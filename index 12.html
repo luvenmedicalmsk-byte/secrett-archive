@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Архив «Великое пробуждение» — Навигация в эпоху поликризиса</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #B8973A;
+  --gold-light: #D4AF5A;
+  --gold-dim: #7A6228;
+  --cyan: #1FAACC;
+  --cyan-dim: #0E6B82;
+  --cyan-glow: rgba(31,170,204,0.12);
+  --cyan-border: rgba(31,170,204,0.25);
+  --cream: #F0E8D8;
+  --dark: #0A0906;
+  --dark-mid: #0D0C09;
+  --dark-soft: #161410;
+  --dark-card: #111009;
+  --text-muted: #6A6458;
+  --text-soft: #A8A090;
+  --border: rgba(184,151,58,0.14);
+  --border-strong: rgba(184,151,58,0.32);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--dark);
+  color: var(--cream);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 15px;
+  line-height: 1.8;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ── CUSTOM CURSOR ── */
+.cursor {
+  width: 6px; height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: screen;
+  transition: transform 0.08s;
+}
+.cursor-ring {
+  width: 28px; height: 28px;
+  border: 1px solid rgba(31,170,204,0.45);
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none;
+  z-index: 9998;
+  transition: transform 0.22s ease, width 0.22s, height 0.22s, border-color 0.22s;
+}
+.cursor-ring.hovered {
+  width: 44px; height: 44px;
+  border-color: rgba(31,170,204,0.7);
+}
+
+/* ── GRAIN OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.032;
+  pointer-events: none;
+  z-index: 2000;
+}
+
+/* ── GRID LINES (global subtle) ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(31,170,204,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31,170,204,0.025) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── TYPOGRAPHY ── */
+.display { font-family: 'Cormorant Garamond', serif; font-weight: 300; line-height: 1.1; }
+.display-lg { font-size: clamp(48px, 7vw, 92px); }
+.display-md { font-size: clamp(34px, 5vw, 60px); }
+.display-sm { font-size: clamp(26px, 3.5vw, 42px); }
+
+.label {
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  font-weight: 500;
+}
+
+.gold { color: var(--gold-light); }
+.cyan { color: var(--cyan); }
+.muted { color: var(--text-muted); }
+.soft { color: var(--text-soft); }
+
+/* ── LAYOUT ── */
+.container { max-width: 980px; margin: 0 auto; padding: 0 40px; }
+.container-wide { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+section { position: relative; z-index: 2; }
+
+/* ── DIVIDERS ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  margin: 0 auto;
+}
+.divider-cyan {
+  height: 1px; width: 60px;
+  background: var(--cyan);
+  margin: 28px auto;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; width: 100%;
+  z-index: 500;
+  padding: 24px 40px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(to bottom, rgba(10,9,6,0.96), transparent);
+  transition: background 0.4s;
+}
+nav.scrolled {
+  background: rgba(10,9,6,0.95);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--cream); text-decoration: none;
+}
+.nav-cta {
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--cyan); border: 1px solid var(--cyan-border);
+  padding: 10px 24px; text-decoration: none; transition: all 0.3s;
+}
+.nav-cta:hover { background: var(--cyan); color: var(--dark); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  padding: 140px 40px 100px;
+  position: relative; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 50%, rgba(31,170,204,0.055) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 80% at 85% 20%, rgba(184,151,58,0.04) 0%, transparent 50%),
+    linear-gradient(180deg, var(--dark) 0%, var(--dark-mid) 100%);
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(31,170,204,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31,170,204,0.045) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse 70% 70% at 20% 50%, black 0%, transparent 70%);
+}
+.hero-content { position: relative; max-width: 800px; }
+.hero-eyebrow { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; }
+.hero-eyebrow-line { width: 40px; height: 1px; background: var(--cyan); }
+.hero-title { margin-bottom: 36px; }
+.hero-title .italic { font-style: italic; color: var(--gold-light); }
+.hero-subtitle { font-size: 16px; color: var(--text-soft); max-width: 540px; margin-bottom: 56px; line-height: 1.9; }
+
+/* hero stats */
+.hero-stats {
+  display: flex; gap: 0; margin-top: 64px;
+  border: 1px solid var(--border);
+  max-width: 480px;
+}
+.hero-stat {
+  flex: 1; padding: 24px 28px;
+  border-right: 1px solid var(--border);
+}
+.hero-stat:last-child { border-right: none; }
+.hero-stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 300;
+  color: var(--gold-light); line-height: 1;
+}
+.hero-stat-label {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted); margin-top: 4px;
+}
+
+.hero-cta-group { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+
+.btn-primary {
+  display: inline-block;
+  background: var(--gold); color: var(--dark);
+  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  font-weight: 600; padding: 18px 40px; text-decoration: none;
+  transition: all 0.3s; position: relative; overflow: hidden;
+}
+.btn-primary::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,0.1); opacity: 0; transition: opacity 0.3s;
+}
+.btn-primary:hover::after { opacity: 1; }
+
+.btn-primary-cyan {
+  display: inline-block;
+  background: var(--cyan); color: var(--dark);
+  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  font-weight: 600; padding: 18px 40px; text-decoration: none;
+  transition: all 0.3s; position: relative; overflow: hidden;
+  border: none;
+}
+.btn-primary-cyan:hover { opacity: 0.88; }
+
+.btn-ghost {
+  display: inline-block; color: var(--text-soft);
+  font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+  text-decoration: none; padding: 4px 0;
+  border-bottom: 1px solid var(--border); transition: all 0.3s;
+}
+.btn-ghost:hover { color: var(--cyan); border-color: var(--cyan-border); }
+
+.hero-scroll {
+  position: absolute; bottom: 48px; left: 40px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.hero-scroll span {
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-muted); writing-mode: vertical-rl;
+}
+.scroll-line {
+  width: 1px; height: 60px;
+  background: linear-gradient(to bottom, var(--cyan), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.1); }
+}
+
+/* ── CONTRAST ── */
+.contrast { padding: 120px 0; }
+.contrast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.contrast-col { padding: 64px 56px; position: relative; }
+.contrast-col.linear { background: var(--dark-soft); opacity: 0.7; }
+.contrast-col.nonlinear {
+  background: var(--dark-card); border: 1px solid var(--cyan-border);
+}
+.contrast-col.nonlinear::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+.contrast-marker {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 32px; display: flex; align-items: center; gap: 12px;
+}
+.contrast-marker.dim { color: var(--text-muted); }
+.contrast-marker.bright { color: var(--cyan); }
+.contrast-marker::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+}
+.contrast-items { list-style: none; display: flex; flex-direction: column; gap: 18px; }
+.contrast-items li {
+  font-size: 14px; color: var(--text-soft); padding-left: 20px;
+  position: relative; line-height: 1.6;
+}
+.contrast-items li::before {
+  content: '—'; position: absolute; left: 0;
+  color: var(--text-muted); font-size: 12px;
+}
+.contrast-col.nonlinear .contrast-items li { color: var(--cream); }
+.contrast-col.nonlinear .contrast-items li::before { color: var(--cyan); }
+.contrast-center { text-align: center; padding: 80px 40px 0; }
+
+/* ── ARCHIVE INTRO ── */
+.archive-intro {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+}
+.archive-intro-inner {
+  display: grid; grid-template-columns: 1fr 2fr; gap: 80px; align-items: start;
+}
+.archive-intro-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 140px; font-weight: 300;
+  color: rgba(31,170,204,0.07); line-height: 1; margin-top: -20px;
+}
+.archive-intro-text p { font-size: 17px; line-height: 2; color: var(--text-soft); margin-bottom: 24px; }
+.archive-intro-text p strong { color: var(--cream); font-weight: 400; }
+
+/* ── FORMULA ── */
+.formula-section {
+  padding: 100px 0;
+  background: var(--dark-soft);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.formula-title-block { text-align: center; margin-bottom: 80px; }
+.formula-equation { display: flex; align-items: stretch; gap: 0; margin-bottom: 48px; }
+.formula-item {
+  flex: 1; padding: 48px 36px;
+  border: 1px solid var(--border); position: relative;
+  background: var(--dark-card);
+}
+.formula-item:first-child { border-right: none; }
+.formula-item:last-child {
+  border-left: none;
+  background: var(--cyan-glow);
+  border-color: var(--cyan-border);
+}
+.formula-item:last-child .formula-item-title { color: var(--cyan); }
+.formula-op {
+  display: flex; align-items: center; justify-content: center;
+  width: 56px; flex-shrink: 0;
+  font-family: 'Cormorant Garamond', serif; font-size: 36px;
+  color: var(--gold-dim);
+  background: var(--dark-soft);
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.formula-item-num {
+  font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 300;
+  color: rgba(184,151,58,0.18); line-height: 1; margin-bottom: 12px;
+}
+.formula-item-title {
+  font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 16px;
+}
+.formula-item-desc { font-size: 13px; color: var(--text-soft); line-height: 1.7; }
+.formula-secret {
+  text-align: center; padding: 36px;
+  border: 1px solid var(--cyan-border);
+  background: var(--cyan-glow); position: relative;
+}
+.formula-secret::before {
+  content: ''; position: absolute; top: -1px; left: 50%;
+  transform: translateX(-50%); width: 80px; height: 2px; background: var(--cyan);
+}
+
+/* ── INSIDE ── */
+.inside-section { padding: 120px 0; }
+.inside-header { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: end; margin-bottom: 80px; }
+.topics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); }
+.topic-card { background: var(--dark); padding: 36px 32px; transition: background 0.3s; cursor: default; }
+.topic-card:hover { background: var(--dark-soft); }
+.topic-icon { font-size: 10px; letter-spacing: 0.2em; color: var(--cyan-dim); text-transform: uppercase; margin-bottom: 20px; }
+.topic-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--cream); margin-bottom: 12px; line-height: 1.3; }
+.topic-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+
+/* ── THINKING ── */
+.thinking-section { padding: 120px 0; background: var(--dark-mid); border-top: 1px solid var(--border); }
+.thinking-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); margin-top: 80px; }
+.thinking-col { background: var(--dark-mid); padding: 64px 56px; }
+.thinking-col.active { background: var(--dark-card); position: relative; }
+.thinking-col.active::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+.thinking-quote {
+  font-family: 'Cormorant Garamond', serif; font-size: 19px; font-style: italic;
+  line-height: 1.7; color: var(--text-soft); margin: 24px 0 32px;
+  padding-left: 20px; border-left: 2px solid var(--border-strong);
+}
+.thinking-col.active .thinking-quote { color: var(--cream); border-color: var(--cyan); }
+.thinking-result { display: flex; align-items: flex-start; gap: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.thinking-result + .thinking-result { margin-top: 14px; }
+.thinking-result-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); margin-top: 8px; flex-shrink: 0; }
+.thinking-col.active .thinking-result { color: var(--text-soft); }
+.thinking-col.active .thinking-result-dot { background: var(--cyan); }
+
+/* ── FOR WHOM ── */
+.forwhom-section { padding: 120px 0; border-top: 1px solid var(--border); }
+.forwhom-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; margin-top: 64px; background: var(--border); }
+.forwhom-card { background: var(--dark); padding: 44px 40px; transition: background 0.3s; }
+.forwhom-card:hover { background: var(--dark-soft); }
+.forwhom-profession { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cyan-dim); margin-bottom: 16px; }
+.forwhom-before { font-size: 13px; color: var(--text-muted); font-style: italic; padding: 12px 16px; border-left: 2px solid rgba(31,170,204,0.2); margin-bottom: 20px; line-height: 1.6; }
+.forwhom-after { font-size: 14px; color: var(--cream); line-height: 1.7; }
+
+/* ── SEGMENTS SECTION ── */
+.segments-section {
+  padding: 120px 0;
+  background: var(--dark-soft);
+  border-top: 1px solid var(--border);
+}
+.seg-tabs { display: flex; gap: 0; border: 1px solid var(--border); overflow: hidden; margin-bottom: 0; flex-wrap: wrap; }
+.seg-tab {
+  padding: 13px 28px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted); background: none; border: none;
+  border-right: 1px solid var(--border); cursor: pointer;
+  font-family: 'Montserrat', sans-serif; font-weight: 400; transition: all 0.3s;
+}
+.seg-tab:last-child { border-right: none; }
+.seg-tab.active, .seg-tab:hover { background: var(--cyan-glow); color: var(--cyan); }
+.seg-tabs-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 56px; flex-wrap: wrap; gap: 24px; }
+.seg-panel { display: none; }
+.seg-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--border); }
+.seg-col { background: var(--dark-card); padding: 48px 44px; }
+.seg-name { font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300; color: var(--cream); margin-bottom: 6px; }
+.seg-who { font-size: 13px; color: var(--text-muted); margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+.three-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); margin-bottom: 28px; }
+.tg-cell { padding: 18px 16px; }
+.tg-cell.pain { background: rgba(155,61,61,0.08); }
+.tg-cell.hook { background: rgba(184,151,58,0.06); }
+.tg-cell.gain { background: rgba(31,170,204,0.06); }
+.tg-head { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.tg-cell.pain .tg-head { color: #9B5A5A; }
+.tg-cell.hook .tg-head { color: var(--gold-dim); }
+.tg-cell.gain .tg-head { color: var(--cyan-dim); }
+.tg-item { font-size: 12px; color: var(--text-muted); line-height: 1.55; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.tg-item:last-child { border: none; }
+.magnet-card { background: var(--cyan-glow); border: 1px solid var(--cyan-border); padding: 24px; margin-bottom: 0; }
+.magnet-badge { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cyan-dim); margin-bottom: 8px; }
+.magnet-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 500; color: var(--cyan); line-height: 1.35; margin-bottom: 6px; }
+.magnet-format { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+.seg-strategy { padding-top: 0; }
+.seg-strategy-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--cyan-dim); margin-bottom: 20px; }
+.step { display: flex; gap: 16px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.step:last-child { border: none; }
+.step-n { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--cyan-dim); line-height: 1; flex-shrink: 0; width: 24px; margin-top: 2px; }
+.step-body { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.step-body strong { color: var(--text-soft); font-weight: 500; }
+
+/* ── ARCHIVE ORBIT SECTION ── */
+.archive-orbit-section {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  align-items: center;
+}
+.orbit-left { padding: 0 60px 0 0; }
+.orbit-visual {
+  position: relative;
+  height: 480px;
+  display: flex; align-items: center; justify-content: center;
+}
+.orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation: orbitRotate linear infinite;
+}
+.orbit-ring-1 { width: 340px; height: 340px; animation-duration: 38s; border-color: rgba(31,170,204,0.18); }
+.orbit-ring-2 { width: 250px; height: 250px; animation-duration: 28s; animation-direction: reverse; border-style: dashed; border-color: rgba(184,151,58,0.15); }
+.orbit-ring-3 { width: 160px; height: 160px; animation-duration: 18s; border-color: rgba(31,170,204,0.12); }
+.orbit-dot {
+  position: absolute;
+  width: 7px; height: 7px; border-radius: 50%;
+  top: -3.5px; left: 50%; transform: translateX(-50%);
+  box-shadow: 0 0 14px currentColor;
+}
+.orbit-ring-1 .orbit-dot { background: var(--cyan); box-shadow: 0 0 14px rgba(31,170,204,0.8); }
+.orbit-ring-2 .orbit-dot { background: var(--gold); box-shadow: 0 0 14px rgba(184,151,58,0.8); }
+.orbit-ring-3 .orbit-dot { background: var(--cyan); box-shadow: 0 0 10px rgba(31,170,204,0.6); }
+@keyframes orbitRotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.orbit-center {
+  position: absolute; text-align: center; z-index: 10;
+}
+.orbit-center-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 60px; font-weight: 300; color: var(--gold-light); line-height: 1;
+}
+.orbit-center-label {
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--text-muted); margin-top: 6px;
+}
+.orbit-node {
+  position: absolute;
+  font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--cyan-dim); background: var(--dark);
+  padding: 4px 10px; border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.archive-features {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+  background: var(--border); border: 1px solid var(--border); margin-bottom: 32px;
+}
+.feat { background: var(--dark-card); padding: 20px 24px; }
+.feat-num { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+.feat-label { font-size: 11px; color: var(--text-muted); }
+
+/* ── STRATEGY TIMELINE ── */
+.strategy-section { padding: 120px 0; background: var(--dark-soft); border-top: 1px solid var(--border); }
+.timeline { position: relative; margin-top: 80px; }
+.timeline::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(to bottom, var(--cyan), var(--border), transparent);
+}
+.timeline-item { display: grid; grid-template-columns: 200px 1fr; gap: 0; padding: 0 0 72px 0; position: relative; }
+.timeline-item::before {
+  content: ''; position: absolute; left: -4px; top: 8px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--cyan); border: 2px solid var(--dark-soft);
+  box-shadow: 0 0 10px rgba(31,170,204,0.5);
+}
+.timeline-year { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--cyan-dim); letter-spacing: 0.05em; padding-left: 28px; padding-top: 4px; }
+.timeline-content { padding-left: 40px; }
+.timeline-phase { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cyan); margin-bottom: 12px; }
+.timeline-text { font-size: 15px; color: var(--text-soft); line-height: 1.8; max-width: 540px; }
+
+/* ── WHAT YOU GET ── */
+.get-section { padding: 120px 0; border-top: 1px solid var(--border); }
+.get-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); }
+.get-item { background: var(--dark); padding: 36px 32px; transition: background 0.3s; }
+.get-item:hover { background: var(--dark-soft); }
+.get-num { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 300; color: rgba(31,170,204,0.12); line-height: 1; margin-bottom: 16px; }
+.get-title { font-size: 13px; font-weight: 500; color: var(--cream); margin-bottom: 8px; letter-spacing: 0.03em; }
+.get-desc { font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+
+/* ── TRUST ── */
+.trust-section { padding: 100px 0; background: var(--dark-mid); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; }
+.trust-stat-grid { display: flex; justify-content: center; gap: 0; margin-top: 64px; border: 1px solid var(--border); max-width: 700px; margin-left: auto; margin-right: auto; }
+.trust-stat { flex: 1; padding: 48px 32px; border-right: 1px solid var(--border); }
+.trust-stat:last-child { border-right: none; }
+.trust-stat-num { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--gold-light); line-height: 1; margin-bottom: 10px; }
+.trust-stat-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+
+/* ── PRICING / ACCESS ── */
+.pricing-section {
+  padding: 140px 0;
+  border-top: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.pricing-section::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(31,170,204,0.04) 0%, transparent 70%);
+}
+.pricing-inner { position: relative; max-width: 720px; margin: 0 auto; }
+.pricing-card {
+  border: 1px solid var(--cyan-border);
+  background: linear-gradient(135deg, rgba(31,170,204,0.04) 0%, rgba(10,9,6,0.98) 60%);
+  padding: 64px;
+  position: relative;
+}
+.pricing-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--gold), transparent);
+}
+.pricing-eyebrow { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+.pricing-eyebrow-line { width: 40px; height: 1px; background: var(--cyan); }
+.pricing-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px; font-weight: 300; color: var(--cream); margin-bottom: 8px;
+}
+.pricing-subtitle { font-size: 14px; color: var(--text-soft); margin-bottom: 40px; font-style: italic; }
+.pricing-features { list-style: none; margin-bottom: 48px; display: flex; flex-direction: column; gap: 14px; }
+.pricing-features li {
+  display: flex; align-items: flex-start; gap: 14px;
+  font-size: 14px; color: var(--text-soft); line-height: 1.6;
+}
+.pricing-features li::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan); flex-shrink: 0; margin-top: 8px;
+  box-shadow: 0 0 8px rgba(31,170,204,0.5);
+}
+.pricing-bottom {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 32px;
+  padding-top: 40px; border-top: 1px solid var(--border);
+}
+.pricing-price-block {}
+.pricing-price-old {
+  font-size: 15px; color: var(--text-muted); text-decoration: line-through;
+  margin-bottom: 4px;
+}
+.pricing-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 56px; font-weight: 300; color: var(--cyan); line-height: 1;
+}
+.pricing-price-note {
+  font-size: 12px; color: var(--text-muted); margin-top: 6px; max-width: 260px; line-height: 1.6;
+}
+.pricing-cta-stack { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+.pricing-region {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted); margin-top: 8px; text-align: right;
+}
+
+/* ── CTA FINAL ── */
+.cta-section { padding: 160px 0; text-align: center; position: relative; overflow: hidden; }
+.cta-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 50%, rgba(31,170,204,0.05) 0%, transparent 70%), var(--dark);
+}
+.cta-content { position: relative; }
+.cta-title { max-width: 640px; margin: 0 auto 24px; }
+.cta-sub { font-size: 15px; color: var(--text-soft); margin-bottom: 56px; max-width: 480px; margin-left: auto; margin-right: auto; }
+.cta-price-note { font-size: 11px; color: var(--text-muted); margin-top: 16px; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 56px 40px 40px;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--text-muted); letter-spacing: 0.05em; }
+.footer-legal { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; }
+.footer-legal a { font-size: 11px; color: var(--text-muted); text-decoration: none; transition: color 0.3s; letter-spacing: 0.08em; text-transform: uppercase; }
+.footer-legal a:hover { color: var(--cyan); }
+.footer-email { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); text-decoration: none; transition: color 0.3s; }
+.footer-email:hover { color: var(--gold-light); }
+.footer-copy { font-size: 11px; color: var(--text-muted); letter-spacing: 0.05em; }
+
+/* ── FADE IN ── */
+.fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.8s ease, transform 0.8s ease; }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* ── AUTHOR SECTION ── */
+.author-section {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+}
+
+/* ── NEW AUTHOR LAYOUT ── */
+.author-redesign {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 0;
+  align-items: center;
+}
+
+/* Photo side */
+.author-photo-new {
+  position: relative;
+  height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.author-photo-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.apr {
+  position: absolute;
+  border-radius: 50%;
+}
+.apr-1 {
+  width: 340px; height: 340px;
+  border: 1px solid rgba(184,151,58,0.28);
+  box-shadow: 0 0 20px rgba(184,151,58,0.06);
+  animation: aprSpin 22s linear infinite;
+}
+/* dot on ring 1 */
+.apr-1::after {
+  content: '';
+  position: absolute;
+  top: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(184,151,58,0.8);
+}
+.apr-2 {
+  width: 400px; height: 400px;
+  border: 1px dashed rgba(31,170,204,0.18);
+  animation: aprSpin 32s linear infinite reverse;
+}
+/* dot on ring 2 */
+.apr-2::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px rgba(31,170,204,0.7);
+}
+@keyframes aprSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.author-photo-frame {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 2;
+  box-shadow:
+    0 0 0 1px rgba(184,151,58,0.3),
+    0 0 40px rgba(0,0,0,0.5);
+}
+.author-photo-main {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%;
+  display: block;
+  opacity: 0.85;
+  filter: grayscale(12%) contrast(1.05);
+  transition: opacity 0.6s ease, transform 0.8s ease;
+  border-radius: 50%;
+  transform: scale(1.08);
+}
+.author-photo-frame:hover .author-photo-main {
+  opacity: 0.95;
+  transform: scale(1.13);
+}
+.author-photo-fade {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(10,9,6,0.35) 100%);
+}
+
+/* Content side */
+.author-content {
+  padding: 60px 0 60px 64px;
+  border-left: 1px solid var(--border);
+  position: relative;
+}
+.author-content::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 80px;
+  background: linear-gradient(to bottom, var(--cyan), transparent);
+}
+.author-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 52px; font-weight: 300;
+  color: var(--cream); line-height: 1.05;
+  margin-bottom: 14px;
+}
+.author-role {
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--cyan-dim); margin-bottom: 28px; line-height: 1.7;
+}
+.author-desc {
+  font-size: 15px; color: var(--text-soft);
+  line-height: 1.9; margin-bottom: 32px; max-width: 480px;
+}
+.author-project {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; color: var(--gold-light);
+  border: 1px solid var(--border);
+  padding: 12px 20px;
+  margin-bottom: 40px;
+}
+.author-project-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+
+/* Inline risks */
+.author-risks-inline { margin-top: 4px; }
+.author-risks-label {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--cyan-dim); margin-bottom: 16px;
+}
+.author-risks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  max-width: 480px;
+}
+.ari {
+  background: var(--dark-card);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ari-n {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 300;
+  color: rgba(31,170,204,0.2); line-height: 1; flex-shrink: 0;
+}
+.ari-t { font-size: 12px; color: var(--text-soft); }
+
+/* OLD classes kept for nothing — replaced */
+.author-inner-v2 { display: none; }
+.author-photo-col, .author-photo-wrap, .author-photo-img,
+.author-photo-ring, .author-photo-ring-2, .author-left,
+.author-right, .author-risks, .author-risk-item,
+.author-mission { display: none; }
+
+/* ── PRICING DUAL ── */
+.pricing-dual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: var(--border);
+  max-width: 960px;
+  margin: 0 auto;
+}
+.pricing-card-intl {
+  background: var(--dark-card);
+  border: 1px solid var(--border);
+  padding: 56px 48px;
+  position: relative;
+}
+.pricing-card-intl::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+.pricing-card-intl.featured {
+  background: linear-gradient(160deg, rgba(31,170,204,0.05) 0%, var(--dark-card) 60%);
+  border-color: var(--cyan-border);
+}
+.pricing-card-intl.featured::before {
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+.pricing-region-badge {
+  display: inline-block;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  margin-bottom: 28px;
+}
+.pricing-card-intl.featured .pricing-region-badge {
+  border-color: var(--cyan-border);
+  color: var(--cyan-dim);
+}
+
+/* ── GLOWING BUTTON (international) ── */
+.btn-glow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--cyan);
+  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  font-weight: 600; padding: 18px 40px; text-decoration: none;
+  border: 1px solid var(--cyan);
+  position: relative; overflow: hidden;
+  transition: all 0.35s;
+  box-shadow:
+    0 0 18px rgba(31,170,204,0.25),
+    inset 0 0 18px rgba(31,170,204,0.06);
+}
+.btn-glow::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(31,170,204,0.12), transparent);
+  opacity: 0; transition: opacity 0.35s;
+}
+.btn-glow:hover {
+  color: var(--dark);
+  background: var(--cyan);
+  box-shadow:
+    0 0 36px rgba(31,170,204,0.55),
+    0 0 80px rgba(31,170,204,0.2),
+    inset 0 0 0 rgba(31,170,204,0);
+}
+.btn-glow:hover::before { opacity: 1; }
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(31,170,204,0.25), inset 0 0 18px rgba(31,170,204,0.06); }
+  50%       { box-shadow: 0 0 32px rgba(31,170,204,0.45), 0 0 64px rgba(31,170,204,0.15), inset 0 0 24px rgba(31,170,204,0.08); }
+}
+.btn-glow { animation: glowPulse 2.8s ease-in-out infinite; }
+.btn-glow:hover { animation: none; }
+.btn-glow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  flex-shrink: 0;
+  transition: background 0.35s, box-shadow 0.35s;
+}
+
+/* ── CONTENTS ACCORDION ── */
+.contents-section {
+  padding: 120px 0;
+  border-top: 1px solid var(--border);
+  background: var(--dark-mid);
+}
+.contents-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.contents-intro { position: sticky; top: 120px; }
+.contents-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+  background: var(--border); border: 1px solid var(--border);
+  margin-top: 40px;
+}
+.cstat { background: var(--dark-card); padding: 24px 28px; }
+.cstat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px; font-weight: 300; color: var(--cyan); line-height: 1; margin-bottom: 4px;
+}
+.cstat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.05em; }
+.accordion { display: flex; flex-direction: column; gap: 1px; }
+.acc-item {
+  border: 1px solid var(--border);
+  background: var(--dark-card);
+  transition: border-color 0.3s;
+  overflow: hidden;
+}
+.acc-item.open { border-color: var(--cyan-border); }
+.acc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; cursor: pointer;
+  user-select: none; transition: background 0.2s;
+}
+.acc-header:hover { background: rgba(31,170,204,0.04); }
+.acc-header-left { display: flex; align-items: center; gap: 16px; }
+.acc-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 300; color: rgba(31,170,204,0.3); line-height: 1; width: 28px;
+}
+.acc-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px; font-weight: 400; color: var(--cream); line-height: 1.2;
+}
+.acc-item.open .acc-title { color: var(--cyan); }
+.acc-count {
+  font-size: 10px; letter-spacing: 0.15em; color: var(--text-muted);
+  white-space: nowrap;
+}
+.acc-arrow {
+  width: 20px; height: 20px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s;
+}
+.acc-item.open .acc-arrow { transform: rotate(180deg); }
+.acc-arrow-icon {
+  width: 10px; height: 6px;
+  border-left: 1px solid var(--text-muted);
+  border-bottom: 1px solid var(--text-muted);
+  transform: rotate(-45deg) translate(1px, -2px);
+}
+.acc-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.6s ease, padding 0.3s;
+  padding: 0 24px;
+}
+.acc-item.open .acc-body {
+  max-height: 4000px;
+  padding: 0 24px 24px;
+}
+.acc-topics {
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.acc-topic {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 13px; color: var(--text-muted); line-height: 1.5;
+}
+.acc-topic-dot {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: var(--cyan-dim); flex-shrink: 0; margin-top: 7px;
+}
+.acc-topic-name { color: var(--text-soft); }
+.acc-topic-desc { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+.btn-glow-gold {
+  color: #F5CA50;
+  border-color: #D4AF5A;
+  border-width: 1.5px;
+  text-shadow: 0 0 12px rgba(240,200,74,0.5);
+  box-shadow:
+    0 0 28px rgba(212,175,90,0.5),
+    0 0 55px rgba(212,175,90,0.18),
+    inset 0 0 22px rgba(212,175,90,0.12);
+}
+.btn-glow-gold::before {
+  background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(212,175,90,0.2), transparent);
+}
+.btn-glow-gold:hover {
+  color: #0A0906;
+  background: #D4AF5A;
+  text-shadow: none;
+  box-shadow:
+    0 0 52px rgba(212,175,90,0.8),
+    0 0 110px rgba(212,175,90,0.35);
+}
+/* ── GLOW BROWN (Russia payment) ── */
+.btn-glow-brown {
+  color: #C8996A;
+  border-color: #8B5E3C;
+  box-shadow: 0 0 18px rgba(139,94,60,0.3), inset 0 0 18px rgba(139,94,60,0.07);
+}
+.btn-glow-brown::before {
+  background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(139,94,60,0.14), transparent);
+}
+.btn-glow-brown:hover {
+  color: var(--dark);
+  background: #8B5E3C;
+  box-shadow: 0 0 36px rgba(139,94,60,0.6), 0 0 80px rgba(139,94,60,0.2);
+}
+@keyframes glowPulseBrown {
+  0%, 100% { box-shadow: 0 0 18px rgba(139,94,60,0.3), inset 0 0 18px rgba(139,94,60,0.07); }
+  50%       { box-shadow: 0 0 32px rgba(139,94,60,0.5), 0 0 64px rgba(139,94,60,0.18), inset 0 0 24px rgba(139,94,60,0.1); }
+}
+.btn-glow-brown { animation: glowPulseBrown 2.8s ease-in-out infinite; }
+.btn-glow-brown:hover { animation: none; }
+
+@keyframes glowPulseGold {
+  0%, 100% { box-shadow: 0 0 18px rgba(184,151,58,0.25), inset 0 0 18px rgba(184,151,58,0.06); }
+  50%       { box-shadow: 0 0 32px rgba(184,151,58,0.45), 0 0 64px rgba(184,151,58,0.15), inset 0 0 24px rgba(184,151,58,0.08); }
+}
+.btn-glow-gold { animation: glowPulseGold 2.8s ease-in-out infinite; }
+.btn-glow-gold:hover { animation: none; }
+
+/* ── SUPPORT SECTION ── */
+.support-section {
+  padding: 100px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.support-section::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 50% 70% at 50% 50%, rgba(31,170,204,0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+.support-inner { position: relative; max-width: 560px; margin: 0 auto; }
+.support-divider {
+  width: 40px; height: 1px;
+  background: var(--border-strong);
+  margin: 0 auto 40px;
+}
+.support-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 3.5vw, 42px);
+  font-weight: 300;
+  color: var(--cream);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.support-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin-bottom: 40px;
+  line-height: 1.7;
+}
+
+
+/* ── SUB-ACCORDION (countries) ── */
+.acc-topic-expandable { align-items: flex-start !important; }
+.acc-subtoggle:hover .sub-plus { color: var(--cyan); }
+.sub-plus { font-size: 14px; color: var(--text-muted); margin-left: 10px; transition: transform 0.3s, color 0.3s; display: inline-block; }
+.acc-subtoggle.open .sub-plus { transform: rotate(45deg); color: var(--cyan); }
+.sub-list { display: flex; flex-direction: column; gap: 6px; }
+.sub-item { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; line-height: 1.5; padding: 2px 0; }
+.sub-dot { color: var(--gold-dim); flex-shrink: 0; font-size: 10px; }
+.acc-topic-wide .acc-topic-name { white-space: normal; word-break: break-word; }
+
+/* ── FAQ ── */
+.faq-section { padding: 100px 0; border-top: 1px solid var(--border); }
+.faq-inner { max-width: 720px; margin: 0 auto; }
+.faq-header { text-align: center; margin-bottom: 56px; }
+.faq-list { display: flex; flex-direction: column; gap: 1px; }
+.faq-item { border: 1px solid var(--border); background: var(--dark-card); transition: border-color 0.3s; }
+.faq-item.open { border-color: var(--cyan-border); }
+.faq-q { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 28px; cursor: pointer; user-select: none; transition: background 0.2s; }
+.faq-q:hover { background: rgba(31,170,204,0.03); }
+.faq-q-text { font-size: 15px; font-weight: 400; color: var(--cream); line-height: 1.5; transition: color 0.3s; }
+.faq-item.open .faq-q-text { color: var(--cyan); }
+.faq-icon { width: 24px; height: 24px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: border-color 0.3s, transform 0.35s, background 0.3s; position: relative; }
+.faq-item.open .faq-icon { border-color: var(--cyan-border); background: rgba(31,170,204,0.08); transform: rotate(45deg); }
+.faq-icon::before, .faq-icon::after { content: ''; position: absolute; background: var(--text-muted); transition: background 0.3s; border-radius: 1px; }
+.faq-icon::before { width: 10px; height: 1px; }
+.faq-icon::after  { width: 1px; height: 10px; }
+.faq-item.open .faq-icon::before, .faq-item.open .faq-icon::after { background: var(--cyan); }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; padding: 0 28px; }
+.faq-item.open .faq-a { max-height: 400px; padding: 0 28px 28px; }
+.faq-a-text { font-size: 14px; color: var(--text-soft); line-height: 1.8; padding-top: 16px; border-top: 1px solid var(--border); }
+
+@media (max-width: 900px) {
+  .cursor, .cursor-ring { display: none; }
+  body { cursor: auto; }
+  .container, nav { padding: 0 20px; }
+  .container-wide { padding: 0 20px; }
+  footer { padding: 40px 20px 32px; }
+  .footer-inner { gap: 16px; }
+  .hero { padding: 120px 20px 80px; }
+  .hero-stats { display: none; }
+  .contrast-grid, .archive-intro-inner, .inside-header,
+  .thinking-inner, .forwhom-grid, .get-grid,
+  .archive-orbit-section, .contents-inner { grid-template-columns: 1fr; }
+  .orbit-visual { display: none; }
+  .orbit-left { padding: 0; }
+  .contents-intro { position: static; }
+  /* ── ACCORDION MOBILE ── */
+  .acc-header { padding: 18px 16px; gap: 10px; }
+  .acc-num { width: 22px; font-size: 18px; }
+  .acc-title { font-size: 15px; line-height: 1.3; }
+  .acc-body { padding: 0 12px; }
+  .acc-item.open .acc-body { padding: 0 12px 18px; }
+  .acc-topics { gap: 12px; }
+  .acc-topic { gap: 10px; align-items: flex-start; }
+  .acc-topic-name { font-size: 13px; white-space: normal; word-break: break-word; line-height: 1.5; }
+  .acc-topic-desc { font-size: 12px; line-height: 1.6; }
+  .sub-item { font-size: 12px; }
+  .sub-list { gap: 8px; }
+  .formula-equation { flex-direction: column; }
+  .formula-op { width: 100%; height: 48px; writing-mode: horizontal-tb; }
+  .timeline-item { grid-template-columns: 1fr; }
+  .timeline-year { padding-left: 28px; margin-bottom: 8px; }
+  .trust-stat-grid { flex-direction: column; }
+  .trust-stat { border-right: none; border-bottom: 1px solid var(--border); }
+  .topics-grid { grid-template-columns: 1fr; }
+  nav { padding: 20px; }
+  .seg-panel.active { grid-template-columns: 1fr; }
+  .three-grid { grid-template-columns: 1fr; }
+  .pricing-card { padding: 36px 24px; }
+  .pricing-bottom { flex-direction: column; align-items: flex-start; }
+  .pricing-cta-stack { align-items: flex-start; }
+  .pricing-region { text-align: left; }
+  .author-redesign { grid-template-columns: 1fr; }
+  .author-photo-new { height: 360px; }
+  .author-photo-frame { width: 220px; height: 220px; }
+  .apr-1 { width: 260px; height: 260px; }
+  .apr-2 { width: 310px; height: 310px; }
+  .author-content { padding: 40px 0 0; border-left: none; border-top: 1px solid var(--border); }
+  .author-risks-grid { grid-template-columns: repeat(2, 1fr); }
+  .author-left { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 48px; }
+  .author-right { padding: 48px 0 0; }
+  .pricing-dual { grid-template-columns: 1fr; }
+  .pricing-card-intl { padding: 36px 24px; }
+  .footer-legal { justify-content: center; }
+  .btn-glow { padding: 16px 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="#" class="nav-logo">Архив · Великое пробуждение</a>
+  <a href="#access" class="nav-cta">Открыть доступ</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content fade-in">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-line"></div>
+      <span class="label">Аналитический проект · 2022–2030+</span>
+    </div>
+    <div class="hero-title">
+      <div class="display display-lg">Мир изменился.</div>
+      <div class="display display-lg italic">Изменилось ли</div>
+      <div class="display display-lg">ваше мышление?</div>
+    </div>
+    <p class="hero-subtitle">
+      Большинство людей продолжают читать нелинейный мир по линейным картам.
+      Архив — это практика иначе видеть реальность и принимать решения,
+      когда стандартные модели перестают работать.
+    </p>
+    <div class="hero-cta-group">
+      <a href="#access" class="btn-primary-cyan">Войти в Архив</a>
+      <a href="#formula" class="btn-ghost">Узнать подробнее</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">500+</div>
+        <div class="hero-stat-label">Исследований</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">102k</div>
+        <div class="hero-stat-label">Подписчиков</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">2100</div>
+        <div class="hero-stat-label">Горизонт</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- CONTRAST -->
+<section class="contrast" id="what">
+  <div class="container-wide">
+    <div class="container" style="margin-bottom: 64px;">
+      <div class="label fade-in" style="margin-bottom: 16px;">Два типа мышления</div>
+      <div class="display display-md fade-in">Разница не в интеллекте.<br>В карте реальности.</div>
+    </div>
+    <div class="contrast-grid fade-in">
+      <div class="contrast-col linear">
+        <div class="contrast-marker dim">Линейное мышление</div>
+        <div class="display display-sm" style="color: var(--text-muted); margin-bottom: 32px;">Старая карта</div>
+        <ul class="contrast-items">
+          <li>Мир предсказуем — нужно просто найти правильный алгоритм</li>
+          <li>Деньги открывают любой доступ</li>
+          <li>Рост продолжается, стабильность возвращается</li>
+          <li>Риски — временные отклонения от нормы</li>
+          <li>Новости объясняют происходящее</li>
+          <li>Достаточно хорошего продукта — клиенты придут сами</li>
+        </ul>
+      </div>
+      <div class="contrast-col nonlinear">
+        <div class="contrast-marker bright">Нелинейное мышление</div>
+        <div class="display display-sm cyan" style="margin-bottom: 32px;">Новая карта</div>
+        <ul class="contrast-items">
+          <li>Мир фрагментируется — выигрывают те, кто видит связи раньше</li>
+          <li>Доступ теперь открывает доверие, репутация и сообщество</li>
+          <li>Эпоха роста закончилась — началась эпоха адаптации</li>
+          <li>Риски — системная норма, к которой нужна стратегия</li>
+          <li>Глубокая аналитика формирует сигналы раньше новостей</li>
+          <li>Если у вас есть бизнес или вы владеете навыками продаж, использование языка рисков усиливает приток клиентов</li>
+        </ul>
+      </div>
+    </div>
+    <div class="contrast-center fade-in">
+      <p class="soft" style="font-size: 16px; max-width: 560px; margin: 0 auto;">
+        Архив — это не набор материалов. Это <span class="cyan">практика перехода</span> от первой карты ко второй. Инструмент, который делает нелинейное мышление рабочим навыком, а не абстрактной идеей.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHIVE INTRO -->
+<section class="archive-intro">
+  <div class="container">
+    <div class="archive-intro-inner">
+      <div class="archive-intro-label">
+        <div class="label fade-in" style="margin-bottom: 20px;">Что такое Архив</div>
+        <div class="archive-intro-number fade-in">500+</div>
+        <p class="soft fade-in" style="font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: -16px;">тем и исследований</p>
+      </div>
+      <div class="archive-intro-text fade-in">
+        <p>Архив «Великое пробуждение» — это <strong>навигационная инфраструктура</strong> для системного понимания будущего. Не вдохновение. Не теория. Операционная база из 500+ исследований, докладов, карт уязвимостей и сценариев.</p>
+        <p>Внутри — <strong>реальное сырьё</strong> для тех, кто принимает решения: климатические риски стран, экономические сценарии, анализ геополитических разломов, технологические сдвиги и социальные трансформации.</p>
+        <p>Автор — <strong>Мия Гекди</strong>, футуролог и стратег-аналитик. С 2018 года исследует глобальные риски и строит карты будущего, которые помогают не просто понимать мир — а <strong>действовать в нём с опережением.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider container-wide"></div>
+
+<!-- FORMULA -->
+<section class="formula-section" id="formula">
+  <div class="container">
+    <div class="formula-title-block fade-in">
+      <div class="label" style="margin-bottom: 16px;">Механика результата</div>
+      <div class="display display-md">Формула, которая<br><span class="italic gold">работает сейчас</span></div>
+    </div>
+    <div class="formula-equation fade-in">
+      <div class="formula-item">
+        <div class="formula-item-num">01</div>
+        <div class="formula-item-title">Продукт</div>
+        <div class="formula-item-desc">Архив даёт трансформацию и решает задачу. Чёткая ценность, измеримый результат, системный подход, доказанная эффективность.</div>
+      </div>
+      <div class="formula-op">+</div>
+      <div class="formula-item">
+        <div class="formula-item-num">02</div>
+        <div class="formula-item-title">Язык рисков</div>
+        <div class="formula-item-desc">Говорит с аудиторией на её языке. Выявляем реальные риски, показываем последствия, даём решение и путь, снимаем страхи и сомнения.</div>
+      </div>
+      <div class="formula-op">=</div>
+      <div class="formula-item" style="background: rgba(31,170,204,0.04); border-color: var(--cyan-border);">
+        <div class="formula-item-num" style="color:rgba(31,170,204,0.25);">03</div>
+        <div class="formula-item-title" style="color:var(--cyan);">Входящий поток</div>
+        <div class="formula-item-desc">Люди находят, доверяют, приходят. Входящий поток заявок, высокий уровень доверия.</div>
+      </div>
+    </div>
+    <div class="formula-secret fade-in">
+      <div class="label" style="margin-bottom: 12px; color: var(--gold);">Нелинейный секрет в связке</div>
+      <p style="font-size: 16px; color: var(--text-soft); max-width: 640px; margin: 0 auto; line-height: 1.8;">
+        Недостаточно иметь сильный продукт. Нужно говорить о нём через призму рисков и желаемых результатов вашей аудитории.
+        <span class="gold"> Сильный продукт + навыки продаж + правильный язык рисков = стабильный доход.</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTENTS — INTERACTIVE ACCORDION -->
+<section class="contents-section" id="contents">
+  <div class="container">
+    <div class="contents-inner">
+
+      <!-- LEFT: sticky intro -->
+      <div class="contents-intro fade-in">
+        <div class="label" style="margin-bottom: 16px;">Содержание Архива</div>
+        <div class="display display-md">500+<br><span class="italic cyan">исследований</span></div>
+        <p style="font-size: 15px; color: var(--text-soft); line-height: 1.9; margin-top: 24px; max-width: 360px;">
+          Архив анализирует поликризис — состояние, когда кризисы соединяются и усиливают друг друга. Операционное сырьё для тех, кто принимает решения.
+        </p>
+        <div class="contents-stats">
+          <div class="cstat">
+            <div class="cstat-num">500+</div>
+            <div class="cstat-label">Тем и исследований</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-num">5</div>
+            <div class="cstat-label">Осей анализа</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-num">2100</div>
+            <div class="cstat-label">Горизонт прогнозов</div>
+          </div>
+          <div class="cstat">
+            <div class="cstat-num">∞</div>
+            <div class="cstat-label">Обновлений</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: accordion -->
+      <div class="accordion fade-in">
+
+        <div class="acc-item open" data-acc="1">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num">01</div>
+              <div class="acc-title">Климат и ресурсы</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Климатические катастрофы и здоровье человека</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Шесть стихийных бедствий</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Обзор влияния климатических опасностей на состояние здоровья</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Прогноз последствий стихийных событий / территории / последствия</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Система здравоохранения, устойчивая к изменению климата</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Изменение климата и будущие пандемии</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Уровни безопасности воды в мире по странам</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Адаптация к климатическим изменениям</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Наиболее безопасные страны для проживания в условиях климатического кризиса</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Краткий прогноз климатических рисков для 109 стран</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Климат 2026 — прогнозы и сценарии</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic acc-topic-expandable">
+                <div class="acc-topic-dot"></div>
+                <div style="width:100%">
+                  <div class="acc-topic-name acc-subtoggle" onclick="toggleSub(this)" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+                    <span>Карты и анализ климатических рисков регионов</span>
+                    <span class="sub-plus">＋</span>
+                  </div>
+                  <div class="acc-topic-desc" style="margin-bottom:4px;">по запросам читателей — Россия, ОАЭ, Испания, Казахстан и др.</div>
+                  <div class="sub-list" style="display:none;margin-top:8px;padding:10px 0 4px;border-top:1px solid rgba(184,151,58,0.1);">
+            <div class="sub-item"><span class="sub-dot">·</span>Россия</div>
+            <div class="sub-item"><span class="sub-dot">·</span>ОАЭ — Дубай</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Испания</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Казахстан</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Черногория</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Узбекистан</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Латвия</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Германия</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Перу</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Кипр</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Таиланд</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Украина</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Великобритания</div>
+            <div class="sub-item"><span class="sub-dot">·</span>Эстония</div>
+            <div class="sub-item"><span class="sub-dot">·</span>США</div>
+                    <div class="sub-item" style="color:var(--text-muted);font-style:italic;"><span class="sub-dot">·</span>и другие страны — по запросам</div>
+                  </div>
+                </div>
+              </div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Спутниковая карта: ураганы, циклоны, штормы, пожары</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic acc-topic-wide"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Интерактивный атлас «Наше возможное климатическое будущее»</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">3D карта землетрясений, тектонические плиты по всему миру</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Критерии выбора безопасного места и стратегическое планирование</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Безопасные страны по данным различных исследований</div><div class="acc-topic-desc"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-item" data-acc="2">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num">02</div>
+              <div class="acc-title">Экономика и финансы</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Обострение экономической напряженности</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Геополитическая рецессия</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Сценарии занятости и трансформация рынка труда</div><div class="acc-topic-desc">Профессии, которые исчезнут, и те, что появятся</div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Стратегия для людей, бизнеса и инвесторов по минимизации воздействия экономических угроз</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Мир в 2025–2027 году: путь к рецессии</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Тим Морган и занижение ВВП — какая сейчас реальность?</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">В какую недвижимость лучше вкладывать?</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Можно ли хранить сбережения в золоте?</div><div class="acc-topic-desc"></div></div></div>
+              
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Эра «Большого использования нефти» подходит к концу · Кривая Хабберта</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Что делать с энергетическим дефицитом в XXI веке?</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Валютные риски и девальвационные сценарии</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Анализ секторов: что выживет, что нет</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:rgba(184,151,58,0.4);"></div><div><div class="acc-topic-name" style="color:var(--gold-dim);font-style:italic;">Планируется анализ в 2026–2028</div><div class="acc-topic-desc"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-item" data-acc="3">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num">03</div>
+              <div class="acc-title">Геополитика и безопасность</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Глобальные конфликты и горячие точки</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Сценарии Украина и Россия</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Европа 2025: углубление кризиса · Европа: будущее</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Прогноз для США · Ближний Восток · Иран</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Эпоха господства на море закончилась</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">1973 год — возможные совпадения с текущей ситуацией</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Прогнозы и аналитика 2025: геополитический контекст</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Геополитика 2026 — прогнозы и сценарии</div><div class="acc-topic-desc"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-item" data-acc="4">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num">04</div>
+              <div class="acc-title">Технологии и ИИ</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Как ИИ изменит мир · Риски, связанные с ИИ</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Инсайдеры OpenAI о будущем ИИ</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Проблемы организаций и ИИ — как быть разумным лидером</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Будущее сферы труда 2024, основанное на ИИ</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Формирование рабочей силы завтрашнего дня</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Инструменты ИИ для IT специалистов</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Как ИИ изменит мир фрилансеров?</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Технологии 2026 — прогнозы и сдвиги</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">«Цифровой двойник» Земли — прогнозирование будущего</div><div class="acc-topic-desc"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-item" data-acc="5">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num">05</div>
+              <div class="acc-title">Социум и психология</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Воспитание поколения трансформеров</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Пандемическое соглашение / договор ВОЗ</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Социальные риски 2026</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Будущее человечества · Экзистенциальные угрозы</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Быстро стареющее общество · Потеря контроля над биотехнологиями</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Планирование профессиональных направлений используя «конус неопределённости»</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Что компании и частные лица смогут сделать, чтобы подготовиться к будущему?</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Протоколы принятия решений для частного лица</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot"></div><div><div class="acc-topic-name">Эффективная стратегия до 2030 года для путешественников: полное руководство по подготовке к рискам</div><div class="acc-topic-desc"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="acc-item" data-acc="6" style="border-color: rgba(184,151,58,0.2); background: rgba(184,151,58,0.03);">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num" style="color:rgba(184,151,58,0.4);">+</div>
+              <div class="acc-title" style="color:var(--gold-light);">Стратегические активы будущего</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div class="acc-count" style="color:var(--gold-dim);">закрытый раздел</div>
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Здоровье · Навыки · Энергия</div><div class="acc-topic-desc">Нефинансовые активы с наибольшей устойчивостью</div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Вода · Земля · Недвижимость нового типа</div><div class="acc-topic-desc">Физические активы в эпоху климатической нестабильности</div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Золото · Медь · Платина</div><div class="acc-topic-desc">Металлы с стратегическим промышленным спросом в 2030+</div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Социальный капитал · ··· · ··· · ··· · ··· · ···</div><div class="acc-topic-desc">Пять активов не раскрываются публично — только внутри Архива</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="acc-item" data-acc="7" style="border-color: rgba(184,151,58,0.2); background: rgba(184,151,58,0.03);">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num" style="color:rgba(184,151,58,0.4);">+</div>
+              <div class="acc-title" style="color:var(--gold-light);">Сценарии</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div class="acc-count" style="color:var(--gold-dim);">закрытый раздел</div>
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Сценарий 2030 года</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Сценарий 2100 года</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Аналитика катаболического коллапса</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Оптимистичный и более напряжённый вектор будущего</div><div class="acc-topic-desc"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="acc-item" data-acc="8" style="border-color: rgba(184,151,58,0.2); background: rgba(184,151,58,0.03);">
+          <div class="acc-header" onclick="toggleAcc(this)">
+            <div class="acc-header-left">
+              <div class="acc-num" style="color:rgba(184,151,58,0.4);">+</div>
+              <div class="acc-title" style="color:var(--gold-light);">Авиация</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div class="acc-count" style="color:var(--gold-dim);">закрытый раздел</div>
+              <div class="acc-arrow"><div class="acc-arrow-icon"></div></div>
+            </div>
+          </div>
+          <div class="acc-body">
+            <div class="acc-topics">
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Авиация ICAO Net Zero к 2050г.</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Проблемы безопасности Boeing</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Под красным флагом ICAO</div><div class="acc-topic-desc"></div></div></div>
+              <div class="acc-topic"><div class="acc-topic-dot" style="background:var(--gold-dim);"></div><div><div class="acc-topic-name" style="color:var(--gold-light);">Как проверить тип самолёта до покупки авиабилетов</div><div class="acc-topic-desc"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THINKING MODES -->
+<section class="thinking-section">
+  <div class="container">
+    <div class="label fade-in" style="margin-bottom: 16px;">Как Архив работает с мышлением</div>
+    <div class="display display-md fade-in">Архив — это практика<br><span class="italic cyan">нелинейного мышления</span></div>
+    <div class="thinking-inner fade-in">
+      <div class="thinking-col">
+        <div class="label dim" style="color: var(--text-muted);">Без Архива</div>
+        <div class="thinking-quote">«Я читаю новости, но они создают тревогу, а не ясность. Я вижу риски, но не понимаю, что с ними делать.»</div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Реакция на события вместо опережения</span></div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Решения на основе новостного шума</span></div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Линейные прогнозы в нелинейном мире</span></div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Тревога без структуры и без опор</span></div>
+      </div>
+      <div class="thinking-col active">
+        <div class="label" style="color: var(--cyan);">С Архивом</div>
+        <div class="thinking-quote">«Я вижу связи между климатом, экономикой и геополитикой. Я принимаю решения с горизонтом 5–10 лет, пока другие реагируют на вчера.»</div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Системное видение вместо фрагментов</span></div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Персональная карта уязвимостей по 7 осям</span></div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Стратегия на основе сценариев, а не надежды</span></div>
+        <div class="thinking-result"><div class="thinking-result-dot"></div><span>Ясность и опора в условиях нестабильности</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOR WHOM -->
+<section class="forwhom-section">
+  <div class="container">
+    <div class="label fade-in" style="margin-bottom: 16px;">Язык рисков для профессионалов</div>
+    <div class="display display-md fade-in">Как Архив меняет<br>позиционирование профессии</div>
+    <p class="soft fade-in" style="margin-top: 20px; font-size: 15px; max-width: 560px;">
+      Специалист с языком рисков занимает позицию, где конкурентов почти нет. Разница не в компетенции — в уровне разговора.
+    </p>
+  </div>
+  <div class="container-wide">
+    <div class="forwhom-grid fade-in">
+      <div class="forwhom-card">
+        <div class="forwhom-profession">Психолог</div>
+        <div class="forwhom-before">«Помогаю справиться с тревогой и найти баланс»</div>
+        <div class="forwhom-after">Мир объективно стал тревожнее. Я работаю не с симптомом — я помогаю выстроить внутреннюю архитектуру, которая держит при любом сценарии снаружи.</div>
+      </div>
+      <div class="forwhom-card">
+        <div class="forwhom-profession">Маркетолог</div>
+        <div class="forwhom-before">«Настраиваю воронки и увеличиваю конверсию»</div>
+        <div class="forwhom-after">Старые воронки умерли. Люди верят тем, кто называет их реальный страх. Я строю коммуникацию через язык рисков: клиент чувствует, что его понимают — и сам приходит.</div>
+      </div>
+      <div class="forwhom-card">
+        <div class="forwhom-profession">Финансист</div>
+        <div class="forwhom-before">«Помогаю инвестировать и сохранять капитал»</div>
+        <div class="forwhom-after">В мире фрагментации деньги перестали быть универсальным ключом. Я строю стратегию не реагируя на новости — а работая с реальными сценариями рисков до 2100 года.</div>
+      </div>
+      <div class="forwhom-card">
+        <div class="forwhom-profession">Педагог</div>
+        <div class="forwhom-before">«Репетитор по математике, готовлю к ЕГЭ»</div>
+        <div class="forwhom-after">Через 10 лет половина сегодняшних профессий изменится до неузнаваемости. Я формирую у ребёнка мышление, которое работает в нелинейном мире — это то, чего не даст ни один вуз.</div>
+      </div>
+      <div class="forwhom-card">
+        <div class="forwhom-profession">Коуч</div>
+        <div class="forwhom-before">«Помогаю найти мотивацию и достичь целей»</div>
+        <div class="forwhom-after">Потеря мотивации — это не слабость. Это сигнал, что карта реальности устарела. Я помогаю переориентироваться в мире, который изменился быстрее, чем ожидалось.</div>
+      </div>
+      <div class="forwhom-card">
+        <div class="forwhom-profession">Архитектор / Девелопер</div>
+        <div class="forwhom-before">«Проектирую красивые и функциональные дома»</div>
+        <div class="forwhom-after">Клиент хочет не просто красивый дом — он хочет автономность и безопасность в нестабильном мире. Я проектирую будущее, а не здание.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- AUTHOR -->
+<section class="author-section" id="author">
+  <div class="container-wide">
+    <div class="author-redesign fade-in">
+
+      <!-- LEFT: PHOTO -->
+      <div class="author-photo-new">
+        <div class="author-photo-frame">
+          <img src="data:image/webp;base64,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" alt="Мия Гекди" class="author-photo-main"/>
+          <div class="author-photo-fade"></div>
+        </div>
+        <div class="author-photo-rings">
+          <div class="apr apr-1"></div>
+          <div class="apr apr-2"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: BIO + RISKS -->
+      <div class="author-content">
+        <div class="label" style="margin-bottom: 20px;">Об авторе</div>
+        <div class="author-name">Мия<br>Гекди</div>
+        <div class="author-role">Футуролог · Стратег-аналитик<br>Эксперт по глобальным рискам и трансдисциплинарному видению будущего</div>
+        <p class="author-desc">
+          Автор уникального аналитического проекта, исследует мировые риски с 2018 года. Её задача — выявлять риски, предупреждать о кризисах и искать опоры в нестабильности, а не поддерживать миф о вечной стабильности и бесконечном росте.
+        </p>
+        <div class="author-project">
+          <div class="author-project-dot"></div>
+          Архив «Великое пробуждение» · 2022–2026
+        </div>
+
+        <div class="author-risks-inline">
+          <div class="author-risks-label">Исследует мировые риски всех стран</div>
+          <div class="author-risks-grid">
+            <div class="ari"><span class="ari-n">01</span><span class="ari-t">Климатические</span></div>
+            <div class="ari"><span class="ari-n">02</span><span class="ari-t">Экономические</span></div>
+            <div class="ari"><span class="ari-n">03</span><span class="ari-t">Энергетические</span></div>
+            <div class="ari"><span class="ari-n">04</span><span class="ari-t">Социальные</span></div>
+            <div class="ari"><span class="ari-n">05</span><span class="ari-t">Технологические</span></div>
+            <div class="ari"><span class="ari-n">06</span><span class="ari-t">Геополитические</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARCHIVE ORBIT -->
+<section class="archive-orbit-section" id="archive">
+  <div class="container" style="max-width:unset; padding:0 40px;">
+    <div class="orbit-left fade-in">
+      <div class="label" style="margin-bottom: 16px;">Продукт</div>
+      <div class="display display-md" style="margin-bottom: 24px;">Архив<br>«Великое<br><span class="italic cyan">пробуждение»</span></div>
+      <p style="font-size:15px; color:var(--text-soft); line-height:1.9; max-width:420px; margin-bottom:36px;">
+        Навигационная инфраструктура для тех, кто хочет понимать будущее — глубоко, системно, без иллюзий, с практическими опорами.
+      </p>
+      <div class="archive-features">
+        <div class="feat"><div class="feat-num">500+</div><div class="feat-label">Аналитических исследований</div></div>
+        <div class="feat"><div class="feat-num">2100</div><div class="feat-label">Горизонт сценариев</div></div>
+        <div class="feat"><div class="feat-num">2022</div><div class="feat-label">Год основания</div></div>
+        
+      </div>
+      <a href="https://secrett-archive.com" class="btn-primary-cyan" target="_blank">Открыть Архив</a>
+    </div>
+    <div class="orbit-visual">
+      <div class="orbit-ring orbit-ring-1"><div class="orbit-dot"></div></div>
+      <div class="orbit-ring orbit-ring-2"><div class="orbit-dot"></div></div>
+      <div class="orbit-ring orbit-ring-3"><div class="orbit-dot"></div></div>
+      <div class="orbit-center">
+        <div class="orbit-center-num">500+</div>
+        <div class="orbit-center-label">тем и исследований</div>
+      </div>
+      <div class="orbit-node" style="top:12%;left:52%;">Климат</div>
+      <div class="orbit-node" style="top:68%;left:58%;">Экономика</div>
+      <div class="orbit-node" style="top:48%;left:2%;">Геополитика</div>
+      <div class="orbit-node" style="top:22%;left:8%;">Технологии</div>
+      <div class="orbit-node" style="top:78%;left:12%;">Социум</div>
+<div class="orbit-node" style="top:20%;left:50%;">Экстремальная погода</div>
+<div class="orbit-node" style="top:35%;left:75%;">Атаки на дата-центры</div>
+<div class="orbit-node" style="top:60%;left:75%;">Суверенитет доступа</div>
+<div class="orbit-node" style="top:75%;left:50%;">Социальное неравенство</div>
+<div class="orbit-node" style="top:60%;left:25%;">Дефицит ресурсов</div>
+<div class="orbit-node" style="top:35%;left:25%;">Системный сбой</div>
+    </div>
+  </div>
+</section>
+
+<!-- STRATEGY TIMELINE -->
+<section class="strategy-section" id="strategy">
+  <div class="container">
+    <div class="label fade-in" style="margin-bottom: 16px;">Долгосрочная стратегия</div>
+    <div class="display display-md fade-in">Горизонт<br><span class="italic gold">2026 — 2036</span></div>
+    <div class="timeline fade-in">
+      <div class="timeline-item">
+        <div class="timeline-year">2026–2028</div>
+        <div class="timeline-content">
+          <div class="timeline-phase">Формирование ядра</div>
+          <div class="timeline-text">Анализ своей страны по 7 осям рисков. Формирование персональной карты уязвимостей. Переход от абстрактных тревог к структурированной стратегии.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">2028–2029</div>
+        <div class="timeline-content">
+          <div class="timeline-phase">Структурирование сети</div>
+          <div class="timeline-text">Тематические контуры, рабочие группы, обмен локальными сигналами. Живая сеть, а не пассивное присутствие.</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">2029–2032</div>
+        <div class="timeline-content">
+          <div class="timeline-phase">Автономные контуры</div>
+          <div class="timeline-text">Ближние круги доверия, сценарные сессии, резервные каналы. Параллельный контур жизнеспособности, не зависящий от одной системы.</div>
+        </div>
+      </div>
+      <div class="timeline-item" style="padding-bottom: 0;">
+        <div class="timeline-year">2032–2036</div>
+        <div class="timeline-content">
+          <div class="timeline-phase">Долгосрочная жизнестойкость</div>
+          <div class="timeline-text">Передача знаний и культуры, пересборка стратегий, коллективная адаптация. Инфраструктура, способная существовать десятилетиями.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU GET -->
+<section class="get-section">
+  <div class="container">
+    <div class="label fade-in" style="margin-bottom: 16px;">Что вы получаете</div>
+    <div class="display display-md fade-in">Архив + Сообщество</div>
+  </div>
+  <div class="container-wide" style="margin-top: 64px;">
+    <div class="get-grid fade-in">
+      <div class="get-item"><div class="get-num">01</div><div class="get-title">Доступ к Архиву</div><div class="get-desc">500+ исследований, доклады, карты рисков, прогнозы и сценарии. Регулярные обновления. Резервная копия.</div></div>
+      <div class="get-item"><div class="get-num">02</div><div class="get-title">Сообщество единомышленников</div><div class="get-desc">Стратегический контур участников с системным мышлением. Горизонтальные трансграничные связи. Среда доверия и кооперации.</div></div>
+      <div class="get-item"><div class="get-num">03</div><div class="get-title">Прогнозы на 2026 год</div><div class="get-desc">Региональные риски и аналитика с горизонтом 5–10 лет. Инструкция по эффективному использованию Архива.</div></div>
+      <div class="get-item"><div class="get-num">04</div><div class="get-title">Климатические риски стран</div><div class="get-desc">Карты уязвимостей, сценарии миграции, давление на ресурсы. Конкретные данные по регионам.</div></div>
+      <div class="get-item"><div class="get-num">05</div><div class="get-title">Протокол личной готовности</div><div class="get-desc">Алгоритмы на 24/72 часа, неделю, месяц. Энергетическая независимость. Стратегия для людей, бизнеса и инвесторов.</div></div>
+      <div class="get-item"><div class="get-num">06</div><div class="get-title">Экономические сценарии</div><div class="get-desc">Анализ секторов 2026–2028. Валютные риски, сценарии занятости. Стратегия, а не реакция.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section class="trust-section">
+  <div class="container">
+    <div class="label fade-in" style="margin-bottom: 16px;">Нам доверяют</div>
+    <div class="display display-sm fade-in">Цифры, которые говорят сами за себя</div>
+    <div class="trust-stat-grid fade-in">
+      <div class="trust-stat"><div class="trust-stat-num">500+</div><div class="trust-stat-label">Тем в Архиве</div></div>
+      <div class="trust-stat"><div class="trust-stat-num">250+</div><div class="trust-stat-label">Отзывов участников</div></div>
+      <div class="trust-stat"><div class="trust-stat-num">2022</div><div class="trust-stat-label">Год основания</div></div>
+    </div>
+    <p class="soft fade-in" style="margin-top: 48px; font-size: 15px; max-width: 540px; margin-left: auto; margin-right: auto;">
+      Чем нестабильнее система — тем дороже знание. Архив растёт в ценности с каждым обновлением.
+    </p>
+  </div>
+</section>
+
+<!-- PRICING / ACCESS -->
+<section class="pricing-section" id="access">
+  <div class="container">
+    <div class="label fade-in" style="margin-bottom: 16px; text-align:center;">Условия доступа</div>
+    <div class="display display-md fade-in" style="text-align:center; margin-bottom:16px;">Тариф <span class="italic gold">«Навсегда»</span></div>
+    <p class="soft fade-in" style="text-align:center; max-width:480px; margin:0 auto 64px;">
+      Полный бессрочный доступ к Архиву для тех, кто принимает решения с горизонтом 10+ лет.
+    </p>
+    <div class="pricing-dual fade-in">
+
+      <!-- Россия / СНГ -->
+      <div class="pricing-card-intl">
+        <div class="pricing-region-badge">Россия · Беларусь · Казахстан</div>
+        <div class="pricing-eyebrow" style="margin-bottom:20px;">
+          <div class="pricing-eyebrow-line"></div>
+          <span class="label" style="color:var(--gold);">Тариф «Навсегда»</span>
+        </div>
+        <div class="pricing-subtitle" style="font-style:italic; color:var(--text-soft); font-size:14px; margin-bottom:32px;">Для тех, кто не упускает возможности.</div>
+        <ul class="pricing-features">
+          <li>Полный и бессрочный доступ ко всем материалам Архива</li>
+          <li>Все будущие обновления без доплат</li>
+          <li>490+ аналитических исследований</li>
+          <li>Сообщество + чат</li>
+          <li>Закрытый канал связи для участников</li>
+          <li>Резервное копирование</li>
+          <li>Оплата из России, Казахстана и Беларуси</li>
+          <li>Внутренняя рассрочка 4×53 000 р.</li>
+          <li>Официальная рассрочка без переплат (Яндекс Сплит, Сбер, Т-Банк)</li>
+        </ul>
+        <div class="pricing-bottom">
+          <div class="pricing-price-block">
+            <div class="pricing-price-old">505 000 ₽</div>
+            <div class="pricing-price" style="color:var(--gold);">212 000 ₽</div>
+            <div class="pricing-price-note">Стоимость растёт с каждым обновлением.</div>
+          </div>
+          <div class="pricing-cta-stack">
+            <a href="https://payform.ru/bebmpSh/" class="btn-glow btn-glow-gold" target="_blank">
+              <span class="btn-glow-dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold);"></span>
+              Оплатить для РФ / СНГ
+            </a>
+            <div class="pricing-region" style="color:var(--text-muted);">Для карт РФ, Казахстана и Беларуси · безопасный платёж</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Международный -->
+      <div class="pricing-card-intl featured">
+        <div class="pricing-region-badge">Международная аудитория</div>
+        <div class="pricing-eyebrow" style="margin-bottom:20px;">
+          <div class="pricing-eyebrow-line" style="background:var(--cyan);"></div>
+          <span class="label">Тариф «Навсегда»</span>
+        </div>
+        <div class="pricing-subtitle" style="font-style:italic; color:var(--text-soft); font-size:14px; margin-bottom:32px;">Для тех, кто чувствует сдвиг.</div>
+        <ul class="pricing-features">
+          <li>Полный и бессрочный доступ ко всем материалам Архива</li>
+          <li>Все будущие обновления без доплат</li>
+          <li>500+ аналитических исследований</li>
+          <li>Чат сообщества</li>
+          <li>Резервное копирование</li>
+<li>Закрытый канал связи для участников</li>
+          <li>Доступная оплата из любых стран</li>
+<li>Доступная оплата в USDT</li>
+          <li>Внутренняя рассрочка 3 × $953 / €816</li>
+        </ul>
+        <div class="pricing-bottom">
+          <div class="pricing-price-block">
+            <div class="pricing-price-old">$6 350 / €5 500</div>
+            <div class="pricing-price">$2 860 / €2 450</div>
+            <div class="pricing-price-note">Оплата доступна из любой страны мира.</div>
+          </div>
+          <div class="pricing-cta-stack">
+            <a href="https://t.me/anirisao" class="btn-glow" target="_blank">
+              <span class="btn-glow-dot"></span>
+              Написать в Телеграм
+            </a>
+            <div class="pricing-region">Безопасный платеж · ОПЛАТА ИЗ ЛЮБОЙ СТРАНЫ</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="faq-inner">
+    <div class="faq-header fade-in">
+      <div class="label" style="margin-bottom: 16px;">Частые вопросы</div>
+      <div class="display display-sm">FAQ</div>
+    </div>
+    <div class="faq-list fade-in">
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <div class="faq-q-text">Можно ли купить доступ к отдельным материалам? Например, «Риски стран»?</div>
+          <div class="faq-icon"></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-text">Нет, Архив доступен только полностью. Это не набор разрозненных материалов, а единая система анализа, где каждый блок усиливает и дополняет другой. Покупка отдельных частей просто не даст вам полной картины и нужного уровня понимания.</div>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <div class="faq-q-text">Есть ли резервное копирование?</div>
+          <div class="faq-icon"></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-text">Да, Архив имеет систему резервного копирования, что обеспечивает сохранность всех данных в случае возможных сбоев.</div>
+        </div>
+      </div>
+
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">
+          <div class="faq-q-text">Есть ли рассрочка?</div>
+          <div class="faq-icon"></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-text">Да, доступна как официальная рассрочка (Яндекс Сплит, Сбер, Т-Банк — без переплат), так и внутренняя рассрочка с гибкими условиями. Для России: 4 × 53 000 ₽. Для международной аудитории: 3 × $953 / €816.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SUPPORT -->
+<section class="support-section">
+  <div class="support-inner fade-in">
+    <div class="support-divider"></div>
+    <div class="support-title">Остались вопросы?</div>
+    <p class="support-sub">Напишите в службу поддержки — ответим на все вопросы об Архиве, оплате и доступе.</p>
+    <a href="https://t.me/anirisao" class="btn-glow" target="_blank" style="display:inline-flex;">
+      <span class="btn-glow-dot"></span>
+      Написать в Телеграм
+    </a>
+  </div>
+</section>
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">Архив · Великое пробуждение</div>
+    <div class="footer-legal">
+      <a href="https://secrett-archive.com/privacy.html" target="_blank">Политика конфиденциальности</a>
+      <a href="https://secrett-archive.com/offer.html" target="_blank">Публичная оферта</a>
+      <a href="https://secrett-archive.com/refund.html" target="_blank">Политика возвратов</a>
+    </div>
+    <a href="mailto:secrettruth50@gmail.com" class="footer-email">secrettruth50@gmail.com</a>
+    <div class="footer-copy">Мия Гекди © 2022–2026 · Все права защищены</div>
+  </div>
+</footer>
+
+<script>
+
+// ── SUB-ACCORDION ──
+function toggleSub(el) {
+  const list = el.closest('.acc-topic-expandable').querySelector('.sub-list');
+  const isOpen = list.style.display !== 'none';
+  list.style.display = isOpen ? 'none' : 'flex';
+  el.classList.toggle('open', !isOpen);
+}
+
+// ── FAQ ──
+function toggleFaq(item) {
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// ── ACCORDION ──
+function toggleAcc(header) {
+  const item = header.closest('.acc-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.acc-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// ── CURSOR ──
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+(function animCursor() {
+  rx += (mx - rx) * 0.13; ry += (my - ry) * 0.13;
+  cur.style.transform = `translate(${mx - 3}px,${my - 3}px)`;
+  ring.style.transform = `translate(${rx - 14}px,${ry - 14}px)`;
+  requestAnimationFrame(animCursor);
+})();
+document.querySelectorAll('a,button').forEach(el => {
+  el.addEventListener('mouseenter', () => ring.classList.add('hovered'));
+  el.addEventListener('mouseleave', () => ring.classList.remove('hovered'));
+});
+
+// ── NAV SCROLL ──
+const nav = document.getElementById('mainNav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ── FADE IN ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), 80);
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.07 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── SEGMENT SWITCH ──
+function switchSeg(id, btn) {
+  document.querySelectorAll('.seg-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.seg-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── SMOOTH ANCHOR ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+</script>
+</body>
+</html>

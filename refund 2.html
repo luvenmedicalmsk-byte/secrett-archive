@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Политика возвратов — Архив «Великое пробуждение»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #B8973A;
+  --gold-light: #D4AF5A;
+  --gold-dim: #7A6228;
+  --cream: #F0E8D8;
+  --dark: #0A0906;
+  --dark-card: #111009;
+  --text-muted: #6A6458;
+  --text-soft: #A8A090;
+  --border: rgba(184,151,58,0.14);
+  --border-strong: rgba(184,151,58,0.32);
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--dark);
+  color: var(--cream);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.9;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 1000;
+}
+nav {
+  position: sticky; top: 0; z-index: 100;
+  padding: 20px 48px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(10,9,6,0.96);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 400; letter-spacing: 0.08em;
+  color: var(--text-muted); text-decoration: none; transition: color 0.3s;
+}
+.nav-logo:hover { color: var(--cream); }
+.nav-back {
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-muted); text-decoration: none;
+  display: flex; align-items: center; gap: 10px; transition: color 0.3s;
+}
+.nav-back:hover { color: var(--gold-light); }
+.nav-back-arrow {
+  width: 20px; height: 1px; background: var(--text-muted);
+  position: relative; transition: background 0.3s;
+}
+.nav-back-arrow::before {
+  content: '';
+  position: absolute; left: 0; top: -3px;
+  width: 7px; height: 7px;
+  border-left: 1px solid var(--text-muted);
+  border-bottom: 1px solid var(--text-muted);
+  transform: rotate(45deg); transition: border-color 0.3s;
+}
+.nav-back:hover .nav-back-arrow,
+.nav-back:hover .nav-back-arrow::before { background: var(--gold-light); border-color: var(--gold-light); }
+
+.page-wrap { max-width: 860px; margin: 0 auto; padding: 80px 48px 120px; }
+
+.doc-header {
+  margin-bottom: 72px; padding-bottom: 48px;
+  border-bottom: 1px solid var(--border); position: relative;
+}
+.doc-header::before {
+  content: ''; position: absolute; bottom: -1px; left: 0;
+  width: 60px; height: 2px; background: var(--gold);
+}
+.doc-eyebrow { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
+.doc-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 5vw, 52px); font-weight: 300;
+  color: var(--cream); line-height: 1.15; margin-bottom: 28px;
+}
+.doc-meta { display: flex; gap: 32px; flex-wrap: wrap; }
+.doc-meta-item { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.doc-meta-item span { color: var(--text-soft); }
+
+.doc-section { margin-bottom: 48px; }
+.doc-section-num { font-family: 'Cormorant Garamond', serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 8px; }
+.doc-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 400; color: var(--cream); line-height: 1.3;
+  margin-bottom: 20px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.doc-section-body { color: var(--text-soft); font-size: 14px; line-height: 1.9; }
+.doc-section-body p { margin-bottom: 14px; }
+.doc-section-body p:last-child { margin-bottom: 0; }
+.doc-section-body ul { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.doc-section-body ul li { padding-left: 20px; position: relative; }
+.doc-section-body ul li::before { content: '—'; position: absolute; left: 0; color: var(--gold-dim); font-size: 12px; }
+.doc-section-body strong { color: var(--cream); font-weight: 500; }
+.doc-section-body a { color: var(--gold-light); text-decoration: none; border-bottom: 1px solid rgba(184,151,58,0.3); transition: border-color 0.3s; }
+.doc-section-body a:hover { border-color: var(--gold); }
+
+.alert-box {
+  background: rgba(184,151,58,0.04);
+  border: 1px solid rgba(184,151,58,0.2);
+  padding: 20px 24px; margin: 16px 0;
+  font-size: 13px; color: var(--text-soft); line-height: 1.7;
+}
+.alert-box strong { color: var(--gold-light); }
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-top: 16px;
+}
+.step-card { background: var(--dark-card); padding: 24px 28px; }
+.step-card-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 300;
+  color: rgba(184,151,58,0.2); line-height: 1; margin-bottom: 8px;
+}
+.step-card-text { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+.step-card-text strong { color: var(--text-soft); font-weight: 500; }
+
+.contact-box {
+  background: var(--dark-card);
+  border: 1px solid var(--border-strong);
+  padding: 32px 36px;
+  margin-top: 16px;
+  position: relative;
+}
+.contact-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: linear-gradient(90deg, var(--gold), transparent);
+}
+.contact-box-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 12px; }
+.contact-box-email {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px; font-weight: 300;
+  color: var(--gold-light); text-decoration: none;
+  border-bottom: 1px solid rgba(184,151,58,0.3); transition: border-color 0.3s;
+  display: inline-block;
+}
+.contact-box-email:hover { border-color: var(--gold); }
+.contact-box-note { font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+
+.doc-footer {
+  margin-top: 80px; padding-top: 40px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px;
+}
+.doc-footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: var(--text-muted); }
+.doc-footer-copy { font-size: 11px; color: var(--text-muted); letter-spacing: 0.05em; }
+
+@media (max-width: 700px) {
+  nav { padding: 16px 20px; }
+  .page-wrap { padding: 48px 20px 80px; }
+  .steps-grid { grid-template-columns: 1fr; }
+  .doc-footer { flex-direction: column; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://secrett-archive.com" class="nav-logo">Архив · Великое пробуждение</a>
+  <a href="https://secrett-archive.com" class="nav-back">
+    <div class="nav-back-arrow"></div>
+    На главную
+  </a>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="doc-header">
+    <div class="doc-eyebrow">Юридический документ</div>
+    <h1 class="doc-title">Политика возврата<br>денежных средств</h1>
+    <div class="doc-meta">
+      <div class="doc-meta-item">Продукт: <span>Архив «Великое пробуждение»</span></div>
+      <div class="doc-meta-item">Исполнитель: <span>ИП Шадрин Валерий Владимирович</span></div>
+    </div>
+  </div>
+
+  <!-- 1 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 01</div>
+    <div class="doc-section-title">Общие положения</div>
+    <div class="doc-section-body">
+      <p>Настоящая политика регулирует порядок возврата денежных средств за доступ к аналитическому продукту «Архив», содержащему авторские исследования, прогнозы, аналитические материалы и рекомендации.</p>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 02</div>
+    <div class="doc-section-title">Характер продукта</div>
+    <div class="doc-section-body">
+      <p>Продукт «Архив Великое пробуждение» является <strong>цифровым информационно-аналитическим материалом</strong> с ограниченным доступом и защищённым содержанием.</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 03</div>
+    <div class="doc-section-title">Условия возврата</div>
+    <div class="doc-section-body">
+      <p>Покупатель вправе запросить возврат денежных средств в течение <strong>7 (семи) календарных дней</strong> с момента оплаты, исключительно в случае, если <strong>доступ к продукту не был предоставлен.</strong></p>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 04</div>
+    <div class="doc-section-title">Ограничения возврата</div>
+    <div class="doc-section-body">
+      <p>С момента предоставления доступа к материалам «Архива» услуга считается <strong>оказанной в полном объёме.</strong></p>
+      <div class="alert-box">
+        <strong>Возврат денежных средств после получения доступа не осуществляется</strong> — продукт относится к категории цифрового контента, не подлежащего возврату в соответствии с законодательством РФ.
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 05</div>
+    <div class="doc-section-title">Частичный доступ</div>
+    <div class="doc-section-body">
+      <p>В случае поэтапного предоставления материалов возврат возможен <strong>только за неоказанную часть услуги.</strong></p>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 06</div>
+    <div class="doc-section-title">Порядок оформления возврата</div>
+    <div class="doc-section-body">
+      <p>Для оформления возврата необходимо направить запрос на электронную почту <a href="mailto:secrettruth50@gmail.com">secrettruth50@gmail.com</a>, указав:</p>
+      <ul>
+        <li>ФИО</li>
+        <li>дату оплаты</li>
+        <li>сумму платежа</li>
+        <li>причину обращения</li>
+      </ul>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-card-num">01</div>
+          <div class="step-card-text"><strong>Направьте заявку</strong><br>На почту secrettruth50@gmail.com с указанием всех необходимых данных</div>
+        </div>
+        <div class="step-card">
+          <div class="step-card-num">02</div>
+          <div class="step-card-text"><strong>Срок рассмотрения</strong><br>До 10 рабочих дней с момента получения заявки</div>
+        </div>
+        <div class="step-card">
+          <div class="step-card-num">03</div>
+          <div class="step-card-text"><strong>Решение</strong><br>Исполнитель уведомит об одобрении или отказе с обоснованием</div>
+        </div>
+        <div class="step-card">
+          <div class="step-card-num">04</div>
+          <div class="step-card-text"><strong>Выплата</strong><br>В течение 10 рабочих дней после одобрения заявки</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 07</div>
+    <div class="doc-section-title">Способ возврата</div>
+    <div class="doc-section-body">
+      <p>Возврат осуществляется <strong>тем же способом оплаты</strong> в течение 10 рабочих дней после одобрения заявки.</p>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 08</div>
+    <div class="doc-section-title">Защита интеллектуальной собственности</div>
+    <div class="doc-section-body">
+      <div class="alert-box">
+        <strong>Любые попытки копирования, распространения или передачи материалов третьим лицам</strong> являются нарушением условий и <strong>исключают возможность возврата.</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="doc-section">
+    <div class="doc-section-num">Раздел 09</div>
+    <div class="doc-section-title">Контактная информация</div>
+    <div class="doc-section-body">
+      <div class="contact-box">
+        <div class="contact-box-label">По всем вопросам возврата</div>
+        <a href="mailto:secrettruth50@gmail.com" class="contact-box-email">secrettruth50@gmail.com</a>
+        <div class="contact-box-note">Срок ответа — до 10 рабочих дней</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div class="doc-footer-logo">Архив · Великое пробуждение</div>
+    <div class="doc-footer-copy">Мия Гекди © 2022–2026 · Все права защищены</div>
+  </div>
+
+</div>
+</body>
+</html>
