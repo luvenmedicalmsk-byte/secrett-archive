@@ -1157,6 +1157,23 @@ footer {
 </head>
 <body>
 
+  <!-- COOKIE BANNER -->
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(10,9,6,0.97);border-top:1px solid rgba(184,151,58,0.25);padding:18px 32px;font-size:12px;z-index:9997;display:flex;align-items:center;gap:20px;flex-wrap:wrap;backdrop-filter:blur(12px);">
+  <span style="flex:1;min-width:220px;color:#A8A090;letter-spacing:0.03em;line-height:1.6;">
+    Сайт использует cookies для аналитики и улучшения работы.
+    <a href="/privacy.html" style="color:#B8973A;text-decoration:underline;white-space:nowrap;">Политика конфиденциальности</a>
+  </span>
+  <button onclick="acceptCookies()" style="background:var(--gold,#B8973A);color:#0A0906;border:none;padding:10px 24px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:'Montserrat',sans-serif;font-weight:500;cursor:pointer;white-space:nowrap;">Принять</button>
+  <button onclick="declineCookies()" style="background:transparent;color:#6A6458;border:1px solid rgba(184,151,58,0.25);padding:10px 24px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:'Montserrat',sans-serif;font-weight:400;cursor:pointer;white-space:nowrap;">Отклонить</button>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('cookie-banner');
+  if(!localStorage.getItem('cookie_consent')){b.style.display='flex';}
+  window.acceptCookies=function(){localStorage.setItem('cookie_consent','accepted');b.style.display='none';};
+  window.declineCookies=function(){localStorage.setItem('cookie_consent','declined');b.style.display='none';};
+})();
+</script>
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 
