@@ -1357,6 +1357,102 @@ footer {
 </head>
 <body>
 
+<!-- ── ENTRANCE OVERLAY ── -->
+<div id="entrance-overlay" style="
+  position:fixed;inset:0;z-index:99999;
+  background:#0A0906;
+  display:flex;align-items:center;justify-content:center;
+  opacity:1;transition:opacity 0.7s ease;
+  cursor:pointer;
+">
+  <!-- top border line -->
+  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.6),transparent);"></div>
+  <!-- bottom border line -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.6),transparent);"></div>
+  <!-- left border line -->
+  <div style="position:absolute;top:0;bottom:0;left:0;width:1px;background:linear-gradient(180deg,transparent,rgba(184,151,58,0.35),transparent);"></div>
+  <!-- right border line -->
+  <div style="position:absolute;top:0;bottom:0;right:0;width:1px;background:linear-gradient(180deg,transparent,rgba(184,151,58,0.35),transparent);"></div>
+
+  <!-- subtle grid -->
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(184,151,58,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(184,151,58,0.018) 1px,transparent 1px);background-size:80px 80px;pointer-events:none;"></div>
+
+  <!-- content -->
+  <div style="position:relative;text-align:center;padding:40px 32px;max-width:720px;width:100%;">
+
+    <!-- label -->
+    <div style="font-size:11px;letter-spacing:0.32em;text-transform:uppercase;color:#B8973A;margin-bottom:28px;font-family:'Montserrat',sans-serif;font-weight:500;">
+      Последнее окно входа
+    </div>
+
+    <!-- pulse dot + headline -->
+    <div style="display:flex;align-items:flex-start;justify-content:center;gap:18px;margin-bottom:52px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#B8973A;box-shadow:0 0 12px #B8973A;animation:ovPulse 1.4s ease-in-out infinite;flex-shrink:0;margin-top:14px;"></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4.5vw,48px);font-weight:300;color:#F0E8D8;line-height:1.25;text-align:left;">
+        Цена повышается 14 мая<br>в 22:00 по московскому времени (GMT+3)
+      </div>
+    </div>
+
+    <!-- countdown -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:0;">
+      <div style="text-align:center;min-width:120px;">
+        <div id="ov-hours" style="font-family:'Cormorant Garamond',serif;font-size:clamp(64px,10vw,96px);font-weight:300;color:#B8973A;line-height:1;">00</div>
+        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#6A6458;margin-top:4px;font-family:'Montserrat',sans-serif;">часов</div>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:300;color:rgba(184,151,58,0.3);padding-bottom:32px;margin:0 4px;">:</div>
+      <div style="text-align:center;min-width:120px;">
+        <div id="ov-minutes" style="font-family:'Cormorant Garamond',serif;font-size:clamp(64px,10vw,96px);font-weight:300;color:#B8973A;line-height:1;">00</div>
+        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#6A6458;margin-top:4px;font-family:'Montserrat',sans-serif;">минут</div>
+      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:300;color:rgba(184,151,58,0.3);padding-bottom:32px;margin:0 4px;">:</div>
+      <div style="text-align:center;min-width:120px;">
+        <div id="ov-seconds" style="font-family:'Cormorant Garamond',serif;font-size:clamp(64px,10vw,96px);font-weight:300;color:#B8973A;line-height:1;">00</div>
+        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#6A6458;margin-top:4px;font-family:'Montserrat',sans-serif;">секунд</div>
+      </div>
+    </div>
+
+    <!-- close hint -->
+    <div style="margin-top:56px;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(106,100,88,0.6);font-family:'Montserrat',sans-serif;">
+      нажмите в любом месте, чтобы продолжить
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes ovPulse {
+  0%,100%{opacity:0.5;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.4);}
+}
+</style>
+<script>
+(function(){
+  var ov = document.getElementById('entrance-overlay');
+  var deadlineOv = new Date('2026-05-14T22:00:00+03:00').getTime();
+  function pad(n){return n<10?'0'+n:n;}
+  function tickOv(){
+    var diff = deadlineOv - Date.now();
+    if(diff <= 0){
+      document.getElementById('ov-hours').textContent='00';
+      document.getElementById('ov-minutes').textContent='00';
+      document.getElementById('ov-seconds').textContent='00';
+      return;
+    }
+    document.getElementById('ov-hours').textContent   = pad(Math.floor(diff/3600000));
+    document.getElementById('ov-minutes').textContent = pad(Math.floor((diff%3600000)/60000));
+    document.getElementById('ov-seconds').textContent = pad(Math.floor((diff%60000)/1000));
+  }
+  tickOv();
+  var ivOv = setInterval(tickOv, 1000);
+  function closeOverlay(){
+    ov.style.opacity='0';
+    setTimeout(function(){ov.style.display='none';clearInterval(ivOv);},700);
+  }
+  ov.addEventListener('click', closeOverlay);
+  // Auto-close after 8 seconds
+  setTimeout(closeOverlay, 8000);
+})();
+</script>
+
 <!-- COOKIE BANNER -->
 <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(10,9,6,0.97);border-top:1px solid rgba(184,151,58,0.25);padding:18px 32px;font-size:12px;z-index:9997;display:flex;align-items:center;gap:20px;flex-wrap:wrap;backdrop-filter:blur(12px);">
   <span style="flex:1;min-width:220px;color:#A8A090;letter-spacing:0.03em;line-height:1.6;">
@@ -2160,7 +2256,7 @@ footer {
 
     <!-- SVG методология -->
     <div class="fade-in" style="display:flex;justify-content:center;">
-    <svg width="100%" viewBox="0 0 560 960" xmlns="http://www.w3.org/2000/svg" style="max-width:640px;">
+    <svg width="100%" viewBox="0 0 680 1000" xmlns="http://www.w3.org/2000/svg" style="max-width:720px;">
       <defs>
         <!-- Glow для золотых фигур -->
         <filter id="glow-gold" x="-50%" y="-50%" width="200%" height="200%">
@@ -2180,9 +2276,9 @@ footer {
 
       <!-- ══ БЛОК 1: Системное мышление ══ -->
       <!-- Увеличена высота до 248 чтобы вместить 5 строк СТЭП + Системы снизу -->
-      <rect x="16" y="4" width="528" height="248" rx="12" fill="rgba(31,170,204,0.05)" stroke="rgba(31,170,204,0.18)" stroke-width="0.8"/>
-      <text font-family="Cormorant Garamond, Georgia, serif" font-size="17" font-weight="600" fill="rgba(31,170,204,0.9)" text-anchor="middle" x="280" y="32">Системное мышление</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(168,160,144,0.8)" text-anchor="middle" x="280" y="50">Нелинейный взгляд на взаимосвязи рисков</text>
+      <rect x="16" y="4" width="648" height="248" rx="12" fill="rgba(31,170,204,0.05)" stroke="rgba(31,170,204,0.18)" stroke-width="0.8"/>
+      <text font-family="Cormorant Garamond, Georgia, serif" font-size="17" font-weight="600" fill="rgba(31,170,204,0.9)" text-anchor="middle" x="340" y="32">Системное мышление</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(168,160,144,0.8)" text-anchor="middle" x="340" y="50">Нелинейный взгляд на взаимосвязи рисков</text>
 
       <!-- Венн — три круга, уменьшены чтобы не выходить за рамку -->
       <circle cx="92"  cy="148" r="44" fill="rgba(31,170,204,0.08)" stroke="rgba(31,170,204,0.3)" stroke-width="0.8"/>
@@ -2210,127 +2306,133 @@ footer {
       <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(184,151,58,0.65)" x="380" y="168">Будущее</text>
 
       <!-- Стрелка 1→2 -->
-      <line x1="280" y1="254" x2="280" y2="282" stroke="rgba(184,151,58,0.25)" stroke-width="1"/>
-      <polygon points="274,278 286,278 280,286" fill="rgba(184,151,58,0.35)"/>
+      <line x1="340" y1="254" x2="340" y2="282" stroke="rgba(184,151,58,0.25)" stroke-width="1"/>
+      <polygon points="334,278 346,278 340,286" fill="rgba(184,151,58,0.35)"/>
 
       <!-- ══ БЛОК 2: Сканирование рисков ══ -->
-      <rect x="16" y="288" width="528" height="240" rx="12" fill="rgba(184,151,58,0.04)" stroke="rgba(184,151,58,0.18)" stroke-width="0.8"/>
-      <text font-family="Cormorant Garamond, Georgia, serif" font-size="17" font-weight="600" fill="rgba(212,175,90,0.9)" text-anchor="middle" x="280" y="316">Сканирование рисков</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(168,160,144,0.8)" text-anchor="middle" x="280" y="334">Данные и сигналы</text>
+      <rect x="16" y="288" width="648" height="240" rx="12" fill="rgba(184,151,58,0.04)" stroke="rgba(184,151,58,0.18)" stroke-width="0.8"/>
+      <text font-family="Cormorant Garamond, Georgia, serif" font-size="17" font-weight="600" fill="rgba(212,175,90,0.9)" text-anchor="middle" x="340" y="316">Сканирование рисков</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(168,160,144,0.8)" text-anchor="middle" x="340" y="334">Данные и сигналы</text>
 
       <!-- Ось времени -->
-      <line x1="36" y1="358" x2="524" y2="358" stroke="rgba(184,151,58,0.3)" stroke-width="1"/>
+      <line x1="36" y1="358" x2="644" y2="358" stroke="rgba(184,151,58,0.3)" stroke-width="1"/>
       <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(106,100,88,0.8)" x="36" y="350">прошлое</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(184,151,58,0.8)" text-anchor="end" x="524" y="350">сейчас</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(184,151,58,0.8)" text-anchor="end" x="644" y="350">сейчас</text>
 
       <!-- Фигуры: тусклые обычные + несколько мигающих с glow -->
       <!-- Тусклые -->
       <circle cx="46"  cy="380" r="7" fill="rgba(184,151,58,0.22)"/>
-      <polygon points="68,372 80,390 56,390" fill="rgba(184,151,58,0.18)"/>
-      <rect x="88" y="372" width="14" height="14" rx="2" fill="rgba(184,151,58,0.2)"/>
-      <circle cx="115" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
-      <polygon points="135,372 147,390 123,390" fill="rgba(184,151,58,0.22)"/>
-      <circle cx="182" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
-      <rect x="222" y="372" width="14" height="14" rx="2" fill="rgba(184,151,58,0.2)"/>
-      <circle cx="249" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
-      <rect x="289" y="372" width="14" height="14" rx="2" fill="rgba(184,151,58,0.22)"/>
-      <circle cx="316" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
-      <circle cx="383" cy="380" r="7" fill="rgba(184,151,58,0.2)"/>
-      <polygon points="403,372 415,390 391,390" fill="rgba(184,151,58,0.18)"/>
-      <circle cx="450" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
-      <polygon points="470,372 482,390 458,390" fill="rgba(184,151,58,0.2)"/>
+      <polygon points="70,372 82,390 58,390" fill="rgba(184,151,58,0.18)"/>
+      <rect x="92" y="372" width="14" height="14" rx="2" fill="rgba(184,151,58,0.2)"/>
+      <circle cx="120" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
+      <polygon points="142,372 154,390 130,390" fill="rgba(184,151,58,0.22)"/>
+      <circle cx="196" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
+      <rect x="240" y="372" width="14" height="14" rx="2" fill="rgba(184,151,58,0.2)"/>
+      <circle cx="268" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
+      <rect x="308" y="372" width="14" height="14" rx="2" fill="rgba(184,151,58,0.22)"/>
+      <circle cx="336" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
+      <circle cx="410" cy="380" r="7" fill="rgba(184,151,58,0.2)"/>
+      <polygon points="434,372 446,390 422,390" fill="rgba(184,151,58,0.18)"/>
+      <circle cx="488" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
+      <polygon points="512,372 524,390 500,390" fill="rgba(184,151,58,0.2)"/>
+      <circle cx="560" cy="380" r="7" fill="rgba(184,151,58,0.18)"/>
+      <rect x="590" y="372" width="14" height="14" rx="2" fill="rgba(184,151,58,0.18)"/>
 
-      <!-- Мигающие — квадрат и треугольник с анимацией -->
-      <rect x="155" y="372" width="14" height="14" rx="2" fill="#D4AF5A" filter="url(#glow-gold)">
+      <!-- Мигающие -->
+      <rect x="168" y="372" width="14" height="14" rx="2" fill="#D4AF5A" filter="url(#glow-gold)">
         <animate attributeName="opacity" values="1;0.25;1" dur="2.1s" repeatCount="indefinite"/>
       </rect>
-      <polygon points="202,372 214,390 190,390" fill="#D4AF5A" filter="url(#glow-gold)">
+      <polygon points="220,372 232,390 208,390" fill="#D4AF5A" filter="url(#glow-gold)">
         <animate attributeName="opacity" values="0.3;1;0.3" dur="1.7s" repeatCount="indefinite"/>
       </polygon>
-      <rect x="356" y="372" width="14" height="14" rx="2" fill="#B8973A" filter="url(#glow-gold)">
+      <rect x="380" y="372" width="14" height="14" rx="2" fill="#B8973A" filter="url(#glow-gold)">
         <animate attributeName="opacity" values="1;0.2;1" dur="2.5s" repeatCount="indefinite"/>
       </rect>
-      <polygon points="269,372 281,390 257,390" fill="#D4AF5A" filter="url(#glow-gold)">
+      <polygon points="286,372 298,390 274,390" fill="#D4AF5A" filter="url(#glow-gold)">
         <animate attributeName="opacity" values="0.2;1;0.2" dur="1.9s" repeatCount="indefinite"/>
       </polygon>
-      <rect x="423" y="372" width="14" height="14" rx="2" fill="#D4AF5A" filter="url(#glow-gold)">
+      <rect x="458" y="372" width="14" height="14" rx="2" fill="#D4AF5A" filter="url(#glow-gold)">
         <animate attributeName="opacity" values="1;0.3;1" dur="2.3s" repeatCount="indefinite"/>
       </rect>
-      <rect x="490" y="372" width="14" height="14" rx="2" fill="#B8973A" filter="url(#glow-gold)">
+      <rect x="534" y="372" width="14" height="14" rx="2" fill="#B8973A" filter="url(#glow-gold)">
         <animate attributeName="opacity" values="0.25;1;0.25" dur="1.6s" repeatCount="indefinite"/>
       </rect>
+      <rect x="616" y="372" width="14" height="14" rx="2" fill="#D4AF5A" filter="url(#glow-gold)">
+        <animate attributeName="opacity" values="0.4;1;0.4" dur="2.0s" repeatCount="indefinite"/>
+      </rect>
 
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(184,151,58,0.65)" text-anchor="middle" x="280" y="414">риски · сигналы · возможности</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(184,151,58,0.65)" text-anchor="middle" x="340" y="414">риски · сигналы · возможности</text>
 
-      <!-- 5 колонок: циан, золото, бежевый, циан, золото -->
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="58" y="442">Климат</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="58" y="458">адаптация</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="58" y="472">экосистемы</text>
+      <!-- 5 колонок равномерно на 648px -->
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="72" y="442">Климат</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="72" y="458">адаптация</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="72" y="472">экосистемы</text>
 
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="158" y="442">Геополитика</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="158" y="458">конфликты</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="158" y="472">регионы</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="200" y="442">Геополитика</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="200" y="458">конфликты</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="200" y="472">регионы</text>
 
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="280" y="442">Экономика</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="280" y="458">кризис</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="280" y="472">активы</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="340" y="442">Экономика</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="340" y="458">кризис</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="340" y="472">активы</text>
 
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="390" y="442">Технологии</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="390" y="458">ИИ · риски</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="390" y="472">будущее труда</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="480" y="442">Технологии</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="480" y="458">ИИ · риски</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="480" y="472">будущее труда</text>
 
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="494" y="442">Социум</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="494" y="458">миграция</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="494" y="472">поляризация</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(184,151,58,0.85)" text-anchor="middle" x="610" y="442">Социум</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="610" y="458">миграция</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" text-anchor="middle" x="610" y="472">поляризация</text>
 
       <!-- Стрелка 2→3 -->
-      <line x1="280" y1="530" x2="280" y2="558" stroke="rgba(184,151,58,0.25)" stroke-width="1"/>
-      <polygon points="274,554 286,554 280,562" fill="rgba(184,151,58,0.35)"/>
+      <line x1="340" y1="530" x2="340" y2="558" stroke="rgba(184,151,58,0.25)" stroke-width="1"/>
+      <polygon points="334,554 346,554 340,562" fill="rgba(184,151,58,0.35)"/>
 
       <!-- ══ БЛОК 3: Сценарное прогнозирование ══ -->
-      <rect x="16" y="564" width="528" height="360" rx="12" fill="rgba(31,170,204,0.04)" stroke="rgba(31,170,204,0.15)" stroke-width="0.8"/>
-      <text font-family="Cormorant Garamond, Georgia, serif" font-size="17" font-weight="600" fill="rgba(31,170,204,0.85)" text-anchor="middle" x="280" y="592">Сценарное прогнозирование</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(168,160,144,0.8)" text-anchor="middle" x="280" y="610">три вектора будущего · горизонт 2026–2050</text>
+      <rect x="16" y="564" width="648" height="400" rx="12" fill="rgba(31,170,204,0.04)" stroke="rgba(31,170,204,0.15)" stroke-width="0.8"/>
+      <text font-family="Cormorant Garamond, Georgia, serif" font-size="17" font-weight="600" fill="rgba(31,170,204,0.85)" text-anchor="middle" x="340" y="592">Сценарное прогнозирование</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="11" fill="rgba(168,160,144,0.8)" text-anchor="middle" x="340" y="610">три вектора будущего · горизонт 2026–2050</text>
 
-      <!-- Линии ДО точки сейчас — конус до x=400 -->
-      <line x1="72" y1="750" x2="400" y2="690" stroke="rgba(31,170,204,0.5)" stroke-width="1.5"/>
-      <line x1="72" y1="750" x2="400" y2="750" stroke="rgba(184,151,58,0.6)" stroke-width="1.8"/>
-      <line x1="72" y1="750" x2="400" y2="810" stroke="rgba(168,160,144,0.45)" stroke-width="1.5"/>
+      <!-- Линии конуса: верх y=680, середина y=760, низ y=840 -->
+      <line x1="72" y1="760" x2="520" y2="680" stroke="rgba(31,170,204,0.5)" stroke-width="1.5"/>
+      <line x1="72" y1="760" x2="520" y2="760" stroke="rgba(184,151,58,0.6)" stroke-width="1.8"/>
+      <line x1="72" y1="760" x2="520" y2="840" stroke="rgba(168,160,144,0.45)" stroke-width="1.5"/>
 
-      <!-- Мигающая точка по базовой линии — золотая светящаяся -->
+      <!-- Мигающая точка по базовой линии -->
       <circle r="5" fill="#D4AF5A" filter="url(#glow-gold)">
-        <animate attributeName="cx" values="72;400;72" dur="7s" repeatCount="indefinite" calcMode="ease-in-out"/>
-        <animate attributeName="cy" values="750;750;750" dur="7s" repeatCount="indefinite"/>
+        <animate attributeName="cx" values="72;520;72" dur="7s" repeatCount="indefinite" calcMode="ease-in-out"/>
+        <animate attributeName="cy" values="760;760;760" dur="7s" repeatCount="indefinite"/>
         <animate attributeName="opacity" values="0.7;1;0.7" dur="7s" repeatCount="indefinite"/>
       </circle>
 
-      <!-- Точка сейчас светящаяся поверх линий -->
-      <circle cx="72" cy="750" r="14" fill="rgba(31,170,204,0.12)" filter="url(#glow-cyan)"/>
-      <circle cx="72" cy="750" r="9" fill="url(#dot-cyan)" filter="url(#glow-cyan)"/>
+      <!-- Точка «сейчас» -->
+      <circle cx="72" cy="760" r="14" fill="rgba(31,170,204,0.12)" filter="url(#glow-cyan)"/>
+      <circle cx="72" cy="760" r="9" fill="url(#dot-cyan)" filter="url(#glow-cyan)"/>
 
       <!-- Точки сценариев -->
-      <circle cx="402" cy="690" r="6" fill="rgba(31,170,204,0.8)"/>
-      <circle cx="402" cy="750" r="8" fill="rgba(184,151,58,0.85)"/>
-      <circle cx="402" cy="810" r="6" fill="rgba(168,160,144,0.65)"/>
+      <circle cx="522" cy="680" r="6" fill="rgba(31,170,204,0.8)"/>
+      <circle cx="522" cy="760" r="8" fill="rgba(184,151,58,0.85)"/>
+      <circle cx="522" cy="840" r="6" fill="rgba(168,160,144,0.65)"/>
 
       <!-- Подписи сценариев -->
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(31,170,204,0.85)" x="416" y="686">Оптимистичный</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" x="416" y="702">адаптация · рост</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(212,175,90,0.85)" x="416" y="746">Базовый</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" x="416" y="762">нестабильность · выбор</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="11" font-weight="600" fill="rgba(240,232,216,0.6)" x="416" y="806">Критический</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(168,160,144,0.6)" x="416" y="822">коллапс · перестройка</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" font-weight="600" fill="rgba(31,170,204,0.85)" x="536" y="676">Адаптивный мир</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="9" fill="rgba(168,160,144,0.6)" x="536" y="690">доминирующий сценарий</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" font-weight="600" fill="rgba(212,175,90,0.85)" x="536" y="752">Фрагментированный</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" font-weight="600" fill="rgba(212,175,90,0.85)" x="536" y="765">мир</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="9" fill="rgba(168,160,144,0.6)" x="536" y="779">вероятный сценарий</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" font-weight="600" fill="rgba(240,232,216,0.6)" x="536" y="836">Системный кризис</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="9" fill="rgba(168,160,144,0.6)" x="536" y="850">стресс-сценарий</text>
 
-      <!-- Шкала годов: 2026 под точкой сейчас, затем 2030, 2040, 2050 -->
-      <line x1="72" y1="840" x2="402" y2="840" stroke="rgba(184,151,58,0.1)" stroke-width="0.5"/>
-      <line x1="72"  y1="840" x2="72"  y2="847" stroke="rgba(31,170,204,0.35)" stroke-width="0.8"/>
-      <line x1="182" y1="840" x2="182" y2="847" stroke="rgba(184,151,58,0.2)"  stroke-width="0.5"/>
-      <line x1="292" y1="840" x2="292" y2="847" stroke="rgba(184,151,58,0.2)"  stroke-width="0.5"/>
-      <line x1="402" y1="840" x2="402" y2="847" stroke="rgba(184,151,58,0.3)"  stroke-width="0.8"/>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(31,170,204,0.65)" text-anchor="middle" x="72"  y="860">2026</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(106,100,88,0.65)" text-anchor="middle" x="182" y="860">2030</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(106,100,88,0.65)" text-anchor="middle" x="292" y="860">2040</text>
-      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(184,151,58,0.7)"  text-anchor="middle" x="402" y="860">2050</text>
+      <!-- Шкала годов -->
+      <line x1="72" y1="880" x2="522" y2="880" stroke="rgba(184,151,58,0.1)" stroke-width="0.5"/>
+      <line x1="72"  y1="880" x2="72"  y2="887" stroke="rgba(31,170,204,0.35)" stroke-width="0.8"/>
+      <line x1="222" y1="880" x2="222" y2="887" stroke="rgba(184,151,58,0.2)"  stroke-width="0.5"/>
+      <line x1="372" y1="880" x2="372" y2="887" stroke="rgba(184,151,58,0.2)"  stroke-width="0.5"/>
+      <line x1="522" y1="880" x2="522" y2="887" stroke="rgba(184,151,58,0.3)"  stroke-width="0.8"/>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(31,170,204,0.65)" text-anchor="middle" x="72"  y="900">2026</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(106,100,88,0.65)" text-anchor="middle" x="222" y="900">2030</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(106,100,88,0.65)" text-anchor="middle" x="372" y="900">2040</text>
+      <text font-family="Montserrat, Arial, sans-serif" font-size="10" fill="rgba(184,151,58,0.7)"  text-anchor="middle" x="522" y="900">2050</text>
 
     </svg>
     </div>
@@ -2491,7 +2593,68 @@ footer {
   </div>
 </section>
 
+<!-- COUNTDOWN TIMER BANNER -->
+<section style="position:relative;z-index:2;padding:0;">
+  <div id="countdown-banner" style="background:linear-gradient(135deg,rgba(10,9,6,0.98) 0%,rgba(13,12,9,0.98) 100%);border-top:1px solid rgba(184,151,58,0.35);border-bottom:1px solid rgba(184,151,58,0.35);padding:32px 40px;">
+    <div style="max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;">
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:#B8973A;box-shadow:0 0 10px #B8973A;animation:timerPulse 1.4s ease-in-out infinite;flex-shrink:0;"></div>
+        <div>
+          <div style="font-size:10px;letter-spacing:0.28em;text-transform:uppercase;color:#B8973A;margin-bottom:4px;">Последнее окно входа · 212 000 ₽</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#F0E8D8;font-weight:300;">Цена повышается 14 мая в 22:00 по московскому времени (GMT+3)</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="text-align:center;min-width:64px;">
+          <div id="cd-hours" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:#B8973A;line-height:1;">00</div>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;margin-top:2px;">часов</div>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:36px;color:rgba(184,151,58,0.4);padding-bottom:18px;">:</div>
+        <div style="text-align:center;min-width:64px;">
+          <div id="cd-minutes" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:#B8973A;line-height:1;">00</div>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;margin-top:2px;">минут</div>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:36px;color:rgba(184,151,58,0.4);padding-bottom:18px;">:</div>
+        <div style="text-align:center;min-width:64px;">
+          <div id="cd-seconds" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:#B8973A;line-height:1;">00</div>
+          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;margin-top:2px;">секунд</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+@keyframes timerPulse {
+  0%,100%{opacity:0.5;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.3);}
+}
+</style>
+<script>
+(function(){
+  // Target: 14 May 2026, 22:00 Moscow time (UTC+3)
+  var deadline = new Date('2026-05-14T22:00:00+03:00').getTime();
+  function pad(n){return n<10?'0'+n:n;}
+  function tick(){
+    var now = Date.now();
+    var diff = deadline - now;
+    if(diff <= 0){
+      document.getElementById('countdown-banner').innerHTML = '<div style="max-width:980px;margin:0 auto;text-align:center;padding:8px 0;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;">Окно входа закрыто</div>';
+      return;
+    }
+    var h = Math.floor(diff/3600000);
+    var m = Math.floor((diff%3600000)/60000);
+    var s = Math.floor((diff%60000)/1000);
+    document.getElementById('cd-hours').textContent = pad(h);
+    document.getElementById('cd-minutes').textContent = pad(m);
+    document.getElementById('cd-seconds').textContent = pad(s);
+  }
+  tick();
+  setInterval(tick,1000);
+})();
+</script>
+
 <!-- PRICING / ACCESS -->
+
 <section class="pricing-section" id="access">
   <div class="container">
     <div class="label fade-in" style="margin-bottom: 16px; text-align:center;">Условия доступа</div>
@@ -2523,12 +2686,14 @@ footer {
         <div class="pricing-bottom">
           <div class="pricing-price-block">
             <div class="pricing-price-old">505 000 ₽</div>
-            <div class="pricing-price" style="color:var(--gold);font-size:64px;">240 000 ₽</div>
-            <div class="pricing-price-old" style="font-size:13px;margin-top:4px;">212 000 ₽</div>
+            <div class="pricing-price-old" style="font-size:22px;margin-top:4px;">240 000 ₽</div>
+            <a href="https://payform.ru/bebmpSh/" target="_blank" style="text-decoration:none;">
+              <div class="pricing-price" style="color:var(--gold);font-size:64px;">212 000 ₽</div>
+            </a>
             <div class="pricing-price-note">Стоимость растёт с каждым обновлением.</div>
           </div>
           <div class="pricing-cta-stack">
-            <a id="pay-ru" href="https://payform.ru/k5brvLz/" class="btn-glow btn-glow-gold" target="_blank">
+            <a id="pay-ru" href="https://payform.ru/bebmpSh/" class="btn-glow btn-glow-gold" target="_blank">
               <span class="btn-glow-dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold);"></span>
               Оплатить для РФ / СНГ
             </a>
@@ -2559,8 +2724,8 @@ footer {
         <div class="pricing-bottom">
           <div class="pricing-price-block">
             <div class="pricing-price-old">$6 350 / €5 500</div>
-            <div class="pricing-price" style="font-size:48px;">$3 260 / €2 800</div>
-            <div class="pricing-price-old" style="font-size:13px;margin-top:4px;">$2 860 / €2 450</div>
+            <div class="pricing-price-old" style="font-size:22px;margin-top:4px;">$3 260 / €2 800</div>
+            <div class="pricing-price" style="font-size:48px;">$2 860 / €2 450</div>
             <div class="pricing-price-note">Оплата доступна из любой страны мира.</div>
           </div>
           <div class="pricing-cta-stack">
