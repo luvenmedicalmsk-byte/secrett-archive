@@ -1382,37 +1382,27 @@ footer {
 
     <!-- label -->
     <div style="font-size:11px;letter-spacing:0.32em;text-transform:uppercase;color:#B8973A;margin-bottom:28px;font-family:'Montserrat',sans-serif;font-weight:500;">
-      Последнее окно входа
+      Архив · обновление 2026
     </div>
 
     <!-- pulse dot + headline -->
-    <div style="display:flex;align-items:flex-start;justify-content:center;gap:18px;margin-bottom:52px;">
-      <div style="width:10px;height:10px;border-radius:50%;background:#B8973A;box-shadow:0 0 12px #B8973A;animation:ovPulse 1.4s ease-in-out infinite;flex-shrink:0;margin-top:14px;"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:center;gap:18px;margin-bottom:40px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#1FAACC;box-shadow:0 0 12px #1FAACC;animation:ovPulse 1.4s ease-in-out infinite;flex-shrink:0;margin-top:14px;"></div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4.5vw,48px);font-weight:300;color:#F0E8D8;line-height:1.25;text-align:left;">
-        Цена повышается 14 мая<br>в 22:00 по московскому времени (GMT+3)
+        Архив строит<br><span style="font-style:italic;color:#D4AF5A;">новую архитектуру</span>
       </div>
     </div>
 
-    <!-- countdown -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:0;">
-      <div style="text-align:center;min-width:120px;">
-        <div id="ov-hours" style="font-family:'Cormorant Garamond',serif;font-size:clamp(64px,10vw,96px);font-weight:300;color:#B8973A;line-height:1;">00</div>
-        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#6A6458;margin-top:4px;font-family:'Montserrat',sans-serif;">часов</div>
-      </div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:300;color:rgba(184,151,58,0.3);padding-bottom:32px;margin:0 4px;">:</div>
-      <div style="text-align:center;min-width:120px;">
-        <div id="ov-minutes" style="font-family:'Cormorant Garamond',serif;font-size:clamp(64px,10vw,96px);font-weight:300;color:#B8973A;line-height:1;">00</div>
-        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#6A6458;margin-top:4px;font-family:'Montserrat',sans-serif;">минут</div>
-      </div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:300;color:rgba(184,151,58,0.3);padding-bottom:32px;margin:0 4px;">:</div>
-      <div style="text-align:center;min-width:120px;">
-        <div id="ov-seconds" style="font-family:'Cormorant Garamond',serif;font-size:clamp(64px,10vw,96px);font-weight:300;color:#B8973A;line-height:1;">00</div>
-        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#6A6458;margin-top:4px;font-family:'Montserrat',sans-serif;">секунд</div>
-      </div>
+    <!-- message -->
+    <div style="max-width:520px;margin:0 auto 44px;font-size:15px;color:rgba(168,160,144,0.85);line-height:1.9;font-family:'Montserrat',sans-serif;font-weight:300;">
+      Войдите сегодня по текущей стоимости — и получите доступ к бизнес-блоку, когда он выйдет, без доплаты.
     </div>
+
+    <!-- divider -->
+    <div style="width:40px;height:1px;background:rgba(184,151,58,0.4);margin:0 auto 44px;"></div>
 
     <!-- close hint -->
-    <div style="margin-top:56px;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(106,100,88,0.6);font-family:'Montserrat',sans-serif;">
+    <div style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(106,100,88,0.6);font-family:'Montserrat',sans-serif;">
       нажмите в любом месте, чтобы продолжить
     </div>
   </div>
@@ -1427,29 +1417,12 @@ footer {
 <script>
 (function(){
   var ov = document.getElementById('entrance-overlay');
-  var deadlineOv = new Date('2026-05-14T22:00:00+03:00').getTime();
-  function pad(n){return n<10?'0'+n:n;}
-  function tickOv(){
-    var diff = deadlineOv - Date.now();
-    if(diff <= 0){
-      document.getElementById('ov-hours').textContent='00';
-      document.getElementById('ov-minutes').textContent='00';
-      document.getElementById('ov-seconds').textContent='00';
-      return;
-    }
-    document.getElementById('ov-hours').textContent   = pad(Math.floor(diff/3600000));
-    document.getElementById('ov-minutes').textContent = pad(Math.floor((diff%3600000)/60000));
-    document.getElementById('ov-seconds').textContent = pad(Math.floor((diff%60000)/1000));
-  }
-  tickOv();
-  var ivOv = setInterval(tickOv, 1000);
   function closeOverlay(){
     ov.style.opacity='0';
-    setTimeout(function(){ov.style.display='none';clearInterval(ivOv);},700);
+    setTimeout(function(){ov.style.display='none';},700);
   }
   ov.addEventListener('click', closeOverlay);
-  // Auto-close after 8 seconds
-  setTimeout(closeOverlay, 8000);
+  setTimeout(closeOverlay, 9000);
 })();
 </script>
 
@@ -2593,65 +2566,24 @@ footer {
   </div>
 </section>
 
-<!-- COUNTDOWN TIMER BANNER -->
+<!-- ARCHITECTURE BANNER -->
 <section style="position:relative;z-index:2;padding:0;">
-  <div id="countdown-banner" style="background:linear-gradient(135deg,rgba(10,9,6,0.98) 0%,rgba(13,12,9,0.98) 100%);border-top:1px solid rgba(184,151,58,0.35);border-bottom:1px solid rgba(184,151,58,0.35);padding:32px 40px;">
-    <div style="max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;">
-      <div style="display:flex;align-items:center;gap:20px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#B8973A;box-shadow:0 0 10px #B8973A;animation:timerPulse 1.4s ease-in-out infinite;flex-shrink:0;"></div>
-        <div>
-          <div style="font-size:10px;letter-spacing:0.28em;text-transform:uppercase;color:#B8973A;margin-bottom:4px;">Последнее окно входа · 212 000 ₽</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#F0E8D8;font-weight:300;">Цена повышается 14 мая в 22:00 по московскому времени (GMT+3)</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div style="text-align:center;min-width:64px;">
-          <div id="cd-hours" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:#B8973A;line-height:1;">00</div>
-          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;margin-top:2px;">часов</div>
-        </div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:36px;color:rgba(184,151,58,0.4);padding-bottom:18px;">:</div>
-        <div style="text-align:center;min-width:64px;">
-          <div id="cd-minutes" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:#B8973A;line-height:1;">00</div>
-          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;margin-top:2px;">минут</div>
-        </div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:36px;color:rgba(184,151,58,0.4);padding-bottom:18px;">:</div>
-        <div style="text-align:center;min-width:64px;">
-          <div id="cd-seconds" style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:#B8973A;line-height:1;">00</div>
-          <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;margin-top:2px;">секунд</div>
-        </div>
+  <div style="background:linear-gradient(135deg,rgba(10,9,6,0.98) 0%,rgba(13,12,9,0.98) 100%);border-top:1px solid rgba(184,151,58,0.35);border-bottom:1px solid rgba(184,151,58,0.35);padding:32px 40px;">
+    <div style="max-width:980px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="width:8px;height:8px;border-radius:50%;background:#1FAACC;box-shadow:0 0 10px #1FAACC;animation:archPulse 1.4s ease-in-out infinite;flex-shrink:0;"></div>
+      <div>
+        <div style="font-size:10px;letter-spacing:0.28em;text-transform:uppercase;color:#B8973A;margin-bottom:6px;">Архив · обновление 2026</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#F0E8D8;font-weight:300;">Войдите сегодня по текущей стоимости — и получите доступ к бизнес-блоку, когда он выйдет, без доплаты.</div>
       </div>
     </div>
   </div>
 </section>
 <style>
-@keyframes timerPulse {
+@keyframes archPulse {
   0%,100%{opacity:0.5;transform:scale(1);}
   50%{opacity:1;transform:scale(1.3);}
 }
 </style>
-<script>
-(function(){
-  // Target: 14 May 2026, 22:00 Moscow time (UTC+3)
-  var deadline = new Date('2026-05-14T22:00:00+03:00').getTime();
-  function pad(n){return n<10?'0'+n:n;}
-  function tick(){
-    var now = Date.now();
-    var diff = deadline - now;
-    if(diff <= 0){
-      document.getElementById('countdown-banner').innerHTML = '<div style="max-width:980px;margin:0 auto;text-align:center;padding:8px 0;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#6A6458;">Окно входа закрыто</div>';
-      return;
-    }
-    var h = Math.floor(diff/3600000);
-    var m = Math.floor((diff%3600000)/60000);
-    var s = Math.floor((diff%60000)/1000);
-    document.getElementById('cd-hours').textContent = pad(h);
-    document.getElementById('cd-minutes').textContent = pad(m);
-    document.getElementById('cd-seconds').textContent = pad(s);
-  }
-  tick();
-  setInterval(tick,1000);
-})();
-</script>
 
 <!-- PRICING / ACCESS -->
 
@@ -2680,20 +2612,19 @@ footer {
           <li>Закрытый канал связи для участников</li>
           <li>Резервное копирование</li>
           <li>Оплата из России, Казахстана и Беларуси</li>
-          <li>Внутренняя рассрочка 4×53 000 р.</li>
+          <li>Внутренняя рассрочка 4×60 000 р.</li>
           <li>Официальная рассрочка без переплат (Яндекс Сплит, Сбер, Т-Банк)</li>
         </ul>
         <div class="pricing-bottom">
           <div class="pricing-price-block">
             <div class="pricing-price-old">505 000 ₽</div>
-            <div class="pricing-price-old" style="font-size:22px;margin-top:4px;">240 000 ₽</div>
-            <a href="https://payform.ru/bebmpSh/" target="_blank" style="text-decoration:none;">
-              <div class="pricing-price" style="color:var(--gold);font-size:64px;">212 000 ₽</div>
+            <a href="https://payform.ru/k5brvLz/" target="_blank" style="text-decoration:none;">
+              <div class="pricing-price" style="color:var(--gold);font-size:64px;">240 000 ₽</div>
             </a>
             <div class="pricing-price-note">Стоимость растёт с каждым обновлением.</div>
           </div>
           <div class="pricing-cta-stack">
-            <a id="pay-ru" href="https://payform.ru/bebmpSh/" class="btn-glow btn-glow-gold" target="_blank">
+            <a id="pay-ru" href="https://payform.ru/k5brvLz/" class="btn-glow btn-glow-gold" target="_blank">
               <span class="btn-glow-dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold);"></span>
               Оплатить для РФ / СНГ
             </a>
@@ -2719,13 +2650,12 @@ footer {
 <li>Закрытый канал связи для участников</li>
           <li>Доступная оплата из любых стран</li>
 <li>Доступная оплата в USDT</li>
-          <li>Внутренняя рассрочка 3 × $953 / €816</li>
+          <li>Внутренняя рассрочка 3 × $1090 / €940</li>
         </ul>
         <div class="pricing-bottom">
           <div class="pricing-price-block">
             <div class="pricing-price-old">$6 350 / €5 500</div>
-            <div class="pricing-price-old" style="font-size:22px;margin-top:4px;">$3 260 / €2 800</div>
-            <div class="pricing-price" style="font-size:48px;">$2 860 / €2 450</div>
+            <div class="pricing-price" style="font-size:48px;">$3 260 / €2 800</div>
             <div class="pricing-price-note">Оплата доступна из любой страны мира.</div>
           </div>
           <div class="pricing-cta-stack">
