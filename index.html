@@ -277,6 +277,8 @@ nav.scrolled {
   transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
   display: flex; flex-direction: column;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .drawer.open { transform: translateX(0); }
 
@@ -3542,6 +3544,8 @@ function openDrawer() {
   document.getElementById('siteDrawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  var list = document.querySelector('.drawer-list');
+  if (list) list.scrollTop = 0;
 }
 function closeDrawer() {
   document.getElementById('siteDrawer').classList.remove('open');
