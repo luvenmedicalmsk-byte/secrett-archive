@@ -150,6 +150,11 @@ nav.scrolled {
 }
 .nav-cta:hover { background: var(--cyan); color: var(--dark); }
 
+@keyframes navCtaBlink {
+  0%, 100% { border-color: var(--border); color: var(--text-soft); box-shadow: none; }
+  50% { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 14px rgba(31,170,204,0.35); }
+}
+
 /* ── HERO ── */
 .hero {
   min-height: 100vh;
@@ -250,6 +255,134 @@ nav.scrolled {
   0%, 100% { opacity: 0.4; transform: scaleY(1); }
   50% { opacity: 1; transform: scaleY(1.1); }
 }
+
+/* ── DRAWER NAVIGATION ── */
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,9,6,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 800;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 320px;
+  background: var(--dark-card);
+  border-left: 1px solid var(--border-strong);
+  z-index: 900;
+  transform: translateX(100%);
+  transition: transform 0.38s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer::before {
+  content: '';
+  position: absolute; top: 0; left: 0; bottom: 0; width: 2px;
+  background: linear-gradient(to bottom, var(--cyan), transparent 60%);
+  opacity: 0.5;
+}
+
+.drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.drawer-header-label {
+  font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--cyan); font-family: 'Montserrat', sans-serif; font-weight: 500;
+}
+.drawer-close {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: none; cursor: pointer;
+  color: var(--text-muted); font-size: 16px; line-height: 1;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.drawer-close:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.drawer-list {
+  flex: 1; overflow-y: auto; padding: 12px 0 32px;
+  scrollbar-width: thin; scrollbar-color: rgba(184,151,58,0.2) transparent;
+}
+.drawer-list::-webkit-scrollbar { width: 3px; }
+.drawer-list::-webkit-scrollbar-thumb { background: rgba(184,151,58,0.2); }
+
+.drawer-link {
+  display: flex; align-items: center; gap: 20px;
+  padding: 14px 32px;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+}
+.drawer-link:hover {
+  background: rgba(31,170,204,0.04);
+  border-left-color: var(--cyan);
+}
+.drawer-link.gold-accent:hover {
+  background: rgba(184,151,58,0.04);
+  border-left-color: var(--gold-light);
+}
+.drawer-link-num {
+  font-size: 9px; letter-spacing: 0.18em; color: var(--text-muted);
+  text-transform: uppercase; min-width: 40px;
+  font-family: 'Montserrat', sans-serif; font-weight: 400;
+  flex-shrink: 0;
+}
+.drawer-link-text {
+  font-size: 12px; color: var(--text-soft); letter-spacing: 0.04em;
+  font-family: 'Montserrat', sans-serif; font-weight: 300;
+  line-height: 1.4;
+}
+.drawer-link:hover .drawer-link-text { color: var(--cream); }
+.drawer-link.gold-accent .drawer-link-num { color: var(--gold-dim); }
+.drawer-link.gold-accent .drawer-link-text { color: var(--gold-light); }
+.drawer-link.gold-accent:hover .drawer-link-text { color: var(--gold-light); }
+
+.drawer-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 32px;
+}
+
+.drawer-footer {
+  padding: 20px 32px 28px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.drawer-footer a {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--cyan); text-decoration: none;
+  border: 1px solid var(--cyan-border); padding: 10px 20px;
+  transition: all 0.25s; width: 100%; justify-content: center;
+}
+.drawer-footer a:hover { background: var(--cyan); color: var(--dark); }
+
+/* Trigger button in nav */
+.nav-menu-btn {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-soft); background: none; border: 1px solid var(--border);
+  padding: 9px 20px; cursor: pointer; transition: all 0.25s;
+  font-family: 'Montserrat', sans-serif;
+  animation: navCtaBlink 2.2s ease-in-out infinite;
+}
+.nav-menu-btn:hover { border-color: var(--cyan-border); color: var(--cyan); animation: none; }
+.nav-menu-btn-lines {
+  display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;
+}
+.nav-menu-btn-lines span {
+  display: block; width: 16px; height: 1px; background: currentColor;
+  transition: all 0.2s;
+}
+.nav-menu-btn-lines span:nth-child(2) { width: 10px; }
 
 /* ── CONTRAST ── */
 .contrast { padding: 120px 0; }
@@ -1450,7 +1583,15 @@ footer {
 <!-- NAV -->
 <nav id="mainNav">
   <a href="#" class="nav-logo">Архив системных рисков «Великое пробуждение»</a>
-  <a href="#access" class="nav-cta">Открыть доступ</a>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+    <button class="nav-menu-btn" onclick="openDrawer()" aria-label="Навигация по разделам">
+      <div class="nav-menu-btn-lines">
+        <span></span><span></span><span></span>
+      </div>
+      Разделы
+    </button>
+    <a href="#access" class="nav-cta">Открыть доступ</a>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -1496,6 +1637,91 @@ footer {
     <span>Scroll</span>
   </div>
 </section>
+
+<!-- DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- DRAWER NAVIGATION -->
+<aside class="drawer" id="siteDrawer" aria-label="Навигация по разделам">
+
+  <div class="drawer-header">
+    <div class="drawer-header-label">Навигация · Архив</div>
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Закрыть">✕</button>
+  </div>
+
+  <div class="drawer-list">
+
+    <a class="drawer-link" href="#what" onclick="closeDrawer()">
+      <span class="drawer-link-num">01</span>
+      <span class="drawer-link-text">Два типа мышления</span>
+    </a>
+    <a class="drawer-link" href="#archive" onclick="closeDrawer()">
+      <span class="drawer-link-num">02</span>
+      <span class="drawer-link-text">Что такое Архив</span>
+    </a>
+    <a class="drawer-link gold-accent" href="#formula" onclick="closeDrawer()">
+      <span class="drawer-link-num">03</span>
+      <span class="drawer-link-text">Формула нелинейного сдвига</span>
+    </a>
+    <a class="drawer-link gold-accent" href="#formula-nonlinear" onclick="closeDrawer()">
+      <span class="drawer-link-num">01.05.2026</span>
+      <span class="drawer-link-text">Доктрина</span>
+    </a>
+
+    <div class="drawer-divider"></div>
+
+    <a class="drawer-link" href="#contents" onclick="closeDrawer()">
+      <span class="drawer-link-num">04</span>
+      <span class="drawer-link-text">Содержание Архива</span>
+    </a>
+    <a class="drawer-link gold-accent" href="#money-asset" onclick="closeDrawer()">
+      <span class="drawer-link-num">Актив 12</span>
+      <span class="drawer-link-text">Деньги</span>
+    </a>
+    <a class="drawer-link" href="#formula-detail" onclick="closeDrawer()">
+      <span class="drawer-link-num">05</span>
+      <span class="drawer-link-text">Как Архив работает с мышлением</span>
+    </a>
+
+    <div class="drawer-divider"></div>
+
+    <a class="drawer-link" href="#forwhom" onclick="closeDrawer()">
+      <span class="drawer-link-num">06</span>
+      <span class="drawer-link-text">Язык рисков для профессионалов</span>
+    </a>
+    <a class="drawer-link" href="#author" onclick="closeDrawer()">
+      <span class="drawer-link-num">07</span>
+      <span class="drawer-link-text">Об Авторе · Мия Гекди</span>
+    </a>
+    <a class="drawer-link" href="#methodology" onclick="closeDrawer()">
+      <span class="drawer-link-num">08</span>
+      <span class="drawer-link-text">Методология · Навигация в нестабильности</span>
+    </a>
+    <a class="drawer-link" href="#strategy" onclick="closeDrawer()">
+      <span class="drawer-link-num">09</span>
+      <span class="drawer-link-text">Долгосрочная стратегия сообщества</span>
+    </a>
+
+    <div class="drawer-divider"></div>
+
+    <a class="drawer-link gold-accent" href="#access" onclick="closeDrawer()">
+      <span class="drawer-link-num">10</span>
+      <span class="drawer-link-text">Условия доступа</span>
+    </a>
+    <a class="drawer-link" href="#faq" onclick="closeDrawer()">
+      <span class="drawer-link-num">FAQ</span>
+      <span class="drawer-link-text">Частые вопросы</span>
+    </a>
+
+  </div>
+
+  <div class="drawer-footer">
+    <a href="https://t.me/anirisao" target="_blank">
+      <span>→</span> Служба поддержки
+    </a>
+  </div>
+
+</aside>
 
 <!-- CONTRAST -->
 <section class="contrast" id="what">
@@ -2092,6 +2318,437 @@ footer {
   </div>
 </section>
 
+<!-- ══════════════════════════════════════════
+     ДЕНЬГИ — РАСХОДНЫЙ МАТЕРИАЛ · Актив №12
+     ══════════════════════════════════════════ -->
+<section id="money-asset" style="position:relative;z-index:2;padding:120px 0;border-top:1px solid var(--border);">
+<div class="container">
+
+  <!-- Подзаголовок — Актив №12 -->
+  <div class="fade-in" style="margin-bottom:40px;">
+    <div class="label" style="margin-bottom:16px;">Архив системных рисков · Актив №&nbsp;12</div>
+    <div class="display display-md" style="margin-bottom:20px;">
+      Деньги —&nbsp;<span class="italic gold">расходный материал</span>
+    </div>
+    <p style="font-size:15px;color:var(--text-soft);line-height:1.9;max-width:580px;">
+      Четыре механизма обесценивания работают одновременно и усиливают друг&nbsp;друга.
+      Матрица рисков по 193&nbsp;странам. Три горизонта: 2, 5&nbsp;и&nbsp;10&nbsp;лет.
+    </p>
+  </div>
+
+  <!-- Четыре механизма -->
+  <div class="fade-in" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:64px;">
+    <div style="background:var(--dark-card);padding:28px 24px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--gold-light);line-height:1;margin-bottom:10px;">И</div>
+      <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px;">Инфляция</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.65;">Деньги тают даже при 5–7%/год. Реальная инфляция расходов выше официальной везде и всегда.</div>
+    </div>
+    <div style="background:var(--dark-card);padding:28px 24px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--gold-light);line-height:1;margin-bottom:10px;">Д</div>
+      <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px;">Девальвация</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.65;">Национальные валюты слабеют под давлением долгов и геополитики. Рубль, лира, реал — история обвалов.</div>
+    </div>
+    <div style="background:var(--dark-card);padding:28px 24px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--gold-light);line-height:1;margin-bottom:10px;">З</div>
+      <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px;">Заморозки</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.65;">Деньги в банке — право требования к системе. Кипр 2013, Ливан 2019, Россия 2022 — $300 млрд.</div>
+    </div>
+    <div style="background:var(--dark-card);padding:28px 24px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--gold-light);line-height:1;margin-bottom:10px;">С</div>
+      <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px;">CBDC</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.65;">130+ стран разрабатывают цифровые валюты. Программируемые ограничения: срок, география, категории трат.</div>
+    </div>
+  </div>
+
+  <!-- Горизонты — табы -->
+  <div class="fade-in">
+    <div style="display:flex;gap:0;border:1px solid var(--border);overflow:hidden;margin-bottom:0;flex-wrap:wrap;" id="money-tabs">
+      <button class="seg-tab active" onclick="switchMoneyTab('m2',this)" style="flex:1;text-align:center;">
+        Горизонт 2&nbsp;года
+        <span style="display:block;font-size:9px;color:#4a7c59;margin-top:3px;letter-spacing:0.05em;">● Высокий приоритет</span>
+      </button>
+      <button class="seg-tab" onclick="switchMoneyTab('m5',this)" style="flex:1;text-align:center;">
+        Горизонт 5&nbsp;лет
+        <span style="display:block;font-size:9px;color:var(--gold-dim);margin-top:3px;letter-spacing:0.05em;">● Средний приоритет</span>
+      </button>
+      <button class="seg-tab" onclick="switchMoneyTab('m10',this)" style="flex:1;text-align:center;">
+        Горизонт 10&nbsp;лет
+        <span style="display:block;font-size:9px;color:var(--cyan-dim);margin-top:3px;letter-spacing:0.05em;">● Низкий приоритет</span>
+      </button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- ═══ ГОРИЗОНТ 2 ГОДА ═══ -->
+<div id="m2" class="money-panel" style="display:block;">
+  <div class="container" style="margin-top:0;padding-top:0;">
+
+    <!-- Сценарии A / B / C -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;">
+      <!-- A -->
+      <div style="background:var(--dark-card);padding:32px 28px;">
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:6px;">Сценарий A</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Адаптивный</div>
+        <div style="font-size:10px;letter-spacing:0.08em;color:var(--gold-dim);margin-bottom:16px;">~15–20% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">Система управляет нестабильностью. Ликвидный резерв 3–6 мес. CHF и SGD как страховка.</div>
+      </div>
+      <!-- B — наиболее вероятный -->
+      <div style="background:var(--dark-card);padding:32px 28px;border-left:1px solid var(--border);border-right:1px solid var(--border);position:relative;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);"></div>
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan-dim);margin-bottom:6px;">Сценарий B · наиболее вероятный</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Фрагментированный</div>
+        <div style="font-size:10px;letter-spacing:0.08em;color:var(--cyan-dim);margin-bottom:16px;">~55–60% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">Фрагментация уже идёт. Счета в нейтральных юрисдикциях — открывать сейчас. Физическое золото вне банков.</div>
+      </div>
+      <!-- C -->
+      <div style="background:var(--dark-card);padding:32px 28px;">
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Сценарий C</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Системный кризис</div>
+        <div style="font-size:10px;letter-spacing:0.08em;color:var(--gold-dim);margin-bottom:16px;">~25–30% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">Капитальный контроль без предупреждения. Инфляция 15–25%. Физическое золото в нейтральном хранилище.</div>
+      </div>
+    </div>
+
+    <!-- Что делать 2 года -->
+    <div style="margin-top:1px;background:rgba(31,170,204,0.04);border:1px solid var(--cyan-border);border-top:none;padding:28px 32px;position:relative;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);"></div>
+      <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;">Что делать · Горизонт 2 года</div>
+      <div style="font-size:14px;color:var(--text-soft);line-height:1.8;">
+        <strong style="color:var(--cream);">Для аудитории вне РФ / двойное гражданство:</strong><br>
+        Капитал от $2 млн: Приватный банкинг в Швейцарии и Сингапуре. Физическое золото в нейтральном хранилище вне банковской системы + стратегические активы Архива 2026–2036.<br><br>
+        Остальные: <span style="filter:blur(4px);user-select:none;pointer-events:none;display:inline;">CHF, SGD через цифровые решения — Wise, Revolut. Счета в Швейцарии возможны — процесс от месяца, от €2000. Физическое золото в нейтральном хранилище + стратегические активы Архива 2026–2036.</span><br><br>
+        <strong style="color:var(--cream);">Для аудитории РФ:</strong><br>
+        USD, EUR, AED наличными — резерв для манёвра, не хранение. Физическое золото — основной защитный актив + стратегические активы Архива 2026–2036.<br>
+        <span style="filter:blur(4px);user-select:none;pointer-events:none;display:inline;">Счета в ОАЭ, Казахстане, Армении, Грузии, Сербии — транзит, не финальное хранение. Полноценного финального хранения в нейтральной юрисдикции для российского паспорта сейчас нет. Наиболее близкий вариант — физическое золото плюс недвижимость в дружественных странах: ОАЭ, Турция, Армения, Таиланд.</span>
+        <span style="color:var(--cyan);font-size:13px;margin-left:6px;">— подробнее в Архиве системных рисков.</span>
+      </div>
+    </div>
+
+    <!-- Наиболее защищённые — блюр текст -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;">
+      <div style="background:var(--dark-card);padding:28px;position:relative;overflow:hidden;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#4a7c59;margin-bottom:14px;">Наиболее защищённые · все 4: Низкий</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;filter:blur(5px);user-select:none;pointer-events:none;">Андорра Дания Лихтенштейн Монако Норвегия Сан-Марино Швеция Швейцария Ватикан Бруней Сингапур Палау</div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <a href="#access" class="btn-glow" style="font-size:9px;padding:7px 16px;white-space:nowrap;"><span class="btn-glow-dot"></span>В Архиве</a>
+        </div>
+      </div>
+      <div style="background:var(--dark-card);padding:28px;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#8b3a2a;margin-bottom:14px;">Наиболее уязвимые · все 4: Высокий</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">Северная Корея, Туркменистан, Аргентина, Куба, Венесуэла, Иран</div>
+      </div>
+      <div style="background:var(--dark-card);padding:28px;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:14px;">Операционные / транзитные</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">ОАЭ, Катар, Кувейт, Бахрейн, Оман, Саудовская Аравия. Геополитическая близость к зонам конфликта и зависимость от нефти создают риски при кризисе.</div>
+      </div>
+    </div>
+
+    <!-- Профили ключевых стран -->
+    <div style="margin-top:48px;">
+      <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;">Уникальные профили · ключевые страны</div>
+      <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);">
+        <!-- Россия -->
+        <div style="background:var(--dark-card);padding:20px 24px;display:grid;grid-template-columns:160px 1fr auto;gap:16px;align-items:center;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--cream);">Россия</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.6;">Юрисдикционный риск. Ограничения на вывод, санкции, цифровой рубль.</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(138,109,46,0.15);color:#c9a55a;">И: Умеренный</span>
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(139,58,42,0.15);color:#d9705a;">Д: Высокий</span>
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(139,58,42,0.15);color:#d9705a;">З: Высокий</span>
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(138,109,46,0.15);color:#c9a55a;">С: Умеренный</span>
+          </div>
+        </div>
+        <!-- Турция -->
+        <div style="background:var(--dark-card);padding:20px 24px;display:grid;grid-template-columns:160px 1fr auto;gap:16px;align-items:center;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--cream);">Турция</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.6;">Хроническая девальвация. Лира −15–25%/год. Физическое золото — ключевой буфер.</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(139,58,42,0.15);color:#d9705a;">И: Высокий</span>
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(139,58,42,0.15);color:#d9705a;">Д: Высокий</span>
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(138,109,46,0.15);color:#c9a55a;">З: Умеренный</span>
+            <span style="font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;background:rgba(138,109,46,0.15);color:#c9a55a;">С: Умеренный</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Таблица стран -->
+    <div style="margin-top:48px;">
+      <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;">Матрица рисков · выборка стран · Горизонт 2 года</div>
+      <div style="border:1px solid var(--border);overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:var(--dark-soft);">
+              <th style="text-align:left;padding:10px 16px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">Страна</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">И</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">Д</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">З</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">С</th>
+            </tr>
+          </thead>
+          <tbody id="m2-table">
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Австрия</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Беларусь</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Германия</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Испания</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Италия</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Казахстан</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Канада</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Польша</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+          </tbody>
+        </table>
+        <!-- Блюр — последние строки -->
+        <div style="position:relative;">
+          <div style="filter:blur(3px);user-select:none;pointer-events:none;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <tbody>
+                <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Россия</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+                <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">США</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td></tr>
+                <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Турция</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+                <tr><td style="padding:9px 16px;color:var(--cream);">Украина</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td></tr>
+                <tr><td style="padding:9px 16px;color:var(--cream);">Великобритания</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Gate overlay на таблице -->
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 0%,rgba(10,9,6,0.7) 40%,rgba(10,9,6,0.97) 100%);display:flex;align-items:flex-end;padding:20px 24px;">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--text-muted);">Полная матрица 193 стран — в Архиве</span>
+              <a href="#access" class="btn-glow" style="padding:8px 20px;font-size:10px;">
+                <span class="btn-glow-dot"></span>Войти в Архив
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container m2 -->
+</div><!-- /#m2 -->
+
+<!-- ═══ ГОРИЗОНТ 5 ЛЕТ ═══ -->
+<div id="m5" class="money-panel" style="display:none;">
+  <div class="container" style="padding-top:0;">
+
+    <!-- Сценарии A / B / C -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;">
+      <!-- A -->
+      <div style="background:var(--dark-card);padding:32px 28px;">
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:6px;">Сценарий A</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Адаптивный</div>
+        <div style="font-size:10px;color:var(--gold-dim);margin-bottom:16px;">~15–20% · наименее вероятный</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">Инфляция 3–4%. Деньги теряют 15–25% за 5 лет. Диверсификация как страховка.</div>
+      </div>
+      <!-- B — наиболее вероятный -->
+      <div style="background:var(--dark-card);padding:32px 28px;border-left:1px solid var(--border);border-right:1px solid var(--border);position:relative;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);"></div>
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan-dim);margin-bottom:6px;">Сценарий B · наиболее вероятный</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Фрагментированный</div>
+        <div style="font-size:10px;color:var(--cyan-dim);margin-bottom:16px;">~55–60% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">Инфляция 5–8% в развитых, 20–40% в уязвимых. Деньги в неправильном блоке — риск заморозки.</div>
+      </div>
+      <!-- C -->
+      <div style="background:var(--dark-card);padding:32px 28px;">
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Сценарий C</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Системный кризис</div>
+        <div style="font-size:10px;color:var(--gold-dim);margin-bottom:16px;">~25–30% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+          Инфляция 15–25%. Накопленная потеря 50–70% даже в сильных валютах.
+          <span style="filter:blur(4px);user-select:none;pointer-events:none;display:inline;"> Только физическое золото и CHF/SGD.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Что делать 5 лет -->
+    <div style="margin-top:1px;background:rgba(31,170,204,0.04);border:1px solid var(--cyan-border);border-top:none;padding:28px 32px;position:relative;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);"></div>
+      <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;">Что делать · Горизонт 5 лет</div>
+      <div style="font-size:14px;color:var(--text-soft);line-height:1.8;">
+        <strong style="color:var(--cream);">Для аудитории вне РФ / двойное гражданство:</strong><br>
+        Капитал от $2 млн: Приватный банкинг в Швейцарии и Сингапуре. Физическое золото в нейтральном хранилище вне банковской системы + стратегические активы Архива 2026–2036.<br><br>
+        Остальные: <span style="filter:blur(4px);user-select:none;pointer-events:none;display:inline;">CHF, SGD через Wise, Revolut — транзит, не финальное хранение. На горизонте 5 лет финтех-решения не гарантируют стабильность доступа. Физическое золото в нейтральном хранилище — основной защитный актив + стратегические активы Архива 2026–2036.</span><br><br>
+        <strong style="color:var(--cream);">Для аудитории РФ:</strong><br>
+        USD, EUR, AED наличными — резерв для манёвра, не хранение. Физическое золото — основной защитный актив + стратегические активы Архива 2026–2036.<br>
+        <span style="filter:blur(4px);user-select:none;pointer-events:none;display:inline;">Счета в ОАЭ, Казахстане, Армении, Грузии, Сербии — транзит, не финальное хранение. На горизонте 5 лет давление на дружественные юрисдикции усилится — доступ может быть ограничен без предупреждения. Полноценного финального хранения в нейтральной юрисдикции для российского паспорта сейчас нет. Наиболее близкий вариант — физическое золото плюс недвижимость в дружественных странах: ОАЭ, Турция, Армения, Таиланд. Начинать формировать сейчас — окно сужается.</span>
+        <span style="color:var(--cyan);font-size:13px;margin-left:6px;">— подробнее в Архиве системных рисков.</span>
+      </div>
+    </div>
+
+    <!-- Наиболее защищённые — блюр, затем уязвимые, затем операционные -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;">
+      <div style="background:var(--dark-card);padding:28px;position:relative;overflow:hidden;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#4a7c59;margin-bottom:14px;">Наиболее защищённые · все 4: Низкий</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;filter:blur(5px);user-select:none;pointer-events:none;">Андорра Дания Лихтенштейн Монако Норвегия Сан-Марино Швеция Швейцария Ватикан Бруней Сингапур Палау</div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <a href="#access" class="btn-glow" style="font-size:9px;padding:7px 16px;white-space:nowrap;"><span class="btn-glow-dot"></span>В Архиве</a>
+        </div>
+      </div>
+      <div style="background:var(--dark-card);padding:28px;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#8b3a2a;margin-bottom:14px;">Наиболее уязвимые · все 4: Высокий</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">Беларусь, Северная Корея, Туркменистан, Аргентина, Куба, Венесуэла, Иран</div>
+      </div>
+      <div style="background:var(--dark-card);padding:28px;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:14px;">Операционные / транзитные</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">ОАЭ, Катар, Кувейт, Бахрейн, Оман, Саудовская Аравия. Зависимость от нефти создаёт риски при кризисе.</div>
+      </div>
+    </div>
+
+    <!-- Выборка стран 5 лет — с блюром -->
+    <div style="margin-top:48px;">
+      <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px;">Матрица рисков · выборка · Горизонт 5 лет</div>
+      <div style="border:1px solid var(--border);overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="background:var(--dark-soft);">
+              <th style="text-align:left;padding:10px 16px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">Страна</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">И</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">Д</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">З</th>
+              <th style="text-align:center;padding:10px 12px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);font-weight:400;border-bottom:1px solid var(--border);">С</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Австрия</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Германия</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Испания</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Казахстан</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Россия</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td></tr>
+            <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">Турция</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-h">Высокий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+          </tbody>
+        </table>
+        <div style="position:relative;">
+          <div style="filter:blur(3px);user-select:none;pointer-events:none;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <tbody>
+                <tr style="border-bottom:1px solid rgba(184,151,58,0.07);"><td style="padding:9px 16px;color:var(--cream);">США</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td></tr>
+                <tr><td style="padding:9px 16px;color:var(--cream);">Великобритания</td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-l">Низкий</span></td><td style="text-align:center;padding:9px 12px;"><span class="rbg rbg-m">Умеренный</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent,rgba(10,9,6,0.97));display:flex;align-items:flex-end;padding:16px 24px;">
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--text-muted);">193 страны по горизонту 5 лет — в Архиве</span>
+              <a href="#access" class="btn-glow" style="padding:8px 20px;font-size:10px;"><span class="btn-glow-dot"></span>Открыть доступ</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /#m5 -->
+
+<!-- ═══ ГОРИЗОНТ 10 ЛЕТ ═══ -->
+<div id="m10" class="money-panel" style="display:none;">
+  <div class="container" style="padding-top:0;">
+
+    <!-- Сценарии A / B / C -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;">
+      <!-- A открытый -->
+      <div style="background:var(--dark-card);padding:32px 28px;">
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:6px;">Сценарий A</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Адаптивный</div>
+        <div style="font-size:10px;color:var(--gold-dim);margin-bottom:16px;">~15% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">Доллар ослаблен, но функционирует. Деньги теряют 30–40%. CBDC без жёстких ограничений.</div>
+      </div>
+      <!-- B — блюр -->
+      <div style="background:var(--dark-card);padding:32px 28px;border-left:1px solid var(--border);border-right:1px solid var(--border);position:relative;">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);"></div>
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan-dim);margin-bottom:6px;">Сценарий B · наиболее вероятный</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Фрагментированный</div>
+        <div style="font-size:10px;color:var(--cyan-dim);margin-bottom:16px;">~50–55% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;filter:blur(4px);user-select:none;pointer-events:none;">Доллар и евро теряют долю в расчётах. CBDC как инструмент блокового контроля. Юрисдикционная диверсификация становится необходимостью.</div>
+      </div>
+      <!-- C — блюр -->
+      <div style="background:var(--dark-card);padding:32px 28px;">
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">Сценарий C</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--cream);margin-bottom:4px;">Системный кризис</div>
+        <div style="font-size:10px;color:var(--gold-dim);margin-bottom:16px;">~30–35% вероятность</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.7;filter:blur(4px);user-select:none;pointer-events:none;">Евро и доллар теряют статус резервных валют к середине 2030-х. Физическое золото — единственная защита.</div>
+      </div>
+    </div>
+
+    <!-- Что делать 10 лет — с блюром -->
+    <div style="margin-top:1px;background:rgba(31,170,204,0.04);border:1px solid var(--cyan-border);border-top:none;padding:28px 32px;position:relative;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);"></div>
+      <div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;">Что делать · Горизонт 10 лет</div>
+      <div style="font-size:14px;color:var(--text-soft);line-height:1.8;">
+        <strong style="color:var(--cream);">Для аудитории вне РФ / двойное гражданство:</strong><br>
+        Капитал от $2 млн: Приватный банкинг в Швейцарии и Сингапуре. Физическое золото в нейтральном хранилище вне банковской системы + стратегические активы Архива 2026–2036.<br><br>
+        Остальные: CHF, SGD через Wise, Revolut — транзит, не финальное хранение. На горизонте 10 лет финтех-решения не гарантируют стабильность доступа. Физическое золото в нейтральном хранилище — единственный надёжный актив + стратегические активы Архива 2026–2036.<br><br>
+        <strong style="color:var(--cream);">Для аудитории РФ:</strong><br>
+        <span style="filter:blur(4px);user-select:none;pointer-events:none;display:inline;">USD, EUR, AED наличными — только для манёвра. Физическое золото — единственный надёжный актив на этом горизонте + стратегические активы Архива 2026–2036. Счета в дружественных юрисдикциях на 10 лет не являются защитой — геополитика изменится, юрисдикции под давлением закроют доступ. Полноценного финального хранения в нейтральной юрисдикции для российского паспорта сейчас нет. Наиболее близкий вариант — физическое золото плюс недвижимость в дружественных странах: ОАЭ, Турция, Армения, Таиланд. На горизонте 10 лет реальные активы вне финансовой системы — земля, недвижимость, навыки — важнее любого счёта. Начинать формировать сейчас — окно сужается.</span>
+        <span style="color:var(--cyan);font-size:13px;margin-left:6px;">— подробнее в Архиве системных рисков.</span>
+      </div>
+    </div>
+
+    <!-- Наиболее защищённые — блюр, уязвимые, операционные -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;">
+      <div style="background:var(--dark-card);padding:28px;position:relative;overflow:hidden;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#4a7c59;margin-bottom:14px;">Наиболее защищённые · все 4: Низкий</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;filter:blur(5px);user-select:none;pointer-events:none;">Андорра Дания Лихтенштейн Монако Норвегия Сан-Марино Швеция Швейцария Ватикан Бруней Сингапур Палау</div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <a href="#access" class="btn-glow" style="font-size:9px;padding:7px 16px;white-space:nowrap;"><span class="btn-glow-dot"></span>В Архиве</a>
+        </div>
+      </div>
+      <div style="background:var(--dark-card);padding:28px;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#8b3a2a;margin-bottom:14px;">Наиболее уязвимые · все 4: Высокий</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">Беларусь, Северная Корея, Туркменистан, Аргентина, Куба, Венесуэла, Иран</div>
+      </div>
+      <div style="background:var(--dark-card);padding:28px;">
+        <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:14px;">Операционные / транзитные</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.8;">ОАЭ, Катар, Кувейт, Бахрейн, Оман, Саудовская Аравия. Зависимость от нефти создаёт риски при кризисе.</div>
+      </div>
+    </div>
+
+    <!-- Gate карточка для горизонта 10 лет -->
+    <div style="margin-top:48px;position:relative;overflow:hidden;border:1px solid var(--cyan-border);background:linear-gradient(135deg,rgba(31,170,204,0.04) 0%,rgba(10,9,6,0.98) 60%);padding:48px;">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--gold),transparent);"></div>
+      <div style="max-width:560px;margin:0 auto;text-align:center;">
+        <div style="font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--cyan);margin-bottom:16px;">Горизонт 10 лет · закрытый раздел</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(24px,3vw,36px);font-weight:300;color:var(--cream);margin-bottom:12px;line-height:1.25;">193 страны · полная матрица<br><span class="italic gold">на горизонт 2026–2036</span></div>
+        <p style="font-size:14px;color:var(--text-soft);line-height:1.8;margin-bottom:32px;">
+          Самый закрытый горизонт в Архиве. Полная матрица по всем регионам, сценарий потери резервного статуса доллара и евро, анализ всех 12 стратегических активов.
+        </p>
+        <div style="margin-bottom:32px;">
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);line-height:1.8;">Полная матрица, все сценарии и 12 стратегических активов<br>доступны участникам Архива.</div>
+        </div>
+        <a href="#access" class="btn-primary-cyan">Войти в Архив</a>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:14px;letter-spacing:0.05em;">Полный бессрочный доступ · Все обновления без доплат</div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /#m10 -->
+
+<!-- Стили для секции -->
+<style>
+.rbg { display:inline-block; font-size:8px; letter-spacing:0.06em; text-transform:uppercase; padding:2px 8px; }
+.rbg-l { background:rgba(74,124,89,0.15); color:#6aaa82; }
+.rbg-m { background:rgba(138,109,46,0.15); color:#c9a55a; }
+.rbg-h { background:rgba(139,58,42,0.15); color:#d9705a; }
+@media (max-width:640px) {
+  #money-asset .display-md { font-size: clamp(28px,8vw,48px); }
+  #money-asset [style*="grid-template-columns:repeat(4"] { grid-template-columns: repeat(2,1fr) !important; }
+  #money-asset [style*="grid-template-columns:repeat(3"] { grid-template-columns: 1fr !important; }
+  #money-asset [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+  #money-asset [style*="grid-template-columns:160px 1fr auto"] { grid-template-columns: 1fr !important; }
+}
+</style>
+<script>
+function switchMoneyTab(id, btn) {
+  document.querySelectorAll('.money-panel').forEach(function(el){ el.style.display='none'; });
+  document.querySelectorAll('#money-tabs .seg-tab').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById(id).style.display = 'block';
+  btn.classList.add('active');
+  document.getElementById('money-asset').scrollIntoView({behavior:'smooth', block:'start'});
+}
+</script>
+
+</section>
+<!-- /ДЕНЬГИ — РАСХОДНЫЙ МАТЕРИАЛ -->
+
 <!-- THINKING MODES -->
 <section class="thinking-section">
   <div class="container">
@@ -2119,7 +2776,7 @@ footer {
 </section>
 
 <!-- FOR WHOM -->
-<section class="forwhom-section">
+<section class="forwhom-section" id="forwhom">
   <div class="container">
     <div class="label fade-in" style="margin-bottom: 16px;">Язык рисков для профессионалов</div>
     <div class="display display-md fade-in">Как Архив меняет<br>позиционирование профессии</div>
@@ -2673,7 +3330,7 @@ footer {
 </section>
 
 <!-- FAQ -->
-<section class="faq-section">
+<section class="faq-section" id="faq">
   <div class="faq-inner">
     <div class="faq-header fade-in">
       <div class="label" style="margin-bottom: 16px;">Частые вопросы</div>
@@ -2863,4 +3520,20 @@ function togglePayBtn(id, checked) {
   });
 })();
 </script></body>
-</html>
+<script>
+// ── DRAWER ──
+function openDrawer() {
+  document.getElementById('siteDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('siteDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDrawer();
+});
+</script>
+</body>
