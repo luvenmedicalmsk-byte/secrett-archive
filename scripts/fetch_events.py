@@ -1028,8 +1028,7 @@ def fetch_russia_climate_v2():
     data = fetch_url(firms_url, timeout=20)
     if data and 'latitude' in data:
         try:
-            lines = data.strip().split('
-')
+            lines = data.strip().split('\n')
             headers = lines[0].split(',')
             lat_idx = headers.index('latitude') if 'latitude' in headers else -1
             lon_idx = headers.index('longitude') if 'longitude' in headers else -1
