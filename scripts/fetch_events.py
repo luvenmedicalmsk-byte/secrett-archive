@@ -419,19 +419,17 @@ def fetch_newsapi(api_key):
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_gdelt():
     items = []
-    queries = [
-        "war conflict military",
-        "climate disaster flood drought",
-        "economic crisis recession",
-        "protest unrest coup",
-    ]
-    for q in queries:
-        url = (f"https://api.gdeltproject.org/api/v2/doc/doc"
-               f"?query={urllib.parse.quote(q)}"
-               f"&mode=artlist&format=json&maxrecords=10"
-               f"&sort=DateDesc&timespan=1d")
-        data = fetch_url(url)
-        if not data: continue
+    # Один широкий запрос раз в 2 часа — соблюдаем лимит GDELT (1 запрос / 5 сек)
+    query = ('war OR conflict OR military OR invasion OR airstrike OR '
+             'protest OR riot OR coup OR unrest OR '
+             'recession OR inflation OR sanctions OR crisis OR '
+             'cyberattack OR ransomware OR hack OR breach OR '
+             'migration OR refugee OR displacement')
+    url = (f"https://api.gdeltproject.org/api/v2/doc/doc"
+           f"?query={urllib.parse.quote(query)}"
+           f"&mode=artlist&format=json&maxrecords=25&timespan=2h&sort=DateDesc")
+    data = fetch_url(url)
+    if data:
         try:
             j = json.loads(data)
             for art in j.get('articles', []):
@@ -448,9 +446,6 @@ def fetch_gdelt():
     print(f"  GDELT: {len(items)} статей", file=sys.stderr)
     return items
 
-# ══════════════════════════════════════════════════════════════════════════════
-# ИСТОЧНИК 3: ReliefWeb API
-# ══════════════════════════════════════════════════════════════════════════════
 def fetch_reliefweb():
     items = []
     url = ("https://api.reliefweb.int/v1/reports"
