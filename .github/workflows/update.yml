@@ -33,18 +33,16 @@ jobs:
           python scripts/fetch_events.py
         timeout-minutes: 12
 
-      - name: Синхронизация events.json
-        run: |
-          cp docs/events.json events.json
-
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add events.json docs/events.json risk-map.html
-          git diff --staged --quiet || (
+          git add events.json risk-map.html
+          if git diff --staged --quiet; then
+            echo "Нет изменений"
+          else
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
             git commit -m "Карта сигналов · $TIMESTAMP"
             git push
-          )
+          fi
 
