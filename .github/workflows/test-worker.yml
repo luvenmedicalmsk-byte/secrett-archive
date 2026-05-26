@@ -5,7 +5,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test GDELT via Worker
+      - name: Test geopolitics sources
         run: |
-          RESULT=$(curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=gdelt')
-          echo $RESULT | python3 -c 'import json,sys; d=json.load(sys.stdin); print("count:", d.get("count")); [print("-", f.get("domain",""), f.get("title","")[:65]) for f in d.get("articles",[])[:12]]'
+          echo === ACLED alternative ===
+          curl -s --max-time 8 https://acleddata.com/feed/ | head -5
+          echo === Armed Conflict ===
+          curl -s --max-time 8 https://www.iiss.org/rss/armed-conflict-survey | head -5
+          echo === Crisis Group ===
+          curl -s --max-time 8 https://www.crisisgroup.org/rss.xml | head -5
+          echo === Council on Foreign Relations ===
+          curl -s --max-time 8 https://www.cfr.org/rss/all | head -5
+          echo === Foreign Policy ===
+          curl -s --max-time 8 https://foreignpolicy.com/feed/ | head -5
+          echo === Al Monitor ===
+          curl -s --max-time 8 https://www.al-monitor.com/rss.xml | head -3
+          echo === SIPRI ===
+          curl -s --max-time 8 https://www.sipri.org/rss.xml | head -3
+          echo === UN News ===
+          curl -s --max-time 8 https://news.un.org/feed/subscribe/en/news/all/rss.xml | head -5
+          echo DONE
