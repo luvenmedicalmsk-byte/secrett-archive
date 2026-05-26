@@ -534,17 +534,17 @@ def process_events(raw_items):
         summary = item['desc'][:250].strip()
         if summary and not summary.endswith('.'): summary += '...'
 
-        title_ru = translate_to_russian(item['title'][:130])
-        summary_ru = translate_to_russian(summary or item['title'])
+        # Переводим только заголовок (summary оставляем как есть для скорости)
+        title_final = translate_to_russian(item['title'][:130])
         events.append({
             "id": ev_id,
-            "title": title_ru,
+            "title": title_final,
             "domain": domain,
             "severity": severity,
             "lat": lat, "lng": lng,
             "svgX": svgX, "svgY": svgY,
             "region": region,
-            "summary": summary_ru,
+            "summary": summary or item['title'],
             "source": item['source'],
             "date": item['date']
         })
@@ -1150,27 +1150,48 @@ def fetch_europe_latam():
     return items
 
 
-def translate_to_russian(text, max_len=150):
-    """Переводит текст на русский через MyMemory API (бесплатно, без ключа)"""
+def translate_to_russian(text, max_len=200):
+    """Переводит текст на русский — пробует несколько серверов"""
     if not text or not text.strip():
         return text
-    # Проверяем — если уже кириллица, не переводим
+    # Если уже кириллица — не переводим
     cyrillic = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
-    if cyrillic > len(text) * 0.3:
+    if cyrillic > len(text) * 0.25:
         return text
-    try:
-        text_short = text[:max_len]
-        encoded = urllib.parse.quote(text_short)
-        url = f"https://api.mymemory.translated.net/get?q={encoded}&langpair=en|ru"
-        data = fetch_url(url, timeout=10)
-        if data:
-            j = json.loads(data)
-            translated = j.get('responseData', {}).get('translatedText', '')
-            if translated and translated != text_short:
-                return translated
-    except:
-        pass
-    return text
+    text_short = text[:max_len]
+    
+    # Вариант 1: LibreTranslate (публичный сервер)
+    servers = [
+        "https://libretranslate.de/translate",
+        "https://translate.argosopentech.com/translate",
+        "https://libretranslate.com/translate",
+    ]
+    for server in servers:
+        try:
+            payload = json.dumps({
+                "q": text_short,
+                "source": "en",
+                "target": "ru",
+                "format": "text"
+            }).encode('utf-8')
+            req = urllib.request.Request(
+                server,
+                data=payload,
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'ArchiveBot/2.0'
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=8) as r:
+                result = json.loads(r.read().decode('utf-8'))
+                translated = result.get('translatedText', '')
+                if translated and translated != text_short:
+                    return translated
+        except:
+            continue
+    
+    return text_short
 
 
 def inject_into_html(events):
