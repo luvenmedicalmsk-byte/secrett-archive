@@ -37,6 +37,7 @@ export default {
       if (path === '/api/score'  && request.method === 'POST') return handleScore(request, env, ctx);
       if (path === '/api/score'  && request.method === 'GET')  return handleScore(request, env, ctx);
       if (path === '/api/scores' && request.method === 'GET')  return handleCachedScores(url, env);
+      if (path === '/api/location' && request.method === 'GET') return handleLocation(url, env);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -556,3 +557,134 @@ async function handleCachedScores(url, env) {
     message: 'Кэш пуст — запустите POST /api/score'
   });
 }
+
+// ── GET /api/location?name=Iran ──────────────────────────────────────────────
+// Страновой/городской профиль риска — Claude синтезирует все события по локации
+async function handleLocation(url, env) {
+  if (!env.ANTHROPIC_API_KEY) {
+    return jsonResponse({ error: 'ANTHROPIC_API_KEY не настроен' }, 503);
+  }
+
+  const name = url.searchParams.get('name') || '';
+  const lat  = parseFloat(url.searchParams.get('lat') || '0');
+  const lng  = parseFloat(url.searchParams.get('lng') || '0');
+
+  if (!name) return jsonResponse({ error: 'Параметр name обязателен' }, 400);
+
+  // Проверяем кэш
+  const cacheKey = `location_${name.toLowerCase().replace(/\s+/g,'_')}`;
+  try {
+    if (env.EVENTS_KV) {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) return jsonResponse({ ...cached, from_cache: true });
+    }
+  } catch (_) {}
+
+  // Собираем события по локации
+  const data   = await getEvents(env);
+  const allEvs = data.events || [];
+
+  // Ищем события где регион или заголовок содержит название
+  const nameLower = name.toLowerCase();
+  const related = allEvs.filter(e => {
+    const region  = (e.region  || '').toLowerCase();
+    const title   = (e.title   || '').toLowerCase();
+    const summary = (e.summary || '').toLowerCase();
+    return region.includes(nameLower) ||
+           title.includes(nameLower)  ||
+           summary.includes(nameLower);
+  });
+
+  // Если событий мало — расширяем поиск по координатам (±8 градусов)
+  let geoRelated = [];
+  if (related.length < 3 && lat && lng) {
+    geoRelated = allEvs.filter(e => {
+      if (related.find(r => r.id === e.id)) return false;
+      const dlat = Math.abs((e.lat||0) - lat);
+      const dlng = Math.abs((e.lng||0) - lng);
+      return dlat < 8 && dlng < 8;
+    });
+  }
+
+  const allRelated = [...related, ...geoRelated]
+    .sort((a,b) => b.severity - a.severity)
+    .slice(0, 15);
+
+  // Формируем промпт
+  const eventsText = allRelated.length > 0
+    ? allRelated.map((e,i) =>
+        `${i+1}. [${e.domain}] ${e.title} (индекс ${e.severity}/100)
+   ${e.summary?.slice(0,150)||'—'}`
+      ).join('\n\n')
+    : 'Специфических событий по данной локации не зафиксировано.';
+
+  const prompt = `Вы — аналитик глобальных рисков Архива «Великое пробуждение».
+Составьте краткий профиль рисков для: ${name}
+
+ТЕКУЩИЕ СОБЫТИЯ И СИГНАЛЫ ПО ЛОКАЦИИ:
+${eventsText}
+
+Ответьте ТОЛЬКО JSON без markdown:
+{
+  "location": "${name}",
+  "overall_risk": 75,
+  "risk_level": "высокий",
+  "summary": "2-3 предложения: текущая ситуация и главные угрозы",
+  "key_risks": [
+    { "domain": "geopolitics", "description": "Краткое описание риска" },
+    { "domain": "economy",     "description": "..." }
+  ],
+  "outlook": "краткосрочный прогноз в 1-2 предложениях",
+  "horizon": "краткосрочный",
+  "watch_signals": ["сигнал 1 для мониторинга", "сигнал 2"],
+  "events_count": ${len(allRelated)}
+}
+
+overall_risk — интегральный индекс 0-100
+risk_level — критический / высокий / умеренный / низкий
+horizon — краткосрочный (до 1 мес) / среднесрочный (1-6 мес) / долгосрочный`;
+
+  let result;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!r.ok) throw new Error(`Claude API ${r.status}`);
+    const d = await r.json();
+    const text = d.content?.[0]?.text || '';
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Нет JSON в ответе');
+    result = JSON.parse(m[0]);
+
+  } catch(e) {
+    console.error('Location score error:', e);
+    return jsonResponse({ error: 'AI scoring failed', detail: e.message }, 500);
+  }
+
+  const response = {
+    ...result,
+    related_events: allRelated,
+    scored_at: new Date().toISOString()
+  };
+
+  // Кэш на 1 час
+  try {
+    if (env.EVENTS_KV) {
+      await env.EVENTS_KV.put(cacheKey, JSON.stringify(response), { expirationTtl: 3600 });
+    }
+  } catch (_) {}
+
+  return jsonResponse(response);
+}
+
