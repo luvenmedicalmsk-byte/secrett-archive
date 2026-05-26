@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Архив · Карта рисков</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -330,7 +333,7 @@ async function tryLoadFresh() {
   // 1. Пробуем Worker API
   try {
     const r = await fetch(API_BASE + '/api/events?limit=200&sort=severity', {
-      signal: AbortSignal.timeout(4000)
+      signal: AbortSignal.timeout(6000)
     });
     if (r.ok) {
       const data = await r.json();
@@ -344,21 +347,27 @@ async function tryLoadFresh() {
     console.warn('[API] Worker недоступен, fallback на events.json:', e.message);
   }
 
-  // 2. Прямой events.json
-  try {
-    const r = await fetch('events.json?nocache=' + Date.now(), {
-      cache: 'no-store',
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!r.ok) { loadFallback(); return; }
-    const data = await r.json();
-    if (data.events && data.events.length > 0) {
-      applyEvents(data.events, data.updated);
-      console.info('[API] events.json: ' + data.events.length + ' событий');
-      return;
+  // 2. Прямой events.json (несколько попыток)
+  for (const url of [
+    'events.json?v=' + Date.now(),
+    'https://raw.githubusercontent.com/luvenmedicalmsk-byte/secrett-archive/main/events.json'
+  ]) {
+    try {
+      const r = await fetch(url, {
+        cache: 'no-store',
+        headers: {'Cache-Control': 'no-cache'},
+        signal: AbortSignal.timeout(8000)
+      });
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (data.events && data.events.length > 0) {
+        applyEvents(data.events, data.updated);
+        console.info('[API] Загружено из:', url, '— событий:', data.events.length);
+        return;
+      }
+    } catch(e) {
+      console.warn('[API] Ошибка:', url, e.message);
     }
-  } catch(e) {
-    console.warn('[API] events.json error:', e.message);
   }
 
   loadFallback();
