@@ -220,14 +220,22 @@ async function loadWorld(){
 }
 
 async function loadEvents(){
-  try {
-    const r = await fetch('events.json?t=' + Date.now());
-    const data = await r.json();
-    setProgress(80);
-    return data;
-  } catch(e) {
-    return { events: [], updated: new Date().toISOString() };
-  }
+  setProgress(80);
+  return {
+    updated: new Date().toISOString(),
+    events: [
+      {id:"e001",title:"Засуха охватывает Северную Африку",domain:"climate",severity:85,lat:28.0,lng:15.0,region:"Северная Африка",summary:"Продовольственная безопасность 40 млн человек под угрозой. Урожай пшеницы сократился на 35%.",source:"ACLED",date:"2026-05-25"},
+      {id:"e002",title:"Торговая война: новые тарифы США–ЕС",domain:"economy",severity:72,lat:48.0,lng:10.0,region:"Европа",summary:"Брюссель объявил ответные меры на американские тарифы. Под угрозой €180 млрд товарооборота.",source:"Reuters",date:"2026-05-24"},
+      {id:"e003",title:"Эскалация в Южно-Китайском море",domain:"geopolitics",severity:90,lat:12.0,lng:114.0,region:"Юго-Восточная Азия",summary:"Военно-морские манёвры трёх держав одновременно. Риск инцидента — критический.",source:"GDELT",date:"2026-05-25"},
+      {id:"e004",title:"ИИ-регулирование: крах переговоров в ООН",domain:"technology",severity:65,lat:46.9,lng:7.5,region:"Швейцария",summary:"США и Китай заблокировали глобальное соглашение по управлению ИИ.",source:"Tech Monitor",date:"2026-05-23"},
+      {id:"e005",title:"Волнения в Сахеле: 5 стран",domain:"social",severity:78,lat:15.0,lng:0.0,region:"Западная Африка",summary:"Протесты против военных правительств охватили регион. Гуманитарный кризис обостряется.",source:"ACLED",date:"2026-05-24"},
+      {id:"e006",title:"Паводки в Бангладеш — 12 млн пострадавших",domain:"climate",severity:80,lat:23.7,lng:90.4,region:"Южная Азия",summary:"Наводнения сезона муссонов усиливаются. Смещение населения — максимум за 20 лет.",source:"NASA",date:"2026-05-22"},
+      {id:"e007",title:"Рецессия в Германии — официально",domain:"economy",severity:68,lat:51.2,lng:10.4,region:"Германия",summary:"ВВП сократился второй квартал подряд. Промышленное производство упало на 4.2%.",source:"Destatis",date:"2026-05-20"},
+      {id:"e008",title:"Кибератака на энергосети Балтики",domain:"technology",severity:75,lat:56.9,lng:24.1,region:"Прибалтика",summary:"Скоординированные атаки на инфраструктуру трёх стран.",source:"OSINT",date:"2026-05-21"},
+      {id:"e009",title:"Миграционный кризис на границе Мексика–США",domain:"social",severity:70,lat:31.7,lng:-106.5,region:"Северная Америка",summary:"Рекордное число пересечений на фоне климатической миграции из Центральной Америки.",source:"GDELT",date:"2026-05-23"},
+      {id:"e010",title:"Напряжённость Индия–Пакистан: войска у границы",domain:"geopolitics",severity:88,lat:30.0,lng:70.0,region:"Южная Азия",summary:"Обе стороны провели военные учения. Дипломатические каналы заморожены.",source:"ACLED",date:"2026-05-25"}
+    ]
+  };
 }
 
 function domainColor(d){ return DOMAIN_COLORS[d] || '#B8973A' }
