@@ -1942,6 +1942,52 @@ def translate_batch(texts):
         return [_translate_cache.get(t, t) for t in texts]
     
     # Переводим через LibreTranslate — один запрос на всё
+    # Встроенный словарный переводчик — работает без внешних запросов
+    WORD_MAP = {
+        'wildfire': 'лесной пожар', 'wildfires': 'лесные пожары',
+        'flood': 'наводнение', 'floods': 'наводнения', 'flooding': 'затопление',
+        'earthquake': 'землетрясение', 'earthquakes': 'землетрясения',
+        'hurricane': 'ураган', 'typhoon': 'тайфун', 'cyclone': 'циклон',
+        'drought': 'засуха', 'heatwave': 'аномальная жара',
+        'volcano': 'вулкан', 'eruption': 'извержение',
+        'tsunami': 'цунами', 'landslide': 'оползень',
+        'war': 'война', 'attack': 'атака', 'strike': 'удар',
+        'military': 'военный', 'troops': 'войска', 'missile': 'ракета',
+        'ceasefire': 'перемирие', 'invasion': 'вторжение',
+        'sanctions': 'санкции', 'crisis': 'кризис',
+        'protest': 'протест', 'unrest': 'беспорядки',
+        'coup': 'переворот', 'election': 'выборы',
+        'recession': 'рецессия', 'inflation': 'инфляция',
+        'debt': 'долг', 'default': 'дефолт',
+        'cyberattack': 'кибератака', 'hacking': 'взлом',
+        'pandemic': 'пандемия', 'outbreak': 'вспышка болезни',
+        'refugee': 'беженцы', 'migration': 'миграция',
+        'fire': 'пожар', 'storm': 'шторм', 'tornado': 'торнадо',
+        'explosion': 'взрыв', 'collapse': 'обрушение',
+        'killed': 'погибших', 'dead': 'мертвых', 'casualties': 'жертвы',
+        'emergency': 'чрезвычайная ситуация', 'disaster': 'катастрофа',
+        'warning': 'предупреждение', 'alert': 'тревога',
+        'nuclear': 'ядерный', 'chemical': 'химический',
+        'oil': 'нефть', 'gas': 'газ', 'energy': 'энергетика',
+        'climate': 'климат', 'temperature': 'температура',
+        'arctic': 'арктика', 'ice': 'лёд', 'glacier': 'ледник',
+        'deforestation': 'вырубка лесов', 'pollution': 'загрязнение',
+    }
+    
+    def simple_translate(text):
+        """Простой словарный перевод ключевых слов"""
+        if not text or not is_english(text):
+            return text
+        result = text
+        text_lower = text.lower()
+        for eng, rus in WORD_MAP.items():
+            if eng in text_lower:
+                # Заменяем первое вхождение с учётом регистра
+                import re
+                result = re.sub(r'' + eng + r'', rus, result, flags=re.IGNORECASE, count=1)
+        return result
+    
+    # Сначала пробуем внешние серверы, потом словарный fallback
     servers = [
         "https://translate.fedilab.app/translate",
         "https://libretranslate.de/translate",
@@ -1991,7 +2037,10 @@ def translate_batch(texts):
             time.sleep(1)
             continue
     
-    # Если перевод не удался — возвращаем оригиналы
+    # Если внешние серверы недоступны — используем словарный переводчик
+    print(f"  Словарный перевод {len(to_translate)} заголовков", file=sys.stderr)
+    for orig_idx, orig_text in to_translate:
+        results[orig_idx] = simple_translate(orig_text)
     return results
 
 def translate_to_russian(text, max_len=150):
