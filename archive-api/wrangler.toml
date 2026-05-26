@@ -1,0 +1,21 @@
+name        = "archive-api"
+main        = "worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# KV для кэша событий (создать: wrangler kv:namespace create EVENTS_KV)
+[[kv_namespaces]]
+binding  = "EVENTS_KV"
+id       = "REPLACE_WITH_YOUR_KV_ID"
+preview_id = "REPLACE_WITH_YOUR_KV_PREVIEW_ID"
+
+[vars]
+GITHUB_REPO = "luvenmedicalmsk-byte/secrett-archive"
+
+# Секреты (задать через: wrangler secret put ADMIN_KEY / GITHUB_TOKEN)
+# ADMIN_KEY   — для POST /api/events/refresh
+# GITHUB_TOKEN — для триггера GitHub Actions
+
+[[routes]]
+pattern = "api.secrett-archive.com/*"
+zone_name = "secrett-archive.com"
