@@ -619,11 +619,9 @@ def process_events(raw_items):
         summary = item['desc'][:250].strip()
         if summary and not summary.endswith('.'): summary += '...'
 
-        # Переводим только заголовок (summary оставляем как есть для скорости)
-        title_final = translate_to_russian(item['title'][:130])
         events.append({
             "id": ev_id,
-            "title": title_final,
+            "title": item['title'][:130],
             "domain": domain,
             "severity": severity,
             "lat": lat, "lng": lng,
@@ -635,7 +633,16 @@ def process_events(raw_items):
         })
 
     events.sort(key=lambda e: e['severity'], reverse=True)
-    return events[:MAX_EVENTS]
+    top_events = events[:MAX_EVENTS]
+    
+    # Пакетный перевод заголовков — один запрос вместо 150
+    print(f"  Переводим заголовки...", file=sys.stderr)
+    titles = [e['title'] for e in top_events]
+    translated_titles = translate_batch(titles)
+    for i, ev in enumerate(top_events):
+        ev['title'] = translated_titles[i]
+    
+    return top_events
 
 def save(events):
     output = {
@@ -981,6 +988,203 @@ def fetch_russia_climate():
     print(f"  Климат Россия: {len(items)} событий", file=sys.stderr)
     return items
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: Климатические риски России v2
+# Пожары, паводки, пермафрост, загрязнение
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_russia_climate_v2():
+    items = []
+    
+    # 1. Авиалесоохрана — лесные пожары России (официальный источник)
+    aviales_url = "https://aviales.ru/rss.xml"
+    data = fetch_url(aviales_url)
+    if data:
+        try:
+            root = ET.fromstring(data)
+            for item in root.findall('.//item')[:20]:
+                title = item.findtext('title','').strip()
+                desc = item.findtext('description','').strip()[:300]
+                pub_date = item.findtext('pubDate','')
+                if not title: continue
+                # Определяем регион
+                geo = detect_russia_coords(title, desc)
+                base = {
+                    'title': title, 'desc': desc,
+                    'date': parse_date(pub_date),
+                    'source': 'Авиалесоохрана',
+                    'source_bias': 12
+                }
+                if geo:
+                    base['_lat'], base['_lng'], base['_region'] = geo
+                    base['_domain'] = 'climate'
+                items.append(base)
+        except Exception as e:
+            print(f"  [WARN] Авиалесоохрана: {e}", file=sys.stderr)
+
+    # 2. FIRMS NASA — спутниковый мониторинг пожаров Россия
+    # Bbox Россия: lon 30-180, lat 45-75
+    firms_url = ("https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
+                 "DEMO_KEY/VIIRS_SNPP_NRT/30,45,180,75/7/")
+    data = fetch_url(firms_url, timeout=20)
+    if data and 'latitude' in data:
+        try:
+            lines = data.strip().split('
+')
+            headers = lines[0].split(',')
+            lat_idx = headers.index('latitude') if 'latitude' in headers else -1
+            lon_idx = headers.index('longitude') if 'longitude' in headers else -1
+            date_idx = headers.index('acq_date') if 'acq_date' in headers else -1
+            bright_idx = headers.index('bright_ti4') if 'bright_ti4' in headers else -1
+            
+            # Кластеризуем точки по регионам
+            seen_regions = {}
+            for line in lines[1:]:
+                parts = line.split(',')
+                if len(parts) <= max(lat_idx, lon_idx, 0): continue
+                try:
+                    lat = float(parts[lat_idx])
+                    lng = float(parts[lon_idx])
+                    region = detect_region_by_coords(lat, lng)
+                    brightness = float(parts[bright_idx]) if bright_idx >= 0 and parts[bright_idx] else 300
+                    
+                    if region not in seen_regions or brightness > seen_regions[region]['bright']:
+                        seen_regions[region] = {
+                            'lat': lat, 'lng': lng, 'bright': brightness,
+                            'date': parts[date_idx] if date_idx >= 0 else datetime.now(timezone.utc).strftime('%Y-%m-%d')
+                        }
+                except: continue
+            
+            for region, info in list(seen_regions.items())[:15]:
+                intensity = 'высокой' if info['bright'] > 350 else 'средней'
+                items.append({
+                    'title': f"Лесной пожар {intensity} интенсивности — {region}",
+                    'desc': f"Спутниковая детекция VIIRS/NASA. Яркость: {info['bright']:.0f}K. Регион: {region}",
+                    'date': info['date'],
+                    'source': 'NASA FIRMS',
+                    'source_bias': 15,
+                    '_lat': info['lat'], '_lng': info['lng'],
+                    '_region': region, '_domain': 'climate'
+                })
+            print(f"  NASA FIRMS Россия: {len(seen_regions)} очагов", file=sys.stderr)
+        except Exception as e:
+            print(f"  [WARN] FIRMS: {e}", file=sys.stderr)
+
+    # 3. МЧС России — паводки и ЧС
+    mchs_feeds = [
+        "https://www.mchs.gov.ru/feeds/all",
+        "https://mchs.gov.ru/deyatelnost/press-centr/novosti/rss",
+    ]
+    mchs_keywords = [
+        "паводок","наводнение","подтопление","разлив","половодье",
+        "пожар","лесной пожар","природный пожар","пал",
+        "загрязнение","разлив нефти","химическое загрязнение",
+        "землетрясение","оползень","сель","лавина","смерч","ураган",
+        "жара","аномальная жара","засуха","экологическая катастрофа"
+    ]
+    for url in mchs_feeds:
+        data = fetch_url(url)
+        if not data: continue
+        try:
+            root = ET.fromstring(data)
+            for item in root.findall('.//item')[:20]:
+                title = item.findtext('title','').strip()
+                desc = item.findtext('description','').strip()[:300]
+                pub_date = item.findtext('pubDate','')
+                if not title: continue
+                text = (title + ' ' + desc).lower()
+                if any(kw in text for kw in mchs_keywords):
+                    geo = detect_russia_coords(title, desc)
+                    base = {
+                        'title': title, 'desc': desc,
+                        'date': parse_date(pub_date),
+                        'source': 'МЧС России',
+                        'source_bias': 14
+                    }
+                    if geo:
+                        base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_domain'] = 'climate'
+                    items.append(base)
+        except: pass
+
+    # 4. Пермафрост и арктические риски
+    permafrost_feeds = [
+        "https://www.arctic.ru/rss/",           # Арктика-инфо
+        "https://nsidc.org/news/newsroom/rss",  # NSIDC (криосфера)
+        "https://www.arctictoday.com/feed/",    # Arctic Today
+    ]
+    permafrost_keywords = [
+        "permafrost","вечная мерзлота","таяние мерзлоты",
+        "arctic warming","арктика","arctic","methane release",
+        "метан","тундра","tundra","thermokarst","subsidence",
+        "просадка грунта","криолитозона"
+    ]
+    for url in permafrost_feeds:
+        data = fetch_url(url)
+        if not data: continue
+        try:
+            root = ET.fromstring(data)
+            for item in root.findall('.//item')[:10]:
+                title = item.findtext('title','').strip()
+                desc = item.findtext('description','').strip()[:300]
+                pub_date = item.findtext('pubDate','')
+                if not title: continue
+                text = (title + ' ' + desc).lower()
+                if any(kw in text for kw in permafrost_keywords):
+                    # Пермафрост — Сибирь/Арктика
+                    is_russia = any(r in text for r in ['russia','siberia','arctic','якути','сибир','арктик'])
+                    lat = round(67.0 + __import__('random').uniform(-5,5), 2)
+                    lng = round(100.0 + __import__('random').uniform(-20,20), 2)
+                    items.append({
+                        'title': title, 'desc': desc,
+                        'date': parse_date(pub_date),
+                        'source': url.split('/')[2],
+                        'source_bias': 10,
+                        '_lat': lat, '_lng': lng,
+                        '_region': 'Арктика/Сибирь', '_domain': 'climate'
+                    })
+        except: pass
+
+    # 5. Загрязнение — Greenpeace Russia, WWF Russia
+    pollution_feeds = [
+        "https://greenpeace.org/russia/ru/feed/",
+        "https://wwf.ru/rss/",
+        "https://bellona.ru/rss",  # Bellona — экология России/Арктики
+    ]
+    pollution_keywords = [
+        "загрязнение","разлив нефти","toxic","нефтяной разлив",
+        "химический","ядовитый","pollution","contamination",
+        "экологическая катастрофа","сброс","выброс","радиация",
+        "промышленные отходы","свалка","мусор"
+    ]
+    for url in pollution_feeds:
+        data = fetch_url(url)
+        if not data: continue
+        try:
+            root = ET.fromstring(data)
+            for item in root.findall('.//item')[:10]:
+                title = item.findtext('title','').strip()
+                desc = item.findtext('description','').strip()[:300]
+                pub_date = item.findtext('pubDate','')
+                if not title: continue
+                text = (title + ' ' + desc).lower()
+                if any(kw in text for kw in pollution_keywords):
+                    geo = detect_russia_coords(title, desc)
+                    base = {
+                        'title': title, 'desc': desc,
+                        'date': parse_date(pub_date),
+                        'source': url.split('/')[2],
+                        'source_bias': 9
+                    }
+                    if geo:
+                        base['_lat'], base['_lng'], base['_region'] = geo
+                        base['_domain'] = 'climate'
+                    items.append(base)
+        except: pass
+
+    print(f"  Климат Россия v2: {len(items)} событий", file=sys.stderr)
+    return items
+
+
 # Координаты российских регионов для геолокации
 RUSSIA_REGIONS = {
     "москва": (55.75, 37.62), "moscow": (55.75, 37.62),
@@ -1235,48 +1439,83 @@ def fetch_europe_latam():
     return items
 
 
-def translate_to_russian(text, max_len=200):
-    """Переводит текст на русский — пробует несколько серверов"""
-    if not text or not text.strip():
-        return text
-    # Если уже кириллица — не переводим
+# Кэш переводов — не переводим одно и то же дважды
+_translate_cache = {}
+
+def is_english(text):
+    """Проверяет что текст на английском (нужен перевод)"""
+    if not text: return False
     cyrillic = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
-    if cyrillic > len(text) * 0.25:
-        return text
-    text_short = text[:max_len]
+    latin = sum(1 for c in text if c.isalpha() and c.isascii())
+    return cyrillic < len(text) * 0.15 and latin > len(text) * 0.3
+
+def translate_batch(texts):
+    """Переводит список текстов одним запросом"""
+    import time
+    # Фильтруем только английские тексты которых нет в кэше
+    to_translate = [(i, t) for i, t in enumerate(texts) 
+                    if is_english(t) and t not in _translate_cache]
     
-    # Вариант 1: LibreTranslate (публичный сервер)
+    if not to_translate:
+        return [_translate_cache.get(t, t) for t in texts]
+    
+    # Переводим через LibreTranslate — один запрос на всё
     servers = [
-        "https://libretranslate.de/translate",
         "https://translate.argosopentech.com/translate",
-        "https://libretranslate.com/translate",
+        "https://libretranslate.de/translate",
     ]
+    
+    results = list(texts)  # копия
+    
     for server in servers:
         try:
+            # Объединяем тексты через разделитель для одного запроса
+            sep = " ||| "
+            combined = sep.join(t[:150] for _, t in to_translate)
+            
             payload = json.dumps({
-                "q": text_short,
-                "source": "en",
+                "q": combined,
+                "source": "en", 
                 "target": "ru",
                 "format": "text"
             }).encode('utf-8')
+            
             req = urllib.request.Request(
                 server,
                 data=payload,
-                headers={
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'ArchiveBot/2.0'
-                },
+                headers={'Content-Type': 'application/json', 'User-Agent': 'ArchiveBot/2.0'},
                 method='POST'
             )
-            with urllib.request.urlopen(req, timeout=8) as r:
+            with urllib.request.urlopen(req, timeout=15) as r:
                 result = json.loads(r.read().decode('utf-8'))
-                translated = result.get('translatedText', '')
-                if translated and translated != text_short:
-                    return translated
-        except:
+                translated_combined = result.get('translatedText', '')
+                
+                if translated_combined:
+                    parts = translated_combined.split('|||')
+                    for j, (orig_idx, orig_text) in enumerate(to_translate):
+                        if j < len(parts):
+                            tr = parts[j].strip()
+                            if tr and len(tr) > 3:
+                                _translate_cache[orig_text] = tr
+                                results[orig_idx] = tr
+                    print(f"  ✓ Переведено {len(to_translate)} заголовков", file=sys.stderr)
+                    return results
+        except Exception as e:
+            print(f"  [WARN] Перевод {server[:30]}: {e}", file=sys.stderr)
+            time.sleep(1)
             continue
     
-    return text_short
+    # Если перевод не удался — возвращаем оригиналы
+    return results
+
+def translate_to_russian(text, max_len=150):
+    """Одиночный перевод с кэшем"""
+    if not text or not is_english(text):
+        return text
+    if text in _translate_cache:
+        return _translate_cache[text]
+    results = translate_batch([text])
+    return results[0] if results else text
 
 
 def inject_into_html(events):
@@ -1355,6 +1594,7 @@ if __name__ == '__main__':
     raw += fetch_global_rss()
     raw += fetch_wfp()
     raw += fetch_russia_climate()
+    raw += fetch_russia_climate_v2()
     raw += fetch_regional()
     raw += fetch_mideast_asia()
     raw += fetch_uk_canada_nordic()
