@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 """
-Архив · Парсер глобальных рисков v2
-Источники: NewsAPI, GDELT 2.0, ReliefWeb API, NASA EONET
-Результат → docs/events.json (обновляется каждые 10 минут)
+Архив · Парсер глобальных рисков v3
+Источники: NewsAPI, GDACS, ReliefWeb, NASA EONET/FIRMS, USGS, Copernicus,
+           CISA, ACLED, 500+ RSS (BIS, WHO, IOM, SIPRI, IAEA, Chatham House...)
+Результат → docs/events.json + docs/risk-map.html (обновляется каждые 10 минут)
+Исправлено v3: OUTPUT_PATH, inject_html путь, REGION_COORDS дубли,
+               DOMAIN_QUOTA сумма, fetch_gdelt отключён, retry в fetch_url,
+               скомпилированные regex, import random на уровне модуля
 """
 
-import json, os, sys, hashlib, math, urllib.request, urllib.parse
+import json, os, sys, hashlib, math, re, time, urllib.request, urllib.parse, urllib.error
 import xml.etree.ElementTree as ET
+import random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-OUTPUT_PATH = Path(__file__).parent.parent / "events.json"
+OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
 MAX_EVENTS = 200
 SEVERITY_THRESHOLD = 45
 
 # Координаты регионов для геолокации событий
 REGION_COORDS = {
-    "ukraine": (49.0, 31.0), "russia": (61.0, 60.0), "china": (35.0, 105.0),
+    "russia": (61.0, 60.0),
     "usa": (38.0, -97.0), "united states": (38.0, -97.0), "america": (38.0, -97.0),
     "india": (22.0, 80.0), "pakistan": (30.0, 70.0), "iran": (32.0, 53.0),
     "israel": (31.5, 34.8), "gaza": (31.4, 34.3), "lebanon": (33.9, 35.5),
@@ -29,11 +34,11 @@ REGION_COORDS = {
     "sahel": (15.0, 0.0), "nigeria": (9.1, 8.7), "kenya": (-0.0, 37.9),
     "africa": (5.0, 20.0), "asia": (35.0, 100.0), "middle east": (27.0, 45.0),
     "south america": (-15.0, -55.0), "north america": (45.0, -100.0),
-    "turkey": (38.9, 35.2), "saudi": (23.9, 45.1), "egypt": (26.8, 30.8),
+    "saudi": (23.9, 45.1),
     "indonesia": (-0.8, 113.9), "philippines": (12.9, 121.8),
     "bangladesh": (23.7, 90.4), "nepal": (28.4, 84.1), "california": (36.7, -119.4),
     "texas": (31.0, -99.0), "florida": (27.7, -81.6), "baltic": (57.0, 24.0),
-    "switzerland": (46.9, 7.5), "poland": (51.9, 19.1), "hungary": (47.2, 19.5),
+    "poland": (51.9, 19.1), "hungary": (47.2, 19.5),
     "turkey": (38.9, 35.2), "türkiye": (38.9, 35.2), "ankara": (39.9, 32.9),
     "istanbul": (41.0, 28.9), "izmir": (38.4, 27.1),
     "kazakhstan": (48.0, 68.0), "almaty": (43.2, 76.9), "astana": (51.2, 71.5),
@@ -45,7 +50,7 @@ REGION_COORDS = {
     "portugal": (38.7, -9.1), "netherlands": (52.4, 4.9), "belgium": (50.8, 4.4),
     "austria": (48.2, 16.4), "romania": (44.4, 26.1), "bulgaria": (42.7, 23.3),
     "serbia": (44.8, 20.5), "moldova": (47.0, 28.8),
-    "georgia": (41.7, 44.8), "armenia": (40.2, 44.5), "azerbaijan": (40.4, 49.9),
+    "azerbaijan": (40.4, 49.9),
     "uzbekistan": (41.3, 69.2), "kyrgyzstan": (42.9, 74.6),
     "tajikistan": (38.6, 68.8), "turkmenistan": (37.9, 58.4),
     "eurasianet": (45.0, 60.0), "central asia": (45.0, 60.0),
@@ -312,16 +317,30 @@ def detect_domain(title, desc):
 def get_env(key, default=""):
     return os.environ.get(key, default)
 
-def fetch_url(url, timeout=20, headers=None):
-    try:
-        req = urllib.request.Request(url, headers=headers or {
-            'User-Agent': 'ArchiveRiskMonitor/2.0'
-        })
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return r.read().decode('utf-8', errors='ignore')
-    except Exception as e:
-        print(f"  [WARN] {url[:70]}: {e}", file=sys.stderr)
-        return None
+def fetch_url(url, timeout=20, headers=None, retries=2):
+    """Загружает URL с retry при временных ошибках (429, 503, timeout)"""
+    last_err = None
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=headers or {
+                'User-Agent': 'ArchiveRiskMonitor/2.0'
+            })
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.read().decode('utf-8', errors='ignore')
+        except urllib.error.HTTPError as e:
+            last_err = e
+            if e.code in (429, 503, 502) and attempt < retries:
+                time.sleep(3 * (attempt + 1))
+                continue
+            break
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                time.sleep(2)
+                continue
+            break
+    print(f"  [WARN] {url[:70]}: {last_err}", file=sys.stderr)
+    return None
 
 def parse_date(s):
     if not s: return datetime.now(timezone.utc).strftime('%Y-%m-%d')
@@ -341,7 +360,6 @@ def detect_coords(title, desc):
         if region in text and len(region) > best_len:
             best, best_len, best_coords = region, len(region), coords
     if best:
-        import random
         lat, lng = best_coords
         return round(lat + random.uniform(-2, 2), 2), round(lng + random.uniform(-2, 2), 2), best.title()
     return None
@@ -355,8 +373,7 @@ def estimate_severity(title, desc, bias=0):
            'recession','attack','missile','tension','displaced','emergency']
     score += sum(8 for s in high if s in text)
     score += sum(4 for s in med if s in text)
-    score += bias
-    import re
+    score += bias  # source_credibility уже учтён в source_bias каждого источника
     for num_str, _ in re.findall(r'\b(\d[\d,]*)\s*(killed|dead|displaced|million|billion)', text):
         n = int(num_str.replace(',',''))
         if n >= 1000000: score += 20
@@ -428,8 +445,6 @@ def fetch_gdelt():
     url = (f"https://api.gdeltproject.org/api/v2/doc/doc"
            f"?query={urllib.parse.quote(query)}"
            f"&mode=artlist&format=json&maxrecords=25&timespan=2h&sort=DateDesc")
-    import time
-    time.sleep(6)  # GDELT rate limit: 1 запрос каждые 5 секунд
     data = fetch_url(url)
     if data:
         try:
@@ -631,14 +646,18 @@ def process_events(raw_items):
 
     events.sort(key=lambda e: e['severity'], reverse=True)
     
-    # Квотирование по доменам — не более 45% на один домен
+    # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     DOMAIN_QUOTA = {
-        'climate':    int(MAX_EVENTS * 0.40),
-        'geopolitics': int(MAX_EVENTS * 0.30),
-        'economy':    int(MAX_EVENTS * 0.15),
-        'technology': int(MAX_EVENTS * 0.10),
-        'social':     int(MAX_EVENTS * 0.10),
+        'climate':     int(MAX_EVENTS * 0.40),   # 80
+        'geopolitics': int(MAX_EVENTS * 0.30),   # 60
+        'economy':     int(MAX_EVENTS * 0.15),   # 30
+        'technology':  int(MAX_EVENTS * 0.075),  # 15
+        'social':      int(MAX_EVENTS * 0.075),  # 15
     }
+    # Корректируем если из-за округления сумма != MAX_EVENTS
+    _quota_sum = sum(DOMAIN_QUOTA.values())
+    if _quota_sum != MAX_EVENTS:
+        DOMAIN_QUOTA['climate'] += MAX_EVENTS - _quota_sum
     domain_counts = {d: 0 for d in DOMAIN_QUOTA}
     balanced = []
     overflow = []  # события сверх квоты — добавим в конце если есть место
@@ -890,6 +909,20 @@ def fetch_global_rss():
         # Социум/права человека
         {"url": "https://www.hrw.org/node/feed", "source": "Human Rights Watch", "bias": 9},
         {"url": "https://www.amnesty.org/en/feed/", "source": "Amnesty International", "bias": 9},
+        # Экономика — аналитические институты
+        {"url": "https://www.bis.org/press/rss.htm", "source": "BIS", "bias": 9, "domain": "economy"},
+        {"url": "https://www.oecd.org/newsroom/rss.xml", "source": "OECD", "bias": 8, "domain": "economy"},
+        {"url": "https://www.project-syndicate.org/rss/economics", "source": "Project Syndicate Economics", "bias": 8, "domain": "economy"},
+        {"url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", "source": "WSJ Markets", "bias": 8, "domain": "economy"},
+        # Социум — миграция, здоровье
+        {"url": "https://www.iom.int/rss.xml", "source": "IOM Migration", "bias": 8, "domain": "social"},
+        {"url": "https://www.who.int/rss-feeds/news-english.xml", "source": "WHO", "bias": 9, "domain": "social"},
+        {"url": "https://reliefweb.int/updates/rss.xml", "source": "ReliefWeb Updates", "bias": 8, "domain": "social"},
+        # Геополитика — экспертные центры
+        {"url": "https://www.chathamhouse.org/rss.xml", "source": "Chatham House", "bias": 9, "domain": "geopolitics"},
+        {"url": "https://sipri.org/rss.xml", "source": "SIPRI", "bias": 9, "domain": "geopolitics"},
+        {"url": "https://www.iaea.org/newscenter/news/rss", "source": "IAEA", "bias": 10, "domain": "geopolitics"},
+        {"url": "https://www.icrc.org/en/rss.xml", "source": "ICRC", "bias": 9, "domain": "geopolitics"},
     ]
     for feed in feeds:
         data = fetch_url(feed['url'])
@@ -1084,7 +1117,6 @@ def fetch_copernicus_floods():
             'mozambique': (-18.7, 35.5), 'madagascar': (-18.8, 46.9), 'malawi': (-13.3, 34.3),
         }
         
-        import random
         
         for flood in floods:
             ftype = flood.get('type', '')
@@ -1212,7 +1244,6 @@ def fetch_copernicus_cyber():
             'global': (20.0, 0.0), 'worldwide': (20.0, 0.0),
         }
         
-        import random
         
         for event in cyber:
             etype = event.get('type', '')
@@ -1938,12 +1969,10 @@ def detect_russia_coords(title, desc):
     text = (title + ' ' + desc).lower()
     for region, coords in RUSSIA_REGIONS.items():
         if region in text:
-            import random
             lat, lng = coords
             return round(lat + random.uniform(-1,1), 2), round(lng + random.uniform(-2,2), 2), region.title()
     # Если упоминается Россия — центральная точка
     if 'россия' in text or 'russia' in text or 'russian' in text:
-        import random
         return round(61.0 + random.uniform(-5,5), 2), round(60.0 + random.uniform(-10,10), 2), 'Россия'
     return None
 
@@ -2182,7 +2211,6 @@ def is_english(text):
 
 def translate_batch(texts):
     """Переводит список текстов одним запросом"""
-    import time
     # Фильтруем только английские тексты которых нет в кэше
     to_translate = [(i, t) for i, t in enumerate(texts) 
                     if is_english(t) and t not in _translate_cache]
@@ -2223,6 +2251,10 @@ def translate_batch(texts):
         'deforestation': 'вырубка лесов', 'pollution': 'загрязнение',
     }
     
+    # Компилируем паттерны один раз — не в цикле
+    _COMPILED = {eng: re.compile(r'\b' + re.escape(eng) + r'\b', re.IGNORECASE)
+                 for eng in WORD_MAP}
+
     def simple_translate(text):
         """Простой словарный перевод ключевых слов"""
         if not text or not is_english(text):
@@ -2231,9 +2263,7 @@ def translate_batch(texts):
         text_lower = text.lower()
         for eng, rus in WORD_MAP.items():
             if eng in text_lower:
-                # Заменяем первое вхождение с учётом регистра
-                import re
-                result = re.sub(r'' + eng + r'', rus, result, flags=re.IGNORECASE, count=1)
+                result = _COMPILED[eng].sub(rus, result, count=1)
         return result
     
     # Сначала пробуем внешние серверы, потом словарный fallback
@@ -2304,7 +2334,7 @@ def translate_to_russian(text, max_len=150):
 
 def inject_into_html(events):
     """Встраивает события прямо в risk-map.html для обхода кэша GitHub Pages"""
-    html_path = Path(__file__).parent.parent / "risk-map.html"
+    html_path = Path(__file__).parent.parent / "docs" / "risk-map.html"
     if not html_path.exists():
         print(f"  [SKIP] {html_path} не найден", file=sys.stderr)
         return
@@ -2368,7 +2398,7 @@ if __name__ == '__main__':
     raw = []
     print("Загружаю источники:", file=sys.stderr)
     raw += fetch_newsapi(NEWS_API_KEY)
-    raw += fetch_gdelt()
+    # fetch_gdelt() — ОТКЛЮЧЕНО: облачные IP заблокированы GDELT
     raw += fetch_reliefweb()
     raw += fetch_reliefweb_v2()
     raw += fetch_nasa_eonet()
@@ -2383,7 +2413,7 @@ if __name__ == '__main__':
     # Спутниковые источники
     raw += fetch_copernicus_floods()
     raw += fetch_copernicus_cyber()
-    raw += fetch_copernicus()
+    # fetch_copernicus() — дубликат sentinel, убрано
     raw += fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))
     raw += fetch_nasa_firms(get_env('FIRMS_API_KEY'))
     raw += fetch_global_forest_watch()
