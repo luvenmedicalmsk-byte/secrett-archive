@@ -428,6 +428,8 @@ def fetch_gdelt():
     url = (f"https://api.gdeltproject.org/api/v2/doc/doc"
            f"?query={urllib.parse.quote(query)}"
            f"&mode=artlist&format=json&maxrecords=25&timespan=2h&sort=DateDesc")
+    import time
+    time.sleep(6)  # GDELT rate limit: 1 запрос каждые 5 секунд
     data = fetch_url(url)
     if data:
         try:
