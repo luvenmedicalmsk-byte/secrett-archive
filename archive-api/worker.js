@@ -355,80 +355,115 @@ async function handleRefresh(request, env, ctx) {
 
 // ── AI SCORING ────────────────────────────────────────────────────────────────
 
+const DOMAINS = {
+  climate:     { ru: 'Климат',      context: 'климатические катастрофы, стихийные бедствия, изменение климата, экологические кризисы' },
+  economy:     { ru: 'Экономика',   context: 'финансовые кризисы, инфляция, рецессия, торговые войны, долговые кризисы, банковские коллапсы' },
+  geopolitics: { ru: 'Геополитика', context: 'вооружённые конфликты, дипломатические кризисы, санкции, территориальные споры, политическая нестабильность' },
+  technology:  { ru: 'Технологии',  context: 'кибератаки, уязвимости инфраструктуры, AI-риски, технологические сбои, дезинформация' },
+  social:      { ru: 'Социум',      context: 'протесты, продовольственная безопасность, миграционные кризисы, здравоохранение, социальная нестабильность' }
+};
+
+// POST /api/score  — оценка всех 5 доменов за один запрос
 async function handleScore(request, env, ctx) {
-  // Авторизация — только с ключом или публичный режим (настраивается)
   const key = request.headers.get('X-API-Key');
   const PUBLIC_SCORING = env.PUBLIC_SCORING === 'true';
   if (!PUBLIC_SCORING && (!env.ADMIN_KEY || key !== env.ADMIN_KEY)) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
-
   if (!env.ANTHROPIC_API_KEY) {
     return jsonResponse({ error: 'ANTHROPIC_API_KEY не настроен' }, 503);
   }
 
-  const body   = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
-  const limit  = Math.min(20, parseInt(body.limit || '10'));
-  const domain = body.domain || null;
+  const body        = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
+  const topPerDomain = Math.min(10, parseInt(body.top || '5')); // топ N на домен
+  const onlyDomain  = body.domain || null; // можно оценить один домен
 
-  // Берём события для оценки
   const data   = await getEvents(env);
-  let events   = data.events || [];
-  if (domain) events = events.filter(e => e.domain === domain);
-  
-  // Сортируем по текущему severity, берём топ
-  events = events
-    .sort((a, b) => b.severity - a.severity)
-    .slice(0, limit);
+  const allEvs = data.events || [];
 
-  if (events.length === 0) {
+  const domainsToScore = onlyDomain
+    ? [onlyDomain]
+    : Object.keys(DOMAINS);
+
+  // Собираем топ-N по каждому домену
+  const sections = [];
+  const eventMap = {}; // index → event
+
+  let idx = 1;
+  for (const dom of domainsToScore) {
+    const domEvents = allEvs
+      .filter(e => e.domain === dom)
+      .sort((a, b) => b.severity - a.severity)
+      .slice(0, topPerDomain);
+
+    if (domEvents.length === 0) continue;
+
+    const domInfo = DOMAINS[dom] || { ru: dom, context: dom };
+    sections.push(`
+## ${domInfo.ru.toUpperCase()} (${domInfo.context})`);
+
+    for (const ev of domEvents) {
+      sections.push(
+        `${idx}. ${ev.title}
+   Регион: ${ev.region} | Текущий индекс: ${ev.severity}/100
+   ${ev.summary?.slice(0, 180) || '—'}`
+      );
+      eventMap[idx] = ev;
+      idx++;
+    }
+  }
+
+  if (Object.keys(eventMap).length === 0) {
     return jsonResponse({ error: 'Нет событий для оценки' }, 404);
   }
 
-  // Формируем промпт для Claude
-  const eventsText = events.map((e, i) =>
-    `${i+1}. [${e.domain.toUpperCase()}] ${e.title}\n   Регион: ${e.region}\n   Текущий индекс: ${e.severity}/100\n   Описание: ${e.summary?.slice(0, 200) || '—'}`
-  ).join('\n\n');
+  const prompt = `Вы — старший аналитик глобальных рисков Архива «Великое пробуждение».
+Оцените события по каждому из 5 доменов риска по шкале 0-100.
 
-  const prompt = `Вы — старший аналитик глобальных рисков. Оцените следующие события по шкале рисков 0-100.
+МЕТОДОЛОГИЯ:
+• 90-100: Системный кризис, угроза глобальной стабильности
+• 80-89: Критический риск, широкое геополитическое/экономическое влияние
+• 70-79: Высокий риск, значительные региональные последствия
+• 60-69: Умеренно-высокий, требует мониторинга
+• 40-59: Умеренный, локальные последствия
 
-Методология оценки:
-- 90-100: Системный кризис, угроза глобальной стабильности
-- 80-89: Критический риск, широкое геополитическое/экономическое влияние  
-- 70-79: Высокий риск, значительные региональные последствия
-- 60-69: Умеренно-высокий, требует мониторинга
-- 40-59: Умеренный, локальные последствия
+ФАКТОРЫ:
+1. Масштаб охвата (сколько людей/стран затронуто)
+2. Необратимость последствий
+3. Каскадность (цепная реакция в других системах)
+4. Скорость развития (острый vs хронический)
+5. Уязвимость существующих механизмов реагирования
 
-Факторы оценки:
-1. Масштаб: сколько людей/стран затронуто
-2. Необратимость: можно ли откатить последствия
-3. Каскадность: вызовет ли цепную реакцию в других системах
-4. Скорость развития: острый кризис или хронический процесс
-5. Уязвимость: есть ли готовые механизмы реагирования
+СОБЫТИЯ ПО ДОМЕНАМ:
+${sections.join('
+')}
 
-СОБЫТИЯ ДЛЯ ОЦЕНКИ:
-
-${eventsText}
-
-Ответьте ТОЛЬКО в формате JSON (без markdown, без пояснений вне JSON):
+Ответьте ТОЛЬКО JSON без markdown:
 {
   "scores": [
     {
       "index": 1,
       "ai_score": 85,
       "ai_delta": 3,
-      "ai_reasoning": "Краткое обоснование на русском (1-2 предложения)",
-      "ai_cascade": ["экономика", "социум"],
+      "ai_reasoning": "Обоснование на русском, 1-2 предложения. Конкретно — почему этот уровень.",
+      "ai_cascade": ["геополитика", "социум"],
       "ai_horizon": "краткосрочный"
     }
-  ]
+  ],
+  "domain_summary": {
+    "climate":     { "risk_level": "высокий",    "trend": "↑", "note": "1 предложение об общей динамике домена" },
+    "economy":     { "risk_level": "умеренный",  "trend": "→", "note": "..." },
+    "geopolitics": { "risk_level": "критический","trend": "↑", "note": "..." },
+    "technology":  { "risk_level": "высокий",    "trend": "↑", "note": "..." },
+    "social":      { "risk_level": "умеренный",  "trend": "↓", "note": "..." }
+  }
 }
 
-ai_delta — разница с текущим индексом (положительная = выше, отрицательная = ниже)
-ai_cascade — домены которые могут быть затронуты вторично
-ai_horizon — краткосрочный (до 1 мес) / среднесрочный (1-6 мес) / долгосрочный (6+ мес)`;
+ai_delta — разница с текущим индексом (+ выше, - ниже)
+ai_cascade — домены вторичного влияния
+ai_horizon — краткосрочный / среднесрочный / долгосрочный
+domain_summary.trend — ↑ ухудшение / → стабильно / ↓ улучшение`;
 
-  // Запрос к Claude API
   let aiResult;
   try {
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -440,34 +475,34 @@ ai_horizon — краткосрочный (до 1 мес) / среднесроч
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
+        max_tokens: 4000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
     if (!claudeRes.ok) {
       const err = await claudeRes.text();
-      throw new Error(`Claude API error ${claudeRes.status}: ${err.slice(0, 200)}`);
+      throw new Error(`Claude API ${claudeRes.status}: ${err.slice(0, 200)}`);
     }
 
     const claudeData = await claudeRes.json();
     const text = claudeData.content?.[0]?.text || '';
-    
-    // Парсим JSON из ответа
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('Claude не вернул JSON');
     aiResult = JSON.parse(jsonMatch[0]);
 
   } catch (e) {
-    console.error('Claude API error:', e);
+    console.error('Claude error:', e);
     return jsonResponse({ error: 'AI scoring failed', detail: e.message }, 500);
   }
 
-  // Обогащаем события AI-данными
-  const scored = events.map((ev, i) => {
-    const aiRow = aiResult.scores?.find(s => s.index === i + 1);
-    if (!aiRow) return ev;
-    return {
+  // Обогащаем события
+  const scoredByDomain = {};
+  for (const dom of domainsToScore) scoredByDomain[dom] = [];
+
+  for (const [idxStr, ev] of Object.entries(eventMap)) {
+    const aiRow = aiResult.scores?.find(s => s.index === parseInt(idxStr));
+    const enriched = aiRow ? {
       ...ev,
       ai_score:     aiRow.ai_score,
       ai_delta:     aiRow.ai_delta,
@@ -475,44 +510,49 @@ ai_horizon — краткосрочный (до 1 мес) / среднесроч
       ai_cascade:   aiRow.ai_cascade || [],
       ai_horizon:   aiRow.ai_horizon || 'среднесрочный',
       ai_scored_at: new Date().toISOString()
-    };
-  });
+    } : ev;
+    scoredByDomain[ev.domain]?.push(enriched);
+  }
 
-  // Кэшируем результат в KV на 30 минут
+  const result = {
+    by_domain:     scoredByDomain,
+    domain_summary: aiResult.domain_summary || {},
+    meta: {
+      model:      'claude-sonnet-4-20250514',
+      top_per_domain: topPerDomain,
+      total_scored: Object.keys(eventMap).length,
+      scored_at:  new Date().toISOString()
+    }
+  };
+
+  // Кэш на 30 минут
   try {
     if (env.EVENTS_KV) {
-      const cacheKey = `ai_scores_${domain || 'all'}_${limit}`;
-      await env.EVENTS_KV.put(cacheKey, JSON.stringify(scored), { expirationTtl: 1800 });
+      const cacheKey = `ai_scores_domains_${onlyDomain || 'all'}_${topPerDomain}`;
+      await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 1800 });
     }
   } catch (_) {}
 
-  return jsonResponse({
-    scored,
-    meta: {
-      model: 'claude-sonnet-4-20250514',
-      count: scored.length,
-      domain: domain || 'all',
-      scored_at: new Date().toISOString()
-    }
-  });
+  return jsonResponse(result);
 }
 
-// ── GET /api/scores/cached ────────────────────────────────────────────────────
-// Отдаёт последние закэшированные AI-оценки без запроса к Claude
+// GET /api/scores — закэшированные оценки
 async function handleCachedScores(url, env) {
   const domain = url.searchParams.get('domain') || 'all';
-  const limit  = Math.min(20, parseInt(url.searchParams.get('limit') || '10'));
-  const cacheKey = `ai_scores_${domain}_${limit}`;
+  const top    = Math.min(10, parseInt(url.searchParams.get('top') || '5'));
+  const cacheKey = `ai_scores_domains_${domain}_${top}`;
 
   try {
     if (env.EVENTS_KV) {
       const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
-      if (cached) {
-        return jsonResponse({ scored: cached, from_cache: true });
-      }
+      if (cached) return jsonResponse({ ...cached, from_cache: true });
     }
   } catch (_) {}
 
-  return jsonResponse({ scored: [], from_cache: false, message: 'Кэш пуст — запустите POST /api/score' });
+  return jsonResponse({
+    by_domain: {},
+    domain_summary: {},
+    from_cache: false,
+    message: 'Кэш пуст — запустите POST /api/score'
+  });
 }
-
