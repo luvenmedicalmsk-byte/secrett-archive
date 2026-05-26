@@ -183,42 +183,131 @@ REGION_COORDS = {
     "uruguay": (-32.5, -55.8), "уругвай": (-32.5, -55.8),
 }
 
+# Классификация по методологии WEF Global Risks Report
+# Каждый домен имеет приоритетные и исключающие ключевые слова
+
 DOMAIN_RULES = {
     "climate": {
-        "keywords": ["drought","flood","wildfire","hurricane","climate","extreme weather",
-                     "heatwave","sea level","glacier","famine","water crisis","earthquake",
-                     "tsunami","cyclone","tornado","deforestation","emissions","temperature"],
-        "weight": 1.0
+        # Экстремальные погодные явления, биоразнообразие, экосистемы, природные ресурсы
+        "keywords": [
+            "flood","wildfire","wildfire","hurricane","typhoon","cyclone","tornado",
+            "heatwave","extreme weather","drought","earthquake","tsunami","avalanche",
+            "landslide","eruption","volcano","blizzard","ice storm","heat dome",
+            "biodiversity","ecosystem collapse","deforestation","species extinction",
+            "coral reef","ocean acidification","glacier","permafrost","sea level",
+            "carbon emissions","greenhouse gas","fossil fuel","renewable energy",
+            "water shortage","water crisis","natural resource","desertification",
+            "air pollution","toxic","environmental","wildfire smoke","prescribed fire",
+            "climate change","global warming","arctic","antarctic","ozone",
+            "resource shortage","energy crisis","oil spill","chemical leak",
+            "засуха","наводнение","пожар","ураган","землетрясение","цунами",
+            "климат","экология","природные ресурсы","биоразнообразие"
+        ],
+        "weight": 1.0,
+        # Слова которые НЕ должны попасть в климат
+        "exclude": ["war","military","attack","sanction","inflation","hack","cyber",
+                    "migration","refugee","protest","inequality","poverty","unemployment"]
     },
     "economy": {
-        "keywords": ["recession","inflation","sanctions","trade war","debt","bank",
-                     "currency","imf","gdp","unemployment","supply chain","commodity",
-                     "oil price","stock","market crash","tariff","default","fiscal",
-                     "economic","finance","budget","interest rate","export","import"],
-        "weight": 1.3
+        # Спад, инфляция, долги, финансовые пузыри, цепочки поставок, рынок труда
+        "keywords": [
+            "recession","economic downturn","inflation","debt","fiscal deficit",
+            "asset bubble","stock market crash","financial crisis","banking collapse",
+            "unemployment","labor shortage","talent shortage","workforce",
+            "supply chain disruption","trade disruption","commodity shortage",
+            "currency crisis","default","sovereign debt","imf bailout",
+            "interest rate","central bank","federal reserve","monetary policy",
+            "gdp decline","economic contraction","austerity","budget cut",
+            "trade war","tariff","export ban","import restriction","sanctions economy",
+            "energy prices","oil price","food prices","cost of living",
+            "рецессия","инфляция","долг","безработица","экономический кризис",
+            "финансовый кризис","цепочки поставок","стагфляция"
+        ],
+        "weight": 1.3,
+        "exclude": ["military","armed","weapon","flood","wildfire","earthquake","hack"]
     },
     "geopolitics": {
-        "keywords": ["military","conflict","war","coup","invasion","nuclear","missile",
-                     "nato","troops","election","protest","regime","territorial","attack",
-                     "airstrike","ceasefire","diplomacy","sanctions","treaty","border",
-                     "geopolitical","security","alliance","tension","crisis","armed"],
-        "weight": 1.5
+        # Вооружённые конфликты, внутригосударственное насилие, ядерное/биооружие, геоэкономика
+        "keywords": [
+            "armed conflict","war","military operation","invasion","airstrike",
+            "troops","military","ceasefire","casualties","killed in action",
+            "coup","regime change","political violence","assassination",
+            "nuclear weapon","biological weapon","chemical weapon","wmd",
+            "missile","ballistic","nuclear test","arms race",
+            "geoeconomic","geopolitical","sanctions","embargo","blockade",
+            "territorial dispute","border conflict","separatist","annexation",
+            "nato","un security council","peacekeeping","occupation",
+            "civil war","insurgency","rebel","jihadist","terrorist attack",
+            "diplomatic crisis","expulsion","ambassador","treaty violation",
+            "election fraud","political repression","authoritarian",
+            "война","военный","конфликт","удар","атака","войска","ядерный",
+            "геополитика","оккупация","санкции","переворот"
+        ],
+        "weight": 1.5,
+        "exclude": ["flood","wildfire","earthquake","inflation","recession","hack","cyber"]
     },
     "technology": {
-        "keywords": ["cyberattack","ai","artificial intelligence","surveillance","hacking",
-                     "semiconductor","chip","data breach","regulation","drone","space",
-                     "biotech","pandemic","virus","epidemic","disinformation","cyber",
-                     "hack","malware","ransomware","tech","digital","internet"],
-        "weight": 1.3
+        # Дезинформация, кибервойна, ИИ, онлайн-угрозы
+        "keywords": [
+            "disinformation","misinformation","fake news","information warfare",
+            "propaganda","deepfake","bot network","influence operation",
+            "cyberattack","cyber espionage","cyber warfare","ransomware",
+            "hacking","data breach","malware","phishing","ddos",
+            "artificial intelligence","ai risk","algorithm bias","autonomous weapon",
+            "surveillance","facial recognition","social credit","digital authoritarianism",
+            "online harm","cyberbullying","digital privacy","data leak",
+            "semiconductor","chip shortage","tech regulation","platform ban",
+            "space weapon","satellite","electronic warfare","signal jamming",
+            "дезинформация","кибератака","искусственный интеллект","взлом",
+            "кибербезопасность","слежка","цифровые риски"
+        ],
+        "weight": 1.3,
+        "exclude": ["flood","wildfire","earthquake","military ground","armed conflict",
+                    "inflation","recession","migration","refugee"]
     },
     "social": {
-        "keywords": ["migration","refugees","inequality","poverty","protest","unrest",
-                     "food security","displacement","human rights","strike","demonstration",
-                     "famine","starvation","crisis","humanitarian","displaced","hunger",
-                     "violence","abuse","discrimination","corruption","social"],
-        "weight": 1.2
+        # Неравенство, поляризация, миграция, здоровье, инфраструктура, соцзащита
+        "keywords": [
+            "inequality","income gap","wealth gap","social polarization",
+            "societal division","political polarization","populism",
+            "involuntary migration","displaced persons","refugee crisis",
+            "asylum seeker","stateless","internal displacement",
+            "public health","mental health","health crisis","pandemic",
+            "disease outbreak","epidemic","healthcare access","mortality",
+            "unemployment","job loss","poverty","food insecurity","hunger",
+            "homelessness","housing crisis","cost of living crisis",
+            "infrastructure failure","power outage","water access",
+            "social protection","welfare cut","pension crisis",
+            "human rights","political prisoner","censorship","freedom of press",
+            "protest","civil unrest","strike","demonstration","riot",
+            "corruption","institutional failure","governance crisis",
+            "неравенство","миграция","беженцы","здоровье","бедность",
+            "поляризация","социальный кризис","протест","права человека"
+        ],
+        "weight": 1.2,
+        "exclude": ["military","armed conflict","war","airstrike","cyberattack",
+                    "flood","wildfire","earthquake","inflation","recession"]
     }
 }
+
+def detect_domain(title, desc):
+    """Определяет домен по ключевым словам WEF-методологии с учётом исключений"""
+    text = (title + ' ' + desc).lower()
+    scores = {}
+    for domain, rule in DOMAIN_RULES.items():
+        # Считаем попадания по ключевым словам
+        hits = sum(1 for kw in rule['keywords'] if kw.lower() in text)
+        if hits == 0:
+            scores[domain] = 0
+            continue
+        # Штрафуем за исключающие слова
+        excludes = sum(1 for ex in rule.get('exclude', []) if ex.lower() in text)
+        score = (hits - excludes * 0.5) * rule['weight']
+        scores[domain] = max(0, score)
+    
+    if max(scores.values(), default=0) == 0:
+        return None
+    return max(scores, key=scores.get)
 
 def get_env(key, default=""):
     return os.environ.get(key, default)
@@ -243,11 +332,7 @@ def parse_date(s):
         except: pass
     return datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
-def detect_domain(title, desc):
-    text = (title + ' ' + desc).lower()
-    scores = {d: sum(1 for kw in r['keywords'] if kw in text) * r['weight']
-              for d, r in DOMAIN_RULES.items()}
-    return max(scores, key=scores.get) if max(scores.values()) > 0 else None
+
 
 def detect_coords(title, desc):
     text = (title + ' ' + desc).lower()
