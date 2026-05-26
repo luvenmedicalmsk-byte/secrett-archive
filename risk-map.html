@@ -777,17 +777,20 @@ function startSSE() {
     } catch(_) {}
   });
 
-  sseSource.addEventListener('reconnect', () => {
+  sseSource.addEventListener('reconnect', e => {
+    // Worker сказал переподключиться — делаем это через 30с
     sseSource.close();
-    setTimeout(startSSE, 3000);
+    sseSource = null;
+    const retry = (() => { try { return JSON.parse(e.data).retry || 30000; } catch(_) { return 30000; } })();
+    console.info('[SSE] Переподключение через', retry/1000, 'с');
+    setTimeout(startSSE, retry);
   });
 
   sseSource.onerror = () => {
-    showLiveIndicator('disconnected');
+    // Не меняем индикатор на ⬛ — просто тихо переподключаемся
     sseRetries++;
     if (sseRetries <= SSE_MAX_RETRIES) {
       const delay = Math.min(30000, 3000 * Math.pow(2, sseRetries - 1));
-      console.warn('[SSE] Ошибка, переподключение через', delay/1000, 'с');
       setTimeout(startSSE, delay);
     }
   };
