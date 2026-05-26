@@ -1,17 +1,11 @@
 name: Test Worker
-on: workflow_dispatch
+on:
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test Copernicus Worker v2
+      - name: Test flood proxy
         run: |
-          echo "=== Floods ==="
-          curl -s -H "X-Proxy-Token: archive-proxy-2026"             "https://copernicus-proxy.luven-medical-msk.workers.dev/?action=floods" | python3 -c "
-import json,sys
-d=json.load(sys.stdin)
-print('ok:', d.get('ok'), 'count:', d.get('count'))
-for f in d.get('floods',[])[:5]:
-    print('-', f.get('type'), f.get('title','')[:60])
-"
-          echo "Done"
+          RESULT=$(curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=floods')
+          echo $RESULT | python3 -c 'import json,sys; d=json.load(sys.stdin); print("count:", d.get("count")); [print("-", f.get("type"), f.get("title","")[:60]) for f in d.get("floods",[])[:10]]'
