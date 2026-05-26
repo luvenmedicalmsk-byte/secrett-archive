@@ -1554,8 +1554,8 @@ def fetch_russia_climate_v2():
     _firms_key = os.environ.get('FIRMS_API_KEY', '')
     if not _firms_key:
         _firms_key = 'DEMO_KEY'
-    firms_url = (f"https://firms.modaps.eosdis.nasa.gov/api/country/csv/"
-                 f"{_firms_key}/VIIRS_SNPP_NRT/RUS/7/")
+    firms_url = (f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
+                 f"{_firms_key}/VIIRS_SNPP_NRT/100,55,110,65/7/")
     data = fetch_url(firms_url, timeout=20)
     if data and 'latitude' in data:
         try:
