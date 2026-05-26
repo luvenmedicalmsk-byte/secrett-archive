@@ -34,6 +34,9 @@ export default {
       if (path === '/api/stats'  && request.method === 'GET')   return handleStats(url, env);
       if (path === '/api/domains' && request.method === 'GET')  return handleDomains(env);
       if (path === '/api/events/refresh' && request.method === 'POST') return handleRefresh(request, env, ctx);
+      if (path === '/api/score'  && request.method === 'POST') return handleScore(request, env, ctx);
+      if (path === '/api/score'  && request.method === 'GET')  return handleScore(request, env, ctx);
+      if (path === '/api/scores' && request.method === 'GET')  return handleCachedScores(url, env);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -338,3 +341,178 @@ async function handleRefresh(request, env, ctx) {
   }
   return jsonResponse({ ok: true, message: 'Cache cleared, parser triggered' });
 }
+
+/**
+ * AI-scoring добавок к worker.js
+ * Новый эндпоинт: POST /api/score
+ * 
+ * Берёт топ-N событий по severity,
+ * отправляет в Claude API,
+ * возвращает обогащённые события с ai_score и ai_reasoning.
+ * 
+ * Env secrets: ANTHROPIC_API_KEY, ADMIN_KEY
+ */
+
+// ── AI SCORING ────────────────────────────────────────────────────────────────
+
+async function handleScore(request, env, ctx) {
+  // Авторизация — только с ключом или публичный режим (настраивается)
+  const key = request.headers.get('X-API-Key');
+  const PUBLIC_SCORING = env.PUBLIC_SCORING === 'true';
+  if (!PUBLIC_SCORING && (!env.ADMIN_KEY || key !== env.ADMIN_KEY)) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  if (!env.ANTHROPIC_API_KEY) {
+    return jsonResponse({ error: 'ANTHROPIC_API_KEY не настроен' }, 503);
+  }
+
+  const body   = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
+  const limit  = Math.min(20, parseInt(body.limit || '10'));
+  const domain = body.domain || null;
+
+  // Берём события для оценки
+  const data   = await getEvents(env);
+  let events   = data.events || [];
+  if (domain) events = events.filter(e => e.domain === domain);
+  
+  // Сортируем по текущему severity, берём топ
+  events = events
+    .sort((a, b) => b.severity - a.severity)
+    .slice(0, limit);
+
+  if (events.length === 0) {
+    return jsonResponse({ error: 'Нет событий для оценки' }, 404);
+  }
+
+  // Формируем промпт для Claude
+  const eventsText = events.map((e, i) =>
+    `${i+1}. [${e.domain.toUpperCase()}] ${e.title}\n   Регион: ${e.region}\n   Текущий индекс: ${e.severity}/100\n   Описание: ${e.summary?.slice(0, 200) || '—'}`
+  ).join('\n\n');
+
+  const prompt = `Вы — старший аналитик глобальных рисков. Оцените следующие события по шкале рисков 0-100.
+
+Методология оценки:
+- 90-100: Системный кризис, угроза глобальной стабильности
+- 80-89: Критический риск, широкое геополитическое/экономическое влияние  
+- 70-79: Высокий риск, значительные региональные последствия
+- 60-69: Умеренно-высокий, требует мониторинга
+- 40-59: Умеренный, локальные последствия
+
+Факторы оценки:
+1. Масштаб: сколько людей/стран затронуто
+2. Необратимость: можно ли откатить последствия
+3. Каскадность: вызовет ли цепную реакцию в других системах
+4. Скорость развития: острый кризис или хронический процесс
+5. Уязвимость: есть ли готовые механизмы реагирования
+
+СОБЫТИЯ ДЛЯ ОЦЕНКИ:
+
+${eventsText}
+
+Ответьте ТОЛЬКО в формате JSON (без markdown, без пояснений вне JSON):
+{
+  "scores": [
+    {
+      "index": 1,
+      "ai_score": 85,
+      "ai_delta": 3,
+      "ai_reasoning": "Краткое обоснование на русском (1-2 предложения)",
+      "ai_cascade": ["экономика", "социум"],
+      "ai_horizon": "краткосрочный"
+    }
+  ]
+}
+
+ai_delta — разница с текущим индексом (положительная = выше, отрицательная = ниже)
+ai_cascade — домены которые могут быть затронуты вторично
+ai_horizon — краткосрочный (до 1 мес) / среднесрочный (1-6 мес) / долгосрочный (6+ мес)`;
+
+  // Запрос к Claude API
+  let aiResult;
+  try {
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!claudeRes.ok) {
+      const err = await claudeRes.text();
+      throw new Error(`Claude API error ${claudeRes.status}: ${err.slice(0, 200)}`);
+    }
+
+    const claudeData = await claudeRes.json();
+    const text = claudeData.content?.[0]?.text || '';
+    
+    // Парсим JSON из ответа
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Claude не вернул JSON');
+    aiResult = JSON.parse(jsonMatch[0]);
+
+  } catch (e) {
+    console.error('Claude API error:', e);
+    return jsonResponse({ error: 'AI scoring failed', detail: e.message }, 500);
+  }
+
+  // Обогащаем события AI-данными
+  const scored = events.map((ev, i) => {
+    const aiRow = aiResult.scores?.find(s => s.index === i + 1);
+    if (!aiRow) return ev;
+    return {
+      ...ev,
+      ai_score:     aiRow.ai_score,
+      ai_delta:     aiRow.ai_delta,
+      ai_reasoning: aiRow.ai_reasoning,
+      ai_cascade:   aiRow.ai_cascade || [],
+      ai_horizon:   aiRow.ai_horizon || 'среднесрочный',
+      ai_scored_at: new Date().toISOString()
+    };
+  });
+
+  // Кэшируем результат в KV на 30 минут
+  try {
+    if (env.EVENTS_KV) {
+      const cacheKey = `ai_scores_${domain || 'all'}_${limit}`;
+      await env.EVENTS_KV.put(cacheKey, JSON.stringify(scored), { expirationTtl: 1800 });
+    }
+  } catch (_) {}
+
+  return jsonResponse({
+    scored,
+    meta: {
+      model: 'claude-sonnet-4-20250514',
+      count: scored.length,
+      domain: domain || 'all',
+      scored_at: new Date().toISOString()
+    }
+  });
+}
+
+// ── GET /api/scores/cached ────────────────────────────────────────────────────
+// Отдаёт последние закэшированные AI-оценки без запроса к Claude
+async function handleCachedScores(url, env) {
+  const domain = url.searchParams.get('domain') || 'all';
+  const limit  = Math.min(20, parseInt(url.searchParams.get('limit') || '10'));
+  const cacheKey = `ai_scores_${domain}_${limit}`;
+
+  try {
+    if (env.EVENTS_KV) {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) {
+        return jsonResponse({ scored: cached, from_cache: true });
+      }
+    }
+  } catch (_) {}
+
+  return jsonResponse({ scored: [], from_cache: false, message: 'Кэш пуст — запустите POST /api/score' });
+}
+
