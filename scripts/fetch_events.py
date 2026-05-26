@@ -1039,7 +1039,7 @@ def fetch_russia_climate():
 
 
 def fetch_copernicus_floods():
-    """Наводнения и паводки через Cloudflare Worker прокси → Copernicus/GloFAS"""
+    """Наводнения через Cloudflare Worker → GDACS + Floodlist + ReliefWeb + Copernicus"""
     items = []
     proxy_url = os.environ.get('PROXY_URL', '')
     proxy_token = os.environ.get('PROXY_TOKEN', '')
@@ -1050,14 +1050,11 @@ def fetch_copernicus_floods():
     
     try:
         url = f"{proxy_url}?action=floods"
-        req = urllib.request.Request(
-            url,
-            headers={
-                'X-Proxy-Token': proxy_token,
-                'User-Agent': 'ArchiveBot/2.0'
-            }
-        )
-        with urllib.request.urlopen(req, timeout=20) as r:
+        req = urllib.request.Request(url, headers={
+            'X-Proxy-Token': proxy_token,
+            'User-Agent': 'ArchiveBot/2.0'
+        })
+        with urllib.request.urlopen(req, timeout=25) as r:
             data = json.loads(r.read())
         
         if not data.get('ok'):
@@ -1067,65 +1064,117 @@ def fetch_copernicus_floods():
         floods = data.get('floods', [])
         print(f"  Copernicus floods: {len(floods)} событий", file=sys.stderr)
         
+        # Координаты стран для геолокации наводнений
+        COUNTRY_COORDS = {
+            'bulgaria': (42.7, 25.5), 'moldova': (47.4, 28.4), 'peru': (-9.2, -75.0),
+            'afghanistan': (33.9, 67.7), 'united states': (38.0, -97.0), 'usa': (38.0, -97.0),
+            'malaysia': (3.1, 101.7), 'philippines': (12.9, 121.8), 'thailand': (13.8, 100.5),
+            'germany': (51.2, 10.4), 'france': (46.2, 2.2), 'italy': (41.9, 12.5),
+            'spain': (40.4, -3.7), 'brazil': (-14.2, -51.9), 'india': (22.0, 80.0),
+            'bangladesh': (23.7, 90.4), 'pakistan': (30.0, 70.0), 'china': (35.0, 105.0),
+            'indonesia': (-0.8, 113.9), 'nigeria': (9.1, 8.7), 'kenya': (-0.0, 37.9),
+            'ethiopia': (9.1, 40.5), 'somalia': (5.1, 46.2), 'sudan': (15.5, 32.5),
+            'myanmar': (19.2, 96.6), 'vietnam': (16.0, 107.8), 'ukraine': (49.0, 31.0),
+            'turkey': (38.9, 35.2), 'iran': (32.0, 53.0), 'iraq': (33.3, 44.4),
+            'nepal': (28.4, 84.1), 'colombia': (4.6, -74.1), 'venezuela': (6.4, -66.6),
+            'argentina': (-38.4, -63.6), 'bolivia': (-16.3, -63.6), 'ecuador': (-1.8, -78.2),
+            'greece': (37.9, 23.7), 'austria': (48.2, 16.4), 'romania': (44.4, 26.1),
+            'czech republic': (50.1, 14.4), 'poland': (51.9, 19.1), 'hungary': (47.2, 19.5),
+            'russia': (61.0, 60.0), 'kazakhstan': (48.0, 68.0), 'tanzania': (-6.4, 34.9),
+            'mozambique': (-18.7, 35.5), 'madagascar': (-18.8, 46.9), 'malawi': (-13.3, 34.3),
+        }
+        
+        import random
+        
         for flood in floods:
             ftype = flood.get('type', '')
             
-            if ftype == 'glofas':
-                severity_map = {'high': 85, 'medium': 72, 'low': 58}
-                sev = severity_map.get(flood.get('severity','medium'), 72)
-                country = flood.get('country', '')
-                river = flood.get('river', '')
-                title = f"Наводнение — {country}" + (f" (р. {river})" if river else "")
-                lat = flood.get('lat') or 0.0
-                lng = flood.get('lng') or 0.0
-                if lat == 0 and lng == 0:
+            if ftype == 'gdacs_flood':
+                title = flood.get('title', '')
+                desc = flood.get('desc', '')
+                lat = flood.get('lat')
+                lng = flood.get('lng')
+                severity_map = {'high': 88, 'medium': 75, 'low': 60}
+                sev_str = flood.get('severity', 'low')
+                
+                # Если нет координат — определяем по названию страны
+                if not lat or not lng:
+                    text_lower = title.lower()
+                    for country, coords in COUNTRY_COORDS.items():
+                        if country in text_lower:
+                            lat = coords[0] + random.uniform(-1, 1)
+                            lng = coords[1] + random.uniform(-2, 2)
+                            break
+                
+                if not lat or not lng:
+                    continue
+                    
+                items.append({
+                    'title': title,
+                    'desc': desc or f"GDACS предупреждение. Уровень: {sev_str}.",
+                    'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                    'source': 'GDACS/Copernicus',
+                    'source_bias': 20,
+                    '_lat': float(lat), '_lng': float(lng),
+                    '_region': detect_region_by_coords(float(lat), float(lng)),
+                    '_domain': 'climate'
+                })
+            
+            elif ftype == 'floodlist':
+                title = flood.get('title', '')
+                desc = flood.get('desc', '')
+                if not title:
+                    continue
+                # Определяем координаты по тексту
+                text_lower = (title + ' ' + desc).lower()
+                lat, lng = None, None
+                for country, coords in COUNTRY_COORDS.items():
+                    if country in text_lower:
+                        lat = coords[0] + random.uniform(-1, 1)
+                        lng = coords[1] + random.uniform(-2, 2)
+                        break
+                if not lat:
                     continue
                 items.append({
                     'title': title,
-                    'desc': f"GloFAS предупреждение. Уровень: {flood.get('severity','medium')}. {country}",
+                    'desc': desc,
                     'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
-                    'source': 'GloFAS/Copernicus',
-                    'source_bias': 20,
+                    'source': 'Floodlist',
+                    'source_bias': 18,
                     '_lat': float(lat), '_lng': float(lng),
-                    '_region': country or detect_region_by_coords(float(lat), float(lng)),
+                    '_region': detect_region_by_coords(float(lat), float(lng)),
                     '_domain': 'climate'
                 })
             
-            elif ftype == 'sentinel2_ndwi':
-                region = flood.get('region', '')
-                water_pct = flood.get('water_fraction', 0)
-                sev = 85 if flood.get('severity') == 'high' else 72
-                bbox = flood.get('bbox', [0,0,0,0])
-                lat = (bbox[1] + bbox[3]) / 2
-                lng = (bbox[0] + bbox[2]) / 2
+            elif ftype == 'reliefweb_flood':
+                title = flood.get('title', '')
+                country = flood.get('country', '')
+                if not title:
+                    continue
+                text_lower = (title + ' ' + country).lower()
+                lat, lng = None, None
+                for c, coords in COUNTRY_COORDS.items():
+                    if c in text_lower:
+                        lat = coords[0] + random.uniform(-1, 1)
+                        lng = coords[1] + random.uniform(-2, 2)
+                        break
+                if not lat:
+                    continue
                 items.append({
-                    'title': f"Затопление территории — {region} ({water_pct}% площади)",
-                    'desc': f"Спутниковая детекция Sentinel-2 NDWI. Площадь затопления: {water_pct}%.",
+                    'title': title,
+                    'desc': f"Активное бедствие. Страна: {country}. Статус: {flood.get('status','')}",
                     'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
-                    'source': 'Sentinel-2/Copernicus',
-                    'source_bias': 22,
-                    '_lat': lat, '_lng': lng,
-                    '_region': region,
+                    'source': 'ReliefWeb/UN',
+                    'source_bias': 16,
+                    '_lat': float(lat), '_lng': float(lng),
+                    '_region': detect_region_by_coords(float(lat), float(lng)),
                     '_domain': 'climate'
                 })
-            
-            elif ftype == 'cems':
-                text = flood.get('text', '')
-                if text:
-                    items.append({
-                        'title': f"[CEMS] {text[:100]}",
-                        'desc': 'Активация Copernicus Emergency Management Service.',
-                        'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
-                        'source': 'Copernicus CEMS',
-                        'source_bias': 18
-                    })
     
     except Exception as e:
         print(f"  [WARN] Copernicus floods proxy: {e}", file=sys.stderr)
     
     return items
-
-
 def fetch_copernicus():
     """Copernicus Emergency Management Service — пожары и наводнения глобально"""
     items = []
