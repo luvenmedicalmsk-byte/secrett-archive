@@ -10,6 +10,9 @@
  *   GET  /api/stream          — SSE live-поток новых событий
  *   POST /api/events/refresh  — триггер обновления (только с API-ключом)
  *   GET  /api/health          — статус сервиса
+ *   POST /api/score           — AI-оценка доменов (OpenAI GPT-4o)
+ *   GET  /api/scores          — закэшированные AI-оценки
+ *   GET  /api/location        — страновой профиль риска
  */
 
 const CORS = {
@@ -64,7 +67,6 @@ function jsonResponse(data, status = 200) {
 }
 
 async function getEvents(env) {
-  // 1. KV кэш
   try {
     if (env.EVENTS_KV) {
       const cached = await env.EVENTS_KV.get('events_data', { type: 'json' });
@@ -72,7 +74,6 @@ async function getEvents(env) {
     }
   } catch (_) {}
 
-  // 2. GitHub Raw
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
   const r = await fetch(
     `https://raw.githubusercontent.com/${REPO}/main/events.json`,
@@ -81,7 +82,6 @@ async function getEvents(env) {
   if (!r.ok) throw new Error(`GitHub fetch failed: ${r.status}`);
   const data = await r.json();
 
-  // 3. Сохраняем в KV
   try {
     if (env.EVENTS_KV) {
       await env.EVENTS_KV.put('events_data', JSON.stringify(data), { expirationTtl: 120 });
@@ -91,21 +91,66 @@ async function getEvents(env) {
   return data;
 }
 
+// ── OpenAI API helper ─────────────────────────────────────────────────────────
+// Единая точка вызова — меняете модель здесь, работает везде
+async function callOpenAI(env, prompt, maxTokens = 4000) {
+  if (!env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY не настроен');
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${env.OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      max_tokens: maxTokens,
+      temperature: 0.3,   // детерминированность важна для аналитики
+      response_format: { type: 'json_object' }, // JSON mode — не нужен regex
+      messages: [
+        {
+          role: 'system',
+          content: 'Вы — старший аналитик глобальных рисков Архива «Великое пробуждение». Отвечайте ТОЛЬКО валидным JSON без markdown и пояснений.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenAI API ${res.status}: ${err.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || '';
+
+  // JSON mode гарантирует валидный JSON, но на всякий случай
+  try {
+    return JSON.parse(text);
+  } catch {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('OpenAI не вернул JSON');
+    return JSON.parse(m[0]);
+  }
+}
+
 // ── GET /api/health ───────────────────────────────────────────────────────────
 function handleHealth(env) {
   return jsonResponse({
     status: 'ok',
     ts: new Date().toISOString(),
     kv: !!env.EVENTS_KV,
-    sse: true
+    sse: true,
+    ai_provider: 'openai',
+    ai_model: 'gpt-4o'
   });
 }
 
 // ── GET /api/stream  (Server-Sent Events) ────────────────────────────────────
-// Клиент подключается и получает события в реальном времени.
-// Логика: при подключении сразу шлём текущие данные,
-// затем каждые 30 секунд проверяем — если events.json обновился,
-// шлём только НОВЫЕ события (по дате и id).
 async function handleStream(request, env, ctx) {
   const lastEventId = request.headers.get('Last-Event-ID') || null;
   const url = new URL(request.url);
@@ -130,24 +175,19 @@ async function handleStream(request, env, ctx) {
 
   ctx.waitUntil((async () => {
     try {
-      // Первый снимок — полные данные
       const data = await getEvents(env);
       let events = data.events || [];
       if (domain) events = events.filter(e => e.domain === domain);
       if (minSev)  events = events.filter(e => e.severity >= minSev);
 
-      // Отслеживаем уже отправленные id
       const sentIds = new Set(events.map(e => e.id));
 
-      // Если клиент переподключился с Last-Event-ID — шлём только новое
       let initialEvents = events;
       if (lastEventId) {
-        // Находим события новее последнего известного
         const idx = events.findIndex(e => e.id === lastEventId);
         initialEvents = idx >= 0 ? events.slice(0, idx) : events;
       }
 
-      // Шлём начальный снимок
       await send('snapshot', {
         events: initialEvents,
         total: events.length,
@@ -157,22 +197,16 @@ async function handleStream(request, env, ctx) {
       let lastUpdated = data.updated;
       let pollCount = 0;
 
-      // Цикл опроса: каждые 30 секунд проверяем обновления
-      // Cloudflare Worker может работать до 30 секунд на бесплатном плане
-      // поэтому делаем несколько коротких итераций
       while (pollCount < 8) {
         await new Promise(r => setTimeout(r, 30000));
         pollCount++;
-
         await ping();
 
         try {
-          // Сбрасываем KV чтобы получить свежие данные
           if (env.EVENTS_KV) await env.EVENTS_KV.delete('events_data');
           const fresh = await getEvents(env);
 
           if (fresh.updated !== lastUpdated) {
-            // Есть обновление — ищем новые события
             let freshEvents = fresh.events || [];
             if (domain) freshEvents = freshEvents.filter(e => e.domain === domain);
             if (minSev)  freshEvents = freshEvents.filter(e => e.severity >= minSev);
@@ -187,7 +221,6 @@ async function handleStream(request, env, ctx) {
                 updated: fresh.updated
               }, fresh.updated);
             } else {
-              // Данные обновились но новых событий нет — шлём статистику
               await send('stats', {
                 total: freshEvents.length,
                 critical: freshEvents.filter(e => e.severity >= 80).length,
@@ -202,7 +235,6 @@ async function handleStream(request, env, ctx) {
         }
       }
 
-      // Говорим клиенту переподключиться
       await send('reconnect', { message: 'Переподключение...' });
 
     } catch (e) {
@@ -240,11 +272,11 @@ async function handleGetEvents(url, env) {
   const page    = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
   const limit   = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
 
-  if (domain)      events = events.filter(e => e.domain === domain);
-  if (region)      events = events.filter(e => e.region?.toLowerCase().includes(region.toLowerCase()));
-  if (minSev)      events = events.filter(e => e.severity >= minSev);
+  if (domain)       events = events.filter(e => e.domain === domain);
+  if (region)       events = events.filter(e => e.region?.toLowerCase().includes(region.toLowerCase()));
+  if (minSev)       events = events.filter(e => e.severity >= minSev);
   if (maxSev < 100) events = events.filter(e => e.severity <= maxSev);
-  if (since)       events = events.filter(e => e.date >= since);
+  if (since)        events = events.filter(e => e.date >= since);
   if (q) {
     const ql = q.toLowerCase();
     events = events.filter(e =>
@@ -343,64 +375,7 @@ async function handleRefresh(request, env, ctx) {
   return jsonResponse({ ok: true, message: 'Cache cleared, parser triggered' });
 }
 
-/**
- * AI-scoring добавок к worker.js
- * Новый эндпоинт: POST /api/score
- * 
- * Берёт топ-N событий по severity,
- * отправляет в Claude API,
- * возвращает обогащённые события с ai_score и ai_reasoning.
- * 
- * Env secrets: OPENAI_API_KEY, ADMIN_KEY
- */
-
 // ── AI SCORING ────────────────────────────────────────────────────────────────
-
-// ── AI HELPER — OpenAI GPT-4o ────────────────────────────────────────────────
-
-async function callAI(env, prompt, maxTokens = 2000) {
-  if (!env.OPENAI_API_KEY) {
-    throw new Error('Задайте OPENAI_API_KEY в настройках Worker');
-  }
-
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      max_tokens: maxTokens,
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: 'Вы — старший аналитик глобальных рисков Архива «Великое пробуждение». Отвечайте ТОЛЬКО валидным JSON.'
-        },
-        { role: 'user', content: prompt }
-      ]
-    })
-  });
-
-  if (!r.ok) {
-    const err = await r.text();
-    throw new Error(`OpenAI API ${r.status}: ${err.slice(0, 200)}`);
-  }
-
-  const d = await r.json();
-  return d.choices?.[0]?.message?.content || '';
-}
-
-function parseAIJson(text) {
-  const clean = text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-  const m = clean.match(/\{[\s\S]*\}/);
-  if (!m) throw new Error('AI не вернул JSON');
-  return JSON.parse(m[0]);
-}
-
-
 
 const DOMAINS = {
   climate:     { ru: 'Климат',      context: 'климатические катастрофы, стихийные бедствия, изменение климата, экологические кризисы' },
@@ -410,7 +385,7 @@ const DOMAINS = {
   social:      { ru: 'Социум',      context: 'протесты, продовольственная безопасность, миграционные кризисы, здравоохранение, социальная нестабильность' }
 };
 
-// POST /api/score  — оценка всех 5 доменов за один запрос
+// POST /api/score — оценка всех 5 доменов за один запрос
 async function handleScore(request, env, ctx) {
   const key = request.headers.get('X-API-Key');
   const PUBLIC_SCORING = env.PUBLIC_SCORING === 'true';
@@ -421,9 +396,9 @@ async function handleScore(request, env, ctx) {
     return jsonResponse({ error: 'OPENAI_API_KEY не настроен' }, 503);
   }
 
-  const body        = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
-  const topPerDomain = Math.min(10, parseInt(body.top || '5')); // топ N на домен
-  const onlyDomain  = body.domain || null; // можно оценить один домен
+  const body         = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
+  const topPerDomain = Math.min(10, parseInt(body.top || '5'));
+  const onlyDomain   = body.domain || null;
 
   const data   = await getEvents(env);
   const allEvs = data.events || [];
@@ -432,11 +407,10 @@ async function handleScore(request, env, ctx) {
     ? [onlyDomain]
     : Object.keys(DOMAINS);
 
-  // Собираем топ-N по каждому домену
   const sections = [];
-  const eventMap = {}; // index → event
-
+  const eventMap = {};
   let idx = 1;
+
   for (const dom of domainsToScore) {
     const domEvents = allEvs
       .filter(e => e.domain === dom)
@@ -446,14 +420,11 @@ async function handleScore(request, env, ctx) {
     if (domEvents.length === 0) continue;
 
     const domInfo = DOMAINS[dom] || { ru: dom, context: dom };
-    sections.push(`
-## ${domInfo.ru.toUpperCase()} (${domInfo.context})`);
+    sections.push(`\n## ${domInfo.ru.toUpperCase()} (${domInfo.context})`);
 
     for (const ev of domEvents) {
       sections.push(
-        `${idx}. ${ev.title}
-   Регион: ${ev.region} | Текущий индекс: ${ev.severity}/100
-   ${ev.summary?.slice(0, 180) || '—'}`
+        `${idx}. ${ev.title}\n   Регион: ${ev.region} | Текущий индекс: ${ev.severity}/100\n   ${ev.summary?.slice(0, 180) || '—'}`
       );
       eventMap[idx] = ev;
       idx++;
@@ -464,8 +435,7 @@ async function handleScore(request, env, ctx) {
     return jsonResponse({ error: 'Нет событий для оценки' }, 404);
   }
 
-  const prompt = `Вы — старший аналитик глобальных рисков Архива «Великое пробуждение».
-Оцените события по каждому из 5 доменов риска по шкале 0-100.
+  const prompt = `Оцените события по каждому из 5 доменов риска по шкале 0-100.
 
 МЕТОДОЛОГИЯ:
 • 90-100: Системный кризис, угроза глобальной стабильности
@@ -474,18 +444,17 @@ async function handleScore(request, env, ctx) {
 • 60-69: Умеренно-высокий, требует мониторинга
 • 40-59: Умеренный, локальные последствия
 
-ФАКТОРЫ:
+ФАКТОРЫ ОЦЕНКИ:
 1. Масштаб охвата (сколько людей/стран затронуто)
 2. Необратимость последствий
 3. Каскадность (цепная реакция в других системах)
 4. Скорость развития (острый vs хронический)
-5. Уязвимость существующих механизмов реагирования
+5. Уязвимость механизмов реагирования
 
 СОБЫТИЯ ПО ДОМЕНАМ:
-${sections.join('
-')}
+${sections.join('\n')}
 
-Ответьте ТОЛЬКО JSON без markdown:
+Верните JSON строго в этом формате:
 {
   "scores": [
     {
@@ -498,26 +467,24 @@ ${sections.join('
     }
   ],
   "domain_summary": {
-    "climate":     { "risk_level": "высокий",    "trend": "↑", "note": "1 предложение об общей динамике домена" },
-    "economy":     { "risk_level": "умеренный",  "trend": "→", "note": "..." },
-    "geopolitics": { "risk_level": "критический","trend": "↑", "note": "..." },
-    "technology":  { "risk_level": "высокий",    "trend": "↑", "note": "..." },
-    "social":      { "risk_level": "умеренный",  "trend": "↓", "note": "..." }
+    "climate":     { "risk_level": "высокий",     "trend": "↑", "note": "1 предложение об общей динамике домена" },
+    "economy":     { "risk_level": "умеренный",   "trend": "→", "note": "..." },
+    "geopolitics": { "risk_level": "критический", "trend": "↑", "note": "..." },
+    "technology":  { "risk_level": "высокий",     "trend": "↑", "note": "..." },
+    "social":      { "risk_level": "умеренный",   "trend": "↓", "note": "..." }
   }
 }
 
-ai_delta — разница с текущим индексом (+ выше, - ниже)
+ai_delta — разница с текущим индексом severity (+ выше / - ниже)
 ai_cascade — домены вторичного влияния
 ai_horizon — краткосрочный / среднесрочный / долгосрочный
 domain_summary.trend — ↑ ухудшение / → стабильно / ↓ улучшение`;
 
   let aiResult;
   try {
-    const text = await callAI(env, prompt, 4000);
-    aiResult = parseAIJson(text);
-
+    aiResult = await callOpenAI(env, prompt, 4000);
   } catch (e) {
-    console.error('Claude error:', e);
+    console.error('OpenAI error:', e);
     return jsonResponse({ error: 'AI scoring failed', detail: e.message }, 500);
   }
 
@@ -540,13 +507,14 @@ domain_summary.trend — ↑ ухудшение / → стабильно / ↓ �
   }
 
   const result = {
-    by_domain:     scoredByDomain,
+    by_domain:      scoredByDomain,
     domain_summary: aiResult.domain_summary || {},
     meta: {
-      model: env.OPENAI_API_KEY ? 'gpt-4o' : 'gpt-4o',
+      model:          'gpt-4o',
+      ai_provider:    'openai',
       top_per_domain: topPerDomain,
-      total_scored: Object.keys(eventMap).length,
-      scored_at:  new Date().toISOString()
+      total_scored:   Object.keys(eventMap).length,
+      scored_at:      new Date().toISOString()
     }
   };
 
@@ -563,8 +531,8 @@ domain_summary.trend — ↑ ухудшение / → стабильно / ↓ �
 
 // GET /api/scores — закэшированные оценки
 async function handleCachedScores(url, env) {
-  const domain = url.searchParams.get('domain') || 'all';
-  const top    = Math.min(10, parseInt(url.searchParams.get('top') || '5'));
+  const domain   = url.searchParams.get('domain') || 'all';
+  const top      = Math.min(10, parseInt(url.searchParams.get('top') || '5'));
   const cacheKey = `ai_scores_domains_${domain}_${top}`;
 
   try {
@@ -575,18 +543,17 @@ async function handleCachedScores(url, env) {
   } catch (_) {}
 
   return jsonResponse({
-    by_domain: {},
+    by_domain:      {},
     domain_summary: {},
-    from_cache: false,
-    message: 'Кэш пуст — запустите POST /api/score'
+    from_cache:     false,
+    message:        'Кэш пуст — запустите POST /api/score'
   });
 }
 
-// ── GET /api/location?name=Iran ──────────────────────────────────────────────
-// Страновой/городской профиль риска — Claude синтезирует все события по локации
+// ── GET /api/location?name=Iran ───────────────────────────────────────────────
 async function handleLocation(url, env) {
-  if (!env.OPENAI_API_KEY && !env.OPENAI_API_KEY) {
-    return jsonResponse({ error: 'Задайте OPENAI_API_KEY или OPENAI_API_KEY в настройках Worker' }, 503);
+  if (!env.OPENAI_API_KEY) {
+    return jsonResponse({ error: 'OPENAI_API_KEY не настроен' }, 503);
   }
 
   const name = url.searchParams.get('name') || '';
@@ -595,7 +562,6 @@ async function handleLocation(url, env) {
 
   if (!name) return jsonResponse({ error: 'Параметр name обязателен' }, 400);
 
-  // Проверяем кэш
   const cacheKey = `location_${name.toLowerCase().replace(/\s+/g,'_')}`;
   try {
     if (env.EVENTS_KV) {
@@ -604,11 +570,9 @@ async function handleLocation(url, env) {
     }
   } catch (_) {}
 
-  // Собираем события по локации
   const data   = await getEvents(env);
   const allEvs = data.events || [];
 
-  // Ищем события где регион или заголовок содержит название
   const nameLower = name.toLowerCase();
   const related = allEvs.filter(e => {
     const region  = (e.region  || '').toLowerCase();
@@ -619,7 +583,6 @@ async function handleLocation(url, env) {
            summary.includes(nameLower);
   });
 
-  // Если событий мало — расширяем поиск по координатам (±8 градусов)
   let geoRelated = [];
   if (related.length < 3 && lat && lng) {
     geoRelated = allEvs.filter(e => {
@@ -634,21 +597,20 @@ async function handleLocation(url, env) {
     .sort((a,b) => b.severity - a.severity)
     .slice(0, 15);
 
-  // Формируем промпт
   const eventsText = allRelated.length > 0
     ? allRelated.map((e,i) =>
-        `${i+1}. [${e.domain}] ${e.title} (индекс ${e.severity}/100)
-   ${e.summary?.slice(0,150)||'—'}`
+        `${i+1}. [${e.domain}] ${e.title} (индекс ${e.severity}/100)\n   ${e.summary?.slice(0,150)||'—'}`
       ).join('\n\n')
     : 'Специфических событий по данной локации не зафиксировано.';
 
-  const prompt = `Вы — аналитик глобальных рисков Архива «Великое пробуждение».
-Составьте краткий профиль рисков для: ${name}
+  const eventsCount = allRelated.length;
+
+  const prompt = `Составьте краткий профиль рисков для локации: ${name}
 
 ТЕКУЩИЕ СОБЫТИЯ И СИГНАЛЫ ПО ЛОКАЦИИ:
 ${eventsText}
 
-Ответьте ТОЛЬКО JSON без markdown:
+Верните JSON строго в этом формате:
 {
   "location": "${name}",
   "overall_risk": 75,
@@ -661,7 +623,7 @@ ${eventsText}
   "outlook": "краткосрочный прогноз в 1-2 предложениях",
   "horizon": "краткосрочный",
   "watch_signals": ["сигнал 1 для мониторинга", "сигнал 2"],
-  "events_count": ${len(allRelated)}
+  "events_count": ${eventsCount}
 }
 
 overall_risk — интегральный индекс 0-100
@@ -670,9 +632,7 @@ horizon — краткосрочный (до 1 мес) / среднесрочн�
 
   let result;
   try {
-    const locText = await callAI(env, prompt, 1000);
-    result = parseAIJson(locText);
-
+    result = await callOpenAI(env, prompt, 1000);
   } catch(e) {
     console.error('Location score error:', e);
     return jsonResponse({ error: 'AI scoring failed', detail: e.message }, 500);
@@ -693,4 +653,3 @@ horizon — краткосрочный (до 1 мес) / среднесрочн�
 
   return jsonResponse(response);
 }
-
