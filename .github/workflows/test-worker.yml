@@ -5,9 +5,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test all actions
+      - name: Test GDELT direct
         run: |
-          echo "=== GDELT ==="
-          curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=gdelt' | python3 -c 'import json,sys; d=json.load(sys.stdin); print("gdelt count:", d.get("count")); [print("-", f.get("domain"), f.get("title","")[:60]) for f in d.get("articles",[])[:10]]'
-          echo "=== ALL ==="
-          curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=all' | python3 -c 'import json,sys; d=json.load(sys.stdin); print("floods:", d.get("floods",{}).get("count")); print("cyber:", d.get("cyber",{}).get("count")); print("gdelt:", d.get("gdelt",{}).get("count"))'
+          echo "=== GDELT direct from GitHub Actions ==="
+          curl -sv "https://api.gdeltproject.org/api/v2/doc/doc?query=war&mode=artlist&format=json&maxrecords=5&timespan=2h" 2>&1 | tail -20
