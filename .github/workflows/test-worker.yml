@@ -5,7 +5,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test GDELT via Worker
+      - name: Test all actions
         run: |
-          RESULT=$(curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=gdelt')
-          echo $RESULT | python3 -c 'import json,sys; d=json.load(sys.stdin); print("count:", d.get("count")); [print("-", f.get("domain"), f.get("title","")[:65]) for f in d.get("articles",[])[:15]]'
+          echo "=== GDELT ==="
+          curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=gdelt' | python3 -c 'import json,sys; d=json.load(sys.stdin); print("gdelt count:", d.get("count")); [print("-", f.get("domain"), f.get("title","")[:60]) for f in d.get("articles",[])[:10]]'
+          echo "=== ALL ==="
+          curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=all' | python3 -c 'import json,sys; d=json.load(sys.stdin); print("floods:", d.get("floods",{}).get("count")); print("cyber:", d.get("cyber",{}).get("count")); print("gdelt:", d.get("gdelt",{}).get("count"))'
