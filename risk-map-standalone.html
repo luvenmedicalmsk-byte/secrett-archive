@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Архив · Карта рисков</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#B8973A;--gold-l:#D4AF5A;--bg:#060504;
+  --cream:#E8E0D0;--muted:#6A6458;--soft:#A8A090;
+  --border:rgba(184,151,58,0.15);
+  --climate:#1FAACC;--economy:#B8973A;
+  --geopolitics:#C84B4B;--technology:#7B5EA7;--social:#4B8C5E;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--cream);font-family:'Montserrat',sans-serif;font-weight:300}
+
+/* CANVAS */
+#globe-canvas{position:fixed;inset:0;z-index:1}
+
+/* UI */
+#ui{position:fixed;inset:0;z-index:2;pointer-events:none;display:flex;flex-direction:column}
+#header{padding:16px 18px 0;pointer-events:all;display:flex;align-items:center;justify-content:space-between}
+#logo-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:400;color:var(--gold-l);letter-spacing:0.1em}
+#logo-sub{font-size:8px;color:var(--muted);letter-spacing:0.22em;text-transform:uppercase;margin-top:2px}
+#updated{font-size:9px;color:var(--muted);letter-spacing:0.08em}
+
+#filters{padding:10px 18px;pointer-events:all;display:flex;gap:6px;flex-wrap:wrap}
+.fb{padding:4px 10px;border:1px solid var(--border);background:rgba(13,11,8,0.75);
+  color:var(--soft);font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;
+  letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;backdrop-filter:blur(4px)}
+.fb:hover{border-color:var(--gold);color:var(--gold-l)}
+.fb.active{color:#060504;font-weight:500}
+.fb[data-d="all"].active{background:var(--gold);border-color:var(--gold)}
+.fb[data-d="climate"].active{background:var(--climate);border-color:var(--climate)}
+.fb[data-d="economy"].active{background:var(--economy);border-color:var(--economy)}
+.fb[data-d="geopolitics"].active{background:var(--geopolitics);border-color:var(--geopolitics)}
+.fb[data-d="technology"].active{background:var(--technology);border-color:var(--technology)}
+.fb[data-d="social"].active{background:var(--social);border-color:var(--social)}
+
+#spacer{flex:1}
+#stats{padding:0 18px 12px;pointer-events:all;display:flex;gap:18px}
+.sv{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;color:var(--gold-l);line-height:1;display:block}
+.sl{font-size:8px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;display:block}
+
+/* SIDEBAR */
+#sidebar{position:fixed;right:0;top:0;bottom:0;width:290px;z-index:3;
+  background:rgba(6,5,4,0.94);border-left:1px solid var(--border);
+  backdrop-filter:blur(16px);transform:translateX(100%);transition:transform 0.3s ease;
+  display:flex;flex-direction:column}
+#sidebar.open{transform:translateX(0)}
+#sb-close{position:absolute;top:12px;left:12px;width:26px;height:26px;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;
+  border-radius:2px;transition:all 0.2s}
+#sb-close:hover{border-color:var(--gold);color:var(--gold)}
+#ev-list{flex:1;overflow-y:auto;padding:46px 0 16px}
+#ev-list::-webkit-scrollbar{width:2px}
+#ev-list::-webkit-scrollbar-thumb{background:var(--border)}
+.ei{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s}
+.ei:hover{background:rgba(184,151,58,0.05)}
+.ei.sel{background:rgba(184,151,58,0.08);border-left:2px solid var(--gold)}
+.ei-tag{font-size:8px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.ei-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.ei-title{font-size:11px;color:var(--cream);line-height:1.4;margin-bottom:4px}
+.ei-meta{font-size:9px;color:var(--muted);display:flex;justify-content:space-between}
+.ei-bar{height:1px;background:rgba(184,151,58,0.1);margin-top:6px}
+.ei-fill{height:100%}
+
+/* DETAIL */
+#detail{position:fixed;right:0;top:0;bottom:0;width:290px;z-index:4;
+  background:rgba(6,5,4,0.97);border-left:1px solid var(--border);
+  backdrop-filter:blur(16px);transform:translateX(100%);transition:transform 0.3s ease;
+  padding:16px;overflow-y:auto}
+#detail.open{transform:translateX(0)}
+#dt-close{width:26px;height:26px;border:1px solid var(--border);background:transparent;
+  color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;
+  justify-content:center;border-radius:2px;transition:all 0.2s;margin-bottom:16px}
+#dt-close:hover{border-color:var(--gold);color:var(--gold)}
+#dt-domain{font-size:8px;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:4px}
+#dt-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;color:var(--cream);line-height:1.3;margin-bottom:10px}
+#dt-region{font-size:10px;color:var(--muted);margin-bottom:14px}
+#dt-sev-label{font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between}
+#dt-sev-bar{height:2px;background:rgba(184,151,58,0.1);margin-bottom:14px}
+#dt-sev-fill{height:100%}
+#dt-summary{font-size:12px;color:var(--soft);line-height:1.7;margin-bottom:14px}
+#dt-source{font-size:9px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between}
+
+#list-btn{position:fixed;bottom:16px;right:16px;z-index:10;padding:8px 14px;
+  background:rgba(13,11,8,0.9);border:1px solid var(--border);color:var(--soft);
+  font-family:'Montserrat',sans-serif;font-size:9px;letter-spacing:0.15em;
+  text-transform:uppercase;cursor:pointer;border-radius:2px;backdrop-filter:blur(8px);transition:all 0.2s}
+#list-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* Маркеры */
+.marker{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2}
+.marker-dot{border-radius:50%;transition:transform 0.2s}
+.marker-dot:hover{transform:scale(1.4)}
+.marker-ring{position:absolute;top:50%;left:50%;border-radius:50%;transform:translate(-50%,-50%);animation:pulse 2.5s ease-out infinite;opacity:0}
+@keyframes pulse{0%{transform:translate(-50%,-50%) scale(0.5);opacity:0.6}100%{transform:translate(-50%,-50%) scale(3);opacity:0}}
+</style>
+</head>
+<body>
+
+<div id="globe-canvas"></div>
+
+<div id="ui">
+  <div id="header">
+    <div>
+      <div id="logo-title">АРХИВ · КАРТА РИСКОВ</div>
+      <div id="logo-sub">Великое пробуждение</div>
+    </div>
+    <span id="updated"></span>
+  </div>
+  <div id="filters">
+    <button class="fb active" data-d="all">Все</button>
+    <button class="fb" data-d="climate">Климат</button>
+    <button class="fb" data-d="economy">Экономика</button>
+    <button class="fb" data-d="geopolitics">Геополитика</button>
+    <button class="fb" data-d="technology">Технологии</button>
+    <button class="fb" data-d="social">Социум</button>
+  </div>
+  <div id="spacer"></div>
+  <div id="stats">
+    <div><span class="sv" id="s-total">0</span><span class="sl">Событий</span></div>
+    <div><span class="sv" id="s-crit">0</span><span class="sl">Критичных</span></div>
+    <div><span class="sv" id="s-avg">0</span><span class="sl">Ср. индекс</span></div>
+  </div>
+</div>
+
+<div id="sidebar">
+  <button id="sb-close">✕</button>
+  <div id="ev-list"></div>
+</div>
+
+<div id="detail">
+  <button id="dt-close">✕</button>
+  <div id="dt-domain"></div>
+  <div id="dt-title"></div>
+  <div id="dt-region"></div>
+  <div id="dt-sev-label"><span>Индекс угрозы</span><span id="dt-sev-val"></span></div>
+  <div id="dt-sev-bar"><div id="dt-sev-fill"></div></div>
+  <div id="dt-summary"></div>
+  <div id="dt-source"><span id="dt-src"></span><span id="dt-date"></span></div>
+</div>
+
+<button id="list-btn">Список событий ↗</button>
+
+<script>
+// ── ДАННЫЕ ────────────────────────────────────────────────────────────────────
+const EVENTS = [
+  {id:"e01",title:"Эскалация в Южно-Китайском море",domain:"geopolitics",severity:90,lat:12,lng:114,region:"Юго-Восточная Азия",summary:"Военно-морские манёвры трёх держав одновременно. Риск инцидента — критический. Торговые пути под угрозой.",source:"GDELT",date:"2026-05-25"},
+  {id:"e02",title:"Напряжённость Индия–Пакистан",domain:"geopolitics",severity:88,lat:30,lng:70,region:"Южная Азия",summary:"Обе стороны провели военные учения у границы. Дипломатические каналы заморожены.",source:"ACLED",date:"2026-05-25"},
+  {id:"e03",title:"Засуха в Северной Африке",domain:"climate",severity:85,lat:28,lng:15,region:"Северная Африка",summary:"Продовольственная безопасность 40 млн человек под угрозой. Урожай пшеницы сократился на 35%.",source:"ACLED",date:"2026-05-25"},
+  {id:"e04",title:"Паводки в Бангладеш",domain:"climate",severity:80,lat:23.7,lng:90.4,region:"Южная Азия",summary:"12 млн пострадавших. Смещение населения — максимум за 20 лет.",source:"NASA",date:"2026-05-22"},
+  {id:"e05",title:"Волнения в Сахеле",domain:"social",severity:78,lat:15,lng:0,region:"Западная Африка",summary:"Протесты против военных правительств охватили 5 стран. Гуманитарный кризис обостряется.",source:"ACLED",date:"2026-05-24"},
+  {id:"e06",title:"Кибератака на энергосети Балтики",domain:"technology",severity:75,lat:56.9,lng:24.1,region:"Прибалтика",summary:"Скоординированные атаки на инфраструктуру трёх стран. Временные отключения.",source:"OSINT",date:"2026-05-21"},
+  {id:"e07",title:"Торговая война США–ЕС",domain:"economy",severity:72,lat:48,lng:10,region:"Европа",summary:"Брюссель объявил ответные меры на тарифы. Под угрозой €180 млрд товарооборота.",source:"Reuters",date:"2026-05-24"},
+  {id:"e08",title:"Миграционный кризис на границе США",domain:"social",severity:70,lat:31.7,lng:-106.5,region:"Северная Америка",summary:"Рекордное число пересечений на фоне климатической миграции из Центральной Америки.",source:"GDELT",date:"2026-05-23"},
+  {id:"e09",title:"Рецессия в Германии",domain:"economy",severity:68,lat:51.2,lng:10.4,region:"Германия",summary:"ВВП сократился второй квартал подряд. Промышленное производство упало на 4.2%.",source:"Destatis",date:"2026-05-20"},
+  {id:"e10",title:"Крах ИИ-переговоров в ООН",domain:"technology",severity:65,lat:46.9,lng:7.5,region:"Швейцария",summary:"США и Китай заблокировали глобальное соглашение по управлению ИИ. Регуляторная фрагментация нарастает.",source:"Tech Monitor",date:"2026-05-23"},
+];
+
+const DC = {climate:'#1FAACC',economy:'#B8973A',geopolitics:'#C84B4B',technology:'#7B5EA7',social:'#4B8C5E'};
+const DL = {climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
+
+let filtered = [...EVENTS], selected = null, filter = 'all';
+let rotX = -20, rotY = -25, dragging = false, lastX = 0, lastY = 0, autoRotate = true;
+
+// ── ГЛОБУС НА CANVAS ──────────────────────────────────────────────────────────
+const container = document.getElementById('globe-canvas');
+const canvas = document.createElement('canvas');
+container.appendChild(canvas);
+const ctx = canvas.getContext('2d');
+
+let W, H, R, CX, CY;
+
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  R = Math.min(W, H) * 0.42;
+  CX = W / 2; CY = H / 2;
+}
+resize();
+window.addEventListener('resize', () => { resize(); drawGlobe(); });
+
+// Простые координаты стран (упрощённые полигоны)
+const LAND_POINTS = [
+  // Европа
+  [[10,71],[28,71],[32,65],[30,60],[25,55],[14,55],[8,58],[2,51],[-5,48],[-9,39],[0,37],[12,37],[18,40],[28,42],[30,47],[22,48],[16,52],[10,55],[5,62],[10,71]],
+  // Азия (упрощ.)
+  [[30,70],[60,73],[100,73],[130,70],[140,60],[135,45],[125,35],[120,25],[105,10],[95,5],[80,10],[70,22],[60,22],[50,30],[40,38],[30,50],[30,70]],
+  // Африка
+  [[-5,37],[12,37],[30,30],[42,12],[42,-12],[35,-25],[20,-35],[10,-35],[-5,-15],[-18,15],[-17,28],[-5,37]],
+  // Северная Америка
+  [[-60,83],[-130,60],[-140,60],[-165,60],[-168,55],[-130,50],[-125,45],[-125,35],[-110,28],[-88,15],[-80,10],[-75,8],[-62,10],[-60,15],[-60,47],[-65,60],[-60,83]],
+  // Южная Америка
+  [[-35,-5],[-48,-28],[-65,-55],[-68,-55],[-75,-38],[-80,-3],[-78,2],[-62,8],[-62,11],[-35,-5]],
+  // Австралия
+  [[114,-22],[125,-14],[137,-12],[148,-18],[152,-25],[148,-38],[140,-38],[130,-32],[114,-25],[114,-22]],
+];
+
+function project(lng, lat, rX, rY) {
+  const phi = (lat) * Math.PI / 180;
+  const lam = (lng) * Math.PI / 180;
+  const rXr = rX * Math.PI / 180;
+  const rYr = rY * Math.PI / 180;
+
+  const x0 = Math.cos(phi) * Math.cos(lam);
+  const y0 = Math.cos(phi) * Math.sin(lam);
+  const z0 = Math.sin(phi);
+
+  // Поворот по Y (долгота)
+  const x1 = x0 * Math.cos(rXr) + y0 * Math.sin(rXr);
+  const y1 = -x0 * Math.sin(rXr) + y0 * Math.cos(rXr);
+  const z1 = z0;
+
+  // Поворот по X (широта)
+  const x2 = x1;
+  const y2 = y1 * Math.cos(rYr) - z1 * Math.sin(rYr);
+  const z2 = y1 * Math.sin(rYr) + z1 * Math.cos(rYr);
+
+  return { x: CX + x2 * R, y: CY - y2 * R, visible: z2 > 0 };
+}
+
+function drawGlobe() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Фон глобуса
+  const grad = ctx.createRadialGradient(CX - R*0.15, CY - R*0.15, R*0.05, CX, CY, R);
+  grad.addColorStop(0, '#111418');
+  grad.addColorStop(1, '#06090C');
+  ctx.beginPath();
+  ctx.arc(CX, CY, R, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Атмосфера
+  const atm = ctx.createRadialGradient(CX, CY, R * 0.95, CX, CY, R * 1.08);
+  atm.addColorStop(0, 'rgba(31,170,204,0.08)');
+  atm.addColorStop(1, 'rgba(31,170,204,0)');
+  ctx.beginPath();
+  ctx.arc(CX, CY, R * 1.08, 0, Math.PI * 2);
+  ctx.fillStyle = atm;
+  ctx.fill();
+
+  // Сетка меридианов
+  ctx.strokeStyle = 'rgba(184,151,58,0.06)';
+  ctx.lineWidth = 0.5;
+  for (let lng = -180; lng < 180; lng += 30) {
+    ctx.beginPath();
+    let first = true;
+    for (let lat = -90; lat <= 90; lat += 3) {
+      const p = project(lng, lat, rotX, rotY);
+      if (!p.visible) { first = true; continue; }
+      if (first) { ctx.moveTo(p.x, p.y); first = false; }
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+  for (let lat = -60; lat <= 60; lat += 30) {
+    ctx.beginPath();
+    let first = true;
+    for (let lng = -180; lng <= 180; lng += 3) {
+      const p = project(lng, lat, rotX, rotY);
+      if (!p.visible) { first = true; continue; }
+      if (first) { ctx.moveTo(p.x, p.y); first = false; }
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+
+  // Континенты
+  LAND_POINTS.forEach(poly => {
+    ctx.beginPath();
+    let started = false;
+    poly.forEach(([lng, lat]) => {
+      const p = project(lng, lat, rotX, rotY);
+      if (!p.visible) { started = false; return; }
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.closePath();
+    ctx.fillStyle = '#1A1812';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(184,151,58,0.15)';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+  });
+
+  // Маркеры событий
+  filtered.forEach(ev => {
+    const p = project(ev.lng, ev.lat, rotX, rotY);
+    if (!p.visible) return;
+    const r = 4 + (ev.severity - 50) * 0.08;
+    const col = DC[ev.domain];
+
+    // Пульс для критических
+    if (ev.severity >= 80) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + 5, 0, Math.PI * 2);
+      ctx.fillStyle = col + '25';
+      ctx.fill();
+    }
+
+    // Основная точка
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = ev.severity >= 80 ? col + 'E5' : col + 'B0';
+    ctx.fill();
+    ctx.strokeStyle = '#06050420';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+
+  // Блик
+  const shine = ctx.createRadialGradient(CX - R*0.35, CY - R*0.35, 0, CX - R*0.35, CY - R*0.35, R*0.6);
+  shine.addColorStop(0, 'rgba(255,255,255,0.04)');
+  shine.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.arc(CX, CY, R, 0, Math.PI * 2);
+  ctx.fillStyle = shine;
+  ctx.fill();
+}
+
+// ── КЛИК ПО МАРКЕРАМ ──────────────────────────────────────────────────────────
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  let hit = null;
+  filtered.forEach(ev => {
+    const p = project(ev.lng, ev.lat, rotX, rotY);
+    if (!p.visible) return;
+    const r = 4 + (ev.severity - 50) * 0.08 + 6;
+    const dx = mx - p.x, dy = my - p.y;
+    if (dx*dx + dy*dy < r*r) hit = ev;
+  });
+  if (hit) showDetail(hit);
+});
+
+// ── DRAG ──────────────────────────────────────────────────────────────────────
+canvas.addEventListener('mousedown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; autoRotate = false; });
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  rotX += (e.clientX - lastX) * 0.3;
+  rotY -= (e.clientY - lastY) * 0.3;
+  lastX = e.clientX; lastY = e.clientY;
+  drawGlobe();
+});
+window.addEventListener('mouseup', () => { dragging = false; setTimeout(() => autoRotate = true, 2000); });
+
+canvas.addEventListener('touchstart', e => { dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; autoRotate = false; });
+canvas.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  e.preventDefault();
+  rotX += (e.touches[0].clientX - lastX) * 0.3;
+  rotY -= (e.touches[0].clientY - lastY) * 0.3;
+  lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  drawGlobe();
+}, { passive: false });
+canvas.addEventListener('touchend', () => { dragging = false; setTimeout(() => autoRotate = true, 2000); });
+
+// ── АНИМАЦИЯ ──────────────────────────────────────────────────────────────────
+function animate() {
+  if (autoRotate && !dragging) { rotX += 0.08; drawGlobe(); }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function dc(d) { return DC[d] || '#B8973A'; }
+function sc(s) { return s >= 85 ? '#C84B4B' : s >= 70 ? '#B8973A' : '#1FAACC'; }
+function fd(iso) { return new Date(iso).toLocaleDateString('ru-RU', {day:'numeric',month:'long'}); }
+
+function updateStats() {
+  document.getElementById('s-total').textContent = filtered.length;
+  document.getElementById('s-crit').textContent = filtered.filter(e => e.severity >= 80).length;
+  const avg = filtered.length ? Math.round(filtered.reduce((s,e) => s+e.severity, 0) / filtered.length) : 0;
+  document.getElementById('s-avg').textContent = avg;
+}
+
+function renderList() {
+  const list = document.getElementById('ev-list');
+  list.innerHTML = '';
+  [...filtered].sort((a,b) => b.severity - a.severity).forEach(ev => {
+    const col = dc(ev.domain);
+    const d = document.createElement('div');
+    d.className = 'ei' + (selected?.id === ev.id ? ' sel' : '');
+    d.innerHTML = `<div class="ei-tag" style="color:${col}"><div class="ei-dot" style="background:${col}"></div>${DL[ev.domain]}</div><div class="ei-title">${ev.title}</div><div class="ei-meta"><span>${ev.region}</span><span>${fd(ev.date)}</span></div><div class="ei-bar"><div class="ei-fill" style="width:${ev.severity}%;background:${sc(ev.severity)}"></div></div>`;
+    d.onclick = () => showDetail(ev);
+    list.appendChild(d);
+  });
+}
+
+function showDetail(ev) {
+  selected = ev;
+  const col = dc(ev.domain);
+  document.getElementById('dt-domain').innerHTML = `<div style="width:4px;height:4px;border-radius:50%;background:${col}"></div><span style="color:${col}">${DL[ev.domain]}</span>`;
+  document.getElementById('dt-title').textContent = ev.title;
+  document.getElementById('dt-region').textContent = ev.region;
+  document.getElementById('dt-sev-val').textContent = ev.severity + ' / 100';
+  document.getElementById('dt-sev-fill').style.cssText = `width:${ev.severity}%;background:${sc(ev.severity)}`;
+  document.getElementById('dt-summary').textContent = ev.summary;
+  document.getElementById('dt-src').textContent = 'Источник: ' + ev.source;
+  document.getElementById('dt-date').textContent = fd(ev.date);
+  document.getElementById('detail').classList.add('open');
+  document.getElementById('sidebar').classList.remove('open');
+  renderList();
+
+  // Центрируем на событии
+  const tX = -ev.lng, tY = -ev.lat * 0.5;
+  const sX = rotX, sY = rotY;
+  let i = 0;
+  const t = setInterval(() => {
+    i++;
+    const e = 1 - Math.pow(1 - i/40, 3);
+    rotX = sX + (tX - sX) * e;
+    rotY = sY + (tY - sY) * e;
+    drawGlobe();
+    if (i >= 40) clearInterval(t);
+  }, 16);
+}
+
+document.getElementById('dt-close').onclick = () => { document.getElementById('detail').classList.remove('open'); selected = null; renderList(); };
+document.getElementById('sb-close').onclick = () => document.getElementById('sidebar').classList.remove('open');
+document.getElementById('list-btn').onclick = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('detail').classList.remove('open'); };
+
+document.querySelectorAll('.fb').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.fb').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.d;
+    filtered = filter === 'all' ? [...EVENTS] : EVENTS.filter(e => e.domain === filter);
+    updateStats(); renderList(); drawGlobe();
+  };
+});
+
+// Дата обновления
+document.getElementById('updated').textContent = 'Обновлено: ' + new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'long'});
+
+updateStats();
+renderList();
+drawGlobe();
+</script>
+</body>
+</html>
