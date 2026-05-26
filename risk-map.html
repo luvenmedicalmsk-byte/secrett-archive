@@ -106,6 +106,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .leaflet-popup-tip-container{display:none}
 .leaflet-popup-close-button{color:#6A6458!important;font-size:14px!important;right:8px!important;top:6px!important}
 .leaflet-popup-close-button:hover{color:#D4AF5A!important}
+
+#ai-panel{position:fixed;left:16px;bottom:120px;width:220px;z-index:15;pointer-events:all;display:none}
+#ai-panel.visible{display:block}
+#ai-panel-header{font-size:7px;letter-spacing:0.18em;text-transform:uppercase;color:#B8973A;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+#ai-panel-close{cursor:pointer;color:#6A6458;font-size:10px;padding:2px 4px}
+#ai-panel-close:hover{color:#D4AF5A}
+.ai-domain-row{padding:6px 10px;background:rgba(6,5,10,0.88);border:1px solid rgba(184,151,58,0.12);margin-bottom:3px;backdrop-filter:blur(8px);border-radius:2px;cursor:pointer;transition:border-color 0.15s}
+.ai-domain-row:hover{border-color:rgba(184,151,58,0.35)}
+.ai-domain-name{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#E8E0D0;display:flex;justify-content:space-between;align-items:center}
+.ai-domain-note{font-size:8px;color:#6A6458;margin-top:2px;line-height:1.4}
+.ai-trend-up{color:#C0392B}
+.ai-trend-down{color:#27AE60}
+.ai-trend-flat{color:#6A6458}
+.ai-risk-critical{color:#C0392B}
+.ai-risk-high{color:#D35400}
+.ai-risk-med{color:#2980B9}
+#ai-score-btn{position:fixed;bottom:16px;left:16px;padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
+#ai-score-btn:hover{border-color:#B8973A;color:#D4AF5A}
+#ai-score-btn.loading{opacity:0.5;pointer-events:none}
 </style>
 </head>
 <body>
@@ -140,6 +159,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     <div><span class="sv" id="s-a">0</span><span class="sl">Ср. индекс</span></div>
   </div>
   <button id="list-btn">Список событий ↗</button>
+  <div id="ai-panel">
+    <div id="ai-panel-header">
+      <span>◆ AI · Анализ доменов</span>
+      <span id="ai-panel-close">✕</span>
+    </div>
+    <div id="ai-domain-rows"></div>
+  </div>
+  <button id="ai-score-btn">◆ AI·Анализ</button>
 </div>
 
 <div id="sidebar"><button id="sb-x">✕</button><div id="ev-list"></div></div>
@@ -451,6 +478,121 @@ function loadFallback() {
 }
 
 tryLoadFresh().then(() => { fetchStats(); startSSE(); });
+
+
+// ── AI DOMAIN PANEL ───────────────────────────────────────────────────────────
+const RISK_LEVELS = {
+  'критический': 'ai-risk-critical',
+  'высокий':     'ai-risk-high',
+  'умеренный':   'ai-risk-med',
+  'низкий':      'ai-risk-med'
+};
+
+async function runAIScore() {
+  const btn = document.getElementById('ai-score-btn');
+  btn.classList.add('loading');
+  btn.textContent = '◆ Анализирую...';
+
+  try {
+    const r = await fetch(API_BASE + '/api/score', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'archive2026'
+      },
+      body: JSON.stringify({ top: 5 }),
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    showAIPanel(data);
+
+    // Обновляем маркеры событий с AI-оценками
+    if (data.by_domain) {
+      const aiMap = {};
+      Object.values(data.by_domain).flat().forEach(ev => {
+        if (ev.ai_score) aiMap[ev.id] = ev;
+      });
+      ALL_EVENTS = ALL_EVENTS.map(ev => aiMap[ev.id] ? { ...ev, ...aiMap[ev.id] } : ev);
+      filtered = filter === 'all' ? [...ALL_EVENTS] : ALL_EVENTS.filter(e => e.domain === filter);
+      renderMarkers(); renderList();
+    }
+  } catch(e) {
+    console.warn('[AI]', e.message);
+    // Пробуем кэш
+    try {
+      const r2 = await fetch(API_BASE + '/api/scores');
+      if (r2.ok) {
+        const data = await r2.json();
+        if (data.domain_summary && Object.keys(data.domain_summary).length > 0) {
+          showAIPanel(data);
+        } else {
+          btn.textContent = '◆ AI·Анализ';
+          alert('Добавьте ANTHROPIC_API_KEY в Worker для AI-анализа');
+        }
+      }
+    } catch(_) {}
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = '◆ AI·Анализ';
+  }
+}
+
+function showAIPanel(data) {
+  const summary = data.domain_summary || {};
+  const rows = document.getElementById('ai-domain-rows');
+  rows.innerHTML = '';
+
+  const domainOrder = ['geopolitics','climate','economy','technology','social'];
+  const domainNames = {
+    climate:'Климат', economy:'Экономика',
+    geopolitics:'Геополитика', technology:'Технологии', social:'Социум'
+  };
+
+  domainOrder.forEach(dom => {
+    const s = summary[dom];
+    if (!s) return;
+
+    const trendClass = s.trend === '↑' ? 'ai-trend-up' : s.trend === '↓' ? 'ai-trend-down' : 'ai-trend-flat';
+    const riskClass  = RISK_LEVELS[s.risk_level] || 'ai-risk-med';
+
+    const row = document.createElement('div');
+    row.className = 'ai-domain-row';
+    row.innerHTML = `
+      <div class="ai-domain-name">
+        <span>${domainNames[dom] || dom}</span>
+        <span><span class="${riskClass}">${s.risk_level}</span> <span class="${trendClass}">${s.trend}</span></span>
+      </div>
+      <div class="ai-domain-note">${s.note || ''}</div>`;
+
+    // Клик — фильтр по домену
+    row.onclick = () => {
+      document.querySelectorAll('.fb').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.fb[data-d="${dom}"]`)?.classList.add('active');
+      filter = dom;
+      filtered = ALL_EVENTS.filter(e => e.domain === dom);
+      updateStats(); renderList(); renderMarkers();
+    };
+    rows.appendChild(row);
+  });
+
+  document.getElementById('ai-panel').classList.add('visible');
+}
+
+document.getElementById('ai-score-btn').onclick = runAIScore;
+document.getElementById('ai-panel-close').onclick = () => {
+  document.getElementById('ai-panel').classList.remove('visible');
+};
+
+// При старте — грузим кэш если есть
+fetch(API_BASE + '/api/scores')
+  .then(r => r.ok ? r.json() : null)
+  .then(data => {
+    if (data?.domain_summary && Object.keys(data.domain_summary).length > 0) {
+      showAIPanel(data);
+    }
+  }).catch(()=>{});
 
 // ── SSE LIVE-ПОТОК ────────────────────────────────────────────────────────────
 let sseSource = null;
