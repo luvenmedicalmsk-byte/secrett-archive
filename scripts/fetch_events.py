@@ -1037,6 +1037,95 @@ def fetch_russia_climate():
 # СПУТНИКОВЫЕ ИСТОЧНИКИ: Copernicus, NASA FIRMS, Global Forest Watch
 # ══════════════════════════════════════════════════════════════════════════════
 
+
+def fetch_copernicus_floods():
+    """Наводнения и паводки через Cloudflare Worker прокси → Copernicus/GloFAS"""
+    items = []
+    proxy_url = os.environ.get('PROXY_URL', '')
+    proxy_token = os.environ.get('PROXY_TOKEN', '')
+    
+    if not proxy_url or not proxy_token:
+        print("  [SKIP] Copernicus floods: нет PROXY_URL/PROXY_TOKEN", file=sys.stderr)
+        return []
+    
+    try:
+        url = f"{proxy_url}?action=floods"
+        req = urllib.request.Request(
+            url,
+            headers={
+                'X-Proxy-Token': proxy_token,
+                'User-Agent': 'ArchiveBot/2.0'
+            }
+        )
+        with urllib.request.urlopen(req, timeout=20) as r:
+            data = json.loads(r.read())
+        
+        if not data.get('ok'):
+            print(f"  [WARN] Copernicus floods: {data.get('error','unknown')}", file=sys.stderr)
+            return []
+        
+        floods = data.get('floods', [])
+        print(f"  Copernicus floods: {len(floods)} событий", file=sys.stderr)
+        
+        for flood in floods:
+            ftype = flood.get('type', '')
+            
+            if ftype == 'glofas':
+                severity_map = {'high': 85, 'medium': 72, 'low': 58}
+                sev = severity_map.get(flood.get('severity','medium'), 72)
+                country = flood.get('country', '')
+                river = flood.get('river', '')
+                title = f"Наводнение — {country}" + (f" (р. {river})" if river else "")
+                lat = flood.get('lat') or 0.0
+                lng = flood.get('lng') or 0.0
+                if lat == 0 and lng == 0:
+                    continue
+                items.append({
+                    'title': title,
+                    'desc': f"GloFAS предупреждение. Уровень: {flood.get('severity','medium')}. {country}",
+                    'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                    'source': 'GloFAS/Copernicus',
+                    'source_bias': 20,
+                    '_lat': float(lat), '_lng': float(lng),
+                    '_region': country or detect_region_by_coords(float(lat), float(lng)),
+                    '_domain': 'climate'
+                })
+            
+            elif ftype == 'sentinel2_ndwi':
+                region = flood.get('region', '')
+                water_pct = flood.get('water_fraction', 0)
+                sev = 85 if flood.get('severity') == 'high' else 72
+                bbox = flood.get('bbox', [0,0,0,0])
+                lat = (bbox[1] + bbox[3]) / 2
+                lng = (bbox[0] + bbox[2]) / 2
+                items.append({
+                    'title': f"Затопление территории — {region} ({water_pct}% площади)",
+                    'desc': f"Спутниковая детекция Sentinel-2 NDWI. Площадь затопления: {water_pct}%.",
+                    'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                    'source': 'Sentinel-2/Copernicus',
+                    'source_bias': 22,
+                    '_lat': lat, '_lng': lng,
+                    '_region': region,
+                    '_domain': 'climate'
+                })
+            
+            elif ftype == 'cems':
+                text = flood.get('text', '')
+                if text:
+                    items.append({
+                        'title': f"[CEMS] {text[:100]}",
+                        'desc': 'Активация Copernicus Emergency Management Service.',
+                        'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                        'source': 'Copernicus CEMS',
+                        'source_bias': 18
+                    })
+    
+    except Exception as e:
+        print(f"  [WARN] Copernicus floods proxy: {e}", file=sys.stderr)
+    
+    return items
+
+
 def fetch_copernicus():
     """Copernicus Emergency Management Service — пожары и наводнения глобально"""
     items = []
@@ -2132,6 +2221,7 @@ if __name__ == '__main__':
     raw += fetch_russia_climate_v2()
     raw += get_russia_static_risks()
     # Спутниковые источники
+    raw += fetch_copernicus_floods()
     raw += fetch_copernicus()
     raw += fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))
     raw += fetch_nasa_firms(get_env('FIRMS_API_KEY'))
