@@ -401,7 +401,113 @@ function loadFallback() {
   updateStats(); renderList(); renderMarkers();
 }
 
-tryLoadFresh().then(() => fetchStats());
+tryLoadFresh().then(() => { fetchStats(); startSSE(); });
+
+// ── SSE LIVE-ПОТОК ────────────────────────────────────────────────────────────
+let sseSource = null;
+let sseRetries = 0;
+const SSE_MAX_RETRIES = 5;
+
+function startSSE() {
+  if (!window.EventSource) return; // старый браузер
+  if (sseSource) { sseSource.close(); sseSource = null; }
+
+  const params = new URLSearchParams();
+  if (filter !== 'all') params.set('domain', filter);
+  const url = API_BASE + '/api/stream?' + params.toString();
+
+  sseSource = new EventSource(url);
+
+  sseSource.addEventListener('snapshot', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.events && d.events.length > 0) {
+        applyEvents(d.events, d.updated);
+        console.info('[SSE] Снимок получен:', d.events.length, 'событий');
+        sseRetries = 0;
+        showLiveIndicator('connected');
+      }
+    } catch(err) { console.warn('[SSE] snapshot parse error', err); }
+  });
+
+  sseSource.addEventListener('update', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.events && d.events.length > 0) {
+        // Добавляем новые события к существующим
+        const existingIds = new Set(ALL_EVENTS.map(ev => ev.id));
+        const newEvs = d.events.filter(ev => !existingIds.has(ev.id));
+        if (newEvs.length > 0) {
+          ALL_EVENTS = [...newEvs, ...ALL_EVENTS];
+          filtered = filter === 'all' ? [...ALL_EVENTS] : ALL_EVENTS.filter(ev => ev.domain === filter);
+          updateStats(); renderList(); renderMarkers();
+          showLiveIndicator('update', newEvs.length);
+          console.info('[SSE] Новых событий:', newEvs.length);
+        }
+      }
+    } catch(err) { console.warn('[SSE] update parse error', err); }
+  });
+
+  sseSource.addEventListener('stats', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.updated) {
+        const dt = new Date(d.updated);
+        document.getElementById('updated').textContent =
+          'Обновлено: ' + dt.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+      }
+    } catch(_) {}
+  });
+
+  sseSource.addEventListener('reconnect', () => {
+    sseSource.close();
+    setTimeout(startSSE, 3000);
+  });
+
+  sseSource.onerror = () => {
+    showLiveIndicator('disconnected');
+    sseRetries++;
+    if (sseRetries <= SSE_MAX_RETRIES) {
+      const delay = Math.min(30000, 3000 * Math.pow(2, sseRetries - 1));
+      console.warn('[SSE] Ошибка, переподключение через', delay/1000, 'с');
+      setTimeout(startSSE, delay);
+    }
+  };
+}
+
+// Индикатор живого соединения в заголовке
+function showLiveIndicator(state, count) {
+  let el = document.getElementById('live-dot');
+  if (!el) {
+    el = document.createElement('span');
+    el.id = 'live-dot';
+    el.style.cssText = 'display:inline-block;width:5px;height:5px;border-radius:50%;margin-left:8px;vertical-align:middle;transition:background 0.3s';
+    document.getElementById('logo-title').appendChild(el);
+  }
+  if (state === 'connected') {
+    el.style.background = '#27AE60';
+    el.title = 'Live — данные обновляются';
+  } else if (state === 'update') {
+    el.style.background = '#D4AF5A';
+    el.title = `+${count} новых событий`;
+    setTimeout(() => { el.style.background = '#27AE60'; }, 3000);
+  } else {
+    el.style.background = '#6A6458';
+    el.title = 'Соединение прервано';
+  }
+}
+
+// Запускаем SSE после загрузки данных
+// При смене фильтра — перезапускаем с новым доменом
+const _origFilterClick = document.querySelectorAll('.fb');
+document.querySelectorAll('.fb').forEach(btn => {
+  const orig = btn.onclick;
+  btn.onclick = (e) => {
+    if (orig) orig.call(btn, e);
+    setTimeout(startSSE, 100);
+  };
+});
+
 </script>
 </body>
 </html>
