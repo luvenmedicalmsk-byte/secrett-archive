@@ -798,7 +798,7 @@ def fetch_reliefweb_v2():
 def fetch_usgs_earthquakes():
     items = []
     # Землетрясения магнитудой 5.0+ за последние 7 дней
-    url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/5.0_week.geojson"
+    url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson"
     data = fetch_url(url)
     if data:
         try:
