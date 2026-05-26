@@ -125,6 +125,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #ai-score-btn{position:fixed;bottom:16px;left:16px;padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
 #ai-score-btn:hover{border-color:#B8973A;color:#D4AF5A}
 #ai-score-btn.loading{opacity:0.5;pointer-events:none}
+
+#location-panel{position:fixed;left:0;right:0;bottom:0;max-height:55vh;z-index:22;background:rgba(6,5,10,0.97);border-top:1px solid rgba(184,151,58,0.2);backdrop-filter:blur(20px);transform:translateY(100%);transition:transform 0.3s ease;overflow-y:auto;padding:16px}
+#location-panel.open{transform:translateY(0)}
+#loc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+#loc-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:#E8E0D0}
+#loc-close{width:24px;height:24px;border:1px solid rgba(184,151,58,0.2);background:transparent;color:#6A6458;cursor:pointer;font-size:11px;border-radius:2px;flex-shrink:0}
+#loc-close:hover{border-color:#B8973A;color:#D4AF5A}
+#loc-risk-row{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+#loc-score{font-family:'Cormorant Garamond',serif;font-size:36px;color:#D4AF5A;line-height:1}
+#loc-level{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;padding:3px 8px;border-radius:2px}
+#loc-summary{font-size:11px;color:#A8A090;line-height:1.7;margin-bottom:12px}
+#loc-risks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.loc-risk-tag{font-size:9px;padding:4px 9px;border-radius:2px;border:1px solid rgba(184,151,58,0.15);color:#A8A090}
+#loc-outlook{font-size:10px;color:#6A6458;border-top:1px solid rgba(184,151,58,0.08);padding-top:10px;line-height:1.6}
+#loc-signals{margin-top:8px}
+#loc-signals-label{font-size:7px;letter-spacing:0.16em;text-transform:uppercase;color:#B8973A;margin-bottom:5px}
+.loc-signal{font-size:9px;color:#6A6458;padding:2px 0;display:flex;gap:5px}
+#loc-loading{text-align:center;padding:20px;font-size:11px;color:#6A6458;letter-spacing:0.1em}
 </style>
 </head>
 <body>
@@ -480,6 +498,115 @@ function loadFallback() {
 tryLoadFresh().then(() => { fetchStats(); startSSE(); });
 
 
+
+// ── ПРОФИЛЬ ЛОКАЦИИ ───────────────────────────────────────────────────────────
+const DC_COLORS = {
+  climate:'#27AE60', economy:'#2980B9',
+  geopolitics:'#D35400', technology:'#8E44AD', social:'#C0392B'
+};
+const RISK_COLORS = {
+  'критический':'#C0392B','высокий':'#D35400','умеренный':'#2980B9','низкий':'#27AE60'
+};
+
+map.on('click', async (e) => {
+  const { lat, lng } = e.latlng;
+
+  // Получаем название места через reverse geocoding (Nominatim — бесплатно)
+  let locationName = '';
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`,
+      { headers: { 'User-Agent': 'ArchiveRiskMap/1.0' }, signal: AbortSignal.timeout(4000) }
+    );
+    if (r.ok) {
+      const geo = await r.json();
+      const a = geo.address || {};
+      locationName = a.country || a.city || a.state || geo.display_name?.split(',')[0] || '';
+    }
+  } catch(_) {}
+
+  if (!locationName) {
+    locationName = `${lat.toFixed(1)}°, ${lng.toFixed(1)}°`;
+  }
+
+  openLocationPanel(locationName, lat, lng);
+});
+
+async function openLocationPanel(name, lat, lng) {
+  const panel = document.getElementById('location-panel');
+  const loading = document.getElementById('loc-loading');
+
+  // Показываем панель с лоадером
+  document.getElementById('loc-name').textContent = name;
+  document.getElementById('loc-score').textContent = '';
+  document.getElementById('loc-level').textContent = '';
+  document.getElementById('loc-summary').textContent = '';
+  document.getElementById('loc-risks').innerHTML = '';
+  document.getElementById('loc-outlook').textContent = '';
+  document.getElementById('loc-signals-list').innerHTML = '';
+  loading.style.display = 'block';
+  panel.classList.add('open');
+
+  try {
+    const params = new URLSearchParams({ name, lat, lng });
+    const r = await fetch(API_BASE + '/api/location?' + params, {
+      signal: AbortSignal.timeout(20000)
+    });
+
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    loading.style.display = 'none';
+    renderLocationPanel(d);
+
+  } catch(e) {
+    loading.textContent = 'Нет данных по этой локации';
+    console.warn('[Location]', e.message);
+  }
+}
+
+function renderLocationPanel(d) {
+  const riskColor = RISK_COLORS[d.risk_level] || '#6A6458';
+
+  document.getElementById('loc-name').textContent = d.location || '';
+  document.getElementById('loc-score').textContent = (d.overall_risk || '—') + ' / 100';
+  const lvl = document.getElementById('loc-level');
+  lvl.textContent = d.risk_level || '';
+  lvl.style.cssText = `background:${riskColor}22;color:${riskColor};border:1px solid ${riskColor}44;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;padding:3px 8px;border-radius:2px`;
+
+  document.getElementById('loc-summary').textContent = d.summary || '';
+
+  // Ключевые риски
+  const risksEl = document.getElementById('loc-risks');
+  risksEl.innerHTML = '';
+  (d.key_risks || []).forEach(risk => {
+    const col = DC_COLORS[risk.domain] || '#6A6458';
+    const tag = document.createElement('div');
+    tag.className = 'loc-risk-tag';
+    tag.style.borderColor = col + '44';
+    tag.style.color = col;
+    tag.textContent = risk.description;
+    risksEl.appendChild(tag);
+  });
+
+  // Прогноз
+  const out = document.getElementById('loc-outlook');
+  out.textContent = (d.horizon ? d.horizon + ' · ' : '') + (d.outlook || '');
+
+  // Сигналы
+  const sigList = document.getElementById('loc-signals-list');
+  sigList.innerHTML = '';
+  (d.watch_signals || []).forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'loc-signal';
+    el.innerHTML = '<span style="color:#B8973A">·</span> ' + s;
+    sigList.appendChild(el);
+  });
+}
+
+document.getElementById('loc-close').onclick = () => {
+  document.getElementById('location-panel').classList.remove('open');
+};
+
 // ── AI DOMAIN PANEL ───────────────────────────────────────────────────────────
 const RISK_LEVELS = {
   'критический': 'ai-risk-critical',
@@ -704,5 +831,24 @@ document.querySelectorAll('.fb').forEach(btn => {
 });
 
 </script>
+
+<div id="location-panel">
+  <div id="loc-header">
+    <div id="loc-name"></div>
+    <button id="loc-close">✕</button>
+  </div>
+  <div id="loc-risk-row">
+    <span id="loc-score"></span>
+    <span id="loc-level"></span>
+  </div>
+  <div id="loc-summary"></div>
+  <div id="loc-risks"></div>
+  <div id="loc-outlook"></div>
+  <div id="loc-signals">
+    <div id="loc-signals-label">Сигналы для мониторинга</div>
+    <div id="loc-signals-list"></div>
+  </div>
+  <div id="loc-loading" style="display:none">◆ Анализирую локацию...</div>
+</div>
 </body>
 </html>
