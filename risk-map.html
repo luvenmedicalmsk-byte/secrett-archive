@@ -17,7 +17,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #map{position:fixed;inset:0;z-index:1;background:#06050A}
 
 /* Стиль тайлов — переопределяем через фильтр */
-.leaflet-tile-pane{filter:brightness(0.18) saturate(0.4) hue-rotate(200deg)}
+.leaflet-tile-pane{}
 
 #ui{position:fixed;inset:0;z-index:10;pointer-events:none}
 #header{position:absolute;top:14px;left:16px;pointer-events:all}
@@ -154,9 +154,21 @@ const map = L.map('map', {
 });
 
 // Тайлы CartoDB Dark — нейтральный тёмный фон
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+// Базовый тёмный фон без надписей
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
   subdomains: 'abcd',
   maxZoom: 19
+}).addTo(map);
+
+// Надписи поверх — светлые, читаемые, рисуются ПОСЛЕ маркеров не нужно pane
+// Используем pane чтобы лейблы были поверх маркеров-событий
+map.createPane('labels');
+map.getPane('labels').style.zIndex = 650;
+map.getPane('labels').style.pointerEvents = 'none';
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+  subdomains: 'abcd',
+  maxZoom: 19,
+  pane: 'labels'
 }).addTo(map);
 
 // ── ЦВЕТОВЫЕ СЛОИ ПО ДОМЕНАМ ─────────────────────────────────────────────────
