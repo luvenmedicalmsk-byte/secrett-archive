@@ -2,10 +2,8 @@ name: Обновление карты сигналов
 
 on:
   schedule:
-    # Каждые 10 минут (GitHub минимум — 5 мин, реально 5-15 мин)
     - cron: '*/10 * * * *'
   workflow_dispatch:
-    # Ручной запуск из GitHub UI
 
 jobs:
   update-events:
@@ -35,9 +33,9 @@ jobs:
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add docs/events.json
+          git add events.json risk-map.html
           if git diff --staged --quiet; then
-            echo "Нет новых событий"
+            echo "Нет изменений"
           else
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
             git commit -m "Карта сигналов · $TIMESTAMP"
