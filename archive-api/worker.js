@@ -356,6 +356,76 @@ async function handleRefresh(request, env, ctx) {
 
 // ── AI SCORING ────────────────────────────────────────────────────────────────
 
+// ── AI HELPER — OpenAI / Anthropic (настраивается через env.AI_PROVIDER) ────────
+
+async function callAI(env, prompt, maxTokens = 2000) {
+  // По умолчанию OpenAI, если задан OPENAI_API_KEY
+  // Переключение: env.AI_PROVIDER = 'anthropic' или 'openai'
+  const useOpenAI = env.OPENAI_API_KEY && env.AI_PROVIDER !== 'anthropic';
+
+  if (useOpenAI) {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: maxTokens,
+        temperature: 0.3,
+        messages: [
+          {
+            role: 'system',
+            content: 'Вы — старший аналитик глобальных рисков. Отвечайте ТОЛЬКО валидным JSON без markdown-блоков.'
+          },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      throw new Error(`OpenAI API ${r.status}: ${err.slice(0, 200)}`);
+    }
+    const d = await r.json();
+    return d.choices?.[0]?.message?.content || '';
+
+  } else if (env.ANTHROPIC_API_KEY) {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: maxTokens,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      throw new Error(`Anthropic API ${r.status}: ${err.slice(0, 200)}`);
+    }
+    const d = await r.json();
+    return d.content?.[0]?.text || '';
+
+  } else {
+    throw new Error('Нет API ключа: задайте OPENAI_API_KEY или ANTHROPIC_API_KEY');
+  }
+}
+
+function parseAIJson(text) {
+  // Убираем markdown-блоки если GPT их добавил
+  const clean = text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+  const m = clean.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error('AI не вернул JSON');
+  return JSON.parse(m[0]);
+}
+
+
+
 const DOMAINS = {
   climate:     { ru: 'Климат',      context: 'климатические катастрофы, стихийные бедствия, изменение климата, экологические кризисы' },
   economy:     { ru: 'Экономика',   context: 'финансовые кризисы, инфляция, рецессия, торговые войны, долговые кризисы, банковские коллапсы' },
@@ -467,30 +537,8 @@ domain_summary.trend — ↑ ухудшение / → стабильно / ↓ �
 
   let aiResult;
   try {
-    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!claudeRes.ok) {
-      const err = await claudeRes.text();
-      throw new Error(`Claude API ${claudeRes.status}: ${err.slice(0, 200)}`);
-    }
-
-    const claudeData = await claudeRes.json();
-    const text = claudeData.content?.[0]?.text || '';
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('Claude не вернул JSON');
-    aiResult = JSON.parse(jsonMatch[0]);
+    const text = await callAI(env, prompt, 4000);
+    aiResult = parseAIJson(text);
 
   } catch (e) {
     console.error('Claude error:', e);
@@ -519,7 +567,7 @@ domain_summary.trend — ↑ ухудшение / → стабильно / ↓ �
     by_domain:     scoredByDomain,
     domain_summary: aiResult.domain_summary || {},
     meta: {
-      model:      'claude-sonnet-4-20250514',
+      model: env.OPENAI_API_KEY ? 'gpt-4o' : 'claude-sonnet-4-20250514',
       top_per_domain: topPerDomain,
       total_scored: Object.keys(eventMap).length,
       scored_at:  new Date().toISOString()
@@ -561,8 +609,8 @@ async function handleCachedScores(url, env) {
 // ── GET /api/location?name=Iran ──────────────────────────────────────────────
 // Страновой/городской профиль риска — Claude синтезирует все события по локации
 async function handleLocation(url, env) {
-  if (!env.ANTHROPIC_API_KEY) {
-    return jsonResponse({ error: 'ANTHROPIC_API_KEY не настроен' }, 503);
+  if (!env.OPENAI_API_KEY && !env.ANTHROPIC_API_KEY) {
+    return jsonResponse({ error: 'Задайте OPENAI_API_KEY или ANTHROPIC_API_KEY в настройках Worker' }, 503);
   }
 
   const name = url.searchParams.get('name') || '';
@@ -646,26 +694,8 @@ horizon — краткосрочный (до 1 мес) / среднесрочн�
 
   let result;
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!r.ok) throw new Error(`Claude API ${r.status}`);
-    const d = await r.json();
-    const text = d.content?.[0]?.text || '';
-    const m = text.match(/\{[\s\S]*\}/);
-    if (!m) throw new Error('Нет JSON в ответе');
-    result = JSON.parse(m[0]);
+    const locText = await callAI(env, prompt, 1000);
+    result = parseAIJson(locText);
 
   } catch(e) {
     console.error('Location score error:', e);
