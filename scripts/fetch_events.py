@@ -1175,6 +1175,117 @@ def fetch_copernicus_floods():
         print(f"  [WARN] Copernicus floods proxy: {e}", file=sys.stderr)
     
     return items
+
+def fetch_copernicus_cyber():
+    """Кибербезопасность через Cloudflare Worker → CISA + AlienVault + BleepingComputer + Krebs + Cloudflare Radar"""
+    items = []
+    proxy_url = os.environ.get('PROXY_URL', '')
+    proxy_token = os.environ.get('PROXY_TOKEN', '')
+    
+    if not proxy_url or not proxy_token:
+        print("  [SKIP] Cyber layer: нет PROXY_URL/PROXY_TOKEN", file=sys.stderr)
+        return []
+    
+    try:
+        url = f"{proxy_url}?action=cyber"
+        req = urllib.request.Request(url, headers={
+            'X-Proxy-Token': proxy_token,
+            'User-Agent': 'ArchiveBot/2.0'
+        })
+        with urllib.request.urlopen(req, timeout=25) as r:
+            data = json.loads(r.read())
+        
+        if not data.get('ok'):
+            print(f"  [WARN] Cyber layer: {data.get('error','unknown')}", file=sys.stderr)
+            return []
+        
+        cyber = data.get('cyber', [])
+        print(f"  Cyber layer: {len(cyber)} событий", file=sys.stderr)
+        
+        # Координаты для геолокации кибератак
+        CYBER_COORDS = {
+            'russia': (61.0, 60.0), 'china': (35.0, 105.0), 'iran': (32.0, 53.0),
+            'north korea': (40.3, 127.5), 'ukraine': (49.0, 31.0), 'usa': (38.0, -97.0),
+            'united states': (38.0, -97.0), 'europe': (50.0, 10.0), 'germany': (51.2, 10.4),
+            'uk': (54.0, -2.0), 'france': (46.2, 2.2), 'israel': (31.5, 34.8),
+            'india': (22.0, 80.0), 'taiwan': (23.7, 121.0), 'japan': (36.0, 138.0),
+            'global': (20.0, 0.0), 'worldwide': (20.0, 0.0),
+        }
+        
+        import random
+        
+        for event in cyber:
+            etype = event.get('type', '')
+            title = event.get('title', '')
+            desc = event.get('desc', '')
+            if not title:
+                continue
+            
+            # Определяем severity
+            sev_str = event.get('severity', 'medium')
+            severity_map = {'high': 82, 'medium': 68, 'low': 55, 'critical': 90}
+            base_severity = severity_map.get(sev_str, 68)
+            
+            # Геолокация по тексту
+            text_lower = (title + ' ' + desc).lower()
+            lat, lng = 20.0 + random.uniform(-5,5), 0.0 + random.uniform(-10,10)
+            region = 'Глобально'
+            
+            for country, coords in CYBER_COORDS.items():
+                if country in text_lower:
+                    lat = coords[0] + random.uniform(-2, 2)
+                    lng = coords[1] + random.uniform(-3, 3)
+                    region = country.title()
+                    break
+            
+            # Специальная обработка по типу
+            if etype == 'cisa_kev':
+                vendor = event.get('vendor', '')
+                product = event.get('product', '')
+                full_desc = f"Активно эксплуатируемая уязвимость. Вендор: {vendor}. Продукт: {product}. {desc[:150]}"
+                base_severity = max(base_severity, 78)
+            elif etype == 'cisa_advisory':
+                full_desc = f"Официальное предупреждение CISA по критической инфраструктуре. {desc[:150]}"
+                base_severity = max(base_severity, 75)
+            elif etype == 'cloudflare_outage':
+                country_name = event.get('country', '')
+                full_desc = f"Интернет-отключение зафиксировано Cloudflare Radar. {country_name}. {desc[:150]}"
+                if country_name:
+                    for c, coords in CYBER_COORDS.items():
+                        if c in country_name.lower():
+                            lat, lng = coords[0] + random.uniform(-1,1), coords[1] + random.uniform(-2,2)
+                            region = country_name
+                            break
+            elif etype == 'netblocks':
+                full_desc = f"NetBlocks: {desc[:200]}"
+                base_severity = max(base_severity, 80)
+            else:
+                full_desc = desc[:200]
+            
+            items.append({
+                'title': title[:130],
+                'desc': full_desc,
+                'date': event.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                'source': {
+                    'cisa_kev': 'CISA KEV',
+                    'cisa_advisory': 'CISA Advisory',
+                    'alienvault': 'AlienVault OTX',
+                    'bleepingcomputer': 'BleepingComputer',
+                    'krebs': 'Krebs Security',
+                    'cloudflare_outage': 'Cloudflare Radar',
+                    'netblocks': 'NetBlocks',
+                }.get(etype, 'Cyber Intel'),
+                'source_bias': base_severity - 50,
+                '_lat': round(lat, 2), '_lng': round(lng, 2),
+                '_region': region, '_domain': 'technology'
+            })
+    
+    except Exception as e:
+        print(f"  [WARN] Cyber layer proxy: {e}", file=sys.stderr)
+    
+    return items
+
+
 def fetch_copernicus():
     """Copernicus Emergency Management Service — пожары и наводнения глобально"""
     items = []
@@ -2271,6 +2382,7 @@ if __name__ == '__main__':
     raw += get_russia_static_risks()
     # Спутниковые источники
     raw += fetch_copernicus_floods()
+    raw += fetch_copernicus_cyber()
     raw += fetch_copernicus()
     raw += fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))
     raw += fetch_nasa_firms(get_env('FIRMS_API_KEY'))
