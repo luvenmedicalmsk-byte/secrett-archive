@@ -1,6 +1,15 @@
 /**
  * Архив «Великое пробуждение» — Edge API v2
  * Cloudflare Worker
+ *
+ * Эндпоинты:
+ *   GET  /api/events          — список событий (фильтры, пагинация)
+ *   GET  /api/events/:id      — одно событие
+ *   GET  /api/stats           — агрегированная статистика
+ *   GET  /api/domains         — список доменов с подсчётом
+ *   GET  /api/stream          — SSE live-поток новых событий
+ *   POST /api/events/refresh  — триггер обновления (только с API-ключом)
+ *   GET  /api/health          — статус сервиса
  */
 
 const CORS = {
@@ -40,6 +49,8 @@ export default {
   }
 };
 
+// ── ХЕЛПЕРЫ ──────────────────────────────────────────────────────────────────
+
 function jsonResponse(data, status = 200) {
   const isError = status >= 400;
   return new Response(JSON.stringify(data), {
@@ -53,6 +64,7 @@ function jsonResponse(data, status = 200) {
 }
 
 async function getEvents(env) {
+  // 1. KV кэш
   try {
     if (env.EVENTS_KV) {
       const cached = await env.EVENTS_KV.get('events_data', { type: 'json' });
@@ -60,6 +72,7 @@ async function getEvents(env) {
     }
   } catch (_) {}
 
+  // 2. GitHub Raw
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
   const r = await fetch(
     `https://raw.githubusercontent.com/${REPO}/main/events.json`,
@@ -68,6 +81,7 @@ async function getEvents(env) {
   if (!r.ok) throw new Error(`GitHub fetch failed: ${r.status}`);
   const data = await r.json();
 
+  // 3. Сохраняем в KV
   try {
     if (env.EVENTS_KV) {
       await env.EVENTS_KV.put('events_data', JSON.stringify(data), { expirationTtl: 120 });
@@ -77,58 +91,21 @@ async function getEvents(env) {
   return data;
 }
 
-async function callOpenAI(env, prompt, maxTokens = 4000) {
-  if (!env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY не настроен');
-
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      max_tokens: maxTokens,
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: 'Вы — старший аналитик глобальных рисков Архива «Великое пробуждение». Отвечайте ТОЛЬКО валидным JSON без markdown и пояснений.'
-        },
-        { role: 'user', content: prompt }
-      ]
-    })
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`OpenAI API ${res.status}: ${err.slice(0, 300)}`);
-  }
-
-  const data = await res.json();
-  const text = data.choices?.[0]?.message?.content || '';
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    const m = text.match(/\{[\s\S]*\}/);
-    if (!m) throw new Error('OpenAI не вернул JSON');
-    return JSON.parse(m[0]);
-  }
-}
-
+// ── GET /api/health ───────────────────────────────────────────────────────────
 function handleHealth(env) {
   return jsonResponse({
     status: 'ok',
     ts: new Date().toISOString(),
     kv: !!env.EVENTS_KV,
-    sse: true,
-    ai_provider: 'openai',
-    ai_model: 'gpt-4o'
+    sse: true
   });
 }
 
+// ── GET /api/stream  (Server-Sent Events) ────────────────────────────────────
+// Клиент подключается и получает события в реальном времени.
+// Логика: при подключении сразу шлём текущие данные,
+// затем каждые 30 секунд проверяем — если events.json обновился,
+// шлём только НОВЫЕ события (по дате и id).
 async function handleStream(request, env, ctx) {
   const lastEventId = request.headers.get('Last-Event-ID') || null;
   const url = new URL(request.url);
@@ -153,50 +130,81 @@ async function handleStream(request, env, ctx) {
 
   ctx.waitUntil((async () => {
     try {
+      // Первый снимок — полные данные
       const data = await getEvents(env);
       let events = data.events || [];
       if (domain) events = events.filter(e => e.domain === domain);
       if (minSev)  events = events.filter(e => e.severity >= minSev);
 
+      // Отслеживаем уже отправленные id
       const sentIds = new Set(events.map(e => e.id));
+
+      // Если клиент переподключился с Last-Event-ID — шлём только новое
       let initialEvents = events;
       if (lastEventId) {
+        // Находим события новее последнего известного
         const idx = events.findIndex(e => e.id === lastEventId);
         initialEvents = idx >= 0 ? events.slice(0, idx) : events;
       }
 
-      await send('snapshot', { events: initialEvents, total: events.length, updated: data.updated }, data.updated);
+      // Шлём начальный снимок
+      await send('snapshot', {
+        events: initialEvents,
+        total: events.length,
+        updated: data.updated
+      }, data.updated);
 
       let lastUpdated = data.updated;
       let pollCount = 0;
 
+      // Цикл опроса: каждые 30 секунд проверяем обновления
+      // Cloudflare Worker может работать до 30 секунд на бесплатном плане
+      // поэтому делаем несколько коротких итераций
       while (pollCount < 8) {
         await new Promise(r => setTimeout(r, 30000));
         pollCount++;
+
         await ping();
 
         try {
+          // Сбрасываем KV чтобы получить свежие данные
           if (env.EVENTS_KV) await env.EVENTS_KV.delete('events_data');
           const fresh = await getEvents(env);
 
           if (fresh.updated !== lastUpdated) {
+            // Есть обновление — ищем новые события
             let freshEvents = fresh.events || [];
             if (domain) freshEvents = freshEvents.filter(e => e.domain === domain);
             if (minSev)  freshEvents = freshEvents.filter(e => e.severity >= minSev);
 
             const newEvents = freshEvents.filter(e => !sentIds.has(e.id));
+
             if (newEvents.length > 0) {
               newEvents.forEach(e => sentIds.add(e.id));
-              await send('update', { events: newEvents, total: freshEvents.length, updated: fresh.updated }, fresh.updated);
+              await send('update', {
+                events: newEvents,
+                total: freshEvents.length,
+                updated: fresh.updated
+              }, fresh.updated);
             } else {
-              await send('stats', { total: freshEvents.length, critical: freshEvents.filter(e => e.severity >= 80).length, updated: fresh.updated }, fresh.updated);
+              // Данные обновились но новых событий нет — шлём статистику
+              await send('stats', {
+                total: freshEvents.length,
+                critical: freshEvents.filter(e => e.severity >= 80).length,
+                updated: fresh.updated
+              }, fresh.updated);
             }
+
             lastUpdated = fresh.updated;
           }
-        } catch (e) { console.warn('SSE poll error:', e.message); }
+        } catch (e) {
+          console.warn('SSE poll error:', e.message);
+        }
       }
 
+      // Говорим клиенту переподключиться
       await send('reconnect', { message: 'Переподключение...' });
+
     } catch (e) {
       console.error('SSE error:', e);
     } finally {
@@ -206,10 +214,17 @@ async function handleStream(request, env, ctx) {
 
   return new Response(readable, {
     status: 200,
-    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no', ...CORS }
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+      ...CORS
+    }
   });
 }
 
+// ── GET /api/events ───────────────────────────────────────────────────────────
 async function handleGetEvents(url, env) {
   const data   = await getEvents(env);
   let events   = data.events || [];
@@ -225,14 +240,18 @@ async function handleGetEvents(url, env) {
   const page    = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
   const limit   = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
 
-  if (domain)       events = events.filter(e => e.domain === domain);
-  if (region)       events = events.filter(e => e.region?.toLowerCase().includes(region.toLowerCase()));
-  if (minSev)       events = events.filter(e => e.severity >= minSev);
+  if (domain)      events = events.filter(e => e.domain === domain);
+  if (region)      events = events.filter(e => e.region?.toLowerCase().includes(region.toLowerCase()));
+  if (minSev)      events = events.filter(e => e.severity >= minSev);
   if (maxSev < 100) events = events.filter(e => e.severity <= maxSev);
-  if (since)        events = events.filter(e => e.date >= since);
+  if (since)       events = events.filter(e => e.date >= since);
   if (q) {
     const ql = q.toLowerCase();
-    events = events.filter(e => e.title?.toLowerCase().includes(ql) || e.summary?.toLowerCase().includes(ql) || e.region?.toLowerCase().includes(ql));
+    events = events.filter(e =>
+      e.title?.toLowerCase().includes(ql) ||
+      e.summary?.toLowerCase().includes(ql) ||
+      e.region?.toLowerCase().includes(ql)
+    );
   }
 
   events.sort((a, b) => {
@@ -248,6 +267,7 @@ async function handleGetEvents(url, env) {
   return jsonResponse({ meta: { total, page, pages, limit, updated: data.updated }, events: slice });
 }
 
+// ── GET /api/events/:id ───────────────────────────────────────────────────────
 async function handleGetEvent(id, env) {
   const data  = await getEvents(env);
   const event = (data.events || []).find(e => e.id === id);
@@ -255,6 +275,7 @@ async function handleGetEvent(id, env) {
   return jsonResponse({ event, updated: data.updated });
 }
 
+// ── GET /api/stats ────────────────────────────────────────────────────────────
 async function handleStats(url, env) {
   const data   = await getEvents(env);
   const events = data.events || [];
@@ -275,36 +296,65 @@ async function handleStats(url, env) {
 
   const sevValues = subset.map(e => e.severity);
   return jsonResponse({
-    total: events.length, filtered: subset.length,
-    critical: subset.filter(e => e.severity >= 80).length,
+    total:        events.length,
+    filtered:     subset.length,
+    critical:     subset.filter(e => e.severity >= 80).length,
     avg_severity: subset.length ? Math.round(sevValues.reduce((a,b)=>a+b,0)/sevValues.length) : 0,
     max_severity: subset.length ? Math.max(...sevValues) : 0,
-    by_domain: byDomain, updated: data.updated
+    by_domain:    byDomain,
+    updated:      data.updated
   });
 }
 
+// ── GET /api/domains ──────────────────────────────────────────────────────────
 async function handleDomains(env) {
   const data   = await getEvents(env);
   const events = data.events || [];
   const map    = {};
   for (const e of events) map[e.domain] = (map[e.domain] || 0) + 1;
-  const domains = Object.entries(map).map(([id, count]) => ({ id, count })).sort((a, b) => b.count - a.count);
+  const domains = Object.entries(map).map(([id, count]) => ({ id, count }))
+    .sort((a, b) => b.count - a.count);
   return jsonResponse({ domains, updated: data.updated });
 }
 
+// ── POST /api/events/refresh ──────────────────────────────────────────────────
 async function handleRefresh(request, env, ctx) {
   const key = request.headers.get('X-API-Key');
-  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) return jsonResponse({ error: 'Unauthorized' }, 401);
-  try { if (env.EVENTS_KV) await env.EVENTS_KV.delete('events_data'); } catch (_) {}
+  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  try {
+    if (env.EVENTS_KV) await env.EVENTS_KV.delete('events_data');
+  } catch (_) {}
+
   if (env.GITHUB_TOKEN && env.GITHUB_REPO) {
-    ctx.waitUntil(fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/actions/workflows/update.yml/dispatches`, {
-      method: 'POST',
-      headers: { Authorization: `token ${env.GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref: 'main' })
-    }));
+    ctx.waitUntil(
+      fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/actions/workflows/update.yml/dispatches`, {
+        method: 'POST',
+        headers: {
+          Authorization: `token ${env.GITHUB_TOKEN}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ref: 'main' })
+      })
+    );
   }
   return jsonResponse({ ok: true, message: 'Cache cleared, parser triggered' });
 }
+
+/**
+ * AI-scoring добавок к worker.js
+ * Новый эндпоинт: POST /api/score
+ * 
+ * Берёт топ-N событий по severity,
+ * отправляет в Claude API,
+ * возвращает обогащённые события с ai_score и ai_reasoning.
+ * 
+ * Env secrets: ANTHROPIC_API_KEY, ADMIN_KEY
+ */
+
+// ── AI SCORING ────────────────────────────────────────────────────────────────
 
 const DOMAINS = {
   climate:     { ru: 'Климат',      context: 'климатические катастрофы, стихийные бедствия, изменение климата, экологические кризисы' },
@@ -314,39 +364,62 @@ const DOMAINS = {
   social:      { ru: 'Социум',      context: 'протесты, продовольственная безопасность, миграционные кризисы, здравоохранение, социальная нестабильность' }
 };
 
+// POST /api/score  — оценка всех 5 доменов за один запрос
 async function handleScore(request, env, ctx) {
   const key = request.headers.get('X-API-Key');
   const PUBLIC_SCORING = env.PUBLIC_SCORING === 'true';
-  if (!PUBLIC_SCORING && (!env.ADMIN_KEY || key !== env.ADMIN_KEY)) return jsonResponse({ error: 'Unauthorized' }, 401);
-  if (!env.OPENAI_API_KEY) return jsonResponse({ error: 'OPENAI_API_KEY не настроен' }, 503);
+  if (!PUBLIC_SCORING && (!env.ADMIN_KEY || key !== env.ADMIN_KEY)) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  if (!env.ANTHROPIC_API_KEY) {
+    return jsonResponse({ error: 'ANTHROPIC_API_KEY не настроен' }, 503);
+  }
 
-  const body         = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
-  const topPerDomain = Math.min(10, parseInt(body.top || '5'));
-  const onlyDomain   = body.domain || null;
+  const body        = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
+  const topPerDomain = Math.min(10, parseInt(body.top || '5')); // топ N на домен
+  const onlyDomain  = body.domain || null; // можно оценить один домен
 
   const data   = await getEvents(env);
   const allEvs = data.events || [];
-  const domainsToScore = onlyDomain ? [onlyDomain] : Object.keys(DOMAINS);
 
+  const domainsToScore = onlyDomain
+    ? [onlyDomain]
+    : Object.keys(DOMAINS);
+
+  // Собираем топ-N по каждому домену
   const sections = [];
-  const eventMap = {};
-  let idx = 1;
+  const eventMap = {}; // index → event
 
+  let idx = 1;
   for (const dom of domainsToScore) {
-    const domEvents = allEvs.filter(e => e.domain === dom).sort((a, b) => b.severity - a.severity).slice(0, topPerDomain);
+    const domEvents = allEvs
+      .filter(e => e.domain === dom)
+      .sort((a, b) => b.severity - a.severity)
+      .slice(0, topPerDomain);
+
     if (domEvents.length === 0) continue;
+
     const domInfo = DOMAINS[dom] || { ru: dom, context: dom };
-    sections.push(`\n## ${domInfo.ru.toUpperCase()} (${domInfo.context})`);
+    sections.push(`
+## ${domInfo.ru.toUpperCase()} (${domInfo.context})`);
+
     for (const ev of domEvents) {
-      sections.push(`${idx}. ${ev.title}\n   Регион: ${ev.region} | Текущий индекс: ${ev.severity}/100\n   ${ev.summary?.slice(0, 180) || '—'}`);
+      sections.push(
+        `${idx}. ${ev.title}
+   Регион: ${ev.region} | Текущий индекс: ${ev.severity}/100
+   ${ev.summary?.slice(0, 180) || '—'}`
+      );
       eventMap[idx] = ev;
       idx++;
     }
   }
 
-  if (Object.keys(eventMap).length === 0) return jsonResponse({ error: 'Нет событий для оценки' }, 404);
+  if (Object.keys(eventMap).length === 0) {
+    return jsonResponse({ error: 'Нет событий для оценки' }, 404);
+  }
 
-  const prompt = `Оцените события по каждому из 5 доменов риска по шкале 0-100.
+  const prompt = `Вы — старший аналитик глобальных рисков Архива «Великое пробуждение».
+Оцените события по каждому из 5 доменов риска по шкале 0-100.
 
 МЕТОДОЛОГИЯ:
 • 90-100: Системный кризис, угроза глобальной стабильности
@@ -355,28 +428,76 @@ async function handleScore(request, env, ctx) {
 • 60-69: Умеренно-высокий, требует мониторинга
 • 40-59: Умеренный, локальные последствия
 
-СОБЫТИЯ ПО ДОМЕНАМ:
-${sections.join('\n')}
+ФАКТОРЫ:
+1. Масштаб охвата (сколько людей/стран затронуто)
+2. Необратимость последствий
+3. Каскадность (цепная реакция в других системах)
+4. Скорость развития (острый vs хронический)
+5. Уязвимость существующих механизмов реагирования
 
-Верните JSON:
+СОБЫТИЯ ПО ДОМЕНАМ:
+${sections.join('
+')}
+
+Ответьте ТОЛЬКО JSON без markdown:
 {
-  "scores": [{"index":1,"ai_score":85,"ai_delta":3,"ai_reasoning":"...","ai_cascade":["геополитика"],"ai_horizon":"краткосрочный"}],
+  "scores": [
+    {
+      "index": 1,
+      "ai_score": 85,
+      "ai_delta": 3,
+      "ai_reasoning": "Обоснование на русском, 1-2 предложения. Конкретно — почему этот уровень.",
+      "ai_cascade": ["геополитика", "социум"],
+      "ai_horizon": "краткосрочный"
+    }
+  ],
   "domain_summary": {
-    "climate":     {"risk_level":"высокий","trend":"↑","note":"..."},
-    "economy":     {"risk_level":"умеренный","trend":"→","note":"..."},
-    "geopolitics": {"risk_level":"критический","trend":"↑","note":"..."},
-    "technology":  {"risk_level":"высокий","trend":"↑","note":"..."},
-    "social":      {"risk_level":"умеренный","trend":"↓","note":"..."}
+    "climate":     { "risk_level": "высокий",    "trend": "↑", "note": "1 предложение об общей динамике домена" },
+    "economy":     { "risk_level": "умеренный",  "trend": "→", "note": "..." },
+    "geopolitics": { "risk_level": "критический","trend": "↑", "note": "..." },
+    "technology":  { "risk_level": "высокий",    "trend": "↑", "note": "..." },
+    "social":      { "risk_level": "умеренный",  "trend": "↓", "note": "..." }
   }
-}`;
+}
+
+ai_delta — разница с текущим индексом (+ выше, - ниже)
+ai_cascade — домены вторичного влияния
+ai_horizon — краткосрочный / среднесрочный / долгосрочный
+domain_summary.trend — ↑ ухудшение / → стабильно / ↓ улучшение`;
 
   let aiResult;
   try {
-    aiResult = await callOpenAI(env, prompt, 4000);
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!claudeRes.ok) {
+      const err = await claudeRes.text();
+      throw new Error(`Claude API ${claudeRes.status}: ${err.slice(0, 200)}`);
+    }
+
+    const claudeData = await claudeRes.json();
+    const text = claudeData.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('Claude не вернул JSON');
+    aiResult = JSON.parse(jsonMatch[0]);
+
   } catch (e) {
+    console.error('Claude error:', e);
     return jsonResponse({ error: 'AI scoring failed', detail: e.message }, 500);
   }
 
+  // Обогащаем события
   const scoredByDomain = {};
   for (const dom of domainsToScore) scoredByDomain[dom] = [];
 
@@ -384,18 +505,28 @@ ${sections.join('\n')}
     const aiRow = aiResult.scores?.find(s => s.index === parseInt(idxStr));
     const enriched = aiRow ? {
       ...ev,
-      ai_score: aiRow.ai_score, ai_delta: aiRow.ai_delta,
-      ai_reasoning: aiRow.ai_reasoning, ai_cascade: aiRow.ai_cascade || [],
-      ai_horizon: aiRow.ai_horizon || 'среднесрочный', ai_scored_at: new Date().toISOString()
+      ai_score:     aiRow.ai_score,
+      ai_delta:     aiRow.ai_delta,
+      ai_reasoning: aiRow.ai_reasoning,
+      ai_cascade:   aiRow.ai_cascade || [],
+      ai_horizon:   aiRow.ai_horizon || 'среднесрочный',
+      ai_scored_at: new Date().toISOString()
     } : ev;
     scoredByDomain[ev.domain]?.push(enriched);
   }
 
   const result = {
-    by_domain: scoredByDomain, domain_summary: aiResult.domain_summary || {},
-    meta: { model: 'gpt-4o', ai_provider: 'openai', top_per_domain: topPerDomain, total_scored: Object.keys(eventMap).length, scored_at: new Date().toISOString() }
+    by_domain:     scoredByDomain,
+    domain_summary: aiResult.domain_summary || {},
+    meta: {
+      model:      'claude-sonnet-4-20250514',
+      top_per_domain: topPerDomain,
+      total_scored: Object.keys(eventMap).length,
+      scored_at:  new Date().toISOString()
+    }
   };
 
+  // Кэш на 30 минут
   try {
     if (env.EVENTS_KV) {
       const cacheKey = `ai_scores_domains_${onlyDomain || 'all'}_${topPerDomain}`;
@@ -406,21 +537,33 @@ ${sections.join('\n')}
   return jsonResponse(result);
 }
 
+// GET /api/scores — закэшированные оценки
 async function handleCachedScores(url, env) {
-  const domain   = url.searchParams.get('domain') || 'all';
-  const top      = Math.min(10, parseInt(url.searchParams.get('top') || '5'));
+  const domain = url.searchParams.get('domain') || 'all';
+  const top    = Math.min(10, parseInt(url.searchParams.get('top') || '5'));
   const cacheKey = `ai_scores_domains_${domain}_${top}`;
+
   try {
     if (env.EVENTS_KV) {
       const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
       if (cached) return jsonResponse({ ...cached, from_cache: true });
     }
   } catch (_) {}
-  return jsonResponse({ by_domain: {}, domain_summary: {}, from_cache: false, message: 'Кэш пуст — запустите POST /api/score' });
+
+  return jsonResponse({
+    by_domain: {},
+    domain_summary: {},
+    from_cache: false,
+    message: 'Кэш пуст — запустите POST /api/score'
+  });
 }
 
+// ── GET /api/location?name=Iran ──────────────────────────────────────────────
+// Страновой/городской профиль риска — Claude синтезирует все события по локации
 async function handleLocation(url, env) {
-  if (!env.OPENAI_API_KEY) return jsonResponse({ error: 'OPENAI_API_KEY не настроен' }, 503);
+  if (!env.ANTHROPIC_API_KEY) {
+    return jsonResponse({ error: 'ANTHROPIC_API_KEY не настроен' }, 503);
+  }
 
   const name = url.searchParams.get('name') || '';
   const lat  = parseFloat(url.searchParams.get('lat') || '0');
@@ -428,6 +571,7 @@ async function handleLocation(url, env) {
 
   if (!name) return jsonResponse({ error: 'Параметр name обязателен' }, 400);
 
+  // Проверяем кэш
   const cacheKey = `location_${name.toLowerCase().replace(/\s+/g,'_')}`;
   try {
     if (env.EVENTS_KV) {
@@ -436,69 +580,111 @@ async function handleLocation(url, env) {
     }
   } catch (_) {}
 
-  const data     = await getEvents(env);
-  const allEvs   = data.events || [];
-  const nameLower = name.toLowerCase();
+  // Собираем события по локации
+  const data   = await getEvents(env);
+  const allEvs = data.events || [];
 
+  // Ищем события где регион или заголовок содержит название
+  const nameLower = name.toLowerCase();
   const related = allEvs.filter(e => {
     const region  = (e.region  || '').toLowerCase();
     const title   = (e.title   || '').toLowerCase();
     const summary = (e.summary || '').toLowerCase();
-    return region.includes(nameLower) || title.includes(nameLower) || summary.includes(nameLower);
+    return region.includes(nameLower) ||
+           title.includes(nameLower)  ||
+           summary.includes(nameLower);
   });
 
+  // Если событий мало — расширяем поиск по координатам (±8 градусов)
   let geoRelated = [];
   if (related.length < 3 && lat && lng) {
     geoRelated = allEvs.filter(e => {
       if (related.find(r => r.id === e.id)) return false;
-      return Math.abs((e.lat||0) - lat) < 8 && Math.abs((e.lng||0) - lng) < 8;
+      const dlat = Math.abs((e.lat||0) - lat);
+      const dlng = Math.abs((e.lng||0) - lng);
+      return dlat < 8 && dlng < 8;
     });
   }
 
-  const allRelated  = [...related, ...geoRelated].sort((a,b) => b.severity - a.severity).slice(0, 15);
-  const eventsCount = allRelated.length;
+  const allRelated = [...related, ...geoRelated]
+    .sort((a,b) => b.severity - a.severity)
+    .slice(0, 15);
 
-  const eventsText = eventsCount > 0
-    ? allRelated.map((e,i) => `${i+1}. [${e.domain}] ${e.title} (индекс ${e.severity}/100)\n   ${e.summary?.slice(0,150)||'—'}`).join('\n\n')
+  // Формируем промпт
+  const eventsText = allRelated.length > 0
+    ? allRelated.map((e,i) =>
+        `${i+1}. [${e.domain}] ${e.title} (индекс ${e.severity}/100)
+   ${e.summary?.slice(0,150)||'—'}`
+      ).join('\n\n')
     : 'Специфических событий по данной локации не зафиксировано.';
 
-  const prompt = `Составьте краткий профиль рисков для локации: ${name}
+  const prompt = `Вы — аналитик глобальных рисков Архива «Великое пробуждение».
+Составьте краткий профиль рисков для: ${name}
 
 ТЕКУЩИЕ СОБЫТИЯ И СИГНАЛЫ ПО ЛОКАЦИИ:
 ${eventsText}
 
-Верните JSON:
+Ответьте ТОЛЬКО JSON без markdown:
 {
   "location": "${name}",
   "overall_risk": 75,
   "risk_level": "высокий",
   "summary": "2-3 предложения: текущая ситуация и главные угрозы",
   "key_risks": [
-    {"domain": "geopolitics", "description": "Краткое описание риска"},
-    {"domain": "economy", "description": "..."}
+    { "domain": "geopolitics", "description": "Краткое описание риска" },
+    { "domain": "economy",     "description": "..." }
   ],
   "outlook": "краткосрочный прогноз в 1-2 предложениях",
   "horizon": "краткосрочный",
-  "watch_signals": ["сигнал 1", "сигнал 2"],
-  "events_count": ${eventsCount}
+  "watch_signals": ["сигнал 1 для мониторинга", "сигнал 2"],
+  "events_count": ${len(allRelated)}
 }
 
 overall_risk — интегральный индекс 0-100
 risk_level — критический / высокий / умеренный / низкий
-horizon — краткосрочный / среднесрочный / долгосрочный`;
+horizon — краткосрочный (до 1 мес) / среднесрочный (1-6 мес) / долгосрочный`;
 
   let result;
   try {
-    result = await callOpenAI(env, prompt, 1000);
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!r.ok) throw new Error(`Claude API ${r.status}`);
+    const d = await r.json();
+    const text = d.content?.[0]?.text || '';
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Нет JSON в ответе');
+    result = JSON.parse(m[0]);
+
   } catch(e) {
+    console.error('Location score error:', e);
     return jsonResponse({ error: 'AI scoring failed', detail: e.message }, 500);
   }
 
-  const response = { ...result, related_events: allRelated, scored_at: new Date().toISOString() };
+  const response = {
+    ...result,
+    related_events: allRelated,
+    scored_at: new Date().toISOString()
+  };
 
+  // Кэш на 1 час
   try {
-    if (env.EVENTS_KV) await env.EVENTS_KV.put(cacheKey, JSON.stringify(response), { expirationTtl: 3600 });
+    if (env.EVENTS_KV) {
+      await env.EVENTS_KV.put(cacheKey, JSON.stringify(response), { expirationTtl: 3600 });
+    }
   } catch (_) {}
 
   return jsonResponse(response);
 }
+
