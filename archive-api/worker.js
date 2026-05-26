@@ -396,7 +396,7 @@ async function callAI(env, prompt, maxTokens = 2000) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model: 'gpt-4o',
