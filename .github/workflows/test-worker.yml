@@ -5,7 +5,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Test flood proxy
+      - name: Test cyber layer
         run: |
-          RESULT=$(curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=floods')
-          echo $RESULT | python3 -c 'import json,sys; d=json.load(sys.stdin); print("count:", d.get("count")); [print("-", f.get("type"), f.get("title","")[:60]) for f in d.get("floods",[])[:10]]'
+          RESULT=$(curl -s -H 'X-Proxy-Token: archive-proxy-2026' 'https://copernicus-proxy.luven-medical-msk.workers.dev/?action=cyber')
+          echo $RESULT | python3 -c 'import json,sys; d=json.load(sys.stdin); print("count:", d.get("count")); [print("-", f.get("type"), f.get("title","")[:70]) for f in d.get("cyber",[])[:15]]'
