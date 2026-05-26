@@ -351,7 +351,7 @@ async function handleRefresh(request, env, ctx) {
  * отправляет в Claude API,
  * возвращает обогащённые события с ai_score и ai_reasoning.
  * 
- * Env secrets: ANTHROPIC_API_KEY, ADMIN_KEY
+ * Env secrets: OPENAI_API_KEY, ADMIN_KEY
  */
 
 // ── AI SCORING ────────────────────────────────────────────────────────────────
@@ -390,16 +390,16 @@ async function callAI(env, prompt, maxTokens = 2000) {
     const d = await r.json();
     return d.choices?.[0]?.message?.content || '';
 
-  } else if (env.ANTHROPIC_API_KEY) {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+  } else if (env.OPENAI_API_KEY) {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
+        'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'gpt-4o',
         max_tokens: maxTokens,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -412,7 +412,7 @@ async function callAI(env, prompt, maxTokens = 2000) {
     return d.content?.[0]?.text || '';
 
   } else {
-    throw new Error('Нет API ключа: задайте OPENAI_API_KEY или ANTHROPIC_API_KEY');
+    throw new Error('Нет API ключа: задайте OPENAI_API_KEY или OPENAI_API_KEY');
   }
 }
 
@@ -441,8 +441,8 @@ async function handleScore(request, env, ctx) {
   if (!PUBLIC_SCORING && (!env.ADMIN_KEY || key !== env.ADMIN_KEY)) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
-  if (!env.ANTHROPIC_API_KEY) {
-    return jsonResponse({ error: 'ANTHROPIC_API_KEY не настроен' }, 503);
+  if (!env.OPENAI_API_KEY) {
+    return jsonResponse({ error: 'OPENAI_API_KEY не настроен' }, 503);
   }
 
   const body        = request.method === 'POST' ? await request.json().catch(()=>({})) : {};
@@ -567,7 +567,7 @@ domain_summary.trend — ↑ ухудшение / → стабильно / ↓ �
     by_domain:     scoredByDomain,
     domain_summary: aiResult.domain_summary || {},
     meta: {
-      model: env.OPENAI_API_KEY ? 'gpt-4o' : 'claude-sonnet-4-20250514',
+      model: env.OPENAI_API_KEY ? 'gpt-4o' : 'gpt-4o',
       top_per_domain: topPerDomain,
       total_scored: Object.keys(eventMap).length,
       scored_at:  new Date().toISOString()
@@ -609,8 +609,8 @@ async function handleCachedScores(url, env) {
 // ── GET /api/location?name=Iran ──────────────────────────────────────────────
 // Страновой/городской профиль риска — Claude синтезирует все события по локации
 async function handleLocation(url, env) {
-  if (!env.OPENAI_API_KEY && !env.ANTHROPIC_API_KEY) {
-    return jsonResponse({ error: 'Задайте OPENAI_API_KEY или ANTHROPIC_API_KEY в настройках Worker' }, 503);
+  if (!env.OPENAI_API_KEY && !env.OPENAI_API_KEY) {
+    return jsonResponse({ error: 'Задайте OPENAI_API_KEY или OPENAI_API_KEY в настройках Worker' }, 503);
   }
 
   const name = url.searchParams.get('name') || '';
