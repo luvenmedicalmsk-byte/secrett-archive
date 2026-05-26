@@ -37,12 +37,10 @@ jobs:
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add events.json docs/events.json docs/risk-map.html
-          if git diff --staged --quiet; then
-            echo "Нет изменений"
-          else
+          git add events.json docs/events.json risk-map.html
+          git diff --staged --quiet || (
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
             git commit -m "Карта сигналов · $TIMESTAMP"
             git push
-          fi
+          )
 
