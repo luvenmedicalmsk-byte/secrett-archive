@@ -1,0 +1,11 @@
+name: Test Worker
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Copernicus Worker
+        run: |
+          echo "Testing Worker..."
+          curl -sv -H "X-Proxy-Token: archive-proxy-2026"             "https://copernicus-proxy.luven-medical-msk.workers.dev/?action=token" 2>&1
+          echo "Done"
