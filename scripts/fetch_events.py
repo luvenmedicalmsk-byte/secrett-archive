@@ -408,6 +408,63 @@ def save(events):
         json.dump(output, f, ensure_ascii=False, indent=2)
     print(f"\n✓ {len(events)} событий → {OUTPUT_PATH}", file=sys.stderr)
 
+
+def inject_into_html(events):
+    """Встраивает события прямо в risk-map.html для обхода кэша GitHub Pages"""
+    html_path = Path(__file__).parent.parent / "risk-map.html"
+    if not html_path.exists():
+        print(f"  [SKIP] {html_path} не найден", file=sys.stderr)
+        return
+    
+    with open(html_path, 'r', encoding='utf-8') as f:
+        html = f.read()
+    
+    import json as _json
+    events_json = _json.dumps(events, ensure_ascii=False)
+    
+    # Заменяем FALLBACK данные в HTML
+    import re
+    pattern = r'const ALL_EVENTS = \[.*?\];'
+    new_data = f'const ALL_EVENTS = {events_json};'
+    
+    # Ищем маркер и заменяем
+    if 'const ALL_EVENTS = ' in html:
+        # Найдём начало и конец массива
+        start = html.find('const ALL_EVENTS = ')
+        if start == -1:
+            return
+        # Найдём конец — ищем ];
+        depth = 0
+        i = start + len('const ALL_EVENTS = ')
+        in_string = False
+        string_char = None
+        while i < len(html):
+            c = html[i]
+            if in_string:
+                if c == string_char and html[i-1] != '\\':
+                    in_string = False
+            else:
+                if c in ('"', "'", '`'):
+                    in_string = True
+                    string_char = c
+                elif c == '[':
+                    depth += 1
+                elif c == ']':
+                    depth -= 1
+                    if depth == 0:
+                        end = i + 1
+                        break
+            i += 1
+        
+        old_part = html[start:end]
+        html = html.replace(old_part, new_data, 1)
+        
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html)
+        print(f"  ✓ Данные встроены в {html_path.name}", file=sys.stderr)
+    else:
+        print(f"  [SKIP] Маркер ALL_EVENTS не найден в HTML", file=sys.stderr)
+
 # ══════════════════════════════════════════════════════════════════════════════
 if __name__ == '__main__':
     print("=== Архив · Парсер рисков v2 ===", file=sys.stderr)
@@ -431,6 +488,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     save(events)
+    inject_into_html(events)
 
     by_domain = {}
     for e in events:
