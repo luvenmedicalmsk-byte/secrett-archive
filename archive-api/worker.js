@@ -356,68 +356,44 @@ async function handleRefresh(request, env, ctx) {
 
 // ── AI SCORING ────────────────────────────────────────────────────────────────
 
-// ── AI HELPER — OpenAI / Anthropic (настраивается через env.AI_PROVIDER) ────────
+// ── AI HELPER — OpenAI GPT-4o ────────────────────────────────────────────────
 
 async function callAI(env, prompt, maxTokens = 2000) {
-  // По умолчанию OpenAI, если задан OPENAI_API_KEY
-  // Переключение: env.AI_PROVIDER = 'anthropic' или 'openai'
-  const useOpenAI = env.OPENAI_API_KEY && env.AI_PROVIDER !== 'anthropic';
-
-  if (useOpenAI) {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        max_tokens: maxTokens,
-        temperature: 0.3,
-        messages: [
-          {
-            role: 'system',
-            content: 'Вы — старший аналитик глобальных рисков. Отвечайте ТОЛЬКО валидным JSON без markdown-блоков.'
-          },
-          { role: 'user', content: prompt }
-        ]
-      })
-    });
-    if (!r.ok) {
-      const err = await r.text();
-      throw new Error(`OpenAI API ${r.status}: ${err.slice(0, 200)}`);
-    }
-    const d = await r.json();
-    return d.choices?.[0]?.message?.content || '';
-
-  } else if (env.OPENAI_API_KEY) {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
-        'Authorization': `Bearer ${env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    if (!r.ok) {
-      const err = await r.text();
-      throw new Error(`Anthropic API ${r.status}: ${err.slice(0, 200)}`);
-    }
-    const d = await r.json();
-    return d.content?.[0]?.text || '';
-
-  } else {
-    throw new Error('Нет API ключа: задайте OPENAI_API_KEY или OPENAI_API_KEY');
+  if (!env.OPENAI_API_KEY) {
+    throw new Error('Задайте OPENAI_API_KEY в настройках Worker');
   }
+
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${env.OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      max_tokens: maxTokens,
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: 'Вы — старший аналитик глобальных рисков Архива «Великое пробуждение». Отвечайте ТОЛЬКО валидным JSON.'
+        },
+        { role: 'user', content: prompt }
+      ]
+    })
+  });
+
+  if (!r.ok) {
+    const err = await r.text();
+    throw new Error(`OpenAI API ${r.status}: ${err.slice(0, 200)}`);
+  }
+
+  const d = await r.json();
+  return d.choices?.[0]?.message?.content || '';
 }
 
 function parseAIJson(text) {
-  // Убираем markdown-блоки если GPT их добавил
   const clean = text.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
   const m = clean.match(/\{[\s\S]*\}/);
   if (!m) throw new Error('AI не вернул JSON');
