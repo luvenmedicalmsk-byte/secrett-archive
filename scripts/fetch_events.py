@@ -380,15 +380,17 @@ def process_events(raw_items):
         summary = item['desc'][:250].strip()
         if summary and not summary.endswith('.'): summary += '...'
 
+        title_ru = translate_to_russian(item['title'][:130])
+        summary_ru = translate_to_russian(summary or item['title'])
         events.append({
             "id": ev_id,
-            "title": item['title'][:130],
+            "title": title_ru,
             "domain": domain,
             "severity": severity,
             "lat": lat, "lng": lng,
             "svgX": svgX, "svgY": svgY,
             "region": region,
-            "summary": summary or item['title'],
+            "summary": summary_ru,
             "source": item['source'],
             "date": item['date']
         })
@@ -407,6 +409,29 @@ def save(events):
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
     print(f"\n✓ {len(events)} событий → {OUTPUT_PATH}", file=sys.stderr)
+
+
+def translate_to_russian(text, max_len=150):
+    """Переводит текст на русский через MyMemory API (бесплатно, без ключа)"""
+    if not text or not text.strip():
+        return text
+    # Проверяем — если уже кириллица, не переводим
+    cyrillic = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
+    if cyrillic > len(text) * 0.3:
+        return text
+    try:
+        text_short = text[:max_len]
+        encoded = urllib.parse.quote(text_short)
+        url = f"https://api.mymemory.translated.net/get?q={encoded}&langpair=en|ru"
+        data = fetch_url(url, timeout=10)
+        if data:
+            j = json.loads(data)
+            translated = j.get('responseData', {}).get('translatedText', '')
+            if translated and translated != text_short:
+                return translated
+    except:
+        pass
+    return text
 
 
 def inject_into_html(events):
