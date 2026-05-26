@@ -1129,125 +1129,16 @@ def fetch_copernicus():
 # Copernicus Sentinel Hub — спутниковые данные (пожары, наводнения, загрязнение)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_copernicus_sentinel(api_key=None):
-    """Copernicus через OAuth2 — получаем токен и запрашиваем данные"""
+    """Copernicus — публичные RSS без OAuth (Dataspace блокирует GitHub Actions IP)"""
     items = []
     key = api_key or os.environ.get('COPERNICUS_KEY', '')
-    if not key:
-        print("  [SKIP] Copernicus: нет COPERNICUS_KEY", file=sys.stderr)
-        return []
 
-    # Шаг 1: получаем OAuth токен
-    # COPERNICUS_KEY может быть: refresh_token, API-key, или client_secret
-    # Пробуем несколько вариантов grant_type
-    token = None
-    token_url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-    
-    grant_attempts = [
-        # Вариант A: ключ как refresh_token
-        urllib.parse.urlencode({
-            "grant_type": "refresh_token",
-            "client_id": "cdse-public",
-            "refresh_token": key,
-        }).encode(),
-        # Вариант B: ключ как client_secret (service account)
-        urllib.parse.urlencode({
-            "grant_type": "client_credentials",
-            "client_id": "cdse-public",
-            "client_secret": key,
-        }).encode(),
-    ]
-    
-    for payload in grant_attempts:
-        try:
-            req = urllib.request.Request(
-                token_url, data=payload,
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                method="POST"
-            )
-            with urllib.request.urlopen(req, timeout=15) as r:
-                token_data = json.loads(r.read())
-                token = token_data.get("access_token")
-            if token:
-                print(f"  Copernicus token: OK", file=sys.stderr)
-                break
-        except Exception as e:
-            print(f"  [WARN] Copernicus token: {e}", file=sys.stderr)
-            continue
-
-    # Шаг 2: CEMS активации через API (без токена тоже работает)
-    try:
-        cems_url = "https://emergency.copernicus.eu/mapping/list-of-activations-rapid"
-        headers = {"User-Agent": "ArchiveBot/2.0"}
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-        req = urllib.request.Request(cems_url, headers=headers)
-        data = fetch_url(cems_url)
-        if data and ('<item>' in data or '<entry>' in data):
-            root = ET.fromstring(data)
-            for item in root.findall('.//item')[:15]:
-                title = item.findtext('title','').strip()
-                desc = item.findtext('description','').strip()[:300]
-                pub_date = item.findtext('pubDate','')
-                if not title: continue
-                geo = detect_coords(title, desc)
-                base = {
-                    'title': f"[Sentinel] {title}",
-                    'desc': desc,
-                    'date': parse_date(pub_date),
-                    'source': 'Copernicus CEMS',
-                    'source_bias': 16
-                }
-                if geo:
-                    base['_lat'], base['_lng'], base['_region'] = geo
-                    base['_domain'] = 'climate'
-                items.append(base)
-    except Exception as e:
-        print(f"  [WARN] CEMS: {e}", file=sys.stderr)
-
-    # Шаг 3: Sentinel Hub Statistical API — горячие точки (пожары)
-    # Используем публичный WFS сервис Copernicus для активных пожаров
-    if token:
-        try:
-            # EFFIS (European Forest Fire Information System) через Copernicus
-            effis_url = ("https://ies-ows.jrc.ec.europa.eu/effis"
-                        "?SERVICE=WFS&REQUEST=GetFeature"
-                        "&TypeName=ms:modis.ba.world.7day"
-                        "&OutputFormat=application/json"
-                        "&maxFeatures=50")
-            req = urllib.request.Request(
-                effis_url,
-                headers={"User-Agent": "ArchiveBot/2.0",
-                        "Authorization": f"Bearer {token}"}
-            )
-            with urllib.request.urlopen(req, timeout=15) as r:
-                fire_data = json.loads(r.read())
-                features = fire_data.get('features', [])
-                # Кластеризуем по регионам
-                seen = {}
-                for feat in features:
-                    coords = feat.get('geometry', {}).get('coordinates', [])
-                    if not coords: continue
-                    lng, lat = float(coords[0]), float(coords[1])
-                    region = detect_region_by_coords(lat, lng)
-                    if region not in seen:
-                        seen[region] = {'lat': lat, 'lng': lng}
-                        items.append({
-                            'title': f"Активный пожар — {region} (Sentinel/EFFIS)",
-                            'desc': f"Детекция лесного пожара за последние 7 дней. Источник: EFFIS/Copernicus.",
-                            'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
-                            'source': 'Copernicus EFFIS',
-                            'source_bias': 18,
-                            '_lat': lat, '_lng': lng,
-                            '_region': region, '_domain': 'climate'
-                        })
-            print(f"  Copernicus EFFIS: {len(seen)} регионов", file=sys.stderr)
-        except Exception as e:
-            print(f"  [WARN] EFFIS: {e}", file=sys.stderr)
-
-    # Шаг 4: Copernicus Climate Change Service — аномалии
+    # C3S и CAMS RSS — работают без токена
     c3s_feeds = [
         "https://climate.copernicus.eu/rss.xml",
         "https://atmosphere.copernicus.eu/rss.xml",
+        "https://www.ecmwf.int/en/rss-feeds/news.xml",
+        "https://climate.copernicus.eu/climate-bulletins/rss.xml",
     ]
     for url in c3s_feeds:
         data = fetch_url(url)
@@ -1262,7 +1153,7 @@ def fetch_copernicus_sentinel(api_key=None):
                 text = (title + ' ' + desc).lower()
                 if any(w in text for w in ['fire','flood','extreme','drought',
                                             'temperature','wildfire','heat','alert',
-                                            'пожар','наводнение']):
+                                            'storm','cyclone','hurricane','пожар']):
                     geo = detect_coords(title, desc)
                     base = {
                         'title': title, 'desc': desc,
@@ -1275,6 +1166,9 @@ def fetch_copernicus_sentinel(api_key=None):
                         base['_domain'] = 'climate'
                     items.append(base)
         except: pass
+
+    if key:
+        print(f"  Copernicus key: {key[:8]}... (Dataspace OAuth недоступен с GitHub Actions)", file=sys.stderr)
 
     print(f"  Copernicus всего: {len(items)} событий", file=sys.stderr)
     return items
@@ -1289,15 +1183,17 @@ def fetch_nasa_firms(api_key=None):
         return []
     print(f"  FIRMS key: {key[:8]}...", file=sys.stderr)
     
-    # Регионы с высоким риском пожаров
+    # Регионы с высоким риском пожаров (bbox макс 10x10 градусов для FIRMS API)
     regions = [
-        ("Россия", "30,45,180,75"),
-        ("Южная Европа", "-10,35,45,55"),
-        ("Северная Америка", "-140,25,-60,70"),
-        ("Южная Америка", "-82,-35,-35,15"),
-        ("Австралия", "110,-45,155,-10"),
-        ("Африка", "-20,-35,55,38"),
-        ("ЮВА", "90,-10,145,25"),
+        ("Россия (Сибирь)", "80,50,100,65"),
+        ("Россия (Дальний Восток)", "120,45,140,65"),
+        ("Россия (Якутия)", "120,60,140,72"),
+        ("Южная Европа", "-10,35,10,45"),
+        ("Северная Америка", "-130,40,-110,55"),
+        ("Южная Америка", "-65,-15,-45,0"),
+        ("Австралия", "130,-35,150,-20"),
+        ("Африка", "15,-5,35,10"),
+        ("ЮВА", "95,-5,115,15"),
     ]
     
     for region_name, bbox in regions:
@@ -1658,8 +1554,8 @@ def fetch_russia_climate_v2():
     _firms_key = os.environ.get('FIRMS_API_KEY', '')
     if not _firms_key:
         _firms_key = 'DEMO_KEY'
-    firms_url = (f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
-                 f"{_firms_key}/VIIRS_SNPP_NRT/30,45,180,75/7/")
+    firms_url = (f"https://firms.modaps.eosdis.nasa.gov/api/country/csv/"
+                 f"{_firms_key}/VIIRS_SNPP_NRT/RUS/7/")
     data = fetch_url(firms_url, timeout=20)
     if data and 'latitude' in data:
         try:
@@ -2096,8 +1992,11 @@ def translate_batch(texts):
     # Переводим через LibreTranslate — один запрос на всё
     servers = [
         "https://translate.fedilab.app/translate",
+        "https://libretranslate.de/translate",
+        "https://translate.argosopentech.com/translate",
         "https://libretranslate.pussthecat.org/translate",
         "https://translate.terraprint.co/translate",
+        "https://translate.mentality.rip/translate",
     ]
     
     results = list(texts)  # копия
