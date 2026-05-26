@@ -130,73 +130,39 @@ function handleHealth(env) {
 }
 
 async function handleStream(request, env, ctx) {
-  const lastEventId = request.headers.get('Last-Event-ID') || null;
-  const url = new URL(request.url);
+  // Cloudflare free plan: обрабатываем быстро — шлём snapshot и reconnect-hint
+  // Клиент сам переподключается каждые 30с — это и есть live polling через SSE
+  const url    = new URL(request.url);
   const domain = url.searchParams.get('domain');
   const minSev = parseInt(url.searchParams.get('min_severity') || '0');
 
   const { readable, writable } = new TransformStream();
-  const writer = writable.getWriter();
+  const writer  = writable.getWriter();
   const encoder = new TextEncoder();
 
-  function send(event, data, id) {
-    let msg = '';
-    if (id)    msg += `id: ${id}\n`;
-    if (event) msg += `event: ${event}\n`;
-    msg += `data: ${JSON.stringify(data)}\n\n`;
+  const write = (event, data, id) => {
+    let msg = id ? `id: ${id}\n` : '';
+    msg += `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     return writer.write(encoder.encode(msg));
-  }
-
-  function ping() {
-    return writer.write(encoder.encode(`: ping ${new Date().toISOString()}\n\n`));
-  }
+  };
 
   ctx.waitUntil((async () => {
     try {
-      const data = await getEvents(env);
-      let events = data.events || [];
+      const data   = await getEvents(env);
+      let events   = data.events || [];
       if (domain) events = events.filter(e => e.domain === domain);
       if (minSev)  events = events.filter(e => e.severity >= minSev);
 
-      const sentIds = new Set(events.map(e => e.id));
-      let initialEvents = events;
-      if (lastEventId) {
-        const idx = events.findIndex(e => e.id === lastEventId);
-        initialEvents = idx >= 0 ? events.slice(0, idx) : events;
-      }
+      // Отправляем текущий снимок
+      await write('snapshot', {
+        events,
+        total:   events.length,
+        updated: data.updated
+      }, data.updated);
 
-      await send('snapshot', { events: initialEvents, total: events.length, updated: data.updated }, data.updated);
+      // Говорим клиенту переподключиться через 30 секунд
+      await write('reconnect', { retry: 30000 });
 
-      let lastUpdated = data.updated;
-      let pollCount = 0;
-
-      while (pollCount < 8) {
-        await new Promise(r => setTimeout(r, 30000));
-        pollCount++;
-        await ping();
-
-        try {
-          if (env.EVENTS_KV) await env.EVENTS_KV.delete('events_data');
-          const fresh = await getEvents(env);
-
-          if (fresh.updated !== lastUpdated) {
-            let freshEvents = fresh.events || [];
-            if (domain) freshEvents = freshEvents.filter(e => e.domain === domain);
-            if (minSev)  freshEvents = freshEvents.filter(e => e.severity >= minSev);
-
-            const newEvents = freshEvents.filter(e => !sentIds.has(e.id));
-            if (newEvents.length > 0) {
-              newEvents.forEach(e => sentIds.add(e.id));
-              await send('update', { events: newEvents, total: freshEvents.length, updated: fresh.updated }, fresh.updated);
-            } else {
-              await send('stats', { total: freshEvents.length, critical: freshEvents.filter(e => e.severity >= 80).length, updated: fresh.updated }, fresh.updated);
-            }
-            lastUpdated = fresh.updated;
-          }
-        } catch (e) { console.warn('SSE poll error:', e.message); }
-      }
-
-      await send('reconnect', { message: 'Переподключение...' });
     } catch (e) {
       console.error('SSE error:', e);
     } finally {
@@ -206,7 +172,13 @@ async function handleStream(request, env, ctx) {
 
   return new Response(readable, {
     status: 200,
-    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no', ...CORS }
+    headers: {
+      'Content-Type':    'text/event-stream',
+      'Cache-Control':   'no-cache',
+      'Connection':      'keep-alive',
+      'X-Accel-Buffering': 'no',
+      ...CORS
+    }
   });
 }
 
