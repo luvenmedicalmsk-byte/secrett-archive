@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
+OUTPUT_PATH = Path(__file__).parent.parent / "events.json"
 MAX_EVENTS = 60
 SEVERITY_THRESHOLD = 50
 
