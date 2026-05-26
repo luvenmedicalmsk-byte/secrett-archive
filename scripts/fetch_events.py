@@ -865,6 +865,9 @@ def fetch_acled_rss():
 def fetch_global_rss():
     items = []
     feeds = [
+        # Геополитика — рабочие источники
+        {"url": "https://foreignpolicy.com/feed/", "source": "Foreign Policy", "bias": 8, "domain": "geopolitics"},
+        {"url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "source": "UN News", "bias": 5, "domain": "geopolitics"},
         # Геополитика
         {"url": "https://feeds.feedburner.com/breitbart", "source": "Global News", "bias": 5},
         {"url": "https://rss.dw.com/rdf/rss-en-world", "source": "DW World", "bias": 6},
