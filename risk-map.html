@@ -25,6 +25,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #ui{position:fixed;inset:0;z-index:10;pointer-events:none}
 #header{position:absolute;top:14px;left:16px;pointer-events:all}
 #logo-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:400;color:#D4AF5A;letter-spacing:0.1em}
+#live-status{margin-top:6px;display:flex;align-items:center;gap:8px}
+#live-status-icon{font-size:13px;line-height:1}
+#live-status-text{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:400;color:#E8E0D0;letter-spacing:0.06em}
 #updated{position:absolute;top:16px;right:16px;font-size:9px;color:rgba(232,224,208,0.4);letter-spacing:0.08em;pointer-events:all}
 
 #filters{position:absolute;bottom:60px;left:16px;right:60px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:all}
@@ -103,6 +106,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 <div id="ui">
   <div id="header">
     <div id="logo-title">АРХИВ · КАРТА СИГНАЛОВ</div>
+    <div id="live-status">
+      <span id="live-status-icon">⬛️</span>
+      <span id="live-status-text">Соединение прервано</span>
+    </div>
   </div>
   <div id="updated">26 мая 2026</div>
   <div id="filters">
@@ -475,25 +482,29 @@ function startSSE() {
   };
 }
 
-// Индикатор живого соединения в заголовке
+// Индикатор живого соединения — статусная строка под заголовком
 function showLiveIndicator(state, count) {
-  let el = document.getElementById('live-dot');
-  if (!el) {
-    el = document.createElement('span');
-    el.id = 'live-dot';
-    el.style.cssText = 'display:inline-block;width:5px;height:5px;border-radius:50%;margin-left:8px;vertical-align:middle;transition:background 0.3s';
-    document.getElementById('logo-title').appendChild(el);
-  }
+  const icon = document.getElementById('live-status-icon');
+  const text = document.getElementById('live-status-text');
+  if (!icon || !text) return;
+
   if (state === 'connected') {
-    el.style.background = '#27AE60';
-    el.title = 'Live — данные обновляются';
+    icon.textContent = '🟩';
+    text.textContent = 'Активно';
+    text.style.color = '#E8E0D0';
   } else if (state === 'update') {
-    el.style.background = '#D4AF5A';
-    el.title = `+${count} новых событий`;
-    setTimeout(() => { el.style.background = '#27AE60'; }, 3000);
+    icon.textContent = '🟨';
+    text.textContent = count ? `Пришли новые события · +${count}` : 'Пришли новые события';
+    text.style.color = '#D4AF5A';
+    setTimeout(() => {
+      icon.textContent = '🟩';
+      text.textContent = 'Активно';
+      text.style.color = '#E8E0D0';
+    }, 4000);
   } else {
-    el.style.background = '#6A6458';
-    el.title = 'Соединение прервано';
+    icon.textContent = '⬛️';
+    text.textContent = 'Соединение прервано';
+    text.style.color = 'rgba(232,224,208,0.4)';
   }
 }
 
