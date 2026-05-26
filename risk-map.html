@@ -322,26 +322,67 @@ document.querySelectorAll('.fb').forEach(btn => {
 });
 
 // ── ЗАГРУЗКА events.json ─────────────────────────────────────────────────────
+// ── API-КЛИЕНТ ────────────────────────────────────────────────────────────
+// Приоритет: Worker API → events.json → fallback
+const API_BASE = 'https://archive-api.secrett-archive.com'; // Cloudflare Worker
+
 async function tryLoadFresh() {
+  // 1. Пробуем Worker API
   try {
-    const url = 'events.json?nocache=' + Date.now();
-    const r = await fetch(url, {cache:'no-store', headers:{'Cache-Control':'no-cache'}});
-    if (!r.ok) { console.warn('events.json:', r.status); loadFallback(); return; }
-    const data = await r.json();
-    if (data.events && data.events.length > 0) {
-      ALL_EVENTS = data.events;
-      filtered = filter==='all' ? [...ALL_EVENTS] : ALL_EVENTS.filter(e=>e.domain===filter);
-      updateStats(); renderList(); renderMarkers();
-      if (data.updated) {
-        const d = new Date(data.updated);
-        document.getElementById('updated').textContent = 'Обновлено: ' + d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+    const r = await fetch(API_BASE + '/api/events?limit=200&sort=severity', {
+      signal: AbortSignal.timeout(4000)
+    });
+    if (r.ok) {
+      const data = await r.json();
+      if (data.events && data.events.length > 0) {
+        applyEvents(data.events, data.meta?.updated);
+        console.info('[API] Worker API: ' + data.events.length + ' событий');
+        return;
       }
-    } else {
-      loadFallback();
     }
   } catch(e) {
-    console.warn('events.json error:', e);
-    loadFallback();
+    console.warn('[API] Worker недоступен, fallback на events.json:', e.message);
+  }
+
+  // 2. Прямой events.json
+  try {
+    const r = await fetch('events.json?nocache=' + Date.now(), {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!r.ok) { loadFallback(); return; }
+    const data = await r.json();
+    if (data.events && data.events.length > 0) {
+      applyEvents(data.events, data.updated);
+      console.info('[API] events.json: ' + data.events.length + ' событий');
+      return;
+    }
+  } catch(e) {
+    console.warn('[API] events.json error:', e.message);
+  }
+
+  loadFallback();
+}
+
+async function fetchStats() {
+  try {
+    const r = await fetch(API_BASE + '/api/stats', { signal: AbortSignal.timeout(3000) });
+    if (!r.ok) return;
+    const s = await r.json();
+    // Обновляем статистику из API (точнее чем из событий)
+    document.getElementById('s-t').textContent = s.total;
+    document.getElementById('s-c').textContent = s.critical;
+    document.getElementById('s-a').textContent = s.avg_severity;
+  } catch(_) {}
+}
+
+function applyEvents(events, updatedIso) {
+  ALL_EVENTS = events;
+  filtered = filter === 'all' ? [...ALL_EVENTS] : ALL_EVENTS.filter(e => e.domain === filter);
+  updateStats(); renderList(); renderMarkers();
+  if (updatedIso) {
+    const d = new Date(updatedIso);
+    document.getElementById('updated').textContent = 'Обновлено: ' + d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
   }
 }
 
@@ -351,7 +392,7 @@ function loadFallback() {
   updateStats(); renderList(); renderMarkers();
 }
 
-tryLoadFresh();
+tryLoadFresh().then(() => fetchStats());
 </script>
 </body>
 </html>
