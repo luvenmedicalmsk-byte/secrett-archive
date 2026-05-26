@@ -1549,57 +1549,9 @@ def fetch_russia_climate_v2():
         except Exception as e:
             print(f"  [WARN] Авиалесоохрана: {e}", file=sys.stderr)
 
-    # 2. FIRMS NASA — спутниковый мониторинг пожаров Россия
-    # Bbox Россия: lon 30-180, lat 45-75
-    _firms_key = os.environ.get('FIRMS_API_KEY', '')
-    if not _firms_key:
-        _firms_key = 'DEMO_KEY'
-    firms_url = (f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
-                 f"{_firms_key}/VIIRS_SNPP_NRT/100,55,110,65/7/")
-    data = fetch_url(firms_url, timeout=20)
-    if data and 'latitude' in data:
-        try:
-            lines = data.strip().split('\n')
-            headers = lines[0].split(',')
-            lat_idx = headers.index('latitude') if 'latitude' in headers else -1
-            lon_idx = headers.index('longitude') if 'longitude' in headers else -1
-            date_idx = headers.index('acq_date') if 'acq_date' in headers else -1
-            bright_idx = headers.index('bright_ti4') if 'bright_ti4' in headers else -1
-            
-            # Кластеризуем точки по регионам
-            seen_regions = {}
-            for line in lines[1:]:
-                parts = line.split(',')
-                if len(parts) <= max(lat_idx, lon_idx, 0): continue
-                try:
-                    lat = float(parts[lat_idx])
-                    lng = float(parts[lon_idx])
-                    region = detect_region_by_coords(lat, lng)
-                    brightness = float(parts[bright_idx]) if bright_idx >= 0 and parts[bright_idx] else 300
-                    
-                    if region not in seen_regions or brightness > seen_regions[region]['bright']:
-                        seen_regions[region] = {
-                            'lat': lat, 'lng': lng, 'bright': brightness,
-                            'date': parts[date_idx] if date_idx >= 0 else datetime.now(timezone.utc).strftime('%Y-%m-%d')
-                        }
-                except: continue
-            
-            for region, info in list(seen_regions.items())[:15]:
-                intensity = 'высокой' if info['bright'] > 350 else 'средней'
-                items.append({
-                    'title': f"Лесной пожар {intensity} интенсивности — {region}",
-                    'desc': f"Спутниковая детекция VIIRS/NASA. Яркость: {info['bright']:.0f}K. Регион: {region}",
-                    'date': info['date'],
-                    'source': 'NASA FIRMS',
-                    'source_bias': 15,
-                    '_lat': info['lat'], '_lng': info['lng'],
-                    '_region': region, '_domain': 'climate'
-                })
-            print(f"  NASA FIRMS Россия: {len(seen_regions)} очагов", file=sys.stderr)
-        except Exception as e:
-            print(f"  [WARN] FIRMS: {e}", file=sys.stderr)
-
-    # 3. МЧС России — паводки и ЧС
+    # 2. FIRMS NASA — данные по России берутся в fetch_nasa_firms
+    # Дублирование убрано
+        # 3. МЧС России — паводки и ЧС
     mchs_feeds = [
         "https://mchs.gov.ru/deyatelnost/press-centr/novosti",
         "https://mchs.gov.ru/deyatelnost/press-centr/novosti/rss",
