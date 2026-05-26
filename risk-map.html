@@ -81,6 +81,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #dt-sfill{height:100%}
 #dt-summary{font-size:11px;color:#A8A090;line-height:1.7;margin-bottom:11px}
 #dt-foot{font-size:8px;color:#6A6458;border-top:1px solid rgba(184,151,58,0.08);padding-top:8px;display:flex;justify-content:space-between}
+#dt-ai{margin-top:10px;padding:10px 12px;border:1px solid rgba(184,151,58,0.15);border-radius:2px;background:rgba(184,151,58,0.04);display:none}
+#dt-ai.visible{display:block}
+#dt-ai-label{font-size:7px;letter-spacing:0.18em;text-transform:uppercase;color:#B8973A;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+#dt-ai-score{font-family:'Cormorant Garamond',serif;font-size:22px;color:#D4AF5A;line-height:1}
+#dt-ai-delta{font-size:9px;margin-left:6px;vertical-align:middle}
+#dt-ai-reasoning{font-size:10px;color:#A8A090;line-height:1.6;margin-top:6px}
+#dt-ai-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.ai-tag{font-size:7px;letter-spacing:0.1em;text-transform:uppercase;padding:2px 6px;border:1px solid rgba(184,151,58,0.2);border-radius:2px;color:#6A6458}
+.ai-tag.cascade{border-color:rgba(211,84,0,0.3);color:#D35400}
 
 /* Кастомные маркеры Leaflet */
 .risk-marker{border-radius:50%;border:none;box-shadow:none}
@@ -142,6 +151,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <div id="dt-slabel"><span>Индекс риска</span><span id="dt-sv"></span></div>
   <div id="dt-sbar"><div id="dt-sfill"></div></div>
   <div id="dt-summary"></div>
+  <div id="dt-ai">
+    <div id="dt-ai-label">◆ AI·Анализ рисков</div>
+    <div><span id="dt-ai-score"></span><span id="dt-ai-delta"></span></div>
+    <div id="dt-ai-reasoning"></div>
+    <div id="dt-ai-tags"></div>
+  </div>
   <div id="dt-foot"><span id="dt-src"></span><span id="dt-dt"></span></div>
 </div>
 
@@ -298,6 +313,33 @@ function showDetail(ev) {
   document.getElementById('dt-summary').textContent = ev.summary;
   document.getElementById('dt-src').textContent = 'Источник: ' + ev.source;
   document.getElementById('dt-dt').textContent = fd(ev.date);
+  // AI-блок
+  const aiBlock = document.getElementById('dt-ai');
+  if (ev.ai_score) {
+    aiBlock.classList.add('visible');
+    document.getElementById('dt-ai-score').textContent = ev.ai_score + ' / 100';
+    const delta = ev.ai_delta || 0;
+    const deltaEl = document.getElementById('dt-ai-delta');
+    deltaEl.textContent = delta > 0 ? '▲ +' + delta : delta < 0 ? '▼ ' + delta : '→ без изменений';
+    deltaEl.style.color = delta > 0 ? '#C0392B' : delta < 0 ? '#2980B9' : '#6A6458';
+    document.getElementById('dt-ai-reasoning').textContent = ev.ai_reasoning || '';
+    const tagsEl = document.getElementById('dt-ai-tags');
+    tagsEl.innerHTML = '';
+    if (ev.ai_horizon) {
+      const t = document.createElement('span');
+      t.className = 'ai-tag';
+      t.textContent = ev.ai_horizon;
+      tagsEl.appendChild(t);
+    }
+    (ev.ai_cascade || []).forEach(c => {
+      const t = document.createElement('span');
+      t.className = 'ai-tag cascade';
+      t.textContent = '→ ' + c;
+      tagsEl.appendChild(t);
+    });
+  } else {
+    aiBlock.classList.remove('visible');
+  }
   document.getElementById('detail').classList.add('open');
   document.getElementById('sidebar').classList.remove('open');
   // Плавно перемещаем карту к событию
