@@ -12,6 +12,12 @@
 import json, os, sys, hashlib, math, re, time, urllib.request, urllib.parse, urllib.error
 import xml.etree.ElementTree as ET
 import random
+# signal schema enrichment (v2)
+try:
+    from signal_enricher import enrich_snapshot as _enrich_snapshot
+    _SIGNAL_ENRICHER_AVAILABLE = True
+except ImportError:
+    _SIGNAL_ENRICHER_AVAILABLE = False
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -3431,6 +3437,54 @@ def inject_into_html(events):
         print(f"  [SKIP] Маркер ALL_EVENTS не найден в HTML", file=sys.stderr)
 
 # ══════════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SIGNAL ENRICHMENT v2
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_previous_snapshot():
+    """Загружает текущий events.json как предыдущий снапшот для delta."""
+    try:
+        if OUTPUT_PATH.exists():
+            with open(OUTPUT_PATH, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"  [WARN] previous snapshot load failed: {e}", file=sys.stderr)
+    return None
+
+
+def save_enriched(events, previous_snapshot=None):
+    """
+    Сохраняет events.json с signal taxonomy.
+    Полностью обратно совместима — добавляет поля, не трогает старые.
+    """
+    raw_snapshot = {
+        "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "count":   len(events),
+        "sources": ["NewsAPI", "GDELT 2.0", "ReliefWeb", "NASA EONET"],
+        "events":  events,
+    }
+
+    if _SIGNAL_ENRICHER_AVAILABLE:
+        try:
+            enriched = _enrich_snapshot(raw_snapshot, previous_snapshot)
+            enriched["count"] = len(enriched["events"])
+            OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
+                json.dump(enriched, f, ensure_ascii=False, indent=2)
+            from collections import Counter
+            types  = Counter(e.get("signal_type","?") for e in enriched["events"])
+            phases = Counter(e.get("phase","?") for e in enriched["events"])
+            print(f"\n✓ {len(enriched['events'])} событий → {OUTPUT_PATH} [schema v2]", file=sys.stderr)
+            print(f"  signal_types: {dict(types)}", file=sys.stderr)
+            print(f"  phases:       {dict(phases)}", file=sys.stderr)
+            return
+        except Exception as e:
+            print(f"  [WARN] signal enrichment failed, falling back to save(): {e}", file=sys.stderr)
+
+    # Fallback — оригинальный save
+    save(events)
+
 if __name__ == '__main__':
     print("=== Архив · Парсер рисков v2 ===", file=sys.stderr)
     print(f"Время: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}\n", file=sys.stderr)
@@ -3508,8 +3562,9 @@ if __name__ == '__main__':
     events = news_events
     print(f"  Итого на карте: {len(news_events)} новостных событий", file=sys.stderr)
 
-    save(events)
-    inject_into_html(events)
+    _prev_snapshot = _load_previous_snapshot()  # загружаем ДО записи
+    save_enriched(events, _prev_snapshot)         # enriched save
+    inject_into_html(events)                      # inject без изменений
 
     by_domain = {}
     for e in events:
