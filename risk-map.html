@@ -553,13 +553,25 @@ async function openLocationPanel(name, lat, lng) {
       signal: AbortSignal.timeout(20000)
     });
 
+    if (r.status === 429) {
+      loading.style.display = 'none';
+      document.getElementById('loc-summary').textContent = '⏳ Лимит запросов исчерпан. Подождите минуту и попробуйте снова.';
+      document.getElementById('loc-summary').style.color = '#D4AF5A';
+      // Автоматически убираем сообщение через 60 секунд
+      setTimeout(() => {
+        document.getElementById('loc-summary').textContent = '';
+        document.getElementById('loc-summary').style.color = '';
+      }, 60000);
+      return;
+    }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     loading.style.display = 'none';
     renderLocationPanel(d);
 
   } catch(e) {
-    loading.textContent = 'Нет данных по этой локации';
+    loading.style.display = 'none';
+    document.getElementById('loc-summary').textContent = 'Нет данных по этой локации.';
     console.warn('[Location]', e.message);
   }
 }
