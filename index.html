@@ -6,6 +6,7 @@
 <title>Архив системных рисков «Великое пробуждение» — Навигация в эпоху поликризиса</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root {
   --gold: #B8973A;
@@ -157,9 +158,9 @@ nav.scrolled {
 
 /* ── HERO ── */
 .hero {
-  min-height: auto;
+  min-height: 100vh;
   display: flex; align-items: center;
-  padding: 100px 40px 100px;
+  padding: 140px 40px 100px;
   position: relative; overflow: hidden;
 }
 .hero-bg {
@@ -1492,28 +1493,29 @@ footer {
 </head>
 <body>
 
-<!-- ── ENTRANCE OVERLAY ── -->
+<!-- ── ENTRANCE OVERLAY (карта фоном) ── -->
 <div id="entrance-overlay" style="
   position:fixed;inset:0;z-index:99999;
-  background:#0A0906;
+  background:#06050A;
   display:flex;align-items:center;justify-content:center;
   opacity:1;transition:opacity 0.7s ease;
   cursor:pointer;
+  overflow:hidden;
 ">
-  <!-- top border line -->
-  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.6),transparent);"></div>
-  <!-- bottom border line -->
-  <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.6),transparent);"></div>
-  <!-- left border line -->
-  <div style="position:absolute;top:0;bottom:0;left:0;width:1px;background:linear-gradient(180deg,transparent,rgba(184,151,58,0.35),transparent);"></div>
-  <!-- right border line -->
-  <div style="position:absolute;top:0;bottom:0;right:0;width:1px;background:linear-gradient(180deg,transparent,rgba(184,151,58,0.35),transparent);"></div>
+  <!-- Карта на весь экран -->
+  <div id="overlay-map" style="position:absolute;inset:0;z-index:0;"></div>
 
-  <!-- subtle grid -->
-  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(184,151,58,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(184,151,58,0.018) 1px,transparent 1px);background-size:80px 80px;pointer-events:none;"></div>
+  <!-- Лёгкое затемнение центра для читаемости текста -->
+  <div style="position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 70% 60% at 50% 50%, rgba(6,5,10,0.55) 0%, rgba(6,5,10,0.18) 100%);pointer-events:none;"></div>
 
-  <!-- content -->
-  <div style="position:relative;text-align:center;padding:40px 32px;max-width:720px;width:100%;">
+  <!-- Рамки -->
+  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.6),transparent);z-index:3;pointer-events:none;"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.6),transparent);z-index:3;pointer-events:none;"></div>
+  <div style="position:absolute;top:0;bottom:0;left:0;width:1px;background:linear-gradient(180deg,transparent,rgba(184,151,58,0.35),transparent);z-index:3;pointer-events:none;"></div>
+  <div style="position:absolute;top:0;bottom:0;right:0;width:1px;background:linear-gradient(180deg,transparent,rgba(184,151,58,0.35),transparent);z-index:3;pointer-events:none;"></div>
+
+  <!-- Контент поверх карты -->
+  <div style="position:relative;z-index:4;text-align:center;padding:40px 32px;max-width:720px;width:100%;pointer-events:none;">
 
     <!-- label -->
     <div style="font-size:11px;letter-spacing:0.32em;text-transform:uppercase;color:#B8973A;margin-bottom:28px;font-family:'Montserrat',sans-serif;font-weight:500;">
@@ -1523,13 +1525,13 @@ footer {
     <!-- pulse dot + headline -->
     <div style="display:flex;align-items:flex-start;justify-content:center;gap:18px;margin-bottom:40px;">
       <div style="width:10px;height:10px;border-radius:50%;background:#1FAACC;box-shadow:0 0 12px #1FAACC;animation:ovPulse 1.4s ease-in-out infinite;flex-shrink:0;margin-top:14px;"></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4.5vw,48px);font-weight:300;color:#F0E8D8;line-height:1.25;text-align:left;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,4.5vw,48px);font-weight:300;color:#F0E8D8;line-height:1.25;text-align:left;text-shadow:0 2px 20px rgba(6,5,10,0.9);">
         Архив строит<br><span style="font-style:italic;color:#D4AF5A;">новую архитектуру</span>
       </div>
     </div>
 
     <!-- message -->
-    <div style="max-width:520px;margin:0 auto 44px;font-size:15px;color:rgba(168,160,144,0.85);line-height:1.9;font-family:'Montserrat',sans-serif;font-weight:300;">
+    <div style="max-width:520px;margin:0 auto 44px;font-size:15px;color:rgba(168,160,144,0.9);line-height:1.9;font-family:'Montserrat',sans-serif;font-weight:300;text-shadow:0 1px 14px rgba(6,5,10,0.95);">
       Войдите сегодня по текущей стоимости — и получите доступ к бизнес-блоку, когда он выйдет, без доплаты.
     </div>
 
@@ -1537,20 +1539,111 @@ footer {
     <div style="width:40px;height:1px;background:rgba(184,151,58,0.4);margin:0 auto 44px;"></div>
 
     <!-- close hint -->
-    <div style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(106,100,88,0.6);font-family:'Montserrat',sans-serif;">
+    <div style="font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(106,100,88,0.7);font-family:'Montserrat',sans-serif;">
       нажмите в любом месте, чтобы продолжить
     </div>
   </div>
 </div>
+
+<!-- ── MAP HERO — первый экран после overlay ── -->
+<section id="map-hero" style="position:relative;width:100%;height:100vh;overflow:hidden;background:#06050A;">
+  <div id="main-map" style="position:absolute;inset:0;z-index:0;"></div>
+  <!-- виньет по краям -->
+  <div style="position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 90% 80% at 50% 50%, transparent 35%, rgba(6,5,10,0.6) 100%);pointer-events:none;"></div>
+  <!-- затемнение снизу — переход к следующей секции -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:180px;z-index:2;background:linear-gradient(to bottom,transparent,rgba(6,5,10,0.98));pointer-events:none;"></div>
+
+  <!-- Подпись на уровне Европы -->
+  <div style="position:absolute;left:28px;top:22%;z-index:3;pointer-events:none;max-width:300px;">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:20px;height:1px;background:rgba(184,151,58,0.9);flex-shrink:0;margin-top:9px;"></div>
+      <div style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:400;letter-spacing:0.16em;text-transform:uppercase;color:rgba(184,151,58,0.9);line-height:1.9;">
+        Инфраструктура мониторинга глобальных рисков нового поколения
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-top:14px;">
+      <div style="width:20px;height:1px;background:rgba(31,170,204,0.85);flex-shrink:0;margin-top:9px;"></div>
+      <div style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:300;letter-spacing:0.14em;text-transform:uppercase;color:rgba(31,170,204,0.85);line-height:1.9;">
+        Модуль спутниковых данных и карты сигналов — скоро будет открыт
+      </div>
+    </div>
+  </div>
+
+  <!-- scroll hint -->
+  <div style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;">
+    <div style="width:1px;height:52px;background:linear-gradient(to bottom,rgba(184,151,58,0.7),transparent);animation:mapScroll 2s ease-in-out infinite;"></div>
+    <span style="font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(184,151,58,0.4);font-family:'Montserrat',sans-serif;">scroll</span>
+  </div>
+</section>
 
 <style>
 @keyframes ovPulse {
   0%,100%{opacity:0.5;transform:scale(1);}
   50%{opacity:1;transform:scale(1.4);}
 }
+@keyframes mapScroll {
+  0%,100%{opacity:0.4;transform:scaleY(1);}
+  50%{opacity:1;transform:scaleY(1.15);}
+}
+/* скрываем Leaflet attribution и zoom */
+.leaflet-control-attribution,.leaflet-control-zoom{display:none!important}
+@keyframes rmPulse{
+  0%{transform:scale(1);opacity:0.35}
+  60%{transform:scale(2.2);opacity:0}
+  100%{transform:scale(2.2);opacity:0}
+}
 </style>
+
 <script>
 (function(){
+  var EVENTS = [
+    {lat:40,lng:15,d:'climate',s:82},{lat:50,lng:10,d:'economy',s:74},{lat:32,lng:40,d:'geopolitics',s:88},
+    {lat:55,lng:20,d:'technology',s:79},{lat:43,lng:67,d:'climate',s:76},{lat:12,lng:20,d:'social',s:85},
+    {lat:38,lng:35,d:'climate',s:81},{lat:25,lng:115,d:'economy',s:71},{lat:55,lng:-115,d:'climate',s:83},
+    {lat:-12,lng:-65,d:'social',s:67},{lat:60,lng:30,d:'geopolitics',s:75},{lat:35,lng:105,d:'economy',s:80},
+    {lat:-25,lng:130,d:'climate',s:70},{lat:20,lng:75,d:'social',s:78},{lat:52,lng:-1,d:'economy',s:72},
+    {lat:48,lng:2,d:'technology',s:68},{lat:41,lng:29,d:'geopolitics',s:86},{lat:-5,lng:37,d:'climate',s:77},
+    {lat:30,lng:31,d:'geopolitics',s:84},{lat:65,lng:25,d:'technology',s:65},{lat:19,lng:-99,d:'social',s:73},
+    {lat:-34,lng:-58,d:'economy',s:69},{lat:37,lng:127,d:'technology',s:76},{lat:1,lng:103,d:'economy',s:71},
+    {lat:14,lng:2,d:'social',s:80},{lat:-8,lng:115,d:'climate',s:74},{lat:28,lng:77,d:'social',s:79}
+  ];
+  var DC={'climate':'#27AE60','economy':'#2980B9','geopolitics':'#D35400','technology':'#8E44AD','social':'#C0392B'};
+
+  function buildMarkers(map) {
+    EVENTS.forEach(function(ev){
+      var col = DC[ev.d]||'#B8973A', r=Math.round(4+(ev.s-50)*0.09), pulse=ev.s>=80, sz=pulse?r*2+12:r*2;
+      var html = pulse
+        ? '<div style="position:relative;width:'+sz+'px;height:'+sz+'px"><div style="position:absolute;inset:0;background:'+col+';opacity:0.22;border-radius:50%;animation:rmPulse 2.5s infinite"></div><div style="position:absolute;top:6px;left:6px;width:'+(r*2)+'px;height:'+(r*2)+'px;background:'+col+';border-radius:50%;opacity:0.9;box-shadow:0 0 8px '+col+'66"></div></div>'
+        : '<div style="width:'+sz+'px;height:'+sz+'px;background:'+col+';border-radius:50%;opacity:0.85;box-shadow:0 0 5px '+col+'44"></div>';
+      L.marker([ev.lat,ev.lng],{icon:L.divIcon({html:html,className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]}),interactive:false}).addTo(map);
+    });
+  }
+
+  function buildMap(id, dragging) {
+    var el = document.getElementById(id);
+    if(!el || el._leaflet_id) return null;
+    var m = L.map(id,{
+      center:[20,10],zoom:2,zoomControl:false,attributionControl:false,
+      scrollWheelZoom:false,dragging:!!dragging,doubleClickZoom:false,
+      touchZoom:false,keyboard:false,minZoom:2,maxZoom:2,
+      maxBounds:[[-85,-180],[85,180]],maxBoundsViscosity:1
+    });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(m);
+    buildMarkers(m);
+    fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+      .then(function(r){return r.ok?r.json():null})
+      .then(function(geo){if(geo)L.geoJSON(geo,{style:{fillColor:'transparent',fillOpacity:0,color:'rgba(184,151,58,0.13)',weight:0.4},interactive:false}).addTo(m);})
+      .catch(function(){});
+    return m;
+  }
+
+  // Инициализируем карту в overlay сразу
+  document.addEventListener('DOMContentLoaded', function(){
+    buildMap('overlay-map', false);
+    buildMap('main-map', false);
+  });
+
+  // Overlay — закрытие по клику, без таймера
   var ov = document.getElementById('entrance-overlay');
   function closeOverlay(){
     ov.style.opacity='0';
@@ -1611,154 +1704,6 @@ footer {
     <a href="#access" class="nav-cta">Открыть доступ</a>
   </div>
 </nav>
-
-<!-- URGENCY TIMER BANNER -->
-<div id="urgency-banner" style="
-  position: relative;
-  z-index: 490;
-  background: linear-gradient(180deg, #0D0C09 0%, #111009 60%, #0A0906 100%);
-  border-bottom: 1px solid rgba(184,151,58,0.4);
-  margin-top: 120px;
-  padding: 52px 32px 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  text-align: center;
-  overflow: hidden;
-">
-  <!-- top gold line -->
-  <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.7),transparent);"></div>
-  <!-- bottom gold line -->
-  <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(184,151,58,0.4),transparent);"></div>
-  <!-- radial glow -->
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 100% at 50% 50%, rgba(184,151,58,0.05) 0%, transparent 70%);pointer-events:none;"></div>
-
-  <!-- label row -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
-    <div style="width:6px;height:6px;border-radius:50%;background:#B8973A;box-shadow:0 0 10px rgba(184,151,58,0.8);animation:timerPulse 1.6s ease-in-out infinite;flex-shrink:0;"></div>
-    <span style="font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:#B8973A;font-family:'Montserrat',sans-serif;font-weight:500;">Специальная стоимость</span>
-    <div style="width:6px;height:6px;border-radius:50%;background:#B8973A;box-shadow:0 0 10px rgba(184,151,58,0.8);animation:timerPulse 1.6s ease-in-out infinite 0.8s;flex-shrink:0;"></div>
-  </div>
-
-  <!-- deadline text -->
-  <div style="font-size:14px;color:rgba(240,232,216,0.65);font-family:'Montserrat',sans-serif;font-weight:300;letter-spacing:0.06em;margin-bottom:36px;">
-    Действует до&nbsp;&nbsp;<span style="color:#D4AF5A;font-weight:500;letter-spacing:0.04em;">26 мая · 22:00 МСК</span>
-  </div>
-
-  <!-- COUNTDOWN -->
-  <div style="display:flex;align-items:flex-start;justify-content:center;gap:0;margin-bottom:40px;">
-
-    <!-- hours -->
-    <div style="display:flex;flex-direction:column;align-items:center;min-width:88px;">
-      <span id="timer-hours" style="font-family:'Cormorant Garamond',serif;font-size:80px;font-weight:300;color:#F0E8D8;line-height:1;letter-spacing:-0.02em;">00</span>
-      <span style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:#6A6458;font-family:'Montserrat',sans-serif;margin-top:6px;">часов</span>
-    </div>
-
-    <!-- sep -->
-    <span style="font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:300;color:rgba(184,151,58,0.35);line-height:1;padding:0 4px;margin-top:4px;">:</span>
-
-    <!-- minutes -->
-    <div style="display:flex;flex-direction:column;align-items:center;min-width:88px;">
-      <span id="timer-minutes" style="font-family:'Cormorant Garamond',serif;font-size:80px;font-weight:300;color:#F0E8D8;line-height:1;letter-spacing:-0.02em;">00</span>
-      <span style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:#6A6458;font-family:'Montserrat',sans-serif;margin-top:6px;">минут</span>
-    </div>
-
-    <!-- sep -->
-    <span style="font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:300;color:rgba(184,151,58,0.35);line-height:1;padding:0 4px;margin-top:4px;">:</span>
-
-    <!-- seconds -->
-    <div style="display:flex;flex-direction:column;align-items:center;min-width:88px;">
-      <span id="timer-seconds" style="font-family:'Cormorant Garamond',serif;font-size:80px;font-weight:300;color:#D4AF5A;line-height:1;letter-spacing:-0.02em;">00</span>
-      <span style="font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:#6A6458;font-family:'Montserrat',sans-serif;margin-top:6px;">секунд</span>
-    </div>
-
-  </div>
-
-  <!-- CTA button -->
-  <a href="#access" style="
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 48px;
-    background: transparent;
-    border: 1px solid rgba(184,151,58,0.6);
-    color: #D4AF5A;
-    font-size: 11px;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    animation: btnBlink 1.1s step-start infinite;
-    max-width: 360px;
-    width: 100%;
-    justify-content: center;
-  "
-  onmouseover="this.style.background='rgba(184,151,58,0.1)';this.style.borderColor='rgba(184,151,58,1)';this.style.color='#F5CA50';this.style.boxShadow='0 0 24px rgba(184,151,58,0.2)';"
-  onmouseout="this.style.background='transparent';this.style.borderColor='rgba(184,151,58,0.6)';this.style.color='#D4AF5A';this.style.boxShadow='none';"
-  >
-    <svg width="14" height="10" viewBox="0 0 14 10" fill="none" style="flex-shrink:0;">
-      <path d="M1 5H13M9 1L13 5L9 9" stroke="currentColor" stroke-width="1" stroke-linecap="square"/>
-    </svg>
-    Условия доступа
-  </a>
-
-</div>
-
-<style>
-@keyframes timerPulse {
-  0%,100%{opacity:0.4;transform:scale(1);}
-  50%{opacity:1;transform:scale(1.6);}
-}
-@keyframes btnBlink {
-  0%,49%{
-    border-color: rgba(184,151,58,0.9);
-    color: #F5CA50;
-    box-shadow: 0 0 18px rgba(184,151,58,0.35), inset 0 0 10px rgba(184,151,58,0.07);
-    background: rgba(184,151,58,0.06);
-  }
-  50%,100%{
-    border-color: rgba(184,151,58,0.2);
-    color: rgba(212,175,90,0.35);
-    box-shadow: none;
-    background: transparent;
-  }
-}
-@media (max-width:480px){
-  #urgency-banner{padding:44px 20px 40px;}
-  #urgency-banner [id^="timer-"]{font-size:64px !important;}
-  #urgency-banner > div:nth-child(5) span:nth-child(2),
-  #urgency-banner > div:nth-child(5) span:nth-child(4){font-size:50px !important;}
-}
-</style>
-
-<script>
-(function(){
-  var deadline = new Date('2026-05-26T22:00:00+03:00').getTime();
-  function pad(n){return n<10?'0'+n:String(n);}
-  function tick(){
-    var now = Date.now();
-    var diff = deadline - now;
-    if(diff <= 0){
-      document.getElementById('timer-hours').textContent = '00';
-      document.getElementById('timer-minutes').textContent = '00';
-      document.getElementById('timer-seconds').textContent = '00';
-      return;
-    }
-    var h = Math.floor(diff / 3600000);
-    var m = Math.floor((diff % 3600000) / 60000);
-    var s = Math.floor((diff % 60000) / 1000);
-    document.getElementById('timer-hours').textContent = pad(h);
-    document.getElementById('timer-minutes').textContent = pad(m);
-    document.getElementById('timer-seconds').textContent = pad(s);
-  }
-  tick();
-  setInterval(tick, 1000);
-})();
-</script>
 
 <!-- HERO -->
 <section class="hero">
@@ -2881,11 +2826,11 @@ footer {
           <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);line-height:1.8;">Полная матрица, все сценарии и 12 стратегических активов<br>доступны участникам Архива.</div>
         </div>
         <div style="margin-bottom:8px;">
-          <div style="font-size:13px;color:var(--text-muted);text-decoration:line-through;letter-spacing:0.05em;">240 000 ₽</div>
+          <div style="font-size:13px;color:var(--text-muted);text-decoration:line-through;letter-spacing:0.05em;">505 000 ₽</div>
         </div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(40px,6vw,64px);font-weight:300;color:var(--cyan);line-height:1;margin-bottom:8px;">212 000 ₽</div>
-        <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:28px;">До 26 мая · 22:00 (МСК)</div>
-        <a href="https://payform.ru/bebmpSh/" class="btn-primary-cyan" target="_blank" style="display:block;width:100%;text-align:center;box-sizing:border-box;">Открыть полный доступ</a>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(40px,6vw,64px);font-weight:300;color:var(--cyan);line-height:1;margin-bottom:8px;">250 000 ₽</div>
+
+        <a href="https://payform.ru/itbBPsb/" class="btn-primary-cyan" target="_blank" style="display:block;width:100%;text-align:center;box-sizing:border-box;">Открыть полный доступ</a>
         <a href="https://t.me/anirisao" target="_blank" style="display:block;width:100%;text-align:center;box-sizing:border-box;margin-top:12px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-soft);border:1px solid var(--border);padding:14px 24px;text-decoration:none;transition:all 0.3s;">Оформить в рассрочку</a>
         <div style="font-size:11px;color:var(--text-muted);margin-top:14px;letter-spacing:0.05em;">Полный бессрочный доступ · Все обновления без доплат</div>
       </div>
@@ -3441,26 +3386,25 @@ function switchMoneyTab(id, btn) {
           <li>Закрытый канал связи для участников</li>
           <li>Резервное копирование</li>
           <li>Оплата из России, Казахстана и Беларуси</li>
-          <li>Внутренняя рассрочка 4×60 000 р.</li>
+          <li>Внутренняя рассрочка 4×62 500 р.</li>
           <li>Официальная рассрочка без переплат (Яндекс Сплит, Сбер, Т-Банк)</li>
         </ul>
         <div class="pricing-bottom">
           <div class="pricing-price-block">
             <div class="pricing-price-old">505 000 ₽</div>
-            <div style="font-size:18px;color:var(--text-muted);text-decoration:line-through;letter-spacing:0.04em;margin-bottom:4px;">240 000 ₽</div>
-            <a href="https://payform.ru/bebmpSh/" target="_blank" style="text-decoration:none;">
-              <div class="pricing-price" style="color:var(--gold);font-size:64px;">212 000 ₽</div>
+            <a href="https://payform.ru/itbBPsb/" target="_blank" style="text-decoration:none;">
+              <div class="pricing-price" style="color:var(--gold);font-size:64px;">250 000 ₽</div>
             </a>
             <div class="pricing-price-note">Стоимость растёт с каждым обновлением.</div>
-            <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan);margin-top:8px;">До 26 мая · 22:00 (МСК)</div>
+
           </div>
           <div class="pricing-cta-stack">
-            <a id="pay-ru" href="https://payform.ru/bebmpSh/" class="btn-glow btn-glow-gold" target="_blank">
+            <a id="pay-ru" href="https://payform.ru/itbBPsb/" class="btn-glow btn-glow-gold" target="_blank">
               <span class="btn-glow-dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold);"></span>
               Оплатить для РФ / СНГ
             </a>
-            <a href="https://t.me/anirisao" class="btn-glow" target="_blank" style="margin-top:10px;">
-              <span class="btn-glow-dot"></span>
+            <a href="https://t.me/anirisao" class="btn-glow btn-glow-gold" target="_blank" style="margin-top:10px;">
+              <span class="btn-glow-dot" style="background:var(--gold);box-shadow:0 0 8px var(--gold);"></span>
               Оформить в рассрочку
             </a>
             <div style="font-size:11px;color:var(--text-muted);margin-top:10px;letter-spacing:0.04em;">К Архиву уже присоединилось большое количество людей по рассрочке</div>
@@ -3486,15 +3430,14 @@ function switchMoneyTab(id, btn) {
 <li>Закрытый канал связи для участников</li>
           <li>Доступная оплата из любых стран</li>
 <li>Доступная оплата в USDT</li>
-          <li>Внутренняя рассрочка 3 × $1090 / €940</li>
+          <li>Внутренняя рассрочка 3 × $1185 / €1017</li>
         </ul>
         <div class="pricing-bottom">
           <div class="pricing-price-block">
             <div class="pricing-price-old">$6 350 / €5 500</div>
-            <div style="font-size:18px;color:var(--text-muted);text-decoration:line-through;letter-spacing:0.04em;margin-bottom:4px;">$3 260 / €2 800</div>
-            <div class="pricing-price" style="font-size:48px;">$3 000 / €2 600</div>
+            <div class="pricing-price" style="font-size:48px;">$3 550 / €3 050</div>
             <div class="pricing-price-note">Оплата доступна из любой страны мира.</div>
-            <div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan);margin-top:8px;">До 26 мая · 22:00 (МСК)</div>
+
           </div>
           <div class="pricing-cta-stack">
             <a id="pay-intl" href="https://t.me/anirisao" class="btn-glow" target="_blank">
@@ -3723,4 +3666,5 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeDrawer();
 });
 </script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
