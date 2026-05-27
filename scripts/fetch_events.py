@@ -2782,8 +2782,8 @@ def translate_batch(texts):
     openai_key = _os.environ.get('OPENAI_API_KEY', '')
     if openai_key and to_translate:
         try:
-            to_translate = to_translate[:100]  # переводим только топ-100
-            BATCH = 25
+            to_translate = to_translate[:80]  # переводим топ-80
+            BATCH = 20
             all_translated = True
             for batch_start in range(0, len(to_translate), BATCH):
                 batch = to_translate[batch_start:batch_start+BATCH]
@@ -2802,7 +2802,7 @@ def translate_batch(texts):
                     headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openai_key},
                     method='POST'
                 )
-                with urllib.request.urlopen(req_ai, timeout=90) as r_ai:
+                with urllib.request.urlopen(req_ai, timeout=45) as r_ai:
                     resp = json.loads(r_ai.read().decode('utf-8'))
                     text_out = resp['choices'][0]['message']['content'].strip()
                     out_lines = [l.strip() for l in text_out.split('\n') if l.strip()]
