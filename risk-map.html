@@ -437,6 +437,14 @@ document.querySelectorAll('.fb').forEach(btn => {
 // Приоритет: Worker API → events.json → fallback
 const API_BASE = 'https://archive-api.luven-medical-msk.workers.dev';
 
+
+function formatMSK(isoStr) {
+  const dt = new Date(isoStr);
+  const mskDate = new Date(dt.getTime() + (3 * 60 + dt.getTimezoneOffset()) * 60000);
+  const dateStr = mskDate.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+  const timeStr = mskDate.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  return dateStr + ' · ' + timeStr + ' МСК';
+}
 async function tryLoadFresh() {
   // 1. Пробуем Worker API
   try {
@@ -499,7 +507,7 @@ function applyEvents(events, updatedIso) {
   updateStats(); renderList(); renderMarkers();
   if (updatedIso) {
     const d = new Date(updatedIso);
-    document.getElementById('updated').textContent = 'Обновлено: ' + d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+    document.getElementById('updated').textContent = formatMSK(updatedIso);
   }
 }
 
@@ -800,8 +808,7 @@ function startSSE() {
       const d = JSON.parse(e.data);
       if (d.updated) {
         const dt = new Date(d.updated);
-        document.getElementById('updated').textContent =
-          'Обновлено: ' + dt.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+        document.getElementById('updated').textContent = formatMSK(d.updated);
       }
     } catch(_) {}
   });
