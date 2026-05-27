@@ -444,9 +444,25 @@ def fetch_newsapi(api_key):
     # Климатические запросы — только из топовых источников
     climate_sources = "reuters,bbc-news,the-guardian-uk,associated-press,al-jazeera-english,cnn"
     climate_queries = [
-        ("wildfire flood drought heatwave extreme weather", 20),
-        ("climate disaster hurricane cyclone storm flood", 20),
-        ("water crisis food security drought famine", 15),
+        # Экстремальная жара и засухи
+        ("heatwave extreme heat record temperature drought scorching", 15),
+        ("drought water shortage arid desertification crop failure", 12),
+        # Наводнения тайфуны ураганы
+        ("flood flooding flash flood inundation river overflow", 15),
+        ("typhoon hurricane cyclone tropical storm landfall", 15),
+        ("storm surge coastal flooding extreme precipitation", 10),
+        # Лесные пожары
+        ("wildfire forest fire bushfire blaze evacuations burned", 15),
+        ("wildfire containment acres burned firefighters emergency", 12),
+        # Таяние льдов и уровень моря
+        ("ice melt glacier Arctic Antarctic sea level rise", 10),
+        ("permafrost thaw ice sheet collapse polar warming", 8),
+        # Продовольственный кризис из-за климата
+        ("food crisis climate crop failure harvest drought famine", 12),
+        ("food insecurity climate agriculture disruption yield loss", 10),
+        # Водный стресс
+        ("water stress scarcity shortage drought reservoir depletion", 12),
+        ("water crisis groundwater depletion freshwater conflict", 10),
     ]
 
     # Экономические источники — Reuters, Bloomberg, CNBC, Al Jazeera, Yahoo Finance + частично FT/Economist/WSJ
