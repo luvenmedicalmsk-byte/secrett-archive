@@ -2456,7 +2456,8 @@ def translate_batch(texts):
     openai_key = _os.environ.get('OPENAI_API_KEY', '')
     if openai_key and to_translate:
         try:
-            BATCH = 50
+            to_translate = to_translate[:100]  # переводим только топ-100
+            BATCH = 25
             all_translated = True
             for batch_start in range(0, len(to_translate), BATCH):
                 batch = to_translate[batch_start:batch_start+BATCH]
