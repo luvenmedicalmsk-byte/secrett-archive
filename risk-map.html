@@ -377,7 +377,10 @@ function showDetail(ev) {
   document.getElementById('dt-region').textContent = ev.region;
   document.getElementById('dt-sv').textContent = ev.severity + ' / 100';
   document.getElementById('dt-sfill').style.cssText = `width:${ev.severity}%;background:${sc(ev.severity)}`;
-  document.getElementById('dt-summary').textContent = ev.summary;
+  // Берём только первый абзац summary, убираем мусор
+  const rawSummary = (ev.summary || '');
+  const cleanSummary = rawSummary.split('|||')[0].split('|')[0].trim();
+  document.getElementById('dt-summary').textContent = cleanSummary;
   document.getElementById('dt-src').textContent = 'Источник: ' + ev.source;
   document.getElementById('dt-dt').textContent = fd(ev.date);
   // AI-блок
