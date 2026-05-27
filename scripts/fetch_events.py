@@ -26,6 +26,8 @@ def strip_html(text):
     text = re.sub(r'&gt;', '>', text)
     text = re.sub(r'&quot;', '"', text)
     text = re.sub(r'\s+', ' ', text).strip()
+    # Убираем мусорные разделители
+    text = text.split('|||')[0].split(' | ')[0].strip()
     return text
 
 
