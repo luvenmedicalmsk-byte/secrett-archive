@@ -15,6 +15,21 @@ import random
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+def strip_html(text):
+    """Удаляет HTML-теги и лишнее из текста"""
+    if not text:
+        return ''
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = re.sub(r'&nbsp;', ' ', text)
+    text = re.sub(r'&amp;', '&', text)
+    text = re.sub(r'&lt;', '<', text)
+    text = re.sub(r'&gt;', '>', text)
+    text = re.sub(r'&quot;', '"', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
+
 OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
 MAX_EVENTS = 200
 SEVERITY_THRESHOLD = 45
@@ -1631,19 +1646,6 @@ def fetch_flood_observatory():
                 
                 # Извлекаем координаты из описания если есть
                 import re
-
-def strip_html(text):
-    """Удаляет HTML-теги и лишнее из текста"""
-    if not text:
-        return ''
-    text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'&nbsp;', ' ', text)
-    text = re.sub(r'&amp;', '&', text)
-    text = re.sub(r'&lt;', '<', text)
-    text = re.sub(r'&gt;', '>', text)
-    text = re.sub(r'&quot;', '"', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
 
                 lat_match = re.search(r'lat[itude]*[:\s]+(-?\d+\.?\d*)', desc, re.I)
                 lon_match = re.search(r'lon[gitude]*[:\s]+(-?\d+\.?\d*)', desc, re.I)
