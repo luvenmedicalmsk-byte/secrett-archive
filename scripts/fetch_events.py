@@ -417,82 +417,36 @@ def fetch_newsapi(api_key):
         print("  [SKIP] NewsAPI: нет ключа", file=sys.stderr)
         return []
 
-    # Запросы по ключевым словам (геополитика, экономика, технологии)
+    today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
+    # Только 6 запросов в день — по одному на домен
+    # Бесплатный план: 100 запросов/день, запускаемся каждые 2 часа = 12 запусков = 72 запроса
     queries = [
-        # Геополитика и конфликты
-        ("war attack missile strike military", 15),
-        ("conflict crisis invasion troops ceasefire", 10),
-        ("explosion bombing terror attack killed", 10),
-        ("sanctions Russia Ukraine NATO weapons", 10),
-        ("coup protest riot uprising revolution", 8),
-        # Катастрофы и ЧС
-        ("earthquake tsunami flood disaster emergency", 10),
-        ("nuclear radiation chemical hazard outbreak", 8),
-        # Экономика
-        ("recession inflation debt collapse financial crisis", 10),
-        ("tariffs trade war sanctions oil energy", 8),
-        ("bank collapse default currency devaluation", 8),
-        # Технологии
-        ("cyberattack hacking infrastructure breach", 8),
-        ("AI artificial intelligence risk regulation", 8),
-        # Горячие точки
-        ("Gaza Israel Iran Lebanon Hamas Hezbollah", 10),
-        ("Taiwan China South China Sea military", 8),
-        ("North Korea DPRK nuclear missile test", 6),
-    ]
-
-    # Климатические запросы — только из топовых источников
-    climate_sources = "reuters,bbc-news,the-guardian-uk,associated-press,al-jazeera-english,cnn"
-    climate_queries = [
-        # Экстремальная жара и засухи
-        ("heatwave extreme heat record temperature drought scorching", 15),
-        ("drought water shortage arid desertification crop failure", 12),
-        # Наводнения тайфуны ураганы
-        ("flood flooding flash flood inundation river overflow", 15),
-        ("typhoon hurricane cyclone tropical storm landfall", 15),
-        ("storm surge coastal flooding extreme precipitation", 10),
-        # Лесные пожары
-        ("wildfire forest fire bushfire blaze evacuations burned", 15),
-        ("wildfire containment acres burned firefighters emergency", 12),
-        # Таяние льдов и уровень моря
-        ("ice melt glacier Arctic Antarctic sea level rise", 10),
-        ("permafrost thaw ice sheet collapse polar warming", 8),
-        # Продовольственный кризис из-за климата
-        ("food crisis climate crop failure harvest drought famine", 12),
-        ("food insecurity climate agriculture disruption yield loss", 10),
-        # Водный стресс
-        ("water stress scarcity shortage drought reservoir depletion", 12),
-        ("water crisis groundwater depletion freshwater conflict", 10),
-    ]
-
-    # Экономические источники — Reuters, Bloomberg, CNBC, Al Jazeera, Yahoo Finance + частично FT/Economist/WSJ
-    economy_sources = "reuters,bloomberg,cnbc,al-jazeera-english,yahoo-finance,financial-times,the-economist,the-wall-street-journal"
-    economy_queries = [
-        # Спады и рецессия
-        ("recession economic downturn GDP contraction slowdown", 15),
-        ("economic crisis collapse debt default bankruptcy", 12),
-        # Энергия — нефть и газ
-        ("oil gas price energy crisis OPEC crude barrel", 15),
-        ("energy supply LNG pipeline gas shortage fuel", 12),
-        # Металлы и ресурсы
-        ("gold silver copper platinum commodities metals price", 12),
-        ("critical minerals lithium cobalt rare earth resources", 10),
-        # Долги и инфляция
-        ("inflation CPI interest rates central bank Fed ECB debt", 15),
-        ("sovereign debt bond yield credit crisis fiscal", 10),
-        # Торговые войны и санкции
-        ("trade war tariffs sanctions trade restrictions export", 15),
-        ("sanctions Russia China Iran trade ban embargo", 12),
+        # Климат — экстремальные события
+        ("heatwave wildfire flood hurricane drought extreme weather", 20,
+         "reuters,bbc-news,the-guardian-uk,associated-press,al-jazeera-english,cnn"),
+        # Геополитика — конфликты и кризисы
+        ("war conflict attack invasion coup sanctions protest", 20,
+         "reuters,bloomberg,al-jazeera-english,financial-times,the-economist"),
+        # Экономика — рецессия, долги, ресурсы
+        ("recession inflation oil gold sanctions trade war debt", 20,
+         "reuters,bloomberg,cnbc,al-jazeera-english,yahoo-finance"),
+        # Технологии — кибер и AI
+        ("cyberattack AI risk semiconductor outage hacking breach", 15,
+         "reuters,wired,techcrunch,the-verge"),
+        # Социум — миграция, здоровье, безработица
+        ("refugee migration disease outbreak unemployment poverty", 15,
+         "reuters,the-guardian-uk,al-jazeera-english"),
+        # Горячие точки — прямой поиск
+        ("Gaza Ukraine Taiwan Iran North Korea coup terror attack", 20,
+         "reuters,bbc-news,al-jazeera-english,associated-press"),
     ]
 
     items = []
-
-    # Климат через конкретные источники
-    for q, count in climate_queries:
-        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    for q, count, sources in queries:
         url = (f"https://newsapi.org/v2/everything"
                f"?q={urllib.parse.quote(q)}"
-               f"&sources={climate_sources}"
+               f"&sources={sources}"
                f"&pageSize={count}"
                f"&sortBy=publishedAt"
                f"&from={today_str}"
@@ -514,240 +468,9 @@ def fetch_newsapi(api_key):
                 })
         except: pass
 
-    # Геополитические запросы — Reuters, Bloomberg, Al Jazeera, FT, Economist
-    geo_sources = "reuters,bloomberg,al-jazeera-english,financial-times,the-economist"
-    geo_queries = [
-        # Конфликты и войны
-        ("war conflict military invasion strike ceasefire battle", 15),
-        ("armed conflict troops weapons NATO alliance escalation", 12),
-        # Санкции и геоэкономика
-        ("sanctions embargo trade restrictions geopolitical tension", 12),
-        ("geopolitics power shift alliance fragmentation multipolar", 10),
-        # Горячие точки
-        ("Gaza Israel Iran Lebanon Hamas Hezbollah strike", 12),
-        ("Ukraine Russia war front ceasefire peace talks", 12),
-        ("Taiwan China South China Sea military threat", 10),
-        ("North Korea DPRK nuclear missile provocation", 8),
-        # Ресурсные конфликты
-        ("energy security oil gas pipeline supply disruption", 10),
-        ("critical minerals resource war strategic competition", 8),
-        # Дипломатия и порядок
-        ("diplomacy UN summit treaty international order breakdown", 10),
-        ("coup election fraud democracy authoritarian regime", 10),
-        # Государственные вооружённые конфликты
-        ("state armed conflict military offensive ground troops casualties", 12),
-        ("interstate war military operation airstrike bombardment", 12),
-        # Гражданские войны
-        ("civil war internal conflict rebel insurgency faction fighting", 12),
-        ("civil war militia armed group warlord territorial control", 10),
-        # Государственные перевороты
-        ("coup d'etat military takeover junta putsch overthrow government", 12),
-        ("coup attempt power seizure military coup regime change", 10),
-        # Терроризм
-        ("terrorist attack terrorism bombing massacre hostage", 12),
-        ("ISIS jihadist extremist attack suicide bombing", 10),
-        # Биологическая химическая ядерная опасность
-        ("biological weapon chemical attack nerve agent hazmat", 10),
-        ("nuclear threat radiation leak dirty bomb WMD biological", 10),
-        ("chemical weapons chlorine sarin anthrax bioweapon", 8),
-        # Протесты и беспорядки
-        ("protest demonstration riot civil unrest clashes police", 12),
-        ("mass protest crackdown suppression tear gas crowd", 10),
-        # Бандитизм и организованная преступность
-        ("gang violence cartel organized crime banditry kidnapping", 10),
-        ("drug cartel trafficking militia criminal group violence", 8),
-    ]
-
-    for q, count in geo_queries:
-        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        url = (f"https://newsapi.org/v2/everything"
-               f"?q={urllib.parse.quote(q)}"
-               f"&sources={geo_sources}"
-               f"&pageSize={count}"
-               f"&sortBy=publishedAt"
-               f"&from={today_str}"
-               f"&to={today_str}"
-               f"&apiKey={api_key}")
-        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
-        if not data: continue
-        try:
-            j = json.loads(data)
-            for art in j.get('articles', []):
-                title = art.get('title','').strip()
-                desc = art.get('description','') or ''
-                if not title or title == '[Removed]': continue
-                items.append({
-                    'title': title, 'desc': desc,
-                    'date': parse_date(art.get('publishedAt','')),
-                    'source': art.get('source',{}).get('name','NewsAPI'),
-                    'source_bias': 2
-                })
-        except: pass
-
-    # Социальные запросы — Reuters, Guardian, Al Jazeera, FT
-    social_sources = "reuters,the-guardian-uk,al-jazeera-english,financial-times"
-    social_queries = [
-        # Неравенство и поляризация
-        ("inequality poverty social polarization protest unrest", 12),
-        ("middle class erosion unemployment wages labor crisis", 10),
-        # Миграция
-        ("migration refugee displacement forced migration border", 12),
-        ("migrant crisis asylum seeker displacement humanitarian", 10),
-        # Здоровье и эпидемии
-        ("disease outbreak epidemic pandemic health emergency", 12),
-        ("health system collapse famine malnutrition food crisis", 10),
-        # Социальный коллапс
-        ("social unrest protest riot civil disorder polarization", 10),
-        ("housing crisis homelessness poverty food insecurity", 8),
-        # Неравенство и поляризация
-        ("inequality wealth gap social polarization class divide", 12),
-        ("political polarization social division radicalization extremism", 10),
-        # Вынужденная миграция
-        ("involuntary migration forced displacement refugee asylum", 12),
-        ("internally displaced persons IDP forced migration conflict", 10),
-        # Здоровье и благополучие
-        ("health decline wellbeing mental health crisis burnout", 10),
-        ("healthcare collapse hospital crisis mortality life expectancy", 10),
-        # Безработица и сокращения
-        ("unemployment layoffs job cuts mass dismissal labor market", 12),
-        ("automation job displacement workforce reduction hiring freeze", 10),
-        # Инфекционные заболевания
-        ("infectious disease outbreak epidemic virus pathogen spread", 12),
-        ("pandemic emerging disease WHO alert infection mortality", 10),
-    ]
-
-    for q, count in social_queries:
-        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        url = (f"https://newsapi.org/v2/everything"
-               f"?q={urllib.parse.quote(q)}"
-               f"&sources={social_sources}"
-               f"&pageSize={count}"
-               f"&sortBy=publishedAt"
-               f"&from={today_str}"
-               f"&to={today_str}"
-               f"&apiKey={api_key}")
-        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
-        if not data: continue
-        try:
-            j = json.loads(data)
-            for art in j.get('articles', []):
-                title = art.get('title','').strip()
-                desc = art.get('description','') or ''
-                if not title or title == '[Removed]': continue
-                items.append({
-                    'title': title, 'desc': desc,
-                    'date': parse_date(art.get('publishedAt','')),
-                    'source': art.get('source',{}).get('name','NewsAPI'),
-                    'source_bias': 2
-                })
-        except: pass
-
-    # Технологические запросы — Reuters, Wired, TechCrunch, The Verge, FT
-    tech_sources = "reuters,wired,techcrunch,the-verge,financial-times"
-    tech_queries = [
-        # AI риски и регулирование
-        ("artificial intelligence AI risk regulation governance", 12),
-        ("AI autonomous systems weapons military technology", 10),
-        ("semiconductor chip war export controls technology", 10),
-        # Кибербезопасность
-        ("cyberattack ransomware hacking infrastructure breach", 12),
-        ("cybersecurity vulnerability exploit state-sponsored", 10),
-        # Технологическая геополитика
-        ("technology geopolitics China US semiconductor supply", 10),
-        ("digital surveillance censorship platform control", 8),
-        # Дезинформация
-        ("disinformation deepfake election manipulation AI", 10),
-        # Сбои и отключения
-        ("outage infrastructure failure blackout system collapse", 10),
-        ("grid failure internet outage power disruption critical", 8),
-        # Кибератаки и угрозы
-        ("cyberattack cyber threat espionage state hacker", 12),
-        ("cyber espionage spyware surveillance government hack", 10),
-        # Квантовые вычисления
-        ("quantum computing encryption cryptography breakthrough", 8),
-        ("quantum threat cybersecurity post-quantum", 8),
-    ]
-
-    for q, count in tech_queries:
-        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        url = (f"https://newsapi.org/v2/everything"
-               f"?q={urllib.parse.quote(q)}"
-               f"&sources={tech_sources}"
-               f"&pageSize={count}"
-               f"&sortBy=publishedAt"
-               f"&from={today_str}"
-               f"&to={today_str}"
-               f"&apiKey={api_key}")
-        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
-        if not data: continue
-        try:
-            j = json.loads(data)
-            for art in j.get('articles', []):
-                title = art.get('title','').strip()
-                desc = art.get('description','') or ''
-                if not title or title == '[Removed]': continue
-                items.append({
-                    'title': title, 'desc': desc,
-                    'date': parse_date(art.get('publishedAt','')),
-                    'source': art.get('source',{}).get('name','NewsAPI'),
-                    'source_bias': 2
-                })
-        except: pass
-
-    # Экономические запросы через топовые источники
-    for q, count in economy_queries:
-        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        url = (f"https://newsapi.org/v2/everything"
-               f"?q={urllib.parse.quote(q)}"
-               f"&sources={economy_sources}"
-               f"&pageSize={count}"
-               f"&sortBy=publishedAt"
-               f"&from={today_str}"
-               f"&to={today_str}"
-               f"&apiKey={api_key}")
-        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
-        if not data: continue
-        try:
-            j = json.loads(data)
-            for art in j.get('articles', []):
-                title = art.get('title','').strip()
-                desc = art.get('description','') or ''
-                if not title or title == '[Removed]': continue
-                items.append({
-                    'title': title, 'desc': desc,
-                    'date': parse_date(art.get('publishedAt','')),
-                    'source': art.get('source',{}).get('name','NewsAPI'),
-                    'source_bias': 2
-                })
-        except: pass
-
-    for q, count in queries:
-        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        url = (f"https://newsapi.org/v2/everything"
-               f"?q={urllib.parse.quote(q)}"
-               f"&pageSize={count}"
-               f"&language=en"
-               f"&sortBy=publishedAt"
-               f"&from={today_str}"
-               f"&to={today_str}"
-               f"&apiKey={api_key}")
-        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
-        if not data: continue
-        try:
-            j = json.loads(data)
-            for art in j.get('articles', []):
-                title = art.get('title','').strip()
-                desc = art.get('description','') or ''
-                if not title or title == '[Removed]': continue
-                items.append({
-                    'title': title, 'desc': desc,
-                    'date': parse_date(art.get('publishedAt','')),
-                    'source': art.get('source',{}).get('name','NewsAPI'),
-                    'source_bias': 2
-                })
-        except: pass
     print(f"  NewsAPI: {len(items)} статей", file=sys.stderr)
     return items
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ИСТОЧНИК 2: GDELT 2.0
