@@ -2334,7 +2334,7 @@ def translate_to_russian(text, max_len=150):
 
 def inject_into_html(events):
     """Встраивает события прямо в risk-map.html для обхода кэша GitHub Pages"""
-    html_path = Path(__file__).parent.parent / "docs" / "risk-map.html"
+    html_path = Path(__file__).parent.parent / "risk-map.html"
     if not html_path.exists():
         print(f"  [SKIP] {html_path} не найден", file=sys.stderr)
         return
