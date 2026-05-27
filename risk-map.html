@@ -544,8 +544,32 @@ const RISK_COLORS = {
   'критический':'#C0392B','высокий':'#D35400','умеренный':'#2980B9','низкий':'#27AE60'
 };
 
-map.on('click', (e) => {
-  // Клик по карте не открывает панель локации — только через маркеры событий
+map.on('click', async (e) => {
+  const { lat, lng } = e.latlng;
+  let locationName = '';
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru&zoom=3`,
+      { headers: { 'User-Agent': 'ArchiveRiskMap/1.0' }, signal: AbortSignal.timeout(5000) }
+    );
+    if (r.ok) {
+      const geo = await r.json();
+      const a = geo.address || {};
+      // Берём страну в первую очередь
+      locationName = a.country || a.state || a.city || a.county || '';
+      if (!locationName && geo.display_name) {
+        // Берём последний значимый элемент display_name (обычно страна)
+        const parts = geo.display_name.split(',').map(s => s.trim());
+        locationName = parts[parts.length - 1] || parts[0] || '';
+      }
+    }
+  } catch(_) {}
+
+  if (!locationName) {
+    locationName = `${lat.toFixed(1)}°, ${lng.toFixed(1)}°`;
+  }
+
+  openLocationPanel(locationName, lat, lng);
 });
 
 async function openLocationPanel(name, lat, lng) {
