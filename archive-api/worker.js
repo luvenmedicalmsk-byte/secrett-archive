@@ -155,7 +155,9 @@ function handleHealth(env) {
     kv: !!env.EVENTS_KV,
     sse: true,
     ai_provider: 'openai',
-    ai_model: 'gpt-4o'
+    ai_model: 'gpt-4o',
+    signal_schema: '2.0',
+    signal_filters: ['signal_type','phase','vector','horizon','only_delta']
   });
 }
 
@@ -216,16 +218,22 @@ async function handleGetEvents(url, env) {
   const data   = await getEvents(env);
   let events   = data.events || [];
 
-  const domain  = url.searchParams.get('domain');
-  const region  = url.searchParams.get('region');
-  const minSev  = parseInt(url.searchParams.get('min_severity') || '0');
-  const maxSev  = parseInt(url.searchParams.get('max_severity') || '100');
-  const since   = url.searchParams.get('since');
-  const q       = url.searchParams.get('q');
-  const sort    = url.searchParams.get('sort') || 'severity';
-  const order   = url.searchParams.get('order') || 'desc';
-  const page    = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-  const limit   = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
+  const domain      = url.searchParams.get('domain');
+  const region      = url.searchParams.get('region');
+  const minSev      = parseInt(url.searchParams.get('min_severity') || '0');
+  const maxSev      = parseInt(url.searchParams.get('max_severity') || '100');
+  const since       = url.searchParams.get('since');
+  const q           = url.searchParams.get('q');
+  const sort        = url.searchParams.get('sort') || 'severity';
+  const order       = url.searchParams.get('order') || 'desc';
+  const page        = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+  const limit       = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
+  // Signal schema filters (v2) — backward-compatible, ignored if field absent
+  const signalType  = url.searchParams.get('signal_type');
+  const phase       = url.searchParams.get('phase');
+  const vector      = url.searchParams.get('vector');
+  const horizon     = url.searchParams.get('horizon');
+  const onlyDelta   = url.searchParams.get('only_delta') === '1';
 
   if (domain)       events = events.filter(e => e.domain === domain);
   if (region)       events = events.filter(e => e.region?.toLowerCase().includes(region.toLowerCase()));
@@ -236,6 +244,12 @@ async function handleGetEvents(url, env) {
     const ql = q.toLowerCase();
     events = events.filter(e => e.title?.toLowerCase().includes(ql) || e.summary?.toLowerCase().includes(ql) || e.region?.toLowerCase().includes(ql));
   }
+  // v2 signal filters (no-op if field missing from old events)
+  if (signalType)   events = events.filter(e => e.signal_type === signalType);
+  if (phase)        events = events.filter(e => e.phase === phase);
+  if (vector)       events = events.filter(e => Array.isArray(e.vectors) && e.vectors.includes(vector));
+  if (horizon)      events = events.filter(e => e.horizon === horizon);
+  if (onlyDelta)    events = events.filter(e => typeof e.severity_delta === 'number' && e.severity_delta !== 0);
 
   events.sort((a, b) => {
     const va = sort === 'date' ? a.date : a.severity;
@@ -276,12 +290,29 @@ async function handleStats(url, env) {
   }
 
   const sevValues = subset.map(e => e.severity);
+
+  // v2: signal_type breakdown
+  const bySignalType = {};
+  const byPhase = {};
+  for (const e of subset) {
+    if (e.signal_type) bySignalType[e.signal_type] = (bySignalType[e.signal_type] || 0) + 1;
+    if (e.phase)       byPhase[e.phase]             = (byPhase[e.phase] || 0) + 1;
+  }
+  const escalating = subset.filter(e => e.signal_type === 'escalation').length;
+  const anomalies  = subset.filter(e => e.signal_type === 'anomaly').length;
+
   return jsonResponse({
     total: events.length, filtered: subset.length,
-    critical: subset.filter(e => e.severity >= 80).length,
-    avg_severity: subset.length ? Math.round(sevValues.reduce((a,b)=>a+b,0)/sevValues.length) : 0,
-    max_severity: subset.length ? Math.max(...sevValues) : 0,
-    by_domain: byDomain, updated: data.updated
+    critical:      subset.filter(e => e.severity >= 80).length,
+    avg_severity:  subset.length ? Math.round(sevValues.reduce((a,b)=>a+b,0)/sevValues.length) : 0,
+    max_severity:  subset.length ? Math.max(...sevValues) : 0,
+    by_domain:     byDomain,
+    by_signal_type: bySignalType,
+    by_phase:       byPhase,
+    escalating,
+    anomalies,
+    schema_version: data.schema_version || '1.0',
+    updated: data.updated
   });
 }
 
