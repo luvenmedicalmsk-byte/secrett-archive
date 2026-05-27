@@ -122,13 +122,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .ai-risk-critical{color:#C0392B}
 .ai-risk-high{color:#D35400}
 .ai-risk-med{color:#2980B9}
-#risks-panel{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:2px;pointer-events:all;z-index:20}
-#risks-2y,#risks-10y{padding:6px 10px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(6px)}
-#risks-2y{border-radius:2px 0 0 2px}
-#risks-5y{border-radius:0}
-#risks-10y{border-radius:0 2px 2px 0}
-#risks-2y:hover,#risks-10y:hover{border-color:#B8973A;color:#D4AF5A}
-#risks-2y.active,#risks-10y.active{border-color:#B8973A;color:#D4AF5A;background:rgba(184,151,58,0.15)}
+#risks-btn{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px);z-index:20}
+#risks-btn:hover{border-color:#B8973A;color:#D4AF5A}
+#risks-btn.active{border-color:#B8973A;color:#D4AF5A;background:rgba(184,151,58,0.12)}
+#risks-submenu{position:fixed;bottom:48px;left:50%;transform:translateX(-50%);display:none;gap:2px;pointer-events:all;z-index:21;flex-direction:row}
+#risks-submenu.open{display:flex}
+#risks-submenu button{padding:6px 10px;background:rgba(6,5,10,0.92);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:7px;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(8px);white-space:nowrap}
+#risks-submenu button:first-child{border-radius:2px 0 0 2px}
+#risks-submenu button:last-child{border-radius:0 2px 2px 0}
+#risks-submenu button:hover{border-color:#B8973A;color:#D4AF5A}
+#risks-submenu button.active{border-color:#B8973A;color:#D4AF5A;background:rgba(184,151,58,0.15)}
 #ai-score-btn{position:fixed;bottom:16px;left:16px;padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
 #ai-score-btn:hover{border-color:#B8973A;color:#D4AF5A}
 #ai-score-btn.loading{opacity:0.5;pointer-events:none}
@@ -191,10 +194,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     </div>
     <div id="ai-domain-rows"></div>
   </div>
-  <div id="risks-panel">
-  <button id="risks-2y">◆ Риски · 2 года</button>
-  <button id="risks-5y">Риски · 5 лет</button>
-  <button id="risks-10y">Риски · 10 лет</button>
+  <button id="risks-btn">◆ Риски</button>
+<div id="risks-submenu">
+  <button id="risks-2y">2 года</button>
+  <button id="risks-5y">5 лет</button>
+  <button id="risks-10y">10 лет</button>
+  <button id="risks-countries">По странам</button>
 </div>
 <button id="ai-score-btn">◆ Анализ доменов</button>
 </div>
@@ -415,33 +420,48 @@ document.getElementById('dt-x').onclick = () => {
   renderList();
 };
 document.getElementById('sb-x').onclick  = () => document.getElementById('sidebar').classList.remove('open');
-function applyRisksFilter(horizon) {
-  const btn2y = document.getElementById('risks-2y');
-  const btn10y = document.getElementById('risks-10y');
-  const isActive = (horizon === '2y' ? btn2y : btn10y).classList.contains('active');
+function clearRisksFilter() {
+  ['risks-2y','risks-5y','risks-10y','risks-countries'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+}
 
-  // Снимаем все активные состояния
-  btn2y.classList.remove('active');
-  document.getElementById('risks-5y').classList.remove('active');
-  btn10y.classList.remove('active');
+function applyRisksFilter(type) {
+  const submenuBtn = document.getElementById('risks-' + (type === 'countries' ? 'countries' : type));
+  const isActive = submenuBtn && submenuBtn.classList.contains('active');
+  clearRisksFilter();
   document.querySelectorAll('.fb').forEach(b => b.classList.remove('active'));
 
   if (isActive) {
-    // Уже активна — сбрасываем на все события
     filter = 'all';
     filtered = [...ALL_EVENTS];
   } else {
-    // Активируем выбранный горизонт
-    (horizon === '2y' ? btn2y : horizon === '5y' ? document.getElementById('risks-5y') : btn10y).classList.add('active');
+    if (submenuBtn) submenuBtn.classList.add('active');
     filter = 'all';
-    filtered = ALL_EVENTS.filter(e => e.source === 'Архив · Структурные риски' && e.horizon === horizon);
+    if (type === 'countries') {
+      filtered = ALL_EVENTS.filter(e => e.source === 'Архив · Структурные риски');
+    } else {
+      filtered = ALL_EVENTS.filter(e => e.source === 'Архив · Структурные риски' && e.horizon === type);
+    }
   }
   updateStats(); renderList(); renderMarkers();
 }
 
+// Кнопка Риски — открывает/закрывает подменю
+document.getElementById('risks-btn').onclick = () => {
+  const submenu = document.getElementById('risks-submenu');
+  const btn = document.getElementById('risks-btn');
+  const isOpen = submenu.classList.contains('open');
+  submenu.classList.toggle('open');
+  btn.classList.toggle('active', !isOpen);
+  if (isOpen) { clearRisksFilter(); filter='all'; filtered=[...ALL_EVENTS]; updateStats(); renderList(); renderMarkers(); }
+};
+
 document.getElementById('risks-2y').onclick = () => applyRisksFilter('2y');
 document.getElementById('risks-5y').onclick = () => applyRisksFilter('5y');
 document.getElementById('risks-10y').onclick = () => applyRisksFilter('10y');
+document.getElementById('risks-countries').onclick = () => applyRisksFilter('countries');
 
 document.getElementById('list-btn').onclick = () => {
   document.getElementById('sidebar').classList.toggle('open');
