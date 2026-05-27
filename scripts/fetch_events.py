@@ -2942,11 +2942,38 @@ if __name__ == '__main__':
 
     print(f"\nВсего сырых записей: {len(raw)}", file=sys.stderr)
 
-    events = process_events(raw)
+    # Отделяем структурные риски от новостного потока
+    structural = [r for r in raw if r.get('source') == 'Архив · Структурные риски']
+    news_raw   = [r for r in raw if r.get('source') != 'Архив · Структурные риски']
 
-    if not events:
+    news_events = process_events(news_raw)
+
+    if not news_events and not structural:
         print("[WARN] Нет событий — источники недоступны", file=sys.stderr)
         sys.exit(0)
+
+    # Структурные риски добавляем поверх лимита — они всегда присутствуют на карте
+    import hashlib as _hs
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    structural_events = []
+    for r in structural:
+        ev_id = 'gs' + _hs.md5((r.get('title','') + r.get('horizon','')).encode()).hexdigest()[:8]
+        structural_events.append({
+            'id': ev_id,
+            'title': r.get('title',''),
+            'domain': r.get('domain','geopolitics'),
+            'severity': r.get('severity', 70),
+            'lat': r.get('lat', 0), 'lng': r.get('lng', 0),
+            'region': r.get('region','Глобально'),
+            'summary': r.get('summary',''),
+            'source': 'Архив · Структурные риски',
+            'horizon': r.get('horizon',''),
+            'date': today,
+            'structural': True
+        })
+
+    events = news_events + structural_events
+    print(f"  Итого на карте: {len(news_events)} новостных + {len(structural_events)} структурных", file=sys.stderr)
 
     save(events)
     inject_into_html(events)
