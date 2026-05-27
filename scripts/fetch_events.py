@@ -443,11 +443,14 @@ def fetch_newsapi(api_key):
     ]
     items = []
     for q, count in queries:
+        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
         url = (f"https://newsapi.org/v2/everything"
                f"?q={urllib.parse.quote(q)}"
                f"&pageSize={count}"
                f"&language=en"
                f"&sortBy=publishedAt"
+               f"&from={today_str}"
+               f"&to={today_str}"
                f"&apiKey={api_key}")
         data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
         if not data: continue
@@ -698,7 +701,12 @@ def process_events(raw_items):
     balanced = []
     overflow = []  # события сверх квоты — добавим в конце если есть место
     
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     for ev in events:
+        # Показываем только сегодняшние события
+        ev_date = ev.get('date', '')[:10]
+        if ev_date and ev_date != today:
+            continue
         d = ev['domain']
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
         if domain_counts.get(d, 0) < quota:
