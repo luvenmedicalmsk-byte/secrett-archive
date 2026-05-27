@@ -416,9 +416,28 @@ def fetch_newsapi(api_key):
         return []
 
     queries = [
-        ("war conflict military crisis", 20),
-        ("climate flood drought disaster", 15),
-        ("economic recession sanctions trade", 15),
+        # Геополитика и конфликты (тематика bbbreaking)
+        ("war attack missile strike military", 15),
+        ("conflict crisis invasion troops ceasefire", 10),
+        ("explosion bombing terror attack killed", 10),
+        ("sanctions Russia Ukraine NATO weapons", 10),
+        ("coup protest riot uprising revolution", 8),
+        # Катастрофы и ЧС
+        ("earthquake tsunami flood disaster emergency", 10),
+        ("wildfire hurricane cyclone storm victims", 8),
+        ("nuclear radiation chemical hazard outbreak", 8),
+        # Экономика и геоэкономика
+        ("recession inflation debt collapse financial crisis", 10),
+        ("tariffs trade war sanctions oil energy", 8),
+        ("bank collapse default currency devaluation", 8),
+        # Технологии и кибербезопасность
+        ("cyberattack hacking infrastructure breach", 8),
+        ("AI artificial intelligence risk regulation", 8),
+        # Ближний Восток и горячие точки
+        ("Gaza Israel Iran Lebanon Hamas Hezbollah", 10),
+        ("Syria Iraq Yemen Taliban Afghanistan", 8),
+        ("Taiwan China South China Sea military", 8),
+        ("North Korea DPRK nuclear missile test", 6),
     ]
     items = []
     for q, count in queries:
