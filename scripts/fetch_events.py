@@ -513,6 +513,15 @@ def fetch_newsapi(api_key):
         ("digital surveillance censorship platform control", 8),
         # Дезинформация
         ("disinformation deepfake election manipulation AI", 10),
+        # Сбои и отключения
+        ("outage infrastructure failure blackout system collapse", 10),
+        ("grid failure internet outage power disruption critical", 8),
+        # Кибератаки и угрозы
+        ("cyberattack cyber threat espionage state hacker", 12),
+        ("cyber espionage spyware surveillance government hack", 10),
+        # Квантовые вычисления
+        ("quantum computing encryption cryptography breakthrough", 8),
+        ("quantum threat cybersecurity post-quantum", 8),
     ]
 
     for q, count in tech_queries:
