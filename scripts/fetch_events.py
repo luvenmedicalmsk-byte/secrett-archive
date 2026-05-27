@@ -518,6 +518,28 @@ def fetch_newsapi(api_key):
         # Дипломатия и порядок
         ("diplomacy UN summit treaty international order breakdown", 10),
         ("coup election fraud democracy authoritarian regime", 10),
+        # Государственные вооружённые конфликты
+        ("state armed conflict military offensive ground troops casualties", 12),
+        ("interstate war military operation airstrike bombardment", 12),
+        # Гражданские войны
+        ("civil war internal conflict rebel insurgency faction fighting", 12),
+        ("civil war militia armed group warlord territorial control", 10),
+        # Государственные перевороты
+        ("coup d'etat military takeover junta putsch overthrow government", 12),
+        ("coup attempt power seizure military coup regime change", 10),
+        # Терроризм
+        ("terrorist attack terrorism bombing massacre hostage", 12),
+        ("ISIS jihadist extremist attack suicide bombing", 10),
+        # Биологическая химическая ядерная опасность
+        ("biological weapon chemical attack nerve agent hazmat", 10),
+        ("nuclear threat radiation leak dirty bomb WMD biological", 10),
+        ("chemical weapons chlorine sarin anthrax bioweapon", 8),
+        # Протесты и беспорядки
+        ("protest demonstration riot civil unrest clashes police", 12),
+        ("mass protest crackdown suppression tear gas crowd", 10),
+        # Бандитизм и организованная преступность
+        ("gang violence cartel organized crime banditry kidnapping", 10),
+        ("drug cartel trafficking militia criminal group violence", 8),
     ]
 
     for q, count in geo_queries:
