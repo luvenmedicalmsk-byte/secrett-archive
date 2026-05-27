@@ -417,8 +417,9 @@ def fetch_newsapi(api_key):
         print("  [SKIP] NewsAPI: нет ключа", file=sys.stderr)
         return []
 
+    # Запросы по ключевым словам (геополитика, экономика, технологии)
     queries = [
-        # Геополитика и конфликты (тематика bbbreaking)
+        # Геополитика и конфликты
         ("war attack missile strike military", 15),
         ("conflict crisis invasion troops ceasefire", 10),
         ("explosion bombing terror attack killed", 10),
@@ -426,22 +427,57 @@ def fetch_newsapi(api_key):
         ("coup protest riot uprising revolution", 8),
         # Катастрофы и ЧС
         ("earthquake tsunami flood disaster emergency", 10),
-        ("wildfire hurricane cyclone storm victims", 8),
         ("nuclear radiation chemical hazard outbreak", 8),
-        # Экономика и геоэкономика
+        # Экономика
         ("recession inflation debt collapse financial crisis", 10),
         ("tariffs trade war sanctions oil energy", 8),
         ("bank collapse default currency devaluation", 8),
-        # Технологии и кибербезопасность
+        # Технологии
         ("cyberattack hacking infrastructure breach", 8),
         ("AI artificial intelligence risk regulation", 8),
-        # Ближний Восток и горячие точки
+        # Горячие точки
         ("Gaza Israel Iran Lebanon Hamas Hezbollah", 10),
-        ("Syria Iraq Yemen Taliban Afghanistan", 8),
         ("Taiwan China South China Sea military", 8),
         ("North Korea DPRK nuclear missile test", 6),
     ]
+
+    # Климатические запросы — только из топовых источников
+    climate_sources = "reuters,bbc-news,the-guardian-uk,associated-press,al-jazeera-english,cnn"
+    climate_queries = [
+        ("wildfire flood drought heatwave extreme weather", 20),
+        ("climate disaster hurricane cyclone storm flood", 20),
+        ("water crisis food security drought famine", 15),
+    ]
+
     items = []
+
+    # Климат через конкретные источники
+    for q, count in climate_queries:
+        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        url = (f"https://newsapi.org/v2/everything"
+               f"?q={urllib.parse.quote(q)}"
+               f"&sources={climate_sources}"
+               f"&pageSize={count}"
+               f"&sortBy=publishedAt"
+               f"&from={today_str}"
+               f"&to={today_str}"
+               f"&apiKey={api_key}")
+        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        if not data: continue
+        try:
+            j = json.loads(data)
+            for art in j.get('articles', []):
+                title = art.get('title','').strip()
+                desc = art.get('description','') or ''
+                if not title or title == '[Removed]': continue
+                items.append({
+                    'title': title, 'desc': desc,
+                    'date': parse_date(art.get('publishedAt','')),
+                    'source': art.get('source',{}).get('name','NewsAPI'),
+                    'source_bias': 2
+                })
+        except: pass
+
     for q, count in queries:
         today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
         url = (f"https://newsapi.org/v2/everything"
