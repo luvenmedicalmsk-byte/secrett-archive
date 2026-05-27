@@ -513,6 +513,21 @@ def fetch_newsapi(api_key):
         # Социальный коллапс
         ("social unrest protest riot civil disorder polarization", 10),
         ("housing crisis homelessness poverty food insecurity", 8),
+        # Неравенство и поляризация
+        ("inequality wealth gap social polarization class divide", 12),
+        ("political polarization social division radicalization extremism", 10),
+        # Вынужденная миграция
+        ("involuntary migration forced displacement refugee asylum", 12),
+        ("internally displaced persons IDP forced migration conflict", 10),
+        # Здоровье и благополучие
+        ("health decline wellbeing mental health crisis burnout", 10),
+        ("healthcare collapse hospital crisis mortality life expectancy", 10),
+        # Безработица и сокращения
+        ("unemployment layoffs job cuts mass dismissal labor market", 12),
+        ("automation job displacement workforce reduction hiring freeze", 10),
+        # Инфекционные заболевания
+        ("infectious disease outbreak epidemic virus pathogen spread", 12),
+        ("pandemic emerging disease WHO alert infection mortality", 10),
     ]
 
     for q, count in social_queries:
