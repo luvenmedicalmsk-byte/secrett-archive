@@ -263,7 +263,9 @@ DOMAIN_RULES = {
             "diplomatic crisis","expulsion","ambassador","treaty violation",
             "election fraud","political repression","authoritarian",
             "война","военный","конфликт","удар","атака","войска","ядерный",
-            "геополитика","оккупация","санкции","переворот"
+            "геополитика","оккупация","санкции","переворот",
+            "ликвидация","ракетный удар","обстрел","наступление","фронт",
+            "самолёт-заправщик","дальнобойный","блокада","Hamas","ХАМАС"
         ],
         "weight": 1.5,
         "exclude": ["flood","wildfire","earthquake","inflation","recession","hack","cyber"]
@@ -308,7 +310,9 @@ DOMAIN_RULES = {
         ],
         "weight": 1.2,
         "exclude": ["military","armed conflict","war","airstrike","cyberattack",
-                    "flood","wildfire","earthquake","inflation","recession"]
+                    "flood","wildfire","earthquake","inflation","recession",
+                    "strike","killed","troops","missile","weapon","attack",
+                    "удар","войска","атака","ракета","военный","убит","ликвидация"]
     }
 }
 
