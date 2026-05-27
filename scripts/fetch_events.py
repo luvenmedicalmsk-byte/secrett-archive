@@ -375,14 +375,38 @@ def parse_date(s):
 
 
 def detect_coords(title, desc):
-    text = (title + ' ' + desc).lower()
-    best, best_len, best_coords = None, 0, None
+    """Определяет координаты — заголовок имеет приоритет над описанием"""
+    title_low = title.lower()
+    desc_low = (desc or '').lower()
+
+    # Шаг 1: ищем в заголовке — высокий приоритет
+    best_title, best_title_len, best_title_coords = None, 0, None
     for region, coords in REGION_COORDS.items():
-        if region in text and len(region) > best_len:
-            best, best_len, best_coords = region, len(region), coords
-    if best:
-        lat, lng = best_coords
-        return round(lat + random.uniform(-2, 2), 2), round(lng + random.uniform(-2, 2), 2), best.title()
+        if region in title_low and len(region) > best_title_len:
+            best_title, best_title_len, best_title_coords = region, len(region), coords
+
+    if best_title:
+        lat, lng = best_title_coords
+        return round(lat + random.uniform(-1.5, 1.5), 2), round(lng + random.uniform(-1.5, 1.5), 2), best_title.title()
+
+    # Шаг 2: ищем в описании — только если в заголовке ничего нет
+    # Исключаем контекстные упоминания стран (after, since, amid, despite, vs)
+    CONTEXT_WORDS = ['since', 'after', 'amid', 'despite', 'vs', 'against', 'from', 'invasion of', 'war in']
+    best_desc, best_desc_len, best_desc_coords = None, 0, None
+    for region, coords in REGION_COORDS.items():
+        if region not in desc_low: continue
+        if len(region) <= best_desc_len: continue
+        # Проверяем не является ли упоминание контекстным
+        idx = desc_low.find(region)
+        context_before = desc_low[max(0, idx-20):idx]
+        if any(cw in context_before for cw in CONTEXT_WORDS):
+            continue
+        best_desc, best_desc_len, best_desc_coords = region, len(region), coords
+
+    if best_desc:
+        lat, lng = best_desc_coords
+        return round(lat + random.uniform(-1.5, 1.5), 2), round(lng + random.uniform(-1.5, 1.5), 2), best_desc.title()
+
     return None
 
 def estimate_severity(title, desc, bias=0):
