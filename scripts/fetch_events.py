@@ -3548,7 +3548,6 @@ def save_enriched(events, previous_snapshot=None):
             traceback.print_exc(file=sys.stderr)
 
     # Fallback — оригинальный save
-    save(events)back — оригинальный save
     save(events)
 
 def _push_snapshot_to_worker(events):
