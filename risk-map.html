@@ -125,6 +125,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #risks-panel{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:2px;pointer-events:all;z-index:20}
 #risks-2y,#risks-10y{padding:6px 10px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(6px)}
 #risks-2y{border-radius:2px 0 0 2px}
+#risks-5y{border-radius:0}
 #risks-10y{border-radius:0 2px 2px 0}
 #risks-2y:hover,#risks-10y:hover{border-color:#B8973A;color:#D4AF5A}
 #risks-2y.active,#risks-10y.active{border-color:#B8973A;color:#D4AF5A;background:rgba(184,151,58,0.15)}
@@ -192,6 +193,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   </div>
   <div id="risks-panel">
   <button id="risks-2y">◆ Риски · 2 года</button>
+  <button id="risks-5y">Риски · 5 лет</button>
   <button id="risks-10y">Риски · 10 лет</button>
 </div>
 <button id="ai-score-btn">◆ Анализ доменов</button>
@@ -420,6 +422,7 @@ function applyRisksFilter(horizon) {
 
   // Снимаем все активные состояния
   btn2y.classList.remove('active');
+  document.getElementById('risks-5y').classList.remove('active');
   btn10y.classList.remove('active');
   document.querySelectorAll('.fb').forEach(b => b.classList.remove('active'));
 
@@ -429,7 +432,7 @@ function applyRisksFilter(horizon) {
     filtered = [...ALL_EVENTS];
   } else {
     // Активируем выбранный горизонт
-    (horizon === '2y' ? btn2y : btn10y).classList.add('active');
+    (horizon === '2y' ? btn2y : horizon === '5y' ? document.getElementById('risks-5y') : btn10y).classList.add('active');
     filter = 'all';
     filtered = ALL_EVENTS.filter(e => e.source === 'Архив · Структурные риски' && e.horizon === horizon);
   }
@@ -437,6 +440,7 @@ function applyRisksFilter(horizon) {
 }
 
 document.getElementById('risks-2y').onclick = () => applyRisksFilter('2y');
+document.getElementById('risks-5y').onclick = () => applyRisksFilter('5y');
 document.getElementById('risks-10y').onclick = () => applyRisksFilter('10y');
 
 document.getElementById('list-btn').onclick = () => {
