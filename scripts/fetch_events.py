@@ -2451,44 +2451,50 @@ def translate_batch(texts):
     
     results = list(texts)  # копия
 
-    # Сначала пробуем OpenAI — самый надёжный вариант
+    # Сначала пробуем OpenAI — батчами по 50 заголовков
     import os as _os
     openai_key = _os.environ.get('OPENAI_API_KEY', '')
     if openai_key and to_translate:
         try:
-            batch_titles = [t for _, t in to_translate]
-            lines_in = [str(j+1) + '. ' + t[:120] for j, t in enumerate(batch_titles)]
-            numbered = '\n'.join(lines_in)
-            prompt = 'Переведи заголовки новостей на русский язык. Верни ТОЛЬКО пронумерованный список, без пояснений.\n\n' + numbered
-            payload = json.dumps({
-                'model': 'gpt-4o-mini',
-                'max_tokens': 2000,
-                'temperature': 0.1,
-                'messages': [{'role': 'user', 'content': prompt}]
-            }).encode('utf-8')
-            req_ai = urllib.request.Request(
-                'https://api.openai.com/v1/chat/completions',
-                data=payload,
-                headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openai_key},
-                method='POST'
-            )
-            with urllib.request.urlopen(req_ai, timeout=30) as r_ai:
-                resp = json.loads(r_ai.read().decode('utf-8'))
-                text_out = resp['choices'][0]['message']['content'].strip()
-                out_lines = [l.strip() for l in text_out.split('\n') if l.strip()]
-                translations = []
-                for l in out_lines:
-                    m = re.match(r'^[0-9]+[.]\s*(.+)$', l)
-                    if m:
-                        translations.append(m.group(1).strip())
-                if len(translations) == len(to_translate):
-                    for j, (orig_idx, orig_text) in enumerate(to_translate):
-                        tr = translations[j]
-                        if tr and len(tr) > 3:
-                            _translate_cache[orig_text] = tr
-                            results[orig_idx] = tr
-                    print('  OpenAI перевёл ' + str(len(to_translate)) + ' заголовков', file=sys.stderr)
-                    return results
+            BATCH = 50
+            all_translated = True
+            for batch_start in range(0, len(to_translate), BATCH):
+                batch = to_translate[batch_start:batch_start+BATCH]
+                lines_in = [str(j+1) + '. ' + t[:120] for j, (_, t) in enumerate(batch)]
+                numbered = '\n'.join(lines_in)
+                prompt = 'Переведи заголовки новостей на русский язык. Верни ТОЛЬКО пронумерованный список в том же порядке, без пояснений.\n\n' + numbered
+                payload = json.dumps({
+                    'model': 'gpt-4o-mini',
+                    'max_tokens': 3000,
+                    'temperature': 0.1,
+                    'messages': [{'role': 'user', 'content': prompt}]
+                }).encode('utf-8')
+                req_ai = urllib.request.Request(
+                    'https://api.openai.com/v1/chat/completions',
+                    data=payload,
+                    headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openai_key},
+                    method='POST'
+                )
+                with urllib.request.urlopen(req_ai, timeout=90) as r_ai:
+                    resp = json.loads(r_ai.read().decode('utf-8'))
+                    text_out = resp['choices'][0]['message']['content'].strip()
+                    out_lines = [l.strip() for l in text_out.split('\n') if l.strip()]
+                    translations = []
+                    for l in out_lines:
+                        m = re.match(r'^[0-9]+[.]\s*(.+)$', l)
+                        if m:
+                            translations.append(m.group(1).strip())
+                    if len(translations) == len(batch):
+                        for j, (orig_idx, orig_text) in enumerate(batch):
+                            tr = translations[j]
+                            if tr and len(tr) > 3:
+                                _translate_cache[orig_text] = tr
+                                results[orig_idx] = tr
+                    else:
+                        all_translated = False
+            if all_translated:
+                print('  OpenAI перевёл ' + str(len(to_translate)) + ' заголовков', file=sys.stderr)
+                return results
         except Exception as e:
             print('  [WARN] OpenAI перевод: ' + str(e), file=sys.stderr)
 
