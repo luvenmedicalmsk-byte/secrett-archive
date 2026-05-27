@@ -449,6 +449,26 @@ def fetch_newsapi(api_key):
         ("water crisis food security drought famine", 15),
     ]
 
+    # Экономические источники — Reuters, Bloomberg, CNBC, Al Jazeera, Yahoo Finance + частично FT/Economist/WSJ
+    economy_sources = "reuters,bloomberg,cnbc,al-jazeera-english,yahoo-finance,financial-times,the-economist,the-wall-street-journal"
+    economy_queries = [
+        # Спады и рецессия
+        ("recession economic downturn GDP contraction slowdown", 15),
+        ("economic crisis collapse debt default bankruptcy", 12),
+        # Энергия — нефть и газ
+        ("oil gas price energy crisis OPEC crude barrel", 15),
+        ("energy supply LNG pipeline gas shortage fuel", 12),
+        # Металлы и ресурсы
+        ("gold silver copper platinum commodities metals price", 12),
+        ("critical minerals lithium cobalt rare earth resources", 10),
+        # Долги и инфляция
+        ("inflation CPI interest rates central bank Fed ECB debt", 15),
+        ("sovereign debt bond yield credit crisis fiscal", 10),
+        # Торговые войны и санкции
+        ("trade war tariffs sanctions trade restrictions export", 15),
+        ("sanctions Russia China Iran trade ban embargo", 12),
+    ]
+
     items = []
 
     # Климат через конкретные источники
@@ -457,6 +477,33 @@ def fetch_newsapi(api_key):
         url = (f"https://newsapi.org/v2/everything"
                f"?q={urllib.parse.quote(q)}"
                f"&sources={climate_sources}"
+               f"&pageSize={count}"
+               f"&sortBy=publishedAt"
+               f"&from={today_str}"
+               f"&to={today_str}"
+               f"&apiKey={api_key}")
+        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        if not data: continue
+        try:
+            j = json.loads(data)
+            for art in j.get('articles', []):
+                title = art.get('title','').strip()
+                desc = art.get('description','') or ''
+                if not title or title == '[Removed]': continue
+                items.append({
+                    'title': title, 'desc': desc,
+                    'date': parse_date(art.get('publishedAt','')),
+                    'source': art.get('source',{}).get('name','NewsAPI'),
+                    'source_bias': 2
+                })
+        except: pass
+
+    # Экономические запросы через топовые источники
+    for q, count in economy_queries:
+        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        url = (f"https://newsapi.org/v2/everything"
+               f"?q={urllib.parse.quote(q)}"
+               f"&sources={economy_sources}"
                f"&pageSize={count}"
                f"&sortBy=publishedAt"
                f"&from={today_str}"
