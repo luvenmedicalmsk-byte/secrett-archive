@@ -2452,39 +2452,33 @@ def translate_batch(texts):
     results = list(texts)  # копия
 
     # Сначала пробуем OpenAI — самый надёжный вариант
-    openai_key = os.environ.get('NEWS_API_KEY') and os.environ.get('OPENAI_API_KEY', '')
-    if not openai_key:
-        import os as _os
-        openai_key = _os.environ.get('OPENAI_API_KEY', '')
+    import os as _os
+    openai_key = _os.environ.get('OPENAI_API_KEY', '')
     if openai_key and to_translate:
         try:
             batch_titles = [t for _, t in to_translate]
-            numbered = '
-'.join(f"{j+1}. {t[:120]}" for j, t in enumerate(batch_titles))
-            prompt = f"""Переведи следующие заголовки новостей на русский язык. Верни ТОЛЬКО пронумерованный список переводов в том же порядке, без пояснений.
-
-{numbered}"""
+            lines_in = [str(j+1) + '. ' + t[:120] for j, t in enumerate(batch_titles)]
+            numbered = '\n'.join(lines_in)
+            prompt = 'Переведи заголовки новостей на русский язык. Верни ТОЛЬКО пронумерованный список, без пояснений.\n\n' + numbered
             payload = json.dumps({
-                "model": "gpt-4o-mini",
-                "max_tokens": 2000,
-                "temperature": 0.1,
-                "messages": [{"role": "user", "content": prompt}]
+                'model': 'gpt-4o-mini',
+                'max_tokens': 2000,
+                'temperature': 0.1,
+                'messages': [{'role': 'user', 'content': prompt}]
             }).encode('utf-8')
-            req = urllib.request.Request(
+            req_ai = urllib.request.Request(
                 'https://api.openai.com/v1/chat/completions',
                 data=payload,
-                headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {openai_key}'},
+                headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openai_key},
                 method='POST'
             )
-            with urllib.request.urlopen(req, timeout=30) as r:
-                resp = json.loads(r.read().decode('utf-8'))
+            with urllib.request.urlopen(req_ai, timeout=30) as r_ai:
+                resp = json.loads(r_ai.read().decode('utf-8'))
                 text_out = resp['choices'][0]['message']['content'].strip()
-                lines_out = [l.strip() for l in text_out.split('
-') if l.strip()]
+                out_lines = [l.strip() for l in text_out.split('\n') if l.strip()]
                 translations = []
-                for l in lines_out:
-                    import re as _re
-                    m = _re.match(r'^\d+\.\s*(.+)$', l)
+                for l in out_lines:
+                    m = re.match(r'^[0-9]+[.]\s*(.+)$', l)
                     if m:
                         translations.append(m.group(1).strip())
                 if len(translations) == len(to_translate):
@@ -2493,12 +2487,12 @@ def translate_batch(texts):
                         if tr and len(tr) > 3:
                             _translate_cache[orig_text] = tr
                             results[orig_idx] = tr
-                    print(f"  ✓ OpenAI перевёл {len(to_translate)} заголовков", file=sys.stderr)
+                    print('  OpenAI перевёл ' + str(len(to_translate)) + ' заголовков', file=sys.stderr)
                     return results
         except Exception as e:
-            print(f"  [WARN] OpenAI перевод: {e}", file=sys.stderr)
+            print('  [WARN] OpenAI перевод: ' + str(e), file=sys.stderr)
 
-    # Fallback — внешние LibreTranslate серверы
+        # Fallback — внешние LibreTranslate серверы
     servers = [
         "https://translate.fedilab.app/translate",
         "https://libretranslate.de/translate",
