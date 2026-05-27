@@ -337,7 +337,7 @@ function updateStats() {
 function renderList() {
   const list = document.getElementById('ev-list');
   list.innerHTML = '';
-  [...filtered].sort((a,b)=>b.severity-a.severity).forEach(ev => {
+  [...filtered].sort((a,b)=>{ const dd=b.date.localeCompare(a.date); return dd!==0?dd:b.severity-a.severity; }).forEach(ev => {
     const col = DC[ev.domain];
     const d = document.createElement('div');
     d.className = 'ei' + (selected?.id===ev.id ? ' sel' : '');
@@ -426,7 +426,7 @@ const API_BASE = 'https://archive-api.luven-medical-msk.workers.dev';
 async function tryLoadFresh() {
   // 1. Пробуем Worker API
   try {
-    const r = await fetch(API_BASE + '/api/events?limit=200&sort=severity', {
+    const r = await fetch(API_BASE + '/api/events?limit=200&sort=date&order=desc', {
       signal: AbortSignal.timeout(6000)
     });
     if (r.ok) {
