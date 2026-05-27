@@ -59,11 +59,14 @@ export default {
       if (path === '/api/proxy/planes') return handleProxyPlanes(url);
       if (path === '/api/proxy/outages') return handleProxyOutages(url);
       if (path === '/api/proxy/ships') return handleProxyShips(url);
-      // History + escalation endpoints (v2.1)
-      if (path === '/api/history/snapshot' && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
-      if (path === '/api/history/agg'      && request.method === 'GET')  return handleHistoryAgg(url, env);
-      if (path === '/api/escalation'        && request.method === 'GET')  return handleEscalation(url, env);
-      if (path === '/api/risk-index'         && request.method === 'GET')  return handleRiskIndex(env);
+      // History + escalation + intelligence endpoints (v2.1)
+      if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
+      if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
+      if (path === '/api/escalation'         && request.method === 'GET')  return handleEscalation(url, env);
+      if (path === '/api/risk-index'          && request.method === 'GET')  return handleRiskIndex(env);
+      if (path === '/api/country-risk'        && request.method === 'GET')  return handleCountryRisk(url, env);
+      if (path === '/api/domain-risk'         && request.method === 'GET')  return handleDomainRisk(url, env);
+      if (path === '/api/escalation-feed'     && request.method === 'GET')  return handleEscalationFeed(url, env);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -885,5 +888,216 @@ async function handleRiskIndex(env) {
     by_domain:      domSummary,
     updated:        data.updated,
     source:         'computed',
+  });
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INTELLIGENCE LAYER ENDPOINTS (v2.1)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/country-risk?country=Iran&limit=10
+// Возвращает агрегированный risk profile страны из live events
+async function handleCountryRisk(url, env) {
+  const country = (url.searchParams.get('country') || '').toLowerCase().trim();
+  const limit   = Math.min(50, parseInt(url.searchParams.get('limit') || '20'));
+
+  const data   = await getEvents(env);
+  const events = data.events || [];
+
+  const filterFn = country
+    ? e => {
+        const t = ((e.title||'') + (e.region||'') + (e.summary||'')).toLowerCase();
+        return t.includes(country);
+      }
+    : () => true;
+
+  const matched = events.filter(filterFn);
+  if (!matched.length) return jsonResponse({ country, found: false, events: [] }, 404);
+
+  const scores = matched.map(e => e.escalation_score || 0).filter(Boolean);
+  const avgEsc = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  const maxEsc = scores.length ? Math.max(...scores) : 0;
+
+  const levelFn = s => s >= 80 ? 'critical' : s >= 60 ? 'high' : s >= 35 ? 'moderate' : s >= 15 ? 'weak' : 'none';
+
+  // Domain breakdown
+  const byDomain = {};
+  for (const e of matched) {
+    if (!e.domain) continue;
+    if (!byDomain[e.domain]) byDomain[e.domain] = { count: 0, total_esc: 0, max_esc: 0 };
+    byDomain[e.domain].count++;
+    byDomain[e.domain].total_esc += e.escalation_score || 0;
+    byDomain[e.domain].max_esc    = Math.max(byDomain[e.domain].max_esc, e.escalation_score || 0);
+  }
+  const domainBreakdown = Object.fromEntries(
+    Object.entries(byDomain).map(([d, v]) => [d, {
+      count:   v.count,
+      avg_esc: Math.round(v.total_esc / v.count),
+      max_esc: v.max_esc,
+    }])
+  );
+
+  // Active vectors
+  const vectorCounts = {};
+  for (const e of matched) {
+    for (const v of (e.vectors || [])) vectorCounts[v] = (vectorCounts[v] || 0) + 1;
+  }
+  const topVectors = Object.entries(vectorCounts).sort((a,b) => b[1]-a[1]).slice(0,4).map(([v]) => v);
+
+  // Top escalating signals
+  const topSignals = matched
+    .sort((a,b) => (b.escalation_score||0) - (a.escalation_score||0))
+    .slice(0, limit)
+    .map(e => ({
+      id:              e.id,
+      title:           e.title,
+      domain:          e.domain,
+      severity:        e.severity,
+      escalation_score: e.escalation_score,
+      escalation_level: e.escalation_level,
+      trend_direction: e.trend_direction,
+      severity_delta:  e.severity_delta,
+      fingerprint:     e.fingerprint,
+      date:            e.date,
+      region:          e.region,
+    }));
+
+  // Dominant phase and type
+  const phaseCounts = {};
+  const typeCounts  = {};
+  for (const e of matched) {
+    if (e.phase) phaseCounts[e.phase] = (phaseCounts[e.phase] || 0) + 1;
+    if (e.signal_type) typeCounts[e.signal_type] = (typeCounts[e.signal_type] || 0) + 1;
+  }
+  const dominantPhase = Object.entries(phaseCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+  const dominantType  = Object.entries(typeCounts).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+
+  return jsonResponse({
+    country:          country || 'all',
+    signal_count:     matched.length,
+    avg_esc_score:    avgEsc,
+    max_esc_score:    maxEsc,
+    risk_level:       levelFn(avgEsc),
+    dominant_phase:   dominantPhase,
+    dominant_type:    dominantType,
+    top_vectors:      topVectors,
+    domain_breakdown: domainBreakdown,
+    critical_count:   matched.filter(e => e.escalation_level === 'critical').length,
+    rising_count:     matched.filter(e => e.trend_direction === 'rising').length,
+    top_signals:      topSignals,
+    schema:           '2.1',
+    updated:          data.updated,
+  });
+}
+
+
+// GET /api/domain-risk?domain=geopolitics
+// Risk profile для одного домена: trend, acceleration, top signals
+async function handleDomainRisk(url, env) {
+  const domain = url.searchParams.get('domain') || '';
+  const data   = await getEvents(env);
+  let events   = data.events || [];
+
+  if (domain) events = events.filter(e => e.domain === domain);
+
+  const levelFn = s => s >= 80 ? 'critical' : s >= 60 ? 'high' : s >= 35 ? 'moderate' : s >= 15 ? 'weak' : 'none';
+
+  const buildProfile = (evs, domainName) => {
+    if (!evs.length) return null;
+    const scores = evs.map(e => e.escalation_score || 0);
+    const avg    = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+    const max    = Math.max(...scores);
+    const rising = evs.filter(e => e.trend_direction === 'rising').length;
+    const crit   = evs.filter(e => e.escalation_level === 'critical').length;
+    const weakSig = evs.filter(e => (e.severity||0) < 65 && (e.trend_direction === 'rising' || (e.severity_delta||0) >= 3));
+
+    // Acceleration: % of rising vs total
+    const acceleration = evs.length ? Math.round(rising / evs.length * 100) : 0;
+
+    return {
+      domain:        domainName,
+      count:         evs.length,
+      avg_esc_score: avg,
+      max_esc_score: max,
+      risk_level:    levelFn(avg),
+      acceleration_pct: acceleration,
+      critical_count:  crit,
+      rising_count:    rising,
+      weak_signal_count: weakSig.length,
+      top_signals: evs
+        .sort((a,b) => (b.escalation_score||0) - (a.escalation_score||0))
+        .slice(0,5)
+        .map(e => ({ id:e.id, title:e.title, escalation_score:e.escalation_score, escalation_level:e.escalation_level, trend_direction:e.trend_direction, fingerprint:e.fingerprint })),
+    };
+  };
+
+  if (domain) {
+    const profile = buildProfile(events, domain);
+    if (!profile) return jsonResponse({ error: 'domain not found', domain }, 404);
+    return jsonResponse({ ...profile, updated: data.updated });
+  }
+
+  // All domains
+  const DOMAINS = ['geopolitics', 'climate', 'economy', 'technology', 'social'];
+  const result = {};
+  for (const d of DOMAINS) {
+    const sub = events.filter(e => e.domain === d);
+    result[d] = buildProfile(sub, d);
+  }
+  return jsonResponse({ domains: result, updated: data.updated });
+}
+
+
+// GET /api/escalation-feed?min_score=60&limit=20&since=2026-05-27
+// Хронологическая лента высокоэскалационных событий
+async function handleEscalationFeed(url, env) {
+  const minScore = parseInt(url.searchParams.get('min_score') || '60');
+  const limit    = Math.min(100, parseInt(url.searchParams.get('limit') || '20'));
+  const since    = url.searchParams.get('since') || '';
+  const domain   = url.searchParams.get('domain') || '';
+
+  const data   = await getEvents(env);
+  let events   = data.events || [];
+
+  events = events.filter(e => (e.escalation_score || 0) >= minScore);
+  if (since)  events = events.filter(e => (e.date || '') >= since);
+  if (domain) events = events.filter(e => e.domain === domain);
+
+  // Сортировка: сначала критические, потом по score
+  events.sort((a,b) => {
+    const lvOrder = { critical:4, high:3, moderate:2, weak:1, none:0 };
+    const lvDiff  = (lvOrder[b.escalation_level||'none'] || 0) - (lvOrder[a.escalation_level||'none'] || 0);
+    return lvDiff !== 0 ? lvDiff : (b.escalation_score||0) - (a.escalation_score||0);
+  });
+
+  const feed = events.slice(0, limit).map(e => ({
+    id:              e.id,
+    title:           e.title,
+    domain:          e.domain,
+    region:          e.region,
+    date:            e.date,
+    severity:        e.severity,
+    severity_delta:  e.severity_delta,
+    escalation_score: e.escalation_score,
+    escalation_level: e.escalation_level,
+    trend_direction: e.trend_direction,
+    signal_type:     e.signal_type,
+    phase:           e.phase,
+    vectors:         e.vectors,
+    cascade:         e.cascade,
+    fingerprint:     e.fingerprint,
+    count_24h:       e.count_24h,
+    count_7d:        e.count_7d,
+  }));
+
+  return jsonResponse({
+    meta: {
+      total:     feed.length,
+      min_score: minScore,
+      limit,
+      updated:   data.updated,
+    },
+    feed,
   });
 }
