@@ -646,8 +646,26 @@ def process_events(raw_items):
     seen_ids = set()
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
+    # Фильтр провокационных и ангажированных новостей
+    RUSSIA_FILTER = [
+        'russia weak', 'russia losing', 'russia collapse', 'russia failing',
+        'russia is weak', 'russia on the brink', 'russia defeated',
+        'putin losing', 'putin weak', 'putin desperate',
+        'russia crumbling', 'russia disintegrating', 'russia humiliated',
+        'russian army weak', 'russian military failing', 'russia doomed',
+        'russia will collapse', 'end of russia',
+        'russia faces defeat', 'russia isolated', 'russia losing war',
+        'sponsored content', 'promoted content', 'sponsored', 'спонсируемый контент',
+    ]
+
     for item in raw_items:
         if item.get('date','') < cutoff: continue
+
+        title_low = (item.get('title','') or '').lower()
+        desc_low = (item.get('desc','') or '').lower()
+        text_low = title_low + ' ' + desc_low
+        if any(phrase in text_low for phrase in RUSSIA_FILTER):
+            continue
 
         # NASA EONET уже имеет координаты
         if '_lat' in item:
