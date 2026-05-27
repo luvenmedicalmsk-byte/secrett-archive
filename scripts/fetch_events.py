@@ -498,6 +498,49 @@ def fetch_newsapi(api_key):
                 })
         except: pass
 
+    # Технологические запросы — Reuters, Wired, TechCrunch, The Verge, FT
+    tech_sources = "reuters,wired,techcrunch,the-verge,financial-times"
+    tech_queries = [
+        # AI риски и регулирование
+        ("artificial intelligence AI risk regulation governance", 12),
+        ("AI autonomous systems weapons military technology", 10),
+        ("semiconductor chip war export controls technology", 10),
+        # Кибербезопасность
+        ("cyberattack ransomware hacking infrastructure breach", 12),
+        ("cybersecurity vulnerability exploit state-sponsored", 10),
+        # Технологическая геополитика
+        ("technology geopolitics China US semiconductor supply", 10),
+        ("digital surveillance censorship platform control", 8),
+        # Дезинформация
+        ("disinformation deepfake election manipulation AI", 10),
+    ]
+
+    for q, count in tech_queries:
+        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        url = (f"https://newsapi.org/v2/everything"
+               f"?q={urllib.parse.quote(q)}"
+               f"&sources={tech_sources}"
+               f"&pageSize={count}"
+               f"&sortBy=publishedAt"
+               f"&from={today_str}"
+               f"&to={today_str}"
+               f"&apiKey={api_key}")
+        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        if not data: continue
+        try:
+            j = json.loads(data)
+            for art in j.get('articles', []):
+                title = art.get('title','').strip()
+                desc = art.get('description','') or ''
+                if not title or title == '[Removed]': continue
+                items.append({
+                    'title': title, 'desc': desc,
+                    'date': parse_date(art.get('publishedAt','')),
+                    'source': art.get('source',{}).get('name','NewsAPI'),
+                    'source_bias': 2
+                })
+        except: pass
+
     # Экономические запросы через топовые источники
     for q, count in economy_queries:
         today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
@@ -1008,6 +1051,98 @@ def fetch_acled_rss():
 # ══════════════════════════════════════════════════════════════════════════════
 # ИСТОЧНИК 9: RSS геополитика/экономика/технологии (глобальные СМИ)
 # ══════════════════════════════════════════════════════════════════════════════
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ТЕХНОЛОГИЧЕСКИЕ RSS — кибербезопасность и AI
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_tech_rss():
+    """MIT Tech Review, The Record, CyberScoop, BleepingComputer, Dark Reading,
+    404 Media, Help Net Security, Industrial Cyber, Lawfare, RAND, WEF"""
+    sources = [
+        # Кибербезопасность
+        ('https://therecord.media/feed', 'The Record', 'technology'),
+        ('https://therecord.media/rss', 'The Record', 'technology'),
+        ('https://cyberscoop.com/feed/', 'CyberScoop', 'technology'),
+        ('https://www.bleepingcomputer.com/feed/', 'BleepingComputer', 'technology'),
+        ('https://www.darkreading.com/rss.xml', 'Dark Reading', 'technology'),
+        ('https://www.helpnetsecurity.com/feed/', 'Help Net Security', 'technology'),
+        ('https://industrialcyber.co/feed/', 'Industrial Cyber', 'technology'),
+        # AI и технологии
+        ('https://www.technologyreview.com/feed/', 'MIT Technology Review', 'technology'),
+        ('https://www.technologyreview.com/rss/feed/', 'MIT Technology Review', 'technology'),
+        ('https://404media.co/feed', '404 Media', 'technology'),
+        ('https://www.platformer.news/feed', 'Platformer', 'technology'),
+        ('https://www.lawfaremedia.org/feed', 'Lawfare', 'technology'),
+        ('https://www.rand.org/blog/rss.xml', 'RAND', 'technology'),
+        ('https://cset.georgetown.edu/feed/', 'CSET', 'technology'),
+        # WEF
+        ('https://www.weforum.org/agenda/feed/', 'WEF', 'technology'),
+        ('https://www.weforum.org/rss/', 'WEF', 'technology'),
+    ]
+
+    items = []
+    seen_urls = set()
+    ua_list = [
+        {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
+        {'User-Agent': 'feedparser/6.0'},
+        {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+    ]
+
+    for url, src_name, domain in sources:
+        if url in seen_urls: continue
+        data = None
+        for hdrs in ua_list:
+            data = fetch_url(url, headers=hdrs, timeout=8)
+            if data: break
+        if not data: continue
+        seen_urls.add(url)
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(data)
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+            for item in root.findall('.//item')[:12]:
+                title = (item.findtext('title') or '').strip()
+                desc = (item.findtext('description') or '').strip()
+                link = (item.findtext('link') or '').strip()
+                pub = item.findtext('pubDate') or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'url': link,
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+            for entry in root.findall('atom:entry', ns)[:12]:
+                title = (entry.findtext('atom:title', namespaces=ns) or '').strip()
+                desc = (entry.findtext('atom:summary', namespaces=ns) or '').strip()
+                pub = entry.findtext('atom:published', namespaces=ns) or entry.findtext('atom:updated', namespaces=ns) or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+        except Exception as e:
+            print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
+
+    seen = set()
+    unique = []
+    for it in items:
+        key = it['title'][:50].lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(it)
+
+    print(f'  Технологические RSS: {len(unique)} событий', file=sys.stderr)
+    return unique
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # КЛИМАТИЧЕСКИЕ RSS — специализированные источники
@@ -3161,6 +3296,7 @@ if __name__ == '__main__':
     raw += fetch_gdacs()
     raw += fetch_usgs_earthquakes()
     raw += fetch_acled_rss()
+    raw += fetch_tech_rss()
     raw += fetch_climate_rss()
     raw += fetch_global_rss()
     raw += fetch_wfp()
