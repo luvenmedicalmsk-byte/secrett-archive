@@ -498,6 +498,54 @@ def fetch_newsapi(api_key):
                 })
         except: pass
 
+    # Геополитические запросы — Reuters, Bloomberg, Al Jazeera, FT, Economist
+    geo_sources = "reuters,bloomberg,al-jazeera-english,financial-times,the-economist"
+    geo_queries = [
+        # Конфликты и войны
+        ("war conflict military invasion strike ceasefire battle", 15),
+        ("armed conflict troops weapons NATO alliance escalation", 12),
+        # Санкции и геоэкономика
+        ("sanctions embargo trade restrictions geopolitical tension", 12),
+        ("geopolitics power shift alliance fragmentation multipolar", 10),
+        # Горячие точки
+        ("Gaza Israel Iran Lebanon Hamas Hezbollah strike", 12),
+        ("Ukraine Russia war front ceasefire peace talks", 12),
+        ("Taiwan China South China Sea military threat", 10),
+        ("North Korea DPRK nuclear missile provocation", 8),
+        # Ресурсные конфликты
+        ("energy security oil gas pipeline supply disruption", 10),
+        ("critical minerals resource war strategic competition", 8),
+        # Дипломатия и порядок
+        ("diplomacy UN summit treaty international order breakdown", 10),
+        ("coup election fraud democracy authoritarian regime", 10),
+    ]
+
+    for q, count in geo_queries:
+        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        url = (f"https://newsapi.org/v2/everything"
+               f"?q={urllib.parse.quote(q)}"
+               f"&sources={geo_sources}"
+               f"&pageSize={count}"
+               f"&sortBy=publishedAt"
+               f"&from={today_str}"
+               f"&to={today_str}"
+               f"&apiKey={api_key}")
+        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        if not data: continue
+        try:
+            j = json.loads(data)
+            for art in j.get('articles', []):
+                title = art.get('title','').strip()
+                desc = art.get('description','') or ''
+                if not title or title == '[Removed]': continue
+                items.append({
+                    'title': title, 'desc': desc,
+                    'date': parse_date(art.get('publishedAt','')),
+                    'source': art.get('source',{}).get('name','NewsAPI'),
+                    'source_bias': 2
+                })
+        except: pass
+
     # Социальные запросы — Reuters, Guardian, Al Jazeera, FT
     social_sources = "reuters,the-guardian-uk,al-jazeera-english,financial-times"
     social_queries = [
@@ -1119,6 +1167,103 @@ def fetch_acled_rss():
 # ИСТОЧНИК 9: RSS геополитика/экономика/технологии (глобальные СМИ)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ГЕОПОЛИТИЧЕСКИЕ RSS — think-tanks, military analysis, geostrategy
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_geopolitics_rss():
+    """Foreign Policy, CSIS, Chatham House, Carnegie, CFR, Atlantic Council,
+    ISW, War on the Rocks, The Diplomat, FPRI, GLOBSEC, Geopolitical Monitor"""
+    sources = [
+        # Премиальная аналитика
+        ('https://foreignpolicy.com/feed/', 'Foreign Policy', 'geopolitics'),
+        ('https://www.csis.org/rss.xml', 'CSIS', 'geopolitics'),
+        ('https://www.csis.org/feed', 'CSIS', 'geopolitics'),
+        ('https://www.chathamhouse.org/rss.xml', 'Chatham House', 'geopolitics'),
+        ('https://www.chathamhouse.org/feed', 'Chatham House', 'geopolitics'),
+        ('https://carnegieendowment.org/rss/', 'Carnegie Endowment', 'geopolitics'),
+        ('https://www.cfr.org/rss.xml', 'CFR', 'geopolitics'),
+        ('https://www.cfr.org/rss/backgrounders', 'CFR', 'geopolitics'),
+        ('https://www.atlanticcouncil.org/feed/', 'Atlantic Council', 'geopolitics'),
+        # Военный анализ
+        ('https://warontherocks.com/feed/', 'War on the Rocks', 'geopolitics'),
+        ('https://www.understandingwar.org/rss.xml', 'ISW', 'geopolitics'),
+        ('https://www.understandingwar.org/feed', 'ISW', 'geopolitics'),
+        # Азия и Indo-Pacific
+        ('https://thediplomat.com/feed/', 'The Diplomat', 'geopolitics'),
+        # Европейская безопасность
+        ('https://www.globsec.org/feed/', 'GLOBSEC', 'geopolitics'),
+        ('https://www.fpri.org/feed/', 'FPRI', 'geopolitics'),
+        # Геополитические мониторы
+        ('https://www.geopoliticalmonitor.com/feed/', 'Geopolitical Monitor', 'geopolitics'),
+        ('https://geopoliticalfutures.com/feed/', 'Geopolitical Futures', 'geopolitics'),
+        # Semafor
+        ('https://www.semafor.com/feed', 'Semafor', 'geopolitics'),
+    ]
+
+    items = []
+    seen_urls = set()
+    ua_list = [
+        {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
+        {'User-Agent': 'feedparser/6.0'},
+        {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+    ]
+
+    for url, src_name, domain in sources:
+        if url in seen_urls: continue
+        data = None
+        for hdrs in ua_list:
+            data = fetch_url(url, headers=hdrs, timeout=8)
+            if data: break
+        if not data: continue
+        seen_urls.add(url)
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(data)
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+            for item in root.findall('.//item')[:12]:
+                title = (item.findtext('title') or '').strip()
+                desc = (item.findtext('description') or '').strip()
+                link = (item.findtext('link') or '').strip()
+                pub = item.findtext('pubDate') or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'url': link,
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+            for entry in root.findall('atom:entry', ns)[:12]:
+                title = (entry.findtext('atom:title', namespaces=ns) or '').strip()
+                desc = (entry.findtext('atom:summary', namespaces=ns) or '').strip()
+                pub = entry.findtext('atom:published', namespaces=ns) or entry.findtext('atom:updated', namespaces=ns) or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+        except Exception as e:
+            print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
+
+    seen = set()
+    unique = []
+    for it in items:
+        key = it['title'][:50].lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(it)
+
+    print(f'  Геополитические RSS: {len(unique)} событий', file=sys.stderr)
+    return unique
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3459,6 +3604,7 @@ if __name__ == '__main__':
     raw += fetch_gdacs()
     raw += fetch_usgs_earthquakes()
     raw += fetch_acled_rss()
+    raw += fetch_geopolitics_rss()
     raw += fetch_social_rss()
     raw += fetch_tech_rss()
     raw += fetch_climate_rss()
