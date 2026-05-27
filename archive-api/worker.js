@@ -9,6 +9,25 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Last-Event-ID',
 };
 
+
+// ── RATE LIMITER (in-memory, per IP) ─────────────────────────────────────────
+const _rateLimits = new Map();
+const RATE_LIMIT   = 5;   // максимум запросов
+const RATE_WINDOW  = 60;  // за 60 секунд
+
+function checkRateLimit(ip) {
+  const now  = Math.floor(Date.now() / 1000);
+  const key  = ip + ':' + Math.floor(now / RATE_WINDOW);
+  const hits = (_rateLimits.get(key) || 0) + 1;
+  _rateLimits.set(key, hits);
+  // Чистим старые записи
+  if (_rateLimits.size > 10000) {
+    const oldKey = ip + ':' + (Math.floor(now / RATE_WINDOW) - 2);
+    _rateLimits.delete(oldKey);
+  }
+  return hits <= RATE_LIMIT;
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
@@ -17,6 +36,13 @@ export default {
 
     const url  = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
+
+    // Rate limit для AI-эндпоинтов
+    const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+    const isAiPath = path === '/api/location' || path === '/api/score';
+    if (isAiPath && !checkRateLimit(ip)) {
+      return jsonResponse({ error: 'Слишком много запросов. Подождите минуту.', retry_after: 60 }, 429);
+    }
 
     try {
       if (path === '/api/health')                               return handleHealth(env);
