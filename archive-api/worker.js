@@ -57,6 +57,7 @@ export default {
       if (path === '/api/location' && request.method === 'GET') return handleLocation(url, env);
       if (path === '/api/proxy/planes') return handleProxyPlanes(url);
       if (path === '/api/proxy/outages') return handleProxyOutages(url);
+      if (path === '/api/proxy/ships') return handleProxyShips(url);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -434,6 +435,51 @@ async function handleProxyPlanes(url) {
   } catch(e) {
     return jsonResponse({ error: e.message }, 502);
   }
+}
+
+
+async function handleProxyShips(url) {
+  // Получаем суда из нескольких стратегических зон через AISStream HTTP API
+  const KEY = 'a28fbd015f34eb5bbe2035c2bfbe74a19d7f978f';
+  const zones = [
+    { name: 'Красное море', bbox: '10,32,30,45' },
+    { name: 'Тайваньский пролив', bbox: '20,118,28,126' },
+    { name: 'Балтийское море', bbox: '54,10,66,30' },
+    { name: 'Ормузский пролив', bbox: '24,55,27,60' },
+    { name: 'Ла-Манш', bbox: '49,-3,52,3' },
+  ];
+
+  const allShips = [];
+  for (const zone of zones) {
+    try {
+      const [minLat, minLon, maxLat, maxLon] = zone.bbox.split(',');
+      const r = await fetch('https://api.aisstream.io/v0/vessels?' + new URLSearchParams({
+        apiKey: KEY,
+        boundingBox: zone.bbox
+      }), { cf: { cacheTtl: 60 } });
+      if (r.ok) {
+        const data = await r.json();
+        const vessels = Array.isArray(data) ? data : (data.vessels || []);
+        vessels.slice(0, 30).forEach(v => {
+          if (v.Latitude && v.Longitude) {
+            allShips.push({
+              name: v.Name || v.ShipName || 'Неизвестно',
+              mmsi: v.MMSI || '',
+              lat: v.Latitude,
+              lng: v.Longitude,
+              sog: v.Sog || v.Speed || 0,
+              cog: v.Cog || v.Course || 0,
+              zone: zone.name
+            });
+          }
+        });
+      }
+    } catch(_) {}
+  }
+
+  return new Response(JSON.stringify({ ships: allShips }), {
+    headers: { 'Content-Type': 'application/json', ...CORS, 'Cache-Control': 'no-cache' }
+  });
 }
 
 async function handleProxyOutages(url) {
