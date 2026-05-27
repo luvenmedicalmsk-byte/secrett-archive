@@ -312,7 +312,10 @@ DOMAIN_RULES = {
         "exclude": ["military","armed conflict","war","airstrike","cyberattack",
                     "flood","wildfire","earthquake","inflation","recession",
                     "strike","killed","troops","missile","weapon","attack",
-                    "удар","войска","атака","ракета","военный","убит","ликвидация"]
+                    "ministry of defense","general staff","defense minister",
+                    "deep strike","logistical lockdown","logistical blockade",
+                    "удар","войска","атака","ракета","военный","убит","ликвидация",
+                    "логистическ","блокада","наступлен","истощ","оборон"]
     }
 }
 
@@ -380,10 +383,18 @@ def detect_coords(title, desc):
     desc_low = (desc or '').lower()
 
     # Шаг 1: ищем в заголовке — высокий приоритет
+    # Притяжательные суффиксы указывают на объект а не субъект — пропускаем
+    POSS = ['скую','ского','ской','ские','ским','ских','ную','ного','ной','ные','ным','ных']
+
     best_title, best_title_len, best_title_coords = None, 0, None
     for region, coords in REGION_COORDS.items():
-        if region in title_low and len(region) > best_title_len:
-            best_title, best_title_len, best_title_coords = region, len(region), coords
+        if region not in title_low: continue
+        if len(region) <= best_title_len: continue
+        idx = title_low.find(region)
+        after = title_low[idx+len(region):idx+len(region)+5]
+        if any(after.startswith(s) for s in POSS):
+            continue
+        best_title, best_title_len, best_title_coords = region, len(region), coords
 
     if best_title:
         lat, lng = best_title_coords
