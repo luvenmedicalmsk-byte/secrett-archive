@@ -879,6 +879,145 @@ document.querySelectorAll('.fb').forEach(btn => {
   };
 });
 
+
+// ══════════════════════════════════════════════════════════════
+// ЖИВЫЕ СЛОИ: самолёты, суда, интернет-отключения
+// ══════════════════════════════════════════════════════════════
+const AISSTREAM_KEY = 'a28fbd015f34eb5bbe2035c2bfbe74a19d7f978f';
+let planesMarkers=[], shipsMarkers=[], outagesMarkers=[];
+let planesActive=false, shipsActive=false, outagesActive=false;
+let wsShips=null, planesInterval=null, outagesInterval=null;
+
+const planeIcon = L.divIcon({html:'<div style="font-size:16px;line-height:1;text-shadow:0 0 4px rgba(212,175,90,0.9)">✈</div>',className:'',iconSize:[18,18],iconAnchor:[9,9]});
+const shipIcon  = L.divIcon({html:'<div style="font-size:14px;line-height:1">🚢</div>',className:'',iconSize:[18,18],iconAnchor:[9,9]});
+const outageIcon= L.divIcon({html:'<div style="width:10px;height:10px;border-radius:50%;background:#E85A5A;border:1px solid rgba(255,90,90,0.5);box-shadow:0 0 6px rgba(232,90,90,0.7)"></div>',className:'',iconSize:[10,10],iconAnchor:[5,5]});
+
+function clearLayer(arr){arr.forEach(m=>map.removeLayer(m));arr.length=0;}
+
+// ── САМОЛЁТЫ через Worker прокси ─────────────────────────────
+async function loadPlanes(){
+  try{
+    const r=await fetch(API_BASE+'/api/proxy/planes',{signal:AbortSignal.timeout(10000)});
+    if(!r.ok)return;
+    const data=await r.json();
+    clearLayer(planesMarkers);
+    const states=(data.states||[]).filter(s=>s[5]&&s[6]&&s[8]===false);
+    const step=Math.max(1,Math.floor(states.length/250));
+    states.filter((_,i)=>i%step===0).forEach(s=>{
+      const m=L.marker([s[6],s[5]],{icon:planeIcon})
+        .bindPopup('<b style="color:#D4AF5A">'+(s[1]||'N/A').trim()+'</b><br><span style="font-size:11px;color:#A8A090">'+
+          (s[2]||'')+'<br>Высота: '+(s[7]?Math.round(s[7])+' м':'?')+'<br>Скорость: '+(s[9]?Math.round(s[9])+' м/с':'?')+'</span>');
+      m.addTo(map);planesMarkers.push(m);
+    });
+    console.info('[Planes]',planesMarkers.length,'бортов');
+  }catch(e){console.warn('[Planes]',e.message);}
+}
+
+// ── СУДА через AISStream WebSocket ───────────────────────────
+function connectShips(){
+  if(wsShips){wsShips.close();wsShips=null;}
+  try{
+    wsShips=new WebSocket('wss://stream.aisstream.io/v0/stream');
+    wsShips.onopen=()=>{
+      wsShips.send(JSON.stringify({
+        APIKey:AISSTREAM_KEY,
+        BoundingBoxes:[
+          [[10,32],[30,45]],   // Красное море
+          [[20,118],[28,126]], // Тайвань
+          [[54,10],[66,30]],   // Балтика
+          [[29,32],[32,35]],   // Суэц
+          [[24,55],[27,60]],   // Ормуз
+          [[49,-3],[52,3]]     // Ла-Манш
+        ],
+        FilterMessageTypes:['PositionReport']
+      }));
+    };
+    wsShips.onmessage=(e)=>{
+      try{
+        const msg=JSON.parse(e.data);
+        const pos=msg.Message?.PositionReport;
+        const meta=msg.MetaData;
+        if(!pos||!meta||shipsMarkers.length>=150)return;
+        const lat=pos.Latitude,lng=pos.Longitude;
+        if(!lat||!lng||lat===0)return;
+        const name=(meta.ShipName||'').trim()||'Неизвестно';
+        const m=L.marker([lat,lng],{icon:shipIcon})
+          .bindPopup('<b style="color:#5AB4D4">'+name+'</b><br><span style="font-size:11px;color:#A8A090">MMSI: '+
+            (meta.MMSI||'')+'<br>Скорость: '+((pos.Sog||0).toFixed(1))+' уз<br>Курс: '+((pos.Cog||0).toFixed(0))+'°</span>');
+        m.addTo(map);shipsMarkers.push(m);
+      }catch(_){}
+    };
+    wsShips.onerror=()=>console.warn('[Ships] WS error');
+  }catch(e){console.warn('[Ships]',e.message);}
+}
+
+// ── ОТКЛЮЧЕНИЯ через Worker прокси ───────────────────────────
+async function loadOutages(){
+  try{
+    const r=await fetch(API_BASE+'/api/proxy/outages',{signal:AbortSignal.timeout(10000)});
+    if(!r.ok)return;
+    const data=await r.json();
+    clearLayer(outagesMarkers);
+    const COORDS={'RU':[55.75,37.6],'CN':[39.9,116.4],'US':[38.9,-77.0],'UA':[50.4,30.5],
+      'IR':[35.7,51.4],'TR':[39.9,32.9],'PK':[33.7,73.1],'IN':[28.6,77.2],
+      'BR':[-15.8,-47.9],'DE':[52.5,13.4],'FR':[48.9,2.3],'GB':[51.5,-0.1],
+      'EG':[30.1,31.2],'NG':[9.1,7.4],'SD':[15.6,32.5],'IQ':[33.3,44.4],
+      'SY':[33.5,36.3],'AF':[34.5,69.2],'VE':[10.5,-66.9],'AR':[-34.6,-58.4],
+      'MX':[19.4,-99.1],'ID':[-6.2,106.8],'SA':[24.7,46.7],'IL':[31.8,35.2],
+      'KP':[39.0,125.8],'BY':[53.9,27.6],'LY':[32.9,13.2],'YE':[15.4,44.2],
+      'MM':[19.7,96.1],'ML':[12.6,-8.0],'ET':[9.0,38.7]};
+    (data.data||[]).forEach(item=>{
+      const cc=item.entity?.code;
+      const coords=COORDS[cc];
+      if(!coords)return;
+      const signals=(item.data||[]).filter(s=>s.value<0.7);
+      if(!signals.length)return;
+      const sev=Math.round((1-Math.min(...signals.map(s=>s.value)))*100);
+      const m=L.marker(coords,{icon:outageIcon})
+        .bindPopup('<b style="color:#E85A5A">📡 Интернет-отключение</b><br><span style="font-size:11px;color:#A8A090">'+
+          (item.entity?.name||cc)+'<br>Серьёзность: '+sev+'%<br>Источник: IODA/CAIDA</span>');
+      m.addTo(map);outagesMarkers.push(m);
+    });
+    console.info('[Outages]',outagesMarkers.length,'отключений');
+  }catch(e){console.warn('[Outages]',e.message);}
+}
+
+// ── КНОПКИ ───────────────────────────────────────────────────
+document.getElementById('lb-planes').addEventListener('click',async function(){
+  planesActive=!planesActive;
+  this.classList.toggle('active',planesActive);
+  if(planesActive){
+    this.textContent='✈ Загрузка...';
+    await loadPlanes();
+    this.textContent='✈ Самолёты';
+    planesInterval=setInterval(loadPlanes,60000);
+  }else{
+    clearLayer(planesMarkers);
+    if(planesInterval){clearInterval(planesInterval);planesInterval=null;}
+  }
+});
+
+document.getElementById('lb-ships').addEventListener('click',function(){
+  shipsActive=!shipsActive;
+  this.classList.toggle('active',shipsActive);
+  if(shipsActive){connectShips();}
+  else{clearLayer(shipsMarkers);if(wsShips){wsShips.close();wsShips=null;}}
+});
+
+document.getElementById('lb-outages').addEventListener('click',async function(){
+  outagesActive=!outagesActive;
+  this.classList.toggle('active',outagesActive);
+  if(outagesActive){
+    this.textContent='📡 Загрузка...';
+    await loadOutages();
+    this.textContent='📡 Отключения';
+    outagesInterval=setInterval(loadOutages,300000);
+  }else{
+    clearLayer(outagesMarkers);
+    if(outagesInterval){clearInterval(outagesInterval);outagesInterval=null;}
+  }
+});
+
 </script>
 
 <div id="location-panel">
