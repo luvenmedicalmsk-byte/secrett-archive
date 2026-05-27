@@ -628,7 +628,7 @@ def process_events(raw_items):
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
-        summary = item.get('desc','')[:250].strip()
+        summary = strip_html(item.get('desc',''))[:250].strip()
         if summary and not summary.endswith('.'): summary += '...'
 
         events.append({
@@ -932,7 +932,7 @@ def fetch_global_rss():
             count = 0
             for item in root.findall('.//item'):
                 title = item.findtext('title','').strip()
-                desc = (item.findtext('description','') or item.findtext('summary','')).strip()[:300]
+                desc = strip_html(item.findtext('description','') or item.findtext('summary','')).strip()[:300]
                 pub_date = item.findtext('pubDate','') or item.findtext('updated','')
                 if not title or count >= 10: continue
                 items.append({
@@ -1631,6 +1631,20 @@ def fetch_flood_observatory():
                 
                 # Извлекаем координаты из описания если есть
                 import re
+
+def strip_html(text):
+    """Удаляет HTML-теги и лишнее из текста"""
+    if not text:
+        return ''
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = re.sub(r'&nbsp;', ' ', text)
+    text = re.sub(r'&amp;', '&', text)
+    text = re.sub(r'&lt;', '<', text)
+    text = re.sub(r'&gt;', '>', text)
+    text = re.sub(r'&quot;', '"', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
                 lat_match = re.search(r'lat[itude]*[:\s]+(-?\d+\.?\d*)', desc, re.I)
                 lon_match = re.search(r'lon[gitude]*[:\s]+(-?\d+\.?\d*)', desc, re.I)
                 
