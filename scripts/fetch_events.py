@@ -12,12 +12,20 @@
 import json, os, sys, hashlib, math, re, time, urllib.request, urllib.parse, urllib.error
 import xml.etree.ElementTree as ET
 import random
-# signal schema enrichment (v2)
+# signal schema enrichment (v2) + escalation engine (v2.1)
 try:
     from signal_enricher import enrich_snapshot as _enrich_snapshot
+    from signal_enricher import enrich_with_escalation as _enrich_escalation
+    from history_store import (
+        LocalHistoryCache, aggregate_history,
+        make_compact_snapshot, snapshot_key, get_hour_keys_range,
+    )
+    from escalation_engine import compute_global_risk_index
     _SIGNAL_ENRICHER_AVAILABLE = True
-except ImportError:
+    _ESCALATION_AVAILABLE = True
+except ImportError as _e:
     _SIGNAL_ENRICHER_AVAILABLE = False
+    _ESCALATION_AVAILABLE = False
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -3453,9 +3461,46 @@ def _load_previous_snapshot():
     return None
 
 
+def _get_history_cache():
+    """Возвращает LocalHistoryCache из docs/.history/ рядом с events.json."""
+    if not _ESCALATION_AVAILABLE:
+        return None
+    try:
+        cache_dir = OUTPUT_PATH.parent / ".history"
+        return LocalHistoryCache(cache_dir)
+    except Exception as e:
+        print(f"  [WARN] history cache init failed: {e}", file=sys.stderr)
+        return None
+
+
+def _build_history_map(cache):
+    """
+    Строит history_map {fingerprint -> aggregated_history} для
+    всех fingerprints в 30-дневном окне.
+    """
+    snaps_24h, snaps_7d, snaps_30d = cache.get_windows()
+    all_fps = set()
+    for snaps in (snaps_24h, snaps_7d, snaps_30d):
+        for snap in snaps:
+            all_fps.update(snap.get("events", {}).keys())
+
+    history_map = {}
+    for fp in all_fps:
+        history_map[fp] = aggregate_history(fp, snaps_24h, snaps_7d, snaps_30d)
+
+    print(f"  History: {len(history_map)} fingerprints | "
+          f"{len(snaps_24h)}x24h / {len(snaps_7d)}x7d / {len(snaps_30d)}x30d",
+          file=sys.stderr)
+    return history_map
+
+
 def save_enriched(events, previous_snapshot=None):
     """
-    Сохраняет events.json с signal taxonomy.
+    Сохраняет events.json c signal taxonomy + escalation engine.
+    Pipeline:
+      1. enrich_snapshot()        -> signal_type, phase, vectors, delta, fingerprint
+      2. _build_history_map()     -> count_24h/7d, trend из rolling KV window
+      3. enrich_with_escalation() -> escalation_score, level, trend_direction
     Полностью обратно совместима — добавляет поля, не трогает старые.
     """
     raw_snapshot = {
@@ -3467,23 +3512,82 @@ def save_enriched(events, previous_snapshot=None):
 
     if _SIGNAL_ENRICHER_AVAILABLE:
         try:
+            from collections import Counter
+
+            # Шаг 1: signal taxonomy (phase / vectors / fingerprint / delta)
             enriched = _enrich_snapshot(raw_snapshot, previous_snapshot)
+
+            # Шаг 2 + 3: history aggregation + escalation scoring
+            if _ESCALATION_AVAILABLE:
+                cache = _get_history_cache()
+                history_map = _build_history_map(cache) if cache else {}
+                enriched = _enrich_escalation(enriched, history_map, cache)
+
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
-            from collections import Counter
-            types  = Counter(e.get("signal_type","?") for e in enriched["events"])
-            phases = Counter(e.get("phase","?") for e in enriched["events"])
-            print(f"\n✓ {len(enriched['events'])} событий → {OUTPUT_PATH} [schema v2]", file=sys.stderr)
-            print(f"  signal_types: {dict(types)}", file=sys.stderr)
-            print(f"  phases:       {dict(phases)}", file=sys.stderr)
+
+            evs    = enriched["events"]
+            types  = Counter(e.get("signal_type", "?") for e in evs)
+            phases = Counter(e.get("phase", "?") for e in evs)
+            levels = Counter(e.get("escalation_level", "?") for e in evs)
+            gri    = enriched.get("global_risk_index", {})
+            schema = enriched.get("schema_version", "2.x")
+
+            print(f"\n✓ {len(evs)} событий -> {OUTPUT_PATH} [schema {schema}]", file=sys.stderr)
+            print(f"  signal_types:      {dict(types)}", file=sys.stderr)
+            print(f"  phases:            {dict(phases)}", file=sys.stderr)
+            print(f"  escalation_levels: {dict(levels)}", file=sys.stderr)
+            print(f"  global_risk_index: {gri.get('index', 0)} ({gri.get('level', '?')})",
+                  file=sys.stderr)
             return
         except Exception as e:
-            print(f"  [WARN] signal enrichment failed, falling back to save(): {e}", file=sys.stderr)
+            import traceback
+            print(f"  [WARN] enrichment failed, fallback: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
 
     # Fallback — оригинальный save
+    save(events)back — оригинальный save
     save(events)
+
+def _push_snapshot_to_worker(events):
+    """
+    Отправляет compact snapshot в Cloudflare Worker → KV.
+    Вызывается после save_enriched — не блокирует основной pipeline.
+    Требует WORKER_URL и ADMIN_KEY в environment.
+    """
+    import os as _os
+    worker_url  = _os.environ.get('WORKER_URL', '')
+    admin_key   = _os.environ.get('ADMIN_KEY', '')
+    if not worker_url or not admin_key:
+        print("  [SKIP] KV snapshot push: нет WORKER_URL/ADMIN_KEY", file=sys.stderr)
+        return
+
+    try:
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H")
+        payload = json.dumps({
+            "ts":     ts,
+            "events": events,
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            f"{worker_url.rstrip('/')}/api/history/snapshot",
+            data=payload,
+            method='POST',
+            headers={
+                'Content-Type':  'application/json',
+                'X-API-Key':     admin_key,
+                'User-Agent':    'ArchiveBot/2.0',
+            }
+        )
+        with urllib.request.urlopen(req, timeout=30) as r:
+            resp = json.loads(r.read())
+            fps  = resp.get("fingerprints", 0)
+            print(f"  ✓ KV snapshot pushed: ts={ts} fps={fps}", file=sys.stderr)
+    except Exception as e:
+        print(f"  [WARN] KV snapshot push failed: {e}", file=sys.stderr)
+
 
 if __name__ == '__main__':
     print("=== Архив · Парсер рисков v2 ===", file=sys.stderr)
@@ -3565,6 +3669,7 @@ if __name__ == '__main__':
     _prev_snapshot = _load_previous_snapshot()  # загружаем ДО записи
     save_enriched(events, _prev_snapshot)         # enriched save
     inject_into_html(events)                      # inject без изменений
+    _push_snapshot_to_worker(events)              # push compact snapshot → KV
 
     by_domain = {}
     for e in events:
