@@ -961,6 +961,115 @@ def fetch_acled_rss():
 # ══════════════════════════════════════════════════════════════════════════════
 # ИСТОЧНИК 9: RSS геополитика/экономика/технологии (глобальные СМИ)
 # ══════════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════════
+# КЛИМАТИЧЕСКИЕ RSS — специализированные источники
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_climate_rss():
+    """FloodList, Wildfire Today, Mongabay, Carbon Brief, Inside Climate News,
+    Yale Climate Connections, The Watchers, Earth Observatory"""
+    sources = [
+        # FloodList — лучший источник по наводнениям
+        ('https://floodlist.com/feed', 'FloodList', 'climate'),
+        ('https://floodlist.com/feed/', 'FloodList', 'climate'),
+        # Wildfire Today — пожары
+        ('https://wildfiretoday.com/feed/', 'Wildfire Today', 'climate'),
+        # Mongabay — экология и катастрофы
+        ('https://news.mongabay.com/feed/', 'Mongabay', 'climate'),
+        # Carbon Brief — климатическая аналитика
+        ('https://www.carbonbrief.org/feed/', 'Carbon Brief', 'climate'),
+        ('https://www.carbonbrief.org/rss/', 'Carbon Brief', 'climate'),
+        # Inside Climate News
+        ('https://insideclimatenews.org/feed/', 'Inside Climate News', 'climate'),
+        # Yale Climate Connections
+        ('https://yaleclimateconnections.org/feed/', 'Yale Climate Connections', 'climate'),
+        # The Watchers — природные катастрофы
+        ('https://watchers.news/feed/', 'The Watchers', 'climate'),
+        ('https://watchers.news/rss', 'The Watchers', 'climate'),
+        # NASA Earth Observatory
+        ('https://earthobservatory.nasa.gov/feeds/natural-hazards.rss', 'NASA Earth Observatory', 'climate'),
+        ('https://earthobservatory.nasa.gov/feeds/earth-observatory.rss', 'NASA Earth Observatory', 'climate'),
+        # ReliefWeb disasters
+        ('https://reliefweb.int/updates/rss.xml?primary_country=0&source=0&type=disaster', 'ReliefWeb', 'climate'),
+        # Yale Environment 360
+        ('https://e360.yale.edu/feed.xml', 'Yale E360', 'climate'),
+        # Prevention Web
+        ('https://www.preventionweb.net/news/rss.xml', 'PreventionWeb', 'climate'),
+    ]
+
+    items = []
+    seen_urls = set()
+    headers_list = [
+        {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
+        {'User-Agent': 'feedparser/6.0'},
+        {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+    ]
+
+    for url, src_name, domain in sources:
+        if url in seen_urls:
+            continue
+        data = None
+        for hdrs in headers_list:
+            data = fetch_url(url, headers=hdrs, timeout=8)
+            if data:
+                break
+        if not data:
+            continue
+        seen_urls.add(url)
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(data)
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+
+            # RSS формат
+            for item in root.findall('.//item')[:15]:
+                title = (item.findtext('title') or '').strip()
+                desc = (item.findtext('description') or '').strip()
+                link = (item.findtext('link') or '').strip()
+                pub = item.findtext('pubDate') or item.findtext('dc:date', namespaces={'dc':'http://purl.org/dc/elements/1.1/'}) or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'url': link,
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+
+            # Atom формат
+            for entry in root.findall('atom:entry', ns)[:15]:
+                title = (entry.findtext('atom:title', namespaces=ns) or '').strip()
+                desc = (entry.findtext('atom:summary', namespaces=ns) or '').strip()
+                pub = entry.findtext('atom:published', namespaces=ns) or entry.findtext('atom:updated', namespaces=ns) or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+
+        except Exception as e:
+            print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
+            continue
+
+    # Убираем дубликаты по заголовку
+    seen = set()
+    unique = []
+    for it in items:
+        key = it['title'][:50].lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(it)
+
+    print(f'  Климатические RSS: {len(unique)} событий', file=sys.stderr)
+    return unique
+
+
 def fetch_global_rss():
     items = []
     feeds = [
@@ -3005,6 +3114,7 @@ if __name__ == '__main__':
     raw += fetch_gdacs()
     raw += fetch_usgs_earthquakes()
     raw += fetch_acled_rss()
+    raw += fetch_climate_rss()
     raw += fetch_global_rss()
     raw += fetch_wfp()
     raw += fetch_russia_climate()
