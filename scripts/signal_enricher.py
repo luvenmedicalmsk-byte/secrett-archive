@@ -489,3 +489,48 @@ def enrich_snapshot(
         },
         "events": enriched,
     }
+
+
+def enrich_with_escalation(
+    snapshot: dict,
+    history_map: dict,
+    history_cache=None,
+) -> dict:
+    """
+    Второй проход: добавляет escalation_score, escalation_level,
+    trend_direction, count_24h, count_7d, avg_severity_7d.
+
+    Вызывается ПОСЛЕ enrich_snapshot — получает уже enriched events.
+    history_map: {fingerprint → aggregated_history} из history_store.
+    history_cache: LocalHistoryCache — если передан, сохраняет текущий snapshot.
+    """
+    try:
+        from escalation_engine import apply_escalation_to_snapshot, compute_global_risk_index
+    except ImportError:
+        return snapshot  # graceful degradation
+
+    events = snapshot.get("events", [])
+
+    # Сохраняем текущий compact snapshot в history_cache если передан
+    if history_cache is not None:
+        try:
+            from history_store import make_compact_snapshot, snapshot_key
+            ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H")
+            compact = make_compact_snapshot(events, ts)
+            history_cache.put(snapshot_key(ts), compact)
+        except Exception as e:
+            import sys
+            print(f"  [WARN] history cache save failed: {e}", file=sys.stderr)
+
+    # Применяем escalation
+    escalated = apply_escalation_to_snapshot(events, history_map, strip_debug=True)
+
+    # Глобальный индекс риска
+    gri = compute_global_risk_index(escalated)
+
+    return {
+        **snapshot,
+        "schema_version":    "2.1",
+        "global_risk_index": gri,
+        "events":            escalated,
+    }
