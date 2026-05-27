@@ -984,8 +984,8 @@ document.getElementById('lb-ships').addEventListener('click',async function(){
   this.classList.toggle('active',shipsActive);
   if(shipsActive){
     this.textContent='🚢 Загрузка...';
-    await connectShips();
-    this.textContent='🚢 Суда' + (shipsMarkers.length ? ' ('+shipsMarkers.length+')' : '');
+    try{ await connectShips(); }catch(e){ shipsActive=false; this.classList.remove('active'); }
+    this.textContent = shipsMarkers.length ? '🚢 Суда ('+shipsMarkers.length+')' : '🚢 Суда';
   } else {
     clearLayer(shipsMarkers);
   }
@@ -996,9 +996,9 @@ document.getElementById('lb-outages').addEventListener('click',async function(){
   this.classList.toggle('active',outagesActive);
   if(outagesActive){
     this.textContent='📡 Загрузка...';
-    await loadOutages();
-    this.textContent='📡 Отключения' + (outagesMarkers.length ? ' ('+outagesMarkers.length+')' : '');
-    outagesInterval=setInterval(loadOutages,300000);
+    try{ await loadOutages(); }catch(e){ outagesActive=false; this.classList.remove('active'); }
+    this.textContent = outagesMarkers.length ? '📡 Отключения ('+outagesMarkers.length+')' : '📡 Отключения';
+    if(outagesMarkers.length) outagesInterval=setInterval(loadOutages,300000);
   }else{
     clearLayer(outagesMarkers);
     if(outagesInterval){clearInterval(outagesInterval);outagesInterval=null;}
