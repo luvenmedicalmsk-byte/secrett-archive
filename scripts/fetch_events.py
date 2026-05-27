@@ -1814,6 +1814,173 @@ def get_russia_static_risks():
 # ИСТОЧНИК: Климатические риски России v2
 # Пожары, паводки, пермафрост, загрязнение
 # ══════════════════════════════════════════════════════════════════════════════
+
+def fetch_russia_signals():
+    """Климатические и чрезвычайные сигналы по России:
+    Росгидромет, Open-Meteo экстремумы, МЧС-подобные RSS"""
+    items = []
+
+    # 1. Росгидромет — штормовые предупреждения
+    meteo_feeds = [
+        'https://meteoinfo.ru/rss/forecasts/index.php?s=28440',  # Москва
+        'https://meteoinfo.ru/rss/forecasts/index.php?s=23330',  # Сочи
+        'https://meteoinfo.ru/rss/forecasts/index.php?s=24959',  # Новосибирск
+        'https://meteoinfo.ru/rss/forecasts/index.php?s=25954',  # Екатеринбург
+        'https://meteoinfo.ru/rss/forecasts/index.php?s=31960',  # Ростов-на-Дону
+        'https://meteoinfo.ru/rss/forecasts/index.php?s=24641',  # Красноярск
+        'https://meteoinfo.ru/rss/forecasts/index.php?s=29839',  # Казань
+    ]
+    for url in meteo_feeds:
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                root = ET.fromstring(r.read())
+            for item in root.findall('.//item')[:3]:
+                title = (item.findtext('title') or '').strip()
+                desc = strip_html(item.findtext('description') or '').strip()[:200]
+                if not title:
+                    continue
+                # Берём только предупреждения и опасные явления
+                keywords = ['предупреждение', 'опасн', 'шторм', 'ураган', 'гроза', 'снег', 'мороз', 'жара', 'наводн', 'паводок']
+                if not any(k in (title+desc).lower() for k in keywords):
+                    continue
+                items.append({
+                    'title': title,
+                    'desc': desc or title,
+                    'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                    'source': 'Росгидромет',
+                    'domain': 'climate',
+                    'region': 'Россия',
+                    'lat': 55.75, 'lng': 37.62,
+                    '_lat': 55.75, '_lng': 37.62,
+                    '_region': 'Россия',
+                    '_domain': 'climate',
+                })
+        except Exception as e:
+            print(f'  [WARN] Росгидромет {url[-20:]}: {e}', file=sys.stderr)
+
+    # 2. Open-Meteo — экстремальные погодные условия по городам России
+    cities = [
+        ('Москва', 55.75, 37.62),
+        ('Санкт-Петербург', 59.93, 30.32),
+        ('Сочи', 43.60, 39.73),
+        ('Новосибирск', 54.99, 82.90),
+        ('Екатеринбург', 56.83, 60.60),
+        ('Красноярск', 56.01, 92.79),
+        ('Якутск', 62.03, 129.73),
+        ('Владивосток', 43.10, 131.87),
+        ('Казань', 55.78, 49.12),
+        ('Ростов-на-Дону', 47.23, 39.72),
+    ]
+    try:
+        lats = ','.join(str(c[1]) for c in cities)
+        lngs = ','.join(str(c[2]) for c in cities)
+        url = (f'https://api.open-meteo.com/v1/forecast'
+               f'?latitude={lats}&longitude={lngs}'
+               f'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,weathercode'
+               f'&timezone=auto&forecast_days=3')
+        req = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode())
+        
+        # API возвращает список если несколько локаций
+        if isinstance(data, dict):
+            data = [data]
+        
+        for idx, city_data in enumerate(data):
+            if idx >= len(cities):
+                break
+            city_name, lat, lng = cities[idx]
+            daily = city_data.get('daily', {})
+            dates = daily.get('time', [])
+            temps_max = daily.get('temperature_2m_max', [])
+            temps_min = daily.get('temperature_2m_min', [])
+            precip = daily.get('precipitation_sum', [])
+            wind = daily.get('windspeed_10m_max', [])
+            wcodes = daily.get('weathercode', [])
+            
+            for i, date in enumerate(dates[:3]):
+                t_max = temps_max[i] if i < len(temps_max) else None
+                t_min = temps_min[i] if i < len(temps_min) else None
+                prec = precip[i] if i < len(precip) else 0
+                w = wind[i] if i < len(wind) else 0
+                wc = wcodes[i] if i < len(wcodes) else 0
+                
+                signals = []
+                severity_add = 0
+                
+                if t_max and t_max >= 35:
+                    signals.append(f'аномальная жара {t_max:.0f}°C')
+                    severity_add += 20
+                if t_min and t_min <= -30:
+                    signals.append(f'экстремальный мороз {t_min:.0f}°C')
+                    severity_add += 20
+                if prec and prec >= 30:
+                    signals.append(f'сильные осадки {prec:.0f}мм')
+                    severity_add += 15
+                if w and w >= 60:
+                    signals.append(f'штормовой ветер {w:.0f}км/ч')
+                    severity_add += 15
+                # Опасные weathercode: 65=сильный дождь, 75=сильный снег, 80-82=ливни, 95+=гроза
+                if wc in [65, 67, 75, 77, 82, 95, 96, 99]:
+                    signals.append('опасные осадки/гроза')
+                    severity_add += 10
+                
+                if not signals:
+                    continue
+                
+                title = f'{city_name}: {", ".join(signals)}'
+                items.append({
+                    'title': title,
+                    'desc': f'Метеопредупреждение для {city_name}. {", ".join(signals).capitalize()}.',
+                    'date': date,
+                    'source': 'Open-Meteo',
+                    'domain': 'climate',
+                    'region': f'Россия · {city_name}',
+                    '_lat': lat, '_lng': lng,
+                    '_region': f'Россия · {city_name}',
+                    '_domain': 'climate',
+                    '_severity_hint': min(90, 50 + severity_add),
+                })
+    except Exception as e:
+        print(f'  [WARN] Open-Meteo Россия: {e}', file=sys.stderr)
+
+    # 3. EMSC — землетрясения на территории России
+    try:
+        url = ('https://www.seismicportal.eu/fdsnws/event/1/query'
+               '?format=json&limit=20&minmag=3.5'
+               '&minlatitude=41&maxlatitude=82'
+               '&minlongitude=19&maxlongitude=190'
+               '&orderby=time')
+        req = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode())
+        for feat in data.get('features', [])[:10]:
+            props = feat.get('properties', {})
+            coords = feat.get('geometry', {}).get('coordinates', [0,0,0])
+            mag = props.get('mag', 0)
+            place = props.get('flynn_region', 'Россия')
+            time_str = props.get('time', '')[:10]
+            if mag < 3.5:
+                continue
+            items.append({
+                'title': f'Землетрясение M{mag:.1f} — {place}',
+                'desc': f'Землетрясение магнитудой {mag:.1f} в районе {place}.',
+                'date': time_str or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                'source': 'EMSC',
+                'domain': 'climate',
+                'region': place,
+                '_lat': coords[1], '_lng': coords[0],
+                '_region': place,
+                '_domain': 'climate',
+                '_severity_hint': min(90, int(mag * 12)),
+            })
+    except Exception as e:
+        print(f'  [WARN] EMSC землетрясения Россия: {e}', file=sys.stderr)
+
+    print(f'  Сигналы России (Росгидромет+OpenMeteo+EMSC): {len(items)} событий', file=sys.stderr)
+    return items
+
 def fetch_russia_climate_v2():
     items = []
     
@@ -2467,6 +2634,7 @@ if __name__ == '__main__':
     raw += fetch_wfp()
     raw += fetch_russia_climate()
     raw += fetch_russia_climate_v2()
+    raw += fetch_russia_signals()
     raw += get_russia_static_risks()
     # Спутниковые источники
     raw += fetch_copernicus_floods()
