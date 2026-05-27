@@ -498,6 +498,49 @@ def fetch_newsapi(api_key):
                 })
         except: pass
 
+    # Социальные запросы — Reuters, Guardian, Al Jazeera, FT
+    social_sources = "reuters,the-guardian-uk,al-jazeera-english,financial-times"
+    social_queries = [
+        # Неравенство и поляризация
+        ("inequality poverty social polarization protest unrest", 12),
+        ("middle class erosion unemployment wages labor crisis", 10),
+        # Миграция
+        ("migration refugee displacement forced migration border", 12),
+        ("migrant crisis asylum seeker displacement humanitarian", 10),
+        # Здоровье и эпидемии
+        ("disease outbreak epidemic pandemic health emergency", 12),
+        ("health system collapse famine malnutrition food crisis", 10),
+        # Социальный коллапс
+        ("social unrest protest riot civil disorder polarization", 10),
+        ("housing crisis homelessness poverty food insecurity", 8),
+    ]
+
+    for q, count in social_queries:
+        today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        url = (f"https://newsapi.org/v2/everything"
+               f"?q={urllib.parse.quote(q)}"
+               f"&sources={social_sources}"
+               f"&pageSize={count}"
+               f"&sortBy=publishedAt"
+               f"&from={today_str}"
+               f"&to={today_str}"
+               f"&apiKey={api_key}")
+        data = fetch_url(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+        if not data: continue
+        try:
+            j = json.loads(data)
+            for art in j.get('articles', []):
+                title = art.get('title','').strip()
+                desc = art.get('description','') or ''
+                if not title or title == '[Removed]': continue
+                items.append({
+                    'title': title, 'desc': desc,
+                    'date': parse_date(art.get('publishedAt','')),
+                    'source': art.get('source',{}).get('name','NewsAPI'),
+                    'source_bias': 2
+                })
+        except: pass
+
     # Технологические запросы — Reuters, Wired, TechCrunch, The Verge, FT
     tech_sources = "reuters,wired,techcrunch,the-verge,financial-times"
     tech_queries = [
@@ -1060,6 +1103,102 @@ def fetch_acled_rss():
 # ══════════════════════════════════════════════════════════════════════════════
 # ИСТОЧНИК 9: RSS геополитика/экономика/технологии (глобальные СМИ)
 # ══════════════════════════════════════════════════════════════════════════════
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# СОЦИАЛЬНЫЕ RSS — неравенство, миграция, здоровье, гуманитарные кризисы
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_social_rss():
+    """WHO, UNHCR, ReliefWeb, The New Humanitarian, Migration Policy,
+    Brookings, Pew, ILO, CGD, Foreign Affairs, The Lancet"""
+    sources = [
+        # Здоровье и эпидемии
+        ('https://www.who.int/rss-feeds/news-english.xml', 'WHO', 'social'),
+        ('https://www.who.int/feeds/entity/mediacentre/news/en/rss.xml', 'WHO', 'social'),
+        # Миграция и беженцы
+        ('https://www.unhcr.org/rss/news.xml', 'UNHCR', 'social'),
+        ('https://www.unhcr.org/feeds/rss.xml', 'UNHCR', 'social'),
+        ('https://www.migrationpolicy.org/feed', 'Migration Policy Institute', 'social'),
+        # Гуманитарные кризисы
+        ('https://www.thenewhumanitarian.org/rss.xml', 'The New Humanitarian', 'social'),
+        ('https://www.thenewhumanitarian.org/feed', 'The New Humanitarian', 'social'),
+        ('https://reliefweb.int/updates/rss.xml', 'ReliefWeb', 'social'),
+        # Think-tanks
+        ('https://www.brookings.edu/feed/', 'Brookings', 'social'),
+        ('https://www.pewresearch.org/feed/', 'Pew Research', 'social'),
+        ('https://www.cgdev.org/rss.xml', 'Center for Global Development', 'social'),
+        ('https://www.cbpp.org/feed', 'CBPP', 'social'),
+        # Труд и занятость
+        ('https://www.ilo.org/global/about-the-ilo/newsroom/news/WCMS_RSS/lang--en/index.xml', 'ILO', 'social'),
+        # Аналитика
+        ('https://www.foreignaffairs.com/rss.xml', 'Foreign Affairs', 'social'),
+        ('https://www.foreignaffairs.com/feeds/rss', 'Foreign Affairs', 'social'),
+        # WEF социальные риски
+        ('https://www.weforum.org/agenda/feed/', 'WEF', 'social'),
+    ]
+
+    items = []
+    seen_urls = set()
+    ua_list = [
+        {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
+        {'User-Agent': 'feedparser/6.0'},
+        {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+    ]
+
+    for url, src_name, domain in sources:
+        if url in seen_urls: continue
+        data = None
+        for hdrs in ua_list:
+            data = fetch_url(url, headers=hdrs, timeout=8)
+            if data: break
+        if not data: continue
+        seen_urls.add(url)
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(data)
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+            for item in root.findall('.//item')[:12]:
+                title = (item.findtext('title') or '').strip()
+                desc = (item.findtext('description') or '').strip()
+                link = (item.findtext('link') or '').strip()
+                pub = item.findtext('pubDate') or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'url': link,
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+            for entry in root.findall('atom:entry', ns)[:12]:
+                title = (entry.findtext('atom:title', namespaces=ns) or '').strip()
+                desc = (entry.findtext('atom:summary', namespaces=ns) or '').strip()
+                pub = entry.findtext('atom:published', namespaces=ns) or entry.findtext('atom:updated', namespaces=ns) or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+        except Exception as e:
+            print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
+
+    seen = set()
+    unique = []
+    for it in items:
+        key = it['title'][:50].lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(it)
+
+    print(f'  Социальные RSS: {len(unique)} событий', file=sys.stderr)
+    return unique
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3305,6 +3444,7 @@ if __name__ == '__main__':
     raw += fetch_gdacs()
     raw += fetch_usgs_earthquakes()
     raw += fetch_acled_rss()
+    raw += fetch_social_rss()
     raw += fetch_tech_rss()
     raw += fetch_climate_rss()
     raw += fetch_global_rss()
