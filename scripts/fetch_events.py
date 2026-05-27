@@ -3011,8 +3011,10 @@ if __name__ == '__main__':
             'structural': True
         })
 
-    events = news_events + structural_events
-    print(f"  Итого на карте: {len(news_events)} новостных + {len(structural_events)} структурных", file=sys.stderr)
+    # На карту идут только новостные события
+    # Структурные риски живут в risk-matrix.html отдельно
+    events = news_events
+    print(f"  Итого на карте: {len(news_events)} новостных событий", file=sys.stderr)
 
     save(events)
     inject_into_html(events)
