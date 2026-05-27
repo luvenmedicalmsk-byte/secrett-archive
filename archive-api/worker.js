@@ -1,6 +1,7 @@
 /**
  * Архив «Великое пробуждение» — Edge API v2
  * Cloudflare Worker
+ * Updated: 2026-05-27 with proxy endpoints
  */
 
 const CORS = {
