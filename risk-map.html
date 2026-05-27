@@ -913,41 +913,20 @@ async function loadPlanes(){
   }catch(e){console.warn('[Planes]',e.message);}
 }
 
-// ── СУДА через AISStream WebSocket ───────────────────────────
-function connectShips(){
-  if(wsShips){wsShips.close();wsShips=null;}
+// ── СУДА через Worker прокси (REST) ─────────────────────────
+async function connectShips(){
   try{
-    wsShips=new WebSocket('wss://stream.aisstream.io/v0/stream');
-    wsShips.onopen=()=>{
-      wsShips.send(JSON.stringify({
-        APIKey:AISSTREAM_KEY,
-        BoundingBoxes:[
-          [[10,32],[30,45]],   // Красное море
-          [[20,118],[28,126]], // Тайвань
-          [[54,10],[66,30]],   // Балтика
-          [[29,32],[32,35]],   // Суэц
-          [[24,55],[27,60]],   // Ормуз
-          [[49,-3],[52,3]]     // Ла-Манш
-        ],
-        FilterMessageTypes:['PositionReport']
-      }));
-    };
-    wsShips.onmessage=(e)=>{
-      try{
-        const msg=JSON.parse(e.data);
-        const pos=msg.Message?.PositionReport;
-        const meta=msg.MetaData;
-        if(!pos||!meta||shipsMarkers.length>=150)return;
-        const lat=pos.Latitude,lng=pos.Longitude;
-        if(!lat||!lng||lat===0)return;
-        const name=(meta.ShipName||'').trim()||'Неизвестно';
-        const m=L.marker([lat,lng],{icon:shipIcon})
-          .bindPopup('<b style="color:#5AB4D4">'+name+'</b><br><span style="font-size:11px;color:#A8A090">MMSI: '+
-            (meta.MMSI||'')+'<br>Скорость: '+((pos.Sog||0).toFixed(1))+' уз<br>Курс: '+((pos.Cog||0).toFixed(0))+'°</span>');
-        m.addTo(map);shipsMarkers.push(m);
-      }catch(_){}
-    };
-    wsShips.onerror=()=>console.warn('[Ships] WS error');
+    const r=await fetch(API_BASE+'/api/proxy/ships',{signal:AbortSignal.timeout(15000)});
+    if(!r.ok)return;
+    const data=await r.json();
+    clearLayer(shipsMarkers);
+    (data.ships||[]).forEach(s=>{
+      const m=L.marker([s.lat,s.lng],{icon:shipIcon})
+        .bindPopup('<b style="color:#5AB4D4">'+s.name+'</b><br><span style="font-size:11px;color:#A8A090">'+
+          'MMSI: '+s.mmsi+'<br>Скорость: '+(s.sog||0).toFixed(1)+' уз<br>Зона: '+s.zone+'</span>');
+      m.addTo(map);shipsMarkers.push(m);
+    });
+    console.info('[Ships]',shipsMarkers.length,'судов');
   }catch(e){console.warn('[Ships]',e.message);}
 }
 
@@ -997,11 +976,16 @@ document.getElementById('lb-planes').addEventListener('click',async function(){
   }
 });
 
-document.getElementById('lb-ships').addEventListener('click',function(){
+document.getElementById('lb-ships').addEventListener('click',async function(){
   shipsActive=!shipsActive;
   this.classList.toggle('active',shipsActive);
-  if(shipsActive){connectShips();}
-  else{clearLayer(shipsMarkers);if(wsShips){wsShips.close();wsShips=null;}}
+  if(shipsActive){
+    this.textContent='🚢 Загрузка...';
+    await connectShips();
+    this.textContent='🚢 Суда';
+  } else {
+    clearLayer(shipsMarkers);
+  }
 });
 
 document.getElementById('lb-outages').addEventListener('click',async function(){
