@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Эскалация сигналов — Архив системных рисков</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#B8973A;--gold-light:#D4AF5A;--gold-dim:#7A6228;
+  --cyan:#1FAACC;--cyan-dim:#0E6B82;--cyan-glow:rgba(31,170,204,.12);--cyan-border:rgba(31,170,204,.25);
+  --cream:#F0E8D8;--dark:#0A0906;--dark-mid:#0D0C09;--dark-soft:#161410;--dark-card:#111009;
+  --text-muted:#6A6458;--text-soft:#A8A090;
+  --border:rgba(184,151,58,.14);--border-strong:rgba(184,151,58,.32);
+  /* escalation levels */
+  --lvl-critical:#C0392B;--lvl-high:#D35400;--lvl-moderate:#B8973A;--lvl-weak:#2980B9;--lvl-none:#3A3A3A;
+  /* domain */
+  --d-climate:#27AE60;--d-economy:#2980B9;--d-geopolitics:#D35400;--d-technology:#8E44AD;--d-social:#C0392B;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--dark);color:var(--cream);font-family:'Montserrat',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+
+/* ── NAV ─────────────────────────────────────────────────────────────────── */
+nav{position:sticky;top:0;z-index:100;background:rgba(10,9,6,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.nav-brand{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text-muted);letter-spacing:.06em;text-decoration:none}
+.nav-brand span{color:var(--gold)}
+.nav-links{display:flex;gap:6px;align-items:center}
+.nav-link{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:5px 10px;border:1px solid transparent;border-radius:3px;transition:all .2s}
+.nav-link:hover,.nav-link.active{border-color:var(--cyan-border);color:var(--cyan)}
+.nav-gri{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.1em}
+.gri-label{color:var(--text-muted)}
+.gri-score{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;line-height:1}
+.gri-level{font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:2px 7px;border-radius:2px}
+
+/* ── LAYOUT ──────────────────────────────────────────────────────────────── */
+.page{max-width:1280px;margin:0 auto;padding:24px 20px 60px}
+.section-label{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--cream);margin-bottom:6px}
+
+/* ── GRID ────────────────────────────────────────────────────────────────── */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px}
+@media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}}
+
+/* ── CARDS ───────────────────────────────────────────────────────────────── */
+.card{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:16px 18px}
+.card-sm{padding:12px 14px}
+.card-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.card-val{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;line-height:1;color:var(--cyan)}
+.card-sub{font-size:11px;color:var(--text-muted);margin-top:4px}
+
+/* ── GLOBAL RISK INDEX HERO ──────────────────────────────────────────────── */
+.gri-hero{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:28px;display:grid;grid-template-columns:200px 1fr 1fr;gap:24px;align-items:center}
+@media(max-width:700px){.gri-hero{grid-template-columns:1fr}}
+.gri-main{text-align:center}
+.gri-index{font-family:'Cormorant Garamond',serif;font-size:80px;font-weight:300;line-height:1}
+.gri-level-badge{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:2px;margin-top:8px}
+.gri-updated{font-size:10px;color:var(--text-muted);margin-top:8px}
+.gri-domains{}
+.gri-domain-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)}
+.gri-domain-row:last-child{border-bottom:none}
+.gri-domain-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.gri-domain-name{font-size:11px;color:var(--text-soft);flex:1}
+.gri-domain-bar-wrap{width:100px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.gri-domain-bar{height:100%;border-radius:2px;transition:width .6s ease}
+.gri-domain-score{font-size:11px;color:var(--cream);min-width:28px;text-align:right}
+.gri-regions{}
+.gri-region-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.gri-region-row:last-child{border-bottom:none}
+.gri-region-name{font-size:11px;color:var(--text-soft)}
+.gri-region-score{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--cream)}
+.gri-region-level{font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:1px 6px;border-radius:2px;margin-left:6px}
+
+/* ── FILTERS ─────────────────────────────────────────────────────────────── */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center}
+.filter-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-right:4px}
+.filter-pill{font-size:10px;letter-spacing:.08em;color:var(--text-muted);background:var(--dark-card);border:1px solid var(--border);padding:4px 11px;border-radius:20px;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
+.filter-pill:hover{border-color:var(--cyan-border);color:var(--cyan)}
+.filter-pill.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-glow)}
+.filter-pill.pill-level-critical.active{border-color:var(--lvl-critical);color:var(--lvl-critical);background:rgba(192,57,43,.1)}
+.filter-pill.pill-level-high.active{border-color:var(--lvl-high);color:var(--lvl-high);background:rgba(211,84,0,.1)}
+.filter-pill.pill-type-escalation.active{border-color:var(--gold-dim);color:var(--gold-light);background:rgba(184,151,58,.08)}
+.filter-pill.pill-trend-rising.active{border-color:#27AE60;color:#2ECC71;background:rgba(39,174,96,.08)}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+
+/* ── SIGNAL TABLE ────────────────────────────────────────────────────────── */
+.signal-table{width:100%;border-collapse:collapse;margin-bottom:28px}
+.signal-table th{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;font-weight:500}
+.signal-table th:last-child,.signal-table td:last-child{text-align:right}
+.signal-table td{padding:10px 12px;border-bottom:1px solid rgba(184,151,58,.07);vertical-align:middle}
+.signal-table tr{transition:background .15s;cursor:pointer}
+.signal-table tr:hover td{background:rgba(255,255,255,.02)}
+.signal-table tr.expanded td{background:rgba(31,170,204,.04)}
+.st-domain{display:flex;align-items:center;gap:7px}
+.st-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.st-domain-name{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.st-title{font-size:13px;color:var(--cream);line-height:1.4;max-width:340px}
+.st-fp{font-size:9px;color:var(--text-muted);font-family:monospace;margin-top:2px}
+.st-score{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300}
+.st-level{font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:2px;white-space:nowrap}
+.st-delta{font-size:12px;font-weight:500}
+.st-trend{font-size:10px;letter-spacing:.08em;display:flex;align-items:center;gap:4px}
+.trend-arrow{font-size:12px}
+.st-count{font-size:12px;color:var(--text-soft)}
+.st-sparkline{display:flex;align-items:flex-end;gap:2px;height:24px}
+.spark-bar{width:4px;background:rgba(31,170,204,.4);border-radius:1px 1px 0 0;transition:background .2s}
+.spark-bar.rising{background:rgba(192,57,43,.6)}
+.spark-bar.falling{background:rgba(41,128,185,.6)}
+/* expanded row detail */
+.signal-detail{display:none;background:rgba(31,170,204,.03);border-bottom:1px solid var(--border)}
+.signal-detail.open{display:table-row}
+.sd-inner{padding:14px 12px 14px 32px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:700px){.sd-inner{grid-template-columns:1fr}}
+.sd-block-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.sd-vectors{display:flex;flex-wrap:wrap;gap:5px}
+.sd-vector{font-size:9px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--border);padding:2px 8px;border-radius:2px;color:var(--text-soft)}
+.sd-cascade{font-size:11px;color:var(--text-soft)}
+.sd-summary{font-size:12px;color:var(--text-muted);line-height:1.7;max-width:600px}
+
+/* ── WEAK SIGNALS ────────────────────────────────────────────────────────── */
+.weak-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:28px}
+.weak-card{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:14px 16px;transition:border-color .2s;cursor:pointer}
+.weak-card:hover{border-color:rgba(41,128,185,.4)}
+.wc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.wc-type{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted)}
+.wc-delta{font-size:11px;font-weight:600;color:#2ECC71}
+.wc-title{font-size:12px;color:var(--text-soft);line-height:1.5;margin-bottom:8px}
+.wc-footer{display:flex;justify-content:space-between;align-items:center}
+.wc-sev{font-size:11px;color:var(--text-muted)}
+.wc-trend-line{display:flex;align-items:flex-end;gap:2px;height:16px}
+.wc-spark{width:3px;border-radius:1px;background:rgba(31,170,204,.35)}
+
+/* ── HEATMAP ─────────────────────────────────────────────────────────────── */
+.heatmap-wrap{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:28px}
+.heatmap-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden;margin-top:14px}
+.hm-cell{padding:12px 10px;position:relative;cursor:pointer;transition:filter .2s}
+.hm-cell:hover{filter:brightness(1.3)}
+.hm-domain{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px}
+.hm-score{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;line-height:1}
+.hm-count{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px}
+.hm-trend{font-size:10px;position:absolute;top:8px;right:10px;opacity:.7}
+
+/* ── TIMELINE (mini) ─────────────────────────────────────────────────────── */
+.timeline-wrap{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:28px}
+.tl-svg{width:100%;height:72px;display:block}
+.tl-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px}
+
+/* ── STAT CARDS ──────────────────────────────────────────────────────────── */
+.stat-card{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:16px}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;line-height:1}
+.stat-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-top:4px}
+
+/* ── FEED ────────────────────────────────────────────────────────────────── */
+.feed-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
+.fi-score{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;min-width:38px;text-align:right;flex-shrink:0;margin-top:2px}
+.fi-body{flex:1;min-width:0}
+.fi-title{font-size:13px;color:var(--cream);line-height:1.4;margin-bottom:4px}
+.fi-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fi-badge{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid var(--border);color:var(--text-muted)}
+.fi-time{font-size:10px;color:var(--text-muted)}
+
+/* ── LEVEL COLORS ────────────────────────────────────────────────────────── */
+.lv-critical{color:var(--lvl-critical)}
+.lv-high{color:var(--lvl-high)}
+.lv-moderate{color:var(--lvl-moderate)}
+.lv-weak{color:var(--lvl-weak)}
+.lv-none{color:var(--text-muted)}
+.bg-critical{background:rgba(192,57,43,.12);border-color:rgba(192,57,43,.3)}
+.bg-high{background:rgba(211,84,0,.12);border-color:rgba(211,84,0,.3)}
+.bg-moderate{background:rgba(184,151,58,.1);border-color:rgba(184,151,58,.25)}
+.bg-weak{background:rgba(41,128,185,.1);border-color:rgba(41,128,185,.25)}
+
+/* ── LOADER ──────────────────────────────────────────────────────────────── */
+.loader{display:flex;align-items:center;justify-content:center;height:200px;flex-direction:column;gap:12px}
+.loader-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulse 1.4s ease-in-out infinite}
+.loader-dot:nth-child(2){animation-delay:.2s}
+.loader-dot:nth-child(3){animation-delay:.4s}
+.loader-text{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted)}
+@keyframes pulse{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
+/* ── COUNTRY SCHEMA PREVIEW (premium) ───────────────────────────────────── */
+.premium-badge{display:inline-flex;align-items:center;gap:5px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-dim);border:1px solid rgba(184,151,58,.2);padding:3px 9px;border-radius:2px}
+.country-card{background:var(--dark-card);border:1px solid var(--border-strong);border-radius:4px;padding:20px;position:relative;overflow:hidden}
+.country-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(184,151,58,.04) 0%,transparent 60%);pointer-events:none}
+.cc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.cc-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300}
+.cc-risk-ring{width:60px;height:60px;position:relative}
+.cc-ring-svg{width:60px;height:60px}
+.cc-ring-score{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300}
+.cc-domains{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.cc-domain-row{display:flex;align-items:center;gap:6px}
+.cc-dom-label{font-size:10px;color:var(--text-muted);flex:1}
+.cc-dom-bar{flex:2;height:2px;background:rgba(255,255,255,.08);border-radius:1px;overflow:hidden}
+.cc-dom-fill{height:100%;border-radius:1px}
+.cc-dom-val{font-size:10px;color:var(--text-soft);min-width:24px;text-align:right}
+.cc-signals{font-size:11px;color:var(--text-muted);line-height:1.6}
+.cc-signal-item{display:flex;gap:6px;margin-bottom:4px}
+.cc-signal-bullet{color:var(--gold-dim);flex-shrink:0}
+
+/* ── SECTION DIVIDER ─────────────────────────────────────────────────────── */
+.divider{height:1px;background:var(--border);margin:32px 0}
+.section-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+.sh-action{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan-dim);cursor:pointer;text-decoration:none;transition:color .2s}
+.sh-action:hover{color:var(--cyan)}
+
+/* ── EMPTY STATE ─────────────────────────────────────────────────────────── */
+.empty{padding:32px;text-align:center;color:var(--text-muted);font-size:12px;letter-spacing:.08em}
+
+/* ── SCROLLBAR ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(184,151,58,.2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-brand"><span>Архив</span> · Сигналы</a>
+  <div class="nav-links">
+    <a href="risk-map.html" class="nav-link">Карта</a>
+    <a href="escalation.html" class="nav-link active">Эскалация</a>
+    <a href="risk-matrix.html" class="nav-link">Матрица</a>
+  </div>
+  <div class="nav-gri">
+    <span class="gri-label">GRI</span>
+    <span class="gri-score" id="nav-gri-score" style="color:var(--text-muted)">—</span>
+    <span class="gri-level" id="nav-gri-level" style="background:rgba(106,100,88,.15);color:var(--text-muted)"></span>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- ── GLOBAL RISK INDEX ─────────────────────────────────────────── -->
+  <div class="section-label">Глобальный индекс риска</div>
+  <div id="gri-hero" class="gri-hero">
+    <div class="loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-text">загрузка</div></div>
+  </div>
+
+  <!-- ── STAT CARDS ─────────────────────────────────────────────────── -->
+  <div class="grid-4" id="stat-cards">
+    <div class="stat-card"><div class="stat-num" id="stat-critical" style="color:var(--lvl-critical)">—</div><div class="stat-label">Критических</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-high" style="color:var(--lvl-high)">—</div><div class="stat-label">Высоких</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-rising" style="color:#2ECC71">—</div><div class="stat-label">Нарастающих</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-weak-signals" style="color:var(--cyan)">—</div><div class="stat-label">Слабых сигналов</div></div>
+  </div>
+
+  <!-- ── FILTERS ────────────────────────────────────────────────────── -->
+  <div class="filters" id="filter-bar">
+    <span class="filter-label">Уровень:</span>
+    <span class="filter-pill pill-level-critical" data-f="level" data-v="critical">Critical</span>
+    <span class="filter-pill pill-level-high"     data-f="level" data-v="high">High</span>
+    <span class="filter-pill"                     data-f="level" data-v="moderate">Moderate</span>
+    <span class="filter-pill"                     data-f="level" data-v="weak">Weak</span>
+    <span class="filter-sep"></span>
+    <span class="filter-label">Тип:</span>
+    <span class="filter-pill pill-type-escalation" data-f="type" data-v="escalation">Эскалация</span>
+    <span class="filter-pill"                      data-f="type" data-v="anomaly">Аномалия</span>
+    <span class="filter-pill"                      data-f="type" data-v="structural">Структурный</span>
+    <span class="filter-sep"></span>
+    <span class="filter-label">Тренд:</span>
+    <span class="filter-pill pill-trend-rising" data-f="trend" data-v="rising">↑ Рост</span>
+    <span class="filter-pill"                  data-f="trend" data-v="volatile">≈ Волатиль</span>
+    <span class="filter-pill"                  data-f="trend" data-v="falling">↓ Спад</span>
+    <span class="filter-sep"></span>
+    <span class="filter-label">Домен:</span>
+    <span class="filter-pill" data-f="domain" data-v="geopolitics">Геополитика</span>
+    <span class="filter-pill" data-f="domain" data-v="climate">Климат</span>
+    <span class="filter-pill" data-f="domain" data-v="economy">Экономика</span>
+    <span class="filter-pill" data-f="domain" data-v="technology">Технологии</span>
+    <span class="filter-pill" data-f="domain" data-v="social">Социум</span>
+  </div>
+
+  <!-- ── HEATMAP ─────────────────────────────────────────────────────── -->
+  <div class="heatmap-wrap" id="heatmap-section">
+    <div class="section-header">
+      <div>
+        <div class="section-label" style="margin-bottom:4px">Карта плотности сигналов</div>
+        <div style="font-size:11px;color:var(--text-muted)">Интенсивность по доменам — цвет = уровень эскалации</div>
+      </div>
+    </div>
+    <div class="heatmap-grid" id="heatmap-grid"></div>
+  </div>
+
+  <!-- ── SIGNAL TABLE ───────────────────────────────────────────────── -->
+  <div class="section-header">
+    <div>
+      <div class="section-label" style="margin-bottom:2px">Сигналы эскалации</div>
+      <div style="font-size:11px;color:var(--text-muted)">Отсортировано по escalation_score · клик — детали</div>
+    </div>
+    <span id="table-count" style="font-size:11px;color:var(--text-muted)"></span>
+  </div>
+  <div style="overflow-x:auto">
+    <table class="signal-table">
+      <thead>
+        <tr>
+          <th>Домен</th>
+          <th>Сигнал</th>
+          <th>Score</th>
+          <th>Δ 24h</th>
+          <th>Тренд</th>
+          <th>24h / 7d</th>
+          <th>Динамика</th>
+        </tr>
+      </thead>
+      <tbody id="signal-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ── WEAK SIGNALS ───────────────────────────────────────────────── -->
+  <div class="section-header">
+    <div>
+      <div class="section-label" style="margin-bottom:2px">Слабые сигналы</div>
+      <div style="font-size:11px;color:var(--text-muted)">Низкая тяжесть, но нарастающий тренд — ранние индикаторы</div>
+    </div>
+  </div>
+  <div class="weak-grid" id="weak-grid"></div>
+
+  <div class="divider"></div>
+
+  <!-- ── PREMIUM: COUNTRY RISK PROFILE ─────────────────────────────── -->
+  <div class="section-header">
+    <div>
+      <div class="section-label" style="margin-bottom:4px">Country Risk Profile <span class="premium-badge">◈ premium foundation</span></div>
+      <div style="font-size:11px;color:var(--text-muted)">Профиль системных рисков по стране — вычисляется из live signals</div>
+    </div>
+  </div>
+  <div class="grid-3" id="country-profiles"></div>
+
+  <div class="divider"></div>
+
+  <!-- ── ESCALATION FEED ────────────────────────────────────────────── -->
+  <div class="section-header">
+    <div class="section-label">Лента эскалации · real-time feed</div>
+  </div>
+  <div id="esc-feed"></div>
+
+</div><!-- /page -->
+
+<script>
+const API = 'https://archive-api.luven-medical-msk.workers.dev';
+const DC  = {climate:'#27AE60',economy:'#2980B9',geopolitics:'#D35400',technology:'#8E44AD',social:'#C0392B'};
+const DL  = {climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
+const LC  = {critical:'var(--lvl-critical)',high:'var(--lvl-high)',moderate:'var(--lvl-moderate)',weak:'var(--lvl-weak)',none:'var(--text-muted)'};
+const LBG = {critical:'rgba(192,57,43,.12)',high:'rgba(211,84,0,.1)',moderate:'rgba(184,151,58,.08)',weak:'rgba(41,128,185,.08)',none:'transparent'};
+const TC  = {rising:'#2ECC71',falling:'#5DADE2',stable:'#7F8C8D',volatile:'#E74C3C',new:'#7F8C8D'};
+const TA  = {rising:'↑',falling:'↓',stable:'→',volatile:'≈',new:'·'};
+
+// ── STATE ─────────────────────────────────────────────────────────────
+let ALL = [], GRI = null;
+let FILTERS = {level:null, type:null, trend:null, domain:null};
+
+// ── FETCH ─────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    // Параллельная загрузка: events + risk-index
+    const [evRes, griRes] = await Promise.all([
+      fetch(API + '/api/events?limit=200&sort=severity&order=desc', {signal:AbortSignal.timeout(8000)}),
+      fetch(API + '/api/risk-index', {signal:AbortSignal.timeout(4000)}),
+    ]);
+
+    if (evRes.ok) {
+      const d = await evRes.json();
+      ALL = d.events || d.meta?.events || [];
+    }
+    if (griRes.ok) GRI = await griRes.json();
+  } catch(e) {
+    // Fallback: пробуем events.json напрямую
+    try {
+      const r = await fetch('/docs/events.json', {signal:AbortSignal.timeout(5000)});
+      if (r.ok) { const d = await r.json(); ALL = d.events || []; }
+    } catch {}
+  }
+
+  render();
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────────
+function applyFilters(events) {
+  return events.filter(e => {
+    if (FILTERS.level  && e.escalation_level  !== FILTERS.level)  return false;
+    if (FILTERS.type   && e.signal_type       !== FILTERS.type)   return false;
+    if (FILTERS.trend  && e.trend_direction   !== FILTERS.trend)  return false;
+    if (FILTERS.domain && e.domain            !== FILTERS.domain) return false;
+    return true;
+  });
+}
+
+document.querySelectorAll('.filter-pill').forEach(p => {
+  p.addEventListener('click', () => {
+    const f = p.dataset.f, v = p.dataset.v;
+    if (FILTERS[f] === v) {
+      FILTERS[f] = null;
+      p.classList.remove('active');
+    } else {
+      document.querySelectorAll(`[data-f="${f}"]`).forEach(x => x.classList.remove('active'));
+      FILTERS[f] = v;
+      p.classList.add('active');
+    }
+    renderTable();
+    renderWeakSignals();
+  });
+});
+
+// ── RENDER ALL ────────────────────────────────────────────────────────
+function render() {
+  renderGRI();
+  renderStats();
+  renderHeatmap();
+  renderTable();
+  renderWeakSignals();
+  renderCountryProfiles();
+  renderFeed();
+}
+
+// ── GRI HERO ──────────────────────────────────────────────────────────
+function levelColor(l) { return LC[l] || LC.none; }
+function levelBg(l)    { return LBG[l] || LBG.none; }
+
+function renderGRI() {
+  const hero = document.getElementById('gri-hero');
+  const gri  = GRI;
+  const events = ALL;
+
+  const index = gri?.index ?? (events.length ? Math.round(events.reduce((s,e) => s+(e.escalation_score||0),0)/events.length) : 0);
+  const level = gri?.level ?? levelFromScore(index);
+  const critical_count = gri?.critical_count ?? events.filter(e => e.escalation_level === 'critical').length;
+  const col = levelColor(level);
+
+  // Update nav
+  const navScore = document.getElementById('nav-gri-score');
+  const navLevel = document.getElementById('nav-gri-level');
+  navScore.textContent = index;
+  navScore.style.color = col;
+  navLevel.textContent = level.toUpperCase();
+  navLevel.style.background = levelBg(level);
+  navLevel.style.color = col;
+
+  // Top domains by avg escalation score
+  const byDomain = gri?.by_domain || {};
+  const domainRows = Object.entries(
+    events.reduce((acc, e) => {
+      if (!e.domain || !(e.escalation_score > 0)) return acc;
+      if (!acc[e.domain]) acc[e.domain] = [];
+      acc[e.domain].push(e.escalation_score);
+      return acc;
+    }, {})
+  ).map(([d, scores]) => ({
+    domain: d,
+    avg: Math.round(scores.reduce((a,b)=>a+b,0)/scores.length),
+    max: Math.max(...scores),
+    count: scores.length
+  })).sort((a,b) => b.avg - a.avg);
+
+  // Top regions
+  const byRegion = events.reduce((acc, e) => {
+    const r = (e.region || 'Глобально').split(' ·')[0].split('/')[0].trim().slice(0,24);
+    if (!e.escalation_score || e.escalation_score < 20) return acc;
+    if (!acc[r]) acc[r] = [];
+    acc[r].push(e.escalation_score);
+    return acc;
+  }, {});
+  const regionRows = Object.entries(byRegion)
+    .map(([r, sc]) => ({region:r, avg:Math.round(sc.reduce((a,b)=>a+b,0)/sc.length), count:sc.length}))
+    .sort((a,b) => b.avg - a.avg).slice(0,6);
+
+  hero.innerHTML = `
+    <div class="gri-main">
+      <div class="gri-index" style="color:${col}">${index}</div>
+      <div><span class="gri-level-badge" style="background:${levelBg(level)};color:${col};border:1px solid ${col}40">${level.toUpperCase()}</span></div>
+      <div class="gri-updated">${gri?.updated ? 'Обновлено: ' + new Date(gri.updated).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) : ''}</div>
+    </div>
+    <div class="gri-domains">
+      <div class="card-label" style="margin-bottom:10px">Топ доменов</div>
+      ${domainRows.map(d => `
+        <div class="gri-domain-row">
+          <div class="gri-domain-dot" style="background:${DC[d.domain]||'#888'}"></div>
+          <div class="gri-domain-name">${DL[d.domain]||d.domain}</div>
+          <div class="gri-domain-bar-wrap"><div class="gri-domain-bar" style="width:${d.avg}%;background:${DC[d.domain]||'#888'}40;border:0"></div></div>
+          <div class="gri-domain-score" style="color:${DC[d.domain]||'#888'}">${d.avg}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="gri-regions">
+      <div class="card-label" style="margin-bottom:10px">Топ регионов</div>
+      ${regionRows.map(r => `
+        <div class="gri-region-row">
+          <div class="gri-region-name">${r.region}</div>
+          <div>
+            <span class="gri-region-score">${r.avg}</span>
+            <span class="gri-region-level" style="background:${levelBg(levelFromScore(r.avg))};color:${levelColor(levelFromScore(r.avg))};border:1px solid ${levelColor(levelFromScore(r.avg))}40">${levelFromScore(r.avg).toUpperCase()}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function levelFromScore(s) {
+  return s >= 80 ? 'critical' : s >= 60 ? 'high' : s >= 35 ? 'moderate' : s >= 15 ? 'weak' : 'none';
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────
+function renderStats() {
+  const ev = ALL;
+  document.getElementById('stat-critical').textContent = ev.filter(e => e.escalation_level === 'critical').length;
+  document.getElementById('stat-high').textContent     = ev.filter(e => e.escalation_level === 'high').length;
+  document.getElementById('stat-rising').textContent   = ev.filter(e => e.trend_direction === 'rising').length;
+  // Weak signals: severity < 65 AND (trend rising OR delta > 2)
+  document.getElementById('stat-weak-signals').textContent = ev.filter(e =>
+    (e.severity||0) < 65 && ((e.trend_direction === 'rising') || (e.severity_delta||0) >= 3)
+  ).length;
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────
+function renderHeatmap() {
+  const domains = ['geopolitics','climate','economy','technology','social'];
+  const ev = ALL;
+  const grid = document.getElementById('heatmap-grid');
+  grid.innerHTML = domains.map(d => {
+    const sub = ev.filter(e => e.domain === d);
+    if (!sub.length) return `<div class="hm-cell" style="background:rgba(255,255,255,.015)"><div class="hm-domain">${DL[d]||d}</div><div class="hm-score" style="color:var(--text-muted)">—</div></div>`;
+    const avgEsc = Math.round(sub.reduce((s,e)=>s+(e.escalation_score||0),0)/sub.length);
+    const maxEsc = Math.max(...sub.map(e=>e.escalation_score||0));
+    const level = levelFromScore(avgEsc);
+    const rising = sub.filter(e=>e.trend_direction==='rising').length;
+    const col = levelColor(level);
+    const bg = levelBg(level);
+    const trendIcon = rising > sub.length * 0.3 ? '↑' : sub.filter(e=>e.trend_direction==='falling').length > sub.length * 0.3 ? '↓' : '→';
+    const alpha = 0.05 + (avgEsc / 100) * 0.18;
+    return `<div class="hm-cell" style="background:rgba(${hexToRgb(DC[d])},${alpha})" title="${DL[d]}: avg esc ${avgEsc}">
+      <div class="hm-trend" style="color:${TC[rising>sub.length*.3?'rising':'stable']}">${trendIcon}</div>
+      <div class="hm-domain" style="color:${DC[d]}">${DL[d]||d}</div>
+      <div class="hm-score" style="color:${col}">${avgEsc}</div>
+      <div class="hm-count">${sub.length} сигналов · max ${maxEsc}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── SIGNAL TABLE ──────────────────────────────────────────────────────
+function renderTable() {
+  const filtered = applyFilters([...ALL])
+    .filter(e => (e.escalation_score||0) >= 15 || (e.severity||0) >= 70)
+    .sort((a,b) => (b.escalation_score||0) - (a.escalation_score||0))
+    .slice(0, 80);
+
+  document.getElementById('table-count').textContent = `${filtered.length} сигналов`;
+
+  const tbody = document.getElementById('signal-tbody');
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="7" class="empty">Нет сигналов по выбранным фильтрам</td></tr>`; return; }
+
+  tbody.innerHTML = filtered.map((e, idx) => {
+    const domCol  = DC[e.domain] || '#888';
+    const lvlCol  = levelColor(e.escalation_level||'none');
+    const lvlBg   = levelBg(e.escalation_level||'none');
+    const delta   = e.severity_delta || 0;
+    const deltaStr = delta > 0 ? `<span class="st-delta" style="color:#2ECC71">+${delta}</span>` : delta < 0 ? `<span class="st-delta" style="color:#5DADE2">${delta}</span>` : `<span style="color:var(--text-muted)">0</span>`;
+    const trend = e.trend_direction || 'new';
+    const trendStr = `<span class="trend-arrow" style="color:${TC[trend]}">${TA[trend]}</span><span style="color:${TC[trend]};font-size:10px">${trend}</span>`;
+    const series = e.count_7d > 0 ? Array.from({length:7}, (_,i) => Math.max(1, Math.round((e.avg_severity_7d||e.severity||50)*(0.85+i*0.025+(Math.random()-0.5)*0.1)))) : [];
+    const sparkMax = series.length ? Math.max(...series) : 1;
+    const sparkHtml = series.map(v => {
+      const h = Math.max(2, Math.round((v/sparkMax)*22));
+      const bc = trend==='rising'?'rgba(192,57,43,.5)':trend==='falling'?'rgba(41,128,185,.4)':'rgba(255,255,255,.15)';
+      return `<div class="spark-bar ${trend}" style="height:${h}px;background:${bc}"></div>`;
+    }).join('');
+    return `
+      <tr onclick="toggleDetail(${idx})" id="row-${idx}">
+        <td><div class="st-domain"><div class="st-dot" style="background:${domCol}"></div><div class="st-domain-name">${DL[e.domain]||e.domain||'—'}</div></div></td>
+        <td><div class="st-title">${e.title||'—'}</div><div class="st-fp">${e.fingerprint||''}</div></td>
+        <td><div class="st-score" style="color:${lvlCol}">${e.escalation_score??'—'}</div><div class="st-level" style="background:${lvlBg};color:${lvlCol};border:1px solid ${lvlCol}30">${e.escalation_level||'—'}</div></td>
+        <td>${deltaStr}</td>
+        <td><div class="st-trend">${trendStr}</div></td>
+        <td class="st-count">${e.count_24h??'—'} / ${e.count_7d??'—'}</td>
+        <td><div class="st-sparkline">${sparkHtml}</div></td>
+      </tr>
+      <tr class="signal-detail" id="detail-${idx}">
+        <td colspan="7">
+          <div class="sd-inner">
+            <div>
+              <div class="sd-block-label">Векторы</div>
+              <div class="sd-vectors">${(e.vectors||[]).map(v=>`<span class="sd-vector">${v}</span>`).join('')||'—'}</div>
+              <div style="margin-top:10px">
+                <div class="sd-block-label">Каскад</div>
+                <div class="sd-cascade">${(e.cascade||[]).map(c=>`→ ${DL[c]||c}`).join(' · ')||'нет'}</div>
+              </div>
+            </div>
+            <div>
+              <div class="sd-block-label">Характеристики</div>
+              <div style="font-size:11px;color:var(--text-soft);line-height:1.9">
+                phase: <b style="color:var(--cream)">${e.phase||'—'}</b><br>
+                horizon: <b style="color:var(--cream)">${e.horizon||'—'}</b><br>
+                avg_sev_7d: <b style="color:var(--cyan)">${e.avg_severity_7d??'—'}</b><br>
+                severity_delta: <b style="color:${delta>0?'#2ECC71':delta<0?'#5DADE2':'var(--text-muted)'}">${delta>0?'+':''}${delta}</b>
+              </div>
+            </div>
+            <div>
+              <div class="sd-block-label">Краткое описание</div>
+              <div class="sd-summary">${(e.summary||'').slice(0,200).replace(/<[^>]+>/g,' ')}${(e.summary||'').length>200?'…':''}</div>
+              <div style="margin-top:8px;font-size:10px;color:var(--text-muted)">${e.source||''} · ${e.date||''} · ${e.region||''}</div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function toggleDetail(idx) {
+  const row    = document.getElementById(`row-${idx}`);
+  const detail = document.getElementById(`detail-${idx}`);
+  const open   = detail.classList.toggle('open');
+  row.classList.toggle('expanded', open);
+}
+
+// ── WEAK SIGNALS ──────────────────────────────────────────────────────
+function renderWeakSignals() {
+  const weak = ALL
+    .filter(e => (e.severity||0) < 65 && ((e.trend_direction === 'rising') || (e.severity_delta||0) >= 3))
+    .sort((a,b) => (b.severity_delta||0) - (a.severity_delta||0))
+    .slice(0, 12);
+
+  const grid = document.getElementById('weak-grid');
+  if (!weak.length) { grid.innerHTML = `<div class="empty">Слабые сигналы не обнаружены</div>`; return; }
+
+  grid.innerHTML = weak.map(e => {
+    const domCol  = DC[e.domain] || '#888';
+    const delta   = e.severity_delta || 0;
+    const series  = Array.from({length:8}, (_,i) => Math.max(2, (e.severity||50) - 5 + i * 0.8));
+    const sparkMax = Math.max(...series);
+    const sparkHtml = series.map(v => `<div class="wc-spark" style="height:${Math.round((v/sparkMax)*14)+2}px;background:rgba(39,174,96,.35)"></div>`).join('');
+    return `<div class="weak-card" onclick="">
+      <div class="wc-header">
+        <div class="wc-type" style="color:${domCol}">${DL[e.domain]||e.domain}</div>
+        <div class="wc-delta">+${delta}</div>
+      </div>
+      <div class="wc-title">${(e.title||'').slice(0,90)}${(e.title||'').length>90?'…':''}</div>
+      <div class="wc-footer">
+        <div class="wc-sev">sev: ${e.severity} · 24h: ${e.count_24h??'?'}</div>
+        <div class="wc-trend-line">${sparkHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── COUNTRY PROFILES (premium foundation) ─────────────────────────────
+function renderCountryProfiles() {
+  // Вычисляем из сигналов — без отдельного API
+  const PRIORITY_REGIONS = [
+    {name:'Иран', keywords:['iran','ормузск','иранск']},
+    {name:'Россия / Украина', keywords:['россия','украина','russia','ukraine','kiev','москва']},
+    {name:'Израиль / Газа', keywords:['israel','gaza','хамас','израиль','газа','lebanon','ливан']},
+  ];
+
+  const profiles = PRIORITY_REGIONS.map(pr => {
+    const match = ALL.filter(e => {
+      const t = ((e.title||'')+(e.region||'')+(e.summary||'')).toLowerCase();
+      return pr.keywords.some(k => t.includes(k));
+    });
+    if (!match.length) return null;
+
+    const avgEsc = Math.round(match.reduce((s,e)=>s+(e.escalation_score||0),0)/match.length);
+    const maxSev = Math.max(...match.map(e=>e.severity||0));
+    const level  = levelFromScore(avgEsc);
+    const col    = levelColor(level);
+
+    // Domain breakdown
+    const domBreak = Object.entries(
+      match.reduce((acc,e) => { acc[e.domain]=(acc[e.domain]||0)+(e.escalation_score||0); return acc; },{})
+    ).sort((a,b)=>b[1]-a[1]).slice(0,4);
+
+    // Top signals
+    const topSig = match.sort((a,b)=>(b.escalation_score||0)-(a.escalation_score||0)).slice(0,3);
+
+    const total = domBreak.reduce((s,[,v])=>s+v,0)||1;
+    return {name:pr.name, avgEsc, maxSev, level, col, domBreak, topSig, total, count:match.length};
+  }).filter(Boolean);
+
+  const el = document.getElementById('country-profiles');
+  el.innerHTML = profiles.map(p => `
+    <div class="country-card">
+      <div class="cc-header">
+        <div>
+          <div class="cc-name">${p.name}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${p.count} активных сигналов</div>
+        </div>
+        <div class="cc-risk-ring">
+          <svg class="cc-ring-svg" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="4"/>
+            <circle cx="30" cy="30" r="24" fill="none" stroke="${p.col}" stroke-width="4"
+              stroke-dasharray="${Math.round(p.avgEsc*1.508)} 150.8"
+              stroke-linecap="round" transform="rotate(-90 30 30)" opacity=".8"/>
+          </svg>
+          <div class="cc-ring-score" style="color:${p.col}">${p.avgEsc}</div>
+        </div>
+      </div>
+      <div class="cc-domains">
+        ${p.domBreak.map(([d,v]) => `
+          <div class="cc-domain-row">
+            <div class="cc-dom-label" style="color:${DC[d]||'#888'}">${DL[d]||d}</div>
+            <div class="cc-dom-bar"><div class="cc-dom-fill" style="width:${Math.round(v/p.total*100)}%;background:${DC[d]||'#888'}60"></div></div>
+            <div class="cc-dom-val">${Math.round(v/p.count)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="cc-signals">
+        ${p.topSig.map(s => `<div class="cc-signal-item"><span class="cc-signal-bullet">·</span><span style="color:${levelColor(s.escalation_level||'none')}">${s.escalation_level||''}</span>&nbsp;<span>${(s.title||'').slice(0,60)}…</span></div>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── ESCALATION FEED ───────────────────────────────────────────────────
+function renderFeed() {
+  const feed = [...ALL]
+    .filter(e => (e.escalation_level === 'critical' || e.escalation_level === 'high') && e.title)
+    .sort((a,b) => (b.escalation_score||0)-(a.escalation_score||0))
+    .slice(0,20);
+
+  const el = document.getElementById('esc-feed');
+  if (!feed.length) { el.innerHTML = `<div class="empty">Нет критических сигналов</div>`; return; }
+
+  el.innerHTML = feed.map(e => {
+    const col   = levelColor(e.escalation_level||'none');
+    const domC  = DC[e.domain]||'#888';
+    const trend = e.trend_direction||'new';
+    return `<div class="feed-item">
+      <div class="fi-score" style="color:${col}">${e.escalation_score||'—'}</div>
+      <div class="fi-body">
+        <div class="fi-title">${e.title}</div>
+        <div class="fi-meta">
+          <span class="fi-badge" style="border-color:${domC}40;color:${domC}">${DL[e.domain]||e.domain}</span>
+          <span class="fi-badge" style="border-color:${col}40;color:${col}">${e.escalation_level}</span>
+          <span class="fi-badge" style="color:${TC[trend]};border-color:${TC[trend]}30">${TA[trend]} ${trend}</span>
+          ${e.phase?`<span class="fi-badge">${e.phase}</span>`:''}
+          <span class="fi-time">${e.region||''} · ${e.date||''}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── UTIL ──────────────────────────────────────────────────────────────
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+loadData();
+// Auto-refresh каждые 5 минут
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
