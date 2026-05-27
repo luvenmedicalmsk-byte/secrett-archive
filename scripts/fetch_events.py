@@ -1270,13 +1270,32 @@ def fetch_copernicus_cyber():
         
         # Координаты для геолокации кибератак
         CYBER_COORDS = {
-            'russia': (61.0, 60.0), 'china': (35.0, 105.0), 'iran': (32.0, 53.0),
-            'north korea': (40.3, 127.5), 'ukraine': (49.0, 31.0), 'usa': (38.0, -97.0),
-            'united states': (38.0, -97.0), 'europe': (50.0, 10.0), 'germany': (51.2, 10.4),
-            'uk': (54.0, -2.0), 'france': (46.2, 2.2), 'israel': (31.5, 34.8),
-            'india': (22.0, 80.0), 'taiwan': (23.7, 121.0), 'japan': (36.0, 138.0),
-            'global': (20.0, 0.0), 'worldwide': (20.0, 0.0),
+            'russia': (55.75, 37.6), 'china': (39.9, 116.4), 'iran': (35.7, 51.4),
+            'north korea': (39.0, 125.8), 'ukraine': (50.4, 30.5), 'usa': (38.9, -77.0),
+            'united states': (38.9, -77.0), 'america': (38.9, -77.0),
+            'europe': (50.1, 8.7), 'germany': (52.5, 13.4), 'uk': (51.5, -0.1),
+            'britain': (51.5, -0.1), 'france': (48.9, 2.3), 'israel': (31.8, 35.2),
+            'india': (28.6, 77.2), 'taiwan': (25.0, 121.5), 'japan': (35.7, 139.7),
+            'south korea': (37.6, 126.9), 'korea': (37.6, 126.9),
+            'microsoft': (47.6, -122.3), 'apple': (37.3, -122.0),
+            'google': (37.4, -122.1), 'meta': (37.5, -122.2),
+            'amazon': (47.6, -122.3), 'adobe': (37.3, -121.9),
+            'cisco': (37.4, -121.9), 'vmware': (37.4, -122.0),
+            'global': (40.7, -74.0), 'worldwide': (51.5, -0.1),
         }
+        # Пул координат для событий без явной геолокации — глобальные теххабы
+        GLOBAL_TECH_COORDS = [
+            (47.6, -122.3),   # Seattle/Microsoft
+            (37.4, -122.1),   # Silicon Valley
+            (51.5, -0.1),     # London
+            (52.5, 13.4),     # Berlin
+            (35.7, 139.7),    # Tokyo
+            (1.3, 103.8),     # Singapore
+            (55.75, 37.6),    # Moscow
+            (39.9, 116.4),    # Beijing
+            (48.9, 2.3),      # Paris
+            (40.4, -3.7),     # Madrid
+        ]
         
         
         for event in cyber:
@@ -1293,7 +1312,8 @@ def fetch_copernicus_cyber():
             
             # Геолокация по тексту
             text_lower = (title + ' ' + desc).lower()
-            lat, lng = 20.0 + random.uniform(-5,5), 0.0 + random.uniform(-10,10)
+            _gtc = GLOBAL_TECH_COORDS[hash(title) % len(GLOBAL_TECH_COORDS)]
+            lat, lng = _gtc[0] + random.uniform(-1,1), _gtc[1] + random.uniform(-2,2)
             region = 'Глобально'
             
             for country, coords in CYBER_COORDS.items():
