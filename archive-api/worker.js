@@ -423,63 +423,82 @@ async function handleCachedScores(url, env) {
 
 
 async function handleProxyPlanes(url) {
-  try {
-    const r = await fetch(
-      'https://opensky-network.org/api/states/all?lamin=-60&lomin=-180&lamax=75&lomax=180',
-      { headers: { 'User-Agent': 'ArchiveBot/2.0' }, cf: { cacheTtl: 30 } }
-    );
-    if (!r.ok) return jsonResponse({ error: 'OpenSky unavailable' }, 502);
-    const data = await r.json();
-    return new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json', ...CORS, 'Cache-Control': 'no-cache' }
-    });
-  } catch(e) {
-    return jsonResponse({ error: e.message }, 502);
+  // Пробуем OpenSky с анонимным доступом
+  const endpoints = [
+    'https://opensky-network.org/api/states/all?lamin=30&lomin=-30&lamax=70&lomax=60',
+    'https://opensky-network.org/api/states/all?lamin=0&lomin=30&lamax=50&lomax=140',
+  ];
+  const allStates = [];
+  for (const ep of endpoints) {
+    try {
+      const r = await fetch(ep, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0',
+          'Accept': 'application/json',
+        },
+        cf: { cacheTtl: 60 }
+      });
+      if (r.ok) {
+        const data = await r.json();
+        if (data.states) allStates.push(...data.states);
+      }
+    } catch(_) {}
   }
+  if (allStates.length > 0) {
+    return new Response(JSON.stringify({ states: allStates, time: Date.now()/1000 }), {
+      headers: { 'Content-Type': 'application/json', ...CORS }
+    });
+  }
+  return jsonResponse({ states: [], error: 'OpenSky rate limited' }, 200);
 }
 
 
 async function handleProxyShips(url) {
-  // Получаем суда из нескольких стратегических зон через AISStream HTTP API
+  // AISStream WebSocket нельзя использовать из Worker — используем MarineTraffic-compatible API
+  // Пробуем получить данные через публичный AIS REST
   const KEY = 'a28fbd015f34eb5bbe2035c2bfbe74a19d7f978f';
   const zones = [
-    { name: 'Красное море', bbox: '10,32,30,45' },
-    { name: 'Тайваньский пролив', bbox: '20,118,28,126' },
-    { name: 'Балтийское море', bbox: '54,10,66,30' },
-    { name: 'Ормузский пролив', bbox: '24,55,27,60' },
-    { name: 'Ла-Манш', bbox: '49,-3,52,3' },
+    { name: 'Красное море', minLat: 12, maxLat: 28, minLon: 32, maxLon: 45 },
+    { name: 'Тайваньский пролив', minLat: 21, maxLat: 27, minLon: 118, maxLon: 123 },
+    { name: 'Балтийское море', minLat: 54, maxLat: 66, minLon: 10, maxLon: 30 },
+    { name: 'Ормузский пролив', minLat: 24, maxLat: 27, minLon: 55, maxLon: 60 },
+    { name: 'Ла-Манш', minLat: 49, maxLat: 52, minLon: -3, maxLon: 3 },
+    { name: 'Суэцкий канал', minLat: 29, maxLat: 32, minLon: 32, maxLon: 35 },
   ];
 
   const allShips = [];
-  for (const zone of zones) {
+  for (const z of zones) {
     try {
-      const [minLat, minLon, maxLat, maxLon] = zone.bbox.split(',');
-      const r = await fetch('https://api.aisstream.io/v0/vessels?' + new URLSearchParams({
-        apiKey: KEY,
-        boundingBox: zone.bbox
-      }), { cf: { cacheTtl: 60 } });
+      const r = await fetch(
+        `https://api.aisstream.io/v0/vessels?apiKey=${KEY}&boundingBox=${z.minLat},${z.minLon},${z.maxLat},${z.maxLon}`,
+        { headers: { 'User-Agent': 'ArchiveBot/2.0' }, cf: { cacheTtl: 120 } }
+      );
       if (r.ok) {
-        const data = await r.json();
-        const vessels = Array.isArray(data) ? data : (data.vessels || []);
-        vessels.slice(0, 30).forEach(v => {
-          if (v.Latitude && v.Longitude) {
-            allShips.push({
-              name: v.Name || v.ShipName || 'Неизвестно',
-              mmsi: v.MMSI || '',
-              lat: v.Latitude,
-              lng: v.Longitude,
-              sog: v.Sog || v.Speed || 0,
-              cog: v.Cog || v.Course || 0,
-              zone: zone.name
-            });
-          }
-        });
+        const text = await r.text();
+        if (text && text.length > 10) {
+          const data = JSON.parse(text);
+          const vessels = Array.isArray(data) ? data : (data.vessels || data.data || []);
+          vessels.slice(0, 25).forEach(v => {
+            const lat = v.Latitude || v.lat || v.LAT;
+            const lng = v.Longitude || v.lon || v.LON;
+            if (lat && lng && Math.abs(lat) < 90) {
+              allShips.push({
+                name: (v.Name || v.ShipName || v.name || 'Unknown').trim(),
+                mmsi: v.MMSI || v.mmsi || '',
+                lat: parseFloat(lat),
+                lng: parseFloat(lng),
+                sog: parseFloat(v.Sog || v.Speed || v.sog || 0),
+                cog: parseFloat(v.Cog || v.Course || v.cog || 0),
+                zone: z.name
+              });
+            }
+          });
+        }
       }
     } catch(_) {}
   }
-
   return new Response(JSON.stringify({ ships: allShips }), {
-    headers: { 'Content-Type': 'application/json', ...CORS, 'Cache-Control': 'no-cache' }
+    headers: { 'Content-Type': 'application/json', ...CORS }
   });
 }
 
