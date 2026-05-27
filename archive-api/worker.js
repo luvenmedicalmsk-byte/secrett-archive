@@ -40,7 +40,7 @@ export default {
 
     // Rate limit для AI-эндпоинтов
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
-    const isAiPath = path === '/api/location' || path === '/api/score';
+    const isAiPath = path === '/api/location' || path === '/api/score' || path === '/api/history/snapshot';
     if (isAiPath && !checkRateLimit(ip)) {
       return jsonResponse({ error: 'Слишком много запросов. Подождите минуту.', retry_after: 60 }, 429);
     }
@@ -59,6 +59,11 @@ export default {
       if (path === '/api/proxy/planes') return handleProxyPlanes(url);
       if (path === '/api/proxy/outages') return handleProxyOutages(url);
       if (path === '/api/proxy/ships') return handleProxyShips(url);
+      // History + escalation endpoints (v2.1)
+      if (path === '/api/history/snapshot' && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
+      if (path === '/api/history/agg'      && request.method === 'GET')  return handleHistoryAgg(url, env);
+      if (path === '/api/escalation'        && request.method === 'GET')  return handleEscalation(url, env);
+      if (path === '/api/risk-index'         && request.method === 'GET')  return handleRiskIndex(env);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -633,4 +638,252 @@ horizon — краткосрочный / среднесрочный / долго
   } catch (_) {}
 
   return jsonResponse(response);
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HISTORY & ESCALATION HANDLERS (v2.1)
+// KV key schema:
+//   snapshot:{YYYY-MM-DDTHH}   → compact snapshot {ts, events:{fp->{s,t,ph,d,r}}}
+//   history:agg:{fingerprint}  → aggregated stats
+//   history:gri                → global risk index
+// ══════════════════════════════════════════════════════════════════════════════
+
+// POST /api/history/snapshot — вызывается из GitHub Actions после каждого build
+// Body: { ts: "2026-05-27T14", events: [...enriched events] }
+// Требует X-API-Key
+async function handleSnapshotIngest(request, env, ctx) {
+  const key = request.headers.get('X-API-Key');
+  if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!env.EVENTS_KV) return jsonResponse({ error: 'KV not configured' }, 503);
+
+  let body;
+  try { body = await request.json(); } catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
+
+  const ts = body.ts || new Date().toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+  const events = body.events || [];
+
+  // Строим compact snapshot
+  const compact = { ts, events: {} };
+  for (const ev of events) {
+    const fp = ev.fingerprint;
+    if (!fp) continue;
+    compact.events[fp] = {
+      s:  ev.severity || 50,
+      t:  ev.signal_type || 'baseline',
+      ph: ev.phase || 'active',
+      d:  ev.domain || '',
+      r:  (ev.region || '').slice(0, 20),
+    };
+  }
+
+  const snapKey = `snapshot:${ts}`;
+  // TTL = 31 days in seconds
+  const TTL_30D = 31 * 24 * 3600;
+  await env.EVENTS_KV.put(snapKey, JSON.stringify(compact), { expirationTtl: TTL_30D });
+
+  // Обновляем aggregated history в фоне
+  ctx.waitUntil(rebuildAggregations(env, compact));
+
+  return jsonResponse({ ok: true, key: snapKey, fingerprints: Object.keys(compact.events).length });
+}
+
+
+// Перестраивает history:agg:{fp} для всех fingerprints текущего snapshot
+async function rebuildAggregations(env, currentSnap) {
+  try {
+    const fps = Object.keys(currentSnap.events);
+    // Загружаем ключи за 30 дней (720 часов)
+    const now = new Date();
+    const snapshotCache = {};
+
+    // Загружаем снапшоты для трёх окон (параллельно, батчами по 12)
+    const loadSnap = async (ts) => {
+      if (snapshotCache[ts]) return snapshotCache[ts];
+      try {
+        const v = await env.EVENTS_KV.get(`snapshot:${ts}`, { type: 'json' });
+        snapshotCache[ts] = v;
+        return v;
+      } catch { return null; }
+    };
+
+    const tsRange = (hours) => {
+      const out = [];
+      for (let h = 0; h < hours; h++) {
+        const t = new Date(now - h * 3600000);
+        out.push(t.toISOString().slice(0, 13));
+      }
+      return out;
+    };
+
+    const keys24h = tsRange(24);
+    const keys7d  = tsRange(24 * 7);
+    const keys30d = tsRange(24 * 30);
+
+    // Параллельная загрузка (батч 12, чтобы не перегружать KV)
+    const loadBatch = async (keys) => {
+      const snaps = [];
+      for (let i = 0; i < keys.length; i += 12) {
+        const batch = keys.slice(i, i + 12);
+        const loaded = await Promise.all(batch.map(loadSnap));
+        snaps.push(...loaded.filter(Boolean));
+      }
+      return snaps;
+    };
+
+    const [snaps24h, snaps7d, snaps30d] = await Promise.all([
+      loadBatch(keys24h), loadBatch(keys7d), loadBatch(keys30d)
+    ]);
+
+    // Агрегируем каждый fingerprint
+    const TTL_AGG = 31 * 24 * 3600;
+    const aggs = [];
+    for (const fp of fps) {
+      const agg = aggregateFingerprint(fp, snaps24h, snaps7d, snaps30d);
+      aggs.push(env.EVENTS_KV.put(`history:agg:${fp}`, JSON.stringify(agg), { expirationTtl: TTL_AGG }));
+    }
+    await Promise.all(aggs);
+  } catch (e) {
+    console.error('rebuildAggregations error:', e);
+  }
+}
+
+
+function aggregateFingerprint(fp, snaps24h, snaps7d, snaps30d) {
+  const extract = (snaps) => snaps
+    .filter(s => s?.events?.[fp])
+    .map(s => s.events[fp]);
+
+  const data24h = extract(snaps24h);
+  const data7d  = extract(snaps7d);
+  const data30d = extract(snaps30d);
+  const allData = data30d.length ? data30d : data7d.length ? data7d : data24h;
+
+  if (!allData.length) return { fingerprint: fp, count_24h: 0, count_7d: 0, count_30d: 0 };
+
+  const sevSeries = allData.map(d => d.s);
+  const avg = sevSeries.reduce((a, b) => a + b, 0) / sevSeries.length;
+  const max = Math.max(...sevSeries);
+
+  // Trend via linear regression
+  const n = sevSeries.length;
+  const xs = sevSeries.map((_, i) => i);
+  const xm = (n - 1) / 2;
+  const ym = avg;
+  let num = 0, den = 0;
+  xs.forEach((x, i) => { num += (x - xm) * (sevSeries[i] - ym); den += (x - xm) ** 2; });
+  const slope = den !== 0 ? num / den : 0;
+
+  const residuals = xs.map((x, i) => Math.abs(sevSeries[i] - (ym + slope * (x - xm))));
+  const volatility = residuals.reduce((a, b) => a + b, 0) / n;
+
+  let trend = 'stable';
+  if (volatility > 8)       trend = 'volatile';
+  else if (slope > 1.5)     trend = 'rising';
+  else if (slope < -1.5)    trend = 'falling';
+
+  const domCount = {};
+  allData.forEach(d => { domCount[d.t] = (domCount[d.t] || 0) + 1; });
+  const dominantType = Object.entries(domCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+
+  return {
+    fingerprint:    fp,
+    count_24h:      data24h.length,
+    count_7d:       data7d.length,
+    count_30d:      data30d.length,
+    avg_severity:   Math.round(avg * 10) / 10,
+    max_severity:   max,
+    severity_series: sevSeries.slice(-12),
+    trend,
+    trend_slope:    Math.round(slope * 100) / 100,
+    dominant_type:  dominantType,
+  };
+}
+
+
+// GET /api/history/agg?fingerprint=xxx
+async function handleHistoryAgg(url, env) {
+  if (!env.EVENTS_KV) return jsonResponse({ error: 'KV not configured' }, 503);
+  const fp = url.searchParams.get('fingerprint');
+  if (!fp) return jsonResponse({ error: 'fingerprint required' }, 400);
+
+  const agg = await env.EVENTS_KV.get(`history:agg:${fp}`, { type: 'json' });
+  if (!agg) return jsonResponse({ fingerprint: fp, found: false }, 404);
+  return jsonResponse({ ...agg, found: true });
+}
+
+
+// GET /api/escalation?min_score=60&level=critical&domain=geopolitics&limit=20
+async function handleEscalation(url, env) {
+  const data   = await getEvents(env);
+  let events   = data.events || [];
+
+  const minScore = parseInt(url.searchParams.get('min_score') || '15');
+  const level    = url.searchParams.get('level');
+  const domain   = url.searchParams.get('domain');
+  const limit    = Math.min(100, parseInt(url.searchParams.get('limit') || '50'));
+
+  // Фильтрация
+  events = events.filter(e => (e.escalation_score || 0) >= minScore);
+  if (level)  events = events.filter(e => e.escalation_level === level);
+  if (domain) events = events.filter(e => e.domain === domain);
+
+  // Сортировка по escalation_score desc
+  events.sort((a, b) => (b.escalation_score || 0) - (a.escalation_score || 0));
+
+  const byLevel = {};
+  events.forEach(e => {
+    const l = e.escalation_level || 'none';
+    byLevel[l] = (byLevel[l] || 0) + 1;
+  });
+
+  return jsonResponse({
+    meta: {
+      total:    events.length,
+      limit,
+      by_level: byLevel,
+      updated:  data.updated,
+    },
+    events: events.slice(0, limit),
+  });
+}
+
+
+// GET /api/risk-index
+async function handleRiskIndex(env) {
+  const data   = await getEvents(env);
+  const events = data.events || [];
+  const gri    = data.global_risk_index || null;
+
+  // Если GRI уже посчитан и свежий — возвращаем его
+  if (gri) return jsonResponse({ ...gri, updated: data.updated, source: 'precomputed' });
+
+  // Fallback: считаем из escalation_score
+  const scores = events.map(e => e.escalation_score || 0).filter(Boolean);
+  if (!scores.length) return jsonResponse({ index: 0, level: 'none', updated: data.updated });
+
+  const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  const byDomain = {};
+  events.forEach(e => {
+    if (e.domain && e.escalation_score) {
+      if (!byDomain[e.domain]) byDomain[e.domain] = [];
+      byDomain[e.domain].push(e.escalation_score);
+    }
+  });
+
+  const domSummary = {};
+  for (const [d, sc] of Object.entries(byDomain)) {
+    domSummary[d] = { avg: Math.round(sc.reduce((a,b)=>a+b,0)/sc.length), max: Math.max(...sc), count: sc.length };
+  }
+
+  const levelFn = s => s >= 80 ? 'critical' : s >= 60 ? 'high' : s >= 35 ? 'moderate' : s >= 15 ? 'weak' : 'none';
+
+  return jsonResponse({
+    index:          avg,
+    level:          levelFn(avg),
+    critical_count: events.filter(e => e.escalation_level === 'critical').length,
+    by_domain:      domSummary,
+    updated:        data.updated,
+    source:         'computed',
+  });
 }
