@@ -707,11 +707,36 @@ def process_events(raw_items):
     balanced = []
     overflow = []  # события сверх квоты — добавим в конце если есть место
     
-    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    today = datetime.now(timezone.utc).date()
+    # Новостные источники — только сегодня
+    # RSS аналитики (think-tanks) — последние 3 дня
+    ANALYTICS_SOURCES = {
+        'Foreign Policy', 'CSIS', 'Chatham House', 'Carnegie Endowment',
+        'CFR', 'Atlantic Council', 'War on the Rocks', 'ISW',
+        'The Diplomat', 'GLOBSEC', 'FPRI', 'Geopolitical Monitor',
+        'Geopolitical Futures', 'MIT Technology Review', '404 Media',
+        'Platformer', 'Lawfare', 'RAND', 'CSET', 'WEF',
+        'Brookings', 'Pew Research', 'Center for Global Development',
+        'CBPP', 'ILO', 'Foreign Affairs', 'Carbon Brief',
+        'Inside Climate News', 'Yale Climate Connections', 'Mongabay',
+        'Yale E360', 'The New Humanitarian', 'Migration Policy Institute',
+        'Help Net Security', 'Dark Reading', 'CyberScoop',
+        'BleepingComputer', 'Industrial Cyber', 'Semafor',
+    }
     for ev in events:
-        # Показываем только сегодняшние события
-        ev_date = ev.get('date', '')[:10]
-        if ev_date and ev_date != today:
+        ev_date_str = ev.get('date', '')[:10]
+        if not ev_date_str:
+            continue
+        try:
+            from datetime import date as _date
+            ev_date = _date.fromisoformat(ev_date_str)
+            days_old = (today - ev_date).days
+            source = ev.get('source', '')
+            # Аналитика — до 3 дней, новости — только сегодня
+            max_days = 3 if source in ANALYTICS_SOURCES else 0
+            if days_old > max_days:
+                continue
+        except:
             continue
         d = ev['domain']
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
