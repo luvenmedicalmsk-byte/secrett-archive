@@ -62,7 +62,7 @@ async function getEvents(env) {
 
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
   const r = await fetch(
-    `https://raw.githubusercontent.com/${REPO}/main/events.json`,
+    `https://raw.githubusercontent.com/${REPO}/main/docs/events.json`,
     { cf: { cacheTtl: 60, cacheEverything: true } }
   );
   if (!r.ok) throw new Error(`GitHub fetch failed: ${r.status}`);
