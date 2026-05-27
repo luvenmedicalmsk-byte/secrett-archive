@@ -55,6 +55,8 @@ export default {
       if (path === '/api/score'  && request.method === 'GET')  return handleScore(request, env, ctx);
       if (path === '/api/scores' && request.method === 'GET')  return handleCachedScores(url, env);
       if (path === '/api/location' && request.method === 'GET') return handleLocation(url, env);
+      if (path === '/api/proxy/planes') return handleProxyPlanes(url);
+      if (path === '/api/proxy/outages') return handleProxyOutages(url);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -415,6 +417,41 @@ async function handleCachedScores(url, env) {
     }
   } catch (_) {}
   return jsonResponse({ by_domain: {}, domain_summary: {}, from_cache: false, message: 'Кэш пуст — запустите POST /api/score' });
+}
+
+
+async function handleProxyPlanes(url) {
+  try {
+    const r = await fetch(
+      'https://opensky-network.org/api/states/all?lamin=-60&lomin=-180&lamax=75&lomax=180',
+      { headers: { 'User-Agent': 'ArchiveBot/2.0' }, cf: { cacheTtl: 30 } }
+    );
+    if (!r.ok) return jsonResponse({ error: 'OpenSky unavailable' }, 502);
+    const data = await r.json();
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json', ...CORS, 'Cache-Control': 'no-cache' }
+    });
+  } catch(e) {
+    return jsonResponse({ error: e.message }, 502);
+  }
+}
+
+async function handleProxyOutages(url) {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const from = now - 6 * 3600;
+    const r = await fetch(
+      `https://api.ioda.caida.org/v2/signals/raw/country?from=${from}&until=${now}&limit=100`,
+      { headers: { 'User-Agent': 'ArchiveBot/2.0' }, cf: { cacheTtl: 300 } }
+    );
+    if (!r.ok) return jsonResponse({ error: 'IODA unavailable' }, 502);
+    const data = await r.json();
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json', ...CORS, 'Cache-Control': 'no-cache' }
+    });
+  } catch(e) {
+    return jsonResponse({ error: e.message }, 502);
+  }
 }
 
 async function handleLocation(url, env) {
