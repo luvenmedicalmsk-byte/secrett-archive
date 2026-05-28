@@ -12,7 +12,7 @@
 import json, os, sys, hashlib, math, re, time, urllib.request, urllib.parse, urllib.error
 import xml.etree.ElementTree as ET
 import random
-# signal schema enrichment (v2) + escalation engine (v2.1)
+# signal schema enrichment v2.2
 try:
     from signal_enricher import enrich_snapshot as _enrich_snapshot
     from signal_enricher import enrich_with_escalation as _enrich_escalation
@@ -21,11 +21,18 @@ try:
         make_compact_snapshot, snapshot_key, get_hour_keys_range,
     )
     from escalation_engine import compute_global_risk_index
+    from forecast_engine import apply_forecast_to_snapshot as _apply_forecast
+    from convergence_engine import compute_convergence as _compute_convergence
+    from country_risk import build_all_profiles as _build_country_profiles
     _SIGNAL_ENRICHER_AVAILABLE = True
     _ESCALATION_AVAILABLE = True
+    _FORECAST_AVAILABLE = True
 except ImportError as _e:
+    import sys as _sys
+    print(f"  [WARN] enrichment import: {_e}", file=_sys.stderr)
     _SIGNAL_ENRICHER_AVAILABLE = False
     _ESCALATION_AVAILABLE = False
+    _FORECAST_AVAILABLE = False
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -3533,14 +3540,20 @@ def save_enriched(events, previous_snapshot=None):
             phases = Counter(e.get("phase", "?") for e in evs)
             levels = Counter(e.get("escalation_level", "?") for e in evs)
             gri    = enriched.get("global_risk_index", {})
+            conv   = enriched.get("convergence", {})
+            cprof  = enriched.get("country_profiles", {})
             schema = enriched.get("schema_version", "2.x")
+            with_fc = sum(1 for e in evs if "forecast_7d" in e)
 
             print(f"\n✓ {len(evs)} событий -> {OUTPUT_PATH} [schema {schema}]", file=sys.stderr)
             print(f"  signal_types:      {dict(types)}", file=sys.stderr)
-            print(f"  phases:            {dict(phases)}", file=sys.stderr)
             print(f"  escalation_levels: {dict(levels)}", file=sys.stderr)
+            print(f"  forecast coverage: {with_fc}/{len(evs)}", file=sys.stderr)
             print(f"  global_risk_index: {gri.get('index', 0)} ({gri.get('level', '?')})",
                   file=sys.stderr)
+            print(f"  convergence:       {conv.get('convergence_index',0)} ({conv.get('convergence_level','?')})",
+                  file=sys.stderr)
+            print(f"  country_profiles:  {len(cprof)} countries", file=sys.stderr)
             return
         except Exception as e:
             import traceback
