@@ -1010,6 +1010,154 @@ document.getElementById('lb-outages').addEventListener('click',async function(){
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// LIVE EXTERNAL FEED — http://62.238.37.129:8001/events.json
+// Schema: [{title, category:[], date, coordinates:[lon,lat]}]
+// Normalised to internal schema: {id,title,domain,lat,lng,severity,
+//   region,summary,source,date}
+// ═══════════════════════════════════════════════════════════════════
+
+const EXT_FEED_URL = 'http://62.238.37.129:8001/events.json';
+const EXT_FEED_INTERVAL_MS = 60000;
+
+// Category → internal domain (for colour/filter compatibility)
+const CAT_TO_DOMAIN = {
+  wildfires:'climate', wildfire:'climate', fire:'climate',
+  volcanoes:'climate', volcano:'climate',
+  floods:'climate',    flood:'climate',    floodhub:'climate',
+  storms:'climate',    storm:'climate',
+  cyclone:'climate',   hurricane:'climate', typhoon:'climate',
+  earthquakes:'climate', earthquake:'climate', seismic:'climate',
+  drought:'climate',   landslide:'climate', tsunami:'climate',
+  epidemic:'social',   disease:'social',
+  // default fallback → geopolitics
+};
+
+// Category → distinct hex colour (drawn OVER domain colour for clarity)
+const CAT_COLOR = {
+  wildfires:'#E84030', wildfire:'#E84030',
+  volcanoes:'#9B30C8', volcano:'#9B30C8',
+  floods:'#2070E8',    flood:'#2070E8',
+  storms:'#E87018',    storm:'#E87018',
+  cyclone:'#E04090',   hurricane:'#E04090', typhoon:'#E04090',
+  earthquakes:'#D8C020', earthquake:'#D8C020',
+  drought:'#C87830',
+  landslide:'#A05828',
+  tsunami:'#40B0D0',
+  epidemic:'#50C880',
+};
+
+// Stable fingerprint: hash of title+lon+lat+date
+function _extFP(item) {
+  const raw = (item.title||'') + '|' +
+    (item.coordinates||[]).join(',') + '|' +
+    (item.date||'');
+  let h = 0;
+  for (let i = 0; i < raw.length; i++) {
+    h = ((h << 5) - h) + raw.charCodeAt(i);
+    h |= 0;
+  }
+  return 'ext_' + (h >>> 0).toString(16);
+}
+
+function _catInfo(categories) {
+  const cats = Array.isArray(categories) ? categories : [categories||''];
+  for (const c of cats) {
+    const key = c.toLowerCase().trim();
+    const domain = CAT_TO_DOMAIN[key];
+    const color  = CAT_COLOR[key];
+    if (domain || color) return { domain: domain||'climate', color, label: c };
+    // partial match
+    for (const [k, d] of Object.entries(CAT_TO_DOMAIN)) {
+      if (key.includes(k) || k.includes(key)) {
+        return { domain: d, color: CAT_COLOR[k], label: c };
+      }
+    }
+  }
+  return { domain: 'geopolitics', color: null, label: cats[0]||'Unknown' };
+}
+
+// Tracks IDs already in ALL_EVENTS to prevent duplicates across refreshes
+const _extSeenIds = new Set();
+
+async function loadExternalFeed() {
+  try {
+    const r = await fetch(EXT_FEED_URL, {
+      signal: AbortSignal.timeout(12000),
+      headers: { Accept: 'application/json' },
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const raw = await r.json();
+    const items = Array.isArray(raw) ? raw : (raw.events || raw.data || []);
+
+    let added = 0;
+    const newEvs = [];
+
+    items.forEach(item => {
+      // Require coordinates
+      if (!item.coordinates || item.coordinates.length < 2) return;
+      const id = _extFP(item);
+      // Skip if already in our event list
+      if (_extSeenIds.has(id)) return;
+      if (ALL_EVENTS.some(e => e.id === id)) return;
+      _extSeenIds.add(id);
+
+      const lon = item.coordinates[0];
+      const lat = item.coordinates[1];
+      if (isNaN(lat) || isNaN(lon)) return;
+
+      const catInfo = _catInfo(item.category);
+
+      // Normalise to existing internal schema
+      const ev = {
+        id,
+        title:    item.title || 'Unknown event',
+        domain:   catInfo.domain,
+        lat,
+        lng:      lon,
+        severity: item.severity || 65,   // default moderate if not provided
+        region:   item.region || item.country || catInfo.label,
+        summary:  item.summary || item.description || '',
+        source:   item.source || 'Live Feed',
+        date:     item.date || new Date().toISOString().slice(0,10),
+        _catColor: catInfo.color,        // extra: category-specific colour
+        _catLabel: catInfo.label,
+      };
+      newEvs.push(ev);
+      added++;
+    });
+
+    if (added > 0) {
+      // Prepend new events; keep list bounded at 500 to avoid memory bloat
+      ALL_EVENTS = [...newEvs, ...ALL_EVENTS].slice(0, 500);
+      filtered = filter === 'all'
+        ? [...ALL_EVENTS]
+        : ALL_EVENTS.filter(e => e.domain === filter);
+      updateStats();
+      renderList();
+      renderMarkers();
+
+      const now = new Date();
+      document.getElementById('updated').textContent =
+        now.toLocaleString('ru-RU', {
+          day:'numeric', month:'long',
+          hour:'2-digit', minute:'2-digit'
+        }) + ' (обновлено)';
+
+      console.info('[ExtFeed] Добавлено новых событий:', added);
+    }
+
+  } catch(e) {
+    console.warn('[ExtFeed] Ошибка загрузки:', e.message);
+  }
+}
+
+// Initial load (non-blocking — runs in parallel with tryLoadFresh)
+loadExternalFeed();
+
+// 60-second auto-refresh
+setInterval(loadExternalFeed, EXT_FEED_INTERVAL_MS);
+
 </script>
 
 <div id="location-panel">
