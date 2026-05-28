@@ -3601,90 +3601,100 @@ def _push_snapshot_to_worker(events):
         print(f"  [WARN] KV snapshot push failed: {e}", file=sys.stderr)
 
 
+
 if __name__ == '__main__':
-    print("=== Архив · Парсер рисков v2 ===", file=sys.stderr)
-    print(f"Время: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}\n", file=sys.stderr)
+    print('=== Архив · Парсер рисков v2 ===', file=sys.stderr)
+    print(f"Время: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}", file=sys.stderr)
 
-    NEWS_API_KEY = get_env('NEWS_API_KEY')
+    # FIX4: global try/except -- unhandled exception in any source does not crash pipeline.
+    # exit(1) causes continue-on-error:true in Actions to skip commit but not fail workflow.
+    try:
+        NEWS_API_KEY = get_env('NEWS_API_KEY')
 
-    raw = []
-    print("Загружаю источники:", file=sys.stderr)
-    raw += fetch_newsapi(NEWS_API_KEY)
-    # fetch_gdelt() -- ОТКЛЮЧЕНО: облачные IP заблокированы GDELT
-    raw += fetch_reliefweb()
-    raw += fetch_reliefweb_v2()
-    raw += fetch_nasa_eonet()
-    raw += fetch_gdacs()
-    raw += fetch_usgs_earthquakes()
-    raw += fetch_acled_rss()
-    raw += fetch_geopolitics_rss()
-    raw += fetch_social_rss()
-    raw += fetch_tech_rss()
-    raw += fetch_climate_rss()
-    raw += fetch_global_rss()
-    raw += fetch_wfp()
-    raw += fetch_russia_climate()
-    raw += fetch_russia_climate_v2()
-    raw += fetch_russia_signals()
-    raw += get_russia_static_risks()
-    raw += fetch_global_structural_risks()
-    # Спутниковые источники
-    raw += fetch_copernicus_floods()
-    raw += fetch_copernicus_cyber()
-    # fetch_copernicus() -- дубликат sentinel, убрано
-    raw += fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))
-    raw += fetch_nasa_firms(get_env('FIRMS_API_KEY'))
-    raw += fetch_global_forest_watch()
-    raw += fetch_flood_observatory()
-    raw += fetch_regional()
-    raw += fetch_mideast_asia()
-    raw += fetch_uk_canada_nordic()
-    raw += fetch_europe_latam()
+        raw = []
+        print("Загружаю источники:", file=sys.stderr)
+        raw += fetch_newsapi(NEWS_API_KEY)
+        # fetch_gdelt() -- ОТКЛЮЧЕНО: облачные IP заблокированы GDELT
+        raw += fetch_reliefweb()
+        raw += fetch_reliefweb_v2()
+        raw += fetch_nasa_eonet()
+        raw += fetch_gdacs()
+        raw += fetch_usgs_earthquakes()
+        raw += fetch_acled_rss()
+        raw += fetch_geopolitics_rss()
+        raw += fetch_social_rss()
+        raw += fetch_tech_rss()
+        raw += fetch_climate_rss()
+        raw += fetch_global_rss()
+        raw += fetch_wfp()
+        raw += fetch_russia_climate()
+        raw += fetch_russia_climate_v2()
+        raw += fetch_russia_signals()
+        raw += get_russia_static_risks()
+        raw += fetch_global_structural_risks()
+        # Спутниковые источники
+        raw += fetch_copernicus_floods()
+        raw += fetch_copernicus_cyber()
+        # fetch_copernicus() -- дубликат sentinel, убрано
+        raw += fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))
+        raw += fetch_nasa_firms(get_env('FIRMS_API_KEY'))
+        raw += fetch_global_forest_watch()
+        raw += fetch_flood_observatory()
+        raw += fetch_regional()
+        raw += fetch_mideast_asia()
+        raw += fetch_uk_canada_nordic()
+        raw += fetch_europe_latam()
 
-    print(f"\nВсего сырых записей: {len(raw)}", file=sys.stderr)
+        print(f"\nВсего сырых записей: {len(raw)}", file=sys.stderr)
 
-    # Отделяем структурные риски от новостного потока
-    structural = [r for r in raw if r.get('source') == 'Архив · Структурные риски']
-    news_raw   = [r for r in raw if r.get('source') != 'Архив · Структурные риски']
+        # Отделяем структурные риски от новостного потока
+        structural = [r for r in raw if r.get('source') == 'Архив · Структурные риски']
+        news_raw   = [r for r in raw if r.get('source') != 'Архив · Структурные риски']
 
-    news_events = process_events(news_raw)
+        news_events = process_events(news_raw)
 
-    if not news_events and not structural:
-        print("[WARN] Нет событий -- источники недоступны", file=sys.stderr)
-        sys.exit(0)
+        if not news_events and not structural:
+            print("[WARN] Нет событий -- источники недоступны", file=sys.stderr)
+            sys.exit(0)
 
-    # Структурные риски добавляем поверх лимита -- они всегда присутствуют на карте
-    import hashlib as _hs
-    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    structural_events = []
-    for r in structural:
-        ev_id = 'gs' + _hs.md5((r.get('title','') + r.get('horizon','')).encode()).hexdigest()[:8]
-        structural_events.append({
-            'id': ev_id,
-            'title': r.get('title',''),
-            'domain': r.get('domain','geopolitics'),
-            'severity': r.get('severity', 70),
-            'lat': r.get('lat', 0), 'lng': r.get('lng', 0),
-            'region': r.get('region','Глобально'),
-            'summary': r.get('summary',''),
-            'source': 'Архив · Структурные риски',
-            'horizon': r.get('horizon',''),
-            'date': today,
-            'structural': True
-        })
+        # Структурные риски добавляем поверх лимита -- они всегда присутствуют на карте
+        import hashlib as _hs
+        today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        structural_events = []
+        for r in structural:
+            ev_id = 'gs' + _hs.md5((r.get('title','') + r.get('horizon','')).encode()).hexdigest()[:8]
+            structural_events.append({
+                'id': ev_id,
+                'title': r.get('title',''),
+                'domain': r.get('domain','geopolitics'),
+                'severity': r.get('severity', 70),
+                'lat': r.get('lat', 0), 'lng': r.get('lng', 0),
+                'region': r.get('region','Глобально'),
+                'summary': r.get('summary',''),
+                'source': 'Архив · Структурные риски',
+                'horizon': r.get('horizon',''),
+                'date': today,
+                'structural': True
+            })
 
-    # На карту идут только новостные события
-    # Структурные риски живут в risk-matrix.html отдельно
-    events = news_events
-    print(f"  Итого на карте: {len(news_events)} новостных событий", file=sys.stderr)
+        # На карту идут только новостные события
+        # Структурные риски живут в risk-matrix.html отдельно
+        events = news_events
+        print(f"  Итого на карте: {len(news_events)} новостных событий", file=sys.stderr)
 
-    _prev_snapshot = _load_previous_snapshot()  # загружаем ДО записи
-    save_enriched(events, _prev_snapshot)         # enriched save
-    inject_into_html(events)                      # inject без изменений
-    _push_snapshot_to_worker(events)              # push compact snapshot → KV
+        _prev_snapshot = _load_previous_snapshot()  # загружаем ДО записи
+        save_enriched(events, _prev_snapshot)         # enriched save
+        # inject_into_html(events)  # FIX5: DISABLED
+        _push_snapshot_to_worker(events)              # push compact snapshot → KV
 
-    by_domain = {}
-    for e in events:
-        by_domain[e['domain']] = by_domain.get(e['domain'], 0) + 1
-    print(f"По доменам: {by_domain}", file=sys.stderr)
-    print(f"Критичных (>80): {sum(1 for e in events if e['severity'] > 80)}", file=sys.stderr)
+        by_domain = {}
+        for e in events:
+            by_domain[e['domain']] = by_domain.get(e['domain'], 0) + 1
+        print(f"По доменам: {by_domain}", file=sys.stderr)
+        print(f"Критичных (>80): {sum(1 for e in events if e['severity'] > 80)}", file=sys.stderr)
+
+    except Exception as _fatal:
+        import traceback as _tb
+        print(f'\n[FATAL] Pipeline exception: {_fatal}', file=sys.stderr)
+        _tb.print_exc(file=sys.stderr)
+        raise SystemExit(1)  # triggers continue-on-error in GitHub Actions
