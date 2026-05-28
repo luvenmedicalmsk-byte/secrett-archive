@@ -65,8 +65,13 @@ export default {
       if (path === '/api/escalation'         && request.method === 'GET')  return handleEscalation(url, env);
       if (path === '/api/risk-index'          && request.method === 'GET')  return handleRiskIndex(env);
       if (path === '/api/country-risk'        && request.method === 'GET')  return handleCountryRisk(url, env);
+      if (path === '/api/country-risk/all'    && request.method === 'GET')  return handleCountryRiskAll(url, env);
       if (path === '/api/domain-risk'         && request.method === 'GET')  return handleDomainRisk(url, env);
       if (path === '/api/escalation-feed'     && request.method === 'GET')  return handleEscalationFeed(url, env);
+      if (path === '/api/forecast'            && request.method === 'GET')  return handleForecast(url, env);
+      if (path === '/api/convergence'         && request.method === 'GET')  return handleConvergence(env);
+      if (path === '/api/cascade-paths'       && request.method === 'GET')  return handleCascadePaths(env);
+      if (path === '/api/structural-risks'    && request.method === 'GET')  return handleStructuralRisks(url, env);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -900,10 +905,18 @@ async function handleRiskIndex(env) {
 // Возвращает агрегированный risk profile страны из live events
 async function handleCountryRisk(url, env) {
   const country = (url.searchParams.get('country') || '').toLowerCase().trim();
+  const iso3    = url.searchParams.get('iso3') || '';
   const limit   = Math.min(50, parseInt(url.searchParams.get('limit') || '20'));
 
   const data   = await getEvents(env);
   const events = data.events || [];
+
+  // v2.2: если есть precomputed profiles — возвращаем их напрямую
+  const profiles = data.country_profiles || {};
+  if (iso3) {
+    const prof = profiles[iso3.toUpperCase()];
+    if (prof) return jsonResponse({ ...prof, source: 'precomputed', limit });
+  }
 
   const filterFn = country
     ? e => {
@@ -1099,5 +1112,209 @@ async function handleEscalationFeed(url, env) {
       updated:   data.updated,
     },
     feed,
+  });
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// V2.2 INTELLIGENCE HANDLERS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/country-risk/all — все страны с сигналами
+async function handleCountryRiskAll(url, env) {
+  const data     = await getEvents(env);
+  const profiles = data.country_profiles || {};
+  const minScore = parseInt(url.searchParams.get('min_score') || '0');
+
+  const filtered = Object.fromEntries(
+    Object.entries(profiles)
+      .filter(([, p]) => (p.risk_score || 0) >= minScore)
+      .sort(([, a], [, b]) => (b.risk_score || 0) - (a.risk_score || 0))
+  );
+
+  return jsonResponse({
+    count:    Object.keys(filtered).length,
+    profiles: filtered,
+    updated:  data.updated,
+    schema:   data.schema_version || '2.2',
+  });
+}
+
+
+// GET /api/forecast?domain=geopolitics&min_score=50&limit=30&trend=accelerating
+async function handleForecast(url, env) {
+  const data   = await getEvents(env);
+  let events   = data.events || [];
+
+  const domain      = url.searchParams.get('domain') || '';
+  const minScore    = parseInt(url.searchParams.get('min_score') || '0');
+  const limit       = Math.min(100, parseInt(url.searchParams.get('limit') || '50'));
+  const fcTrend     = url.searchParams.get('trend') || '';
+  const onlyRising  = url.searchParams.get('rising') === '1';
+
+  if (domain)    events = events.filter(e => e.domain === domain);
+  if (minScore)  events = events.filter(e => (e.escalation_score || 0) >= minScore);
+  if (fcTrend)   events = events.filter(e => e.forecast_trend === fcTrend);
+  if (onlyRising) events = events.filter(e => e.forecast_trend === 'accelerating' || e.forecast_trend === 'deteriorating');
+
+  // Filter to events that have forecast fields
+  const withForecast = events.filter(e => 'forecast_7d' in e);
+
+  withForecast.sort((a, b) => {
+    const da = (a.forecast_7d || 0) - (a.escalation_score || 0);
+    const db = (b.forecast_7d || 0) - (b.escalation_score || 0);
+    return db - da;
+  });
+
+  // Domain-level forecast summary
+  const DOMAINS = ['geopolitics','climate','economy','technology','social'];
+  const byDomain = {};
+  for (const d of DOMAINS) {
+    const sub = withForecast.filter(e => e.domain === d);
+    if (!sub.length) continue;
+    const avg7d  = sub.reduce((s, e) => s + (e.forecast_7d  || 0), 0) / sub.length;
+    const avg30d = sub.reduce((s, e) => s + (e.forecast_30d || 0), 0) / sub.length;
+    const avgCur = sub.reduce((s, e) => s + (e.escalation_score || 0), 0) / sub.length;
+    byDomain[d] = {
+      count:          sub.length,
+      avg_current:    Math.round(avgCur),
+      avg_forecast_7d: Math.round(avg7d),
+      avg_forecast_30d: Math.round(avg30d),
+      delta_7d:        Math.round(avg7d - avgCur),
+      accelerating:    sub.filter(e => e.forecast_trend === 'accelerating').length,
+      decelerating:    sub.filter(e => e.forecast_trend === 'decelerating').length,
+    };
+  }
+
+  return jsonResponse({
+    meta: {
+      total:         withForecast.length,
+      limit,
+      coverage_pct:  data.events?.length
+                     ? Math.round(withForecast.length / data.events.length * 100)
+                     : 0,
+      updated: data.updated,
+    },
+    by_domain: byDomain,
+    signals: withForecast.slice(0, limit).map(e => ({
+      id:              e.id,
+      title:           e.title,
+      domain:          e.domain,
+      region:          e.region,
+      escalation_score: e.escalation_score,
+      escalation_level: e.escalation_level,
+      forecast_7d:     e.forecast_7d,
+      forecast_30d:    e.forecast_30d,
+      forecast_trend:  e.forecast_trend,
+      forecast_confidence: e.forecast_confidence,
+      trend_direction: e.trend_direction,
+      fingerprint:     e.fingerprint,
+    })),
+  });
+}
+
+
+// GET /api/convergence
+async function handleConvergence(env) {
+  const data = await getEvents(env);
+  const conv = data.convergence;
+
+  if (conv && Object.keys(conv).length) {
+    return jsonResponse({ ...conv, source: 'precomputed', updated: data.updated });
+  }
+
+  // Fallback: compute on-the-fly from events
+  const events = data.events || [];
+  const DOMAINS = ['geopolitics','climate','economy','technology','social'];
+  const byDomain = {};
+  for (const d of DOMAINS) {
+    const sub = events.filter(e => e.domain === d);
+    if (!sub.length) { byDomain[d] = { avg_esc: 0, rising_pct: 0, count: 0 }; continue; }
+    const scores   = sub.map(e => e.escalation_score || 0);
+    const rising   = sub.filter(e => e.trend_direction === 'rising').length;
+    byDomain[d] = {
+      avg_esc:    Math.round(scores.reduce((a,b)=>a+b,0)/scores.length),
+      max_esc:    Math.max(...scores),
+      rising_pct: Math.round(rising/sub.length*100),
+      count:      sub.length,
+    };
+  }
+  const activeDomains = Object.entries(byDomain).filter(([,s]) => s.avg_esc >= 35).map(([d]) => d);
+  const risingDomains = Object.entries(byDomain).filter(([,s]) => s.rising_pct >= 30).map(([d]) => d);
+  const index = Math.round((activeDomains.length/5)*30 + (risingDomains.length/5)*40 +
+    Object.values(byDomain).reduce((s,d)=>s+d.avg_esc,0)/5/100*30);
+
+  return jsonResponse({
+    convergence_index:  Math.min(100, index),
+    convergence_level:  index>=70?'critical':index>=50?'active':index>=25?'emerging':'none',
+    active_domains:     activeDomains,
+    rising_domains:     risingDomains,
+    domain_stats:       byDomain,
+    source:             'computed',
+    updated:            data.updated,
+  });
+}
+
+
+// GET /api/cascade-paths
+async function handleCascadePaths(env) {
+  const data  = await getEvents(env);
+  const paths = data.cascade_paths || [];
+
+  if (paths.length) return jsonResponse({ paths, source: 'precomputed', updated: data.updated });
+
+  // Fallback: compute from events
+  const events  = data.events || [];
+  const pathMap = {};
+  for (const ev of events) {
+    if (!['critical','high'].includes(ev.escalation_level)) continue;
+    for (const dst of (ev.cascade || [])) {
+      const k = `${ev.domain}→${dst}`;
+      if (!pathMap[k]) pathMap[k] = { from_domain: ev.domain, to_domain: dst, count: 0, total: 0, sample: ev.title || '' };
+      pathMap[k].count++;
+      pathMap[k].total += ev.escalation_score || 0;
+    }
+  }
+  const computed = Object.values(pathMap)
+    .map(p => ({ ...p, avg_score: Math.round(p.total/p.count), sample_title: p.sample.slice(0,80) }))
+    .sort((a,b) => b.count - a.count || b.avg_score - a.avg_score)
+    .slice(0, 10);
+
+  return jsonResponse({ paths: computed, source: 'computed', updated: data.updated });
+}
+
+
+// GET /api/structural-risks?domain=climate&horizon=долгосрочный
+async function handleStructuralRisks(url, env) {
+  const data   = await getEvents(env);
+  const domain  = url.searchParams.get('domain') || '';
+  const horizon = url.searchParams.get('horizon') || '';
+
+  let vulns = data.structural_vulnerabilities || [];
+
+  if (!vulns.length) {
+    // Fallback: extract from events
+    const events = data.events || [];
+    vulns = events
+      .filter(e => e.signal_type === 'structural' || e.structural)
+      .map(e => ({
+        type:             'structural_risk',
+        domain:           e.domain,
+        title:            (e.title || '').slice(0, 80),
+        escalation_score: e.escalation_score || e.severity || 0,
+        horizon:          e.horizon || 'долгосрочный',
+        fingerprint:      e.fingerprint || '',
+      }))
+      .sort((a,b) => b.escalation_score - a.escalation_score);
+  }
+
+  if (domain)  vulns = vulns.filter(v => v.domain === domain);
+  if (horizon) vulns = vulns.filter(v => v.horizon === horizon);
+
+  return jsonResponse({
+    count:    vulns.length,
+    risks:    vulns,
+    updated:  data.updated,
+    source:   data.structural_vulnerabilities?.length ? 'precomputed' : 'computed',
   });
 }
