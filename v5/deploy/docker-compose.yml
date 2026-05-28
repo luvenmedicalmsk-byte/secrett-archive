@@ -1,0 +1,76 @@
+version: "3.9"
+
+# Sovereign Intelligence Platform v5
+# Run: docker compose up -d
+# Gateway: http://localhost:8080
+# Redis:   localhost:6379
+
+services:
+
+  # ── Redis 7 — event bus + KV store ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: intel_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intel_net
+
+  # ── Intelligence Gateway — FastAPI + WebSocket ───────────────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: intel_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_URL:    redis://redis:6379
+      SNAPSHOT_URL: https://secrett-archive.com/docs/events.json
+      LOG_LEVEL:    info
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - intel_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Ingestion Worker — polls NASA FIRMS, GDACS, USGS, CISA, EONET ──────────
+  ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile.ingestion
+    container_name: intel_ingestion
+    restart: unless-stopped
+    environment:
+      REDIS_URL:       redis://redis:6379
+      FIRMS_API_KEY:   ${FIRMS_API_KEY:-}
+      NEWS_API_KEY:    ${NEWS_API_KEY:-}
+      OPENAI_API_KEY:  ${OPENAI_API_KEY:-}
+      LOG_LEVEL:       info
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - intel_net
+
+networks:
+  intel_net:
+    driver: bridge
