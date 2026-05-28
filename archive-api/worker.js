@@ -59,6 +59,7 @@ export default {
       if (path === '/api/proxy/planes') return handleProxyPlanes(url);
       if (path === '/api/proxy/outages') return handleProxyOutages(url);
       if (path === '/api/proxy/ships') return handleProxyShips(url);
+      if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1472,4 +1473,32 @@ async function handleGRIv2(env) {
   }
   // Fallback: legacy GRI
   return jsonResponse({ ...gri, note: 'GRI v2 not yet computed, showing v2.2', updated: data.updated });
+}
+
+// Proxy for external live feed (HTTP → HTTPS via Worker)
+// Source: http://62.238.37.129:8001/events.json
+async function handleProxyEventsFeed() {
+  try {
+    const r = await fetch('http://62.238.37.129:8001/events.json', {
+      headers: { 'User-Agent': 'ArchiveProxy/1.0' },
+      cf: { cacheTtl: 55 }   // cache 55s — matches client 60s refresh
+    });
+    if (!r.ok) return new Response(JSON.stringify({ error: 'upstream ' + r.status }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+    const data = await r.json();
+    return new Response(JSON.stringify(data), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=55',
+      }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
 }
