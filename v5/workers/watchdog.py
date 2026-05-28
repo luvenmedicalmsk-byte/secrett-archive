@@ -136,6 +136,8 @@ class Watchdog:
         self._redis   = RedisChecker(REDIS_URL)
         self._last_restart: dict[str,float] = {}
         self._restart_counts: dict[str,int]  = {}
+        # FIX H3: track consecutive unhealthy counts to avoid single-sample false positives
+        self._unhealthy_counts: dict[str,int] = {}
 
     async def run(self):
         logger.info(f"[watchdog] watching {WATCH_CONTAINERS} every {CHECK_INTERVAL_S}s")
@@ -152,12 +154,24 @@ class Watchdog:
             status = st.get("status","unknown")
             health = st.get("health","none")
 
-            if status != "running":
+            # FIX H3: 'starting' and 'restarting' are transient — do not restart.
+            # Only act on terminal non-running states: exited, dead, paused, removing.
+            # Two consecutive 'unhealthy' samples required before restart —
+            # a single slow response (e.g. during AOF rewrite) should not trigger action.
+            _STABLE_NON_RUNNING = {"exited", "dead", "paused", "removing"}
+            if status in _STABLE_NON_RUNNING:
                 issues.append(f"{name}:not_running({status})")
                 await self._maybe_restart(name)
+                self._unhealthy_counts[name] = 0
             elif health == "unhealthy":
-                issues.append(f"{name}:unhealthy")
-                await self._maybe_restart(name)
+                self._unhealthy_counts[name] = self._unhealthy_counts.get(name, 0) + 1
+                issues.append(f"{name}:unhealthy(x{self._unhealthy_counts[name]})")
+                if self._unhealthy_counts[name] >= 2:
+                    await self._maybe_restart(name)
+                    self._unhealthy_counts[name] = 0
+            else:
+                # healthy or starting/restarting — reset counter
+                self._unhealthy_counts[name] = 0
 
         # 2. Redis
         if not self._redis.ping():
