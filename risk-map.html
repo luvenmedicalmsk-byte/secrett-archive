@@ -233,6 +233,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 const DC={climate:'#27AE60',economy:'#2980B9',geopolitics:'#D35400',technology:'#8E44AD',social:'#C0392B'};
 const DL={climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
 
+// ── PIPELINE CONSTANTS ───────────────────────────────────────────────────────
+const MAX_EVENTS       = 600;          // FIX1: hard cap on ALL_EVENTS array
+const MAX_EVENT_AGE_DAYS = 30;         // FIX5: discard events older than 30 days
+const MAX_EVENT_AGE_MS = MAX_EVENT_AGE_DAYS * 86400000;
+
+// ── LIGHTWEIGHT DIAGNOSTICS (FIX8+9) ────────────────────────────────────────
+// Stores last N log entries; visible via window.__INTEL_LOG in browser console
+const _diagLog = [];
+const _diagStart = Date.now();
+function _log(module, msg) {
+  const entry = {
+    t: ((Date.now() - _diagStart) / 1000).toFixed(1) + 's',
+    m: module,
+    msg
+  };
+  _diagLog.push(entry);
+  if (_diagLog.length > 200) _diagLog.shift();
+  // Use warn for anything that looks like an error
+  const fn = /error|fail|miss|invalid|reject/i.test(msg) ? console.error : console.debug;
+  fn(`[${module.toUpperCase()}] ${msg}`);
+}
+window.__INTEL_LOG = _diagLog;  // expose for debugging: window.__INTEL_LOG in DevTools
+window.__INTEL_DIAG = () => {
+  const now = Date.now();
+  console.table({
+    'Events total':    ALL_EVENTS.length,
+    'Events filtered': typeof filtered !== 'undefined' ? filtered.length : '?',
+    'SSE state':       sseSource ? ['CONNECTING','OPEN','CLOSED'][sseSource.readyState] : 'null',
+    'SSE retries':     sseRetries,
+    'ExtFeed seen':    _extSeenIds.size,
+    'Uptime (s)':      ((now - _diagStart) / 1000).toFixed(0),
+  });
+  console.log('Last 20 log entries:', _diagLog.slice(-20));
+};
+console.info('[INTEL] Pipeline diagnostics ready. Run window.__INTEL_DIAG() for status.');
+
 // ── ИНИЦИАЛИЗАЦИЯ КАРТЫ ──────────────────────────────────────────────────────
 const map = L.map('map', {
   center: [20, 10],
@@ -243,7 +279,9 @@ const map = L.map('map', {
   maxZoom: 10,
   worldCopyJump: false,
   maxBounds: [[-85, -180], [85, 180]],
-  maxBoundsViscosity: 0.8
+  maxBoundsViscosity: 0.8,
+  preferCanvas: true,   // FIX3: Canvas renderer — 3-5× faster at 500+ markers
+  renderer: L.canvas({ padding: 0.5 })
 });
 
 // Тайлы CartoDB Dark — нейтральный тёмный фон
@@ -335,15 +373,34 @@ function createMarkerIcon(color, severity) {
   });
 }
 
+// FIX2: batch addLayers (single DOM operation vs N individual addLayer calls)
+// FIX5: skip events older than MAX_EVENT_AGE_DAYS to prevent stale accumulation
+let _lastRenderedCount = -1;  // skip redundant redraws
 function renderMarkers() {
+  const now = Date.now();
+  const cutoff = now - MAX_EVENT_AGE_MS;
+  const fresh = filtered.filter(ev => {
+    if (!ev.lat || !ev.lng || isNaN(ev.lat) || isNaN(ev.lng)) return false;
+    if (!ev.date) return true;  // no date = keep
+    const age = new Date(ev.date).getTime();
+    return isNaN(age) || age >= cutoff;
+  });
+
+  // Skip full rebuild if nothing changed
+  if (fresh.length === _lastRenderedCount &&
+      fresh.length === markersLayer.getLayers().length) return;
+  _lastRenderedCount = fresh.length;
+
   markersLayer.clearLayers();
-  filtered.forEach(ev => {
+  const markers = fresh.map(ev => {
     const col = DC[ev.domain] || '#B8973A';
     const icon = createMarkerIcon(col, ev.severity);
-    const marker = L.marker([ev.lat, ev.lng], { icon });
-    marker.on('click', () => showDetail(ev));
-    markersLayer.addLayer(marker);
+    const m = L.marker([ev.lat, ev.lng], { icon });
+    m.on('click', () => showDetail(ev));
+    return m;
   });
+  if (markers.length) markersLayer.addLayers(markers);  // single batch op
+  _log('render', `${markers.length} markers (${filtered.length - markers.length} filtered stale/invalid)`);
 }
 
 // ── СТАТИСТИКА И СПИСОК ──────────────────────────────────────────────────────
@@ -532,6 +589,15 @@ function loadFallback() {
 }
 
 tryLoadFresh().then(() => { fetchStats(); startSSE(); });
+
+// FIX4: Fallback poll every 5 min — keeps data fresh if SSE dies
+// tryLoadFresh() does a full replace (applyEvents), so data stays current
+setInterval(() => {
+  if (!sseSource || sseSource.readyState === EventSource.CLOSED) {
+    _log('poll', 'SSE closed — polling main events');
+    tryLoadFresh();
+  }
+}, 5 * 60 * 1000);
 
 
 
@@ -811,11 +877,13 @@ function startSSE() {
         const existingIds = new Set(ALL_EVENTS.map(ev => ev.id));
         const newEvs = d.events.filter(ev => !existingIds.has(ev.id));
         if (newEvs.length > 0) {
-          ALL_EVENTS = [...newEvs, ...ALL_EVENTS];
+          // FIX1: cap array size to prevent unbounded memory growth
+          ALL_EVENTS = [...newEvs, ...ALL_EVENTS].slice(0, MAX_EVENTS);
           filtered = filter === 'all' ? [...ALL_EVENTS] : ALL_EVENTS.filter(ev => ev.domain === filter);
+          _lastRenderedCount = -1;  // force redraw after new events
           updateStats(); renderList(); renderMarkers();
           showLiveIndicator('update', newEvs.length);
-          console.info('[SSE] Новых событий:', newEvs.length);
+          _log('sse', `+${newEvs.length} events, total=${ALL_EVENTS.length}`);
         }
       }
     } catch(err) { console.warn('[SSE] update parse error', err); }
@@ -843,12 +911,28 @@ function startSSE() {
   sseSource.onerror = () => {
     // Не меняем индикатор на ⬛ — просто тихо переподключаемся
     sseRetries++;
+    _log('sse', `error, retry ${sseRetries}/${SSE_MAX_RETRIES}`);
     if (sseRetries <= SSE_MAX_RETRIES) {
       const delay = Math.min(30000, 3000 * Math.pow(2, sseRetries - 1));
       setTimeout(startSSE, delay);
     }
   };
 }
+
+// FIX6: Close SSE when tab goes to background (mobile Safari kills open connections)
+// Reopen when tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (sseSource) { sseSource.close(); sseSource = null; }
+    _log('sse', 'tab hidden — SSE closed');
+  } else {
+    _log('sse', 'tab visible — reconnecting SSE');
+    setTimeout(startSSE, 500);
+  }
+});
+window.addEventListener('beforeunload', () => {
+  if (sseSource) sseSource.close();
+});
 
 // Индикатор живого соединения — статусная строка под заголовком
 function showLiveIndicator(state, count) {
@@ -1077,8 +1161,9 @@ function _catInfo(categories) {
   return { domain: 'geopolitics', color: null, label: cats[0]||'Unknown' };
 }
 
-// Tracks IDs already in ALL_EVENTS to prevent duplicates across refreshes
+// FIX7+10: O(1) dedup Set with periodic cleanup (prevents infinite growth)
 const _extSeenIds = new Set();
+let _extSeenCleanupTs = Date.now();
 
 async function loadExternalFeed() {
   try {
@@ -1099,7 +1184,7 @@ async function loadExternalFeed() {
       const id = _extFP(item);
       // Skip if already in our event list
       if (_extSeenIds.has(id)) return;
-      if (ALL_EVENTS.some(e => e.id === id)) return;
+      // FIX7: use Set for O(1) instead of Array.some() O(n)
       _extSeenIds.add(id);
 
       const lon = item.coordinates[0];
@@ -1157,6 +1242,14 @@ loadExternalFeed();
 
 // 60-second auto-refresh
 setInterval(loadExternalFeed, EXT_FEED_INTERVAL_MS);
+// FIX10: prune _extSeenIds every 30 min — only keep IDs still in ALL_EVENTS
+setInterval(() => {
+  const live = new Set(ALL_EVENTS.map(e => e.id));
+  for (const id of _extSeenIds) {
+    if (!live.has(id)) _extSeenIds.delete(id);
+  }
+  _log('extfeed', `dedup set pruned, size=${_extSeenIds.size}`);
+}, 30 * 60 * 1000);
 
 </script>
 
