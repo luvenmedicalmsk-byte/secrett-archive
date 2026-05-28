@@ -325,6 +325,47 @@ nav{position:sticky;top:0;z-index:200;background:rgba(9,8,10,.97);backdrop-filte
 .tb-fill{height:100%;border-radius:1px}
 .tb-val{font-size:8px;color:var(--cream);min-width:20px;text-align:right}
 
+
+/* ═════ V4 STYLES ═════ */
+.briefing-card{border:1px solid var(--border-gold);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.briefing-card:hover{border-color:var(--border-strong)}
+.brief-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,.2);cursor:pointer}
+.brief-type{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.brief-title{font-size:11px;font-weight:500;color:var(--cream)}
+.brief-urgency{font-size:9px;padding:2px 7px;border-radius:var(--radius);border:1px solid}
+.brief-body-wrap{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.brief-body-wrap.open{max-height:400px}
+.brief-body{padding:12px 14px;border-top:1px solid var(--border)}
+.brief-text{font-size:11px;color:var(--ink);line-height:1.8;margin-bottom:10px}
+.brief-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:10px}
+.bm-row{display:flex;align-items:baseline;gap:6px}
+.bm-label{color:var(--muted)}
+.bm-val{color:var(--cream)}
+
+.det-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;padding:0 16px 16px}
+.det-card{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.det-card.firing{border-color:rgba(176,58,46,.4);background:rgba(176,58,46,.06)}
+.det-card.elevated{border-color:rgba(184,151,58,.3)}
+.det-label{font-size:10px;color:var(--cream);margin-bottom:6px}
+.det-bar-wrap{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.det-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.det-scores{display:flex;justify-content:space-between;font-size:9px;color:var(--muted)}
+
+.cascade-sim-timeline{padding:0 16px 16px}
+.cst-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.cst-day{font-size:9px;color:var(--muted);width:28px;flex-shrink:0}
+.cst-domain{font-size:9px;padding:1px 6px;border-radius:2px;border:1px solid;white-space:nowrap}
+.cst-delta{font-size:10px;font-weight:500;min-width:28px;text-align:right}
+.cst-mech{font-size:9px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cst-stress-row{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--border)}
+.cst-stress-item{display:flex;align-items:center;gap:4px;font-size:10px}
+
+.geo-zones{padding:0 16px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.geo-zone-card{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px}
+.gz-coord{font-size:8px;color:var(--muted);font-family:var(--font-mono);margin-bottom:5px}
+.gz-pressure{font-family:var(--font-serif);font-size:20px;font-weight:300;line-height:1;margin-bottom:3px}
+.gz-domains{font-size:8px;color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -625,6 +666,50 @@ nav{position:sticky;top:0;z-index:200;background:rgba(9,8,10,.97);backdrop-filte
     <div class="traj-grid" id="traj-grid"></div>
   </div>
 
+
+  <!-- V4 INTELLIGENCE BRIEFINGS -->
+  <div class="card" id="briefings-card" style="margin-bottom:20px;display:none">
+    <div class="card-header">
+      <span class="card-title">Autonomous Intelligence Briefings · v4</span>
+      <span class="card-badge" id="briefings-alert-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+    </div>
+    <div id="briefings-body" style="padding:12px 16px 4px"></div>
+  </div>
+
+  <!-- V4 DETECTOR REGISTRY + CASCADE SIM (2-col) -->
+  <div class="grid2" id="detectors-cascade-row" style="margin-bottom:20px;display:none">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Autonomous Detectors · registry</span>
+        <span class="card-badge" id="det-alert-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+      </div>
+      <div class="det-grid" id="det-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Cascade Simulation · 30d forward</span>
+        <span class="card-badge" id="csim-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+      </div>
+      <div class="cascade-sim-timeline" id="cascade-sim-body">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Стресс по доменам через 30 дней:</div>
+        <div id="cascade-final-stress" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Propagation timeline (топ):</div>
+        <div id="cascade-timeline-rows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- V4 GEO INTELLIGENCE -->
+  <div class="card" id="geo-intel-card" style="margin-bottom:20px;display:none">
+    <div class="card-header">
+      <span class="card-title">Geo-Temporal Intelligence · pressure zones</span>
+      <span class="card-badge" id="geo-zones-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+    </div>
+    <div class="geo-zones" id="geo-zones"></div>
+  </div>
+
 </div><!-- /page -->
 
 <script>
@@ -649,6 +734,7 @@ const WS_LABELS = {logistics_stress:'Логистика',migration_anomaly:'Ми
 // ════════════════════════════════════════════════════════════════════
 let ALL_EVENTS = [], GRI = null, REGIME = null, PROBABILISTIC = null;
 let IE_RESULT = null;
+let ALERT_LEVEL = 'monitor';
 let PATTERNS = null, WEAK = null, GRAPH_DATA = null, COUNTRIES = null;
 let SCENARIOS_DATA = null, CASCADE_DATA = null;
 let FILTERS = {level:'',type:'',trend:''};
@@ -736,6 +822,29 @@ async function loadAll() {
         weak_signals: WEAK, patterns: PATTERNS,
         country_profiles: COUNTRIES, global_risk_index: GRI,
       });
+      // v4 modules
+      if (IE.FusionEngine)   IE_RESULT.fusion    = IE.FusionEngine.fuse(ALL_EVENTS);
+      if (IE.GeoIntelligence) {
+        const pz = IE.GeoIntelligence.buildPressureZones(ALL_EVENTS);
+        IE_RESULT.geo = {
+          pressure_zones: pz,
+          corridors:      IE.GeoIntelligence.detectInstabilityCorridors(pz),
+          transboundary:  IE.GeoIntelligence.detectTransboundaryContagion(ALL_EVENTS),
+        };
+      }
+      if (IE.CascadeSimulator) IE_RESULT.cascade_sim = IE.CascadeSimulator.simulate(ALL_EVENTS, 30);
+      if (IE.DetectorRegistry) {
+        IE_RESULT.detectors = IE.DetectorRegistry.run(ALL_EVENTS);
+        ALERT_LEVEL = IE_RESULT.detectors.alert_level || 'monitor';
+      }
+      if (IE.AdaptivePriority) {
+        IE_RESULT.adaptive_signals = IE.AdaptivePriority.rank(ALL_EVENTS, {
+          convergence: evSnap && evSnap.convergence,
+          accelerationState: IE_RESULT.acceleration?.state || 'latent',
+          domainPressure: IE_RESULT.propagation,
+        }, 20);
+      }
+      if (IE.Briefings) IE_RESULT.briefings = IE.Briefings.generateAll(ALL_EVENTS, IE_RESULT, ALERT_LEVEL);
     } catch(e) { console.warn('[IE] pipeline error:', e); }
   }
 
@@ -788,6 +897,11 @@ function renderAll() {
     renderPrioritySignals();
     renderHorizonForecast();
     renderTrajectories();
+    // v4 layers
+    renderBriefings();
+    renderDetectors();
+    renderCascadeSim();
+    renderGeoIntelligence();
   }
 }
 
@@ -1870,5 +1984,145 @@ function renderTrajectories() {
 
 </script>
 <script src="intelligence-engine.js"></script>
+<script src="signal-fusion.js"></script>
+<script src="cascade-simulator.js"></script>
+<script src="detector-registry.js"></script>
+<script src="intelligence-briefings.js">
+// ═══════════════════════════════════════════════════════
+// V4 RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
+function renderBriefings() {
+  const r = IE_RESULT;
+  const card = document.getElementById('briefings-card');
+  const body = document.getElementById('briefings-body');
+  const badge = document.getElementById('briefings-alert-badge');
+  if (!r || !card || !body || !r.briefings) return;
+  card.style.display = '';
+
+  const alertLvl = (r.detectors && r.detectors.alert_level) || ALERT_LEVEL || 'monitor';
+  const ALERT_COLS = {monitor:'var(--muted)',elevated:'var(--r-moderate)',critical:'var(--r-high)',cascading:'var(--r-critical)',systemic_break:'#7B241C'};
+  const col = ALERT_COLS[alertLvl] || 'var(--muted)';
+  if (badge) { badge.textContent = alertLvl.toUpperCase(); badge.style.color = col; badge.style.borderColor = col+'40'; }
+
+  body.innerHTML = r.briefings.map((b, i) => {
+    const urg_col = b.urgency >= 80 ? '#B03A2E' : b.urgency >= 55 ? '#B8973A' : '#5D6D7E';
+    return `<div class="briefing-card">
+      <div class="brief-header" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div>
+          <div class="brief-type">${b.classification||''}</div>
+          <div class="brief-title">${b.title}</div>
+        </div>
+        <span class="brief-urgency" style="color:${urg_col};border-color:${urg_col}30">URG ${b.urgency}</span>
+      </div>
+      <div class="brief-body-wrap${i===0?' open':''}">
+        <div class="brief-body">
+          <div class="brief-text">${b.body||''}</div>
+          <div class="brief-meta">
+            <div class="bm-row"><span class="bm-label">Confidence:</span><span class="bm-val">${((b.confidence||0)*100).toFixed(0)}%</span></div>
+            <div class="bm-row"><span class="bm-label">P(escalation):</span><span class="bm-val" style="color:${urg_col}">${((b.escalation_probability||0)*100).toFixed(0)}%</span></div>
+            <div class="bm-row"><span class="bm-label">Системы:</span><span class="bm-val">${(b.affected_systems||[]).join(', ')}</span></div>
+            <div class="bm-row"><span class="bm-label">Векторы:</span><span class="bm-val">${(b.propagation_vectors||[]).join(', ')}</span></div>
+          </div>
+          ${b.uncertainty_assessment?`<div style="font-size:9px;color:var(--muted);margin-top:8px;font-style:italic">${b.uncertainty_assessment}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDetectors() {
+  const r = IE_RESULT;
+  const row = document.getElementById('detectors-cascade-row');
+  const grid = document.getElementById('det-grid');
+  const badge = document.getElementById('det-alert-badge');
+  if (!r || !r.detectors || !grid) return;
+  row.style.display = '';
+
+  const ALERT_COLS = {monitor:'var(--muted)',elevated:'var(--r-moderate)',critical:'var(--r-high)',cascading:'var(--r-critical)',systemic_break:'#7B241C'};
+  const al  = r.detectors.alert_level || 'monitor';
+  const col = ALERT_COLS[al] || 'var(--muted)';
+  if (badge) { badge.textContent = `${al.toUpperCase()} · ${r.detectors.active_count} active`; badge.style.color = col; badge.style.borderColor = col+'30'; }
+
+  grid.innerHTML = (r.detectors.detections || []).map(d => {
+    const dCol = d.firing ? '#B03A2E' : d.elevated ? '#B8973A' : '#5D6D7E';
+    const pct  = Math.round(d.score / (d.threshold * 2) * 100);
+    const classes = `det-card${d.firing?' firing':d.elevated?' elevated':''}`;
+    return `<div class="${classes}">
+      <div class="det-label" style="color:${dCol}">${d.label}</div>
+      <div class="det-bar-wrap"><div class="det-bar-fill" style="width:${Math.min(100,pct)}%;background:${dCol}"></div></div>
+      <div class="det-scores">
+        <span>${d.firing?'🔴 ACTIVE':d.on_cooldown?'⏸ cooldown':'——'}</span>
+        <span style="color:${dCol}">${d.score}/${d.threshold}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCascadeSim() {
+  const r = IE_RESULT;
+  if (!r || !r.cascade_sim) return;
+  const badge    = document.getElementById('csim-badge');
+  const stressEl = document.getElementById('cascade-final-stress');
+  const timeEl   = document.getElementById('cascade-timeline-rows');
+
+  const sim = r.cascade_sim;
+  if (badge) {
+    badge.textContent = `${sim.timeline.length} событий · глубина ${sim.chain_depth}`;
+    badge.style.color = 'var(--cyan)'; badge.style.borderColor = 'var(--cyan-border)';
+  }
+
+  if (stressEl) {
+    stressEl.innerHTML = IE.DOMAINS.map(d => {
+      const v = sim.final_stress[d] || 0;
+      const c = DC[d]||'#888';
+      const lvl = v>=70?'#B03A2E':v>=45?'#B8973A':v>=25?'#2471A3':'var(--muted)';
+      return `<div class="cst-stress-item">
+        <div style="width:6px;height:6px;border-radius:50%;background:${c};flex-shrink:0"></div>
+        <span style="font-size:9px;color:${c}">${IE.DL[d]||d}</span>
+        <span style="font-family:var(--font-serif);font-size:14px;color:${lvl}">${v}</span>
+      </div>`;
+    }).join('');
+  }
+
+  if (timeEl) {
+    timeEl.innerHTML = sim.timeline.slice(0,8).map(t => {
+      const dc = DC[t.domain]||'#888';
+      return `<div class="cst-row">
+        <span class="cst-day">д${t.day}</span>
+        <span class="cst-domain" style="color:${dc};border-color:${dc}30">${IE.DL[t.domain]||t.domain}</span>
+        <span class="cst-delta" style="color:${t.esc_delta>=8?'#B03A2E':t.esc_delta>=4?'#B8973A':'var(--muted)'}">+${t.esc_delta}</span>
+        <span class="cst-mech">${t.mechanism||''}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderGeoIntelligence() {
+  const r = IE_RESULT;
+  const card  = document.getElementById('geo-intel-card');
+  const zones = document.getElementById('geo-zones');
+  const badge = document.getElementById('geo-zones-badge');
+  if (!r || !r.geo || !card || !zones) return;
+
+  const pz = r.geo.pressure_zones || [];
+  const top = pz.filter(z => z.pressure >= 25).slice(0, 12);
+  if (!top.length) return;
+  card.style.display = '';
+
+  if (badge) badge.textContent = `${pz.length} зон · ${r.geo.corridors.length} коридоров`;
+
+  zones.innerHTML = top.map(z => {
+    const col = z.pressure>=60?'#B03A2E':z.pressure>=40?'#B8973A':z.pressure>=25?'#2471A3':'var(--muted)';
+    return `<div class="geo-zone-card" style="border-color:${col}20">
+      <div class="gz-coord">${z.lat.toFixed(1)}°, ${z.lng.toFixed(1)}°</div>
+      <div class="gz-pressure" style="color:${col}">${z.pressure}</div>
+      <div class="gz-domains" style="color:${col}80">${z.domains.map(d=>IE.DL[d]||d).join(' · ')}</div>
+      <div style="font-size:8px;color:var(--muted);margin-top:3px">${z.count} сигналов</div>
+    </div>`;
+  }).join('');
+}
+
+</script>
 </body>
 </html>
