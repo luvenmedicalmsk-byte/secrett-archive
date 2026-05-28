@@ -270,6 +270,61 @@ nav{position:sticky;top:0;z-index:200;background:rgba(9,8,10,.97);backdrop-filte
 
 /* empty state */
 .empty-state{padding:32px;text-align:center;color:var(--muted);font-size:11px;letter-spacing:.08em}
+
+/* ═══════════════ V3 INTELLIGENCE STYLES ═══════════════ */
+.assess-block{padding:16px;border-bottom:1px solid var(--border)}
+.assess-block:last-child{border-bottom:none}
+.assess-label{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.assess-text{font-size:12px;line-height:1.8;color:var(--ink)}
+.assess-text b{color:var(--cream)}
+
+.causal-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.causal-src{font-size:10px;letter-spacing:.08em;padding:2px 8px;border-radius:3px;border:1px solid;white-space:nowrap}
+.causal-arrow{color:var(--muted);font-size:12px;flex-shrink:0}
+.causal-dst{font-size:10px;letter-spacing:.08em;padding:2px 8px;border-radius:3px;border:1px solid;white-space:nowrap}
+.causal-mech{font-size:9px;color:var(--muted);flex:1;padding:0 6px;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.causal-w{font-size:10px;color:var(--cream);min-width:32px;text-align:right}
+
+.acc-state-row{display:flex;align-items:center;gap:12px;padding:16px}
+.acc-orb{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.acc-orb-pulse{position:absolute;inset:0;border-radius:50%;border:1.5px solid currentColor;animation:acc-pulse 1.8s ease-out infinite}
+@keyframes acc-pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+.acc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px}
+.acc-metric{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:3px;padding:8px 10px}
+.acc-metric-val{font-family:var(--font-serif);font-size:22px;font-weight:300;line-height:1}
+.acc-metric-label{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+
+.priority-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.pr-rank{font-family:var(--font-serif);font-size:14px;color:var(--muted);width:20px;flex-shrink:0;text-align:right}
+.pr-class{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:1px 6px;border-radius:2px;border:1px solid;white-space:nowrap;flex-shrink:0}
+.pr-score{font-family:var(--font-serif);font-size:16px;min-width:28px;text-align:right;flex-shrink:0}
+.pr-title{font-size:11px;color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-domain{font-size:9px;white-space:nowrap}
+
+.horizon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:3px;overflow:hidden;margin:0 16px 16px}
+@media(max-width:700px){.horizon-grid{grid-template-columns:1fr 1fr}}
+.hg-cell{background:var(--card);padding:12px 10px}
+.hg-horizon{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.hg-bar-row{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.hg-bar-label{font-size:8px;color:var(--muted);width:80px;flex-shrink:0}
+.hg-bar-track{flex:1;height:2px;background:rgba(255,255,255,.06);border-radius:1px;overflow:hidden}
+.hg-bar-fill{height:100%;border-radius:1px}
+.hg-bar-pct{font-size:9px;color:var(--cream);min-width:28px;text-align:right}
+.hg-conf{font-size:8px;color:var(--muted);margin-top:6px}
+
+.traj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;padding:0 16px 16px}
+.traj-card{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:3px;padding:10px 12px;transition:border-color .2s}
+.traj-card:hover{border-color:var(--border-gold)}
+.traj-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.traj-name{font-size:12px;color:var(--cream)}
+.traj-state{font-size:8px;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:2px;border:1px solid}
+.traj-bars{display:flex;flex-direction:column;gap:4px}
+.tb-row{display:flex;align-items:center;gap:5px}
+.tb-label{font-size:8px;color:var(--muted);width:60px;flex-shrink:0}
+.tb-track{flex:1;height:2px;background:rgba(255,255,255,.06);border-radius:1px;overflow:hidden}
+.tb-fill{height:100%;border-radius:1px}
+.tb-val{font-size:8px;color:var(--cream);min-width:20px;text-align:right}
+
 </style>
 </head>
 <body>
@@ -509,6 +564,67 @@ nav{position:sticky;top:0;z-index:200;background:rgba(9,8,10,.97);backdrop-filte
     </div>
   </div>
 
+
+  <!-- V3 INTELLIGENCE ASSESSMENT -->
+  <div class="card" id="assessment-card" style="margin-bottom:20px;display:none">
+    <div class="card-header">
+      <span class="card-title">Intelligence Assessment · machine-generated</span>
+      <span class="card-badge" style="color:var(--cyan);border-color:var(--cyan-border)">v3 · deterministic</span>
+    </div>
+    <div id="assessment-body"></div>
+  </div>
+
+  <!-- CAUSAL ENGINE + ACCELERATION (2-col) -->
+  <div class="grid2" id="causal-acc-row" style="margin-bottom:20px;display:none">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Каузальные цепочки · propagation</span>
+        <span class="card-badge" id="causal-count-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+      </div>
+      <div id="causal-body" style="padding:0 16px 16px"></div>
+      <div style="border-top:1px solid var(--border);padding:12px 16px">
+        <div class="section-label" style="margin-bottom:8px">Амплификаторы</div>
+        <div id="amplifier-body" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Системное ускорение · acceleration state</span>
+        <span class="card-badge" id="acc-state-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+      </div>
+      <div id="acc-body"></div>
+    </div>
+  </div>
+
+  <!-- TOP PRIORITY SIGNALS -->
+  <div class="card" id="priority-card" style="margin-bottom:20px;display:none">
+    <div class="card-header">
+      <span class="card-title">Top Systemic Signals · приоритизация v3</span>
+      <span class="card-badge" id="priority-formula-badge" style="color:var(--muted);border-color:var(--border)">P = severity + convergence + cascade + recurrence</span>
+    </div>
+    <div id="priority-body" style="padding:0 16px 16px"></div>
+  </div>
+
+  <!-- MULTI-HORIZON FORECAST -->
+  <div class="card" id="horizon-card" style="margin-bottom:20px;display:none">
+    <div class="card-header">
+      <span class="card-title">Multi-Horizon Forecast · 7d / 30d / 90d / 180d</span>
+      <span class="card-badge" style="color:var(--muted);border-color:var(--border)">deterministic · Bayesian</span>
+    </div>
+    <div class="horizon-grid" id="horizon-grid"></div>
+  </div>
+
+  <!-- COUNTRY TRAJECTORIES -->
+  <div class="card" id="trajectory-card" style="margin-bottom:20px;display:none">
+    <div class="card-header">
+      <span class="card-title">Country Trajectories · resilience / fragility / exposure</span>
+      <span class="card-badge" id="traj-count-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+    </div>
+    <div class="traj-grid" id="traj-grid"></div>
+  </div>
+
 </div><!-- /page -->
 
 <script>
@@ -532,6 +648,7 @@ const WS_LABELS = {logistics_stress:'Логистика',migration_anomaly:'Ми
 // STATE
 // ════════════════════════════════════════════════════════════════════
 let ALL_EVENTS = [], GRI = null, REGIME = null, PROBABILISTIC = null;
+let IE_RESULT = null;
 let PATTERNS = null, WEAK = null, GRAPH_DATA = null, COUNTRIES = null;
 let SCENARIOS_DATA = null, CASCADE_DATA = null;
 let FILTERS = {level:'',type:'',trend:''};
@@ -611,6 +728,17 @@ async function loadAll() {
   if (!REGIME) REGIME = deriveRegime(ALL_EVENTS);
   if (!GRI && ALL_EVENTS.length) GRI = deriveGRI(ALL_EVENTS);
 
+  // Run v3 intelligence pipeline (async, non-blocking)
+  if (typeof IE !== 'undefined') {
+    try {
+      IE_RESULT = IE.Pipeline.run(ALL_EVENTS, {
+        regime: REGIME, convergence: evSnap && evSnap.convergence,
+        weak_signals: WEAK, patterns: PATTERNS,
+        country_profiles: COUNTRIES, global_risk_index: GRI,
+      });
+    } catch(e) { console.warn('[IE] pipeline error:', e); }
+  }
+
   renderAll();
 }
 
@@ -652,6 +780,15 @@ function renderAll() {
   renderCascade();
   renderCountries();
   renderTable();
+  // v3 Intelligence layers
+  if (IE_RESULT) {
+    renderAssessment();
+    renderCausalEngine();
+    renderAcceleration();
+    renderPrioritySignals();
+    renderHorizonForecast();
+    renderTrajectories();
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1512,6 +1649,226 @@ document.getElementById('filter-strip').addEventListener('click', ev => {
 loadAll();
 setInterval(loadAll, 5 * 60 * 1000);
 window.addEventListener('resize', () => { if (graphNodes.length) renderGraph(); });
+
+// ═══════════════════════════════════════════════════════
+// V3 RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
+const ACC_COLORS = {latent:'#5D6D7E',accelerating:'#B8973A',synchronized:'#C0622B',cascading:'#A93226',nonlinear_break:'#7B241C'};
+const ACC_LABELS = {latent:'Латентный',accelerating:'Ускорение',synchronized:'Синхронизация',cascading:'Каскадирование',nonlinear_break:'Нелинейный разрыв'};
+const SCEN4_COLORS = {stabilization:'#1E8449',controlled_escalation:'#B8973A',systemic_fragmentation:'#C0622B',nonlinear_disruption:'#7B241C'};
+const SCEN4_LABELS = {stabilization:'Стабилизация',controlled_escalation:'Управляемая',systemic_fragmentation:'Фрагментация',nonlinear_disruption:'Нелинейный сбой'};
+const TRAJ_COLORS = {stable:'#1E8449',pressured:'#2471A3',fragile:'#B8973A',deteriorating:'#C0622B',unstable:'#A93226',systemic_risk:'#7B241C'};
+const CLASS_COLORS = {critical_system:'#B03A2E',precursor:'#B8973A',systemic_trigger:'#C0622B',monitor:'#5D6D7E',noise:'#3A3A3A'};
+const CLASS_LABELS = {critical_system:'КРИТИЧЕСКИЙ',precursor:'ПРЕКУРСОР',systemic_trigger:'ТРИГГЕР',monitor:'мониторинг',noise:'шум'};
+
+function renderAssessment() {
+  const r = IE_RESULT;
+  if (!r || !r.assessment) return;
+  const card = document.getElementById('assessment-card');
+  const body = document.getElementById('assessment-body');
+  if (!card || !body) return;
+  card.style.display = '';
+
+  const a = r.assessment;
+  const sections = [
+    { label: 'Исполнительное резюме', key: 'executive_summary' },
+    { label: 'Оценка эскалации',       key: 'escalation_assessment' },
+    { label: 'Интерпретация режима',   key: 'regime_interpretation' },
+    { label: 'Скрытые сигналы',        key: 'hidden_signals' },
+  ];
+
+  body.innerHTML = sections.map(s => {
+    const text = typeof a[s.key] === 'string' ? a[s.key] : '';
+    if (!text) return '';
+    return `<div class="assess-block">
+      <div class="assess-label">${s.label}</div>
+      <div class="assess-text">${text}</div>
+    </div>`;
+  }).join('') + (a.contagion_vectors && a.contagion_vectors.length ? `
+    <div class="assess-block">
+      <div class="assess-label">Ведущие векторы заражения</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${a.contagion_vectors.map(v => `<span style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border:1px solid var(--border);border-radius:2px;color:var(--ink)">${v.vector}${v.top_path?` → ${v.top_path}`:''}</span>`).join('')}
+      </div>
+    </div>` : '');
+}
+
+function renderCausalEngine() {
+  const r = IE_RESULT;
+  if (!r) return;
+  const row = document.getElementById('causal-acc-row');
+  const body = document.getElementById('causal-body');
+  const ampBody = document.getElementById('amplifier-body');
+  const cb = document.getElementById('causal-count-badge');
+  if (!row || !body) return;
+  row.style.display = '';
+
+  const chains = r.causalChains || [];
+  if (cb) { cb.textContent = `${chains.length} путей`; cb.style.color='var(--cyan)'; cb.style.borderColor='var(--cyan-border)'; }
+
+  body.innerHTML = chains.slice(0,6).map(c => {
+    const sc = DC[c.src]||'#888', dc = DC[c.dst]||'#888';
+    const opacity = c.type === 'inferred' ? '0.6' : '1';
+    return `<div class="causal-row" style="opacity:${opacity}">
+      <span class="causal-src" style="color:${sc};border-color:${sc}30;background:${sc}10">${DL[c.src]||c.src}</span>
+      <span class="causal-arrow">→</span>
+      <span class="causal-dst" style="color:${dc};border-color:${dc}30;background:${dc}10">${DL[c.dst]||c.dst}</span>
+      <span class="causal-mech">${c.mechanism||''}</span>
+      <span class="causal-w" style="color:${c.type==='cascade'?'var(--cream)':'var(--muted)'}">${(c.weight*100).toFixed(0)}%</span>
+    </div>`;
+  }).join('') || '<div class="empty-state">Каузальных связей не обнаружено</div>';
+
+  if (ampBody) {
+    ampBody.innerHTML = (r.amplifiers||[]).slice(0,6).map(a => {
+      const v = IE.VECTOR_VELOCITY[a.vector] || 0.5;
+      const col = v >= 0.8 ? '#B03A2E' : v >= 0.65 ? '#B8973A' : '#5D6D7E';
+      return `<span style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border:1px solid ${col}30;border-radius:2px;color:${col};background:${col}10">${a.vector} ${a.amplification_score.toFixed(0)}</span>`;
+    }).join('');
+  }
+}
+
+function renderAcceleration() {
+  const r = IE_RESULT;
+  const body = document.getElementById('acc-body');
+  const badge = document.getElementById('acc-state-badge');
+  if (!r || !body) return;
+
+  const acc = r.acceleration || {};
+  const state = acc.state || 'latent';
+  const col = ACC_COLORS[state] || '#888';
+  const lbl = ACC_LABELS[state] || state;
+  if (badge) { badge.textContent = lbl; badge.style.color = col; badge.style.borderColor = col+'40'; }
+
+  const m = acc.metrics || {};
+  const clusters = acc.clusters || [];
+
+  body.innerHTML = `
+    <div class="acc-state-row">
+      <div class="acc-orb" style="color:${col};background:${col}18">
+        <div class="acc-orb-pulse"></div>
+        <span style="font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:${col};text-align:center;padding:2px">${lbl}</span>
+      </div>
+      <div style="flex:1">
+        <div style="font-family:var(--font-serif);font-size:18px;color:${col};margin-bottom:4px">${ACC_LABELS[state]||state}</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.6">
+          синхр: <b style="color:${col}">${(m.sync_score||0)*100|0}%</b> &nbsp;|&nbsp;
+          конверг: <b style="color:${col}">${(m.convergence_density||0)*100|0}%</b> &nbsp;|&nbsp;
+          contagion: <b style="color:${col}">${m.contagion_velocity||0}%</b>
+        </div>
+      </div>
+    </div>
+    <div class="acc-metrics">
+      <div class="acc-metric">
+        <div class="acc-metric-val" style="color:${col}">${(m.slope_acceleration||0).toFixed(2)}</div>
+        <div class="acc-metric-label">Slope acceleration</div>
+      </div>
+      <div class="acc-metric">
+        <div class="acc-metric-val" style="color:${col}">${(m.volatility||0).toFixed(1)}</div>
+        <div class="acc-metric-label">Волатильность</div>
+      </div>
+      <div class="acc-metric">
+        <div class="acc-metric-val" style="color:${col}">${m.avg_escalation||0}</div>
+        <div class="acc-metric-label">Avg escalation</div>
+      </div>
+      <div class="acc-metric">
+        <div class="acc-metric-val" style="color:${col}">${clusters.length}</div>
+        <div class="acc-metric-label">Кластеров</div>
+      </div>
+    </div>
+    ${clusters.length ? `<div style="padding:0 16px 12px">
+      ${clusters.map(cl => `<div style="font-size:10px;padding:3px 0;border-bottom:1px solid var(--border)">
+        <span style="color:${DC[cl.domain]||'#888'}">${DL[cl.domain]||cl.domain}</span>:
+        <span style="color:var(--cream)">${cl.count} событий</span>
+        <span style="color:var(--muted)">&nbsp;Δ=${cl.avg_delta}</span>
+      </div>`).join('')}
+    </div>` : ''}
+  `;
+}
+
+function renderPrioritySignals() {
+  const r = IE_RESULT;
+  const card = document.getElementById('priority-card');
+  const body = document.getElementById('priority-body');
+  if (!r || !card || !body) return;
+  card.style.display = '';
+
+  const signals = r.prioritized || [];
+  body.innerHTML = signals.slice(0,15).map((e,i) => {
+    const col  = levelCol(e.escalation_level||'none');
+    const cc   = CLASS_COLORS[e.signal_class] || '#888';
+    const domC = DC[e.domain]||'#888';
+    return `<div class="priority-row">
+      <span class="pr-rank">${i+1}</span>
+      <span class="pr-class" style="color:${cc};border-color:${cc}30">${CLASS_LABELS[e.signal_class]||e.signal_class}</span>
+      <span class="pr-score" style="color:${cc}">${e.priority_score}</span>
+      <span class="pr-title" style="color:var(--cream)">${(e.title||'').slice(0,70)}</span>
+      <span class="pr-domain" style="color:${domC}">${DL[e.domain]||e.domain}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderHorizonForecast() {
+  const r = IE_RESULT;
+  const card = document.getElementById('horizon-card');
+  const grid = document.getElementById('horizon-grid');
+  if (!r || !card || !grid) return;
+  card.style.display = '';
+
+  const hf = r.horizonForecast || {};
+  grid.innerHTML = [7,30,90,180].map(h => {
+    const f = hf[h];
+    if (!f) return `<div class="hg-cell"><div class="hg-horizon">${h}Д</div><div style="color:var(--muted);font-size:10px">—</div></div>`;
+    const sc = f.scenarios || {};
+    const dom = Object.entries(sc).sort((a,b)=>b[1]-a[1])[0];
+    const domCol = SCEN4_COLORS[dom[0]] || '#888';
+    const bars = Object.entries(sc).map(([k,v]) => {
+      const c = SCEN4_COLORS[k]||'#888';
+      return `<div class="hg-bar-row">
+        <span class="hg-bar-label" style="color:${c}">${SCEN4_LABELS[k]||k}</span>
+        <div class="hg-bar-track"><div class="hg-bar-fill" style="width:${Math.round(v*100)}%;background:${c}"></div></div>
+        <span class="hg-bar-pct" style="color:${c}">${Math.round(v*100)}%</span>
+      </div>`;
+    }).join('');
+    return `<div class="hg-cell">
+      <div class="hg-horizon">${h}Д <span style="color:${domCol}">${SCEN4_LABELS[dom[0]]||dom[0]}</span></div>
+      ${bars}
+      <div class="hg-conf">conf: ${(f.confidence*100).toFixed(0)}% · div: ${f.divergence}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrajectories() {
+  const r = IE_RESULT;
+  const card = document.getElementById('trajectory-card');
+  const grid = document.getElementById('traj-grid');
+  const badge = document.getElementById('traj-count-badge');
+  if (!r || !card || !grid) return;
+
+  const trajs = r.trajectories || [];
+  if (!trajs.length) return;
+  card.style.display = '';
+  if (badge) badge.textContent = `${trajs.length} стран`;
+
+  grid.innerHTML = trajs.slice(0,12).map(t => {
+    const col = TRAJ_COLORS[t.trajectory] || '#888';
+    const TRAJ_LABELS = {stable:'Стабильный',pressured:'Под давлением',fragile:'Хрупкий',deteriorating:'Деградация',unstable:'Нестабильный',systemic_risk:'Системный риск'};
+    return `<div class="traj-card">
+      <div class="traj-header">
+        <span class="traj-name">${t.name_ru||t.iso3}</span>
+        <span class="traj-state" style="color:${col};border-color:${col}40">${TRAJ_LABELS[t.trajectory]||t.trajectory}</span>
+      </div>
+      <div class="traj-bars">
+        <div class="tb-row"><span class="tb-label">Устойчивость</span><div class="tb-track"><div class="tb-fill" style="width:${t.resilience}%;background:#1E8449"></div></div><span class="tb-val">${t.resilience}</span></div>
+        <div class="tb-row"><span class="tb-label">Хрупкость</span><div class="tb-track"><div class="tb-fill" style="width:${t.fragility}%;background:#B03A2E"></div></div><span class="tb-val">${t.fragility}</span></div>
+        <div class="tb-row"><span class="tb-label">Экспозиция</span><div class="tb-track"><div class="tb-fill" style="width:${t.exposure}%;background:#2471A3"></div></div><span class="tb-val">${t.exposure}</span></div>
+        <div class="tb-row"><span class="tb-label">Конвергенция</span><div class="tb-track"><div class="tb-fill" style="width:${t.convergence_exposure}%;background:#B8973A"></div></div><span class="tb-val">${t.convergence_exposure}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 </script>
+<script src="intelligence-engine.js"></script>
 </body>
 </html>
