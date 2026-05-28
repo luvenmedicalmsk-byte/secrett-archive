@@ -110,7 +110,7 @@ REGION_COORDS = {
     "iraq": (33.3, 44.4), "ирак": (33.3, 44.4), "baghdad": (33.3, 44.4),
     "yemen": (15.6, 48.5), "йемен": (15.6, 48.5),
     "oman": (23.6, 58.6), "оман": (23.6, 58.6),
-    # Азия — крупные страны
+    # Азия -- крупные страны
     "china": (35.0, 105.0), "китай": (35.0, 105.0), "beijing": (39.9, 116.4), "пекин": (39.9, 116.4),
     "shanghai": (31.2, 121.5), "шанхай": (31.2, 121.5),
     "hong kong": (22.3, 114.2), "гонконг": (22.3, 114.2),
@@ -174,7 +174,7 @@ REGION_COORDS = {
     "anchorage": (61.2, -149.9), "fairbanks": (64.8, -147.7),
     "juneau": (58.3, -134.4), "kodiak": (57.8, -152.4),
     "aleutian": (52.0, -175.0), "алеутские": (52.0, -175.0),
-    # Европа — все страны
+    # Европа -- все страны
     "ireland": (53.4, -8.2), "ирландия": (53.4, -8.2), "dublin": (53.3, -6.3),
     "denmark": (56.3, 9.5), "дания": (56.3, 9.5), "copenhagen": (55.7, 12.6),
     "finland": (64.0, 26.0), "финляндия": (64.0, 26.0), "helsinki": (60.2, 24.9),
@@ -198,7 +198,7 @@ REGION_COORDS = {
     "monaco": (43.7, 7.4), "монако": (43.7, 7.4),
     "san marino": (43.9, 12.5), "сан-марино": (43.9, 12.5),
     "vatican": (41.9, 12.5), "ватикан": (41.9, 12.5),
-    # Африка — север
+    # Африка -- север
     "morocco": (31.8, -7.1), "марокко": (31.8, -7.1), "rabat": (34.0, -6.8), "casablanca": (33.6, -7.6),
     "algeria": (28.0, 2.6), "алжир": (28.0, 2.6),
     "tunisia": (33.9, 9.5), "тунис": (33.9, 9.5),
@@ -399,12 +399,12 @@ def parse_date(s):
 
 
 def detect_coords(title, desc):
-    """Определяет координаты — заголовок имеет приоритет над описанием"""
+    """Определяет координаты -- заголовок имеет приоритет над описанием"""
     title_low = title.lower()
     desc_low = (desc or '').lower()
 
-    # Шаг 1: ищем в заголовке — высокий приоритет
-    # Притяжательные суффиксы указывают на объект а не субъект — пропускаем
+    # Шаг 1: ищем в заголовке -- высокий приоритет
+    # Притяжательные суффиксы указывают на объект а не субъект -- пропускаем
     POSS = ['скую','ского','ской','ские','ским','ских','ную','ного','ной','ные','ным','ных']
 
     best_title, best_title_len, best_title_coords = None, 0, None
@@ -421,7 +421,7 @@ def detect_coords(title, desc):
         lat, lng = best_title_coords
         return round(lat + random.uniform(-1.5, 1.5), 2), round(lng + random.uniform(-1.5, 1.5), 2), best_title.title()
 
-    # Шаг 2: ищем в описании — только если в заголовке ничего нет
+    # Шаг 2: ищем в описании -- только если в заголовке ничего нет
     # Исключаем контекстные упоминания стран (after, since, amid, despite, vs)
     CONTEXT_WORDS = ['since', 'after', 'amid', 'despite', 'vs', 'against', 'from', 'invasion of', 'war in']
     best_desc, best_desc_len, best_desc_coords = None, 0, None
@@ -479,25 +479,25 @@ def fetch_newsapi(api_key):
 
     today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
-    # Только 6 запросов в день — по одному на домен
+    # Только 6 запросов в день -- по одному на домен
     # Бесплатный план: 100 запросов/день, запускаемся каждые 2 часа = 12 запусков = 72 запроса
     queries = [
-        # Климат — экстремальные события
+        # Климат -- экстремальные события
         ("heatwave wildfire flood hurricane drought extreme weather", 20,
          "reuters,bbc-news,the-guardian-uk,associated-press,al-jazeera-english,cnn"),
-        # Геополитика — конфликты и кризисы
+        # Геополитика -- конфликты и кризисы
         ("war conflict attack invasion coup sanctions protest", 20,
          "reuters,bloomberg,al-jazeera-english,financial-times,the-economist"),
-        # Экономика — рецессия, долги, ресурсы
+        # Экономика -- рецессия, долги, ресурсы
         ("recession inflation oil gold sanctions trade war debt", 20,
          "reuters,bloomberg,cnbc,al-jazeera-english,yahoo-finance"),
-        # Технологии — кибер и AI
+        # Технологии -- кибер и AI
         ("cyberattack AI risk semiconductor outage hacking breach", 15,
          "reuters,wired,techcrunch,the-verge"),
-        # Социум — миграция, здоровье, безработица
+        # Социум -- миграция, здоровье, безработица
         ("refugee migration disease outbreak unemployment poverty", 15,
          "reuters,the-guardian-uk,al-jazeera-english"),
-        # Горячие точки — прямой поиск
+        # Горячие точки -- прямой поиск
         ("Gaza Ukraine Taiwan Iran North Korea coup terror attack", 20,
          "reuters,bbc-news,al-jazeera-english,associated-press"),
     ]
@@ -537,7 +537,7 @@ def fetch_newsapi(api_key):
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_gdelt():
     items = []
-    # Один широкий запрос раз в 2 часа — соблюдаем лимит GDELT (1 запрос / 5 сек)
+    # Один широкий запрос раз в 2 часа -- соблюдаем лимит GDELT (1 запрос / 5 сек)
     query = ('war OR conflict OR military OR invasion OR airstrike OR '
              'protest OR riot OR coup OR unrest OR '
              'recession OR inflation OR sanctions OR crisis OR '
@@ -779,11 +779,11 @@ def process_events(raw_items):
         DOMAIN_QUOTA['climate'] += MAX_EVENTS - _quota_sum
     domain_counts = {d: 0 for d in DOMAIN_QUOTA}
     balanced = []
-    overflow = []  # события сверх квоты — добавим в конце если есть место
+    overflow = []  # события сверх квоты -- добавим в конце если есть место
     
     today = datetime.now(timezone.utc).date()
-    # Новостные источники — только сегодня
-    # RSS аналитики (think-tanks) — последние 3 дня
+    # Новостные источники -- только сегодня
+    # RSS аналитики (think-tanks) -- последние 3 дня
     ANALYTICS_SOURCES = {
         'Foreign Policy', 'CSIS', 'Chatham House', 'Carnegie Endowment',
         'CFR', 'Atlantic Council', 'War on the Rocks', 'ISW',
@@ -806,7 +806,7 @@ def process_events(raw_items):
             ev_date = _date.fromisoformat(ev_date_str)
             days_old = (today - ev_date).days
             source = ev.get('source', '')
-            # Аналитика — до 3 дней, новости — только сегодня
+            # Аналитика -- до 3 дней, новости -- только сегодня
             max_days = 3 if source in ANALYTICS_SOURCES else 0
             if days_old > max_days:
                 continue
@@ -827,7 +827,7 @@ def process_events(raw_items):
     
     top_events = balanced[:MAX_EVENTS]
     
-    # Пакетный перевод заголовков — один запрос вместо 150
+    # Пакетный перевод заголовков -- один запрос вместо 150
     print(f"  Переводим заголовки...", file=sys.stderr)
     titles = [e['title'] for e in top_events]
     translated_titles = translate_batch(titles)
@@ -850,7 +850,7 @@ def save(events):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ИСТОЧНИК 5: GDACS (Global Disaster Alert and Coordination System — ООН)
+# ИСТОЧНИК 5: GDACS (Global Disaster Alert and Coordination System -- ООН)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_gdacs():
     items = []
@@ -897,7 +897,7 @@ def fetch_gdacs():
                 'source_bias': bias
             }
             
-            # Если есть координаты — используем напрямую
+            # Если есть координаты -- используем напрямую
             if lat_el is not None and lng_el is not None:
                 try:
                     lat = float(lat_el.text)
@@ -980,7 +980,7 @@ def fetch_usgs_earthquakes():
                 lng, lat = float(coords[0]), float(coords[1])
                 mag = props.get('mag', 0)
                 place = props.get('place', '')
-                title = f"Землетрясение M{mag} — {place}"
+                title = f"Землетрясение M{mag} -- {place}"
                 items.append({
                     'title': title,
                     'desc': f"Магнитуда {mag}. {place}",
@@ -998,7 +998,7 @@ def fetch_usgs_earthquakes():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ИСТОЧНИК 8: ACLED (Armed Conflict Location & Event Data) — геополитика/социум
+# ИСТОЧНИК 8: ACLED (Armed Conflict Location & Event Data) -- геополитика/социум
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_acled_rss():
     items = []
@@ -1035,7 +1035,7 @@ def fetch_acled_rss():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ГЕОПОЛИТИЧЕСКИЕ RSS — think-tanks, military analysis, geostrategy
+# ГЕОПОЛИТИЧЕСКИЕ RSS -- think-tanks, military analysis, geostrategy
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_geopolitics_rss():
     """Foreign Policy, CSIS, Chatham House, Carnegie, CFR, Atlantic Council,
@@ -1131,7 +1131,7 @@ def fetch_geopolitics_rss():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# СОЦИАЛЬНЫЕ RSS — неравенство, миграция, здоровье, гуманитарные кризисы
+# СОЦИАЛЬНЫЕ RSS -- неравенство, миграция, здоровье, гуманитарные кризисы
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_social_rss():
     """WHO, UNHCR, ReliefWeb, The New Humanitarian, Migration Policy,
@@ -1226,7 +1226,7 @@ def fetch_social_rss():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ТЕХНОЛОГИЧЕСКИЕ RSS — кибербезопасность и AI
+# ТЕХНОЛОГИЧЕСКИЕ RSS -- кибербезопасность и AI
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_tech_rss():
     """MIT Tech Review, The Record, CyberScoop, BleepingComputer, Dark Reading,
@@ -1317,27 +1317,27 @@ def fetch_tech_rss():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# КЛИМАТИЧЕСКИЕ RSS — специализированные источники
+# КЛИМАТИЧЕСКИЕ RSS -- специализированные источники
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_climate_rss():
     """FloodList, Wildfire Today, Mongabay, Carbon Brief, Inside Climate News,
     Yale Climate Connections, The Watchers, Earth Observatory"""
     sources = [
-        # FloodList — лучший источник по наводнениям
+        # FloodList -- лучший источник по наводнениям
         ('https://floodlist.com/feed', 'FloodList', 'climate'),
         ('https://floodlist.com/feed/', 'FloodList', 'climate'),
-        # Wildfire Today — пожары
+        # Wildfire Today -- пожары
         ('https://wildfiretoday.com/feed/', 'Wildfire Today', 'climate'),
-        # Mongabay — экология и катастрофы
+        # Mongabay -- экология и катастрофы
         ('https://news.mongabay.com/feed/', 'Mongabay', 'climate'),
-        # Carbon Brief — климатическая аналитика
+        # Carbon Brief -- климатическая аналитика
         ('https://www.carbonbrief.org/feed/', 'Carbon Brief', 'climate'),
         ('https://www.carbonbrief.org/rss/', 'Carbon Brief', 'climate'),
         # Inside Climate News
         ('https://insideclimatenews.org/feed/', 'Inside Climate News', 'climate'),
         # Yale Climate Connections
         ('https://yaleclimateconnections.org/feed/', 'Yale Climate Connections', 'climate'),
-        # The Watchers — природные катастрофы
+        # The Watchers -- природные катастрофы
         ('https://watchers.news/feed/', 'The Watchers', 'climate'),
         ('https://watchers.news/rss', 'The Watchers', 'climate'),
         # NASA Earth Observatory
@@ -1427,14 +1427,14 @@ def fetch_climate_rss():
 def fetch_global_rss():
     items = []
     feeds = [
-        # Геополитика — рабочие источники
+        # Геополитика -- рабочие источники
         {"url": "https://foreignpolicy.com/feed/", "source": "Foreign Policy", "bias": 8, "domain": "geopolitics"},
         {"url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "source": "UN News", "bias": 5, "domain": "geopolitics"},
         # Геополитика
         {"url": "https://feeds.feedburner.com/breitbart", "source": "Global News", "bias": 5},
         {"url": "https://rss.dw.com/rdf/rss-en-world", "source": "DW World", "bias": 6},
         {"url": "https://www.france24.com/en/rss", "source": "France24", "bias": 6},
-        # Экономика — расширенный пул
+        # Экономика -- расширенный пул
         {"url": "https://www.imf.org/en/news/rss", "source": "IMF", "bias": 8},
         {"url": "https://blogs.worldbank.org/rss.xml", "source": "World Bank", "bias": 8},
         {"url": "https://feeds.bloomberg.com/markets/news.rss", "source": "Bloomberg Markets", "bias": 8},
@@ -1442,7 +1442,7 @@ def fetch_global_rss():
         {"url": "https://feeds.reuters.com/reuters/businessNews", "source": "Reuters Business", "bias": 8},
         {"url": "https://feeds.reuters.com/reuters/financialsNews", "source": "Reuters Finance", "bias": 8},
         {"url": "https://www.project-syndicate.org/rss", "source": "Project Syndicate Economy", "bias": 7},
-        # Технологии/кибербезопасность — расширенный пул
+        # Технологии/кибербезопасность -- расширенный пул
         {"url": "https://feeds.feedburner.com/TheHackersNews", "source": "Hacker News Security", "bias": 7},
         {"url": "https://www.darkreading.com/rss.xml", "source": "Dark Reading", "bias": 6},
         {"url": "https://feeds.arstechnica.com/arstechnica/technology-lab", "source": "Ars Technica Tech", "bias": 6},
@@ -1452,16 +1452,16 @@ def fetch_global_rss():
         # Социум/права человека
         {"url": "https://www.hrw.org/node/feed", "source": "Human Rights Watch", "bias": 9},
         {"url": "https://www.amnesty.org/en/feed/", "source": "Amnesty International", "bias": 9},
-        # Экономика — аналитические институты
+        # Экономика -- аналитические институты
         {"url": "https://www.bis.org/press/rss.htm", "source": "BIS", "bias": 9, "domain": "economy"},
         {"url": "https://www.oecd.org/newsroom/rss.xml", "source": "OECD", "bias": 8, "domain": "economy"},
         {"url": "https://www.project-syndicate.org/rss/economics", "source": "Project Syndicate Economics", "bias": 8, "domain": "economy"},
         {"url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", "source": "WSJ Markets", "bias": 8, "domain": "economy"},
-        # Социум — миграция, здоровье
+        # Социум -- миграция, здоровье
         {"url": "https://www.iom.int/rss.xml", "source": "IOM Migration", "bias": 8, "domain": "social"},
         {"url": "https://www.who.int/rss-feeds/news-english.xml", "source": "WHO", "bias": 9, "domain": "social"},
         {"url": "https://reliefweb.int/updates/rss.xml", "source": "ReliefWeb Updates", "bias": 8, "domain": "social"},
-        # Геополитика — экспертные центры
+        # Геополитика -- экспертные центры
         {"url": "https://www.chathamhouse.org/rss.xml", "source": "Chatham House", "bias": 9, "domain": "geopolitics"},
         {"url": "https://sipri.org/rss.xml", "source": "SIPRI", "bias": 9, "domain": "geopolitics"},
         {"url": "https://www.iaea.org/newscenter/news/rss", "source": "IAEA", "bias": 10, "domain": "geopolitics"},
@@ -1490,7 +1490,7 @@ def fetch_global_rss():
     return items
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ИСТОЧНИК 10: WFP (ООН Продовольственная программа) — голод/социум глобально
+# ИСТОЧНИК 10: WFP (ООН Продовольственная программа) -- голод/социум глобально
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_wfp():
     items = []
@@ -1523,13 +1523,13 @@ def fetch_russia_climate():
     items = []
     
     feeds = [
-        # МЧС России — чрезвычайные ситуации
+        # МЧС России -- чрезвычайные ситуации
         {"url": "https://mchs.gov.ru/deyatelnost/press-centr/novosti", "source": "МЧС России", "bias": 10},
-        # Русская служба Би-би-си — климат и катастрофы
+        # Русская служба Би-би-си -- климат и катастрофы
         {"url": "https://feeds.bbci.co.uk/russian/rss.xml", "source": "BBC Россия", "bias": 6},
         # RFE/RL по России
         {"url": "https://www.rferl.org/api/zjrqovec-q_", "source": "RFE/RL", "bias": 6},
-        # Meduza — новости из России
+        # Meduza -- новости из России
         {"url": "https://meduza.io/rss/all", "source": "Meduza", "bias": 7},
     ]
     
@@ -1566,7 +1566,7 @@ def fetch_russia_climate():
         except Exception as e:
             print(f"  [WARN] {feed['source']}: {e}", file=sys.stderr)
     
-    # FIRMS NASA — лесные пожары в России (Сибирь, Дальний Восток)
+    # FIRMS NASA -- лесные пожары в России (Сибирь, Дальний Восток)
     # Bbox: Россия примерно 30-180 lng, 45-75 lat
     firms_url = ("https://firms.modaps.eosdis.nasa.gov/api/country/csv/"
                  "FIRMS_API_KEY/VIIRS_SNPP_NRT/RUS/7/")
@@ -1672,7 +1672,7 @@ def fetch_copernicus_floods():
                 severity_map = {'high': 88, 'medium': 75, 'low': 60}
                 sev_str = flood.get('severity', 'low')
                 
-                # Если нет координат — определяем по названию страны
+                # Если нет координат -- определяем по названию страны
                 if not lat or not lng:
                     text_lower = title.lower()
                     for country, coords in COUNTRY_COORDS.items():
@@ -1792,7 +1792,7 @@ def fetch_copernicus_cyber():
             'cisco': (37.4, -121.9), 'vmware': (37.4, -122.0),
             'global': (40.7, -74.0), 'worldwide': (51.5, -0.1),
         }
-        # Пул координат для событий без явной геолокации — глобальные теххабы
+        # Пул координат для событий без явной геолокации -- глобальные теххабы
         GLOBAL_TECH_COORDS = [
             (47.6, -122.3),   # Seattle/Microsoft
             (37.4, -122.1),   # Silicon Valley
@@ -1881,10 +1881,10 @@ def fetch_copernicus_cyber():
 
 
 def fetch_copernicus():
-    """Copernicus Emergency Management Service — пожары и наводнения глобально"""
+    """Copernicus Emergency Management Service -- пожары и наводнения глобально"""
     items = []
     
-    # CEMS Rapid Mapping — активные чрезвычайные ситуации
+    # CEMS Rapid Mapping -- активные чрезвычайные ситуации
     cems_url = "https://emergency.copernicus.eu/mapping/list-of-activations-rapid"
     # RSS активаций CEMS
     feeds = [
@@ -1931,7 +1931,7 @@ def fetch_copernicus():
         except Exception as e:
             print(f"  [WARN] Copernicus RSS: {e}", file=sys.stderr)
     
-    # Copernicus Climate Change Service — аномалии температуры
+    # Copernicus Climate Change Service -- аномалии температуры
     # Используем Copernicus Atmosphere Monitoring Service (CAMS) RSS
     cams_feeds = [
         "https://atmosphere.copernicus.eu/rss.xml",
@@ -1969,14 +1969,14 @@ def fetch_copernicus():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Copernicus Sentinel Hub — спутниковые данные (пожары, наводнения, загрязнение)
+# Copernicus Sentinel Hub -- спутниковые данные (пожары, наводнения, загрязнение)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_copernicus_sentinel(api_key=None):
-    """Copernicus — публичные RSS без OAuth (Dataspace блокирует GitHub Actions IP)"""
+    """Copernicus -- публичные RSS без OAuth (Dataspace блокирует GitHub Actions IP)"""
     items = []
     key = api_key or os.environ.get('COPERNICUS_KEY', '')
 
-    # C3S и CAMS RSS — работают без токена
+    # C3S и CAMS RSS -- работают без токена
     c3s_feeds = [
         "https://climate.copernicus.eu/rss.xml",
         "https://atmosphere.copernicus.eu/rss.xml",
@@ -2017,7 +2017,7 @@ def fetch_copernicus_sentinel(api_key=None):
     return items
 
 def fetch_nasa_firms(api_key=None):
-    """NASA FIRMS — спутниковые пожары каждые 3 часа"""
+    """NASA FIRMS -- спутниковые пожары каждые 3 часа"""
     items = []
     
     key = api_key or os.environ.get('FIRMS_API_KEY','')
@@ -2072,7 +2072,7 @@ def fetch_nasa_firms(api_key=None):
                     # Только высокодостоверные
                     if conf not in ['high','nominal','n']: continue
                     
-                    # Ключ кластера — сетка 2 градуса
+                    # Ключ кластера -- сетка 2 градуса
                     grid_key = (round(lat/2)*2, round(lng/2)*2)
                     if grid_key not in clusters or bright > clusters[grid_key]['bright']:
                         clusters[grid_key] = {
@@ -2088,7 +2088,7 @@ def fetch_nasa_firms(api_key=None):
                 intensity = 'критическая' if fire['bright'] > 370 else 'высокая' if fire['bright'] > 340 else 'средняя'
                 reg = detect_region_by_coords(fire['lat'], fire['lng'])
                 items.append({
-                    'title': f"Лесной пожар — {reg} (интенсивность: {intensity})",
+                    'title': f"Лесной пожар -- {reg} (интенсивность: {intensity})",
                     'desc': f"Спутниковая детекция NASA VIIRS. Яркость: {fire['bright']:.0f}K. Регион: {reg}",
                     'date': fire['date'],
                     'source': 'NASA FIRMS',
@@ -2107,7 +2107,7 @@ def fetch_nasa_firms(api_key=None):
 
 
 def fetch_global_forest_watch():
-    """Global Forest Watch — вырубки, пожары, деградация лесов"""
+    """Global Forest Watch -- вырубки, пожары, деградация лесов"""
     items = []
     
     # GFW использует VIIRS/MODIS данные через свой API
@@ -2144,7 +2144,7 @@ def fetch_global_forest_watch():
         except Exception as e:
             print(f"  [WARN] GFW: {e}", file=sys.stderr)
     
-    # GFW GLAD alerts — еженедельные спутниковые алерты по лесам
+    # GFW GLAD alerts -- еженедельные спутниковые алерты по лесам
     glad_url = "https://glad.umd.edu/projects/glad-2016/rss"
     data = fetch_url(glad_url)
     if data:
@@ -2173,10 +2173,10 @@ def fetch_global_forest_watch():
 
 
 def fetch_flood_observatory():
-    """Dartmouth Flood Observatory — глобальный мониторинг наводнений"""
+    """Dartmouth Flood Observatory -- глобальный мониторинг наводнений"""
     items = []
     
-    # DFO — самая полная база наводнений в мире
+    # DFO -- самая полная база наводнений в мире
     feeds = [
         "https://floodobservatory.colorado.edu/GeographicRegions/GlobalFloodsR.html",
         "https://floodobservatory.colorado.edu/rss",
@@ -2235,18 +2235,18 @@ def get_russia_static_risks():
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     
     risks = [
-        # Пожары — Сибирь и Дальний Восток (сезон май-октябрь)
+        # Пожары -- Сибирь и Дальний Восток (сезон май-октябрь)
         {
             "title": "Сезон лесных пожаров: Сибирь и Дальний Восток",
             "domain": "climate",
             "severity": 82,
             "lat": 61.0, "lng": 107.0,
             "region": "Сибирь",
-            "summary": "Ежегодно выгорает 5-15 млн га. Якутия, Красноярский край, Иркутская область — зоны критического риска. Пожары 2021 года стали рекордными: 18.8 млн га.",
+            "summary": "Ежегодно выгорает 5-15 млн га. Якутия, Красноярский край, Иркутская область -- зоны критического риска. Пожары 2021 года стали рекордными: 18.8 млн га.",
             "source": "Авиалесоохрана / Росгидромет",
         },
         {
-            "title": "Лесные пожары: Якутия — зона максимального риска",
+            "title": "Лесные пожары: Якутия -- зона максимального риска",
             "domain": "climate",
             "severity": 85,
             "lat": 63.0, "lng": 129.0,
@@ -2270,7 +2270,7 @@ def get_russia_static_risks():
             "severity": 76,
             "lat": 57.5, "lng": 65.0,
             "region": "Урал",
-            "summary": "Оренбург, Орск, Тюмень — ежегодные паводки. 2024 год: крупнейшее наводнение за 80 лет. 100 000+ человек эвакуированы, ущерб 40+ млрд рублей.",
+            "summary": "Оренбург, Орск, Тюмень -- ежегодные паводки. 2024 год: крупнейшее наводнение за 80 лет. 100 000+ человек эвакуированы, ущерб 40+ млрд рублей.",
             "source": "МЧС России / Росгидромет",
         },
         # Вечная мерзлота
@@ -2280,7 +2280,7 @@ def get_russia_static_risks():
             "severity": 88,
             "lat": 68.0, "lng": 95.0,
             "region": "Арктика/Сибирь",
-            "summary": "65% территории России — зона вечной мерзлоты. Таяние разрушает здания, трубопроводы, дороги. К 2050 году ущерб может достичь $250 млрд. Норильск: уже 40% зданий деформированы.",
+            "summary": "65% территории России -- зона вечной мерзлоты. Таяние разрушает здания, трубопроводы, дороги. К 2050 году ущерб может достичь $250 млрд. Норильск: уже 40% зданий деформированы.",
             "source": "Росгидромет / IPCC AR6",
         },
         {
@@ -2289,7 +2289,7 @@ def get_russia_static_risks():
             "severity": 90,
             "lat": 72.0, "lng": 120.0,
             "region": "Сибирь/Арктика",
-            "summary": "Сибирская тундра хранит 1.5 трлн тонн углерода. При таянии выделяется метан — в 84 раза мощнее CO₂. Воронки взрывного газа фиксируются ежегодно. Риск цепной реакции.",
+            "summary": "Сибирская тундра хранит 1.5 трлн тонн углерода. При таянии выделяется метан -- в 84 раза мощнее CO₂. Воронки взрывного газа фиксируются ежегодно. Риск цепной реакции.",
             "source": "Nature / IPCC AR6",
         },
         # Загрязнение
@@ -2299,7 +2299,7 @@ def get_russia_static_risks():
             "severity": 80,
             "lat": 69.3, "lng": 88.2,
             "region": "Красноярский край",
-            "summary": "Разлив 2020 года: 21 000 тонн нефтепродуктов в реки Арктики. Норильск — один из самых загрязнённых городов мира. Диоксид серы: превышение нормы в 100+ раз.",
+            "summary": "Разлив 2020 года: 21 000 тонн нефтепродуктов в реки Арктики. Норильск -- один из самых загрязнённых городов мира. Диоксид серы: превышение нормы в 100+ раз.",
             "source": "Greenpeace / МЧС",
         },
         {
@@ -2308,7 +2308,7 @@ def get_russia_static_risks():
             "severity": 75,
             "lat": 42.0, "lng": 51.0,
             "region": "Каспий",
-            "summary": "С 1996 года уровень Каспия упал на 3+ метра — рекорд за 400 лет. Угроза рыболовству, судоходству, экосистемам. Прогноз: ещё -9-18 м к 2100 году.",
+            "summary": "С 1996 года уровень Каспия упал на 3+ метра -- рекорд за 400 лет. Угроза рыболовству, судоходству, экосистемам. Прогноз: ещё -9-18 м к 2100 году.",
             "source": "Nature Climate Change",
         },
         # Засуха и жара
@@ -2328,7 +2328,7 @@ def get_russia_static_risks():
             "severity": 92,
             "lat": 80.0, "lng": 60.0,
             "region": "Российская Арктика",
-            "summary": "Российская Арктика — наиболее быстро нагревающийся регион Земли. Морской лёд сократился на 40% за 40 лет. Северный морской путь открыт круглый год впервые в истории. Угрозы: береговая эрозия, подъём моря, разрушение экосистем.",
+            "summary": "Российская Арктика -- наиболее быстро нагревающийся регион Земли. Морской лёд сократился на 40% за 40 лет. Северный морской путь открыт круглый год впервые в истории. Угрозы: береговая эрозия, подъём моря, разрушение экосистем.",
             "source": "AMAP / Росгидромет",
         },
     ]
@@ -2370,7 +2370,7 @@ def fetch_russia_signals():
     Росгидромет, Open-Meteo экстремумы, МЧС-подобные RSS"""
     items = []
 
-    # 1. Росгидромет — штормовые предупреждения
+    # 1. Росгидромет -- штормовые предупреждения
     meteo_feeds = [
         'https://meteoinfo.ru/rss/forecasts/index.php?s=28440',  # Москва
         'https://meteoinfo.ru/rss/forecasts/index.php?s=23330',  # Сочи
@@ -2409,7 +2409,7 @@ def fetch_russia_signals():
         except Exception as e:
             print(f'  [WARN] Росгидромет {url[-20:]}: {e}', file=sys.stderr)
 
-    # 2. Open-Meteo — экстремальные погодные условия по городам России
+    # 2. Open-Meteo -- экстремальные погодные условия по городам России
     cities = [
         ('Москва', 55.75, 37.62),
         ('Санкт-Петербург', 59.93, 30.32),
@@ -2495,7 +2495,7 @@ def fetch_russia_signals():
     except Exception as e:
         print(f'  [WARN] Open-Meteo Россия: {e}', file=sys.stderr)
 
-    # 3. EMSC — землетрясения на территории России
+    # 3. EMSC -- землетрясения на территории России
     try:
         url = ('https://www.seismicportal.eu/fdsnws/event/1/query'
                '?format=json&limit=20&minmag=3.5'
@@ -2514,7 +2514,7 @@ def fetch_russia_signals():
             if mag < 3.5:
                 continue
             items.append({
-                'title': f'Землетрясение M{mag:.1f} — {place}',
+                'title': f'Землетрясение M{mag:.1f} -- {place}',
                 'desc': f'Землетрясение магнитудой {mag:.1f} в районе {place}.',
                 'date': time_str or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                 'source': 'EMSC',
@@ -2533,7 +2533,7 @@ def fetch_russia_signals():
 
 
 def fetch_global_structural_risks():
-    """Структурные риски по всем странам — авторская аналитика Архива.
+    """Структурные риски по всем странам -- авторская аналитика Архива.
     horizon: '2y' = краткосрочный (2 года), '10y' = долгосрочный (10 лет)"""
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     risks = [
@@ -2564,7 +2564,7 @@ def fetch_global_structural_risks():
         {'title': 'Судан: гражданская война и миграционный кризис', 'domain': 'social',
          'severity': 88, 'lat': 15.6, 'lng': 32.5, 'region': 'Судан',
          'horizon': '2y',
-         'summary': 'Война между армией и ССБ — один из крупнейших кризисов перемещения в мире. Свыше 10 млн человек покинули дома. Голод охватывает целые регионы.'},
+         'summary': 'Война между армией и ССБ -- один из крупнейших кризисов перемещения в мире. Свыше 10 млн человек покинули дома. Голод охватывает целые регионы.'},
 
         # ЭКОНОМИКА (краткосрочные)
         {'title': 'Глобальный экономический спад: долговая рекалибровка', 'domain': 'economy',
@@ -2606,7 +2606,7 @@ def fetch_global_structural_risks():
         {'title': 'Экстремальные погодные явления: рекордный сезон', 'domain': 'climate',
          'severity': 84, 'lat': 20.0, 'lng': 78.0, 'region': 'Южная Азия · Глобально',
          'horizon': '2y',
-         'summary': '2024 — самый жаркий год в истории (+1.55°C). Экстремальная жара, наводнения и засухи одновременно охватывают несколько континентов. Сельское хозяйство и здоровье под угрозой.'},
+         'summary': '2024 -- самый жаркий год в истории (+1.55°C). Экстремальная жара, наводнения и засухи одновременно охватывают несколько континентов. Сельское хозяйство и здоровье под угрозой.'},
         {'title': 'Индия: водный стресс и угроза продовольственной безопасности', 'domain': 'climate',
          'severity': 82, 'lat': 20.6, 'lng': 78.9, 'region': 'Индия',
          'horizon': '2y',
@@ -2620,7 +2620,7 @@ def fetch_global_structural_risks():
         {'title': 'Афганистан: гуманитарный коллапс', 'domain': 'social',
          'severity': 84, 'lat': 34.5, 'lng': 69.2, 'region': 'Афганистан',
          'horizon': '2y',
-         'summary': 'Экономика рухнула. Полная изоляция женщин от образования. Голод угрожает миллионам. Страна — источник нестабильности для всего региона.'},
+         'summary': 'Экономика рухнула. Полная изоляция женщин от образования. Голод угрожает миллионам. Страна -- источник нестабильности для всего региона.'},
         {'title': 'Газа: гуманитарная катастрофа и региональный риск', 'domain': 'social',
          'severity': 90, 'lat': 31.5, 'lng': 34.5, 'region': 'Палестина',
          'horizon': '2y',
@@ -2632,7 +2632,7 @@ def fetch_global_structural_risks():
         {'title': 'Экстремальные погодные явления: нарастающая угроза', 'domain': 'climate',
          'severity': 95, 'lat': 0.0, 'lng': 20.0, 'region': 'Глобально',
          'horizon': '10y',
-         'summary': 'Риск №1 на 10 лет. Частота и интенсивность экстремальных явлений растёт экспоненциально. Половина топ-10 долгосрочных рисков — климатические.'},
+         'summary': 'Риск №1 на 10 лет. Частота и интенсивность экстремальных явлений растёт экспоненциально. Половина топ-10 долгосрочных рисков -- климатические.'},
         {'title': 'Потеря биоразнообразия и коллапс экосистем', 'domain': 'climate',
          'severity': 92, 'lat': -3.1, 'lng': -60.0, 'region': 'Амазония · Глобально',
          'horizon': '10y',
@@ -2640,7 +2640,7 @@ def fetch_global_structural_risks():
         {'title': 'Критические изменения земных систем', 'domain': 'climate',
          'severity': 91, 'lat': 80.0, 'lng': 30.0, 'region': 'Арктика · Глобально',
          'horizon': '10y',
-         'summary': 'Таяние Арктики, нарушение АМОС, закисление океанов — переломные точки климатической системы. Пересечение этих порогов необратимо меняет условия жизни на Земле.'},
+         'summary': 'Таяние Арктики, нарушение АМОС, закисление океанов -- переломные точки климатической системы. Пересечение этих порогов необратимо меняет условия жизни на Земле.'},
         {'title': 'Нехватка природных ресурсов', 'domain': 'climate',
          'severity': 88, 'lat': 20.0, 'lng': 30.0, 'region': 'Глобально',
          'horizon': '10y',
@@ -2658,7 +2658,7 @@ def fetch_global_structural_risks():
         {'title': 'Неблагоприятные исходы ИИ: автономные системы', 'domain': 'technology',
          'severity': 89, 'lat': 37.4, 'lng': -122.1, 'region': 'Глобально',
          'horizon': '10y',
-         'summary': 'Риск №5 на 10 лет. Автономные ИИ-системы в военных применениях, экономике и управлении могут действовать непредсказуемо. Утрата человеческого контроля — экзистенциальный риск.'},
+         'summary': 'Риск №5 на 10 лет. Автономные ИИ-системы в военных применениях, экономике и управлении могут действовать непредсказуемо. Утрата человеческого контроля -- экзистенциальный риск.'},
         {'title': 'Квантовые угрозы криптографии', 'domain': 'technology',
          'severity': 82, 'lat': 47.4, 'lng': 8.5, 'region': 'Глобально',
          'horizon': '10y',
@@ -2680,7 +2680,7 @@ def fetch_global_structural_risks():
         {'title': 'Демографический разрыв: старение vs молодёжные взрывы', 'domain': 'social',
          'severity': 81, 'lat': 35.7, 'lng': 139.7, 'region': 'Глобально',
          'horizon': '10y',
-         'summary': 'Япония, Южная Корея, Европа стареют и сокращаются. Африка и Южная Азия — молодёжный взрыв без рабочих мест. Миграционное давление и социальная нестабильность нарастают.'},
+         'summary': 'Япония, Южная Корея, Европа стареют и сокращаются. Африка и Южная Азия -- молодёжный взрыв без рабочих мест. Миграционное давление и социальная нестабильность нарастают.'},
         {'title': 'Продовольственная безопасность: системный кризис', 'domain': 'social',
          'severity': 86, 'lat': 5.0, 'lng': 20.0, 'region': 'Африка · Южная Азия',
          'horizon': '10y',
@@ -2698,7 +2698,7 @@ def fetch_global_structural_risks():
         {'title': 'Война за критические минералы', 'domain': 'geopolitics',
          'severity': 85, 'lat': -4.3, 'lng': 15.3, 'region': 'Африка · Глобально',
          'horizon': '10y',
-         'summary': 'Кобальт, литий, редкоземельные металлы — стратегические ресурсы будущего. Контроль над месторождениями ДРК, Чили, Монголии определит технологическое превосходство держав.'},
+         'summary': 'Кобальт, литий, редкоземельные металлы -- стратегические ресурсы будущего. Контроль над месторождениями ДРК, Чили, Монголии определит технологическое превосходство держав.'},
 
         # ЭКОНОМИКА (долгосрочные)
         {'title': 'Технологическая безработица: ИИ вытесняет труд', 'domain': 'economy',
@@ -2729,7 +2729,7 @@ def fetch_global_structural_risks():
         {'title': 'Африка: геополитическая конкуренция за континент', 'domain': 'geopolitics',
          'severity': 79, 'lat': 0.0, 'lng': 20.0, 'region': 'Африка',
          'horizon': '5y',
-         'summary': 'США, Китай, Россия, ЕС и Турция конкурируют за влияние в Африке. Военные перевороты и нестабильность создают плацдармы для внешних игроков. Ресурсный потенциал континента — главный приз.'},
+         'summary': 'США, Китай, Россия, ЕС и Турция конкурируют за влияние в Африке. Военные перевороты и нестабильность создают плацдармы для внешних игроков. Ресурсный потенциал континента -- главный приз.'},
         {'title': 'Северная Корея: ядерная угроза нового уровня', 'domain': 'geopolitics',
          'severity': 81, 'lat': 39.0, 'lng': 125.8, 'region': 'КНДР',
          'horizon': '5y',
@@ -2821,7 +2821,7 @@ def fetch_global_structural_risks():
 def fetch_russia_climate_v2():
     items = []
     
-    # 1. Авиалесоохрана — лесные пожары России (официальный источник)
+    # 1. Авиалесоохрана -- лесные пожары России (официальный источник)
     aviales_url = "https://aviales.ru/popup.aspx?lang=ru"
     data = fetch_url(aviales_url)
     if data:
@@ -2847,9 +2847,9 @@ def fetch_russia_climate_v2():
         except Exception as e:
             print(f"  [WARN] Авиалесоохрана: {e}", file=sys.stderr)
 
-    # 2. FIRMS NASA — данные по России берутся в fetch_nasa_firms
+    # 2. FIRMS NASA -- данные по России берутся в fetch_nasa_firms
     # Дублирование убрано
-        # 3. МЧС России — паводки и ЧС
+        # 3. МЧС России -- паводки и ЧС
     mchs_feeds = [
         "https://mchs.gov.ru/deyatelnost/press-centr/novosti",
         "https://mchs.gov.ru/deyatelnost/press-centr/novosti/rss",
@@ -2910,7 +2910,7 @@ def fetch_russia_climate_v2():
                 if not title: continue
                 text = (title + ' ' + desc).lower()
                 if any(kw in text for kw in permafrost_keywords):
-                    # Пермафрост — Сибирь/Арктика
+                    # Пермафрост -- Сибирь/Арктика
                     is_russia = any(r in text for r in ['russia','siberia','arctic','якути','сибир','арктик'])
                     lat = round(67.0 + __import__('random').uniform(-5,5), 2)
                     lng = round(100.0 + __import__('random').uniform(-20,20), 2)
@@ -2924,11 +2924,11 @@ def fetch_russia_climate_v2():
                     })
         except: pass
 
-    # 5. Загрязнение — Greenpeace Russia, WWF Russia
+    # 5. Загрязнение -- Greenpeace Russia, WWF Russia
     pollution_feeds = [
         "https://www.greenpeace.org/russia/ru/feed/",
         "https://wwf.ru/rss/",
-        "https://bellona.ru/rss",  # Bellona — экология России/Арктики
+        "https://bellona.ru/rss",  # Bellona -- экология России/Арктики
     ]
     pollution_keywords = [
         "загрязнение","разлив нефти","toxic","нефтяной разлив",
@@ -2989,14 +2989,14 @@ def detect_russia_coords(title, desc):
         if region in text:
             lat, lng = coords
             return round(lat + random.uniform(-1,1), 2), round(lng + random.uniform(-2,2), 2), region.title()
-    # Если упоминается Россия — центральная точка
+    # Если упоминается Россия -- центральная точка
     if 'россия' in text or 'russia' in text or 'russian' in text:
         return round(61.0 + random.uniform(-5,5), 2), round(60.0 + random.uniform(-10,10), 2), 'Россия'
     return None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ИСТОЧНИК 12: Региональные источники — Европа, Турция, Казахстан, Беларусь, Украина
+# ИСТОЧНИК 12: Региональные источники -- Европа, Турция, Казахстан, Беларусь, Украина
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_regional():
     items = []
@@ -3217,7 +3217,7 @@ def fetch_europe_latam():
     return items
 
 
-# Кэш переводов — не переводим одно и то же дважды
+# Кэш переводов -- не переводим одно и то же дважды
 _translate_cache = {}
 
 def is_english(text):
@@ -3236,8 +3236,8 @@ def translate_batch(texts):
     if not to_translate:
         return [_translate_cache.get(t, t) for t in texts]
     
-    # Переводим через LibreTranslate — один запрос на всё
-    # Встроенный словарный переводчик — работает без внешних запросов
+    # Переводим через LibreTranslate -- один запрос на всё
+    # Встроенный словарный переводчик -- работает без внешних запросов
     WORD_MAP = {
         'wildfire': 'лесной пожар', 'wildfires': 'лесные пожары',
         'flood': 'наводнение', 'floods': 'наводнения', 'flooding': 'затопление',
@@ -3269,7 +3269,7 @@ def translate_batch(texts):
         'deforestation': 'вырубка лесов', 'pollution': 'загрязнение',
     }
     
-    # Компилируем паттерны один раз — не в цикле
+    # Компилируем паттерны один раз -- не в цикле
     _COMPILED = {eng: re.compile(r'\b' + re.escape(eng) + r'\b', re.IGNORECASE)
                  for eng in WORD_MAP}
 
@@ -3286,7 +3286,7 @@ def translate_batch(texts):
     
     results = list(texts)  # копия
 
-    # Сначала пробуем OpenAI — батчами по 50 заголовков
+    # Сначала пробуем OpenAI -- батчами по 50 заголовков
     import os as _os
     openai_key = _os.environ.get('OPENAI_API_KEY', '')
     if openai_key and to_translate:
@@ -3334,7 +3334,7 @@ def translate_batch(texts):
         except Exception as e:
             print('  [WARN] OpenAI перевод: ' + str(e), file=sys.stderr)
 
-        # Fallback — внешние LibreTranslate серверы
+        # Fallback -- внешние LibreTranslate серверы
     servers = [
         "https://translate.fedilab.app/translate",
         "https://libretranslate.de/translate",
@@ -3379,7 +3379,7 @@ def translate_batch(texts):
             time.sleep(1)
             continue
     
-    # Если внешние серверы недоступны — используем словарный переводчик
+    # Если внешние серверы недоступны -- используем словарный переводчик
     print(f"  Словарный перевод {len(to_translate)} заголовков", file=sys.stderr)
     for orig_idx, orig_text in to_translate:
         results[orig_idx] = simple_translate(orig_text)
@@ -3419,7 +3419,7 @@ def inject_into_html(events):
         start = html.find('const ALL_EVENTS = ')
         if start == -1:
             return
-        # Найдём конец — ищем ];
+        # Найдём конец -- ищем ];
         depth = 0
         i = start + len('const ALL_EVENTS = ')
         in_string = False
@@ -3508,7 +3508,7 @@ def save_enriched(events, previous_snapshot=None):
       1. enrich_snapshot()        -> signal_type, phase, vectors, delta, fingerprint
       2. _build_history_map()     -> count_24h/7d, trend из rolling KV window
       3. enrich_with_escalation() -> escalation_score, level, trend_direction
-    Полностью обратно совместима — добавляет поля, не трогает старые.
+    Полностью обратно совместима -- добавляет поля, не трогает старые.
     """
     raw_snapshot = {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -3560,13 +3560,13 @@ def save_enriched(events, previous_snapshot=None):
             print(f"  [WARN] enrichment failed, fallback: {e}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
 
-    # Fallback — оригинальный save
+    # Fallback -- оригинальный save
     save(events)
 
 def _push_snapshot_to_worker(events):
     """
     Отправляет compact snapshot в Cloudflare Worker → KV.
-    Вызывается после save_enriched — не блокирует основной pipeline.
+    Вызывается после save_enriched -- не блокирует основной pipeline.
     Требует WORKER_URL и ADMIN_KEY в environment.
     """
     import os as _os
@@ -3610,7 +3610,7 @@ if __name__ == '__main__':
     raw = []
     print("Загружаю источники:", file=sys.stderr)
     raw += fetch_newsapi(NEWS_API_KEY)
-    # fetch_gdelt() — ОТКЛЮЧЕНО: облачные IP заблокированы GDELT
+    # fetch_gdelt() -- ОТКЛЮЧЕНО: облачные IP заблокированы GDELT
     raw += fetch_reliefweb()
     raw += fetch_reliefweb_v2()
     raw += fetch_nasa_eonet()
@@ -3631,7 +3631,7 @@ if __name__ == '__main__':
     # Спутниковые источники
     raw += fetch_copernicus_floods()
     raw += fetch_copernicus_cyber()
-    # fetch_copernicus() — дубликат sentinel, убрано
+    # fetch_copernicus() -- дубликат sentinel, убрано
     raw += fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))
     raw += fetch_nasa_firms(get_env('FIRMS_API_KEY'))
     raw += fetch_global_forest_watch()
@@ -3650,10 +3650,10 @@ if __name__ == '__main__':
     news_events = process_events(news_raw)
 
     if not news_events and not structural:
-        print("[WARN] Нет событий — источники недоступны", file=sys.stderr)
+        print("[WARN] Нет событий -- источники недоступны", file=sys.stderr)
         sys.exit(0)
 
-    # Структурные риски добавляем поверх лимита — они всегда присутствуют на карте
+    # Структурные риски добавляем поверх лимита -- они всегда присутствуют на карте
     import hashlib as _hs
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     structural_events = []
