@@ -14,6 +14,7 @@ Drop-in replacement for websocket_gateway.py with:
 """
 from __future__ import annotations
 import asyncio, json, logging, os, time
+import collections
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -63,14 +64,23 @@ class _RateLimiter:
 # ── Reconnect storm guard ──────────────────────────────────────────────────────
 class _ReconnectGuard:
     def __init__(self, min_ms: int):
-        self._min_ms = min_ms
-        self._last: dict[str, float] = {}
+        self._min_ms   = min_ms
+        self._last:    dict[str, float] = {}
+        self._prune_at: float = time.monotonic()   # FIX H1
 
     def ok(self, ip: str) -> bool:
-        now = time.monotonic() * 1000
-        if now - self._last.get(ip, 0) < self._min_ms:
+        now_ms  = time.monotonic() * 1000
+        now_sec = time.monotonic()
+        if now_ms - self._last.get(ip, 0) < self._min_ms:
             return False
-        self._last[ip] = now
+        self._last[ip] = now_ms
+        # FIX H1: prune stale entries every 10 minutes.
+        # Entries older than 60s (well past any reconnect window) are removed.
+        # One cheap dict comprehension per 10 min — no thread, no timer.
+        if now_sec - self._prune_at > 600:
+            stale_ms = now_ms - 60_000   # 60s ago in ms
+            self._last = {k: v for k, v in self._last.items() if v > stale_ms}
+            self._prune_at = now_sec
         return True
 
 
@@ -191,11 +201,17 @@ class _State:
         self.validator = _Validator()
         self.quarantine= _Quarantine()
         self.redis_mgr: Optional[_RedisManager] = None
-        self.events:   list[dict] = []
+        # FIX H2: deque(maxlen=500) — append is atomic, no manual trim needed.
+        # Reading: list(S.events)[:N] or S.events[:N] both work on deque.
+        self.events:   collections.deque = collections.deque(maxlen=500)
         self.alert:    str = "monitor"
         self.updated:  str = _iso()
         self.metrics:  dict[str, int] = defaultdict(int)
         self._t0 = time.time()
+        # FIX H4: cached Redis reachability — avoids a live ping on every /health call.
+        # Updated by _redis_consumer on each successful Redis.get(); TTL 15s.
+        self._redis_ok: bool = False
+        self._redis_checked_at: float = 0.0
 
     def inc(self, k: str, n: int = 1):
         self.metrics[k] += n
@@ -255,12 +271,20 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"],
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
-    r = await S.redis_mgr.get() if S.redis_mgr else None
+    # FIX H4: Read cached Redis status. Avoids a live Redis ping on every Docker
+    # healthcheck call. Cache is kept fresh by _redis_consumer (runs continuously).
+    # Fallback: if cache is >15s stale and we have a redis_mgr, do a one-shot probe.
+    now = time.time()
+    if now - S._redis_checked_at > 15 and S.redis_mgr:
+        r = await S.redis_mgr.get()
+        S._redis_ok = bool(r)
+        S._redis_checked_at = now
+    redis_status = S._redis_ok
     return {
-        "status":    "ok" if r else "degraded",
+        "status":    "ok" if redis_status else "degraded",
         "ts":        _iso(),
         "uptime_s":  S.uptime,
-        "redis":     "ok" if r else "unavailable",
+        "redis":     "ok" if redis_status else "unavailable",
         "ws":        len(S.conns),
         "queue":     S.queue.qsize(),
         "events":    len(S.events),
@@ -283,19 +307,33 @@ async def metrics():
     r = await S.redis_mgr.get() if S.redis_mgr else None
     streams = {}
     if r:
+        # FIX C1: xinfo_stream and xinfo_groups are synchronous blocking calls.
+        # Run in executor to avoid stalling the event loop under Redis latency.
+        loop_m = asyncio.get_event_loop()
         try:
-            for s in ("intel:events", "intel:events:retry", "intel:events:dlq"):
-                xi = r.xinfo_stream(s)
-                streams[s] = {"length": xi.get("length", 0),
-                               "groups": xi.get("groups", 0)}
+            def _get_stream_info():
+                out = {}
+                for s in ("intel:events", "intel:events:retry", "intel:events:dlq"):
+                    try:
+                        xi = r.xinfo_stream(s)
+                        out[s] = {"length": xi.get("length", 0),
+                                  "groups": xi.get("groups", 0)}
+                    except Exception:
+                        pass
+                return out
+            streams = await loop_m.run_in_executor(None, _get_stream_info)
         except Exception:
             pass
     lag = {}
     if r:
         try:
-            for g in r.xinfo_groups("intel:events"):
-                lag[g["name"]] = {"pending": g.get("pending", 0),
-                                  "consumers": g.get("consumers", 0)}
+            def _get_lag():
+                out = {}
+                for g in r.xinfo_groups("intel:events"):
+                    out[g["name"]] = {"pending": g.get("pending", 0),
+                                      "consumers": g.get("consumers", 0)}
+                return out
+            lag = await loop_m.run_in_executor(None, _get_lag)
         except Exception:
             pass
     return {
@@ -398,9 +436,7 @@ async def _relay():
             if not ok:
                 S.quarantine.add(str(ev)[:200], err, "relay")
                 S.inc("quarantined"); continue
-            S.events.append(ev)
-            if len(S.events) > 1000:
-                S.events = S.events[-500:]
+            S.events.append(ev)   # FIX H2: deque(maxlen=500) auto-trims — no manual slice
             S.updated = _iso()
             S.inc("relayed")
             await S.broadcast({"type":"event","event":ev}, "escalation")
@@ -419,32 +455,54 @@ async def _relay():
 
 
 async def _redis_consumer():
+    # FIX C1: all redis-py calls are synchronous (blocking I/O).
+    # Wrapping with run_in_executor prevents them from stalling the event loop.
+    # xreadgroup(block=2000) can hold the thread for up to 2s — acceptable in
+    # a thread pool, fatal in the event loop (blocks all WS heartbeats, /health).
+    loop = asyncio.get_event_loop()
     while True:
         r = await S.redis_mgr.get() if S.redis_mgr else None
         if not r:
+            S._redis_ok = False               # FIX H4: mark Redis down in cache
+            S._redis_checked_at = time.time()
             await asyncio.sleep(10); continue
+        S._redis_ok = True                    # FIX H4: mark Redis up in cache
+        S._redis_checked_at = time.time()
         try:
-            resp = r.xreadgroup("ws-group", "gateway",
-                                streams={"intel:events": ">"},
-                                count=30, block=2000)
+            resp = await loop.run_in_executor(
+                None,
+                lambda: r.xreadgroup("ws-group", "gateway",
+                                      streams={"intel:events": ">"},
+                                      count=30, block=2000)
+            )
             if not resp: continue
             for _, msgs in resp:
                 for mid, fields in msgs:
                     raw = fields.get("event", "")
                     if not raw or raw.startswith('{"_init"'):
-                        r.xack("intel:events","ws-group",mid); continue
+                        await loop.run_in_executor(
+                            None, lambda m=mid: r.xack("intel:events","ws-group",m))
+                        continue
                     if len(raw.encode()) > PAYLOAD_MAX_BYTES:
                         S.quarantine.add(raw[:200], f"oversized:{len(raw)}b", "stream")
-                        r.xack("intel:events","ws-group",mid)
+                        await loop.run_in_executor(
+                            None, lambda m=mid: r.xack("intel:events","ws-group",m))
                         S.inc("oversized"); continue
                     try:
                         ev = json.loads(raw)
-                        await S.queue.put(ev)
-                        r.xack("intel:events","ws-group",mid)
+                        # C2 fix applied here (see below): put_nowait, ack only on success
+                        S.queue.put_nowait(ev)
+                        await loop.run_in_executor(
+                            None, lambda m=mid: r.xack("intel:events","ws-group",m))
                         S.inc("consumed")
-                    except (json.JSONDecodeError, asyncio.QueueFull) as e:
+                    except asyncio.QueueFull:
+                        # Do NOT ack — message stays in PEL, redelivered after idle_ms
+                        S.inc("backpressure_drops")
+                        logger.warning(f"[consumer] queue full, msg {mid} left in PEL")
+                    except json.JSONDecodeError as e:
                         S.quarantine.add(raw[:200], str(e), "stream")
-                        r.xack("intel:events","ws-group",mid)
+                        await loop.run_in_executor(
+                            None, lambda m=mid: r.xack("intel:events","ws-group",m))
                         S.inc("dropped")
         except Exception as e:
             logger.warning(f"[redis consumer] {e}"); S.inc("redis_errors")
@@ -476,7 +534,10 @@ async def _load_snapshot():
                                 timeout=aiohttp.ClientTimeout(total=10)) as r:
                 if r.status == 200:
                     data = await r.json(content_type=None)
-                    S.events = data.get("events",[])[:200]
+                    # FIX H2: replace deque contents without swapping the object reference
+                    evs_new = data.get("events",[])[:200]
+                    S.events.clear()
+                    S.events.extend(evs_new)
                     logger.info(f"[snapshot] loaded {len(S.events)} events")
     except Exception as e:
         logger.warning(f"[snapshot] {e}")
