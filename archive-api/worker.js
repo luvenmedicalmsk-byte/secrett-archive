@@ -1479,10 +1479,14 @@ async function handleGRIv2(env) {
 // Source: http://62.238.37.129:8001/events.json
 async function handleProxyEventsFeed() {
   try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 10000);  // 10s upstream timeout
     const r = await fetch('http://62.238.37.129:8001/events.json', {
       headers: { 'User-Agent': 'ArchiveProxy/1.0' },
+      signal: ctrl.signal,
       cf: { cacheTtl: 55 }   // cache 55s — matches client 60s refresh
     });
+    clearTimeout(tid);
     if (!r.ok) return new Response(JSON.stringify({ error: 'upstream ' + r.status }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
