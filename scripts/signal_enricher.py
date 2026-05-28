@@ -528,9 +528,43 @@ def enrich_with_escalation(
     # Глобальный индекс риска
     gri = compute_global_risk_index(escalated)
 
+    # Шаг 3: Forecast (deterministic extrapolation)
+    try:
+        from forecast_engine import apply_forecast_to_snapshot
+        escalated = apply_forecast_to_snapshot(escalated, history_map)
+    except ImportError:
+        pass  # graceful: forecast fields absent, frontend handles
+
+    # Шаг 4: Convergence + cascade paths + structural vulnerabilities
+    convergence = {}
+    cascade_paths = []
+    structural_vulnerabilities = []
+    try:
+        from convergence_engine import (
+            compute_convergence, compute_cascade_paths,
+            compute_structural_vulnerabilities,
+        )
+        convergence              = compute_convergence(escalated)
+        cascade_paths            = compute_cascade_paths(escalated)
+        structural_vulnerabilities = compute_structural_vulnerabilities(escalated)
+    except ImportError:
+        pass
+
+    # Шаг 5: Country Risk Profiles (top countries по сигналам)
+    country_profiles = {}
+    try:
+        from country_risk import build_all_profiles
+        country_profiles = build_all_profiles(escalated, min_signal_count=1)
+    except ImportError:
+        pass
+
     return {
         **snapshot,
-        "schema_version":    "2.1",
-        "global_risk_index": gri,
-        "events":            escalated,
+        "schema_version":            "2.2",
+        "global_risk_index":         gri,
+        "convergence":               convergence,
+        "cascade_paths":             cascade_paths,
+        "structural_vulnerabilities": structural_vulnerabilities,
+        "country_profiles":          country_profiles,
+        "events":                    escalated,
     }
