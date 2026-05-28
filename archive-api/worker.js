@@ -72,6 +72,18 @@ export default {
       if (path === '/api/convergence'         && request.method === 'GET')  return handleConvergence(env);
       if (path === '/api/cascade-paths'       && request.method === 'GET')  return handleCascadePaths(env);
       if (path === '/api/structural-risks'    && request.method === 'GET')  return handleStructuralRisks(url, env);
+      if (path === '/api/regime'              && request.method === 'GET')  return handleRegime(env);
+      if (path === '/api/regime/history'      && request.method === 'GET')  return handleRegimeHistory(url, env);
+      if (path === '/api/system-graph'         && request.method === 'GET')  return handleSystemGraph(env);
+      if (path === '/api/cascade-map'          && request.method === 'GET')  return handleCascadeMap(env);
+      if (path === '/api/critical-nodes'       && request.method === 'GET')  return handleCriticalNodes(env);
+      if (path === '/api/patterns'             && request.method === 'GET')  return handlePatterns(env);
+      if (path === '/api/analogs'              && request.method === 'GET')  return handleAnalogs(env);
+      if (path === '/api/anomaly-memory'       && request.method === 'GET')  return handleAnomalyMemory(env);
+      if (path === '/api/probabilistic'        && request.method === 'GET')  return handleProbabilistic(url, env);
+      if (path === '/api/scenarios'            && request.method === 'GET')  return handleScenarios(url, env);
+      if (path === '/api/weak-signals'         && request.method === 'GET')  return handleWeakSignals(url, env);
+      if (path === '/api/gri/v2'               && request.method === 'GET')  return handleGRIv2(env);
       if (path.startsWith('/api/events/') && request.method === 'GET') {
         return handleGetEvent(path.replace('/api/events/', ''), env);
       }
@@ -1317,4 +1329,147 @@ async function handleStructuralRisks(url, env) {
     updated:  data.updated,
     source:   data.structural_vulnerabilities?.length ? 'precomputed' : 'computed',
   });
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// V2.3 SOVEREIGN INTELLIGENCE HANDLERS
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function handleRegime(env) {
+  const data = await getEvents(env);
+  const r    = data.regime;
+  if (r && r.state) return jsonResponse({ ...r, updated: data.updated, source: 'precomputed' });
+  return jsonResponse({ state: 'unknown', note: 'Run pipeline to compute regime', updated: data.updated });
+}
+
+async function handleRegimeHistory(url, env) {
+  // KV rolling: list keys "regime:history:*" (populated by pipeline in future sprint)
+  if (!env.EVENTS_KV) return jsonResponse({ error: 'KV not configured' }, 503);
+  const prefix = 'regime:history:';
+  try {
+    const list = await env.EVENTS_KV.list({ prefix, limit: 30 });
+    const entries = await Promise.all(
+      list.keys.map(async k => {
+        const v = await env.EVENTS_KV.get(k.name, { type: 'json' });
+        return v ? { ts: k.name.replace(prefix, ''), ...v } : null;
+      })
+    );
+    return jsonResponse({ history: entries.filter(Boolean), count: entries.length, updated: new Date().toISOString() });
+  } catch (e) {
+    return jsonResponse({ error: String(e) }, 500);
+  }
+}
+
+async function handleSystemGraph(env) {
+  const data = await getEvents(env);
+  const sg   = data.system_graph;
+  if (sg && sg.nodes_count > 0) return jsonResponse({ ...sg, updated: data.updated, source: 'precomputed' });
+  return jsonResponse({ error: 'system_graph not available in current snapshot', updated: data.updated }, 404);
+}
+
+async function handleCascadeMap(env) {
+  const data  = await getEvents(env);
+  const sg    = data.system_graph || {};
+  const paths = data.cascade_paths || [];
+  return jsonResponse({
+    contagion_paths: sg.contagion_paths || [],
+    cascade_paths:   paths,
+    dependency_note: 'Full graph available at /api/system-graph',
+    updated: data.updated,
+  });
+}
+
+async function handleCriticalNodes(env) {
+  const data = await getEvents(env);
+  const sg   = data.system_graph || {};
+  return jsonResponse({
+    critical_nodes:  sg.critical_nodes  || [],
+    systemic_bridges: sg.systemic_bridges || [],
+    updated: data.updated,
+  });
+}
+
+async function handlePatterns(env) {
+  const data = await getEvents(env);
+  const p    = data.patterns || {};
+  return jsonResponse({
+    pattern_matches:  p.pattern_matches || [],
+    pattern_count:    p.pattern_count   || 0,
+    current_signature: p.current_signature || {},
+    recurring_vectors: p.recurring_vectors || [],
+    updated: data.updated,
+  });
+}
+
+async function handleAnalogs(env) {
+  const data = await getEvents(env);
+  const p    = data.patterns || {};
+  const minSim = parseFloat(new URL('http://x').searchParams?.get?.('min_sim') || '0.5');
+  const analogs = (p.analogs || []).filter(a => a.similarity >= minSim);
+  return jsonResponse({ analogs, count: analogs.length, updated: data.updated });
+}
+
+async function handleAnomalyMemory(env) {
+  const data = await getEvents(env);
+  const p    = data.patterns || {};
+  return jsonResponse({ ...(p.anomaly_memory || {}), updated: data.updated });
+}
+
+async function handleProbabilistic(url, env) {
+  const data  = await getEvents(env);
+  const prob  = data.probabilistic || {};
+  const h     = parseInt(url.searchParams.get('horizon') || '30');
+  if (h <= 45) {
+    return jsonResponse({
+      scenario:           prob.scenario_30d || {},
+      confidence_interval: prob.confidence_interval_30d || {},
+      dominant_scenario:  prob.dominant_scenario_30d || 'unknown',
+      horizon_days:       30,
+      updated:            data.updated,
+    });
+  }
+  return jsonResponse({
+    scenario:           prob.scenario_90d || {},
+    confidence_interval: prob.confidence_interval_90d || {},
+    dominant_scenario:  prob.dominant_scenario_90d || 'unknown',
+    horizon_days:       90,
+    updated:            data.updated,
+  });
+}
+
+async function handleScenarios(url, env) {
+  const data = await getEvents(env);
+  const prob = data.probabilistic || {};
+  return jsonResponse({
+    scenario_tree:      prob.scenario_tree || {},
+    scenario_30d:       prob.scenario_30d  || {},
+    scenario_90d:       prob.scenario_90d  || {},
+    scenario_divergence: prob.scenario_divergence || 0,
+    method:             prob.method || 'bayesian_lr_chain',
+    updated:            data.updated,
+  });
+}
+
+async function handleWeakSignals(url, env) {
+  const data = await getEvents(env);
+  const ws   = data.weak_signals || {};
+  const minP = parseFloat(url.searchParams.get('min_probability') || '0.25');
+  const signals = (ws.signals || []).filter(s => s.probability >= minP);
+  return jsonResponse({
+    signals,
+    cluster:      ws.cluster || {},
+    total_active: signals.length,
+    updated:      data.updated,
+  });
+}
+
+async function handleGRIv2(env) {
+  const data = await getEvents(env);
+  const gri  = data.global_risk_index || {};
+  if (gri.version === '2.3' || gri.subindices) {
+    return jsonResponse({ ...gri, updated: data.updated });
+  }
+  // Fallback: legacy GRI
+  return jsonResponse({ ...gri, note: 'GRI v2 not yet computed, showing v2.2', updated: data.updated });
 }
