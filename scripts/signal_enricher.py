@@ -558,13 +558,81 @@ def enrich_with_escalation(
     except ImportError:
         pass
 
+    # Шаг 6: Regime Shift detection
+    regime = {}
+    try:
+        from regime_engine import compute_regime
+        regime = compute_regime(escalated, convergence, gri, history_series=None)
+    except ImportError:
+        pass
+
+    # Шаг 7: System Graph
+    system_graph = {}
+    try:
+        from system_graph import build_system_graph
+        system_graph = build_system_graph(escalated, convergence)
+        # Не сохраняем полный граф в events.json (слишком большой) — только summary
+        system_graph_summary = {
+            "nodes_count":       system_graph.get("nodes_count", 0),
+            "edges_count":       system_graph.get("edges_count", 0),
+            "critical_nodes":    system_graph.get("critical_nodes", [])[:5],
+            "systemic_bridges":  system_graph.get("systemic_bridges", [])[:3],
+            "contagion_paths":   system_graph.get("contagion_paths", [])[:5],
+            "synchronization_clusters": system_graph.get("synchronization_clusters", [])[:4],
+        }
+    except ImportError:
+        system_graph_summary = {}
+
+    # Шаг 8: Pattern Memory
+    patterns = {}
+    try:
+        from pattern_memory import run_pattern_memory
+        patterns = run_pattern_memory(escalated, convergence, regime)
+    except ImportError:
+        pass
+
+    # Шаг 9: Probabilistic layer
+    probabilistic = {}
+    try:
+        from probabilistic_engine import compute_probabilistic
+        probabilistic = compute_probabilistic(
+            escalated, regime, convergence,
+            patterns.get("analogs", [])
+        )
+    except ImportError:
+        pass
+
+    # Шаг 10: GRI v2
+    gri_v2 = {}
+    try:
+        from gri_v2 import compute_gri_v2
+        gri_v2 = compute_gri_v2(
+            escalated, convergence, cascade_paths,
+            structural_vulnerabilities, regime
+        )
+    except ImportError:
+        gri_v2 = gri  # fallback to v2.2 GRI
+
+    # Шаг 11: Weak Signal Engine
+    weak_signals = {}
+    try:
+        from weak_signal_engine import detect_weak_signals
+        weak_signals = detect_weak_signals(escalated)
+    except ImportError:
+        pass
+
     return {
         **snapshot,
-        "schema_version":            "2.2",
-        "global_risk_index":         gri,
+        "schema_version":            "2.3",
+        "global_risk_index":         gri_v2 or gri,
         "convergence":               convergence,
         "cascade_paths":             cascade_paths,
         "structural_vulnerabilities": structural_vulnerabilities,
         "country_profiles":          country_profiles,
+        "regime":                    regime,
+        "system_graph":              system_graph_summary,
+        "patterns":                  patterns,
+        "probabilistic":             probabilistic,
+        "weak_signals":              weak_signals,
         "events":                    escalated,
     }
