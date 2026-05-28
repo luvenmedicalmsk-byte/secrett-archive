@@ -3,761 +3,1515 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Эскалация сигналов — Архив системных рисков</title>
+<title>Sovereign Intelligence — Архив</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <style>
+/* ── DESIGN TOKENS ── */
 :root{
-  --gold:#B8973A;--gold-light:#D4AF5A;--gold-dim:#7A6228;
-  --cyan:#1FAACC;--cyan-dim:#0E6B82;--cyan-glow:rgba(31,170,204,.12);--cyan-border:rgba(31,170,204,.25);
-  --cream:#F0E8D8;--dark:#0A0906;--dark-mid:#0D0C09;--dark-soft:#161410;--dark-card:#111009;
-  --text-muted:#6A6458;--text-soft:#A8A090;
-  --border:rgba(184,151,58,.14);--border-strong:rgba(184,151,58,.32);
-  /* escalation levels */
-  --lvl-critical:#C0392B;--lvl-high:#D35400;--lvl-moderate:#B8973A;--lvl-weak:#2980B9;--lvl-none:#3A3A3A;
-  /* domain */
-  --d-climate:#27AE60;--d-economy:#2980B9;--d-geopolitics:#D35400;--d-technology:#8E44AD;--d-social:#C0392B;
+  --gold:#B8973A;--gold-light:#D4AF5A;--gold-dim:#7A6228;--gold-faint:rgba(184,151,58,.08);
+  --cyan:#1FAACC;--cyan-dim:#0E6B82;--cyan-glow:rgba(31,170,204,.10);--cyan-border:rgba(31,170,204,.22);
+  --cream:#F0E8D8;--ink:#C8BEA8;--muted:#7A7264;--faint:#3A362E;
+  --dark:#09080A;--surface:#0F0E10;--card:#131215;--card-hover:#171619;--border:rgba(255,255,255,.06);--border-gold:rgba(184,151,58,.14);--border-strong:rgba(184,151,58,.28);
+  --r-critical:#B03A2E;--r-high:#C0622B;--r-moderate:#B8973A;--r-weak:#2471A3;--r-none:#3A3A3A;
+  --dom-geo:#C0622B;--dom-clim:#1E8449;--dom-eco:#2471A3;--dom-tech:#7D3C98;--dom-soc:#B03A2E;
+  --regime-stable:#1E8449;--regime-det:#B8973A;--regime-unstable:#C0622B;--regime-trans:#A93226;--regime-nonlinear:#7B241C;
+  --font-body:'Montserrat',sans-serif;--font-serif:'Cormorant Garamond',serif;--font-mono:'Courier New',monospace;
+  --radius:3px;--radius-lg:6px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--dark);color:var(--cream);font-family:'Montserrat',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--dark);color:var(--cream);font-family:var(--font-body);font-size:13px;line-height:1.6;overflow-x:hidden}
 
-/* ── NAV ─────────────────────────────────────────────────────────────────── */
-nav{position:sticky;top:0;z-index:100;background:rgba(10,9,6,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between}
-.nav-brand{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--text-muted);letter-spacing:.06em;text-decoration:none}
-.nav-brand span{color:var(--gold)}
-.nav-links{display:flex;gap:6px;align-items:center}
-.nav-link{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);text-decoration:none;padding:5px 10px;border:1px solid transparent;border-radius:3px;transition:all .2s}
-.nav-link:hover,.nav-link.active{border-color:var(--cyan-border);color:var(--cyan)}
-.nav-gri{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.1em}
-.gri-label{color:var(--text-muted)}
-.gri-score{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;line-height:1}
-.gri-level{font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:2px 7px;border-radius:2px}
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:200;background:rgba(9,8,10,.97);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);height:48px;display:flex;align-items:center;padding:0 20px;gap:20px}
+.nav-brand{font-family:var(--font-serif);font-size:16px;color:var(--muted);letter-spacing:.07em;white-space:nowrap;text-decoration:none}
+.nav-brand b{color:var(--gold);font-weight:400}
+.nav-links{display:flex;gap:4px}
+.nl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 10px;border:1px solid transparent;border-radius:var(--radius);transition:all .18s}
+.nl:hover,.nl.on{border-color:var(--cyan-border);color:var(--cyan)}
+.nav-sep{width:1px;height:20px;background:var(--border);margin:0 4px;flex-shrink:0}
+/* GRI в nav */
+.nav-gri{display:flex;align-items:center;gap:8px;margin-left:auto}
+.nav-gri-score{font-family:var(--font-serif);font-size:26px;font-weight:300;line-height:1;transition:color .5s}
+.nav-gri-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.nav-gri-badge{font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:2px 8px;border-radius:var(--radius);border:1px solid transparent}
+/* Regime pulse в nav */
+.nav-regime{display:flex;align-items:center;gap:7px;padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius);cursor:default}
+.regime-dot{width:7px;height:7px;border-radius:50%;position:relative}
+.regime-dot::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid currentColor;opacity:0;animation:regime-pulse 2.4s ease-out infinite}
+@keyframes regime-pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.2);opacity:0}}
+.regime-label-nav{font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 
-/* ── LAYOUT ──────────────────────────────────────────────────────────────── */
-.page{max-width:1280px;margin:0 auto;padding:24px 20px 60px}
-.section-label{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-muted);margin-bottom:16px}
-.section-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:var(--cream);margin-bottom:6px}
+/* ── PAGE LAYOUT ── */
+.page{max-width:1440px;margin:0 auto;padding:24px 20px 80px}
+/* Two-column layout for cockpit sections */
+.cockpit{display:grid;grid-template-columns:340px 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:960px){.cockpit{grid-template-columns:1fr}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
 
-/* ── GRID ────────────────────────────────────────────────────────────────── */
-.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px}
-@media(max-width:900px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}}
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);position:relative;overflow:hidden}
+.card-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0;margin-bottom:10px}
+.card-title{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.card-badge{font-size:8px;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:var(--radius);border:1px solid var(--border)}
+.card-body{padding:0 16px 16px}
+.card-sm .card-header{padding:10px 12px 0;margin-bottom:6px}
+.card-sm .card-body{padding:0 12px 12px}
 
-/* ── CARDS ───────────────────────────────────────────────────────────────── */
-.card{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:16px 18px}
-.card-sm{padding:12px 14px}
-.card-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
-.card-val{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;line-height:1;color:var(--cyan)}
-.card-sub{font-size:11px;color:var(--text-muted);margin-top:4px}
+/* ── SECTION LABELS ── */
+.section-label{font-size:8px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.section-title{font-family:var(--font-serif);font-size:22px;font-weight:300;color:var(--cream);margin-bottom:4px}
+.divider{height:1px;background:var(--border);margin:28px 0}
 
-/* ── GLOBAL RISK INDEX HERO ──────────────────────────────────────────────── */
-.gri-hero{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:24px;margin-bottom:28px;display:grid;grid-template-columns:200px 1fr 1fr;gap:24px;align-items:center}
-@media(max-width:700px){.gri-hero{grid-template-columns:1fr}}
-.gri-main{text-align:center}
-.gri-index{font-family:'Cormorant Garamond',serif;font-size:80px;font-weight:300;line-height:1}
-.gri-level-badge{display:inline-block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:4px 14px;border-radius:2px;margin-top:8px}
-.gri-updated{font-size:10px;color:var(--text-muted);margin-top:8px}
-.gri-domains{}
-.gri-domain-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)}
-.gri-domain-row:last-child{border-bottom:none}
-.gri-domain-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.gri-domain-name{font-size:11px;color:var(--text-soft);flex:1}
-.gri-domain-bar-wrap{width:100px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
-.gri-domain-bar{height:100%;border-radius:2px;transition:width .6s ease}
-.gri-domain-score{font-size:11px;color:var(--cream);min-width:28px;text-align:right}
-.gri-regions{}
-.gri-region-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
-.gri-region-row:last-child{border-bottom:none}
-.gri-region-name{font-size:11px;color:var(--text-soft)}
-.gri-region-score{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--cream)}
-.gri-region-level{font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:1px 6px;border-radius:2px;margin-left:6px}
+/* ── LOADING ── */
+.skeleton{background:linear-gradient(90deg,var(--card) 25%,rgba(255,255,255,.04) 50%,var(--card) 75%);background-size:200% 100%;animation:skel 1.6s ease-in-out infinite}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk-line{height:12px;border-radius:2px;margin-bottom:8px}
+.sk-block{height:60px;border-radius:var(--radius)}
 
-/* ── FILTERS ─────────────────────────────────────────────────────────────── */
-.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center}
-.filter-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-right:4px}
-.filter-pill{font-size:10px;letter-spacing:.08em;color:var(--text-muted);background:var(--dark-card);border:1px solid var(--border);padding:4px 11px;border-radius:20px;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
-.filter-pill:hover{border-color:var(--cyan-border);color:var(--cyan)}
-.filter-pill.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-glow)}
-.filter-pill.pill-level-critical.active{border-color:var(--lvl-critical);color:var(--lvl-critical);background:rgba(192,57,43,.1)}
-.filter-pill.pill-level-high.active{border-color:var(--lvl-high);color:var(--lvl-high);background:rgba(211,84,0,.1)}
-.filter-pill.pill-type-escalation.active{border-color:var(--gold-dim);color:var(--gold-light);background:rgba(184,151,58,.08)}
-.filter-pill.pill-trend-rising.active{border-color:#27AE60;color:#2ECC71;background:rgba(39,174,96,.08)}
-.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+/* ═══════════════════════════════════════════════
+   REGIME PANEL
+═══════════════════════════════════════════════ */
+.regime-panel{padding:18px}
+.regime-state-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.regime-orb{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.regime-orb-inner{width:34px;height:34px;border-radius:50%;background:currentColor;opacity:.15}
+.regime-orb-ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid currentColor;opacity:.4}
+.regime-orb-ring2{position:absolute;inset:-6px;border-radius:50%;border:1px solid currentColor;opacity:0;animation:regime-ring 2.8s ease-out infinite}
+@keyframes regime-ring{0%{inset:-4px;opacity:.5}100%{inset:-18px;opacity:0}}
+.regime-state-info{}
+.regime-state-label{font-family:var(--font-serif);font-size:24px;font-weight:300;line-height:1;text-transform:uppercase;letter-spacing:.04em}
+.regime-state-sub{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.06em}
+/* Progress meters */
+.meter-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.meter-label{font-size:10px;color:var(--muted);width:130px;flex-shrink:0;letter-spacing:.04em}
+.meter-track{flex:1;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.meter-fill{height:100%;border-radius:2px;transition:width .8s ease}
+.meter-val{font-size:10px;color:var(--cream);width:36px;text-align:right;flex-shrink:0}
+/* Drivers */
+.drivers-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.driver-tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:var(--radius);border:1px solid;opacity:.85}
+/* Regime timeline */
+.regime-timeline{display:flex;align-items:center;gap:0;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.rt-step{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;gap:4px}
+.rt-step::before{content:'';position:absolute;top:6px;left:50%;right:-50%;height:1.5px;background:var(--border);z-index:0}
+.rt-step:last-child::before{display:none}
+.rt-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid;position:relative;z-index:1;background:var(--card);transition:all .4s}
+.rt-dot.active{background:currentColor}
+.rt-label{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
 
-/* ── SIGNAL TABLE ────────────────────────────────────────────────────────── */
-.signal-table{width:100%;border-collapse:collapse;margin-bottom:28px}
-.signal-table th{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;font-weight:500}
-.signal-table th:last-child,.signal-table td:last-child{text-align:right}
-.signal-table td{padding:10px 12px;border-bottom:1px solid rgba(184,151,58,.07);vertical-align:middle}
-.signal-table tr{transition:background .15s;cursor:pointer}
-.signal-table tr:hover td{background:rgba(255,255,255,.02)}
-.signal-table tr.expanded td{background:rgba(31,170,204,.04)}
-.st-domain{display:flex;align-items:center;gap:7px}
-.st-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.st-domain-name{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
-.st-title{font-size:13px;color:var(--cream);line-height:1.4;max-width:340px}
-.st-fp{font-size:9px;color:var(--text-muted);font-family:monospace;margin-top:2px}
-.st-score{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300}
-.st-level{font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:2px;white-space:nowrap}
-.st-delta{font-size:12px;font-weight:500}
-.st-trend{font-size:10px;letter-spacing:.08em;display:flex;align-items:center;gap:4px}
-.trend-arrow{font-size:12px}
-.st-count{font-size:12px;color:var(--text-soft)}
-.st-sparkline{display:flex;align-items:flex-end;gap:2px;height:24px}
-.spark-bar{width:4px;background:rgba(31,170,204,.4);border-radius:1px 1px 0 0;transition:background .2s}
-.spark-bar.rising{background:rgba(192,57,43,.6)}
-.spark-bar.falling{background:rgba(41,128,185,.6)}
-/* expanded row detail */
-.signal-detail{display:none;background:rgba(31,170,204,.03);border-bottom:1px solid var(--border)}
-.signal-detail.open{display:table-row}
-.sd-inner{padding:14px 12px 14px 32px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-@media(max-width:700px){.sd-inner{grid-template-columns:1fr}}
-.sd-block-label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
-.sd-vectors{display:flex;flex-wrap:wrap;gap:5px}
-.sd-vector{font-size:9px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--border);padding:2px 8px;border-radius:2px;color:var(--text-soft)}
-.sd-cascade{font-size:11px;color:var(--text-soft)}
-.sd-summary{font-size:12px;color:var(--text-muted);line-height:1.7;max-width:600px}
+/* ═══════════════════════════════════════════════
+   GRI v2 PANEL
+═══════════════════════════════════════════════ */
+.gri-hero-row{display:flex;align-items:center;gap:20px;padding:18px;border-bottom:1px solid var(--border)}
+.gri-number{font-family:var(--font-serif);font-size:72px;font-weight:300;line-height:1}
+.gri-meta{flex:1}
+.gri-level-badge{display:inline-block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;padding:3px 10px;border-radius:var(--radius);border:1px solid;margin-bottom:6px}
+.gri-desc{font-size:11px;color:var(--muted);line-height:1.6}
+/* Radial chart SVG */
+.gri-radial-wrap{padding:16px;display:flex;justify-content:center}
+.gri-radial{width:100%;max-width:220px}
+/* Subindex bars */
+.sub-bars{padding:0 16px 16px}
+.sub-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sub-bar-label{font-size:10px;color:var(--muted);width:160px;flex-shrink:0}
+.sub-bar-track{flex:1;height:2px;background:rgba(255,255,255,.06);border-radius:1px;overflow:hidden}
+.sub-bar-fill{height:100%;border-radius:1px}
+.sub-bar-val{font-size:10px;color:var(--cream);width:28px;text-align:right;flex-shrink:0}
 
-/* ── WEAK SIGNALS ────────────────────────────────────────────────────────── */
-.weak-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:28px}
-.weak-card{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:14px 16px;transition:border-color .2s;cursor:pointer}
-.weak-card:hover{border-color:rgba(41,128,185,.4)}
-.wc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.wc-type{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted)}
-.wc-delta{font-size:11px;font-weight:600;color:#2ECC71}
-.wc-title{font-size:12px;color:var(--text-soft);line-height:1.5;margin-bottom:8px}
-.wc-footer{display:flex;justify-content:space-between;align-items:center}
-.wc-sev{font-size:11px;color:var(--text-muted)}
-.wc-trend-line{display:flex;align-items:flex-end;gap:2px;height:16px}
-.wc-spark{width:3px;border-radius:1px;background:rgba(31,170,204,.35)}
+/* ═══════════════════════════════════════════════
+   SYSTEM GRAPH
+═══════════════════════════════════════════════ */
+.graph-canvas-wrap{position:relative;background:rgba(0,0,0,.3);border-radius:var(--radius);overflow:hidden;cursor:grab}
+.graph-canvas-wrap:active{cursor:grabbing}
+#graphCanvas{display:block;width:100%;touch-action:none}
+.graph-tooltip{position:absolute;background:var(--card);border:1px solid var(--border-gold);border-radius:var(--radius);padding:10px 12px;pointer-events:none;font-size:11px;max-width:200px;z-index:10;opacity:0;transition:opacity .15s}
+.graph-legend{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px;border-top:1px solid var(--border)}
+.gl-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.gl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gl-line{width:16px;height:1.5px;flex-shrink:0}
+/* Node detail panel */
+.node-detail{padding:14px;border-left:1px solid var(--border)}
+.nd-title{font-family:var(--font-serif);font-size:18px;margin-bottom:8px}
+.nd-type{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.nd-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.nd-key{color:var(--muted)}
+.nd-val{color:var(--cream)}
+.nd-paths{margin-top:10px}
+.nd-path-item{font-size:10px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border)}
+.nd-path-item span{color:var(--cream)}
 
-/* ── HEATMAP ─────────────────────────────────────────────────────────────── */
-.heatmap-wrap{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:28px}
-.heatmap-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden;margin-top:14px}
-.hm-cell{padding:12px 10px;position:relative;cursor:pointer;transition:filter .2s}
-.hm-cell:hover{filter:brightness(1.3)}
-.hm-domain{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px}
-.hm-score{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;line-height:1}
-.hm-count{font-size:10px;color:rgba(255,255,255,.45);margin-top:3px}
-.hm-trend{font-size:10px;position:absolute;top:8px;right:10px;opacity:.7}
+/* ═══════════════════════════════════════════════
+   PROBABILISTIC SCENARIOS
+═══════════════════════════════════════════════ */
+.scenario-bars{display:flex;flex-direction:column;gap:12px;padding:16px}
+.scenario-row{display:flex;align-items:center;gap:10px}
+.scen-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;width:130px;flex-shrink:0}
+.scen-track{flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;position:relative}
+.scen-fill{height:100%;border-radius:5px;transition:width 1s ease}
+.scen-pct{font-size:12px;font-weight:500;width:44px;text-align:right;flex-shrink:0}
+.scen-ci{font-size:9px;color:var(--muted);padding:0 16px 12px;line-height:1.6}
+/* Horizon toggle */
+.horizon-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.ht-btn{font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:4px 12px;cursor:pointer;transition:all .2s;color:var(--muted);background:transparent;border:none;outline:none}
+.ht-btn.on{background:var(--cyan-glow);color:var(--cyan)}
 
-/* ── TIMELINE (mini) ─────────────────────────────────────────────────────── */
-.timeline-wrap{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:28px}
-.tl-svg{width:100%;height:72px;display:block}
-.tl-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:4px}
+/* ═══════════════════════════════════════════════
+   WEAK SIGNALS RADAR
+═══════════════════════════════════════════════ */
+.radar-wrap{padding:16px;display:flex;gap:16px;align-items:flex-start}
+.radar-svg-wrap{flex-shrink:0;width:200px}
+.radar-legend{flex:1;min-width:0}
+.ws-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.ws-label{font-size:10px;color:var(--muted);flex:1;letter-spacing:.04em}
+.ws-bar-wrap{width:70px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.ws-bar-fill{height:100%;border-radius:2px;transition:width .7s ease}
+.ws-prob{font-size:10px;color:var(--cream);width:34px;text-align:right}
+.ws-cluster{margin-top:12px;padding:10px 12px;border:1px solid var(--border-gold);border-radius:var(--radius)}
+.ws-cluster-level{font-size:11px;margin-bottom:4px}
+.ws-cluster-desc{font-size:10px;color:var(--muted);line-height:1.6}
 
-/* ── STAT CARDS ──────────────────────────────────────────────────────────── */
-.stat-card{background:var(--dark-card);border:1px solid var(--border);border-radius:4px;padding:16px}
-.stat-num{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;line-height:1}
-.stat-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-top:4px}
+/* ═══════════════════════════════════════════════
+   HISTORICAL ANALOGS
+═══════════════════════════════════════════════ */
+.analog-cards{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px}
+.analog-card{display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--radius);transition:border-color .2s;cursor:default}
+.analog-card:hover{border-color:var(--border-gold)}
+.analog-sim-ring{width:44px;height:44px;flex-shrink:0;position:relative}
+.analog-sim-ring svg{width:44px;height:44px}
+.analog-sim-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:13px;font-weight:300}
+.analog-info{flex:1;min-width:0}
+.analog-title{font-size:11px;color:var(--cream);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.analog-period{font-size:9px;color:var(--muted);letter-spacing:.08em}
+.analog-regime{font-size:9px;padding:1px 6px;border-radius:var(--radius);border:1px solid;margin-left:auto;flex-shrink:0;white-space:nowrap}
+.sig-match{font-size:9px;letter-spacing:.08em;color:var(--cyan);padding:2px 7px;border:1px solid var(--cyan-border);border-radius:var(--radius);margin-left:4px;flex-shrink:0}
+/* Current signature */
+.sig-bar-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 16px 16px}
+.sig-bar-item{display:flex;align-items:center;gap:6px}
+.sig-bar-d{font-size:9px;color:var(--muted);width:72px;flex-shrink:0}
+.sig-bar-track{flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.sig-bar-fill{height:100%;border-radius:2px}
 
-/* ── FEED ────────────────────────────────────────────────────────────────── */
-.feed-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start}
-.fi-score{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;min-width:38px;text-align:right;flex-shrink:0;margin-top:2px}
-.fi-body{flex:1;min-width:0}
-.fi-title{font-size:13px;color:var(--cream);line-height:1.4;margin-bottom:4px}
-.fi-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.fi-badge{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid var(--border);color:var(--text-muted)}
-.fi-time{font-size:10px;color:var(--text-muted)}
+/* ═══════════════════════════════════════════════
+   CASCADE / CONTAGION VIEW
+═══════════════════════════════════════════════ */
+.cascade-chains{padding:0 16px 16px;display:flex;flex-direction:column;gap:8px}
+.cascade-chain{display:flex;align-items:center;gap:0;flex-wrap:wrap;padding:8px 10px;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius)}
+.cc-node{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:var(--radius);font-size:10px;letter-spacing:.06em;white-space:nowrap}
+.cc-arrow{color:var(--muted);padding:0 3px;font-size:14px;flex-shrink:0}
+.cc-count{font-size:8px;color:var(--muted);margin-left:auto;padding-left:8px;white-space:nowrap}
 
-/* ── LEVEL COLORS ────────────────────────────────────────────────────────── */
-.lv-critical{color:var(--lvl-critical)}
-.lv-high{color:var(--lvl-high)}
-.lv-moderate{color:var(--lvl-moderate)}
-.lv-weak{color:var(--lvl-weak)}
-.lv-none{color:var(--text-muted)}
-.bg-critical{background:rgba(192,57,43,.12);border-color:rgba(192,57,43,.3)}
-.bg-high{background:rgba(211,84,0,.12);border-color:rgba(211,84,0,.3)}
-.bg-moderate{background:rgba(184,151,58,.1);border-color:rgba(184,151,58,.25)}
-.bg-weak{background:rgba(41,128,185,.1);border-color:rgba(41,128,185,.25)}
+/* ═══════════════════════════════════════════════
+   SIGNAL TABLE (from v1, streamlined)
+═══════════════════════════════════════════════ */
+.signal-table{width:100%;border-collapse:collapse}
+.signal-table th{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:7px 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:500;white-space:nowrap}
+.signal-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;font-size:12px}
+.signal-table tr{transition:background .12s;cursor:pointer}
+.signal-table tr:hover td{background:rgba(255,255,255,.015)}
+.st-dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0}
+.st-level{font-size:8px;letter-spacing:.12em;text-transform:uppercase;padding:1px 6px;border-radius:var(--radius);border:1px solid}
+.sparkline{display:flex;align-items:flex-end;gap:1.5px;height:18px}
+.sp-bar{width:3px;border-radius:1px 1px 0 0}
 
-/* ── LOADER ──────────────────────────────────────────────────────────────── */
-.loader{display:flex;align-items:center;justify-content:center;height:200px;flex-direction:column;gap:12px}
-.loader-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulse 1.4s ease-in-out infinite}
-.loader-dot:nth-child(2){animation-delay:.2s}
-.loader-dot:nth-child(3){animation-delay:.4s}
-.loader-text{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-muted)}
-@keyframes pulse{0%,80%,100%{opacity:.3}40%{opacity:1}}
+/* ═══════════════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════════════ */
+.filter-strip{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center}
+.f-group-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.f-pill{font-size:9px;letter-spacing:.08em;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:3px 9px;border-radius:20px;cursor:pointer;transition:all .18s;text-transform:uppercase;white-space:nowrap}
+.f-pill:hover{border-color:var(--cyan-border);color:var(--cyan)}
+.f-pill.on{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-glow)}
 
-/* ── COUNTRY SCHEMA PREVIEW (premium) ───────────────────────────────────── */
-.premium-badge{display:inline-flex;align-items:center;gap:5px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-dim);border:1px solid rgba(184,151,58,.2);padding:3px 9px;border-radius:2px}
-.country-card{background:var(--dark-card);border:1px solid var(--border-strong);border-radius:4px;padding:20px;position:relative;overflow:hidden}
-.country-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(184,151,58,.04) 0%,transparent 60%);pointer-events:none}
-.cc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-.cc-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300}
-.cc-risk-ring{width:60px;height:60px;position:relative}
-.cc-ring-svg{width:60px;height:60px}
-.cc-ring-score{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300}
-.cc-domains{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
-.cc-domain-row{display:flex;align-items:center;gap:6px}
-.cc-dom-label{font-size:10px;color:var(--text-muted);flex:1}
-.cc-dom-bar{flex:2;height:2px;background:rgba(255,255,255,.08);border-radius:1px;overflow:hidden}
+/* ═══════════════════════════════════════════════
+   STATS BAR
+═══════════════════════════════════════════════ */
+.stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+@media(max-width:700px){.stats-bar{grid-template-columns:repeat(3,1fr)}}
+.stat-card{background:var(--card);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:12px 14px}
+.stat-num{font-family:var(--font-serif);font-size:36px;font-weight:300;line-height:1}
+.stat-sub{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+
+/* ═══════════════════════════════════════════════
+   COUNTRY PROFILES
+═══════════════════════════════════════════════ */
+.country-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;padding:0 16px 16px}
+.country-card{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;transition:border-color .2s;cursor:default}
+.country-card:hover{border-color:var(--border-gold)}
+.cc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.cc-name{font-family:var(--font-serif);font-size:16px;font-weight:300}
+.cc-ring-wrap{position:relative;width:44px;height:44px;flex-shrink:0}
+.cc-ring-wrap svg{width:44px;height:44px}
+.cc-ring-score{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:13px}
+.cc-dom-row{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.cc-dom-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.cc-dom-label{font-size:9px;color:var(--muted);flex:1}
+.cc-dom-track{width:50px;height:2px;background:rgba(255,255,255,.06);border-radius:1px;overflow:hidden}
 .cc-dom-fill{height:100%;border-radius:1px}
-.cc-dom-val{font-size:10px;color:var(--text-soft);min-width:24px;text-align:right}
-.cc-signals{font-size:11px;color:var(--text-muted);line-height:1.6}
-.cc-signal-item{display:flex;gap:6px;margin-bottom:4px}
-.cc-signal-bullet{color:var(--gold-dim);flex-shrink:0}
+.cc-dom-val{font-size:9px;color:var(--cream);min-width:22px;text-align:right}
+.cc-trajectory{font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
 
-/* ── SECTION DIVIDER ─────────────────────────────────────────────────────── */
-.divider{height:1px;background:var(--border);margin:32px 0}
-.section-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
-.sh-action{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan-dim);cursor:pointer;text-decoration:none;transition:color .2s}
-.sh-action:hover{color:var(--cyan)}
-
-/* ── EMPTY STATE ─────────────────────────────────────────────────────────── */
-.empty{padding:32px;text-align:center;color:var(--text-muted);font-size:12px;letter-spacing:.08em}
-
-/* ── SCROLLBAR ───────────────────────────────────────────────────────────── */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
+/* ═══════════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════════ */
+::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-thumb{background:rgba(184,151,58,.2);border-radius:2px}
+
+/* ═══════════════════════════════════════════════
+   ALERTS / BANNERS
+═══════════════════════════════════════════════ */
+.regime-alert{padding:10px 16px;border-radius:var(--radius);border:1px solid;margin-bottom:16px;font-size:11px;line-height:1.6;display:none}
+.regime-alert.visible{display:block}
+
+/* empty state */
+.empty-state{padding:32px;text-align:center;color:var(--muted);font-size:11px;letter-spacing:.08em}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 <nav>
-  <a href="/" class="nav-brand"><span>Архив</span> · Сигналы</a>
+  <a href="/" class="nav-brand"><b>Архив</b> · Разведка</a>
   <div class="nav-links">
-    <a href="risk-map.html" class="nav-link">Карта</a>
-    <a href="escalation.html" class="nav-link active">Эскалация</a>
-    <a href="risk-matrix.html" class="nav-link">Матрица</a>
+    <a href="risk-map.html" class="nl">Карта</a>
+    <a href="escalation.html" class="nl on">Эскалация</a>
+    <a href="risk-matrix.html" class="nl">Матрица</a>
   </div>
+  <div class="nav-sep"></div>
+  <!-- Regime pulse -->
+  <div class="nav-regime" id="nav-regime-block" title="Состояние системы">
+    <div class="regime-dot" id="nav-regime-dot" style="color:var(--muted)"></div>
+    <span class="regime-label-nav" id="nav-regime-state" style="color:var(--muted)">загрузка</span>
+  </div>
+  <!-- GRI -->
   <div class="nav-gri">
-    <span class="gri-label">GRI</span>
-    <span class="gri-score" id="nav-gri-score" style="color:var(--text-muted)">—</span>
-    <span class="gri-level" id="nav-gri-level" style="background:rgba(106,100,88,.15);color:var(--text-muted)"></span>
+    <div>
+      <div class="nav-gri-label">GRI</div>
+      <div class="nav-gri-badge" id="nav-gri-badge" style="color:var(--muted);border-color:var(--border)">—</div>
+    </div>
+    <div class="nav-gri-score" id="nav-gri-score" style="color:var(--muted)">—</div>
   </div>
 </nav>
 
+<!-- ── PAGE ────────────────────────────────────────────────────────────── -->
 <div class="page">
 
-  <!-- ── GLOBAL RISK INDEX ─────────────────────────────────────────── -->
-  <div class="section-label">Глобальный индекс риска</div>
-  <div id="gri-hero" class="gri-hero">
-    <div class="loader"><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-dot"></div><div class="loader-text">загрузка</div></div>
+  <!-- NONLINEAR ALERT BANNER -->
+  <div class="regime-alert" id="regime-alert" style="border-color:var(--regime-nonlinear);background:rgba(123,36,28,.08);color:#E88">
+    ⚠ Система перешла в нелинейный режим. Вероятность структурного разрыва повышена.
   </div>
 
-  <!-- ── STAT CARDS ─────────────────────────────────────────────────── -->
-  <div class="grid-4" id="stat-cards">
-    <div class="stat-card"><div class="stat-num" id="stat-critical" style="color:var(--lvl-critical)">—</div><div class="stat-label">Критических</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-high" style="color:var(--lvl-high)">—</div><div class="stat-label">Высоких</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-rising" style="color:#2ECC71">—</div><div class="stat-label">Нарастающих</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-weak-signals" style="color:var(--cyan)">—</div><div class="stat-label">Слабых сигналов</div></div>
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-num" id="sc-critical" style="color:var(--r-critical)">—</div><div class="stat-sub">Критических</div></div>
+    <div class="stat-card"><div class="stat-num" id="sc-high" style="color:var(--r-high)">—</div><div class="stat-sub">Высоких</div></div>
+    <div class="stat-card"><div class="stat-num" id="sc-rising" style="color:#2ECC71">—</div><div class="stat-sub">Нарастающих</div></div>
+    <div class="stat-card"><div class="stat-num" id="sc-weak-sig" style="color:var(--cyan)">—</div><div class="stat-sub">Слабых сигналов</div></div>
+    <div class="stat-card"><div class="stat-num" id="sc-total" style="color:var(--muted)">—</div><div class="stat-sub">Сигналов всего</div></div>
   </div>
 
-  <!-- ── FILTERS ────────────────────────────────────────────────────── -->
-  <div class="filters" id="filter-bar">
-    <span class="filter-label">Уровень:</span>
-    <span class="filter-pill pill-level-critical" data-f="level" data-v="critical">Critical</span>
-    <span class="filter-pill pill-level-high"     data-f="level" data-v="high">High</span>
-    <span class="filter-pill"                     data-f="level" data-v="moderate">Moderate</span>
-    <span class="filter-pill"                     data-f="level" data-v="weak">Weak</span>
-    <span class="filter-sep"></span>
-    <span class="filter-label">Тип:</span>
-    <span class="filter-pill pill-type-escalation" data-f="type" data-v="escalation">Эскалация</span>
-    <span class="filter-pill"                      data-f="type" data-v="anomaly">Аномалия</span>
-    <span class="filter-pill"                      data-f="type" data-v="structural">Структурный</span>
-    <span class="filter-sep"></span>
-    <span class="filter-label">Тренд:</span>
-    <span class="filter-pill pill-trend-rising" data-f="trend" data-v="rising">↑ Рост</span>
-    <span class="filter-pill"                  data-f="trend" data-v="volatile">≈ Волатиль</span>
-    <span class="filter-pill"                  data-f="trend" data-v="falling">↓ Спад</span>
-    <span class="filter-sep"></span>
-    <span class="filter-label">Домен:</span>
-    <span class="filter-pill" data-f="domain" data-v="geopolitics">Геополитика</span>
-    <span class="filter-pill" data-f="domain" data-v="climate">Климат</span>
-    <span class="filter-pill" data-f="domain" data-v="economy">Экономика</span>
-    <span class="filter-pill" data-f="domain" data-v="technology">Технологии</span>
-    <span class="filter-pill" data-f="domain" data-v="social">Социум</span>
-  </div>
+  <!-- ROW 1: Regime + GRI v2 -->
+  <div class="cockpit" style="margin-bottom:20px">
 
-  <!-- ── HEATMAP ─────────────────────────────────────────────────────── -->
-  <div class="heatmap-wrap" id="heatmap-section">
-    <div class="section-header">
-      <div>
-        <div class="section-label" style="margin-bottom:4px">Карта плотности сигналов</div>
-        <div style="font-size:11px;color:var(--text-muted)">Интенсивность по доменам — цвет = уровень эскалации</div>
+    <!-- REGIME PANEL -->
+    <div class="card" id="regime-card">
+      <div class="card-header">
+        <span class="card-title">Состояние системы</span>
+        <span class="card-badge" id="regime-conf-badge" style="color:var(--muted);border-color:var(--border)">conf —</span>
+      </div>
+      <div class="card-body" id="regime-body">
+        <div class="sk-block skeleton" style="height:54px;margin-bottom:12px"></div>
+        <div class="sk-line skeleton" style="width:90%"></div>
+        <div class="sk-line skeleton" style="width:75%"></div>
+        <div class="sk-line skeleton" style="width:80%"></div>
       </div>
     </div>
-    <div class="heatmap-grid" id="heatmap-grid"></div>
-  </div>
 
-  <!-- ── SIGNAL TABLE ───────────────────────────────────────────────── -->
-  <div class="section-header">
-    <div>
-      <div class="section-label" style="margin-bottom:2px">Сигналы эскалации</div>
-      <div style="font-size:11px;color:var(--text-muted)">Отсортировано по escalation_score · клик — детали</div>
-    </div>
-    <span id="table-count" style="font-size:11px;color:var(--text-muted)"></span>
-  </div>
-  <div style="overflow-x:auto">
-    <table class="signal-table">
-      <thead>
-        <tr>
-          <th>Домен</th>
-          <th>Сигнал</th>
-          <th>Score</th>
-          <th>Δ 24h</th>
-          <th>Тренд</th>
-          <th>24h / 7d</th>
-          <th>Динамика</th>
-        </tr>
-      </thead>
-      <tbody id="signal-tbody"></tbody>
-    </table>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- ── WEAK SIGNALS ───────────────────────────────────────────────── -->
-  <div class="section-header">
-    <div>
-      <div class="section-label" style="margin-bottom:2px">Слабые сигналы</div>
-      <div style="font-size:11px;color:var(--text-muted)">Низкая тяжесть, но нарастающий тренд — ранние индикаторы</div>
+    <!-- GRI v2 -->
+    <div class="card" id="gri-card">
+      <div class="card-header">
+        <span class="card-title">Global Risk Index v2</span>
+        <span class="card-badge" id="gri-v2-badge" style="color:var(--muted);border-color:var(--border)">v2.3</span>
+      </div>
+      <div id="gri-body">
+        <div class="gri-hero-row">
+          <div class="gri-number" id="gri-number" style="color:var(--muted)">—</div>
+          <div class="gri-meta">
+            <div class="gri-level-badge" id="gri-level-badge" style="color:var(--muted);border-color:var(--border)">—</div>
+            <div class="gri-desc" id="gri-desc">Загрузка индекса...</div>
+          </div>
+          <!-- Radial chart -->
+          <svg class="gri-radial" id="gri-radial-svg" viewBox="0 0 140 140" style="flex-shrink:0;width:110px;height:110px">
+            <circle cx="70" cy="70" r="56" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="10"/>
+            <!-- 6 arcs filled by JS -->
+            <g id="gri-radial-arcs"></g>
+            <text x="70" y="66" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="22" font-weight="300" fill="#F0E8D8" id="gri-radial-center">—</text>
+            <text x="70" y="82" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="7" fill="#7A7264" letter-spacing="1">GRI</text>
+          </svg>
+        </div>
+        <div class="sub-bars" id="sub-bars">
+          <div class="sk-line skeleton" style="width:100%"></div>
+          <div class="sk-line skeleton" style="width:85%"></div>
+          <div class="sk-line skeleton" style="width:92%"></div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="weak-grid" id="weak-grid"></div>
 
-  <div class="divider"></div>
-
-  <!-- ── PREMIUM: COUNTRY RISK PROFILE ─────────────────────────────── -->
-  <div class="section-header">
-    <div>
-      <div class="section-label" style="margin-bottom:4px">Country Risk Profile <span class="premium-badge">◈ premium foundation</span></div>
-      <div style="font-size:11px;color:var(--text-muted)">Профиль системных рисков по стране — вычисляется из live signals</div>
+  <!-- ROW 2: System Graph -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <span class="card-title">Системный граф зависимостей</span>
+      <span class="card-badge" id="graph-badge" style="color:var(--muted);border-color:var(--border)">загрузка</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div style="display:grid;grid-template-columns:1fr 220px">
+        <div class="graph-canvas-wrap" style="min-height:360px;padding:12px">
+          <canvas id="graphCanvas" width="800" height="360"></canvas>
+          <div class="graph-tooltip" id="graph-tooltip"></div>
+        </div>
+        <div class="node-detail" id="node-detail">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px">Выберите узел</div>
+          <div class="empty-state" style="padding:20px 0;font-size:10px">↤ наведите или нажмите на узел графа</div>
+        </div>
+      </div>
+      <div class="graph-legend" id="graph-legend">
+        <span class="gl-item"><span class="gl-dot" style="background:var(--dom-geo)"></span>Геополитика</span>
+        <span class="gl-item"><span class="gl-dot" style="background:var(--dom-clim)"></span>Климат</span>
+        <span class="gl-item"><span class="gl-dot" style="background:var(--dom-eco)"></span>Экономика</span>
+        <span class="gl-item"><span class="gl-dot" style="background:var(--dom-tech)"></span>Технологии</span>
+        <span class="gl-item"><span class="gl-dot" style="background:var(--dom-soc)"></span>Социум</span>
+        <span class="gl-item"><span class="gl-line" style="background:rgba(192,57,43,.6)"></span>Каскад</span>
+        <span class="gl-item"><span class="gl-line" style="background:rgba(41,128,185,.5)"></span>Зависимость</span>
+        <span class="gl-item"><span class="gl-line" style="background:rgba(184,151,58,.5)"></span>Обратная связь</span>
+      </div>
     </div>
   </div>
-  <div class="grid-3" id="country-profiles"></div>
 
-  <div class="divider"></div>
+  <!-- ROW 3: Probabilistic + Weak Signals -->
+  <div class="grid2" style="margin-bottom:20px">
 
-  <!-- ── ESCALATION FEED ────────────────────────────────────────────── -->
-  <div class="section-header">
-    <div class="section-label">Лента эскалации · real-time feed</div>
+    <!-- PROBABILISTIC SCENARIOS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Вероятностные сценарии</span>
+        <div class="horizon-toggle">
+          <button class="ht-btn on" id="ht-30" onclick="setHorizon(30)">30д</button>
+          <button class="ht-btn" id="ht-90" onclick="setHorizon(90)">90д</button>
+        </div>
+      </div>
+      <div id="scenario-body">
+        <div class="scenario-bars" id="scenario-bars">
+          <div class="sk-block skeleton"></div>
+        </div>
+        <div class="scen-ci" id="scen-ci">—</div>
+      </div>
+    </div>
+
+    <!-- WEAK SIGNALS RADAR -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Слабые сигналы · ранние признаки</span>
+        <span class="card-badge" id="ws-cluster-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+      </div>
+      <div class="card-body" id="ws-body">
+        <div class="sk-block skeleton"></div>
+      </div>
+    </div>
   </div>
-  <div id="esc-feed"></div>
+
+  <!-- ROW 4: Historical Analogs + Cascade View -->
+  <div class="grid2" style="margin-bottom:20px">
+
+    <!-- HISTORICAL ANALOGS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Исторические аналоги · паттерн-матчинг</span>
+        <span class="card-badge" id="analog-count-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+      </div>
+      <div id="analog-sig-body">
+        <div class="sig-bar-grid" id="sig-bar-grid">
+          <div class="sk-line skeleton" style="width:100%;grid-column:span 2"></div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:8px">
+        <div class="card-body" style="padding-top:0">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Текущее состояние напоминает:</div>
+        </div>
+        <div class="analog-cards" id="analog-cards">
+          <div class="sk-block skeleton"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CASCADE / CONTAGION VIEW -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Каскадные пути · распространение</span>
+        <span class="card-badge" id="cascade-count-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+      </div>
+      <div class="cascade-chains" id="cascade-chains">
+        <div class="sk-block skeleton"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 5: Country Profiles -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <span class="card-title">Country Risk Profiles · реальные данные</span>
+      <span class="card-badge" id="country-count-badge" style="color:var(--muted);border-color:var(--border)">—</span>
+    </div>
+    <div class="country-grid" id="country-grid">
+      <div class="sk-block skeleton" style="grid-column:span 3"></div>
+    </div>
+  </div>
+
+  <!-- ROW 6: Signal Table with Filters -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Сигнальная таблица</span>
+      <span id="table-count-badge" style="font-size:10px;color:var(--muted)"></span>
+    </div>
+    <div class="card-body">
+      <div class="filter-strip" id="filter-strip">
+        <span class="f-group-label">Уровень:</span>
+        <span class="f-pill on" data-f="level" data-v="">Все</span>
+        <span class="f-pill" data-f="level" data-v="critical">Critical</span>
+        <span class="f-pill" data-f="level" data-v="high">High</span>
+        <span class="f-pill" data-f="level" data-v="moderate">Moderate</span>
+        <span class="f-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>
+        <span class="f-group-label">Тип:</span>
+        <span class="f-pill on" data-f="type" data-v="">Все</span>
+        <span class="f-pill" data-f="type" data-v="escalation">Эскалация</span>
+        <span class="f-pill" data-f="type" data-v="anomaly">Аномалия</span>
+        <span class="f-pill" data-f="type" data-v="structural">Структурный</span>
+        <span class="f-sep" style="width:1px;height:16px;background:var(--border);margin:0 4px"></span>
+        <span class="f-group-label">Тренд:</span>
+        <span class="f-pill on" data-f="trend" data-v="">Все</span>
+        <span class="f-pill" data-f="trend" data-v="rising">↑ Рост</span>
+        <span class="f-pill" data-f="trend" data-v="volatile">≈ Волат.</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="signal-table">
+          <thead><tr>
+            <th>Домен</th><th>Сигнал</th><th>Score</th>
+            <th>Δ</th><th>Тренд</th><th>24h/7d</th><th>Горизонт</th>
+          </tr></thead>
+          <tbody id="signal-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
 </div><!-- /page -->
 
 <script>
-const API = 'https://archive-api.luven-medical-msk.workers.dev';
-const DC  = {climate:'#27AE60',economy:'#2980B9',geopolitics:'#D35400',technology:'#8E44AD',social:'#C0392B'};
-const DL  = {climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
-const LC  = {critical:'var(--lvl-critical)',high:'var(--lvl-high)',moderate:'var(--lvl-moderate)',weak:'var(--lvl-weak)',none:'var(--text-muted)'};
-const LBG = {critical:'rgba(192,57,43,.12)',high:'rgba(211,84,0,.1)',moderate:'rgba(184,151,58,.08)',weak:'rgba(41,128,185,.08)',none:'transparent'};
+// ════════════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════════════
+const API   = 'https://archive-api.luven-medical-msk.workers.dev';
+const EVJSON = '/docs/events.json';
+
+const DC = {climate:'#1E8449',economy:'#2471A3',geopolitics:'#C0622B',technology:'#7D3C98',social:'#B03A2E'};
+const DL = {climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
+const LC = {critical:'#B03A2E',high:'#C0622B',moderate:'#B8973A',weak:'#2471A3',none:'#3A3A3A'};
+const LBG = {critical:'rgba(176,58,46,.12)',high:'rgba(192,98,43,.1)',moderate:'rgba(184,151,58,.08)',weak:'rgba(36,113,163,.08)',none:'transparent'};
 const TC  = {rising:'#2ECC71',falling:'#5DADE2',stable:'#7F8C8D',volatile:'#E74C3C',new:'#7F8C8D'};
 const TA  = {rising:'↑',falling:'↓',stable:'→',volatile:'≈',new:'·'};
+const REGIME_COLORS = {stable:'#1E8449',deteriorating:'#B8973A',unstable:'#C0622B',transition:'#A93226',nonlinear:'#7B241C'};
+const REGIME_LABELS = {stable:'Стабильный',deteriorating:'Деградация',unstable:'Нестабильный',transition:'Переход',nonlinear:'Нелинейный'};
+const WS_LABELS = {logistics_stress:'Логистика',migration_anomaly:'Миграция',cyber_precursor:'Кибер-прекурсор',energy_instability:'Энергетика',food_security_stress:'Продовольствие',cross_domain_acceleration:'Мульти-домен',financial_stress_precursor:'Финансы'};
 
-// ── STATE ─────────────────────────────────────────────────────────────
-let ALL = [], GRI = null;
-let FILTERS = {level:null, type:null, trend:null, domain:null};
+// ════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════
+let ALL_EVENTS = [], GRI = null, REGIME = null, PROBABILISTIC = null;
+let PATTERNS = null, WEAK = null, GRAPH_DATA = null, COUNTRIES = null;
+let SCENARIOS_DATA = null, CASCADE_DATA = null;
+let FILTERS = {level:'',type:'',trend:''};
+let HORIZON = 30;
 
-// ── FETCH ─────────────────────────────────────────────────────────────
-async function loadData() {
+// ════════════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════════════
+const levelCol  = l => LC[l]  || LC.none;
+const levelBg   = l => LBG[l] || LBG.none;
+const lvlFromScore = s => s>=80?'critical':s>=60?'high':s>=35?'moderate':s>=15?'weak':'none';
+const pct = (n,d) => d>0?Math.round(n/d*100):0;
+
+function circleArc(cx,cy,r,deg0,deg1){
+  const r0=deg0*Math.PI/180, r1=deg1*Math.PI/180;
+  const x0=cx+r*Math.cos(r0), y0=cy+r*Math.sin(r0);
+  const x1=cx+r*Math.cos(r1), y1=cy+r*Math.sin(r1);
+  const large=deg1-deg0>180?1:0;
+  return `M${x0},${y0} A${r},${r},0,${large},1,${x1},${y1}`;
+}
+
+function badge(text,col,bg){
+  return `<span style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid ${col}40;color:${col};background:${bg||'transparent'}">${text}</span>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// DATA FETCH — parallel, graceful fallback
+// ════════════════════════════════════════════════════════════════════
+async function fetchSafe(url, opts={}) {
   try {
-    // Параллельная загрузка: events + risk-index
-    const [evRes, griRes] = await Promise.all([
-      fetch(API + '/api/events?limit=200&sort=severity&order=desc', {signal:AbortSignal.timeout(8000)}),
-      fetch(API + '/api/risk-index', {signal:AbortSignal.timeout(4000)}),
-    ]);
+    const r = await fetch(url, {signal:AbortSignal.timeout(8000), ...opts});
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
 
-    if (evRes.ok) {
-      const d = await evRes.json();
-      ALL = d.events || d.meta?.events || [];
-    }
-    if (griRes.ok) GRI = await griRes.json();
-  } catch(e) {
-    // Fallback: пробуем events.json напрямую
-    try {
-      const r = await fetch('/docs/events.json', {signal:AbortSignal.timeout(5000)});
-      if (r.ok) { const d = await r.json(); ALL = d.events || []; }
-    } catch {}
+async function loadAll() {
+  // Priority 1: events.json (always available on GitHub Pages)
+  const evSnap = await fetchSafe(EVJSON) || await fetchSafe(API+'/api/events?limit=200');
+  if (evSnap) {
+    ALL_EVENTS = evSnap.events || [];
+    GRI        = evSnap.global_risk_index || null;
+    REGIME     = evSnap.regime || null;
+    PATTERNS   = evSnap.patterns || null;
+    PROBABILISTIC = evSnap.probabilistic || null;
+    WEAK       = evSnap.weak_signals || null;
+    // system_graph summary from snapshot
+    GRAPH_DATA = evSnap.system_graph || null;
+    CASCADE_DATA = {paths: evSnap.cascade_paths||[], contagion: GRAPH_DATA?.contagion_paths||[]};
+    // Country profiles
+    COUNTRIES  = evSnap.country_profiles || null;
+    SCENARIOS_DATA = evSnap.probabilistic || null;
   }
 
-  render();
+  // Priority 2: Worker endpoints fill gaps (best-effort, parallel)
+  const [griW, regimeW, probW, weakW, analogW, graphW, cascW, countryW] = await Promise.all([
+    !GRI       ? fetchSafe(API+'/api/gri/v2') : null,
+    !REGIME    ? fetchSafe(API+'/api/regime') : null,
+    !PROBABILISTIC ? fetchSafe(API+'/api/scenarios') : null,
+    !WEAK      ? fetchSafe(API+'/api/weak-signals') : null,
+    !PATTERNS  ? fetchSafe(API+'/api/patterns') : null,
+    !GRAPH_DATA ? fetchSafe(API+'/api/system-graph') : null,
+    !CASCADE_DATA ? fetchSafe(API+'/api/cascade-map') : null,
+    !COUNTRIES ? fetchSafe(API+'/api/country-risk/all') : null,
+  ]);
+
+  if (griW)     GRI          = griW;
+  if (regimeW)  REGIME       = regimeW;
+  if (probW)    { PROBABILISTIC = probW; SCENARIOS_DATA = probW; }
+  if (weakW)    WEAK         = weakW;
+  if (analogW)  PATTERNS     = analogW;
+  if (graphW)   GRAPH_DATA   = graphW;
+  if (cascW)    CASCADE_DATA = cascW;
+  if (countryW) COUNTRIES    = countryW.profiles || countryW;
+
+  // Derive from events if v2.3 data missing
+  if (!REGIME) REGIME = deriveRegime(ALL_EVENTS);
+  if (!GRI && ALL_EVENTS.length) GRI = deriveGRI(ALL_EVENTS);
+
+  renderAll();
 }
 
-// ── FILTERS ───────────────────────────────────────────────────────────
-function applyFilters(events) {
-  return events.filter(e => {
-    if (FILTERS.level  && e.escalation_level  !== FILTERS.level)  return false;
-    if (FILTERS.type   && e.signal_type       !== FILTERS.type)   return false;
-    if (FILTERS.trend  && e.trend_direction   !== FILTERS.trend)  return false;
-    if (FILTERS.domain && e.domain            !== FILTERS.domain) return false;
-    return true;
-  });
+// ════════════════════════════════════════════════════════════════════
+// DERIVED DATA (fallback when v2.3 not yet run)
+// ════════════════════════════════════════════════════════════════════
+function deriveRegime(events) {
+  const scores = events.map(e=>e.escalation_score||0).filter(Boolean);
+  if (!scores.length) return {state:'stable',confidence:0.5,transition_probability:0,systemic_break_probability:0,drivers:[]};
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  const rising = events.filter(e=>e.trend_direction==='rising').length;
+  const state = avg>=70?'deteriorating':avg>=50?'deteriorating':rising>events.length*.4?'deteriorating':'stable';
+  return {state, confidence:.5, transition_probability:.2, systemic_break_probability:.1, drivers:['geopolitics','economy'], signals:{zscore:0,volatility_expansion:1,slope_acceleration:0,convergence_index:0}};
 }
 
-document.querySelectorAll('.filter-pill').forEach(p => {
-  p.addEventListener('click', () => {
-    const f = p.dataset.f, v = p.dataset.v;
-    if (FILTERS[f] === v) {
-      FILTERS[f] = null;
-      p.classList.remove('active');
-    } else {
-      document.querySelectorAll(`[data-f="${f}"]`).forEach(x => x.classList.remove('active'));
-      FILTERS[f] = v;
-      p.classList.add('active');
-    }
-    renderTable();
-    renderWeakSignals();
+function deriveGRI(events) {
+  const scores = events.map(e=>e.escalation_score||e.severity||0);
+  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+  const by_domain = {};
+  ['geopolitics','climate','economy','technology','social'].forEach(d=>{
+    const sub = events.filter(e=>e.domain===d);
+    if (sub.length) by_domain[d]={avg:Math.round(sub.reduce((s,e)=>s+(e.escalation_score||e.severity||0),0)/sub.length),count:sub.length,max:Math.max(...sub.map(e=>e.escalation_score||e.severity||0))};
   });
-});
+  return {index:avg,level:lvlFromScore(avg),by_domain,version:'derived'};
+}
 
-// ── RENDER ALL ────────────────────────────────────────────────────────
-function render() {
-  renderGRI();
+// ════════════════════════════════════════════════════════════════════
+// RENDER ORCHESTRATOR
+// ════════════════════════════════════════════════════════════════════
+function renderAll() {
+  renderNav();
   renderStats();
-  renderHeatmap();
-  renderTable();
+  renderRegime();
+  renderGRI();
+  renderGraph();
+  renderScenarios();
   renderWeakSignals();
-  renderCountryProfiles();
-  renderFeed();
+  renderAnalogs();
+  renderCascade();
+  renderCountries();
+  renderTable();
 }
 
-// ── GRI HERO ──────────────────────────────────────────────────────────
-function levelColor(l) { return LC[l] || LC.none; }
-function levelBg(l)    { return LBG[l] || LBG.none; }
+// ════════════════════════════════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════════════════════════════════
+function renderNav() {
+  const r = REGIME || {};
+  const state = r.state || 'stable';
+  const col   = REGIME_COLORS[state] || REGIME_COLORS.stable;
+  const lbl   = REGIME_LABELS[state] || state;
+  const dot   = document.getElementById('nav-regime-dot');
+  const span  = document.getElementById('nav-regime-state');
+  if (dot)  { dot.style.color = col; dot.style.background = col; }
+  if (span) { span.textContent = lbl; span.style.color = col; }
 
-function renderGRI() {
-  const hero = document.getElementById('gri-hero');
-  const gri  = GRI;
-  const events = ALL;
+  if (GRI) {
+    const s = GRI.index || 0;
+    const lv = GRI.level || lvlFromScore(s);
+    const sc = document.getElementById('nav-gri-score');
+    const bg = document.getElementById('nav-gri-badge');
+    if (sc) { sc.textContent = s; sc.style.color = levelCol(lv); }
+    if (bg) { bg.textContent = lv.toUpperCase(); bg.style.color = levelCol(lv); bg.style.borderColor = levelCol(lv)+'40'; }
+  }
 
-  const index = gri?.index ?? (events.length ? Math.round(events.reduce((s,e) => s+(e.escalation_score||0),0)/events.length) : 0);
-  const level = gri?.level ?? levelFromScore(index);
-  const critical_count = gri?.critical_count ?? events.filter(e => e.escalation_level === 'critical').length;
-  const col = levelColor(level);
+  // Nonlinear alert
+  if (state === 'nonlinear' || state === 'transition') {
+    const al = document.getElementById('regime-alert');
+    if (al) al.classList.add('visible');
+  }
+}
 
-  // Update nav
-  const navScore = document.getElementById('nav-gri-score');
-  const navLevel = document.getElementById('nav-gri-level');
-  navScore.textContent = index;
-  navScore.style.color = col;
-  navLevel.textContent = level.toUpperCase();
-  navLevel.style.background = levelBg(level);
-  navLevel.style.color = col;
+// ════════════════════════════════════════════════════════════════════
+// STATS BAR
+// ════════════════════════════════════════════════════════════════════
+function renderStats() {
+  const ev = ALL_EVENTS;
+  document.getElementById('sc-critical').textContent = ev.filter(e=>e.escalation_level==='critical').length;
+  document.getElementById('sc-high').textContent     = ev.filter(e=>e.escalation_level==='high').length;
+  document.getElementById('sc-rising').textContent   = ev.filter(e=>e.trend_direction==='rising').length;
+  document.getElementById('sc-weak-sig').textContent = ev.filter(e=>(e.severity||0)<65&&((e.trend_direction==='rising')||(e.severity_delta||0)>=3)).length;
+  document.getElementById('sc-total').textContent    = ev.length;
+}
 
-  // Top domains by avg escalation score
-  const byDomain = gri?.by_domain || {};
-  const domainRows = Object.entries(
-    events.reduce((acc, e) => {
-      if (!e.domain || !(e.escalation_score > 0)) return acc;
-      if (!acc[e.domain]) acc[e.domain] = [];
-      acc[e.domain].push(e.escalation_score);
-      return acc;
-    }, {})
-  ).map(([d, scores]) => ({
-    domain: d,
-    avg: Math.round(scores.reduce((a,b)=>a+b,0)/scores.length),
-    max: Math.max(...scores),
-    count: scores.length
-  })).sort((a,b) => b.avg - a.avg);
+// ════════════════════════════════════════════════════════════════════
+// REGIME PANEL
+// ════════════════════════════════════════════════════════════════════
+function renderRegime() {
+  const r = REGIME || {};
+  const state     = r.state || 'stable';
+  const col       = REGIME_COLORS[state] || '#7A7264';
+  const lbl       = REGIME_LABELS[state] || state;
+  const conf      = r.confidence || 0;
+  const trans_p   = r.transition_probability || 0;
+  const break_p   = r.systemic_break_probability || 0;
+  const drivers   = r.drivers || [];
+  const sigs      = r.signals || {};
 
-  // Top regions
-  const byRegion = events.reduce((acc, e) => {
-    const r = (e.region || 'Глобально').split(' ·')[0].split('/')[0].trim().slice(0,24);
-    if (!e.escalation_score || e.escalation_score < 20) return acc;
-    if (!acc[r]) acc[r] = [];
-    acc[r].push(e.escalation_score);
-    return acc;
-  }, {});
-  const regionRows = Object.entries(byRegion)
-    .map(([r, sc]) => ({region:r, avg:Math.round(sc.reduce((a,b)=>a+b,0)/sc.length), count:sc.length}))
-    .sort((a,b) => b.avg - a.avg).slice(0,6);
+  // confidence badge
+  const cb = document.getElementById('regime-conf-badge');
+  if (cb) { cb.textContent = `conf ${Math.round(conf*100)}%`; cb.style.color = col; cb.style.borderColor = col+'30'; }
 
-  hero.innerHTML = `
-    <div class="gri-main">
-      <div class="gri-index" style="color:${col}">${index}</div>
-      <div><span class="gri-level-badge" style="background:${levelBg(level)};color:${col};border:1px solid ${col}40">${level.toUpperCase()}</span></div>
-      <div class="gri-updated">${gri?.updated ? 'Обновлено: ' + new Date(gri.updated).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) : ''}</div>
+  // Body
+  const body = document.getElementById('regime-body');
+  if (!body) return;
+
+  const TIMELINE = ['stable','deteriorating','unstable','transition','nonlinear'];
+  const timelineHTML = TIMELINE.map(s => {
+    const c = REGIME_COLORS[s];
+    const active = s === state;
+    const past   = TIMELINE.indexOf(s) < TIMELINE.indexOf(state);
+    return `<div class="rt-step">
+      <div class="rt-dot" style="color:${c};border-color:${c};${active||past?'background:'+c:''}" ></div>
+      <span class="rt-label" style="color:${active?c:'var(--muted)'}">${REGIME_LABELS[s].replace(' ','<br>')}</span>
+    </div>`;
+  }).join('');
+
+  const driversHTML = drivers.slice(0,5).map(d => {
+    const dc = DC[d] || '#888';
+    return `<span class="driver-tag" style="color:${dc};border-color:${dc}40;background:${dc}10">${DL[d]||d}</span>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="regime-state-row">
+      <div class="regime-orb" style="color:${col}">
+        <div class="regime-orb-ring"></div>
+        <div class="regime-orb-ring2"></div>
+        <div class="regime-orb-inner"></div>
+      </div>
+      <div class="regime-state-info">
+        <div class="regime-state-label" style="color:${col}">${lbl}</div>
+        <div class="regime-state-sub">Индекс системного состояния</div>
+      </div>
     </div>
-    <div class="gri-domains">
-      <div class="card-label" style="margin-bottom:10px">Топ доменов</div>
-      ${domainRows.map(d => `
-        <div class="gri-domain-row">
-          <div class="gri-domain-dot" style="background:${DC[d.domain]||'#888'}"></div>
-          <div class="gri-domain-name">${DL[d.domain]||d.domain}</div>
-          <div class="gri-domain-bar-wrap"><div class="gri-domain-bar" style="width:${d.avg}%;background:${DC[d.domain]||'#888'}40;border:0"></div></div>
-          <div class="gri-domain-score" style="color:${DC[d.domain]||'#888'}">${d.avg}</div>
-        </div>
-      `).join('')}
+    <div class="meter-row">
+      <span class="meter-label">Уверенность</span>
+      <div class="meter-track"><div class="meter-fill" style="width:${conf*100}%;background:${col}"></div></div>
+      <span class="meter-val" style="color:${col}">${Math.round(conf*100)}%</span>
     </div>
-    <div class="gri-regions">
-      <div class="card-label" style="margin-bottom:10px">Топ регионов</div>
-      ${regionRows.map(r => `
-        <div class="gri-region-row">
-          <div class="gri-region-name">${r.region}</div>
-          <div>
-            <span class="gri-region-score">${r.avg}</span>
-            <span class="gri-region-level" style="background:${levelBg(levelFromScore(r.avg))};color:${levelColor(levelFromScore(r.avg))};border:1px solid ${levelColor(levelFromScore(r.avg))}40">${levelFromScore(r.avg).toUpperCase()}</span>
-          </div>
-        </div>
-      `).join('')}
+    <div class="meter-row">
+      <span class="meter-label">Вероятность перехода</span>
+      <div class="meter-track"><div class="meter-fill" style="width:${trans_p*100}%;background:var(--r-moderate)"></div></div>
+      <span class="meter-val" style="color:var(--r-moderate)">${Math.round(trans_p*100)}%</span>
     </div>
+    <div class="meter-row">
+      <span class="meter-label">Системный разрыв</span>
+      <div class="meter-track"><div class="meter-fill" style="width:${break_p*100}%;background:var(--r-critical)"></div></div>
+      <span class="meter-val" style="color:var(--r-critical)">${Math.round(break_p*100)}%</span>
+    </div>
+    ${drivers.length ? `<div class="drivers-row">${driversHTML}</div>` : ''}
+    <div class="regime-timeline">${timelineHTML}</div>
+    ${sigs.zscore ? `<div style="margin-top:12px;font-size:9px;color:var(--muted);line-height:1.8">
+      z-score: <b style="color:var(--cream)">${sigs.zscore}</b> &nbsp;|&nbsp;
+      vol_exp: <b style="color:var(--cream)">${sigs.volatility_expansion}</b> &nbsp;|&nbsp;
+      slope_accel: <b style="color:var(--cream)">${sigs.slope_acceleration}</b>
+    </div>` : ''}
   `;
 }
 
-function levelFromScore(s) {
-  return s >= 80 ? 'critical' : s >= 60 ? 'high' : s >= 35 ? 'moderate' : s >= 15 ? 'weak' : 'none';
-}
+// ════════════════════════════════════════════════════════════════════
+// GRI v2 — RADIAL CHART + SUBINDEX BARS
+// ════════════════════════════════════════════════════════════════════
+function renderGRI() {
+  if (!GRI) return;
+  const idx   = GRI.index || 0;
+  const level = GRI.level || lvlFromScore(idx);
+  const col   = levelCol(level);
+  const sub   = GRI.subindices || {};
 
-// ── STATS ─────────────────────────────────────────────────────────────
-function renderStats() {
-  const ev = ALL;
-  document.getElementById('stat-critical').textContent = ev.filter(e => e.escalation_level === 'critical').length;
-  document.getElementById('stat-high').textContent     = ev.filter(e => e.escalation_level === 'high').length;
-  document.getElementById('stat-rising').textContent   = ev.filter(e => e.trend_direction === 'rising').length;
-  // Weak signals: severity < 65 AND (trend rising OR delta > 2)
-  document.getElementById('stat-weak-signals').textContent = ev.filter(e =>
-    (e.severity||0) < 65 && ((e.trend_direction === 'rising') || (e.severity_delta||0) >= 3)
-  ).length;
-}
+  document.getElementById('gri-number').textContent = idx;
+  document.getElementById('gri-number').style.color = col;
+  document.getElementById('gri-radial-center').textContent = idx;
 
-// ── HEATMAP ───────────────────────────────────────────────────────────
-function renderHeatmap() {
-  const domains = ['geopolitics','climate','economy','technology','social'];
-  const ev = ALL;
-  const grid = document.getElementById('heatmap-grid');
-  grid.innerHTML = domains.map(d => {
-    const sub = ev.filter(e => e.domain === d);
-    if (!sub.length) return `<div class="hm-cell" style="background:rgba(255,255,255,.015)"><div class="hm-domain">${DL[d]||d}</div><div class="hm-score" style="color:var(--text-muted)">—</div></div>`;
-    const avgEsc = Math.round(sub.reduce((s,e)=>s+(e.escalation_score||0),0)/sub.length);
-    const maxEsc = Math.max(...sub.map(e=>e.escalation_score||0));
-    const level = levelFromScore(avgEsc);
-    const rising = sub.filter(e=>e.trend_direction==='rising').length;
-    const col = levelColor(level);
-    const bg = levelBg(level);
-    const trendIcon = rising > sub.length * 0.3 ? '↑' : sub.filter(e=>e.trend_direction==='falling').length > sub.length * 0.3 ? '↓' : '→';
-    const alpha = 0.05 + (avgEsc / 100) * 0.18;
-    return `<div class="hm-cell" style="background:rgba(${hexToRgb(DC[d])},${alpha})" title="${DL[d]}: avg esc ${avgEsc}">
-      <div class="hm-trend" style="color:${TC[rising>sub.length*.3?'rising':'stable']}">${trendIcon}</div>
-      <div class="hm-domain" style="color:${DC[d]}">${DL[d]||d}</div>
-      <div class="hm-score" style="color:${col}">${avgEsc}</div>
-      <div class="hm-count">${sub.length} сигналов · max ${maxEsc}</div>
-    </div>`;
-  }).join('');
-}
+  const badge_el = document.getElementById('gri-level-badge');
+  if (badge_el) { badge_el.textContent = level.toUpperCase(); badge_el.style.color = col; badge_el.style.borderColor = col+'50'; }
 
-// ── SIGNAL TABLE ──────────────────────────────────────────────────────
-function renderTable() {
-  const filtered = applyFilters([...ALL])
-    .filter(e => (e.escalation_score||0) >= 15 || (e.severity||0) >= 70)
-    .sort((a,b) => (b.escalation_score||0) - (a.escalation_score||0))
-    .slice(0, 80);
+  const desc = document.getElementById('gri-desc');
+  if (desc) desc.textContent = `Обновлено · ${GRI.version || 'v2'} · ${(GRI.critical_count||0)} критических`;
 
-  document.getElementById('table-count').textContent = `${filtered.length} сигналов`;
-
-  const tbody = document.getElementById('signal-tbody');
-  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="7" class="empty">Нет сигналов по выбранным фильтрам</td></tr>`; return; }
-
-  tbody.innerHTML = filtered.map((e, idx) => {
-    const domCol  = DC[e.domain] || '#888';
-    const lvlCol  = levelColor(e.escalation_level||'none');
-    const lvlBg   = levelBg(e.escalation_level||'none');
-    const delta   = e.severity_delta || 0;
-    const deltaStr = delta > 0 ? `<span class="st-delta" style="color:#2ECC71">+${delta}</span>` : delta < 0 ? `<span class="st-delta" style="color:#5DADE2">${delta}</span>` : `<span style="color:var(--text-muted)">0</span>`;
-    const trend = e.trend_direction || 'new';
-    const trendStr = `<span class="trend-arrow" style="color:${TC[trend]}">${TA[trend]}</span><span style="color:${TC[trend]};font-size:10px">${trend}</span>`;
-    const series = e.count_7d > 0 ? Array.from({length:7}, (_,i) => Math.max(1, Math.round((e.avg_severity_7d||e.severity||50)*(0.85+i*0.025+(Math.random()-0.5)*0.1)))) : [];
-    const sparkMax = series.length ? Math.max(...series) : 1;
-    const sparkHtml = series.map(v => {
-      const h = Math.max(2, Math.round((v/sparkMax)*22));
-      const bc = trend==='rising'?'rgba(192,57,43,.5)':trend==='falling'?'rgba(41,128,185,.4)':'rgba(255,255,255,.15)';
-      return `<div class="spark-bar ${trend}" style="height:${h}px;background:${bc}"></div>`;
+  // Radial chart: 6 arcs evenly spaced
+  const arcGroup = document.getElementById('gri-radial-arcs');
+  if (arcGroup && Object.keys(sub).length) {
+    const entries = Object.entries(sub);
+    const ARC_COLORS = ['#C0622B','#A93226','#2471A3','#B8973A','#7D3C98','#1E8449'];
+    const n = entries.length;
+    const segDeg = 360 / n;
+    arcGroup.innerHTML = entries.map(([k,v],i) => {
+      const startDeg = -90 + i * segDeg;
+      const endDeg   = startDeg + segDeg * v / 100 - 2;
+      if (endDeg <= startDeg) return '';
+      const d = circleArc(70,70,56,startDeg,endDeg);
+      return `<path d="${d}" fill="none" stroke="${ARC_COLORS[i]}" stroke-width="9" stroke-linecap="round" opacity=".85"/>`;
     }).join('');
-    return `
-      <tr onclick="toggleDetail(${idx})" id="row-${idx}">
-        <td><div class="st-domain"><div class="st-dot" style="background:${domCol}"></div><div class="st-domain-name">${DL[e.domain]||e.domain||'—'}</div></div></td>
-        <td><div class="st-title">${e.title||'—'}</div><div class="st-fp">${e.fingerprint||''}</div></td>
-        <td><div class="st-score" style="color:${lvlCol}">${e.escalation_score??'—'}</div><div class="st-level" style="background:${lvlBg};color:${lvlCol};border:1px solid ${lvlCol}30">${e.escalation_level||'—'}</div></td>
-        <td>${deltaStr}</td>
-        <td><div class="st-trend">${trendStr}</div></td>
-        <td class="st-count">${e.count_24h??'—'} / ${e.count_7d??'—'}</td>
-        <td><div class="st-sparkline">${sparkHtml}</div></td>
-      </tr>
-      <tr class="signal-detail" id="detail-${idx}">
-        <td colspan="7">
-          <div class="sd-inner">
-            <div>
-              <div class="sd-block-label">Векторы</div>
-              <div class="sd-vectors">${(e.vectors||[]).map(v=>`<span class="sd-vector">${v}</span>`).join('')||'—'}</div>
-              <div style="margin-top:10px">
-                <div class="sd-block-label">Каскад</div>
-                <div class="sd-cascade">${(e.cascade||[]).map(c=>`→ ${DL[c]||c}`).join(' · ')||'нет'}</div>
-              </div>
-            </div>
-            <div>
-              <div class="sd-block-label">Характеристики</div>
-              <div style="font-size:11px;color:var(--text-soft);line-height:1.9">
-                phase: <b style="color:var(--cream)">${e.phase||'—'}</b><br>
-                horizon: <b style="color:var(--cream)">${e.horizon||'—'}</b><br>
-                avg_sev_7d: <b style="color:var(--cyan)">${e.avg_severity_7d??'—'}</b><br>
-                severity_delta: <b style="color:${delta>0?'#2ECC71':delta<0?'#5DADE2':'var(--text-muted)'}">${delta>0?'+':''}${delta}</b>
-              </div>
-            </div>
-            <div>
-              <div class="sd-block-label">Краткое описание</div>
-              <div class="sd-summary">${(e.summary||'').slice(0,200).replace(/<[^>]+>/g,' ')}${(e.summary||'').length>200?'…':''}</div>
-              <div style="margin-top:8px;font-size:10px;color:var(--text-muted)">${e.source||''} · ${e.date||''} · ${e.region||''}</div>
-            </div>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
+  }
 
-function toggleDetail(idx) {
-  const row    = document.getElementById(`row-${idx}`);
-  const detail = document.getElementById(`detail-${idx}`);
-  const open   = detail.classList.toggle('open');
-  row.classList.toggle('expanded', open);
-}
-
-// ── WEAK SIGNALS ──────────────────────────────────────────────────────
-function renderWeakSignals() {
-  const weak = ALL
-    .filter(e => (e.severity||0) < 65 && ((e.trend_direction === 'rising') || (e.severity_delta||0) >= 3))
-    .sort((a,b) => (b.severity_delta||0) - (a.severity_delta||0))
-    .slice(0, 12);
-
-  const grid = document.getElementById('weak-grid');
-  if (!weak.length) { grid.innerHTML = `<div class="empty">Слабые сигналы не обнаружены</div>`; return; }
-
-  grid.innerHTML = weak.map(e => {
-    const domCol  = DC[e.domain] || '#888';
-    const delta   = e.severity_delta || 0;
-    const series  = Array.from({length:8}, (_,i) => Math.max(2, (e.severity||50) - 5 + i * 0.8));
-    const sparkMax = Math.max(...series);
-    const sparkHtml = series.map(v => `<div class="wc-spark" style="height:${Math.round((v/sparkMax)*14)+2}px;background:rgba(39,174,96,.35)"></div>`).join('');
-    return `<div class="weak-card" onclick="">
-      <div class="wc-header">
-        <div class="wc-type" style="color:${domCol}">${DL[e.domain]||e.domain}</div>
-        <div class="wc-delta">+${delta}</div>
-      </div>
-      <div class="wc-title">${(e.title||'').slice(0,90)}${(e.title||'').length>90?'…':''}</div>
-      <div class="wc-footer">
-        <div class="wc-sev">sev: ${e.severity} · 24h: ${e.count_24h??'?'}</div>
-        <div class="wc-trend-line">${sparkHtml}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── COUNTRY PROFILES (premium foundation) ─────────────────────────────
-function renderCountryProfiles() {
-  // Вычисляем из сигналов — без отдельного API
-  const PRIORITY_REGIONS = [
-    {name:'Иран', keywords:['iran','ормузск','иранск']},
-    {name:'Россия / Украина', keywords:['россия','украина','russia','ukraine','kiev','москва']},
-    {name:'Израиль / Газа', keywords:['israel','gaza','хамас','израиль','газа','lebanon','ливан']},
-  ];
-
-  const profiles = PRIORITY_REGIONS.map(pr => {
-    const match = ALL.filter(e => {
-      const t = ((e.title||'')+(e.region||'')+(e.summary||'')).toLowerCase();
-      return pr.keywords.some(k => t.includes(k));
-    });
-    if (!match.length) return null;
-
-    const avgEsc = Math.round(match.reduce((s,e)=>s+(e.escalation_score||0),0)/match.length);
-    const maxSev = Math.max(...match.map(e=>e.severity||0));
-    const level  = levelFromScore(avgEsc);
-    const col    = levelColor(level);
-
-    // Domain breakdown
-    const domBreak = Object.entries(
-      match.reduce((acc,e) => { acc[e.domain]=(acc[e.domain]||0)+(e.escalation_score||0); return acc; },{})
-    ).sort((a,b)=>b[1]-a[1]).slice(0,4);
-
-    // Top signals
-    const topSig = match.sort((a,b)=>(b.escalation_score||0)-(a.escalation_score||0)).slice(0,3);
-
-    const total = domBreak.reduce((s,[,v])=>s+v,0)||1;
-    return {name:pr.name, avgEsc, maxSev, level, col, domBreak, topSig, total, count:match.length};
-  }).filter(Boolean);
-
-  const el = document.getElementById('country-profiles');
-  el.innerHTML = profiles.map(p => `
-    <div class="country-card">
-      <div class="cc-header">
-        <div>
-          <div class="cc-name">${p.name}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${p.count} активных сигналов</div>
-        </div>
-        <div class="cc-risk-ring">
-          <svg class="cc-ring-svg" viewBox="0 0 60 60">
-            <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="4"/>
-            <circle cx="30" cy="30" r="24" fill="none" stroke="${p.col}" stroke-width="4"
-              stroke-dasharray="${Math.round(p.avgEsc*1.508)} 150.8"
-              stroke-linecap="round" transform="rotate(-90 30 30)" opacity=".8"/>
-          </svg>
-          <div class="cc-ring-score" style="color:${p.col}">${p.avgEsc}</div>
-        </div>
-      </div>
-      <div class="cc-domains">
-        ${p.domBreak.map(([d,v]) => `
-          <div class="cc-domain-row">
-            <div class="cc-dom-label" style="color:${DC[d]||'#888'}">${DL[d]||d}</div>
-            <div class="cc-dom-bar"><div class="cc-dom-fill" style="width:${Math.round(v/p.total*100)}%;background:${DC[d]||'#888'}60"></div></div>
-            <div class="cc-dom-val">${Math.round(v/p.count)}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="cc-signals">
-        ${p.topSig.map(s => `<div class="cc-signal-item"><span class="cc-signal-bullet">·</span><span style="color:${levelColor(s.escalation_level||'none')}">${s.escalation_level||''}</span>&nbsp;<span>${(s.title||'').slice(0,60)}…</span></div>`).join('')}
-      </div>
+  // Subindex bars
+  const barsEl = document.getElementById('sub-bars');
+  if (!barsEl || !Object.keys(sub).length) return;
+  const SUB_LABELS = {system_pressure:'Давление системы',structural_fragility:'Структурная хрупкость',cascade_exposure:'Каскадная уязвимость',synchronization_level:'Синхронизация',adaptive_capacity:'Адаптивность',resilience_deficit:'Дефицит устойчивости'};
+  const SUB_COLORS = ['#C0622B','#A93226','#2471A3','#B8973A','#7D3C98','#1E8449'];
+  barsEl.innerHTML = Object.entries(sub).map(([k,v],i) => `
+    <div class="sub-bar-row">
+      <span class="sub-bar-label">${SUB_LABELS[k]||k}</span>
+      <div class="sub-bar-track"><div class="sub-bar-fill" style="width:${v}%;background:${SUB_COLORS[i]||'#888'}"></div></div>
+      <span class="sub-bar-val">${v}</span>
     </div>
   `).join('');
 }
 
-// ── ESCALATION FEED ───────────────────────────────────────────────────
-function renderFeed() {
-  const feed = [...ALL]
-    .filter(e => (e.escalation_level === 'critical' || e.escalation_level === 'high') && e.title)
-    .sort((a,b) => (b.escalation_score||0)-(a.escalation_score||0))
-    .slice(0,20);
+// ════════════════════════════════════════════════════════════════════
+// SYSTEM GRAPH — Canvas renderer
+// ════════════════════════════════════════════════════════════════════
+let graphNodes = [], graphEdges = [], graphTransform = {x:0,y:0,scale:1};
+let dragNode = null, dragStart = null, graphAnimFrame = null;
+let hoveredNode = null;
 
-  const el = document.getElementById('esc-feed');
-  if (!feed.length) { el.innerHTML = `<div class="empty">Нет критических сигналов</div>`; return; }
+function renderGraph() {
+  const badge_el = document.getElementById('graph-badge');
 
-  el.innerHTML = feed.map(e => {
-    const col   = levelColor(e.escalation_level||'none');
-    const domC  = DC[e.domain]||'#888';
-    const trend = e.trend_direction||'new';
-    return `<div class="feed-item">
-      <div class="fi-score" style="color:${col}">${e.escalation_score||'—'}</div>
-      <div class="fi-body">
-        <div class="fi-title">${e.title}</div>
-        <div class="fi-meta">
-          <span class="fi-badge" style="border-color:${domC}40;color:${domC}">${DL[e.domain]||e.domain}</span>
-          <span class="fi-badge" style="border-color:${col}40;color:${col}">${e.escalation_level}</span>
-          <span class="fi-badge" style="color:${TC[trend]};border-color:${TC[trend]}30">${TA[trend]} ${trend}</span>
-          ${e.phase?`<span class="fi-badge">${e.phase}</span>`:''}
-          <span class="fi-time">${e.region||''} · ${e.date||''}</span>
-        </div>
+  // Build from GRAPH_DATA or derive from events
+  let nodes = [], edges = [];
+
+  if (GRAPH_DATA && GRAPH_DATA.graph && GRAPH_DATA.graph.nodes) {
+    nodes = GRAPH_DATA.graph.nodes;
+    edges = GRAPH_DATA.graph.edges || [];
+  } else {
+    // Fallback: synthetic graph from events
+    nodes = buildFallbackNodes();
+    edges = buildFallbackEdges();
+  }
+
+  if (!nodes.length) { if (badge_el) badge_el.textContent = 'нет данных'; return; }
+
+  if (badge_el) badge_el.textContent = `${nodes.length} узлов · ${edges.length} связей`;
+
+  // Layout: force-directed with fixed domain positions
+  graphNodes = layoutNodes(nodes);
+  graphEdges = edges.map(e => {
+    const src = graphNodes.find(n=>n.id===e.from);
+    const dst = graphNodes.find(n=>n.id===e.to);
+    return {...e, src, dst};
+  }).filter(e=>e.src&&e.dst);
+
+  initGraphCanvas();
+}
+
+function buildFallbackNodes() {
+  const DOMAINS = ['geopolitics','climate','economy','technology','social'];
+  const nodes = DOMAINS.map(d => ({
+    id: `dom:${d}`, type: 'domain', label: d,
+    score: (ALL_EVENTS.filter(e=>e.domain===d).reduce((s,e)=>s+(e.escalation_score||0),0) /
+            Math.max(1,ALL_EVENTS.filter(e=>e.domain===d).length)) / 100,
+    active: true
+  }));
+  // Add top vector nodes
+  const vCounts = {};
+  ALL_EVENTS.forEach(e=>(e.vectors||[]).forEach(v=>{ vCounts[v]=(vCounts[v]||0)+1; }));
+  Object.entries(vCounts).sort((a,b)=>b[1]-a[1]).slice(0,4).forEach(([v,c])=>{
+    nodes.push({id:`vec:${v}`,type:'vector',label:v,score:Math.min(1,c/20),active:true});
+  });
+  return nodes;
+}
+
+function buildFallbackEdges() {
+  const DEPS = {geopolitics:['economy','social'],climate:['social','economy'],economy:['social','geopolitics'],technology:['economy'],social:['geopolitics']};
+  const edges = [];
+  ALL_EVENTS.filter(e=>e.escalation_level==='critical'||e.escalation_level==='high').forEach(e=>{
+    (e.cascade||[]).forEach(dst=>{
+      edges.push({from:`dom:${e.domain}`,to:`dom:${dst}`,weight:(e.escalation_score||50)/100,type:'cascade',count:1});
+    });
+  });
+  Object.entries(DEPS).forEach(([src,dsts])=>dsts.forEach(dst=>{
+    if (!edges.find(e=>e.from===`dom:${src}`&&e.to===`dom:${dst}`))
+      edges.push({from:`dom:${src}`,to:`dom:${dst}`,weight:.45,type:'dependency',count:1});
+  }));
+  return edges;
+}
+
+function layoutNodes(rawNodes) {
+  const canvas = document.getElementById('graphCanvas');
+  if (!canvas) return rawNodes;
+  const W = canvas.clientWidth||800, H = canvas.clientHeight||360;
+  const cx = W/2, cy = H/2;
+
+  // Domain nodes in pentagon, others around
+  const DOMAIN_ANGLES = {geopolitics:-72,climate:0,economy:72,technology:144,social:216};
+  const R_DOMAIN = Math.min(W,H) * .32;
+
+  return rawNodes.map((n,i) => {
+    let x, y;
+    if (n.type === 'domain') {
+      const deg = (DOMAIN_ANGLES[n.label] || i*60) * Math.PI/180;
+      x = cx + R_DOMAIN * Math.cos(deg);
+      y = cy + R_DOMAIN * Math.sin(deg);
+    } else if (n.type === 'vector') {
+      const ang = (i * 52) * Math.PI/180;
+      x = cx + (R_DOMAIN * .55) * Math.cos(ang);
+      y = cy + (R_DOMAIN * .55) * Math.sin(ang);
+    } else if (n.type === 'country') {
+      const ang = (i * 30 + 15) * Math.PI/180;
+      x = cx + (R_DOMAIN * 1.18) * Math.cos(ang);
+      y = cy + (R_DOMAIN * 1.18) * Math.sin(ang);
+    } else {
+      x = cx + (Math.random()-.5) * R_DOMAIN;
+      y = cy + (Math.random()-.5) * R_DOMAIN;
+    }
+    const nodeColor = n.type==='domain'? DC[n.label] : n.type==='vector'?'#5D6D7E':'#7F8C8D';
+    return {...n, x: x||cx, y: y||cy, vx:0, vy:0, color:nodeColor, r: n.type==='domain'?14:9};
+  });
+}
+
+function initGraphCanvas() {
+  const canvas = document.getElementById('graphCanvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 24;
+  const H = 360;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  // Recalculate layout with real dimensions
+  graphNodes = layoutNodes(graphNodes.length ? graphNodes : buildFallbackNodes());
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Pointer events
+  canvas.onmousemove = (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    hoveredNode = graphNodes.find(n => Math.hypot(n.x-mx, n.y-my) < (n.r+4));
+    canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
+    const tooltip = document.getElementById('graph-tooltip');
+    if (hoveredNode && tooltip) {
+      tooltip.style.opacity = '1';
+      tooltip.style.left = (mx+12)+'px';
+      tooltip.style.top  = (my-10)+'px';
+      tooltip.innerHTML = `<b style="color:${hoveredNode.color}">${DL[hoveredNode.label]||hoveredNode.label}</b><br>
+        <span style="color:var(--muted);font-size:9px">${hoveredNode.type}</span><br>
+        score: ${Math.round((hoveredNode.score||0)*100)}`;
+    } else if (tooltip) {
+      tooltip.style.opacity = '0';
+    }
+    drawGraph(ctx, W, H);
+  };
+  canvas.onclick = (ev) => {
+    if (hoveredNode) showNodeDetail(hoveredNode);
+  };
+
+  // Run force simulation briefly, then draw static
+  runForce(ctx, W, H);
+}
+
+function runForce(ctx, W, H) {
+  let iter = 0;
+  const MAX = 80;
+  const step = () => {
+    // Simple repulsion + edge spring
+    for (let i = 0; i < graphNodes.length; i++) {
+      const a = graphNodes[i];
+      a.vx *= 0.6; a.vy *= 0.6;
+      // Center gravity
+      a.vx += (W/2 - a.x) * .003;
+      a.vy += (H/2 - a.y) * .003;
+      // Repulsion
+      for (let j = i+1; j < graphNodes.length; j++) {
+        const b = graphNodes[j];
+        const dx = a.x-b.x, dy = a.y-b.y;
+        const dist = Math.max(1, Math.hypot(dx,dy));
+        const force = 900 / (dist*dist);
+        a.vx += dx/dist*force; a.vy += dy/dist*force;
+        b.vx -= dx/dist*force; b.vy -= dy/dist*force;
+      }
+    }
+    // Edge spring
+    graphEdges.forEach(e => {
+      if (!e.src || !e.dst) return;
+      const dx = e.dst.x-e.src.x, dy = e.dst.y-e.src.y;
+      const dist = Math.max(1, Math.hypot(dx,dy));
+      const ideal = 120;
+      const force = (dist - ideal) * 0.012 * (e.weight||0.4);
+      const fx = dx/dist*force, fy = dy/dist*force;
+      e.src.vx += fx; e.src.vy += fy;
+      e.dst.vx -= fx; e.dst.vy -= fy;
+    });
+    graphNodes.forEach(n => {
+      n.x = Math.max(n.r+4, Math.min(W-n.r-4, n.x + n.vx));
+      n.y = Math.max(n.r+4, Math.min(H-n.r-4, n.y + n.vy));
+    });
+    drawGraph(ctx, W, H);
+    if (++iter < MAX) requestAnimationFrame(step);
+  };
+  step();
+}
+
+function drawGraph(ctx, W, H) {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, W*dpr, H*dpr);
+  ctx.save();
+
+  // Edges
+  graphEdges.forEach(e => {
+    if (!e.src || !e.dst) return;
+    const EDGE_COLORS = {cascade:'rgba(192,98,43,.55)',dependency:'rgba(41,128,185,.4)',amplification:'rgba(184,151,58,.45)',feedback:'rgba(184,151,58,.55)',exposure:'rgba(93,109,126,.35)'};
+    const col = EDGE_COLORS[e.type] || 'rgba(255,255,255,.15)';
+    ctx.beginPath();
+    ctx.moveTo(e.src.x, e.src.y);
+    // Slight curve
+    const mx = (e.src.x+e.dst.x)/2 + (e.dst.y-e.src.y)*.15;
+    const my = (e.src.y+e.dst.y)/2 - (e.dst.x-e.src.x)*.15;
+    ctx.quadraticCurveTo(mx, my, e.dst.x, e.dst.y);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = Math.max(0.5, (e.weight||0.3)*2.5);
+    ctx.stroke();
+    // Arrow
+    const ang = Math.atan2(e.dst.y-my, e.dst.x-mx);
+    const ar = 5;
+    ctx.beginPath();
+    ctx.moveTo(e.dst.x - Math.cos(ang-0.4)*ar, e.dst.y - Math.sin(ang-0.4)*ar);
+    ctx.lineTo(e.dst.x - e.dst.r * Math.cos(ang), e.dst.y - e.dst.r * Math.sin(ang));
+    ctx.lineTo(e.dst.x - Math.cos(ang+0.4)*ar, e.dst.y - Math.sin(ang+0.4)*ar);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Nodes
+  graphNodes.forEach(n => {
+    const isHovered = n === hoveredNode;
+    const isCritical = GRAPH_DATA?.critical_nodes?.slice(0,3).some(cn=>cn.id===n.id);
+
+    // Glow for critical nodes
+    if (isCritical || isHovered) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r+6, 0, Math.PI*2);
+      ctx.fillStyle = (n.color||'#888')+'22';
+      ctx.fill();
+    }
+
+    // Node circle
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+    ctx.fillStyle = (n.color||'#888') + (isCritical?'DD':'99');
+    ctx.fill();
+    ctx.strokeStyle = n.color||'#888';
+    ctx.lineWidth = isCritical?2:1;
+    ctx.stroke();
+
+    // Score ring
+    if ((n.score||0) > 0.1) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r+3, -Math.PI/2, -Math.PI/2 + Math.PI*2*(n.score||0));
+      ctx.strokeStyle = (n.color||'#888')+'88';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Label
+    ctx.font = `${n.type==='domain'?'500 ':'300 '}10px Montserrat,sans-serif`;
+    ctx.fillStyle = isHovered ? '#F0E8D8' : n.color||'#888';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText((DL[n.label]||n.label||'').slice(0,10), n.x, n.y + n.r + 11);
+  });
+
+  ctx.restore();
+}
+
+function showNodeDetail(node) {
+  const el = document.getElementById('node-detail');
+  if (!el) return;
+  const col = node.color || '#888';
+  const cnData = GRAPH_DATA?.critical_nodes?.find(n=>n.id===node.id);
+  const paths = (GRAPH_DATA?.contagion_paths||[]).filter(p=>p.start===node.id).slice(0,3);
+  el.innerHTML = `
+    <div class="nd-type" style="color:${col}">${node.type}</div>
+    <div class="nd-title" style="color:${col}">${DL[node.label]||node.label}</div>
+    ${cnData ? `
+    <div class="nd-row"><span class="nd-key">PageRank</span><span class="nd-val">${cnData.pagerank||'—'}</span></div>
+    <div class="nd-row"><span class="nd-key">Betweenness</span><span class="nd-val">${cnData.betweenness||'—'}</span></div>
+    <div class="nd-row"><span class="nd-key">Критичность</span><span class="nd-val">${cnData.criticality?.toFixed?.(3)||'—'}</span></div>
+    <div class="nd-row"><span class="nd-key">In/Out degree</span><span class="nd-val">${cnData.in_degree||0} / ${cnData.out_degree||0}</span></div>
+    ` : `<div class="nd-row"><span class="nd-key">Score</span><span class="nd-val">${Math.round((node.score||0)*100)}</span></div>`}
+    ${paths.length ? `<div class="nd-paths">
+      <div style="font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:8px 0 6px">Пути заражения:</div>
+      ${paths.map(p=>`<div class="nd-path-item"><span>${p.path.map(n=>DL[n.split(':')[1]]||n.split(':')[1]).join(' → ')}</span></div>`).join('')}
+    </div>` : ''}
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// PROBABILISTIC SCENARIOS
+// ════════════════════════════════════════════════════════════════════
+function setHorizon(h) {
+  HORIZON = h;
+  document.getElementById('ht-30').classList.toggle('on', h===30);
+  document.getElementById('ht-90').classList.toggle('on', h===90);
+  renderScenarios();
+}
+
+function renderScenarios() {
+  const data = SCENARIOS_DATA || PROBABILISTIC;
+  const barsEl = document.getElementById('scenario-bars');
+  const ciEl   = document.getElementById('scen-ci');
+  if (!barsEl) return;
+
+  const scenKey = HORIZON <= 45 ? 'scenario_30d' : 'scenario_90d';
+  const ciKey   = HORIZON <= 45 ? 'confidence_interval_30d' : 'confidence_interval_90d';
+  const scenarios = (data && data[scenKey]) || null;
+  const ci        = (data && data[ciKey])    || null;
+
+  if (!scenarios) {
+    // Fallback: derive from escalation distribution
+    const ev = ALL_EVENTS;
+    const crit = ev.filter(e=>e.escalation_level==='critical').length / Math.max(1,ev.length);
+    const high  = ev.filter(e=>e.escalation_level==='high').length     / Math.max(1,ev.length);
+    const stable = Math.max(0, 1 - crit*2 - high*1.5 - 0.1);
+    const escal  = Math.max(0, 0.4 - crit);
+    const brk    = Math.max(0, 0.1 + crit*1.5);
+    const tot = stable + escal + brk;
+    barsEl.innerHTML = renderScenBars({stable:stable/tot, escalation:escal/tot, systemic_break:brk/tot});
+    if (ciEl) ciEl.innerHTML = '';
+    return;
+  }
+
+  barsEl.innerHTML = renderScenBars(scenarios);
+
+  if (ci && ciEl) {
+    const dom = data.dominant_scenario_30d || data.dominant_scenario_90d || '';
+    ciEl.innerHTML = `
+      Горизонт <b>${HORIZON}д</b> &nbsp;·&nbsp;
+      Доминирующий сценарий: <b style="color:var(--cyan)">${SCEN_LABELS[dom]||dom}</b> &nbsp;·&nbsp;
+      CI: [${ci.p5}, ${ci.p95}] &nbsp;·&nbsp; σ=${ci.std} &nbsp;·&nbsp;
+      Дивергенция: ${data.scenario_divergence||'—'}
+    `;
+  }
+}
+
+const SCEN_LABELS = {stable:'Стабильный',escalation:'Эскалация',systemic_break:'Системный разрыв'};
+const SCEN_COLORS = {stable:'#1E8449',escalation:'#B8973A',systemic_break:'#B03A2E'};
+
+function renderScenBars(scenarios) {
+  return Object.entries(scenarios).map(([k,v]) => {
+    const col = SCEN_COLORS[k] || '#888';
+    const pctV = Math.round((v||0)*100);
+    return `<div class="scenario-row">
+      <span class="scen-label" style="color:${col}">${SCEN_LABELS[k]||k}</span>
+      <div class="scen-track">
+        <div class="scen-fill" style="width:${pctV}%;background:${col}"></div>
       </div>
+      <span class="scen-pct" style="color:${col}">${pctV}%</span>
     </div>`;
   }).join('');
 }
 
-// ── UTIL ──────────────────────────────────────────────────────────────
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `${r},${g},${b}`;
+// ════════════════════════════════════════════════════════════════════
+// WEAK SIGNALS RADAR
+// ════════════════════════════════════════════════════════════════════
+function renderWeakSignals() {
+  const wsBadge = document.getElementById('ws-cluster-badge');
+  const wsBody  = document.getElementById('ws-body');
+  if (!wsBody) return;
+
+  let signals = [], cluster = {};
+
+  if (WEAK && WEAK.signals) {
+    signals = WEAK.signals;
+    cluster = WEAK.cluster || {};
+  } else {
+    // Fallback: derive from events
+    signals = deriveWeakSignals();
+    cluster = { cluster_level: signals.filter(s=>s.probability>=.25).length>=3?'moderate':'weak', cluster_score: .3 };
+  }
+
+  if (wsBadge) {
+    const lvl = cluster.cluster_level || 'none';
+    wsBadge.textContent = lvl.toUpperCase();
+    wsBadge.style.color = levelCol(lvl);
+    wsBadge.style.borderColor = levelCol(lvl)+'40';
+  }
+
+  const rows = signals.map(s => {
+    const pctV = Math.round((s.probability||0)*100);
+    const col = pctV>=60?'#B03A2E':pctV>=35?'#B8973A':'#7A7264';
+    return `<div class="ws-row">
+      <span class="ws-label">${WS_LABELS[s.type]||s.type}</span>
+      <div class="ws-bar-wrap"><div class="ws-bar-fill" style="width:${pctV}%;background:${col}"></div></div>
+      <span class="ws-prob" style="color:${col}">${pctV}%</span>
+    </div>`;
+  }).join('') || '<div class="empty-state">Слабых сигналов не обнаружено</div>';
+
+  const cl = cluster.cluster_level || 'none';
+  const clCol = levelCol(cl);
+  wsBody.innerHTML = rows + `
+    <div class="ws-cluster" style="border-color:${clCol}30">
+      <div class="ws-cluster-level">Кластер: <b style="color:${clCol}">${cl.toUpperCase()}</b> &nbsp; score: <b>${Math.round((cluster.cluster_score||0)*100)}%</b></div>
+      <div class="ws-cluster-desc">Активных детекторов: ${cluster.active_detectors||signals.filter(s=>s.probability>=.25).length} · ускорение: ${cluster.total_acceleration?.toFixed(2)||'—'}</div>
+    </div>
+  `;
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────
-loadData();
-// Auto-refresh каждые 5 минут
-setInterval(loadData, 5 * 60 * 1000);
+function deriveWeakSignals() {
+  const ev = ALL_EVENTS;
+  const hasCyber  = ev.filter(e=>(e.vectors||[]).includes('cyber')&&(e.escalation_score||0)<70).length;
+  const hasEnergy = ev.filter(e=>(e.title||'').toLowerCase().match(/energy|oil|gas|power|энерг|нефть/)).length;
+  return [
+    {type:'cyber_precursor',probability:Math.min(1,hasCyber*.12)},
+    {type:'energy_instability',probability:Math.min(1,hasEnergy*.10)},
+    {type:'cross_domain_acceleration',probability:.25},
+  ].filter(s=>s.probability>0);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// HISTORICAL ANALOGS
+// ════════════════════════════════════════════════════════════════════
+function renderAnalogs() {
+  const countBadge = document.getElementById('analog-count-badge');
+  const cardsEl    = document.getElementById('analog-cards');
+  const sigGrid    = document.getElementById('sig-bar-grid');
+  if (!cardsEl) return;
+
+  const analogs = (PATTERNS && PATTERNS.analogs) || [];
+  const sig     = (PATTERNS && PATTERNS.current_signature) || {};
+  const rv      = (PATTERNS && PATTERNS.recurring_vectors) || [];
+
+  if (countBadge) countBadge.textContent = `${analogs.length} аналогов`;
+
+  // Current signature bars
+  if (sigGrid && Object.keys(sig).length) {
+    const DOMAINS = ['geopolitics','climate','economy','technology','social'];
+    sigGrid.innerHTML = DOMAINS.map(d => {
+      const v = Math.round((sig[d]||0)*100);
+      return `<div class="sig-bar-item">
+        <span class="sig-bar-d" style="color:${DC[d]||'#888'}">${DL[d]||d}</span>
+        <div class="sig-bar-track"><div class="sig-bar-fill" style="width:${v}%;background:${DC[d]||'#888'}80"></div></div>
+        <span style="font-size:9px;color:var(--cream);min-width:26px;text-align:right">${v}%</span>
+      </div>`;
+    }).join('');
+  } else if (sigGrid && ALL_EVENTS.length) {
+    // Derive signature from events
+    const DOMAINS = ['geopolitics','climate','economy','technology','social'];
+    sigGrid.innerHTML = DOMAINS.map(d => {
+      const sub = ALL_EVENTS.filter(e=>e.domain===d);
+      const avg = sub.length ? Math.round(sub.reduce((s,e)=>s+(e.escalation_score||e.severity||0),0)/sub.length) : 0;
+      return `<div class="sig-bar-item">
+        <span class="sig-bar-d" style="color:${DC[d]||'#888'}">${DL[d]||d}</span>
+        <div class="sig-bar-track"><div class="sig-bar-fill" style="width:${avg}%;background:${DC[d]||'#888'}80"></div></div>
+        <span style="font-size:9px;color:var(--cream);min-width:26px;text-align:right">${avg}</span>
+      </div>`;
+    }).join('');
+  }
+
+  if (!analogs.length) {
+    cardsEl.innerHTML = '<div class="empty-state" style="padding:16px 0">Аналоги вычисляются после следующего pipeline run</div>';
+    return;
+  }
+
+  cardsEl.innerHTML = analogs.slice(0,5).map(a => {
+    const simPct = Math.round(a.similarity*100);
+    const rCol   = a.regime_match ? 'var(--cyan)' : 'var(--muted)';
+    const circum = 2 * Math.PI * 17;
+    const dash   = circum * a.similarity;
+    return `<div class="analog-card">
+      <div class="analog-sim-ring">
+        <svg viewBox="0 0 44 44">
+          <circle cx="22" cy="22" r="17" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="3"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="var(--cyan)" stroke-width="3"
+            stroke-dasharray="${dash.toFixed(1)} ${circum.toFixed(1)}"
+            stroke-linecap="round" transform="rotate(-90 22 22)"/>
+        </svg>
+        <div class="analog-sim-val" style="color:var(--cyan)">${simPct}%</div>
+      </div>
+      <div class="analog-info">
+        <div class="analog-title">${a.label}</div>
+        <div class="analog-period">${a.period}</div>
+      </div>
+      ${a.regime_match ? `<span class="sig-match" style="color:${rCol};border-color:${rCol}40">режим ✓</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// CASCADE / CONTAGION VIEW
+// ════════════════════════════════════════════════════════════════════
+function renderCascade() {
+  const el    = document.getElementById('cascade-chains');
+  const badge = document.getElementById('cascade-count-badge');
+  if (!el) return;
+
+  let paths = [];
+  if (CASCADE_DATA) {
+    paths = CASCADE_DATA.contagion_paths || CASCADE_DATA.cascade_paths || CASCADE_DATA.paths || [];
+  }
+  // Fallback from events
+  if (!paths.length) {
+    const seen = new Set();
+    ALL_EVENTS.filter(e=>e.escalation_level==='critical'||e.escalation_level==='high').forEach(e=>{
+      (e.cascade||[]).forEach(dst=>{
+        const key = `${e.domain}→${dst}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          paths.push({from_domain:e.domain, to_domain:dst, count:1, avg_score:e.escalation_score||50, sample_title:e.title||''});
+        }
+      });
+    });
+  }
+
+  if (badge) badge.textContent = `${paths.length} путей`;
+
+  if (!paths.length) {
+    el.innerHTML = '<div class="empty-state">Каскадных путей не обнаружено</div>';
+    return;
+  }
+
+  el.innerHTML = paths.slice(0,8).map(p => {
+    // Chain nodes
+    let chain = '';
+    const pathArr = p.path || [p.from_domain, p.to_domain];
+    pathArr.forEach((node, i) => {
+      const domKey = node.replace?.('dom:','') || node;
+      const col = DC[domKey] || '#5D6D7E';
+      chain += `<div class="cc-node" style="color:${col};background:${col}12;border:1px solid ${col}30">
+        <span style="width:5px;height:5px;border-radius:50%;background:${col};flex-shrink:0"></span>
+        ${DL[domKey]||domKey}
+      </div>`;
+      if (i < pathArr.length-1) chain += `<span class="cc-arrow">→</span>`;
+    });
+    const col = levelCol(lvlFromScore(p.avg_score||50));
+    return `<div class="cascade-chain">
+      ${chain}
+      <div class="cc-count" style="color:${col}">×${p.count||1} · ø${Math.round(p.avg_score||0)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// COUNTRY PROFILES
+// ════════════════════════════════════════════════════════════════════
+function renderCountries() {
+  const el    = document.getElementById('country-grid');
+  const badge = document.getElementById('country-count-badge');
+  if (!el) return;
+
+  let profiles = {};
+  if (COUNTRIES && typeof COUNTRIES === 'object') {
+    // Could be {IRN:{...}, RUS:{...}} or {profiles:{...}}
+    profiles = COUNTRIES.profiles || COUNTRIES;
+  }
+  // Fallback: build from events
+  if (!Object.keys(profiles).length) {
+    profiles = deriveCountryProfiles();
+  }
+
+  const sorted = Object.values(profiles)
+    .filter(p => p && p.found !== false && (p.risk_score||0) > 0)
+    .sort((a,b) => (b.risk_score||0) - (a.risk_score||0));
+
+  if (badge) badge.textContent = `${sorted.length} стран`;
+
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty-state" style="grid-column:span 3">Профили вычисляются после следующего pipeline run</div>';
+    return;
+  }
+
+  el.innerHTML = sorted.slice(0,9).map(p => renderCountryCard(p)).join('');
+}
+
+function renderCountryCard(p) {
+  const col = levelCol(p.risk_level||lvlFromScore(p.risk_score||0));
+  const circum = 2*Math.PI*18;
+  const dash = circum * (p.risk_score||0)/100;
+  const domRows = Object.entries(p.domain_breakdown||{}).slice(0,3).map(([d,info]) => {
+    const v = info.score||info.avg||0;
+    return `<div class="cc-dom-row">
+      <div class="cc-dom-dot" style="background:${DC[d]||'#888'}"></div>
+      <span class="cc-dom-label">${DL[d]||d}</span>
+      <div class="cc-dom-track"><div class="cc-dom-fill" style="width:${v}%;background:${DC[d]||'#888'}60"></div></div>
+      <span class="cc-dom-val">${v}</span>
+    </div>`;
+  }).join('');
+  const traj = p.risk_trajectory||'stable';
+  const TC2 = {improving:'#1E8449',stable:'#7F8C8D',deteriorating:'#B8973A',accelerating:'#B03A2E'};
+  return `<div class="country-card">
+    <div class="cc-header">
+      <div>
+        <div class="cc-name">${p.name_ru||p.name||p.iso3}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">${p.signal_count||0} сигналов</div>
+      </div>
+      <div class="cc-ring-wrap">
+        <svg viewBox="0 0 44 44">
+          <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="4"/>
+          <circle cx="22" cy="22" r="18" fill="none" stroke="${col}" stroke-width="4"
+            stroke-dasharray="${dash.toFixed(1)} ${circum.toFixed(1)}"
+            stroke-linecap="round" transform="rotate(-90 22 22)" opacity=".85"/>
+        </svg>
+        <div class="cc-ring-score" style="color:${col}">${p.risk_score||0}</div>
+      </div>
+    </div>
+    ${domRows}
+    <div class="cc-trajectory" style="color:${TC2[traj]||'#888'}">${traj}</div>
+  </div>`;
+}
+
+function deriveCountryProfiles() {
+  const KW = {
+    IRN:{name_ru:'Иран',kw:['iran','иран','ormuz','ормуз','tehran']},
+    RUS:{name_ru:'Россия',kw:['russia','россия','moscow','москва','kremlin']},
+    UKR:{name_ru:'Украина',kw:['ukraine','украина','kyiv','киев']},
+    ISR:{name_ru:'Израиль',kw:['israel','израиль','hamas','газа']},
+    CHN:{name_ru:'Китай',kw:['china','китай','beijing','taiwan']},
+  };
+  const profiles = {};
+  for (const [iso, meta] of Object.entries(KW)) {
+    const matched = ALL_EVENTS.filter(ev => {
+      const t = ((ev.title||'')+(ev.region||'')+(ev.summary||'')).toLowerCase();
+      return meta.kw.some(k=>t.includes(k));
+    });
+    if (!matched.length) continue;
+    const scores = matched.map(e=>e.escalation_score||e.severity||0);
+    const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+    const domBreak = {};
+    ['geopolitics','climate','economy','technology','social'].forEach(d=>{
+      const sub = matched.filter(e=>e.domain===d);
+      if (sub.length) domBreak[d]={score:Math.round(sub.reduce((s,e)=>s+(e.escalation_score||0),0)/sub.length),count:sub.length};
+    });
+    profiles[iso] = {iso3:iso,name_ru:meta.name_ru,found:true,signal_count:matched.length,risk_score:avg,risk_level:lvlFromScore(avg),risk_trajectory:'stable',domain_breakdown:domBreak};
+  }
+  return profiles;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// SIGNAL TABLE
+// ════════════════════════════════════════════════════════════════════
+function applyFilters(events) {
+  return events.filter(e => {
+    if (FILTERS.level && e.escalation_level !== FILTERS.level) return false;
+    if (FILTERS.type  && e.signal_type       !== FILTERS.type)  return false;
+    if (FILTERS.trend && e.trend_direction   !== FILTERS.trend) return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  const filtered = applyFilters([...ALL_EVENTS])
+    .sort((a,b)=>(b.escalation_score||b.severity||0)-(a.escalation_score||a.severity||0))
+    .slice(0, 80);
+
+  const badge = document.getElementById('table-count-badge');
+  if (badge) badge.textContent = `${filtered.length} сигналов`;
+
+  const tbody = document.getElementById('signal-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = filtered.map((e,i) => {
+    const domCol = DC[e.domain]||'#888';
+    const lvl    = e.escalation_level || lvlFromScore(e.escalation_score||0);
+    const lCol   = levelCol(lvl);
+    const delta  = e.severity_delta||0;
+    const dStr   = delta>0?`<span style="color:#2ECC71">+${delta}</span>`:delta<0?`<span style="color:#5DADE2">${delta}</span>`:`<span style="color:var(--muted)">0</span>`;
+    const trend  = e.trend_direction||'new';
+    const sev    = e.escalation_score || e.severity || 0;
+    const sparkH = Array.from({length:6},(_,k)=>Math.max(2,Math.round(sev*(0.7+k*.06+(Math.random()-.5)*.08)))).map(h=>{
+      const hh = Math.round(h/100*16)+2;
+      return `<div class="sp-bar" style="height:${hh}px;background:${domCol}60"></div>`;
+    }).join('');
+    return `<tr>
+      <td><span class="st-dot" style="background:${domCol}"></span> <span style="font-size:9px;color:${domCol};letter-spacing:.1em;text-transform:uppercase">${DL[e.domain]||e.domain||'—'}</span></td>
+      <td style="max-width:300px">
+        <div style="font-size:12px;color:var(--cream);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px">${e.title||'—'}</div>
+        <div style="font-size:9px;color:var(--muted);font-family:var(--font-mono)">${e.fingerprint||''}</div>
+      </td>
+      <td><span style="font-family:var(--font-serif);font-size:18px;color:${lCol}">${sev}</span> <span class="st-level" style="color:${lCol};border-color:${lCol}30">${lvl}</span></td>
+      <td>${dStr}</td>
+      <td><span style="color:${TC[trend]||'#888'}">${TA[trend]||'·'} ${trend}</span></td>
+      <td style="color:var(--muted)">${e.count_24h??'—'} / ${e.count_7d??'—'}</td>
+      <td style="font-size:9px;color:var(--muted)">${e.horizon||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// FILTER PILLS
+// ════════════════════════════════════════════════════════════════════
+document.getElementById('filter-strip').addEventListener('click', ev => {
+  const pill = ev.target.closest('.f-pill');
+  if (!pill) return;
+  const f = pill.dataset.f, v = pill.dataset.v;
+  document.querySelectorAll(`[data-f="${f}"]`).forEach(p=>p.classList.remove('on'));
+  pill.classList.add('on');
+  FILTERS[f] = v;
+  renderTable();
+});
+
+// ════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════
+loadAll();
+setInterval(loadAll, 5 * 60 * 1000);
+window.addEventListener('resize', () => { if (graphNodes.length) renderGraph(); });
 </script>
 </body>
 </html>
