@@ -506,6 +506,31 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-sc2-trig-cond{font-size:9px;color:rgba(232,224,208,.6);flex:1}
 .cc-sc2-trig-target{font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}
 
+/* ── Forecast Calibration Engine ── */
+.cc-cal{margin-bottom:14px}
+.cc-cal-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cc-cal-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-cal-score{font-size:20px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-cal-grade{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.cc-cal-grade.excellent{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-cal-grade.good{background:rgba(132,204,22,.12);color:#84cc16;border:1px solid rgba(132,204,22,.25)}
+.cc-cal-grade.fair{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.25)}
+.cc-cal-grade.poor{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-cal-grade.unreliable{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.35)}
+.cc-cal-grade.unknown{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.1)}
+.cc-cal-row{display:flex;gap:8px;margin-bottom:6px}
+.cc-cal-cell{flex:1;text-align:center;padding:5px 4px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-cal-cell-val{display:block;font-size:13px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1.2}
+.cc-cal-cell-lbl{display:block;font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-top:2px}
+.cc-cal-hz-header{font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:6px 0 4px}
+.cc-cal-hz{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:4px}
+.cc-cal-hz-cell{text-align:center;padding:3px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-cal-hz-lbl{display:block;font-size:7px;color:rgba(255,255,255,.25);letter-spacing:.08em;margin-bottom:2px}
+.cc-cal-hz-val{display:block;font-size:11px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-cal-bias{font-size:9px;color:rgba(232,224,208,.6);padding:4px 0;border-top:1px solid rgba(255,255,255,.05);margin-top:4px}
+.cc-cal-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
+.cc-cal-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+.cc-cal-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
 </style>
 </head>
 <body>
@@ -1896,6 +1921,7 @@ setInterval(() => {
     <div id="cc-ew-block"></div>
     <div id="cc-ds-block"></div>
     <div id="cc-resilience-block"></div>
+    <div id="cc-calibration-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1960,10 +1986,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics'},
   };
   return C[tier]||C.free;
 }
@@ -2035,6 +2061,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-ew-block').innerHTML='';
   document.getElementById('cc-ds-block').innerHTML='';
   document.getElementById('cc-resilience-block').innerHTML='';
+  document.getElementById('cc-calibration-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2072,6 +2099,7 @@ window.openCountryCard = async function(cc) {
   fetchEarlyWarning(cc).then(function(ewData) { renderEarlyWarning(ewData, _clientCaps); });
   fetchDecisionSupport(cc).then(function(dsData) { renderDecisionSupport(dsData, _clientCaps); });
   fetchResilience(cc).then(function(resData) { renderResilience(resData, _clientCaps); });
+  fetchCalibration(cc).then(function(calData) { renderCalibration(calData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -3932,6 +3960,154 @@ function renderResilience(data, caps) {
   }
 
   html += '</div>';
+  block.innerHTML = html;
+}
+
+
+// ── Forecast Calibration Engine V1 — UI ─────────────────────────────────
+var _calCache = {};
+
+var _CAL_GRADE_COLOR = function(grade) {
+  return grade === 'excellent'  ? '#22c55e'
+       : grade === 'good'       ? '#84cc16'
+       : grade === 'fair'       ? '#fbbf24'
+       : grade === 'poor'       ? '#f59e0b'
+       : grade === 'unreliable' ? '#dc2626'
+       : 'rgba(255,255,255,.3)';
+};
+
+async function fetchCalibration(cc) {
+  if (_calCache[cc]) return _calCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/calibration/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _calCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderCalibration(data, caps) {
+  var block = document.getElementById('cc-calibration-block');
+  if (!block) return;
+  var access = caps.calibration_access || 'score';
+  if (!data || data.error) { block.innerHTML = ''; return; }
+
+  var score = data.calibration_score;
+  var grade = data.calibration_grade || 'unknown';
+  var gradeRu = data.calibration_grade_ru || 'Нет данных';
+  var depth = data.history_depth || 0;
+  var scoreCol = _CAL_GRADE_COLOR(grade);
+
+  var html = '<div class="cc-cal">'
+    + '<div class="cc-cal-header">'
+    + '<span class="cc-cal-label">Калибровка прогноза</span>'
+    + (score !== null && score !== undefined
+        ? '<span class="cc-cal-score" style="color:' + scoreCol + '">' + score + '</span>'
+        : '')
+    + '<span class="cc-cal-grade ' + grade + '">' + _esc(gradeRu) + '</span>'
+    + '</div>';
+
+  // FREE: grade + score only
+  if (access === 'score') {
+    if (depth < 10) {
+      html += '<div class="cc-cal-teaser">Накапливается история прогнозов</div>';
+    } else {
+      html += '<div class="cc-cal-teaser">Калибровка: ' + (score !== null ? score + '/100' : 'нет данных') + '</div>';
+    }
+    html += '<div class="cc-cal-lock">🔒 Детальные метрики в Signal PRO</div>'
+         + '<div class="cc-cal-depth">История: ' + depth + ' дней</div>'
+         + '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL+: accuracy + bias row
+  var acc7  = data.accuracy_pct_7d;
+  var acc30 = data.accuracy_pct_30d;
+  var bias7 = data.bias_7d;
+  var biasLbl7 = data.bias_label_7d || '';
+  var biasLbl30 = data.bias_label_30d || '';
+  var cal7  = data.calibration_7d;
+  var cal30 = data.calibration_30d;
+
+  var na = '—';
+  html += '<div class="cc-cal-row">'
+    + '<div class="cc-cal-cell">'
+    +   '<span class="cc-cal-cell-val" style="color:' + (acc7 ? (acc7>=75?'#22c55e':acc7>=55?'#fbbf24':'#ef4444') : '#888') + '">' + (acc7 !== null && acc7 !== undefined ? acc7 + '%' : na) + '</span>'
+    +   '<span class="cc-cal-cell-lbl">Точность 7д</span>'
+    + '</div>'
+    + '<div class="cc-cal-cell">'
+    +   '<span class="cc-cal-cell-val" style="color:' + (acc30 ? (acc30>=70?'#22c55e':acc30>=50?'#fbbf24':'#ef4444') : '#888') + '">' + (acc30 !== null && acc30 !== undefined ? acc30 + '%' : na) + '</span>'
+    +   '<span class="cc-cal-cell-lbl">Точность 30д</span>'
+    + '</div>'
+    + '<div class="cc-cal-cell">'
+    +   '<span class="cc-cal-cell-val" style="color:' + (cal7 ? _CAL_GRADE_COLOR(grade) : '#888') + '">' + (cal7 !== null && cal7 !== undefined ? cal7 : na) + '</span>'
+    +   '<span class="cc-cal-cell-lbl">Скор 7д</span>'
+    + '</div>'
+    + '<div class="cc-cal-cell">'
+    +   '<span class="cc-cal-cell-val" style="color:' + (cal30 ? _CAL_GRADE_COLOR(grade) : '#888') + '">' + (cal30 !== null && cal30 !== undefined ? cal30 : na) + '</span>'
+    +   '<span class="cc-cal-cell-lbl">Скор 30д</span>'
+    + '</div>'
+    + '</div>';
+
+  if (biasLbl7 || biasLbl30) {
+    html += '<div class="cc-cal-bias">';
+    if (biasLbl7)  html += '7д: ' + _esc(biasLbl7);
+    if (biasLbl7 && biasLbl30) html += '  ·  ';
+    if (biasLbl30) html += '30д: ' + _esc(biasLbl30);
+    html += '</div>';
+  }
+
+  if (access === 'score+bias') {
+    html += '<div class="cc-cal-lock">🔒 Полные метрики в Strategic PRO</div>';
+    html += '<div class="cc-cal-depth">История: ' + depth + ' дней</div>'
+         + '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: full metric tables for 7d and 30d
+  function metricTable(m, label) {
+    if (!m || m.n_observations === 0) return '';
+    var t = '<div class="cc-cal-hz-header">' + label + ' (' + m.n_observations + ' наблюд.)</div>'
+          + '<div class="cc-cal-hz">';
+    var cells = [
+      {v: m.mae,               l: 'MAE'},
+      {v: m.rmse,              l: 'RMSE'},
+      {v: m.bias !== null && m.bias !== undefined ? (m.bias > 0 ? '+' : '') + m.bias : '—', l: 'Смещение'},
+      {v: m.direction_hit_rate !== null ? m.direction_hit_rate + '%' : '—', l: 'Направл.'},
+    ];
+    cells.forEach(function(c) {
+      t += '<div class="cc-cal-hz-cell">'
+         + '<span class="cc-cal-hz-lbl">' + c.l + '</span>'
+         + '<span class="cc-cal-hz-val">' + (c.v !== null && c.v !== undefined ? c.v : '—') + '</span>'
+         + '</div>';
+    });
+    t += '</div>';
+    return t;
+  }
+
+  var m7  = data.metrics_7d  || {};
+  var m30 = data.metrics_30d || {};
+  html += metricTable(m7,  'Прогноз 7 дней');
+  html += metricTable(m30, 'Прогноз 30 дней');
+
+  // ELITE: confidence calibration status
+  if (access === 'full+diagnostics') {
+    var cc7  = data.confidence_calibrated_7d;
+    var cc30 = data.confidence_calibrated_30d;
+    html += '<div class="cc-cal-hz-header">Диагностика</div>';
+    html += '<div class="cc-cal-bias">';
+    if (cc7  !== null && cc7  !== undefined) html += '7д: ' + (cc7  ? '✓ Доверит. откалибрована' : '⚠ Доверит. не откалибрована') + '  ';
+    if (cc30 !== null && cc30 !== undefined) html += '30д: ' + (cc30 ? '✓ Откалибрована' : '⚠ Не откалибрована');
+    html += '</div>';
+  }
+
+  html += '<div class="cc-cal-depth">История: ' + depth + ' дней</div>'
+        + '</div>';
   block.innerHTML = html;
 }
 
