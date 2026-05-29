@@ -368,6 +368,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-sys-hm-name{font-size:7px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cc-sys-hm-val{font-size:11px;font-weight:700;font-family:'Cormorant Garamond',serif}
 
+/* ── Early Warning Engine ── */
+.cc-ew{margin-bottom:14px}
+.cc-ew-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-ew-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-ew-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-ew-level{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex-shrink:0}
+.cc-ew-level.red{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.35)}
+.cc-ew-level.orange{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-ew-level.yellow{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.25)}
+.cc-ew-level.green{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.cc-ew-velocity{font-size:9px;letter-spacing:.08em;color:rgba(255,255,255,.35);margin-bottom:8px}
+.cc-ew-velocity span{font-weight:600}
+.cc-ew-velocity.explosive span{color:#dc2626}
+.cc-ew-velocity.accelerating span{color:#f59e0b}
+.cc-ew-velocity.rising span{color:#fbbf24}
+.cc-ew-velocity.stable span{color:#22c55e}
+.cc-ew-section-title{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.18);margin-bottom:5px;margin-top:8px}
+.cc-ew-signal{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-ew-signal:last-child{border-bottom:none}
+.cc-ew-signal-name{font-size:10px;color:rgba(232,224,208,.8);flex:1}
+.cc-ew-signal-detail{font-size:9px;color:rgba(255,255,255,.3);margin-top:1px}
+.cc-ew-signal-bar-wrap{width:36px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;flex-shrink:0}
+.cc-ew-signal-bar{height:100%;border-radius:2px}
+.cc-ew-signal-score{font-size:9px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3);width:22px;text-align:right;flex-shrink:0}
+.cc-ew-horizons{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:6px}
+.cc-ew-hz-cell{padding:5px 4px;border-radius:3px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);text-align:center}
+.cc-ew-hz-label{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.25);display:block;margin-bottom:3px}
+.cc-ew-hz-prob{font-size:13px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-ew-hz-note{font-size:8px;color:rgba(255,255,255,.2);margin-top:2px;display:block}
+.cc-ew-emerging{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-ew-emerging:last-child{border-bottom:none}
+.cc-ew-emerging-name{font-size:10px;color:rgba(232,224,208,.7);margin-bottom:2px}
+.cc-ew-emerging-sub{font-size:9px;color:rgba(255,255,255,.3)}
+.cc-ew-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
+.cc-ew-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+
 </style>
 </head>
 <body>
@@ -1752,6 +1788,7 @@ setInterval(() => {
     <div id="cc-correlations-block"></div>
     <div id="cc-propagation-block"></div>
     <div id="cc-systemic-block"></div>
+    <div id="cc-ew-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1816,10 +1853,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -1888,6 +1925,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-correlations-block').innerHTML='';
   document.getElementById('cc-propagation-block').innerHTML='';
   document.getElementById('cc-systemic-block').innerHTML='';
+  document.getElementById('cc-ew-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -1922,6 +1960,7 @@ window.openCountryCard = async function(cc) {
   fetchCorrelations(cc).then(function(corrData) { renderCorrelations(corrData, _clientCaps); });
   fetchPropagation(cc).then(function(propData) { renderPropagation(propData, _clientCaps); });
   fetchSystemic(cc).then(function(sysData) { renderSystemic(sysData, _clientCaps); });
+  fetchEarlyWarning(cc).then(function(ewData) { renderEarlyWarning(ewData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -3263,6 +3302,144 @@ function renderSystemic(data, caps) {
               + '</div>';
       });
       html += '</div>';
+    }
+  }
+
+  html += '</div>';
+  block.innerHTML = html;
+}
+
+
+// ── Strategic Early Warning Engine V1 — UI ──────────────────────────────
+var _ewCache = {};
+var EW_SIG_COLORS = {
+  risk_acceleration:   '#ef4444',
+  driver_acceleration: '#f59e0b',
+  forecast_divergence: '#a855f7',
+  domain_expansion:    '#38bdf8',
+  escalation_proximity:'#dc2626',
+  forecast_pressure:   '#f97316',
+  change_momentum:     '#22c55e',
+};
+
+async function fetchEarlyWarning(cc) {
+  if (_ewCache[cc]) return _ewCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/early-warning/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _ewCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderEarlyWarning(data, caps) {
+  var block = document.getElementById('cc-ew-block');
+  if (!block) return;
+  var access = caps.early_warning_access || 'score';
+
+  if (!data) { block.innerHTML = ''; return; }
+
+  var ewScore   = data.early_warning_score || 0;
+  var sigVel    = data.signal_velocity     || 0;
+  var level     = data.warning_level       || 'green';
+  var levelRu   = data.warning_level_ru    || 'Зелёный';
+  var velTrend  = data.velocity_trend      || 'stable';
+  var velTrendRu= data.velocity_trend_ru   || 'Стабильный';
+  var ewCol     = level === 'red' ? '#dc2626'
+                : level === 'orange' ? '#f59e0b'
+                : level === 'yellow' ? '#fbbf24' : '#22c55e';
+
+  var html = '<div class="cc-ew">';
+  html += '<div class="cc-ew-header">'
+        + '<span class="cc-ew-label">Раннее предупреждение</span>'
+        + '<span class="cc-ew-score" style="color:' + ewCol + '">' + ewScore + '</span>';
+
+  if (access !== 'score') {
+    html += '<span class="cc-ew-level ' + level + '">' + _esc(levelRu) + '</span>';
+  }
+  html += '</div>';
+
+  // FREE
+  if (access === 'score') {
+    html += '<div class="cc-ew-teaser">Индекс раннего предупреждения: ' + ewScore + '/100</div>'
+          + '<div class="cc-ew-lock">🔒 Уровень и тренд в Signal PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL: level + velocity
+  html += '<div class="cc-ew-velocity ' + velTrend + '">'
+        + 'Скорость сигнала: <span>' + _esc(velTrendRu) + '</span>'
+        + ' · Активных сигналов: ' + (data.signal_count || 0)
+        + '</div>';
+
+  if (access === 'score+level') {
+    html += '<div class="cc-ew-lock">🔒 Полный анализ в Strategic PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: signals
+  var signals = data.signals || [];
+  if (signals.length) {
+    html += '<div class="cc-ew-section-title">Активные сигналы</div>';
+    signals.forEach(function(s) {
+      var col     = EW_SIG_COLORS[s.type] || '#B8973A';
+      var barPct  = s.score || 0;
+      html += '<div class="cc-ew-signal">'
+            + '<div style="flex:1;min-width:0">'
+            +   '<div class="cc-ew-signal-name">' + _esc(s.label) + '</div>';
+      if (access === 'full+explain' && s.detail) {
+        html += '<div class="cc-ew-signal-detail">' + _esc(s.detail) + '</div>';
+      }
+      html += '</div>'
+            + '<div class="cc-ew-signal-bar-wrap">'
+            +   '<div class="cc-ew-signal-bar" style="width:' + barPct + '%;background:' + col + '"></div>'
+            + '</div>'
+            + '<span class="cc-ew-signal-score">' + barPct + '</span>'
+            + '</div>';
+    });
+  } else {
+    html += '<div class="cc-ew-teaser">Значимых ранних сигналов не обнаружено</div>';
+  }
+
+  // Horizons
+  var horizons = data.horizons || [];
+  if (horizons.length) {
+    html += '<div class="cc-ew-section-title">Горизонты эскалации</div>';
+    html += '<div class="cc-ew-horizons">';
+    horizons.forEach(function(h) {
+      var prob = h.escalation_probability || 0;
+      var col  = prob >= 65 ? '#dc2626' : prob >= 45 ? '#f59e0b' : prob >= 25 ? '#fbbf24' : '#22c55e';
+      html += '<div class="cc-ew-hz-cell">'
+            + '<span class="cc-ew-hz-label">' + _esc(h.label) + '</span>'
+            + '<span class="cc-ew-hz-prob" style="color:' + col + '">' + prob + '%</span>'
+            + (access === 'full+explain' && h.note
+                ? '<span class="cc-ew-hz-note">' + _esc(h.note) + '</span>'
+                : '')
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ELITE: emerging risks
+  if (access === 'full+explain') {
+    var emerging = data.emerging_risks || [];
+    if (emerging.length) {
+      html += '<div class="cc-ew-section-title">Формирующиеся риски</div>';
+      emerging.forEach(function(e) {
+        var col = (window.DCL_PROP || {})[e.domain] || '#B8973A';
+        html += '<div class="cc-ew-emerging">'
+              + '<div class="cc-ew-emerging-name">' + _esc(e.name) + '</div>'
+              + '<div class="cc-ew-emerging-sub" style="color:' + col + '">'
+              +   _esc(e.label) + ' · Рост: ' + (e.growth_signal || 0)
+              + '</div></div>';
+      });
     }
   }
 
