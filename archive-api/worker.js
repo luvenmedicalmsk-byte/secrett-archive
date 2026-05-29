@@ -78,6 +78,8 @@ export default {
     return handleScenarios_v1(request, env);
   if (path.startsWith('/api/correlations/') && request.method === 'GET')
     return handleCorrelations(request, env);
+  if (path.startsWith('/api/propagation/') && request.method === 'GET')
+    return handlePropagation(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1563,6 +1565,7 @@ function getTierCapabilities(tier) {
       timeline_days:       7,
       scenario_access:     'none',
       correlation_access: 'none',
+      propagation_access: 'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1581,6 +1584,7 @@ function getTierCapabilities(tier) {
       timeline_days:       30,
       scenario_access:     'base',
       correlation_access: 'top3',
+      propagation_access: 'chain',
     },
     strategic: {
       tier:                'strategic',
@@ -1599,6 +1603,7 @@ function getTierCapabilities(tier) {
       timeline_days:       180,
       scenario_access:     'full',
       correlation_access: 'full',
+      propagation_access: 'full',
     },
     elite: {
       tier:                'elite',
@@ -1617,6 +1622,7 @@ function getTierCapabilities(tier) {
       timeline_days:       -1,
       scenario_access:     'drivers',
       correlation_access: 'full+explain',
+      propagation_access: 'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2231,6 +2237,114 @@ function _filterCorrelations(data, access, tier) {
       base.driver_pairs = data.driver_pairs || [];
     }
   }
+
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RISK PROPAGATION ENGINE V1 — Worker endpoint
+// GET /api/propagation/{CC}
+// propagation_access:
+//   teaser       → FREE: rps score only + teaser
+//   chain        → SIGNAL: primary chain only
+//   full         → STRATEGIC: primary + secondary + domain_chain
+//   full+explain → ELITE: all + tertiary + impact_matrix + channel reasons
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handlePropagation(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.propagation_access || 'teaser';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
+
+  if (!cc || cc.length !== 2) {
+    return new Response(JSON.stringify({ error: 'Invalid country code' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  const cacheKey = `propagation:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                   'X-Cache': 'HIT', 'X-Tier': tier }
+      });
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/propagation/${cc}.json`;
+    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    if (r.status === 404) return new Response(JSON.stringify({ error: 'No propagation for ' + cc }), {
+      status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+    if (!r.ok) throw new Error('fetch failed: ' + r.status);
+    const data   = await r.json();
+    const result = _filterPropagation(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 600 }); } catch (_) {}
+    }
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterPropagation(data, access, tier) {
+  // Always include: country identity + rps score
+  const base = {
+    country: data.country, country_name: data.country_name,
+    date: data.date, tier,
+    risk_propagation_score: data.risk_propagation_score,
+    dominant_domain:        data.dominant_domain,
+  };
+
+  if (access === 'teaser') {
+    base.teaser = true;
+    return base;
+  }
+
+  // SIGNAL+: primary impacts
+  const stripChannel = access !== 'full+explain';
+  base.primary_impacts = (data.primary_impacts || []).map(p => {
+    const item = {
+      target_country:    p.target_country,
+      target_name:       p.target_name,
+      target_domain:     p.target_domain,
+      propagation_score: p.propagation_score,
+      delay_days:        p.delay_days,
+      impact_level:      p.impact_level,
+    };
+    if (!stripChannel) item.channel = p.channel;
+    return item;
+  });
+
+  if (access === 'chain') return base;
+
+  // STRATEGIC+: secondary + domain chain
+  base.secondary_impacts = (data.secondary_impacts || []).map(s => ({
+    target_country:    s.target_country,
+    target_name:       s.target_name,
+    propagation_score: s.propagation_score,
+    delay_days:        s.delay_days,
+    via_country:       s.via_country,
+    impact_level:      s.impact_level,
+  }));
+  base.domain_chain = data.domain_chain || [];
+
+  if (access === 'full') return base;
+
+  // ELITE: tertiary + impact_matrix + channel explanations
+  base.tertiary_impacts = data.tertiary_impacts || [];
+  base.impact_matrix    = data.impact_matrix    || [];
 
   return base;
 }
