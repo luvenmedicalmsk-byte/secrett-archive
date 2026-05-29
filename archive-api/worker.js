@@ -96,6 +96,8 @@ export default {
     return handleStrategyFeedback(request, env);
   if (path.startsWith('/api/validation/') && request.method === 'GET')
     return handleValidation(request, env);
+  if (path.startsWith('/api/dashboard/') && request.method === 'GET')
+    return handleDashboard(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1590,6 +1592,7 @@ function getTierCapabilities(tier) {
       strategy_access:    'teaser',
       feedback_access:     'teaser',
       validation_access:   'teaser',
+      dashboard_access:   'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1617,6 +1620,7 @@ function getTierCapabilities(tier) {
       strategy_access:    'summary',
       feedback_access:     'summary',
       validation_access:   'summary',
+      dashboard_access:   'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1644,6 +1648,7 @@ function getTierCapabilities(tier) {
       strategy_access:    'full',
       feedback_access:     'full',
       validation_access:   'full',
+      dashboard_access:   'full',
     },
     elite: {
       tier:                'elite',
@@ -1671,6 +1676,7 @@ function getTierCapabilities(tier) {
       strategy_access:    'full+explain',
       feedback_access:     'full+explain',
       validation_access:   'full+explain',
+      dashboard_access:   'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -3291,5 +3297,150 @@ function _filterValidation(data, access, tier) {
     const raw = (data.horizons || {})[k];
     if (raw && raw.confidence) base.horizons[k].confidence = raw.confidence;
   });
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ACCURACY & CONFIDENCE DASHBOARD V1 — Worker endpoint
+// GET /api/dashboard/{CC}    — per-country dashboard
+// GET /api/dashboard/_ranking — global ranking (no CC needed)
+//
+// dashboard_access:
+//   teaser       → FREE:     dashboard_score + grade only
+//   summary      → SIGNAL:   + Section A (forecast quality) + Section B summary
+//   full         → STRATEGIC:+ Section B detail + Section C (calibration) + Section D (trends)
+//   full+explain → ELITE:    + Section E (diagnostics) + Section F (ranking context)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleDashboard(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.dashboard_access || 'teaser';
+
+  // Special route: /api/dashboard/_ranking
+  const rawCC = request.url.split('/api/dashboard/')[1] || '';
+  const ccClean = rawCC.replace(/[^A-Za-z_]/g, '').toUpperCase();
+
+  if (ccClean === '_RANKING') {
+    return _handleDashboardRanking(request, env, tier, access);
+  }
+
+  const cc = ccClean.replace('_','');
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code or endpoint. Use /api/dashboard/CC or /api/dashboard/_ranking'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `dash:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/dashboard/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (r.status === 404) return new Response(
+      JSON.stringify({error:'No dashboard data for '+cc+' — needs validation history'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    if (!r.ok) throw new Error('fetch '+r.status);
+    const data   = await r.json();
+    const result = _filterDashboard(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl:3600}); } catch(_){}
+    }
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+async function _handleDashboardRanking(request, env, tier, access) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  if (access === 'teaser') return new Response(
+    JSON.stringify({error:'Country ranking requires Signal tier or above'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/dashboard/_ranking.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (!r.ok) throw new Error('fetch '+r.status);
+    const data = await r.json();
+    // Elite gets full ranking, others get top/lowest only
+    const result = access === 'full+explain' ? data : {
+      date: data.date,
+      total_countries: data.total_countries,
+      top_accuracy:    data.top_accuracy,
+      lowest_accuracy: data.lowest_accuracy,
+    };
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+function _filterDashboard(data, access, tier) {
+  // FREE: score + grade only
+  const base = {
+    country:             data.country,
+    country_name:        data.country_name,
+    date:                data.date,
+    tier,
+    dashboard_score:     data.dashboard_score,
+    dashboard_grade:     data.dashboard_grade,
+    dashboard_grade_ru:  data.dashboard_grade_ru,
+    history_depth:       data.history_depth,
+    note:                data.note,
+  };
+  if (access === 'teaser') return base;
+
+  // SIGNAL+: Section A + B summary
+  base.validation_score      = data.validation_score;
+  base.validation_grade      = data.validation_grade;
+  base.forecast_accuracy     = data.forecast_accuracy;
+  base.confidence_accuracy   = data.confidence_accuracy;
+  base.state_accuracy        = data.state_accuracy;
+  base.scenario_accuracy     = data.scenario_accuracy;
+  base.best_horizon          = data.best_horizon;
+  base.worst_horizon         = data.worst_horizon;
+  base.horizon_scores        = data.horizon_scores;
+  base.mae                   = data.mae;
+  base.rmse                  = data.rmse;
+  base.bias                  = data.bias;
+  base.dhr                   = data.dhr;
+  if (access === 'summary') return base;
+
+  // STRATEGIC+: Section B detail + Section C + Section D
+  base.horizon_series        = data.horizon_series;
+  base.confidence_drift      = data.confidence_drift;
+  base.overestimation_rate   = data.overestimation_rate;
+  base.underestimation_rate  = data.underestimation_rate;
+  base.reliability_band      = data.reliability_band;
+  base.avg_confidence_error  = data.avg_confidence_error;
+  base.trend_direction       = data.trend_direction;
+  base.trend_delta           = data.trend_delta;
+  base.trend_30d             = data.trend_30d;
+  base.trend_90d             = data.trend_90d;
+  base.trend_180d            = data.trend_180d;
+  base.trend_365d            = data.trend_365d;
+  if (access === 'full') return base;
+
+  // ELITE: + Section E diagnostics
+  base.diagnostics           = data.diagnostics;
+  base.diagnostic_count      = data.diagnostic_count;
   return base;
 }
