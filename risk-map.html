@@ -624,6 +624,37 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-val-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
 .cc-val-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 .cc-val-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
+/* ── Accuracy & Confidence Dashboard V1 ── */
+.cc-dash{margin-bottom:14px}
+.cc-dash-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-dash-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-dash-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-dash-grade{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:3px;flex-shrink:0}
+.cc-dash-grade.elite{background:rgba(167,139,250,.15);color:#a78bfa;border:1px solid rgba(167,139,250,.3)}
+.cc-dash-grade.strong{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-dash-grade.good{background:rgba(96,165,250,.10);color:#60a5fa;border:1px solid rgba(96,165,250,.25)}
+.cc-dash-grade.fair{background:rgba(250,204,21,.10);color:#fbbf24;border:1px solid rgba(250,204,21,.25)}
+.cc-dash-grade.weak{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.cc-dash-grade.unknown{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.1)}
+.cc-dash-score-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.cc-dash-score-fill{height:100%;border-radius:2px;transition:width .5s}
+.cc-dash-section{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:8px 0 5px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.cc-dash-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
+.cc-dash-grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:6px}
+.cc-dash-cell{text-align:center;padding:5px 3px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-dash-cell-val{display:block;font-size:13px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1.2}
+.cc-dash-cell-lbl{display:block;font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.22);margin-top:2px}
+.cc-dash-hz-bar-wrap{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin:3px 0;overflow:hidden}
+.cc-dash-hz-bar{height:100%;border-radius:2px}
+.cc-dash-trend{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:9px;color:rgba(232,224,208,.5)}
+.cc-dash-trend-icon{font-size:12px;flex-shrink:0}
+.cc-dash-diag{padding:4px 0 4px 10px;border-left:2px solid rgba(239,68,68,.4);margin-bottom:4px}
+.cc-dash-diag.medium{border-left-color:rgba(245,158,11,.4)}
+.cc-dash-diag-type{font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.cc-dash-diag-detail{font-size:9px;color:rgba(232,224,208,.6);margin-top:1px;line-height:1.4}
+.cc-dash-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-dash-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+.cc-dash-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
 </style>
 </head>
 <body>
@@ -2018,6 +2049,7 @@ setInterval(() => {
     <div id="cc-strategy-block"></div>
     <div id="cc-feedback-block"></div>
     <div id="cc-validation-block"></div>
+    <div id="cc-dash-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -2082,10 +2114,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2161,6 +2193,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-strategy-block').innerHTML='';
   document.getElementById('cc-feedback-block').innerHTML='';
   document.getElementById('cc-validation-block').innerHTML='';
+  document.getElementById('cc-dash-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2202,6 +2235,7 @@ window.openCountryCard = async function(cc) {
   fetchStrategy(cc).then(function(strData) { renderStrategy(strData, _clientCaps); });
   fetchStrategyFeedback(cc).then(function(fbData) { renderStrategyFeedback(fbData, _clientCaps); });
   fetchValidation(cc).then(function(valData) { renderValidation(valData, _clientCaps); });
+  fetchDashboard(cc).then(function(dashData) { renderDashboard(dashData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -4620,6 +4654,202 @@ function renderValidation(data, caps) {
 
   html += '<div class="cc-val-depth">История: ' + depth + ' дней</div></div>';
   block.innerHTML = html;
+}
+
+
+// ── Accuracy & Confidence Dashboard V1 — UI ──────────────────────────────
+var _dashCache = {};
+var _DASH_GRADE_COL = function(g) {
+  return g==='elite'?'#a78bfa':g==='strong'?'#22c55e':g==='good'?'#60a5fa':
+         g==='fair'?'#fbbf24':g==='weak'?'#ef4444':'rgba(255,255,255,.3)';
+};
+var _DASH_HZ_ORDER = ['d7','d30','d90','d180','d365'];
+
+async function fetchDashboard(cc) {
+  if (_dashCache[cc]) return _dashCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/dashboard/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _dashCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderDashboard(data, caps) {
+  var block = document.getElementById('cc-dash-block');
+  if (!block) return;
+  var access = caps.dashboard_access || 'teaser';
+  if (!data || data.error) { block.innerHTML = ''; return; }
+
+  var sc    = data.dashboard_score;
+  var grade = data.dashboard_grade    || 'unknown';
+  var grRu  = data.dashboard_grade_ru || '';
+  var depth = data.history_depth      || 0;
+  var gCol  = _DASH_GRADE_COL(grade);
+  var barW  = sc !== null ? Math.min(100, sc) : 0;
+
+  var html = '<div class="cc-dash">'
+    + '<div class="cc-dash-header">'
+    +   '<span class="cc-dash-label">Dashboard · Точность прогнозов</span>'
+    +   (sc!==null?'<span class="cc-dash-score" style="color:'+gCol+'">'+sc+'</span>':'')
+    +   '<span class="cc-dash-grade '+grade+'">'+_esc(grRu)+'</span>'
+    + '</div>'
+    + '<div class="cc-dash-score-bar"><div class="cc-dash-score-fill" style="width:'+barW+'%;background:'+gCol+'"></div></div>';
+
+  // FREE: score only
+  if (access === 'teaser') {
+    if (data.note) html += '<div class="cc-dash-teaser">'+_esc(data.note)+'</div>';
+    else html += '<div class="cc-dash-teaser">Dashboard Score: '+(sc!==null?sc+'/100':'—')+'</div>';
+    html += '<div class="cc-dash-lock">🔒 Детальный анализ в Signal PRO</div>'
+          + '<div class="cc-dash-depth">История: '+depth+' дней</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // SIGNAL+: Section A (Forecast Quality) + B summary
+  var va = data.validation_score; var fa = data.forecast_accuracy;
+  var ca = data.confidence_accuracy; var sa = data.state_accuracy;
+  var scna = data.scenario_accuracy;
+  var bh = data.best_horizon; var wh = data.worst_horizon;
+  var mae = data.mae; var rmse = data.rmse; var bias = data.bias; var dhr = data.dhr;
+  var na = '—';
+
+  html += '<div class="cc-dash-section">A · Качество прогнозов</div>'
+        + '<div class="cc-dash-grid4">'
+        + _dCell(fa!==null&&fa!==undefined?fa+'%':na,'Точность',fa>=80?'#22c55e':fa>=60?'#fbbf24':'#ef4444')
+        + _dCell(ca!==null&&ca!==undefined?ca+'%':na,'Уверенность',ca>=80?'#22c55e':ca>=60?'#fbbf24':'#ef4444')
+        + _dCell(sa!==null&&sa!==undefined?sa+'%':na,'Состояние',sa>=80?'#22c55e':sa>=60?'#fbbf24':'#ef4444')
+        + _dCell(scna!==null&&scna!==undefined?scna+'%':na,'Сценарий',scna>=65?'#22c55e':scna>=45?'#fbbf24':'#ef4444')
+        + '</div>';
+
+  // Section B summary: horizon scores bar
+  var hScores = data.horizon_scores || {};
+  var hasHS = Object.keys(hScores).length > 0;
+  if (hasHS) {
+    html += '<div class="cc-dash-section">B · Горизонты</div>'
+          + '<div class="cc-dash-grid5">';
+    _DASH_HZ_ORDER.forEach(function(k) {
+      var sv = hScores[k];
+      var hCol = sv>=80?'#22c55e':sv>=65?'#84cc16':sv>=50?'#fbbf24':sv>=35?'#f59e0b':'#ef4444';
+      html += '<div class="cc-dash-cell">'
+            + '<span class="cc-dash-cell-val" style="color:'+(sv!==undefined?hCol:'rgba(255,255,255,.2)') +'">'+(sv!==undefined?sv:na)+'</span>'
+            + '<div class="cc-dash-hz-bar-wrap"><div class="cc-dash-hz-bar" style="width:'+(sv||0)+'%;background:'+(sv!==undefined?hCol:'rgba(255,255,255,.06)')+'"></div></div>'
+            + '<span class="cc-dash-cell-lbl">'+k+'</span>'
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // MAE/RMSE/Bias/DHR row
+  if (mae!==null&&mae!==undefined) {
+    html += '<div class="cc-dash-grid4">'
+          + _dCell(mae!==null?mae:na,'MAE','rgba(232,224,208,.6)')
+          + _dCell(rmse!==null?rmse:na,'RMSE','rgba(232,224,208,.6)')
+          + _dCell(bias!==null?(bias>0?'+':'')+bias:na,'Смещение',bias&&Math.abs(bias)>3?'#f59e0b':'rgba(232,224,208,.6)')
+          + _dCell(dhr!==null?dhr+'%':na,'DHR',dhr>=70?'#22c55e':dhr>=50?'#fbbf24':'#ef4444')
+          + '</div>';
+  }
+
+  if (bh||wh) {
+    html += '<div class="cc-dash-trend">'
+          + (bh?'<span class="cc-dash-trend-icon">✓</span><span>Лучший: '+bh+'</span>':'')
+          + (wh?'<span style="margin-left:8px" class="cc-dash-trend-icon">✗</span><span>Худший: '+wh+'</span>':'')
+          + '</div>';
+  }
+
+  if (access === 'summary') {
+    html += '<div class="cc-dash-lock">🔒 Детальные метрики в Strategic PRO</div>'
+          + '<div class="cc-dash-depth">История: '+depth+' дней</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // STRATEGIC+: Section C (Calibration) + Section D (Trends) + B detail
+  var cd = data.confidence_drift; var or_ = data.overestimation_rate;
+  var ur = data.underestimation_rate; var rb = data.reliability_band;
+  var ace = data.avg_confidence_error; var td = data.trend_direction;
+  var tdelta = data.trend_delta;
+
+  html += '<div class="cc-dash-section">C · Калибровка</div>'
+        + '<div class="cc-dash-grid4">'
+        + _dCell(ace!==null&&ace!==undefined?'±'+ace:na,'Ошибка ув.',ace!=null&&ace>10?'#f59e0b':'rgba(232,224,208,.6)')
+        + _dCell(cd!==null&&cd!==undefined?(cd>0?'+':'')+cd:na,'Дрейф',cd!=null&&Math.abs(cd)>5?'#f59e0b':'rgba(232,224,208,.6)')
+        + _dCell(or_!==null&&or_!==undefined?or_+'%':na,'Завышение',or_>50?'#ef4444':'rgba(232,224,208,.6)')
+        + _dCell(ur!==null&&ur!==undefined?ur+'%':na,'Занижение',ur>50?'#ef4444':'rgba(232,224,208,.6)')
+        + '</div>';
+
+  // Section D: Trend
+  if (td) {
+    var tdIcon = td==='improving'?'↑':td==='declining'?'↓':'→';
+    var tdCol  = td==='improving'?'#22c55e':td==='declining'?'#ef4444':'rgba(232,224,208,.5)';
+    html += '<div class="cc-dash-section">D · Тренды точности</div>'
+          + '<div class="cc-dash-trend"><span class="cc-dash-trend-icon" style="color:'+tdCol+'">'+tdIcon+'</span>'
+          + '<span style="color:'+tdCol+'">'+_esc(td)+(tdelta!==null?'  (Δ'+(tdelta>0?'+':'')+tdelta+'pt)':'')+'</span></div>';
+
+    var tSeries = [
+      {k:'d30',v:data.trend_30d,l:'30д'},{k:'d90',v:data.trend_90d,l:'90д'},
+      {k:'d180',v:data.trend_180d,l:'180д'},{k:'d365',v:data.trend_365d,l:'365д'}
+    ];
+    var tHasData = tSeries.some(function(t){return t.v!==null&&t.v!==undefined;});
+    if (tHasData) {
+      html += '<div class="cc-dash-grid4">';
+      tSeries.forEach(function(t) {
+        var tCol = t.v>=80?'#22c55e':t.v>=65?'#84cc16':t.v>=50?'#fbbf24':'#f59e0b';
+        html += _dCell(t.v!==null&&t.v!==undefined?t.v+'%':na,t.l,t.v!=null?tCol:'rgba(255,255,255,.2)');
+      });
+      html += '</div>';
+    }
+  }
+
+  // Horizon detail (B full)
+  var hSeries = data.horizon_series || {};
+  var hasDetail = _DASH_HZ_ORDER.some(function(k){return hSeries[k]&&hSeries[k].mae!==undefined;});
+  if (hasDetail) {
+    html += '<div class="cc-dash-section">B · Детальные метрики</div>';
+    _DASH_HZ_ORDER.forEach(function(k) {
+      var h = hSeries[k];
+      if (!h||h===null) return;
+      var hCol = h.accuracy_pct>=80?'#22c55e':h.accuracy_pct>=65?'#84cc16':h.accuracy_pct>=50?'#fbbf24':'#ef4444';
+      html += '<div class="cc-dash-grid5" style="margin-bottom:3px">'
+            + '<div class="cc-dash-cell" style="max-width:28px"><span class="cc-dash-cell-val" style="font-size:9px;color:rgba(255,255,255,.35)">'+k+'</span></div>'
+            + _dCell(h.accuracy_pct!=null?h.accuracy_pct+'%':na,'Acc',hCol)
+            + _dCell(h.mae!=null?h.mae:na,'MAE','rgba(232,224,208,.5)')
+            + _dCell(h.dhr!=null?h.dhr+'%':na,'DHR',h.dhr>=70?'#22c55e':'rgba(232,224,208,.5)')
+            + _dCell(h.bias!=null?(h.bias>0?'+':'')+h.bias:na,'Bias',h.bias!=null&&Math.abs(h.bias)>3?'#f59e0b':'rgba(232,224,208,.5)')
+            + '</div>';
+    });
+  }
+
+  if (access === 'full') {
+    html += '<div class="cc-dash-depth">История: '+depth+' дней</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // ELITE: Section E diagnostics
+  var diags = data.diagnostics || [];
+  if (diags.length) {
+    html += '<div class="cc-dash-section">E · Диагностика ('+diags.length+')</div>';
+    diags.forEach(function(d) {
+      html += '<div class="cc-dash-diag '+_esc(d.severity||'medium')+'">'
+            + '<div class="cc-dash-diag-type">'+_esc(d.type||'')+'</div>'
+            + '<div class="cc-dash-diag-detail">'+_esc(d.detail||'')+'</div>'
+            + '</div>';
+    });
+  } else {
+    html += '<div class="cc-dash-section">E · Диагностика</div>'
+          + '<div class="cc-dash-trend"><span class="cc-dash-trend-icon" style="color:#22c55e">✓</span><span>Проблем не обнаружено</span></div>';
+  }
+
+  html += '<div class="cc-dash-depth">История: '+depth+' дней</div></div>';
+  block.innerHTML = html;
+}
+
+function _dCell(val, lbl, col) {
+  return '<div class="cc-dash-cell">'
+       + '<span class="cc-dash-cell-val" style="color:'+(col||'rgba(232,224,208,.7)')+'">'+val+'</span>'
+       + '<span class="cc-dash-cell-lbl">'+lbl+'</span>'
+       + '</div>';
 }
 
 })(); // end IIFE
