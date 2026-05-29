@@ -1534,6 +1534,16 @@ const DOMAIN_RU = {
   technology:'Технологии', social:'Социум',
 };
 
+// Domain accent colors — unified with signal map
+const DOMAIN_COLORS = {
+  geopolitics: '#ff7a00',
+  climate:     '#22c55e',
+  economy:     '#38bdf8',
+  technology:  '#a855f7',
+  social:      '#ef4444',
+};
+const domainColor = d => DOMAIN_COLORS[d] || '#B8973A';
+
 const LEVEL_CLASS = {
   stable:'level-stable', elevated:'level-elevated',
   pressured:'level-pressured', critical:'level-critical',
@@ -1619,6 +1629,8 @@ window.openCountryCard = async function(cc) {
   }
 
   renderCard(country);
+  // Store domain color for timeline
+  window._currentDomainColor = domainColor(country.dominant_domain);
 
   // Try to load history for timeline
   const hist = await fetchHistory(cc);
@@ -1627,7 +1639,8 @@ window.openCountryCard = async function(cc) {
 
 // ── Render card from snapshot data ────────────────────────────────────────
 function renderCard(c) {
-  const color = SCORE_COLOR(c.risk_score);
+  const domCol = domainColor(c.dominant_domain);
+  const color  = domCol;  // accent = domain color
 
   document.getElementById('cc-flag').textContent  = FLAGS[c.country] || '🌐';
   document.getElementById('cc-name').textContent  = c.country_name || c.country;
@@ -1643,7 +1656,10 @@ function renderCard(c) {
   else            { dEl.textContent = '→ 0';      dEl.className = 'cc-delta flat'; }
 
   const domEl = document.getElementById('cc-domain');
-  domEl.textContent  = DOMAIN_RU[c.dominant_domain] || c.dominant_domain;
+  domEl.textContent   = DOMAIN_RU[c.dominant_domain] || c.dominant_domain;
+  domEl.style.background = domCol + '22';
+  domEl.style.color      = domCol;
+  domEl.style.border     = '1px solid ' + domCol + '55';
 
   const lvlEl = document.getElementById('cc-level');
   lvlEl.textContent = LEVEL_RU[c.escalation_level] || c.escalation_level;
@@ -1665,6 +1681,8 @@ function renderCard(c) {
   }
 
   document.getElementById('cc-footer').textContent = 'Данные на ' + c.date || '';
+  // Domain accent: top border on card
+  document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
 }
 
 // ── Mini timeline chart ────────────────────────────────────────────────────
@@ -1730,10 +1748,13 @@ function renderTimeline(hist, todayScore) {
   ctx.setLineDash([]);
 
   // Line
-  const lastColor = SCORE_COLOR(points[points.length - 1]);
+  // Timeline color = domain accent color
+  const _domColTl = typeof _currentDomainColor !== 'undefined'
+    ? _currentDomainColor : '#B8973A';
+  const lastColor = _domColTl;
   const grad = ctx.createLinearGradient(0, 0, W, 0);
-  grad.addColorStop(0,   'rgba(184,151,58,.4)');
-  grad.addColorStop(1,   lastColor);
+  grad.addColorStop(0,   _domColTl + '55');
+  grad.addColorStop(1,   _domColTl);
 
   ctx.beginPath();
   ctx.moveTo(scaleX(0), scaleY(points[0]));
@@ -1819,7 +1840,7 @@ async function openCountriesPanel() {
 
   sorted.forEach(c => {
     const delta  = c.delta || 0;
-    const col    = SCORE_COLOR(c.risk_score);
+    const col    = domainColor(c.dominant_domain);
     const lvlCol = LEVEL_COLORS[c.escalation_level] || '#888';
     const domRu  = DOMAIN_RU[c.dominant_domain] || c.dominant_domain;
     const dSign  = delta > 0 ? '▲+' : delta < 0 ? '▼' : '→';
