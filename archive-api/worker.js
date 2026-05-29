@@ -72,6 +72,8 @@ export default {
     return handleIntelligenceDaily(request, env);
   if (path === '/api/alerts' && request.method === 'GET')
     return handleAlerts(request, env);
+  if (path.startsWith('/api/timeline/') && request.method === 'GET')
+    return handleTimeline(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1554,6 +1556,7 @@ function getTierCapabilities(tier) {
       scenario_engine:     false,
       intel_limit:         3,
       alerts_limit:        3,
+      timeline_days:       7,
     },
     signal: {
       tier:                'signal',
@@ -1569,6 +1572,7 @@ function getTierCapabilities(tier) {
       scenario_engine:     false,
       intel_limit:         10,
       alerts_limit:        20,
+      timeline_days:       30,
     },
     strategic: {
       tier:                'strategic',
@@ -1584,6 +1588,7 @@ function getTierCapabilities(tier) {
       scenario_engine:     false,
       intel_limit:         -1,
       alerts_limit:        100,
+      timeline_days:       180,
     },
     elite: {
       tier:                'elite',
@@ -1599,6 +1604,7 @@ function getTierCapabilities(tier) {
       scenario_engine:     true,
       intel_limit:         -1,
       alerts_limit:        -1,
+      timeline_days:       -1,
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -1994,4 +2000,96 @@ function _filterAlerts(raw, caps, limit) {
     count:        raw.count,
     alerts:       filtered,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TIMELINE ENGINE V1 — Worker endpoint
+// GET /api/timeline/{CC}
+// Returns risk timeline events for a country, tier-filtered by days.
+// Source: docs/timelines/{CC}.json
+//
+// Tier access (timeline_days):
+//   free:      7 days
+//   signal:    30 days
+//   strategic: 180 days
+//   elite:     -1 (all history)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleTimeline(request, env) {
+  const REPO  = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier  = _resolveClientTier(request, env);
+  const caps  = getTierCapabilities(tier);
+  const days  = caps.timeline_days;   // 7 | 30 | 180 | -1
+
+  // Extract CC from /api/timeline/RU
+  const cc = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
+  if (!cc || cc.length !== 2) {
+    return new Response(JSON.stringify({ error: 'Invalid country code' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  const cacheKey = `timeline:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          headers: { 'Content-Type': 'application/json',
+                     'Access-Control-Allow-Origin': '*',
+                     'X-Cache': 'HIT', 'X-Tier': tier }
+        });
+      }
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/timelines/${cc}.json`;
+    const r = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    if (r.status === 404) {
+      return new Response(JSON.stringify({ error: 'No timeline for ' + cc }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+    if (!r.ok) throw new Error('Timeline fetch failed: ' + r.status);
+    const data = await r.json();
+
+    // Filter by timeline_days
+    const cutoffDate = days > 0
+      ? new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
+      : null;
+
+    const filtered = cutoffDate
+      ? (data.events || []).filter(e => e.date >= cutoffDate)
+      : (data.events || []);
+
+    const result = {
+      country:      data.country,
+      country_name: data.country_name,
+      tier:         tier,
+      days_limit:   days,
+      event_count:  filtered.length,
+      generated_at: data.generated_at,
+      events:       filtered,
+    };
+
+    if (env.EVENTS_KV) {
+      try {
+        await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 600 });
+      } catch (_) {}
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json',
+                 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
 }
