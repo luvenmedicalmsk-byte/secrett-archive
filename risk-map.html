@@ -1402,6 +1402,14 @@ setInterval(() => {
 
 /* Summary (premium) */
 .cc-drivers { margin-bottom: 14px; }
+.cc-change{margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:4px}
+.cc-change-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:6px}
+.cc-change-delta{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1;margin-bottom:8px}
+.cc-change-items{display:flex;flex-wrap:wrap;gap:5px}
+.cc-change-item{font-size:10px;color:rgba(232,224,208,.55);background:rgba(255,255,255,.04);border-radius:3px;padding:2px 7px}
+.cc-change-zero{font-size:10px;color:rgba(255,255,255,.25);font-style:italic}
+.cc-change-locked{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+
 .cc-drivers-label { font-size: 8px; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.25); margin-bottom: 7px; }
 .cc-driver { display: flex; align-items: flex-start; gap: 7px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
 .cc-driver:last-child { border-bottom: none; }
@@ -1508,6 +1516,7 @@ setInterval(() => {
     </div>
 
     <!-- Summary: premium shows text, free shows blur + CTA -->
+    <div id="cc-change-block"></div>
     <div id="cc-summary-block"></div>
     <div id="cc-drivers-block"></div>
 
@@ -1624,6 +1633,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-level').textContent  = '';
   document.getElementById('cc-summary-block').innerHTML = '';
   document.getElementById('cc-drivers-block').innerHTML = '';
+  document.getElementById('cc-change-block').innerHTML = '';
   document.getElementById('cc-footer').textContent = '';
   document.getElementById('cc-chart-label').textContent = '';
   clearChart();
@@ -1695,10 +1705,37 @@ function renderCard(c) {
   document.getElementById('cc-footer').textContent = 'Данные на ' + c.date || '';
   // Domain accent: top border on card
   document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
+  renderChangeAttribution(c.delta || 0, c.change_drivers || [], !!_premiumToken);
   renderDrivers(c.drivers || [], !!_premiumToken);
 }
 
 // ── Mini timeline chart ────────────────────────────────────────────────────
+// ── Change Attribution ─────────────────────────────────────────────────────
+function renderChangeAttribution(delta, changeDrv, premium) {
+  var block = document.getElementById('cc-change-block');
+  if (!block) return;
+  var d   = delta || 0;
+  var sgn = d > 0 ? '▲ +' : d < 0 ? '▼ ' : '';
+  var col = d > 0 ? '#ef4444' : d < 0 ? '#22c55e' : 'rgba(255,255,255,.25)';
+  var html = '<div class="cc-change">'
+           + '<div class="cc-change-label">Что изменилось за 24 часа</div>'
+           + '<div class="cc-change-delta" style="color:' + col + '">' + sgn + Math.abs(d) + '</div>';
+  if (d === 0) {
+    html += '<div class="cc-change-zero">Существенных изменений за последние 24 часа не выявлено.</div>';
+  } else if (premium && changeDrv && changeDrv.length) {
+    html += '<div class="cc-change-items">';
+    changeDrv.forEach(function(cd) {
+      var pts = cd.impact_score || 0;
+      html += '<span class="cc-change-item">' + _esc(cd.name) + ' (' + (d>0?'+':'-') + pts + ')</span>';
+    });
+    html += '</div>';
+  } else if (!premium && d !== 0) {
+    html += '<div class="cc-change-locked">🔒 Атрибуция изменений в Signal PRO</div>';
+  }
+  html += '</div>';
+  block.innerHTML = html;
+}
+
 // ── Top Drivers ─────────────────────────────────────────────────────────
 function renderDrivers(drivers, premium) {
   var block = document.getElementById('cc-drivers-block');
