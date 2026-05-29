@@ -60,6 +60,14 @@ export default {
       if (path === '/api/proxy/outages') return handleProxyOutages(url);
       if (path === '/api/proxy/ships') return handleProxyShips(url);
       if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
+
+  // ── SNAPSHOT API ──────────────────────────────────────────────────────────
+  // /api/snapshot/today        → all 25 countries, current scores (FREE: no summary)
+  // /api/snapshot/history/:cc  → full history for one country (PREMIUM only)
+  if (path === '/api/snapshot/today'  && request.method === 'GET')
+    return handleSnapshotToday(request, env);
+  if (path.startsWith('/api/snapshot/history/') && request.method === 'GET')
+    return handleSnapshotHistory(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1498,6 +1506,161 @@ async function handleProxyEventsFeed() {
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'public, max-age=55',
       }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SNAPSHOT API  MVP V1
+// Data source: docs/snapshots/index.json  (today)
+//              docs/snapshots/history/{CC}.json  (history)
+// Tier logic:
+//   FREE    → risk_score, dominant_domain, escalation_level, delta only
+//   PREMIUM → above + summary (from daily file) + full history array
+//
+// Premium token check: header X-Snapshot-Token = env.SNAPSHOT_TOKEN
+// MVP: single shared token stored in CF env var SNAPSHOT_TOKEN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function _isSnapshotPremium(request, env) {
+  const token = request.headers.get('X-Snapshot-Token') || '';
+  const valid = env.SNAPSHOT_TOKEN || '';
+  return valid && token === valid;
+}
+
+async function handleSnapshotToday(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const premium = _isSnapshotPremium(request, env);
+
+  // Try KV cache first (TTL 300s = 5 min)
+  const cacheKey = 'snapshot:today';
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) {
+        const result = _filterSnapshotTier(cached, premium);
+        return new Response(JSON.stringify(result), {
+          headers: { 'Content-Type': 'application/json',
+                     'Access-Control-Allow-Origin': '*',
+                     'X-Cache': 'HIT' }
+        });
+      }
+    } catch (_) {}
+  }
+
+  // Fetch from GitHub Pages CDN
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/snapshots/index.json`;
+    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+    if (!r.ok) throw new Error('GitHub fetch failed: ' + r.status);
+    const data = await r.json();
+
+    // Cache in KV
+    if (env.EVENTS_KV) {
+      try {
+        await env.EVENTS_KV.put(cacheKey, JSON.stringify(data), { expirationTtl: 300 });
+      } catch (_) {}
+    }
+
+    const result = _filterSnapshotTier(data, premium);
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json',
+                 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS' }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterSnapshotTier(data, premium) {
+  // FREE: no summary in country list
+  const countries = (data.countries || []).map(c => {
+    const base = {
+      country:          c.country,
+      country_name:     c.country_name,
+      risk_score:       c.risk_score,
+      dominant_domain:  c.dominant_domain,
+      escalation_level: c.escalation_level,
+      delta:            c.delta,
+    };
+    if (premium && c.summary) base.summary = c.summary;
+    return base;
+  });
+  return { date: data.date, generated_at: data.generated_at, countries };
+}
+
+async function handleSnapshotHistory(request, env) {
+  const premium = _isSnapshotPremium(request, env);
+  const url     = new URL(request.url);
+  // Extract country code from /api/snapshot/history/RU
+  const cc = url.pathname.split('/').pop()?.toUpperCase();
+  if (!cc || cc.length !== 2) {
+    return new Response(JSON.stringify({ error: 'Invalid country code' }), {
+      status: 400, headers: { 'Content-Type': 'application/json',
+                               'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  // History is PREMIUM only
+  if (!premium) {
+    return new Response(JSON.stringify({
+      error: 'premium_required',
+      message: 'History access requires Signal PRO or higher'
+    }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json',
+                 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const cacheKey = `snapshot:history:${cc}`;
+
+  // Try KV cache (TTL 600s)
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          headers: { 'Content-Type': 'application/json',
+                     'Access-Control-Allow-Origin': '*',
+                     'X-Cache': 'HIT' }
+        });
+      }
+    } catch (_) {}
+  }
+
+  try {
+    const rawUrl = `https://raw.githubusercontent.com/${REPO}/main/docs/snapshots/history/${cc}.json`;
+    const r = await fetch(rawUrl, { cf: { cacheTtl: 600, cacheEverything: true } });
+    if (r.status === 404) {
+      return new Response(JSON.stringify({ error: 'No history yet for ' + cc }), {
+        status: 404, headers: { 'Content-Type': 'application/json',
+                                 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+    if (!r.ok) throw new Error('GitHub fetch failed: ' + r.status);
+    const data = await r.json();
+
+    if (env.EVENTS_KV) {
+      try {
+        await env.EVENTS_KV.put(cacheKey, JSON.stringify(data), { expirationTtl: 600 });
+      } catch (_) {}
+    }
+
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json',
+                 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS' }
     });
   } catch(e) {
     return new Response(JSON.stringify({ error: String(e) }), {
