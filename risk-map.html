@@ -1402,6 +1402,22 @@ setInterval(() => {
 
 /* Summary (premium) */
 .cc-drivers { margin-bottom: 14px; }
+/* 30-day outlook */
+.cc-outlook{margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:4px}
+.cc-outlook-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px}
+.cc-outlook-scenarios{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.cc-outlook-row{display:flex;justify-content:space-between;align-items:center}
+.cc-outlook-name{font-size:9px;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase}
+.cc-outlook-bar-wrap{flex:1;height:3px;background:rgba(255,255,255,.07);margin:0 8px;border-radius:2px;overflow:hidden}
+.cc-outlook-bar{height:100%;border-radius:2px;transition:width .4s}
+.cc-outlook-val{font-size:11px;font-family:'Courier New',monospace;width:24px;text-align:right}
+.cc-outlook-conf{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.06em;margin-top:4px}
+.cc-scenario-drivers{margin-top:8px;border-top:1px solid rgba(255,255,255,.05);padding-top:8px}
+.cc-scenario-drv-label{font-size:7px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:5px}
+.cc-scenario-drv{font-size:10px;color:rgba(232,224,208,.5);padding:2px 0;display:flex;gap:6px;align-items:baseline}
+.cc-scenario-drv-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.cc-outlook-locked{font-size:9px;color:#B8973A;margin-top:6px;letter-spacing:.06em}
+
 .cc-forecast{margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:4px}
 .cc-forecast-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:6px}
 .cc-forecast-dir{font-size:18px;font-weight:600;line-height:1;margin-bottom:8px}
@@ -1524,6 +1540,7 @@ setInterval(() => {
     </div>
 
     <!-- Summary: premium shows text, free shows blur + CTA -->
+    <div id="cc-outlook-block"></div>
     <div id="cc-forecast-block"></div>
     <div id="cc-change-block"></div>
     <div id="cc-summary-block"></div>
@@ -1655,6 +1672,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-level').textContent  = '';
   document.getElementById('cc-summary-block').innerHTML = '';
   document.getElementById('cc-drivers-block').innerHTML = '';
+  document.getElementById('cc-outlook-block').innerHTML='';
   document.getElementById('cc-forecast-block').innerHTML='';
   document.getElementById('cc-change-block').innerHTML = '';
   document.getElementById('cc-footer').textContent = '';
@@ -1729,11 +1747,54 @@ function renderCard(c) {
   // Domain accent: top border on card
   document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
   renderForecast(c.forecast_7d||null,_clientCaps);
+  renderOutlook30d(c.forecast_30d||null,_clientCaps);
   renderChangeAttribution(c.delta || 0, c.change_drivers || [], _clientCaps);
   renderDrivers(c.drivers || [], _clientCaps);
 }
 
 // ── Mini timeline chart ────────────────────────────────────────────────────
+// ── Forecast V2 — 30 Day Outlook ────────────────────────────────────────────
+var DCL30={geopolitics:'#ff7a00',climate:'#22c55e',economy:'#38bdf8',technology:'#a855f7',social:'#ef4444'};
+function renderOutlook30d(fc30, caps){
+  var block=document.getElementById('cc-outlook-block');
+  if(!block)return;
+  if(!caps.forecast_30d||caps.forecast_30d!=='full'){
+    // STRATEGIC PRO+ only
+    if(caps.forecast_7d==='full'&&!caps.forecast_30d){
+      // SIGNAL PRO sees a locked teaser
+      block.innerHTML='<div class="cc-outlook"><div class="cc-outlook-label">Прогноз 30 дней</div><div class="cc-outlook-locked">🔒 Доступно в Strategic PRO</div></div>';
+    }else{
+      block.innerHTML='';
+    }
+    return;
+  }
+  if(!fc30||fc30.best_case===undefined){block.innerHTML='';return;}
+  var best=fc30.best_case, base=fc30.base_case, worst=fc30.worst_case, conf=fc30.confidence;
+  var range=Math.max(1,worst-best);
+  function bar(val,col){
+    var pct=Math.round((val-best)/range*100);
+    return '<div class="cc-outlook-bar-wrap"><div class="cc-outlook-bar" style="width:'+pct+'%;background:'+col+'"></div></div>';
+  }
+  var h='<div class="cc-outlook"><div class="cc-outlook-label">Прогноз 30 дней</div>'
+       +'<div class="cc-outlook-scenarios">'
+       +'<div class="cc-outlook-row"><span class="cc-outlook-name">Лучший сценарий</span>'+bar(best,'#22c55e')+'<span class="cc-outlook-val" style="color:#22c55e">'+best+'</span></div>'
+       +'<div class="cc-outlook-row"><span class="cc-outlook-name">Базовый</span>'+bar(base,'#D4AF5A')+'<span class="cc-outlook-val" style="color:#D4AF5A">'+base+'</span></div>'
+       +'<div class="cc-outlook-row"><span class="cc-outlook-name">Худший сценарий</span>'+bar(worst,'#ef4444')+'<span class="cc-outlook-val" style="color:#ef4444">'+worst+'</span></div>'
+       +'</div>'
+       +'<div class="cc-outlook-conf">Уверенность модели: '+conf+'%</div>';
+  // ELITE: scenario drivers
+  if(caps.scenario_engine&&fc30.scenario_drivers&&fc30.scenario_drivers.length){
+    h+='<div class="cc-scenario-drivers"><div class="cc-scenario-drv-label">Сценарные факторы</div>';
+    fc30.scenario_drivers.forEach(function(d){
+      var col=DCL30[d.domain]||'#B8973A';
+      h+='<div class="cc-scenario-drv"><div class="cc-scenario-drv-dot" style="background:'+col+'"></div>'+_esc(d.name)+'</div>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  block.innerHTML=h;
+}
+
 // ── Forecast Engine V1 ──────────────────────────────────────────────────────
 var _FDIR={up:{icon:'↗',text:'Риск растёт',col:'#ef4444'},down:{icon:'↘',text:'Риск снижается',col:'#22c55e'},stable:{icon:'→',text:'Риск стабилен',col:'rgba(255,255,255,.4)'}};
 function renderForecast(fc,caps){
