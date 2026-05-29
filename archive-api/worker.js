@@ -1604,6 +1604,28 @@ function _filterSnapshotTier(data, premium) {
       base.change_drivers = c.change_drivers;
     }
     if (premium && c.summary) base.summary = c.summary;
+
+    // forecast_7d: FREE gets direction only, SIGNAL PRO+ gets full
+    if (c.forecast_7d) {
+      if (premium) {
+        // SIGNAL PRO / STRATEGIC PRO / ELITE: full forecast
+        base.forecast_7d = {
+          direction:  c.forecast_7d.direction,
+          score_min:  c.forecast_7d.score_min,
+          score_max:  c.forecast_7d.score_max,
+          confidence: c.forecast_7d.confidence,
+        };
+      } else {
+        // FREE: direction arrow only
+        base.forecast_7d = { direction: c.forecast_7d.direction };
+      }
+    }
+    // Architecture stub for V2: forecast_30d / forecast_90d / forecast_180d
+    // Same pattern — pass through when field exists in snapshot
+    if (premium && c.forecast_30d)  base.forecast_30d  = c.forecast_30d;
+    if (premium && c.forecast_90d)  base.forecast_90d  = c.forecast_90d;
+    if (premium && c.forecast_180d) base.forecast_180d = c.forecast_180d;
+
     return base;
   });
   return { date: data.date, generated_at: data.generated_at, countries };
