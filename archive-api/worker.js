@@ -80,6 +80,8 @@ export default {
     return handleCorrelations(request, env);
   if (path.startsWith('/api/propagation/') && request.method === 'GET')
     return handlePropagation(request, env);
+  if (path.startsWith('/api/systemic/') && request.method === 'GET')
+    return handleSystemic(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1566,6 +1568,7 @@ function getTierCapabilities(tier) {
       scenario_access:     'none',
       correlation_access: 'none',
       propagation_access: 'teaser',
+      systemic_access:    'score',
     },
     signal: {
       tier:                'signal',
@@ -1585,6 +1588,7 @@ function getTierCapabilities(tier) {
       scenario_access:     'base',
       correlation_access: 'top3',
       propagation_access: 'chain',
+      systemic_access:    'score+level',
     },
     strategic: {
       tier:                'strategic',
@@ -1604,6 +1608,7 @@ function getTierCapabilities(tier) {
       scenario_access:     'full',
       correlation_access: 'full',
       propagation_access: 'full',
+      systemic_access:    'full',
     },
     elite: {
       tier:                'elite',
@@ -1623,6 +1628,7 @@ function getTierCapabilities(tier) {
       scenario_access:     'drivers',
       correlation_access: 'full+explain',
       propagation_access: 'full+explain',
+      systemic_access:    'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2345,6 +2351,102 @@ function _filterPropagation(data, access, tier) {
   // ELITE: tertiary + impact_matrix + channel explanations
   base.tertiary_impacts = data.tertiary_impacts || [];
   base.impact_matrix    = data.impact_matrix    || [];
+
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SYSTEMIC RISK ENGINE V1 — Worker endpoint
+// GET /api/systemic/{CC}
+// systemic_access:
+//   score        → FREE: systemic_score only
+//   score+level  → SIGNAL: + systemic_level + active combo count
+//   full         → STRATEGIC: + all active_combos (no explanation)
+//   full+explain → ELITE: + explanation + domain_matrix + cascade_probability
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleSystemic(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.systemic_access || 'score';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
+
+  if (!cc || cc.length !== 2) {
+    return new Response(JSON.stringify({ error: 'Invalid country code' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  const cacheKey = `systemic:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                   'X-Cache': 'HIT', 'X-Tier': tier }
+      });
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/systemic/${cc}.json`;
+    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    if (r.status === 404) return new Response(JSON.stringify({ error: 'No systemic data for ' + cc }), {
+      status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+    if (!r.ok) throw new Error('fetch failed: ' + r.status);
+    const data   = await r.json();
+    const result = _filterSystemic(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 600 }); } catch (_) {}
+    }
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterSystemic(data, access, tier) {
+  // Always: score + country identity
+  const base = {
+    country:         data.country,
+    country_name:    data.country_name,
+    date:            data.date,
+    tier,
+    systemic_score:  data.systemic_score,
+    systemic_pressure: data.systemic_pressure,
+  };
+
+  if (access === 'score') return base;
+
+  // SIGNAL+: level + combo count
+  base.systemic_level    = data.systemic_level;
+  base.systemic_level_ru = data.systemic_level_ru;
+  base.active_domain_count = data.active_domain_count;
+  base.cascade_count     = data.cascade_count;
+
+  if (access === 'score+level') return base;
+
+  // STRATEGIC+: active combos (no explanation)
+  base.active_combos = (data.active_combos || []).map(c => ({
+    label:            c.label,
+    domain_a:         c.domain_a,
+    domain_b:         c.domain_b,
+    cascade_probability: c.cascade_probability,
+    is_critical:      c.is_critical,
+  }));
+
+  if (access === 'full') return base;
+
+  // ELITE: explanation + domain_matrix + full combo data
+  base.active_combos = data.active_combos || [];
+  base.domain_matrix = data.domain_matrix || [];
 
   return base;
 }
