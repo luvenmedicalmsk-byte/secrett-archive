@@ -30,6 +30,7 @@ CORRELATIONS_DIR = DOCS_DIR / "correlations"
 PROPAGATION_DIR  = DOCS_DIR / "propagation"
 SYSTEMIC_DIR     = DOCS_DIR / "systemic"
 EARLY_WARNING_DIR = DOCS_DIR / "early-warning"
+DECISION_DIR      = DOCS_DIR / "decision-support"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -2252,6 +2253,336 @@ def save_early_warning(snapshots: list[dict]) -> None:
             print(f"  [EW] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[EW] Saved early warning for {len(snapshots)} countries", file=sys.stderr)
 
+# ── ACTION LIBRARY — domain × level → concrete actions ───────────────────
+# Each action: {label, description, priority(1-5), urgency, confidence}
+_ACTION_LIBRARY: dict[str, list[dict]] = {
+    "geopolitics": [
+        {"label": "Дипломатическая эскалация",
+         "desc":  "Активировать дипломатические каналы снижения напряжённости",
+         "priority": 5, "urgency": "high",   "confidence": 78},
+        {"label": "Активация союзников",
+         "desc":  "Инициировать консультации с ключевыми партнёрами",
+         "priority": 4, "urgency": "medium", "confidence": 72},
+        {"label": "Санкционный анализ",
+         "desc":  "Оценить последствия санкционного давления",
+         "priority": 3, "urgency": "medium", "confidence": 65},
+        {"label": "Мониторинг вооружений",
+         "desc":  "Усилить разведывательное наблюдение",
+         "priority": 4, "urgency": "high",   "confidence": 80},
+        {"label": "Evacuation Planning",
+         "desc":  "Разработать планы экстренной эвакуации",
+         "priority": 2, "urgency": "low",    "confidence": 60},
+    ],
+    "economy": [
+        {"label": "Диверсификация поставок",
+         "desc":  "Снизить зависимость от уязвимых цепочек поставок",
+         "priority": 5, "urgency": "high",   "confidence": 82},
+        {"label": "Валютная защита",
+         "desc":  "Хеджировать валютные риски и укрепить резервы",
+         "priority": 4, "urgency": "high",   "confidence": 75},
+        {"label": "Пересмотр инвестиций",
+         "desc":  "Отложить капитальные вложения до стабилизации",
+         "priority": 3, "urgency": "medium", "confidence": 70},
+        {"label": "Ликвидность",
+         "desc":  "Увеличить ликвидные резервы на 20-30%",
+         "priority": 4, "urgency": "medium", "confidence": 77},
+        {"label": "Торговые альтернативы",
+         "desc":  "Идентифицировать альтернативные рынки сбыта",
+         "priority": 3, "urgency": "low",    "confidence": 65},
+    ],
+    "climate": [
+        {"label": "Водный резерв",
+         "desc":  "Активировать протоколы управления водными ресурсами",
+         "priority": 5, "urgency": "high",   "confidence": 85},
+        {"label": "Продовольственная безопасность",
+         "desc":  "Наращивать стратегические запасы продовольствия",
+         "priority": 4, "urgency": "high",   "confidence": 80},
+        {"label": "Инфраструктурная адаптация",
+         "desc":  "Усилить критическую инфраструктуру к экстремальным событиям",
+         "priority": 3, "urgency": "medium", "confidence": 72},
+        {"label": "Страховая защита",
+         "desc":  "Пересмотреть страховые покрытия климатических рисков",
+         "priority": 2, "urgency": "low",    "confidence": 68},
+        {"label": "Миграционный план",
+         "desc":  "Подготовить план управления климатической миграцией",
+         "priority": 3, "urgency": "medium", "confidence": 65},
+    ],
+    "technology": [
+        {"label": "Кибербезопасность",
+         "desc":  "Аудит критических систем и усиление защиты",
+         "priority": 5, "urgency": "high",   "confidence": 88},
+        {"label": "Технологический суверенитет",
+         "desc":  "Снизить зависимость от иностранных технологий",
+         "priority": 4, "urgency": "medium", "confidence": 72},
+        {"label": "ИИ-регулирование",
+         "desc":  "Разработать регуляторные рамки для ИИ-рисков",
+         "priority": 3, "urgency": "medium", "confidence": 68},
+        {"label": "Резервные системы",
+         "desc":  "Обеспечить резервирование критических цифровых систем",
+         "priority": 4, "urgency": "high",   "confidence": 80},
+        {"label": "Цепочки полупроводников",
+         "desc":  "Диверсифицировать источники полупроводников",
+         "priority": 3, "urgency": "medium", "confidence": 70},
+    ],
+    "social": [
+        {"label": "Социальный мониторинг",
+         "desc":  "Усилить мониторинг общественных настроений",
+         "priority": 4, "urgency": "high",   "confidence": 75},
+        {"label": "Антикризисная коммуникация",
+         "desc":  "Активировать протоколы кризисных коммуникаций",
+         "priority": 5, "urgency": "high",   "confidence": 80},
+        {"label": "Социальная поддержка",
+         "desc":  "Усилить программы социальной защиты уязвимых групп",
+         "priority": 3, "urgency": "medium", "confidence": 70},
+        {"label": "Управление миграцией",
+         "desc":  "Подготовить инфраструктуру для миграционных потоков",
+         "priority": 3, "urgency": "medium", "confidence": 65},
+        {"label": "Правопорядок",
+         "desc":  "Оценить готовность сил правопорядка",
+         "priority": 4, "urgency": "high",   "confidence": 72},
+    ],
+}
+
+# ── DECISION PRESSURE THRESHOLDS ─────────────────────────────────────────
+_DECISION_PRESSURE = [
+    (75, "critical",  "Критическое"),
+    (55, "high",      "Высокое"),
+    (35, "medium",    "Среднее"),
+    (0,  "low",       "Низкое"),
+]
+
+# ── DECISION LEVEL THRESHOLDS ─────────────────────────────────────────────
+_DECISION_LEVELS = [
+    (75, "act_now",  "Действовать немедленно"),
+    (55, "mitigate", "Митигировать угрозу"),
+    (35, "prepare",  "Подготовиться"),
+    (0,  "monitor",  "Мониторинг"),
+]
+
+
+def compute_decision_support(snap: dict) -> dict:
+    """
+    Decision Support Engine V1 — deterministic action recommendation system.
+    Converts signals from all other engines into concrete actionable intelligence.
+    No LLM. Pure rule-based logic.
+
+    STEPS 1-8: Aggregate signals from all engines
+    STEP 9:  Select domain-specific actions from _ACTION_LIBRARY
+    STEP 10: Readiness Score — urgency of action
+    STEP 11: Decision Pressure — current pressure level
+    STEP 12: Opportunity Signals — upside potential
+    STEP 13: Strategic Windows — time-sensitive action windows
+    """
+    score       = snap.get("risk_score", 50)
+    delta       = snap.get("delta", 0)
+    level       = snap.get("escalation_level", "stable")
+    domain      = snap.get("dominant_domain", "geopolitics")
+    drivers     = snap.get("drivers", [])
+    f30         = snap.get("forecast_30d") or {}
+    esc_ord     = _ESCALATION_ORDER.get(level, 0)
+
+    # ── STEPS 1-8: Aggregate all engine signals ────────────────────────────
+    # Combine: risk_score, forecast pressure, escalation, driver severity
+    hot_drivers   = [d for d in drivers if d.get("severity", 0) >= 65]
+    avg_drv_sev   = (sum(d["severity"] for d in hot_drivers) / len(hot_drivers)
+                     if hot_drivers else score)
+    worst_30d     = f30.get("worst_case", score)
+    f_conf        = f30.get("confidence", 70) / 100
+
+    # Composite decision score
+    decision_score = min(100, round(
+        score           * 0.35 +
+        avg_drv_sev     * 0.25 +
+        worst_30d       * 0.20 +
+        esc_ord / 3.0   * 100 * 0.12 +
+        abs(delta) * 5  * 0.08
+    ))
+
+    # ── STEP 10: Readiness Score ──────────────────────────────────────────
+    # How urgently action is required (0-100)
+    velocity_factor = min(30, abs(delta) * 4)
+    readiness_score = min(100, round(decision_score * 0.65 + velocity_factor * 0.35))
+
+    # ── STEP 11: Decision Pressure ────────────────────────────────────────
+    pressure_level    = "low"
+    pressure_level_ru = "Низкое"
+    for thresh, lvl, lvl_ru in _DECISION_PRESSURE:
+        if decision_score >= thresh:
+            pressure_level    = lvl
+            pressure_level_ru = lvl_ru
+            break
+
+    # Decision level
+    decision_level    = "monitor"
+    decision_label_ru = "Мониторинг"
+    for thresh, lvl, lbl in _DECISION_LEVELS:
+        if decision_score >= thresh:
+            decision_level    = lvl
+            decision_label_ru = lbl
+            break
+
+    # ── STEP 9: Action Matrix ─────────────────────────────────────────────
+    # Select top actions for dominant domain, scaled by decision_score
+    base_actions = _ACTION_LIBRARY.get(domain, _ACTION_LIBRARY["geopolitics"])
+
+    # Score each action: higher priority + higher urgency = higher rank
+    urgency_map = {"high": 3, "medium": 2, "low": 1}
+    ranked_actions = sorted(
+        base_actions,
+        key=lambda a: -(a["priority"] * urgency_map.get(a["urgency"], 1))
+    )
+
+    # Scale action confidence by current decision pressure
+    pressure_scalar = decision_score / 100
+    actions: list[dict] = []
+    for a in ranked_actions[:5]:
+        scaled_confidence = min(98, round(a["confidence"] * 0.7 + pressure_scalar * 30))
+        actions.append({
+            "label":       a["label"],
+            "description": a["desc"],
+            "priority":    a["priority"],
+            "urgency":     a["urgency"],
+            "confidence":  scaled_confidence,
+            "domain":      domain,
+        })
+
+    # Add cross-domain action if multiple hot domains
+    active_doms = set()
+    for d in drivers:
+        if d.get("severity", 0) >= 55: active_doms.add(d.get("domain",""))
+    if len(active_doms) >= 3:
+        actions.append({
+            "label":       "Межведомственная координация",
+            "description": f"Синхронизировать ответные меры по {len(active_doms)} доменам",
+            "priority":    5,
+            "urgency":     "high",
+            "confidence":  round(decision_score * 0.85),
+            "domain":      "cross",
+        })
+
+    actions.sort(key=lambda a: -(a["priority"] * urgency_map.get(a["urgency"], 1)))
+
+    # ── STEP 12: Opportunity Signals ─────────────────────────────────────
+    # Look for positive signals: risk dropping, scenarios improving, low baseline
+    opportunity_score = 0
+    opportunity_signals: list[dict] = []
+
+    if delta < -3:
+        opportunity_score += 25
+        opportunity_signals.append({
+            "type":  "risk_declining",
+            "label": "Риск снижается",
+            "desc":  f"Δ{delta} указывает на стабилизацию",
+            "score": min(85, abs(delta) * 8),
+        })
+
+    best_30d = f30.get("best_case", score)
+    if best_30d < score - 8:
+        opportunity_score += 20
+        opportunity_signals.append({
+            "type":  "positive_scenario",
+            "label": "Благоприятный сценарий",
+            "desc":  f"Лучший сценарий: {best_30d} (текущий: {score})",
+            "score": min(80, round((score - best_30d) * 3)),
+        })
+
+    if score < 45 and esc_ord <= 1:
+        opportunity_score += 20
+        opportunity_signals.append({
+            "type":  "stability_window",
+            "label": "Окно стабильности",
+            "desc":  "Низкий базовый риск — время для инициатив",
+            "score": round((50 - score) * 1.5),
+        })
+
+    if f30.get("confidence", 0) >= 75 and worst_30d < 65:
+        opportunity_score += 15
+        opportunity_signals.append({
+            "type":  "high_confidence_forecast",
+            "label": "Уверенный прогноз",
+            "desc":  f"Прогноз {f30.get('confidence')}% уверенности, худший: {worst_30d}",
+            "score": round(f30.get("confidence", 0) * 0.7),
+        })
+
+    opportunity_score = min(100, opportunity_score)
+    opportunity_signals.sort(key=lambda x: -x["score"])
+
+    # ── STEP 13: Strategic Windows ────────────────────────────────────────
+    # Is there a time window to act before situation deteriorates?
+    best_30  = f30.get("best_case", score)
+    base_30  = f30.get("base_case", score)
+    worst_30 = f30.get("worst_case", score)
+
+    def _window_status(horizon_score: float) -> str:
+        if horizon_score <= score - 5:   return "window_open"
+        elif horizon_score <= score + 5: return "window_closing"
+        else:                            return "window_closed"
+
+    windows = [
+        {
+            "horizon":      "30d",
+            "label":        "30 дней",
+            "status":       _window_status(base_30),
+            "status_ru":    {"window_open": "Открыто", "window_closing": "Закрывается", "window_closed": "Закрыто"}[_window_status(base_30)],
+            "projected_score": base_30,
+            "urgency_score": max(0, base_30 - score),
+        },
+        {
+            "horizon":      "90d",
+            "label":        "90 дней",
+            "status":       _window_status(round(base_30 * 1.05 + score * 0.05)),
+            "status_ru":    {"window_open": "Открыто", "window_closing": "Закрывается", "window_closed": "Закрыто"}[_window_status(round(base_30 * 1.05 + score * 0.05))],
+            "projected_score": round(base_30 * 1.05 + score * 0.05),
+            "urgency_score": max(0, round(base_30 * 1.05 + score * 0.05) - score),
+        },
+        {
+            "horizon":      "180d",
+            "label":        "180 дней",
+            "status":       _window_status(min(95, round(worst_30 * 0.9 + score * 0.1))),
+            "status_ru":    {"window_open": "Открыто", "window_closing": "Закрывается", "window_closed": "Закрыто"}[_window_status(min(95, round(worst_30 * 0.9 + score * 0.1)))],
+            "projected_score": min(95, round(worst_30 * 0.9 + score * 0.1)),
+            "urgency_score": max(0, min(95, round(worst_30 * 0.9 + score * 0.1)) - score),
+        },
+    ]
+
+    return {
+        "country":            snap["country"],
+        "country_name":       snap["country_name"],
+        "date":               TODAY,
+        "generated_at":       datetime.now(timezone.utc).isoformat(),
+        # Core scores
+        "decision_score":     decision_score,
+        "readiness_score":    readiness_score,
+        "opportunity_score":  opportunity_score,
+        "decision_level":     decision_level,
+        "decision_label_ru":  decision_label_ru,
+        "decision_pressure":  pressure_level,
+        "decision_pressure_ru": pressure_level_ru,
+        # Action matrix
+        "actions":            actions,
+        # Opportunity
+        "opportunity_signals":opportunity_signals,
+        # Windows
+        "strategic_windows":  windows,
+        # Context
+        "dominant_domain":    domain,
+        "active_hot_drivers": len(hot_drivers),
+    }
+
+
+def save_decision_support(snapshots: list[dict]) -> None:
+    """Save decision support data for all 25 countries to docs/decision-support/{CC}.json"""
+    DECISION_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            ds = compute_decision_support(snap)
+            with open(DECISION_DIR / f"{iso2}.json", "w") as f:
+                json.dump(ds, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [DS] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[DS] Saved decision support for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -2281,6 +2612,7 @@ def main():
     save_propagation(snapshots)
     save_systemic(snapshots)
     save_early_warning(snapshots)
+    save_decision_support(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
