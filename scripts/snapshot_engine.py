@@ -23,6 +23,7 @@ SNAP_DIR       = DOCS_DIR / "snapshots"
 DAILY_DIR      = SNAP_DIR / "daily"
 HISTORY_DIR    = SNAP_DIR / "history"
 INTEL_DIR      = DOCS_DIR / "intelligence"
+ALERTS_DIR     = DOCS_DIR / "alerts"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -757,6 +758,174 @@ def update_index(snapshots: list[dict]) -> None:
 # ── ENTRYPOINT ────────────────────────────────────────────────────────────────
 
 
+# ── ESCALATION ORDER for upgrade detection ────────────────────────────────
+_ESCALATION_ORDER = {"stable": 0, "elevated": 1, "pressured": 2, "critical": 3}
+
+
+def generate_alerts(snap: dict, prev_snap: dict) -> list[dict]:
+    """
+    Alert Engine V1 — deterministic alert generation per country snapshot.
+    No LLM. No external APIs.
+    Compares current snapshot with previous snapshot from history.
+
+    Alert types:
+      risk_spike          delta >= 5
+      risk_drop           delta <= -5
+      critical_driver     any driver severity >= 85
+      escalation_upgrade  escalation_level increased (e.g. stable→elevated)
+      forecast_alert      forecast_30d.worst_case >= 85
+    """
+    alerts = []
+    ts      = datetime.now(timezone.utc).isoformat()
+    cc      = snap["country"]
+    cc_name = snap["country_name"]
+    score   = snap.get("risk_score", 0)
+    delta   = snap.get("delta", 0)
+    level   = snap.get("escalation_level", "stable")
+    drivers = snap.get("drivers", [])
+    f30     = snap.get("forecast_30d", {}) or {}
+
+    # ── Risk Spike ────────────────────────────────────────────────────────
+    if delta >= 5:
+        alerts.append({
+            "type":      "risk_spike",
+            "severity":  min(95, score + delta),
+            "country":   cc,
+            "country_name": cc_name,
+            "title":     "Резкий рост риска",
+            "message":   f"+{delta} пунктов за 24 часа. Текущий индекс: {score}",
+            "timestamp": ts,
+        })
+
+    # ── Risk Drop ─────────────────────────────────────────────────────────
+    elif delta <= -5:
+        alerts.append({
+            "type":      "risk_drop",
+            "severity":  max(5, score),
+            "country":   cc,
+            "country_name": cc_name,
+            "title":     "Снижение уровня риска",
+            "message":   f"{delta} пунктов за 24 часа. Текущий индекс: {score}",
+            "timestamp": ts,
+        })
+
+    # ── Critical Driver ────────────────────────────────────────────────────
+    for drv in drivers:
+        if drv.get("severity", 0) >= 85:
+            alerts.append({
+                "type":      "critical_driver",
+                "severity":  drv["severity"],
+                "country":   cc,
+                "country_name": cc_name,
+                "title":     "Критический фактор риска",
+                "message":   drv.get("name", "")[:80],
+                "domain":    drv.get("domain", ""),
+                "timestamp": ts,
+            })
+            break  # one critical_driver alert per country per day
+
+    # ── Escalation Upgrade ────────────────────────────────────────────────
+    prev_level = prev_snap.get("escalation_level", level) if prev_snap else level
+    prev_ord   = _ESCALATION_ORDER.get(prev_level, 0)
+    curr_ord   = _ESCALATION_ORDER.get(level, 0)
+    if curr_ord > prev_ord:
+        level_labels = {
+            "elevated":  "Повышенный",
+            "pressured": "Под давлением",
+            "critical":  "Критический",
+        }
+        alerts.append({
+            "type":      "escalation_upgrade",
+            "severity":  score,
+            "country":   cc,
+            "country_name": cc_name,
+            "title":     "Эскалация уровня угрозы",
+            "message":   (f"{prev_level.capitalize()} → "
+                          f"{level_labels.get(level, level.capitalize())}"),
+            "timestamp": ts,
+        })
+
+    # ── Forecast Alert ────────────────────────────────────────────────────
+    worst = f30.get("worst_case", 0)
+    if worst >= 85:
+        alerts.append({
+            "type":      "forecast_alert",
+            "severity":  worst,
+            "country":   cc,
+            "country_name": cc_name,
+            "title":     "Критический прогноз на 30 дней",
+            "message":   (f"Худший сценарий: {worst}/100 "
+                          f"(базовый: {f30.get('base_case', '?')})"),
+            "timestamp": ts,
+        })
+
+    return alerts
+
+
+def _load_prev_snapshot(iso2: str) -> dict:
+    """Load yesterday's snapshot record from history for alert comparison."""
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    if not hist_path.exists():
+        return {}
+    try:
+        with open(hist_path) as f:
+            hist = json.load(f)
+        snaps = hist.get("snapshots", [])
+        # Return second-to-last record (last = today, not yet written)
+        if len(snaps) >= 2:
+            return snaps[-2]
+        if len(snaps) == 1:
+            return snaps[-1]
+        return {}
+    except Exception:
+        return {}
+
+
+def generate_global_alerts(snapshots: list[dict]) -> None:
+    """
+    Alert Engine V1 — global aggregator.
+    Collects alerts from all 25 countries, deduplicates, sorts by severity DESC.
+    Saves to docs/alerts/latest.json.
+    """
+    ALERTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    all_alerts: list[dict] = []
+    for snap in snapshots:
+        iso2     = snap["country"]
+        prev     = _load_prev_snapshot(iso2)
+        country_alerts = generate_alerts(snap, prev)
+        all_alerts.extend(country_alerts)
+
+    # Deduplicate: one alert per (country, type) per day
+    seen: set[str] = set()
+    deduped: list[dict] = []
+    for a in all_alerts:
+        key = f"{a['country']}:{a['type']}"
+        if key not in seen:
+            seen.add(key)
+            deduped.append(a)
+
+    # Sort by severity DESC, limit 100
+    deduped.sort(key=lambda a: -a.get("severity", 0))
+    deduped = deduped[:100]
+
+    payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "date":         TODAY,
+        "count":        len(deduped),
+        "alerts":       deduped,
+    }
+
+    path = ALERTS_DIR / "latest.json"
+    with open(path, "w") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+    print(
+        f"[ALERT] Saved: {path}  count={len(deduped)}",
+        file=sys.stderr
+    )
+
+
 def generate_intelligence_feed(snapshots: list[dict]) -> None:
     """
     Daily Intelligence Feed V1.
@@ -901,6 +1070,7 @@ def main():
     save_daily(snapshots)
     update_index(snapshots)
     generate_intelligence_feed(snapshots)
+    generate_global_alerts(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
