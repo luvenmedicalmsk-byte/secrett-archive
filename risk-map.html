@@ -265,6 +265,28 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #cc-tl-chart{width:100%;height:48px}
 .cc-tl-chart-label{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.2);text-align:right;margin-bottom:2px}
 
+/* ── Scenario Engine ── */
+.cc-scenarios{margin-bottom:14px}
+.cc-scenarios-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px}
+.cc-sc-grid{display:flex;flex-direction:column;gap:6px}
+.cc-sc-card{padding:9px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02)}
+.cc-sc-card.best{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
+.cc-sc-card.base{border-color:rgba(212,175,90,.25);background:rgba(212,175,90,.04)}
+.cc-sc-card.worst{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.04)}
+.cc-sc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.cc-sc-name{font-size:10px;font-weight:600;color:rgba(232,224,208,.8);letter-spacing:.06em}
+.cc-sc-prob{font-size:9px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3)}
+.cc-sc-row{display:flex;justify-content:space-between;align-items:baseline}
+.cc-sc-score{font-size:20px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-sc-delta{font-size:11px;font-family:'Courier New',monospace}
+.cc-sc-delta.up{color:#ef4444}.cc-sc-delta.down{color:#22c55e}.cc-sc-delta.flat{color:rgba(255,255,255,.25)}
+.cc-sc-drivers{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06)}
+.cc-sc-drv-label{font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:4px}
+.cc-sc-drv{font-size:10px;color:rgba(232,224,208,.5);padding:1px 0;display:flex;justify-content:space-between}
+.cc-sc-drv-impact{font-size:9px;font-family:'Courier New',monospace;color:rgba(255,255,255,.25)}
+.cc-scenarios-lock{font-size:9px;color:#B8973A;margin-top:6px;letter-spacing:.06em}
+.cc-scenarios-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:10px 0;text-align:center;font-style:italic}
+
 </style>
 </head>
 <body>
@@ -1645,6 +1667,7 @@ setInterval(() => {
     <div id="cc-change-block"></div>
     <div id="cc-summary-block"></div>
     <div id="cc-drivers-block"></div>
+    <div id="cc-scenarios-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1709,10 +1732,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers'},
   };
   return C[tier]||C.free;
 }
@@ -1777,6 +1800,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-level').textContent  = '';
   document.getElementById('cc-summary-block').innerHTML = '';
   document.getElementById('cc-drivers-block').innerHTML = '';
+  document.getElementById('cc-scenarios-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -1807,6 +1831,7 @@ window.openCountryCard = async function(cc) {
   renderTimeline(hist, country.risk_score);
   // Timeline Engine V1
   fetchTimeline(cc).then(function(tlData) { renderCountryTimeline(tlData, _clientCaps); });
+  fetchScenarios(cc).then(function(scData) { renderScenarios(scData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -2624,6 +2649,88 @@ function _renderTlMiniChart(events, caps) {
   ctx.arc(scX(points.length-1), scY(lastScore), 3, 0, Math.PI*2);
   ctx.fillStyle = lineCol;
   ctx.fill();
+}
+
+
+// ── Scenario Engine V1 — UI ──────────────────────────────────────────────
+var _scCache = {};   // {CC: scenario data}
+
+async function fetchScenarios(cc) {
+  if (_scCache[cc]) return _scCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/scenarios/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _scCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderScenarios(data, caps) {
+  var block = document.getElementById('cc-scenarios-block');
+  if (!block) return;
+  var access = caps.scenario_access || 'none';
+
+  if (!data) { block.innerHTML = ''; return; }
+
+  // FREE: teaser
+  if (access === 'none' || data.teaser) {
+    block.innerHTML = '<div class="cc-scenarios">'
+      + '<div class="cc-scenarios-label">Сценарии (30 дней)</div>'
+      + '<div class="cc-scenarios-teaser">Доступно в Signal PRO и выше</div>'
+      + '<div class="cc-scenarios-lock">🔒 Базовый сценарий в Signal PRO · Все сценарии в Strategic PRO</div>'
+      + '</div>';
+    return;
+  }
+
+  var scenarios = data.scenarios || [];
+  if (!scenarios.length) { block.innerHTML = ''; return; }
+
+  var html = '<div class="cc-scenarios"><div class="cc-scenarios-label">Сценарии · 30 дней</div>'
+           + '<div class="cc-sc-grid">';
+
+  scenarios.forEach(function(sc) {
+    var cls  = sc.name === 'Best Case' ? 'best' : sc.name === 'Worst Case' ? 'worst' : 'base';
+    var dfc  = sc.delta_from_current || 0;
+    var dStr = dfc > 0 ? '+' + dfc : String(dfc);
+    var dCls = dfc > 0 ? 'up' : dfc < 0 ? 'down' : 'flat';
+    var scoreCol = sc.score >= 80 ? '#dc2626' : sc.score >= 65 ? '#ef4444' : sc.score >= 50 ? '#D4AF5A' : '#22c55e';
+
+    html += '<div class="cc-sc-card ' + cls + '">'
+          + '<div class="cc-sc-top">'
+          +   '<span class="cc-sc-name">' + _esc(sc.name_ru || sc.name) + '</span>'
+          +   '<span class="cc-sc-prob">Вероятность: ' + (sc.probability || '?') + '%</span>'
+          + '</div>'
+          + '<div class="cc-sc-row">'
+          +   '<span class="cc-sc-score" style="color:' + scoreCol + '">' + (sc.score || '?') + '</span>'
+          +   '<span class="cc-sc-delta ' + dCls + '">Δ ' + dStr + '</span>'
+          + '</div>';
+
+    // ELITE: scenario drivers
+    if (access === 'drivers' && sc.drivers && sc.drivers.length) {
+      html += '<div class="cc-sc-drivers">'
+            + '<div class="cc-sc-drv-label">Ключевые факторы</div>';
+      sc.drivers.forEach(function(drv) {
+        html += '<div class="cc-sc-drv">'
+              + '<span>' + _esc((drv.driver || drv.name || '').substring(0, 40)) + '</span>'
+              + '<span class="cc-sc-drv-impact">+' + (drv.impact || 0) + '</span>'
+              + '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+  });
+
+  // Signal PRO sees Base Case — suggest Strategic PRO for full view
+  if (access === 'base') {
+    html += '<div class="cc-scenarios-lock">🔒 Все 3 сценария в Strategic PRO</div>';
+  }
+
+  html += '</div></div>';
+  block.innerHTML = html;
 }
 
 })(); // end IIFE
