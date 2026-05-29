@@ -2,7 +2,7 @@ name: Обновление карты сигналов
 
 on:
   schedule:
-    - cron: '0 */4 * * *'   # FIX1: было */2 (1800 min/month) -> */4 (900 min/month)
+    - cron: '0 */4 * * *'
   workflow_dispatch:
 
 jobs:
@@ -42,22 +42,31 @@ jobs:
         id: healthcheck
         run: |
           if [ ! -f docs/events.json ]; then
-            echo '::error::events.json не найден'
+            echo "::error::events.json не найден"
             exit 1
           fi
           COUNT=$(python3 -c "import json; d=json.load(open('docs/events.json')); print(d.get('count', len(d.get('events',[]))))")
           echo "events_count=$COUNT" >> $GITHUB_OUTPUT
           echo "Событий: $COUNT"
           if [ "$COUNT" -lt "10" ]; then
-            echo '::error::Слишком мало событий: '$COUNT
+            echo "::error::Слишком мало событий: $COUNT"
             exit 1
           fi
+
+      - name: Запуск Country Snapshot Engine
+        id: snapshot
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python scripts/snapshot_engine.py
 
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add docs/events.json
+          git add docs/events.json docs/snapshots/
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else
@@ -78,6 +87,6 @@ jobs:
             echo "Telegram secrets не настроены"
             exit 0
           fi
-          MSG="%E2%9A%A0 Архив Pipeline Failed%0ARun: ${{ github.run_number }}%0ATime: $(date -u '+%Y-%m-%d %H:%M UTC')%0AParser: ${{ steps.parser.outcome }} / Health: ${{ steps.healthcheck.outcome }}%0Ahttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          MSG="⚠ Архив Pipeline Failed%0ARun: ${{ github.run_number }}%0ATime: $(date -u '+%Y-%m-%d %H:%M UTC')%0AParser: ${{ steps.parser.outcome }} / Snapshot: ${{ steps.snapshot.outcome }}%0Ahttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             -d "chat_id=${TG_CHAT}&text=${MSG}" > /dev/null
