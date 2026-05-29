@@ -565,6 +565,37 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-strat-hz-val{display:block;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .cc-strat-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
 .cc-strat-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+/* ── Strategy Feedback Engine ── */
+.cc-fb{margin-bottom:14px}
+.cc-fb-header{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.cc-fb-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-fb-score{font-size:20px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-fb-grade{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:3px;flex-shrink:0}
+.cc-fb-grade.excellent{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-fb-grade.good{background:rgba(132,204,22,.10);color:#84cc16;border:1px solid rgba(132,204,22,.25)}
+.cc-fb-grade.fair{background:rgba(250,204,21,.10);color:#fbbf24;border:1px solid rgba(250,204,21,.25)}
+.cc-fb-grade.poor{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-fb-grade.unreliable{background:rgba(220,38,38,.18);color:#dc2626;border:1px solid rgba(220,38,38,.35)}
+.cc-fb-grade.unknown{background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.1)}
+.cc-fb-rates{display:flex;gap:6px;margin-bottom:8px}
+.cc-fb-rate{flex:1;text-align:center;padding:4px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-fb-rate-val{display:block;font-size:14px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-fb-rate-lbl{display:block;font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.22);margin-top:1px}
+.cc-fb-hz{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px}
+.cc-fb-hz-cell{text-align:center;padding:3px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-fb-hz-lbl{display:block;font-size:7px;color:rgba(255,255,255,.22);letter-spacing:.08em;margin-bottom:2px}
+.cc-fb-hz-val{display:block;font-size:12px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-fb-section{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:6px 0 4px}
+.cc-fb-action{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-fb-action:last-child{border-bottom:none}
+.cc-fb-action-id{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.25);flex-shrink:0;width:38px}
+.cc-fb-action-sr{font-size:10px;font-weight:700;font-family:'Cormorant Garamond',serif;flex-shrink:0;width:36px;text-align:right}
+.cc-fb-action-bar-wrap{flex:1;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.cc-fb-action-bar{height:100%;border-radius:2px}
+.cc-fb-conf{display:flex;justify-content:space-between;font-size:9px;color:rgba(232,224,208,.5);margin-top:4px}
+.cc-fb-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-fb-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+.cc-fb-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
 </style>
 </head>
 <body>
@@ -1957,6 +1988,7 @@ setInterval(() => {
     <div id="cc-resilience-block"></div>
     <div id="cc-calibration-block"></div>
     <div id="cc-strategy-block"></div>
+    <div id="cc-feedback-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -2021,10 +2053,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2098,6 +2130,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-resilience-block').innerHTML='';
   document.getElementById('cc-calibration-block').innerHTML='';
   document.getElementById('cc-strategy-block').innerHTML='';
+  document.getElementById('cc-feedback-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2137,6 +2170,7 @@ window.openCountryCard = async function(cc) {
   fetchResilience(cc).then(function(resData) { renderResilience(resData, _clientCaps); });
   fetchCalibration(cc).then(function(calData) { renderCalibration(calData, _clientCaps); });
   fetchStrategy(cc).then(function(strData) { renderStrategy(strData, _clientCaps); });
+  fetchStrategyFeedback(cc).then(function(fbData) { renderStrategyFeedback(fbData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -4286,6 +4320,148 @@ function renderStrategy(data, caps) {
 
   html += '</div>';
   block.innerHTML = html;
+}
+
+
+// ── Strategy Feedback Engine V1 — UI ─────────────────────────────────────
+var _fbCache = {};
+var _FB_GRADE_COL = function(g) {
+  return g==='excellent'?'#22c55e':g==='good'?'#84cc16':
+         g==='fair'?'#fbbf24':g==='poor'?'#f59e0b':
+         g==='unreliable'?'#dc2626':'rgba(255,255,255,.3)';
+};
+
+async function fetchStrategyFeedback(cc) {
+  if (_fbCache[cc]) return _fbCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/strategy-feedback/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _fbCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderStrategyFeedback(data, caps) {
+  var block  = document.getElementById('cc-feedback-block');
+  if (!block) return;
+  var access = caps.feedback_access || 'teaser';
+  if (!data || data.error) { block.innerHTML = ''; return; }
+
+  var grade   = data.feedback_grade    || 'unknown';
+  var gradeRu = data.feedback_grade_ru || '';
+  var sr      = data.strategy_success_rate;
+  var gCol    = _FB_GRADE_COL(grade);
+  var depth   = data.history_depth || 0;
+  var nEval   = data.n_evaluated   || 0;
+
+  var html = '<div class="cc-fb">'
+    + '<div class="cc-fb-header">'
+    +   '<span class="cc-fb-label">Фидбек стратегии</span>'
+    +   (sr !== null && sr !== undefined ? '<span class="cc-fb-score" style="color:' + gCol + '">' + sr + '%</span>' : '')
+    +   '<span class="cc-fb-grade ' + grade + '">' + _esc(gradeRu) + '</span>'
+    + '</div>';
+
+  // FREE: teaser
+  if (access === 'teaser') {
+    if (data.note) {
+      html += '<div class="cc-fb-teaser">' + _esc(data.note) + '</div>';
+    } else {
+      html += '<div class="cc-fb-teaser">Успешность стратегий: ' + (sr !== null ? sr + '%' : '—') + '</div>';
+    }
+    html += '<div class="cc-fb-lock">🔒 Детальный фидбек в Signal PRO</div>'
+          + '<div class="cc-fb-depth">История: ' + depth + ' д. · Оценено: ' + nEval + '</div>'
+          + '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL+: rates + confidence + horizon
+  var fr   = data.strategy_failure_rate;
+  var pr   = data.strategy_partial_rate;
+  var ss   = data.success_score;
+  var ca   = data.confidence_accuracy;
+  var ce   = data.avg_confidence_error;
+  var na   = '—';
+
+  html += '<div class="cc-fb-rates">'
+    + _fbRateCell(sr, 'Успех', sr>=60?'#22c55e':sr>=40?'#fbbf24':'#ef4444')
+    + _fbRateCell(pr, 'Частично', '#fbbf24')
+    + _fbRateCell(fr, 'Неудача', fr<=30?'#22c55e':fr<=50?'#fbbf24':'#ef4444')
+    + _fbRateCell(ss, 'Скор', _FB_GRADE_COL(grade))
+    + '</div>';
+
+  // Confidence accuracy
+  if (ca !== null && ca !== undefined) {
+    html += '<div class="cc-fb-conf">'
+          + '<span>Точность уверенности: <b>' + ca + '%</b></span>'
+          + (ce !== null ? '<span>Ошибка: ±' + ce + 'pt</span>' : '')
+          + '</div>';
+  }
+
+  // Horizon breakdown
+  var hz = data.horizon_breakdown || {};
+  var hzKeys = Object.keys(hz);
+  if (hzKeys.length) {
+    html += '<div class="cc-fb-section">По горизонтам</div><div class="cc-fb-hz">';
+    hzKeys.forEach(function(k) {
+      var h = hz[k];
+      var hCol = h.success_rate>=60?'#22c55e':h.success_rate>=40?'#fbbf24':'#ef4444';
+      html += '<div class="cc-fb-hz-cell">'
+            + '<span class="cc-fb-hz-lbl">' + k + '</span>'
+            + '<span class="cc-fb-hz-val" style="color:' + hCol + '">' + h.success_rate + '%</span>'
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (access === 'summary') {
+    html += '<div class="cc-fb-lock">🔒 Аналитика действий в Strategic PRO</div>'
+          + '<div class="cc-fb-depth">История: ' + depth + 'д · Оценено: ' + nEval + '</div>'
+          + '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: action analytics
+  var aa = data.action_analytics || {};
+  var top = aa.top_actions     || [];
+  var weak= aa.weakest_actions || [];
+
+  if (top.length) {
+    html += '<div class="cc-fb-section">Топ действия (' + (aa.total_actions_tracked||0) + ' всего)</div>';
+    top.forEach(function(a) {
+      var aCol = a.success_rate>=60?'#22c55e':a.success_rate>=40?'#fbbf24':'#ef4444';
+      html += _fbActionRow(a.action_id, a.success_rate, aCol, a.effectiveness_score);
+    });
+  }
+  if (weak.length) {
+    html += '<div class="cc-fb-section">Слабые действия</div>';
+    weak.forEach(function(a) {
+      var aCol = '#ef4444';
+      html += _fbActionRow(a.action_id, a.failure_rate, aCol, a.effectiveness_score);
+    });
+  }
+
+  html += '<div class="cc-fb-depth">История: ' + depth + 'д · Оценено: ' + nEval + '</div>'
+        + '</div>';
+  block.innerHTML = html;
+}
+
+function _fbRateCell(val, lbl, col) {
+  return '<div class="cc-fb-rate">'
+       + '<span class="cc-fb-rate-val" style="color:' + col + '">' + (val !== null && val !== undefined ? val + '%' : '—') + '</span>'
+       + '<span class="cc-fb-rate-lbl">' + lbl + '</span>'
+       + '</div>';
+}
+function _fbActionRow(id, pct, col, eff) {
+  return '<div class="cc-fb-action">'
+       + '<span class="cc-fb-action-id">' + _esc(id||'') + '</span>'
+       + '<div class="cc-fb-action-bar-wrap"><div class="cc-fb-action-bar" style="width:' + (pct||0) + '%;background:' + col + '"></div></div>'
+       + '<span class="cc-fb-action-sr" style="color:' + col + '">' + (pct !== null ? pct + '%' : '—') + '</span>'
+       + '</div>';
 }
 
 })(); // end IIFE
