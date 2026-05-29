@@ -25,6 +25,7 @@ HISTORY_DIR    = SNAP_DIR / "history"
 INTEL_DIR      = DOCS_DIR / "intelligence"
 ALERTS_DIR     = DOCS_DIR / "alerts"
 TIMELINE_DIR   = DOCS_DIR / "timelines"
+SCENARIOS_DIR  = DOCS_DIR / "scenarios"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -1126,6 +1127,128 @@ def save_country_timelines(snapshots: list[dict]) -> None:
             print(f"  [TIMELINE] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[TIMELINE] Saved timelines for {len(snapshots)} countries", file=sys.stderr)
 
+def generate_scenarios(snap: dict) -> list[dict]:
+    """
+    Scenario Engine V1 — deterministic 3-scenario generation.
+    No LLM. No external APIs.
+
+    Uses: risk_score, delta, drivers, change_drivers, forecast_30d, alerts
+    Produces: Best Case / Base Case / Worst Case with probabilities summing to 100.
+
+    Algorithm:
+      1. Base score from forecast_30d.base_case (or linear extrapolation)
+      2. Best/Worst derived from band width based on instability
+      3. Probability split: weighted by driver severity + delta velocity
+      4. Scenario drivers = top contributors to each scenario
+    """
+    score        = snap.get("risk_score", 50)
+    delta        = snap.get("delta", 0)
+    drivers      = snap.get("drivers", [])
+    change_drvs  = snap.get("change_drivers", [])
+    f30          = snap.get("forecast_30d") or {}
+    f7           = snap.get("forecast_7d")  or {}
+
+    # ── Base projections ──────────────────────────────────────────────────
+    base_score  = f30.get("base_case")  or max(10, min(95, score + round(delta * 15)))
+    best_score  = f30.get("best_case")  or max(10, base_score - 10)
+    worst_score = f30.get("worst_case") or min(95, base_score + 15)
+
+    # Clip to valid range
+    best_score  = max(10, min(95, int(best_score)))
+    base_score  = max(10, min(95, int(base_score)))
+    worst_score = max(10, min(95, int(worst_score)))
+
+    # ── Instability factor ────────────────────────────────────────────────
+    hot_drivers    = [d for d in drivers if d.get("severity", 0) >= 65]
+    avg_hot_sev    = (sum(d["severity"] for d in hot_drivers) / len(hot_drivers)
+                      if hot_drivers else score)
+    pressure       = max(0.0, (avg_hot_sev - 65) / 35)     # 0..1
+    velocity       = min(abs(delta) / 10.0, 1.0)           # 0..1 from delta speed
+    instability    = pressure * 0.6 + velocity * 0.4        # 0..1
+
+    # ── Probability calculation ───────────────────────────────────────────
+    # High instability → higher worst probability
+    # Moderate → balanced base
+    # Low → best case more likely
+    raw_worst = 20 + round(instability * 45)     # 20..65
+    raw_best  = 35 - round(instability * 25)     # 10..35
+    raw_base  = 100 - raw_worst - raw_best
+    # Clamp and normalize to 100
+    raw_worst = max(10, min(65, raw_worst))
+    raw_best  = max(10, min(45, raw_best))
+    raw_base  = max(15, 100 - raw_worst - raw_best)
+    total     = raw_worst + raw_best + raw_base
+    p_worst   = round(raw_worst * 100 / total)
+    p_best    = round(raw_best  * 100 / total)
+    p_base    = 100 - p_worst - p_best
+
+    # ── Scenario drivers ─────────────────────────────────────────────────
+    # Top 3 drivers sorted by severity — used for worst case
+    top_drivers = sorted(drivers, key=lambda d: -d.get("severity", 0))[:3]
+    worst_drivers = [
+        {"driver": d.get("name", "")[:50], "impact": round(d.get("severity", 50) / 20)}
+        for d in top_drivers
+    ]
+    # Best case uses change_drivers with negative delta (de-escalation signals)
+    deesc_drivers = [cd for cd in change_drvs if cd.get("impact_score", 0) < 0]
+    best_drivers  = [
+        {"driver": d.get("name", "")[:50], "impact": abs(d.get("impact_score", 1))}
+        for d in deesc_drivers[:3]
+    ]
+    # Base case = blend of active drivers
+    base_drivers = worst_drivers[:2]
+
+    return [
+        {
+            "name":        "Best Case",
+            "name_ru":     "Лучший сценарий",
+            "score":       best_score,
+            "delta_from_current": best_score - score,
+            "probability": p_best,
+            "drivers":     best_drivers,
+        },
+        {
+            "name":        "Base Case",
+            "name_ru":     "Базовый сценарий",
+            "score":       base_score,
+            "delta_from_current": base_score - score,
+            "probability": p_base,
+            "drivers":     base_drivers,
+        },
+        {
+            "name":        "Worst Case",
+            "name_ru":     "Худший сценарий",
+            "score":       worst_score,
+            "delta_from_current": worst_score - score,
+            "probability": p_worst,
+            "drivers":     worst_drivers,
+        },
+    ]
+
+
+def save_country_scenarios(snapshots: list[dict]) -> None:
+    """
+    Save 3-scenario forecast for all 25 countries to docs/scenarios/{CC}.json
+    """
+    SCENARIOS_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            scenarios = generate_scenarios(snap)
+            payload = {
+                "country":      iso2,
+                "country_name": snap["country_name"],
+                "date":         TODAY,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "risk_score":   snap["risk_score"],
+                "scenarios":    scenarios,
+            }
+            with open(SCENARIOS_DIR / f"{iso2}.json", "w") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [SCENARIO] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[SCENARIO] Saved scenarios for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -1150,6 +1273,7 @@ def main():
     generate_intelligence_feed(snapshots)
     generate_global_alerts(snapshots)
     save_country_timelines(snapshots)
+    save_country_scenarios(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
