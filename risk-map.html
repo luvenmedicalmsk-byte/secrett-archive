@@ -1272,5 +1272,494 @@ setInterval(() => {
   </div>
   <div id="loc-loading" style="display:none">◆ Анализирую локацию...</div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════
+     COUNTRY SNAPSHOT CARD  MVP V1
+     Shows risk_score, domain, escalation for FREE
+     Shows summary + mini timeline for PREMIUM
+     ═══════════════════════════════════════════════════ -->
+
+<style>
+/* Country Card Modal */
+#cc-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
+}
+#cc-overlay.open { display: flex; }
+
+#cc-card {
+  width: 320px;
+  max-width: 94vw;
+  background: #0A0C10;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 6px;
+  padding: 20px;
+  position: relative;
+  font-family: 'Montserrat', sans-serif;
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
+}
+#cc-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  font-size: 16px;
+  color: rgba(255,255,255,.3);
+  cursor: pointer;
+  line-height: 1;
+}
+#cc-close:hover { color: rgba(255,255,255,.7); }
+
+.cc-flag   { font-size: 28px; margin-bottom: 4px; }
+.cc-name   { font-size: 18px; font-weight: 600; color: #E8DEC8; margin-bottom: 14px; }
+
+.cc-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.cc-score-num {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: 'Cormorant Garamond', serif;
+}
+.cc-delta {
+  font-size: 13px;
+  font-family: monospace;
+  font-weight: 600;
+}
+.cc-delta.up   { color: #E84030; }
+.cc-delta.down { color: #27AE60; }
+.cc-delta.flat { color: #888; }
+
+.cc-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.cc-badge {
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  background: rgba(255,255,255,.06);
+  color: rgba(232,224,208,.7);
+}
+.cc-badge.domain { }
+.cc-badge.level-stable    { background: rgba(39,174,96,.15); color: #5DD18A; }
+.cc-badge.level-elevated  { background: rgba(200,144,10,.15); color: #D4AF5A; }
+.cc-badge.level-pressured { background: rgba(200,80,10,.2);  color: #E87040; }
+.cc-badge.level-critical  { background: rgba(200,30,30,.2);  color: #E84030; }
+
+/* Summary (premium) */
+.cc-summary {
+  font-size: 12px;
+  color: rgba(232,224,208,.65);
+  line-height: 1.6;
+  margin-bottom: 16px;
+  border-left: 2px solid rgba(184,151,58,.4);
+  padding-left: 10px;
+}
+
+/* Blurred summary placeholder (free) */
+.cc-summary-locked {
+  font-size: 12px;
+  color: rgba(232,224,208,.2);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+}
+.cc-lock-cta {
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #B8973A;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 16px;
+  margin-top: -8px;
+}
+
+/* Mini timeline canvas */
+#cc-chart-wrap {
+  position: relative;
+  height: 64px;
+  margin-bottom: 8px;
+}
+#cc-chart { width: 100%; height: 64px; }
+
+.cc-chart-label {
+  font-size: 9px;
+  font-family: monospace;
+  color: rgba(255,255,255,.25);
+  text-align: right;
+  margin-bottom: 4px;
+}
+
+/* Blurred overlay for timeline */
+#cc-chart-blur {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 15%, rgba(10,12,16,.92) 55%);
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+}
+#cc-chart-blur.show { display: flex; }
+.cc-chart-blur-text {
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #B8973A;
+  text-align: right;
+  line-height: 1.5;
+}
+
+.cc-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,.05);
+  margin: 12px 0;
+}
+.cc-footer {
+  font-size: 9px;
+  color: rgba(255,255,255,.2);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+</style>
+
+<!-- Modal -->
+<div id="cc-overlay">
+  <div id="cc-card">
+    <span id="cc-close">✕</span>
+    <div class="cc-flag" id="cc-flag"></div>
+    <div class="cc-name" id="cc-name"></div>
+
+    <div class="cc-score-row">
+      <div class="cc-score-num" id="cc-score"></div>
+      <div class="cc-delta" id="cc-delta"></div>
+    </div>
+
+    <div class="cc-meta">
+      <span class="cc-badge domain" id="cc-domain"></span>
+      <span class="cc-badge" id="cc-level"></span>
+    </div>
+
+    <!-- Summary: premium shows text, free shows blur + CTA -->
+    <div id="cc-summary-block"></div>
+
+    <!-- Mini timeline -->
+    <div class="cc-chart-label" id="cc-chart-label"></div>
+    <div id="cc-chart-wrap">
+      <canvas id="cc-chart"></canvas>
+      <div id="cc-chart-blur">
+        <div class="cc-chart-blur-text">История доступна<br>в Signal PRO →</div>
+      </div>
+    </div>
+
+    <hr class="cc-divider">
+    <div class="cc-footer" id="cc-footer"></div>
+  </div>
+</div>
+
+<script>
+// ── COUNTRY SNAPSHOT CARD  MVP V1 ─────────────────────────────────────────
+(function() {
+'use strict';
+
+const API = 'https://archive-api.luven-medical-msk.workers.dev';
+
+// Country flag emoji by ISO2
+const FLAGS = {
+  RU:'🇷🇺', US:'🇺🇸', CN:'🇨🇳', DE:'🇩🇪', GB:'🇬🇧', FR:'🇫🇷',
+  TR:'🇹🇷', KZ:'🇰🇿', AE:'🇦🇪', UA:'🇺🇦', BY:'🇧🇾', IN:'🇮🇳',
+  JP:'🇯🇵', SA:'🇸🇦', EG:'🇪🇬', PL:'🇵🇱', IL:'🇮🇱', IR:'🇮🇷',
+  IT:'🇮🇹', AR:'🇦🇷', CA:'🇨🇦', ES:'🇪🇸', ID:'🇮🇩', MX:'🇲🇽', CH:'🇨🇭',
+};
+
+const DOMAIN_RU = {
+  climate:'Климат', economy:'Экономика', geopolitics:'Геополитика',
+  technology:'Технологии', social:'Социум',
+};
+
+const LEVEL_CLASS = {
+  stable:'level-stable', elevated:'level-elevated',
+  pressured:'level-pressured', critical:'level-critical',
+};
+
+const LEVEL_RU = {
+  stable:'Стабильно', elevated:'Повышенный', pressured:'Под давлением', critical:'Критический',
+};
+
+const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '#D4AF5A' : '#27AE60';
+
+// ── State ──────────────────────────────────────────────────────────────────
+let _todayData  = null;   // cached /api/snapshot/today
+let _histCache  = {};     // {CC: history data}
+let _premiumToken = localStorage.getItem('cc_token') || '';
+
+// ── Premium token (set via console: CC.setToken('xxx')) ────────────────────
+window.CC = {
+  setToken(t) { _premiumToken = t; localStorage.setItem('cc_token', t); console.log('Token set'); },
+  clearToken() { _premiumToken = ''; localStorage.removeItem('cc_token'); },
+};
+
+// ── Fetch helpers ──────────────────────────────────────────────────────────
+async function fetchToday() {
+  if (_todayData) return _todayData;
+  try {
+    const headers = {};
+    if (_premiumToken) headers['X-Snapshot-Token'] = _premiumToken;
+    const r = await fetch(API + '/api/snapshot/today', { headers });
+    if (!r.ok) return null;
+    _todayData = await r.json();
+    return _todayData;
+  } catch(e) {
+    console.warn('[CC] fetchToday:', e.message);
+    return null;
+  }
+}
+
+async function fetchHistory(cc) {
+  if (_histCache[cc]) return _histCache[cc];
+  if (!_premiumToken) return null;
+  try {
+    const r = await fetch(API + '/api/snapshot/history/' + cc, {
+      headers: { 'X-Snapshot-Token': _premiumToken }
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    _histCache[cc] = d;
+    return d;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ── Open card for a given country code ────────────────────────────────────
+window.openCountryCard = async function(cc) {
+  cc = cc.toUpperCase();
+  const overlay = document.getElementById('cc-overlay');
+  overlay.classList.add('open');
+
+  // Set placeholder while loading
+  document.getElementById('cc-flag').textContent  = FLAGS[cc] || '🌐';
+  document.getElementById('cc-name').textContent  = cc;
+  document.getElementById('cc-score').textContent = '…';
+  document.getElementById('cc-delta').textContent = '';
+  document.getElementById('cc-domain').textContent = '';
+  document.getElementById('cc-level').textContent  = '';
+  document.getElementById('cc-summary-block').innerHTML = '';
+  document.getElementById('cc-footer').textContent = '';
+  document.getElementById('cc-chart-label').textContent = '';
+  clearChart();
+
+  const data = await fetchToday();
+  if (!data) {
+    document.getElementById('cc-name').textContent = 'Данные недоступны';
+    return;
+  }
+
+  const country = data.countries.find(c => c.country === cc);
+  if (!country) {
+    document.getElementById('cc-name').textContent = cc + ' — нет данных';
+    return;
+  }
+
+  renderCard(country);
+
+  // Try to load history for timeline
+  const hist = await fetchHistory(cc);
+  renderTimeline(hist, country.risk_score);
+};
+
+// ── Render card from snapshot data ────────────────────────────────────────
+function renderCard(c) {
+  const color = SCORE_COLOR(c.risk_score);
+
+  document.getElementById('cc-flag').textContent  = FLAGS[c.country] || '🌐';
+  document.getElementById('cc-name').textContent  = c.country_name || c.country;
+
+  const scoreEl = document.getElementById('cc-score');
+  scoreEl.textContent  = c.risk_score;
+  scoreEl.style.color  = color;
+
+  const dEl = document.getElementById('cc-delta');
+  const d   = c.delta || 0;
+  if (d > 0)      { dEl.textContent = '▲+' + d; dEl.className = 'cc-delta up'; }
+  else if (d < 0) { dEl.textContent = '▼' + d;  dEl.className = 'cc-delta down'; }
+  else            { dEl.textContent = '→ 0';      dEl.className = 'cc-delta flat'; }
+
+  const domEl = document.getElementById('cc-domain');
+  domEl.textContent  = DOMAIN_RU[c.dominant_domain] || c.dominant_domain;
+
+  const lvlEl = document.getElementById('cc-level');
+  lvlEl.textContent = LEVEL_RU[c.escalation_level] || c.escalation_level;
+  lvlEl.className   = 'cc-badge ' + (LEVEL_CLASS[c.escalation_level] || '');
+
+  // Summary
+  const sumBlock = document.getElementById('cc-summary-block');
+  if (c.summary) {
+    sumBlock.innerHTML = `<div class="cc-summary">${_esc(c.summary)}</div>`;
+  } else {
+    // Blurred placeholder for free users
+    const fake = 'Геополитическая напряжённость остаётся основным драйвером риска. '
+               + 'Структурные факторы продолжают оказывать давление на экономику страны.';
+    sumBlock.innerHTML =
+      `<div class="cc-summary-locked">${_esc(fake)}</div>` +
+      `<a class="cc-lock-cta" href="#" onclick="return false">
+         🔒 Аналитика доступна в Signal PRO →
+       </a>`;
+  }
+
+  document.getElementById('cc-footer').textContent = 'Данные на ' + c.date || '';
+}
+
+// ── Mini timeline chart ────────────────────────────────────────────────────
+function clearChart() {
+  const cv  = document.getElementById('cc-chart');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  document.getElementById('cc-chart-blur').classList.remove('show');
+}
+
+function renderTimeline(hist, todayScore) {
+  const cv    = document.getElementById('cc-chart');
+  const wrap  = document.getElementById('cc-chart-wrap');
+  const blur  = document.getElementById('cc-chart-blur');
+  const dpr   = window.devicePixelRatio || 1;
+  const W     = wrap.clientWidth  || 280;
+  const H     = 64;
+
+  cv.width  = W * dpr;
+  cv.height = H * dpr;
+  cv.style.width  = W + 'px';
+  cv.style.height = H + 'px';
+
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  let points = [];
+
+  if (hist && hist.snapshots && hist.snapshots.length > 1) {
+    // Premium: real history
+    const snaps = hist.snapshots.slice(-30);   // last 30 days
+    points = snaps.map(s => s.risk_score);
+    document.getElementById('cc-chart-label').textContent =
+      `${snaps.length} дней · ${snaps[0].date} → ${snaps[snaps.length-1].date}`;
+    blur.classList.remove('show');
+  } else {
+    // Free: generate pseudo-history from today's score with noise
+    // Shape visible but unreadable — purely decorative to show there IS history
+    for (let i = 29; i >= 0; i--) {
+      const noise = (Math.sin(i * 1.3) * 6) + (Math.cos(i * 0.7) * 4);
+      points.push(Math.max(10, Math.min(95, todayScore + noise)));
+    }
+    document.getElementById('cc-chart-label').textContent = '30 дней';
+    blur.classList.add('show');
+  }
+
+  if (points.length < 2) return;
+
+  const minV = Math.min(...points) - 5;
+  const maxV = Math.max(...points) + 5;
+  const scaleY = v => H - ((v - minV) / (maxV - minV)) * (H - 8) - 4;
+  const scaleX = i => (i / (points.length - 1)) * W;
+
+  // Grid line at 65 (pressured threshold)
+  ctx.strokeStyle = 'rgba(255,255,255,.06)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 4]);
+  const gridY = scaleY(65);
+  ctx.beginPath();
+  ctx.moveTo(0, gridY);
+  ctx.lineTo(W, gridY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Line
+  const lastColor = SCORE_COLOR(points[points.length - 1]);
+  const grad = ctx.createLinearGradient(0, 0, W, 0);
+  grad.addColorStop(0,   'rgba(184,151,58,.4)');
+  grad.addColorStop(1,   lastColor);
+
+  ctx.beginPath();
+  ctx.moveTo(scaleX(0), scaleY(points[0]));
+  for (let i = 1; i < points.length; i++) {
+    // Smooth curve
+    const x0 = scaleX(i - 1), y0 = scaleY(points[i - 1]);
+    const x1 = scaleX(i),     y1 = scaleY(points[i]);
+    const cpx = (x0 + x1) / 2;
+    ctx.bezierCurveTo(cpx, y0, cpx, y1, x1, y1);
+  }
+  ctx.strokeStyle = grad;
+  ctx.lineWidth   = 2;
+  ctx.stroke();
+
+  // Fill area under curve
+  ctx.lineTo(scaleX(points.length - 1), H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  const fillGrad = ctx.createLinearGradient(0, 0, 0, H);
+  fillGrad.addColorStop(0, lastColor.replace(')', ',.18)').replace('rgb', 'rgba'));
+  fillGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+
+  // Last point dot
+  const lx = scaleX(points.length - 1);
+  const ly = scaleY(points[points.length - 1]);
+  ctx.beginPath();
+  ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+  ctx.fillStyle = lastColor;
+  ctx.fill();
+}
+
+function _esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Close modal ────────────────────────────────────────────────────────────
+document.getElementById('cc-close').addEventListener('click', () => {
+  document.getElementById('cc-overlay').classList.remove('open');
+});
+document.getElementById('cc-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('cc-overlay')) {
+    document.getElementById('cc-overlay').classList.remove('open');
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('cc-overlay').classList.remove('open');
+});
+
+// ── Hook into existing map markers ────────────────────────────────────────
+// When a marker is clicked and it has a country code, open the card
+// This supplements (doesn't replace) existing showDetail()
+const CC_COUNTRIES = new Set([
+  'RU','US','CN','DE','GB','FR','TR','KZ','AE','UA',
+  'BY','IN','JP','SA','EG','PL','IL','IR','IT','AR',
+  'CA','ES','ID','MX','CH'
+]);
+
+// Expose for external use (e.g. from marker click in existing code)
+window._CC_COUNTRIES = CC_COUNTRIES;
+
+// Preload snapshot data in background after page ready
+setTimeout(() => { fetchToday().catch(() => {}); }, 2000);
+
+})(); // end IIFE
+</script>
+
 </body>
 </html>
