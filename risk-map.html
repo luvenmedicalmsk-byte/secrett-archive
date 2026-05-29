@@ -1402,6 +1402,14 @@ setInterval(() => {
 
 /* Summary (premium) */
 .cc-drivers { margin-bottom: 14px; }
+.cc-forecast{margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:4px}
+.cc-forecast-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:6px}
+.cc-forecast-dir{font-size:18px;font-weight:600;line-height:1;margin-bottom:8px}
+.cc-forecast-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:4px}
+.cc-forecast-key{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.08em;text-transform:uppercase}
+.cc-forecast-val{font-size:12px;color:rgba(232,224,208,.8);font-family:'Courier New',monospace}
+.cc-forecast-locked{font-size:9px;color:#B8973A;margin-top:6px;letter-spacing:.06em}
+
 .cc-change{margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:4px}
 .cc-change-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:6px}
 .cc-change-delta{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1;margin-bottom:8px}
@@ -1516,6 +1524,7 @@ setInterval(() => {
     </div>
 
     <!-- Summary: premium shows text, free shows blur + CTA -->
+    <div id="cc-forecast-block"></div>
     <div id="cc-change-block"></div>
     <div id="cc-summary-block"></div>
     <div id="cc-drivers-block"></div>
@@ -1633,6 +1642,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-level').textContent  = '';
   document.getElementById('cc-summary-block').innerHTML = '';
   document.getElementById('cc-drivers-block').innerHTML = '';
+  document.getElementById('cc-forecast-block').innerHTML='';
   document.getElementById('cc-change-block').innerHTML = '';
   document.getElementById('cc-footer').textContent = '';
   document.getElementById('cc-chart-label').textContent = '';
@@ -1705,11 +1715,33 @@ function renderCard(c) {
   document.getElementById('cc-footer').textContent = 'Данные на ' + c.date || '';
   // Domain accent: top border on card
   document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
+  renderForecast(c.forecast_7d||null,!!_premiumToken);
   renderChangeAttribution(c.delta || 0, c.change_drivers || [], !!_premiumToken);
   renderDrivers(c.drivers || [], !!_premiumToken);
 }
 
 // ── Mini timeline chart ────────────────────────────────────────────────────
+// ── Forecast Engine V1 ──────────────────────────────────────────────────────
+var _FDIR={up:{icon:'↗',text:'Риск растёт',col:'#ef4444'},down:{icon:'↘',text:'Риск снижается',col:'#22c55e'},stable:{icon:'→',text:'Риск стабилен',col:'rgba(255,255,255,.4)'}};
+function renderForecast(fc,premium){
+  var block=document.getElementById('cc-forecast-block');
+  if(!block)return;
+  if(!fc||!fc.direction){block.innerHTML='';return;}
+  var dir=_FDIR[fc.direction]||_FDIR.stable;
+  var h='<div class="cc-forecast"><div class="cc-forecast-label">Прогноз 7 дней</div>'
+       +'<div class="cc-forecast-dir" style="color:'+dir.col+'">'+dir.icon+' '+dir.text+'</div>';
+  if(premium&&fc.score_min!==undefined){
+    h+='<div class="cc-forecast-row"><span class="cc-forecast-key">Ожидаемый диапазон</span>'
+      +'<span class="cc-forecast-val">'+fc.score_min+'–'+fc.score_max+'</span></div>'
+      +'<div class="cc-forecast-row"><span class="cc-forecast-key">Уверенность модели</span>'
+      +'<span class="cc-forecast-val">'+fc.confidence+'%</span></div>';
+  }else if(!premium){
+    h+='<div class="cc-forecast-locked">🔒 Полный прогноз доступен в Signal PRO</div>';
+  }
+  h+='</div>';
+  block.innerHTML=h;
+}
+
 // ── Change Attribution ─────────────────────────────────────────────────────
 function renderChangeAttribution(delta, changeDrv, premium) {
   var block = document.getElementById('cc-change-block');
