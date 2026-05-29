@@ -36,6 +36,7 @@ CALIBRATION_DIR   = DOCS_DIR / "calibration"
 STRATEGY_DIR          = DOCS_DIR / "strategy"
 STRATEGY_HISTORY_DIR  = DOCS_DIR / "strategy-history"
 STRATEGY_FEEDBACK_DIR = DOCS_DIR / "strategy-feedback"
+VALIDATION_DIR        = DOCS_DIR / "validation"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -713,14 +714,27 @@ def update_history(snap: dict) -> None:
         }
 
     # Lightweight history record — drivers stored for next-day attribution
+    # Historical Validation Layer — extended record with forecast fields
+    _f7  = snap.get("forecast_7d")  or {}
+    _f30 = snap.get("forecast_30d") or {}
     record = {
-        "date":             snap["date"],
-        "risk_score":       snap["risk_score"],
-        "dominant_domain":  snap["dominant_domain"],
-        "escalation_level": snap["escalation_level"],
-        "delta":            snap["delta"],
-        "drivers":          [{"name": d["name"], "severity": d["severity"]}
-                              for d in snap.get("drivers", [])],
+        "date":               snap["date"],
+        "risk_score":         snap["risk_score"],
+        "dominant_domain":    snap["dominant_domain"],
+        "escalation_level":   snap["escalation_level"],
+        "delta":              snap["delta"],
+        "drivers":            [{"name": d["name"], "severity": d["severity"]}
+                                for d in snap.get("drivers", [])],
+        "forecast_direction": _f7.get("direction"),
+        "forecast_confidence":_f7.get("confidence"),
+        "forecast_7d_min":    _f7.get("score_min"),
+        "forecast_7d_max":    _f7.get("score_max"),
+        "forecast_30d_base":  _f30.get("base_case"),
+        "forecast_30d_best":  _f30.get("best_case"),
+        "forecast_30d_worst": _f30.get("worst_case"),
+        "forecast_30d_conf":  _f30.get("confidence"),
+        "dominant_scenario":  None,
+        "scenario_probs":     {},
     }
 
     # Deduplicate: replace if same date already exists
@@ -1359,6 +1373,7 @@ def save_country_scenarios(snapshots: list[dict]) -> None:
             payload = generate_scenarios(snap)
             with open(SCENARIOS_DIR / f"{iso2}.json", "w") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)
+            _enrich_history_with_scenarios(iso2, snap["date"], payload)
         except Exception as e:
             print(f"  [SCENARIO] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[SCENARIO] Saved scenarios for {len(snapshots)} countries", file=sys.stderr)
@@ -3913,6 +3928,208 @@ def save_strategy_feedback(snapshots: list[dict]) -> None:
             print(f"  [FEEDBACK] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[FEEDBACK] Saved for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# HISTORICAL VALIDATION LAYER V1  —  independent, read-only measurement
+# Does NOT modify forecasts, risk_score, scenario_score or strategy_score.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_VAL_HORIZONS = [7, 30, 90, 180, 365]
+_VAL_WEIGHTS  = {7: 0.30, 30: 0.30, 90: 0.20, 180: 0.15, 365: 0.05}
+_ESC_SEV      = {"stable":0,"elevated":1,"pressured":2,"critical":3}
+
+
+def _enrich_history_with_scenarios(iso2: str, date_str: str, payload: dict) -> None:
+    """Back-fill dominant_scenario + scenario_probs into the history record."""
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    if not hist_path.exists(): return
+    try:
+        with open(hist_path) as f: hist = json.load(f)
+        dom   = payload.get("dominant_scenario", "base")
+        probs = {s["type"]: s["probability"] for s in payload.get("scenarios", [])}
+        for rec in hist["snapshots"]:
+            if rec.get("date") == date_str:
+                rec["dominant_scenario"] = dom
+                rec["scenario_probs"]    = probs
+                break
+        with open(hist_path, "w") as f: json.dump(hist, f, ensure_ascii=False, indent=2)
+    except Exception: pass
+
+
+def _hz_metrics(preds, actuals, pred_dirs, act_dirs):
+    if len(preds) < 3: return None
+    import math
+    n = len(preds)
+    errs = [p-a for p,a in zip(preds, actuals)]
+    mae  = round(sum(abs(e) for e in errs)/n, 2)
+    rmse = round(math.sqrt(sum(e*e for e in errs)/n), 2)
+    bias = round(sum(errs)/n, 2)
+    hits = sum(1 for p,a in zip(pred_dirs,act_dirs)
+               if p==0 or (p>0 and a>0) or (p<0 and a<0))
+    dhr  = round(hits/n*100, 1)
+    acc  = round(max(0.0, 100.0*(1.0 - mae/75.0)), 1)
+    bl   = ("calibrated" if abs(bias)<2 else "over-estimates" if bias>4 else
+            "under-estimates" if bias<-4 else "slight over" if bias>0 else "slight under")
+    return {"n":n,"mae":mae,"rmse":rmse,"bias":bias,"bias_label":bl,"accuracy_pct":acc,"dhr":dhr}
+
+
+def _state_acc(pred_s, act_s):
+    if not pred_s: return None
+    n = len(pred_s)
+    sc = [100 if abs(_ESC_SEV.get(p,0)-_ESC_SEV.get(a,0))==0
+          else 50 if abs(_ESC_SEV.get(p,0)-_ESC_SEV.get(a,0))==1 else 0
+          for p,a in zip(pred_s,act_s)]
+    return {"n":n,"state_score":round(sum(sc)/n),
+            "exact_rate":round(sum(1 for s in sc if s==100)/n*100,1),
+            "partial_rate":round(sum(1 for s in sc if s==50)/n*100,1),
+            "miss_rate":round(sum(1 for s in sc if s==0)/n*100,1)}
+
+
+def _scen_acc(pred_sc, act_sc, pred_probs):
+    if not pred_sc: return None
+    n    = len(pred_sc)
+    hits = sum(1 for p,a in zip(pred_sc,act_sc) if p==a)
+    t2   = sum(1 for a,pb in zip(act_sc,pred_probs)
+               if pb and a in {k for k,_ in sorted(pb.items(),key=lambda x:-x[1])[:2]})
+    return {"n":n,"hit_rate":round(hits/n*100,1),"top2_hit_rate":round(t2/n*100,1)}
+
+
+def _conf_val(confs, successes):
+    if len(confs)<3: return None
+    n=len(confs); exp=round(sum(confs)/n); act=round(sum(successes)/n*100)
+    err=abs(exp-act)
+    gr=("excellent" if err<=5 else "good" if err<=10 else "fair" if err<=20 else "poor")
+    return {"overall_expected":exp,"overall_actual":act,"confidence_error":err,"confidence_grade":gr}
+
+
+def compute_historical_validation(iso2: str, country_name: str) -> dict:
+    """Historical Validation Layer V1 — reconstructs forecast-vs-actual pairs."""
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    base_out  = {"country":iso2,"country_name":country_name,"date":TODAY,
+                 "generated_at":datetime.now(timezone.utc).isoformat()}
+    if not hist_path.exists():
+        return {**base_out,"note":"no history","historical_validation_score":None,
+                "validation_grade":"unknown","validation_grade_ru":"Нет данных","history_depth":0}
+    with open(hist_path) as f: hist_data = json.load(f)
+    records = sorted(hist_data.get("snapshots",[]), key=lambda r: r.get("date",""))
+    if len(records)<10:
+        return {**base_out,"note":"insufficient history (need ≥10 days)",
+                "historical_validation_score":None,
+                "validation_grade":"unknown","validation_grade_ru":"Нет данных",
+                "history_depth":len(records)}
+
+    from datetime import date as dt, timedelta
+    date_map = {r["date"]:r for r in records}
+    hd_keys  = ["preds","actuals","pred_dirs","act_dirs","pred_states","act_states",
+                 "pred_scens","act_scens","pred_probs","confs","succs"]
+    hd = {h:{k:[] for k in hd_keys} for h in _VAL_HORIZONS}
+
+    for rec in records:
+        rs = rec.get("risk_score"); rd = rec.get("date","")
+        if rs is None: continue
+        for h in _VAL_HORIZONS:
+            try: tgt = (dt.fromisoformat(rd)+timedelta(days=h)).isoformat()
+            except Exception: continue
+            ar = date_map.get(tgt)
+            if not ar: continue
+            as_ = ar.get("risk_score")
+            if as_ is None: continue
+            # Reconstruct predicted score
+            if h==7:
+                mn=rec.get("forecast_7d_min"); mx=rec.get("forecast_7d_max")
+                conf=rec.get("forecast_confidence",65)
+                ps=(round((mn+mx)/2) if mn is not None and mx is not None
+                    else max(10,min(95,round(rs+rec.get("delta",0)*0.6*7))))
+                fdir=rec.get("forecast_direction","stable")
+                pd_=1 if fdir=="up" else(-1 if fdir=="down" else 0)
+            else:
+                fb=rec.get("forecast_30d_base"); conf=rec.get("forecast_30d_conf",60)
+                if fb is not None:
+                    dr=fb-rs; scale=h/30.0; damp=min(1.0,1.0/(1.0+(h-30)/90))
+                    ps=max(10,min(95,round(rs+dr*scale*damp)))
+                else:
+                    dr=rec.get("delta",0)*0.4; damp=min(1.0,30.0/h)
+                    ps=max(10,min(95,round(rs+dr*30*damp)))
+                pd_=1 if ps>rs else(-1 if ps<rs else 0)
+            ad_=1 if as_>rs else(-1 if as_<rs else 0)
+            h[h]["preds"].append(ps); h[h]["actuals"].append(as_)
+            h[h]["pred_dirs"].append(pd_); h[h]["act_dirs"].append(ad_)
+            h[h]["pred_states"].append(rec.get("escalation_level","stable"))
+            h[h]["act_states"].append(ar.get("escalation_level","stable"))
+            h[h]["pred_scens"].append(rec.get("dominant_scenario","base"))
+            h[h]["act_scens"].append(ar.get("dominant_scenario","base"))
+            h[h]["pred_probs"].append(rec.get("scenario_probs",{}))
+            h[h]["confs"].append(conf); h[h]["succs"].append(abs(ps-as_)<=8)
+
+    horizons_out={}; hz_scores={}
+    for hz in _VAL_HORIZONS:
+        d=hd[hz]
+        if len(d["preds"])<3:
+            horizons_out[f"d{hz}"]={"n":len(d["preds"]),"note":"insufficient pairs"}; continue
+        hm=_hz_metrics(d["preds"],d["actuals"],d["pred_dirs"],d["act_dirs"])
+        sm=_state_acc(d["pred_states"],d["act_states"])
+        sc=_scen_acc(d["pred_scens"],d["act_scens"],d["pred_probs"])
+        cv=_conf_val(d["confs"],d["succs"])
+        if not hm: continue
+        sv=sm["state_score"] if sm else 50
+        scv=sc["hit_rate"]   if sc else 50
+        csv_=max(0,100-(cv["confidence_error"] if cv else 20)*2)
+        hs=round(hm["accuracy_pct"]*0.40+sv*0.25+scv*0.20+csv_*0.15)
+        hz_scores[hz]=hs
+        horizons_out[f"d{hz}"]={"n":hm["n"],"mae":hm["mae"],"rmse":hm["rmse"],
+            "bias":hm["bias"],"bias_label":hm["bias_label"],"accuracy_pct":hm["accuracy_pct"],
+            "dhr":hm["dhr"],"state_hit":sm,"scenario_hit":sc,"confidence":cv,"horizon_score":hs}
+
+    if not hz_scores: hv=None
+    else:
+        tw=sum(_VAL_WEIGHTS[h] for h in hz_scores)
+        hv=round(sum(hz_scores[h]*_VAL_WEIGHTS[h] for h in hz_scores)/max(1,tw))
+
+    if hv is None:         grade,grade_ru="unknown","Нет данных"
+    elif hv>=90:           grade,grade_ru="excellent","Отличная"
+    elif hv>=80:           grade,grade_ru="strong","Сильная"
+    elif hv>=65:           grade,grade_ru="good","Хорошая"
+    elif hv>=50:           grade,grade_ru="fair","Удовлетворительная"
+    elif hv>=35:           grade,grade_ru="weak","Слабая"
+    else:                  grade,grade_ru="unreliable","Ненадёжная"
+
+    bh=(f"d{max(hz_scores,key=hz_scores.get)}" if hz_scores else None)
+    wh=(f"d{min(hz_scores,key=hz_scores.get)}" if hz_scores else None)
+    biases=[horizons_out[k]["bias"] for k in horizons_out if "bias" in horizons_out.get(k,{})]
+    sb=round(sum(biases)/len(biases),2) if biases else None
+    or_=round(sum(1 for b in biases if b>1)/len(biases)*100) if biases else None
+    ur=round(sum(1 for b in biases if b<-1)/len(biases)*100) if biases else None
+    sa=round(sum(horizons_out[k]["state_hit"]["state_score"]
+               for k in horizons_out if horizons_out[k].get("state_hit"))
+           /max(1,sum(1 for k in horizons_out if horizons_out[k].get("state_hit")))) if hz_scores else None
+    scna=round(sum(horizons_out[k]["scenario_hit"]["hit_rate"]
+                for k in horizons_out if horizons_out[k].get("scenario_hit"))
+            /max(1,sum(1 for k in horizons_out if horizons_out[k].get("scenario_hit"))),1) if hz_scores else None
+    ce_pairs=[(h,horizons_out[f"d{h}"]["confidence"]["confidence_error"])
+              for h in _VAL_HORIZONS if f"d{h}" in horizons_out and horizons_out[f"d{h}"].get("confidence")]
+    cdrift=round(sorted(ce_pairs)[-1][1]-sorted(ce_pairs)[0][1],1) if len(ce_pairs)>=2 else None
+
+    return {**base_out,"historical_validation_score":hv,"validation_grade":grade,
+            "validation_grade_ru":grade_ru,"horizons":horizons_out,
+            "state_accuracy":sa,"scenario_accuracy":scna,"systematic_bias":sb,
+            "overestimation_rate":or_,"underestimation_rate":ur,"confidence_drift":cdrift,
+            "best_horizon":bh,"worst_horizon":wh,
+            "horizon_scores":{f"d{h}":v for h,v in hz_scores.items()},
+            "history_depth":len(records)}
+
+
+def save_validation(snapshots: list[dict]) -> None:
+    """Compute and store historical validation for all 25 countries."""
+    VALIDATION_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            r = compute_historical_validation(iso2, snap["country_name"])
+            with open(VALIDATION_DIR / f"{iso2}.json","w") as f:
+                json.dump(r, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [VAL] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[VAL] Saved validation for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -3970,6 +4187,7 @@ def main():
     save_calibration(snapshots)
     save_strategy(snapshots)
     save_strategy_feedback(snapshots)
+    save_validation(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
