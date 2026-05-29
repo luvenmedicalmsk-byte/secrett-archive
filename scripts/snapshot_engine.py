@@ -22,6 +22,7 @@ DOCS_DIR       = Path("docs")
 SNAP_DIR       = DOCS_DIR / "snapshots"
 DAILY_DIR      = SNAP_DIR / "daily"
 HISTORY_DIR    = SNAP_DIR / "history"
+INTEL_DIR      = DOCS_DIR / "intelligence"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -755,6 +756,129 @@ def update_index(snapshots: list[dict]) -> None:
 
 # ── ENTRYPOINT ────────────────────────────────────────────────────────────────
 
+
+def generate_intelligence_feed(snapshots: list[dict]) -> None:
+    """
+    Daily Intelligence Feed V1.
+    Generates docs/intelligence/daily.json from all 25 country snapshots.
+    No external APIs. Pure aggregation and ranking of existing snapshot data.
+
+    Sections:
+      top_risk_increase  — countries with highest positive delta (risk rising)
+      top_risk_decrease  — countries with highest negative delta (risk falling)
+      top_forecast_growth— countries where forecast_30d.worst_case is highest
+      new_drivers        — most severe active drivers across all countries
+    """
+    INTEL_DIR.mkdir(parents=True, exist_ok=True)
+
+    # ── top_risk_increase: biggest delta > 0, sorted descending ──────────
+    risk_up = sorted(
+        [s for s in snapshots if s.get("delta", 0) > 0],
+        key=lambda s: (-s["delta"], -s["risk_score"])
+    )
+    top_risk_increase = [
+        {
+            "country":      s["country"],
+            "country_name": s["country_name"],
+            "risk_score":   s["risk_score"],
+            "delta":        s["delta"],
+            "dominant_domain": s["dominant_domain"],
+            "escalation_level": s["escalation_level"],
+            "top_driver":   s["drivers"][0]["name"] if s.get("drivers") else None,
+            "top_driver_domain": s["drivers"][0]["domain"] if s.get("drivers") else None,
+        }
+        for s in risk_up
+    ]
+
+    # ── top_risk_decrease: biggest delta < 0, sorted ascending ───────────
+    risk_down = sorted(
+        [s for s in snapshots if s.get("delta", 0) < 0],
+        key=lambda s: (s["delta"], s["risk_score"])
+    )
+    top_risk_decrease = [
+        {
+            "country":      s["country"],
+            "country_name": s["country_name"],
+            "risk_score":   s["risk_score"],
+            "delta":        s["delta"],
+            "dominant_domain": s["dominant_domain"],
+            "escalation_level": s["escalation_level"],
+        }
+        for s in risk_down
+    ]
+
+    # ── top_forecast_growth: highest forecast_30d.worst_case ─────────────
+    with_forecast = [
+        s for s in snapshots
+        if s.get("forecast_30d") and s["forecast_30d"].get("worst_case")
+    ]
+    forecast_ranked = sorted(
+        with_forecast,
+        key=lambda s: -s["forecast_30d"]["worst_case"]
+    )
+    top_forecast_growth = [
+        {
+            "country":      s["country"],
+            "country_name": s["country_name"],
+            "risk_score":   s["risk_score"],
+            "forecast_base": s["forecast_30d"].get("base_case"),
+            "forecast_worst": s["forecast_30d"].get("worst_case"),
+            "forecast_confidence": s["forecast_30d"].get("confidence"),
+            "dominant_domain": s["dominant_domain"],
+        }
+        for s in forecast_ranked
+    ]
+
+    # ── new_drivers: top drivers by severity across all countries ─────────
+    all_drivers = []
+    for s in snapshots:
+        for drv in s.get("drivers", []):
+            all_drivers.append({
+                "country":      s["country"],
+                "country_name": s["country_name"],
+                "name":         drv.get("name", ""),
+                "domain":       drv.get("domain", ""),
+                "severity":     drv.get("severity", 0),
+                "impact":       drv.get("impact"),   # None for free tier
+                "risk_score":   s["risk_score"],
+            })
+
+    # Deduplicate by name (take highest severity per driver name)
+    seen: dict[str, dict] = {}
+    for d in all_drivers:
+        key = d["name"][:50]
+        if key not in seen or d["severity"] > seen[key]["severity"]:
+            seen[key] = d
+    new_drivers = sorted(seen.values(), key=lambda d: -d["severity"])
+
+    # ── Build feed ────────────────────────────────────────────────────────
+    feed = {
+        "date":                TODAY,
+        "generated_at":        datetime.now(timezone.utc).isoformat(),
+        "top_risk_increase":   top_risk_increase,
+        "top_risk_decrease":   top_risk_decrease,
+        "top_forecast_growth": top_forecast_growth,
+        "new_drivers":         new_drivers,
+        "meta": {
+            "countries_processed": len(snapshots),
+            "risk_up_count":    len(top_risk_increase),
+            "risk_down_count":  len(top_risk_decrease),
+            "driver_count":     len(new_drivers),
+        }
+    }
+
+    path = INTEL_DIR / "daily.json"
+    with open(path, "w") as f:
+        json.dump(feed, f, ensure_ascii=False, indent=2)
+
+    print(
+        f"[INTEL] Feed saved: {path}  "
+        f"up={len(top_risk_increase)} down={len(top_risk_decrease)} "
+        f"drivers={len(new_drivers)}",
+        file=sys.stderr
+    )
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -776,6 +900,7 @@ def main():
 
     save_daily(snapshots)
     update_index(snapshots)
+    generate_intelligence_feed(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
