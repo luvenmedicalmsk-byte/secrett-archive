@@ -470,8 +470,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   </div>
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
-  <button class="lb" id="intel-btn" ontouchend="this._touched=true" onclick="(function(){var p=document.getElementById('intel-panel');if(p&&p.classList.contains('open')){closeIntelPanel();}else{closeAlertsPanel();openIntelPanel();}})()">◆ Раннее предупреждение</button>
-  <button class="lb" id="alerts-btn" ontouchend="this._touched=true" onclick="(function(){var p=document.getElementById('alerts-panel');if(p&&p.classList.contains('open')){closeAlertsPanel();}else{closeIntelPanel();openAlertsPanel();}})()">⚠ Критические события</button>
+  <button class="lb" id="intel-btn" onclick="window._toggleIntelPanel()">◆ Раннее предупреждение</button>
+  <button class="lb" id="alerts-btn" onclick="window._toggleAlertsPanel()">⚠ Критические события</button>
   <!-- all layer buttons hidden from UI, code preserved -->
   <button class="lb" id="lb-planes" style="display:none">✈ Самолёты</button>
   <button class="lb" id="lb-ships" style="display:none">🚢 Суда</button>
@@ -2532,12 +2532,7 @@ function closeIntelPanel() {
   _hidePanelOverlay();
 }
 
-document.getElementById('intel-btn').addEventListener('click', function() {
-  var p = document.getElementById('intel-panel');
-  if (p.classList.contains('open')) { closeIntelPanel(); return; }
-  closeAlertsPanel();   // close the other panel first
-  openIntelPanel();
-});
+// intel-btn handled by window._toggle onclick
 document.getElementById('ip-close').addEventListener('click', closeIntelPanel);
 
 // Preload intel feed alongside snapshot data
@@ -2655,12 +2650,7 @@ function closeAlertsPanel() {
   _hidePanelOverlay();
 }
 
-document.getElementById('alerts-btn').addEventListener('click', function() {
-  var p = document.getElementById('alerts-panel');
-  if (p.classList.contains('open')) { closeAlertsPanel(); return; }
-  closeIntelPanel();    // close the other panel first
-  openAlertsPanel();
-});
+// alerts-btn handled by window._toggle onclick
 document.getElementById('ap-close').addEventListener('click', closeAlertsPanel);
 
 // Preload alerts in background
@@ -3645,32 +3635,55 @@ window.closeCountriesPanel = closeCountriesPanel;
 
 })(); // end IIFE
 
-// ── Global panel toggles (accessible from inline onclick on mobile) ─────
-function _togglePanel(panelId, btnId, openFn, closeFn) {
-  var p = document.getElementById(panelId);
-  if (!p) return;
-  if (p.classList.contains('open')) { closeFn(); }
-  else { openFn(); }
+// ── Panel toggle functions on window — called by button onclick ──────────
+// Same pattern as window.openCountryCard. No addEventListener conflict.
+
+window._toggleIntelPanel = function() {
+  var p = document.getElementById('intel-panel');
+  var ap = document.getElementById('alerts-panel');
+  if (p && p.classList.contains('open')) {
+    p.classList.remove('open');
+    var b = document.getElementById('intel-btn'); if (b) b.classList.remove('active');
+  } else {
+    if (ap) { ap.classList.remove('open'); var ab=document.getElementById('alerts-btn'); if(ab)ab.classList.remove('active'); }
+    if (p) {
+      p.classList.add('open');
+      var ib = document.getElementById('intel-btn'); if (ib) ib.classList.add('active');
+      if (typeof fetchIntelFeed === 'function') fetchIntelFeed().then(function(d){ if(typeof renderIntelFeed==='function')renderIntelFeed(d); }).catch(function(){});
+    }
+  }
+  _syncOverlay();
+};
+
+window._toggleAlertsPanel = function() {
+  var p = document.getElementById('alerts-panel');
+  var ip = document.getElementById('intel-panel');
+  if (p && p.classList.contains('open')) {
+    p.classList.remove('open');
+    var b = document.getElementById('alerts-btn'); if (b) b.classList.remove('active');
+  } else {
+    if (ip) { ip.classList.remove('open'); var ib=document.getElementById('intel-btn'); if(ib)ib.classList.remove('active'); }
+    if (p) {
+      p.classList.add('open');
+      var ab = document.getElementById('alerts-btn'); if (ab) ab.classList.add('active');
+      if (typeof fetchAlerts === 'function') fetchAlerts().then(function(d){ if(typeof renderAlerts==='function')renderAlerts(d); }).catch(function(){});
+    }
+  }
+  _syncOverlay();
+};
+
+function _syncOverlay() {
+  var ip = document.getElementById('intel-panel');
+  var ap = document.getElementById('alerts-panel');
+  var ov = document.getElementById('panel-overlay');
+  if (!ov) return;
+  ov.style.display = ((ip&&ip.classList.contains('open'))||(ap&&ap.classList.contains('open'))) ? 'block' : 'none';
 }
 
 function closeAllPanels() {
-  // Close all side panels — called by map overlay tap
-  if (window.closeIntelPanel)      window.closeIntelPanel();
-  if (window.closeAlertsPanel)     window.closeAlertsPanel();
-  if (window.closeCountriesPanel)  window.closeCountriesPanel();
-  var ov = document.getElementById('panel-overlay');
-  if (ov) ov.style.display = 'none';
+  ['intel-panel','alerts-panel','countries-panel'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('open');});
+  ['intel-btn','alerts-btn','countries-btn'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.remove('active');});
+  var ov=document.getElementById('panel-overlay'); if(ov)ov.style.display='none';
 }
-
-function _showPanelOverlay() {
-  document.getElementById('panel-overlay').style.display = 'block';
-}
-
-function _hidePanelOverlay() {
-  document.getElementById('panel-overlay').style.display = 'none';
-}
-
-</script>
-
-</body>
-</html>
+function _showPanelOverlay(){_syncOverlay();}
+function _hidePanelOverlay(){_syncOverlay();}
