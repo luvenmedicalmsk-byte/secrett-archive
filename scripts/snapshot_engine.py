@@ -533,6 +533,93 @@ def compute_forecast_7d(
     }
 
 
+def compute_forecast_30d(
+    score: int,
+    delta: int,
+    drivers: list[dict],
+    change_drivers: list[dict],
+    forecast_7d: dict,
+) -> dict:
+    """
+    Forecast Engine V2 — deterministic 30-day scenario forecast.
+    No LLM. No external APIs. Pure math on existing snapshot fields.
+
+    Extends V1 algorithm with:
+      - Three scenarios: best_case, base_case, worst_case
+      - Scenario drivers: factors contributing to each scenario
+      - Wider confidence band (uncertainty grows with horizon)
+      - Structural pressure from hot drivers dominates over short-term velocity
+
+    Architecture: same pattern as V1 — multiply drift by horizon,
+    widen band, reduce confidence. forecast_90d / forecast_180d
+    follow identical structure with different multipliers.
+
+    Inputs:
+      score          : current risk_score (0-100)
+      delta          : change vs yesterday
+      drivers        : top 3 active drivers with severity
+      change_drivers : contributors to today's delta
+      forecast_7d    : V1 result (reuse drift_per_day)
+    """
+
+    # Reuse drift_per_day from V1 for consistency
+    drift_per_day = forecast_7d.get("_drift_per_day", 0.0)
+
+    # Over 30 days, structural pressure matters more than recent velocity
+    hot_drivers   = [d for d in drivers if d.get("severity", 0) > 65]
+    avg_hot_sev   = (
+        sum(d.get("severity", 0) for d in hot_drivers) / len(hot_drivers)
+        if hot_drivers else score
+    )
+    pressure      = max(0.0, (avg_hot_sev - 65) / 35)   # 0..1
+    # Structural drift: blend short-term velocity with longer-term pressure
+    structural_drift = drift_per_day * 0.4 + pressure * 0.6
+
+    # Base case: 30-day projection
+    base_proj = score + round(structural_drift * 30)
+    base_proj = max(10, min(95, base_proj))
+
+    # Scenario band widens significantly at 30d
+    instability = min(abs(delta) + len(hot_drivers), 10)
+    band_30     = max(6, round(instability * 2.5))   # ≈2-3× wider than 7d
+
+    best_case  = max(10, base_proj - band_30)
+    worst_case = min(95, base_proj + band_30)
+
+    # Confidence drops with horizon and instability
+    confidence = 75 - instability * 3
+    if not drivers:      confidence -= 10
+    if abs(delta) > 5:   confidence -= 8
+    confidence = max(25, min(80, confidence))
+
+    # Scenario drivers — top 3 active factors shaping the outlook
+    # For ELITE tier: these explain the scenario spread
+    scenario_drivers = []
+    for drv in sorted(drivers, key=lambda d: d.get("severity", 0), reverse=True)[:3]:
+        sev  = drv.get("severity", 50)
+        dom  = drv.get("domain", "geopolitics")
+        name = drv.get("name", "")[:60]
+        # Each driver's contribution to worst-case: high severity = higher worst
+        contribution = round((sev - 50) / 50 * band_30 * 0.5) if sev > 50 else 0
+        scenario_drivers.append({
+            "name":         name,
+            "domain":       dom,
+            "severity":     sev,
+            "contribution": contribution,   # points added to worst_case
+        })
+
+    return {
+        "best_case":        best_case,
+        "base_case":        base_proj,
+        "worst_case":       worst_case,
+        "confidence":       confidence,
+        "scenario_drivers": scenario_drivers,   # ELITE only — filtered in Worker
+        # Architecture stub for V3
+        "_horizon":         "30d",
+        "_structural_drift": round(structural_drift, 3),
+    }
+
+
 # ── MAIN SNAPSHOT LOGIC ───────────────────────────────────────────────────────
 
 def build_snapshot(iso2: str, events: list[dict]) -> dict:
@@ -549,6 +636,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     drivers        = compute_drivers(iso2, matched, score)
     change_drivers = compute_change_attribution(iso2, drivers, delta)
     forecast_7d    = compute_forecast_7d(score, delta, drivers, change_drivers)
+    forecast_30d   = compute_forecast_30d(score, delta, drivers, change_drivers, forecast_7d)
 
     snap = {
         "country":          iso2,
@@ -562,6 +650,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         "drivers":          drivers,
         "change_drivers":   change_drivers,
         "forecast_7d":      forecast_7d,
+        "forecast_30d":     forecast_30d,
         "event_count":      len(matched),
     }
 
@@ -652,6 +741,8 @@ def update_index(snapshots: list[dict]) -> None:
                 "dominant_domain":  s["dominant_domain"],
                 "escalation_level": s["escalation_level"],
                 "delta":            s["delta"],
+                "forecast_7d":      s.get("forecast_7d"),
+                "forecast_30d":     s.get("forecast_30d"),
                 # summary intentionally omitted — served only to premium via history endpoint
             }
             for s in snapshots
