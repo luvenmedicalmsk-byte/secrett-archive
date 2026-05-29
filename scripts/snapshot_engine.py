@@ -1934,7 +1934,9 @@ def compute_systemic_risk(snap: dict) -> dict:
 
     # ── 1. Collect active domains ─────────────────────────────────────────
     active_domains: dict[str, int] = {}  # domain → max severity
-    active_domains[domain] = max(score, active_domains.get(domain, 0))
+    # LEAK-2 FIX: seed from drivers only — do NOT use risk_score (P1)
+    # P1 is counted directly in scenario_score×0.30
+    active_domains[domain] = active_domains.get(domain, 50)  # neutral seed
     for drv in drivers:
         d = drv.get("domain", "")
         s = drv.get("severity", 0)
@@ -2192,11 +2194,13 @@ def compute_early_warning(snap: dict) -> dict:
     # STEP 8: Signal Velocity
     # ────────────────────────────────────────────────────────────────────
     if signals:
-        weighted_sum  = sum(s["score"] * s["weight"] for s in signals)
-        weight_total  = sum(s["weight"] for s in signals)
+        weighted_sum    = sum(s["score"] * s["weight"] for s in signals)
+        weight_total    = sum(s["weight"] for s in signals)
+        # LEAK-1 FIX: pure pattern score — no base_pressure(P1) term
         signal_velocity = round(weighted_sum / weight_total) if weight_total else 0
     else:
-        signal_velocity = round(score * 0.15)  # baseline from current score
+        # Fallback: use delta magnitude only (no P1 content)
+        signal_velocity = min(40, round(abs(delta) * 8))
 
     velocity_trend    = "stable"
     velocity_trend_ru = "Стабильный"
@@ -2210,11 +2214,11 @@ def compute_early_warning(snap: dict) -> dict:
     # STEP 1–6: Early Warning Score
     # Blend: signal_velocity (60%) + base score pressure (25%) + escalation (15%)
     # ────────────────────────────────────────────────────────────────────
-    base_pressure = max(0, (score - 40) / 60 * 100) if score > 40 else 0
+    # LEAK-1 FIX: ew_score uses ONLY signal patterns + escalation proximity
+    # base_pressure(P1) removed — P1 counted directly in scenario_score
     ew_score = min(100, round(
-        signal_velocity * 0.60 +
-        base_pressure   * 0.25 +
-        esc_ord / 3.0   * 100 * 0.15
+        signal_velocity * 0.75 +
+        esc_ord / 3.0   * 100 * 0.25
     ))
 
     # Warning level
@@ -2934,6 +2938,29 @@ def main():
     generate_global_alerts(snapshots)
     save_country_timelines(snapshots)
     save_country_scenarios(snapshots)
+    # ── LEAK-4 FIX: Wire engine unique outputs into snap for Scenario Engine ──
+    # Attaches _systemic_pressure, _signal_velocity, _readiness_score,
+    # _resilience_score, _cascade_probability to each snap dict so that
+    # generate_scenarios uses real values instead of score×k fallbacks.
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            sys_data  = compute_systemic_risk(snap)
+            ew_data   = compute_early_warning(snap)
+            ds_data   = compute_decision_support(snap)
+            res_data  = compute_resilience(snap)
+            snap["_systemic_pressure"]  = sys_data.get("systemic_pressure", 0)
+            snap["_signal_velocity"]    = ew_data.get("signal_velocity", 0)
+            snap["_readiness_score"]    = ds_data.get("readiness_score", 0)
+            snap["_resilience_score"]   = res_data.get("resilience_score", 50)
+            # cascade_probability: max from active combos
+            combos = sys_data.get("active_combos", [])
+            snap["_cascade_probability"] = max(
+                (c.get("cascade_probability", 0) for c in combos), default=0
+            )
+        except Exception as e:
+            import sys as _sys
+            print(f"  [WIRE] {iso2}: {e}", file=_sys.stderr)
     save_country_correlations(snapshots)
     save_propagation(snapshots)
     save_systemic(snapshots)
