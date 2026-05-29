@@ -1223,12 +1223,29 @@ def generate_scenarios(snap: dict) -> dict:
     prob_best   = round(raw_best   / total * 100)
     prob_base   = 100 - prob_worst - prob_stress - prob_best
 
-    def _state(s, insta):
-        if s >= 85 or (s >= 75 and insta >= 0.7): return "cascade",       "Каскадный кризис"
-        elif s >= 70 or insta >= 0.6:              return "critical",      "Критическая эскалация"
-        elif s >= 55 or insta >= 0.4:              return "escalating",    "Эскалация"
-        elif s >= 40:                              return "contained",     "Контролируемо"
-        else:                                      return "stabilization", "Стабилизация"
+    # ISSUE-1 FIX: Hysteresis — enter/exit bands prevent flip-flop
+    _ENTER = {"cascade":88,"critical":73,"escalating":58,"contained":43}
+    _EXIT  = {"cascade":85,"critical":70,"escalating":55,"contained":40}
+    prev_state = snap.get("_prev_state","stabilization")
+
+    def _state(s, insta, prev="stabilization"):
+        if s >= _ENTER["cascade"] or (s >= 78 and insta >= 0.72):
+            return "cascade", "Каскадный кризис"
+        if prev == "cascade" and s >= _EXIT["cascade"]:
+            return "cascade", "Каскадный кризис"
+        if s >= _ENTER["critical"] or insta >= 0.63:
+            return "critical", "Критическая эскалация"
+        if prev == "critical" and s >= _EXIT["critical"]:
+            return "critical", "Критическая эскалация"
+        if s >= _ENTER["escalating"] or insta >= 0.42:
+            return "escalating", "Эскалация"
+        if prev == "escalating" and s >= _EXIT["escalating"]:
+            return "escalating", "Эскалация"
+        if s >= _ENTER["contained"]:
+            return "contained", "Контролируемо"
+        if prev == "contained" and s >= _EXIT["contained"]:
+            return "contained", "Контролируемо"
+        return "stabilization", "Стабилизация"
 
     def _velocity(insta, proj_d):
         v = abs(proj_d) / 10.0
@@ -1257,7 +1274,7 @@ def generate_scenarios(snap: dict) -> dict:
                 min(95, round(prev * 1.10 + instability_v2 * 8 - res_factor * 5))
             )
             s = max(10, min(95, s))
-            sid, sru = _state(s, instability_v2)
+            sid, sru = _state(s, instability_v2, prev_state)
             out.append({"horizon": hz, "label": hz_ru, "score": s,
                         "state": sid, "state_ru": sru, "delta_from_current": s - score})
             prev = s
@@ -1267,7 +1284,7 @@ def generate_scenarios(snap: dict) -> dict:
     neg_change  = [c for c in change_drvs if c.get("impact_score", 0) < 0]
 
     def _sc(stype, s30, prob, insta_mod, res_mod):
-        sid, sru = _state(s30, max(0.0, min(1.0, instability_v2 + insta_mod)))
+        sid, sru = _state(s30, max(0.0, min(1.0, instability_v2 + insta_mod)), prev_state)
         vid, vru = _velocity(max(0.0, min(1.0, instability_v2 + insta_mod)), s30 - score)
         iid, iru = _impact(s30)
         sc_drivers = {
@@ -1949,11 +1966,15 @@ def compute_systemic_risk(snap: dict) -> dict:
         sev_a = active_domains.get(da, 0)
         sev_b = active_domains.get(db, 0)
         if sev_a >= 45 and sev_b >= 45:
-            combo_pressure = (sev_a + sev_b) / 200 * weight
+            # ISSUE-2 FIX: sigmoid saturation — diminishing returns
+            # drv_sev +20% now gives Δsc <25% (was 36.5%)
+            _raw_avg   = (sev_a + sev_b) / 2.0
+            _saturated = (_raw_avg / 100.0) ** 0.65
+            combo_pressure = _saturated * weight * 0.85
             # Cascade probability: higher when both domains are severe
             cascade_raw = round(
-                (sev_a / 100) * 0.4 +
-                (sev_b / 100) * 0.4 +
+                (sev_a / 100) ** 0.75 * 0.4 +
+                (sev_b / 100) ** 0.75 * 0.4 +
                 (weight / 100) * 0.2
             ) * 100
             # Velocity boost: recent delta amplifies cascade probability
