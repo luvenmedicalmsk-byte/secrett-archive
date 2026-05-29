@@ -90,6 +90,8 @@ export default {
     return handleResilience(request, env);
   if (path.startsWith('/api/calibration/') && request.method === 'GET')
     return handleCalibration(request, env);
+  if (path.startsWith('/api/strategy/') && request.method === 'GET')
+    return handleStrategy(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1581,6 +1583,7 @@ function getTierCapabilities(tier) {
       decision_access:      'score',
       resilience_access:   'score',
       calibration_access:  'score',
+      strategy_access:    'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1605,6 +1608,7 @@ function getTierCapabilities(tier) {
       decision_access:      'score+level',
       resilience_access:   'score+level',
       calibration_access:  'score+bias',
+      strategy_access:    'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1629,6 +1633,7 @@ function getTierCapabilities(tier) {
       decision_access:      'full',
       resilience_access:   'full',
       calibration_access:  'full',
+      strategy_access:    'full',
     },
     elite: {
       tier:                'elite',
@@ -1653,6 +1658,7 @@ function getTierCapabilities(tier) {
       decision_access:      'full+explain',
       resilience_access:   'full+explain',
       calibration_access:  'full+diagnostics',
+      strategy_access:    'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2954,4 +2960,111 @@ function _stripMetrics(m) {
     accuracy_pct:      m.accuracy_pct,
     direction_hit_rate:m.direction_hit_rate,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADAPTIVE STRATEGY ENGINE V1 — Worker endpoint
+// GET /api/strategy/{CC}
+// strategy_access:
+//   teaser      → FREE:     urgency_level + strategy_score only
+//   summary     → SIGNAL:   + preparedness + monitoring_priority + top action
+//   full        → STRATEGIC:+ all actions + escalation_triggers
+//   full+explain→ ELITE:    + action confidence + horizon_outlook
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleStrategy(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.strategy_access || 'teaser';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `str:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/strategy/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    if (r.status === 404) return new Response(
+      JSON.stringify({error:'No strategy data for '+cc}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    if (!r.ok) throw new Error('fetch failed: '+r.status);
+    const data   = await r.json();
+    const result = _filterStrategy(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl:600}); } catch(_){}
+    }
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+function _filterStrategy(data, access, tier) {
+  // FREE: urgency + strategy_score teaser
+  const base = {
+    country:           data.country,
+    country_name:      data.country_name,
+    date:              data.date,
+    tier,
+    strategy_score:    data.strategy_score,
+    urgency_level:     data.urgency_level,
+    urgency_level_ru:  data.urgency_level_ru,
+    urgency_color:     data.urgency_color,
+    state:             data.state,
+  };
+  if (access === 'teaser') return base;
+
+  // SIGNAL+: preparedness + monitoring + top action (without confidence)
+  base.preparedness_level    = data.preparedness_level;
+  base.preparedness_level_ru = data.preparedness_level_ru;
+  base.monitoring_priority   = data.monitoring_priority;
+  base.monitoring_ru         = data.monitoring_ru;
+  base.strategy_confidence   = data.strategy_confidence;
+  base.dominant_scenario     = data.dominant_scenario;
+  base.probabilities         = data.probabilities;
+  base.calibration_grade     = data.calibration_grade;
+  // Top priority action only (stripped of confidence)
+  const topAction = (data.actions || []).find(a => a.priority === 1);
+  base.top_action = topAction ? {
+    id: topAction.id, priority: topAction.priority,
+    action: topAction.action, detail: topAction.detail,
+  } : null;
+  if (access === 'summary') return base;
+
+  // STRATEGIC+: all actions + escalation_triggers
+  base.actions = (data.actions || []).map(a => ({
+    id: a.id, priority: a.priority, action: a.action,
+    detail: a.detail, trigger: a.trigger, expiry: a.expiry,
+    domain_context: a.domain_context,
+  }));
+  base.action_count        = data.action_count;
+  base.escalation_triggers = (data.escalation_triggers || []).map(t => ({
+    condition: t.condition, leads_to: t.leads_to, probability: t.probability,
+  }));
+  if (access === 'full') return base;
+
+  // ELITE: + action confidence + horizon_outlook
+  base.actions = data.actions || [];  // full objects with confidence
+  base.horizon_outlook      = data.horizon_outlook || [];
+  base.scenario_score       = data.scenario_score;
+  base.instability          = data.instability;
+  return base;
 }
