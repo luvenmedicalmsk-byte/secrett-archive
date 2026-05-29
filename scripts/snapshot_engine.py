@@ -33,6 +33,7 @@ EARLY_WARNING_DIR = DOCS_DIR / "early-warning"
 DECISION_DIR      = DOCS_DIR / "decision-support"
 RESILIENCE_DIR    = DOCS_DIR / "resilience"
 CALIBRATION_DIR   = DOCS_DIR / "calibration"
+STRATEGY_DIR      = DOCS_DIR / "strategy"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -3174,6 +3175,508 @@ def save_calibration(snapshots: list[dict]) -> None:
             print(f"  [CAL] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[CAL] Saved calibration for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ADAPTIVE STRATEGY ENGINE V1
+# Separate strategy layer — does NOT modify forecast/calibration engines.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Strategy matrix: state × dominant_scenario × urgency ─────────────────
+# Each cell defines a template of recommended actions.
+# Keys: (state, dominant_scenario) → list of action templates
+# Actions are parameterised at runtime with live data.
+
+_STRATEGY_MATRIX: dict[tuple[str, str], list[dict]] = {
+
+    ("stabilization", "best"): [
+        {"id": "S-01", "priority": 1, "action": "Мониторинговый режим",
+         "detail": "Поддерживать стандартный цикл наблюдения, отклонений не выявлено",
+         "trigger": "risk_score < 40 AND dominant = best",
+         "expiry":  "risk_score > 45 OR delta > 3"},
+        {"id": "S-02", "priority": 2, "action": "Обновить базовые прогнозы",
+         "detail": "Благоприятный период для актуализации долгосрочных прогнозов",
+         "trigger": "stabilization state > 7d",
+         "expiry":  "state transition"},
+    ],
+    ("stabilization", "base"): [
+        {"id": "S-03", "priority": 1, "action": "Плановый мониторинг",
+         "detail": "Стандартные процедуры наблюдения, активных угроз нет",
+         "trigger": "stabilization + base dominant",
+         "expiry":  "risk_score > 45"},
+        {"id": "S-04", "priority": 2, "action": "Превентивный сбор данных",
+         "detail": "Усилить сбор по ведущему домену как профилактику",
+         "trigger": "always",
+         "expiry":  "state transition"},
+    ],
+    ("stabilization", "stress"): [
+        {"id": "S-05", "priority": 1, "action": "Повышенная бдительность",
+         "detail": "Низкий риск, но стресс-сценарий доминирует — проверить опережающие индикаторы",
+         "trigger": "stress dominant despite low score",
+         "expiry":  "stress probability < 20%"},
+        {"id": "S-06", "priority": 2, "action": "Проверить триггеры стресс-перехода",
+         "detail": "Идентифицировать конкретные условия, при которых стресс-сценарий реализуется",
+         "trigger": "always",
+         "expiry":  "state escalation"},
+    ],
+    ("stabilization", "worst"): [
+        {"id": "S-07", "priority": 1, "action": "Немедленный аналитический обзор",
+         "detail": "Базовый риск низкий, но worst-case доминирует — аномалия требует проверки",
+         "trigger": "worst dominant at stabilization",
+         "expiry":  "probability rebalancing"},
+        {"id": "S-08", "priority": 2, "action": "Проверить качество данных",
+         "detail": "Возможна аномалия в сигналах или экстремальное событие вне стандартных паттернов",
+         "trigger": "always",
+         "expiry":  "data confirmed"},
+    ],
+
+    ("contained", "best"): [
+        {"id": "C-01", "priority": 1, "action": "Ожидать деэскалации",
+         "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
+         "trigger": "contained + best dominant",
+         "expiry":  "state change or prob_best < 25%"},
+        {"id": "C-02", "priority": 2, "action": "Подготовить план выхода из контролируемой фазы",
+         "detail": "Определить индикаторы для перевода в мониторинговый режим",
+         "trigger": "contained > 5d",
+         "expiry":  "stabilization transition"},
+    ],
+    ("contained", "base"): [
+        {"id": "C-03", "priority": 1, "action": "Активный мониторинг ключевых драйверов",
+         "detail": "Риск управляем, но динамика нейтральная — отслеживать ведущие домены",
+         "trigger": "contained + base dominant",
+         "expiry":  "dominant scenario shift"},
+        {"id": "C-04", "priority": 2, "action": "Оценить цепочки распространения",
+         "detail": "Проверить, не накапливается ли системное давление в смежных доменах",
+         "trigger": "systemic_pressure > 25",
+         "expiry":  "systemic_pressure < 20"},
+    ],
+    ("contained", "stress"): [
+        {"id": "C-05", "priority": 1, "action": "Превентивные меры по ведущему домену",
+         "detail": "Стресс-сценарий в контролируемой фазе сигнализирует о накоплении давления",
+         "trigger": "stress dominant + contained",
+         "expiry":  "stress probability < 20%"},
+        {"id": "C-06", "priority": 2, "action": "Подготовить сценарный план эскалации",
+         "detail": "Заблаговременно разработать реагирование для escalating state",
+         "trigger": "always",
+         "expiry":  "state transition"},
+    ],
+    ("contained", "worst"): [
+        {"id": "C-07", "priority": 1, "action": "Срочная проверка системных рисков",
+         "detail": "Worst-case доминирует при контролируемом риске — возможны скрытые уязвимости",
+         "trigger": "worst dominant + contained",
+         "expiry":  "systemic audit complete"},
+        {"id": "C-08", "priority": 2, "action": "Активировать ранние предупреждения",
+         "detail": "Повысить частоту мониторинга сигналов раннего предупреждения до 2× в сутки",
+         "trigger": "always",
+         "expiry":  "probability rebalancing"},
+    ],
+
+    ("escalating", "best"): [
+        {"id": "E-01", "priority": 1, "action": "Удержать деэскалационный потенциал",
+         "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
+         "trigger": "escalating + best dominant",
+         "expiry":  "state transition"},
+        {"id": "E-02", "priority": 2, "action": "Инициировать дипломатические/превентивные контакты",
+         "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
+         "trigger": "prob_best > 20%",
+         "expiry":  "prob_best < 15%"},
+    ],
+    ("escalating", "base"): [
+        {"id": "E-03", "priority": 1, "action": "Повышенная готовность по ведущему домену",
+         "detail": "Эскалация развивается по базовому сценарию — мобилизовать ресурсы реагирования",
+         "trigger": "escalating + base dominant",
+         "expiry":  "state change"},
+        {"id": "E-04", "priority": 2, "action": "Усилить мониторинг каскадных рисков",
+         "detail": "При эскалации вероятность системных эффектов возрастает",
+         "trigger": "systemic_pressure > 30",
+         "expiry":  "systemic_pressure normalises"},
+        {"id": "E-05", "priority": 3, "action": "Обновить 30d прогноз",
+         "detail": "Текущий прогноз может недооценивать скорость эскалации",
+         "trigger": "delta > 4",
+         "expiry":  "forecast updated"},
+    ],
+    ("escalating", "stress"): [
+        {"id": "E-06", "priority": 1, "action": "НЕМЕДЛЕННАЯ МОБИЛИЗАЦИЯ РЕСУРСОВ",
+         "detail": "Эскалация + доминирующий стресс-сценарий: высокий риск перехода в critical",
+         "trigger": "escalating + stress dominant",
+         "expiry":  "state stabilises or critical transition"},
+        {"id": "E-07", "priority": 1, "action": "Активировать планы управления кризисом",
+         "detail": "Запустить протоколы кризисного управления для ведущего домена",
+         "trigger": "always",
+         "expiry":  "state change"},
+        {"id": "E-08", "priority": 2, "action": "Экстренная оценка устойчивости",
+         "detail": "Проверить resilience_score и узкие места цепочек поставок",
+         "trigger": "resilience_score < 50",
+         "expiry":  "resilience audit complete"},
+    ],
+    ("escalating", "worst"): [
+        {"id": "E-09", "priority": 1, "action": "КРИТИЧЕСКИЙ СТАТУС — МАКСИМАЛЬНАЯ ГОТОВНОСТЬ",
+         "detail": "Эскалирующий риск с доминирующим worst-case: вероятен переход в critical",
+         "trigger": "escalating + worst dominant",
+         "expiry":  "state resolution"},
+        {"id": "E-10", "priority": 1, "action": "Немедленное межведомственное совещание",
+         "detail": "Собрать все заинтересованные стороны для координации реагирования",
+         "trigger": "always",
+         "expiry":  "resolution achieved"},
+        {"id": "E-11", "priority": 2, "action": "Задействовать альтернативные цепочки поставок",
+         "detail": "При worst-case реализации стандартные каналы под угрозой",
+         "trigger": "supply_chain_pressure > 40",
+         "expiry":  "supply normalised"},
+    ],
+
+    ("critical", "best"): [
+        {"id": "CR-01", "priority": 1, "action": "Контролируемая деэскалация",
+         "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
+         "trigger": "critical + best dominant",
+         "expiry":  "state transition"},
+        {"id": "CR-02", "priority": 2, "action": "Защитить деэскалационные индикаторы",
+         "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
+         "trigger": "always",
+         "expiry":  "deescalation confirmed"},
+    ],
+    ("critical", "base"): [
+        {"id": "CR-03", "priority": 1, "action": "КРИТИЧЕСКИЙ ПРОТОКОЛ — НЕМЕДЛЕННО",
+         "detail": "Критический риск по базовому сценарию: полная активация реагирования",
+         "trigger": "critical + base dominant",
+         "expiry":  "state change"},
+        {"id": "CR-04", "priority": 1, "action": "Активировать резервные механизмы",
+         "detail": "Задействовать все резервные протоколы по затронутым доменам",
+         "trigger": "always",
+         "expiry":  "crisis resolution"},
+        {"id": "CR-05", "priority": 2, "action": "Непрерывный мониторинг 24/7",
+         "detail": "Переключить на режим постоянного наблюдения с часовым обновлением",
+         "trigger": "always",
+         "expiry":  "state normalises"},
+    ],
+    ("critical", "stress"): [
+        {"id": "CR-06", "priority": 1, "action": "ЭКСТРЕННЫЙ УРОВЕНЬ РЕАГИРОВАНИЯ",
+         "detail": "Критическая стадия + стресс-доминирование: переход в cascade вероятен",
+         "trigger": "critical + stress dominant",
+         "expiry":  "cascade or stabilisation"},
+        {"id": "CR-07", "priority": 1, "action": "Активировать международные механизмы",
+         "detail": "Задействовать международные партнёрства и механизмы поддержки",
+         "trigger": "resilience_score < 40",
+         "expiry":  "support received"},
+        {"id": "CR-08", "priority": 2, "action": "Подготовить план каскадного реагирования",
+         "detail": "Заблаговременно разработать протоколы для cascade state",
+         "trigger": "always",
+         "expiry":  "state resolution"},
+    ],
+    ("critical", "worst"): [
+        {"id": "CR-09", "priority": 1, "action": "МАКСИМАЛЬНЫЙ УРОВЕНЬ ТРЕВОГИ",
+         "detail": "Критический риск с worst-case dominant: системный кризис в высокой готовности",
+         "trigger": "critical + worst dominant",
+         "expiry":  "state resolution"},
+        {"id": "CR-10", "priority": 1, "action": "Немедленная эвакуация уязвимых активов",
+         "detail": "Приоритетная защита критической инфраструктуры и цепочек поставок",
+         "trigger": "always",
+         "expiry":  "assets secured"},
+        {"id": "CR-11", "priority": 1, "action": "Активировать высший уровень кризисного управления",
+         "detail": "Передать координацию реагирования на высший уровень принятия решений",
+         "trigger": "always",
+         "expiry":  "crisis resolved"},
+    ],
+
+    ("cascade", "worst"): [
+        {"id": "CA-01", "priority": 1, "action": "КАСКАДНЫЙ КРИЗИС — МАКСИМАЛЬНАЯ ТРЕВОГА",
+         "detail": "Системный каскадный сбой. Все механизмы реагирования активированы немедленно",
+         "trigger": "cascade state",
+         "expiry":  "cascade resolution"},
+        {"id": "CA-02", "priority": 1, "action": "Полная активация антикризисного центра",
+         "detail": "Непрерывная работа антикризисного центра, координация всех задействованных сторон",
+         "trigger": "always",
+         "expiry":  "cascade resolved"},
+        {"id": "CA-03", "priority": 1, "action": "Изоляция критических систем",
+         "detail": "Предотвратить дальнейшее распространение каскада на смежные домены",
+         "trigger": "systemic_combos > 2",
+         "expiry":  "cascade isolated"},
+    ],
+    ("cascade", "stress"): [
+        {"id": "CA-04", "priority": 1, "action": "КАСКАДНЫЙ КРИЗИС — СРОЧНОЕ РЕАГИРОВАНИЕ",
+         "detail": "Каскадный сбой с возможным ослаблением — стресс-сценарий как сигнал выхода",
+         "trigger": "cascade + stress dominant",
+         "expiry":  "stress becomes best"},
+        {"id": "CA-05", "priority": 1, "action": "Мониторинг точек каскадного выхода",
+         "detail": "Отслеживать индикаторы прекращения каскада для своевременной деэскалации",
+         "trigger": "always",
+         "expiry":  "cascade stabilises"},
+    ],
+}
+
+# Fallback для неопределённых комбинаций
+_STRATEGY_FALLBACK: list[dict] = [
+    {"id": "F-01", "priority": 1, "action": "Оценить текущую обстановку",
+     "detail": "Комбинация состояния и сценария требует ручного анализа",
+     "trigger": "unusual state-scenario combination",
+     "expiry":  "manual review complete"},
+    {"id": "F-02", "priority": 2, "action": "Интенсифицировать мониторинг",
+     "detail": "Увеличить частоту обновлений до разрешения неопределённости",
+     "trigger": "always",
+     "expiry":  "clarity achieved"},
+]
+
+# ── Urgency levels ────────────────────────────────────────────────────────
+_URGENCY = {
+    "stabilization": ("low",        "Низкая",      "#22c55e"),
+    "contained":     ("moderate",   "Умеренная",   "#fbbf24"),
+    "escalating":    ("high",       "Высокая",     "#f59e0b"),
+    "critical":      ("critical",   "Критическая", "#ef4444"),
+    "cascade":       ("maximum",    "Максимальная","#dc2626"),
+}
+
+# ── Preparedness levels ───────────────────────────────────────────────────
+_PREPAREDNESS = {
+    "stabilization": ("routine",    "Плановый режим"),
+    "contained":     ("enhanced",   "Повышенная готовность"),
+    "escalating":    ("active",     "Активная готовность"),
+    "critical":      ("emergency",  "Чрезвычайная готовность"),
+    "cascade":       ("maximum",    "Максимальная готовность"),
+}
+
+# ── Monitoring priority ───────────────────────────────────────────────────
+_MONITORING = {
+    "stabilization": 1,   # daily
+    "contained":     2,   # twice daily
+    "escalating":    3,   # every 6h
+    "critical":      4,   # hourly
+    "cascade":       5,   # continuous
+}
+_MONITORING_RU = {1:"Ежедневно",2:"Дважды в сутки",3:"Каждые 6 часов",4:"Ежечасно",5:"Непрерывно"}
+
+
+def compute_strategy(
+    snap: dict,
+    scenario_data: dict | None = None,
+    calibration_data: dict | None = None,
+) -> dict:
+    """
+    Adaptive Strategy Engine V1 — separate strategy layer.
+    Does NOT modify forecast/calibration engines.
+
+    Inputs (all from already-computed engines):
+      snap             : current snapshot (risk_score, state, delta, domain...)
+      scenario_data    : output of generate_scenarios() for this country
+      calibration_data : output of compute_forecast_accuracy() for this country
+
+    Outputs:
+      strategy_score      0–100 composite urgency + capacity
+      strategy_confidence 0–100 based on calibration_score
+      urgency_level       low/moderate/high/critical/maximum
+      preparedness_level  routine/enhanced/active/emergency/maximum
+      monitoring_priority 1–5
+      actions[]           prioritised action list with trigger/expiry
+      escalation_triggers conditions that would move to next state
+      horizon_outlook     strategic view across 30/90/180/365d
+    """
+    iso2         = snap["country"]
+    score        = snap.get("risk_score", 50)
+    delta        = snap.get("delta", 0)
+    domain       = snap.get("dominant_domain", "geopolitics")
+    level        = snap.get("escalation_level", "stable")
+
+    # ── Derive state from scenario data or snap ────────────────────────────
+    state = "stabilization"
+    dom_scenario = "base"
+    prob_worst = 20; prob_stress = 22; prob_base = 33; prob_best = 25
+    scenario_score = 50; instability = 30
+    f30_worst = score + 10; recovery_days = 180
+
+    if scenario_data:
+        state        = (scenario_data.get("scenarios") or [{}])[0].get("state", "stabilization")
+        dom_scenario = scenario_data.get("dominant_scenario", "base")
+        scenario_score = scenario_data.get("scenario_score", 50)
+        instability    = scenario_data.get("instability", 30)
+        probs = {s["type"]: s["probability"] for s in scenario_data.get("scenarios", [])}
+        prob_worst  = probs.get("worst", 20)
+        prob_stress = probs.get("stress", 22)
+        prob_base   = probs.get("base",  33)
+        prob_best   = probs.get("best",  25)
+        # worst-case 30d from first scenario
+        for sc in scenario_data.get("scenarios", []):
+            if sc["type"] == "worst":
+                f30_worst    = sc.get("score", score + 15)
+                recovery_days= sc.get("recovery_days", 180)
+                break
+        # Use state from dominant scenario's own horizons[0]
+        for sc in scenario_data.get("scenarios", []):
+            if sc["type"] == dom_scenario:
+                state = sc.get("state", state)
+                break
+
+    # ── Strategy confidence from calibration ───────────────────────────────
+    cal_score = None
+    cal_grade = "unknown"
+    if calibration_data:
+        cal_score = calibration_data.get("calibration_score")
+        cal_grade = calibration_data.get("calibration_grade", "unknown")
+
+    # strategy_confidence: how much to trust the strategy recommendations
+    # Based on calibration_score (forecast accuracy)
+    if cal_score is not None:
+        strategy_confidence = min(95, max(20, round(cal_score)))
+    else:
+        # No calibration data → moderate confidence (new country)
+        strategy_confidence = 50
+
+    # ── Urgency, preparedness, monitoring ──────────────────────────────────
+    urg_id, urg_ru, urg_col = _URGENCY.get(state, ("moderate", "Умеренная", "#fbbf24"))
+    prep_id, prep_ru         = _PREPAREDNESS.get(state, ("enhanced", "Повышенная готовность"))
+    mon_priority             = _MONITORING.get(state, 2)
+    mon_ru                   = _MONITORING_RU.get(mon_priority, "Дважды в сутки")
+
+    # ── Retrieve action templates ──────────────────────────────────────────
+    key = (state, dom_scenario)
+    templates = _STRATEGY_MATRIX.get(key)
+    # Try cascade with any scenario if not found
+    if templates is None and state == "cascade":
+        templates = _STRATEGY_MATRIX.get(("cascade", "worst"), _STRATEGY_FALLBACK)
+    if templates is None:
+        templates = _STRATEGY_FALLBACK
+
+    # ── Enrich actions with live context ──────────────────────────────────
+    actions = []
+    for t in templates:
+        conf = min(95, max(25, round(
+            strategy_confidence * 0.60 +        # calibration confidence
+            (100 - instability) * 0.25 +        # stability factor
+            (100 - prob_worst)  * 0.15           # probability factor
+        )))
+        actions.append({
+            "id":               t["id"],
+            "priority":         t["priority"],
+            "action":           t["action"],
+            "detail":           t["detail"],
+            "trigger":          t["trigger"],
+            "expiry":           t["expiry"],
+            "confidence":       conf,
+            "domain_context":   domain,
+            "horizon_relevant": "30d",
+        })
+    actions.sort(key=lambda a: a["priority"])
+
+    # ── Escalation triggers ────────────────────────────────────────────────
+    _NEXT_STATE = {
+        "stabilization": "contained",
+        "contained":     "escalating",
+        "escalating":    "critical",
+        "critical":      "cascade",
+        "cascade":       "cascade",
+    }
+    next_state   = _NEXT_STATE.get(state, state)
+    next_urg, _, _ = _URGENCY.get(next_state, ("high","",""))
+
+    escalation_triggers = [
+        {
+            "condition":   f"risk_score ≥ {min(95, score + 8)} (+8pt)",
+            "leads_to":    next_state,
+            "probability": round(prob_worst * 0.60 + prob_stress * 0.20),
+        },
+        {
+            "condition":   f"delta ≥ 6 за 24ч",
+            "leads_to":    next_state,
+            "probability": round(max(5, instability * 0.5)),
+        },
+        {
+            "condition":   f"Worst-case 30d ≥ {min(95, f30_worst + 5)}",
+            "leads_to":    next_state,
+            "probability": round(prob_worst),
+        },
+        {
+            "condition":   f"Новый критический драйвер в {domain}",
+            "leads_to":    next_state,
+            "probability": round(prob_stress * 0.80),
+        },
+    ]
+
+    # ── Horizon outlook ────────────────────────────────────────────────────
+    def _hz_strategy(hz_label: str, sc_hz: dict) -> dict:
+        hz_state  = sc_hz.get("state", state)
+        hz_score  = sc_hz.get("score", score)
+        hz_urg,_,_= _URGENCY.get(hz_state, ("moderate","Умеренная","#fbbf24"))
+        hz_prep,_ = _PREPAREDNESS.get(hz_state, ("enhanced","Повышенная готовность"))
+        return {
+            "horizon":      hz_label,
+            "score":        hz_score,
+            "state":        hz_state,
+            "urgency":      hz_urg,
+            "preparedness": hz_prep,
+        }
+
+    horizon_outlook = []
+    if scenario_data:
+        # Use dominant scenario's horizon projections
+        for sc in scenario_data.get("scenarios", []):
+            if sc["type"] == dom_scenario:
+                for hz in sc.get("horizons", []):
+                    horizon_outlook.append(_hz_strategy(hz["label"], hz))
+                break
+
+    # ── Strategy score (0–100) ─────────────────────────────────────────────
+    # High urgency + low preparedness + poor calibration = high strategy_score
+    urgency_map = {"low":10,"moderate":30,"high":55,"critical":75,"maximum":95}
+    urg_val     = urgency_map.get(urg_id, 30)
+    # Confidence penalty: low confidence inflates strategy_score (more caution needed)
+    conf_penalty = max(0, (70 - strategy_confidence) * 0.3)
+    strategy_score = min(100, round(
+        urg_val * 0.55 +
+        scenario_score * 0.25 +
+        conf_penalty   * 0.20
+    ))
+
+    return {
+        "country":              iso2,
+        "country_name":         snap["country_name"],
+        "date":                 TODAY,
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        # Core outputs
+        "strategy_score":       strategy_score,
+        "strategy_confidence":  strategy_confidence,
+        "urgency_level":        urg_id,
+        "urgency_level_ru":     urg_ru,
+        "urgency_color":        urg_col,
+        "preparedness_level":   prep_id,
+        "preparedness_level_ru":prep_ru,
+        "monitoring_priority":  mon_priority,
+        "monitoring_ru":        mon_ru,
+        # Actions
+        "actions":              actions,
+        "action_count":         len(actions),
+        # Context
+        "state":                state,
+        "dominant_scenario":    dom_scenario,
+        "scenario_score":       scenario_score,
+        "instability":          instability,
+        "calibration_grade":    cal_grade,
+        # Triggers and outlook
+        "escalation_triggers":  escalation_triggers,
+        "horizon_outlook":      horizon_outlook,
+        # Probabilities
+        "probabilities": {
+            "worst":  prob_worst,
+            "stress": prob_stress,
+            "base":   prob_base,
+            "best":   prob_best,
+        },
+    }
+
+
+def save_strategy(snapshots: list[dict]) -> None:
+    """Save strategy for all 25 countries to docs/strategy/{CC}.json"""
+    STRATEGY_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Load scenario data
+            sc_path  = SCENARIOS_DIR    / f"{iso2}.json"
+            cal_path = CALIBRATION_DIR  / f"{iso2}.json"
+            sc_data  = json.loads(sc_path.read_text())  if sc_path.exists()  else None
+            cal_data = json.loads(cal_path.read_text()) if cal_path.exists() else None
+
+            strategy = compute_strategy(snap, sc_data, cal_data)
+            with open(STRATEGY_DIR / f"{iso2}.json", "w") as f:
+                json.dump(strategy, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [STRATEGY] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[STRATEGY] Saved strategy for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -3229,6 +3732,7 @@ def main():
     save_decision_support(snapshots)
     save_resilience(snapshots)
     save_calibration(snapshots)
+    save_strategy(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
