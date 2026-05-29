@@ -452,6 +452,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 <body>
 
 <div id="map"></div>
+<div id="panel-overlay" onclick="closeAllPanels()" style="position:fixed;top:0;left:0;right:300px;bottom:0;z-index:20;display:none;cursor:pointer"></div>
 
 <div id="ui">
   <div id="header">
@@ -469,8 +470,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   </div>
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
-  <button class="lb" id="intel-btn">◆ Раннее предупреждение</button>
-  <button class="lb" id="alerts-btn">⚠ Критические события</button>
+  <button class="lb" id="intel-btn" ontouchend="this._touched=true" onclick="(function(e){if(typeof openIntelPanel==='undefined')return;var p=document.getElementById('intel-panel');if(p&&p.classList.contains('open')){closeIntelPanel();}else{closeAlertsPanel();openIntelPanel();}})()">◆ Раннее предупреждение</button>
+  <button class="lb" id="alerts-btn" ontouchend="this._touched=true" onclick="(function(e){if(typeof openAlertsPanel==='undefined')return;var p=document.getElementById('alerts-panel');if(p&&p.classList.contains('open')){closeAlertsPanel();}else{closeIntelPanel();openAlertsPanel();}})()">⚠ Критические события</button>
   <!-- all layer buttons hidden from UI, code preserved -->
   <button class="lb" id="lb-planes" style="display:none">✈ Самолёты</button>
   <button class="lb" id="lb-ships" style="display:none">🚢 Суда</button>
@@ -2519,6 +2520,7 @@ async function openIntelPanel() {
   var btn   = document.getElementById('intel-btn');
   panel.classList.add('open');
   btn.classList.add('active');
+  _showPanelOverlay();
 
   var data = await fetchIntelFeed();
   renderIntelFeed(data);
@@ -2527,6 +2529,7 @@ async function openIntelPanel() {
 function closeIntelPanel() {
   document.getElementById('intel-panel').classList.remove('open');
   document.getElementById('intel-btn').classList.remove('active');
+  _hidePanelOverlay();
 }
 
 document.getElementById('intel-btn').addEventListener('click', function() {
@@ -2641,6 +2644,7 @@ async function openAlertsPanel() {
   var btn   = document.getElementById('alerts-btn');
   panel.classList.add('open');
   btn.classList.add('active');
+  _showPanelOverlay();
   var data = await fetchAlerts();
   renderAlerts(data);
 }
@@ -2648,6 +2652,7 @@ async function openAlertsPanel() {
 function closeAlertsPanel() {
   document.getElementById('alerts-panel').classList.remove('open');
   document.getElementById('alerts-btn').classList.remove('active');
+  _hidePanelOverlay();
 }
 
 document.getElementById('alerts-btn').addEventListener('click', function() {
@@ -3631,6 +3636,31 @@ function renderDecisionSupport(data, caps) {
 }
 
 })(); // end IIFE
+
+// ── Global panel toggles (accessible from inline onclick on mobile) ─────
+function _togglePanel(panelId, btnId, openFn, closeFn) {
+  var p = document.getElementById(panelId);
+  if (!p) return;
+  if (p.classList.contains('open')) { closeFn(); }
+  else { openFn(); }
+}
+
+function closeAllPanels() {
+  // Close all side panels — called by map overlay tap
+  if (typeof closeIntelPanel  !== 'undefined') closeIntelPanel();
+  if (typeof closeAlertsPanel !== 'undefined') closeAlertsPanel();
+  if (typeof closeCountriesPanel !== 'undefined') closeCountriesPanel();
+  document.getElementById('panel-overlay').style.display = 'none';
+}
+
+function _showPanelOverlay() {
+  document.getElementById('panel-overlay').style.display = 'block';
+}
+
+function _hidePanelOverlay() {
+  document.getElementById('panel-overlay').style.display = 'none';
+}
+
 </script>
 
 </body>
