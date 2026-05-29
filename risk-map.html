@@ -1401,6 +1401,16 @@ setInterval(() => {
 .cc-badge.level-critical  { background: rgba(220,38,38,.22);   color: #dc2626; border-color: rgba(220,38,38,.5); box-shadow: 0 0 8px rgba(220,38,38,.25); }
 
 /* Summary (premium) */
+.cc-drivers { margin-bottom: 14px; }
+.cc-drivers-label { font-size: 8px; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.25); margin-bottom: 7px; }
+.cc-driver { display: flex; align-items: flex-start; gap: 7px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.cc-driver:last-child { border-bottom: none; }
+.cc-driver-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.cc-driver-body { flex: 1; min-width: 0; }
+.cc-driver-name { font-size: 11px; color: rgba(232,224,208,.85); line-height: 1.4; margin-bottom: 2px; }
+.cc-driver-impact { font-size: 10px; color: rgba(232,224,208,.4); line-height: 1.4; font-style: italic; }
+.cc-driver-sev { font-size: 9px; font-family: 'Courier New', monospace; color: rgba(255,255,255,.2); flex-shrink: 0; margin-top: 2px; }
+
 .cc-summary {
   font-size: 12px;
   color: rgba(232,224,208,.65);
@@ -1499,6 +1509,7 @@ setInterval(() => {
 
     <!-- Summary: premium shows text, free shows blur + CTA -->
     <div id="cc-summary-block"></div>
+    <div id="cc-drivers-block"></div>
 
     <!-- Mini timeline -->
     <div class="cc-chart-label" id="cc-chart-label"></div>
@@ -1612,6 +1623,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-domain').textContent = '';
   document.getElementById('cc-level').textContent  = '';
   document.getElementById('cc-summary-block').innerHTML = '';
+  document.getElementById('cc-drivers-block').innerHTML = '';
   document.getElementById('cc-footer').textContent = '';
   document.getElementById('cc-chart-label').textContent = '';
   clearChart();
@@ -1683,9 +1695,29 @@ function renderCard(c) {
   document.getElementById('cc-footer').textContent = 'Данные на ' + c.date || '';
   // Domain accent: top border on card
   document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
+  renderDrivers(c.drivers || [], !!_premiumToken);
 }
 
 // ── Mini timeline chart ────────────────────────────────────────────────────
+// ── Top Drivers ─────────────────────────────────────────────────────────
+function renderDrivers(drivers, premium) {
+  var block = document.getElementById('cc-drivers-block');
+  if (!drivers || !drivers.length) { block.innerHTML = ''; return; }
+  var DCL = { geopolitics:'#ff7a00', climate:'#22c55e', economy:'#38bdf8', technology:'#a855f7', social:'#ef4444' };
+  var html = '<div class="cc-drivers"><div class="cc-drivers-label">Ключевые драйверы риска</div>';
+  drivers.forEach(function(d) {
+    var col = DCL[d.domain] || '#B8973A';
+    html += '<div class="cc-driver">'
+          + '<div class="cc-driver-dot" style="background:' + col + '"></div>'
+          + '<div class="cc-driver-body"><div class="cc-driver-name">' + _esc(d.name) + '</div>';
+    if (premium && d.impact) html += '<div class="cc-driver-impact">' + _esc(d.impact) + '</div>';
+    html += '</div><div class="cc-driver-sev">' + (d.severity || '') + '</div></div>';
+  });
+  if (!premium) html += '<div style="font-size:9px;color:#B8973A;margin-top:6px">🔒 Анализ влияния в Signal PRO</div>';
+  html += '</div>';
+  block.innerHTML = html;
+}
+
 function clearChart() {
   const cv  = document.getElementById('cc-chart');
   const ctx = cv.getContext('2d');
