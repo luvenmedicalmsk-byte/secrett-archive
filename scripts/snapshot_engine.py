@@ -26,6 +26,7 @@ INTEL_DIR      = DOCS_DIR / "intelligence"
 ALERTS_DIR     = DOCS_DIR / "alerts"
 TIMELINE_DIR   = DOCS_DIR / "timelines"
 SCENARIOS_DIR  = DOCS_DIR / "scenarios"
+CORRELATIONS_DIR = DOCS_DIR / "correlations"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -1249,6 +1250,287 @@ def save_country_scenarios(snapshots: list[dict]) -> None:
             print(f"  [SCENARIO] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[SCENARIO] Saved scenarios for {len(snapshots)} countries", file=sys.stderr)
 
+# ── STATIC COUNTRY LINK MAP ───────────────────────────────────────────────
+# Deterministic geopolitical/economic links between countries.
+# strength 0-100: geopolitical proximity, trade dependency, shared risk domains.
+_COUNTRY_LINKS: dict[str, list[dict]] = {
+    "RU": [
+        {"linked": "UA", "strength": 95, "reason": "Ongoing military conflict"},
+        {"linked": "BY", "strength": 88, "reason": "Political-military alliance"},
+        {"linked": "CN", "strength": 75, "reason": "Strategic energy partnership"},
+        {"linked": "DE", "strength": 62, "reason": "Energy supply disruption"},
+        {"linked": "KZ", "strength": 68, "reason": "Economic and security ties"},
+    ],
+    "UA": [
+        {"linked": "RU", "strength": 95, "reason": "Active conflict"},
+        {"linked": "PL", "strength": 82, "reason": "Refugee flows and military aid"},
+        {"linked": "DE", "strength": 70, "reason": "Economic and military support"},
+        {"linked": "US", "strength": 78, "reason": "Military and financial aid"},
+    ],
+    "CN": [
+        {"linked": "US", "strength": 85, "reason": "Trade and tech rivalry"},
+        {"linked": "TW", "strength": 90, "reason": "Taiwan Strait tension"},
+        {"linked": "JP", "strength": 72, "reason": "Regional security competition"},
+        {"linked": "IN", "strength": 68, "reason": "Border disputes"},
+        {"linked": "RU", "strength": 75, "reason": "Strategic partnership"},
+        {"linked": "KR", "strength": 65, "reason": "Trade dependency"},
+    ],
+    "US": [
+        {"linked": "CN", "strength": 85, "reason": "Economic and tech rivalry"},
+        {"linked": "RU", "strength": 78, "reason": "Geopolitical confrontation"},
+        {"linked": "UA", "strength": 78, "reason": "Military and financial support"},
+        {"linked": "IL", "strength": 72, "reason": "Security alliance"},
+        {"linked": "SA", "strength": 68, "reason": "Energy and defense"},
+    ],
+    "DE": [
+        {"linked": "RU", "strength": 62, "reason": "Energy dependency legacy"},
+        {"linked": "UA", "strength": 70, "reason": "Economic and military support"},
+        {"linked": "FR", "strength": 75, "reason": "EU economic leadership"},
+        {"linked": "CN", "strength": 65, "reason": "Trade exposure"},
+    ],
+    "FR": [
+        {"linked": "DE", "strength": 75, "reason": "EU economic leadership"},
+        {"linked": "SA", "strength": 60, "reason": "Energy and security"},
+        {"linked": "IL", "strength": 58, "reason": "Middle East policy"},
+    ],
+    "GB": [
+        {"linked": "US", "strength": 78, "reason": "Intelligence and defense alliance"},
+        {"linked": "UA", "strength": 68, "reason": "Military support"},
+        {"linked": "DE", "strength": 62, "reason": "Post-Brexit trade"},
+    ],
+    "TR": [
+        {"linked": "RU", "strength": 72, "reason": "Energy and trade corridor"},
+        {"linked": "UA", "strength": 65, "reason": "Bosphorus and drone supply"},
+        {"linked": "SA", "strength": 58, "reason": "Regional rivalry"},
+        {"linked": "IL", "strength": 55, "reason": "Diplomatic tension"},
+    ],
+    "IL": [
+        {"linked": "IR", "strength": 90, "reason": "Existential military threat"},
+        {"linked": "US", "strength": 72, "reason": "Security alliance"},
+        {"linked": "SA", "strength": 60, "reason": "Normalization process"},
+        {"linked": "EG", "strength": 55, "reason": "Gaza border control"},
+    ],
+    "IR": [
+        {"linked": "IL", "strength": 90, "reason": "Military confrontation"},
+        {"linked": "US", "strength": 85, "reason": "Sanctions and nuclear standoff"},
+        {"linked": "SA", "strength": 72, "reason": "Regional Shia-Sunni rivalry"},
+        {"linked": "AE", "strength": 55, "reason": "Gulf security"},
+    ],
+    "SA": [
+        {"linked": "IR", "strength": 72, "reason": "Regional rivalry"},
+        {"linked": "US", "strength": 68, "reason": "Security and energy"},
+        {"linked": "AE", "strength": 70, "reason": "GCC coordination"},
+        {"linked": "IL", "strength": 60, "reason": "Normalization signals"},
+    ],
+    "IN": [
+        {"linked": "CN", "strength": 68, "reason": "Border disputes"},
+        {"linked": "PK", "strength": 75, "reason": "Historic rivalry"},
+        {"linked": "US", "strength": 60, "reason": "Defense partnership"},
+    ],
+    "JP": [
+        {"linked": "CN", "strength": 72, "reason": "Regional security competition"},
+        {"linked": "US", "strength": 78, "reason": "Defense alliance"},
+        {"linked": "KR", "strength": 65, "reason": "Economic ties"},
+    ],
+    "KZ": [
+        {"linked": "RU", "strength": 68, "reason": "Economic and security ties"},
+        {"linked": "CN", "strength": 62, "reason": "BRI and trade"},
+    ],
+    "BY": [
+        {"linked": "RU", "strength": 88, "reason": "Political-military alliance"},
+        {"linked": "PL", "strength": 70, "reason": "Border pressure and sanctions"},
+    ],
+    "AE": [
+        {"linked": "SA", "strength": 70, "reason": "GCC coordination"},
+        {"linked": "IR", "strength": 55, "reason": "Gulf security"},
+        {"linked": "US", "strength": 60, "reason": "Defense partnership"},
+    ],
+    "EG": [
+        {"linked": "IL", "strength": 55, "reason": "Gaza border"},
+        {"linked": "SA", "strength": 58, "reason": "Regional alignment"},
+    ],
+    "PL": [
+        {"linked": "UA", "strength": 82, "reason": "Refugee flows and military aid"},
+        {"linked": "BY", "strength": 70, "reason": "Border pressure"},
+        {"linked": "RU", "strength": 65, "reason": "Security threat"},
+    ],
+    "IT": [
+        {"linked": "DE", "strength": 60, "reason": "EU fiscal tension"},
+        {"linked": "EG", "strength": 52, "reason": "Migration and energy"},
+    ],
+    "ES": [
+        {"linked": "FR", "strength": 58, "reason": "EU integration"},
+        {"linked": "MX", "strength": 50, "reason": "Cultural and economic ties"},
+    ],
+    "AR": [
+        {"linked": "US", "strength": 55, "reason": "IMF debt restructuring"},
+        {"linked": "CN", "strength": 58, "reason": "Trade and soy exports"},
+    ],
+    "MX": [
+        {"linked": "US", "strength": 82, "reason": "USMCA trade and migration"},
+        {"linked": "CN", "strength": 52, "reason": "Manufacturing competition"},
+    ],
+    "CA": [
+        {"linked": "US", "strength": 85, "reason": "USMCA and defense"},
+        {"linked": "CN", "strength": 55, "reason": "Trade and diplomatic tension"},
+    ],
+    "CH": [
+        {"linked": "DE", "strength": 62, "reason": "Financial and trade hub"},
+        {"linked": "RU", "strength": 55, "reason": "Sanctions exposure"},
+    ],
+    "ID": [
+        {"linked": "CN", "strength": 60, "reason": "South China Sea claims"},
+        {"linked": "US", "strength": 52, "reason": "Strategic partnership"},
+    ],
+}
+
+# ── DOMAIN CO-OCCURRENCE for driver correlations ──────────────────────────
+# Pairs of domains that frequently co-escalate
+_DOMAIN_CORRELATIONS: list[tuple[str, str, int, str]] = [
+    ("geopolitics", "economy",    80, "Geopolitical conflict drives economic disruption"),
+    ("geopolitics", "social",     72, "Political instability amplifies social unrest"),
+    ("climate",     "economy",    75, "Climate events disrupt supply chains and food systems"),
+    ("climate",     "social",     70, "Climate stress drives migration and social tension"),
+    ("economy",     "social",     78, "Economic downturns amplify social instability"),
+    ("technology",  "economy",    68, "Tech disruption reshapes labor and financial markets"),
+    ("technology",  "geopolitics",65, "Cyber and AI capabilities reshape power dynamics"),
+]
+
+
+def generate_correlations(snap: dict, all_snapshots: list[dict]) -> dict:
+    """
+    Correlation Engine V1 — deterministic correlation analysis.
+    No LLM. No external APIs.
+
+    Produces:
+      country_links  : related countries + strength + reason
+      driver_correlations: co-occurring driver domain pairs
+      risk_amplifiers: countries amplifying this country's risk
+
+    Algorithm:
+      1. Country links: static geo-political map + dynamic risk score adjustment
+      2. Driver correlations: compare dominant domain pairs via co-occurrence table
+      3. Risk amplifiers: find linked countries with delta > 0 AND high severity
+    """
+    iso2    = snap["country"]
+    score   = snap.get("risk_score", 50)
+    domain  = snap.get("dominant_domain", "geopolitics")
+    drivers = snap.get("drivers", [])
+    delta   = snap.get("delta", 0)
+
+    # Build lookup for all snapshots
+    snap_by_cc: dict[str, dict] = {s["country"]: s for s in all_snapshots}
+
+    # ── Country Links ──────────────────────────────────────────────────────
+    static_links = _COUNTRY_LINKS.get(iso2, [])
+    country_links = []
+    for link in static_links:
+        linked_cc   = link["linked"]
+        linked_snap = snap_by_cc.get(linked_cc)
+        base_str    = link["strength"]
+
+        # Dynamic adjustment: if linked country has high risk and positive delta → +5
+        if linked_snap:
+            linked_score = linked_snap.get("risk_score", 50)
+            linked_delta = linked_snap.get("delta", 0)
+            dynamic_adj  = 5 if (linked_score > 65 and linked_delta > 0) else 0
+            adj_strength = min(99, base_str + dynamic_adj)
+            linked_name  = COUNTRIES.get(linked_cc, {}).get("name_ru", linked_cc)
+            linked_domain = linked_snap.get("dominant_domain", "")
+        else:
+            adj_strength = base_str
+            linked_name  = COUNTRIES.get(linked_cc, {}).get("name_ru", linked_cc)
+            linked_domain = ""
+
+        country_links.append({
+            "country":        linked_cc,
+            "country_name":   linked_name,
+            "strength":       adj_strength,
+            "reason":         link["reason"],
+            "linked_domain":  linked_domain,
+        })
+
+    # Sort by strength
+    country_links.sort(key=lambda x: -x["strength"])
+
+    # ── Driver Correlations ────────────────────────────────────────────────
+    driver_domains = list({d.get("domain", "") for d in drivers if d.get("domain")})
+    driver_corrs   = []
+
+    for d_a, d_b, strength, explanation in _DOMAIN_CORRELATIONS:
+        if d_a in driver_domains or d_b in driver_domains:
+            # Boost if both domains are active
+            boost = 8 if (d_a in driver_domains and d_b in driver_domains) else 0
+            driver_corrs.append({
+                "domain_a":    d_a,
+                "domain_b":    d_b,
+                "strength":    min(99, strength + boost),
+                "explanation": explanation,
+            })
+
+    driver_corrs.sort(key=lambda x: -x["strength"])
+
+    # Specific driver-pair correlations from active drivers
+    driver_pairs = []
+    drv_names = [d.get("name", "")[:50] for d in drivers[:5] if d.get("name")]
+    for i, da in enumerate(drv_names):
+        for db in drv_names[i+1:]:
+            sev_a = next((d.get("severity", 50) for d in drivers if d.get("name","")[:50] == da), 50)
+            sev_b = next((d.get("severity", 50) for d in drivers if d.get("name","")[:50] == db), 50)
+            pair_str = round((sev_a + sev_b) / 2)
+            if pair_str >= 55:
+                driver_pairs.append({
+                    "driver_a": da,
+                    "driver_b": db,
+                    "strength": pair_str,
+                })
+    driver_pairs.sort(key=lambda x: -x["strength"])
+
+    # ── Risk Amplifiers ────────────────────────────────────────────────────
+    # Linked countries that are currently escalating → amplify this country's risk
+    amplifiers = []
+    for link in country_links[:5]:
+        linked_cc   = link["country"]
+        linked_snap = snap_by_cc.get(linked_cc)
+        if linked_snap:
+            linked_delta = linked_snap.get("delta", 0)
+            linked_score = linked_snap.get("risk_score", 50)
+            if linked_delta >= 3 or linked_score >= 70:
+                amplifiers.append({
+                    "country":      linked_cc,
+                    "country_name": link["country_name"],
+                    "risk_score":   linked_score,
+                    "delta":        linked_delta,
+                    "link_strength": link["strength"],
+                    "reason":       link["reason"],
+                })
+    amplifiers.sort(key=lambda x: -(x["risk_score"] + x["delta"] * 5))
+
+    return {
+        "country":             iso2,
+        "country_name":        snap["country_name"],
+        "date":                TODAY,
+        "generated_at":        datetime.now(timezone.utc).isoformat(),
+        "country_links":       country_links,
+        "driver_correlations": driver_corrs[:5],
+        "driver_pairs":        driver_pairs[:5],
+        "risk_amplifiers":     amplifiers[:5],
+    }
+
+
+def save_country_correlations(snapshots: list[dict]) -> None:
+    """Save correlations for all 25 countries to docs/correlations/{CC}.json"""
+    CORRELATIONS_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            corr = generate_correlations(snap, snapshots)
+            with open(CORRELATIONS_DIR / f"{iso2}.json", "w") as f:
+                json.dump(corr, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [CORR] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[CORR] Saved correlations for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -1274,6 +1556,7 @@ def main():
     generate_global_alerts(snapshots)
     save_country_timelines(snapshots)
     save_country_scenarios(snapshots)
+    save_country_correlations(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
