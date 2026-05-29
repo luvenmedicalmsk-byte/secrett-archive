@@ -477,6 +477,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-res-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
 .cc-res-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 
+/* ── Adaptive Scenario Engine V1 ── */
+.cc-sc2-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cc-sc2-score{font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-sc2-summary{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.cc-sc2-pill{padding:3px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.04);cursor:default}
+.cc-sc2-pill.cc-sc2-dom{background:rgba(255,255,255,.08)}
+.cc-sc2-pill-name{font-size:8px;letter-spacing:.06em;text-transform:uppercase;margin-right:5px}
+.cc-sc2-pill-prob{font-size:9px;font-family:'Courier New',monospace;color:rgba(255,255,255,.4)}
+.cc-sc2-card{border-left:2px solid rgba(255,255,255,.2);padding:7px 0 7px 10px;margin-bottom:8px}
+.cc-sc2-card:last-child{margin-bottom:0}
+.cc-sc2-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.cc-sc2-card-name{font-size:10px;font-weight:600;letter-spacing:.04em}
+.cc-sc2-prob{font-size:9px;font-family:'Courier New',monospace;color:rgba(255,255,255,.35)}
+.cc-sc2-card-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.cc-sc2-score-val{font-size:18px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-sc2-state{font-size:9px;color:rgba(255,255,255,.5);flex:1}
+.cc-sc2-meta{display:flex;gap:8px;font-size:8px;color:rgba(255,255,255,.3);margin-bottom:5px;flex-wrap:wrap}
+.cc-sc2-horizons{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:5px}
+.cc-sc2-hz{text-align:center;padding:3px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-sc2-hz-label{display:block;font-size:7px;color:rgba(255,255,255,.25);letter-spacing:.08em;margin-bottom:2px}
+.cc-sc2-hz-score{display:block;font-size:12px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-sc2-desc{font-size:8px;color:rgba(255,255,255,.3);margin-top:4px;line-height:1.4;font-style:italic}
+.cc-sc2-triggers{margin-top:8px;border-top:1px solid rgba(255,255,255,.06);padding-top:8px}
+.cc-sc2-trig-label{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:5px}
+.cc-sc2-trig{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:8px}
+.cc-sc2-trig:last-child{border-bottom:none}
+.cc-sc2-trig-cond{font-size:9px;color:rgba(232,224,208,.6);flex:1}
+.cc-sc2-trig-target{font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0}
+
 </style>
 </head>
 <body>
@@ -2881,18 +2910,26 @@ async function fetchScenarios(cc) {
 }
 
 function renderScenarios(data, caps) {
-  var block = document.getElementById('cc-scenarios-block');
+  var block  = document.getElementById('cc-scenarios-block');
   if (!block) return;
   var access = caps.scenario_access || 'none';
+  if (!data)  { block.innerHTML = ''; return; }
 
-  if (!data) { block.innerHTML = ''; return; }
+  var SC_COL  = {best:'#22c55e', base:'#B8973A', stress:'#f59e0b', worst:'#dc2626'};
+  var ST_COL  = {stabilization:'#22c55e', contained:'#84cc16',
+                 escalating:'#f59e0b', critical:'#ef4444', cascade:'#dc2626'};
+  var HZ_COLS = ['#B8973A','#f59e0b','#ef4444','#dc2626'];
+
+  var scenScore = data.scenario_score || 0;
+  var insta     = data.instability    || 0;
+  var domSc     = data.dominant_scenario || 'base';
 
   // FREE: teaser
   if (access === 'none' || data.teaser) {
     block.innerHTML = '<div class="cc-scenarios">'
-      + '<div class="cc-scenarios-label">Сценарии (30 дней)</div>'
-      + '<div class="cc-scenarios-teaser">Доступно в Signal PRO и выше</div>'
-      + '<div class="cc-scenarios-lock">🔒 Базовый сценарий в Signal PRO · Все сценарии в Strategic PRO</div>'
+      + '<div class="cc-scenarios-label">Сценарии</div>'
+      + '<div class="cc-scenarios-teaser">Сценарий-индекс: ' + scenScore + '/100</div>'
+      + '<div class="cc-scenarios-lock">🔒 Базовый сценарий в Signal PRO</div>'
       + '</div>';
     return;
   }
@@ -2900,49 +2937,114 @@ function renderScenarios(data, caps) {
   var scenarios = data.scenarios || [];
   if (!scenarios.length) { block.innerHTML = ''; return; }
 
-  var html = '<div class="cc-scenarios"><div class="cc-scenarios-label">Сценарии · 30 дней</div>'
-           + '<div class="cc-sc-grid">';
+  var html = '<div class="cc-scenarios">'
+           + '<div class="cc-sc2-header">'
+           + '<span class="cc-scenarios-label">Сценарии · 30d–365d</span>'
+           + '<span class="cc-sc2-score" style="color:' + (scenScore>=70?'#ef4444':scenScore>=50?'#f59e0b':'#B8973A') + '">' + scenScore + '</span>'
+           + '</div>';
 
+  // SIGNAL: scenarios_summary + dominant full
+  if (access === 'base') {
+    var summ = data.scenarios_summary || scenarios.map(function(s){return {
+      type:s.type, name_ru:s.name_ru, probability:s.probability, score:s.score, state:s.state, state_ru:s.state_ru
+    };});
+    html += '<div class="cc-sc2-summary">';
+    summ.forEach(function(s) {
+      var col = SC_COL[s.type] || '#B8973A';
+      var sCl = s.type === domSc ? ' cc-sc2-dom' : '';
+      html += '<div class="cc-sc2-pill' + sCl + '" style="border-color:' + col + '">'
+            + '<span class="cc-sc2-pill-name" style="color:' + col + '">' + _esc(s.name_ru) + '</span>'
+            + '<span class="cc-sc2-pill-prob">' + s.probability + '%</span>'
+            + '</div>';
+    });
+    html += '</div>';
+    var dom = scenarios.find(function(s){return s.type === domSc;}) || scenarios[0];
+    if (dom) html += _renderScCard(dom, access, SC_COL, ST_COL, HZ_COLS);
+    html += '<div class="cc-scenarios-lock">🔒 Все сценарии в Strategic PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC / ELITE: all 4 cards
   scenarios.forEach(function(sc) {
-    var cls  = sc.name === 'Best Case' ? 'best' : sc.name === 'Worst Case' ? 'worst' : 'base';
-    var dfc  = sc.delta_from_current || 0;
-    var dStr = dfc > 0 ? '+' + dfc : String(dfc);
-    var dCls = dfc > 0 ? 'up' : dfc < 0 ? 'down' : 'flat';
-    var scoreCol = sc.score >= 80 ? '#dc2626' : sc.score >= 65 ? '#ef4444' : sc.score >= 50 ? '#D4AF5A' : '#22c55e';
+    html += _renderScCard(sc, access, SC_COL, ST_COL, HZ_COLS);
+  });
 
-    html += '<div class="cc-sc-card ' + cls + '">'
-          + '<div class="cc-sc-top">'
-          +   '<span class="cc-sc-name">' + _esc(sc.name_ru || sc.name) + '</span>'
-          +   '<span class="cc-sc-prob">Вероятность: ' + (sc.probability || '?') + '%</span>'
-          + '</div>'
-          + '<div class="cc-sc-row">'
-          +   '<span class="cc-sc-score" style="color:' + scoreCol + '">' + (sc.score || '?') + '</span>'
-          +   '<span class="cc-sc-delta ' + dCls + '">Δ ' + dStr + '</span>'
-          + '</div>';
-
-    // ELITE: scenario drivers
-    if (access === 'drivers' && sc.drivers && sc.drivers.length) {
-      html += '<div class="cc-sc-drivers">'
-            + '<div class="cc-sc-drv-label">Ключевые факторы</div>';
-      sc.drivers.forEach(function(drv) {
-        html += '<div class="cc-sc-drv">'
-              + '<span>' + _esc((drv.driver || drv.name || '').substring(0, 40)) + '</span>'
-              + '<span class="cc-sc-drv-impact">+' + (drv.impact || 0) + '</span>'
+  // ELITE: transition triggers
+  if (access === 'drivers') {
+    var triggers = data.transition_triggers || [];
+    if (triggers.length) {
+      html += '<div class="cc-sc2-triggers"><div class="cc-sc2-trig-label">Триггеры переходов</div>';
+      triggers.forEach(function(t) {
+        var col = SC_COL[t.leads_to] || '#B8973A';
+        html += '<div class="cc-sc2-trig">'
+              + '<span class="cc-sc2-trig-cond">' + _esc(t.condition) + '</span>'
+              + '<span class="cc-sc2-trig-target" style="color:' + col + '">→ ' + _esc(t.leads_to) + '</span>'
               + '</div>';
       });
       html += '</div>';
     }
-
-    html += '</div>';
-  });
-
-  // Signal PRO sees Base Case — suggest Strategic PRO for full view
-  if (access === 'base') {
-    html += '<div class="cc-scenarios-lock">🔒 Все 3 сценария в Strategic PRO</div>';
   }
 
-  html += '</div></div>';
+  html += '</div>';
   block.innerHTML = html;
+}
+
+function _renderScCard(sc, access, SC_COL, ST_COL, HZ_COLS) {
+  var col   = SC_COL[sc.type]  || '#B8973A';
+  var stCol = ST_COL[sc.state] || '#B8973A';
+  var dfc   = sc.delta_from_current || 0;
+  var dStr  = dfc > 0 ? '+' + dfc : String(dfc);
+  var dCls  = dfc > 0 ? 'up' : dfc < 0 ? 'down' : 'flat';
+  var sCol  = sc.score >= 75 ? '#dc2626' : sc.score >= 55 ? '#ef4444' : sc.score >= 40 ? '#f59e0b' : '#22c55e';
+
+  var html  = '<div class="cc-sc2-card" style="border-left-color:' + col + '">'
+            + '<div class="cc-sc2-card-top">'
+            +   '<span class="cc-sc2-card-name" style="color:' + col + '">' + _esc(sc.name_ru) + '</span>'
+            +   '<span class="cc-sc2-prob">' + sc.probability + '%</span>'
+            + '</div>'
+            + '<div class="cc-sc2-card-row">'
+            +   '<span class="cc-sc2-score-val" style="color:' + sCol + '">' + sc.score + '</span>'
+            +   '<span class="cc-sc2-delta ' + dCls + '">Δ' + dStr + '</span>'
+            +   '<span class="cc-sc2-state" style="color:' + stCol + '">' + _esc(sc.state_ru) + '</span>'
+            + '</div>'
+            + '<div class="cc-sc2-meta">'
+            +   '<span>⚡ ' + _esc(sc.velocity_ru || '') + '</span>'
+            +   '<span>⚠ ' + _esc(sc.impact_ru   || '') + '</span>'
+            +   '<span>🔄 ' + (sc.recovery_days || '?') + 'д</span>'
+            + '</div>';
+
+  // Horizons mini-timeline
+  var horizons = sc.horizons || [];
+  if (horizons.length) {
+    html += '<div class="cc-sc2-horizons">';
+    horizons.forEach(function(h, idx) {
+      var hCol = HZ_COLS[Math.min(idx, HZ_COLS.length-1)];
+      var hSCol = h.score >= 75 ? '#dc2626' : h.score >= 55 ? '#ef4444' : h.score >= 40 ? '#f59e0b' : '#22c55e';
+      html += '<div class="cc-sc2-hz">'
+            + '<span class="cc-sc2-hz-label">' + _esc(h.label) + '</span>'
+            + '<span class="cc-sc2-hz-score" style="color:' + hSCol + '">' + h.score + '</span>'
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ELITE: drivers + description
+  if ((access === 'drivers' || access === 'full') && sc.drivers && sc.drivers.length) {
+    html += '<div class="cc-sc-drivers"><div class="cc-sc-drv-label">Факторы</div>';
+    sc.drivers.slice(0,3).forEach(function(d) {
+      html += '<div class="cc-sc-drv">'
+            + '<span>' + _esc((d.driver||d.name||'').substring(0,40)) + '</span>'
+            + '<span class="cc-sc-drv-impact">' + (d.impact>=0?'+':'') + (d.impact||0) + '</span>'
+            + '</div>';
+    });
+    html += '</div>';
+    if (sc.description) html += '<div class="cc-sc2-desc">' + _esc(sc.description) + '</div>';
+  }
+
+  html += '</div>';
+  return html;
 }
 
 
