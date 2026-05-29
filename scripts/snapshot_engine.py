@@ -31,6 +31,7 @@ PROPAGATION_DIR  = DOCS_DIR / "propagation"
 SYSTEMIC_DIR     = DOCS_DIR / "systemic"
 EARLY_WARNING_DIR = DOCS_DIR / "early-warning"
 DECISION_DIR      = DOCS_DIR / "decision-support"
+RESILIENCE_DIR    = DOCS_DIR / "resilience"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -2583,6 +2584,244 @@ def save_decision_support(snapshots: list[dict]) -> None:
             print(f"  [DS] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[DS] Saved decision support for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# AUTONOMY / RESILIENCE ENGINE V1
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Static country resilience baselines per domain (0-100) ────────────────
+# Based on structural factors: geographic, institutional, economic
+# Higher = stronger resilience in that domain
+_RESILIENCE_BASELINES: dict[str, dict[str, int]] = {
+    # food  water  energy  finance  supply  health  govern  tech
+    "RU": dict(food=70, water=78, energy=92, finance=52, supply=65, health=62, governance=45, technology=60),
+    "US": dict(food=82, water=75, energy=85, finance=90, supply=80, health=72, governance=78, technology=95),
+    "CN": dict(food=68, water=55, energy=72, finance=70, supply=85, health=65, governance=62, technology=80),
+    "DE": dict(food=80, water=82, energy=48, finance=85, supply=82, health=82, governance=85, technology=82),
+    "GB": dict(food=72, water=78, energy=62, finance=88, supply=78, health=78, governance=82, technology=80),
+    "FR": dict(food=80, water=80, energy=75, finance=82, supply=80, health=82, governance=80, technology=78),
+    "TR": dict(food=65, water=52, energy=45, finance=48, supply=62, health=65, governance=42, technology=55),
+    "KZ": dict(food=68, water=58, energy=85, finance=52, supply=55, health=55, governance=48, technology=45),
+    "AE": dict(food=35, water=30, energy=92, finance=85, supply=72, health=78, governance=70, technology=75),
+    "UA": dict(food=72, water=65, energy=32, finance=32, supply=35, health=52, governance=38, technology=55),
+    "BY": dict(food=65, water=72, energy=38, finance=35, supply=48, health=62, governance=32, technology=42),
+    "IN": dict(food=58, water=42, energy=55, finance=58, supply=65, health=52, governance=55, technology=65),
+    "JP": dict(food=55, water=78, energy=38, finance=82, supply=78, health=88, governance=80, technology=90),
+    "SA": dict(food=32, water=28, energy=98, finance=78, supply=62, health=68, governance=58, technology=60),
+    "EG": dict(food=42, water=35, energy=52, finance=38, supply=45, health=48, governance=38, technology=40),
+    "PL": dict(food=78, water=72, energy=55, finance=68, supply=72, health=72, governance=72, technology=65),
+    "IT": dict(food=78, water=70, energy=45, finance=68, supply=75, health=78, governance=58, technology=68),
+    "ES": dict(food=75, water=62, energy=55, finance=65, supply=72, health=80, governance=65, technology=68),
+    "AR": dict(food=75, water=72, energy=58, finance=28, supply=48, health=62, governance=32, technology=45),
+    "MX": dict(food=62, water=48, energy=65, finance=48, supply=62, health=60, governance=38, technology=50),
+    "CA": dict(food=85, water=90, energy=88, finance=85, supply=82, health=80, governance=85, technology=85),
+    "CH": dict(food=72, water=88, energy=55, finance=95, supply=85, health=92, governance=92, technology=88),
+    "IL": dict(food=65, water=72, energy=52, finance=78, supply=68, health=82, governance=72, technology=88),
+    "IR": dict(food=55, water=38, energy=85, finance=28, supply=38, health=52, governance=32, technology=42),
+    "ID": dict(food=62, water=58, energy=62, finance=48, supply=60, health=52, governance=45, technology=48),
+}
+
+# ── Default for unknown countries ─────────────────────────────────────────
+_RES_DEFAULT = dict(food=55, water=55, energy=55, finance=55, supply=55,
+                    health=55, governance=55, technology=55)
+
+# ── Domain weights for resilience_score ───────────────────────────────────
+_RES_WEIGHTS = dict(food=0.15, water=0.15, energy=0.15, finance=0.15,
+                    supply=0.10, health=0.10, governance=0.10, technology=0.10)
+
+# ── Autonomy level thresholds ─────────────────────────────────────────────
+_AUTONOMY_LEVELS = [
+    (81, "resilient",  "Устойчивый"),
+    (61, "strong",     "Сильный"),
+    (41, "moderate",   "Умеренный"),
+    (21, "fragile",    "Хрупкий"),
+    (0,  "critical",   "Критический"),
+]
+
+# ── Domain labels ──────────────────────────────────────────────────────────
+_RES_LABELS = {
+    "food":       "Продовольственная безопасность",
+    "water":      "Водная безопасность",
+    "energy":     "Энергетическая безопасность",
+    "finance":    "Финансовая устойчивость",
+    "supply":     "Цепочки поставок",
+    "health":     "Здравоохранение",
+    "governance": "Управление",
+    "technology": "Технологическая независимость",
+}
+
+# ── Risk-domain → resilience-domain pressures ─────────────────────────────
+_RISK_PRESSURE_MAP: dict[str, list[tuple[str, float]]] = {
+    "climate":     [("food", 0.25), ("water", 0.30), ("energy", 0.10), ("supply", 0.15)],
+    "economy":     [("finance", 0.35), ("supply", 0.20), ("governance", 0.10)],
+    "geopolitics": [("energy", 0.20), ("supply", 0.20), ("governance", 0.25), ("finance", 0.10)],
+    "technology":  [("technology", 0.40), ("supply", 0.10)],
+    "social":      [("governance", 0.25), ("health", 0.20), ("food", 0.10)],
+}
+
+
+def compute_resilience(snap: dict) -> dict:
+    """
+    Autonomy / Resilience Engine V1 — deterministic resilience assessment.
+    No LLM. No external APIs.
+
+    Calculates how well a country can absorb, withstand and recover from
+    cascading risks across 8 structural domains.
+
+    Algorithm:
+      1. Load static baseline per domain
+      2. Apply dynamic pressure from active risk drivers
+         (current score + delta velocity reduce domain scores)
+      3. Compute resilience_score = weighted average of 8 domains
+      4. Derive autonomy_level, recovery_capacity, adaptation_capacity
+      5. Identify weakest domains and generate recommendations
+    """
+    iso2     = snap["country"]
+    score    = snap.get("risk_score", 50)
+    delta    = snap.get("delta", 0)
+    domain   = snap.get("dominant_domain", "geopolitics")
+    drivers  = snap.get("drivers", [])
+    level    = snap.get("escalation_level", "stable")
+    f30      = snap.get("forecast_30d") or {}
+
+    base = dict(_RESILIENCE_BASELINES.get(iso2, _RES_DEFAULT))
+
+    # ── Apply dynamic pressure from current risk state ─────────────────────
+    # Higher risk score → higher pressure on relevant domains
+    pressure_scale = (score - 40) / 60.0  # 0 at score=40, 1 at score=100
+    pressure_scale = max(0.0, min(1.0, pressure_scale))
+    velocity_factor = min(1.0, abs(delta) / 8.0)
+
+    # Pressure from dominant domain
+    dom_pressures = _RISK_PRESSURE_MAP.get(domain, [])
+    for dom_key, dom_weight in dom_pressures:
+        reduction = round(pressure_scale * dom_weight * 30 + velocity_factor * dom_weight * 10)
+        base[dom_key] = max(5, base[dom_key] - reduction)
+
+    # Pressure from hot drivers (severity >= 65)
+    for drv in drivers:
+        drv_domain = drv.get("domain", "")
+        drv_sev    = drv.get("severity", 0)
+        if drv_sev >= 65:
+            for dom_key, dom_weight in _RISK_PRESSURE_MAP.get(drv_domain, []):
+                extra = round((drv_sev - 65) / 35 * dom_weight * 15)
+                base[dom_key] = max(5, base[dom_key] - extra)
+
+    # Forecast pressure: if worst_case high → reduce finance & supply
+    worst_30 = f30.get("worst_case", score)
+    if worst_30 >= 75:
+        extra_f = round((worst_30 - 75) / 25 * 8)
+        base["finance"] = max(5, base["finance"] - extra_f)
+        base["supply"]  = max(5, base["supply"]  - extra_f)
+
+    # ── Build domain matrix ────────────────────────────────────────────────
+    domains: list[dict] = []
+    for key in ["food", "water", "energy", "finance", "supply", "health", "governance", "technology"]:
+        s = base[key]
+        static_s = _RESILIENCE_BASELINES.get(iso2, _RES_DEFAULT)[key]
+        pressure = max(0, static_s - s)
+        trend = "stable" if pressure < 3 else "declining" if pressure >= 8 else "under_pressure"
+        status = "resilient" if s >= 70 else "moderate" if s >= 45 else "vulnerable"
+        domains.append({
+            "domain":         key,
+            "label":          _RES_LABELS[key],
+            "score":          s,
+            "weight":         _RES_WEIGHTS[key],
+            "pressure":       pressure,
+            "trend":          trend,
+            "status":         status,
+        })
+
+    # ── Resilience score ───────────────────────────────────────────────────
+    resilience_score = round(sum(d["score"] * _RES_WEIGHTS[d["domain"]] for d in domains))
+
+    # ── Autonomy level ─────────────────────────────────────────────────────
+    autonomy_level    = "critical"
+    autonomy_level_ru = "Критический"
+    for thresh, lvl, lvl_ru in _AUTONOMY_LEVELS:
+        if resilience_score >= thresh:
+            autonomy_level    = lvl
+            autonomy_level_ru = lvl_ru
+            break
+
+    # ── Resilience pressure ────────────────────────────────────────────────
+    static_score   = round(sum(
+        _RESILIENCE_BASELINES.get(iso2, _RES_DEFAULT)[k] * w
+        for k, w in _RES_WEIGHTS.items()
+    ))
+    resilience_pressure = max(0, static_score - resilience_score)
+    pressure_level    = "critical" if resilience_pressure >= 20 else                         "high"     if resilience_pressure >= 12 else                         "medium"   if resilience_pressure >= 5  else "low"
+    pressure_level_ru = {"critical":"Критическое","high":"Высокое",
+                         "medium":"Среднее","low":"Низкое"}[pressure_level]
+
+    # ── Recovery capacity (0-100) ──────────────────────────────────────────
+    # Based on finance + governance + healthcare
+    recovery_capacity = round(
+        base["finance"]    * 0.35 +
+        base["governance"] * 0.35 +
+        base["health"]     * 0.30
+    )
+
+    # ── Adaptation capacity (0-100) ────────────────────────────────────────
+    # Based on technology + supply + energy
+    adaptation_capacity = round(
+        base["technology"] * 0.40 +
+        base["supply"]     * 0.30 +
+        base["energy"]     * 0.30
+    )
+
+    # ── Weakest domains ────────────────────────────────────────────────────
+    sorted_domains = sorted(domains, key=lambda d: d["score"])
+    weakest = sorted_domains[:3]
+
+    # ── Recommendations ────────────────────────────────────────────────────
+    _REC_MAP = {
+        "food":       "Диверсифицировать импорт продовольствия и наращивать внутреннее производство",
+        "water":      "Инвестировать в водосберегающую инфраструктуру и опреснение",
+        "energy":     "Ускорить диверсификацию энергетики и снижение зависимости от импорта",
+        "finance":    "Наращивать валютные резервы и снижать долговую нагрузку",
+        "supply":     "Диверсифицировать цепочки поставок и развивать внутреннее производство",
+        "health":     "Расширять медицинскую инфраструктуру и стратегические запасы",
+        "governance": "Укреплять институциональный потенциал и антикризисные механизмы",
+        "technology": "Наращивать технологический суверенитет и R&D",
+    }
+    recommendations = [
+        {"domain": d["domain"], "label": d["label"],
+         "score": d["score"], "recommendation": _REC_MAP[d["domain"]]}
+        for d in weakest
+    ]
+
+    return {
+        "country":             iso2,
+        "country_name":        snap["country_name"],
+        "date":                TODAY,
+        "generated_at":        datetime.now(timezone.utc).isoformat(),
+        "resilience_score":    resilience_score,
+        "autonomy_level":      autonomy_level,
+        "autonomy_level_ru":   autonomy_level_ru,
+        "resilience_pressure": resilience_pressure,
+        "pressure_level":      pressure_level,
+        "pressure_level_ru":   pressure_level_ru,
+        "recovery_capacity":   recovery_capacity,
+        "adaptation_capacity": adaptation_capacity,
+        "domains":             domains,
+        "weakest_domains":     weakest,
+        "recommendations":     recommendations,
+    }
+
+
+def save_resilience(snapshots: list[dict]) -> None:
+    """Save resilience data for all 25 countries to docs/resilience/{CC}.json"""
+    RESILIENCE_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            res = compute_resilience(snap)
+            with open(RESILIENCE_DIR / f"{iso2}.json", "w") as f:
+                json.dump(res, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [RES] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[RES] Saved resilience for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -2613,6 +2852,7 @@ def main():
     save_systemic(snapshots)
     save_early_warning(snapshots)
     save_decision_support(snapshots)
+    save_resilience(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
