@@ -98,6 +98,10 @@ export default {
     return handleValidation(request, env);
   if (path.startsWith('/api/dashboard/') && request.method === 'GET')
     return handleDashboard(request, env);
+  if (path.startsWith('/api/decision-quality/') && request.method === 'GET')
+    return handleDecisionQuality(request, env);
+  if (path === '/api/decision-ranking' && request.method === 'GET')
+    return handleDecisionRanking(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1593,6 +1597,7 @@ function getTierCapabilities(tier) {
       feedback_access:     'teaser',
       validation_access:   'teaser',
       dashboard_access:   'teaser',
+      dq_access:         'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1621,6 +1626,7 @@ function getTierCapabilities(tier) {
       feedback_access:     'summary',
       validation_access:   'summary',
       dashboard_access:   'summary',
+      dq_access:         'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1649,6 +1655,7 @@ function getTierCapabilities(tier) {
       feedback_access:     'full',
       validation_access:   'full',
       dashboard_access:   'full',
+      dq_access:         'full',
     },
     elite: {
       tier:                'elite',
@@ -1677,6 +1684,7 @@ function getTierCapabilities(tier) {
       feedback_access:     'full+explain',
       validation_access:   'full+explain',
       dashboard_access:   'full+explain',
+      dq_access:         'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -3442,5 +3450,138 @@ function _filterDashboard(data, access, tier) {
   // ELITE: + Section E diagnostics
   base.diagnostics           = data.diagnostics;
   base.diagnostic_count      = data.diagnostic_count;
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DECISION QUALITY ENGINE V1 — Worker endpoints
+// GET /api/decision-quality/{CC}  — per-country decision analytics
+// GET /api/decision-ranking        — global leaderboard
+//
+// dq_access:
+//   teaser       → FREE:     decision_score + grade only
+//   summary      → SIGNAL:   + Section A (performance) + B (action ranking top-3)
+//   full         → STRATEGIC:+ Section C (outcome) + D (bias detection)
+//   full+explain → ELITE:    + Section E (strategy effectiveness) + F (leaderboard)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleDecisionQuality(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.dq_access || 'teaser';
+  const cc     = request.url.split('/api/decision-quality/')[1]?.toUpperCase().replace(/[^A-Z]/g,'') || '';
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `dq:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/decision-quality/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (r.status === 404) return new Response(
+      JSON.stringify({error:'No decision quality data for '+cc+' — needs 30d+ strategy history'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    if (!r.ok) throw new Error('fetch '+r.status);
+    const data   = await r.json();
+    const result = _filterDQ(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl:3600}); } catch(_){}
+    }
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+async function handleDecisionRanking(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  if ((caps.dq_access || 'teaser') === 'teaser') return new Response(
+    JSON.stringify({error:'Decision ranking requires Signal tier or above'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/decision-ranking/_global.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (!r.ok) throw new Error('fetch '+r.status);
+    const data = await r.json();
+    // Full for elite, top/lowest only for signal/strategic
+    const result = (caps.dq_access === 'full+explain') ? data : {
+      date:              data.date,
+      total_countries:   data.total_countries,
+      top_performers:    data.top_performers,
+      lowest_performers: data.lowest_performers,
+    };
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+function _filterDQ(data, access, tier) {
+  const base = {
+    country:              data.country,
+    country_name:         data.country_name,
+    date:                 data.date,
+    tier,
+    decision_score:       data.decision_score,
+    grade:                data.grade,
+    grade_ru:             data.grade_ru,
+    history_depth:        data.history_depth,
+    n_evaluated:          data.n_evaluated,
+    note:                 data.note,
+  };
+  if (access === 'teaser') return base;
+
+  // SIGNAL+: Section A + action ranking top-3
+  base.decision_success_rate    = data.decision_success_rate;
+  base.outcome_improvement_pct  = data.outcome_improvement_pct;
+  base.expected_actual_gap      = data.expected_actual_gap;
+  base.alpha_score              = data.alpha_score;
+  base.alpha_mean               = data.alpha_mean;
+  base.action_count_avg         = data.action_count_avg;
+  base.action_ranking           = (data.action_ranking || []).slice(0, 3);
+  if (access === 'summary') return base;
+
+  // STRATEGIC+: Section C (outcome) + Section D (bias)
+  base.action_efficiency_score  = data.action_efficiency_score;
+  base.risk_reduction_score     = data.risk_reduction_score;
+  base.opportunity_capture_rate = data.opportunity_capture_rate;
+  base.cost_efficiency_score    = data.cost_efficiency_score;
+  base.action_ranking           = data.action_ranking || [];
+  base.biases                   = (data.biases || []).map(b => ({
+    type:b.type, label:b.label, severity:b.severity, rate:b.rate, detail:b.detail,
+  }));
+  base.bias_count               = data.bias_count;
+  if (access === 'full') return base;
+
+  // ELITE: Section E (strategy effectiveness)
+  base.strategy_effectiveness   = data.strategy_effectiveness;
+  base.outcome_score            = data.outcome_score;
+  base.efficiency_score         = data.efficiency_score;
+  base.consistency_score        = data.consistency_score;
+  base.baseline_comparison      = data.baseline_comparison;
   return base;
 }
