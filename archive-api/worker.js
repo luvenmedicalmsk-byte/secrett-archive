@@ -74,6 +74,8 @@ export default {
     return handleAlerts(request, env);
   if (path.startsWith('/api/timeline/') && request.method === 'GET')
     return handleTimeline(request, env);
+  if (path.startsWith('/api/scenarios/') && request.method === 'GET')
+    return handleScenarios_v1(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1557,6 +1559,7 @@ function getTierCapabilities(tier) {
       intel_limit:         3,
       alerts_limit:        3,
       timeline_days:       7,
+      scenario_access:     'none',
     },
     signal: {
       tier:                'signal',
@@ -1573,6 +1576,7 @@ function getTierCapabilities(tier) {
       intel_limit:         10,
       alerts_limit:        20,
       timeline_days:       30,
+      scenario_access:     'base',
     },
     strategic: {
       tier:                'strategic',
@@ -1589,6 +1593,7 @@ function getTierCapabilities(tier) {
       intel_limit:         -1,
       alerts_limit:        100,
       timeline_days:       180,
+      scenario_access:     'full',
     },
     elite: {
       tier:                'elite',
@@ -1605,6 +1610,7 @@ function getTierCapabilities(tier) {
       intel_limit:         -1,
       alerts_limit:        -1,
       timeline_days:       -1,
+      scenario_access:     'drivers',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2092,4 +2098,34 @@ async function handleTimeline(request, env) {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
+}
+
+async function handleScenarios_v1(request, env) {
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request, env), caps=getTierCapabilities(tier);
+  const access=caps.scenario_access||'none';
+  const cc=request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
+  if(!cc||cc.length!==2) return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cacheKey=`scenarios:${cc}:${tier}`;
+  if(env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(cacheKey,{type:'json'});if(c) return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}});}catch(_){}}
+  try{
+    const url=`https://raw.githubusercontent.com/${REPO}/main/docs/scenarios/${cc}.json`;
+    const r=await fetch(url,{cf:{cacheTtl:600,cacheEverything:true}});
+    if(r.status===404) return new Response(JSON.stringify({error:'No scenarios for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    if(!r.ok) throw new Error('fetch failed: '+r.status);
+    const data=await r.json();
+    const result=_filterScenarios(data,access,tier);
+    if(env.EVENTS_KV){try{await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:600});}catch(_){}}
+    return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}});
+  }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+function _filterScenarios(data,access,tier){
+  const base={country:data.country,country_name:data.country_name,date:data.date,risk_score:data.risk_score,tier};
+  if(access==='none'){base.scenarios=null;base.teaser=true;return base;}
+  let filtered=data.scenarios||[];
+  if(access==='base') filtered=filtered.filter(s=>s.name==='Base Case');
+  if(access!=='drivers') filtered=filtered.map(s=>({name:s.name,name_ru:s.name_ru,score:s.score,delta_from_current:s.delta_from_current,probability:s.probability}));
+  base.scenarios=filtered;
+  return base;
 }
