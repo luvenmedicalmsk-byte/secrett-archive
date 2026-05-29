@@ -389,6 +389,67 @@ def generate_summary(iso2: str, score: int, domain: str,
         return None
 
 
+def compute_change_attribution(
+    iso2: str,
+    today_drivers: list[dict],
+    delta: int,
+) -> list[dict]:
+    """
+    Change Attribution Engine V1.
+    Compares today's drivers with yesterday's drivers from history.
+    Returns list of {name, impact_score} for contributors to delta.
+    No API calls — pure diff of driver severity changes.
+    """
+    if delta == 0 or not today_drivers:
+        return []
+
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    prev_drivers: dict[str, int] = {}
+
+    if hist_path.exists():
+        try:
+            with open(hist_path) as f:
+                hist = json.load(f)
+            snaps = hist.get("snapshots", [])
+            if snaps:
+                prev_d = snaps[-1].get("drivers", [])
+                prev_drivers = {d["name"]: d.get("severity", 50) for d in prev_d}
+        except Exception:
+            pass
+
+    # Weight each driver by how much it changed
+    weights: list[tuple[float, str]] = []
+    for drv in today_drivers:
+        name = drv["name"]
+        sev  = float(drv.get("severity", 50))
+        prev = float(prev_drivers.get(name, 0))
+        w = sev if prev == 0 else max(0.0, sev - prev)
+        if w > 0:
+            weights.append((w, name))
+
+    if not weights:
+        # No changed drivers — spread delta evenly over top 3
+        top = today_drivers[:min(3, abs(delta))]
+        per = max(1, round(abs(delta) / len(top))) if top else 1
+        return [{"name": d["name"], "impact_score": per} for d in top]
+
+    # Distribute |delta| proportionally across top 3 changed drivers
+    weights.sort(key=lambda x: -x[0])
+    top3 = weights[:3]
+    total_w = sum(w for w, _ in top3)
+    result, rem = [], abs(delta)
+
+    for i, (w, name) in enumerate(top3):
+        if i < len(top3) - 1:
+            pts = max(1, round(abs(delta) * w / total_w))
+            rem -= pts
+        else:
+            pts = max(1, rem)
+        result.append({"name": name, "impact_score": pts})
+
+    return [r for r in result if r["impact_score"] > 0]
+
+
 # ── MAIN SNAPSHOT LOGIC ───────────────────────────────────────────────────────
 
 def build_snapshot(iso2: str, events: list[dict]) -> dict:
@@ -401,8 +462,9 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     domain   = compute_dominant_domain(matched)
     delta    = compute_delta(iso2, score)
     level    = compute_escalation_level(score, delta)
-    summary  = generate_summary(iso2, score, domain, matched, level)
-    drivers  = compute_drivers(iso2, matched, score)
+    summary        = generate_summary(iso2, score, domain, matched, level)
+    drivers        = compute_drivers(iso2, matched, score)
+    change_drivers = compute_change_attribution(iso2, drivers, delta)
 
     snap = {
         "country":          iso2,
@@ -414,6 +476,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         "delta":            delta,
         "summary":          summary,
         "drivers":          drivers,
+        "change_drivers":   change_drivers,
         "event_count":      len(matched),
     }
 
@@ -461,13 +524,15 @@ def update_history(snap: dict) -> None:
             "snapshots":    [],
         }
 
-    # Lightweight history record — no summary
+    # Lightweight history record — drivers stored for next-day attribution
     record = {
         "date":             snap["date"],
         "risk_score":       snap["risk_score"],
         "dominant_domain":  snap["dominant_domain"],
         "escalation_level": snap["escalation_level"],
         "delta":            snap["delta"],
+        "drivers":          [{"name": d["name"], "severity": d["severity"]}
+                              for d in snap.get("drivers", [])],
     }
 
     # Deduplicate: replace if same date already exists
