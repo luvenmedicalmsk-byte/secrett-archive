@@ -1133,104 +1133,164 @@ def save_country_timelines(snapshots: list[dict]) -> None:
             print(f"  [TIMELINE] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[TIMELINE] Saved timelines for {len(snapshots)} countries", file=sys.stderr)
 
-def generate_scenarios(snap: dict) -> list[dict]:
+def generate_scenarios(snap: dict) -> dict:
     """
-    Scenario Engine V1 — deterministic 3-scenario generation.
-    No LLM. No external APIs.
-
-    Uses: risk_score, delta, drivers, change_drivers, forecast_30d, alerts
-    Produces: Best Case / Base Case / Worst Case with probabilities summing to 100.
-
-    Algorithm:
-      1. Base score from forecast_30d.base_case (or linear extrapolation)
-      2. Best/Worst derived from band width based on instability
-      3. Probability split: weighted by driver severity + delta velocity
-      4. Scenario drivers = top contributors to each scenario
+    Adaptive Scenario Engine V1 — 4 scenarios x 4 horizons.
+    scenario_score = risk*0.30 + systemic*0.25 + warning*0.20 + decision*0.10 - resilience*0.15
+    States: stabilization / contained / escalating / critical / cascade
     """
     score        = snap.get("risk_score", 50)
     delta        = snap.get("delta", 0)
     drivers      = snap.get("drivers", [])
     change_drvs  = snap.get("change_drivers", [])
     f30          = snap.get("forecast_30d") or {}
-    f7           = snap.get("forecast_7d")  or {}
+    domain       = snap.get("dominant_domain", "geopolitics")
+    level        = snap.get("escalation_level", "stable")
 
-    # ── Base projections ──────────────────────────────────────────────────
-    base_score  = f30.get("base_case")  or max(10, min(95, score + round(delta * 15)))
-    best_score  = f30.get("best_case")  or max(10, base_score - 10)
-    worst_score = f30.get("worst_case") or min(95, base_score + 15)
+    systemic_score   = snap.get("_systemic_score",  round(score * 0.85))
+    ew_score         = snap.get("_ew_score",         round(score * 0.70))
+    decision_score   = snap.get("_decision_score",   round(score * 0.80))
+    resilience_score = snap.get("_resilience_score", max(10, 75 - round(score * 0.40)))
 
-    # Clip to valid range
-    best_score  = max(10, min(95, int(best_score)))
-    base_score  = max(10, min(95, int(base_score)))
-    worst_score = max(10, min(95, int(worst_score)))
+    scenario_score = max(0, min(100, round(
+        score * 0.30 + systemic_score * 0.25 + ew_score * 0.20
+        + decision_score * 0.10 - resilience_score * 0.15
+    )))
 
-    # ── Instability factor ────────────────────────────────────────────────
-    hot_drivers    = [d for d in drivers if d.get("severity", 0) >= 65]
-    avg_hot_sev    = (sum(d["severity"] for d in hot_drivers) / len(hot_drivers)
-                      if hot_drivers else score)
-    pressure       = max(0.0, (avg_hot_sev - 65) / 35)     # 0..1
-    velocity       = min(abs(delta) / 10.0, 1.0)           # 0..1 from delta speed
-    instability    = pressure * 0.6 + velocity * 0.4        # 0..1
+    hot_drvs       = [d for d in drivers if d.get("severity", 0) >= 65]
+    avg_hot        = (sum(d["severity"] for d in hot_drvs) / len(hot_drvs)
+                      if hot_drvs else score)
+    pressure       = max(0.0, (avg_hot - 65) / 35.0)
+    velocity       = min(abs(delta) / 10.0, 1.0)
+    instability    = pressure * 0.55 + velocity * 0.45
+    res_factor     = resilience_score / 100.0
 
-    # ── Probability calculation ───────────────────────────────────────────
-    # High instability → higher worst probability
-    # Moderate → balanced base
-    # Low → best case more likely
-    raw_worst = 20 + round(instability * 45)     # 20..65
-    raw_best  = 35 - round(instability * 25)     # 10..35
-    raw_base  = 100 - raw_worst - raw_best
-    # Clamp and normalize to 100
-    raw_worst = max(10, min(65, raw_worst))
-    raw_best  = max(10, min(45, raw_best))
-    raw_base  = max(15, 100 - raw_worst - raw_best)
-    total     = raw_worst + raw_best + raw_base
-    p_worst   = round(raw_worst * 100 / total)
-    p_best    = round(raw_best  * 100 / total)
-    p_base    = 100 - p_worst - p_best
+    base_30  = int(f30.get("base_case")  or max(10, min(95, score + round(delta * 15))))
+    best_30  = int(f30.get("best_case")  or max(10, base_30 - 12))
+    worst_30 = int(f30.get("worst_case") or min(95, base_30 + 18))
+    stress_30= max(10, min(95, round((base_30 + worst_30) / 2)))
+    best_30  = max(10, min(95, best_30))
+    base_30  = max(10, min(95, base_30))
+    worst_30 = max(10, min(95, worst_30))
 
-    # ── Scenario drivers ─────────────────────────────────────────────────
-    # Top 3 drivers sorted by severity — used for worst case
-    top_drivers = sorted(drivers, key=lambda d: -d.get("severity", 0))[:3]
-    worst_drivers = [
-        {"driver": d.get("name", "")[:50], "impact": round(d.get("severity", 50) / 20)}
-        for d in top_drivers
+    raw_worst  = max(8,  round(18 + instability * 42 - res_factor * 12))
+    raw_stress = max(12, round(22 + instability * 20 - res_factor * 8))
+    raw_best   = max(5,  round(32 - instability * 22))
+    raw_base   = max(5,  100 - raw_worst - raw_stress - raw_best)
+    total      = raw_worst + raw_stress + raw_base + raw_best
+    prob_worst  = round(raw_worst  / total * 100)
+    prob_stress = round(raw_stress / total * 100)
+    prob_best   = round(raw_best   / total * 100)
+    prob_base   = 100 - prob_worst - prob_stress - prob_best
+
+    _STATES = [
+        (85, "cascade",       "Каскадный кризис"),
+        (70, "critical",      "Критическая эскалация"),
+        (55, "escalating",    "Эскалация"),
+        (40, "contained",     "Контролируемо"),
+        (0,  "stabilization", "Стабилизация"),
     ]
-    # Best case uses change_drivers with negative delta (de-escalation signals)
-    deesc_drivers = [cd for cd in change_drvs if cd.get("impact_score", 0) < 0]
-    best_drivers  = [
-        {"driver": d.get("name", "")[:50], "impact": abs(d.get("impact_score", 1))}
-        for d in deesc_drivers[:3]
-    ]
-    # Base case = blend of active drivers
-    base_drivers = worst_drivers[:2]
+    def _state(s, insta):
+        if s >= 85 or (s >= 75 and insta >= 0.7): return "cascade",       "Каскадный кризис"
+        elif s >= 70 or insta >= 0.6:              return "critical",      "Критическая эскалация"
+        elif s >= 55 or insta >= 0.4:              return "escalating",    "Эскалация"
+        elif s >= 40:                              return "contained",     "Контролируемо"
+        else:                                      return "stabilization", "Стабилизация"
 
-    return [
-        {
-            "name":        "Best Case",
-            "name_ru":     "Лучший сценарий",
-            "score":       best_score,
-            "delta_from_current": best_score - score,
-            "probability": p_best,
-            "drivers":     best_drivers,
-        },
-        {
-            "name":        "Base Case",
-            "name_ru":     "Базовый сценарий",
-            "score":       base_score,
-            "delta_from_current": base_score - score,
-            "probability": p_base,
-            "drivers":     base_drivers,
-        },
-        {
-            "name":        "Worst Case",
-            "name_ru":     "Худший сценарий",
-            "score":       worst_score,
-            "delta_from_current": worst_score - score,
-            "probability": p_worst,
-            "drivers":     worst_drivers,
-        },
+    def _velocity(insta, proj_d):
+        v = abs(proj_d) / 10.0
+        if v >= 0.7 or insta >= 0.7: return "explosive",  "Взрывной"
+        elif v >= 0.4 or insta >= 0.5: return "fast",      "Быстрый"
+        elif v >= 0.2 or insta >= 0.3: return "moderate",  "Умеренный"
+        else:                           return "slow",      "Медленный"
+
+    def _impact(s):
+        if s >= 80:   return "catastrophic","Катастрофический"
+        elif s >= 65: return "severe",      "Тяжёлый"
+        elif s >= 50: return "significant", "Значительный"
+        elif s >= 35: return "moderate",    "Умеренный"
+        else:         return "minor",       "Незначительный"
+
+    def _recovery(s): return round(max(30, s * 3.5) * (1 + (1 - res_factor)))
+
+    def _horizons(stype, s30):
+        prev = s30
+        out  = []
+        for hz, hz_ru in [("30d","30 дней"),("90d","90 дней"),("180d","180 дней"),("365d","365 дней")]:
+            s = s30 if hz == "30d" else (
+                max(10, round(prev * (0.90 - instability * 0.05)))          if stype == "best"   else
+                min(95, max(10, round(prev + delta * 3 * (1 - instability * 0.4)))) if stype == "base" else
+                min(95, round(prev * 1.06 + instability * 4))               if stype == "stress" else
+                min(95, round(prev * 1.10 + instability * 8 - res_factor * 5))
+            )
+            s = max(10, min(95, s))
+            sid, sru = _state(s, instability)
+            out.append({"horizon": hz, "label": hz_ru, "score": s,
+                        "state": sid, "state_ru": sru, "delta_from_current": s - score})
+            prev = s
+        return out
+
+    hot_labels  = [d.get("name","")[:45] for d in hot_drvs[:3]]
+    neg_change  = [c for c in change_drvs if c.get("impact_score", 0) < 0]
+
+    def _sc(stype, s30, prob, insta_mod, res_mod):
+        sid, sru = _state(s30, max(0.0, min(1.0, instability + insta_mod)))
+        vid, vru = _velocity(max(0.0, min(1.0, instability + insta_mod)), s30 - score)
+        iid, iru = _impact(s30)
+        sc_drivers = {
+            "best":   [{"driver": c.get("name","")[:45], "impact": -abs(c.get("impact_score",1))}
+                       for c in neg_change[:2]] + [{"driver": "Деэскалация", "impact": -5}],
+            "base":   [{"driver": n, "impact": round(avg_hot * 0.15)} for n in hot_labels[:2]],
+            "stress": [{"driver": n, "impact": round(avg_hot * 0.20)} for n in hot_labels[:2]]
+                      + [{"driver": "Негативный сдвиг", "impact": 8}],
+            "worst":  [{"driver": n, "impact": round(avg_hot * 0.28)} for n in hot_labels[:3]]
+                      + [{"driver": "Каскадный эффект", "impact": 15}],
+        }[stype]
+        desc = {
+            "best":   "Деэскалация ключевых драйверов, устойчивое снижение риска",
+            "base":   "Текущие тренды сохраняются, без значимых изменений",
+            "stress": "Негативные факторы усиливаются, риск выше базового",
+            "worst":  "Каскадная эскалация, системный кризис",
+        }[stype]
+        name_map = {"best": ("Best Case","Лучший сценарий"),
+                    "base": ("Base Case","Базовый сценарий"),
+                    "stress": ("Stress Case","Стресс-сценарий"),
+                    "worst": ("Worst Case","Худший сценарий")}
+        nm, nm_ru = name_map[stype]
+        return {
+            "type": stype, "name": nm, "name_ru": nm_ru,
+            "probability": prob, "score": s30, "delta_from_current": s30 - score,
+            "state": sid, "state_ru": sru, "impact": iid, "impact_ru": iru,
+            "velocity": vid, "velocity_ru": vru, "recovery_days": _recovery(s30),
+            "future_pressure":   max(0, round(s30 - resilience_score * 0.4 * res_mod)),
+            "future_resilience": min(95, max(5, round(resilience_score * res_mod))),
+            "future_probability": prob,
+            "drivers": sc_drivers, "description": desc,
+            "horizons": _horizons(stype, s30),
+        }
+
+    scenarios = [
+        _sc("best",   best_30,   prob_best,   -0.30, 1.05),
+        _sc("base",   base_30,   prob_base,    0.00, 0.98),
+        _sc("stress", stress_30, prob_stress,  0.15, 0.90),
+        _sc("worst",  worst_30,  prob_worst,   0.30, 0.75),
     ]
 
+    triggers = [
+        {"condition": f"delta ≥ {max(3,round(delta+3))} за 24ч",         "leads_to": "worst",  "probability": prob_worst},
+        {"condition": f"Драйвер severity ≥ 85 в {domain}",                "leads_to": "stress", "probability": prob_stress},
+        {"condition": "Деэскалация ключевого кризиса",                     "leads_to": "best",   "probability": prob_best},
+        {"condition": "Цепочка распространения → 3+ страны",              "leads_to": "worst",  "probability": max(5, round(instability * 35))},
+    ]
+
+    return {
+        "country": snap["country"], "country_name": snap["country_name"],
+        "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+        "risk_score": score, "scenario_score": scenario_score,
+        "instability": round(instability * 100), "scenarios": scenarios,
+        "transition_triggers": triggers,
+        "dominant_scenario": max(scenarios, key=lambda s: s["probability"])["type"],
+    }
 
 def save_country_scenarios(snapshots: list[dict]) -> None:
     """
@@ -1240,15 +1300,7 @@ def save_country_scenarios(snapshots: list[dict]) -> None:
     for snap in snapshots:
         iso2 = snap["country"]
         try:
-            scenarios = generate_scenarios(snap)
-            payload = {
-                "country":      iso2,
-                "country_name": snap["country_name"],
-                "date":         TODAY,
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "risk_score":   snap["risk_score"],
-                "scenarios":    scenarios,
-            }
+            payload = generate_scenarios(snap)
             with open(SCENARIOS_DIR / f"{iso2}.json", "w") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)
         except Exception as e:
