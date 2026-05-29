@@ -70,6 +70,8 @@ export default {
     return handleSnapshotHistory(request, env);
   if (path === '/api/intelligence/daily' && request.method === 'GET')
     return handleIntelligenceDaily(request, env);
+  if (path === '/api/alerts' && request.method === 'GET')
+    return handleAlerts(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1550,7 +1552,8 @@ function getTierCapabilities(tier) {
       forecast_180d:       false,
       country_comparison:  false,
       scenario_engine:     false,
-      intel_limit:         3,       // items per feed section
+      intel_limit:         3,
+      alerts_limit:        3,
     },
     signal: {
       tier:                'signal',
@@ -1565,6 +1568,7 @@ function getTierCapabilities(tier) {
       country_comparison:  false,
       scenario_engine:     false,
       intel_limit:         10,
+      alerts_limit:        20,
     },
     strategic: {
       tier:                'strategic',
@@ -1578,7 +1582,8 @@ function getTierCapabilities(tier) {
       forecast_180d:       false,
       country_comparison:  true,
       scenario_engine:     false,
-      intel_limit:         -1,      // unlimited
+      intel_limit:         -1,
+      alerts_limit:        100,
     },
     elite: {
       tier:                'elite',
@@ -1592,7 +1597,8 @@ function getTierCapabilities(tier) {
       forecast_180d:       'full',
       country_comparison:  true,
       scenario_engine:     true,
-      intel_limit:         -1,      // unlimited + driver_commentary
+      intel_limit:         -1,
+      alerts_limit:        -1,
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -1896,4 +1902,96 @@ function _filterIntelFeed(raw, caps, limit) {
     }),
   };
   return result;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ALERT ENGINE V1 — Worker endpoint
+// GET /api/alerts
+// Returns early warning alerts from docs/alerts/latest.json
+// Tier filtering via alerts_limit + field visibility
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleAlerts(request, env) {
+  const REPO  = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier  = _resolveClientTier(request, env);
+  const caps  = getTierCapabilities(tier);
+  const limit = caps.alerts_limit;          // 3 | 20 | 100 | -1
+
+  const cacheKey = `alerts:latest:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          headers: { 'Content-Type': 'application/json',
+                     'Access-Control-Allow-Origin': '*',
+                     'X-Cache': 'HIT', 'X-Tier': tier }
+        });
+      }
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/alerts/latest.json`;
+    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+    if (!r.ok) throw new Error('Alerts not found: ' + r.status);
+    const raw = await r.json();
+
+    const result = _filterAlerts(raw, caps, limit);
+
+    if (env.EVENTS_KV) {
+      try {
+        await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 300 });
+      } catch (_) {}
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json',
+                 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterAlerts(raw, caps, limit) {
+  const allAlerts = raw.alerts || [];
+
+  // Apply limit (-1 = unlimited)
+  const sliced = limit < 0 ? allAlerts : allAlerts.slice(0, limit);
+
+  const filtered = sliced.map(a => {
+    // FREE: country + title only (no severity, no message)
+    if (!caps.drivers_details) {
+      return {
+        type:         a.type,
+        country:      a.country,
+        country_name: a.country_name,
+        title:        a.title,
+      };
+    }
+    // SIGNAL PRO+: full alert object
+    return {
+      type:         a.type,
+      severity:     a.severity,
+      country:      a.country,
+      country_name: a.country_name,
+      title:        a.title,
+      message:      a.message,
+      domain:       a.domain,
+      timestamp:    a.timestamp,
+    };
+  });
+
+  return {
+    tier:         caps.tier,
+    generated_at: raw.generated_at,
+    date:         raw.date,
+    count:        raw.count,
+    alerts:       filtered,
+  };
 }
