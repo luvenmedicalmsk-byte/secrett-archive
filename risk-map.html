@@ -404,6 +404,49 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-ew-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
 .cc-ew-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 
+/* ── Decision Support Engine ── */
+.cc-ds{margin-bottom:14px}
+.cc-ds-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-ds-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-ds-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-ds-level{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex-shrink:0}
+.cc-ds-level.act_now{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.35)}
+.cc-ds-level.mitigate{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-ds-level.prepare{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3)}
+.cc-ds-level.monitor{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.cc-ds-scores-row{display:flex;gap:12px;margin-bottom:8px}
+.cc-ds-mini-score{text-align:center;flex:1}
+.cc-ds-mini-val{font-size:15px;font-weight:700;font-family:'Cormorant Garamond',serif;display:block}
+.cc-ds-mini-lbl{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.25);display:block;margin-top:1px}
+.cc-ds-pressure{font-size:9px;color:rgba(255,255,255,.35);margin-bottom:8px;letter-spacing:.06em}
+.cc-ds-section-title{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.18);margin-bottom:5px;margin-top:8px}
+.cc-ds-action{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-ds-action:last-child{border-bottom:none}
+.cc-ds-action-top{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.cc-ds-action-label{font-size:10px;color:rgba(232,224,208,.85);flex:1;font-weight:500}
+.cc-ds-action-conf{font-size:9px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3);flex-shrink:0}
+.cc-ds-action-prio{font-size:8px;padding:1px 4px;border-radius:2px;flex-shrink:0;letter-spacing:.06em}
+.cc-ds-action-desc{font-size:9px;color:rgba(255,255,255,.3);line-height:1.4}
+.cc-ds-urgency-high{background:rgba(239,68,68,.15);color:#ef4444}
+.cc-ds-urgency-medium{background:rgba(245,158,11,.12);color:#f59e0b}
+.cc-ds-urgency-low{background:rgba(255,255,255,.07);color:rgba(255,255,255,.4)}
+.cc-ds-windows{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px}
+.cc-ds-window{padding:5px 4px;border-radius:3px;border:1px solid rgba(255,255,255,.07);text-align:center}
+.cc-ds-window.window_open{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.06)}
+.cc-ds-window.window_closing{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
+.cc-ds-window.window_closed{border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.04)}
+.cc-ds-window-hz{font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.3);display:block;margin-bottom:2px}
+.cc-ds-window-status{font-size:8px;font-weight:600;letter-spacing:.06em;display:block}
+.cc-ds-window-status.window_open{color:#22c55e}
+.cc-ds-window-status.window_closing{color:#f59e0b}
+.cc-ds-window-status.window_closed{color:#ef4444}
+.cc-ds-opp{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-ds-opp:last-child{border-bottom:none}
+.cc-ds-opp-name{font-size:10px;color:rgba(232,224,208,.75)}
+.cc-ds-opp-desc{font-size:9px;color:rgba(255,255,255,.3);margin-top:1px}
+.cc-ds-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
+.cc-ds-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+
 </style>
 </head>
 <body>
@@ -1789,6 +1832,7 @@ setInterval(() => {
     <div id="cc-propagation-block"></div>
     <div id="cc-systemic-block"></div>
     <div id="cc-ew-block"></div>
+    <div id="cc-ds-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1853,10 +1897,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -1926,6 +1970,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-propagation-block').innerHTML='';
   document.getElementById('cc-systemic-block').innerHTML='';
   document.getElementById('cc-ew-block').innerHTML='';
+  document.getElementById('cc-ds-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -1961,6 +2006,7 @@ window.openCountryCard = async function(cc) {
   fetchPropagation(cc).then(function(propData) { renderPropagation(propData, _clientCaps); });
   fetchSystemic(cc).then(function(sysData) { renderSystemic(sysData, _clientCaps); });
   fetchEarlyWarning(cc).then(function(ewData) { renderEarlyWarning(ewData, _clientCaps); });
+  fetchDecisionSupport(cc).then(function(dsData) { renderDecisionSupport(dsData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -3439,6 +3485,140 @@ function renderEarlyWarning(data, caps) {
               + '<div class="cc-ew-emerging-sub" style="color:' + col + '">'
               +   _esc(e.label) + ' · Рост: ' + (e.growth_signal || 0)
               + '</div></div>';
+      });
+    }
+  }
+
+  html += '</div>';
+  block.innerHTML = html;
+}
+
+
+// ── Decision Support Engine V1 — UI ─────────────────────────────────────
+var _dsCache = {};
+var DS_URGENCY_COL = {high:'#ef4444', medium:'#f59e0b', low:'rgba(255,255,255,.4)'};
+var DS_LEVEL_ICON = {act_now:'🔴', mitigate:'🟡', prepare:'🔵', monitor:'🟢'};
+var DS_WIN_ICON = {window_open:'✦', window_closing:'◑', window_closed:'✕'};
+
+async function fetchDecisionSupport(cc) {
+  if (_dsCache[cc]) return _dsCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/decision-support/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _dsCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderDecisionSupport(data, caps) {
+  var block = document.getElementById('cc-ds-block');
+  if (!block) return;
+  var access = caps.decision_access || 'score';
+
+  if (!data) { block.innerHTML = ''; return; }
+
+  var ds  = data.decision_score  || 0;
+  var rs  = data.readiness_score || 0;
+  var opp = data.opportunity_score || 0;
+  var lvl = data.decision_level  || 'monitor';
+  var lblRu = data.decision_label_ru || 'Мониторинг';
+  var dsCol = ds >= 70 ? '#dc2626' : ds >= 50 ? '#f59e0b' : ds >= 30 ? '#818cf8' : '#22c55e';
+
+  var html = '<div class="cc-ds">';
+  html += '<div class="cc-ds-header">'
+        + '<span class="cc-ds-label">Decision Intelligence</span>'
+        + '<span class="cc-ds-score" style="color:' + dsCol + '">' + ds + '</span>';
+
+  if (access !== 'score') {
+    html += '<span class="cc-ds-level ' + lvl + '">' + (DS_LEVEL_ICON[lvl]||'') + ' ' + _esc(lblRu) + '</span>';
+  }
+  html += '</div>';
+
+  // Sub-scores row (always)
+  html += '<div class="cc-ds-scores-row">';
+  var subScores = [
+    {val: rs,  label: 'Готовность', col: rs >= 65 ? '#ef4444' : '#f59e0b'},
+    {val: opp, label: 'Возможности', col: opp >= 40 ? '#22c55e' : 'rgba(255,255,255,.3)'},
+  ];
+  subScores.forEach(function(s) {
+    html += '<div class="cc-ds-mini-score">'
+          + '<span class="cc-ds-mini-val" style="color:' + s.col + '">' + s.val + '</span>'
+          + '<span class="cc-ds-mini-lbl">' + s.label + '</span>'
+          + '</div>';
+  });
+  html += '</div>';
+
+  // FREE
+  if (access === 'score') {
+    html += '<div class="cc-ds-teaser">Индекс принятия решений: ' + ds + '/100</div>'
+          + '<div class="cc-ds-lock">🔒 Уровень и рекомендации в Signal PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL: pressure
+  var pressRu = data.decision_pressure_ru || '';
+  html += '<div class="cc-ds-pressure">Давление: <strong>' + _esc(pressRu) + '</strong>'
+        + ' · ' + _esc(data.dominant_domain || '') + '</div>';
+
+  if (access === 'score+level') {
+    html += '<div class="cc-ds-lock">🔒 Матрица действий в Strategic PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: actions
+  var actions = data.actions || [];
+  if (actions.length) {
+    html += '<div class="cc-ds-section-title">Рекомендуемые действия</div>';
+    actions.forEach(function(a) {
+      var urgCls = 'cc-ds-urgency-' + (a.urgency || 'low');
+      html += '<div class="cc-ds-action">'
+            + '<div class="cc-ds-action-top">'
+            +   '<span class="cc-ds-action-label">' + _esc(a.label) + '</span>'
+            +   '<span class="cc-ds-action-prio ' + urgCls + '">' + _esc(a.urgency || '') + '</span>'
+            +   '<span class="cc-ds-action-conf">' + (a.confidence || 0) + '%</span>'
+            + '</div>';
+      if (access === 'full+explain' && a.description) {
+        html += '<div class="cc-ds-action-desc">' + _esc(a.description) + '</div>';
+      }
+      html += '</div>';
+    });
+  }
+
+  // Strategic Windows
+  var windows = data.strategic_windows || [];
+  if (windows.length) {
+    html += '<div class="cc-ds-section-title">Стратегические окна</div>';
+    html += '<div class="cc-ds-windows">';
+    windows.forEach(function(w) {
+      var statusCls = w.status || 'window_closing';
+      var statusRu  = w.status_ru || '?';
+      html += '<div class="cc-ds-window ' + statusCls + '">'
+            + '<span class="cc-ds-window-hz">' + _esc(w.label) + '</span>'
+            + '<span class="cc-ds-window-status ' + statusCls + '">'
+            +   (DS_WIN_ICON[statusCls]||'') + ' ' + _esc(statusRu)
+            + '</span>'
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ELITE: opportunity signals
+  if (access === 'full+explain') {
+    var opps = data.opportunity_signals || [];
+    if (opps.length) {
+      html += '<div class="cc-ds-section-title">Сигналы возможностей</div>';
+      opps.forEach(function(o) {
+        html += '<div class="cc-ds-opp">'
+              + '<div class="cc-ds-opp-name">✦ ' + _esc(o.label) + '</div>'
+              + '<div class="cc-ds-opp-desc">' + _esc(o.desc || '') + '</div>'
+              + '</div>';
       });
     }
   }
