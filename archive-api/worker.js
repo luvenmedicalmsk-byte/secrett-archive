@@ -1599,6 +1599,10 @@ function _filterSnapshotTier(data, premium) {
         return dr;
       });
     }
+    // change_drivers: PREMIUM only
+    if (premium && c.change_drivers && c.change_drivers.length) {
+      base.change_drivers = c.change_drivers;
+    }
     if (premium && c.summary) base.summary = c.summary;
     return base;
   });
