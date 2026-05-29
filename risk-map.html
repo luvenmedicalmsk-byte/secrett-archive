@@ -341,6 +341,33 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #cc-prop-map-wrap{height:130px;margin-top:8px}
 #cc-prop-map-canvas{width:100%;height:130px}
 
+/* ── Systemic Risk Engine ── */
+.cc-systemic{margin-bottom:14px}
+.cc-sys-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-sys-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-sys-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-sys-level{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex-shrink:0}
+.cc-sys-level.critical{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.35)}
+.cc-sys-level.pressured{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-sys-level.elevated{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3)}
+.cc-sys-level.stable{background:rgba(34,197,94,.1);color:#22c55e;border:1px solid rgba(34,197,94,.25)}
+.cc-sys-combo{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-sys-combo:last-child{border-bottom:none}
+.cc-sys-combo-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.cc-sys-combo-name{font-size:10px;color:rgba(232,224,208,.85);font-weight:500}
+.cc-sys-combo-prob{font-size:11px;font-family:'Courier New',monospace;color:#f59e0b}
+.cc-sys-combo-prob.critical{color:#dc2626}
+.cc-sys-combo-explain{font-size:9px;color:rgba(255,255,255,.3);line-height:1.4;margin-top:2px}
+.cc-sys-combo-badge{font-size:7px;letter-spacing:.1em;text-transform:uppercase;background:rgba(220,38,38,.15);color:#ef4444;border:1px solid rgba(220,38,38,.25);padding:1px 5px;border-radius:2px;margin-left:4px}
+.cc-sys-section-title{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.18);margin-bottom:5px;margin-top:8px}
+.cc-sys-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
+.cc-sys-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+/* ── ELITE domain heatmap ── */
+.cc-sys-heatmap{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-top:8px}
+.cc-sys-hm-cell{padding:4px 2px;border-radius:3px;text-align:center;cursor:default}
+.cc-sys-hm-name{font-size:7px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.4);display:block;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-sys-hm-val{font-size:11px;font-weight:700;font-family:'Cormorant Garamond',serif}
+
 </style>
 </head>
 <body>
@@ -1724,6 +1751,7 @@ setInterval(() => {
     <div id="cc-scenarios-block"></div>
     <div id="cc-correlations-block"></div>
     <div id="cc-propagation-block"></div>
+    <div id="cc-systemic-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1788,10 +1816,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -1859,6 +1887,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-scenarios-block').innerHTML='';
   document.getElementById('cc-correlations-block').innerHTML='';
   document.getElementById('cc-propagation-block').innerHTML='';
+  document.getElementById('cc-systemic-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -1892,6 +1921,7 @@ window.openCountryCard = async function(cc) {
   fetchScenarios(cc).then(function(scData) { renderScenarios(scData, _clientCaps); });
   fetchCorrelations(cc).then(function(corrData) { renderCorrelations(corrData, _clientCaps); });
   fetchPropagation(cc).then(function(propData) { renderPropagation(propData, _clientCaps); });
+  fetchSystemic(cc).then(function(sysData) { renderSystemic(sysData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -3116,6 +3146,128 @@ function _drawPropMap(data) {
   ctx.fillStyle = '#B8973A'; ctx.fill();
   ctx.fillStyle = '#0A0C10'; ctx.font = 'bold 7px Montserrat'; ctx.textAlign = 'center';
   ctx.fillText(data.country, cx, cy + 3);
+}
+
+
+// ── Systemic Risk Engine V1 — UI ─────────────────────────────────────────
+var _sysCache = {};
+
+var _SYS_DOM_COLORS = {
+  geopolitics:'#ff7a00', economy:'#38bdf8', climate:'#22c55e',
+  technology:'#a855f7',  social:'#ef4444'
+};
+
+async function fetchSystemic(cc) {
+  if (_sysCache[cc]) return _sysCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/systemic/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _sysCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderSystemic(data, caps) {
+  var block = document.getElementById('cc-systemic-block');
+  if (!block) return;
+  var access = caps.systemic_access || 'score';
+
+  if (!data) { block.innerHTML = ''; return; }
+
+  var score    = data.systemic_score || 0;
+  var level    = data.systemic_level || 'stable';
+  var levelRu  = data.systemic_level_ru || 'Стабильно';
+  var scoreCol = score >= 70 ? '#dc2626' : score >= 50 ? '#f59e0b' : score >= 30 ? '#818cf8' : '#22c55e';
+
+  var html = '<div class="cc-systemic">';
+  html += '<div class="cc-sys-header">'
+        + '<span class="cc-sys-label">Системный риск</span>'
+        + '<span class="cc-sys-score" style="color:' + scoreCol + '">' + score + '</span>';
+
+  if (access !== 'score') {
+    html += '<span class="cc-sys-level ' + level + '">' + _esc(levelRu) + '</span>';
+  }
+  html += '</div>';
+
+  // FREE: score + teaser
+  if (access === 'score') {
+    html += '<div class="cc-sys-teaser">Индекс системного риска: ' + score + '/100</div>'
+          + '<div class="cc-sys-lock">🔒 Уровень и комбинации в Signal PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL: level + combo count teaser
+  if (access === 'score+level') {
+    var cc_cnt  = data.cascade_count   || 0;
+    var dom_cnt = data.active_domain_count || 0;
+    html += '<div class="cc-sys-teaser">Активных доменов: ' + dom_cnt
+          + ' · Критических комбинаций: ' + cc_cnt + '</div>'
+          + '<div class="cc-sys-lock">🔒 Комбинации рисков в Strategic PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: active combos
+  var combos = data.active_combos || [];
+  if (combos.length) {
+    html += '<div class="cc-sys-section-title">Активные комбинации</div>';
+    combos.forEach(function(c) {
+      var probCol = c.cascade_probability >= 65 ? 'critical' : '';
+      var colA = _SYS_DOM_COLORS[c.domain_a] || '#B8973A';
+      var colB = _SYS_DOM_COLORS[c.domain_b] || '#B8973A';
+      html += '<div class="cc-sys-combo">'
+            + '<div class="cc-sys-combo-top">'
+            +   '<span class="cc-sys-combo-name">'
+            +     '<span style="color:' + colA + '">●</span> '
+            +     _esc(c.label)
+            +     ' <span style="color:' + colB + '">●</span>'
+            +     (c.is_critical ? '<span class="cc-sys-combo-badge">каскад</span>' : '')
+            +   '</span>'
+            +   '<span class="cc-sys-combo-prob ' + probCol + '">' + c.cascade_probability + '%</span>'
+            + '</div>';
+      if (access === 'full+explain' && c.explanation) {
+        html += '<div class="cc-sys-combo-explain">' + _esc(c.explanation) + '</div>';
+      }
+      html += '</div>';
+    });
+  } else {
+    html += '<div class="cc-sys-teaser">Критических комбинаций не выявлено</div>';
+  }
+
+  // ELITE: domain heatmap
+  if (access === 'full+explain') {
+    var matrix = data.domain_matrix || [];
+    if (matrix.length) {
+      html += '<div class="cc-sys-section-title">Матрица доменов</div>';
+      html += '<div class="cc-sys-heatmap">';
+      matrix.forEach(function(d) {
+        var col     = _SYS_DOM_COLORS[d.domain] || '#B8973A';
+        var opacity = d.active ? 0.08 + (d.severity / 100) * 0.25 : 0.04;
+        var textCol = d.active ? col : 'rgba(255,255,255,.2)';
+        var bg      = d.active
+          ? col.replace('rgb','rgba').replace(')',', ' + opacity + ')') || ('rgba(184,151,58,' + opacity + ')')
+          : 'rgba(255,255,255,.03)';
+        html += '<div class="cc-sys-hm-cell" style="background:' + bg + '">'
+              + '<span class="cc-sys-hm-name" style="color:' + textCol + '">'
+              +   _esc(d.domain.substring(0,4))
+              + '</span>'
+              + '<span class="cc-sys-hm-val" style="color:' + textCol + '">'
+              +   (d.active ? d.severity : '—')
+              + '</span>'
+              + '</div>';
+      });
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
+  block.innerHTML = html;
 }
 
 })(); // end IIFE
