@@ -1071,6 +1071,7 @@ def main():
     update_index(snapshots)
     generate_intelligence_feed(snapshots)
     generate_global_alerts(snapshots)
+    save_country_timelines(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
