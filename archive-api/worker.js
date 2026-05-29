@@ -2137,23 +2137,96 @@ async function handleTimeline(request, env) {
 }
 
 async function handleScenarios_v1(request, env) {
-  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request, env), caps=getTierCapabilities(tier);
-  const access=caps.scenario_access||'none';
-  const cc=request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
-  if(!cc||cc.length!==2) return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
-  const cacheKey=`scenarios:${cc}:${tier}`;
-  if(env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(cacheKey,{type:'json'});if(c) return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}});}catch(_){}}
-  try{
-    const url=`https://raw.githubusercontent.com/${REPO}/main/docs/scenarios/${cc}.json`;
-    const r=await fetch(url,{cf:{cacheTtl:600,cacheEverything:true}});
-    if(r.status===404) return new Response(JSON.stringify({error:'No scenarios for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
-    if(!r.ok) throw new Error('fetch failed: '+r.status);
-    const data=await r.json();
-    const result=_filterScenarios(data,access,tier);
-    if(env.EVENTS_KV){try{await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:600});}catch(_){}}
-    return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}});
-  }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.scenario_access || 'none';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `sc2:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/scenarios/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    if (r.status === 404) return new Response(
+      JSON.stringify({error:'No scenarios for '+cc}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    if (!r.ok) throw new Error('fetch failed: '+r.status);
+    const data   = await r.json();
+    const result = _filterScenarios_v2(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl:600}); } catch(_){}
+    }
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+function _filterScenarios_v2(data, access, tier) {
+  // FREE: dominant scenario + scenario_score only
+  const base = {
+    country: data.country, country_name: data.country_name,
+    date: data.date, tier,
+    scenario_score:    data.scenario_score,
+    instability:       data.instability,
+    dominant_scenario: data.dominant_scenario,
+    teaser:            access === 'none',
+  };
+  if (access === 'none') return base;
+
+  const scenarios = data.scenarios || [];
+
+  // SIGNAL: dominant scenario full + probability of all
+  if (access === 'base') {
+    const dominant = scenarios.find(s => s.type === data.dominant_scenario) || scenarios[0];
+    base.scenarios = dominant ? [_stripScenario(dominant, false)] : [];
+    base.scenarios_summary = scenarios.map(s => ({
+      type: s.type, name_ru: s.name_ru, probability: s.probability,
+      score: s.score, state: s.state, state_ru: s.state_ru,
+    }));
+    return base;
+  }
+
+  // STRATEGIC+: all 4 scenarios + horizons (no drivers/triggers)
+  base.scenarios = scenarios.map(s => _stripScenario(s, access === 'full'));
+  base.transition_triggers = access === 'drivers'
+    ? data.transition_triggers || []
+    : (data.transition_triggers || []).map(t => ({condition: t.condition, leads_to: t.leads_to}));
+
+  return base;
+}
+
+function _stripScenario(s, stripDrivers) {
+  const out = {
+    type: s.type, name: s.name, name_ru: s.name_ru,
+    probability: s.probability, score: s.score, delta_from_current: s.delta_from_current,
+    state: s.state, state_ru: s.state_ru, impact: s.impact, impact_ru: s.impact_ru,
+    velocity: s.velocity, velocity_ru: s.velocity_ru, recovery_days: s.recovery_days,
+    future_pressure: s.future_pressure, future_resilience: s.future_resilience,
+    horizons: s.horizons || [],
+  };
+  if (!stripDrivers) out.drivers = s.drivers || [];
+  if (!stripDrivers) out.description = s.description;
+  return out;
 }
 
 function _filterScenarios(data,access,tier){
