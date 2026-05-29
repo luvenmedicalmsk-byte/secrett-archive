@@ -1582,7 +1582,6 @@ async function handleSnapshotToday(request, env) {
 }
 
 function _filterSnapshotTier(data, premium) {
-  // FREE: no summary in country list
   const countries = (data.countries || []).map(c => {
     const base = {
       country:          c.country,
@@ -1592,6 +1591,14 @@ function _filterSnapshotTier(data, premium) {
       escalation_level: c.escalation_level,
       delta:            c.delta,
     };
+    // Drivers: FREE gets name+domain+severity, PREMIUM gets full with impact
+    if (c.drivers && c.drivers.length) {
+      base.drivers = c.drivers.map(d => {
+        const dr = { name: d.name, domain: d.domain, severity: d.severity };
+        if (premium && d.impact) dr.impact = d.impact;
+        return dr;
+      });
+    }
     if (premium && c.summary) base.summary = c.summary;
     return base;
   });
