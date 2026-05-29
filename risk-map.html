@@ -691,6 +691,46 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-dq-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
 .cc-dq-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 .cc-dq-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
+/* ── Strategy Optimization Engine V1 ── */
+.cc-so{margin-bottom:14px}
+.cc-so-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-so-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-so-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-so-grade{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;flex-shrink:0;letter-spacing:.06em}
+.cc-so-grade.Aplus{background:rgba(167,139,250,.18);color:#a78bfa;border:1px solid rgba(167,139,250,.35)}
+.cc-so-grade.A{background:rgba(34,197,94,.14);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-so-grade.B{background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.28)}
+.cc-so-grade.C{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.28)}
+.cc-so-grade.D{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-so-grade.F{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.38)}
+.cc-so-grade.NA{background:rgba(255,255,255,.04);color:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.08)}
+.cc-so-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.cc-so-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.cc-so-section{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:8px 0 5px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.cc-so-grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:6px}
+.cc-so-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:6px}
+.cc-so-cell{text-align:center;padding:5px 3px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-so-cell-val{display:block;font-size:13px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1.2}
+.cc-so-cell-lbl{display:block;font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.22);margin-top:2px}
+.cc-so-action{display:flex;align-items:center;gap:7px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-so-action:last-child{border-bottom:none}
+.cc-so-action-id{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3);width:38px;flex-shrink:0}
+.cc-so-action-bar-wrap{flex:1;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.cc-so-action-bar{height:100%;border-radius:2px}
+.cc-so-action-val{font-size:9px;font-weight:700;width:32px;text-align:right;flex-shrink:0}
+.cc-so-action-badge{font-size:7px;padding:1px 5px;border-radius:2px;flex-shrink:0;letter-spacing:.06em}
+.cc-so-action-badge.boost{background:rgba(34,197,94,.12);color:#22c55e}
+.cc-so-action-badge.reduce{background:rgba(239,68,68,.12);color:#ef4444}
+.cc-so-diag{padding:4px 0 4px 10px;border-left:2px solid rgba(245,158,11,.4);margin-bottom:4px}
+.cc-so-diag.high{border-left-color:rgba(220,38,38,.5)}
+.cc-so-diag-label{font-size:8px;font-weight:600;color:rgba(232,224,208,.7)}
+.cc-so-diag-detail{font-size:8px;color:rgba(255,255,255,.35);margin-top:2px;line-height:1.4}
+.cc-so-gain{display:flex;align-items:baseline;gap:5px;padding:4px 0}
+.cc-so-gain-val{font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-so-gain-lbl{font-size:8px;color:rgba(255,255,255,.3)}
+.cc-so-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-so-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+.cc-so-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
 </style>
 </head>
 <body>
@@ -2087,6 +2127,7 @@ setInterval(() => {
     <div id="cc-validation-block"></div>
     <div id="cc-dash-block"></div>
     <div id="cc-dq-block"></div>
+    <div id="cc-so-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -2151,10 +2192,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2232,6 +2273,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-validation-block').innerHTML='';
   document.getElementById('cc-dash-block').innerHTML='';
   document.getElementById('cc-dq-block').innerHTML='';
+  document.getElementById('cc-so-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2275,6 +2317,7 @@ window.openCountryCard = async function(cc) {
   fetchValidation(cc).then(function(valData) { renderValidation(valData, _clientCaps); });
   fetchDashboard(cc).then(function(dashData) { renderDashboard(dashData, _clientCaps); });
   fetchDecisionQuality(cc).then(function(dqData) { renderDecisionQuality(dqData, _clientCaps); });
+  fetchStrategyOptimization(cc).then(function(soData) { renderStrategyOptimization(soData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -5078,6 +5121,97 @@ function _dqCell(val, lbl, col) {
        + '<span class="cc-dq-cell-lbl">'+lbl+'</span>'
        + '</div>';
 }
+
+
+// ── Strategy Optimization Engine V1 — UI ─────────────────────────────────
+var _soCache = {};
+var _SO_GRADE_COL=function(g){return g==='A+'?'#a78bfa':g==='A'?'#22c55e':g==='B'?'#60a5fa':g==='C'?'#fbbf24':g==='D'?'#f59e0b':g==='F'?'#dc2626':'rgba(255,255,255,.3)';};
+var _SO_GRADE_CSS=function(g){return g==='A+'?'Aplus':g||'NA';};
+
+async function fetchStrategyOptimization(cc){
+  if(_soCache[cc])return _soCache[cc];
+  try{var h={};if(_clientToken)h['X-Snapshot-Token']=_clientToken;
+  var r=await fetch(API+'/api/strategy-optimization/'+cc,{headers:h});
+  if(!r.ok)return null;var d=await r.json();_soCache[cc]=d;return d;}catch(e){return null;}
+}
+
+function renderStrategyOptimization(data,caps){
+  var block=document.getElementById('cc-so-block');
+  if(!block)return;
+  var access=caps.so_access||'teaser';
+  if(!data||data.error){block.innerHTML='';return;}
+  var sc=data.optimization_score;var grade=data.grade||'N/A';var grRu=data.grade_ru||'';
+  var depth=data.history_depth||0;var gCol=_SO_GRADE_COL(grade);var gCss=_SO_GRADE_CSS(grade);
+  var barW=sc!==null&&sc!==undefined?Math.min(100,sc):0;var na='—';
+  var html='<div class="cc-so">'
+    +'<div class="cc-so-header">'
+    +'<span class="cc-so-label">Оптимизация стратегии</span>'
+    +(sc!==null&&sc!==undefined?'<span class="cc-so-score" style="color:'+gCol+'">'+sc+'</span>':'')
+    +'<span class="cc-so-grade '+gCss+'">'+_esc(grade)+'</span>'
+    +'</div>'
+    +'<div class="cc-so-bar"><div class="cc-so-bar-fill" style="width:'+barW+'%;background:'+gCol+'"></div></div>';
+  if(access==='teaser'){
+    html+=(data.note?'<div class="cc-so-teaser">'+_esc(data.note)+'</div>':'<div class="cc-so-teaser">Optimization Score: '+(sc!==null?sc+'/100':'—')+'</div>');
+    html+='<div class="cc-so-lock">🔒 Полный план оптимизации в Signal PRO</div>'
+        +'<div class="cc-so-depth">История: '+depth+' дней</div></div>';
+    block.innerHTML=html;return;
+  }
+  // SIGNAL+: Section A sub-scores + F gain
+  var ds=data.decision_score_base;var pn=data.predicted_next_score;var og=data.optimization_gain;
+  var si=data.stability_index;var as_=data.alpha_score;var wr=data.win_rate;var rr=data.rr_score;var opp=data.opp_score;
+  html+='<div class="cc-so-section">A · Оценка оптимизации</div>'
+      +'<div class="cc-so-grid5">'
+      +_soCell(as_!==undefined?as_:na,'Alpha',as_>=60?'#22c55e':as_>=45?'#fbbf24':'#ef4444')
+      +_soCell(wr!==undefined?wr+'%':na,'Win Rate',wr>=60?'#22c55e':wr>=45?'#fbbf24':'#ef4444')
+      +_soCell(rr!==undefined?rr:na,'Risk Red',rr>=60?'#22c55e':rr>=45?'#fbbf24':'#ef4444')
+      +_soCell(opp!==undefined?opp+'%':na,'Возможн.',opp>=60?'#22c55e':opp>=45?'#fbbf24':'#ef4444')
+      +_soCell(si!==undefined?si:na,'Стабильн.',si>=70?'#22c55e':si>=50?'#fbbf24':'#ef4444')
+      +'</div>';
+  // Gain indicator
+  if(og!==null&&og!==undefined){var ogCol=og>0?'#22c55e':og<0?'#ef4444':'rgba(232,224,208,.4)';
+    html+='<div class="cc-so-gain"><span class="cc-so-gain-val" style="color:'+ogCol+'">'+(og>0?'+':'')+og+'pt</span><span class="cc-so-gain-lbl">оптимизационный прирост</span>'+(pn!==undefined&&pn!==null?' → прогноз: '+pn:'')+'</div>';}
+  // Section B: high-alpha actions
+  var ha=data.high_alpha_actions||[];
+  if(ha.length){html+='<div class="cc-so-section">B · Действия высокой альфы ('+ha.length+')</div>';
+    ha.forEach(function(a){var aC=a.avg_alpha>0?'#22c55e':'#ef4444';
+    html+='<div class="cc-so-action"><span class="cc-so-action-id">'+_esc(a.action_id||'')+'</span>'
+        +'<div class="cc-so-action-bar-wrap"><div class="cc-so-action-bar" style="width:'+Math.min(100,a.win_rate||0)+'%;background:'+aC+'"></div></div>'
+        +'<span class="cc-so-action-val" style="color:'+aC+'">'+(a.avg_alpha>0?'+':'')+a.avg_alpha+'</span>'
+        +'<span class="cc-so-action-badge boost">boost</span></div>';});}
+  if(access==='summary'){html+='<div class="cc-so-lock">🔒 Полный план в Strategic PRO</div><div class="cc-so-depth">История: '+depth+'</div></div>';block.innerHTML=html;return;}
+  // STRATEGIC+: Section C (underperform) + D (rebalance) + E (diag)
+  var up=data.underperforming||[];
+  if(up.length){html+='<div class="cc-so-section">C · Слабые действия ('+up.length+')</div>';
+    up.forEach(function(a){html+='<div class="cc-so-action"><span class="cc-so-action-id">'+_esc(a.action_id||'')+'</span>'
+        +'<div class="cc-so-action-bar-wrap"><div class="cc-so-action-bar" style="width:'+Math.min(100,a.win_rate||0)+'%;background:#ef4444"></div></div>'
+        +'<span class="cc-so-action-val" style="color:#ef4444">'+(a.win_rate||0)+'%</span>'
+        +'<span class="cc-so-action-badge reduce">reduce</span></div>';});}
+  var rb=data.rebalance_plan||{};
+  if(rb.n_boosted!==undefined||rb.n_reduced!==undefined){html+='<div class="cc-so-section">D · Ребалансировка</div>'
+    +'<div class="cc-so-grid3">'
+    +_soCell(rb.n_boosted!==undefined?rb.n_boosted:na,'Boost','#22c55e')
+    +_soCell(rb.n_reduced!==undefined?rb.n_reduced:na,'Reduce','#ef4444')
+    +_soCell(rb.confidence_recal!==undefined&&rb.confidence_recal!==null?(rb.confidence_recal>0?'+':'')+rb.confidence_recal+'pt':na,'Конф.',Math.abs(rb.confidence_recal||0)>5?'#f59e0b':'rgba(232,224,208,.5)')
+    +'</div>';}
+  var dg=data.diagnostics||[];
+  html+='<div class="cc-so-section">E · Диагностика ('+dg.length+')</div>';
+  if(!dg.length){html+='<div style="font-size:9px;color:#22c55e;padding:3px 0">✓ Проблем не обнаружено</div>';}
+  else{dg.forEach(function(d){html+='<div class="cc-so-diag '+(d.severity||'medium')+'">'
+        +'<div class="cc-so-diag-label">'+_esc(d.label||d.type||'')+'</div>'
+        +'<div class="cc-so-diag-detail">'+_esc(d.detail||'')+'</div></div>';});}
+  if(access==='full'){html+='<div class="cc-so-depth">История: '+depth+'</div></div>';block.innerHTML=html;return;}
+  // ELITE: Section F (adjusted_actions + evolution)
+  var aa=data.adjusted_actions||[];
+  if(aa.length){html+='<div class="cc-so-section">F · Скорректированные веса ('+aa.length+')</div>';
+    aa.slice(0,8).forEach(function(a){var fc=a.adjusted_score>a.original_score?'#22c55e':a.adjusted_score<a.original_score?'#ef4444':'rgba(232,224,208,.4)';
+    html+='<div class="cc-so-action"><span class="cc-so-action-id">'+_esc(a.action_id||'')+'</span>'
+        +'<div class="cc-so-action-bar-wrap"><div class="cc-so-action-bar" style="width:'+Math.min(100,a.adjusted_score||0)+'%;background:'+fc+'"></div></div>'
+        +'<span class="cc-so-action-val" style="color:'+fc+'">'+(a.adjusted_score||0)+'</span>'
+        +'<span class="cc-so-action-badge '+(a.factor>1?'boost':'reduce')+'">'+(a.factor>1?'+':'')+(Math.round((a.factor-1)*100))+'%</span></div>';});}
+  html+='<div class="cc-so-depth">История: '+depth+' дней</div></div>';
+  block.innerHTML=html;
+}
+function _soCell(val,lbl,col){return '<div class="cc-so-cell"><span class="cc-so-cell-val" style="color:'+(col||'rgba(232,224,208,.7)')+'">'+val+'</span><span class="cc-so-cell-lbl">'+lbl+'</span></div>';}
 
 })(); // end IIFE
 
