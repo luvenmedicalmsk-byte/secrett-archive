@@ -86,6 +86,8 @@ export default {
     return handleEarlyWarning(request, env);
   if (path.startsWith('/api/decision-support/') && request.method === 'GET')
     return handleDecisionSupport(request, env);
+  if (path.startsWith('/api/resilience/') && request.method === 'GET')
+    return handleResilience(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1575,6 +1577,7 @@ function getTierCapabilities(tier) {
       systemic_access:    'score',
       early_warning_access: 'score',
       decision_access:      'score',
+      resilience_access:   'score',
     },
     signal: {
       tier:                'signal',
@@ -1597,6 +1600,7 @@ function getTierCapabilities(tier) {
       systemic_access:    'score+level',
       early_warning_access: 'score+level',
       decision_access:      'score+level',
+      resilience_access:   'score+level',
     },
     strategic: {
       tier:                'strategic',
@@ -1619,6 +1623,7 @@ function getTierCapabilities(tier) {
       systemic_access:    'full',
       early_warning_access: 'full',
       decision_access:      'full',
+      resilience_access:   'full',
     },
     elite: {
       tier:                'elite',
@@ -1641,6 +1646,7 @@ function getTierCapabilities(tier) {
       systemic_access:    'full+explain',
       early_warning_access: 'full+explain',
       decision_access:      'full+explain',
+      resilience_access:   'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2658,6 +2664,107 @@ function _filterDecisionSupport(data, access, tier) {
   // ELITE: full descriptions + opportunity signals
   base.actions           = data.actions || [];
   base.opportunity_signals = data.opportunity_signals || [];
+
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTONOMY / RESILIENCE ENGINE V1 — Worker endpoint
+// GET /api/resilience/{CC}
+// resilience_access:
+//   score        → FREE:      resilience_score + autonomy_level
+//   score+level  → SIGNAL:    + pressure_level + recovery + adaptation
+//   full         → STRATEGIC: + full domains matrix
+//   full+explain → ELITE:     + recommendations + explanations
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleResilience(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.resilience_access || 'score';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `res:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/resilience/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    if (r.status === 404) return new Response(
+      JSON.stringify({error:'No resilience data for '+cc}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    if (!r.ok) throw new Error('fetch failed: '+r.status);
+    const data   = await r.json();
+    const result = _filterResilience(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl:600}); } catch(_){}
+    }
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+function _filterResilience(data, access, tier) {
+  // FREE: score + autonomy level always
+  const base = {
+    country:           data.country,
+    country_name:      data.country_name,
+    date:              data.date,
+    tier,
+    resilience_score:  data.resilience_score,
+    autonomy_level:    data.autonomy_level,
+    autonomy_level_ru: data.autonomy_level_ru,
+  };
+
+  if (access === 'score') return base;
+
+  // SIGNAL+: pressure + capacity scores
+  base.resilience_pressure = data.resilience_pressure;
+  base.pressure_level      = data.pressure_level;
+  base.pressure_level_ru   = data.pressure_level_ru;
+  base.recovery_capacity   = data.recovery_capacity;
+  base.adaptation_capacity = data.adaptation_capacity;
+
+  if (access === 'score+level') return base;
+
+  // STRATEGIC+: full domains matrix (score+status+trend, no recommendations)
+  base.domains = (data.domains || []).map(d => ({
+    domain:   d.domain,
+    label:    d.label,
+    score:    d.score,
+    weight:   d.weight,
+    pressure: d.pressure,
+    trend:    d.trend,
+    status:   d.status,
+  }));
+  base.weakest_domains = (data.weakest_domains || []).map(d => ({
+    domain: d.domain, label: d.label, score: d.score,
+  }));
+
+  if (access === 'full') return base;
+
+  // ELITE: + recommendations + full domain detail
+  base.domains         = data.domains || [];
+  base.recommendations = data.recommendations || [];
 
   return base;
 }
