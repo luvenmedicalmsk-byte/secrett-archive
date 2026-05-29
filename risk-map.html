@@ -1584,15 +1584,27 @@ const LEVEL_RU = {
 
 const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '#D4AF5A' : '#27AE60';
 
-// ── State ──────────────────────────────────────────────────────────────────
-let _todayData  = null;   // cached /api/snapshot/today
-let _histCache  = {};     // {CC: history data}
-let _premiumToken = localStorage.getItem('cc_token') || '';
+// ── Entitlement Engine V1 — Client Side ─────────────────────────────────
+function _getClientCaps(tier) {
+  var C={
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full'},
+  };
+  return C[tier]||C.free;
+}
+// ── State ─────────────────────────────────────────────────────────────────
+let _todayData   = null;
+let _histCache   = {};
+let _clientToken = localStorage.getItem('cc_token') || '';
+let _clientCaps  = _getClientCaps('free');
 
-// ── Premium token (set via console: CC.setToken('xxx')) ────────────────────
 window.CC = {
-  setToken(t) { _premiumToken = t; localStorage.setItem('cc_token', t); console.log('Token set'); },
-  clearToken() { _premiumToken = ''; localStorage.removeItem('cc_token'); },
+  setToken(t)  { _clientToken=t; localStorage.setItem('cc_token',t); _todayData=null; },
+  clearToken() { _clientToken=''; localStorage.removeItem('cc_token'); _todayData=null; _clientCaps=_getClientCaps('free'); },
+  tier()       { return _clientCaps.tier; },
+  caps()       { return _clientCaps; },
 };
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────
@@ -1600,10 +1612,11 @@ async function fetchToday() {
   if (_todayData) return _todayData;
   try {
     const headers = {};
-    if (_premiumToken) headers['X-Snapshot-Token'] = _premiumToken;
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
     const r = await fetch(API + '/api/snapshot/today', { headers });
     if (!r.ok) return null;
     _todayData = await r.json();
+    if (_todayData && _todayData.tier) _clientCaps = _getClientCaps(_todayData.tier);
     return _todayData;
   } catch(e) {
     console.warn('[CC] fetchToday:', e.message);
@@ -1613,10 +1626,10 @@ async function fetchToday() {
 
 async function fetchHistory(cc) {
   if (_histCache[cc]) return _histCache[cc];
-  if (!_premiumToken) return null;
+  if (_clientCaps.history_days === 0) return null;
   try {
     const r = await fetch(API + '/api/snapshot/history/' + cc, {
-      headers: { 'X-Snapshot-Token': _premiumToken }
+      headers: _clientToken ? { 'X-Snapshot-Token': _clientToken } : {}
     });
     if (!r.ok) return null;
     const d = await r.json();
@@ -1699,7 +1712,7 @@ function renderCard(c) {
 
   // Summary
   const sumBlock = document.getElementById('cc-summary-block');
-  if (c.summary) {
+  if (c.summary && _clientCaps.summary) {
     sumBlock.innerHTML = `<div class="cc-summary">${_esc(c.summary)}</div>`;
   } else {
     // Blurred placeholder for free users
@@ -1715,27 +1728,27 @@ function renderCard(c) {
   document.getElementById('cc-footer').textContent = 'Данные на ' + c.date || '';
   // Domain accent: top border on card
   document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
-  renderForecast(c.forecast_7d||null,!!_premiumToken);
-  renderChangeAttribution(c.delta || 0, c.change_drivers || [], !!_premiumToken);
-  renderDrivers(c.drivers || [], !!_premiumToken);
+  renderForecast(c.forecast_7d||null,_clientCaps);
+  renderChangeAttribution(c.delta || 0, c.change_drivers || [], _clientCaps);
+  renderDrivers(c.drivers || [], _clientCaps);
 }
 
 // ── Mini timeline chart ────────────────────────────────────────────────────
 // ── Forecast Engine V1 ──────────────────────────────────────────────────────
 var _FDIR={up:{icon:'↗',text:'Риск растёт',col:'#ef4444'},down:{icon:'↘',text:'Риск снижается',col:'#22c55e'},stable:{icon:'→',text:'Риск стабилен',col:'rgba(255,255,255,.4)'}};
-function renderForecast(fc,premium){
+function renderForecast(fc,caps){
   var block=document.getElementById('cc-forecast-block');
   if(!block)return;
   if(!fc||!fc.direction){block.innerHTML='';return;}
   var dir=_FDIR[fc.direction]||_FDIR.stable;
   var h='<div class="cc-forecast"><div class="cc-forecast-label">Прогноз 7 дней</div>'
        +'<div class="cc-forecast-dir" style="color:'+dir.col+'">'+dir.icon+' '+dir.text+'</div>';
-  if(premium&&fc.score_min!==undefined){
+  if(caps.forecast_7d==='full'&&fc.score_min!==undefined){
     h+='<div class="cc-forecast-row"><span class="cc-forecast-key">Ожидаемый диапазон</span>'
       +'<span class="cc-forecast-val">'+fc.score_min+'–'+fc.score_max+'</span></div>'
       +'<div class="cc-forecast-row"><span class="cc-forecast-key">Уверенность модели</span>'
       +'<span class="cc-forecast-val">'+fc.confidence+'%</span></div>';
-  }else if(!premium){
+  }else if(caps.forecast_7d==='direction_only'){
     h+='<div class="cc-forecast-locked">🔒 Полный прогноз доступен в Signal PRO</div>';
   }
   h+='</div>';
@@ -1743,7 +1756,7 @@ function renderForecast(fc,premium){
 }
 
 // ── Change Attribution ─────────────────────────────────────────────────────
-function renderChangeAttribution(delta, changeDrv, premium) {
+function renderChangeAttribution(delta, changeDrv, caps) {
   var block = document.getElementById('cc-change-block');
   if (!block) return;
   var d   = delta || 0;
@@ -1754,14 +1767,14 @@ function renderChangeAttribution(delta, changeDrv, premium) {
            + '<div class="cc-change-delta" style="color:' + col + '">' + sgn + Math.abs(d) + '</div>';
   if (d === 0) {
     html += '<div class="cc-change-zero">Существенных изменений за последние 24 часа не выявлено.</div>';
-  } else if (premium && changeDrv && changeDrv.length) {
+  } else if (caps.change_attribution && changeDrv && changeDrv.length) {
     html += '<div class="cc-change-items">';
     changeDrv.forEach(function(cd) {
       var pts = cd.impact_score || 0;
       html += '<span class="cc-change-item">' + _esc(cd.name) + ' (' + (d>0?'+':'-') + pts + ')</span>';
     });
     html += '</div>';
-  } else if (!premium && d !== 0) {
+  } else if (!caps.change_attribution && d !== 0) {
     html += '<div class="cc-change-locked">🔒 Атрибуция изменений в Signal PRO</div>';
   }
   html += '</div>';
@@ -1769,7 +1782,7 @@ function renderChangeAttribution(delta, changeDrv, premium) {
 }
 
 // ── Top Drivers ─────────────────────────────────────────────────────────
-function renderDrivers(drivers, premium) {
+function renderDrivers(drivers, caps) {
   var block = document.getElementById('cc-drivers-block');
   if (!drivers || !drivers.length) { block.innerHTML = ''; return; }
   var DCL = { geopolitics:'#ff7a00', climate:'#22c55e', economy:'#38bdf8', technology:'#a855f7', social:'#ef4444' };
@@ -1779,10 +1792,10 @@ function renderDrivers(drivers, premium) {
     html += '<div class="cc-driver">'
           + '<div class="cc-driver-dot" style="background:' + col + '"></div>'
           + '<div class="cc-driver-body"><div class="cc-driver-name">' + _esc(d.name) + '</div>';
-    if (premium && d.impact) html += '<div class="cc-driver-impact">' + _esc(d.impact) + '</div>';
+    if (caps.drivers_details && d.impact) html += '<div class="cc-driver-impact">' + _esc(d.impact) + '</div>';
     html += '</div><div class="cc-driver-sev">' + (d.severity || '') + '</div></div>';
   });
-  if (!premium) html += '<div style="font-size:9px;color:#B8973A;margin-top:6px">🔒 Анализ влияния в Signal PRO</div>';
+  if (!caps.drivers_details) html += '<div style="font-size:9px;color:#B8973A;margin-top:6px">🔒 Анализ влияния в Signal PRO</div>';
   html += '</div>';
   block.innerHTML = html;
 }
