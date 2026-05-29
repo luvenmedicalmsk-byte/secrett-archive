@@ -94,6 +94,8 @@ export default {
     return handleStrategy(request, env);
   if (path.startsWith('/api/strategy-feedback/') && request.method === 'GET')
     return handleStrategyFeedback(request, env);
+  if (path.startsWith('/api/validation/') && request.method === 'GET')
+    return handleValidation(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1587,6 +1589,7 @@ function getTierCapabilities(tier) {
       calibration_access:  'score',
       strategy_access:    'teaser',
       feedback_access:     'teaser',
+      validation_access:   'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1613,6 +1616,7 @@ function getTierCapabilities(tier) {
       calibration_access:  'score+bias',
       strategy_access:    'summary',
       feedback_access:     'summary',
+      validation_access:   'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1639,6 +1643,7 @@ function getTierCapabilities(tier) {
       calibration_access:  'full',
       strategy_access:    'full',
       feedback_access:     'full',
+      validation_access:   'full',
     },
     elite: {
       tier:                'elite',
@@ -1665,6 +1670,7 @@ function getTierCapabilities(tier) {
       calibration_access:  'full+diagnostics',
       strategy_access:    'full+explain',
       feedback_access:     'full+explain',
+      validation_access:   'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -3171,5 +3177,119 @@ function _filterFeedback(data, access, tier) {
 
   // ELITE: complete action list
   base.action_analytics = data.action_analytics || {};
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HISTORICAL VALIDATION LAYER V1 — Worker endpoint
+// GET /api/validation/{CC}
+// validation_access:
+//   teaser       → FREE:     score + grade only
+//   summary      → SIGNAL:   + state/scenario accuracy + bias + best/worst horizon
+//   full         → STRATEGIC:+ full horizon breakdown (all 5 windows)
+//   full+explain → ELITE:    + diagnostics (conf_drift, over/under rate, band detail)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleValidation(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.validation_access || 'teaser';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `val:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/validation/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (r.status === 404) return new Response(
+      JSON.stringify({error:'No validation data for '+cc+' — needs history'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    if (!r.ok) throw new Error('fetch failed: '+r.status);
+    const data   = await r.json();
+    const result = _filterValidation(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl:3600}); } catch(_){}
+    }
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+function _filterValidation(data, access, tier) {
+  const base = {
+    country:                    data.country,
+    country_name:               data.country_name,
+    date:                       data.date,
+    tier,
+    historical_validation_score:data.historical_validation_score,
+    validation_grade:           data.validation_grade,
+    validation_grade_ru:        data.validation_grade_ru,
+    history_depth:              data.history_depth,
+    note:                       data.note,
+  };
+  if (access === 'teaser') return base;
+
+  // SIGNAL+: accuracy summary + bias + best/worst horizon
+  base.state_accuracy        = data.state_accuracy;
+  base.scenario_accuracy     = data.scenario_accuracy;
+  base.systematic_bias       = data.systematic_bias;
+  base.best_horizon          = data.best_horizon;
+  base.worst_horizon         = data.worst_horizon;
+  base.horizon_scores        = data.horizon_scores;
+  if (access === 'summary') return base;
+
+  // STRATEGIC+: full 5-horizon breakdown (MAE/RMSE/Bias/DHR/StateHit/ScenarioHit)
+  const hz = data.horizons || {};
+  base.horizons = {};
+  Object.keys(hz).forEach(k => {
+    const h = hz[k];
+    base.horizons[k] = {
+      n:            h.n,
+      mae:          h.mae,
+      rmse:         h.rmse,
+      bias:         h.bias,
+      bias_label:   h.bias_label,
+      accuracy_pct: h.accuracy_pct,
+      dhr:          h.dhr,
+      horizon_score:h.horizon_score,
+      state_hit:    h.state_hit   ? {state_score:h.state_hit.state_score,
+                                     exact_rate:h.state_hit.exact_rate,
+                                     partial_rate:h.state_hit.partial_rate} : null,
+      scenario_hit: h.scenario_hit? {hit_rate:h.scenario_hit.hit_rate,
+                                     top2_hit_rate:h.scenario_hit.top2_hit_rate} : null,
+      note:         h.note,
+    };
+  });
+  if (access === 'full') return base;
+
+  // ELITE: + confidence band detail + overestimation/underestimation + drift
+  base.overestimation_rate  = data.overestimation_rate;
+  base.underestimation_rate = data.underestimation_rate;
+  base.confidence_drift     = data.confidence_drift;
+  // Add confidence detail to each horizon
+  Object.keys(base.horizons).forEach(k => {
+    const raw = (data.horizons || {})[k];
+    if (raw && raw.confidence) base.horizons[k].confidence = raw.confidence;
+  });
   return base;
 }
