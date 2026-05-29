@@ -29,6 +29,7 @@ SCENARIOS_DIR  = DOCS_DIR / "scenarios"
 CORRELATIONS_DIR = DOCS_DIR / "correlations"
 PROPAGATION_DIR  = DOCS_DIR / "propagation"
 SYSTEMIC_DIR     = DOCS_DIR / "systemic"
+EARLY_WARNING_DIR = DOCS_DIR / "early-warning"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -1956,6 +1957,301 @@ def save_systemic(snapshots: list[dict]) -> None:
             print(f"  [SYS] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[SYS] Saved systemic risk for {len(snapshots)} countries", file=sys.stderr)
 
+# ── WARNING LEVEL THRESHOLDS ─────────────────────────────────────────────
+_WARNING_LEVELS = [
+    (75, "red",    "Красный", "Критическое раннее предупреждение"),
+    (50, "orange", "Оранжевый", "Высокий риск эскалации"),
+    (30, "yellow", "Жёлтый", "Нарастающее давление"),
+    (0,  "green",  "Зелёный", "Сигналы в норме"),
+]
+
+# ── VELOCITY TREND THRESHOLDS ─────────────────────────────────────────────
+_VELOCITY_TRENDS = [
+    (4,  "explosive",    "Взрывной рост"),
+    (2,  "accelerating", "Ускорение"),
+    (1,  "rising",       "Нарастающий"),
+    (0,  "stable",       "Стабильный"),
+]
+
+
+def compute_early_warning(snap: dict) -> dict:
+    """
+    Strategic Early Warning Engine V1 — detect weak signals of future crises.
+    No LLM. Fully deterministic.
+
+    Unlike other engines which analyse CURRENT risk,
+    this engine looks for ACCELERATION PATTERNS and EMERGING SIGNALS
+    that precede escalation.
+
+    Inputs: risk_score, delta, drivers, forecast_30d, escalation_level,
+            change_drivers
+
+    Weak signal categories (Steps 7–10):
+      1. risk_acceleration    — delta velocity above threshold
+      2. driver_acceleration  — growing number/severity of drivers
+      3. forecast_divergence  — worst_case >> base_case (wide spread)
+      4. domain_expansion     — multiple domains simultaneously active
+      5. escalation_proximity — escalation_level near critical
+      6. forecast_pressure    — 30d worst_case above danger threshold
+      7. change_momentum      — positive change_drivers pile up
+
+    Signal Velocity (Step 8):
+      signal_velocity = weighted sum of signal scores
+      velocity_trend  = explosive/accelerating/rising/stable
+
+    Prediction Horizons (Step 9):
+      Escalation probability at 7d/30d/90d/180d
+
+    Emerging Risks (Step 10):
+      Risks not yet high but growing fast
+    """
+    score        = snap.get("risk_score", 50)
+    delta        = snap.get("delta", 0)
+    level        = snap.get("escalation_level", "stable")
+    drivers      = snap.get("drivers", [])
+    change_drvs  = snap.get("change_drivers", [])
+    f30          = snap.get("forecast_30d") or {}
+    f7           = snap.get("forecast_7d")  or {}
+    domain       = snap.get("dominant_domain", "geopolitics")
+
+    esc_ord      = _ESCALATION_ORDER.get(level, 0)   # 0-3
+
+    # ────────────────────────────────────────────────────────────────────
+    # STEP 7: Weak Signals — each returns (score 0-100, detected bool, label)
+    # ────────────────────────────────────────────────────────────────────
+    signals: list[dict] = []
+
+    # 1. Risk acceleration — delta >= 3 and trending up
+    if delta >= 5:
+        sig_score = min(100, round(40 + delta * 6))
+        signals.append({"type": "risk_acceleration", "score": sig_score, "weight": 0.22,
+                         "label": "Ускорение риска",
+                         "detail": f"Δ+{delta} за 24ч — значимое ускорение"})
+    elif delta >= 3:
+        signals.append({"type": "risk_acceleration", "score": 35, "weight": 0.22,
+                         "label": "Рост риска", "detail": f"Δ+{delta} за 24ч"})
+
+    # 2. Driver severity acceleration — multiple high-severity drivers
+    hot_drvs = [d for d in drivers if d.get("severity", 0) >= 70]
+    if len(hot_drvs) >= 3:
+        sig_score = min(100, 45 + len(hot_drvs) * 10)
+        signals.append({"type": "driver_acceleration", "score": sig_score, "weight": 0.18,
+                         "label": "Множественные критические факторы",
+                         "detail": f"{len(hot_drvs)} драйвера severity ≥ 70"})
+    elif len(hot_drvs) == 2:
+        signals.append({"type": "driver_acceleration", "score": 38, "weight": 0.18,
+                         "label": "Усиление факторов риска",
+                         "detail": "2 критических драйвера одновременно"})
+
+    # 3. Forecast divergence — wide spread between best and worst case
+    if f30:
+        best  = f30.get("best_case", score)
+        worst = f30.get("worst_case", score)
+        spread = worst - best
+        if spread >= 25:
+            sig_score = min(100, round(30 + spread * 1.5))
+            signals.append({"type": "forecast_divergence", "score": sig_score, "weight": 0.16,
+                             "label": "Высокая неопределённость прогноза",
+                             "detail": f"Разброс сценариев: {spread} пунктов"})
+
+    # 4. Domain expansion — risk spreading across multiple domains
+    active_doms = set()
+    active_doms.add(domain)
+    for d in drivers:
+        if d.get("severity", 0) >= 50 and d.get("domain"):
+            active_doms.add(d["domain"])
+    if len(active_doms) >= 4:
+        signals.append({"type": "domain_expansion", "score": 70, "weight": 0.14,
+                         "label": "Доменное расширение риска",
+                         "detail": f"Активны {len(active_doms)} доменов: {', '.join(sorted(active_doms))}"})
+    elif len(active_doms) == 3:
+        signals.append({"type": "domain_expansion", "score": 40, "weight": 0.14,
+                         "label": "Расширение в смежные домены",
+                         "detail": f"3 активных домена"})
+
+    # 5. Escalation proximity — close to next level
+    if esc_ord == 2:   # pressured → one step from critical
+        signals.append({"type": "escalation_proximity", "score": 72, "weight": 0.14,
+                         "label": "Близость к критическому уровню",
+                         "detail": "Уровень: Под давлением → критический следующий"})
+    elif esc_ord == 1: # elevated → two steps
+        signals.append({"type": "escalation_proximity", "score": 38, "weight": 0.14,
+                         "label": "Повышенный уровень эскалации",
+                         "detail": "Уровень: Повышенный"})
+
+    # 6. Forecast pressure — 30d worst_case above 75
+    worst_30d = f30.get("worst_case", 0)
+    if worst_30d >= 80:
+        sig_score = min(100, round(40 + (worst_30d - 75) * 2.5))
+        signals.append({"type": "forecast_pressure", "score": sig_score, "weight": 0.10,
+                         "label": "Критический прогноз 30d",
+                         "detail": f"Худший сценарий: {worst_30d}/100"})
+    elif worst_30d >= 70:
+        signals.append({"type": "forecast_pressure", "score": 35, "weight": 0.10,
+                         "label": "Давление в прогнозе 30d",
+                         "detail": f"Худший сценарий: {worst_30d}/100"})
+
+    # 7. Change momentum — positive change drivers piling up
+    pos_changes = [c for c in change_drvs if c.get("impact_score", 0) > 0]
+    if len(pos_changes) >= 2:
+        sig_score = min(100, 30 + len(pos_changes) * 12)
+        signals.append({"type": "change_momentum", "score": sig_score, "weight": 0.06,
+                         "label": "Нарастающая позитивная динамика факторов",
+                         "detail": f"{len(pos_changes)} усиливающихся факторов"})
+
+    # ────────────────────────────────────────────────────────────────────
+    # STEP 8: Signal Velocity
+    # ────────────────────────────────────────────────────────────────────
+    if signals:
+        weighted_sum  = sum(s["score"] * s["weight"] for s in signals)
+        weight_total  = sum(s["weight"] for s in signals)
+        signal_velocity = round(weighted_sum / weight_total) if weight_total else 0
+    else:
+        signal_velocity = round(score * 0.15)  # baseline from current score
+
+    velocity_trend    = "stable"
+    velocity_trend_ru = "Стабильный"
+    for thresh, trend, trend_ru in _VELOCITY_TRENDS:
+        if delta >= thresh or signal_velocity >= (20 + thresh * 15):
+            velocity_trend    = trend
+            velocity_trend_ru = trend_ru
+            break
+
+    # ────────────────────────────────────────────────────────────────────
+    # STEP 1–6: Early Warning Score
+    # Blend: signal_velocity (60%) + base score pressure (25%) + escalation (15%)
+    # ────────────────────────────────────────────────────────────────────
+    base_pressure = max(0, (score - 40) / 60 * 100) if score > 40 else 0
+    ew_score = min(100, round(
+        signal_velocity * 0.60 +
+        base_pressure   * 0.25 +
+        esc_ord / 3.0   * 100 * 0.15
+    ))
+
+    # Warning level
+    warning_level    = "green"
+    warning_level_ru = "Зелёный"
+    warning_label    = "Сигналы в норме"
+    for thresh, lvl, lvl_ru, lbl in _WARNING_LEVELS:
+        if ew_score >= thresh:
+            warning_level    = lvl
+            warning_level_ru = lvl_ru
+            warning_label    = lbl
+            break
+
+    # ────────────────────────────────────────────────────────────────────
+    # STEP 9: Prediction Horizons
+    # ────────────────────────────────────────────────────────────────────
+    # Base escalation probability from current state
+    base_prob = min(95, round(score * 0.5 + ew_score * 0.5))
+
+    # Velocity multiplier
+    v_mult = {"stable": 0.7, "rising": 0.9, "accelerating": 1.1, "explosive": 1.3}
+    vm     = v_mult.get(velocity_trend, 1.0)
+
+    best_30  = f30.get("best_case", score)
+    worst_30 = f30.get("worst_case", score)
+    conf_30  = f30.get("confidence", 70) / 100
+
+    horizons = [
+        {
+            "horizon":     "7d",
+            "label":       "7 дней",
+            "escalation_probability": min(95, round(base_prob * vm * 0.55)),
+            "note": f30.get("direction", "stable") if f7 else "нет данных",
+        },
+        {
+            "horizon":     "30d",
+            "label":       "30 дней",
+            "escalation_probability": min(95, round(
+                worst_30 * 0.45 * conf_30 + base_prob * 0.35 * vm + ew_score * 0.20
+            )),
+            "note": f"диапазон {best_30}–{worst_30}",
+        },
+        {
+            "horizon":     "90d",
+            "label":       "90 дней",
+            "escalation_probability": min(95, round(base_prob * vm * 0.80)),
+            "note": "структурный тренд",
+        },
+        {
+            "horizon":     "180d",
+            "label":       "180 дней",
+            "escalation_probability": min(95, round(base_prob * vm * 0.65)),
+            "note": "долгосрочный сценарий",
+        },
+    ]
+
+    # ────────────────────────────────────────────────────────────────────
+    # STEP 10: Emerging Risks
+    # Drivers with moderate severity (40-65) but positive delta or in forecast
+    # ────────────────────────────────────────────────────────────────────
+    emerging_risks: list[dict] = []
+    for d in drivers:
+        sev  = d.get("severity", 0)
+        dom  = d.get("domain", "")
+        name = d.get("name", "")[:60]
+        # Emerging = not yet critical (< 70) but growing
+        if 40 <= sev < 70 and delta >= 2:
+            growth_signal = round((sev / 70) * 50 + delta * 5)
+            emerging_risks.append({
+                "name":          name,
+                "domain":        dom,
+                "severity":      sev,
+                "growth_signal": min(85, growth_signal),
+                "label":         f"Формирующийся риск: {dom}",
+            })
+    # Also flag domains with change_drivers pointing up
+    for cd in change_drvs:
+        if cd.get("impact_score", 0) >= 2:
+            emerging_risks.append({
+                "name":          cd.get("name", "")[:60],
+                "domain":        "trend",
+                "severity":      cd.get("impact_score", 0) * 15,
+                "growth_signal": min(85, cd.get("impact_score", 0) * 20),
+                "label":         "Растущий тренд",
+            })
+    emerging_risks.sort(key=lambda x: -x["growth_signal"])
+    emerging_risks = emerging_risks[:4]
+
+    return {
+        "country":           snap["country"],
+        "country_name":      snap["country_name"],
+        "date":              TODAY,
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        # Core scores
+        "early_warning_score": ew_score,
+        "signal_velocity":     signal_velocity,
+        "warning_level":       warning_level,
+        "warning_level_ru":    warning_level_ru,
+        "warning_label":       warning_label,
+        "velocity_trend":      velocity_trend,
+        "velocity_trend_ru":   velocity_trend_ru,
+        # Signals
+        "signals":             signals,
+        "signal_count":        len(signals),
+        # Horizons
+        "horizons":            horizons,
+        # Emerging
+        "emerging_risks":      emerging_risks,
+        # Context
+        "active_domain_count": len(active_doms),
+    }
+
+
+def save_early_warning(snapshots: list[dict]) -> None:
+    """Save early warning analysis for all 25 countries to docs/early-warning/{CC}.json"""
+    EARLY_WARNING_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            ew = compute_early_warning(snap)
+            with open(EARLY_WARNING_DIR / f"{iso2}.json", "w") as f:
+                json.dump(ew, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [EW] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[EW] Saved early warning for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -1984,6 +2280,7 @@ def main():
     save_country_correlations(snapshots)
     save_propagation(snapshots)
     save_systemic(snapshots)
+    save_early_warning(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
