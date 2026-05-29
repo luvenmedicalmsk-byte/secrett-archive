@@ -88,6 +88,8 @@ export default {
     return handleDecisionSupport(request, env);
   if (path.startsWith('/api/resilience/') && request.method === 'GET')
     return handleResilience(request, env);
+  if (path.startsWith('/api/calibration/') && request.method === 'GET')
+    return handleCalibration(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1578,6 +1580,7 @@ function getTierCapabilities(tier) {
       early_warning_access: 'score',
       decision_access:      'score',
       resilience_access:   'score',
+      calibration_access:  'score',
     },
     signal: {
       tier:                'signal',
@@ -1601,6 +1604,7 @@ function getTierCapabilities(tier) {
       early_warning_access: 'score+level',
       decision_access:      'score+level',
       resilience_access:   'score+level',
+      calibration_access:  'score+bias',
     },
     strategic: {
       tier:                'strategic',
@@ -1624,6 +1628,7 @@ function getTierCapabilities(tier) {
       early_warning_access: 'full',
       decision_access:      'full',
       resilience_access:   'full',
+      calibration_access:  'full',
     },
     elite: {
       tier:                'elite',
@@ -1647,6 +1652,7 @@ function getTierCapabilities(tier) {
       early_warning_access: 'full+explain',
       decision_access:      'full+explain',
       resilience_access:   'full+explain',
+      calibration_access:  'full+diagnostics',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2840,4 +2846,112 @@ function _filterResilience(data, access, tier) {
   base.recommendations = data.recommendations || [];
 
   return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FORECAST CALIBRATION ENGINE V1 — Worker endpoint
+// GET /api/calibration/{CC}
+// calibration_access:
+//   score         → FREE:     calibration_score + grade only
+//   score+bias    → SIGNAL:   + bias label + accuracy_pct
+//   full          → STRATEGIC:+ full 7d/30d metrics (MAE/RMSE/Bias/DHR)
+//   full+diagnostics → ELITE: + confidence calibration + diagnostics
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleCalibration(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.calibration_access || 'score';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `cal:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/calibration/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (r.status === 404) return new Response(
+      JSON.stringify({error:'No calibration data for '+cc+' — needs history'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    if (!r.ok) throw new Error('fetch failed: '+r.status);
+    const data   = await r.json();
+    const result = _filterCalibration(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl:3600}); } catch(_){}
+    }
+    return new Response(JSON.stringify(result), {
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+  }
+}
+
+function _filterCalibration(data, access, tier) {
+  // FREE: score + grade only
+  const base = {
+    country:             data.country,
+    country_name:        data.country_name,
+    date:                data.date,
+    tier,
+    calibration_score:   data.calibration_score,
+    calibration_grade:   data.calibration_grade,
+    calibration_grade_ru:data.calibration_grade_ru,
+    history_depth:       data.history_depth,
+  };
+  if (access === 'score') return base;
+
+  // SIGNAL+: bias label + accuracy
+  const m7  = data.metrics_7d  || {};
+  const m30 = data.metrics_30d || {};
+  base.bias_7d          = m7.bias;
+  base.bias_label_7d    = m7.bias_label;
+  base.accuracy_pct_7d  = m7.accuracy_pct;
+  base.bias_30d         = m30.bias;
+  base.bias_label_30d   = m30.bias_label;
+  base.accuracy_pct_30d = m30.accuracy_pct;
+  base.calibration_7d   = data.calibration_7d;
+  base.calibration_30d  = data.calibration_30d;
+  if (access === 'score+bias') return base;
+
+  // STRATEGIC+: full metrics both horizons
+  base.metrics_7d   = _stripMetrics(m7);
+  base.metrics_30d  = _stripMetrics(m30);
+  if (access === 'full') return base;
+
+  // ELITE: + confidence calibration + diagnostics
+  base.confidence_calibrated_7d  = data.confidence_calibrated_7d;
+  base.confidence_calibrated_30d = data.confidence_calibrated_30d;
+  base.is_month_report           = data.is_month_report;
+  return base;
+}
+
+function _stripMetrics(m) {
+  if (!m || m.n_observations === 0) return m;
+  return {
+    horizon:           m.horizon,
+    n_observations:    m.n_observations,
+    mae:               m.mae,
+    rmse:              m.rmse,
+    bias:              m.bias,
+    bias_label:        m.bias_label,
+    accuracy_pct:      m.accuracy_pct,
+    direction_hit_rate:m.direction_hit_rate,
+  };
 }
