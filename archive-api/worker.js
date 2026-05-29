@@ -100,6 +100,10 @@ export default {
     return handleDashboard(request, env);
   if (path.startsWith('/api/decision-quality/') && request.method === 'GET')
     return handleDecisionQuality(request, env);
+  if (path.startsWith('/api/strategy-optimization/') && request.method === 'GET')
+    return handleStrategyOptimization(request, env);
+  if (path.startsWith('/api/strategy-evolution/') && request.method === 'GET')
+    return handleStrategyEvolution(request, env);
   if (path === '/api/decision-ranking' && request.method === 'GET')
     return handleDecisionRanking(request, env);
       // History + escalation + intelligence endpoints (v2.1)
@@ -1598,6 +1602,7 @@ function getTierCapabilities(tier) {
       validation_access:   'teaser',
       dashboard_access:   'teaser',
       dq_access:         'teaser',
+      so_access:         'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1627,6 +1632,7 @@ function getTierCapabilities(tier) {
       validation_access:   'summary',
       dashboard_access:   'summary',
       dq_access:         'summary',
+      so_access:         'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1656,6 +1662,7 @@ function getTierCapabilities(tier) {
       validation_access:   'full',
       dashboard_access:   'full',
       dq_access:         'full',
+      so_access:         'full',
     },
     elite: {
       tier:                'elite',
@@ -1685,6 +1692,7 @@ function getTierCapabilities(tier) {
       validation_access:   'full+explain',
       dashboard_access:   'full+explain',
       dq_access:         'full+explain',
+      so_access:         'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -3583,5 +3591,130 @@ function _filterDQ(data, access, tier) {
   base.efficiency_score         = data.efficiency_score;
   base.consistency_score        = data.consistency_score;
   base.baseline_comparison      = data.baseline_comparison;
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTONOMOUS STRATEGY OPTIMIZATION ENGINE V1 — Worker endpoints
+// GET /api/strategy-optimization/{CC}
+// GET /api/strategy-evolution/{CC}
+//
+// so_access:
+//   teaser       → FREE:     optimization_score + grade
+//   summary      → SIGNAL:   + Section A + B (high-alpha actions)
+//   full         → STRATEGIC:+ Section C/D/E (underperform, rebalance, diag)
+//   full+explain → ELITE:    + Section F (evolution, gain, adjusted_actions)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleStrategyOptimization(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.so_access || 'teaser';
+  const cc     = (request.url.split('/api/strategy-optimization/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `so:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey,{type:'json'});
+      if (cached) return new Response(JSON.stringify(cached),{
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/strategy-optimization/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (r.status===404) return new Response(JSON.stringify({error:'No optimization data for '+cc}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    if (!r.ok) throw new Error('fetch '+r.status);
+    const data   = await r.json();
+    const result = _filterSO(data, access, tier);
+    if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:3600}); } catch(_){} }
+    return new Response(JSON.stringify(result),{
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  }
+}
+
+async function handleStrategyEvolution(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  if ((caps.so_access||'teaser')==='teaser') return new Response(
+    JSON.stringify({error:'Evolution timeline requires Signal tier or above'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+  const cc = (request.url.split('/api/strategy-evolution/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if (!cc||cc.length!==2) return new Response(JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/strategy-evolution/${cc}.json`;
+    const r   = await fetch(url,{cf:{cacheTtl:3600,cacheEverything:true}});
+    if (!r.ok) throw new Error('fetch '+r.status);
+    const data = await r.json();
+    // Slim for signal, full for elite
+    const records = (caps.so_access==='full+explain') ? data.records : (data.records||[]).slice(-30);
+    return new Response(JSON.stringify({...data, records}),{
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  }
+}
+
+function _filterSO(data, access, tier) {
+  const base = {
+    country:            data.country,
+    country_name:       data.country_name,
+    date:               data.date,
+    tier,
+    optimization_score: data.optimization_score,
+    grade:              data.grade,
+    grade_ru:           data.grade_ru,
+    history_depth:      data.history_depth,
+    note:               data.note,
+  };
+  if (access==='teaser') return base;
+
+  // SIGNAL+: Section A (sub-scores) + B (high-alpha)
+  base.decision_score_base   = data.decision_score_base;
+  base.predicted_next_score  = data.predicted_next_score;
+  base.optimization_gain     = data.optimization_gain;
+  base.stability_index       = data.stability_index;
+  base.alpha_score           = data.alpha_score;
+  base.win_rate              = data.win_rate;
+  base.rr_score              = data.rr_score;
+  base.opp_score             = data.opp_score;
+  base.high_alpha_actions    = (data.high_alpha_actions||[]).slice(0,5);
+  base.n_actions             = data.n_actions;
+  if (access==='summary') return base;
+
+  // STRATEGIC+: Section C (underperform) + D (rebalance) + E (diagnostics)
+  base.underperforming       = data.underperforming || [];
+  base.rebalance_plan        = data.rebalance_plan  || {};
+  base.confidence_target     = data.confidence_target;
+  base.urgency_adjustment    = data.urgency_adjustment;
+  base.diagnostics           = (data.diagnostics||[]).map(d=>({
+    type:d.type,label:d.label,severity:d.severity,detail:d.detail
+  }));
+  base.diagnostic_count      = data.diagnostic_count;
+  base.conf_drift            = data.conf_drift;
+  base.fb_grade              = data.fb_grade;
+  if (access==='full') return base;
+
+  // ELITE: Section F (evolution, adjusted actions, full diag)
+  base.adjusted_actions      = data.adjusted_actions || [];
+  base.hv_score              = data.hv_score;
+  base.evolution_record      = data.evolution_record;
   return base;
 }
