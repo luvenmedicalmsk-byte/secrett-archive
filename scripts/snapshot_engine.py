@@ -28,6 +28,7 @@ TIMELINE_DIR   = DOCS_DIR / "timelines"
 SCENARIOS_DIR  = DOCS_DIR / "scenarios"
 CORRELATIONS_DIR = DOCS_DIR / "correlations"
 PROPAGATION_DIR  = DOCS_DIR / "propagation"
+SYSTEMIC_DIR     = DOCS_DIR / "systemic"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -1770,6 +1771,191 @@ def save_propagation(snapshots: list[dict]) -> None:
             print(f"  [PROP] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[PROP] Saved propagation for {len(snapshots)} countries", file=sys.stderr)
 
+# ── SYSTEMIC RISK COMBINATIONS ────────────────────────────────────────────
+# Each combo: (domain_a, domain_b, weight, label, explanation)
+# weight = how dangerous this combination is (0-100)
+_SYSTEMIC_COMBOS: list[tuple] = [
+    ("geopolitics", "economy",    90,
+     "Геополитика + Экономика",
+     "Военные конфликты и санкции вызывают экономический коллапс"),
+    ("economy",     "social",     85,
+     "Экономика + Социум",
+     "Финансовый кризис провоцирует социальную нестабильность"),
+    ("geopolitics", "social",     80,
+     "Геополитика + Социум",
+     "Политическая нестабильность усиливает социальную напряжённость"),
+    ("climate",     "economy",    82,
+     "Климат + Экономика",
+     "Климатические шоки разрушают производственные цепочки"),
+    ("climate",     "social",     78,
+     "Климат + Социум",
+     "Климатический стресс вызывает миграцию и социальные конфликты"),
+    ("technology",  "economy",    75,
+     "Технологии + Экономика",
+     "Кибератаки и технологическая деструкция дестабилизируют рынки"),
+    ("technology",  "geopolitics",72,
+     "Технологии + Геополитика",
+     "Кибероружие и ИИ изменяют баланс сил"),
+    ("geopolitics", "climate",    65,
+     "Геополитика + Климат",
+     "Борьба за ресурсы в условиях климатического давления"),
+    ("economy",     "technology", 70,
+     "Экономика + Технологии",
+     "Технологическое неравенство углубляет экономические разрывы"),
+    ("social",      "geopolitics",74,
+     "Социум + Геополитика",
+     "Массовые протесты подрывают политическую стабильность"),
+]
+
+# ── SYSTEMIC LEVEL THRESHOLDS ─────────────────────────────────────────────
+_SYSTEMIC_LEVELS = [
+    (75, "critical",  "Системный кризис"),
+    (55, "pressured", "Системное давление"),
+    (35, "elevated",  "Повышенный риск"),
+    (0,  "stable",    "Стабильно"),
+]
+
+
+def compute_systemic_risk(snap: dict) -> dict:
+    """
+    Systemic Risk Engine V1 — deterministic systemic risk computation.
+    No LLM. No external APIs.
+
+    Identifies which risk domain combinations are simultaneously active
+    and calculates cascade probability.
+
+    Inputs: risk_score, escalation_level, drivers, forecast_30d,
+            delta (velocity)
+
+    Algorithm:
+      1. Collect active domains from drivers (severity >= 50)
+      2. Match active domain pairs against _SYSTEMIC_COMBOS
+      3. systemic_pressure = weighted sum of active combos / max possible
+      4. systemic_score = blend of risk_score, systemic_pressure, forecast
+      5. cascade_probability = probability a combo triggers cascade
+      6. systemic_level = critical/pressured/elevated/stable
+    """
+    score      = snap.get("risk_score", 50)
+    delta      = snap.get("delta", 0)
+    level      = snap.get("escalation_level", "stable")
+    drivers    = snap.get("drivers", [])
+    f30        = snap.get("forecast_30d") or {}
+    domain     = snap.get("dominant_domain", "geopolitics")
+
+    # ── 1. Collect active domains ─────────────────────────────────────────
+    active_domains: dict[str, int] = {}  # domain → max severity
+    active_domains[domain] = max(score, active_domains.get(domain, 0))
+    for drv in drivers:
+        d = drv.get("domain", "")
+        s = drv.get("severity", 0)
+        if d and s >= 45:
+            active_domains[d] = max(s, active_domains.get(d, 0))
+
+    # ── 2. Match active combos ────────────────────────────────────────────
+    active_combos: list[dict] = []
+    for (da, db, weight, label, explanation) in _SYSTEMIC_COMBOS:
+        sev_a = active_domains.get(da, 0)
+        sev_b = active_domains.get(db, 0)
+        if sev_a >= 45 and sev_b >= 45:
+            combo_pressure = (sev_a + sev_b) / 200 * weight
+            # Cascade probability: higher when both domains are severe
+            cascade_raw = round(
+                (sev_a / 100) * 0.4 +
+                (sev_b / 100) * 0.4 +
+                (weight / 100) * 0.2
+            ) * 100
+            # Velocity boost: recent delta amplifies cascade probability
+            velocity_boost = min(15, abs(delta) * 1.5)
+            cascade_prob = min(95, round(cascade_raw + velocity_boost))
+
+            active_combos.append({
+                "domain_a":          da,
+                "domain_b":          db,
+                "label":             label,
+                "explanation":       explanation,
+                "weight":            weight,
+                "severity_a":        sev_a,
+                "severity_b":        sev_b,
+                "combo_pressure":    round(combo_pressure),
+                "cascade_probability": cascade_prob,
+                "is_critical":       (sev_a >= 75 and sev_b >= 65) or cascade_prob >= 70,
+            })
+
+    active_combos.sort(key=lambda c: -c["cascade_probability"])
+
+    # ── 3. Systemic pressure (0-100) ─────────────────────────────────────
+    if active_combos:
+        max_possible = max(w for (_, _, w, _, _) in _SYSTEMIC_COMBOS)
+        total_press  = sum(c["combo_pressure"] for c in active_combos)
+        systemic_pressure = min(100, round(total_press / max_possible * 100))
+    else:
+        systemic_pressure = round(score * 0.25)
+
+    # ── 4. Systemic score (0-100) ─────────────────────────────────────────
+    forecast_worst = f30.get("worst_case", score)
+    esc_ord        = _ESCALATION_ORDER.get(level, 0) / 3.0  # 0..1
+    systemic_score = min(100, round(
+        score * 0.40 +
+        systemic_pressure * 0.35 +
+        forecast_worst * 0.15 +
+        esc_ord * 10
+    ))
+
+    # ── 5. Systemic level ─────────────────────────────────────────────────
+    systemic_level     = "stable"
+    systemic_level_ru  = "Стабильно"
+    for threshold, lvl, lvl_ru in _SYSTEMIC_LEVELS:
+        if systemic_score >= threshold:
+            systemic_level    = lvl
+            systemic_level_ru = lvl_ru
+            break
+
+    # ── 6. Domain matrix — pressure per domain ────────────────────────────
+    all_domains = ["geopolitics", "economy", "climate", "technology", "social"]
+    domain_matrix: list[dict] = []
+    for d in all_domains:
+        sev  = active_domains.get(d, 0)
+        # How many active combos involve this domain?
+        combos_involving = [c for c in active_combos
+                            if c["domain_a"] == d or c["domain_b"] == d]
+        domain_matrix.append({
+            "domain":         d,
+            "severity":       sev,
+            "active":         sev >= 45,
+            "combo_count":    len(combos_involving),
+            "max_cascade":    max((c["cascade_probability"] for c in combos_involving), default=0),
+        })
+    domain_matrix.sort(key=lambda x: -x["severity"])
+
+    return {
+        "country":            snap["country"],
+        "country_name":       snap["country_name"],
+        "date":               TODAY,
+        "generated_at":       datetime.now(timezone.utc).isoformat(),
+        "systemic_score":     systemic_score,
+        "systemic_pressure":  systemic_pressure,
+        "systemic_level":     systemic_level,
+        "systemic_level_ru":  systemic_level_ru,
+        "active_combos":      active_combos,
+        "domain_matrix":      domain_matrix,
+        "active_domain_count":len(active_domains),
+        "cascade_count":      len([c for c in active_combos if c["is_critical"]]),
+    }
+
+
+def save_systemic(snapshots: list[dict]) -> None:
+    """Save systemic risk data for all 25 countries to docs/systemic/{CC}.json"""
+    SYSTEMIC_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            sys_data = compute_systemic_risk(snap)
+            with open(SYSTEMIC_DIR / f"{iso2}.json", "w") as f:
+                json.dump(sys_data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [SYS] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[SYS] Saved systemic risk for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -1797,6 +1983,7 @@ def main():
     save_country_scenarios(snapshots)
     save_country_correlations(snapshots)
     save_propagation(snapshots)
+    save_systemic(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
