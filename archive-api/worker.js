@@ -82,6 +82,8 @@ export default {
     return handlePropagation(request, env);
   if (path.startsWith('/api/systemic/') && request.method === 'GET')
     return handleSystemic(request, env);
+  if (path.startsWith('/api/early-warning/') && request.method === 'GET')
+    return handleEarlyWarning(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1569,6 +1571,7 @@ function getTierCapabilities(tier) {
       correlation_access: 'none',
       propagation_access: 'teaser',
       systemic_access:    'score',
+      early_warning_access: 'score',
     },
     signal: {
       tier:                'signal',
@@ -1589,6 +1592,7 @@ function getTierCapabilities(tier) {
       correlation_access: 'top3',
       propagation_access: 'chain',
       systemic_access:    'score+level',
+      early_warning_access: 'score+level',
     },
     strategic: {
       tier:                'strategic',
@@ -1609,6 +1613,7 @@ function getTierCapabilities(tier) {
       correlation_access: 'full',
       propagation_access: 'full',
       systemic_access:    'full',
+      early_warning_access: 'full',
     },
     elite: {
       tier:                'elite',
@@ -1629,6 +1634,7 @@ function getTierCapabilities(tier) {
       correlation_access: 'full+explain',
       propagation_access: 'full+explain',
       systemic_access:    'full+explain',
+      early_warning_access: 'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2447,6 +2453,105 @@ function _filterSystemic(data, access, tier) {
   // ELITE: explanation + domain_matrix + full combo data
   base.active_combos = data.active_combos || [];
   base.domain_matrix = data.domain_matrix || [];
+
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STRATEGIC EARLY WARNING ENGINE V1 — Worker endpoint
+// GET /api/early-warning/{CC}
+// early_warning_access:
+//   score        → FREE: ew_score only
+//   score+level  → SIGNAL: + warning_level + velocity_trend + signal_count
+//   full         → STRATEGIC: + all signals + horizons
+//   full+explain → ELITE: + emerging_risks + full signal detail
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleEarlyWarning(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.early_warning_access || 'score';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
+
+  if (!cc || cc.length !== 2) {
+    return new Response(JSON.stringify({ error: 'Invalid country code' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  const cacheKey = `ew:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                   'X-Cache': 'HIT', 'X-Tier': tier }
+      });
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/early-warning/${cc}.json`;
+    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    if (r.status === 404) return new Response(JSON.stringify({ error: 'No early warning for ' + cc }), {
+      status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+    if (!r.ok) throw new Error('fetch failed: ' + r.status);
+    const data   = await r.json();
+    const result = _filterEarlyWarning(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 600 }); } catch (_) {}
+    }
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterEarlyWarning(data, access, tier) {
+  // Always: score (all tiers)
+  const base = {
+    country:             data.country,
+    country_name:        data.country_name,
+    date:                data.date,
+    tier,
+    early_warning_score: data.early_warning_score,
+    signal_velocity:     data.signal_velocity,
+  };
+
+  if (access === 'score') return base;
+
+  // SIGNAL+: level + trend + count
+  base.warning_level    = data.warning_level;
+  base.warning_level_ru = data.warning_level_ru;
+  base.warning_label    = data.warning_label;
+  base.velocity_trend   = data.velocity_trend;
+  base.velocity_trend_ru = data.velocity_trend_ru;
+  base.signal_count     = data.signal_count;
+  base.active_domain_count = data.active_domain_count;
+
+  if (access === 'score+level') return base;
+
+  // STRATEGIC+: signals (type/label/score) + horizons
+  base.signals = (data.signals || []).map(s => ({
+    type:   s.type,
+    label:  s.label,
+    score:  s.score,
+    weight: s.weight,
+  }));
+  base.horizons = data.horizons || [];
+
+  if (access === 'full') return base;
+
+  // ELITE: full signal detail + emerging risks
+  base.signals       = data.signals || [];
+  base.emerging_risks = data.emerging_risks || [];
 
   return base;
 }
