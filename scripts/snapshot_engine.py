@@ -1135,9 +1135,22 @@ def save_country_timelines(snapshots: list[dict]) -> None:
 
 def generate_scenarios(snap: dict) -> dict:
     """
-    Adaptive Scenario Engine V1 — 4 scenarios x 4 horizons.
-    scenario_score = risk*0.30 + systemic*0.25 + warning*0.20 + decision*0.10 - resilience*0.15
-    States: stabilization / contained / escalating / critical / cascade
+    Adaptive Scenario Engine V1 — 4 scenarios × 4 horizons.
+
+    CORRECTED FORMULA (audit 2026-05-29):
+      scenario_score = risk×0.30
+                     + systemic_PRESSURE×0.25   [unique: co-occurrence combos]
+                     + signal_VELOCITY×0.20     [unique: EW acceleration]
+                     + readiness_score×0.10     [unique: urgency layer]
+                     − resilience_score×0.15    [structural dampening]
+
+    Each primary signal (P1-P7) counted EXACTLY ONCE across the chain.
+    decision_score replaced by readiness_score to remove P1/P2/P4 double-count.
+
+    IMPROVED PROBABILITY MODEL V2:
+      instability_v2 = hot_pressure×0.30 + velocity×0.25
+                     + cascade_prob_norm×0.25 + signal_vel_norm×0.20
+    Uses cascade_probability (systemic) and signal_velocity (EW) — new info.
     """
     score        = snap.get("risk_score", 50)
     delta        = snap.get("delta", 0)
@@ -1147,23 +1160,49 @@ def generate_scenarios(snap: dict) -> dict:
     domain       = snap.get("dominant_domain", "geopolitics")
     level        = snap.get("escalation_level", "stable")
 
-    systemic_score   = snap.get("_systemic_score",  round(score * 0.85))
-    ew_score         = snap.get("_ew_score",         round(score * 0.70))
-    decision_score   = snap.get("_decision_score",   round(score * 0.80))
-    resilience_score = snap.get("_resilience_score", max(10, 75 - round(score * 0.40)))
+    # ── Read UNIQUE derivatives from sibling engines ───────────────────────
+    # systemic_pressure: pure combo pressure (no P1 inside)
+    systemic_pressure  = snap.get("_systemic_pressure",  round(score * 0.50))
+    # signal_velocity:   pure acceleration pattern (no P1 inside)
+    signal_velocity_v  = snap.get("_signal_velocity",    round(min(100, abs(delta) * 10)))
+    # readiness_score:   urgency layer (once removed from P1 via decision)
+    readiness_score    = snap.get("_readiness_score",    round(score * 0.70))
+    # resilience_score:  structural domain capacity
+    resilience_score   = snap.get("_resilience_score",   max(10, 75 - round(score * 0.40)))
+    # cascade_probability: max cascade from systemic engine
+    cascade_prob_raw   = snap.get("_cascade_probability", round(score * 0.60))
+    # forecast confidence
+    f_conf             = f30.get("confidence", 70)
 
+    # ── CORRECTED scenario_score (no double counting) ─────────────────────
     scenario_score = max(0, min(100, round(
-        score * 0.30 + systemic_score * 0.25 + ew_score * 0.20
-        + decision_score * 0.10 - resilience_score * 0.15
+        score              * 0.30 +   # P1 direct — magnitude
+        systemic_pressure  * 0.25 +   # L1 unique — co-occurrence
+        signal_velocity_v  * 0.20 +   # L2 unique — acceleration
+        readiness_score    * 0.10 -   # L3 unique — urgency (not raw score)
+        resilience_score   * 0.15     # L4 unique — structural dampening
     )))
 
-    hot_drvs       = [d for d in drivers if d.get("severity", 0) >= 65]
-    avg_hot        = (sum(d["severity"] for d in hot_drvs) / len(hot_drvs)
-                      if hot_drvs else score)
-    pressure       = max(0.0, (avg_hot - 65) / 35.0)
-    velocity       = min(abs(delta) / 10.0, 1.0)
-    instability    = pressure * 0.55 + velocity * 0.45
-    res_factor     = resilience_score / 100.0
+    # ── Instability factors ────────────────────────────────────────────────
+    hot_drvs      = [d for d in drivers if d.get("severity", 0) >= 65]
+    avg_hot       = (sum(d["severity"] for d in hot_drvs) / len(hot_drvs)
+                     if hot_drvs else score)
+    hot_pressure  = max(0.0, (avg_hot - 65) / 35.0)    # 0..1
+    velocity      = min(abs(delta) / 10.0, 1.0)         # 0..1
+    casc_norm     = min(1.0, cascade_prob_raw / 100.0)  # 0..1 from systemic
+    sigvel_norm   = min(1.0, signal_velocity_v / 100.0)  # 0..1 from EW
+
+    # ── IMPROVED instability_v2 — uses cascade + signal_velocity ─────────
+    instability_v2 = (
+        hot_pressure * 0.30 +  # driver severity pressure
+        velocity     * 0.25 +  # delta speed
+        casc_norm    * 0.25 +  # cascade risk from systemic combos
+        sigvel_norm  * 0.20    # acceleration from early warning
+    )
+
+    res_factor  = resilience_score / 100.0
+    # conf_boost: high-confidence dire forecast amplifies worst probability
+    conf_boost  = max(0, (f_conf - 70) / 100 * 8) if score > 65 else 0
 
     base_30  = int(f30.get("base_case")  or max(10, min(95, score + round(delta * 15))))
     best_30  = int(f30.get("best_case")  or max(10, base_30 - 12))
@@ -1173,9 +1212,10 @@ def generate_scenarios(snap: dict) -> dict:
     base_30  = max(10, min(95, base_30))
     worst_30 = max(10, min(95, worst_30))
 
-    raw_worst  = max(8,  round(18 + instability * 42 - res_factor * 12))
-    raw_stress = max(12, round(22 + instability * 20 - res_factor * 8))
-    raw_best   = max(5,  round(32 - instability * 22))
+    # ── IMPROVED probability model V2 ─────────────────────────────────────
+    raw_worst  = max(8,  round(18 + instability_v2 * 40 - res_factor * 10 + conf_boost))
+    raw_stress = max(12, round(22 + instability_v2 * 15 - res_factor * 5))
+    raw_best   = max(5,  round(32 - instability_v2 * 18 + res_factor * 8))
     raw_base   = max(5,  100 - raw_worst - raw_stress - raw_best)
     total      = raw_worst + raw_stress + raw_base + raw_best
     prob_worst  = round(raw_worst  / total * 100)
@@ -1183,13 +1223,6 @@ def generate_scenarios(snap: dict) -> dict:
     prob_best   = round(raw_best   / total * 100)
     prob_base   = 100 - prob_worst - prob_stress - prob_best
 
-    _STATES = [
-        (85, "cascade",       "Каскадный кризис"),
-        (70, "critical",      "Критическая эскалация"),
-        (55, "escalating",    "Эскалация"),
-        (40, "contained",     "Контролируемо"),
-        (0,  "stabilization", "Стабилизация"),
-    ]
     def _state(s, insta):
         if s >= 85 or (s >= 75 and insta >= 0.7): return "cascade",       "Каскадный кризис"
         elif s >= 70 or insta >= 0.6:              return "critical",      "Критическая эскалация"
@@ -1218,13 +1251,13 @@ def generate_scenarios(snap: dict) -> dict:
         out  = []
         for hz, hz_ru in [("30d","30 дней"),("90d","90 дней"),("180d","180 дней"),("365d","365 дней")]:
             s = s30 if hz == "30d" else (
-                max(10, round(prev * (0.90 - instability * 0.05)))          if stype == "best"   else
-                min(95, max(10, round(prev + delta * 3 * (1 - instability * 0.4)))) if stype == "base" else
-                min(95, round(prev * 1.06 + instability * 4))               if stype == "stress" else
-                min(95, round(prev * 1.10 + instability * 8 - res_factor * 5))
+                max(10, round(prev * (0.90 - instability_v2 * 0.05)))              if stype == "best"   else
+                min(95, max(10, round(prev + delta * 3 * (1 - instability_v2 * 0.4)))) if stype == "base" else
+                min(95, round(prev * 1.06 + instability_v2 * 4))                  if stype == "stress" else
+                min(95, round(prev * 1.10 + instability_v2 * 8 - res_factor * 5))
             )
             s = max(10, min(95, s))
-            sid, sru = _state(s, instability)
+            sid, sru = _state(s, instability_v2)
             out.append({"horizon": hz, "label": hz_ru, "score": s,
                         "state": sid, "state_ru": sru, "delta_from_current": s - score})
             prev = s
@@ -1234,8 +1267,8 @@ def generate_scenarios(snap: dict) -> dict:
     neg_change  = [c for c in change_drvs if c.get("impact_score", 0) < 0]
 
     def _sc(stype, s30, prob, insta_mod, res_mod):
-        sid, sru = _state(s30, max(0.0, min(1.0, instability + insta_mod)))
-        vid, vru = _velocity(max(0.0, min(1.0, instability + insta_mod)), s30 - score)
+        sid, sru = _state(s30, max(0.0, min(1.0, instability_v2 + insta_mod)))
+        vid, vru = _velocity(max(0.0, min(1.0, instability_v2 + insta_mod)), s30 - score)
         iid, iru = _impact(s30)
         sc_drivers = {
             "best":   [{"driver": c.get("name","")[:45], "impact": -abs(c.get("impact_score",1))}
@@ -1252,10 +1285,10 @@ def generate_scenarios(snap: dict) -> dict:
             "stress": "Негативные факторы усиливаются, риск выше базового",
             "worst":  "Каскадная эскалация, системный кризис",
         }[stype]
-        name_map = {"best": ("Best Case","Лучший сценарий"),
-                    "base": ("Base Case","Базовый сценарий"),
-                    "stress": ("Stress Case","Стресс-сценарий"),
-                    "worst": ("Worst Case","Худший сценарий")}
+        name_map = {"best":   ("Best Case",   "Лучший сценарий"),
+                    "base":   ("Base Case",   "Базовый сценарий"),
+                    "stress": ("Stress Case", "Стресс-сценарий"),
+                    "worst":  ("Worst Case",  "Худший сценарий")}
         nm, nm_ru = name_map[stype]
         return {
             "type": stype, "name": nm, "name_ru": nm_ru,
@@ -1277,17 +1310,19 @@ def generate_scenarios(snap: dict) -> dict:
     ]
 
     triggers = [
-        {"condition": f"delta ≥ {max(3,round(delta+3))} за 24ч",         "leads_to": "worst",  "probability": prob_worst},
-        {"condition": f"Драйвер severity ≥ 85 в {domain}",                "leads_to": "stress", "probability": prob_stress},
-        {"condition": "Деэскалация ключевого кризиса",                     "leads_to": "best",   "probability": prob_best},
-        {"condition": "Цепочка распространения → 3+ страны",              "leads_to": "worst",  "probability": max(5, round(instability * 35))},
+        {"condition": f"delta ≥ {max(3,round(delta+3))} за 24ч",        "leads_to": "worst",  "probability": prob_worst},
+        {"condition": f"Драйвер severity ≥ 85 в {domain}",               "leads_to": "stress", "probability": prob_stress},
+        {"condition": "Деэскалация ключевого кризиса",                    "leads_to": "best",   "probability": prob_best},
+        {"condition": "Цепочка распространения → 3+ страны",             "leads_to": "worst",  "probability": max(5, round(instability_v2 * 35))},
     ]
 
     return {
         "country": snap["country"], "country_name": snap["country_name"],
         "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
         "risk_score": score, "scenario_score": scenario_score,
-        "instability": round(instability * 100), "scenarios": scenarios,
+        "instability": round(instability_v2 * 100),
+        "instability_v2": True,
+        "scenarios": scenarios,
         "transition_triggers": triggers,
         "dominant_scenario": max(scenarios, key=lambda s: s["probability"])["type"],
     }
