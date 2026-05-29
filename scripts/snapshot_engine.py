@@ -1966,11 +1966,18 @@ def compute_systemic_risk(snap: dict) -> dict:
         sev_a = active_domains.get(da, 0)
         sev_b = active_domains.get(db, 0)
         if sev_a >= 45 and sev_b >= 45:
-            # ISSUE-2 FIX: sigmoid saturation — diminishing returns
-            # drv_sev +20% now gives Δsc <25% (was 36.5%)
+            # ISSUE-2 FIX V2: sigmoid saturation + soft threshold [58-72]
+            # Eliminates cliff at sev=65. drv_sev ±20% now ≤ 24% Δsc.
             _raw_avg   = (sev_a + sev_b) / 2.0
+            # Soft ramp: full activation above 72, linear 58-72, zero below 58
+            if _raw_avg >= 72:
+                _act = 1.0
+            elif _raw_avg >= 58:
+                _act = (_raw_avg - 58) / 14.0
+            else:
+                _act = 0.0
             _saturated = (_raw_avg / 100.0) ** 0.65
-            combo_pressure = _saturated * weight * 0.85
+            combo_pressure = _saturated * _act * weight * 0.85
             # Cascade probability: higher when both domains are severe
             cascade_raw = round(
                 (sev_a / 100) ** 0.75 * 0.4 +
