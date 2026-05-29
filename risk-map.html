@@ -2356,7 +2356,15 @@ function closeCountriesPanel() {
 }
 
 document.getElementById('countries-btn').addEventListener('click', () => {
-  closeIntelPanel(); closeAlertsPanel();
+  // close other panels via direct DOM (no function calls that might throw)
+  var ip = document.getElementById('intel-panel');
+  var ap = document.getElementById('alerts-panel');
+  if (ip) ip.classList.remove('open');
+  if (ap) ap.classList.remove('open');
+  var ib = document.getElementById('intel-btn');
+  var ab = document.getElementById('alerts-btn');
+  if (ib) ib.classList.remove('active');
+  if (ab) ab.classList.remove('active');
   const p = document.getElementById('countries-panel');
   if (p.classList.contains('open')) closeCountriesPanel();
   else openCountriesPanel();
@@ -2520,7 +2528,6 @@ async function openIntelPanel() {
   var btn   = document.getElementById('intel-btn');
   panel.classList.add('open');
   btn.classList.add('active');
-  _showPanelOverlay();
 
   var data = await fetchIntelFeed();
   renderIntelFeed(data);
@@ -2529,7 +2536,6 @@ async function openIntelPanel() {
 function closeIntelPanel() {
   document.getElementById('intel-panel').classList.remove('open');
   document.getElementById('intel-btn').classList.remove('active');
-  _hidePanelOverlay();
 }
 
 // intel-btn handled by window._toggle onclick
@@ -2639,7 +2645,6 @@ async function openAlertsPanel() {
   var btn   = document.getElementById('alerts-btn');
   panel.classList.add('open');
   btn.classList.add('active');
-  _showPanelOverlay();
   var data = await fetchAlerts();
   renderAlerts(data);
 }
@@ -2647,7 +2652,6 @@ async function openAlertsPanel() {
 function closeAlertsPanel() {
   document.getElementById('alerts-panel').classList.remove('open');
   document.getElementById('alerts-btn').classList.remove('active');
-  _hidePanelOverlay();
 }
 
 // alerts-btn handled by window._toggle onclick
