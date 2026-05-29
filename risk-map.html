@@ -214,6 +214,38 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .ip-empty{font-size:10px;color:rgba(255,255,255,0.2);text-align:center;padding:16px 0;font-style:italic}
 .ip-loading{font-size:10px;color:rgba(255,255,255,0.2);text-align:center;padding:20px 0;letter-spacing:0.1em}
 
+/* ── Alerts button & panel ── */
+#alerts-btn{padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
+#alerts-btn:hover,#alerts-btn.active{border-color:#dc2626;color:#ef4444}
+#alerts-btn.has-alerts{border-color:rgba(220,38,38,0.5);color:#ef4444}
+#alerts-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:22;background:rgba(6,5,10,0.97);border-left:1px solid rgba(220,38,38,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+#alerts-panel.open{transform:translateX(0)}
+#ap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(220,38,38,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;flex-shrink:0}
+#ap-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
+#ap-close:hover{color:rgba(255,255,255,0.7)}
+#ap-meta{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,0.2);padding:6px 14px;letter-spacing:0.06em;flex-shrink:0}
+#ap-body{flex:1;overflow-y:auto;padding:8px 12px 16px}
+#ap-body::-webkit-scrollbar{width:2px}
+#ap-body::-webkit-scrollbar-thumb{background:rgba(220,38,38,0.3)}
+.ap-card{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer}
+.ap-card:last-child{border-bottom:none}
+.ap-card:hover .ap-title{color:rgba(232,224,208,1)}
+.ap-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.ap-country{font-size:11px;color:rgba(232,224,208,.85);font-weight:600}
+.ap-severity{font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.ap-type-badge{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;margin-bottom:5px;display:inline-block}
+.ap-type-risk_spike{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.ap-type-risk_drop{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.ap-type-critical_driver{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.4)}
+.ap-type-escalation_upgrade{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.ap-type-forecast_alert{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+.ap-title{font-size:11px;color:rgba(232,224,208,.8);margin-bottom:3px}
+.ap-message{font-size:10px;color:rgba(255,255,255,.35);line-height:1.4}
+.ap-ts{font-size:8px;color:rgba(255,255,255,.2);font-family:'Courier New',monospace;margin-top:4px}
+.ap-lock{font-size:9px;color:#B8973A;text-align:center;padding:14px 0;letter-spacing:.06em;border-top:1px solid rgba(255,255,255,.04)}
+.ap-empty{font-size:10px;color:rgba(255,255,255,.2);text-align:center;padding:20px 0;font-style:italic}
+.ap-loading{font-size:10px;color:rgba(255,255,255,.2);text-align:center;padding:20px 0;letter-spacing:.1em}
+
 </style>
 </head>
 <body>
@@ -237,6 +269,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
   <button class="lb" id="intel-btn">◆ Раннее предупреждение</button>
+  <button class="lb" id="alerts-btn">⚠ Критические события</button>
   <!-- all layer buttons hidden from UI, code preserved -->
   <button class="lb" id="lb-planes" style="display:none">✈ Самолёты</button>
   <button class="lb" id="lb-ships" style="display:none">🚢 Суда</button>
@@ -285,6 +318,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <div id="ip-body">
     <div class="ip-loading">Загрузка данных…</div>
   </div>
+
+<!-- Alerts Panel (Alert Engine V1) -->
+<div id="alerts-panel">
+  <div id="ap-header"><span>⚠ Критические события</span><span id="ap-close">✕</span></div>
+  <div id="ap-meta"></div>
+  <div id="ap-body"><div class="ap-loading">Загрузка…</div></div>
+</div>
 </div>
 <div id="detail">
   <button id="dt-x">✕</button>
@@ -1645,10 +1685,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1},
   };
   return C[tier]||C.free;
 }
@@ -2269,6 +2309,126 @@ document.getElementById('ip-close').addEventListener('click', closeIntelPanel);
 
 // Preload intel feed alongside snapshot data
 setTimeout(function() { fetchIntelFeed().catch(function(){}); }, 3000);
+
+
+// ── Alert Engine V1 — UI ─────────────────────────────────────────────────
+var _alertsData = null;
+
+var _AP_TYPE_LABELS = {
+  risk_spike:         'Резкий рост',
+  risk_drop:          'Снижение риска',
+  critical_driver:    'Критический фактор',
+  escalation_upgrade: 'Эскалация',
+  forecast_alert:     'Прогноз: угроза'
+};
+
+async function fetchAlerts() {
+  if (_alertsData) return _alertsData;
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/alerts', { headers });
+    if (!r.ok) return null;
+    _alertsData = await r.json();
+    if (_alertsData && _alertsData.tier) _clientCaps = _getClientCaps(_alertsData.tier);
+    // Highlight button if alerts exist
+    if (_alertsData && _alertsData.count > 0) {
+      document.getElementById('alerts-btn').classList.add('has-alerts');
+    }
+    return _alertsData;
+  } catch(e) {
+    console.warn('[ALERTS] fetch:', e.message);
+    return null;
+  }
+}
+
+function renderAlerts(data) {
+  var body = document.getElementById('ap-body');
+  var meta = document.getElementById('ap-meta');
+
+  if (!data || !data.alerts) {
+    body.innerHTML = '<div class="ap-empty">Нет данных об алертах.</div>';
+    return;
+  }
+
+  var alerts = data.alerts || [];
+  var tier   = data.tier || 'free';
+  var limit  = _clientCaps.alerts_limit;
+
+  meta.textContent = 'Данные на ' + (data.date || '?')
+    + '  ·  всего ' + (data.count || 0) + '  ·  tier: ' + tier;
+
+  if (!alerts.length) {
+    body.innerHTML = '<div class="ap-empty">Критических событий не выявлено.</div>';
+    return;
+  }
+
+  var html = '';
+  alerts.forEach(function(a) {
+    var domCol = (window.DCL_INTEL || {})[a.domain] || 'rgba(255,255,255,.3)';
+    var sevCol = a.severity >= 80 ? '#dc2626'
+               : a.severity >= 65 ? '#ef4444'
+               : a.severity >= 50 ? '#f59e0b' : '#22c55e';
+    var typeLabel = _AP_TYPE_LABELS[a.type] || a.type;
+
+    html += '<div class="ap-card" onclick="openCountryCard('' + (a.country||'') + '')">'
+          + '<div class="ap-card-top">'
+          + '<span class="ap-country">' + _esc(FLAGS[a.country]||'') + ' ' + _esc(a.country_name||'') + '</span>';
+
+    if (a.severity !== undefined) {
+      html += '<span class="ap-severity" style="color:' + sevCol + '">' + a.severity + '</span>';
+    }
+
+    html += '</div>'
+          + '<span class="ap-type-badge ap-type-' + (a.type||'') + '">' + _esc(typeLabel) + '</span>'
+          + '<div class="ap-title">' + _esc(a.title||'') + '</div>';
+
+    if (a.message) {
+      html += '<div class="ap-message">' + _esc(a.message) + '</div>';
+    }
+    if (a.timestamp) {
+      html += '<div class="ap-ts">' + a.timestamp.slice(0,19).replace('T',' ') + ' UTC</div>';
+    }
+
+    html += '</div>';
+  });
+
+  // Show tier lock after limit
+  if (limit > 0 && alerts.length >= limit) {
+    var nextTier = tier === 'free' ? 'Signal PRO'
+                 : tier === 'signal' ? 'Strategic PRO'
+                 : null;
+    if (nextTier) {
+      html += '<div class="ap-lock">🔒 Больше алертов в ' + nextTier + '</div>';
+    }
+  }
+
+  body.innerHTML = html;
+}
+
+async function openAlertsPanel() {
+  var panel = document.getElementById('alerts-panel');
+  var btn   = document.getElementById('alerts-btn');
+  panel.classList.add('open');
+  btn.classList.add('active');
+  var data = await fetchAlerts();
+  renderAlerts(data);
+}
+
+function closeAlertsPanel() {
+  document.getElementById('alerts-panel').classList.remove('open');
+  document.getElementById('alerts-btn').classList.remove('active');
+}
+
+document.getElementById('alerts-btn').addEventListener('click', function() {
+  var p = document.getElementById('alerts-panel');
+  if (p.classList.contains('open')) closeAlertsPanel();
+  else openAlertsPanel();
+});
+document.getElementById('ap-close').addEventListener('click', closeAlertsPanel);
+
+// Preload alerts in background
+setTimeout(function() { fetchAlerts().catch(function(){}); }, 4000);
 
 })(); // end IIFE
 </script>
