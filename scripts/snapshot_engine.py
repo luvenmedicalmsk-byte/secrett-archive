@@ -40,6 +40,8 @@ VALIDATION_DIR        = DOCS_DIR / "validation"
 DASHBOARD_DIR         = DOCS_DIR / "dashboard"
 DQ_DIR                = DOCS_DIR / "decision-quality"
 DQ_RANKING_DIR        = DOCS_DIR / "decision-ranking"
+SO_DIR                = DOCS_DIR / "strategy-optimization"
+SE_DIR                = DOCS_DIR / "strategy-evolution"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -5015,6 +5017,506 @@ def save_decision_quality(snapshots: list[dict]) -> None:
 
     print(f"[DQ] Saved decision quality for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# AUTONOMOUS STRATEGY OPTIMIZATION ENGINE V1
+# Closed-loop layer: reads DQ + Validation, produces optimized weights,
+# evolution timeline and optimization gain.
+# Does NOT modify Strategy Engine, Forecast, Calibration or Validation.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Optimization score weights (spec)
+_SO_W = {"alpha":0.30,"win_rate":0.25,"risk_reduction":0.20,
+         "opportunity":0.15,"stability":0.10}
+
+# Weight rebalancing thresholds
+_SO_EFFECTIVENESS_FLOOR    = 35.0   # below this → reduce weight
+_SO_ALPHA_HIGH_THRESHOLD   = 1.5    # above this → increase weight
+_SO_BIAS_PENALTY           = 8.0    # pts subtracted per detected bias
+_SO_CONFIDENCE_DRIFT_LIMIT = 8.0    # above this → recalibrate
+
+# Grade map: A+ → F
+def _so_grade(score: float | None) -> tuple[str, str]:
+    if score is None:  return "N/A",  "Нет данных"
+    if score >= 90:    return "A+",   "Самооптимизация"
+    if score >= 80:    return "A",    "Сильная"
+    if score >= 70:    return "B",    "Стабильная"
+    if score >= 60:    return "C",    "Умеренная"
+    if score >= 50:    return "D",    "Слабая"
+    return "F", "Требует рекалибровки"
+
+
+# ── Core functions ────────────────────────────────────────────────────────
+
+def analyze_strategy_performance(dq_data: dict, val_data: dict, fb_data: dict) -> dict:
+    """
+    Aggregate performance signal from DQ, Validation, and Feedback layers.
+    Returns a unified performance snapshot for optimization decisions.
+    """
+    alpha_score    = dq_data.get("alpha_score", 50) or 50
+    alpha_mean     = dq_data.get("alpha_mean", 0.0) or 0.0
+    win_rate       = dq_data.get("decision_success_rate", 50) or 50
+    rr_score       = dq_data.get("risk_reduction_score", 50) or 50
+    opp_score      = dq_data.get("opportunity_capture_rate") or 50
+    eff_score      = dq_data.get("action_efficiency_score", 50) or 50
+    bias_count     = dq_data.get("bias_count", 0) or 0
+    biases         = dq_data.get("biases", []) or []
+    action_ranking = dq_data.get("action_ranking", []) or []
+    strat_eff      = dq_data.get("strategy_effectiveness", {}) or {}
+    consistency_sc = dq_data.get("consistency_score", 50) or 50
+
+    # From validation
+    hv_score       = val_data.get("historical_validation_score") or 50
+    conf_drift     = val_data.get("confidence_drift") or 0
+    sys_bias       = val_data.get("systematic_bias") or 0
+
+    # From feedback
+    fb_success     = fb_data.get("strategy_success_rate") or 50
+    fb_grade       = fb_data.get("feedback_grade", "unknown")
+
+    return {
+        "alpha_score":      alpha_score,
+        "alpha_mean":       alpha_mean,
+        "win_rate":         win_rate,
+        "rr_score":         rr_score,
+        "opp_score":        opp_score,
+        "eff_score":        eff_score,
+        "bias_count":       bias_count,
+        "biases":           biases,
+        "action_ranking":   action_ranking,
+        "strat_eff":        strat_eff,
+        "consistency_sc":   consistency_sc,
+        "hv_score":         hv_score,
+        "conf_drift":       conf_drift,
+        "sys_bias":         sys_bias,
+        "fb_success":       fb_success,
+        "fb_grade":         fb_grade,
+    }
+
+
+def identify_underperforming_actions(action_ranking: list[dict]) -> list[dict]:
+    """
+    Flag actions with effectiveness_score < _SO_EFFECTIVENESS_FLOOR
+    or negative avg_alpha as underperforming.
+    """
+    weak = []
+    for a in action_ranking:
+        reasons = []
+        eff = a.get("action_score", 50) or 0
+        alpha = a.get("avg_alpha", 0) or 0
+        win   = a.get("win_rate", 50) or 0
+        if eff < _SO_EFFECTIVENESS_FLOOR:
+            reasons.append(f"низкий effectiveness ({eff})")
+        if alpha < -0.5:
+            reasons.append(f"отрицательная альфа ({alpha:+.2f})")
+        if win < 35:
+            reasons.append(f"win_rate {win}%")
+        if reasons:
+            weak.append({**a, "reasons": reasons, "recommendation": "reduce_weight"})
+    return weak
+
+
+def discover_high_alpha_actions(action_ranking: list[dict]) -> list[dict]:
+    """
+    Actions with avg_alpha > _SO_ALPHA_HIGH_THRESHOLD and win_rate > 55
+    are candidates for weight increase.
+    """
+    high = []
+    for a in action_ranking:
+        alpha = a.get("avg_alpha", 0) or 0
+        win   = a.get("win_rate", 50) or 0
+        if alpha > _SO_ALPHA_HIGH_THRESHOLD and win > 55:
+            high.append({**a, "recommendation": "increase_weight"})
+    return high
+
+
+def rebalance_strategy_weights(
+    perf: dict,
+    underperforming: list[dict],
+    high_alpha: list[dict],
+) -> dict:
+    """
+    Compute weight adjustment factors for the strategy matrix.
+    Logic:
+      - Underperforming actions → weight × 0.70 (reduce)
+      - High-alpha actions → weight × 1.20 (boost)
+      - Bias detected → global penalty applied
+      - Confidence drift > limit → confidence recalibrated downward
+    Returns a rebalancing plan with action-level adjustments and
+    global multipliers for urgency and confidence.
+    """
+    action_adjustments: list[dict] = []
+
+    for a in underperforming:
+        action_adjustments.append({
+            "action_id":   a["action_id"],
+            "adjustment":  "reduce",
+            "factor":      0.70,
+            "reason":      "; ".join(a.get("reasons", ["low effectiveness"])),
+        })
+
+    for a in high_alpha:
+        action_adjustments.append({
+            "action_id":   a["action_id"],
+            "adjustment":  "boost",
+            "factor":      1.20,
+            "reason":      f"high alpha {a.get('avg_alpha',0):+.2f}, win {a.get('win_rate',0):.0f}%",
+        })
+
+    # Global bias penalty
+    n_biases     = perf["bias_count"]
+    bias_penalty = min(0.30, n_biases * 0.06)   # max −30% global
+
+    # Confidence recalibration
+    conf_drift   = abs(perf["conf_drift"])
+    if conf_drift > _SO_CONFIDENCE_DRIFT_LIMIT:
+        conf_recal = round(-min(20, (conf_drift - _SO_CONFIDENCE_DRIFT_LIMIT) * 2), 1)
+    else:
+        conf_recal = 0
+
+    # Urgency calibration: if systematic over/underreaction bias
+    bias_types = [b.get("type","") for b in perf["biases"]]
+    if "overreaction" in bias_types:
+        urgency_adj = "reduce"
+        urgency_factor = 0.85
+    elif "underreaction" in bias_types:
+        urgency_adj = "increase"
+        urgency_factor = 1.10
+    else:
+        urgency_adj = "neutral"
+        urgency_factor = 1.00
+
+    return {
+        "action_adjustments":  action_adjustments,
+        "bias_penalty":        round(bias_penalty * 100, 1),    # % reduction
+        "confidence_recal":    conf_recal,                       # pts adjustment
+        "urgency_adjustment":  urgency_adj,
+        "urgency_factor":      urgency_factor,
+        "n_boosted":           len(high_alpha),
+        "n_reduced":           len(underperforming),
+    }
+
+
+def _detect_optimization_diagnostics(perf: dict, rebalance: dict) -> list[dict]:
+    """
+    Spec diagnostics: Action Saturation, Overfitting Risk, Confidence Drift,
+    Strategy Decay, Optimization Instability.
+    """
+    diags = []
+    ar    = perf.get("action_ranking", [])
+
+    # Action Saturation: few unique actions, all similar score
+    if len(ar) >= 3:
+        scores  = [a.get("action_score", 50) for a in ar]
+        spread  = max(scores) - min(scores)
+        if spread < 10:
+            diags.append({
+                "type":    "action_saturation",
+                "label":   "Насыщение действий",
+                "severity":"medium",
+                "detail":  f"Разброс action_score всего {spread:.0f}pt — действия малодифференцированы",
+            })
+
+    # Overfitting Risk: many boosts with small sample sizes
+    small_sample_boosts = sum(1 for a in rebalance.get("action_adjustments",[])
+                               if a.get("adjustment")=="boost"
+                               and next((x.get("sample_count",0) for x in ar
+                                        if x.get("action_id")==a.get("action_id")),0) < 5)
+    if small_sample_boosts >= 2:
+        diags.append({
+            "type":    "overfitting_risk",
+            "label":   "Риск переобучения",
+            "severity":"medium",
+            "detail":  f"{small_sample_boosts} boost с малой выборкой (n<5) — нестабильная оценка",
+        })
+
+    # Confidence Drift
+    if abs(perf.get("conf_drift", 0)) > _SO_CONFIDENCE_DRIFT_LIMIT:
+        diags.append({
+            "type":    "confidence_drift",
+            "label":   "Дрейф уверенности",
+            "severity":"high" if abs(perf["conf_drift"]) > 12 else "medium",
+            "detail":  f"Дрейф {perf['conf_drift']:+.1f}pt — уверенность не откалибрована",
+        })
+
+    # Strategy Decay: feedback success rate declining
+    fb_success = perf.get("fb_success", 50)
+    if fb_success < 40:
+        diags.append({
+            "type":    "strategy_decay",
+            "label":   "Деградация стратегии",
+            "severity":"high",
+            "detail":  f"Feedback success rate {fb_success}% — стратегия деградирует",
+        })
+
+    # Optimization Instability: both many reduces AND many boosts
+    n_red = rebalance.get("n_reduced", 0)
+    n_boost = rebalance.get("n_boosted", 0)
+    if n_red >= 3 and n_boost >= 3:
+        diags.append({
+            "type":    "optimization_instability",
+            "label":   "Нестабильность оптимизации",
+            "severity":"medium",
+            "detail":  f"Одновременно {n_boost} boost и {n_red} reduce — высокая волатильность весов",
+        })
+
+    return diags
+
+
+def generate_optimized_strategy(
+    iso2:       str,
+    perf:       dict,
+    rebalance:  dict,
+    history:    list[dict],
+) -> dict:
+    """
+    Synthesise optimized strategy recommendations:
+      - priority order of actions (by adjusted score)
+      - confidence target (base confidence ± recalibration)
+      - urgency calibration direction
+      - predicted optimization gain
+    """
+    ar = perf.get("action_ranking", [])
+
+    # Apply adjustment factors to action scores
+    adj_map = {a["action_id"]: a["factor"]
+               for a in rebalance.get("action_adjustments", [])}
+    adjusted_actions = []
+    for a in ar:
+        factor = adj_map.get(a["action_id"], 1.0)
+        bp     = 1.0 - rebalance.get("bias_penalty", 0) / 100.0
+        adj_score = round(min(100, a.get("action_score", 50) * factor * bp))
+        adjusted_actions.append({
+            "action_id":     a["action_id"],
+            "original_score":a.get("action_score", 50),
+            "adjusted_score":adj_score,
+            "factor":        factor,
+            "win_rate":      a.get("win_rate", 50),
+            "avg_alpha":     a.get("avg_alpha", 0),
+        })
+    adjusted_actions.sort(key=lambda x: -x["adjusted_score"])
+
+    # Predicted optimization gain
+    if adjusted_actions:
+        orig_avg  = sum(a["original_score"] for a in adjusted_actions) / len(adjusted_actions)
+        adj_avg   = sum(a["adjusted_score"]  for a in adjusted_actions) / len(adjusted_actions)
+        opt_gain  = round(adj_avg - orig_avg, 1)
+    else:
+        orig_avg = adj_avg = 50; opt_gain = 0
+
+    # Strategy stability index: consistency across history
+    if len(history) >= 5:
+        scores = [h.get("strategy_score", 50) or 50 for h in history[-10:]]
+        import statistics
+        stability = max(0, round(100 - statistics.stdev(scores) * 3))
+    else:
+        stability = 50
+
+    return {
+        "adjusted_actions":   adjusted_actions[:10],
+        "confidence_target":  max(30, min(95, 65 + rebalance.get("confidence_recal", 0))),
+        "urgency_adjustment": rebalance.get("urgency_adjustment", "neutral"),
+        "optimization_gain":  opt_gain,
+        "stability_index":    stability,
+        "n_actions_adjusted": len(adj_map),
+    }
+
+
+def _load_or_init_evolution(iso2: str, country_name: str) -> list[dict]:
+    """Load strategy evolution timeline (rolling 90 records)."""
+    evo_path = SE_DIR / f"{iso2}.json"
+    if evo_path.exists():
+        try:
+            with open(evo_path) as f:
+                data = json.load(f)
+            return data.get("records", [])
+        except Exception:
+            pass
+    return []
+
+
+def compute_strategy_optimization(iso2: str, country_name: str) -> dict:
+    """
+    Autonomous Strategy Optimization Engine V1.
+    Reads docs/decision-quality/, docs/validation/, docs/strategy-feedback/.
+    Produces optimization score, weight rebalancing plan, evolution record.
+
+    OptimizationScore = AlphaScore×0.30 + WinRate×0.25 + RiskReduction×0.20
+                      + OpportunityScore×0.15 + StabilityScore×0.10
+    """
+    base_out = {
+        "country": iso2, "country_name": country_name,
+        "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    # Load source data (read-only)
+    dq_path  = DQ_DIR                / f"{iso2}.json"
+    val_path = VALIDATION_DIR        / f"{iso2}.json"
+    fb_path  = STRATEGY_FEEDBACK_DIR / f"{iso2}.json"
+
+    if not dq_path.exists():
+        return {**base_out, "note":"no decision quality data",
+                "optimization_score":None,"grade":"N/A","grade_ru":"Нет данных"}
+
+    dq_data  = json.loads(dq_path.read_text())
+    val_data = json.loads(val_path.read_text())  if val_path.exists()  else {}
+    fb_data  = json.loads(fb_path.read_text())   if fb_path.exists()   else {}
+    evo_hist = _load_or_init_evolution(iso2, country_name)
+
+    # Load strategy history for stability
+    sh_path  = STRATEGY_HISTORY_DIR / f"{iso2}.json"
+    sh_recs  = json.loads(sh_path.read_text()).get("records",[]) if sh_path.exists() else []
+
+    if dq_data.get("decision_score") is None:
+        return {**base_out, "note": dq_data.get("note","no data"),
+                "optimization_score":None,"grade":"N/A","grade_ru":"Нет данных",
+                "history_depth": len(sh_recs)}
+
+    # ── Core pipeline ─────────────────────────────────────────────────────
+    perf        = analyze_strategy_performance(dq_data, val_data, fb_data)
+    under       = identify_underperforming_actions(perf["action_ranking"])
+    high_alpha  = discover_high_alpha_actions(perf["action_ranking"])
+    rebalance   = rebalance_strategy_weights(perf, under, high_alpha)
+    opt_strat   = generate_optimized_strategy(iso2, perf, rebalance, sh_recs)
+    diags       = _detect_optimization_diagnostics(perf, rebalance)
+
+    # ── Optimization Score (spec formula) ────────────────────────────────
+    alpha_s   = perf["alpha_score"]
+    win_s     = perf["win_rate"]
+    rr_s      = perf["rr_score"]
+    opp_s     = min(100, perf["opp_score"]) if perf["opp_score"] else 50
+    stab_s    = opt_strat["stability_index"]
+
+    opt_score = round(
+        alpha_s * _SO_W["alpha"]         +
+        win_s   * _SO_W["win_rate"]      +
+        rr_s    * _SO_W["risk_reduction"]+
+        opp_s   * _SO_W["opportunity"]   +
+        stab_s  * _SO_W["stability"]
+    )
+    grade, grade_ru = _so_grade(opt_score)
+
+    # Optimization gain % vs baseline (before/after rebalancing)
+    baseline_score = dq_data.get("decision_score", 50) or 50
+    opt_gain_pct   = opt_strat["optimization_gain"]
+    predicted_next = min(100, round(baseline_score + opt_gain_pct))
+
+    # ── Evolution record (append to rolling timeline) ─────────────────────
+    evo_record = {
+        "date":               TODAY,
+        "optimization_score": opt_score,
+        "grade":              grade,
+        "decision_score":     baseline_score,
+        "opt_gain":           opt_gain_pct,
+        "alpha_mean":         perf["alpha_mean"],
+        "win_rate":           win_s,
+        "stability":          stab_s,
+        "n_boosted":          rebalance["n_boosted"],
+        "n_reduced":          rebalance["n_reduced"],
+        "bias_count":         perf["bias_count"],
+    }
+
+    return {
+        **base_out,
+        # Section A: Optimization Score
+        "optimization_score":   opt_score,
+        "grade":                grade,
+        "grade_ru":             grade_ru,
+        "decision_score_base":  baseline_score,
+        "predicted_next_score": predicted_next,
+        "optimization_gain":    opt_gain_pct,
+        # B/C/D/E/F sections
+        "high_alpha_actions":   high_alpha,
+        "underperforming":      under,
+        "rebalance_plan":       rebalance,
+        "adjusted_actions":     opt_strat["adjusted_actions"],
+        "confidence_target":    opt_strat["confidence_target"],
+        "urgency_adjustment":   opt_strat["urgency_adjustment"],
+        "stability_index":      stab_s,
+        # F: sub-scores
+        "alpha_score":          alpha_s,
+        "win_rate":             win_s,
+        "rr_score":             rr_s,
+        "opp_score":            opp_s,
+        # Diagnostics
+        "diagnostics":          diags,
+        "diagnostic_count":     len(diags),
+        # Perf snapshot
+        "conf_drift":           perf["conf_drift"],
+        "fb_grade":             perf["fb_grade"],
+        "hv_score":             perf["hv_score"],
+        # Meta
+        "n_actions":            len(perf["action_ranking"]),
+        "history_depth":        len(sh_recs),
+        "evolution_record":     evo_record,
+    }
+
+
+def save_strategy_optimization(snapshots: list[dict]) -> None:
+    """Compute and save strategy optimization + evolution for all countries."""
+    SO_DIR.mkdir(parents=True, exist_ok=True)
+    SE_DIR.mkdir(parents=True, exist_ok=True)
+
+    global_entries = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            result = compute_strategy_optimization(iso2, snap["country_name"])
+            # Save per-country optimization
+            with open(SO_DIR / f"{iso2}.json", "w") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+
+            # Update evolution timeline (rolling 90)
+            evo_path = SE_DIR / f"{iso2}.json"
+            if evo_path.exists():
+                with open(evo_path) as f: evo = json.load(f)
+            else:
+                evo = {"country":iso2,"country_name":snap["country_name"],"records":[]}
+
+            rec = result.get("evolution_record")
+            if rec:
+                idx = {r["date"]:i for i,r in enumerate(evo["records"])}
+                if rec["date"] in idx: evo["records"][idx[rec["date"]]] = rec
+                else: evo["records"].append(rec)
+                evo["records"] = evo["records"][-90:]
+                evo["last_updated"] = datetime.now(timezone.utc).isoformat()
+                with open(evo_path, "w") as f:
+                    json.dump(evo, f, ensure_ascii=False, indent=2)
+
+            # Collect for global ranking
+            if result.get("optimization_score") is not None:
+                global_entries.append({
+                    "country":           iso2,
+                    "country_name":      snap["country_name"],
+                    "optimization_score":result["optimization_score"],
+                    "grade":             result["grade"],
+                    "optimization_gain": result.get("optimization_gain", 0),
+                    "stability_index":   result.get("stability_index"),
+                    "diagnostic_count":  result.get("diagnostic_count", 0),
+                })
+        except Exception as e:
+            print(f"  [SO] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    # Global optimization ranking
+    try:
+        by_score = sorted(global_entries, key=lambda x: -(x["optimization_score"] or 0))
+        by_gain  = sorted(global_entries, key=lambda x: -(x.get("optimization_gain") or 0))
+        global_out = {
+            "date":              TODAY,
+            "generated_at":      datetime.now(timezone.utc).isoformat(),
+            "total_countries":   len(global_entries),
+            "top_optimized":     by_score[:5],
+            "most_improved":     by_gain[:5],
+            "lowest_optimized":  list(reversed(by_score))[:5],
+            "most_diagnostic":   sorted(global_entries, key=lambda x: -x["diagnostic_count"])[:5],
+        }
+        with open(SO_DIR / "_global.json", "w") as f:
+            json.dump(global_out, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [SO] global ranking FAILED — {e}", file=sys.stderr)
+
+    print(f"[SO] Saved strategy optimization for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -5075,6 +5577,7 @@ def main():
     save_validation(snapshots)
     save_dashboard(snapshots)
     save_decision_quality(snapshots)
+    save_strategy_optimization(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
