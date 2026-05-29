@@ -531,6 +531,40 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-cal-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
 .cc-cal-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 .cc-cal-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
+/* ── Adaptive Strategy Engine ── */
+.cc-strat{margin-bottom:14px}
+.cc-strat-header{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.cc-strat-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-strat-score{font-size:20px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-strat-urg{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex-shrink:0}
+.cc-strat-urg.low{background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-strat-urg.moderate{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.3)}
+.cc-strat-urg.high{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-strat-urg.critical{background:rgba(239,68,68,.18);color:#ef4444;border:1px solid rgba(239,68,68,.35)}
+.cc-strat-urg.maximum{background:rgba(220,38,38,.22);color:#dc2626;border:1px solid rgba(220,38,38,.4)}
+.cc-strat-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.cc-strat-pill{font-size:8px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,.06);color:rgba(232,224,208,.6);border:1px solid rgba(255,255,255,.08)}
+.cc-strat-conf-bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-bottom:8px;overflow:hidden}
+.cc-strat-conf-fill{height:100%;border-radius:2px;transition:width .4s}
+.cc-strat-section{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:6px 0 4px}
+.cc-strat-action{border-left:2px solid rgba(255,255,255,.12);padding:5px 0 5px 8px;margin-bottom:6px}
+.cc-strat-action.p1{border-left-color:#ef4444}
+.cc-strat-action.p2{border-left-color:#f59e0b}
+.cc-strat-action.p3{border-left-color:#B8973A}
+.cc-strat-act-name{font-size:10px;font-weight:600;color:rgba(232,224,208,.9);margin-bottom:2px}
+.cc-strat-act-detail{font-size:8px;color:rgba(255,255,255,.35);line-height:1.4;margin-bottom:3px}
+.cc-strat-act-meta{display:flex;gap:8px;font-size:7px;color:rgba(255,255,255,.22)}
+.cc-strat-act-conf{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3);float:right}
+.cc-strat-trigger{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:8px}
+.cc-strat-trigger:last-child{border-bottom:none}
+.cc-strat-trig-cond{font-size:9px;color:rgba(232,224,208,.6);flex:1}
+.cc-strat-trig-prob{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3);flex-shrink:0}
+.cc-strat-hz{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:4px}
+.cc-strat-hz-cell{text-align:center;padding:4px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-strat-hz-lbl{display:block;font-size:7px;color:rgba(255,255,255,.22);letter-spacing:.08em;margin-bottom:2px}
+.cc-strat-hz-val{display:block;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.cc-strat-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-strat-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 </style>
 </head>
 <body>
@@ -1922,6 +1956,7 @@ setInterval(() => {
     <div id="cc-ds-block"></div>
     <div id="cc-resilience-block"></div>
     <div id="cc-calibration-block"></div>
+    <div id="cc-strategy-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1986,10 +2021,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2062,6 +2097,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-ds-block').innerHTML='';
   document.getElementById('cc-resilience-block').innerHTML='';
   document.getElementById('cc-calibration-block').innerHTML='';
+  document.getElementById('cc-strategy-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2100,6 +2136,7 @@ window.openCountryCard = async function(cc) {
   fetchDecisionSupport(cc).then(function(dsData) { renderDecisionSupport(dsData, _clientCaps); });
   fetchResilience(cc).then(function(resData) { renderResilience(resData, _clientCaps); });
   fetchCalibration(cc).then(function(calData) { renderCalibration(calData, _clientCaps); });
+  fetchStrategy(cc).then(function(strData) { renderStrategy(strData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -4108,6 +4145,146 @@ function renderCalibration(data, caps) {
 
   html += '<div class="cc-cal-depth">История: ' + depth + ' дней</div>'
         + '</div>';
+  block.innerHTML = html;
+}
+
+
+// ── Adaptive Strategy Engine V1 — UI ────────────────────────────────────
+var _stratCache = {};
+var _URG_CLS = {low:'low',moderate:'moderate',high:'high',critical:'critical',maximum:'maximum'};
+var _P_CLS   = {1:'p1',2:'p2',3:'p3'};
+
+async function fetchStrategy(cc) {
+  if (_stratCache[cc]) return _stratCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/strategy/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _stratCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderStrategy(data, caps) {
+  var block  = document.getElementById('cc-strategy-block');
+  if (!block) return;
+  var access = caps.strategy_access || 'teaser';
+  if (!data || data.error) { block.innerHTML = ''; return; }
+
+  var sc   = data.strategy_score   || 0;
+  var urg  = data.urgency_level    || 'low';
+  var urgRu= data.urgency_level_ru || '';
+  var urgCol=data.urgency_color    || '#B8973A';
+  var state= data.state            || 'stabilization';
+  var conf = data.strategy_confidence || 50;
+
+  var html = '<div class="cc-strat">'
+    + '<div class="cc-strat-header">'
+    +   '<span class="cc-strat-label">Адаптивная стратегия</span>'
+    +   '<span class="cc-strat-score" style="color:' + urgCol + '">' + sc + '</span>'
+    +   '<span class="cc-strat-urg ' + (_URG_CLS[urg]||'moderate') + '">' + _esc(urgRu) + '</span>'
+    + '</div>';
+
+  // FREE: teaser
+  if (access === 'teaser') {
+    html += '<div class="cc-strat-teaser">Уровень срочности: ' + _esc(urgRu) + '</div>'
+          + '<div class="cc-strat-lock">🔒 Стратегические рекомендации в Signal PRO</div>'
+          + '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL+: preparedness + monitoring + top action
+  var prep   = data.preparedness_level_ru || '';
+  var monRu  = data.monitoring_ru         || '';
+  var domSc  = data.dominant_scenario     || '';
+  var calGr  = data.calibration_grade     || 'unknown';
+  var probs  = data.probabilities         || {};
+
+  html += '<div class="cc-strat-meta">'
+    + '<span class="cc-strat-pill">📋 ' + _esc(prep) + '</span>'
+    + '<span class="cc-strat-pill">🔍 ' + _esc(monRu) + '</span>'
+    + (domSc ? '<span class="cc-strat-pill">→ ' + _esc(domSc) + '</span>' : '')
+    + (calGr && calGr !== 'unknown' ? '<span class="cc-strat-pill">cal: ' + _esc(calGr) + '</span>' : '')
+    + '</div>';
+
+  // Confidence bar
+  var confCol = conf >= 70 ? '#22c55e' : conf >= 50 ? '#fbbf24' : '#ef4444';
+  html += '<div class="cc-strat-conf-bar"><div class="cc-strat-conf-fill" style="width:'
+        + conf + '%;background:' + confCol + '"></div></div>';
+
+  // Top action (SIGNAL)
+  if (data.top_action) {
+    var ta = data.top_action;
+    var pcls = _P_CLS[ta.priority] || 'p3';
+    html += '<div class="cc-strat-section">Приоритетное действие</div>'
+          + '<div class="cc-strat-action ' + pcls + '">'
+          +   '<div class="cc-strat-act-name">' + _esc(ta.action) + '</div>'
+          +   '<div class="cc-strat-act-detail">' + _esc(ta.detail) + '</div>'
+          + '</div>';
+  }
+
+  if (access === 'summary') {
+    html += '<div class="cc-strat-lock">🔒 Полный план действий в Strategic PRO</div>'
+          + '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: all actions + escalation triggers
+  var actions = data.actions || [];
+  if (actions.length) {
+    html += '<div class="cc-strat-section">План действий (' + actions.length + ')</div>';
+    actions.forEach(function(a) {
+      var pcls = _P_CLS[a.priority] || 'p3';
+      var confStr = (access === 'full+explain' && a.confidence)
+                    ? '<span class="cc-strat-act-conf">' + a.confidence + '%</span>' : '';
+      html += '<div class="cc-strat-action ' + pcls + '">'
+            +   confStr
+            +   '<div class="cc-strat-act-name">' + _esc(a.action) + '</div>'
+            +   '<div class="cc-strat-act-detail">' + _esc(a.detail) + '</div>'
+            +   '<div class="cc-strat-act-meta">'
+            +     '<span>▶ ' + _esc(a.trigger || '') + '</span>'
+            +     (a.expiry ? '<span>⏹ ' + _esc(a.expiry) + '</span>' : '')
+            +   '</div>'
+            + '</div>';
+    });
+  }
+
+  var triggers = data.escalation_triggers || [];
+  if (triggers.length) {
+    html += '<div class="cc-strat-section">Триггеры эскалации</div>';
+    triggers.forEach(function(t) {
+      html += '<div class="cc-strat-trigger">'
+            +   '<span class="cc-strat-trig-cond">' + _esc(t.condition) + '</span>'
+            +   '<span class="cc-strat-trig-prob">' + (t.probability || '?') + '%</span>'
+            + '</div>';
+    });
+  }
+
+  // ELITE: + horizon outlook
+  if (access === 'full+explain') {
+    var hz = data.horizon_outlook || [];
+    if (hz.length) {
+      html += '<div class="cc-strat-section">Горизонт стратегии</div>'
+            + '<div class="cc-strat-hz">';
+      hz.forEach(function(h) {
+        var hCol = h.urgency === 'low' ? '#22c55e'
+                 : h.urgency === 'moderate' ? '#fbbf24'
+                 : h.urgency === 'high' ? '#f59e0b'
+                 : h.urgency === 'critical' ? '#ef4444' : '#dc2626';
+        html += '<div class="cc-strat-hz-cell">'
+              +   '<span class="cc-strat-hz-lbl">' + _esc(h.horizon) + '</span>'
+              +   '<span class="cc-strat-hz-val" style="color:' + hCol + '">' + _esc(h.state || '') + '</span>'
+              + '</div>';
+      });
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
   block.innerHTML = html;
 }
 
