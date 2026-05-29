@@ -1705,7 +1705,21 @@ function _filterSnapshotTier(data, caps) {
     }
 
     // Extended forecasts — V2/V3: same pattern, no code changes needed
-    if (caps.forecast_30d  && c.forecast_30d)  base.forecast_30d  = c.forecast_30d;
+    // forecast_30d: STRATEGIC+ gets full, but scenario_drivers only for ELITE
+    if (caps.forecast_30d && c.forecast_30d) {
+      const f30 = {
+        best_case:  c.forecast_30d.best_case,
+        base_case:  c.forecast_30d.base_case,
+        worst_case: c.forecast_30d.worst_case,
+        confidence: c.forecast_30d.confidence,
+      };
+      // scenario_drivers: ELITE only (scenario_engine capability)
+      if (caps.scenario_engine && c.forecast_30d.scenario_drivers) {
+        f30.scenario_drivers = c.forecast_30d.scenario_drivers;
+      }
+      base.forecast_30d = f30;
+    }
+    // forecast_90d / forecast_180d: same pattern (V3 ready)
     if (caps.forecast_90d  && c.forecast_90d)  base.forecast_90d  = c.forecast_90d;
     if (caps.forecast_180d && c.forecast_180d) base.forecast_180d = c.forecast_180d;
 
