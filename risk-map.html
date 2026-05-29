@@ -158,6 +158,31 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #loc-signals-label{font-size:7px;letter-spacing:0.16em;text-transform:uppercase;color:#B8973A;margin-bottom:5px}
 .loc-signal{font-size:9px;color:#6A6458;padding:2px 0;display:flex;gap:5px}
 #loc-loading{text-align:center;padding:20px;font-size:11px;color:#6A6458;letter-spacing:0.1em}
+
+/* COUNTRIES BUTTON */
+#countries-btn{position:absolute;bottom:56px;right:16px;padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
+#countries-btn:hover,#countries-btn.active{border-color:#B8973A;color:#D4AF5A}
+/* COUNTRIES PANEL */
+#countries-panel{position:fixed;left:0;top:0;bottom:0;width:240px;z-index:21;background:rgba(6,5,10,0.97);border-right:1px solid rgba(184,151,58,0.15);backdrop-filter:blur(20px);transform:translateX(-100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+#countries-panel.open{transform:translateX(0)}
+#cp-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(184,151,58,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#B8973A}
+#cp-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
+#cp-close:hover{color:rgba(255,255,255,0.7)}
+#cp-updated{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,0.2);padding:6px 14px;letter-spacing:0.06em}
+#cp-grid{flex:1;overflow-y:auto;padding:6px 8px}
+#cp-grid::-webkit-scrollbar{width:2px}
+#cp-grid::-webkit-scrollbar-thumb{background:rgba(184,151,58,0.3)}
+.cp-row{display:flex;align-items:center;gap:8px;padding:7px 8px;cursor:pointer;border-radius:3px;border:1px solid transparent;transition:all 0.15s;margin-bottom:2px}
+.cp-row:hover{background:rgba(255,255,255,0.04);border-color:rgba(184,151,58,0.15)}
+.cp-flag{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+.cp-info{flex:1;min-width:0}
+.cp-name{font-size:10px;color:rgba(232,224,208,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.cp-meta{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,0.3);letter-spacing:0.04em}
+.cp-score-col{text-align:right;flex-shrink:0}
+.cp-score{font-size:16px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cp-delta{font-size:8px;font-family:'Courier New',monospace;margin-top:1px}
+.cp-delta.up{color:#E84030}.cp-delta.down{color:#27AE60}.cp-delta.flat{color:rgba(255,255,255,0.25)}
+.cp-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-left:2px}
 </style>
 </head>
 <body>
@@ -198,6 +223,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   </div>
 
   <button id="list-btn">◆ Список событий</button>
+  <button id="countries-btn">◆ Страны</button>
   <div id="ai-panel">
     <div id="ai-panel-header">
       <span>◆ AI · Анализ доменов</span>
@@ -211,6 +237,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 </div>
 
 <div id="sidebar"><button id="sb-x">✕</button><div id="ev-list"></div></div>
+
+<!-- Country Intelligence Panel -->
+<div id="countries-panel">
+  <div id="cp-header"><span>◆ Страновой риск</span><span id="cp-close">✕</span></div>
+  <div id="cp-updated"></div>
+  <div id="cp-grid"></div>
+</div>
 <div id="detail">
   <button id="dt-x">✕</button>
   <div id="dt-domain"></div>
@@ -614,6 +647,7 @@ const RISK_COLORS = {
 map.on('click', async (e) => {
   const { lat, lng } = e.latlng;
   let locationName = '';
+  let isoCode = null;
   try {
     const r = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru&zoom=3`,
@@ -624,6 +658,7 @@ map.on('click', async (e) => {
       const a = geo.address || {};
       // Берём страну в первую очередь
       locationName = a.country || a.state || a.city || a.county || '';
+      isoCode = (a.country_code || '').toUpperCase();
       if (!locationName && geo.display_name) {
         // Берём последний значимый элемент display_name (обычно страна)
         const parts = geo.display_name.split(',').map(s => s.trim());
@@ -636,6 +671,11 @@ map.on('click', async (e) => {
     locationName = `${lat.toFixed(1)}°, ${lng.toFixed(1)}°`;
   }
 
+  // If clicked country is in our 25-country snapshot list → open Country Card
+  if (isoCode && window._CC_COUNTRIES && window._CC_COUNTRIES.has(isoCode)) {
+    openCountryCard(isoCode);
+    return;
+  }
   openLocationPanel(locationName, lat, lng);
 });
 
@@ -1754,6 +1794,66 @@ const CC_COUNTRIES = new Set([
 
 // Expose for external use (e.g. from marker click in existing code)
 window._CC_COUNTRIES = CC_COUNTRIES;
+
+// ── Countries Panel ────────────────────────────────────────────────────────
+const LEVEL_COLORS = {
+  stable:'#27AE60', elevated:'#D4AF5A', pressured:'#E87030', critical:'#E84030'
+};
+
+async function openCountriesPanel() {
+  const panel = document.getElementById('countries-panel');
+  const btn   = document.getElementById('countries-btn');
+  panel.classList.add('open');
+  btn.classList.add('active');
+
+  const data = await fetchToday();
+  if (!data) return;
+
+  document.getElementById('cp-updated').textContent = 'Данные на ' + (data.date || '');
+
+  const grid = document.getElementById('cp-grid');
+  grid.innerHTML = '';
+
+  const sorted = [...data.countries].sort((a,b) => b.risk_score - a.risk_score);
+
+  sorted.forEach(c => {
+    const delta  = c.delta || 0;
+    const col    = SCORE_COLOR(c.risk_score);
+    const lvlCol = LEVEL_COLORS[c.escalation_level] || '#888';
+    const domRu  = DOMAIN_RU[c.dominant_domain] || c.dominant_domain;
+    const dSign  = delta > 0 ? '▲+' : delta < 0 ? '▼' : '→';
+    const dClass = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+
+    const row = document.createElement('div');
+    row.className = 'cp-row';
+    row.innerHTML =
+      '<div class="cp-flag">' + (FLAGS[c.country]||'🌐') + '</div>' +
+      '<div class="cp-info">' +
+        '<div class="cp-name">' + _esc(c.country_name) + '</div>' +
+        '<div class="cp-meta">' + _esc(domRu) + '</div>' +
+      '</div>' +
+      '<div class="cp-score-col">' +
+        '<div class="cp-score" style="color:' + col + '">' + c.risk_score + '</div>' +
+        '<div class="cp-delta ' + dClass + '">' + dSign + Math.abs(delta) + '</div>' +
+      '</div>' +
+      '<div class="cp-dot" style="background:' + lvlCol + '"></div>';
+
+    row.onclick = () => { closeCountriesPanel(); openCountryCard(c.country); };
+    grid.appendChild(row);
+  });
+}
+
+function closeCountriesPanel() {
+  document.getElementById('countries-panel').classList.remove('open');
+  document.getElementById('countries-btn').classList.remove('active');
+}
+
+document.getElementById('countries-btn').addEventListener('click', () => {
+  const p = document.getElementById('countries-panel');
+  if (p.classList.contains('open')) closeCountriesPanel();
+  else openCountriesPanel();
+});
+document.getElementById('cp-close').addEventListener('click', closeCountriesPanel);
 
 // Preload snapshot data in background after page ready
 setTimeout(() => { fetchToday().catch(() => {}); }, 2000);
