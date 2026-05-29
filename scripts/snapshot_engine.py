@@ -224,6 +224,72 @@ def compute_dominant_domain(events: list[dict]) -> str:
     return max(domain_scores, key=domain_scores.get)
 
 
+
+
+def compute_drivers(iso2: str, events: list[dict], score: int) -> list[dict]:
+    """
+    Top Drivers Engine — extracts top 3 risk drivers from matched events.
+    Each driver: { name, domain, severity, impact }
+    impact = short explanation (from event title + severity context).
+    No extra API calls — uses existing event data.
+    """
+    if not events:
+        return []
+
+    # Score each event by severity + recency (last 7 days bonus)
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone.utc)
+    cutoff_7d = (now - timedelta(days=7)).isoformat()
+
+    scored = []
+    seen_titles = set()
+    for ev in events:
+        title = ev.get("title", "").strip()
+        if not title or title in seen_titles:
+            continue
+        seen_titles.add(title)
+
+        sev = float(ev.get("severity", 50))
+        # Recency bonus: +5 if event is within 7 days
+        recency = 5 if ev.get("date", "") >= cutoff_7d else 0
+        weight = sev + recency
+        scored.append((weight, ev))
+
+    # Top 3 by weight
+    top3 = sorted(scored, key=lambda x: -x[0])[:3]
+
+    drivers = []
+    for weight, ev in top3:
+        sev = int(ev.get("severity", 50))
+        domain = ev.get("domain", "geopolitics")
+        title = ev.get("title", "")
+
+        # Generate impact phrase from severity level
+        if sev >= 80:
+            impact_prefix = "Критический фактор"
+        elif sev >= 65:
+            impact_prefix = "Высокое влияние"
+        else:
+            impact_prefix = "Умеренное влияние"
+
+        # Use event summary if available, otherwise build from title
+        ev_summary = ev.get("summary", "")
+        if ev_summary and len(ev_summary) > 30:
+            # Take first sentence only
+            first_sent = ev_summary.split(".")[0].strip()
+            impact = f"{impact_prefix}: {first_sent[:120]}"
+        else:
+            impact = f"{impact_prefix} на индекс риска (severity {sev}/100)"
+
+        drivers.append({
+            "name":     title[:80],
+            "domain":   domain,
+            "severity": sev,
+            "impact":   impact,
+        })
+
+    return drivers
+
 def compute_escalation_level(score: int, delta: int) -> str:
     """
     Determine escalation level.
@@ -336,6 +402,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     delta    = compute_delta(iso2, score)
     level    = compute_escalation_level(score, delta)
     summary  = generate_summary(iso2, score, domain, matched, level)
+    drivers  = compute_drivers(iso2, matched, score)
 
     snap = {
         "country":          iso2,
@@ -346,13 +413,14 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         "escalation_level": level,
         "delta":            delta,
         "summary":          summary,
+        "drivers":          drivers,
         "event_count":      len(matched),
     }
 
     print(
         f"  [SNAP] {iso2}: score={score} ({'+' if delta>=0 else ''}{delta}) "
         f"domain={domain} level={level} events={len(matched)} "
-        f"summary={'ok' if summary else 'null'}",
+        f"drivers={len(drivers)} summary={'ok' if summary else 'null'}",
         file=sys.stderr
     )
     return snap
