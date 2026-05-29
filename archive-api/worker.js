@@ -1516,62 +1516,138 @@ async function handleProxyEventsFeed() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SNAPSHOT API  MVP V1
-// Data source: docs/snapshots/index.json  (today)
-//              docs/snapshots/history/{CC}.json  (history)
-// Tier logic:
-//   FREE    → risk_score, dominant_domain, escalation_level, delta only
-//   PREMIUM → above + summary (from daily file) + full history array
+// ENTITLEMENT ENGINE V1
+// Single source of truth for all tier-based access decisions.
+// Replaces all binary premium/free branching.
 //
-// Premium token check: header X-Snapshot-Token = env.SNAPSHOT_TOKEN
-// MVP: single shared token stored in CF env var SNAPSHOT_TOKEN
+// Tiers: free | signal | strategic | elite
+// Token resolution: X-Snapshot-Token header matched against CF env vars:
+//   env.SIGNAL_TOKEN    → signal
+//   env.STRATEGIC_TOKEN → strategic
+//   env.ELITE_TOKEN     → elite
+//   (no match)          → free
+//
+// Usage:
+//   const tier = _resolveClientTier(request, env);
+//   const caps = getTierCapabilities(tier);
+//   if (caps.summary) { ... }
 // ═══════════════════════════════════════════════════════════════════════════
 
-function _isSnapshotPremium(request, env) {
-  const token = request.headers.get('X-Snapshot-Token') || '';
-  const valid = env.SNAPSHOT_TOKEN || '';
-  return valid && token === valid;
+// ── Capabilities model — single source of truth ───────────────────────────
+function getTierCapabilities(tier) {
+  const CAPS = {
+    free: {
+      tier:                'free',
+      history_days:        0,
+      drivers_details:     false,   // impact text
+      change_attribution:  false,
+      summary:             false,
+      forecast_7d:         'direction_only',
+      forecast_30d:        false,
+      forecast_90d:        false,
+      forecast_180d:       false,
+      country_comparison:  false,
+      scenario_engine:     false,
+    },
+    signal: {
+      tier:                'signal',
+      history_days:        30,
+      drivers_details:     true,
+      change_attribution:  true,
+      summary:             true,
+      forecast_7d:         'full',
+      forecast_30d:        false,
+      forecast_90d:        false,
+      forecast_180d:       false,
+      country_comparison:  false,
+      scenario_engine:     false,
+    },
+    strategic: {
+      tier:                'strategic',
+      history_days:        -1,       // -1 = unlimited
+      drivers_details:     true,
+      change_attribution:  true,
+      summary:             true,
+      forecast_7d:         'full',
+      forecast_30d:        'full',
+      forecast_90d:        'full',
+      forecast_180d:       false,
+      country_comparison:  true,
+      scenario_engine:     false,
+    },
+    elite: {
+      tier:                'elite',
+      history_days:        -1,
+      drivers_details:     true,
+      change_attribution:  true,
+      summary:             true,
+      forecast_7d:         'full',
+      forecast_30d:        'full',
+      forecast_90d:        'full',
+      forecast_180d:       'full',
+      country_comparison:  true,
+      scenario_engine:     true,
+    },
+  };
+  return CAPS[tier] || CAPS.free;
 }
 
+// ── Token → tier resolution ───────────────────────────────────────────────
+function _resolveClientTier(request, env) {
+  const token = request.headers.get('X-Snapshot-Token') || '';
+  if (!token) return 'free';
+  // Check tokens in order: elite → strategic → signal
+  // Allows a single token to grant exactly one tier
+  if (env.ELITE_TOKEN     && token === env.ELITE_TOKEN)     return 'elite';
+  if (env.STRATEGIC_TOKEN && token === env.STRATEGIC_TOKEN) return 'strategic';
+  if (env.SIGNAL_TOKEN    && token === env.SIGNAL_TOKEN)    return 'signal';
+  // Legacy: SNAPSHOT_TOKEN = signal PRO (backward compat with existing deployments)
+  if (env.SNAPSHOT_TOKEN  && token === env.SNAPSHOT_TOKEN)  return 'signal';
+  return 'free';
+}
+
+// ── Snapshot today endpoint ───────────────────────────────────────────────
 async function handleSnapshotToday(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const premium = _isSnapshotPremium(request, env);
+  const tier  = _resolveClientTier(request, env);
+  const caps  = getTierCapabilities(tier);
 
-  // Try KV cache first (TTL 300s = 5 min)
-  const cacheKey = 'snapshot:today';
+  // Try KV cache (300s). Cache key includes tier so each tier gets own cache.
+  const cacheKey = `snapshot:today:${tier}`;
   if (env.EVENTS_KV) {
     try {
       const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
       if (cached) {
-        const result = _filterSnapshotTier(cached, premium);
-        return new Response(JSON.stringify(result), {
+        return new Response(JSON.stringify(cached), {
           headers: { 'Content-Type': 'application/json',
                      'Access-Control-Allow-Origin': '*',
-                     'X-Cache': 'HIT' }
+                     'X-Cache': 'HIT',
+                     'X-Tier': tier }
         });
       }
     } catch (_) {}
   }
 
-  // Fetch from GitHub Pages CDN
+  // Fetch raw data from GitHub CDN
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/snapshots/index.json`;
     const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
     if (!r.ok) throw new Error('GitHub fetch failed: ' + r.status);
     const data = await r.json();
 
-    // Cache in KV
+    const result = _filterSnapshotTier(data, caps);
+
     if (env.EVENTS_KV) {
       try {
-        await env.EVENTS_KV.put(cacheKey, JSON.stringify(data), { expirationTtl: 300 });
+        await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 300 });
       } catch (_) {}
     }
 
-    const result = _filterSnapshotTier(data, premium);
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json',
                  'Access-Control-Allow-Origin': '*',
-                 'X-Cache': 'MISS' }
+                 'X-Cache': 'MISS',
+                 'X-Tier': tier }
     });
   } catch(e) {
     return new Response(JSON.stringify({ error: String(e) }), {
@@ -1581,8 +1657,12 @@ async function handleSnapshotToday(request, env) {
   }
 }
 
-function _filterSnapshotTier(data, premium) {
+// ── Capabilities-based snapshot filter ───────────────────────────────────
+// Single function — all access decisions driven by caps object.
+// No hardcoded tier names. Adding a new capability = add to getTierCapabilities().
+function _filterSnapshotTier(data, caps) {
   const countries = (data.countries || []).map(c => {
+    // Base fields: always visible to all tiers
     const base = {
       country:          c.country,
       country_name:     c.country_name,
@@ -1591,51 +1671,59 @@ function _filterSnapshotTier(data, premium) {
       escalation_level: c.escalation_level,
       delta:            c.delta,
     };
-    // Drivers: FREE gets name+domain+severity, PREMIUM gets full with impact
+
+    // Drivers: names+domain+severity always visible; impact requires drivers_details
     if (c.drivers && c.drivers.length) {
       base.drivers = c.drivers.map(d => {
         const dr = { name: d.name, domain: d.domain, severity: d.severity };
-        if (premium && d.impact) dr.impact = d.impact;
+        if (caps.drivers_details && d.impact) dr.impact = d.impact;
         return dr;
       });
     }
-    // change_drivers: PREMIUM only
-    if (premium && c.change_drivers && c.change_drivers.length) {
+
+    // Change attribution
+    if (caps.change_attribution && c.change_drivers && c.change_drivers.length) {
       base.change_drivers = c.change_drivers;
     }
-    if (premium && c.summary) base.summary = c.summary;
 
-    // forecast_7d: FREE gets direction only, SIGNAL PRO+ gets full
+    // Summary
+    if (caps.summary && c.summary) base.summary = c.summary;
+
+    // Forecast 7d
     if (c.forecast_7d) {
-      if (premium) {
-        // SIGNAL PRO / STRATEGIC PRO / ELITE: full forecast
+      if (caps.forecast_7d === 'full') {
         base.forecast_7d = {
           direction:  c.forecast_7d.direction,
           score_min:  c.forecast_7d.score_min,
           score_max:  c.forecast_7d.score_max,
           confidence: c.forecast_7d.confidence,
         };
-      } else {
-        // FREE: direction arrow only
+      } else if (caps.forecast_7d === 'direction_only') {
         base.forecast_7d = { direction: c.forecast_7d.direction };
       }
+      // false = field omitted entirely (future use)
     }
-    // Architecture stub for V2: forecast_30d / forecast_90d / forecast_180d
-    // Same pattern — pass through when field exists in snapshot
-    if (premium && c.forecast_30d)  base.forecast_30d  = c.forecast_30d;
-    if (premium && c.forecast_90d)  base.forecast_90d  = c.forecast_90d;
-    if (premium && c.forecast_180d) base.forecast_180d = c.forecast_180d;
+
+    // Extended forecasts — V2/V3: same pattern, no code changes needed
+    if (caps.forecast_30d  && c.forecast_30d)  base.forecast_30d  = c.forecast_30d;
+    if (caps.forecast_90d  && c.forecast_90d)  base.forecast_90d  = c.forecast_90d;
+    if (caps.forecast_180d && c.forecast_180d) base.forecast_180d = c.forecast_180d;
+
+    // Future capabilities — auto-enabled when field added to getTierCapabilities
+    // country_comparison, scenario_engine: no snapshot field yet — reserved
 
     return base;
   });
-  return { date: data.date, generated_at: data.generated_at, countries };
+  return { date: data.date, generated_at: data.generated_at, tier: caps.tier, countries };
 }
 
+// ── History endpoint ──────────────────────────────────────────────────────
 async function handleSnapshotHistory(request, env) {
-  const premium = _isSnapshotPremium(request, env);
-  const url     = new URL(request.url);
-  // Extract country code from /api/snapshot/history/RU
-  const cc = url.pathname.split('/').pop()?.toUpperCase();
+  const tier  = _resolveClientTier(request, env);
+  const caps  = getTierCapabilities(tier);
+  const url   = new URL(request.url);
+  const cc    = url.pathname.split('/').pop()?.toUpperCase();
+
   if (!cc || cc.length !== 2) {
     return new Response(JSON.stringify({ error: 'Invalid country code' }), {
       status: 400, headers: { 'Content-Type': 'application/json',
@@ -1643,22 +1731,21 @@ async function handleSnapshotHistory(request, env) {
     });
   }
 
-  // History is PREMIUM only
-  if (!premium) {
+  // Tier check: history_days === 0 means no history access
+  if (caps.history_days === 0) {
     return new Response(JSON.stringify({
-      error: 'premium_required',
+      error: 'tier_required',
+      required_tier: 'signal',
       message: 'History access requires Signal PRO or higher'
     }), {
       status: 403,
-      headers: { 'Content-Type': 'application/json',
-                 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
 
-  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const cacheKey = `snapshot:history:${cc}`;
+  const REPO     = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const cacheKey = `snapshot:history:${cc}:${tier}`;
 
-  // Try KV cache (TTL 600s)
   if (env.EVENTS_KV) {
     try {
       const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
@@ -1666,7 +1753,7 @@ async function handleSnapshotHistory(request, env) {
         return new Response(JSON.stringify(cached), {
           headers: { 'Content-Type': 'application/json',
                      'Access-Control-Allow-Origin': '*',
-                     'X-Cache': 'HIT' }
+                     'X-Cache': 'HIT', 'X-Tier': tier }
         });
       }
     } catch (_) {}
@@ -1684,6 +1771,12 @@ async function handleSnapshotHistory(request, env) {
     if (!r.ok) throw new Error('GitHub fetch failed: ' + r.status);
     const data = await r.json();
 
+    // Apply history_days limit: -1 = unlimited, >0 = slice to N most recent
+    if (caps.history_days > 0 && data.snapshots) {
+      data.snapshots = data.snapshots.slice(-caps.history_days);
+    }
+    data.tier = caps.tier;
+
     if (env.EVENTS_KV) {
       try {
         await env.EVENTS_KV.put(cacheKey, JSON.stringify(data), { expirationTtl: 600 });
@@ -1693,7 +1786,7 @@ async function handleSnapshotHistory(request, env) {
     return new Response(JSON.stringify(data), {
       headers: { 'Content-Type': 'application/json',
                  'Access-Control-Allow-Origin': '*',
-                 'X-Cache': 'MISS' }
+                 'X-Cache': 'MISS', 'X-Tier': tier }
     });
   } catch(e) {
     return new Response(JSON.stringify({ error: String(e) }), {
