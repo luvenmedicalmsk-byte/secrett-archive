@@ -312,6 +312,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #cc-net-wrap{height:120px;margin-top:8px;position:relative}
 #cc-net-canvas{width:100%;height:120px}
 
+/* ── Risk Propagation Engine ── */
+.cc-propagation{margin-bottom:14px}
+.cc-prop-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.cc-prop-rps{font-size:13px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-prop-section{margin-bottom:8px}
+.cc-prop-section-title{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.18);margin-bottom:4px}
+.cc-prop-hop{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-prop-hop:last-child{border-bottom:none}
+.cc-prop-level{font-size:7px;letter-spacing:.1em;text-transform:uppercase;padding:1px 5px;border-radius:2px;flex-shrink:0}
+.cc-prop-level.primary{background:rgba(239,68,68,.2);color:#ef4444}
+.cc-prop-level.secondary{background:rgba(245,158,11,.15);color:#f59e0b}
+.cc-prop-level.tertiary{background:rgba(99,102,241,.15);color:#818cf8}
+.cc-prop-flag{font-size:13px;flex-shrink:0}
+.cc-prop-info{flex:1;min-width:0}
+.cc-prop-name{font-size:10px;color:rgba(232,224,208,.8)}
+.cc-prop-sub{font-size:9px;color:rgba(255,255,255,.3);margin-top:1px}
+.cc-prop-score{font-size:11px;font-family:'Courier New',monospace;flex-shrink:0}
+.cc-prop-delay{font-size:8px;color:rgba(255,255,255,.25);flex-shrink:0}
+.cc-prop-dom-row{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-prop-dom-row:last-child{border-bottom:none}
+.cc-prop-dom-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cc-prop-dom-text{font-size:10px;color:rgba(232,224,208,.65);flex:1}
+.cc-prop-dom-delay{font-size:8px;color:rgba(255,255,255,.25)}
+.cc-prop-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;text-align:center;font-style:italic}
+.cc-prop-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+/* ── ELITE propagation map canvas ── */
+#cc-prop-map-wrap{height:130px;margin-top:8px}
+#cc-prop-map-canvas{width:100%;height:130px}
+
 </style>
 </head>
 <body>
@@ -1694,6 +1723,7 @@ setInterval(() => {
     <div id="cc-drivers-block"></div>
     <div id="cc-scenarios-block"></div>
     <div id="cc-correlations-block"></div>
+    <div id="cc-propagation-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1758,10 +1788,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -1828,6 +1858,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-drivers-block').innerHTML = '';
   document.getElementById('cc-scenarios-block').innerHTML='';
   document.getElementById('cc-correlations-block').innerHTML='';
+  document.getElementById('cc-propagation-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -1860,6 +1891,7 @@ window.openCountryCard = async function(cc) {
   fetchTimeline(cc).then(function(tlData) { renderCountryTimeline(tlData, _clientCaps); });
   fetchScenarios(cc).then(function(scData) { renderScenarios(scData, _clientCaps); });
   fetchCorrelations(cc).then(function(corrData) { renderCorrelations(corrData, _clientCaps); });
+  fetchPropagation(cc).then(function(propData) { renderPropagation(propData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -2914,6 +2946,176 @@ function _drawCorrNetwork(centerCC, links) {
   ctx.font = 'bold 7px Montserrat';
   ctx.textAlign = 'center';
   ctx.fillText(centerCC, cx, cy + 3);
+}
+
+
+// ── Risk Propagation Engine V1 — UI ─────────────────────────────────────
+var _propCache = {};
+var DCL_PROP = {geopolitics:'#ff7a00',climate:'#22c55e',economy:'#38bdf8',technology:'#a855f7',social:'#ef4444'};
+
+async function fetchPropagation(cc) {
+  if (_propCache[cc]) return _propCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/propagation/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _propCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderPropagation(data, caps) {
+  var block = document.getElementById('cc-propagation-block');
+  if (!block) return;
+  var access = caps.propagation_access || 'teaser';
+
+  if (!data) { block.innerHTML = ''; return; }
+
+  var rps     = data.risk_propagation_score || 0;
+  var rpsCol  = rps >= 70 ? '#dc2626' : rps >= 45 ? '#f59e0b' : rps >= 25 ? '#38bdf8' : 'rgba(255,255,255,.3)';
+  var html    = '<div class="cc-propagation">'
+              + '<div class="cc-prop-label">Распространение риска'
+              + '<span class="cc-prop-rps" style="color:' + rpsCol + '">' + rps + '</span>'
+              + '</div>';
+
+  if (access === 'teaser' || data.teaser) {
+    html += '<div class="cc-prop-teaser">Индекс распространения: ' + rps + '/100</div>'
+          + '<div class="cc-prop-lock">🔒 Цепочки распространения в Signal PRO</div>'
+          + '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL+: primary chain
+  var primary = data.primary_impacts || [];
+  if (primary.length) {
+    html += '<div class="cc-prop-section"><div class="cc-prop-section-title">Прямое воздействие (до 7 дней)</div>';
+    primary.forEach(function(p) {
+      var scoreCol = p.propagation_score >= 60 ? '#ef4444' : p.propagation_score >= 35 ? '#f59e0b' : '#6b7280';
+      var domCol   = DCL_PROP[p.target_domain] || '#B8973A';
+      html += '<div class="cc-prop-hop">'
+            + '<span class="cc-prop-level primary">P</span>'
+            + '<span class="cc-prop-flag">' + (FLAGS[p.target_country] || '🌐') + '</span>'
+            + '<div class="cc-prop-info">'
+            +   '<div class="cc-prop-name">' + _esc(p.target_name) + '</div>'
+            +   (p.channel ? '<div class="cc-prop-sub">' + _esc(p.channel) + '</div>' : '')
+            + '</div>'
+            + '<span class="cc-prop-score" style="color:' + scoreCol + '">' + p.propagation_score + '</span>'
+            + '<span class="cc-prop-delay">~' + p.delay_days + 'д</span>'
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (access === 'chain') {
+    html += '<div class="cc-prop-lock">🔒 Вторичные цепочки в Strategic PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: secondary
+  var secondary = data.secondary_impacts || [];
+  if (secondary.length) {
+    html += '<div class="cc-prop-section"><div class="cc-prop-section-title">Вторичное воздействие (7–21 дней)</div>';
+    secondary.forEach(function(s) {
+      var scoreCol = s.propagation_score >= 40 ? '#f59e0b' : '#6b7280';
+      html += '<div class="cc-prop-hop">'
+            + '<span class="cc-prop-level secondary">S</span>'
+            + '<span class="cc-prop-flag">' + (FLAGS[s.target_country] || '🌐') + '</span>'
+            + '<div class="cc-prop-info">'
+            +   '<div class="cc-prop-name">' + _esc(s.target_name) + '</div>'
+            +   (s.via_country ? '<div class="cc-prop-sub">через ' + _esc(FLAGS[s.via_country]||'') + ' ' + _esc(s.via_country) + '</div>' : '')
+            + '</div>'
+            + '<span class="cc-prop-score" style="color:' + scoreCol + '">' + s.propagation_score + '</span>'
+            + '<span class="cc-prop-delay">~' + s.delay_days + 'д</span>'
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Domain chain
+  var domChain = data.domain_chain || [];
+  if (domChain.length) {
+    html += '<div class="cc-prop-section"><div class="cc-prop-section-title">Доменный каскад</div>';
+    domChain.forEach(function(d) {
+      var colA = DCL_PROP[d.source_domain] || '#B8973A';
+      var colB = DCL_PROP[d.target_domain] || '#B8973A';
+      html += '<div class="cc-prop-dom-row">'
+            + '<div class="cc-prop-dom-dot" style="background:' + colA + '"></div>'
+            + '<div class="cc-prop-dom-text">' + _esc(d.source_domain) + ' → ' + _esc(d.target_domain) + '</div>'
+            + '<div class="cc-prop-dom-delay">~' + d.delay_days + 'д · ' + d.strength + '</div>'
+            + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ELITE: tertiary + propagation map
+  if (access === 'full+explain') {
+    var tertiary = data.tertiary_impacts || [];
+    if (tertiary.length) {
+      html += '<div class="cc-prop-section"><div class="cc-prop-section-title">Третичное воздействие (21–45 дней)</div>';
+      tertiary.forEach(function(t) {
+        html += '<div class="cc-prop-hop">'
+              + '<span class="cc-prop-level tertiary">T</span>'
+              + '<span class="cc-prop-flag">' + (FLAGS[t.target_country] || '🌐') + '</span>'
+              + '<div class="cc-prop-info"><div class="cc-prop-name">' + _esc(t.target_name) + '</div>'
+              +   (t.via_country ? '<div class="cc-prop-sub">через ' + _esc(t.via_country) + '</div>' : '')
+              + '</div>'
+              + '<span class="cc-prop-score">' + t.propagation_score + '</span>'
+              + '<span class="cc-prop-delay">~' + t.delay_days + 'д</span>'
+              + '</div>';
+      });
+      html += '</div>';
+    }
+    html += '<div id="cc-prop-map-wrap"><canvas id="cc-prop-map-canvas"></canvas></div>';
+  }
+
+  html += '</div>';
+  block.innerHTML = html;
+
+  if (access === 'full+explain') {
+    _drawPropMap(data);
+  }
+}
+
+function _drawPropMap(data) {
+  var cv = document.getElementById('cc-prop-map-canvas');
+  if (!cv) return;
+  var dpr = window.devicePixelRatio || 1;
+  var W = cv.parentElement.clientWidth || 260, H = 130;
+  cv.width = W * dpr; cv.height = H * dpr;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  var ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var cx = W * 0.22, cy = H / 2;
+  var allImpacts = (data.primary_impacts || []).concat(data.secondary_impacts || []).concat(data.tertiary_impacts || []);
+  var maxScore = Math.max.apply(null, allImpacts.map(function(p) { return p.propagation_score || 1; })) || 1;
+
+  // Draw connections
+  allImpacts.forEach(function(p, i) {
+    var col    = p.impact_level === 'primary' ? '#ef4444' : p.impact_level === 'secondary' ? '#f59e0b' : '#818cf8';
+    var nx     = cx + (W * 0.55) + (p.impact_level === 'tertiary' ? W * 0.12 : 0);
+    var ny     = 16 + (i * (H - 24) / Math.max(allImpacts.length - 1, 1));
+    var alpha  = 0.15 + (p.propagation_score / maxScore) * 0.5;
+    ctx.strokeStyle = col.replace('rgb','rgba').replace(')',', ' + alpha + ')') || ('rgba(184,151,58,' + alpha + ')');
+    ctx.lineWidth   = 0.5 + (p.propagation_score / maxScore) * 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
+    ctx.beginPath(); ctx.arc(nx, ny, 4, 0, Math.PI * 2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.fillStyle = 'rgba(232,224,208,.5)';
+    ctx.font = '8px Courier New'; ctx.textAlign = 'left';
+    ctx.fillText(p.target_country, nx + 7, ny + 3);
+  });
+
+  // Source node
+  ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+  ctx.fillStyle = '#B8973A'; ctx.fill();
+  ctx.fillStyle = '#0A0C10'; ctx.font = 'bold 7px Montserrat'; ctx.textAlign = 'center';
+  ctx.fillText(data.country, cx, cy + 3);
 }
 
 })(); // end IIFE
