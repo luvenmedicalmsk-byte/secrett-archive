@@ -38,6 +38,8 @@ STRATEGY_HISTORY_DIR  = DOCS_DIR / "strategy-history"
 STRATEGY_FEEDBACK_DIR = DOCS_DIR / "strategy-feedback"
 VALIDATION_DIR        = DOCS_DIR / "validation"
 DASHBOARD_DIR         = DOCS_DIR / "dashboard"
+DQ_DIR                = DOCS_DIR / "decision-quality"
+DQ_RANKING_DIR        = DOCS_DIR / "decision-ranking"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -4507,6 +4509,512 @@ def _build_country_ranking(snapshots: list[dict]) -> dict:
         "largest_drift":   by_drift[:5],
     }
 
+# ═══════════════════════════════════════════════════════════════════════════
+# DECISION QUALITY ENGINE V1
+# Evaluates whether strategy actions produced superior outcomes vs baseline.
+# Reads: strategy-history, strategy-feedback, snapshots/history, validation.
+# Writes: docs/decision-quality/{CC}.json, docs/decision-ranking/_global.json
+# Does NOT modify any upstream engine.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Decision score composite weights (spec)
+_DQ_W = {"outcome": 0.35, "efficiency": 0.25, "risk_reduction": 0.20, "consistency": 0.20}
+
+# Baseline: random/passive strategy success rate (theoretical benchmark)
+_BASELINE_SUCCESS_RATE = 50.0   # coin-flip baseline for strategy decisions
+_BASELINE_RISK_DRIFT   = 2.0    # pts/day passive risk drift
+
+# Action category prefixes → weight for efficiency scoring
+_ACTION_WEIGHTS = {
+    "CA": 1.20,  # cascade — highest stakes
+    "CR": 1.15,  # critical
+    "E":  1.10,  # escalating
+    "C":  1.00,  # contained
+    "S":  0.90,  # stabilization / fallback
+    "F":  0.80,  # fallback
+}
+
+# Bias detection thresholds
+_BIAS_THRESHOLDS = {
+    "overreaction":       {"min_urgency": 3, "max_actual_sev": 1, "min_count": 3},
+    "underreaction":      {"max_urgency": 1, "min_actual_sev": 3, "min_count": 3},
+    "late_response":      {"sev_diff_positive": 2, "min_count": 3},
+    "false_escalation":   {"max_actual_sev": 1, "min_pred_sev": 3, "min_count": 2},
+    "missed_opportunity": {"min_actual_improvement": 15, "min_count": 2},
+}
+
+_SEV = {"stable":0,"stabilization":0,"elevated":1,"contained":1,
+        "pressured":2,"escalating":2,"critical":3,"cascade":4}
+
+
+def _grade_dq(score: float | None) -> tuple[str, str]:
+    """A+ Elite → F Failed scale."""
+    if score is None:  return "N/A",  "Нет данных"
+    if score >= 90:    return "A+",   "Элита"
+    if score >= 80:    return "A",    "Отлично"
+    if score >= 70:    return "B",    "Хорошо"
+    if score >= 60:    return "C",    "Умеренно"
+    if score >= 50:    return "D",    "Слабо"
+    return "F", "Провал"
+
+
+def _action_weight(action_id: str) -> float:
+    for prefix, w in _ACTION_WEIGHTS.items():
+        if action_id.startswith(prefix):
+            return w
+    return 1.0
+
+
+# ── STEP 1: evaluate_decision_outcome ────────────────────────────────────
+def evaluate_decision_outcome(
+    strat_records: list[dict],
+    snap_history:  list[dict],
+) -> dict:
+    """
+    For each historical strategy record, compute:
+      actual_risk_change = risk_score at (date + 30d) - risk_score at date
+      expected_change    = strategy_score → implied risk direction
+      outcome_improvement= did strategy correlate with risk reduction?
+      alpha_score        = improvement vs baseline drift
+
+    Returns aggregated decision quality metrics.
+    """
+    from datetime import date as dt, timedelta
+    date_map  = {h["date"]: h for h in snap_history}
+    outcomes: list[dict] = []
+
+    for rec in strat_records:
+        date_str  = rec.get("date", "")
+        strat_sc  = rec.get("strategy_score", 50)
+        urgency   = rec.get("urgency_level", "low")
+        state     = rec.get("state", "stabilization")
+        action_ids= rec.get("action_ids", [])
+
+        base_rec  = date_map.get(date_str)
+        if base_rec is None:
+            continue
+        base_risk = base_rec.get("risk_score", 50)
+
+        # Evaluate at 30d horizon
+        try:
+            target_30 = (dt.fromisoformat(date_str) + timedelta(days=30)).isoformat()
+        except Exception:
+            continue
+        future_rec = date_map.get(target_30)
+        if future_rec is None:
+            continue
+        future_risk   = future_rec.get("risk_score", base_risk)
+        actual_change = future_risk - base_risk          # + = worse, - = better
+
+        # Strategy implied direction: high strategy_score → expect action → risk should decrease
+        # or at least not rise as fast as baseline
+        urgency_to_sev = {"low":0,"moderate":1,"high":2,"critical":3,"maximum":4}
+        urg_val = urgency_to_sev.get(urgency, 1)
+
+        # Outcome score: did risk reduce (or stabilise) relative to baseline?
+        # Baseline: assumes risk drifts +_BASELINE_RISK_DRIFT pts/30d passively
+        baseline_expected_risk = base_risk + _BASELINE_RISK_DRIFT * 1.0
+        baseline_change        = baseline_expected_risk - base_risk       # +2 typically
+
+        # Alpha = baseline_change - actual_change  (positive = outperformed baseline)
+        alpha = round(baseline_change - actual_change, 1)
+
+        # Outcome improvement %: risk reduced or held vs baseline
+        if actual_change <= baseline_change:
+            improvement_pct = min(100, round(50 + (baseline_change - actual_change) * 5))
+        else:
+            improvement_pct = max(0, round(50 - (actual_change - baseline_change) * 5))
+
+        # Risk reduction score: how much absolute risk was contained
+        risk_red = max(0, min(100, round(50 - actual_change * 3)))
+
+        # Action efficiency: weighted by action stakes
+        if action_ids:
+            avg_weight = sum(_action_weight(a) for a in action_ids) / len(action_ids)
+            # Efficiency = outcome relative to effort (higher-stakes actions → higher expectation)
+            eff_score  = min(100, round(improvement_pct / avg_weight))
+        else:
+            eff_score  = improvement_pct
+
+        outcomes.append({
+            "date":            date_str,
+            "state":           state,
+            "urgency":         urgency,
+            "urgency_val":     urg_val,
+            "base_risk":       base_risk,
+            "future_risk":     future_risk,
+            "actual_change":   actual_change,
+            "baseline_change": baseline_change,
+            "alpha":           alpha,
+            "improvement_pct": improvement_pct,
+            "risk_reduction":  risk_red,
+            "efficiency_score":eff_score,
+            "action_count":    len(action_ids),
+            "action_ids":      action_ids,
+        })
+
+    return outcomes
+
+
+# ── STEP 2: compare_with_baseline ────────────────────────────────────────
+def compare_with_baseline(outcomes: list[dict]) -> dict:
+    """
+    Compute Decision Alpha Score: how much better than random/passive baseline.
+    """
+    if not outcomes:
+        return {"n": 0, "alpha_mean": None, "alpha_positive_rate": None,
+                "outcome_improvement_mean": None, "risk_reduction_mean": None}
+
+    n        = len(outcomes)
+    alphas   = [o["alpha"] for o in outcomes]
+    imps     = [o["improvement_pct"] for o in outcomes]
+    rr       = [o["risk_reduction"] for o in outcomes]
+
+    return {
+        "n":                       n,
+        "alpha_mean":              round(sum(alphas)/n, 2),
+        "alpha_positive_rate":     round(sum(1 for a in alphas if a > 0)/n*100, 1),
+        "outcome_improvement_mean":round(sum(imps)/n, 1),
+        "risk_reduction_mean":     round(sum(rr)/n, 1),
+    }
+
+
+# ── STEP 3: rank_actions ──────────────────────────────────────────────────
+def rank_actions(outcomes: list[dict]) -> list[dict]:
+    """
+    For every action_id: compute win_rate (improvement > 50), avg_alpha, sample count.
+    Returns ranked list (descending effectiveness).
+    """
+    stats: dict[str, dict] = {}
+    for o in outcomes:
+        for aid in o.get("action_ids", []):
+            if aid not in stats:
+                stats[aid] = {"count":0,"alpha_sum":0.0,"wins":0,"eff_sum":0.0}
+            stats[aid]["count"]    += 1
+            stats[aid]["alpha_sum"]+= o["alpha"]
+            stats[aid]["eff_sum"]  += o["efficiency_score"]
+            if o["improvement_pct"] > 50:
+                stats[aid]["wins"] += 1
+
+    ranked = []
+    for aid, s in stats.items():
+        n  = s["count"]
+        if not n: continue
+        win_rate = round(s["wins"]/n*100, 1)
+        avg_alpha= round(s["alpha_sum"]/n, 2)
+        avg_eff  = round(s["eff_sum"]/n, 1)
+        ranked.append({
+            "action_id":      aid,
+            "sample_count":   n,
+            "win_rate":       win_rate,
+            "avg_alpha":      avg_alpha,
+            "avg_efficiency": avg_eff,
+            "action_score":   round(win_rate*0.50 + max(0, avg_alpha*10)*0.30 + avg_eff*0.20),
+        })
+    ranked.sort(key=lambda x: -x["action_score"])
+    return ranked
+
+
+# ── STEP 4: detect_decision_bias ─────────────────────────────────────────
+def detect_decision_bias(
+    outcomes:      list[dict],
+    strat_records: list[dict],
+) -> list[dict]:
+    """
+    Five bias types: overreaction, underreaction, late_response,
+    false_escalation, missed_opportunity.
+    Each requires ≥ min_count observations.
+    """
+    biases: list[dict] = []
+    if not outcomes: return biases
+
+    n = len(outcomes)
+
+    # Overreaction: high urgency → risk actually stayed low / improved
+    overreact = [o for o in outcomes
+                 if o["urgency_val"] >= 3 and o["future_risk"] <= 45 and o["actual_change"] < 0]
+    if len(overreact) >= 2:
+        rate = round(len(overreact)/n*100, 1)
+        biases.append({
+            "type":        "overreaction",
+            "label":       "Гиперреакция",
+            "severity":    "medium" if rate < 30 else "high",
+            "rate":        rate,
+            "count":       len(overreact),
+            "detail":      f"Высокая срочность при низком фактическом риске в {rate}% случаев",
+        })
+
+    # Underreaction: low urgency → risk escalated significantly
+    underreact = [o for o in outcomes
+                  if o["urgency_val"] <= 1 and o["actual_change"] >= 5]
+    if len(underreact) >= 2:
+        rate = round(len(underreact)/n*100, 1)
+        biases.append({
+            "type":        "underreaction",
+            "label":       "Недостаточная реакция",
+            "severity":    "high" if rate >= 20 else "medium",
+            "rate":        rate,
+            "count":       len(underreact),
+            "detail":      f"Низкая срочность при росте риска в {rate}% случаев",
+        })
+
+    # Late response: sev_diff positive trend (getting worse before action)
+    late = [o for o in outcomes
+            if o["actual_change"] > 3 and o["urgency_val"] < _SEV.get(o["state"],0)]
+    if len(late) >= 2:
+        rate = round(len(late)/n*100, 1)
+        biases.append({
+            "type":        "late_response",
+            "label":       "Запоздалая реакция",
+            "severity":    "medium",
+            "rate":        rate,
+            "count":       len(late),
+            "detail":      f"Срочность ниже уровня эскалации в {rate}% эпизодов",
+        })
+
+    # False escalation: predicted high severity, actual state stayed low
+    false_esc = [o for o in outcomes
+                 if o["urgency_val"] >= 3 and _SEV.get(o["state"],0) <= 1]
+    if len(false_esc) >= 2:
+        rate = round(len(false_esc)/n*100, 1)
+        biases.append({
+            "type":        "false_escalation",
+            "label":       "Ложная эскалация",
+            "severity":    "low" if rate < 20 else "medium",
+            "rate":        rate,
+            "count":       len(false_esc),
+            "detail":      f"Критическая срочность без реального кризиса в {rate}% случаев",
+        })
+
+    # Missed opportunity: large risk improvement with very low action count
+    missed = [o for o in outcomes
+              if o["actual_change"] < -10 and o["action_count"] <= 1]
+    if len(missed) >= 2:
+        rate = round(len(missed)/n*100, 1)
+        biases.append({
+            "type":        "missed_opportunity",
+            "label":       "Упущенная возможность",
+            "severity":    "medium",
+            "rate":        rate,
+            "count":       len(missed),
+            "detail":      f"Крупное улучшение при минимальных действиях в {rate}% случаев",
+        })
+
+    return biases
+
+
+# ── STEP 5: compute_decision_quality ─────────────────────────────────────
+def compute_decision_quality(iso2: str, country_name: str) -> dict:
+    """
+    Decision Quality Engine V1.
+    Reads strategy-history, snapshots/history, strategy-feedback.
+    Writes docs/decision-quality/{CC}.json.
+
+    DecisionScore = OutcomeScore×0.35 + EfficiencyScore×0.25
+                  + RiskReduction×0.20 + ConsistencyScore×0.20
+    """
+    base_out = {
+        "country": iso2, "country_name": country_name,
+        "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    # Load strategy history
+    sh_path = STRATEGY_HISTORY_DIR / f"{iso2}.json"
+    if not sh_path.exists():
+        return {**base_out, "note":"no strategy history",
+                "decision_score":None, "grade":"N/A", "grade_ru":"Нет данных"}
+    with open(sh_path) as f:
+        sh_data = json.load(f)
+    strat_records = sh_data.get("records", [])
+
+    # Load snapshot history (actual outcomes)
+    snap_path = HISTORY_DIR / f"{iso2}.json"
+    snap_hist: list[dict] = []
+    if snap_path.exists():
+        with open(snap_path) as f:
+            snap_hist = json.load(f).get("snapshots", [])
+
+    # Load strategy feedback (for consistency score)
+    fb_path  = STRATEGY_FEEDBACK_DIR / f"{iso2}.json"
+    fb_data  = json.loads(fb_path.read_text()) if fb_path.exists() else {}
+    fb_sr    = fb_data.get("strategy_success_rate")  # 0-100
+    fb_ss    = fb_data.get("success_score", 50)
+    aa_data  = fb_data.get("action_analytics", {})
+
+    # ── Evaluate outcomes ──────────────────────────────────────────────────
+    outcomes = evaluate_decision_outcome(strat_records, snap_hist)
+    if len(outcomes) < 3:
+        return {**base_out, "note":"insufficient outcome data (need ≥3 30d windows)",
+                "decision_score":None, "grade":"N/A", "grade_ru":"Нет данных",
+                "history_depth":len(strat_records)}
+
+    baseline_cmp  = compare_with_baseline(outcomes)
+    action_ranking= rank_actions(outcomes)
+    biases        = detect_decision_bias(outcomes, strat_records)
+
+    n = baseline_cmp["n"]
+    # ── Section A: Decision Performance ───────────────────────────────────
+    alpha_mean    = baseline_cmp["alpha_mean"] or 0
+    alpha_pos_rate= baseline_cmp["alpha_positive_rate"] or 50
+    imp_mean      = baseline_cmp["outcome_improvement_mean"] or 50
+    rr_mean       = baseline_cmp["risk_reduction_mean"] or 50
+
+    # Decision Success Rate: % of 30d windows where alpha > 0
+    decision_success_rate = alpha_pos_rate
+
+    # Outcome Improvement %: mean improvement vs baseline
+    outcome_improvement_pct = imp_mean
+
+    # Expected vs Actual Outcome Gap: how far actual from predicted
+    pred_changes = [o["base_risk"] + (o["urgency_val"] - 2) * (-2) for o in outcomes]
+    act_changes  = [o["actual_change"] for o in outcomes]
+    gap_mean     = round(sum(abs(p-a) for p,a in zip(pred_changes, act_changes))/n, 1)
+
+    # Decision Alpha Score: normalised (0-100)
+    alpha_score  = min(100, max(0, round(50 + alpha_mean * 10)))
+
+    # ── Composite sub-scores ──────────────────────────────────────────────
+    # OutcomeScore: alpha_pos_rate rebalanced to [0-100]
+    outcome_score = round((alpha_pos_rate * 0.60 + imp_mean * 0.40))
+
+    # EfficiencyScore: avg action efficiency
+    eff_scores  = [o["efficiency_score"] for o in outcomes]
+    eff_score   = round(sum(eff_scores)/len(eff_scores)) if eff_scores else 50
+
+    # RiskReductionScore: avg risk_reduction
+    risk_red_score = round(rr_mean)
+
+    # ConsistencyScore: from strategy_feedback success_score + bias penalty
+    bias_penalty   = min(30, len(biases) * 6)
+    consistency_score = max(0, round((fb_ss or 50) - bias_penalty))
+
+    # ── DecisionScore (spec formula) ─────────────────────────────────────
+    decision_score = round(
+        outcome_score     * _DQ_W["outcome"]      +
+        eff_score         * _DQ_W["efficiency"]   +
+        risk_red_score    * _DQ_W["risk_reduction"]+
+        consistency_score * _DQ_W["consistency"]
+    )
+    grade, grade_ru = _grade_dq(decision_score)
+
+    # ── Opportunity Capture Rate ──────────────────────────────────────────
+    # % of episodes with large risk improvement where ≥2 actions fired
+    high_imp = [o for o in outcomes if o["actual_change"] < -5]
+    opp_capture = round(sum(1 for o in high_imp if o["action_count"] >= 2)
+                        / max(1, len(high_imp)) * 100) if high_imp else None
+
+    # ── Cost Efficiency Score: alpha per action ────────────────────────────
+    total_actions = sum(o["action_count"] for o in outcomes)
+    cost_eff = round(alpha_mean / max(1, total_actions / n) * 10 + 50) if n else None
+    cost_eff = min(100, max(0, cost_eff)) if cost_eff is not None else None
+
+    # ── Section E: Strategy Effectiveness ────────────────────────────────
+    strat_effectiveness = {
+        "state_action_correlation": {},
+    }
+    for state_name in ["stabilization","contained","escalating","critical","cascade"]:
+        state_outs = [o for o in outcomes if o["state"] == state_name]
+        if len(state_outs) >= 2:
+            alph = round(sum(o["alpha"] for o in state_outs)/len(state_outs), 1)
+            strat_effectiveness["state_action_correlation"][state_name] = {
+                "n":     len(state_outs),
+                "alpha": alph,
+                "good":  alph > 0,
+            }
+
+    return {
+        **base_out,
+        # A: Decision Performance
+        "decision_score":          decision_score,
+        "grade":                   grade,
+        "grade_ru":                grade_ru,
+        "decision_success_rate":   decision_success_rate,
+        "outcome_improvement_pct": outcome_improvement_pct,
+        "expected_actual_gap":     gap_mean,
+        "alpha_score":             alpha_score,
+        "alpha_mean":              alpha_mean,
+        # B: Action Ranking
+        "action_ranking":          action_ranking[:10],
+        "action_count_avg":        round(sum(o["action_count"] for o in outcomes)/n, 1),
+        # C: Outcome Improvement
+        "action_efficiency_score": eff_score,
+        "risk_reduction_score":    risk_red_score,
+        "opportunity_capture_rate":opp_capture,
+        "cost_efficiency_score":   cost_eff,
+        # D: Bias Detection
+        "biases":                  biases,
+        "bias_count":              len(biases),
+        # E: Strategy Effectiveness
+        "strategy_effectiveness":  strat_effectiveness,
+        "consistency_score":       consistency_score,
+        # Sub-scores
+        "outcome_score":           outcome_score,
+        "efficiency_score":        eff_score,
+        # Meta
+        "n_evaluated":             n,
+        "history_depth":           len(strat_records),
+        "baseline_comparison":     baseline_cmp,
+    }
+
+
+def _build_dq_ranking(snapshots: list[dict]) -> dict:
+    """Section F: Global ranking across all countries."""
+    entries = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            p = DQ_DIR / f"{iso2}.json"
+            if not p.exists(): continue
+            d = json.loads(p.read_text())
+            if d.get("decision_score") is None: continue
+            entries.append({
+                "country":            iso2,
+                "country_name":       snap["country_name"],
+                "decision_score":     d["decision_score"],
+                "grade":              d["grade"],
+                "decision_success_rate": d.get("decision_success_rate"),
+                "alpha_score":        d.get("alpha_score"),
+                "bias_count":         d.get("bias_count", 0),
+                "n_evaluated":        d.get("n_evaluated", 0),
+            })
+        except Exception:
+            continue
+    by_score = sorted(entries, key=lambda x: -(x["decision_score"] or 0))
+    by_alpha = sorted(entries, key=lambda x: -(x.get("alpha_score") or 0))
+    return {
+        "date":              TODAY,
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "total_countries":   len(entries),
+        "top_performers":    by_score[:5],
+        "lowest_performers": list(reversed(by_score))[:5],
+        "highest_alpha":     by_alpha[:5],
+        "most_biased":       sorted(entries, key=lambda x: -x["bias_count"])[:5],
+    }
+
+
+def save_decision_quality(snapshots: list[dict]) -> None:
+    """Compute and persist decision quality for all 25 countries."""
+    DQ_DIR.mkdir(parents=True, exist_ok=True)
+    DQ_RANKING_DIR.mkdir(parents=True, exist_ok=True)
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            d = compute_decision_quality(iso2, snap["country_name"])
+            with open(DQ_DIR / f"{iso2}.json", "w") as f:
+                json.dump(d, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [DQ] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    try:
+        ranking = _build_dq_ranking(snapshots)
+        with open(DQ_RANKING_DIR / "_global.json", "w") as f:
+            json.dump(ranking, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [DQ] ranking FAILED — {e}", file=sys.stderr)
+
+    print(f"[DQ] Saved decision quality for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -4566,6 +5074,7 @@ def main():
     save_strategy_feedback(snapshots)
     save_validation(snapshots)
     save_dashboard(snapshots)
+    save_decision_quality(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
