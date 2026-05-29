@@ -447,6 +447,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-ds-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
 .cc-ds-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 
+/* ── Resilience Engine ── */
+.cc-res{margin-bottom:14px}
+.cc-res-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-res-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-res-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-res-level{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex-shrink:0}
+.cc-res-level.resilient{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-res-level.strong{background:rgba(132,204,22,.12);color:#84cc16;border:1px solid rgba(132,204,22,.25)}
+.cc-res-level.moderate{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.25)}
+.cc-res-level.fragile{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-res-level.critical{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.35)}
+.cc-res-caps{display:flex;gap:10px;margin-bottom:8px}
+.cc-res-cap{text-align:center;flex:1;padding:4px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-res-cap-val{font-size:14px;font-weight:700;font-family:'Cormorant Garamond',serif;display:block}
+.cc-res-cap-lbl{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.25);display:block;margin-top:1px}
+.cc-res-section-title{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.18);margin-bottom:5px;margin-top:8px}
+.cc-res-domain{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-res-domain:last-child{border-bottom:none}
+.cc-res-dom-name{font-size:9px;color:rgba(232,224,208,.75);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-res-dom-bar-wrap{width:60px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;flex-shrink:0}
+.cc-res-dom-bar{height:100%;border-radius:2px;transition:width .4s}
+.cc-res-dom-score{font-size:10px;font-family:'Courier New',monospace;color:rgba(255,255,255,.4);width:24px;text-align:right;flex-shrink:0}
+.cc-res-dom-trend{font-size:7px;flex-shrink:0;width:10px;text-align:center}
+.cc-res-rec{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-res-rec:last-child{border-bottom:none}
+.cc-res-rec-name{font-size:9px;color:rgba(232,224,208,.75);margin-bottom:2px}
+.cc-res-rec-text{font-size:8px;color:rgba(255,255,255,.3);line-height:1.4}
+.cc-res-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:8px 0;text-align:center;font-style:italic}
+.cc-res-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+
 </style>
 </head>
 <body>
@@ -1836,6 +1866,7 @@ setInterval(() => {
     <div id="cc-systemic-block"></div>
     <div id="cc-ew-block"></div>
     <div id="cc-ds-block"></div>
+    <div id="cc-resilience-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -1900,10 +1931,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -1974,6 +2005,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-systemic-block').innerHTML='';
   document.getElementById('cc-ew-block').innerHTML='';
   document.getElementById('cc-ds-block').innerHTML='';
+  document.getElementById('cc-resilience-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2010,6 +2042,7 @@ window.openCountryCard = async function(cc) {
   fetchSystemic(cc).then(function(sysData) { renderSystemic(sysData, _clientCaps); });
   fetchEarlyWarning(cc).then(function(ewData) { renderEarlyWarning(ewData, _clientCaps); });
   fetchDecisionSupport(cc).then(function(dsData) { renderDecisionSupport(dsData, _clientCaps); });
+  fetchResilience(cc).then(function(resData) { renderResilience(resData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -3691,6 +3724,114 @@ window.closeAllPanels = function() {
   var ov = document.getElementById('panel-overlay');
   if (ov) ov.style.display = 'none';
 };
+
+
+// ── Resilience Engine V1 — UI ────────────────────────────────────────────
+var _resCache = {};
+
+var _RES_SCORE_COLOR = function(s) {
+  return s >= 81 ? '#22c55e'
+       : s >= 61 ? '#84cc16'
+       : s >= 41 ? '#fbbf24'
+       : s >= 21 ? '#f59e0b'
+       : '#dc2626';
+};
+
+var _RES_TREND_ICON = {declining:'↓', under_pressure:'~', stable:'→'};
+
+async function fetchResilience(cc) {
+  if (_resCache[cc]) return _resCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/resilience/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _resCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderResilience(data, caps) {
+  var block = document.getElementById('cc-resilience-block');
+  if (!block) return;
+  var access = caps.resilience_access || 'score';
+  if (!data) { block.innerHTML = ''; return; }
+
+  var rs    = data.resilience_score    || 0;
+  var lvl   = data.autonomy_level      || 'critical';
+  var lvlRu = data.autonomy_level_ru   || 'Критический';
+  var rsCol = _RES_SCORE_COLOR(rs);
+
+  var html = '<div class="cc-res">';
+  html += '<div class="cc-res-header">'
+        + '<span class="cc-res-label">Устойчивость / Автономия</span>'
+        + '<span class="cc-res-score" style="color:' + rsCol + '">' + rs + '</span>'
+        + '<span class="cc-res-level ' + lvl + '">' + _esc(lvlRu) + '</span>'
+        + '</div>';
+
+  // FREE: score only
+  if (access === 'score') {
+    html += '<div class="cc-res-teaser">Индекс устойчивости: ' + rs + '/100</div>'
+          + '<div class="cc-res-lock">🔒 Полный анализ в Signal PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // SIGNAL+: capacity scores + pressure
+  var rc  = data.recovery_capacity   || 0;
+  var ac  = data.adaptation_capacity || 0;
+  var prRu = data.pressure_level_ru  || '';
+  var rcCol = _RES_SCORE_COLOR(rc);
+  var acCol = _RES_SCORE_COLOR(ac);
+  html += '<div class="cc-res-caps">'
+        + '<div class="cc-res-cap"><span class="cc-res-cap-val" style="color:' + rcCol + '">' + rc + '</span><span class="cc-res-cap-lbl">Восстановление</span></div>'
+        + '<div class="cc-res-cap"><span class="cc-res-cap-val" style="color:' + acCol + '">' + ac + '</span><span class="cc-res-cap-lbl">Адаптация</span></div>'
+        + '<div class="cc-res-cap"><span class="cc-res-cap-val" style="color:' + rsCol + '">' + (data.resilience_pressure || 0) + '</span><span class="cc-res-cap-lbl">Давление</span></div>'
+        + '</div>';
+
+  if (access === 'score+level') {
+    html += '<div class="cc-res-lock">🔒 Матрица доменов в Strategic PRO</div>';
+    html += '</div>';
+    block.innerHTML = html;
+    return;
+  }
+
+  // STRATEGIC+: domain matrix
+  var domains = data.domains || [];
+  if (domains.length) {
+    html += '<div class="cc-res-section-title">Матрица доменов</div>';
+    domains.forEach(function(d) {
+      var col   = _RES_SCORE_COLOR(d.score);
+      var trend = _RES_TREND_ICON[d.trend] || '→';
+      var tCol  = d.trend === 'declining' ? '#ef4444' : d.trend === 'under_pressure' ? '#f59e0b' : 'rgba(255,255,255,.3)';
+      html += '<div class="cc-res-domain">'
+            + '<span class="cc-res-dom-name">' + _esc(d.label) + '</span>'
+            + '<div class="cc-res-dom-bar-wrap"><div class="cc-res-dom-bar" style="width:' + d.score + '%;background:' + col + '"></div></div>'
+            + '<span class="cc-res-dom-score">' + d.score + '</span>'
+            + '<span class="cc-res-dom-trend" style="color:' + tCol + '">' + trend + '</span>'
+            + '</div>';
+    });
+  }
+
+  // ELITE: recommendations
+  if (access === 'full+explain') {
+    var recs = data.recommendations || [];
+    if (recs.length) {
+      html += '<div class="cc-res-section-title">Рекомендации</div>';
+      recs.forEach(function(r) {
+        html += '<div class="cc-res-rec">'
+              + '<div class="cc-res-rec-name">' + _esc(r.label) + ' · ' + r.score + '</div>'
+              + '<div class="cc-res-rec-text">' + _esc(r.recommendation) + '</div>'
+              + '</div>';
+      });
+    }
+  }
+
+  html += '</div>';
+  block.innerHTML = html;
+}
 
 })(); // end IIFE
 
