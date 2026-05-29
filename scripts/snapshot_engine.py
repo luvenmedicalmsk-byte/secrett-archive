@@ -33,7 +33,9 @@ EARLY_WARNING_DIR = DOCS_DIR / "early-warning"
 DECISION_DIR      = DOCS_DIR / "decision-support"
 RESILIENCE_DIR    = DOCS_DIR / "resilience"
 CALIBRATION_DIR   = DOCS_DIR / "calibration"
-STRATEGY_DIR      = DOCS_DIR / "strategy"
+STRATEGY_DIR          = DOCS_DIR / "strategy"
+STRATEGY_HISTORY_DIR  = DOCS_DIR / "strategy-history"
+STRATEGY_FEEDBACK_DIR = DOCS_DIR / "strategy-feedback"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -3677,6 +3679,240 @@ def save_strategy(snapshots: list[dict]) -> None:
             print(f"  [STRATEGY] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[STRATEGY] Saved strategy for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# STRATEGY FEEDBACK ENGINE V1
+# Independent feedback layer. No modifications to any existing engine.
+# Closes the loop: Signal → Scenario → Strategy → Outcome → Feedback
+# ═══════════════════════════════════════════════════════════════════════════
+
+_STATE_SEV: dict[str, int] = {
+    "stabilization":0, "contained":1, "escalating":2, "critical":3, "cascade":4
+}
+_ESC_TO_STATE: dict[str, str] = {
+    "stable":"stabilization","elevated":"contained",
+    "pressured":"escalating","critical":"critical",
+}
+_EVAL_WINDOWS = [30, 90, 180, 365]
+
+
+def _evaluate_outcome(rec: dict, snap_history: list[dict]) -> dict:
+    """Compare strategy prediction vs actual observed state at 30/90/180/365d."""
+    from datetime import date as dt, timedelta
+    date_map = {h["date"]: h for h in snap_history}
+    pred_state   = rec.get("state", "stabilization")
+    pred_sev     = _STATE_SEV.get(pred_state, 0)
+    strat_date   = rec.get("date", "")
+    strat_conf   = rec.get("strategy_confidence", 50)
+
+    evaluations: list[dict] = []
+    for window in _EVAL_WINDOWS:
+        try:
+            target = (dt.fromisoformat(strat_date) + timedelta(days=window)).isoformat()
+        except Exception:
+            continue
+        actual = date_map.get(target)
+        if actual is None:
+            continue
+        actual_state = _ESC_TO_STATE.get(actual.get("escalation_level","stable"), "stabilization")
+        actual_sev   = _STATE_SEV.get(actual_state, 0)
+        diff = abs(pred_sev - actual_sev)
+        state_score  = 100 if diff==0 else 60 if diff==1 else 25 if diff==2 else 0
+        outcome      = "success" if diff==0 else "partial" if diff==1 else "failure"
+        evaluations.append({
+            "window_days":    window,
+            "target_date":    target,
+            "predicted_state":pred_state,
+            "actual_state":   actual_state,
+            "sev_diff":       diff,
+            "outcome":        outcome,
+            "outcome_score":  state_score,
+            "actual_score":   actual.get("risk_score", 50),
+        })
+
+    if not evaluations:
+        return {"eval_count":0, "success_rate":None, "partial_rate":None,
+                "failure_rate":None, "agg_outcome_score":None,
+                "confidence_error":None, "evaluations":[]}
+
+    wts = {30:0.40, 90:0.30, 180:0.20, 365:0.10}
+    tw  = sum(wts[e["window_days"]] for e in evaluations)
+    agg = round(sum(e["outcome_score"]*wts[e["window_days"]] for e in evaluations)/max(1,tw))
+    n   = len(evaluations)
+    sr  = round(sum(1 for e in evaluations if e["outcome"]=="success")/n*100)
+    pr  = round(sum(1 for e in evaluations if e["outcome"]=="partial")/n*100)
+    fr  = round(sum(1 for e in evaluations if e["outcome"]=="failure")/n*100)
+    ce  = round(abs(strat_conf - agg), 1)
+    return {"eval_count":n,"success_rate":sr,"partial_rate":pr,"failure_rate":fr,
+            "agg_outcome_score":agg,"confidence_error":ce,
+            "confidence_calibrated": ce<15,"evaluations":evaluations}
+
+
+def _action_analytics(strat_records: list[dict], eval_results: list[dict]) -> dict:
+    """Action-level success/failure analytics across all evaluated strategies."""
+    stats: dict[str,dict] = {}
+    for rec, ev in zip(strat_records, eval_results):
+        if not ev.get("eval_count"): continue
+        sr = ev.get("success_rate") or 0
+        outcome = "success" if sr>=60 else "partial" if sr>=30 else "failure"
+        for aid in rec.get("action_ids", []):
+            if aid not in stats:
+                stats[aid] = {"count":0,"success":0,"partial":0,"failure":0}
+            stats[aid]["count"]   += 1
+            stats[aid][outcome]   += 1
+    ranked = []
+    for aid, s in stats.items():
+        n = s["count"]
+        if not n: continue
+        sr = round(s["success"]/n*100); fr = round(s["failure"]/n*100)
+        ranked.append({
+            "action_id": aid, "sample_count": n,
+            "success_rate": sr, "partial_rate": round(s["partial"]/n*100),
+            "failure_rate": fr,
+            "effectiveness_score": round(sr*0.70+(100-fr)*0.30),
+        })
+    ranked.sort(key=lambda x: -x["effectiveness_score"])
+    return {
+        "total_actions_tracked": len(ranked),
+        "top_actions":     ranked[:5],
+        "weakest_actions": sorted(ranked, key=lambda x: x["effectiveness_score"])[:5],
+    }
+
+
+def _feedback_grade(sr: float|None) -> tuple[str,str]:
+    if sr is None:   return "unknown",   "Нет данных"
+    if sr >= 75:     return "excellent", "Отличная"
+    if sr >= 60:     return "good",      "Хорошая"
+    if sr >= 45:     return "fair",      "Удовлетворительная"
+    if sr >= 30:     return "poor",      "Слабая"
+    return "unreliable", "Ненадёжная"
+
+
+def update_strategy_history(strategy: dict) -> None:
+    """Append today's strategy record to docs/strategy-history/{CC}.json (rolling 365)."""
+    STRATEGY_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    iso2      = strategy["country"]
+    hist_path = STRATEGY_HISTORY_DIR / f"{iso2}.json"
+    if hist_path.exists():
+        with open(hist_path) as f: hist = json.load(f)
+    else:
+        hist = {"country":iso2,"country_name":strategy["country_name"],"records":[]}
+    record = {
+        "date":                strategy["date"],
+        "state":               strategy.get("state"),
+        "dominant_scenario":   strategy.get("dominant_scenario"),
+        "strategy_score":      strategy.get("strategy_score"),
+        "strategy_confidence": strategy.get("strategy_confidence"),
+        "urgency_level":       strategy.get("urgency_level"),
+        "preparedness_level":  strategy.get("preparedness_level"),
+        "monitoring_priority": strategy.get("monitoring_priority"),
+        "action_ids":          [a["id"] for a in strategy.get("actions", [])],
+        "probabilities":       strategy.get("probabilities", {}),
+        "scenario_score":      strategy.get("scenario_score"),
+        "instability":         strategy.get("instability"),
+    }
+    idx = {r["date"]:i for i,r in enumerate(hist["records"])}
+    if record["date"] in idx: hist["records"][idx[record["date"]]] = record
+    else: hist["records"].append(record)
+    hist["records"] = hist["records"][-365:]
+    hist["last_updated"] = datetime.now(timezone.utc).isoformat()
+    with open(hist_path,"w") as f: json.dump(hist, f, ensure_ascii=False, indent=2)
+
+
+def compute_strategy_feedback(iso2: str, country_name: str) -> dict:
+    """
+    Strategy Feedback Engine V1.
+    Evaluate all historical strategies against actual observed outcomes.
+    Returns strategy_success_rate, action_rankings, confidence_accuracy, feedback_grade.
+    """
+    hist_path = STRATEGY_HISTORY_DIR / f"{iso2}.json"
+    if not hist_path.exists():
+        return {"country":iso2,"country_name":country_name,"date":TODAY,
+                "generated_at":datetime.now(timezone.utc).isoformat(),
+                "note":"no strategy history yet","strategy_success_rate":None,
+                "feedback_grade":"unknown","feedback_grade_ru":"Нет данных","history_depth":0}
+
+    with open(hist_path) as f: strat_hist = json.load(f)
+    strat_records = strat_hist.get("records", [])
+
+    snap_path = HISTORY_DIR / f"{iso2}.json"
+    snap_hist  = []
+    if snap_path.exists():
+        with open(snap_path) as f: snap_hist = json.load(f).get("snapshots", [])
+
+    eval_results = [_evaluate_outcome(r, snap_hist) for r in strat_records]
+    evaluated    = [(r,e) for r,e in zip(strat_records,eval_results) if e["eval_count"]>0]
+    n            = len(evaluated)
+
+    if n == 0:
+        return {"country":iso2,"country_name":country_name,"date":TODAY,
+                "generated_at":datetime.now(timezone.utc).isoformat(),
+                "note":"awaiting 30d+ of outcome data",
+                "strategy_success_rate":None,"feedback_grade":"unknown",
+                "feedback_grade_ru":"Нет данных","history_depth":len(strat_records)}
+
+    avg_sr = round(sum(e["success_rate"] for _,e in evaluated if e["success_rate"] is not None)/n)
+    avg_pr = round(sum(e["partial_rate"]  for _,e in evaluated if e["partial_rate"]  is not None)/n)
+    avg_fr = round(sum(e["failure_rate"]  for _,e in evaluated if e["failure_rate"]  is not None)/n)
+    avg_os = round(sum(e["agg_outcome_score"] for _,e in evaluated if e["agg_outcome_score"] is not None)/n)
+
+    ce_vals = [e["confidence_error"] for _,e in evaluated if e["confidence_error"] is not None]
+    avg_ce  = round(sum(ce_vals)/len(ce_vals),1) if ce_vals else None
+    conf_acc= max(0, round(100-(avg_ce or 0))) if avg_ce is not None else None
+
+    aa = _action_analytics([r for r,_ in evaluated], [e for _,e in evaluated])
+
+    # Horizon breakdown
+    hz_bd = {}
+    for w in _EVAL_WINDOWS:
+        hz_ev = [e for el in [e["evaluations"] for _,e in evaluated] for e in el if e["window_days"]==w]
+        if hz_ev:
+            nh = len(hz_ev)
+            hz_bd[f"{w}d"] = {
+                "n":nh,
+                "success_rate":round(sum(1 for e in hz_ev if e["outcome"]=="success")/nh*100),
+                "partial_rate":round(sum(1 for e in hz_ev if e["outcome"]=="partial")/nh*100),
+                "failure_rate":round(sum(1 for e in hz_ev if e["outcome"]=="failure")/nh*100),
+                "avg_sev_diff":round(sum(e["sev_diff"] for e in hz_ev)/nh,2),
+            }
+
+    grade, grade_ru = _feedback_grade(avg_sr)
+    return {
+        "country":               iso2,
+        "country_name":          country_name,
+        "date":                  TODAY,
+        "generated_at":          datetime.now(timezone.utc).isoformat(),
+        "strategy_success_rate": avg_sr,
+        "strategy_partial_rate": avg_pr,
+        "strategy_failure_rate": avg_fr,
+        "success_score":         avg_os,
+        "feedback_grade":        grade,
+        "feedback_grade_ru":     grade_ru,
+        "confidence_accuracy":   conf_acc,
+        "avg_confidence_error":  avg_ce,
+        "action_analytics":      aa,
+        "horizon_breakdown":     hz_bd,
+        "history_depth":         len(strat_records),
+        "n_evaluated":           n,
+    }
+
+
+def save_strategy_feedback(snapshots: list[dict]) -> None:
+    """Pass 1: store today's strategy. Pass 2: evaluate past strategies vs outcomes."""
+    STRATEGY_FEEDBACK_DIR.mkdir(parents=True, exist_ok=True)
+    STRATEGY_HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            strat_path = STRATEGY_DIR / f"{iso2}.json"
+            if strat_path.exists():
+                update_strategy_history(json.loads(strat_path.read_text()))
+            fb = compute_strategy_feedback(iso2, snap["country_name"])
+            with open(STRATEGY_FEEDBACK_DIR / f"{iso2}.json","w") as f:
+                json.dump(fb, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [FEEDBACK] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[FEEDBACK] Saved for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -3733,6 +3969,7 @@ def main():
     save_resilience(snapshots)
     save_calibration(snapshots)
     save_strategy(snapshots)
+    save_strategy_feedback(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
