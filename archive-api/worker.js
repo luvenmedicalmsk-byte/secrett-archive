@@ -68,6 +68,8 @@ export default {
     return handleSnapshotToday(request, env);
   if (path.startsWith('/api/snapshot/history/') && request.method === 'GET')
     return handleSnapshotHistory(request, env);
+  if (path === '/api/intelligence/daily' && request.method === 'GET')
+    return handleIntelligenceDaily(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1539,7 +1541,7 @@ function getTierCapabilities(tier) {
     free: {
       tier:                'free',
       history_days:        0,
-      drivers_details:     false,   // impact text
+      drivers_details:     false,
       change_attribution:  false,
       summary:             false,
       forecast_7d:         'direction_only',
@@ -1548,6 +1550,7 @@ function getTierCapabilities(tier) {
       forecast_180d:       false,
       country_comparison:  false,
       scenario_engine:     false,
+      intel_limit:         3,       // items per feed section
     },
     signal: {
       tier:                'signal',
@@ -1561,10 +1564,11 @@ function getTierCapabilities(tier) {
       forecast_180d:       false,
       country_comparison:  false,
       scenario_engine:     false,
+      intel_limit:         10,
     },
     strategic: {
       tier:                'strategic',
-      history_days:        -1,       // -1 = unlimited
+      history_days:        -1,
       drivers_details:     true,
       change_attribution:  true,
       summary:             true,
@@ -1574,6 +1578,7 @@ function getTierCapabilities(tier) {
       forecast_180d:       false,
       country_comparison:  true,
       scenario_engine:     false,
+      intel_limit:         -1,      // unlimited
     },
     elite: {
       tier:                'elite',
@@ -1587,6 +1592,7 @@ function getTierCapabilities(tier) {
       forecast_180d:       'full',
       country_comparison:  true,
       scenario_engine:     true,
+      intel_limit:         -1,      // unlimited + driver_commentary
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -1808,4 +1814,86 @@ async function handleSnapshotHistory(request, env) {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INTELLIGENCE DAILY ENDPOINT
+// GET /api/intelligence/daily
+// Tier filtering via intel_limit + driver_commentary for ELITE
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleIntelligenceDaily(request, env) {
+  const REPO  = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier  = _resolveClientTier(request, env);
+  const caps  = getTierCapabilities(tier);
+  const limit = caps.intel_limit;            // 3 | 10 | -1
+
+  const cacheKey = `intel:daily:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          headers: { 'Content-Type': 'application/json',
+                     'Access-Control-Allow-Origin': '*',
+                     'X-Cache': 'HIT', 'X-Tier': tier }
+        });
+      }
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/intelligence/daily.json`;
+    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+    if (!r.ok) throw new Error('Feed not found: ' + r.status);
+    const raw = await r.json();
+
+    const result = _filterIntelFeed(raw, caps, limit);
+
+    if (env.EVENTS_KV) {
+      try {
+        await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 300 });
+      } catch (_) {}
+    }
+
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json',
+                 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterIntelFeed(raw, caps, limit) {
+  // Slice each section by intel_limit (-1 = all)
+  const slice = arr => limit < 0 ? arr : (arr || []).slice(0, limit);
+
+  const result = {
+    date:          raw.date,
+    generated_at:  raw.generated_at,
+    tier:          caps.tier,
+    meta:          raw.meta,
+    top_risk_increase:   slice(raw.top_risk_increase   || []),
+    top_risk_decrease:   slice(raw.top_risk_decrease   || []),
+    top_forecast_growth: slice(raw.top_forecast_growth || []),
+    new_drivers:         slice(raw.new_drivers         || []).map(d => {
+      const item = {
+        country:      d.country,
+        country_name: d.country_name,
+        name:         d.name,
+        domain:       d.domain,
+        severity:     d.severity,
+        risk_score:   d.risk_score,
+      };
+      // driver impact (commentary): ELITE only — uses drivers_details capability
+      if (caps.drivers_details && d.impact) item.impact = d.impact;
+      return item;
+    }),
+  };
+  return result;
 }
