@@ -450,6 +450,89 @@ def compute_change_attribution(
     return [r for r in result if r["impact_score"] > 0]
 
 
+def compute_forecast_7d(
+    score: int,
+    delta: int,
+    drivers: list[dict],
+    change_drivers: list[dict],
+) -> dict:
+    """
+    Forecast Engine V1 — deterministic 7-day forecast.
+    No LLM. No external APIs. Pure math on existing snapshot fields.
+
+    Inputs:
+      score          : current risk_score (0-100)
+      delta          : change vs yesterday
+      drivers        : top 3 active drivers with severity
+      change_drivers : contributors to today's delta
+
+    Algorithm:
+      1. velocity  = weighted delta trend (current delta counts double)
+      2. pressure  = average driver severity above 65 (hot drivers)
+      3. raw_drift = velocity * 0.6 + pressure_factor * 0.4
+      4. projected = score + raw_drift * 7 days, clamped to [10, 95]
+      5. range     = [projected - band, projected + band]
+      6. confidence = 90 - uncertainty penalty (high delta, many drivers → less certain)
+      7. direction = 'up' if drift > 0.5, 'down' if < -0.5, else 'stable'
+
+    Architecture note — extensible for V2:
+      forecast_30d : multiply drift by 30, widen band, reduce confidence
+      forecast_90d : multiply drift by 90, much wider band, confidence -20
+      forecast_180d: structural regime dominates short-term drift
+    """
+
+    # 1. Velocity: daily change rate
+    #    Use delta as primary signal, change_drivers magnitude as confirmation
+    cd_magnitude = sum(abs(cd.get("impact_score", 0)) for cd in change_drivers)
+    velocity = float(delta) + (cd_magnitude * 0.1 if delta != 0 else 0)
+
+    # 2. Driver pressure: hot drivers (severity > 65) elevate uncertainty
+    hot_drivers = [d for d in drivers if d.get("severity", 0) > 65]
+    avg_hot_sev = (
+        sum(d.get("severity", 0) for d in hot_drivers) / len(hot_drivers)
+        if hot_drivers else score
+    )
+    # Pressure factor: how far above baseline
+    pressure_factor = max(0.0, (avg_hot_sev - 65) / 35)  # 0..1
+
+    # 3. Raw drift per day
+    raw_drift = velocity * 0.6 + pressure_factor * 0.4
+
+    # 4. Projected score (7 days)
+    projected = score + round(raw_drift * 7)
+    projected  = max(10, min(95, projected))
+
+    # 5. Uncertainty band: wider when delta is large or many hot drivers
+    instability = min(abs(delta) + len(hot_drivers), 10)
+    band = max(2, round(instability * 0.8))
+    score_min = max(10, projected - band)
+    score_max = min(95, projected + band)
+
+    # 6. Confidence: base 85, reduced by instability and data gaps
+    confidence = 85 - instability * 2
+    if not drivers:         confidence -= 10  # no driver data
+    if abs(delta) > 5:      confidence -= 5   # rapid change = less predictable
+    confidence = max(30, min(92, confidence))
+
+    # 7. Direction
+    if raw_drift > 0.5:
+        direction = "up"
+    elif raw_drift < -0.5:
+        direction = "down"
+    else:
+        direction = "stable"
+
+    return {
+        "direction":  direction,
+        "score_min":  score_min,
+        "score_max":  score_max,
+        "confidence": confidence,
+        # Architecture stub for V2 horizons — same function, different multipliers
+        "_horizon":   "7d",
+        "_drift_per_day": round(raw_drift, 3),
+    }
+
+
 # ── MAIN SNAPSHOT LOGIC ───────────────────────────────────────────────────────
 
 def build_snapshot(iso2: str, events: list[dict]) -> dict:
@@ -465,6 +548,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     summary        = generate_summary(iso2, score, domain, matched, level)
     drivers        = compute_drivers(iso2, matched, score)
     change_drivers = compute_change_attribution(iso2, drivers, delta)
+    forecast_7d    = compute_forecast_7d(score, delta, drivers, change_drivers)
 
     snap = {
         "country":          iso2,
@@ -477,6 +561,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         "summary":          summary,
         "drivers":          drivers,
         "change_drivers":   change_drivers,
+        "forecast_7d":      forecast_7d,
         "event_count":      len(matched),
     }
 
