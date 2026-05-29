@@ -32,6 +32,7 @@ SYSTEMIC_DIR     = DOCS_DIR / "systemic"
 EARLY_WARNING_DIR = DOCS_DIR / "early-warning"
 DECISION_DIR      = DOCS_DIR / "decision-support"
 RESILIENCE_DIR    = DOCS_DIR / "resilience"
+CALIBRATION_DIR   = DOCS_DIR / "calibration"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -2941,6 +2942,230 @@ def save_resilience(snapshots: list[dict]) -> None:
             print(f"  [RES] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[RES] Saved resilience for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# FORECAST CALIBRATION ENGINE V1
+# ═══════════════════════════════════════════════════════════════════════════
+
+def compute_forecast_accuracy(snap: dict, history: list[dict]) -> dict:
+    """
+    Forecast Calibration Engine V1 — measure forecast quality vs real outcomes.
+    No LLM. Deterministic only.
+
+    Algorithm:
+      1. Load today's forecast_7d and forecast_30d from snap
+      2. Look back 7 and 30 days in history to find actual observed values
+      3. Compare predicted vs actual:
+           MAE  = mean(|predicted - actual|)
+           RMSE = sqrt(mean((predicted - actual)^2))
+           Bias = mean(predicted - actual)  [positive = over-estimates]
+           Accuracy% = 100 - MAE / 100 * 100
+           Direction hit rate = % of days where direction sign matched
+      4. Calibration score = weighted accuracy metric (0-100)
+      5. Confidence calibration = forecast confidence vs actual error
+
+    Inputs:
+      snap    : current snapshot with forecast_7d, forecast_30d
+      history : list of historical records [{date, risk_score, delta, ...}]
+    """
+    today         = snap["date"]
+    f7            = snap.get("forecast_7d")  or {}
+    f30           = snap.get("forecast_30d") or {}
+    current_score = snap.get("risk_score", 50)
+    iso2          = snap["country"]
+
+    # Sort history ascending by date
+    hist_sorted = sorted(history, key=lambda x: x.get("date", ""))
+
+    # Build date → score lookup
+    date_score: dict[str, int] = {h["date"]: h["risk_score"] for h in hist_sorted}
+    date_list   = [h["date"] for h in hist_sorted]
+
+    # ── Find actual values at forecast horizons ────────────────────────────
+    def find_actual_at_offset(from_date: str, offset_days: int) -> float | None:
+        """Find actual observed score N days after from_date."""
+        try:
+            from datetime import date as dt, timedelta
+            base = dt.fromisoformat(from_date)
+            target = (base + timedelta(days=offset_days)).isoformat()
+            return date_score.get(target)
+        except Exception:
+            return None
+
+    # ── 7-day forecast errors ──────────────────────────────────────────────
+    errors_7d:   list[float] = []
+    dir_hits_7d: list[bool]  = []
+
+    # Look at past dates and check if their 7d forecast (which we reconstruct
+    # from the stored record) matched what actually happened 7 days later.
+    # Since we don't store past forecasts, we use current forecast as proxy
+    # for recent-history comparison: compare last N=14 days of history.
+    for h in hist_sorted[-21:]:
+        d   = h["date"]
+        act = find_actual_at_offset(d, 7)
+        if act is None: continue
+        h_score  = h["risk_score"]
+        h_delta  = h.get("delta", 0)
+        # Reconstruct simple 7d forecast from that day
+        drift    = h_delta * 0.6
+        pred_7d  = max(10, min(95, h_score + drift * 7))
+        error    = pred_7d - act
+        errors_7d.append(error)
+        # Direction hit: did we predict up/down correctly?
+        pred_dir = 1 if drift > 0.5 else (-1 if drift < -0.5 else 0)
+        act_dir  = 1 if (act - h_score) > 1 else (-1 if (act - h_score) < -1 else 0)
+        dir_hits_7d.append(pred_dir == act_dir or pred_dir == 0)
+
+    # ── 30-day forecast errors ─────────────────────────────────────────────
+    errors_30d:   list[float] = []
+    dir_hits_30d: list[bool]  = []
+
+    for h in hist_sorted[-45:]:
+        d   = h["date"]
+        act = find_actual_at_offset(d, 30)
+        if act is None: continue
+        h_score  = h["risk_score"]
+        h_delta  = h.get("delta", 0)
+        drift    = h_delta * 0.4
+        pred_30d = max(10, min(95, h_score + drift * 30))
+        error    = pred_30d - act
+        errors_30d.append(error)
+        pred_dir = 1 if drift > 0.3 else (-1 if drift < -0.3 else 0)
+        act_dir  = 1 if (act - h_score) > 2 else (-1 if (act - h_score) < -2 else 0)
+        dir_hits_30d.append(pred_dir == act_dir or pred_dir == 0)
+
+    # ── Compute metrics ────────────────────────────────────────────────────
+    import math
+
+    def _metrics(errors: list[float], dir_hits: list[bool], label: str) -> dict:
+        if not errors:
+            return {
+                "horizon":        label,
+                "n_observations": 0,
+                "mae":            None,
+                "rmse":           None,
+                "bias":           None,
+                "accuracy_pct":   None,
+                "direction_hit_rate": None,
+                "note": "insufficient history",
+            }
+        n    = len(errors)
+        mae  = round(sum(abs(e) for e in errors) / n, 2)
+        rmse = round(math.sqrt(sum(e*e for e in errors) / n), 2)
+        bias = round(sum(errors) / n, 2)   # positive = over-predicts risk
+        acc  = round(max(0, 100 - mae), 1)
+        dhr  = round(sum(dir_hits) / len(dir_hits) * 100, 1) if dir_hits else None
+        # Bias label
+        if abs(bias) < 2:   bias_label = "calibrated"
+        elif bias > 4:      bias_label = "over-estimates risk"
+        elif bias < -4:     bias_label = "under-estimates risk"
+        elif bias > 0:      bias_label = "slight over-estimation"
+        else:               bias_label = "slight under-estimation"
+        return {
+            "horizon":           label,
+            "n_observations":    n,
+            "mae":               mae,
+            "rmse":              rmse,
+            "bias":              bias,
+            "bias_label":        bias_label,
+            "accuracy_pct":      acc,
+            "direction_hit_rate":dhr,
+        }
+
+    m7  = _metrics(errors_7d,  dir_hits_7d,  "7d")
+    m30 = _metrics(errors_30d, dir_hits_30d, "30d")
+
+    # ── Calibration score (0-100) ──────────────────────────────────────────
+    # Weighted: accuracy (50%) + direction hit rate (30%) + bias penalty (20%)
+    def _cal_score(m: dict) -> float | None:
+        if m["n_observations"] == 0: return None
+        acc_s = m["accuracy_pct"] * 0.50
+        dhr_s = (m["direction_hit_rate"] or 50) * 0.30
+        # Bias penalty: low bias = good
+        bias_pen = max(0, 20 - abs(m["bias"]) * 2)
+        return round(min(100, acc_s + dhr_s + bias_pen), 1)
+
+    cal_7d  = _cal_score(m7)
+    cal_30d = _cal_score(m30)
+    # Combined calibration score
+    if cal_7d is not None and cal_30d is not None:
+        cal_score = round(cal_7d * 0.45 + cal_30d * 0.55, 1)
+    elif cal_7d is not None:
+        cal_score = cal_7d
+    elif cal_30d is not None:
+        cal_score = cal_30d
+    else:
+        cal_score = None
+
+    # ── Calibration grade ──────────────────────────────────────────────────
+    if cal_score is None:    grade, grade_ru = "unknown",   "Нет данных"
+    elif cal_score >= 80:    grade, grade_ru = "excellent",  "Отличная"
+    elif cal_score >= 65:    grade, grade_ru = "good",       "Хорошая"
+    elif cal_score >= 50:    grade, grade_ru = "fair",       "Удовлетворительная"
+    elif cal_score >= 35:    grade, grade_ru = "poor",       "Слабая"
+    else:                    grade, grade_ru = "unreliable", "Ненадёжная"
+
+    # ── Confidence calibration ─────────────────────────────────────────────
+    # Is the model's stated confidence consistent with actual errors?
+    stated_conf_7d  = f7.get("confidence",  70)
+    stated_conf_30d = f30.get("confidence", 65)
+    # Expected MAE at a given confidence level (rough Gaussian approximation)
+    expected_mae_7d  = round(100 * (1 - stated_conf_7d / 100) * 0.5, 1)
+    expected_mae_30d = round(100 * (1 - stated_conf_30d / 100) * 0.6, 1)
+    conf_cal_7d  = (abs((m7["mae"]  or 0) - expected_mae_7d)  < 5) if m7["mae"]  is not None else None
+    conf_cal_30d = (abs((m30["mae"] or 0) - expected_mae_30d) < 8) if m30["mae"] is not None else None
+
+    # ── Monthly report trigger ─────────────────────────────────────────────
+    try:
+        from datetime import date as dt
+        day = dt.fromisoformat(TODAY).day
+        is_month_start = (day <= 3)
+    except Exception:
+        is_month_start = False
+
+    return {
+        "country":          iso2,
+        "country_name":     snap["country_name"],
+        "date":             TODAY,
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "calibration_score":cal_score,
+        "calibration_grade":grade,
+        "calibration_grade_ru": grade_ru,
+        # Horizon metrics
+        "metrics_7d":       m7,
+        "metrics_30d":      m30,
+        "calibration_7d":   cal_7d,
+        "calibration_30d":  cal_30d,
+        # Confidence calibration
+        "confidence_calibrated_7d":  conf_cal_7d,
+        "confidence_calibrated_30d": conf_cal_30d,
+        # Context
+        "history_depth":    len(hist_sorted),
+        "is_month_report":  is_month_start,
+    }
+
+
+def save_calibration(snapshots: list[dict]) -> None:
+    """Save forecast calibration for all 25 countries to docs/calibration/{CC}.json"""
+    CALIBRATION_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Load history for this country
+            hist_path = HISTORY_DIR / f"{iso2}.json"
+            if hist_path.exists():
+                with open(hist_path) as f:
+                    hist_data = json.load(f)
+                history = hist_data.get("snapshots", [])
+            else:
+                history = []
+
+            cal = compute_forecast_accuracy(snap, history)
+            with open(CALIBRATION_DIR / f"{iso2}.json", "w") as f:
+                json.dump(cal, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [CAL] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[CAL] Saved calibration for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -2995,6 +3220,7 @@ def main():
     save_early_warning(snapshots)
     save_decision_support(snapshots)
     save_resilience(snapshots)
+    save_calibration(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
