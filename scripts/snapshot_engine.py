@@ -24,6 +24,7 @@ DAILY_DIR      = SNAP_DIR / "daily"
 HISTORY_DIR    = SNAP_DIR / "history"
 INTEL_DIR      = DOCS_DIR / "intelligence"
 ALERTS_DIR     = DOCS_DIR / "alerts"
+TIMELINE_DIR   = DOCS_DIR / "timelines"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -1047,6 +1048,83 @@ def generate_intelligence_feed(snapshots: list[dict]) -> None:
         file=sys.stderr
     )
 
+
+
+_ESC_LABELS_RU = {"stable":"Стабильно","elevated":"Повышенный","pressured":"Под давлением","critical":"Критический"}
+
+
+def build_country_timeline(iso2: str) -> list[dict]:
+    """Timeline Engine V1 — build event timeline from history file."""
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    if not hist_path.exists():
+        return []
+    try:
+        with open(hist_path) as f:
+            hist = json.load(f)
+    except Exception:
+        return []
+    snaps = hist.get("snapshots", [])
+    if not snaps:
+        return []
+    events: list[dict] = []
+    for i, snap in enumerate(snaps):
+        prev   = snaps[i - 1] if i > 0 else None
+        score  = snap.get("risk_score", 0)
+        delta  = snap.get("delta", 0)
+        level  = snap.get("escalation_level", "stable")
+        domain = snap.get("dominant_domain", "geopolitics")
+        date   = snap.get("date", "")
+        drivers = snap.get("drivers", [])
+        if delta != 0:
+            events.append({"date":date,"type":"risk_change","direction":"up" if delta > 0 else "down",
+                            "risk_score":score,"delta":delta,"escalation":level,"domain":domain,
+                            "description":f"Риск {'вырос' if delta > 0 else 'снизился'} на {abs(delta)} пунктов до {score}/100"})
+        if prev:
+            prev_ord = _ESCALATION_ORDER.get(prev.get("escalation_level","stable"),0)
+            curr_ord = _ESCALATION_ORDER.get(level, 0)
+            if curr_ord > prev_ord:
+                events.append({"date":date,"type":"escalation_upgrade","direction":"up","risk_score":score,
+                                "delta":delta,"escalation":level,"domain":domain,
+                                "description":f"Эскалация: {_ESC_LABELS_RU.get(prev.get('escalation_level',''),'')} → {_ESC_LABELS_RU.get(level,level)}"})
+            elif curr_ord < prev_ord:
+                events.append({"date":date,"type":"escalation_downgrade","direction":"down","risk_score":score,
+                                "delta":delta,"escalation":level,"domain":domain,
+                                "description":f"Деэскалация: {_ESC_LABELS_RU.get(prev.get('escalation_level',''),'')} → {_ESC_LABELS_RU.get(level,level)}"})
+        for drv in drivers:
+            if drv.get("severity",0) >= 85:
+                events.append({"date":date,"type":"critical_driver","direction":"up","risk_score":score,
+                                "delta":delta,"escalation":level,"domain":drv.get("domain",domain),
+                                "description":drv.get("name","")[:80]})
+                break
+        if delta <= -5:
+            events.append({"date":date,"type":"risk_recovery","direction":"down","risk_score":score,
+                            "delta":delta,"escalation":level,"domain":domain,
+                            "description":f"Существенное снижение риска: {delta} за 24 часа"})
+    events.sort(key=lambda e: e["date"], reverse=True)
+    seen: set = set()
+    result: list[dict] = []
+    for e in events:
+        k = e["date"] + ":" + e["type"]
+        if k not in seen:
+            seen.add(k)
+            result.append(e)
+    return result
+
+
+def save_country_timelines(snapshots: list[dict]) -> None:
+    """Save timeline for all 25 countries to docs/timelines/{CC}.json"""
+    TIMELINE_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            events = build_country_timeline(iso2)
+            with open(TIMELINE_DIR / f"{iso2}.json", "w") as f:
+                json.dump({"country":iso2,"country_name":snap["country_name"],
+                           "generated_at":datetime.now(timezone.utc).isoformat(),
+                           "event_count":len(events),"events":events}, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [TIMELINE] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[TIMELINE] Saved timelines for {len(snapshots)} countries", file=sys.stderr)
 
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
