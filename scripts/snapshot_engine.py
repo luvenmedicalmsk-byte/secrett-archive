@@ -3048,11 +3048,18 @@ def compute_forecast_accuracy(snap: dict, history: list[dict]) -> dict:
                 "direction_hit_rate": None,
                 "note": "insufficient history",
             }
+        # ── Calibration V1.1 — Option A: normalized accuracy ─────────────
+        # RISK_RANGE = 75 = span of risk_score platform-wide [10..85]
+        # Old: accuracy_pct = max(0, 100 - MAE)  — not normalized, not comparable
+        # New: accuracy_pct = 100 × (1 - MAE / RISK_RANGE) — fully normalized
+        # Mathematical justification: MAE=5 means different things in tight
+        # vs wide risk ranges. This makes scores comparable across countries.
+        _RISK_RANGE = 75.0  # platform constant: risk_score spans 10..85
         n    = len(errors)
         mae  = round(sum(abs(e) for e in errors) / n, 2)
         rmse = round(math.sqrt(sum(e*e for e in errors) / n), 2)
         bias = round(sum(errors) / n, 2)   # positive = over-predicts risk
-        acc  = round(max(0, 100 - mae), 1)
+        acc  = round(max(0.0, 100.0 * (1.0 - mae / _RISK_RANGE)), 1)
         dhr  = round(sum(dir_hits) / len(dir_hits) * 100, 1) if dir_hits else None
         # Bias label
         if abs(bias) < 2:   bias_label = "calibrated"
@@ -3126,6 +3133,7 @@ def compute_forecast_accuracy(snap: dict, history: list[dict]) -> dict:
         "country":          iso2,
         "country_name":     snap["country_name"],
         "date":             TODAY,
+        "formula_version":  "v1.1-normalized",  # Option A: 100×(1-MAE/75)
         "generated_at":     datetime.now(timezone.utc).isoformat(),
         "calibration_score":cal_score,
         "calibration_grade":grade,
