@@ -76,6 +76,8 @@ export default {
     return handleTimeline(request, env);
   if (path.startsWith('/api/scenarios/') && request.method === 'GET')
     return handleScenarios_v1(request, env);
+  if (path.startsWith('/api/correlations/') && request.method === 'GET')
+    return handleCorrelations(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1560,6 +1562,7 @@ function getTierCapabilities(tier) {
       alerts_limit:        3,
       timeline_days:       7,
       scenario_access:     'none',
+      correlation_access: 'none',
     },
     signal: {
       tier:                'signal',
@@ -1577,6 +1580,7 @@ function getTierCapabilities(tier) {
       alerts_limit:        20,
       timeline_days:       30,
       scenario_access:     'base',
+      correlation_access: 'top3',
     },
     strategic: {
       tier:                'strategic',
@@ -1594,6 +1598,7 @@ function getTierCapabilities(tier) {
       alerts_limit:        100,
       timeline_days:       180,
       scenario_access:     'full',
+      correlation_access: 'full',
     },
     elite: {
       tier:                'elite',
@@ -1611,6 +1616,7 @@ function getTierCapabilities(tier) {
       alerts_limit:        -1,
       timeline_days:       -1,
       scenario_access:     'drivers',
+      correlation_access: 'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2127,5 +2133,104 @@ function _filterScenarios(data,access,tier){
   if(access==='base') filtered=filtered.filter(s=>s.name==='Base Case');
   if(access!=='drivers') filtered=filtered.map(s=>({name:s.name,name_ru:s.name_ru,score:s.score,delta_from_current:s.delta_from_current,probability:s.probability}));
   base.scenarios=filtered;
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CORRELATION ENGINE V1 — Worker endpoint
+// GET /api/correlations/{CC}
+// correlation_access: 'none' | 'top3' | 'full' | 'full+explain'
+//   none       → FREE: teaser only
+//   top3       → SIGNAL PRO: top 3 country links, no explanations
+//   full       → STRATEGIC PRO: all links + driver correlations
+//   full+explain → ELITE: all + explanations + driver pairs
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleCorrelations(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.correlation_access || 'none';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
+
+  if (!cc || cc.length !== 2) {
+    return new Response(JSON.stringify({ error: 'Invalid country code' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  const cacheKey = `correlations:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                   'X-Cache': 'HIT', 'X-Tier': tier }
+      });
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/correlations/${cc}.json`;
+    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    if (r.status === 404) return new Response(JSON.stringify({ error: 'No correlations for ' + cc }), {
+      status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+    if (!r.ok) throw new Error('fetch failed: ' + r.status);
+    const data   = await r.json();
+    const result = _filterCorrelations(data, access, tier);
+
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 600 }); } catch (_) {}
+    }
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterCorrelations(data, access, tier) {
+  const base = {
+    country: data.country, country_name: data.country_name,
+    date: data.date, tier,
+  };
+
+  if (access === 'none') {
+    base.teaser         = true;
+    base.country_links  = null;
+    return base;
+  }
+
+  // Country links
+  const allLinks = data.country_links || [];
+  const links    = access === 'top3' ? allLinks.slice(0, 3) : allLinks;
+
+  // Strip explanations for non-elite
+  base.country_links = links.map(l => {
+    const item = { country: l.country, country_name: l.country_name,
+                   strength: l.strength, linked_domain: l.linked_domain };
+    if (access === 'full+explain') item.reason = l.reason;
+    return item;
+  });
+
+  // Driver correlations: full and elite only
+  if (access !== 'top3') {
+    base.driver_correlations = (data.driver_correlations || []).map(d => {
+      const item = { domain_a: d.domain_a, domain_b: d.domain_b, strength: d.strength };
+      if (access === 'full+explain') item.explanation = d.explanation;
+      return item;
+    });
+    // Driver pairs and risk amplifiers: full+
+    base.risk_amplifiers = data.risk_amplifiers || [];
+    if (access === 'full+explain') {
+      base.driver_pairs = data.driver_pairs || [];
+    }
+  }
+
   return base;
 }
