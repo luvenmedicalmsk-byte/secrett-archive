@@ -84,6 +84,8 @@ export default {
     return handleSystemic(request, env);
   if (path.startsWith('/api/early-warning/') && request.method === 'GET')
     return handleEarlyWarning(request, env);
+  if (path.startsWith('/api/decision-support/') && request.method === 'GET')
+    return handleDecisionSupport(request, env);
       // History + escalation + intelligence endpoints (v2.1)
       if (path === '/api/history/snapshot'  && request.method === 'POST') return handleSnapshotIngest(request, env, ctx);
       if (path === '/api/history/agg'       && request.method === 'GET')  return handleHistoryAgg(url, env);
@@ -1572,6 +1574,7 @@ function getTierCapabilities(tier) {
       propagation_access: 'teaser',
       systemic_access:    'score',
       early_warning_access: 'score',
+      decision_access:      'score',
     },
     signal: {
       tier:                'signal',
@@ -1593,6 +1596,7 @@ function getTierCapabilities(tier) {
       propagation_access: 'chain',
       systemic_access:    'score+level',
       early_warning_access: 'score+level',
+      decision_access:      'score+level',
     },
     strategic: {
       tier:                'strategic',
@@ -1614,6 +1618,7 @@ function getTierCapabilities(tier) {
       propagation_access: 'full',
       systemic_access:    'full',
       early_warning_access: 'full',
+      decision_access:      'full',
     },
     elite: {
       tier:                'elite',
@@ -1635,6 +1640,7 @@ function getTierCapabilities(tier) {
       propagation_access: 'full+explain',
       systemic_access:    'full+explain',
       early_warning_access: 'full+explain',
+      decision_access:      'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -2552,6 +2558,106 @@ function _filterEarlyWarning(data, access, tier) {
   // ELITE: full signal detail + emerging risks
   base.signals       = data.signals || [];
   base.emerging_risks = data.emerging_risks || [];
+
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DECISION SUPPORT ENGINE V1 — Worker endpoint
+// GET /api/decision-support/{CC}
+// decision_access:
+//   score        → FREE: decision_score + readiness_score
+//   score+level  → SIGNAL: + decision_level + pressure
+//   full         → STRATEGIC: + actions + strategic_windows
+//   full+explain → ELITE: + opportunity_signals + full action descriptions
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleDecisionSupport(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.decision_access || 'score';
+  const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
+
+  if (!cc || cc.length !== 2) {
+    return new Response(JSON.stringify({ error: 'Invalid country code' }), {
+      status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+
+  const cacheKey = `ds:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, { type: 'json' });
+      if (cached) return new Response(JSON.stringify(cached), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                   'X-Cache': 'HIT', 'X-Tier': tier }
+      });
+    } catch (_) {}
+  }
+
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/decision-support/${cc}.json`;
+    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    if (r.status === 404) return new Response(JSON.stringify({ error: 'No decision support for ' + cc }), {
+      status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+    if (!r.ok) throw new Error('fetch failed: ' + r.status);
+    const data   = await r.json();
+    const result = _filterDecisionSupport(data, access, tier);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), { expirationTtl: 600 }); } catch (_) {}
+    }
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*',
+                 'X-Cache': 'MISS', 'X-Tier': tier }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: String(e) }), {
+      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+function _filterDecisionSupport(data, access, tier) {
+  // Always: scores (all tiers)
+  const base = {
+    country:          data.country,
+    country_name:     data.country_name,
+    date:             data.date,
+    tier,
+    decision_score:   data.decision_score,
+    readiness_score:  data.readiness_score,
+    opportunity_score: data.opportunity_score,
+  };
+
+  if (access === 'score') return base;
+
+  // SIGNAL+: level + pressure
+  base.decision_level     = data.decision_level;
+  base.decision_label_ru  = data.decision_label_ru;
+  base.decision_pressure  = data.decision_pressure;
+  base.decision_pressure_ru = data.decision_pressure_ru;
+  base.dominant_domain    = data.dominant_domain;
+  base.active_hot_drivers = data.active_hot_drivers;
+
+  if (access === 'score+level') return base;
+
+  // STRATEGIC+: actions (label+priority+urgency) + strategic windows
+  base.actions = (data.actions || []).map(a => ({
+    label:      a.label,
+    priority:   a.priority,
+    urgency:    a.urgency,
+    confidence: a.confidence,
+    domain:     a.domain,
+  }));
+  base.strategic_windows = data.strategic_windows || [];
+
+  if (access === 'full') return base;
+
+  // ELITE: full descriptions + opportunity signals
+  base.actions           = data.actions || [];
+  base.opportunity_signals = data.opportunity_signals || [];
 
   return base;
 }
