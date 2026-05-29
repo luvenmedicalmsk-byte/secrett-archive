@@ -246,6 +246,25 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .ap-empty{font-size:10px;color:rgba(255,255,255,.2);text-align:center;padding:20px 0;font-style:italic}
 .ap-loading{font-size:10px;color:rgba(255,255,255,.2);text-align:center;padding:20px 0;letter-spacing:.1em}
 
+/* ── Timeline block ── */
+.cc-timeline{margin-bottom:14px}
+.cc-timeline-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:8px}
+.cc-tl-item{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:flex-start}
+.cc-tl-item:last-child{border-bottom:none}
+.cc-tl-line{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
+.cc-tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cc-tl-stem{width:1px;background:rgba(255,255,255,.07);flex:1;margin-top:3px;min-height:8px}
+.cc-tl-body{flex:1;min-width:0}
+.cc-tl-date{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.25);margin-bottom:2px}
+.cc-tl-type{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:3px}
+.cc-tl-desc{font-size:11px;color:rgba(232,224,208,.8);line-height:1.4}
+.cc-tl-score{font-size:9px;font-family:'Courier New',monospace;margin-top:2px;color:rgba(255,255,255,.3)}
+.cc-timeline-lock{font-size:9px;color:#B8973A;margin-top:6px;letter-spacing:.06em}
+/* ── Mini history chart ── */
+#cc-tl-chart-wrap{height:48px;margin-bottom:6px;margin-top:8px}
+#cc-tl-chart{width:100%;height:48px}
+.cc-tl-chart-label{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.2);text-align:right;margin-bottom:2px}
+
 </style>
 </head>
 <body>
@@ -1627,6 +1646,11 @@ setInterval(() => {
     <div id="cc-summary-block"></div>
     <div id="cc-drivers-block"></div>
 
+    <!-- Risk Timeline -->
+    <div id="cc-timeline-block"></div>
+    <div class="cc-tl-chart-label" id="cc-tl-chart-label"></div>
+    <div id="cc-tl-chart-wrap"><canvas id="cc-tl-chart"></canvas></div>
+
     <!-- Mini timeline -->
     <div class="cc-chart-label" id="cc-chart-label"></div>
     <div id="cc-chart-wrap">
@@ -1685,10 +1709,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1},
   };
   return C[tier]||C.free;
 }
@@ -1753,6 +1777,8 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-level').textContent  = '';
   document.getElementById('cc-summary-block').innerHTML = '';
   document.getElementById('cc-drivers-block').innerHTML = '';
+  document.getElementById('cc-timeline-block').innerHTML='';
+  document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
   document.getElementById('cc-forecast-block').innerHTML='';
   document.getElementById('cc-change-block').innerHTML = '';
@@ -1779,6 +1805,8 @@ window.openCountryCard = async function(cc) {
   // Try to load history for timeline
   const hist = await fetchHistory(cc);
   renderTimeline(hist, country.risk_score);
+  // Timeline Engine V1
+  fetchTimeline(cc).then(function(tlData) { renderCountryTimeline(tlData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -2429,6 +2457,174 @@ document.getElementById('ap-close').addEventListener('click', closeAlertsPanel);
 
 // Preload alerts in background
 setTimeout(function() { fetchAlerts().catch(function(){}); }, 4000);
+
+
+// ── Timeline Engine V1 — UI ───────────────────────────────────────────────
+var _tlCache = {};   // {CC: timeline data}
+
+var _TL_TYPE_LABELS = {
+  risk_change:          'Изменение риска',
+  escalation_upgrade:   'Эскалация',
+  escalation_downgrade: 'Деэскалация',
+  critical_driver:      'Критический фактор',
+  risk_recovery:        'Снижение угрозы',
+  forecast_alert:       'Прогноз: угроза',
+};
+
+var _TL_COLORS = {
+  risk_change:          '#D4AF5A',
+  escalation_upgrade:   '#ef4444',
+  escalation_downgrade: '#22c55e',
+  critical_driver:      '#dc2626',
+  risk_recovery:        '#22c55e',
+  forecast_alert:       '#a855f7',
+};
+
+async function fetchTimeline(cc) {
+  if (_tlCache[cc]) return _tlCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/timeline/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _tlCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderCountryTimeline(data, caps) {
+  var block = document.getElementById('cc-timeline-block');
+  var chartLabel = document.getElementById('cc-tl-chart-label');
+  if (!block) return;
+
+  if (!data || !data.events || !data.events.length) {
+    block.innerHTML = '';
+    chartLabel.textContent = '';
+    _renderTlMiniChart([], caps);
+    return;
+  }
+
+  var events = data.events;
+  var days   = caps.timeline_days || 7;
+  var label  = days < 0 ? 'Вся история' : 'За ' + days + ' дней';
+
+  var html = '<div class="cc-timeline">'
+           + '<div class="cc-timeline-label">История риска · ' + label + '</div>';
+
+  events.forEach(function(e, idx) {
+    var col      = _TL_COLORS[e.type] || '#B8973A';
+    var typeLabel = _TL_TYPE_LABELS[e.type] || e.type;
+    var isLast   = idx === events.length - 1;
+    var delta    = e.delta || 0;
+    var dStr     = delta > 0 ? '+' + delta : String(delta);
+
+    html += '<div class="cc-tl-item">'
+          + '<div class="cc-tl-line">'
+          +   '<div class="cc-tl-dot" style="background:' + col + '"></div>'
+          +   (isLast ? '' : '<div class="cc-tl-stem"></div>')
+          + '</div>'
+          + '<div class="cc-tl-body">'
+          +   '<div class="cc-tl-date">' + _esc(e.date || '') + '</div>'
+          +   '<div class="cc-tl-type">' + _esc(typeLabel) + '</div>'
+          +   '<div class="cc-tl-desc">' + _esc(e.description || '') + '</div>'
+          +   '<div class="cc-tl-score">'
+          +     'Индекс: ' + (e.risk_score || '?')
+          +     ' · ' + (delta !== 0 ? dStr : '→0')
+          +   '</div>'
+          + '</div>'
+          + '</div>';
+  });
+
+  // Lock hint if more data exists at higher tier
+  var tierOrder = ['free','signal','strategic','elite'];
+  var curIdx = tierOrder.indexOf(data.tier || 'free');
+  if (curIdx < 3) {
+    var nextTier = curIdx === 0 ? 'Signal PRO (30 дней)' : curIdx === 1 ? 'Strategic PRO (180 дней)' : null;
+    if (nextTier) html += '<div class="cc-timeline-lock">🔒 Глубже в ' + nextTier + '</div>';
+  }
+
+  html += '</div>';
+  block.innerHTML = html;
+
+  // Mini score chart
+  _renderTlMiniChart(events, caps);
+  chartLabel.textContent = events.length + ' событий · ' + (data.generated_at || '').slice(0,10);
+}
+
+function _renderTlMiniChart(events, caps) {
+  var wrap = document.getElementById('cc-tl-chart-wrap');
+  var cv   = document.getElementById('cc-tl-chart');
+  if (!cv || !wrap) return;
+
+  // Collect score points from events (risk_change type only)
+  var points = events
+    .filter(function(e) { return e.risk_score !== undefined; })
+    .map(function(e)    { return e.risk_score; })
+    .reverse();  // oldest first for chart
+
+  if (points.length < 2) { cv.style.display = 'none'; return; }
+  cv.style.display = 'block';
+
+  var dpr = window.devicePixelRatio || 1;
+  var W   = wrap.clientWidth || 260;
+  var H   = 48;
+  cv.width  = W * dpr;
+  cv.height = H * dpr;
+  cv.style.width  = W + 'px';
+  cv.style.height = H + 'px';
+
+  var ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var minV = Math.min.apply(null, points) - 3;
+  var maxV = Math.max.apply(null, points) + 3;
+  var scX  = function(i) { return (i / (points.length - 1)) * W; };
+  var scY  = function(v) { return H - ((v - minV) / (maxV - minV)) * (H - 6) - 3; };
+
+  // Threshold line at 65
+  ctx.strokeStyle = 'rgba(255,255,255,.06)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,4]);
+  ctx.beginPath();
+  ctx.moveTo(0, scY(65));
+  ctx.lineTo(W, scY(65));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Line
+  var lastScore = points[points.length - 1];
+  var lineCol = lastScore >= 80 ? '#dc2626' : lastScore >= 65 ? '#ef4444' : lastScore >= 50 ? '#D4AF5A' : '#22c55e';
+  var grad = ctx.createLinearGradient(0, 0, W, 0);
+  grad.addColorStop(0, 'rgba(184,151,58,.3)');
+  grad.addColorStop(1, lineCol);
+
+  ctx.beginPath();
+  ctx.moveTo(scX(0), scY(points[0]));
+  for (var i = 1; i < points.length; i++) {
+    var cpx = (scX(i-1) + scX(i)) / 2;
+    ctx.bezierCurveTo(cpx, scY(points[i-1]), cpx, scY(points[i]), scX(i), scY(points[i]));
+  }
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Fill
+  ctx.lineTo(scX(points.length-1), H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  var fill = ctx.createLinearGradient(0,0,0,H);
+  fill.addColorStop(0, lineCol.replace('rgb','rgba').replace(')',', .15)'));
+  fill.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = fill;
+  ctx.fill();
+
+  // End dot
+  ctx.beginPath();
+  ctx.arc(scX(points.length-1), scY(lastScore), 3, 0, Math.PI*2);
+  ctx.fillStyle = lineCol;
+  ctx.fill();
+}
 
 })(); // end IIFE
 </script>
