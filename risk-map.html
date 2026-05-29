@@ -399,7 +399,7 @@ function renderMarkers() {
     m.on('click', () => showDetail(ev));
     return m;
   });
-  if (markers.length) markersLayer.addLayers(markers);  // single batch op
+  markers.forEach(m => markersLayer.addLayer(m));  // layerGroup uses addLayer() not addLayers()
   _log('render', `${markers.length} markers (${filtered.length - markers.length} filtered stale/invalid)`);
 }
 
