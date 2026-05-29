@@ -188,8 +188,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #intel-btn{pointer-events:all;padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
 #intel-btn:hover,#intel-btn.active{border-color:#B8973A;color:#D4AF5A}
 /* ── Intelligence Panel ── */
-#intel-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:21;background:rgba(6,5,10,0.97);border-left:1px solid rgba(184,151,58,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
-#intel-panel.open{transform:translateX(0)}
+#intel-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:21;pointer-events:none;background:rgba(6,5,10,0.97);border-left:1px solid rgba(184,151,58,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+#intel-panel.open{transform:translateX(0);pointer-events:all}
 #ip-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(184,151,58,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#B8973A;flex-shrink:0}
 #ip-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
 #ip-close:hover{color:rgba(255,255,255,0.7)}
@@ -219,8 +219,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #alerts-btn{pointer-events:all;padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
 #alerts-btn:hover,#alerts-btn.active{border-color:#dc2626;color:#ef4444}
 #alerts-btn.has-alerts{border-color:rgba(220,38,38,0.5);color:#ef4444}
-#alerts-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:22;background:rgba(6,5,10,0.97);border-left:1px solid rgba(220,38,38,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
-#alerts-panel.open{transform:translateX(0)}
+#alerts-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:22;pointer-events:none;background:rgba(6,5,10,0.97);border-left:1px solid rgba(220,38,38,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+#alerts-panel.open{transform:translateX(0);pointer-events:all}
 #ap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(220,38,38,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;flex-shrink:0}
 #ap-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
 #ap-close:hover{color:rgba(255,255,255,0.7)}
@@ -2355,6 +2355,7 @@ function closeCountriesPanel() {
 }
 
 document.getElementById('countries-btn').addEventListener('click', () => {
+  closeIntelPanel(); closeAlertsPanel();
   const p = document.getElementById('countries-panel');
   if (p.classList.contains('open')) closeCountriesPanel();
   else openCountriesPanel();
@@ -2530,8 +2531,9 @@ function closeIntelPanel() {
 
 document.getElementById('intel-btn').addEventListener('click', function() {
   var p = document.getElementById('intel-panel');
-  if (p.classList.contains('open')) closeIntelPanel();
-  else openIntelPanel();
+  if (p.classList.contains('open')) { closeIntelPanel(); return; }
+  closeAlertsPanel();   // close the other panel first
+  openIntelPanel();
 });
 document.getElementById('ip-close').addEventListener('click', closeIntelPanel);
 
@@ -2650,8 +2652,9 @@ function closeAlertsPanel() {
 
 document.getElementById('alerts-btn').addEventListener('click', function() {
   var p = document.getElementById('alerts-panel');
-  if (p.classList.contains('open')) closeAlertsPanel();
-  else openAlertsPanel();
+  if (p.classList.contains('open')) { closeAlertsPanel(); return; }
+  closeIntelPanel();    // close the other panel first
+  openAlertsPanel();
 });
 document.getElementById('ap-close').addEventListener('click', closeAlertsPanel);
 
