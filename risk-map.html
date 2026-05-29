@@ -655,6 +655,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-dash-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
 .cc-dash-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 .cc-dash-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
+/* ── Decision Quality Engine V1 ── */
+.cc-dq{margin-bottom:14px}
+.cc-dq-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-dq-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-dq-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-dq-grade{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;flex-shrink:0;letter-spacing:.06em}
+.cc-dq-grade.Aplus{background:rgba(167,139,250,.18);color:#a78bfa;border:1px solid rgba(167,139,250,.35)}
+.cc-dq-grade.A{background:rgba(34,197,94,.14);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-dq-grade.B{background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.28)}
+.cc-dq-grade.C{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.28)}
+.cc-dq-grade.D{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-dq-grade.F{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.38)}
+.cc-dq-grade.NA{background:rgba(255,255,255,.04);color:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.08)}
+.cc-dq-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.cc-dq-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.cc-dq-section{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:8px 0 5px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.cc-dq-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:6px}
+.cc-dq-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
+.cc-dq-cell{text-align:center;padding:5px 3px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-dq-cell-val{display:block;font-size:13px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1.2}
+.cc-dq-cell-lbl{display:block;font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.22);margin-top:2px}
+.cc-dq-action{display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-dq-action:last-child{border-bottom:none}
+.cc-dq-action-id{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3);width:38px;flex-shrink:0}
+.cc-dq-action-bar-wrap{flex:1;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.cc-dq-action-bar{height:100%;border-radius:2px}
+.cc-dq-action-val{font-size:9px;font-weight:700;flex-shrink:0;width:32px;text-align:right}
+.cc-dq-action-alpha{font-size:8px;color:rgba(255,255,255,.3);flex-shrink:0;width:36px;text-align:right;font-family:'Courier New',monospace}
+.cc-dq-bias{padding:4px 0 4px 10px;border-left:2px solid rgba(245,158,11,.4);margin-bottom:5px}
+.cc-dq-bias.high{border-left-color:rgba(220,38,38,.5)}
+.cc-dq-bias.low{border-left-color:rgba(96,165,250,.35)}
+.cc-dq-bias-label{font-size:8px;font-weight:600;color:rgba(232,224,208,.7);display:flex;justify-content:space-between}
+.cc-dq-bias-detail{font-size:8px;color:rgba(255,255,255,.35);margin-top:2px;line-height:1.4}
+.cc-dq-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-dq-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+.cc-dq-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
 </style>
 </head>
 <body>
@@ -2050,6 +2086,7 @@ setInterval(() => {
     <div id="cc-feedback-block"></div>
     <div id="cc-validation-block"></div>
     <div id="cc-dash-block"></div>
+    <div id="cc-dq-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -2114,10 +2151,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2194,6 +2231,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-feedback-block').innerHTML='';
   document.getElementById('cc-validation-block').innerHTML='';
   document.getElementById('cc-dash-block').innerHTML='';
+  document.getElementById('cc-dq-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2236,6 +2274,7 @@ window.openCountryCard = async function(cc) {
   fetchStrategyFeedback(cc).then(function(fbData) { renderStrategyFeedback(fbData, _clientCaps); });
   fetchValidation(cc).then(function(valData) { renderValidation(valData, _clientCaps); });
   fetchDashboard(cc).then(function(dashData) { renderDashboard(dashData, _clientCaps); });
+  fetchDecisionQuality(cc).then(function(dqData) { renderDecisionQuality(dqData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -4849,6 +4888,194 @@ function _dCell(val, lbl, col) {
   return '<div class="cc-dash-cell">'
        + '<span class="cc-dash-cell-val" style="color:'+(col||'rgba(232,224,208,.7)')+'">'+val+'</span>'
        + '<span class="cc-dash-cell-lbl">'+lbl+'</span>'
+       + '</div>';
+}
+
+
+// ── Decision Quality Engine V1 — UI ──────────────────────────────────────
+var _dqCache = {};
+var _DQ_GRADE_COL = function(g) {
+  return g==='A+'?'#a78bfa':g==='A'?'#22c55e':g==='B'?'#60a5fa':
+         g==='C'?'#fbbf24':g==='D'?'#f59e0b':g==='F'?'#dc2626':'rgba(255,255,255,.3)';
+};
+var _DQ_GRADE_CSS = function(g) {
+  return g==='A+'?'Aplus':g==='A'?'A':g==='B'?'B':g==='C'?'C':g==='D'?'D':g==='F'?'F':'NA';
+};
+
+async function fetchDecisionQuality(cc) {
+  if (_dqCache[cc]) return _dqCache[cc];
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/decision-quality/' + cc, { headers });
+    if (!r.ok) return null;
+    var d = await r.json();
+    _dqCache[cc] = d;
+    return d;
+  } catch(e) { return null; }
+}
+
+function renderDecisionQuality(data, caps) {
+  var block = document.getElementById('cc-dq-block');
+  if (!block) return;
+  var access = caps.dq_access || 'teaser';
+  if (!data || data.error) { block.innerHTML = ''; return; }
+
+  var sc    = data.decision_score;
+  var grade = data.grade    || 'N/A';
+  var grRu  = data.grade_ru || '';
+  var depth = data.history_depth || 0;
+  var nEval = data.n_evaluated   || 0;
+  var gCol  = _DQ_GRADE_COL(grade);
+  var gCss  = _DQ_GRADE_CSS(grade);
+  var barW  = sc !== null && sc !== undefined ? Math.min(100, sc) : 0;
+  var na    = '—';
+
+  var html = '<div class="cc-dq">'
+    + '<div class="cc-dq-header">'
+    +   '<span class="cc-dq-label">Качество решений</span>'
+    +   (sc!==null&&sc!==undefined?'<span class="cc-dq-score" style="color:'+gCol+'">'+sc+'</span>':'')
+    +   '<span class="cc-dq-grade '+gCss+'">'+_esc(grade)+'</span>'
+    + '</div>'
+    + '<div class="cc-dq-bar"><div class="cc-dq-bar-fill" style="width:'+barW+'%;background:'+gCol+'"></div></div>';
+
+  // FREE: grade + score only
+  if (access === 'teaser') {
+    if (data.note) html += '<div class="cc-dq-teaser">'+_esc(data.note)+'</div>';
+    else html += '<div class="cc-dq-teaser">Decision Score: '+(sc!==null?sc+'/100':'—')+'</div>';
+    html += '<div class="cc-dq-lock">🔒 Полный анализ решений в Signal PRO</div>'
+          + '<div class="cc-dq-depth">История: '+depth+' · Оценено: '+nEval+'</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // SIGNAL+: Section A + top-3 actions
+  var dsr  = data.decision_success_rate;
+  var oip  = data.outcome_improvement_pct;
+  var gap  = data.expected_actual_gap;
+  var alph = data.alpha_score;
+  var am   = data.alpha_mean;
+
+  html += '<div class="cc-dq-section">A · Эффективность решений</div>'
+        + '<div class="cc-dq-grid4">'
+        + _dqCell(dsr!==null&&dsr!==undefined?dsr+'%':na,'Успех',dsr>=65?'#22c55e':dsr>=45?'#fbbf24':'#ef4444')
+        + _dqCell(alph!==null&&alph!==undefined?alph:na,'Alpha',alph>=60?'#22c55e':alph>=45?'#fbbf24':'#ef4444')
+        + _dqCell(oip!==null&&oip!==undefined?Math.round(oip)+'%':na,'Улучшение',oip>=60?'#22c55e':oip>=45?'#fbbf24':'#ef4444')
+        + _dqCell(gap!==null&&gap!==undefined?gap:na,'Gap','rgba(232,224,208,.6)')
+        + '</div>';
+
+  // Alpha mean indicator
+  if (am!==null&&am!==undefined) {
+    var amCol = am>0?'#22c55e':am<0?'#ef4444':'rgba(232,224,208,.5)';
+    html += '<div style="font-size:9px;color:rgba(232,224,208,.5);margin-bottom:5px">'
+          + 'Альфа относительно пассивной стратегии: '
+          + '<span style="color:'+amCol+';font-weight:700">'+(am>0?'+':'')+am+'pt</span></div>';
+  }
+
+  // Top-3 action ranking
+  var ar = data.action_ranking || [];
+  if (ar.length) {
+    html += '<div class="cc-dq-section">B · Рейтинг действий</div>';
+    ar.slice(0,3).forEach(function(a) {
+      var wCol = a.win_rate>=60?'#22c55e':a.win_rate>=40?'#fbbf24':'#ef4444';
+      var aAlph= a.avg_alpha!==null&&a.avg_alpha!==undefined?(a.avg_alpha>0?'+':'')+a.avg_alpha:'';
+      html += '<div class="cc-dq-action">'
+            + '<span class="cc-dq-action-id">'+_esc(a.action_id||'')+'</span>'
+            + '<div class="cc-dq-action-bar-wrap"><div class="cc-dq-action-bar" style="width:'+Math.min(100,a.win_rate||0)+'%;background:'+wCol+'"></div></div>'
+            + '<span class="cc-dq-action-val" style="color:'+wCol+'">'+(a.win_rate!==null?a.win_rate+'%':'—')+'</span>'
+            + '<span class="cc-dq-action-alpha">'+_esc(aAlph)+'</span>'
+            + '</div>';
+    });
+  }
+
+  if (access === 'summary') {
+    html += '<div class="cc-dq-lock">🔒 Полный анализ в Strategic PRO</div>'
+          + '<div class="cc-dq-depth">История: '+depth+' · Оценено: '+nEval+'</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // STRATEGIC+: Section C (outcome) + D (bias)
+  var aes  = data.action_efficiency_score;
+  var rrs  = data.risk_reduction_score;
+  var ocr  = data.opportunity_capture_rate;
+  var ces  = data.cost_efficiency_score;
+
+  html += '<div class="cc-dq-section">C · Исходы</div>'
+        + '<div class="cc-dq-grid4">'
+        + _dqCell(aes!==null&&aes!==undefined?aes:na,'Эффект',aes>=65?'#22c55e':aes>=45?'#fbbf24':'#ef4444')
+        + _dqCell(rrs!==null&&rrs!==undefined?rrs:na,'Снижение риска',rrs>=60?'#22c55e':rrs>=40?'#fbbf24':'#ef4444')
+        + _dqCell(ocr!==null&&ocr!==undefined?ocr+'%':na,'Захват возм.',ocr>=70?'#22c55e':ocr>=45?'#fbbf24':'#ef4444')
+        + _dqCell(ces!==null&&ces!==undefined?ces:na,'Cost Eff.',ces>=60?'#22c55e':ces>=40?'#fbbf24':'#ef4444')
+        + '</div>';
+
+  // Full action ranking
+  var arFull = data.action_ranking || [];
+  if (arFull.length > 3) {
+    arFull.slice(3).forEach(function(a) {
+      var wCol = a.win_rate>=60?'#22c55e':a.win_rate>=40?'#fbbf24':'#ef4444';
+      html += '<div class="cc-dq-action">'
+            + '<span class="cc-dq-action-id">'+_esc(a.action_id||'')+'</span>'
+            + '<div class="cc-dq-action-bar-wrap"><div class="cc-dq-action-bar" style="width:'+Math.min(100,a.win_rate||0)+'%;background:'+wCol+'"></div></div>'
+            + '<span class="cc-dq-action-val" style="color:'+wCol+'">'+(a.win_rate!==null?a.win_rate+'%':'—')+'</span>'
+            + '</div>';
+    });
+  }
+
+  // Section D: Biases
+  var biases = data.biases || [];
+  html += '<div class="cc-dq-section">D · Обнаруженные смещения ('+(biases.length||0)+')</div>';
+  if (!biases.length) {
+    html += '<div style="font-size:9px;color:#22c55e;padding:3px 0">✓ Смещений не обнаружено</div>';
+  } else {
+    biases.forEach(function(b) {
+      html += '<div class="cc-dq-bias '+(b.severity||'medium')+'">'
+            + '<div class="cc-dq-bias-label"><span>'+_esc(b.label||b.type||'')+'</span><span style="font-size:7px;color:rgba(255,255,255,.3)">'+(b.rate!==undefined?b.rate+'%':'')+'</span></div>'
+            + '<div class="cc-dq-bias-detail">'+_esc(b.detail||'')+'</div>'
+            + '</div>';
+    });
+  }
+
+  if (access === 'full') {
+    html += '<div class="cc-dq-depth">История: '+depth+' · Оценено: '+nEval+'</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // ELITE: Section E (strategy effectiveness by state)
+  var se_ = data.strategy_effectiveness || {};
+  var sac = se_.state_action_correlation || {};
+  var sacKeys = Object.keys(sac);
+  if (sacKeys.length) {
+    html += '<div class="cc-dq-section">E · Эффективность по состоянию</div>';
+    sacKeys.forEach(function(st) {
+      var s = sac[st];
+      var aCol = s.alpha>0?'#22c55e':s.alpha<0?'#ef4444':'rgba(232,224,208,.4)';
+      html += '<div class="cc-dq-action">'
+            + '<span class="cc-dq-action-id" style="width:90px;font-size:7px">'+_esc(st)+'</span>'
+            + '<div class="cc-dq-action-bar-wrap"><div class="cc-dq-action-bar" style="width:'
+            + Math.min(100,Math.max(0,(s.alpha+5)*10))+'%;background:'+aCol+'"></div></div>'
+            + '<span class="cc-dq-action-alpha" style="width:50px;color:'+aCol+'">'+(s.alpha>0?'+':'')+s.alpha+' (n='+s.n+')</span>'
+            + '</div>';
+    });
+  }
+
+  // Consistency sub-scores
+  var os_ = data.outcome_score; var ef_ = data.efficiency_score; var cs_ = data.consistency_score;
+  if (os_!==undefined||ef_!==undefined||cs_!==undefined) {
+    html += '<div class="cc-dq-section">Sub-scores</div>'
+          + '<div class="cc-dq-grid3">'
+          + _dqCell(os_!==undefined?os_:na,'Outcome','rgba(232,224,208,.6)')
+          + _dqCell(ef_!==undefined?ef_:na,'Efficiency','rgba(232,224,208,.6)')
+          + _dqCell(cs_!==undefined?cs_:na,'Consistency','rgba(232,224,208,.6)')
+          + '</div>';
+  }
+
+  html += '<div class="cc-dq-depth">История: '+depth+' · Оценено: '+nEval+'</div></div>';
+  block.innerHTML = html;
+}
+
+function _dqCell(val, lbl, col) {
+  return '<div class="cc-dq-cell">'
+       + '<span class="cc-dq-cell-val" style="color:'+(col||'rgba(232,224,208,.7)')+'">'+val+'</span>'
+       + '<span class="cc-dq-cell-lbl">'+lbl+'</span>'
        + '</div>';
 }
 
