@@ -183,6 +183,37 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cp-delta{font-size:8px;font-family:'Courier New',monospace;margin-top:1px}
 .cp-delta.up{color:#E84030}.cp-delta.down{color:#27AE60}.cp-delta.flat{color:rgba(255,255,255,0.25)}
 .cp-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-left:2px}
+/* ── Intelligence button ── */
+#intel-btn{padding:6px 12px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:rgba(168,160,144,0.85);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all 0.2s;pointer-events:all;backdrop-filter:blur(6px)}
+#intel-btn:hover,#intel-btn.active{border-color:#B8973A;color:#D4AF5A}
+/* ── Intelligence Panel ── */
+#intel-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:21;background:rgba(6,5,10,0.97);border-left:1px solid rgba(184,151,58,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+#intel-panel.open{transform:translateX(0)}
+#ip-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(184,151,58,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#B8973A;flex-shrink:0}
+#ip-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
+#ip-close:hover{color:rgba(255,255,255,0.7)}
+#ip-meta{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,0.2);padding:6px 14px;letter-spacing:0.06em;flex-shrink:0}
+#ip-body{flex:1;overflow-y:auto;padding:8px 12px 16px}
+#ip-body::-webkit-scrollbar{width:2px}
+#ip-body::-webkit-scrollbar-thumb{background:rgba(184,151,58,0.3)}
+.ip-section{margin-bottom:18px}
+.ip-section-title{font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ip-section-title span{font-size:9px}
+.ip-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer}
+.ip-item:last-child{border-bottom:none}
+.ip-item:hover .ip-item-name{color:rgba(232,224,208,1)}
+.ip-item-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:3px}
+.ip-item-name{font-size:11px;color:rgba(232,224,208,0.85);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ip-item-score{font-size:14px;font-weight:700;font-family:'Cormorant Garamond',serif;flex-shrink:0}
+.ip-item-delta{font-size:9px;font-family:'Courier New',monospace;flex-shrink:0}
+.ip-item-delta.up{color:#ef4444}.ip-item-delta.down{color:#22c55e}.ip-item-delta.flat{color:rgba(255,255,255,0.2)}
+.ip-item-sub{font-size:9px;color:rgba(255,255,255,0.3);display:flex;gap:6px;align-items:center}
+.ip-item-impact{font-size:9px;color:rgba(232,224,208,0.4);margin-top:3px;font-style:italic}
+.ip-domain-dot{width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0}
+.ip-lock{font-size:9px;color:#B8973A;text-align:center;padding:12px 0;letter-spacing:0.06em}
+.ip-empty{font-size:10px;color:rgba(255,255,255,0.2);text-align:center;padding:16px 0;font-style:italic}
+.ip-loading{font-size:10px;color:rgba(255,255,255,0.2);text-align:center;padding:20px 0;letter-spacing:0.1em}
+
 </style>
 </head>
 <body>
@@ -205,6 +236,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   </div>
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
+  <button class="lb" id="intel-btn">◆ Разведка</button>
   <!-- all layer buttons hidden from UI, code preserved -->
   <button class="lb" id="lb-planes" style="display:none">✈ Самолёты</button>
   <button class="lb" id="lb-ships" style="display:none">🚢 Суда</button>
@@ -244,6 +276,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <div id="cp-header"><span>◆ Страновой риск</span><span id="cp-close">✕</span></div>
   <div id="cp-updated"></div>
   <div id="cp-grid"></div>
+</div>
+
+<!-- Daily Intelligence Panel -->
+<div id="intel-panel">
+  <div id="ip-header"><span>◆ Разведка · Сводка</span><span id="ip-close">✕</span></div>
+  <div id="ip-meta"></div>
+  <div id="ip-body">
+    <div class="ip-loading">Загрузка данных…</div>
+  </div>
 </div>
 <div id="detail">
   <button id="dt-x">✕</button>
@@ -2054,6 +2095,180 @@ document.getElementById('cp-close').addEventListener('click', closeCountriesPane
 
 // Preload snapshot data in background after page ready
 setTimeout(() => { fetchToday().catch(() => {}); }, 2000);
+
+
+// ── Daily Intelligence Feed ──────────────────────────────────────────────
+var _intelData = null;
+
+var DCL_INTEL = {
+  geopolitics:'#ff7a00', climate:'#22c55e', economy:'#38bdf8',
+  technology:'#a855f7', social:'#ef4444'
+};
+
+async function fetchIntelFeed() {
+  if (_intelData) return _intelData;
+  try {
+    var headers = {};
+    if (_clientToken) headers['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/intelligence/daily', { headers });
+    if (!r.ok) return null;
+    _intelData = await r.json();
+    if (_intelData && _intelData.tier) _clientCaps = _getClientCaps(_intelData.tier);
+    return _intelData;
+  } catch(e) {
+    console.warn('[INTEL] fetch error:', e.message);
+    return null;
+  }
+}
+
+function renderIntelFeed(data) {
+  var body = document.getElementById('ip-body');
+  var meta = document.getElementById('ip-meta');
+  if (!data) {
+    body.innerHTML = '<div class="ip-empty">Нет данных. Попробуйте позже.</div>';
+    return;
+  }
+
+  var tier = data.tier || 'free';
+  var m = data.meta || {};
+  meta.textContent = 'Данные на ' + (data.date || '?') + '  ·  tier: ' + tier;
+
+  var html = '';
+
+  // ── Top Risk Increase ──────────────────────────────────────────────────
+  html += renderIntelSection(
+    '↑ Рост риска', '🔴',
+    data.top_risk_increase || [],
+    function(item) {
+      var col = DCL_INTEL[item.dominant_domain] || '#B8973A';
+      var d = item.delta || 0;
+      var dSign = d > 0 ? '▲+' + d : d < 0 ? '▼' + d : '→0';
+      var dCls  = d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
+      var row = '<div class="ip-item" onclick="openCountryCard(\'' + item.country + '\')">'
+              + '<div class="ip-item-row">'
+              + '<span class="ip-item-name">' + _esc(FLAGS[item.country]||'') + ' ' + _esc(item.country_name) + '</span>'
+              + '<span class="ip-item-score" style="color:' + col + '">' + item.risk_score + '</span>'
+              + '<span class="ip-item-delta ' + dCls + '">' + dSign + '</span>'
+              + '</div>'
+              + '<div class="ip-item-sub">'
+              + '<span class="ip-domain-dot" style="background:' + col + '"></span>'
+              + _esc(DOMAIN_RU[item.dominant_domain] || item.dominant_domain);
+      if (item.top_driver) row += ' · ' + _esc(item.top_driver.substring(0, 40));
+      row += '</div></div>';
+      return row;
+    },
+    tier
+  );
+
+  // ── Top Risk Decrease ──────────────────────────────────────────────────
+  html += renderIntelSection(
+    '↓ Снижение риска', '🟢',
+    data.top_risk_decrease || [],
+    function(item) {
+      var col = DCL_INTEL[item.dominant_domain] || '#B8973A';
+      var d = item.delta || 0;
+      var dSign = d > 0 ? '▲+' + d : d < 0 ? '▼' + d : '→0';
+      var dCls  = d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
+      return '<div class="ip-item" onclick="openCountryCard(\'' + item.country + '\')">'
+           + '<div class="ip-item-row">'
+           + '<span class="ip-item-name">' + _esc(FLAGS[item.country]||'') + ' ' + _esc(item.country_name) + '</span>'
+           + '<span class="ip-item-score" style="color:' + col + '">' + item.risk_score + '</span>'
+           + '<span class="ip-item-delta ' + dCls + '">' + dSign + '</span>'
+           + '</div>'
+           + '<div class="ip-item-sub">'
+           + '<span class="ip-domain-dot" style="background:' + col + '"></span>'
+           + _esc(DOMAIN_RU[item.dominant_domain] || item.dominant_domain)
+           + '</div></div>';
+    },
+    tier
+  );
+
+  // ── Top Forecast Growth ────────────────────────────────────────────────
+  html += renderIntelSection(
+    '⬆ Прогноз роста', '📈',
+    data.top_forecast_growth || [],
+    function(item) {
+      var col = DCL_INTEL[item.dominant_domain] || '#B8973A';
+      return '<div class="ip-item" onclick="openCountryCard(\'' + item.country + '\')">'
+           + '<div class="ip-item-row">'
+           + '<span class="ip-item-name">' + _esc(FLAGS[item.country]||'') + ' ' + _esc(item.country_name) + '</span>'
+           + '<span class="ip-item-score" style="color:' + col + '">' + item.risk_score + '</span>'
+           + '</div>'
+           + '<div class="ip-item-sub">'
+           + 'Прогноз: ' + (item.forecast_base || '?') + ' → ' + (item.forecast_worst || '?')
+           + ' · ' + (item.forecast_confidence || '?') + '%'
+           + '</div></div>';
+    },
+    tier
+  );
+
+  // ── New Drivers ────────────────────────────────────────────────────────
+  html += renderIntelSection(
+    '⚡ Ключевые сигналы', '🔶',
+    data.new_drivers || [],
+    function(item) {
+      var col = DCL_INTEL[item.domain] || '#B8973A';
+      var row = '<div class="ip-item" onclick="openCountryCard(\'' + item.country + '\')">'
+              + '<div class="ip-item-row">'
+              + '<span class="ip-item-name">' + _esc(item.name.substring(0,50)) + '</span>'
+              + '<span class="ip-item-score" style="color:' + col + ';font-size:11px">' + (item.severity||'') + '</span>'
+              + '</div>'
+              + '<div class="ip-item-sub">'
+              + '<span class="ip-domain-dot" style="background:' + col + '"></span>'
+              + _esc(FLAGS[item.country]||'') + ' ' + _esc(item.country_name)
+              + '</div>';
+      if (item.impact) {
+        row += '<div class="ip-item-impact">' + _esc(item.impact.substring(0,80)) + '</div>';
+      }
+      row += '</div>';
+      return row;
+    },
+    tier
+  );
+
+  body.innerHTML = html || '<div class="ip-empty">Нет данных за сегодня.</div>';
+}
+
+function renderIntelSection(title, icon, items, renderItem, tier) {
+  if (!items || !items.length) return '';
+  var html = '<div class="ip-section">'
+           + '<div class="ip-section-title"><span>' + icon + '</span>' + title + '</div>';
+  items.forEach(function(item) { html += renderItem(item); });
+
+  // Show lock hint if this is partial data
+  var limit = _clientCaps.intel_limit;
+  if (limit > 0 && items.length >= limit) {
+    html += '<div class="ip-lock">🔒 Полный список в следующем тире</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+async function openIntelPanel() {
+  var panel = document.getElementById('intel-panel');
+  var btn   = document.getElementById('intel-btn');
+  panel.classList.add('open');
+  btn.classList.add('active');
+
+  var data = await fetchIntelFeed();
+  renderIntelFeed(data);
+}
+
+function closeIntelPanel() {
+  document.getElementById('intel-panel').classList.remove('open');
+  document.getElementById('intel-btn').classList.remove('active');
+}
+
+document.getElementById('intel-btn').addEventListener('click', function() {
+  var p = document.getElementById('intel-panel');
+  if (p.classList.contains('open')) closeIntelPanel();
+  else openIntelPanel();
+});
+document.getElementById('ip-close').addEventListener('click', closeIntelPanel);
+
+// Preload intel feed alongside snapshot data
+setTimeout(function() { fetchIntelFeed().catch(function(){}); }, 3000);
 
 })(); // end IIFE
 </script>
