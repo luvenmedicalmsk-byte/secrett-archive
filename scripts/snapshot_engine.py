@@ -27,6 +27,7 @@ ALERTS_DIR     = DOCS_DIR / "alerts"
 TIMELINE_DIR   = DOCS_DIR / "timelines"
 SCENARIOS_DIR  = DOCS_DIR / "scenarios"
 CORRELATIONS_DIR = DOCS_DIR / "correlations"
+PROPAGATION_DIR  = DOCS_DIR / "propagation"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -1531,6 +1532,244 @@ def save_country_correlations(snapshots: list[dict]) -> None:
             print(f"  [CORR] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[CORR] Saved correlations for {len(snapshots)} countries", file=sys.stderr)
 
+# ── DOMAIN PROPAGATION DELAYS (days) ─────────────────────────────────────
+# How quickly a risk in domain_source propagates to domain_target
+_DOMAIN_PROP_DELAY: dict[tuple, int] = {
+    ("geopolitics", "economy"):    3,
+    ("geopolitics", "social"):     5,
+    ("geopolitics", "climate"):   14,
+    ("geopolitics", "technology"): 7,
+    ("economy",     "social"):     4,
+    ("economy",     "geopolitics"):7,
+    ("economy",     "technology"): 5,
+    ("climate",     "economy"):    7,
+    ("climate",     "social"):     5,
+    ("climate",     "geopolitics"):10,
+    ("technology",  "economy"):    3,
+    ("technology",  "geopolitics"):5,
+    ("social",      "geopolitics"):7,
+    ("social",      "economy"):    5,
+}
+
+# ── DOMAIN PROPAGATION STRENGTH (0-100) ──────────────────────────────────
+_DOMAIN_PROP_STRENGTH: dict[tuple, int] = {
+    ("geopolitics", "economy"):    82,
+    ("geopolitics", "social"):     75,
+    ("geopolitics", "climate"):    40,
+    ("geopolitics", "technology"): 60,
+    ("economy",     "social"):     80,
+    ("economy",     "geopolitics"):65,
+    ("economy",     "technology"): 62,
+    ("climate",     "economy"):    72,
+    ("climate",     "social"):     68,
+    ("climate",     "geopolitics"):45,
+    ("technology",  "economy"):    70,
+    ("technology",  "geopolitics"):58,
+    ("social",      "geopolitics"):65,
+    ("social",      "economy"):    60,
+}
+
+
+def _propagation_score(source_score: int, source_delta: int,
+                        link_strength: int, domain_str: int) -> int:
+    """
+    Risk Propagation Score V1 (0-100).
+    Combines source risk level, velocity, country link strength, domain strength.
+    """
+    # Base: how much risk the source country is "pushing"
+    velocity_factor = min(1.0, max(0.0, source_delta / 10.0))  # 0..1
+    risk_pressure   = (source_score / 100.0) * 0.6 + velocity_factor * 0.4
+
+    # Transmission: how strong the channel is
+    transmission    = (link_strength / 100.0) * 0.5 + (domain_str / 100.0) * 0.5
+
+    raw = risk_pressure * transmission * 100
+    return max(0, min(100, round(raw)))
+
+
+def propagate_risk(snap: dict, all_snapshots: list[dict]) -> dict:
+    """
+    Risk Propagation Engine V1 — deterministic propagation chain.
+    No LLM. No external APIs.
+
+    For a given country, calculates:
+      primary   : countries/domains directly hit (1 hop, ≤7 days)
+      secondary : countries hit via primary chain (2 hops, 7-21 days)
+      tertiary  : countries hit via secondary (3 hops, 21-45 days)
+
+    risk_propagation_score: 0-100 — how strongly this country is
+      currently propagating risk to the network.
+
+    Algorithm:
+      1. Source risk = score + delta velocity
+      2. For each correlation link: compute propagation strength × link strength
+      3. Domain propagation: dominant domain → connected domains
+      4. Hop propagation: secondary = primary links' own primary links
+      5. risk_propagation_score = weighted average of all propagation paths
+    """
+    iso2    = snap["country"]
+    score   = snap.get("risk_score", 50)
+    delta   = snap.get("delta", 0)
+    domain  = snap.get("dominant_domain", "geopolitics")
+    drivers = snap.get("drivers", [])
+    f30     = snap.get("forecast_30d") or {}
+
+    snap_by_cc: dict[str, dict] = {s["country"]: s for s in all_snapshots}
+    links    = _COUNTRY_LINKS.get(iso2, [])
+
+    # ── PRIMARY IMPACTS (direct links, ≤7 days) ────────────────────────
+    primary: list[dict] = []
+    for link in links:
+        tgt_cc   = link["linked"]
+        tgt_snap = snap_by_cc.get(tgt_cc, {})
+        tgt_score= tgt_snap.get("risk_score", 50)
+        tgt_dom  = tgt_snap.get("dominant_domain", "geopolitics")
+
+        # Domain transmission delay
+        dom_key   = (domain, tgt_dom)
+        prop_del  = _DOMAIN_PROP_DELAY.get(dom_key, 7)
+        dom_str   = _DOMAIN_PROP_STRENGTH.get(dom_key, 55)
+        prop_scr  = _propagation_score(score, delta, link["strength"], dom_str)
+
+        if prop_scr >= 20:
+            primary.append({
+                "target_country":   tgt_cc,
+                "target_name":      COUNTRIES.get(tgt_cc, {}).get("name_ru", tgt_cc),
+                "target_domain":    tgt_dom,
+                "target_score":     tgt_score,
+                "propagation_score":prop_scr,
+                "link_strength":    link["strength"],
+                "delay_days":       prop_del,
+                "channel":          link["reason"],
+                "impact_level":     "primary",
+            })
+
+    primary.sort(key=lambda x: -x["propagation_score"])
+    primary = primary[:5]
+
+    # ── SECONDARY IMPACTS (2-hop, 7-21 days) ──────────────────────────
+    secondary: list[dict] = []
+    seen_cc = {iso2} | {p["target_country"] for p in primary}
+    for p_item in primary[:3]:
+        p_cc    = p_item["target_country"]
+        p_links = _COUNTRY_LINKS.get(p_cc, [])
+        for link2 in p_links[:4]:
+            tgt2_cc = link2["linked"]
+            if tgt2_cc in seen_cc:
+                continue
+            tgt2_snap  = snap_by_cc.get(tgt2_cc, {})
+            tgt2_score = tgt2_snap.get("risk_score", 50)
+            tgt2_dom   = tgt2_snap.get("dominant_domain", "geopolitics")
+            # Attenuated: multiply by 0.55 for second hop
+            prop2 = round(p_item["propagation_score"] * (link2["strength"] / 100) * 0.55)
+            delay2 = p_item["delay_days"] + _DOMAIN_PROP_DELAY.get(
+                (p_item["target_domain"], tgt2_dom), 7)
+            if prop2 >= 12:
+                secondary.append({
+                    "target_country":   tgt2_cc,
+                    "target_name":      COUNTRIES.get(tgt2_cc, {}).get("name_ru", tgt2_cc),
+                    "target_score":     tgt2_score,
+                    "target_domain":    tgt2_dom,
+                    "propagation_score":prop2,
+                    "delay_days":       min(delay2, 21),
+                    "via_country":      p_cc,
+                    "impact_level":     "secondary",
+                })
+            seen_cc.add(tgt2_cc)
+    secondary.sort(key=lambda x: -x["propagation_score"])
+    secondary = secondary[:4]
+
+    # ── TERTIARY IMPACTS (3-hop, 21-45 days) ──────────────────────────
+    tertiary: list[dict] = []
+    seen_cc2 = seen_cc | {s["target_country"] for s in secondary}
+    for s_item in secondary[:2]:
+        s_cc    = s_item["target_country"]
+        s_links = _COUNTRY_LINKS.get(s_cc, [])
+        for link3 in s_links[:3]:
+            tgt3_cc = link3["linked"]
+            if tgt3_cc in seen_cc2:
+                continue
+            prop3   = round(s_item["propagation_score"] * (link3["strength"] / 100) * 0.4)
+            delay3  = s_item["delay_days"] + 10
+            if prop3 >= 8:
+                tgt3_snap = snap_by_cc.get(tgt3_cc, {})
+                tertiary.append({
+                    "target_country":   tgt3_cc,
+                    "target_name":      COUNTRIES.get(tgt3_cc, {}).get("name_ru", tgt3_cc),
+                    "target_score":     tgt3_snap.get("risk_score", 50),
+                    "propagation_score":prop3,
+                    "delay_days":       min(delay3, 45),
+                    "via_country":      s_cc,
+                    "impact_level":     "tertiary",
+                })
+            seen_cc2.add(tgt3_cc)
+    tertiary.sort(key=lambda x: -x["propagation_score"])
+    tertiary = tertiary[:3]
+
+    # ── DOMAIN PROPAGATION CHAIN ──────────────────────────────────────
+    domain_chain: list[dict] = []
+    for (src_d, tgt_d), strength in _DOMAIN_PROP_STRENGTH.items():
+        if src_d == domain:
+            delay = _DOMAIN_PROP_DELAY.get((src_d, tgt_d), 7)
+            effective_str = round(strength * (score / 100))
+            if effective_str >= 20:
+                domain_chain.append({
+                    "source_domain": src_d,
+                    "target_domain": tgt_d,
+                    "strength":      effective_str,
+                    "delay_days":    delay,
+                })
+    domain_chain.sort(key=lambda x: -x["strength"])
+
+    # ── RISK PROPAGATION SCORE (0-100) ────────────────────────────────
+    # How strongly this country radiates risk to the network right now
+    if primary:
+        avg_prop = sum(p["propagation_score"] for p in primary) / len(primary)
+        velocity_boost = min(20, abs(delta) * 2)
+        forecast_boost = min(10, max(0, f30.get("worst_case", score) - score) // 3)
+        rps = min(100, round(avg_prop + velocity_boost + forecast_boost))
+    else:
+        rps = round(score * 0.3)
+
+    # ── IMPACT MATRIX ──────────────────────────────────────────────────
+    all_impacts = primary + secondary + tertiary
+    impact_matrix: list[dict] = []
+    domain_totals: dict[str, int] = {}
+    for imp in all_impacts:
+        d = imp.get("target_domain", "geopolitics")
+        domain_totals[d] = max(domain_totals.get(d, 0), imp["propagation_score"])
+    for dom, strength in sorted(domain_totals.items(), key=lambda x: -x[1]):
+        impact_matrix.append({"domain": dom, "max_impact": strength})
+
+    return {
+        "country":                  iso2,
+        "country_name":             snap["country_name"],
+        "date":                     TODAY,
+        "generated_at":             datetime.now(timezone.utc).isoformat(),
+        "risk_score":               score,
+        "risk_propagation_score":   rps,
+        "dominant_domain":          domain,
+        "primary_impacts":          primary,
+        "secondary_impacts":        secondary,
+        "tertiary_impacts":         tertiary,
+        "domain_chain":             domain_chain[:4],
+        "impact_matrix":            impact_matrix,
+    }
+
+
+def save_propagation(snapshots: list[dict]) -> None:
+    """Save propagation chains for all 25 countries to docs/propagation/{CC}.json"""
+    PROPAGATION_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            prop = propagate_risk(snap, snapshots)
+            with open(PROPAGATION_DIR / f"{iso2}.json", "w") as f:
+                json.dump(prop, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [PROP] {iso2}: FAILED — {e}", file=sys.stderr)
+    print(f"[PROP] Saved propagation for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -1557,6 +1796,7 @@ def main():
     save_country_timelines(snapshots)
     save_country_scenarios(snapshots)
     save_country_correlations(snapshots)
+    save_propagation(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
