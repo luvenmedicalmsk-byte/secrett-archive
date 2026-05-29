@@ -37,6 +37,7 @@ STRATEGY_DIR          = DOCS_DIR / "strategy"
 STRATEGY_HISTORY_DIR  = DOCS_DIR / "strategy-history"
 STRATEGY_FEEDBACK_DIR = DOCS_DIR / "strategy-feedback"
 VALIDATION_DIR        = DOCS_DIR / "validation"
+DASHBOARD_DIR         = DOCS_DIR / "dashboard"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -4130,6 +4131,382 @@ def save_validation(snapshots: list[dict]) -> None:
             print(f"  [VAL] {iso2}: FAILED — {e}", file=sys.stderr)
     print(f"[VAL] Saved validation for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ACCURACY & CONFIDENCE DASHBOARD V1
+# Read-only observability layer. Reads docs/validation/ data only.
+# Does NOT modify forecasts, scenarios, calibration or validation engines.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_DASH_HZ = ["d7", "d30", "d90", "d180", "d365"]
+
+# Dashboard composite score weights (spec)
+_DASH_W = {"validation": 0.40, "confidence": 0.25, "scenario": 0.20, "state": 0.15}
+
+
+def _dash_grade(score: float | None) -> tuple[str, str]:
+    if score is None:   return "unknown", "Нет данных"
+    if score >= 90:     return "elite",   "Элита"
+    if score >= 80:     return "strong",  "Сильная"
+    if score >= 65:     return "good",    "Хорошая"
+    if score >= 50:     return "fair",    "Удовлетворительная"
+    return "weak", "Слабая"
+
+
+def _extract_horizon_series(horizons: dict) -> dict:
+    """
+    Extract per-horizon accuracy/MAE/RMSE/Bias/DHR into flat series
+    for trend charts and horizon analysis.
+    """
+    series: dict[str, dict] = {}
+    for hz in _DASH_HZ:
+        h = horizons.get(hz, {})
+        if not h or h.get("note"):
+            series[hz] = None
+            continue
+        series[hz] = {
+            "n":            h.get("n"),
+            "accuracy_pct": h.get("accuracy_pct"),
+            "mae":          h.get("mae"),
+            "rmse":         h.get("rmse"),
+            "bias":         h.get("bias"),
+            "bias_label":   h.get("bias_label"),
+            "dhr":          h.get("dhr"),
+            "horizon_score":h.get("horizon_score"),
+            "state_score":  (h.get("state_hit") or {}).get("state_score"),
+            "scenario_hit": (h.get("scenario_hit") or {}).get("hit_rate"),
+            "top2_hit":     (h.get("scenario_hit") or {}).get("top2_hit_rate"),
+            "conf_error":   (h.get("confidence") or {}).get("confidence_error"),
+            "conf_grade":   (h.get("confidence") or {}).get("confidence_grade"),
+        }
+    return series
+
+
+def _compute_trends(series: dict) -> dict:
+    """
+    Derive rolling trend signals from horizon series.
+    Uses short horizons as leading indicator and long as lagging.
+    Trend = sign of (avg short-horizon score - avg long-horizon score).
+    """
+    short_accs = [series[hz]["accuracy_pct"] for hz in ["d7","d30"]
+                  if series.get(hz) and series[hz]["accuracy_pct"] is not None]
+    long_accs  = [series[hz]["accuracy_pct"] for hz in ["d180","d365"]
+                  if series.get(hz) and series[hz]["accuracy_pct"] is not None]
+    short_avg  = round(sum(short_accs)/len(short_accs), 1) if short_accs else None
+    long_avg   = round(sum(long_accs)/len(long_accs), 1)   if long_accs  else None
+
+    if short_avg is not None and long_avg is not None:
+        trend_dir = "improving" if short_avg > long_avg + 2 else \
+                    "declining" if short_avg < long_avg - 2 else "stable"
+        trend_delta = round(short_avg - long_avg, 1)
+    else:
+        trend_dir = "unknown"; trend_delta = None
+
+    # Confidence drift across horizons
+    conf_errors = [(hz, series[hz]["conf_error"]) for hz in _DASH_HZ
+                   if series.get(hz) and series[hz]["conf_error"] is not None]
+    if len(conf_errors) >= 2:
+        sorted_ce = sorted(conf_errors, key=lambda x: _DASH_HZ.index(x[0]))
+        conf_drift = round(sorted_ce[-1][1] - sorted_ce[0][1], 1)
+    else:
+        conf_drift = None
+
+    return {
+        "short_avg_accuracy":  short_avg,
+        "long_avg_accuracy":   long_avg,
+        "trend_direction":     trend_dir,
+        "trend_delta":         trend_delta,
+        "confidence_drift":    conf_drift,
+    }
+
+
+def _detect_diagnostics(val: dict, series: dict) -> list[dict]:
+    """
+    Section E — automatic anomaly detection.
+    Returns list of detected issues with severity.
+    """
+    issues = []
+
+    # Systematic bias
+    sb = val.get("systematic_bias")
+    if sb is not None and abs(sb) >= 3:
+        direction = "over" if sb > 0 else "under"
+        issues.append({
+            "type":     "systematic_bias",
+            "severity": "high" if abs(sb) >= 5 else "medium",
+            "detail":   f"Систематическое смещение {'+' if sb>0 else ''}{sb}pt ({direction}-estimation)",
+        })
+
+    # Confidence drift
+    cd = val.get("confidence_drift")
+    if cd is not None and abs(cd) > 5:
+        issues.append({
+            "type":     "confidence_drift",
+            "severity": "high" if abs(cd) > 10 else "medium",
+            "detail":   f"Дрейф уверенности на {'+' if cd>0 else ''}{cd}pt от 7d→365d",
+        })
+
+    # Horizon degradation: long horizons much worse than short
+    s7  = series.get("d7",  {}) or {}
+    s365= series.get("d365",{}) or {}
+    if s7.get("accuracy_pct") and s365.get("accuracy_pct"):
+        deg = s7["accuracy_pct"] - s365["accuracy_pct"]
+        if deg > 15:
+            issues.append({
+                "type":     "horizon_degradation",
+                "severity": "medium",
+                "detail":   f"Деградация точности {deg:.0f}pt от 7d→365d",
+            })
+
+    # Scenario weakness
+    sc_acc = val.get("scenario_accuracy")
+    if sc_acc is not None and sc_acc < 50:
+        issues.append({
+            "type":     "scenario_weakness",
+            "severity": "medium",
+            "detail":   f"Точность сценариев {sc_acc}% (ниже 50%)",
+        })
+
+    # State classification errors
+    st_acc = val.get("state_accuracy")
+    if st_acc is not None and st_acc < 60:
+        issues.append({
+            "type":     "state_errors",
+            "severity": "medium" if st_acc >= 40 else "high",
+            "detail":   f"Точность состояний {st_acc}% (ниже 60%)",
+        })
+
+    # Over/under-estimation rates
+    or_ = val.get("overestimation_rate")
+    ur  = val.get("underestimation_rate")
+    if or_ is not None and or_ > 60:
+        issues.append({
+            "type":     "overestimation",
+            "severity": "medium",
+            "detail":   f"Систематическое завышение в {or_}% горизонтов",
+        })
+    if ur is not None and ur > 60:
+        issues.append({
+            "type":     "underestimation",
+            "severity": "medium",
+            "detail":   f"Систематическое занижение в {ur}% горизонтов",
+        })
+
+    return issues
+
+
+def compute_dashboard(iso2: str, country_name: str) -> dict:
+    """
+    Accuracy & Confidence Dashboard V1.
+    Reads docs/validation/{cc}.json (read-only).
+    Computes composite DashboardScore, section data for A-F,
+    and stores to docs/dashboard/{cc}.json.
+
+    DashboardScore = ValidationScore×0.40 + ConfidenceScore×0.25
+                   + ScenarioScore×0.20 + StateScore×0.15
+    """
+    val_path = VALIDATION_DIR / f"{iso2}.json"
+    base_out = {
+        "country": iso2, "country_name": country_name,
+        "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    if not val_path.exists():
+        return {**base_out, "note": "no validation data",
+                "dashboard_score": None, "dashboard_grade": "unknown",
+                "dashboard_grade_ru": "Нет данных"}
+
+    with open(val_path) as f:
+        val = json.load(f)
+
+    if val.get("historical_validation_score") is None:
+        return {**base_out, "note": val.get("note","no data"),
+                "dashboard_score": None, "dashboard_grade": "unknown",
+                "dashboard_grade_ru": "Нет данных",
+                "history_depth": val.get("history_depth", 0)}
+
+    # ── Section A: Forecast Quality ───────────────────────────────────────
+    hv_score   = val.get("historical_validation_score", 50)
+    val_grade  = val.get("validation_grade", "unknown")
+    state_acc  = val.get("state_accuracy", 50)
+    scen_acc   = val.get("scenario_accuracy", 50)
+    sys_bias   = val.get("systematic_bias", 0)
+    or_        = val.get("overestimation_rate", 0)
+    ur         = val.get("underestimation_rate", 0)
+    best_hz    = val.get("best_horizon")
+    worst_hz   = val.get("worst_horizon")
+    hz_scores  = val.get("horizon_scores", {})
+
+    # Extract per-horizon series
+    horizons   = val.get("horizons", {})
+    series     = _extract_horizon_series(horizons)
+
+    # Average confidence accuracy from horizons
+    conf_errors = [series[hz]["conf_error"] for hz in _DASH_HZ
+                   if series.get(hz) and series[hz] and series[hz].get("conf_error") is not None]
+    avg_conf_err= round(sum(conf_errors)/len(conf_errors), 1) if conf_errors else None
+    conf_acc    = max(0, round(100 - (avg_conf_err or 25))) if avg_conf_err is not None else None
+
+    # Average accuracy across all horizons
+    all_accs    = [series[hz]["accuracy_pct"] for hz in _DASH_HZ
+                   if series.get(hz) and series[hz] and series[hz].get("accuracy_pct") is not None]
+    avg_acc     = round(sum(all_accs)/len(all_accs), 1) if all_accs else None
+
+    # Average MAE/RMSE/Bias/DHR (flattened)
+    all_mae  = [series[hz]["mae"]  for hz in _DASH_HZ if series.get(hz) and series[hz] and series[hz].get("mae") is not None]
+    all_rmse = [series[hz]["rmse"] for hz in _DASH_HZ if series.get(hz) and series[hz] and series[hz].get("rmse") is not None]
+    all_dhr  = [series[hz]["dhr"]  for hz in _DASH_HZ if series.get(hz) and series[hz] and series[hz].get("dhr") is not None]
+    avg_mae  = round(sum(all_mae) /len(all_mae),  2) if all_mae  else None
+    avg_rmse = round(sum(all_rmse)/len(all_rmse), 2) if all_rmse else None
+    avg_dhr  = round(sum(all_dhr) /len(all_dhr),  1) if all_dhr  else None
+
+    # ── Section B: Horizon Analysis — already in series ──────────────────
+
+    # ── Section C: Calibration Monitoring ────────────────────────────────
+    conf_drift = val.get("confidence_drift")
+    # Reliability band: how consistent is accuracy across horizons?
+    if len(all_accs) >= 2:
+        rel_band = round(max(all_accs) - min(all_accs), 1)
+    else:
+        rel_band = None
+
+    # ── Section D: Trend Monitoring ──────────────────────────────────────
+    trends = _compute_trends(series)
+    trend_dir   = trends["trend_direction"]
+    trend_delta = trends["trend_delta"]
+
+    # Rolling window accuracy estimates (use hz as proxy)
+    trend_30d  = series.get("d30",  {}).get("accuracy_pct") if series.get("d30")  else None
+    trend_90d  = series.get("d90",  {}).get("accuracy_pct") if series.get("d90")  else None
+    trend_180d = series.get("d180", {}).get("accuracy_pct") if series.get("d180") else None
+    trend_365d = series.get("d365", {}).get("accuracy_pct") if series.get("d365") else None
+
+    # ── Section E: Diagnostics ────────────────────────────────────────────
+    diagnostics = _detect_diagnostics(val, series)
+
+    # ── Dashboard Composite Score ─────────────────────────────────────────
+    # DashboardScore = ValidationScore×0.40 + ConfidenceScore×0.25
+    #                + ScenarioScore×0.20 + StateScore×0.15
+    v_score  = hv_score   or 0
+    c_score  = conf_acc   or max(0, 50 - (avg_conf_err or 25))
+    sc_score = (scen_acc  or 0) if scen_acc is not None else 50
+    st_score = (state_acc or 0) if state_acc is not None else 50
+
+    dash_score = round(
+        v_score  * _DASH_W["validation"]  +
+        c_score  * _DASH_W["confidence"]  +
+        sc_score * _DASH_W["scenario"]    +
+        st_score * _DASH_W["state"]
+    )
+    grade, grade_ru = _dash_grade(dash_score)
+
+    return {
+        **base_out,
+        # A: Forecast Quality
+        "dashboard_score":        dash_score,
+        "dashboard_grade":        grade,
+        "dashboard_grade_ru":     grade_ru,
+        "validation_score":       hv_score,
+        "validation_grade":       val_grade,
+        "forecast_accuracy":      avg_acc,
+        "confidence_accuracy":    conf_acc,
+        "state_accuracy":         state_acc,
+        "scenario_accuracy":      scen_acc,
+        # B: Horizon Analysis
+        "horizon_series":         series,
+        "horizon_scores":         hz_scores,
+        "best_horizon":           best_hz,
+        "worst_horizon":          worst_hz,
+        # C: Calibration Monitoring
+        "mae":                    avg_mae,
+        "rmse":                   avg_rmse,
+        "bias":                   sys_bias,
+        "dhr":                    avg_dhr,
+        "confidence_drift":       conf_drift,
+        "overestimation_rate":    or_,
+        "underestimation_rate":   ur,
+        "reliability_band":       rel_band,
+        "avg_confidence_error":   avg_conf_err,
+        # D: Trend Monitoring
+        "trend_direction":        trend_dir,
+        "trend_delta":            trend_delta,
+        "trend_30d":              trend_30d,
+        "trend_90d":              trend_90d,
+        "trend_180d":             trend_180d,
+        "trend_365d":             trend_365d,
+        # E: Diagnostics
+        "diagnostics":            diagnostics,
+        "diagnostic_count":       len(diagnostics),
+        # Meta
+        "history_depth":          val.get("history_depth", 0),
+    }
+
+
+def save_dashboard(snapshots: list[dict]) -> None:
+    """Compute dashboard for all 25 countries. Read-only from validation data."""
+    DASHBOARD_DIR.mkdir(parents=True, exist_ok=True)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            d = compute_dashboard(iso2, snap["country_name"])
+            with open(DASHBOARD_DIR / f"{iso2}.json", "w") as f:
+                json.dump(d, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"  [DASH] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    # Section F: Country Ranking (global comparison file)
+    try:
+        ranking = _build_country_ranking(snapshots)
+        with open(DASHBOARD_DIR / "_ranking.json", "w") as f:
+            json.dump(ranking, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [DASH] ranking FAILED — {e}", file=sys.stderr)
+
+    print(f"[DASH] Saved dashboard for {len(snapshots)} countries", file=sys.stderr)
+
+
+def _build_country_ranking(snapshots: list[dict]) -> dict:
+    """Section F: build global accuracy ranking from all dashboard files."""
+    entries = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            p = DASHBOARD_DIR / f"{iso2}.json"
+            if not p.exists(): continue
+            d = json.loads(p.read_text())
+            if d.get("dashboard_score") is None: continue
+            entries.append({
+                "country":       iso2,
+                "country_name":  snap["country_name"],
+                "dashboard_score":d["dashboard_score"],
+                "forecast_accuracy": d.get("forecast_accuracy"),
+                "confidence_accuracy": d.get("confidence_accuracy"),
+                "trend_direction": d.get("trend_direction"),
+                "confidence_drift": d.get("confidence_drift"),
+                "validation_grade": d.get("validation_grade"),
+            })
+        except Exception:
+            continue
+
+    if not entries:
+        return {"date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+                "top_accuracy": [], "lowest_accuracy": [],
+                "largest_drift": []}
+
+    by_score   = sorted(entries, key=lambda x: -(x["dashboard_score"] or 0))
+    by_drift   = sorted([e for e in entries if e.get("confidence_drift") is not None],
+                        key=lambda x: -abs(x["confidence_drift"] or 0))
+
+    return {
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "total_countries": len(entries),
+        "top_accuracy":    by_score[:5],
+        "lowest_accuracy": list(reversed(by_score))[:5],
+        "improving":       [e for e in entries if e.get("trend_direction") == "improving"][:5],
+        "declining":       [e for e in entries if e.get("trend_direction") == "declining"][:5],
+        "largest_drift":   by_drift[:5],
+    }
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -4188,6 +4565,7 @@ def main():
     save_strategy(snapshots)
     save_strategy_feedback(snapshots)
     save_validation(snapshots)
+    save_dashboard(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
