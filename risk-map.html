@@ -807,6 +807,42 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-ase-diag-detail{font-size:7px;color:rgba(255,255,255,.3);margin-top:1px;line-height:1.4}
 .cc-ase-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
 .cc-ase-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+/* ── Global Risk Intelligence Engine V1 ── */
+.cc-grie{margin-bottom:14px}
+.cc-grie-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-grie-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-grie-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-grie-grade{font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;flex-shrink:0;letter-spacing:.06em}
+.cc-grie-grade.CRITICAL{background:rgba(220,38,38,.22);color:#dc2626;border:1px solid rgba(220,38,38,.4)}
+.cc-grie-grade.HIGH{background:rgba(239,68,68,.16);color:#ef4444;border:1px solid rgba(239,68,68,.32)}
+.cc-grie-grade.ELEVATED{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-grie-grade.MODERATE{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.28)}
+.cc-grie-grade.LOW{background:rgba(132,204,22,.10);color:#84cc16;border:1px solid rgba(132,204,22,.24)}
+.cc-grie-grade.MINIMAL{background:rgba(34,197,94,.10);color:#22c55e;border:1px solid rgba(34,197,94,.24)}
+.cc-grie-grade.NA{background:rgba(255,255,255,.04);color:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.08)}
+.cc-grie-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-bottom:9px;overflow:hidden}
+.cc-grie-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.cc-grie-section{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:7px 0 4px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.cc-grie-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px;font-size:8px;color:rgba(255,255,255,.3)}
+.cc-grie-pill{padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.cc-grie-risk{padding:4px 0 4px 9px;margin-bottom:4px;border-radius:2px}
+.cc-grie-risk.CRITICAL{border-left:3px solid #dc2626;background:rgba(220,38,38,.06)}
+.cc-grie-risk.HIGH{border-left:3px solid #ef4444;background:rgba(239,68,68,.04)}
+.cc-grie-risk.ELEVATED{border-left:3px solid #f59e0b;background:rgba(245,158,11,.04)}
+.cc-grie-risk.MODERATE{border-left:3px solid rgba(255,255,255,.15)}
+.cc-grie-risk-header{display:flex;align-items:center;gap:6px}
+.cc-grie-risk-cat{font-size:7px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;flex-shrink:0}
+.cc-grie-risk-title{font-size:9px;color:rgba(232,224,208,.82);flex:1;line-height:1.3}
+.cc-grie-risk-score{font-size:9px;font-family:'Courier New',monospace;font-weight:700;flex-shrink:0}
+.cc-grie-vel{display:flex;align-items:baseline;gap:6px;padding:3px 0;font-size:9px}
+.cc-grie-vel-icon{font-size:13px;flex-shrink:0}
+.cc-grie-cascade{font-size:8px;color:rgba(245,158,11,.8);padding:3px 0 3px 8px;border-left:2px solid rgba(245,158,11,.3);margin-bottom:3px}
+.cc-grie-outlook-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}
+.cc-grie-ol-cell{text-align:center;padding:4px 2px;border-radius:3px;background:rgba(255,255,255,.03)}
+.cc-grie-ol-hz{display:block;font-size:7px;color:rgba(255,255,255,.22);letter-spacing:.08em;margin-bottom:2px}
+.cc-grie-ol-score{display:block;font-size:13px;font-weight:700;font-family:'Cormorant Garamond',serif}
+.cc-grie-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-grie-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 </style>
 </head>
 <body>
@@ -2206,6 +2242,7 @@ setInterval(() => {
     <div id="cc-so-block"></div>
     <div id="cc-rec-block"></div>
     <div id="cc-ase-block"></div>
+    <div id="cc-grie-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -2270,10 +2307,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser',rec_access:'teaser',ase_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary',rec_access:'summary',ase_access:'summary'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full',rec_access:'full',ase_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain',rec_access:'full+explain',ase_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser',rec_access:'teaser',ase_access:'teaser',grie_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary',rec_access:'summary',ase_access:'summary',grie_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full',rec_access:'full',ase_access:'full',grie_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain',rec_access:'full+explain',ase_access:'full+explain',grie_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2354,6 +2391,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-so-block').innerHTML='';
   document.getElementById('cc-rec-block').innerHTML='';
   document.getElementById('cc-ase-block').innerHTML='';
+  document.getElementById('cc-grie-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2400,6 +2438,7 @@ window.openCountryCard = async function(cc) {
   fetchStrategyOptimization(cc).then(function(soData) { renderStrategyOptimization(soData, _clientCaps); });
   fetchRecommendations(cc).then(function(recData) { renderRecommendations(recData, _clientCaps); });
   fetchScenarioEvolution(cc).then(function(aseData) { renderScenarioEvolution(aseData, _clientCaps); });
+  fetchGlobalRisks(cc).then(function(grData) { renderGlobalRisks(grData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -5563,6 +5602,129 @@ function renderScenarioEvolution(data,caps){
       +'<div class="cc-ase-diag-label">'+_esc(d.label||d.type||'')+'</div>'
       +'<div class="cc-ase-diag-detail">'+_esc(d.detail||'')+'</div>'
       +'</div>';});}
+
+  html+='</div>'; block.innerHTML=html;
+}
+
+
+// ── Global Risk Intelligence Engine V1 — UI ──────────────────────────────
+var _grieCache = {};
+var _GRIE_GRADE_COL=function(g){
+  return g==='CRITICAL'?'#dc2626':g==='HIGH'?'#ef4444':g==='ELEVATED'?'#f59e0b':
+         g==='MODERATE'?'#fbbf24':g==='LOW'?'#84cc16':'#22c55e';
+};
+var _GRIE_VEL_ICON={accelerating:'🔺',rising:'↑',stable:'→',declining:'↓'};
+var _CAT_COL={geopolitical:'#ef4444',economic:'#f59e0b',financial:'#fbbf24',
+  systemic:'#dc2626',technological:'#60a5fa',climate:'#22c55e',scenario:'#a78bfa'};
+
+async function fetchGlobalRisks(cc){
+  if(_grieCache[cc])return _grieCache[cc];
+  try{var h={};if(_clientToken)h['X-Snapshot-Token']=_clientToken;
+  var r=await fetch(API+'/api/global-risks/'+cc,{headers:h});
+  if(!r.ok)return null;var d=await r.json();_grieCache[cc]=d;return d;}catch(e){return null;}
+}
+
+function renderGlobalRisks(data,caps){
+  var block=document.getElementById('cc-grie-block');
+  if(!block)return;
+  var access=caps.grie_access||'teaser';
+  if(!data||data.error){block.innerHTML='';return;}
+  var sc=data.grie_score;var grade=data.grade||'N/A';var grRu=data.grade_ru||'';
+  var gCol=_GRIE_GRADE_COL(grade);var barW=sc!==null&&sc!==undefined?Math.min(100,sc):0;
+  var nc=data.n_critical||0;var nh=data.n_high||0;var dl=data.delta||0;
+  var na='—';
+
+  var html='<div class="cc-grie">'
+    +'<div class="cc-grie-header">'
+    +'<span class="cc-grie-label">Глобальный анализ рисков</span>'
+    +(sc!==null?'<span class="cc-grie-score" style="color:'+gCol+'">'+sc+'</span>':'')
+    +'<span class="cc-grie-grade '+(grade||'NA')+'">'+_esc(grRu)+'</span>'
+    +'</div>'
+    +'<div class="cc-grie-bar"><div class="cc-grie-bar-fill" style="width:'+barW+'%;background:'+gCol+'"></div></div>'
+    +'<div class="cc-grie-meta">'
+    +(nc?'<span class="cc-grie-pill" style="color:#dc2626">⚠ CRITICAL: '+nc+'</span>':'')
+    +(nh?'<span class="cc-grie-pill" style="color:#ef4444">HIGH: '+nh+'</span>':'')
+    +(dl?'<span class="cc-grie-pill">Δ'+(dl>0?'+':'')+dl+'</span>':'')
+    +'</div>';
+
+  if(access==='teaser'){
+    if(data.top_risk_title)html+='<div class="cc-grie-risk '+(data.top_risk_grade||'MODERATE')+'">'
+      +'<div class="cc-grie-risk-header">'
+      +'<span class="cc-grie-risk-cat" style="color:'+gCol+'">'+(data.top_risk_grade||'')+'</span>'
+      +'<span class="cc-grie-risk-title">'+_esc(data.top_risk_title||'')+'</span>'
+      +'</div></div>';
+    html+='<div class="cc-grie-lock">🔒 Полный анализ рисков в Signal PRO</div></div>';
+    block.innerHTML=html;return;
+  }
+
+  // SIGNAL+: A ranked + B accelerating + C emerging
+  var ranked=(data.ranked_risks||[]).slice(0,5);
+  var accel=data.accelerating_risks||[];
+  var emrg=data.emerging_risks||[];
+  if(ranked.length){html+='<div class="cc-grie-section">A · Топ риски ('+data.risk_count+')</div>';
+    ranked.forEach(function(r){
+      var rCol=_GRIE_GRADE_COL(r.grade||'MODERATE');
+      html+='<div class="cc-grie-risk '+(r.grade||'MODERATE')+'">'
+        +'<div class="cc-grie-risk-header">'
+        +'<span class="cc-grie-risk-cat" style="color:'+(_CAT_COL[r.category]||rCol)+'">'+_esc((r.category||'').replace('_',' ').toUpperCase().slice(0,5))+'</span>'
+        +'<span class="cc-grie-risk-title">'+_esc(r.title||'')+'</span>'
+        +'<span class="cc-grie-risk-score" style="color:'+rCol+'">'+(r.risk_score_grie||0)+'</span>'
+        +'</div></div>';});}
+  if(accel.length){html+='<div class="cc-grie-section">B · Ускоряющиеся риски</div>';
+    accel.forEach(function(a){
+      var vd=a.velocity_score||50; var vCol=vd>=70?'#ef4444':vd>=50?'#f59e0b':'rgba(232,224,208,.5)';
+      html+='<div class="cc-grie-vel">'
+        +'<span class="cc-grie-vel-icon" style="color:'+vCol+'">'+(_GRIE_VEL_ICON[a.acceleration>=0?'accelerating':'declining']||'→')+'</span>'
+        +'<span style="color:rgba(232,224,208,.8)">'+_esc(a.title||'')+'</span>'
+        +'<span style="color:'+vCol+';font-size:8px;margin-left:4px">vel='+vd+'</span>'
+        +'</div>';});}
+  if(emrg.length){html+='<div class="cc-grie-section">C · Новые риски</div>';
+    emrg.forEach(function(e){
+      html+='<div class="cc-grie-risk emerging" style="border-left:2px solid #a78bfa;background:rgba(167,139,250,.05);padding:4px 0 4px 9px;margin-bottom:3px">'
+        +'<div class="cc-grie-risk-header">'
+        +'<span class="cc-grie-risk-cat" style="color:#a78bfa">НОВЫЙ</span>'
+        +'<span class="cc-grie-risk-title">'+_esc(e.title||e.id||'')+'</span>'
+        +'</div></div>';});}
+
+  if(access==='summary'){html+='<div class="cc-grie-lock">🔒 Каскады и системные риски в Strategic PRO</div></div>';block.innerHTML=html;return;}
+
+  // STRATEGIC+: D cascades + E systemic + F ranking + outlook
+  var casc=data.cascading_risks||[];
+  var sys_=data.systemic_risks||[];
+  var conv=data.risk_convergences||[];
+  var divg=data.risk_divergences||[];
+  if(casc.length){html+='<div class="cc-grie-section">D · Каскадные риски</div>';
+    casc.forEach(function(c){html+='<div class="cc-grie-cascade">⛓ '+_esc(c.title||'')+(c.cascade_prob?' ('+c.cascade_prob+'%)':'')+'</div>';});}
+  if(sys_.length){html+='<div class="cc-grie-section">E · Системные риски</div>';
+    sys_.forEach(function(s){html+='<div class="cc-grie-cascade" style="border-left-color:rgba(239,68,68,.4)">⚙ '+_esc(s.title||'')+'</div>';});}
+  if(conv.length||divg.length){
+    html+='<div class="cc-grie-section">Конвергенция / Расхождение</div>';
+    conv.forEach(function(c){html+='<div class="cc-grie-cascade" style="color:rgba(132,204,22,.7);border-left-color:rgba(132,204,22,.3)">⟶ '+_esc(c.label||'')+'</div>';});
+    divg.forEach(function(d){html+='<div class="cc-grie-cascade" style="border-left-color:rgba(245,158,11,.4)">⟺ '+_esc(d.label||'')+'</div>';});}
+
+  var ol=data.risk_outlook||{};
+  if(ol.outlook_30d){html+='<div class="cc-grie-section">F · Прогноз рисков</div>'
+    +'<div class="cc-grie-outlook-grid">';
+    [['30д',ol.outlook_30d],['90д',ol.outlook_90d],['180д',ol.outlook_180d]].forEach(function(hz){
+      if(!hz[1])return;
+      var os=hz[1].score||50; var oCol=os>=70?'#ef4444':os>=55?'#f59e0b':os>=40?'#fbbf24':'#22c55e';
+      html+='<div class="cc-grie-ol-cell">'
+        +'<span class="cc-grie-ol-hz">'+hz[0]+'</span>'
+        +'<span class="cc-grie-ol-score" style="color:'+oCol+'">'+os+'</span>'
+        +'</div>';});
+    html+='</div>';}
+
+  if(access==='full'){html+='</div>';block.innerHTML=html;return;}
+
+  // ELITE: hierarchy summary + velocity
+  var hier=data.hierarchy||{};var domLvl=hier.dominant_level||'MINIMAL';
+  var vel=data.velocity||{};var pers=data.persistence||{};var mom=data.momentum||{};
+  html+='<div class="cc-grie-section">G · Иерархия (доминант: '+_esc(domLvl)+')</div>';
+  if(vel.direction){html+='<div class="cc-grie-vel">'
+    +'<span class="cc-grie-vel-icon">'+(_GRIE_VEL_ICON[vel.direction]||'→')+'</span>'
+    +'<span style="color:rgba(232,224,208,.7)">'+_esc(vel.direction)+' · '
+    +'Velocity: '+vel.velocity_score+' · Persist: '+(pers.persistence_score||0)+'д</span>'
+    +'</div>';}
 
   html+='</div>'; block.innerHTML=html;
 }
