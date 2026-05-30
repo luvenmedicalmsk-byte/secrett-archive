@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>GRIVL V2 — Global Risk Intelligence Visualization Layer</title>
+<style>
+/* ── Root ── */
+:root{
+  --bg:#080c14;--surface:#0d111c;--panel:#111827;--border:rgba(255,255,255,.07);
+  --text:#e2dfd6;--muted:rgba(226,223,214,.3);--dim:rgba(226,223,214,.12);
+  --gold:#c8a84b;--red:#dc2626;--orange:#ea580c;--yellow:#d97706;--blue:#1d4ed8;
+  --green:#16a34a;--cyan:#0891b2;--purple:#7c3aed;
+  /* Domains */
+  --geo:#dc2626;--eco:#f59e0b;--cli:#22c55e;--tech:#3b82f6;
+  --soc:#a855f7;--infra:#f97316;--cyber:#06b6d4;
+  --font:'Inter',system-ui,sans-serif;--mono:'Courier New',monospace;--serif:'Cormorant Garamond',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+
+/* ── Loading ── */
+#ld{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .6s}
+#ld.gone{opacity:0;pointer-events:none}
+.ld-logo{font-family:var(--serif);font-size:30px;letter-spacing:.08em;margin-bottom:6px}
+.ld-logo b{color:var(--red)}
+.ld-sub{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:24px}
+.ld-bar{width:220px;height:1px;background:var(--border)}
+.ld-fill{height:100%;background:var(--gold);width:0;transition:width .5s}
+.ld-txt{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+
+/* ── Topbar ── */
+#topbar{display:flex;align-items:center;gap:0;height:44px;background:rgba(8,12,20,.97);border-bottom:1px solid var(--border);position:relative;z-index:100;padding:0 12px;flex-shrink:0}
+.tb-logo{font-family:var(--serif);font-size:15px;letter-spacing:.06em;white-space:nowrap;margin-right:16px}
+.tb-logo b{color:var(--red)}
+.tb-sep{flex:1}
+/* Timeline controls */
+#timeline-bar{display:flex;align-items:center;gap:6px;padding:0 8px}
+.tl-btn{font-size:8px;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s}
+.tl-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(200,168,75,.08)}
+.tl-label{font-size:8px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-right:4px}
+/* Stats */
+.tb-stat{display:flex;flex-direction:column;align-items:center;padding:0 10px;border-left:1px solid var(--border);font-size:8px}
+.tb-stat-val{font-family:var(--mono);font-size:13px;font-weight:700;line-height:1.2}
+.tb-stat-lbl{color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.tb-stat.crit .tb-stat-val{color:var(--red)}
+.tb-stat.warn .tb-stat-val{color:var(--orange)}
+/* Right controls */
+.tb-view-btn{font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;margin-left:6px}
+.tb-view-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(8,145,178,.08)}
+#live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 2s infinite;margin-left:10px;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+#last-upd{font-size:8px;color:var(--muted);letter-spacing:.08em;margin-left:8px;white-space:nowrap}
+
+/* ── Main layout ── */
+#main{display:flex;height:calc(100vh - 44px);overflow:hidden}
+
+/* ── Left sidebar (Phase 1: Layer Engine + Phase 4: GRI) ── */
+#left{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column}
+#left::-webkit-scrollbar{display:none}
+.sb-sect{border-bottom:1px solid var(--border);padding:10px 0}
+.sb-title{font-size:7px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);padding:0 12px;margin-bottom:8px}
+
+/* Layer toggles (Phase 1) */
+.layer-row{display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:2px;transition:background .15s;cursor:pointer}
+.layer-row:hover{background:rgba(255,255,255,.03)}
+.layer-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.layer-name{font-size:10px;flex:1;color:rgba(226,223,214,.7)}
+.layer-toggle{width:28px;height:14px;border-radius:7px;background:var(--border);position:relative;flex-shrink:0;transition:background .2s;cursor:pointer}
+.layer-toggle.on{background:rgba(200,168,75,.4)}
+.layer-toggle::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:left .2s}
+.layer-toggle.on::after{left:16px}
+.layer-opacity{width:100%;height:2px;background:var(--border);border-radius:1px;margin:3px 12px 0;cursor:pointer;-webkit-appearance:none;appearance:none}
+.layer-opacity::-webkit-slider-thumb{-webkit-appearance:none;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+/* Multi-layer toggle */
+#multi-toggle{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:9px;color:var(--muted);cursor:pointer}
+.mt-switch{width:32px;height:16px;border-radius:8px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0}
+.mt-switch.on{background:rgba(8,145,178,.5)}
+.mt-switch::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}
+.mt-switch.on::after{left:18px}
+
+/* GRI Table (Phase 4) */
+.gri-row{display:flex;align-items:center;gap:6px;padding:4px 12px;cursor:pointer;transition:background .15s}
+.gri-row:hover{background:rgba(255,255,255,.04)}
+.gri-rank{font-size:8px;color:var(--muted);width:14px;text-align:right;flex-shrink:0;font-family:var(--mono)}
+.gri-flag{width:8px;height:8px;border-radius:1px;flex-shrink:0}
+.gri-name{font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.gri-score{font-size:9px;font-family:var(--mono);font-weight:700;flex-shrink:0;width:24px;text-align:right}
+.gri-level-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.gri-tabs{display:flex;border-bottom:1px solid var(--border)}
+.gri-tab{flex:1;padding:6px;font-size:8px;letter-spacing:.1em;text-transform:uppercase;text-align:center;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:color .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.gri-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── Map container ── */
+#map-wrap{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+#map-svg{width:100%;height:100%;cursor:grab;user-select:none}
+#map-svg:active{cursor:grabbing}
+
+/* Map elements */
+.c-heatmap{pointer-events:none;opacity:.6}
+.c-ring{pointer-events:none}
+.c-node{cursor:pointer;transition:opacity .2s}
+.c-node:hover .c-inner{stroke:#fff;stroke-width:1.5}
+.c-node.sel .c-inner{stroke:var(--gold);stroke-width:2}
+.c-pulse{pointer-events:none;animation:ring-pulse 2.5s ease-out infinite}
+@keyframes ring-pulse{0%{r:0;opacity:.7}100%{r:28;opacity:0}}
+.c-label{pointer-events:none;font-family:var(--mono);font-size:8px;fill:rgba(226,223,214,.7);text-anchor:middle;dominant-baseline:middle}
+.c-score{pointer-events:none;font-family:var(--mono);font-size:7px;fill:rgba(226,223,214,.45);text-anchor:middle}
+
+/* Map legend */
+#map-legend{position:absolute;bottom:14px;left:230px;background:rgba(8,12,20,.9);border:1px solid var(--border);border-radius:4px;padding:8px 12px;backdrop-filter:blur(6px)}
+.leg-row{display:flex;align-items:center;gap:7px;font-size:8px;color:var(--muted);padding:1px 0}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* Heatmap scale legend */
+#hm-scale{position:absolute;bottom:14px;left:430px;background:rgba(8,12,20,.9);border:1px solid var(--border);border-radius:4px;padding:8px 12px;backdrop-filter:blur(6px);display:none}
+.hm-bar{width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#1d4ed8,#d97706,#ea580c,#dc2626);margin-bottom:4px}
+.hm-labels{display:flex;justify-content:space-between;font-size:7px;color:var(--muted);letter-spacing:.06em}
+
+/* ── Right panel ── */
+#right{width:290px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.rp-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.rp-tab{flex:1;padding:8px 4px;font-size:8px;letter-spacing:.1em;text-transform:uppercase;text-align:center;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:color .15s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.rp-tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.rp-content{flex:1;overflow-y:auto;scrollbar-width:none}
+.rp-content::-webkit-scrollbar{display:none}
+
+/* ── Phase 7: Sovereign Dashboard ── */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px}
+.dash-widget{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:4px;padding:8px 10px}
+.dw-val{font-family:var(--serif);font-size:24px;font-weight:700;line-height:1;margin-bottom:2px}
+.dw-lbl{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.dw-sub{font-size:8px;color:var(--muted);margin-top:3px}
+.dw-full{grid-column:1/-1}
+.dash-sect{padding:0 10px 10px;font-size:9px}
+.dash-sect-label{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:8px 0 5px;border-top:1px solid var(--border);margin-top:6px}
+.dash-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.dash-row-cc{font-family:var(--mono);font-size:8px;color:var(--muted);width:22px;flex-shrink:0}
+.dash-row-name{flex:1;font-size:9px;color:var(--text)}
+.dash-row-score{font-family:var(--mono);font-size:10px;font-weight:700}
+.dash-row-level{font-size:7px;font-weight:700;letter-spacing:.06em;padding:1px 5px;border-radius:2px}
+
+/* ── Phase 3: Country detail panel ── */
+.cc-section{padding:10px 14px;border-bottom:1px solid var(--border)}
+.cc-header{padding:14px 14px 10px}
+.cc-country{font-family:var(--serif);font-size:20px;margin-bottom:4px}
+.cc-badge{display:inline-flex;align-items:center;font-size:8px;font-weight:700;letter-spacing:.1em;padding:2px 9px;border-radius:2px;margin-bottom:8px}
+.cc-score-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.cc-score-big{font-family:var(--serif);font-size:40px;font-weight:700;line-height:1}
+.cc-score-label{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.cc-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.cc-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.cc-section-title{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+/* Domain radar (Phase 3) */
+.domain-bars{display:flex;flex-direction:column;gap:5px}
+.domain-bar-row{display:flex;align-items:center;gap:8px}
+.domain-bar-lbl{font-size:8px;color:var(--muted);width:70px;flex-shrink:0;text-align:right}
+.domain-bar-track{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.domain-bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.domain-bar-val{font-size:8px;font-family:var(--mono);width:24px;text-align:right;flex-shrink:0}
+/* Composite risk indicator */
+.cri-box{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:4px;padding:8px 10px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.cri-score{font-family:var(--serif);font-size:28px;font-weight:700;line-height:1}
+.cri-meta{display:flex;flex-direction:column;gap:2px}
+.cri-label{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.cri-formula{font-size:8px;color:var(--muted)}
+/* Forecast timeline row */
+.fc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:6px}
+.fc-cell{text-align:center;padding:4px 2px;border-radius:3px;background:rgba(255,255,255,.03)}
+.fc-hz{display:block;font-size:7px;color:var(--muted);letter-spacing:.06em;margin-bottom:1px}
+.fc-val{display:block;font-family:var(--serif);font-size:13px;font-weight:700}
+.fc-cell.active{border:1px solid var(--gold)}
+
+/* ── Phase 6: Signal Graph ── */
+#signal-svg{width:100%;height:320px;display:block}
+.sg-node{cursor:pointer;transition:opacity .2s}
+.sg-node:hover{opacity:.8}
+.sg-edge{stroke-dasharray:4,3;animation:dash-flow 2s linear infinite;stroke-width:1.5;fill:none;opacity:.6}
+@keyframes dash-flow{to{stroke-dashoffset:-14}}
+.sg-label{font-size:9px;fill:rgba(226,223,214,.7);text-anchor:middle;dominant-baseline:middle;pointer-events:none;font-family:var(--font)}
+.sg-badge{font-size:7px;fill:rgba(226,223,214,.4);text-anchor:middle;pointer-events:none;font-family:var(--mono)}
+.sg-chain-label{font-size:7px;letter-spacing:.12em;text-transform:uppercase;fill:rgba(226,223,214,.25);text-anchor:start;font-family:var(--mono)}
+/* Signal chain selector */
+.sg-chains{display:flex;gap:5px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.sg-chain-btn{font-size:8px;letter-spacing:.08em;padding:3px 8px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.sg-chain-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(8,145,178,.08)}
+
+/* ── Phase 5: Timeline slider (bottom) ── */
+#timeline-detail{background:rgba(8,12,20,.97);border-top:1px solid var(--border);height:48px;display:none;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+#timeline-detail.visible{display:flex}
+#tl-slider{flex:1;height:2px;background:var(--border);border-radius:1px;position:relative;cursor:pointer}
+.tl-track-fill{height:100%;background:var(--gold);border-radius:1px;transition:width .3s}
+.tl-markers{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between}
+.tl-marker{width:8px;height:8px;border-radius:50%;background:var(--border);border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:background .2s;position:relative}
+.tl-marker.active{background:var(--gold)}
+.tl-marker-lbl{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.1em;white-space:nowrap;color:var(--muted)}
+.tl-marker.active .tl-marker-lbl{color:var(--gold)}
+.tl-mode-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);min-width:50px}
+
+/* ── Mobile ── */
+#mobile-layer-btn{display:none;position:fixed;bottom:60px;right:14px;z-index:200;width:44px;height:44px;border-radius:50%;background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:18px;align-items:center;justify-content:center;cursor:pointer}
+#mobile-bottom{display:none;position:fixed;bottom:0;left:0;right:0;z-index:150;background:var(--panel);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:65vh;overflow-y:auto;will-change:transform;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobile-bottom.open{transform:translateY(0)}
+#mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:140}
+#mobile-overlay.visible{display:block}
+#mobile-tabs{display:none;position:fixed;bottom:0;left:0;right:0;z-index:130;background:var(--surface);border-top:1px solid var(--border);height:50px;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(max-width:900px){
+  #left{display:none}
+  #right{display:none}
+  #mobile-layer-btn{display:flex}
+  #mobile-tabs{display:flex}
+  #main{height:calc(100vh - 44px - 50px)}
+  #map-legend{left:8px;bottom:58px}
+  #hm-scale{left:8px;bottom:120px}
+  .tb-stat{display:none}
+  #timeline-bar{display:none}
+  #last-upd{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="ld">
+  <div class="ld-logo">АРХИВ <b>●</b> GRIVL</div>
+  <div class="ld-sub">Global Risk Intelligence Visualization Layer V2</div>
+  <div class="ld-bar"><div class="ld-fill" id="ld-fill"></div></div>
+  <div class="ld-txt" id="ld-txt">Инициализация...</div>
+</div>
+
+<!-- Topbar -->
+<div id="topbar">
+  <div class="tb-logo">GRIVL <b>V2</b></div>
+  <!-- Timeline (Phase 5) -->
+  <div id="timeline-bar">
+    <span class="tl-label">Горизонт:</span>
+    <button class="tl-btn active" onclick="setTimeline('now',this)">NOW</button>
+    <button class="tl-btn" onclick="setTimeline('30d',this)">+30Д</button>
+    <button class="tl-btn" onclick="setTimeline('90d',this)">+90Д</button>
+    <button class="tl-btn" onclick="setTimeline('180d',this)">+180Д</button>
+    <button class="tl-btn" onclick="setTimeline('365d',this)">+365Д</button>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-stat crit"><span class="tb-stat-val" id="stat-crit">—</span><span class="tb-stat-lbl">Critical</span></div>
+  <div class="tb-stat warn"><span class="tb-stat-val" id="stat-warn">—</span><span class="tb-stat-lbl">Warning</span></div>
+  <div class="tb-stat"><span class="tb-stat-val" id="stat-active">—</span><span class="tb-stat-lbl">Active</span></div>
+  <div class="tb-stat"><span class="tb-stat-val" id="stat-gri" style="color:var(--gold)">—</span><span class="tb-stat-lbl">Avg GRI</span></div>
+  <!-- View controls -->
+  <button class="tb-view-btn active" id="vbtn-dash" onclick="setView('dashboard')">Dashboard</button>
+  <button class="tb-view-btn" id="vbtn-country" onclick="setView('country')">Country</button>
+  <button class="tb-view-btn" id="vbtn-graph" onclick="setView('graph')">Signals</button>
+  <div id="live-dot"></div>
+  <span id="last-upd">—</span>
+</div>
+
+<!-- Main -->
+<div id="main">
+
+  <!-- Left: Layer Engine (Phase 1) + GRI (Phase 4) -->
+  <div id="left">
+    <!-- Phase 1: Layer Engine -->
+    <div class="sb-sect">
+      <div class="sb-title">Risk Layers — Phase 1</div>
+      <div id="multi-toggle" onclick="toggleMultiLayer()">
+        <div class="mt-switch" id="multi-sw"></div>
+        <span style="font-size:9px">Multi-Layer Mode</span>
+      </div>
+      <div id="layer-list"></div>
+    </div>
+    <!-- Phase 4: GRI Table -->
+    <div class="sb-sect" style="flex:1">
+      <div class="gri-tabs">
+        <button class="gri-tab active" onclick="setGRITab('score',this)">Score</button>
+        <button class="gri-tab" onclick="setGRITab('velocity',this)">Velocity</button>
+        <button class="gri-tab" onclick="setGRITab('emerging',this)">Emerging</button>
+      </div>
+      <div style="padding:4px 0"><div id="gri-list"></div></div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div id="map-wrap">
+    <svg id="map-svg" viewBox="0 0 1010 510" xmlns="http://www.w3.org/2000/svg">
+      <defs id="svg-defs"></defs>
+      <rect width="1010" height="510" fill="url(#oceanGrad)"/>
+      <!-- Grid -->
+      <g id="grid-layer" stroke="rgba(255,255,255,.025)" stroke-width=".4">
+        <line x1="0" y1="170" x2="1010" y2="170"/>
+        <line x1="0" y1="255" x2="1010" y2="255"/>
+        <line x1="0" y1="340" x2="1010" y2="340"/>
+        <line x1="252" y1="0" x2="252" y2="510"/>
+        <line x1="504" y1="0" x2="504" y2="510"/>
+        <line x1="756" y1="0" x2="756" y2="510"/>
+      </g>
+      <g id="heatmap-layer"></g>
+      <g id="countries-layer"></g>
+      <g id="labels-layer"></g>
+    </svg>
+    <!-- Map tooltip -->
+    <div id="tt" style="display:none;position:fixed;pointer-events:none;background:rgba(8,12,20,.97);border:1px solid var(--border);border-radius:4px;padding:9px 12px;font-size:11px;max-width:200px;z-index:300;backdrop-filter:blur(8px)"></div>
+    <!-- Alert level legend -->
+    <div id="map-legend">
+      <div class="leg-row"><div class="leg-dot" style="background:#dc2626"></div>CRITICAL</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#ea580c"></div>WARNING</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#d97706"></div>ALERT</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#1d4ed8"></div>WATCH</div>
+      <div class="leg-row"><div class="leg-dot" style="background:#2a2a3a"></div>NONE</div>
+    </div>
+    <!-- Phase 2: Heatmap scale -->
+    <div id="hm-scale">
+      <div style="font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Risk Intensity</div>
+      <div class="hm-bar"></div>
+      <div class="hm-labels"><span>Low 0</span><span>Moderate 25</span><span>High 50</span><span>Critical 100</span></div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div id="right">
+    <div class="rp-tabs">
+      <button class="rp-tab active" id="rt-dash" onclick="setRightTab('dashboard')">Dashboard</button>
+      <button class="rp-tab" id="rt-country" onclick="setRightTab('country')">Country</button>
+      <button class="rp-tab" id="rt-graph" onclick="setRightTab('graph')">Signals</button>
+    </div>
+    <div class="rp-content">
+      <!-- Phase 7: Sovereign Dashboard -->
+      <div id="rp-dashboard"></div>
+      <!-- Phase 3: Country Detail -->
+      <div id="rp-country" style="display:none"></div>
+      <!-- Phase 6: Signal Graph -->
+      <div id="rp-graph" style="display:none">
+        <div class="sg-chains" id="sg-chain-btns"></div>
+        <svg id="signal-svg" viewBox="0 0 560 340"></svg>
+        <div style="padding:8px 12px;font-size:8px;color:var(--muted);border-top:1px solid var(--border)">
+          Каскадные цепочки рисков. Нажмите узел для деталей.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 5: Timeline detail bar -->
+<div id="timeline-detail">
+  <span class="tl-mode-lbl" id="tl-mode-lbl">NOW</span>
+  <div id="tl-slider">
+    <div class="tl-track-fill" id="tl-track-fill"></div>
+    <div class="tl-markers" id="tl-markers"></div>
+  </div>
+</div>
+
+<!-- Mobile UI -->
+<button id="mobile-layer-btn" onclick="openMobilePanel()">☰</button>
+<div id="mobile-overlay" onclick="closeMobilePanel()"></div>
+<div id="mobile-bottom" id="mob-panel"></div>
+<div id="mobile-tabs">
+  <button class="tb-view-btn" onclick="setView('dashboard');closeMobilePanel()" style="border:none;font-size:11px">📊 Dash</button>
+  <button class="tb-view-btn" onclick="setView('country');closeMobilePanel()" style="border:none;font-size:11px">🌍 Country</button>
+  <button class="tb-view-btn" onclick="setView('graph');closeMobilePanel()" style="border:none;font-size:11px">⛓ Graph</button>
+  <button class="tb-view-btn" onclick="openMobilePanel()" style="border:none;font-size:11px">⚡ Layers</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// GRIVL V2 — Global Risk Intelligence Visualization Layer
+// All 7 phases implemented
+// ═══════════════════════════════════════════════════════════════════════
+
+const API      = 'https://archive-api.luven-medical-msk.workers.dev';
+const RAW_BASE = 'https://raw.githubusercontent.com/luvenmedicalmsk-byte/secrett-archive/main';
+const REFRESH  = 300_000;
+
+// ── Phase 1: Layer definitions ──────────────────────────────────────────
+const LAYERS = {
+  geopolitics:  {label:'Геополитика',   labelEn:'Geopolitics',  color:'#dc2626',weight:.25,enabled:true, opacity:.75},
+  economy:      {label:'Экономика',     labelEn:'Economy',      color:'#f59e0b',weight:.20,enabled:true, opacity:.75},
+  climate:      {label:'Климат',        labelEn:'Climate',      color:'#22c55e',weight:.15,enabled:false,opacity:.75},
+  technology:   {label:'Технологии',    labelEn:'Technology',   color:'#3b82f6',weight:.12,enabled:false,opacity:.75},
+  social:       {label:'Социум',        labelEn:'Social',       color:'#a855f7',weight:.10,enabled:false,opacity:.75},
+  infrastructure:{label:'Инфраструктура',labelEn:'Infrastructure',color:'#f97316',weight:.10,enabled:false,opacity:.75},
+  cyber:        {label:'Кибер',         labelEn:'Cyber',        color:'#06b6d4',weight:.08,enabled:false,opacity:.75},
+};
+let multiLayerMode = false;
+
+// ── Country data ────────────────────────────────────────────────────────
+const COUNTRIES = {
+  RU:{name:'Россия',nameEn:'Russia'},US:{name:'США',nameEn:'United States'},
+  CN:{name:'Китай',nameEn:'China'},DE:{name:'Германия',nameEn:'Germany'},
+  GB:{name:'Великобритания',nameEn:'United Kingdom'},FR:{name:'Франция',nameEn:'France'},
+  TR:{name:'Турция',nameEn:'Turkey'},KZ:{name:'Казахстан',nameEn:'Kazakhstan'},
+  AE:{name:'ОАЭ',nameEn:'UAE'},UA:{name:'Украина',nameEn:'Ukraine'},
+  BY:{name:'Беларусь',nameEn:'Belarus'},IN:{name:'Индия',nameEn:'India'},
+  JP:{name:'Япония',nameEn:'Japan'},SA:{name:'Саудовская Аравия',nameEn:'Saudi Arabia'},
+  EG:{name:'Египет',nameEn:'Egypt'},PL:{name:'Польша',nameEn:'Poland'},
+  IL:{name:'Израиль',nameEn:'Israel'},IR:{name:'Иран',nameEn:'Iran'},
+  IT:{name:'Италия',nameEn:'Italy'},AR:{name:'Аргентина',nameEn:'Argentina'},
+  CA:{name:'Канада',nameEn:'Canada'},ES:{name:'Испания',nameEn:'Spain'},
+  ID:{name:'Индонезия',nameEn:'Indonesia'},MX:{name:'Мексика',nameEn:'Mexico'},
+  CH:{name:'Швейцария',nameEn:'Switzerland'},
+};
+const CC_POS={
+  RU:{cx:640,cy:140,rx:100,ry:40},US:{cx:165,cy:200,rx:65,ry:45},CN:{cx:700,cy:230,rx:60,ry:40},
+  DE:{cx:500,cy:170,rx:18,ry:14},GB:{cx:472,cy:155,rx:12,ry:16},FR:{cx:485,cy:185,rx:18,ry:16},
+  TR:{cx:555,cy:205,rx:28,ry:14},KZ:{cx:620,cy:185,rx:35,ry:20},AE:{cx:598,cy:245,rx:12,ry:8},
+  UA:{cx:540,cy:185,rx:22,ry:13},BY:{cx:528,cy:168,rx:15,ry:10},IN:{cx:650,cy:265,rx:35,ry:40},
+  JP:{cx:770,cy:205,rx:18,ry:22},SA:{cx:577,cy:256,rx:25,ry:20},EG:{cx:537,cy:243,rx:18,ry:16},
+  PL:{cx:516,cy:166,rx:16,ry:12},IL:{cx:547,cy:228,rx:6,ry:7},IR:{cx:596,cy:221,rx:24,ry:18},
+  IT:{cx:502,cy:203,rx:12,ry:18},AR:{cx:250,cy:390,rx:20,ry:38},CA:{cx:165,cy:145,rx:75,ry:38},
+  ES:{cx:472,cy:202,rx:22,ry:14},ID:{cx:725,cy:310,rx:45,ry:18},MX:{cx:148,cy:248,rx:30,ry:20},
+  CH:{cx:499,cy:185,rx:9,ry:7},
+};
+const LVL_COLOR={CRITICAL:'#dc2626',WARNING:'#ea580c',ALERT:'#d97706',WATCH:'#1d4ed8',NONE:'#2a2a3a'};
+const LVL_ORDER={NONE:0,WATCH:1,ALERT:2,WARNING:3,CRITICAL:4};
+
+// ── Phase 5: Timeline modes ─────────────────────────────────────────────
+const TL_MODES=['now','30d','90d','180d','365d'];
+const TL_LABELS={now:'NOW',  '30d':'+30Д','90d':'+90Д','180d':'+180Д','365d':'+365Д'};
+let timelineMode='now';
+
+// ── Phase 4: GRI tab ────────────────────────────────────────────────────
+let griTab='score';
+
+// ── Phase 6: Signal chains ──────────────────────────────────────────────
+const SIGNAL_CHAINS={
+  climate:{
+    label:'Климат',
+    nodes:[
+      {id:'wildfire',   label:'Лесные пожары',    domain:'climate',       x:60, y:80},
+      {id:'energy',     label:'Энергетика',        domain:'infrastructure',x:200,y:80},
+      {id:'supplychain',label:'Поставки',          domain:'economy',       x:340,y:80},
+      {id:'econ-impact',label:'Экономика',         domain:'economy',       x:470,y:80},
+    ],
+    edges:[['wildfire','energy'],['energy','supplychain'],['supplychain','econ-impact']],
+    color:'#22c55e',
+  },
+  cyber:{
+    label:'Кибер',
+    nodes:[
+      {id:'cyber-atk',  label:'Кибератака',       domain:'cyber',         x:60, y:170},
+      {id:'infra-fail', label:'Инфраструктура',    domain:'infrastructure',x:200,y:170},
+      {id:'econ-cyber', label:'Экономика',         domain:'economy',       x:340,y:170},
+      {id:'social-inst',label:'Социум',            domain:'social',        x:470,y:170},
+    ],
+    edges:[['cyber-atk','infra-fail'],['infra-fail','econ-cyber'],['econ-cyber','social-inst']],
+    color:'#06b6d4',
+  },
+  drought:{
+    label:'Засуха',
+    nodes:[
+      {id:'drought-ev', label:'Засуха',            domain:'climate',       x:60, y:260},
+      {id:'food-sec',   label:'Продовольствие',    domain:'social',        x:200,y:260},
+      {id:'migration',  label:'Миграция',          domain:'social',        x:340,y:260},
+      {id:'conflict',   label:'Конфликт',          domain:'geopolitics',   x:470,y:260},
+    ],
+    edges:[['drought-ev','food-sec'],['food-sec','migration'],['migration','conflict']],
+    color:'#f59e0b',
+  },
+};
+let activeChain='climate';
+
+// ── State ───────────────────────────────────────────────────────────────
+let alertData={};    // cc → alert record
+let explData={};     // cc → explainability
+let rankData=null;
+let globalReport=null;
+let selectedCC=null;
+let rightTab='dashboard';
+let zoomLevel=1, panX=0, panY=0, isPanning=false, startX=0, startY=0;
+
+// ── Data fetching ────────────────────────────────────────────────────────
+async function fetchJSON(url){
+  try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)return null;return r.json();}catch{return null;}
+}
+
+async function loadGlobal(){
+  let rep=await fetchJSON(`${API}/api/map/summary`);
+  if(!rep||rep.error) rep=await fetchJSON(`${RAW_BASE}/docs/alerts/reports/latest.json`);
+  globalReport=rep;
+}
+
+async function loadRankings(){
+  let r=await fetchJSON(`${API}/api/map/rankings`);
+  if(!r||r.error) r=await fetchJSON(`${RAW_BASE}/docs/alerts/rankings/latest.json`);
+  rankData=r;
+}
+
+async function loadCountries(){
+  const ccs=Object.keys(COUNTRIES);
+  const results=await Promise.all(ccs.map(cc=>
+    fetchJSON(`${RAW_BASE}/docs/alerts/reports/${cc}.json`).then(d=>({cc,d}))
+  ));
+  results.forEach(({cc,d})=>{ if(d) alertData[cc]=d; });
+}
+
+async function loadExplBatch(ccs){
+  const results=await Promise.all(ccs.map(cc=>
+    fetchJSON(`${RAW_BASE}/docs/explanations/${cc}.json`).then(d=>({cc,d}))
+  ));
+  results.forEach(({cc,d})=>{ if(d) explData[cc]=d; });
+}
+
+// ── Phase 3: Composite Risk Index ────────────────────────────────────────
+function calcCRI(cc){
+  const a=alertData[cc];
+  const e=explData[cc];
+  if(!a) return 0;
+  if(!e||!e.contributions||!e.contributions.length) return a.alert_score||0;
+  let total=0, weightSum=0;
+  for(const c of e.contributions){
+    const ld=LAYERS[c.engine];
+    if(!ld) continue;
+    const domainScore=Math.min(100,(c.contribution/100)*(a.alert_score||50)*2);
+    total+=domainScore*ld.weight; weightSum+=ld.weight;
+  }
+  return weightSum>0?Math.min(100,Math.round(total/weightSum)):a.alert_score||0;
+}
+
+// ── Phase 5: Timeline score ──────────────────────────────────────────────
+function getTimelineScore(cc, mode){
+  const a=alertData[cc];
+  if(!a) return 0;
+  const base=a.risk_score||a.alert_score||50;
+  if(mode==='now') return a.alert_score||0;
+  const f={
+    '30d': a.forecast_30d?.base_case || Math.min(95,Math.max(5,base+(a.delta||0)*3)),
+    '90d': a.forecast_90d?.base_case || Math.min(95,Math.max(5,base+(a.delta||0)*1.8)),
+    '180d':a.forecast_180d?.base_case|| Math.min(95,Math.max(5,base+(a.delta||0)*1.2)),
+    '365d':a.forecast_365d?.base_case|| Math.min(95,Math.max(5,base+(a.delta||0)*0.7)),
+  };
+  return Math.round(f[mode]||base);
+}
+
+// ── Phase 2: Heatmap ─────────────────────────────────────────────────────
+function scoreToHeatColor(score){
+  if(score>=75) return '#dc2626';
+  if(score>=51) return '#ea580c';
+  if(score>=26) return '#d97706';
+  return '#1d4ed8';
+}
+
+// ── Phase 1: get visible domain score for a country ─────────────────────
+function getDomainScore(cc, domain){
+  const e=explData[cc];
+  const a=alertData[cc];
+  if(!e||!a) return 0;
+  const c=(e.contributions||[]).find(x=>x.engine===domain);
+  if(!c) return 0;
+  return Math.min(100,Math.round(c.contribution*(a.alert_score||50)/25));
+}
+
+// ── Layer control UI (Phase 1) ────────────────────────────────────────────
+function buildLayerList(){
+  const el=document.getElementById('layer-list');
+  if(!el) return;
+  el.innerHTML=Object.entries(LAYERS).map(([key,ld])=>`
+    <div class="layer-row">
+      <div class="layer-dot" style="background:${ld.color}"></div>
+      <div class="layer-name">${ld.label}</div>
+      <div class="layer-toggle ${ld.enabled?'on':''}" id="lt-${key}" onclick="toggleLayer('${key}')"></div>
+    </div>
+    <div style="padding:0 12px 4px">
+      <input type="range" class="layer-opacity" min="20" max="100" value="${Math.round(ld.opacity*100)}"
+        oninput="setLayerOpacity('${key}',this.value/100)"
+        style="accent-color:${ld.color}">
+    </div>`).join('');
+
+  const ms=document.getElementById('multi-sw');
+  if(ms) ms.className='mt-switch'+(multiLayerMode?' on':'');
+}
+
+function toggleLayer(domain){
+  LAYERS[domain].enabled=!LAYERS[domain].enabled;
+  const el=document.getElementById('lt-'+domain);
+  if(el) el.className='layer-toggle'+(LAYERS[domain].enabled?' on':'');
+  renderMap();
+}
+
+function setLayerOpacity(domain, val){
+  LAYERS[domain].opacity=val;
+  renderMap();
+}
+
+function toggleMultiLayer(){
+  multiLayerMode=!multiLayerMode;
+  const ms=document.getElementById('multi-sw');
+  if(ms) ms.className='mt-switch'+(multiLayerMode?' on':'');
+  renderMap();
+}
+
+// ── Map rendering ─────────────────────────────────────────────────────────
+function renderMap(){
+  const defs=document.getElementById('svg-defs');
+  const hmLayer=document.getElementById('heatmap-layer');
+  const ccLayer=document.getElementById('countries-layer');
+  const lblLayer=document.getElementById('labels-layer');
+  if(!defs||!hmLayer||!ccLayer) return;
+
+  // Ocean gradient
+  defs.innerHTML=`<radialGradient id="oceanGrad" cx="50%" cy="50%"><stop offset="0%" stop-color="#0d111c"/><stop offset="100%" stop-color="#080c14"/></radialGradient>`;
+
+  // Add radial gradients for heatmap
+  Object.keys(COUNTRIES).forEach(cc=>{
+    const pos=CC_POS[cc]; if(!pos) return;
+    const score=getTimelineScore(cc,timelineMode);
+    const col=scoreToHeatColor(score);
+    defs.innerHTML+=`<radialGradient id="hm-${cc}" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="${col}" stop-opacity="${Math.min(.5,score/100*.7)}"/>
+      <stop offset="100%" stop-color="${col}" stop-opacity="0"/>
+    </radialGradient>`;
+  });
+
+  hmLayer.innerHTML='';
+  ccLayer.innerHTML='';
+  lblLayer.innerHTML='';
+
+  const activeLayers=Object.entries(LAYERS).filter(([,ld])=>ld.enabled);
+  const showHeatmap=activeLayers.length>0;
+  if(showHeatmap) document.getElementById('hm-scale').style.display='block';
+  else document.getElementById('hm-scale').style.display='none';
+
+  Object.entries(CC_POS).forEach(([cc,pos])=>{
+    const score=getTimelineScore(cc,timelineMode);
+    const lvl=alertData[cc]?.alert_level||'NONE';
+    const col=LVL_COLOR[lvl];
+    const isSelected=cc===selectedCC;
+    const isCritical=lvl==='CRITICAL'||lvl==='WARNING';
+    const r=Math.max(pos.rx,pos.ry);
+
+    // Phase 2: Heatmap zone
+    if(showHeatmap && score>15){
+      const hmR=Math.max(20,Math.min(60,score*0.55));
+      const hmEl=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+      hmEl.setAttribute('cx',pos.cx); hmEl.setAttribute('cy',pos.cy);
+      hmEl.setAttribute('rx',hmR*1.6); hmEl.setAttribute('ry',hmR*0.9);
+      hmEl.setAttribute('fill',`url(#hm-${cc})`);
+      hmEl.setAttribute('class','c-heatmap');
+      hmLayer.appendChild(hmEl);
+    }
+
+    // Phase 1: Domain layer rings (multi-layer mode)
+    if(multiLayerMode && activeLayers.length>1){
+      const arcR=r+6;
+      const segAngle=360/activeLayers.length;
+      activeLayers.forEach(([domain,ld],idx)=>{
+        const ds=getDomainScore(cc,domain);
+        if(ds<5) return;
+        const start=idx*segAngle-90;
+        const end=start+segAngle-2;
+        const sr=start*Math.PI/180, er=end*Math.PI/180;
+        const x1=pos.cx+arcR*Math.cos(sr), y1=pos.cy+arcR*Math.sin(sr);
+        const x2=pos.cx+arcR*Math.cos(er), y2=pos.cy+arcR*Math.sin(er);
+        const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+        const d=`M ${pos.cx} ${pos.cy} L ${x1} ${y1} A ${arcR} ${arcR} 0 0 1 ${x2} ${y2} Z`;
+        path.setAttribute('d',d);
+        path.setAttribute('fill',ld.color);
+        path.setAttribute('opacity',ld.opacity*0.7);
+        path.setAttribute('class','c-ring');
+        ccLayer.appendChild(path);
+      });
+    } else if(activeLayers.length===1){
+      // Single layer: color by that domain
+      const [domain,ld]=activeLayers[0];
+      const ds=getDomainScore(cc,domain);
+      if(ds>5){
+        const el2=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+        el2.setAttribute('cx',pos.cx); el2.setAttribute('cy',pos.cy);
+        el2.setAttribute('rx',pos.rx+4); el2.setAttribute('ry',pos.ry+4);
+        el2.setAttribute('fill',ld.color);
+        el2.setAttribute('opacity',ld.opacity*(ds/100)*0.8);
+        ccLayer.appendChild(el2);
+      }
+    }
+
+    // Critical pulse animation
+    if(isCritical){
+      const pulse=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      pulse.setAttribute('cx',pos.cx); pulse.setAttribute('cy',pos.cy);
+      pulse.setAttribute('r','0'); pulse.setAttribute('fill','none');
+      pulse.setAttribute('stroke',col); pulse.setAttribute('stroke-width','1.5');
+      pulse.setAttribute('class','c-pulse');
+      ccLayer.appendChild(pulse);
+    }
+
+    // Main country ellipse
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','c-node'+(isSelected?' sel':''));
+    g.addEventListener('mouseenter',e=>showTT(e,cc));
+    g.addEventListener('mousemove',moveTT);
+    g.addEventListener('mouseleave',hideTT);
+    g.addEventListener('click',()=>selectCountry(cc));
+
+    const el=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+    el.setAttribute('cx',pos.cx); el.setAttribute('cy',pos.cy);
+    el.setAttribute('rx',pos.rx); el.setAttribute('ry',pos.ry);
+    el.setAttribute('fill',col);
+    el.setAttribute('stroke',isSelected?'#c8a84b':'#1a1a2e');
+    el.setAttribute('stroke-width',isSelected?'2':'.5');
+    el.setAttribute('opacity',lvl==='NONE'?'.5':'1');
+    el.setAttribute('class','c-inner');
+    if(isCritical) el.setAttribute('filter','drop-shadow(0 0 4px '+col+')');
+    g.appendChild(el);
+    ccLayer.appendChild(g);
+
+    // Label
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',pos.cx); lbl.setAttribute('y',pos.cy);
+    lbl.setAttribute('class','c-label');
+    lbl.setAttribute('font-size',Math.min(9,Math.max(6,pos.rx/4)));
+    lbl.setAttribute('fill',lvl==='NONE'?'rgba(255,255,255,.2)':'rgba(255,255,255,.85)');
+    lbl.textContent=cc;
+    lblLayer.appendChild(lbl);
+
+    if(score>=50){
+      const sc=document.createElementNS('http://www.w3.org/2000/svg','text');
+      sc.setAttribute('x',pos.cx); sc.setAttribute('y',pos.cy+pos.ry+9);
+      sc.setAttribute('class','c-score');
+      sc.setAttribute('fill',col);
+      sc.textContent=score;
+      lblLayer.appendChild(sc);
+    }
+  });
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────
+function showTT(e,cc){
+  const a=alertData[cc]; if(!a) return;
+  const lvl=a.alert_level||'NONE';
+  const score=getTimelineScore(cc,timelineMode);
+  const trend=a.trend||'stable';
+  const drivers=(a.top_drivers||[]).slice(0,3).join(', ')||'—';
+  const trendIcon={accelerating:'🔺',rising:'↑',falling:'↓',stable:'→'}[trend]||'→';
+  const col=LVL_COLOR[lvl];
+  document.getElementById('tt').style.display='block';
+  document.getElementById('tt').innerHTML=`
+    <div style="font-family:var(--serif);font-size:14px;margin-bottom:4px">${COUNTRIES[cc]?.name||cc}</div>
+    <div style="display:inline-block;font-size:8px;font-weight:700;letter-spacing:.1em;padding:2px 7px;border-radius:2px;background:${col}22;color:${col};border:1px solid ${col}44;margin-bottom:6px">${lvl}</div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="color:var(--muted)">GRI Score</span><b>${score}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="color:var(--muted)">Тренд</span><b>${trendIcon} ${trend}</b></div>
+    <div style="font-size:9px;color:var(--muted);margin-top:5px;padding-top:5px;border-top:1px solid var(--border)">· ${drivers}</div>
+  `;
+  moveTT(e);
+}
+function moveTT(e){
+  const tt=document.getElementById('tt');
+  const x=Math.min(e.clientX+14,window.innerWidth-220);
+  const y=Math.min(e.clientY-10,window.innerHeight-150);
+  tt.style.left=x+'px'; tt.style.top=y+'px';
+}
+function hideTT(){ document.getElementById('tt').style.display='none'; }
+
+// ── Country selection ─────────────────────────────────────────────────────
+async function selectCountry(cc){
+  selectedCC=cc;
+  renderMap();
+  setRightTab('country');
+  // Load expl if not loaded
+  if(!explData[cc]){
+    const d=await fetchJSON(`${RAW_BASE}/docs/explanations/${cc}.json`);
+    if(d) explData[cc]=d;
+  }
+  renderCountryPanel(cc);
+}
+
+// ── Phase 3: Country panel with composite risk ────────────────────────────
+function renderCountryPanel(cc){
+  const el=document.getElementById('rp-country');
+  const a=alertData[cc]; const e=explData[cc];
+  if(!a){el.innerHTML='<div style="padding:20px;color:var(--muted);text-align:center">Нет данных</div>';return;}
+
+  const lvl=a.alert_level||'NONE';
+  const col=LVL_COLOR[lvl];
+  const score=getTimelineScore(cc,timelineMode);
+  const cri=calcCRI(cc);
+  const contribs=(e?.contributions||[]).slice(0,7);
+  const trend=a.trend||'stable';
+  const trendClass=trend==='accelerating'||trend==='rising'?'color:var(--red)':trend==='falling'?'color:var(--green)':'color:var(--muted)';
+  const trendIcon={accelerating:'🔺 Ускорение',rising:'↑ Рост',falling:'↓ Снижение',stable:'→ Стабильно'}[trend]||'→ Стабильно';
+
+  // Phase 5: timeline cells
+  const tlCells=TL_MODES.map(m=>{
+    const s=getTimelineScore(cc,m);
+    const c=s>=75?'var(--red)':s>=60?'var(--orange)':s>=40?'var(--yellow)':'#60a5fa';
+    return `<div class="fc-cell${m===timelineMode?' active':''}">
+      <span class="fc-hz">${TL_LABELS[m]}</span>
+      <span class="fc-val" style="color:${c}">${s}</span>
+    </div>`;
+  }).join('');
+
+  // Domain bars from contributions
+  let domainBarsHtml='';
+  if(contribs.length){
+    domainBarsHtml=contribs.map(c=>{
+      const ld=LAYERS[c.engine];
+      if(!ld) return '';
+      const ds=Math.min(100,Math.round(c.contribution*(a.alert_score||50)/25));
+      return `<div class="domain-bar-row">
+        <div class="domain-bar-lbl" style="color:${ld.color};text-align:right">${ld.label}</div>
+        <div class="domain-bar-track"><div class="domain-bar-fill" style="width:${c.contribution}%;background:${ld.color}"></div></div>
+        <div class="domain-bar-val" style="color:${ld.color}">${Math.round(c.contribution)}%</div>
+      </div>`;
+    }).join('');
+  } else {
+    domainBarsHtml='<div style="font-size:9px;color:var(--muted)">Нет данных (загрузите Signal tier)</div>';
+  }
+
+  // Explanation text
+  const explanation=e?.explanation||a.trend?`Risk ${lvl} — ${trend} trend`:'—';
+
+  el.innerHTML=`
+    <div class="cc-header">
+      <div class="cc-country">${COUNTRIES[cc]?.name||cc}</div>
+      <div class="cc-badge" style="background:${col}20;color:${col};border:1px solid ${col}40">${lvl}</div>
+      <div class="cc-score-row">
+        <div class="cc-score-big" style="color:${col}">${score}</div>
+        <div class="cc-score-label">Alert Score</div>
+      </div>
+      <div class="cc-bar"><div class="cc-bar-fill" style="width:${score}%;background:${col}"></div></div>
+    </div>
+
+    <div class="cc-section">
+      <div class="cc-section-title">Composite Risk Index — Phase 3</div>
+      <div class="cri-box">
+        <div class="cri-score" style="color:${LVL_COLOR[alertData[cc]?.alert_level||'NONE']}">${cri}</div>
+        <div class="cri-meta">
+          <div class="cri-label">CRI / 100</div>
+          <div class="cri-formula">Σ(domain × weight) / Σ(weight)</div>
+          <div style="font-size:9px;margin-top:2px;${trendClass}">${trendIcon}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cc-section">
+      <div class="cc-section-title">Domain Breakdown — Phase 1</div>
+      <div class="domain-bars">${domainBarsHtml}</div>
+    </div>
+
+    <div class="cc-section">
+      <div class="cc-section-title">Risk Timeline — Phase 5</div>
+      <div class="fc-grid">${tlCells}</div>
+    </div>
+
+    <div class="cc-section">
+      <div class="cc-section-title">Intelligence</div>
+      <div style="font-size:9px;color:rgba(226,223,214,.6);line-height:1.6">${explanation}</div>
+      <div style="margin-top:7px">
+        ${(a.top_drivers||[]).map(d=>`<span style="display:inline-block;font-size:8px;padding:2px 6px;border:1px solid var(--border);border-radius:2px;margin:2px 2px 0 0;color:var(--muted)">${d}</span>`).join('')}
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+  `;
+}
+
+// ── Phase 4: GRI Rankings ─────────────────────────────────────────────────
+function setGRITab(tab, btn){
+  griTab=tab;
+  document.querySelectorAll('.gri-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderGRI();
+}
+
+function renderGRI(){
+  const el=document.getElementById('gri-list');
+  if(!el) return;
+  const rd=rankData||{};
+  const list=griTab==='score' ? (rd.top_score||rd.top_alert_score||[])
+             :griTab==='velocity'? (rd.top_velocity||[])
+             :(rd.top_emerging||[]);
+
+  if(!list.length){
+    el.innerHTML='<div style="padding:12px;font-size:9px;color:var(--muted)">Загрузка рейтинга...</div>';
+    return;
+  }
+  el.innerHTML=list.slice(0,15).map((e,i)=>{
+    const cc=e.cc||e.country;
+    const name=COUNTRIES[cc]?.name||e.name||cc;
+    const score=e.alert_score||e.score||0;
+    const lvl=e.alert_level||alertData[cc]?.alert_level||'NONE';
+    const col=LVL_COLOR[lvl];
+    return `<div class="gri-row" onclick="selectCountry('${cc}')">
+      <div class="gri-rank">${i+1}</div>
+      <div class="gri-flag" style="background:${col}"></div>
+      <div class="gri-name">${name}</div>
+      <div class="gri-score" style="color:${col}">${score}</div>
+      <div class="gri-level-dot" style="background:${col}"></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Phase 7: Sovereign Dashboard ─────────────────────────────────────────
+function renderDashboard(){
+  const el=document.getElementById('rp-dashboard');
+  if(!el) return;
+  const rep=globalReport||{};
+  const s=rep.summary||{};
+  const critical=s.critical||Object.values(alertData).filter(d=>d.alert_level==='CRITICAL').length;
+  const warning=s.warning||Object.values(alertData).filter(d=>d.alert_level==='WARNING').length;
+  const alert_=s.alert||Object.values(alertData).filter(d=>d.alert_level==='ALERT').length;
+  const watch=s.watch||Object.values(alertData).filter(d=>d.alert_level==='WATCH').length;
+  const total=s.total_active||(critical+warning+alert_+watch);
+  const allScores=Object.values(alertData).map(d=>d.alert_score||0);
+  const avgGRI=allScores.length?Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length):0;
+  const topCC=Object.entries(alertData).sort((a,b)=>(b[1].alert_score||0)-(a[1].alert_score||0))[0];
+  const topName=topCC?COUNTRIES[topCC[0]]?.name||topCC[0]:'—';
+  const topScore=topCC?topCC[1].alert_score||0:0;
+
+  // Fastest escalating
+  const escalating=Object.entries(alertData)
+    .filter(([,d])=>d.is_escalation||((d.delta||0)>=5))
+    .sort((a,b)=>(b[1].delta||0)-(a[1].delta||0)).slice(0,5);
+
+  // Emerging threats
+  const emerging=Object.entries(alertData)
+    .filter(([,d])=>d.triggered_rules?.includes('D'))
+    .slice(0,5);
+
+  // Active signals
+  const totalSignals=Object.values(alertData).reduce((a,d)=>a+(d.signals||0),0);
+
+  // Top 10 for table
+  const top10=Object.entries(alertData)
+    .sort((a,b)=>(b[1].alert_score||0)-(a[1].alert_score||0)).slice(0,10);
+
+  el.innerHTML=`
+    <div class="dash-grid">
+      <div class="dash-widget crit" style="border-color:rgba(220,38,38,.3)">
+        <div class="dw-val" style="color:#dc2626">${critical}</div>
+        <div class="dw-lbl">Critical</div>
+      </div>
+      <div class="dash-widget" style="border-color:rgba(234,88,12,.3)">
+        <div class="dw-val" style="color:#ea580c">${warning}</div>
+        <div class="dw-lbl">Warning</div>
+      </div>
+      <div class="dash-widget">
+        <div class="dw-val" style="color:var(--gold)">${total}</div>
+        <div class="dw-lbl">Active Alerts</div>
+      </div>
+      <div class="dash-widget">
+        <div class="dw-val" style="color:var(--cyan)">${avgGRI}</div>
+        <div class="dw-lbl">Avg GRI</div>
+      </div>
+      <div class="dash-widget dw-full">
+        <div class="dw-val" style="font-size:16px;color:#dc2626">${topName}</div>
+        <div class="dw-lbl">Highest Risk Country</div>
+        <div class="dw-sub">Score: ${topScore} · Signals: ${totalSignals} active</div>
+      </div>
+    </div>
+
+    <div class="dash-sect">
+      <div class="dash-sect-label">Top 10 Highest Risk — Phase 4</div>
+      ${top10.map(([cc,d],i)=>{
+        const lvl=d.alert_level||'NONE';const col=LVL_COLOR[lvl];
+        return `<div class="dash-row">
+          <div class="dash-row-cc">${cc}</div>
+          <div class="dash-row-name">${COUNTRIES[cc]?.name||cc}</div>
+          <div class="dash-row-score" style="color:${col}">${d.alert_score||0}</div>
+          <div class="dash-row-level" style="background:${col}20;color:${col}">${lvl}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${escalating.length?`<div class="dash-sect">
+      <div class="dash-sect-label">Fastest Escalating</div>
+      ${escalating.map(([cc,d])=>{
+        const col=LVL_COLOR[d.alert_level||'NONE'];
+        return `<div class="dash-row">
+          <div class="dash-row-cc">${cc}</div>
+          <div class="dash-row-name">${COUNTRIES[cc]?.name||cc}</div>
+          <div class="dash-row-score" style="color:#f97316">Δ+${d.delta||0}</div>
+          <div class="dash-row-level" style="background:${col}20;color:${col}">${d.alert_level||'NONE'}</div>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    ${emerging.length?`<div class="dash-sect">
+      <div class="dash-sect-label">Emerging Threats (Rule D)</div>
+      ${emerging.map(([cc,d])=>{
+        return `<div class="dash-row">
+          <div class="dash-row-cc">${cc}</div>
+          <div class="dash-row-name">${COUNTRIES[cc]?.name||cc}</div>
+          <div class="dash-row-score" style="color:#a855f7">EMRG</div>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+    <div style="height:16px"></div>
+  `;
+}
+
+// ── Phase 6: Signal Graph ─────────────────────────────────────────────────
+function buildChainBtns(){
+  const el=document.getElementById('sg-chain-btns');
+  if(!el) return;
+  el.innerHTML=Object.entries(SIGNAL_CHAINS).map(([key,ch])=>
+    `<button class="sg-chain-btn${key===activeChain?' active':''}"
+      onclick="setChain('${key}',this)">${ch.label}</button>`
+  ).join('');
+}
+
+function setChain(key, btn){
+  activeChain=key;
+  document.querySelectorAll('.sg-chain-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderSignalGraph();
+}
+
+function renderSignalGraph(){
+  const svg=document.getElementById('signal-svg');
+  if(!svg) return;
+  const chain=SIGNAL_CHAINS[activeChain];
+  if(!chain) return;
+
+  svg.innerHTML='';
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+
+  // Arrow marker
+  const marker=document.createElementNS('http://www.w3.org/2000/svg','marker');
+  marker.setAttribute('id','arrow-'+activeChain);
+  marker.setAttribute('markerWidth','8');marker.setAttribute('markerHeight','8');
+  marker.setAttribute('refX','6');marker.setAttribute('refY','3');
+  marker.setAttribute('orient','auto');
+  const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points','0 0, 8 3, 0 6');
+  poly.setAttribute('fill',chain.color);
+  marker.appendChild(poly);
+  defs.appendChild(marker);
+  svg.appendChild(defs);
+
+  // Chain label
+  const chainLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  chainLbl.setAttribute('x','10');chainLbl.setAttribute('y','20');
+  chainLbl.setAttribute('class','sg-chain-label');
+  chainLbl.textContent=`CASCADE: ${chain.label.toUpperCase()}`;
+  svg.appendChild(chainLbl);
+
+  // Build node map
+  const nodeMap={};
+  chain.nodes.forEach(n=>nodeMap[n.id]=n);
+
+  // Edges first (under nodes)
+  chain.edges.forEach(([from,to])=>{
+    const fn=nodeMap[from], tn=nodeMap[to];
+    if(!fn||!tn) return;
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const mx=(fn.x+tn.x)/2, my=(fn.y+tn.y)/2-20;
+    const d=`M ${fn.x} ${fn.y} Q ${mx} ${my} ${tn.x} ${tn.y}`;
+    path.setAttribute('d',d);
+    path.setAttribute('stroke',chain.color);
+    path.setAttribute('class','sg-edge');
+    path.setAttribute('marker-end',`url(#arrow-${activeChain})`);
+    svg.appendChild(path);
+  });
+
+  // Nodes
+  chain.nodes.forEach((n,idx)=>{
+    const ld=LAYERS[n.domain]||{color:'#666'};
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','sg-node');
+
+    // Glow
+    const glow=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    glow.setAttribute('cx',n.x);glow.setAttribute('cy',n.y);glow.setAttribute('r','26');
+    glow.setAttribute('fill',ld.color);glow.setAttribute('opacity','.08');
+    g.appendChild(glow);
+
+    // Node circle
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',n.x);circle.setAttribute('cy',n.y);circle.setAttribute('r','18');
+    circle.setAttribute('fill',`${ld.color}22`);
+    circle.setAttribute('stroke',ld.color);circle.setAttribute('stroke-width','1.5');
+    g.appendChild(circle);
+
+    // Icon/number
+    const num=document.createElementNS('http://www.w3.org/2000/svg','text');
+    num.setAttribute('x',n.x);num.setAttribute('y',n.y-2);
+    num.setAttribute('class','sg-badge');num.setAttribute('fill',ld.color);
+    num.textContent=idx+1;
+    g.appendChild(num);
+
+    // Label below
+    const lblEl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lblEl.setAttribute('x',n.x);lblEl.setAttribute('y',n.y+32);
+    lblEl.setAttribute('class','sg-label');
+    const words=n.label.split(' ');
+    if(words.length>2){
+      const t1=document.createElementNS('http://www.w3.org/2000/svg','tspan');
+      t1.setAttribute('x',n.x);t1.setAttribute('dy','0');t1.textContent=words.slice(0,2).join(' ');
+      const t2=document.createElementNS('http://www.w3.org/2000/svg','tspan');
+      t2.setAttribute('x',n.x);t2.setAttribute('dy','12');t2.textContent=words.slice(2).join(' ');
+      lblEl.appendChild(t1);lblEl.appendChild(t2);
+    } else {
+      lblEl.textContent=n.label;
+    }
+    g.appendChild(lblEl);
+
+    // Domain badge
+    const domBadge=document.createElementNS('http://www.w3.org/2000/svg','text');
+    domBadge.setAttribute('x',n.x);domBadge.setAttribute('y',n.y+52);
+    domBadge.setAttribute('class','sg-badge');domBadge.setAttribute('fill',ld.color);
+    domBadge.setAttribute('opacity','.6');
+    domBadge.textContent=(ld.labelEn||n.domain).toUpperCase().slice(0,6);
+    g.appendChild(domBadge);
+
+    svg.appendChild(g);
+  });
+}
+
+// ── Phase 5: Timeline ─────────────────────────────────────────────────────
+function setTimeline(mode, btn){
+  timelineMode=mode;
+  document.querySelectorAll('.tl-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  // Update timeline detail bar
+  const bar=document.getElementById('timeline-detail');
+  const modeLabel=document.getElementById('tl-mode-lbl');
+  if(bar) bar.classList.toggle('visible', mode!=='now');
+  if(modeLabel) modeLabel.textContent=TL_LABELS[mode]||mode.toUpperCase();
+  renderMap();
+  renderGRI();
+  if(selectedCC) renderCountryPanel(selectedCC);
+  if(rightTab==='dashboard') renderDashboard();
+
+  // Update timeline markers
+  const markers=document.getElementById('tl-markers');
+  const fill=document.getElementById('tl-track-fill');
+  if(markers){
+    const idx=TL_MODES.indexOf(mode);
+    const pct=idx/(TL_MODES.length-1)*100;
+    if(fill) fill.style.width=pct+'%';
+    markers.innerHTML=TL_MODES.map((m,i)=>`
+      <div class="tl-marker${m===mode?' active':''}" onclick="setTimeline('${m}')" title="${TL_LABELS[m]}">
+        <span class="tl-marker-lbl">${TL_LABELS[m]}</span>
+      </div>`).join('');
+  }
+}
+
+// ── View management ───────────────────────────────────────────────────────
+function setView(v){
+  document.querySelectorAll('[id^="vbtn-"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('vbtn-'+v);
+  if(btn) btn.classList.add('active');
+  setRightTab(v==='country'&&selectedCC?'country':v==='graph'?'graph':'dashboard');
+}
+
+function setRightTab(tab){
+  rightTab=tab;
+  ['dashboard','country','graph'].forEach(t=>{
+    const el=document.getElementById('rp-'+t);
+    const btn=document.getElementById('rt-'+t);
+    if(el) el.style.display=t===tab?'block':'none';
+    if(btn) btn.classList.toggle('active',t===tab);
+  });
+  if(tab==='dashboard') renderDashboard();
+  else if(tab==='graph'){renderSignalGraph();buildChainBtns();}
+  else if(tab==='country'&&selectedCC) renderCountryPanel(selectedCC);
+}
+
+// ── Mobile panel ──────────────────────────────────────────────────────────
+function openMobilePanel(){
+  const p=document.getElementById('mobile-bottom');
+  const o=document.getElementById('mobile-overlay');
+  if(p){
+    p.innerHTML=buildMobileLayerPanel();
+    p.classList.add('open');
+  }
+  if(o) o.classList.add('visible');
+  document.body.style.overflow='hidden';
+}
+function closeMobilePanel(){
+  document.getElementById('mobile-bottom')?.classList.remove('open');
+  document.getElementById('mobile-overlay')?.classList.remove('visible');
+  document.body.style.overflow='';
+}
+function buildMobileLayerPanel(){
+  return `<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">Risk Layers</span>
+    <button onclick="closeMobilePanel()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+  </div>
+  ${Object.entries(LAYERS).map(([key,ld])=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="width:12px;height:12px;border-radius:50%;background:${ld.color};flex-shrink:0"></div>
+      <div style="flex:1;font-size:11px">${ld.label}</div>
+      <div class="layer-toggle${ld.enabled?' on':''}" onclick="toggleLayer('${key}');closeMobilePanel();openMobilePanel()"></div>
+    </div>`).join('')}
+  <div style="height:env(safe-area-inset-bottom,0px)"></div>`;
+}
+
+// ── Map zoom/pan ──────────────────────────────────────────────────────────
+function initMapControls(){
+  const svg=document.getElementById('map-svg');
+  svg.addEventListener('wheel',e=>{
+    e.preventDefault();
+    zoomLevel=Math.max(.8,Math.min(4,zoomLevel*(e.deltaY>0?.9:1.1)));
+    applyTransform();
+  },{passive:false});
+  svg.addEventListener('mousedown',e=>{
+    if(e.target.closest('.c-node')) return;
+    isPanning=true;startX=e.clientX-panX;startY=e.clientY-panY;
+    svg.style.cursor='grabbing';
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!isPanning) return;
+    panX=e.clientX-startX;panY=e.clientY-startY;applyTransform();
+  });
+  window.addEventListener('mouseup',()=>{isPanning=false;document.getElementById('map-svg').style.cursor='grab';});
+}
+function applyTransform(){
+  const t=`translate(${panX}px,${panY}px) scale(${zoomLevel})`;
+  document.getElementById('heatmap-layer').style.transform=t;
+  document.getElementById('countries-layer').style.transform=t;
+  document.getElementById('labels-layer').style.transform=t;
+}
+
+// ── Topbar stats ──────────────────────────────────────────────────────────
+function updateStats(){
+  const rep=globalReport||{};
+  const s=rep.summary||{};
+  const crit=s.critical||Object.values(alertData).filter(d=>d.alert_level==='CRITICAL').length;
+  const warn=s.warning||Object.values(alertData).filter(d=>d.alert_level==='WARNING').length;
+  const act=s.total_active||(crit+warn+(s.alert||0)+(s.watch||0));
+  const scores=Object.values(alertData).map(d=>d.alert_score||0);
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):0;
+  document.getElementById('stat-crit').textContent=crit;
+  document.getElementById('stat-warn').textContent=warn;
+  document.getElementById('stat-active').textContent=act;
+  document.getElementById('stat-gri').textContent=avg;
+  document.getElementById('last-upd').textContent='↺ '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── Main init ─────────────────────────────────────────────────────────────
+async function init(){
+  const fill=document.getElementById('ld-fill');
+  const txt=document.getElementById('ld-txt');
+
+  txt.textContent='Загрузка глобальных данных...'; fill.style.width='20%';
+  buildLayerList();
+  await loadGlobal();
+
+  txt.textContent='Загрузка стран...'; fill.style.width='45%';
+  await loadCountries();
+  await loadRankings();
+
+  txt.textContent='Загрузка объяснений...'; fill.style.width='70%';
+  // Load expl for top-risk countries first
+  const topCCs=Object.entries(alertData)
+    .sort((a,b)=>(b[1].alert_score||0)-(a[1].alert_score||0))
+    .slice(0,8).map(([cc])=>cc);
+  await loadExplBatch(topCCs);
+
+  txt.textContent='Рендеринг...'; fill.style.width='90%';
+  initMapControls();
+  renderMap();
+  renderGRI();
+  renderDashboard();
+  buildChainBtns();
+  setTimeline('now');
+
+  // Ocean gradient in SVG
+  const defs=document.getElementById('svg-defs');
+  if(defs){
+    const og=document.createElementNS('http://www.w3.org/2000/svg','radialGradient');
+    og.id='oceanGrad';og.setAttribute('cx','50%');og.setAttribute('cy','50%');
+    ['0%:#0d111c','100%:#080c14'].forEach(s=>{
+      const [offset,col]=s.split(':');
+      const stop=document.createElementNS('http://www.w3.org/2000/svg','stop');
+      stop.setAttribute('offset',offset);stop.setAttribute('stop-color',col);
+      og.appendChild(stop);
+    });
+    defs.appendChild(og);
+  }
+
+  fill.style.width='100%';
+  setTimeout(()=>document.getElementById('ld').classList.add('gone'),600);
+
+  // Background: load remaining expl
+  const remainCCs=Object.keys(COUNTRIES).filter(cc=>!explData[cc]);
+  setTimeout(()=>loadExplBatch(remainCCs).then(()=>{
+    if(selectedCC) renderCountryPanel(selectedCC);
+    renderDashboard();
+  }),2000);
+
+  updateStats();
+  setInterval(async()=>{
+    await loadGlobal(); await loadCountries(); await loadRankings();
+    renderMap(); renderGRI(); renderDashboard(); updateStats();
+    if(selectedCC) renderCountryPanel(selectedCC);
+  }, REFRESH);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
