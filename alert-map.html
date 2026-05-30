@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Alert Map V1 — Global Risk Intelligence</title>
+<style>
+:root {
+  --bg:       #0a0a12;
+  --panel:    #111120;
+  --border:   rgba(255,255,255,.08);
+  --text:     #e8e0d0;
+  --muted:    rgba(232,224,208,.35);
+  --none:     #2a2a3a;
+  --watch:    #1e40af;
+  --watch-bg: rgba(30,64,175,.18);
+  --alert:    #92400e;
+  --alert-bg: rgba(146,64,14,.18);
+  --warning:  #c2410c;
+  --warning-bg:rgba(194,65,12,.20);
+  --critical: #dc2626;
+  --critical-bg:rgba(220,38,38,.22);
+  --gold:     #B8973A;
+  --font:     'Inter',system-ui,sans-serif;
+  --serif:    'Cormorant Garamond','Georgia',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+/* ── Top bar ── */
+#topbar{display:flex;align-items:center;gap:16px;padding:10px 20px;background:rgba(10,10,18,.95);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+#topbar h1{font-family:var(--serif);font-size:18px;font-weight:400;letter-spacing:.04em;color:var(--text);white-space:nowrap}
+#topbar h1 span{color:var(--critical);font-weight:700}
+.tb-sep{flex:1}
+#last-update{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+#refresh-btn{font-size:9px;padding:4px 10px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;border-radius:3px;letter-spacing:.1em;text-transform:uppercase;transition:all .2s}
+#refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+#live-dot{width:7px;height:7px;border-radius:50%;background:var(--critical);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── Global summary bar ── */
+#summary-bar{display:flex;gap:12px;padding:10px 20px;background:rgba(12,12,22,.8);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+#summary-bar::-webkit-scrollbar{display:none}
+.sb-card{display:flex;flex-direction:column;align-items:center;min-width:80px;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:rgba(255,255,255,.03);cursor:pointer;transition:border-color .2s}
+.sb-card:hover{border-color:var(--gold)}
+.sb-num{font-family:var(--serif);font-size:22px;font-weight:700;line-height:1}
+.sb-lbl{font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.sb-card.critical .sb-num{color:var(--critical)}
+.sb-card.warning  .sb-num{color:#f97316}
+.sb-card.alert    .sb-num{color:#fbbf24}
+.sb-card.watch    .sb-num{color:#60a5fa}
+.sb-card.total    .sb-num{color:var(--text)}
+
+/* ── Layout ── */
+#layout{display:flex;height:calc(100vh - 88px);overflow:hidden}
+#map-container{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+#side-panel{width:320px;flex-shrink:0;background:var(--panel);border-left:1px solid var(--border);overflow-y:auto;transition:transform .3s;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+#side-panel.collapsed{transform:translateX(320px);position:absolute;right:0;top:0;bottom:0;z-index:50}
+#side-panel::-webkit-scrollbar{width:4px}
+#side-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── SVG Map ── */
+#world-svg{width:100%;height:100%;cursor:grab}
+#world-svg:active{cursor:grabbing}
+.country-path{stroke:#1a1a2e;stroke-width:.4;transition:fill .4s,stroke .2s,stroke-width .2s;cursor:pointer}
+.country-path:hover{stroke:#fff;stroke-width:1.2}
+.country-path.selected{stroke:var(--gold);stroke-width:1.8}
+.country-path.NONE    {fill:var(--none)}
+.country-path.WATCH   {fill:#1d4ed8}
+.country-path.ALERT   {fill:#d97706}
+.country-path.WARNING {fill:#ea580c}
+.country-path.CRITICAL{fill:var(--critical)}
+.country-path.loading {fill:#1c1c2e;animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* ── Map tooltip ── */
+#map-tooltip{position:fixed;pointer-events:none;background:rgba(10,10,18,.97);border:1px solid var(--border);border-radius:5px;padding:10px 12px;font-size:11px;line-height:1.6;max-width:220px;z-index:200;display:none;backdrop-filter:blur(8px)}
+#map-tooltip .tt-country{font-family:var(--serif);font-size:14px;color:var(--text);margin-bottom:4px;font-weight:600}
+#map-tooltip .tt-level{font-size:9px;font-weight:700;letter-spacing:.12em;padding:2px 8px;border-radius:3px;display:inline-block;margin-bottom:6px}
+.tt-level.NONE    {background:rgba(42,42,58,.4);color:#666}
+.tt-level.WATCH   {background:rgba(29,78,216,.2);color:#60a5fa}
+.tt-level.ALERT   {background:rgba(217,119,6,.2);color:#fbbf24}
+.tt-level.WARNING {background:rgba(234,88,12,.2);color:#fb923c}
+.tt-level.CRITICAL{background:rgba(220,38,38,.2);color:#f87171}
+#map-tooltip .tt-row{display:flex;justify-content:space-between;gap:12px;font-size:10px;color:var(--muted)}
+#map-tooltip .tt-val{color:var(--text);font-weight:600}
+#map-tooltip .tt-drivers{font-size:9px;color:var(--muted);margin-top:5px;border-top:1px solid var(--border);padding-top:5px}
+#map-tooltip .tt-driver{color:rgba(232,224,208,.6);padding:1px 0}
+
+/* ── Side panel content ── */
+#panel-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:12px}
+#panel-empty svg{display:block;margin:0 auto 12px;opacity:.2}
+#panel-content{display:none;padding:0}
+#panel-close{position:absolute;top:10px;right:12px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;z-index:10;padding:4px}
+#panel-close:hover{color:var(--text)}
+.pc-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);position:relative}
+.pc-country{font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:4px}
+.pc-level-badge{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:700;letter-spacing:.12em;padding:3px 10px;border-radius:3px;margin-bottom:8px}
+.pc-level-badge.CRITICAL{background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.3)}
+.pc-level-badge.WARNING {background:rgba(234,88,12,.2);color:#fb923c;border:1px solid rgba(234,88,12,.3)}
+.pc-level-badge.ALERT   {background:rgba(217,119,6,.2);color:#fbbf24;border:1px solid rgba(217,119,6,.3)}
+.pc-level-badge.WATCH   {background:rgba(29,78,216,.2);color:#60a5fa;border:1px solid rgba(29,78,216,.3)}
+.pc-level-badge.NONE    {background:rgba(42,42,58,.3);color:#666;border:1px solid rgba(255,255,255,.08)}
+.pc-score-row{display:flex;align-items:baseline;gap:8px}
+.pc-score{font-family:var(--serif);font-size:36px;font-weight:700;line-height:1}
+.pc-score-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.pc-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:8px;overflow:hidden}
+.pc-bar-fill{height:100%;border-radius:2px;transition:width .6s}
+
+.pc-section{padding:12px 16px;border-bottom:1px solid var(--border)}
+.pc-section-label{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.pc-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px}
+.pc-row-lbl{color:var(--muted)}
+.pc-row-val{color:var(--text);font-weight:600}
+.pc-trend-up{color:#f87171}
+.pc-trend-down{color:#34d399}
+.pc-trend-stable{color:var(--muted)}
+
+.pc-driver{display:flex;align-items:center;gap:8px;padding:4px 0}
+.pc-driver-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pc-driver-name{font-size:10px;color:rgba(232,224,208,.75)}
+.pc-driver-pct{font-size:9px;color:var(--muted);margin-left:auto;font-family:monospace}
+
+.pc-rule-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:10px}
+.pc-rule-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pc-rule-dot.triggered{background:#ef4444}
+.pc-rule-dot.ok{background:#374151}
+.pc-rule-name{color:rgba(232,224,208,.6)}
+.pc-rule-active{color:#ef4444;font-weight:600}
+
+.pc-esc{padding:5px 8px;border-radius:3px;border-left:3px solid #ef4444;background:rgba(239,68,68,.06);margin-bottom:5px;font-size:10px}
+.pc-esc-label{color:#f87171;font-weight:600;font-size:9px;letter-spacing:.06em}
+.pc-esc-detail{color:var(--muted);margin-top:2px}
+
+.pc-link{display:block;margin:12px 16px;padding:8px;text-align:center;border:1px solid var(--border);color:var(--muted);font-size:9px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border-radius:3px;transition:all .2s}
+.pc-link:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ── Rankings panel ── */
+#rankings-panel{position:absolute;bottom:16px;left:16px;width:240px;background:rgba(10,10,18,.95);border:1px solid var(--border);border-radius:5px;z-index:50;backdrop-filter:blur(8px)}
+.rp-header{padding:8px 12px;border-bottom:1px solid var(--border);font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.rp-tab-btn{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s}
+.rp-tab-btn.active{border-color:var(--gold);color:var(--gold)}
+.rp-list{padding:6px 0;max-height:180px;overflow-y:auto;scrollbar-width:none}
+.rp-list::-webkit-scrollbar{display:none}
+.rp-item{display:flex;align-items:center;gap:8px;padding:4px 12px;cursor:pointer;transition:background .15s}
+.rp-item:hover{background:rgba(255,255,255,.04)}
+.rp-rank{font-size:9px;color:var(--muted);width:16px;text-align:right;flex-shrink:0}
+.rp-cc-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.rp-name{font-size:10px;color:var(--text);flex:1}
+.rp-score{font-size:10px;font-weight:700;font-family:monospace;flex-shrink:0}
+
+/* ── Legend ── */
+#legend{position:absolute;bottom:16px;right:332px;display:flex;flex-direction:column;gap:4px;background:rgba(10,10,18,.92);border:1px solid var(--border);border-radius:4px;padding:8px 12px;backdrop-filter:blur(6px)}
+.leg-item{display:flex;align-items:center;gap:8px;font-size:9px;color:var(--muted);white-space:nowrap}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.leg-dot.CRITICAL{background:var(--critical)}
+.leg-dot.WARNING {background:#ea580c}
+.leg-dot.ALERT   {background:#d97706}
+.leg-dot.WATCH   {background:#1d4ed8}
+.leg-dot.NONE    {background:var(--none)}
+
+/* ── Loading overlay ── */
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s}
+#loader.hidden{opacity:0;pointer-events:none}
+.ld-logo{font-family:var(--serif);font-size:28px;color:var(--text);margin-bottom:16px;letter-spacing:.08em}
+.ld-logo span{color:var(--critical)}
+.ld-bar{width:200px;height:2px;background:rgba(255,255,255,.08);border-radius:1px;overflow:hidden}
+.ld-bar-fill{height:100%;background:var(--critical);border-radius:1px;width:0;transition:width .8s}
+.ld-status{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+  #side-panel{width:100%;position:absolute;bottom:0;left:0;right:0;top:auto;height:60vh;border-left:none;border-top:1px solid var(--border);transform:translateY(100%);transition:transform .3s}
+  #side-panel.open{transform:translateY(0)}
+  #rankings-panel{display:none}
+  #legend{right:8px;bottom:8px}
+  #layout{height:calc(100vh - 88px)}
+  #topbar h1{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loader">
+  <div class="ld-logo">АРХИВ <span>●</span> КАРТА СИГНАЛОВ</div>
+  <div class="ld-bar"><div class="ld-bar-fill" id="ld-fill"></div></div>
+  <div class="ld-status" id="ld-status">Инициализация...</div>
+</div>
+
+<!-- Top bar -->
+<div id="topbar">
+  <div id="live-dot"></div>
+  <h1>АРХИВ — <span>КАРТА ТРЕВОГ</span></h1>
+  <div class="tb-sep"></div>
+  <span id="last-update">Обновление...</span>
+  <button id="refresh-btn" onclick="refreshAll()">↺ Обновить</button>
+</div>
+
+<!-- Summary bar -->
+<div id="summary-bar">
+  <div class="sb-card critical" onclick="filterByLevel('CRITICAL')" title="Критические">
+    <span class="sb-num" id="sb-critical">—</span>
+    <span class="sb-lbl">Critical</span>
+  </div>
+  <div class="sb-card warning" onclick="filterByLevel('WARNING')" title="Предупреждения">
+    <span class="sb-num" id="sb-warning">—</span>
+    <span class="sb-lbl">Warning</span>
+  </div>
+  <div class="sb-card alert" onclick="filterByLevel('ALERT')" title="Тревога">
+    <span class="sb-num" id="sb-alert">—</span>
+    <span class="sb-lbl">Alert</span>
+  </div>
+  <div class="sb-card watch" onclick="filterByLevel('WATCH')" title="Наблюдение">
+    <span class="sb-num" id="sb-watch">—</span>
+    <span class="sb-lbl">Watch</span>
+  </div>
+  <div class="sb-card total" onclick="filterByLevel(null)" title="Всего активных">
+    <span class="sb-num" id="sb-total">—</span>
+    <span class="sb-lbl">Active</span>
+  </div>
+  <div class="sb-card" id="sb-top-card" style="min-width:120px">
+    <span class="sb-num" id="sb-top-score" style="font-size:14px;color:var(--critical)">—</span>
+    <span class="sb-lbl" id="sb-top-name">Highest Risk</span>
+  </div>
+</div>
+
+<!-- Main layout -->
+<div id="layout">
+  <!-- SVG world map -->
+  <div id="map-container">
+    <svg id="world-svg" viewBox="0 0 1010 510" xmlns="http://www.w3.org/2000/svg">
+      <!-- Paths injected by JS from embedded geo data -->
+    </svg>
+
+    <!-- Legend -->
+    <div id="legend">
+      <div class="leg-item"><div class="leg-dot CRITICAL"></div>CRITICAL (90-100)</div>
+      <div class="leg-item"><div class="leg-dot WARNING"></div>WARNING (75-89)</div>
+      <div class="leg-item"><div class="leg-dot ALERT"></div>ALERT (60-74)</div>
+      <div class="leg-item"><div class="leg-dot WATCH"></div>WATCH (40-59)</div>
+      <div class="leg-item"><div class="leg-dot NONE"></div>NONE / No data</div>
+    </div>
+
+    <!-- Rankings panel -->
+    <div id="rankings-panel">
+      <div class="rp-header">
+        <span>Рейтинг</span>
+        <div style="display:flex;gap:4px">
+          <button class="rp-tab-btn active" onclick="setRankTab('score',this)">Score</button>
+          <button class="rp-tab-btn" onclick="setRankTab('velocity',this)">Velocity</button>
+          <button class="rp-tab-btn" onclick="setRankTab('emerging',this)">Emerging</button>
+        </div>
+      </div>
+      <div class="rp-list" id="rp-list"></div>
+    </div>
+  </div>
+
+  <!-- Side panel -->
+  <div id="side-panel" class="collapsed">
+    <button id="panel-close" onclick="closePanel()">✕</button>
+    <div id="panel-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+      </svg>
+      Выберите страну на карте
+    </div>
+    <div id="panel-content"></div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div id="map-tooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════
+const API      = 'https://archive-api.luven-medical-msk.workers.dev';
+const RAW_BASE = 'https://raw.githubusercontent.com/luvenmedicalmsk-byte/secrett-archive/main';
+const REFRESH_MS = 300_000; // 5 min
+
+// ═══════════════════════════════════════════════════════════
+// ALERT LEVEL COLOURS
+// ═══════════════════════════════════════════════════════════
+const LVL_COLOR = {
+  CRITICAL: '#dc2626', WARNING: '#ea580c',
+  ALERT: '#d97706',   WATCH:   '#1d4ed8',
+  NONE:  '#2a2a3a'
+};
+const LVL_ORDER = { NONE:0, WATCH:1, ALERT:2, WARNING:3, CRITICAL:4 };
+
+// ═══════════════════════════════════════════════════════════
+// 25 MONITORED COUNTRIES — ISO codes + SVG path data
+// Simplified Robinson-projection paths for the 25 countries
+// ═══════════════════════════════════════════════════════════
+const COUNTRIES = {
+  RU:{name:'Россия',          nameEn:'Russia'},
+  US:{name:'США',             nameEn:'United States'},
+  CN:{name:'Китай',           nameEn:'China'},
+  DE:{name:'Германия',        nameEn:'Germany'},
+  GB:{name:'Великобритания',  nameEn:'United Kingdom'},
+  FR:{name:'Франция',         nameEn:'France'},
+  TR:{name:'Турция',          nameEn:'Turkey'},
+  KZ:{name:'Казахстан',       nameEn:'Kazakhstan'},
+  AE:{name:'ОАЭ',             nameEn:'UAE'},
+  UA:{name:'Украина',         nameEn:'Ukraine'},
+  BY:{name:'Беларусь',        nameEn:'Belarus'},
+  IN:{name:'Индия',           nameEn:'India'},
+  JP:{name:'Япония',          nameEn:'Japan'},
+  SA:{name:'Саудовская Аравия',nameEn:'Saudi Arabia'},
+  EG:{name:'Египет',          nameEn:'Egypt'},
+  PL:{name:'Польша',          nameEn:'Poland'},
+  IL:{name:'Израиль',         nameEn:'Israel'},
+  IR:{name:'Иран',            nameEn:'Iran'},
+  IT:{name:'Италия',          nameEn:'Italy'},
+  AR:{name:'Аргентина',       nameEn:'Argentina'},
+  CA:{name:'Канада',          nameEn:'Canada'},
+  ES:{name:'Испания',         nameEn:'Spain'},
+  ID:{name:'Индонезия',       nameEn:'Indonesia'},
+  MX:{name:'Мексика',         nameEn:'Mexico'},
+  CH:{name:'Швейцария',       nameEn:'Switzerland'},
+};
+
+// Approximate SVG coords in 1010×510 Robinson projection
+// Each country: [cx, cy, rx, ry] for ellipse rendering
+// (more accurate paths drawn below via SVG polygons)
+const CC_POS = {
+  RU:{cx:640,cy:140,rx:100,ry:40},
+  US:{cx:165,cy:200,rx:65,ry:45},
+  CN:{cx:700,cy:230,rx:60,ry:40},
+  DE:{cx:500,cy:170,rx:18,ry:14},
+  GB:{cx:472,cy:155,rx:12,ry:16},
+  FR:{cx:485,cy:185,rx:18,ry:16},
+  TR:{cx:555,cy:205,rx:28,ry:14},
+  KZ:{cx:620,cy:185,rx:35,ry:20},
+  AE:{cx:598,cy:245,rx:12,ry:8},
+  UA:{cx:540,cy:185,rx:22,ry:13},
+  BY:{cx:528,cy:168,rx:15,ry:10},
+  IN:{cx:650,cy:265,rx:35,ry:40},
+  JP:{cx:770,cy:205,rx:18,ry:22},
+  SA:{cx:577,cy:256,rx:25,ry:20},
+  EG:{cx:537,cy:243,rx:18,ry:16},
+  PL:{cx:516,cy:166,rx:16,ry:12},
+  IL:{cx:547,cy:228,rx:6,ry:7},
+  IR:{cx:596,cy:221,rx:24,ry:18},
+  IT:{cx:502,cy:203,rx:12,ry:18},
+  AR:{cx:250,cy:390,rx:20,ry:38},
+  CA:{cx:165,cy:145,rx:75,ry:38},
+  ES:{cx:472,cy:202,rx:22,ry:14},
+  ID:{cx:725,cy:310,rx:45,ry:18},
+  MX:{cx:148,cy:248,rx:30,ry:20},
+  CH:{cx:499,cy:185,rx:9,ry:7},
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let alertData   = {};   // cc → alert record
+let latestReport= null;
+let rankData    = null;
+let rankTab     = 'score';
+let filterLevel = null;
+let selectedCC  = null;
+let zoomLevel   = 1;
+let panX = 0, panY = 0;
+let isPanning   = false, startX = 0, startY = 0;
+
+// ═══════════════════════════════════════════════════════════
+// FETCH HELPERS
+// ═══════════════════════════════════════════════════════════
+async function fetchJSON(url) {
+  try {
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) return null;
+    return r.json();
+  } catch { return null; }
+}
+
+async function loadAlertData() {
+  // Try API first, then raw fallback
+  let rep = await fetchJSON(`${API}/api/alerts/summary`);
+  if (!rep || rep.error) {
+    rep = await fetchJSON(`${RAW_BASE}/docs/alerts/reports/latest.json`);
+  }
+  latestReport = rep;
+
+  // Load per-country data
+  const ccs = Object.keys(COUNTRIES);
+  const batch = await Promise.all(
+    ccs.map(cc =>
+      fetchJSON(`${RAW_BASE}/docs/alerts/reports/${cc}.json`)
+        .then(d => ({ cc, d }))
+    )
+  );
+  batch.forEach(({ cc, d }) => {
+    if (d) alertData[cc] = d;
+  });
+}
+
+async function loadRankings() {
+  let r = await fetchJSON(`${RAW_BASE}/docs/alerts/rankings/latest.json`);
+  if (!r) {
+    // Build from alertData
+    const entries = Object.entries(alertData).map(([cc, d]) => ({
+      cc, name: COUNTRIES[cc]?.name || cc,
+      alert_score: d.alert_score || 0,
+      alert_level: d.alert_level || 'NONE',
+      change_7d: d.rules?.A_velocity?.change_7d || 0,
+      has_emerging: d.rules?.D_emerging?.triggered || false,
+    }));
+    r = {
+      top_score:    [...entries].sort((a,b)=>b.alert_score-a.alert_score).slice(0,10),
+      top_velocity: [...entries].sort((a,b)=>Math.abs(b.change_7d)-Math.abs(a.change_7d)).slice(0,10),
+      top_emerging: entries.filter(e=>e.has_emerging).slice(0,10),
+    };
+  }
+  rankData = r;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAP RENDERING
+// ═══════════════════════════════════════════════════════════
+function getAlertLevel(cc) {
+  if (filterLevel && alertData[cc]?.alert_level !== filterLevel) return 'NONE';
+  return alertData[cc]?.alert_level || 'NONE';
+}
+
+function getAlertScore(cc) { return alertData[cc]?.alert_score || 0; }
+
+function buildMap() {
+  const svg = document.getElementById('world-svg');
+
+  // Ocean background
+  svg.innerHTML = `
+    <defs>
+      <radialGradient id="oceanGrad" cx="50%" cy="50%">
+        <stop offset="0%" stop-color="#0d1117"/>
+        <stop offset="100%" stop-color="#080c10"/>
+      </radialGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <rect width="1010" height="510" fill="url(#oceanGrad)"/>
+    <!-- Grid lines -->
+    <g stroke="rgba(255,255,255,.03)" stroke-width=".5">
+      ${[90,120,150,180,210,240,270,300,330,360,390,420,450,480,510,540,570,600,630,660,690,720,750,780,810,840,870,900,930,960,990].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="510"/>`).join('')}
+      ${[60,120,180,240,300,360,420].map(y=>`<line x1="0" y1="${y}" x2="1010" y2="${y}"/>`).join('')}
+    </g>
+    <g id="countries-group"></g>
+    <g id="labels-group"></g>
+  `;
+
+  renderCountries();
+}
+
+function renderCountries() {
+  const grp  = document.getElementById('countries-group');
+  const lbls = document.getElementById('labels-group');
+  if (!grp || !lbls) return;
+
+  grp.innerHTML  = '';
+  lbls.innerHTML = '';
+
+  Object.entries(CC_POS).forEach(([cc, pos]) => {
+    const level = getAlertLevel(cc);
+    const score = getAlertScore(cc);
+    const color = LVL_COLOR[level] || LVL_COLOR.NONE;
+    const isSelected = cc === selectedCC;
+
+    // Country ellipse (simplified geo representation)
+    const el = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+    el.setAttribute('cx', pos.cx);
+    el.setAttribute('cy', pos.cy);
+    el.setAttribute('rx', pos.rx);
+    el.setAttribute('ry', pos.ry);
+    el.setAttribute('fill', color);
+    el.setAttribute('stroke', isSelected ? '#B8973A' : '#1a1a2e');
+    el.setAttribute('stroke-width', isSelected ? '2' : '.6');
+    el.setAttribute('opacity', level === 'NONE' ? '.6' : '1');
+    el.setAttribute('class', `country-path ${level}${isSelected ? ' selected' : ''}`);
+    el.style.cursor = 'pointer';
+    el.dataset.cc   = cc;
+
+    if (level === 'CRITICAL' || level === 'WARNING') {
+      el.setAttribute('filter', 'url(#glow)');
+    }
+
+    el.addEventListener('mouseenter', (e) => showTooltip(e, cc));
+    el.addEventListener('mousemove',  (e) => moveTooltip(e));
+    el.addEventListener('mouseleave', hideTooltip);
+    el.addEventListener('click',      ()  => selectCountry(cc));
+
+    grp.appendChild(el);
+
+    // Label
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x', pos.cx);
+    text.setAttribute('y', pos.cy + 1);
+    text.setAttribute('text-anchor','middle');
+    text.setAttribute('dominant-baseline','middle');
+    text.setAttribute('font-size', Math.min(9, Math.max(6, pos.rx / 4)));
+    text.setAttribute('fill', level === 'NONE' ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.85)');
+    text.setAttribute('pointer-events','none');
+    text.setAttribute('font-family','Inter,system-ui,sans-serif');
+    text.setAttribute('font-weight', level !== 'NONE' ? '600' : '400');
+    text.textContent = cc;
+    lbls.appendChild(text);
+
+    // Score badge for high-alert countries
+    if (score >= 60) {
+      const badge = document.createElementNS('http://www.w3.org/2000/svg','text');
+      badge.setAttribute('x', pos.cx);
+      badge.setAttribute('y', pos.cy + pos.ry + 8);
+      badge.setAttribute('text-anchor','middle');
+      badge.setAttribute('font-size','7');
+      badge.setAttribute('fill', color);
+      badge.setAttribute('pointer-events','none');
+      badge.setAttribute('font-family','monospace');
+      badge.textContent = score;
+      lbls.appendChild(badge);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOOLTIP
+// ═══════════════════════════════════════════════════════════
+function showTooltip(e, cc) {
+  const d = alertData[cc];
+  if (!d) return;
+  const tt = document.getElementById('map-tooltip');
+  const level = d.alert_level || 'NONE';
+  const trend = d.trend || 'stable';
+  const drivers = d.top_drivers || [];
+
+  const trendIcon = trend === 'accelerating' ? '🔺' : trend === 'rising' ? '↑' : trend === 'falling' ? '↓' : '→';
+
+  tt.innerHTML = `
+    <div class="tt-country">${COUNTRIES[cc]?.name || cc}</div>
+    <span class="tt-level ${level}">${level}</span>
+    <div class="tt-row"><span>Score</span><span class="tt-val">${d.alert_score || 0}</span></div>
+    <div class="tt-row"><span>Risk</span><span class="tt-val">${d.risk_score || '—'}</span></div>
+    <div class="tt-row"><span>Trend</span><span class="tt-val">${trendIcon} ${trend}</span></div>
+    <div class="tt-row"><span>Обновлено</span><span class="tt-val">${d.date || '—'}</span></div>
+    ${drivers.length ? `<div class="tt-drivers">${drivers.slice(0,5).map(dr=>`<div class="tt-driver">· ${dr}</div>`).join('')}</div>` : ''}
+  `;
+  tt.style.display = 'block';
+  moveTooltip(e);
+}
+
+function moveTooltip(e) {
+  const tt = document.getElementById('map-tooltip');
+  const x = e.clientX + 14;
+  const y = e.clientY - 10;
+  const maxX = window.innerWidth  - tt.offsetWidth  - 20;
+  const maxY = window.innerHeight - tt.offsetHeight - 10;
+  tt.style.left = Math.min(x, maxX) + 'px';
+  tt.style.top  = Math.min(y, maxY) + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('map-tooltip').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// SIDE PANEL
+// ═══════════════════════════════════════════════════════════
+function selectCountry(cc) {
+  selectedCC = cc;
+  renderCountries();
+  const d = alertData[cc];
+  if (!d) return;
+  openPanel(cc, d);
+}
+
+function openPanel(cc, d) {
+  const panel = document.getElementById('side-panel');
+  const empty = document.getElementById('panel-empty');
+  const content = document.getElementById('panel-content');
+
+  panel.classList.remove('collapsed');
+  panel.classList.add('open');
+  empty.style.display = 'none';
+  content.style.display = 'block';
+
+  const level     = d.alert_level || 'NONE';
+  const score     = d.alert_score || 0;
+  const riskScore = d.risk_score  || 0;
+  const conf      = d.confidence  || 0;
+  const signals   = d.signals     || 0;
+  const trend     = d.trend       || 'stable';
+  const drivers   = d.top_drivers || [];
+  const contribs  = d.contributions || [];
+  const rules     = d.rules || {};
+  const esc       = d.escalation;
+  const color     = LVL_COLOR[level];
+  const trendClass = trend === 'accelerating' || trend === 'rising' ? 'pc-trend-up'
+                   : trend === 'falling' || trend === 'decelerating' ? 'pc-trend-down'
+                   : 'pc-trend-stable';
+  const trendIcon  = trend === 'accelerating' ? '🔺 Ускорение' : trend === 'rising' ? '↑ Рост'
+                   : trend === 'falling' ? '↓ Снижение' : '→ Стабильно';
+
+  const driverColors = ['#ef4444','#f97316','#f59e0b','#84cc16','#22d3ee'];
+
+  // Build contributions (from explainability if available, else top_drivers)
+  let driverRows = '';
+  if (contribs && contribs.length) {
+    driverRows = contribs.slice(0,5).map((c,i) => `
+      <div class="pc-driver">
+        <div class="pc-driver-dot" style="background:${driverColors[i]||'#666'}"></div>
+        <div class="pc-driver-name">${c.label || c.engine}</div>
+        <div class="pc-driver-pct">${c.contribution}%</div>
+      </div>`).join('');
+  } else if (drivers.length) {
+    const pct = Math.floor(100 / Math.max(1, drivers.length));
+    driverRows = drivers.slice(0,5).map((dr,i) => `
+      <div class="pc-driver">
+        <div class="pc-driver-dot" style="background:${driverColors[i]||'#666'}"></div>
+        <div class="pc-driver-name">${dr}</div>
+        <div class="pc-driver-pct">${pct}%</div>
+      </div>`).join('');
+  }
+
+  // Rules summary
+  const ruleMap = [
+    ['A','Velocity Spike',     rules.A_velocity?.triggered],
+    ['B','Signal Explosion',   rules.B_signal_expl?.triggered],
+    ['C','Multi-Engine Conf.', rules.C_multi_eng?.triggered],
+    ['D','Emerging Threat',    rules.D_emerging?.triggered],
+    ['E','Confidence Esc.',    rules.E_confidence?.triggered],
+  ];
+  const ruleRows = ruleMap.map(([id,name,trig]) => `
+    <div class="pc-rule-row">
+      <div class="pc-rule-dot ${trig ? 'triggered' : 'ok'}"></div>
+      <div class="pc-rule-name">Rule ${id} — ${name}</div>
+      ${trig ? '<div class="pc-rule-active">ACTIVE</div>' : ''}
+    </div>`).join('');
+
+  const escHtml = esc ? `
+    <div class="pc-section">
+      <div class="pc-section-label">Эскалация</div>
+      <div class="pc-esc">
+        <div class="pc-esc-label">${esc.previous} → ${esc.current}</div>
+        <div class="pc-esc-detail">Δ ${esc.delta_score > 0 ? '+' : ''}${esc.delta_score} баллов · ${(esc.timestamp||'').slice(0,10)}</div>
+      </div>
+    </div>` : '';
+
+  content.innerHTML = `
+    <div class="pc-header">
+      <div class="pc-country">${COUNTRIES[cc]?.name || cc}</div>
+      <div class="pc-level-badge ${level}">${level}</div>
+      <div class="pc-score-row">
+        <div class="pc-score" style="color:${color}">${score}</div>
+        <div class="pc-score-lbl">/ 100 Alert Score</div>
+      </div>
+      <div class="pc-bar"><div class="pc-bar-fill" style="width:${score}%;background:${color}"></div></div>
+    </div>
+
+    <div class="pc-section">
+      <div class="pc-section-label">Метрики</div>
+      <div class="pc-row"><span class="pc-row-lbl">Risk Score</span><span class="pc-row-val">${riskScore}</span></div>
+      <div class="pc-row"><span class="pc-row-lbl">Confidence</span><span class="pc-row-val">${conf}%</span></div>
+      <div class="pc-row"><span class="pc-row-lbl">Сигналы</span><span class="pc-row-val">${signals}</span></div>
+      <div class="pc-row"><span class="pc-row-lbl">Тренд</span><span class="pc-row-val ${trendClass}">${trendIcon}</span></div>
+      <div class="pc-row"><span class="pc-row-lbl">Домен</span><span class="pc-row-val">${d.dominant_domain || '—'}</span></div>
+      <div class="pc-row"><span class="pc-row-lbl">Уровень</span><span class="pc-row-val">${d.escalation_level || '—'}</span></div>
+      <div class="pc-row"><span class="pc-row-lbl">Дата</span><span class="pc-row-val">${d.date || '—'}</span></div>
+    </div>
+
+    ${driverRows ? `<div class="pc-section"><div class="pc-section-label">Топ-драйверы</div>${driverRows}</div>` : ''}
+
+    <div class="pc-section">
+      <div class="pc-section-label">Правила детектирования</div>
+      ${ruleRows}
+    </div>
+
+    ${escHtml}
+
+    <a class="pc-link" href="#" onclick="loadExplainability('${cc}');return false">
+      → Полный анализ (Explainability)
+    </a>
+    <div style="height:16px"></div>
+  `;
+}
+
+async function loadExplainability(cc) {
+  const d = await fetchJSON(`${RAW_BASE}/docs/explanations/${cc}.json`);
+  if (!d || !alertData[cc]) return;
+  alertData[cc].contributions = d.contributions || alertData[cc].contributions;
+  alertData[cc].trend = { dominant_trend: d.trend?.dominant_trend };
+  openPanel(cc, alertData[cc]);
+}
+
+function closePanel() {
+  const panel = document.getElementById('side-panel');
+  panel.classList.add('collapsed');
+  panel.classList.remove('open');
+  selectedCC = null;
+  renderCountries();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RANKINGS
+// ═══════════════════════════════════════════════════════════
+function setRankTab(tab, btn) {
+  rankTab = tab;
+  document.querySelectorAll('.rp-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRankings();
+}
+
+function renderRankings() {
+  const list = document.getElementById('rp-list');
+  if (!rankData || !list) return;
+
+  const data = rankTab === 'score'    ? (rankData.top_score    || rankData.top_alert_score || [])
+             : rankTab === 'velocity' ? (rankData.top_velocity || [])
+             :                          (rankData.top_emerging || []);
+
+  list.innerHTML = data.slice(0,10).map((entry, i) => {
+    const cc    = entry.cc || entry.country;
+    const name  = COUNTRIES[cc]?.name || entry.name || cc;
+    const score = entry.alert_score || entry.score || 0;
+    const level = entry.alert_level || alertData[cc]?.alert_level || 'NONE';
+    const color = LVL_COLOR[level];
+    return `
+      <div class="rp-item" onclick="selectCountry('${cc}')">
+        <span class="rp-rank">${i+1}</span>
+        <div class="rp-cc-dot" style="background:${color}"></div>
+        <span class="rp-name">${name}</span>
+        <span class="rp-score" style="color:${color}">${score}</span>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUMMARY BAR
+// ═══════════════════════════════════════════════════════════
+function updateSummaryBar() {
+  const s = latestReport?.summary || {};
+  const critical = s.critical || Object.values(alertData).filter(d=>d.alert_level==='CRITICAL').length;
+  const warning  = s.warning  || Object.values(alertData).filter(d=>d.alert_level==='WARNING').length;
+  const alert_   = s.alert    || Object.values(alertData).filter(d=>d.alert_level==='ALERT').length;
+  const watch    = s.watch    || Object.values(alertData).filter(d=>d.alert_level==='WATCH').length;
+  const total    = s.total_active || (critical+warning+alert_+watch);
+
+  document.getElementById('sb-critical').textContent = critical;
+  document.getElementById('sb-warning').textContent  = warning;
+  document.getElementById('sb-alert').textContent    = alert_;
+  document.getElementById('sb-watch').textContent    = watch;
+  document.getElementById('sb-total').textContent    = total;
+
+  // Highest risk country
+  const topReport = (latestReport?.top_alert_score || [])[0];
+  const topEntry  = topReport || Object.entries(alertData)
+    .sort((a,b) => (b[1].alert_score||0)-(a[1].alert_score||0))[0];
+
+  if (topEntry) {
+    const cc    = topEntry.country || topEntry[0];
+    const score = topEntry.alert_score || (topEntry[1]?.alert_score) || 0;
+    document.getElementById('sb-top-score').textContent = `${score} — ${cc}`;
+    document.getElementById('sb-top-name').textContent  = COUNTRIES[cc]?.name || cc;
+  }
+
+  const now = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('last-update').textContent = `Обновлено: ${now}`;
+}
+
+function filterByLevel(level) {
+  filterLevel = filterLevel === level ? null : level;
+  renderCountries();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAP ZOOM/PAN
+// ═══════════════════════════════════════════════════════════
+function initMapControls() {
+  const svg = document.getElementById('world-svg');
+
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    zoomLevel = Math.max(0.8, Math.min(4, zoomLevel * delta));
+    applyTransform();
+  }, { passive: false });
+
+  svg.addEventListener('mousedown', (e) => {
+    if (e.target.dataset.cc) return;
+    isPanning = true;
+    startX = e.clientX - panX;
+    startY = e.clientY - panY;
+    svg.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+    applyTransform();
+  });
+
+  window.addEventListener('mouseup', () => {
+    isPanning = false;
+    svg.style.cursor = 'grab';
+  });
+
+  // Touch
+  let lastTouchDist = 0;
+  svg.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      lastTouchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  });
+  svg.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const delta = dist / lastTouchDist;
+      zoomLevel = Math.max(0.8, Math.min(4, zoomLevel * delta));
+      lastTouchDist = dist;
+      applyTransform();
+    }
+  }, { passive: false });
+}
+
+function applyTransform() {
+  const grp = document.getElementById('countries-group');
+  const lbl = document.getElementById('labels-group');
+  const t   = `translate(${panX}px,${panY}px) scale(${zoomLevel})`;
+  if (grp) grp.style.transform = t;
+  if (lbl) lbl.style.transform = t;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RANKING ENGINE — SAVE docs/alerts/rankings/latest.json
+// ═══════════════════════════════════════════════════════════
+// (Rankings are built client-side from alert data; server-side
+//  docs/alerts/rankings/latest.json is generated by the Ranking Engine
+//  in snapshot_engine.py — see API /api/map/rankings)
+
+// ═══════════════════════════════════════════════════════════
+// REFRESH
+// ═══════════════════════════════════════════════════════════
+async function refreshAll() {
+  document.getElementById('refresh-btn').textContent = '↺ ...';
+  await loadAlertData();
+  await loadRankings();
+  updateSummaryBar();
+  renderCountries();
+  renderRankings();
+  document.getElementById('refresh-btn').textContent = '↺ Обновить';
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+async function init() {
+  const fill   = document.getElementById('ld-fill');
+  const status = document.getElementById('ld-status');
+
+  status.textContent = 'Загрузка данных тревог...';
+  fill.style.width = '30%';
+  buildMap();
+
+  status.textContent = 'Загрузка данных по странам...';
+  fill.style.width = '60%';
+  await loadAlertData();
+
+  status.textContent = 'Построение рейтингов...';
+  fill.style.width = '85%';
+  await loadRankings();
+
+  status.textContent = 'Рендеринг карты...';
+  fill.style.width = '100%';
+  updateSummaryBar();
+  renderCountries();
+  renderRankings();
+  initMapControls();
+
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('hidden');
+  }, 600);
+
+  // Auto-refresh
+  setInterval(refreshAll, REFRESH_MS);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
