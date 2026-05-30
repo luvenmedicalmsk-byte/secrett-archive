@@ -106,6 +106,17 @@ export default {
     return handleRecommendations(request, env);
   if (path.startsWith('/api/scenario-evolution/') && request.method === 'GET')
     return handleScenarioEvolution(request, env);
+
+  if (path.startsWith('/api/extval/metrics') && request.method === 'GET')
+    return handleExtValMetrics(request, env);
+  if (path.startsWith('/api/extval/country/') && request.method === 'GET')
+    return handleExtValCountry(request, env);
+  if (path.startsWith('/api/extval/calibration') && request.method === 'GET')
+    return handleExtValCalibration(request, env);
+  if (path.startsWith('/api/extval/lead-time') && request.method === 'GET')
+    return handleExtValLeadTime(request, env);
+  if (path.startsWith('/api/extval/learning') && request.method === 'GET')
+    return handleExtValLearning(request, env);
   if (path.startsWith('/api/global-risks/') && request.method === 'GET')
     return handleGlobalRisks(request, env);
   if (path.startsWith('/api/risk-ranking/') && request.method === 'GET')
@@ -4088,4 +4099,92 @@ function _filterGRIE(data,access,tier){
   base.momentum=data.momentum||{};
   base.history_depth=data.history_depth;
   return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXTERNAL VALIDATION FRAMEWORK V1 — Worker endpoints
+// All extval endpoints require Signal tier or above.
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function _evFetch(repo, file, ttl) {
+  const url=`https://raw.githubusercontent.com/${repo}/main/docs/validation-external/${file}`;
+  const r=await fetch(url,{cf:{cacheTtl:ttl,cacheEverything:true}});
+  if(r.status===404)return null;if(!r.ok)throw new Error('fetch '+r.status);return r.json();
+}
+
+function _evAuthCheck(caps) {
+  const t=caps.grie_access||'teaser';
+  return t==='teaser' ? {ok:false,error:'External validation requires Signal tier'} : {ok:true};
+}
+
+async function handleExtValMetrics(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _evFetch(REPO,'metrics.json',3600);
+  if(!d)return new Response(JSON.stringify({error:'No validation metrics — run external_validation.py'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  // Elite gets full; signal/strategic gets summary
+  const tier=_resolveClientTier(request,env);
+  const full=['full','full+explain'].includes(caps.grie_access);
+  const result=full?d:{
+    generated_at:d.generated_at,events_database_size:d.events_database_size,
+    years_covered:d.years_covered,
+    forecast_accuracy:d['1_forecast_accuracy'],
+    classification:d['4_5_6_classification'],
+    brier_score:d['7_brier_score'],
+    lead_time:{n_detected:d['9_lead_time']?.n_detected,avg_lead_days:d['9_lead_time']?.avg_lead_days,detection_rate_pct:d['9_lead_time']?.detection_rate_pct},
+  };
+  return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleExtValCountry(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cc=(request.url.split('/api/extval/country/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  try{const d=await _evFetch(REPO,'country_performance.json',3600);
+  if(!d)return new Response(JSON.stringify({error:'No country performance data'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  if(cc&&cc.length===2){
+    const cp=d.by_country?.[cc];
+    return new Response(JSON.stringify(cp||{error:'No data for '+cc}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  }
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleExtValCalibration(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _evFetch(REPO,'calibration_curve.json',3600);
+  if(!d)return new Response(JSON.stringify({error:'No calibration data'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleExtValLeadTime(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _evFetch(REPO,'lead_time_analysis.json',3600);
+  if(!d)return new Response(JSON.stringify({error:'No lead time data'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleExtValLearning(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env);
+  const caps=getTierCapabilities(tier);
+  const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  // Learning signals: full detail for elite only
+  try{const d=await _evFetch(REPO,'learning_signals.json',3600);
+  if(!d)return new Response(JSON.stringify({error:'No learning signals'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const full=['full','full+explain'].includes(caps.grie_access||'teaser');
+  const result=full?d:{generated_at:d.generated_at,n_signals:d.n_signals,
+    priority_high:d.priority_high,priority_medium:d.priority_medium,overall_model_health:d.overall_model_health,
+    signals:(d.signals||[]).map(s=>({type:s.type,priority:s.priority,action:s.action}))};
+  return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
 }
