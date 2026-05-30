@@ -123,6 +123,8 @@ export default {
     return handleTrackRecord(request, env);
   if (path === '/api/model-history' && request.method === 'GET')
     return handleModelHistory(request, env);
+  if (path.startsWith('/api/grivl/') && request.method === 'GET')
+    return handleGRIVL(request, env);
   if (path.startsWith('/api/map/') && request.method === 'GET')
     return handleMap(request, env);
   if (path.startsWith('/api/alerts/') && request.method === 'GET')
@@ -4916,4 +4918,170 @@ async function handleMap(request, env) {
   }
 
   return new Response(JSON.stringify({error:'Unknown map route',available:['/api/map/summary','/api/map/rankings','/api/map/critical','/api/map/trends','/api/map/country/:cc']}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GRIVL V2 API — Global Risk Intelligence Visualization Layer
+// GET /api/grivl/layers          → all 7 domain definitions + current scores
+// GET /api/grivl/heatmap         → heatmap data (country scores, intensity)
+// GET /api/grivl/composite       → composite risk index for all countries
+// GET /api/grivl/gri             → GRI ranking (score/velocity/emerging)
+// GET /api/grivl/timeline/:cc    → timeline data for country
+// GET /api/grivl/signals         → signal chain catalogue
+// GET /api/grivl/dashboard       → sovereign dashboard aggregates
+// ═══════════════════════════════════════════════════════════════════════════
+
+const _LAYER_DEFS = {
+  geopolitics:  {label:'Геополитика', labelEn:'Geopolitics',  color:'#dc2626', weight:0.25},
+  economy:      {label:'Экономика',   labelEn:'Economy',      color:'#f59e0b', weight:0.20},
+  climate:      {label:'Климат',      labelEn:'Climate',      color:'#22c55e', weight:0.15},
+  technology:   {label:'Технологии',  labelEn:'Technology',   color:'#3b82f6', weight:0.12},
+  social:       {label:'Социум',      labelEn:'Social',       color:'#a855f7', weight:0.10},
+  infrastructure:{label:'Инфраструктура',labelEn:'Infrastructure',color:'#f97316',weight:0.10},
+  cyber:        {label:'Кибер',       labelEn:'Cyber',        color:'#06b6d4', weight:0.08},
+};
+
+const _SIGNAL_CHAINS = {
+  climate:{label:'Климат',color:'#22c55e',
+    nodes:['Лесные пожары','Энергетика','Поставки','Экономика'],
+    domains:['climate','infrastructure','economy','economy']},
+  cyber:{label:'Кибер',color:'#06b6d4',
+    nodes:['Кибератака','Инфраструктура','Экономика','Социум'],
+    domains:['cyber','infrastructure','economy','social']},
+  drought:{label:'Засуха',color:'#f59e0b',
+    nodes:['Засуха','Продовольствие','Миграция','Конфликт'],
+    domains:['climate','social','social','geopolitics']},
+};
+
+async function _grivlFetch(repo, path, ttl) {
+  const url=`https://raw.githubusercontent.com/${repo}/main/${path}`;
+  const r=await fetch(url,{cf:{cacheTtl:ttl,cacheEverything:true}});
+  if(r.status===404)return null; if(!r.ok)throw new Error('upstream '+r.status); return r.json();
+}
+
+async function handleGRIVL(request, env) {
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env);
+  const caps=getTierCapabilities(tier);
+  const seg=(request.url.split('/api/grivl/')[1]||'').split('/').filter(Boolean);
+  const CORS={'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier};
+
+  // /api/grivl/layers
+  if(seg[0]==='layers'){
+    return new Response(JSON.stringify({layers:_LAYER_DEFS,tier}),{headers:CORS});
+  }
+
+  // /api/grivl/signals
+  if(seg[0]==='signals'){
+    return new Response(JSON.stringify({chains:_SIGNAL_CHAINS,tier}),{headers:CORS});
+  }
+
+  // /api/grivl/heatmap — all countries with heatmap intensity data
+  if(seg[0]==='heatmap'){
+    try{
+      const latest=await _grivlFetch(REPO,'docs/alerts/reports/latest.json',300);
+      if(!latest)return new Response(JSON.stringify({error:'No heatmap data yet'}),{status:404,headers:CORS});
+      const entries=(latest.all_levels||[]).map(e=>({
+        country:e.country||e.cc,
+        alert_score:e.alert_score||0,
+        alert_level:e.alert_level||'NONE',
+        intensity:Math.min(100,e.alert_score||0),
+        heat_color:e.alert_score>=75?'#dc2626':e.alert_score>=50?'#ea580c':e.alert_score>=25?'#d97706':'#1d4ed8',
+      }));
+      return new Response(JSON.stringify({date:latest.date,heatmap:entries,tier}),{headers:CORS});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grivl/composite — composite risk index for all countries
+  if(seg[0]==='composite'){
+    const access=caps.expl_access||'teaser';
+    if(access==='teaser')return new Response(JSON.stringify({error:'Composite requires Signal tier'}),{status:403,headers:CORS});
+    try{
+      const latest=await _grivlFetch(REPO,'docs/alerts/reports/latest.json',300);
+      const countries=['RU','US','CN','DE','GB','FR','TR','KZ','AE','UA','BY','IN','JP','SA','EG','PL','IL','IR','IT','AR','CA','ES','ID','MX','CH'];
+      const results=await Promise.all(countries.map(cc=>
+        _grivlFetch(REPO,`docs/explanations/${cc}.json`,600)
+          .then(e=>({cc,e})).catch(()=>({cc,e:null}))
+      ));
+      const composite=results.map(({cc,e})=>{
+        if(!e||!e.contributions) return {country:cc,cri:null,dominant_domain:null};
+        let total=0,wsum=0;
+        for(const c of e.contributions){
+          const ld=_LAYER_DEFS[c.engine]; if(!ld) continue;
+          const ds=Math.min(100,(c.contribution/100)*(e.risk_score||50)*2);
+          total+=ds*ld.weight; wsum+=ld.weight;
+        }
+        const cri=wsum>0?Math.min(100,Math.round(total/wsum)):0;
+        const top=e.contributions[0];
+        return {country:cc,cri,dominant_domain:top?.engine,dominant_label:top?.label,contributions:e.contributions.slice(0,5)};
+      });
+      return new Response(JSON.stringify({generated_at:new Date().toISOString(),composite,tier}),{headers:CORS});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grivl/gri — GRI ranking
+  if(seg[0]==='gri'){
+    try{
+      const d=await _grivlFetch(REPO,'docs/alerts/rankings/latest.json',300);
+      if(!d)return new Response(JSON.stringify({error:'No GRI data yet'}),{status:404,headers:CORS});
+      // Top 10 highest + fastest + emerging
+      const r={
+        top10_score:    (d.top_score||d.top_alert_score||[]).slice(0,10),
+        top10_velocity: (d.top_velocity||[]).slice(0,10),
+        top10_emerging: (d.top_emerging||[]).slice(0,10),
+        tier,
+      };
+      return new Response(JSON.stringify(r),{headers:CORS});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grivl/timeline/:cc
+  if(seg[0]==='timeline'&&seg[1]){
+    const cc=seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    try{
+      const [alert,track]=await Promise.all([
+        _grivlFetch(REPO,`docs/alerts/reports/${cc}.json`,300),
+        _grivlFetch(REPO,`docs/track-record/history/${cc}.json`,600),
+      ]);
+      if(!alert)return new Response(JSON.stringify({error:'No data for '+cc}),{status:404,headers:CORS});
+      const base=alert.risk_score||50;
+      const delta=alert.delta||0;
+      const tl={
+        now: alert.alert_score||0,
+        '30d': alert.forecast_30d?.base_case || Math.min(95,Math.max(5,base+delta*3)),
+        '90d': alert.forecast_90d?.base_case || Math.min(95,Math.max(5,base+delta*1.8)),
+        '180d':alert.forecast_180d?.base_case|| Math.min(95,Math.max(5,base+delta*1.2)),
+        '365d':alert.forecast_365d?.base_case|| Math.min(95,Math.max(5,base+delta*0.7)),
+      };
+      const history=(track?.records||[]).slice(-30).map(r=>({date:r.date,score:r.risk_score}));
+      return new Response(JSON.stringify({country:cc,timeline:tl,history,tier}),{headers:CORS});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grivl/dashboard
+  if(seg[0]==='dashboard'){
+    try{
+      const [latest,rankings]=await Promise.all([
+        _grivlFetch(REPO,'docs/alerts/reports/latest.json',300),
+        _grivlFetch(REPO,'docs/alerts/rankings/latest.json',300),
+      ]);
+      const source=latest||rankings;
+      if(!source)return new Response(JSON.stringify({error:'No dashboard data yet'}),{status:404,headers:CORS});
+      const dash={
+        generated_at:source.generated_at||new Date().toISOString(),
+        summary:latest?.summary||{},
+        top_risk:(rankings?.top_score||latest?.top_alert_score||[]).slice(0,10),
+        top_velocity:(rankings?.top_velocity||[]).slice(0,10),
+        top_emerging:(rankings?.top_emerging||[]).slice(0,5),
+        critical_countries:latest?.critical_countries||[],
+        tier,
+      };
+      return new Response(JSON.stringify(dash),{headers:CORS});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  return new Response(JSON.stringify({error:'Unknown GRIVL route',available:[
+    '/api/grivl/layers','/api/grivl/heatmap','/api/grivl/composite',
+    '/api/grivl/gri','/api/grivl/timeline/:cc','/api/grivl/signals','/api/grivl/dashboard'
+  ]}),{status:404,headers:CORS});
 }
