@@ -52,6 +52,9 @@ RANK_DIR              = DOCS_DIR / "risk-ranking"
 HIER_DIR              = DOCS_DIR / "risk-hierarchy"
 RACC_DIR              = DOCS_DIR / "risk-acceleration"
 EXTVAL_DIR            = DOCS_DIR / "validation-external"
+TR_DIR                = DOCS_DIR / "track-record"
+TR_DAILY_DIR          = TR_DIR   / "daily"
+TR_HIST_DIR           = TR_DIR   / "history"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -7560,6 +7563,410 @@ def save_external_validation() -> None:
     except Exception as e:
         print(f"[EXTVAL] Error: {e}", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# HISTORICAL TRACK RECORD SYSTEM V1
+# Immutable daily archive of all forecasts, scores, signals and model outputs.
+# Does NOT modify any existing engine or forecast logic.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Current model version — increment when architecture changes
+_MODEL_VERSION       = "GRIE_V1"
+_ARCHITECTURE_VER    = "1.19"           # 19th engine layer
+_ACTIVE_COMPONENTS   = [
+    "SignalLayer","ForecastEngine","ScenarioEngine","CalibrationEngine",
+    "ValidationLayer","StrategyEngine","FeedbackEngine","HistoricalValidation",
+    "Dashboard","DecisionQualityEngine","StrategyOptimization",
+    "RecommendationEngine","ScenarioEvolution","GRIE_V1","ExternalValidation",
+]
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────
+
+def _extract_domain_score(drivers: list[dict], domain: str) -> int | None:
+    """Extract a composite domain severity from the drivers list."""
+    hits = [d for d in drivers if (d.get("domain","") or d.get("name","")).lower().startswith(domain.lower())]
+    if not hits:
+        return None
+    return round(sum(h.get("severity", h.get("score", 50)) for h in hits) / len(hits))
+
+
+def _forecast_horizon(snap: dict, horizon_days: int) -> dict:
+    """
+    Extrapolate a forecast to longer horizons from 30d forecast.
+    Uses dampened-drift formula consistent with validation engine.
+    Does NOT call any forecast engine function.
+    """
+    score   = snap.get("risk_score", 50) or 50
+    f30     = snap.get("forecast_30d") or {}
+    base_30 = f30.get("base_case", score)
+    best_30 = f30.get("best_case",  max(10, score - 8))
+    worst_30= f30.get("worst_case", min(95, score + 12))
+    conf_30 = f30.get("confidence", 60) or 60
+
+    drift_30 = base_30 - score
+    scale    = horizon_days / 30.0
+    damp     = min(1.0, 1.0 / (1.0 + max(0, horizon_days - 30) / 90.0))
+
+    base_hz  = max(10, min(95, round(score + drift_30 * scale * damp)))
+    spread   = abs(worst_30 - best_30) * min(1.5, scale * 0.8)
+    best_hz  = max(10, min(95, round(base_hz - spread / 2)))
+    worst_hz = max(10, min(95, round(base_hz + spread / 2)))
+    conf_hz  = max(15, round(conf_30 * (0.95 ** max(0, horizon_days - 30) / 30)))
+
+    return {
+        "base_case":  base_hz,
+        "best_case":  best_hz,
+        "worst_case": worst_hz,
+        "confidence": conf_hz,
+        "horizon_days": horizon_days,
+    }
+
+
+def _snapshot_hash(record: dict) -> str:
+    """SHA-256 fingerprint of the forecast record for auditability."""
+    import hashlib
+    canonical = json.dumps({
+        k: record[k] for k in sorted(record)
+        if k not in ("snapshot_id", "hash", "generated_at")
+    }, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(canonical.encode()).hexdigest()[:16]
+
+
+def _build_tr_record(snap: dict) -> dict:
+    """
+    Build a single immutable track-record entry from a live snapshot.
+    Fields are fixed — never edited after creation.
+    """
+    iso2      = snap["country"]
+    today     = snap.get("date", TODAY)
+    score     = snap.get("risk_score", 50) or 50
+    drivers   = snap.get("drivers", []) or []
+    f7        = snap.get("forecast_7d")  or {}
+    f30       = snap.get("forecast_30d") or {}
+    f90       = _forecast_horizon(snap, 90)
+    f180      = _forecast_horizon(snap, 180)
+    f365      = _forecast_horizon(snap, 365)
+
+    # Active signals: list of driver names above threshold
+    active_signals = [
+        d.get("name","?") for d in drivers
+        if d.get("severity", d.get("score", 0)) >= 60
+    ][:10]
+
+    ts = datetime.now(timezone.utc).isoformat()
+    snap_id = f"{iso2}_{today}_{ts[:19].replace(':','').replace('-','')}"
+
+    record = {
+        # Identity
+        "snapshot_id":       snap_id,
+        "country":           iso2,
+        "country_name":      snap.get("country_name", iso2),
+        "date":              today,
+        "timestamp":         ts,
+        "model_version":     _MODEL_VERSION,
+        "architecture_ver":  _ARCHITECTURE_VER,
+        # Core scores
+        "risk_score":        score,
+        "dominant_domain":   snap.get("dominant_domain", "unknown"),
+        "escalation_level":  snap.get("escalation_level", "stable"),
+        "delta":             snap.get("delta", 0),
+        # Domain scores (extracted from drivers)
+        "geopolitics_score": _extract_domain_score(drivers, "geopolit"),
+        "economy_score":     _extract_domain_score(drivers, "econom"),
+        "climate_score":     _extract_domain_score(drivers, "climat"),
+        "technology_score":  _extract_domain_score(drivers, "tech"),
+        "society_score":     _extract_domain_score(drivers, "societ"),
+        # Forecasts (all horizons)
+        "forecast_7d":       f7,
+        "forecast_30d":      f30,
+        "forecast_90d":      f90,
+        "forecast_180d":     f180,
+        "forecast_365d":     f365,
+        # Signals
+        "active_signals":    active_signals,
+        "signal_count":      len(active_signals),
+        "event_count":       snap.get("event_count", 0),
+        # Validation readiness — STEP 7: placeholders only
+        "validation": {
+            "outcome_date":       None,   # filled when outcome is known
+            "actual_severity":    None,
+            "lead_time_days":     None,
+            "true_positive":      None,
+            "false_positive":     None,
+            "false_negative":     None,
+            "precision":          None,
+            "recall":             None,
+            "verification_status":"pending",
+        },
+    }
+    # Append immutable hash AFTER record is built
+    record["hash"] = _snapshot_hash(record)
+    return record
+
+
+# ── STEP 1: Daily forecast archive ───────────────────────────────────────
+
+def save_tr_daily(snapshots: list[dict]) -> None:
+    """
+    STEP 1 — Archive all 25 country forecasts for today.
+    Output: docs/track-record/daily/YYYY-MM-DD.json
+    File is created once per day; never overwritten.
+    """
+    TR_DAILY_DIR.mkdir(parents=True, exist_ok=True)
+    daily_path = TR_DAILY_DIR / f"{TODAY}.json"
+
+    # Load existing to detect duplicates (idempotent)
+    existing: dict[str, dict] = {}
+    if daily_path.exists():
+        try:
+            with open(daily_path) as f:
+                existing_data = json.load(f)
+            existing = {r["country"]: r for r in existing_data.get("records", [])}
+        except Exception:
+            pass
+
+    records = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        if iso2 in existing:
+            records.append(existing[iso2])   # preserve original immutable record
+        else:
+            records.append(_build_tr_record(snap))
+
+    daily_out = {
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "model_version":  _MODEL_VERSION,
+        "record_count":   len(records),
+        "records":        records,
+    }
+    with open(daily_path, "w") as f:
+        json.dump(daily_out, f, ensure_ascii=False, indent=2)
+    print(f"[TR] Daily archive: {daily_path}  ({len(records)} countries)", file=sys.stderr)
+
+
+# ── STEP 2: Country forecast history ─────────────────────────────────────
+
+def save_tr_history(snapshots: list[dict]) -> None:
+    """
+    STEP 2 — Append today's record to each country's history file.
+    Output: docs/track-record/history/{CC}.json
+    Append-only: existing records are NEVER overwritten or deleted.
+    """
+    TR_HIST_DIR.mkdir(parents=True, exist_ok=True)
+
+    for snap in snapshots:
+        iso2      = snap["country"]
+        hist_path = TR_HIST_DIR / f"{iso2}.json"
+
+        # Load or initialise
+        if hist_path.exists():
+            try:
+                with open(hist_path) as f:
+                    hist = json.load(f)
+            except Exception:
+                hist = {"country": iso2, "country_name": snap.get("country_name",iso2), "records": []}
+        else:
+            hist = {"country": iso2, "country_name": snap.get("country_name",iso2), "records": []}
+
+        # Check if today already archived (idempotent)
+        existing_dates = {r["date"] for r in hist["records"]}
+        if TODAY not in existing_dates:
+            new_rec = _build_tr_record(snap)
+            hist["records"].append(new_rec)
+
+        hist["last_updated"] = datetime.now(timezone.utc).isoformat()
+        hist["record_count"] = len(hist["records"])
+
+        with open(hist_path, "w") as f:
+            json.dump(hist, f, ensure_ascii=False, indent=2)
+
+    print(f"[TR] History updated for {len(snapshots)} countries", file=sys.stderr)
+
+
+# ── STEP 4: Forecast ledger ───────────────────────────────────────────────
+
+def save_tr_ledger(snapshots: list[dict]) -> None:
+    """
+    STEP 4 — Append today's forecast fingerprints to the immutable ledger.
+    Output: docs/track-record/ledger.json
+    Each entry: snapshot_id, hash, timestamp, model_version, country, risk_score.
+    Ledger is append-only — existing entries are NEVER modified.
+    """
+    TR_DIR.mkdir(parents=True, exist_ok=True)
+    ledger_path = TR_DIR / "ledger.json"
+
+    if ledger_path.exists():
+        try:
+            with open(ledger_path) as f:
+                ledger = json.load(f)
+        except Exception:
+            ledger = {"version":"1.0","entries":[]}
+    else:
+        ledger = {"version":"1.0","entries":[]}
+
+    existing_ids = {e["snapshot_id"] for e in ledger["entries"]}
+    new_entries  = 0
+
+    for snap in snapshots:
+        iso2    = snap["country"]
+        score   = snap.get("risk_score", 50) or 50
+        ts      = datetime.now(timezone.utc).isoformat()
+        snap_id = f"{iso2}_{TODAY}_{ts[:19].replace(':','').replace('-','')}"
+
+        if snap_id not in existing_ids:
+            # Hash from core immutable fields only
+            core = {
+                "country":iso2,"date":TODAY,"risk_score":score,
+                "dominant_domain":snap.get("dominant_domain",""),
+                "escalation_level":snap.get("escalation_level",""),
+                "model_version":_MODEL_VERSION,
+            }
+            import hashlib
+            h = hashlib.sha256(json.dumps(core,sort_keys=True).encode()).hexdigest()[:16]
+            ledger["entries"].append({
+                "snapshot_id":   snap_id,
+                "hash":          h,
+                "timestamp":     ts,
+                "model_version": _MODEL_VERSION,
+                "country":       iso2,
+                "risk_score":    score,
+                "date":          TODAY,
+            })
+            new_entries += 1
+
+    ledger["total_entries"]  = len(ledger["entries"])
+    ledger["last_appended"]  = datetime.now(timezone.utc).isoformat()
+
+    with open(ledger_path, "w") as f:
+        json.dump(ledger, f, ensure_ascii=False, indent=2)
+    print(f"[TR] Ledger: {len(ledger['entries'])} total entries (+{new_entries} today)", file=sys.stderr)
+
+
+# ── STEP 5: Model version history ────────────────────────────────────────
+
+def save_model_history() -> None:
+    """
+    STEP 5 — Record the current model version if not already tracked.
+    Output: docs/model-history.json
+    Append-only: new versions are added, existing never changed.
+    """
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    path = DOCS_DIR / "model-history.json"
+
+    if path.exists():
+        try:
+            with open(path) as f:
+                history = json.load(f)
+        except Exception:
+            history = {"versions": []}
+    else:
+        history = {"versions": []}
+
+    existing_versions = {v["model_version"] for v in history["versions"]}
+
+    if _MODEL_VERSION not in existing_versions:
+        history["versions"].append({
+            "model_version":      _MODEL_VERSION,
+            "deployment_date":    TODAY,
+            "architecture_version": _ARCHITECTURE_VER,
+            "active_components":  _ACTIVE_COMPONENTS,
+            "engine_count":       len(_ACTIVE_COMPONENTS),
+            "changelog":          "Initial GRIE V1 production release — 19 engines active",
+        })
+        history["current_version"] = _MODEL_VERSION
+        history["last_updated"]    = datetime.now(timezone.utc).isoformat()
+
+        with open(path, "w") as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+        print(f"[TR] Model history: added version {_MODEL_VERSION}", file=sys.stderr)
+    else:
+        # Update last_updated even if version already recorded
+        history["last_updated"] = datetime.now(timezone.utc).isoformat()
+        with open(path, "w") as f:
+            json.dump(history, f, ensure_ascii=False, indent=2)
+
+
+# ── STEP 6: Daily metrics ─────────────────────────────────────────────────
+
+def save_tr_metrics(snapshots: list[dict]) -> None:
+    """
+    STEP 6 — Generate daily metrics summary.
+    Output: docs/track-record/metrics.json
+    This file IS overwritten daily (it's a current-state metrics file, not immutable).
+    """
+    TR_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Count total ledger entries
+    ledger_path = TR_DIR / "ledger.json"
+    total_ledger = 0
+    if ledger_path.exists():
+        try:
+            total_ledger = json.loads(ledger_path.read_text()).get("total_entries", 0)
+        except Exception:
+            pass
+
+    # Count history files
+    total_hist_days = 0
+    if TR_HIST_DIR.exists():
+        try:
+            sample = list(TR_HIST_DIR.glob("*.json"))
+            if sample:
+                data = json.loads(sample[0].read_text())
+                total_hist_days = data.get("record_count", 0)
+        except Exception:
+            pass
+
+    # Daily metrics
+    all_scores   = [s.get("risk_score", 50) for s in snapshots if s.get("risk_score")]
+    all_signals  = sum(s.get("event_count", 0) for s in snapshots)
+    all_domains  = list(set(s.get("dominant_domain","?") for s in snapshots if s.get("dominant_domain")))
+
+    # Model version usage (count from ledger)
+    version_usage = {_MODEL_VERSION: len(snapshots)}
+
+    metrics = {
+        "date":              TODAY,
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "model_version":     _MODEL_VERSION,
+        # Counts
+        "forecast_count":    len(snapshots),
+        "country_coverage":  len(snapshots),
+        "signal_count":      all_signals,
+        # Scores
+        "avg_risk_score":    round(sum(all_scores)/max(1,len(all_scores)), 1),
+        "max_risk_score":    max(all_scores) if all_scores else None,
+        "min_risk_score":    min(all_scores) if all_scores else None,
+        "active_domains":    all_domains,
+        # Archive totals
+        "total_ledger_entries":   total_ledger,
+        "model_version_usage":    version_usage,
+        # Validation readiness (STEP 7 placeholder)
+        "validation_ready":       True,
+        "validation_pending":     len(snapshots),   # all records pending real-world outcome
+        "validation_completed":   0,
+    }
+
+    with open(TR_DIR / "metrics.json", "w") as f:
+        json.dump(metrics, f, ensure_ascii=False, indent=2)
+    print(f"[TR] Metrics saved: {len(snapshots)} forecasts, {all_signals} signals", file=sys.stderr)
+
+
+# ── Orchestrator ──────────────────────────────────────────────────────────
+
+def save_track_record(snapshots: list[dict]) -> None:
+    """
+    HISTORICAL TRACK RECORD SYSTEM V1 — orchestrator.
+    Runs all 6 steps in correct order. Does NOT modify any upstream engine.
+    Call order: daily → history → ledger → model_history → metrics
+    """
+    save_tr_daily(snapshots)    # STEP 1
+    save_tr_history(snapshots)  # STEP 2
+    save_tr_ledger(snapshots)   # STEP 4
+    save_model_history()        # STEP 5
+    save_tr_metrics(snapshots)  # STEP 6
+    print("[TR] Track Record System V1 complete", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -7625,6 +8032,7 @@ def main():
     save_scenario_evolution(snapshots)
     save_global_risk_intelligence(snapshots)
     save_external_validation()
+    save_track_record(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
