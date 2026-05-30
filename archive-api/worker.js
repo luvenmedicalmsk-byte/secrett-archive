@@ -102,6 +102,10 @@ export default {
     return handleDecisionQuality(request, env);
   if (path.startsWith('/api/strategy-optimization/') && request.method === 'GET')
     return handleStrategyOptimization(request, env);
+  if (path.startsWith('/api/recommendations/') && request.method === 'GET')
+    return handleRecommendations(request, env);
+  if (path.startsWith('/api/executive-summary/') && request.method === 'GET')
+    return handleExecutiveSummary(request, env);
   if (path.startsWith('/api/strategy-evolution/') && request.method === 'GET')
     return handleStrategyEvolution(request, env);
   if (path === '/api/decision-ranking' && request.method === 'GET')
@@ -1603,6 +1607,7 @@ function getTierCapabilities(tier) {
       dashboard_access:   'teaser',
       dq_access:         'teaser',
       so_access:         'teaser',
+      rec_access:        'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1633,6 +1638,7 @@ function getTierCapabilities(tier) {
       dashboard_access:   'summary',
       dq_access:         'summary',
       so_access:         'summary',
+      rec_access:        'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1663,6 +1669,7 @@ function getTierCapabilities(tier) {
       dashboard_access:   'full',
       dq_access:         'full',
       so_access:         'full',
+      rec_access:        'full',
     },
     elite: {
       tier:                'elite',
@@ -1693,6 +1700,7 @@ function getTierCapabilities(tier) {
       dashboard_access:   'full+explain',
       dq_access:         'full+explain',
       so_access:         'full+explain',
+      rec_access:        'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -3716,5 +3724,158 @@ function _filterSO(data, access, tier) {
   base.adjusted_actions      = data.adjusted_actions || [];
   base.hv_score              = data.hv_score;
   base.evolution_record      = data.evolution_record;
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STRATEGIC RECOMMENDATION ENGINE V1 — Worker endpoints
+// GET /api/recommendations/{CC}    — per-country recommendations
+// GET /api/recommendations/_global — global recommendations
+// GET /api/executive-summary/{CC}  — executive summary
+//
+// rec_access:
+//   teaser       → FREE:     srs_score + grade + top risk teaser
+//   summary      → SIGNAL:   + Section A (risks) + B (opps) + action count
+//   full         → STRATEGIC:+ Section C (shifts) + D (ranked) + E (actions)
+//   full+explain → ELITE:    + Section F (exec summary) + diagnostics
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleRecommendations(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.rec_access || 'teaser';
+  const raw    = (request.url.split('/api/recommendations/')[1] || '').replace(/[^A-Za-z_]/g,'');
+  const isGlobal = raw.toUpperCase() === '_GLOBAL';
+
+  if (isGlobal) {
+    if (access === 'teaser') return new Response(
+      JSON.stringify({error:'Global recommendations require Signal tier'}),
+      {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    try {
+      const url = `https://raw.githubusercontent.com/${REPO}/main/docs/recommendations/_global.json`;
+      const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+      if (!r.ok) throw new Error('fetch '+r.status);
+      const data = await r.json();
+      const result = access==='full+explain' ? data : {
+        date:data.date, total_countries:data.total_countries,
+        avg_srs_score:data.avg_srs_score,
+        top_srs:data.top_srs, highest_risk:data.highest_risk,
+        critical_alerts:(data.critical_alerts||[]).slice(0,3),
+      };
+      return new Response(JSON.stringify(result),{
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}
+      });
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}); }
+  }
+
+  const cc = raw.toUpperCase().replace('_','');
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Invalid country code or use _global'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  const cacheKey = `rec:${cc}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached),{
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}
+      });
+    } catch(_){}
+  }
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/recommendations/${cc}.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    if (r.status===404) return new Response(JSON.stringify({error:'No recommendations for '+cc}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    if (!r.ok) throw new Error('fetch '+r.status);
+    const data   = await r.json();
+    const result = _filterRec(data, access, tier);
+    if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:600}); } catch(_){} }
+    return new Response(JSON.stringify(result),{
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  }
+}
+
+async function handleExecutiveSummary(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  if ((caps.rec_access||'teaser')==='teaser') return new Response(
+    JSON.stringify({error:'Executive summary requires Signal tier or above'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+  const cc = (request.url.split('/api/executive-summary/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if (!cc||cc.length!==2) return new Response(JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/executive-summary/${cc}.json`;
+    const r   = await fetch(url,{cf:{cacheTtl:600,cacheEverything:true}});
+    if (!r.ok) throw new Error('fetch '+r.status);
+    return new Response(await r.text(),{
+      headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}
+    });
+  } catch(e) { return new Response(JSON.stringify({error:String(e)}),
+    {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}); }
+}
+
+function _filterRec(data, access, tier) {
+  const base = {
+    country:    data.country,
+    country_name:data.country_name,
+    date:       data.date,
+    tier,
+    srs_score:  data.srs_score,
+    srs_grade:  data.srs_grade,
+    srs_grade_ru:data.srs_grade_ru,
+    risk_score: data.risk_score,
+    delta:      data.delta,
+    domain:     data.domain,
+    risk_count: data.risk_count,
+    opp_count:  data.opp_count,
+    note:       data.note,
+  };
+  if (access==='teaser') {
+    const top = (data.priority_risks||[])[0];
+    if (top) base.top_risk_teaser = {title:top.title, category:top.category, urgency:top.urgency};
+    return base;
+  }
+  // SIGNAL+: full A (risks) + B (opps)
+  base.priority_risks        = (data.priority_risks||[]).map(r=>({
+    id:r.id, category:r.category, title:r.title, urgency:r.urgency, source:r.source
+  }));
+  base.priority_opportunities= (data.priority_opportunities||[]).map(o=>({
+    id:o.id, category:o.category, title:o.title, impact:o.impact, source:o.source
+  }));
+  base.action_count          = data.action_count;
+  if (access==='summary') return base;
+
+  // STRATEGIC+: C (shifts) + D (ranked) + E (actions)
+  base.emerging_shifts        = data.emerging_shifts        || [];
+  base.forecast_degradation   = data.forecast_degradation   || [];
+  base.forecast_improvement   = data.forecast_improvement   || [];
+  base.ranked_recommendations = (data.ranked_recommendations||[]).map(r=>({
+    id:r.id, type:r.type, priority:r.priority, title:r.title, rec_score:r.rec_score
+  }));
+  base.action_plan = (data.action_plan||[]).map(a=>({
+    id:a.id, priority:a.priority, action:a.action, deadline:a.deadline
+  }));
+  if (access==='full') return base;
+
+  // ELITE: full details + F (diagnostics)
+  base.priority_risks         = data.priority_risks         || [];
+  base.priority_opportunities = data.priority_opportunities || [];
+  base.ranked_recommendations = data.ranked_recommendations || [];
+  base.action_plan            = data.action_plan            || [];
+  base.rec_diagnostics        = data.rec_diagnostics        || [];
+  base.diagnostic_count       = data.diagnostic_count;
+  base.history_depth          = data.history_depth;
   return base;
 }
