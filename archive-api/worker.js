@@ -123,6 +123,8 @@ export default {
     return handleTrackRecord(request, env);
   if (path === '/api/model-history' && request.method === 'GET')
     return handleModelHistory(request, env);
+  if (path.startsWith('/api/explainability/') && request.method === 'GET')
+    return handleExplainability(request, env);
   if (path.startsWith('/api/extval/metrics') && request.method === 'GET')
     return handleExtValMetrics(request, env);
   if (path.startsWith('/api/extval/country/') && request.method === 'GET')
@@ -4553,4 +4555,93 @@ async function handleValidationLatest(request, env) {
          country_ranking:(ranking?.ranking||[]).slice(0,10), tier};
     return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
   } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FORECAST EXPLAINABILITY ENGINE V1 — archive-api/worker.js
+// GET /api/explainability/:cc          → full explanation
+// GET /api/explainability/:cc/latest   → alias
+// GET /api/explainability/ranking      → global ranking
+// GET /api/explainability/top-drivers  → aggregate top drivers
+// expl_access: teaser→summary→full→full+explain
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function _explFetch(repo, path, ttl) {
+  const url=`https://raw.githubusercontent.com/${repo}/main/${path}`;
+  const r=await fetch(url,{cf:{cacheTtl:ttl,cacheEverything:true}});
+  if(r.status===404)return null;if(!r.ok)throw new Error('upstream '+r.status);return r.json();
+}
+
+async function handleExplainability(request, env) {
+  const REPO   = env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request,env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.expl_access||'teaser';
+  const raw    = (request.url.split('/api/explainability/')[1]||'').replace(/\/latest$/,'');
+  const seg    = raw.split('/').filter(Boolean);
+
+  if(seg[0]==='ranking'){
+    if(access==='teaser')return new Response(JSON.stringify({error:'Ranking requires Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    try{const d=await _explFetch(REPO,'docs/explanations/ranking.json',600);
+    if(!d)return new Response(JSON.stringify({error:'No ranking yet — run engines/explainability_engine.py'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    return new Response(JSON.stringify({...d,tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+    catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+
+  if(seg[0]==='top-drivers'){
+    if(access==='teaser')return new Response(JSON.stringify({error:'Top drivers require Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    try{const ranking=await _explFetch(REPO,'docs/explanations/ranking.json',600);
+    if(!ranking)return new Response(JSON.stringify({error:'No explanation data yet'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    const driverAgg={};
+    for(const entry of (ranking.by_risk_score||[]).slice(0,15)){
+      const expl=await _explFetch(REPO,`docs/explanations/${entry.country}.json`,600).catch(()=>null);
+      if(!expl)continue;
+      for(const d of (expl.top_drivers||[]).slice(0,3)){
+        const eng=d.engine;
+        if(!driverAgg[eng])driverAgg[eng]={engine:eng,label:d.label||eng,count:0,total_contribution:0};
+        driverAgg[eng].count++;driverAgg[eng].total_contribution+=(d.contribution||0);
+      }
+    }
+    const sorted=Object.values(driverAgg).map(d=>({...d,avg_contribution:Math.round(d.total_contribution/d.count*10)/10})).sort((a,b)=>b.count-a.count);
+    return new Response(JSON.stringify({generated_at:new Date().toISOString(),top_drivers:sorted.slice(0,10),tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+    catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+
+  const cc=(seg[0]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cacheKey=`expl:${cc}:${tier}`;
+  if(env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(cacheKey,{type:'json'});if(c)return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}});}catch(_){}}
+  try{const data=await _explFetch(REPO,`docs/explanations/${cc}.json`,600);
+  if(!data)return new Response(JSON.stringify({error:'No explanation for '+cc+' — run engines/explainability_engine.py'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const result=_filterExpl(data,access,tier);
+  if(env.EVENTS_KV){try{await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:600});}catch(_){}}
+  return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+function _filterExpl(data,access,tier){
+  const base={country:data.country,country_name:data.country_name,date:data.date,tier,
+    risk_score:data.risk_score,escalation_level:data.escalation_level,
+    explanation:data.explanation,top_driver:(data.top_drivers||[])[0]||null};
+  if(access==='teaser')return base;
+  base.top_drivers=      (data.top_drivers||[]).slice(0,3);
+  base.confidence=        data.confidence;
+  base.confidence_grade=  data.confidence_grade;
+  base.delta=             data.delta;
+  base.dominant_domain=   data.dominant_domain;
+  base.trend_7d=          data.trend?.trend_7d;
+  base.trend_30d=         data.trend?.trend_30d;
+  if(access==='summary')return base;
+  base.top_drivers=       data.top_drivers||[];
+  base.contributions=     data.contributions||[];
+  base.signal_attribution=data.signal_attribution||[];
+  base.trend=             data.trend||{};
+  if(access==='full')return base;
+  base.confidence_detail= data.confidence_detail||{};
+  base.forecast_30d=      data.forecast_30d;
+  base.outlook_30d=       data.outlook_30d;
+  base.outlook_90d=       data.outlook_90d;
+  base.priority_risks=    data.priority_risks||[];
+  base.engine_version=    data.engine_version;
+  return base;
 }
