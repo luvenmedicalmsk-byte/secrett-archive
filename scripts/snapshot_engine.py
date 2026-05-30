@@ -59,6 +59,7 @@ EXPL_DIR              = DOCS_DIR / "explanations"
 ALERT_HIST_DIR        = DOCS_DIR / "alerts" / "history"
 ALERT_REP_DIR         = DOCS_DIR / "alerts" / "reports"
 MAP_RANK_DIR          = DOCS_DIR / "alerts" / "rankings"
+GRDF_DIR              = DOCS_DIR / "grdf"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -8072,6 +8073,535 @@ def save_alert_rankings(snapshots: list[dict]) -> None:
         json.dump(rankings, f, ensure_ascii=False, indent=2)
     print(f"[MAP] Rankings saved: {len(entries)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# GLOBAL RISK DATA FABRIC V1 (GRDF V1)
+# Единый слой данных для всей платформы Sovereign Intelligence System.
+# Строит Universal Risk Objects (URO) для всех 25 монitorируемых стран.
+#
+# Outputs (все файлы в docs/grdf/):
+#   {CC}.json          — полный URO per country
+#   _all.json          — компактный агрегат всех стран
+#   _signals.json      — глобальный реестр сигналов
+#   _events.json       — реестр событий (2010-2026)
+#   _dashboard.json    — агрегированный дашборд
+#   _rankings.json     — GRI rankings (score/velocity/emerging)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# 7 GRDF domains (spec)
+_GRDF_DOMAINS = [
+    "geopolitical", "economic", "climate",
+    "technology", "social", "infrastructure", "cyber",
+]
+
+# Base weights (equal = 1.0 each, configurable)
+_GRDF_WEIGHTS: dict[str, float] = {d: 1.0 for d in _GRDF_DOMAINS}
+
+# GRIE category → GRDF domain
+_GRIE_TO_GRDF: dict[str, str] = {
+    "geopolitical":    "geopolitical",
+    "economic":        "economic",
+    "financial":       "economic",
+    "supply_chain":    "economic",
+    "climate":         "climate",
+    "ecological":      "climate",
+    "water_security":  "climate",
+    "technological":   "technology",
+    "cyber":           "cyber",
+    "social":          "social",
+    "governance":      "social",
+    "health":          "social",
+    "migration":       "social",
+    "food_security":   "social",
+    "infrastructure":  "infrastructure",
+    "energy":          "infrastructure",
+    "conflict":        "geopolitical",
+}
+
+# Engine name → GRDF domain (for explainability contributions)
+_ENGINE_TO_GRDF: dict[str, str] = {
+    "geopolitics":    "geopolitical",
+    "economy":        "economic",
+    "finance":        "economic",
+    "supply_chain":   "economic",
+    "climate":        "climate",
+    "drought":        "climate",
+    "wildfire":       "climate",
+    "technology":     "technology",
+    "cyber":          "cyber",
+    "social":         "social",
+    "governance":     "social",
+    "health":         "social",
+    "migration":      "social",
+    "infrastructure": "infrastructure",
+    "energy":         "infrastructure",
+    "conflict":       "geopolitical",
+}
+
+
+# ── GRI Engine ───────────────────────────────────────────────────────────
+
+def _calc_gri(domain_scores: dict[str, int | None],
+              weights: dict[str, float] | None = None) -> float:
+    """
+    GRI = Σ(domain_score × weight) / Σ(weight)
+    Equal weights (all 1.0) by default → GRI = mean of domain scores.
+    Configurable via weights parameter.
+    Performance: O(7) — always <50ms.
+    """
+    w = weights or _GRDF_WEIGHTS
+    total = 0.0; w_sum = 0.0
+    for domain in _GRDF_DOMAINS:
+        score = domain_scores.get(domain)
+        if score is None:
+            continue
+        wt = w.get(domain, 1.0)
+        total += score * wt
+        w_sum += wt
+    return round(total / w_sum, 1) if w_sum > 0 else 50.0
+
+
+def _gri_grade(gri: float) -> str:
+    if gri >= 80: return "CRITICAL"
+    if gri >= 65: return "HIGH"
+    if gri >= 50: return "ELEVATED"
+    if gri >= 35: return "MODERATE"
+    return "LOW"
+
+
+# ── Velocity Engine ──────────────────────────────────────────────────────
+
+def _calc_velocity(snap: dict, history: list[dict]) -> dict:
+    """
+    velocity = rate of change in risk_score (pts/day over 7 days).
+    +1/day  = low   velocity
+    +10/day = high  velocity
+    +20/day = critical velocity
+    """
+    score = snap.get("risk_score", 50) or 50
+
+    # 7-day velocity from history
+    if len(history) >= 7:
+        s7 = history[-7].get("risk_score", score) or score
+        v7 = (score - s7) / 7.0
+    elif snap.get("delta") is not None:
+        v7 = float(snap["delta"])
+    else:
+        v7 = 0.0
+
+    trend = ("up"   if v7 >  0.5 else
+             "down" if v7 < -0.5 else "stable")
+
+    return {
+        "velocity":        round(abs(v7), 2),
+        "velocity_signed": round(v7, 2),
+        "velocity_7d":     round(v7, 2),
+        "trend":           trend,
+    }
+
+
+# ── Domain Score Derivation ──────────────────────────────────────────────
+
+def _domain_scores_from_grie(cc: str) -> dict[str, int | None]:
+    """
+    Primary source: GRIE ranked_risks by category.
+    Each GRIE risk category maps to a GRDF domain.
+    """
+    scores: dict[str, int | None] = {d: None for d in _GRDF_DOMAINS}
+    grie_path = GRIE_DIR / f"{cc}.json"
+    if not grie_path.exists():
+        return scores
+    try:
+        grie = json.loads(grie_path.read_text())
+        for risk in grie.get("ranked_risks", []):
+            cat    = risk.get("category", "")
+            domain = _GRIE_TO_GRDF.get(cat)
+            if domain and scores[domain] is None:
+                scores[domain] = int(risk.get("risk_score_grie", 0) or 0)
+    except Exception:
+        pass
+    return scores
+
+
+def _domain_scores_from_expl(cc: str, snap: dict,
+                              base_scores: dict[str, int | None]) -> dict[str, int | None]:
+    """
+    Secondary source: explainability contributions.
+    Fills domains still None after GRIE pass.
+    domain_score = risk_score × (contribution / max_contribution)
+    """
+    expl_path = EXPL_DIR / f"{cc}.json"
+    if not expl_path.exists():
+        return base_scores
+    try:
+        expl   = json.loads(expl_path.read_text())
+        contrs = expl.get("contributions", []) or []
+        if not contrs:
+            return base_scores
+        risk      = snap.get("risk_score", 50) or 50
+        max_contr = max((c.get("contribution", 0) or 0) for c in contrs) or 25
+        for c in contrs:
+            engine = c.get("engine", "")
+            domain = _ENGINE_TO_GRDF.get(engine)
+            if domain and base_scores.get(domain) is None:
+                pct   = c.get("contribution", 0) or 0
+                score = min(100, round(risk * pct / max_contr))
+                base_scores[domain] = score
+    except Exception:
+        pass
+    return base_scores
+
+
+def _domain_scores_fill_fallback(snap: dict,
+                                  scores: dict[str, int | None]) -> dict[str, int | None]:
+    """
+    Fallback: fill remaining None domains from risk_score + domain weight.
+    Ensures all 7 domains always have a value.
+    """
+    base = snap.get("risk_score", 50) or 50
+    for d in _GRDF_DOMAINS:
+        if scores[d] is None:
+            # Proportional fallback: economic/geo slightly higher, cyber slightly lower
+            factors = {
+                "geopolitical":0.95,"economic":0.90,"climate":0.70,
+                "technology":0.65,"social":0.75,"infrastructure":0.70,"cyber":0.60,
+            }
+            scores[d] = max(5, min(100, round(base * factors.get(d, 0.75))))
+    return scores
+
+
+def _get_domain_scores(cc: str, snap: dict) -> dict[str, dict]:
+    """
+    Build full domain object with score + trend + velocity for each domain.
+    Returns: {domain: {score, trend, velocity}}
+    """
+    # Layer 1: GRIE
+    raw = _domain_scores_from_grie(cc)
+    # Layer 2: explainability
+    raw = _domain_scores_from_expl(cc, snap, raw)
+    # Layer 3: fallback
+    raw = _domain_scores_fill_fallback(snap, raw)
+
+    delta      = snap.get("delta", 0) or 0
+    dom_snap   = (snap.get("dominant_domain","") or "").lower()
+
+    result: dict[str, dict] = {}
+    for d in _GRDF_DOMAINS:
+        score = raw[d]
+        # Domain-level velocity: dominant domain carries full delta, others proportional
+        dom_grdf = _ENGINE_TO_GRDF.get(dom_snap, dom_snap)
+        if d == dom_grdf:
+            d_vel = float(delta)
+        else:
+            d_vel = round(delta * score / max(1, raw.get(dom_grdf) or score), 1)
+        d_trend = "up" if d_vel > 0.3 else "down" if d_vel < -0.3 else "stable"
+        result[d] = {
+            "score":    score,
+            "trend":    d_trend,
+            "velocity": round(abs(d_vel), 1),
+        }
+    return result
+
+
+# ── Signal Registry ──────────────────────────────────────────────────────
+
+def _build_signals(cc: str, snap: dict) -> list[dict]:
+    """
+    Build per-country signal registry from snap drivers.
+    Each driver → Signal object (spec).
+    """
+    drivers = snap.get("drivers", []) or []
+    _src_map = {
+        "climate":"NASA EONET","wildfire":"NASA FIRMS","drought":"NASA EONET",
+        "cyber":"CISA/NCSC","geopolitics":"GDELT","economy":"World Bank",
+        "finance":"Central Bank","infrastructure":"ReliefWeb","health":"WHO",
+        "supply_chain":"GDELT","energy":"IEA","social":"GDELT",
+    }
+    signals = []
+    for i, drv in enumerate(drivers[:15]):
+        dom   = (drv.get("domain","") or "unknown").lower()
+        grdf_d= _ENGINE_TO_GRDF.get(dom, dom)
+        signals.append({
+            "id":        f"SIG-{cc}-{i+1:03d}",
+            "domain":    grdf_d,
+            "severity":  int(drv.get("severity", 50) or 50),
+            "country":   cc,
+            "title":     (drv.get("name","") or f"{dom} signal")[:60],
+            "source":    _src_map.get(dom, "GRIE Signal Layer"),
+            "timestamp": TODAY,
+        })
+    return signals
+
+
+# ── Event Registry ───────────────────────────────────────────────────────
+
+def _load_events_db() -> list[dict]:
+    """Load historical events DB once."""
+    path = EXTVAL_DIR / "events.json"
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text()).get("events", [])
+    except Exception:
+        return []
+
+
+def _build_events(cc: str, events_db: list[dict]) -> list[dict]:
+    """Filter recent events for country (last 730 days)."""
+    from datetime import date as _date
+    cutoff = (_date.fromisoformat(TODAY) - __import__('datetime').timedelta(days=730)).isoformat()
+    result = []
+    for ev in events_db:
+        if ev.get("country") == cc and (ev.get("date","") or "") >= cutoff:
+            result.append({
+                "id":        ev.get("id",""),
+                "country":   cc,
+                "type":      ev.get("category","shock"),
+                "severity":  int(ev.get("actual_severity", 50) or 50),
+                "domain":    _ENGINE_TO_GRDF.get(ev.get("domain",""), ev.get("domain","")),
+                "timestamp": ev.get("date",""),
+                "description": (ev.get("description","") or "")[:80],
+            })
+    return sorted(result, key=lambda x: -(x["severity"]))[:5]
+
+
+# ── Forecast Layer ───────────────────────────────────────────────────────
+
+def _build_forecast(snap: dict) -> dict:
+    """
+    Forecast horizons: NOW, +30D, +90D, +180D, +365D.
+    Uses snap forecast fields or damped-drift extrapolation.
+    """
+    score = snap.get("risk_score", 50) or 50
+    delta = snap.get("delta", 0) or 0
+    f30  = (snap.get("forecast_30d")  or {}).get("base_case") or round(min(95,max(5,score+delta*3)))
+    f90  = (snap.get("forecast_90d")  or {}).get("base_case") or round(min(95,max(5,score+delta*1.8)))
+    f180 = (snap.get("forecast_180d") or {}).get("base_case") or round(min(95,max(5,score+delta*1.2)))
+    f365 = (snap.get("forecast_365d") or {}).get("base_case") or round(min(95,max(5,score+delta*0.7)))
+    return {
+        "30d":  int(f30),
+        "90d":  int(f90),
+        "180d": int(f180),
+        "365d": int(f365),
+    }
+
+
+# ── Explainability ───────────────────────────────────────────────────────
+
+def _build_drivers(cc: str, snap: dict, domains: dict) -> list[str]:
+    """Return top 3 driver labels for the URO explainability block."""
+    expl_path = EXPL_DIR / f"{cc}.json"
+    if expl_path.exists():
+        try:
+            expl = json.loads(expl_path.read_text())
+            top  = [c.get("engine","") for c in (expl.get("contributions",[]) or [])[:3]]
+            if top:
+                return [_ENGINE_TO_GRDF.get(t, t).title() for t in top]
+        except Exception:
+            pass
+    # Fallback: top-scoring domains
+    return sorted(domains, key=lambda d: -domains[d]["score"])[:3]
+
+
+# ── Master URO builder ───────────────────────────────────────────────────
+
+def _build_uro(iso2: str, snap: dict,
+               history: list[dict], events_db: list[dict]) -> dict:
+    """Build a complete Universal Risk Object for one country."""
+    ts = datetime.now(timezone.utc).isoformat()
+
+    domains  = _get_domain_scores(iso2, snap)
+    gri      = _calc_gri({d: v["score"] for d, v in domains.items()})
+    vel      = _calc_velocity(snap, history)
+    signals  = _build_signals(iso2, snap)
+    events   = _build_events(iso2, events_db)
+    forecast = _build_forecast(snap)
+    drivers  = _build_drivers(iso2, snap, domains)
+
+    # Alert data
+    alert_path = ALERT_REP_DIR / f"{iso2}.json"
+    alert_level = "NONE"; alert_score = 0
+    if alert_path.exists():
+        try:
+            ad = json.loads(alert_path.read_text())
+            alert_level = ad.get("alert_level","NONE")
+            alert_score = ad.get("alert_score", 0)
+        except Exception:
+            pass
+
+    return {
+        # Identity
+        "country":           iso2,
+        "country_name":      snap.get("country_name", iso2),
+        "timestamp":         ts,
+        "date":              TODAY,
+        # Domain engine (7 domains)
+        "domains":           domains,
+        # GRI Engine
+        "gri":               round(gri),
+        "gri_exact":         gri,
+        "gri_grade":         _gri_grade(gri),
+        "gri_weights":       _GRDF_WEIGHTS,
+        # Velocity Engine
+        "velocity":          vel["velocity"],
+        "velocity_signed":   vel["velocity_signed"],
+        "trend":             vel["trend"],
+        # Alert
+        "risk_score":        int(snap.get("risk_score", 50) or 50),
+        "alert_level":       alert_level,
+        "alert_score":       int(alert_score),
+        "dominant_domain":   snap.get("dominant_domain","unknown"),
+        "escalation_level":  snap.get("escalation_level","stable"),
+        "delta":             int(snap.get("delta",0) or 0),
+        # Registries
+        "signals":           signals,
+        "signal_count":      len(signals),
+        "events":            events,
+        "event_count":       len(events),
+        # Explainability
+        "drivers":           drivers,
+        "explanation":       f"GRI={round(gri)}/100 — {vel['trend']} trend. Dominant: {drivers[0] if drivers else 'N/A'}.",
+        # Forecast Layer
+        "forecast":          forecast,
+        # Sources
+        "sources":           ["GRIE_V1","ALERT_V1","EXPL_V1","TR_V1"],
+        # Meta
+        "model_version":     "GRDF_V1",
+        "grdf_version":      "1.0",
+        "generated_at":      ts,
+    }
+
+
+# ── Aggregate outputs ────────────────────────────────────────────────────
+
+def _save_grdf_all(uros: list[dict]) -> None:
+    """Compact aggregate for /api/grdf/countries (fast list endpoint)."""
+    compact = [{
+        "country":        u["country"],
+        "country_name":   u["country_name"],
+        "gri":            u["gri"],
+        "gri_grade":      u["gri_grade"],
+        "alert_level":    u["alert_level"],
+        "alert_score":    u["alert_score"],
+        "risk_score":     u["risk_score"],
+        "velocity":       u["velocity"],
+        "trend":          u["trend"],
+        "dominant_domain":u["dominant_domain"],
+        "domains":        {d: v["score"] for d,v in u["domains"].items()},
+        "forecast_30d":   u["forecast"]["30d"],
+        "date":           u["date"],
+    } for u in uros]
+    with open(GRDF_DIR / "_all.json","w") as f:
+        json.dump({"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat(),
+                   "total":len(compact),"countries":compact}, f, ensure_ascii=False, indent=2)
+
+
+def _save_grdf_signals(all_signals: list[dict]) -> None:
+    """Global signal registry across all countries."""
+    sig_sorted = sorted(all_signals, key=lambda s: -s["severity"])
+    with open(GRDF_DIR / "_signals.json","w") as f:
+        json.dump({"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat(),
+                   "total":len(sig_sorted),"signals":sig_sorted[:200]}, f, ensure_ascii=False, indent=2)
+
+
+def _save_grdf_events(events_db: list[dict]) -> None:
+    """Event registry — recent 2 years from historical DB."""
+    from datetime import date as _date
+    cutoff=(_date.fromisoformat(TODAY)-__import__('datetime').timedelta(days=730)).isoformat()
+    recent=[ev for ev in events_db if (ev.get("date","") or "")>=cutoff]
+    registry=[{
+        "id":     ev.get("id",""),
+        "country":ev.get("country",""),
+        "type":   ev.get("category","shock"),
+        "severity":int(ev.get("actual_severity",50) or 50),
+        "domain": _ENGINE_TO_GRDF.get(ev.get("domain",""),ev.get("domain","")),
+        "timestamp":ev.get("date",""),
+        "description":(ev.get("description","") or "")[:80],
+    } for ev in sorted(recent,key=lambda e:-(e.get("actual_severity",0) or 0))]
+    with open(GRDF_DIR / "_events.json","w") as f:
+        json.dump({"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat(),
+                   "total":len(registry),"events":registry[:300]}, f, ensure_ascii=False, indent=2)
+
+
+def _save_grdf_dashboard(uros: list[dict]) -> None:
+    """Aggregate dashboard (spec format)."""
+    critical=sum(1 for u in uros if u["alert_level"]=="CRITICAL")
+    warning =sum(1 for u in uros if u["alert_level"]=="WARNING")
+    alert_  =sum(1 for u in uros if u["alert_level"]=="ALERT")
+    watch   =sum(1 for u in uros if u["alert_level"]=="WATCH")
+    avg_gri =round(sum(u["gri"] for u in uros)/max(1,len(uros)),1)
+    top     =sorted(uros,key=lambda u:-u["gri"])
+    top_cc  =top[0]["country"] if top else "N/A"
+    top_name=top[0]["country_name"] if top else "N/A"
+    with open(GRDF_DIR / "_dashboard.json","w") as f:
+        json.dump({
+            "date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat(),
+            "critical":critical,"warning":warning,"alert":alert_,"watch":watch,
+            "total_active":(critical+warning+alert_+watch),"total_countries":len(uros),
+            "highestRiskCountry":top_cc,"highestRiskCountryName":top_name,
+            "highestRiskGRI":top[0]["gri"] if top else 0,
+            "avgGRI":avg_gri,
+            "top10_gri":[{"country":u["country"],"country_name":u["country_name"],"gri":u["gri"],"alert_level":u["alert_level"]} for u in top[:10]],
+            "top10_velocity":sorted(
+                [{"country":u["country"],"country_name":u["country_name"],"velocity":u["velocity"],"trend":u["trend"]} for u in uros],
+                key=lambda x:-x["velocity"])[:10],
+        }, f, ensure_ascii=False, indent=2)
+
+
+def _save_grdf_rankings(uros: list[dict]) -> None:
+    """GRI rankings (score / velocity / emerging)."""
+    by_gri =sorted(uros,key=lambda u:-u["gri"])
+    by_vel =sorted(uros,key=lambda u:-u["velocity"])
+    emerging=[u for u in uros if u["alert_level"] in ("CRITICAL","WARNING") and u["velocity"]>2]
+    def _slim(u): return {"country":u["country"],"country_name":u["country_name"],
+        "gri":u["gri"],"gri_grade":u["gri_grade"],"alert_level":u["alert_level"],"velocity":u["velocity"]}
+    with open(GRDF_DIR / "_rankings.json","w") as f:
+        json.dump({"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat(),
+                   "by_gri":[_slim(u) for u in by_gri],
+                   "by_velocity":[_slim(u) for u in by_vel],
+                   "emerging":[_slim(u) for u in emerging[:10]]}, f, ensure_ascii=False, indent=2)
+
+
+# ── Master GRDF orchestrator ─────────────────────────────────────────────
+
+def save_grdf(snapshots: list[dict]) -> None:
+    """
+    GLOBAL RISK DATA FABRIC V1 — orchestrator.
+    Reads: all engine outputs (GRIE, EXPL, ALERT, TR, EXTVAL)
+    Writes: docs/grdf/ (8 files)
+    Called last in main() pipeline.
+    Does NOT modify any upstream engine data.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+    events_db = _load_events_db()
+    all_uros:    list[dict] = []
+    all_signals: list[dict] = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Load history tail (7 records max) for velocity
+            hist_path = TR_HIST_DIR / f"{iso2}.json"
+            history: list[dict] = []
+            if hist_path.exists():
+                hist_data = json.loads(hist_path.read_text())
+                history   = hist_data.get("records", [])[-7:]
+
+            uro = _build_uro(iso2, snap, history, events_db)
+            with open(GRDF_DIR / f"{iso2}.json", "w") as f:
+                json.dump(uro, f, ensure_ascii=False, indent=2)
+            all_uros.append(uro)
+            all_signals.extend(uro.get("signals", []))
+        except Exception as e:
+            print(f"[GRDF] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    _save_grdf_all(all_uros)
+    _save_grdf_signals(all_signals)
+    _save_grdf_events(events_db)
+    _save_grdf_dashboard(all_uros)
+    _save_grdf_rankings(all_uros)
+
+    print(f"[GRDF] Built {len(all_uros)} UROs  signals={len(all_signals)}", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -8141,6 +8671,7 @@ def main():
     save_explainability()
     save_alerts()
     save_alert_rankings(snapshots)
+    save_grdf(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
