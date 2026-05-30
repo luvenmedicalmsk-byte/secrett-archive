@@ -47,6 +47,10 @@ EXEC_DIR              = DOCS_DIR / "executive-summary"
 ASE_DIR               = DOCS_DIR / "scenario-evolution"
 ASP_DIR               = DOCS_DIR / "scenario-pathways"
 AST_DIR               = DOCS_DIR / "scenario-tree"
+GRIE_DIR              = DOCS_DIR / "global-risks"
+RANK_DIR              = DOCS_DIR / "risk-ranking"
+HIER_DIR              = DOCS_DIR / "risk-hierarchy"
+RACC_DIR              = DOCS_DIR / "risk-acceleration"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -6853,6 +6857,681 @@ def save_scenario_evolution(snapshots: list[dict]) -> None:
 
     print(f"[ASE] Saved scenario evolution for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# GLOBAL RISK INTELLIGENCE ENGINE V1 (GRIE V1)
+# Highest-order intelligence layer. Reads all country data, produces:
+#   docs/global-risks/{CC}.json        — per-country risk intelligence
+#   docs/risk-ranking/{CC}.json        — risk ranking per country
+#   docs/risk-hierarchy/{CC}.json      — risk hierarchy tree
+#   docs/risk-acceleration/{CC}.json   — velocity & acceleration data
+#   docs/global-risks/_global.json     — global risk intelligence
+# Does NOT modify any upstream engine.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# RiskScore weights (spec)
+_GRIE_W = {"impact":0.30,"probability":0.25,"urgency":0.20,"velocity":0.15,"persistence":0.10}
+
+# 15 risk categories
+_RISK_CATEGORIES = [
+    "climate","ecological","economic","financial","geopolitical",
+    "social","infrastructure","technological","cyber","energy",
+    "supply_chain","food_security","water_security","health","governance",
+]
+
+# Domain → category mapping
+_DOMAIN_TO_CAT: dict[str,str] = {
+    "geopolitics": "geopolitical",  "economy": "economic",
+    "finance": "financial",         "technology": "technological",
+    "society": "social",            "climate": "climate",
+    "energy": "energy",             "health": "health",
+    "governance": "governance",     "infrastructure": "infrastructure",
+    "supply_chain": "supply_chain", "food": "food_security",
+    "water": "water_security",      "cyber": "cyber",
+    "ecology": "ecological",
+}
+
+# Velocity thresholds
+_VEL_HIGH   = 5.0    # delta ≥ 5 → high velocity
+_VEL_MED    = 3.0    # delta ≥ 3 → medium
+_PERSIST_HZ = 3      # need ≥ 3 horizons with score > threshold for persistence
+
+# Emergence threshold
+_EMERGE_NEW_DELTA   = 4.0   # fast-rising new signal
+_CASCADE_DOMAIN_MIN = 2     # minimum domains for cascade
+
+# Grade
+def _grie_grade(score: float | None) -> tuple[str,str]:
+    if score is None:  return "N/A","Нет данных"
+    if score >= 85:    return "CRITICAL","Критический"
+    if score >= 70:    return "HIGH","Высокий"
+    if score >= 55:    return "ELEVATED","Повышенный"
+    if score >= 40:    return "MODERATE","Умеренный"
+    if score >= 25:    return "LOW","Низкий"
+    return "MINIMAL","Минимальный"
+
+
+# ── Core scoring functions ────────────────────────────────────────────────
+
+def calculate_risk_velocity(snap: dict, history: list[dict]) -> dict:
+    """
+    Velocity = rate of change in risk_score over recent history.
+    Momentum  = second derivative (acceleration of velocity).
+    Returns velocity_score (0-100), momentum, direction.
+    """
+    delta       = snap.get("delta", 0) or 0
+    score       = snap.get("risk_score", 50) or 50
+
+    # Short-term velocity from delta
+    vel_raw  = delta
+    vel_score= min(100, max(0, round(50 + vel_raw * 10)))  # centre at 50
+    vel_dir  = "accelerating" if delta >= _VEL_HIGH else \
+               "rising" if delta >= _VEL_MED else \
+               "declining" if delta <= -_VEL_MED else "stable"
+
+    # Momentum from history (last 7d vs 7-14d delta mean)
+    momentum = 0.0
+    if len(history) >= 14:
+        recent  = [h.get("delta",0) or 0 for h in history[-7:]]
+        earlier = [h.get("delta",0) or 0 for h in history[-14:-7]]
+        recent_avg  = sum(recent)/max(1,len(recent))
+        earlier_avg = sum(earlier)/max(1,len(earlier))
+        momentum = round(recent_avg - earlier_avg, 2)
+
+    return {
+        "delta":         delta,
+        "velocity_score":vel_score,
+        "velocity_raw":  vel_raw,
+        "direction":     vel_dir,
+        "momentum":      momentum,
+        "is_accelerating": abs(momentum) > 0.5 and momentum > 0,
+    }
+
+
+def calculate_risk_persistence(snap: dict, history: list[dict], threshold: float = 55.0) -> dict:
+    """
+    Persistence = how many consecutive days risk_score > threshold.
+    High persistence → entrenched risk.
+    """
+    score   = snap.get("risk_score", 50) or 50
+    persist = 0
+    for h in reversed(history):
+        if (h.get("risk_score") or 0) >= threshold:
+            persist += 1
+        else:
+            break
+
+    persist_score = min(100, round(persist * 4))  # 25d at threshold → 100
+    level = "entrenched" if persist >= 20 else \
+            "persistent" if persist >= 10 else \
+            "recurring" if persist >= 5 else "transient"
+
+    return {
+        "days_above_threshold": persist,
+        "persistence_score":    persist_score,
+        "persistence_level":    level,
+        "threshold_used":       threshold,
+    }
+
+
+def calculate_risk_momentum(snap: dict, history: list[dict]) -> dict:
+    """
+    Momentum = integrated velocity over recent window (7d area under curve).
+    Positive → sustained escalation, Negative → sustained deescalation.
+    """
+    scores = [h.get("risk_score",50) or 50 for h in history[-7:]]
+    if not scores:
+        return {"momentum_score":50,"momentum_direction":"stable","area":0}
+
+    base = scores[0]
+    area = sum(s - base for s in scores)  # cumulative deviation
+    mom_score = min(100, max(0, round(50 + area * 1.5)))
+    mom_dir   = "sustained_escalation" if area > 10 else \
+                "sustained_deescalation" if area < -10 else "oscillating"
+    return {
+        "momentum_score":    mom_score,
+        "momentum_direction":mom_dir,
+        "area":              round(area, 1),
+    }
+
+
+# ── Risk detection functions ──────────────────────────────────────────────
+
+def detect_emerging_risks(
+    snap:     dict,
+    history:  list[dict],
+    velocity: dict,
+    rec_data: dict,
+) -> list[dict]:
+    """
+    Emerging risks = fast-rising signals not previously prominent.
+    Criteria: delta ≥ _EMERGE_NEW_DELTA AND score was < 50 in prior 7d window.
+    """
+    emerging = []
+    delta  = snap.get("delta", 0) or 0
+    score  = snap.get("risk_score", 50) or 50
+    domain = snap.get("dominant_domain","geopolitics")
+    drivers= snap.get("drivers", []) or []
+
+    # Criterion: current delta high AND score recently crossed 50
+    prev_scores = [h.get("risk_score",50) for h in history[-7:]]
+    prev_avg    = sum(prev_scores)/len(prev_scores) if prev_scores else score
+
+    if delta >= _EMERGE_NEW_DELTA and prev_avg < 50 and score >= 50:
+        emerging.append({
+            "id":       f"EMERGE-ACC-{domain[:3].upper()}",
+            "category": _DOMAIN_TO_CAT.get(domain, "geopolitical"),
+            "title":    f"Новый риск: ускорение в {domain}",
+            "detail":   f"Скор вырос до {score} с базы {prev_avg:.0f}, Δ={delta:+d}",
+            "score":    score,
+            "delta":    delta,
+            "status":   "emerging",
+            "domain":   domain,
+        })
+
+    # High-severity new drivers
+    new_drivers = [d for d in drivers
+                   if d.get("severity",0) >= 75 and d.get("impact_score",0) >= 3]
+    for drv in new_drivers[:2]:
+        cat = _DOMAIN_TO_CAT.get(domain, "geopolitical")
+        emerging.append({
+            "id":       f"EMERGE-DRV-{drv.get('name','?')[:6].upper().replace(' ','')}",
+            "category": cat,
+            "title":    f"Новый драйвер: {drv.get('name','?')}",
+            "detail":   f"Severity={drv.get('severity',0)}, impact={drv.get('impact_score',0)}",
+            "score":    drv.get("severity",50),
+            "delta":    delta,
+            "status":   "emerging",
+            "domain":   domain,
+        })
+
+    # From recommendations emerging_shifts
+    for sh in (rec_data.get("emerging_shifts",[]) or [])[:2]:
+        if sh.get("direction") == "up":
+            emerging.append({
+                "id":       f"EMERGE-SHIFT-{sh.get('type','?')[:4].upper()}",
+                "category": "geopolitical",
+                "title":    sh.get("title","Emerging shift"),
+                "detail":   sh.get("detail","Emerging shift detected"),
+                "score":    min(80, score + 5),
+                "delta":    delta,
+                "status":   "emerging",
+                "domain":   domain,
+            })
+    return emerging[:5]
+
+
+def detect_accelerating_risks(snap: dict, velocity: dict, momentum: dict) -> list[dict]:
+    """
+    Accelerating risks = velocity_dir ∈ {accelerating, rising} AND momentum > 0.
+    """
+    accel = []
+    vel_dir  = velocity.get("direction","stable")
+    mom      = momentum.get("momentum_direction","oscillating")
+    delta    = snap.get("delta", 0) or 0
+    score    = snap.get("risk_score", 50) or 50
+    domain   = snap.get("dominant_domain","geopolitics")
+
+    if vel_dir in ("accelerating","rising") and delta >= _VEL_MED:
+        cat = _DOMAIN_TO_CAT.get(domain, "geopolitical")
+        accel.append({
+            "id":       f"ACCEL-{domain[:3].upper()}-{abs(int(delta))}",
+            "category": cat,
+            "title":    f"Ускорение риска: {domain} (Δ={delta:+d})",
+            "detail":   f"Скорость нарастания {velocity.get('velocity_raw',0):+.1f}pt/день",
+            "risk_score":     score,
+            "delta":          delta,
+            "velocity_score": velocity.get("velocity_score",50),
+            "momentum_score": momentum.get("momentum_score",50),
+            "acceleration":   velocity.get("momentum",0),
+        })
+    return accel
+
+
+def detect_cascading_risks(
+    snap:     dict,
+    sys_data: dict,
+    ase_data: dict,
+) -> list[dict]:
+    """
+    Cascading risks = multiple domains triggered in systemic combos
+    OR scenario divergences indicating multi-pathway risk.
+    """
+    cascades = []
+    score  = snap.get("risk_score", 50) or 50
+    domain = snap.get("dominant_domain","geopolitics")
+    drivers= snap.get("drivers", []) or []
+
+    # From systemic data: active combos
+    combos = sys_data.get("active_combos", []) or []
+    for combo in combos[:3]:
+        domains = combo.get("domains", []) or []
+        if len(domains) >= _CASCADE_DOMAIN_MIN:
+            cascades.append({
+                "id":       f"CASCADE-{'-'.join(d[:3].upper() for d in domains[:3])}",
+                "category": "systemic",
+                "title":    f"Каскад: {' → '.join(domains[:3])}",
+                "detail":   f"Системное давление по {len(domains)} доменам",
+                "domains":  domains,
+                "cascade_prob": combo.get("cascade_probability",20),
+                "severity":     combo.get("combo_pressure",50),
+                "status":   "cascading",
+            })
+
+    # From ASE divergences
+    for div in (ase_data.get("divergences",[]) or [])[:2]:
+        cascades.append({
+            "id":       f"CASCADE-DIV-{div.get('scenario_a','?')[:3].upper()}",
+            "category": "scenario",
+            "title":    f"Каскадное расхождение: {div.get('label','?')}",
+            "detail":   f"Разрыв между сценариями {div.get('score_gap',0):.0f}pt",
+            "domains":  [],
+            "cascade_prob": 25,
+            "severity":     min(100, div.get("score_gap",20) * 2),
+            "status":   "diverging",
+        })
+
+    return cascades[:5]
+
+
+def detect_systemic_risks(
+    snap:     dict,
+    sys_data: dict,
+    val_data: dict,
+) -> list[dict]:
+    """
+    Systemic risks = high systemic_pressure OR multiple active combos
+    AND validation shows bias (forecasts may underestimate).
+    """
+    sys_risks = []
+    sys_pres  = sys_data.get("systemic_pressure", 0) or 0
+    score     = snap.get("risk_score", 50) or 50
+    combos    = sys_data.get("active_combos", []) or []
+    sb        = val_data.get("systematic_bias", 0) or 0
+    domain    = snap.get("dominant_domain","geopolitics")
+
+    if sys_pres >= 40 or len(combos) >= 2:
+        # Is forecast underestimating? (negative bias = under)
+        underest = sb < -3
+        sys_risks.append({
+            "id":       f"SYS-{domain[:3].upper()}-PRESS",
+            "category": "systemic",
+            "title":    f"Системное давление: {round(sys_pres)}/100",
+            "detail":   (f"{'⚠ Прогнозы занижают риск' if underest else 'Системное давление нарастает'}. "
+                         f"{len(combos)} активных комбо."),
+            "systemic_pressure": sys_pres,
+            "combo_count":       len(combos),
+            "forecast_underestimates": underest,
+            "score":    score,
+            "severity": round(sys_pres),
+        })
+
+    # High-severity multi-domain combos
+    for combo in combos[:2]:
+        if combo.get("cascade_probability",0) >= 40:
+            sys_risks.append({
+                "id":       f"SYS-CASC-{str(combo.get('combo_pressure',0))[:2]}",
+                "category": "systemic",
+                "title":    f"Каскадный риск: P={combo.get('cascade_probability',0)}%",
+                "detail":   f"Комбо: {combo.get('combo_pressure',0):.0f}pt давления",
+                "systemic_pressure": sys_pres,
+                "combo_count":       len(combos),
+                "forecast_underestimates": sb < -2,
+                "score":    min(95, round(combo.get("cascade_probability",0) + score * 0.3)),
+                "severity": combo.get("cascade_probability",30),
+            })
+
+    return sys_risks[:4]
+
+
+def detect_risk_convergence(ase_data: dict, snap: dict) -> list[dict]:
+    """Risk convergence = multiple scenarios approaching same outcome."""
+    return [
+        {
+            "id":      f"CONV-{c.get('scenario_a','?')[:3].upper()}-{c.get('scenario_b','?')[:3].upper()}",
+            "label":   c.get("label","Convergence"),
+            "gap":     c.get("score_gap",0),
+            "prob_gap":c.get("prob_gap",0),
+        }
+        for c in (ase_data.get("convergences",[]) or [])
+    ][:3]
+
+
+def detect_risk_divergence(ase_data: dict, snap: dict) -> list[dict]:
+    """Risk divergence = scenarios splitting into high/low outcome branches."""
+    return [
+        {
+            "id":      f"DIV-{d.get('scenario_a','?')[:3].upper()}-{d.get('scenario_b','?')[:3].upper()}",
+            "label":   d.get("label","Divergence"),
+            "gap":     d.get("score_gap",0),
+        }
+        for d in (ase_data.get("divergences",[]) or [])
+    ][:3]
+
+
+# ── Ranking functions ─────────────────────────────────────────────────────
+
+def rank_global_risks(all_risk_items: list[dict], val_data: dict) -> list[dict]:
+    """
+    Apply RiskScore formula to all collected risk items and return ranked list.
+    RiskScore = Impact×0.30 + Probability×0.25 + Urgency×0.20
+              + Velocity×0.15 + Persistence×0.10
+    """
+    hv = val_data.get("historical_validation_score") or 50
+    ranked = []
+    for item in all_risk_items:
+        impact      = min(100, item.get("severity", item.get("score", 50)) or 50)
+        probability = min(100, item.get("cascade_prob",
+                         item.get("probability", max(10, round(impact * 0.6)))) or 40)
+        urgency     = min(100, item.get("delta", 0) * 10 + impact * 0.5) if "delta" in item \
+                      else min(100, impact * 0.7)
+        velocity    = min(100, item.get("velocity_score", 50) or 50)
+        persistence = min(100, item.get("persistence_score", 30) or 30)
+
+        rs = round(
+            impact      * _GRIE_W["impact"]       +
+            probability * _GRIE_W["probability"]  +
+            urgency     * _GRIE_W["urgency"]      +
+            velocity    * _GRIE_W["velocity"]     +
+            persistence * _GRIE_W["persistence"]
+        )
+        grade, grade_ru = _grie_grade(rs)
+        ranked.append({**item,
+            "risk_score_grie": rs,
+            "grade":           grade,
+            "grade_ru":        grade_ru,
+            "components": {
+                "impact":impact,"probability":probability,
+                "urgency":urgency,"velocity":velocity,"persistence":persistence,
+            }
+        })
+
+    ranked.sort(key=lambda x: -x["risk_score_grie"])
+    return ranked[:20]
+
+
+def rank_country_risks(
+    snap:      dict,
+    emerging:  list[dict],
+    accel:     list[dict],
+    cascades:  list[dict],
+    systemic:  list[dict],
+    velocity:  dict,
+    persist:   dict,
+    momentum:  dict,
+    val_data:  dict,
+) -> list[dict]:
+    """Country-level risk ranking across all detected risk types."""
+    all_items: list[dict] = []
+
+    # Base country risk item
+    score  = snap.get("risk_score",50) or 50
+    delta  = snap.get("delta",0) or 0
+    domain = snap.get("dominant_domain","geopolitics")
+    all_items.append({
+        "id":            f"BASE-{snap['country']}",
+        "category":      _DOMAIN_TO_CAT.get(domain,"geopolitical"),
+        "title":         f"Базовый риск: {snap['country_name']}",
+        "severity":      score,
+        "score":         score,
+        "delta":         delta,
+        "velocity_score":velocity.get("velocity_score",50),
+        "persistence_score":persist.get("persistence_score",30),
+        "probability":   min(100, round(score * 0.7)),
+        "cascade_prob":  20,
+        "domain":        domain,
+    })
+
+    for item in emerging + accel + cascades + systemic:
+        all_items.append({
+            "velocity_score":    velocity.get("velocity_score",50),
+            "persistence_score": persist.get("persistence_score",30),
+            **item,
+        })
+
+    return rank_global_risks(all_items, val_data)
+
+
+def generate_risk_hierarchy(ranked: list[dict], snap: dict) -> dict:
+    """
+    Hierarchical tree: CRITICAL → HIGH → ELEVATED → MODERATE → LOW
+    Each level contains risk items.
+    """
+    levels: dict[str, list] = {"CRITICAL":[],"HIGH":[],"ELEVATED":[],"MODERATE":[],"LOW":[],"MINIMAL":[]}
+    for r in ranked:
+        g = r.get("grade","LOW")
+        if g in levels:
+            levels[g].append({"id":r.get("id","?"),"title":r.get("title","?"),
+                              "score":r.get("risk_score_grie",0),"category":r.get("category","?")})
+
+    return {
+        "country":      snap["country"],
+        "date":         TODAY,
+        "levels":       levels,
+        "dominant_level":next((k for k,v in levels.items() if v),"MINIMAL"),
+        "total_risks":  len(ranked),
+    }
+
+
+def generate_risk_outlook(
+    snap:     dict,
+    velocity: dict,
+    persist:  dict,
+    momentum: dict,
+    ranked:   list[dict],
+    val_data: dict,
+    ase_data: dict,
+) -> dict:
+    """Synthesise a forward-looking risk outlook across 30/90/180d."""
+    score    = snap.get("risk_score",50) or 50
+    delta    = snap.get("delta",0) or 0
+    hv       = val_data.get("historical_validation_score") or 50
+    landscape= (ase_data.get("future_landscape") or {})
+    outlook  = landscape.get("outlook","stable")
+    top_risk = ranked[0] if ranked else {}
+
+    conf_base = min(90, max(20, hv))
+    return {
+        "outlook_30d":  {"score": min(95,max(10,round(score+delta*3))),    "confidence":conf_base, "trend":velocity.get("direction","stable")},
+        "outlook_90d":  {"score": min(95,max(10,round(score+delta*1.5))),  "confidence":max(15,round(conf_base*0.85)),"trend":momentum.get("momentum_direction","oscillating")},
+        "outlook_180d": {"score": min(95,max(10,round(score+delta*0.8))),  "confidence":max(10,round(conf_base*0.70)),"trend":outlook},
+        "dominant_risk_type": top_risk.get("category","unknown"),
+        "horizon_bias":       val_data.get("systematic_bias",0),
+    }
+
+
+# ── Main engine function ──────────────────────────────────────────────────
+
+def compute_global_risk_intelligence(iso2: str, country_name: str, snap: dict) -> dict:
+    """
+    Global Risk Intelligence Engine V1 — full pipeline per country.
+    Reads: snapshot history, systemic, validation, recommendations, ASE data.
+    Produces: per-country risk intelligence.
+    """
+    base_out = {
+        "country": iso2, "country_name": country_name,
+        "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    def _load(p): return json.loads(p.read_text()) if p.exists() else {}
+
+    # Load source data
+    hist_raw  = _load(HISTORY_DIR    / f"{iso2}.json")
+    history   = hist_raw.get("snapshots", [])
+    sys_data  = _load(SYSTEMIC_DIR   / f"{iso2}.json")
+    val_data  = _load(VALIDATION_DIR / f"{iso2}.json")
+    rec_data  = _load(REC_DIR        / f"{iso2}.json")
+    ase_data  = _load(ASE_DIR        / f"{iso2}.json")
+
+    score  = snap.get("risk_score", 50) or 50
+    delta  = snap.get("delta", 0) or 0
+    domain = snap.get("dominant_domain","geopolitics")
+    level  = snap.get("escalation_level","stable")
+
+    # ── Core calculations ─────────────────────────────────────────────────
+    velocity  = calculate_risk_velocity(snap, history)
+    persist   = calculate_risk_persistence(snap, history, threshold=55.0)
+    momentum  = calculate_risk_momentum(snap, history)
+
+    # ── Risk detection ────────────────────────────────────────────────────
+    emerging = detect_emerging_risks(snap, history, velocity, rec_data)
+    accel    = detect_accelerating_risks(snap, velocity, momentum)
+    cascades = detect_cascading_risks(snap, sys_data, ase_data)
+    systemic = detect_systemic_risks(snap, sys_data, val_data)
+    convergences = detect_risk_convergence(ase_data, snap)
+    divergences  = detect_risk_divergence(ase_data, snap)
+
+    # ── Ranking ───────────────────────────────────────────────────────────
+    ranked   = rank_country_risks(snap, emerging, accel, cascades, systemic,
+                                   velocity, persist, momentum, val_data)
+    hierarchy= generate_risk_hierarchy(ranked, snap)
+    outlook  = generate_risk_outlook(snap, velocity, persist, momentum, ranked, val_data, ase_data)
+
+    # ── GRIE composite score ──────────────────────────────────────────────
+    # How serious is the overall risk picture?
+    top_score   = ranked[0]["risk_score_grie"] if ranked else 0
+    n_critical  = sum(1 for r in ranked if r.get("grade")=="CRITICAL")
+    n_high      = sum(1 for r in ranked if r.get("grade")=="HIGH")
+    cascade_any = len(cascades) > 0
+    emerge_any  = len(emerging) > 0
+    grie_score  = round(min(100, max(0,
+        top_score * 0.50 +
+        n_critical * 12  * 0.20 +
+        n_high     * 6   * 0.15 +
+        (15 if cascade_any else 0) * 0.10 +
+        (10 if emerge_any  else 0) * 0.05
+    )))
+    grade, grade_ru = _grie_grade(grie_score)
+
+    return {
+        **base_out,
+        # Score
+        "grie_score":     grie_score,
+        "grade":          grade,
+        "grade_ru":       grade_ru,
+        # Risk vectors
+        "emerging_risks": emerging,
+        "accelerating_risks": accel,
+        "cascading_risks":    cascades,
+        "systemic_risks":     systemic,
+        "risk_convergences":  convergences,
+        "risk_divergences":   divergences,
+        # Ranking
+        "ranked_risks":   ranked,
+        "risk_count":     len(ranked),
+        # Hierarchy
+        "hierarchy":      hierarchy,
+        # Velocity/momentum/persistence
+        "velocity":       velocity,
+        "persistence":    persist,
+        "momentum":       momentum,
+        # Outlook
+        "risk_outlook":   outlook,
+        # Counts
+        "n_critical":     n_critical,
+        "n_high":         n_high,
+        # Meta
+        "risk_score":     score,
+        "delta":          delta,
+        "domain":         domain,
+        "escalation_level":level,
+        "history_depth":  len(history),
+    }
+
+
+def save_global_risk_intelligence(snapshots: list[dict]) -> None:
+    """
+    Compute and save GRIE outputs for all countries + global summary.
+    """
+    for d in (GRIE_DIR, RANK_DIR, HIER_DIR, RACC_DIR):
+        d.mkdir(parents=True, exist_ok=True)
+
+    global_entries = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            result = compute_global_risk_intelligence(iso2, snap["country_name"], snap)
+
+            # Main GRIE file
+            with open(GRIE_DIR / f"{iso2}.json","w") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+
+            # Risk ranking file
+            ranking_out = {
+                "country":iso2,"country_name":snap["country_name"],"date":TODAY,
+                "ranked_risks":result["ranked_risks"],
+                "n_critical":result["n_critical"],
+                "n_high":result["n_high"],
+            }
+            with open(RANK_DIR / f"{iso2}.json","w") as f:
+                json.dump(ranking_out, f, ensure_ascii=False, indent=2)
+
+            # Hierarchy file
+            with open(HIER_DIR / f"{iso2}.json","w") as f:
+                json.dump(result["hierarchy"], f, ensure_ascii=False, indent=2)
+
+            # Acceleration file
+            accel_out = {
+                "country":iso2,"country_name":snap["country_name"],"date":TODAY,
+                "velocity":result["velocity"],
+                "momentum":result["momentum"],
+                "persistence":result["persistence"],
+                "accelerating_risks":result["accelerating_risks"],
+                "emerging_risks":result["emerging_risks"],
+            }
+            with open(RACC_DIR / f"{iso2}.json","w") as f:
+                json.dump(accel_out, f, ensure_ascii=False, indent=2)
+
+            global_entries.append({
+                "country":      iso2,
+                "country_name": snap["country_name"],
+                "grie_score":   result["grie_score"],
+                "grade":        result["grade"],
+                "risk_score":   snap.get("risk_score",50),
+                "delta":        snap.get("delta",0),
+                "domain":       snap.get("dominant_domain","?"),
+                "n_critical":   result["n_critical"],
+                "n_cascades":   len(result["cascading_risks"]),
+                "n_emerging":   len(result["emerging_risks"]),
+                "outlook":      result["risk_outlook"].get("outlook_30d",{}).get("trend","stable"),
+                "velocity_dir": result["velocity"].get("direction","stable"),
+            })
+
+        except Exception as e:
+            print(f"  [GRIE] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    # Global summary
+    try:
+        by_grie    = sorted(global_entries, key=lambda x: -(x["grie_score"] or 0))
+        by_delta   = sorted(global_entries, key=lambda x: -(x["delta"] or 0))
+        critical   = [e for e in global_entries if e.get("grade")=="CRITICAL"]
+        accelerating=[e for e in global_entries if e.get("velocity_dir")=="accelerating"]
+        emerging_g  = [e for e in global_entries if e.get("n_emerging",0)>0]
+        cascade_g   = [e for e in global_entries if e.get("n_cascades",0)>0]
+
+        global_out = {
+            "date":           TODAY,
+            "generated_at":   datetime.now(timezone.utc).isoformat(),
+            "total_countries":len(global_entries),
+            "avg_grie_score": round(sum(e["grie_score"] for e in global_entries)
+                                    /max(1,len(global_entries))),
+            "top_risks":      by_grie[:5],
+            "fastest_accelerating": by_delta[:5],
+            "critical_alert_countries": critical[:5],
+            "cascade_countries":        cascade_g[:5],
+            "emerging_risk_countries":  emerging_g[:5],
+            "global_risk_level": _grie_grade(
+                round(sum(e["grie_score"] for e in global_entries)/max(1,len(global_entries)))
+            )[0],
+        }
+        with open(GRIE_DIR / "_global.json","w") as f:
+            json.dump(global_out, f, ensure_ascii=False, indent=2)
+
+    except Exception as e:
+        print(f"  [GRIE] global FAILED — {e}", file=sys.stderr)
+
+    print(f"[GRIE] Saved global risk intelligence for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -6916,6 +7595,7 @@ def main():
     save_strategy_optimization(snapshots)
     save_recommendations(snapshots)
     save_scenario_evolution(snapshots)
+    save_global_risk_intelligence(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
