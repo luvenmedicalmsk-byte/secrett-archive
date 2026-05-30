@@ -104,6 +104,12 @@ export default {
     return handleStrategyOptimization(request, env);
   if (path.startsWith('/api/recommendations/') && request.method === 'GET')
     return handleRecommendations(request, env);
+  if (path.startsWith('/api/scenario-evolution/') && request.method === 'GET')
+    return handleScenarioEvolution(request, env);
+  if (path.startsWith('/api/scenario-pathways/') && request.method === 'GET')
+    return handleScenarioPathways(request, env);
+  if (path.startsWith('/api/scenario-tree/') && request.method === 'GET')
+    return handleScenarioTree(request, env);
   if (path.startsWith('/api/executive-summary/') && request.method === 'GET')
     return handleExecutiveSummary(request, env);
   if (path.startsWith('/api/strategy-evolution/') && request.method === 'GET')
@@ -1608,6 +1614,7 @@ function getTierCapabilities(tier) {
       dq_access:         'teaser',
       so_access:         'teaser',
       rec_access:        'teaser',
+      ase_access:        'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1639,6 +1646,7 @@ function getTierCapabilities(tier) {
       dq_access:         'summary',
       so_access:         'summary',
       rec_access:        'summary',
+      ase_access:        'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1670,6 +1678,7 @@ function getTierCapabilities(tier) {
       dq_access:         'full',
       so_access:         'full',
       rec_access:        'full',
+      ase_access:        'full',
     },
     elite: {
       tier:                'elite',
@@ -1701,6 +1710,7 @@ function getTierCapabilities(tier) {
       dq_access:         'full+explain',
       so_access:         'full+explain',
       rec_access:        'full+explain',
+      ase_access:        'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -3877,5 +3887,96 @@ function _filterRec(data, access, tier) {
   base.rec_diagnostics        = data.rec_diagnostics        || [];
   base.diagnostic_count       = data.diagnostic_count;
   base.history_depth          = data.history_depth;
+  return base;
+}
+
+async function _fetchASE(repo, cc, folder, env, ttl) {
+  const url = `https://raw.githubusercontent.com/${repo}/main/docs/${folder}/${cc}.json`;
+  const r   = await fetch(url, {cf:{cacheTtl:ttl,cacheEverything:true}});
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('fetch '+r.status);
+  return r.json();
+}
+
+async function handleScenarioEvolution(request, env) {
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env); const caps=getTierCapabilities(tier);
+  const access=caps.ase_access||'teaser';
+  const raw=(request.url.split('/api/scenario-evolution/')[1]||'').replace(/[^A-Za-z_]/g,'');
+  const isGlobal=raw.toUpperCase()==='_GLOBAL';
+  if(isGlobal){
+    if(access==='teaser')return new Response(JSON.stringify({error:'Global requires Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    try{const d=await _fetchASE(REPO,'_global','scenario-evolution',env,3600);
+    if(!d)return new Response(JSON.stringify({error:'No global data'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+    catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+  const cc=raw.toUpperCase().replace('_','');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cacheKey=`ase:${cc}:${tier}`;
+  if(env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(cacheKey,{type:'json'});if(c)return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}});}catch(_){}}
+  try{const data=await _fetchASE(REPO,cc,'scenario-evolution',env,3600);
+  if(!data)return new Response(JSON.stringify({error:'No evolution data for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const result=_filterASE(data,access,tier);
+  if(env.EVENTS_KV){try{await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:3600});}catch(_){}}
+  return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleScenarioPathways(request, env) {
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env); const caps=getTierCapabilities(tier);
+  if((caps.ase_access||'teaser')==='teaser')return new Response(JSON.stringify({error:'Pathways require Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cc=(request.url.split('/api/scenario-pathways/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _fetchASE(REPO,cc,'scenario-pathways',env,3600);
+  if(!d)return new Response(JSON.stringify({error:'No pathways for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleScenarioTree(request, env) {
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env); const caps=getTierCapabilities(tier);
+  if(!['full','full+explain'].includes(caps.ase_access||'teaser'))return new Response(JSON.stringify({error:'Tree requires Strategic tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cc=(request.url.split('/api/scenario-tree/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _fetchASE(REPO,cc,'scenario-tree',env,3600);
+  if(!d)return new Response(JSON.stringify({error:'No tree for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+function _filterASE(data, access, tier) {
+  const rl=data.future_landscape||{};
+  const base={
+    country:data.country, country_name:data.country_name, date:data.date, tier,
+    evolution_score:data.evolution_score, grade:data.grade, grade_ru:data.grade_ru,
+    active_count:data.active_count,
+    scenario_diversity_index:data.scenario_diversity_index,
+    future_stability_index:data.future_stability_index,
+    outlook:rl.outlook,
+    dominant_pathway:rl.dominant_pathway,
+    dominant_prob:rl.dominant_prob,
+  };
+  if(access==='teaser')return base;
+  base.active_scenarios=(data.active_scenarios||[]).map(s=>({
+    id:s.id||s.type, name:s.name||s.name_ru, type:s.type, status:s.status,
+    evolved_probability:s.evolved_probability||s.probability, score:s.score||50,
+  }));
+  base.emerging_scenarios=data.emerging_scenarios||[];
+  base.ranked_pathways=(data.ranked_pathways||[]).slice(0,4);
+  if(access==='summary')return base;
+  base.convergences=data.convergences||[];
+  base.divergences=data.divergences||[];
+  base.future_landscape=data.future_landscape||{};
+  base.ranked_pathways=data.ranked_pathways||[];
+  base.retired_count=data.retired_count;
+  if(access==='full')return base;
+  base.diagnostics=data.diagnostics||[];
+  base.diagnostic_count=data.diagnostic_count;
+  base.sub_scores=data.sub_scores||{};
+  base.retired_scenarios=data.retired_scenarios||[];
+  base.pathway_count=data.pathway_count;
   return base;
 }
