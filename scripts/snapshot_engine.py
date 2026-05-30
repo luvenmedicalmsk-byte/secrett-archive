@@ -42,6 +42,8 @@ DQ_DIR                = DOCS_DIR / "decision-quality"
 DQ_RANKING_DIR        = DOCS_DIR / "decision-ranking"
 SO_DIR                = DOCS_DIR / "strategy-optimization"
 SE_DIR                = DOCS_DIR / "strategy-evolution"
+REC_DIR               = DOCS_DIR / "recommendations"
+EXEC_DIR              = DOCS_DIR / "executive-summary"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -5517,6 +5519,674 @@ def save_strategy_optimization(snapshots: list[dict]) -> None:
 
     print(f"[SO] Saved strategy optimization for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# STRATEGIC RECOMMENDATION ENGINE V1
+# Transforms the full intelligence pipeline into actionable recommendations.
+# Reads: snap, scenarios, validation, DQ, strategy-optimization.
+# Writes: docs/recommendations/{CC}.json, docs/recommendations/_global.json
+#         docs/executive-summary/{CC}.json
+# Does NOT modify any upstream engine.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Recommendation score weights (spec)
+_REC_W = {"urgency":0.30,"forecast_impact":0.25,"confidence":0.20,
+           "opt_gain":0.15,"dq":0.10}
+
+# Priority logic thresholds
+_REC_RISK_CRITICAL    = 80
+_REC_CONF_LOW         = 40
+_REC_OPT_GAIN_HIGH    = 20
+_REC_DIAG_MULTI       = 3
+
+# Categories
+_REC_CATEGORIES = ["CRITICAL","HIGH_PRIORITY","STRATEGIC","WATCHLIST","INFORMATIONAL"]
+
+# StrategicRecommendationScore weights
+_SRS_W = {"accuracy":0.30,"impact":0.25,"actionability":0.20,"confidence":0.15,"stability":0.10}
+
+
+def _rec_priority(score: float) -> str:
+    if score >= 80: return "CRITICAL"
+    if score >= 65: return "HIGH_PRIORITY"
+    if score >= 50: return "STRATEGIC"
+    if score >= 35: return "WATCHLIST"
+    return "INFORMATIONAL"
+
+def _rec_grade(srs: float | None) -> tuple[str, str]:
+    if srs is None:  return "N/A",  "Нет данных"
+    if srs >= 90:    return "A+",   "Стратегический лидер"
+    if srs >= 80:    return "A",    "Высокая эффективность"
+    if srs >= 70:    return "B",    "Стабильная"
+    if srs >= 60:    return "C",    "Умеренная"
+    if srs >= 50:    return "D",    "Требует внимания"
+    return "F", "Критический пересмотр"
+
+
+# ── Core identification functions ─────────────────────────────────────────
+
+def identify_priority_risks(
+    snap:     dict,
+    val_data: dict,
+    dq_data:  dict,
+    so_data:  dict,
+) -> list[dict]:
+    """Section A — Top Strategic Risks."""
+    risks: list[dict] = []
+    score = snap.get("risk_score", 50) or 50
+    delta = snap.get("delta", 0) or 0
+    level = snap.get("escalation_level", "stable")
+    domain= snap.get("dominant_domain", "geopolitics")
+
+    # R1: High risk score
+    if score >= _REC_RISK_CRITICAL:
+        risks.append({
+            "id": "R-01", "category": "CRITICAL",
+            "title": f"Критический уровень риска: {score}",
+            "detail": f"Скор риска {score} превышает критический порог {_REC_RISK_CRITICAL}. "
+                      f"Доминирующий домен: {domain}.",
+            "metric_value": score,
+            "urgency": 95,
+            "source": "risk_score",
+        })
+
+    # R2: Rapid deterioration
+    if delta >= 5:
+        risks.append({
+            "id": "R-02", "category": "HIGH_PRIORITY",
+            "title": f"Быстрая эскалация: Δ={delta:+d}/день",
+            "detail": f"Скорость ухудшения {delta} пунктов в сутки. "
+                      f"Требуется немедленное увеличение мониторинга.",
+            "metric_value": delta,
+            "urgency": min(90, 50 + delta * 8),
+            "source": "delta",
+        })
+
+    # R3: Systematic bias (forecasts unreliable)
+    sb = val_data.get("systematic_bias") or 0
+    if abs(sb) >= 4:
+        risks.append({
+            "id": "R-03", "category": "HIGH_PRIORITY",
+            "title": f"Системное смещение прогнозов: {sb:+.1f}pt",
+            "detail": f"Систематическая ошибка прогнозов {sb:+.1f}pt снижает "
+                      f"достоверность сценарного анализа.",
+            "metric_value": sb,
+            "urgency": min(80, 40 + abs(sb) * 5),
+            "source": "validation_bias",
+        })
+
+    # R4: Multiple diagnostics
+    dc = so_data.get("diagnostic_count", 0) or 0
+    if dc >= _REC_DIAG_MULTI:
+        risks.append({
+            "id": "R-04", "category": "STRATEGIC",
+            "title": f"Множественные диагностические проблемы: {dc}",
+            "detail": f"Обнаружено {dc} диагностических предупреждений в стратегическом слое. "
+                      f"Возможны системные ошибки.",
+            "metric_value": dc,
+            "urgency": min(75, 40 + dc * 8),
+            "source": "diagnostics",
+        })
+
+    # R5: DQ bias detected
+    bias_count = dq_data.get("bias_count", 0) or 0
+    if bias_count >= 2:
+        biases = dq_data.get("biases", []) or []
+        bias_labels = ", ".join(b.get("label", b.get("type","")) for b in biases[:2])
+        risks.append({
+            "id": "R-05", "category": "STRATEGIC",
+            "title": f"Смещения в принятии решений ({bias_count})",
+            "detail": f"Выявлено {bias_count} смещений: {bias_labels}. "
+                      f"Рекомендуется рекалибровка стратегии.",
+            "metric_value": bias_count,
+            "urgency": min(70, 30 + bias_count * 12),
+            "source": "decision_bias",
+        })
+
+    # R6: Confidence drift
+    cdrift = val_data.get("confidence_drift") or 0
+    if abs(cdrift) > 8:
+        risks.append({
+            "id": "R-06", "category": "WATCHLIST",
+            "title": f"Дрейф уверенности прогнозов: {cdrift:+.1f}pt",
+            "detail": f"Уверенность прогнозной системы дрейфует на {cdrift:+.1f}pt "
+                      f"от краткосрочного к долгосрочному горизонту.",
+            "metric_value": cdrift,
+            "urgency": min(60, 30 + abs(cdrift) * 2),
+            "source": "confidence_drift",
+        })
+
+    return sorted(risks, key=lambda x: -x["urgency"])[:6]
+
+
+def identify_priority_opportunities(
+    snap:    dict,
+    so_data: dict,
+    dq_data: dict,
+    val_data:dict,
+) -> list[dict]:
+    """Section B — Top Opportunities."""
+    opps: list[dict] = []
+    score = snap.get("risk_score", 50) or 50
+    delta = snap.get("delta", 0) or 0
+
+    # O1: Optimization gain available
+    og = so_data.get("optimization_gain", 0) or 0
+    if og >= _REC_OPT_GAIN_HIGH:
+        opps.append({
+            "id": "O-01", "category": "STRATEGIC",
+            "title": f"Высокий потенциал оптимизации: +{og}pt",
+            "detail": f"Рекалибровка весов стратегии даёт прогнозируемый прирост "
+                      f"+{og}pt к Decision Score. Рекомендуется немедленное внедрение.",
+            "metric_value": og,
+            "impact": min(90, 50 + og * 2),
+            "source": "optimization_gain",
+        })
+
+    # O2: Risk reduction improving
+    rr = dq_data.get("risk_reduction_score", 50) or 50
+    if rr >= 70:
+        opps.append({
+            "id": "O-02", "category": "HIGH_PRIORITY",
+            "title": f"Эффективное снижение риска: {rr}%",
+            "detail": f"Стратегические действия демонстрируют {rr}% эффективность "
+                      f"снижения риска. Усилить аналогичные подходы.",
+            "metric_value": rr,
+            "impact": min(85, rr),
+            "source": "risk_reduction",
+        })
+
+    # O3: Improving forecast accuracy
+    hv = val_data.get("historical_validation_score") or 0
+    if hv >= 75:
+        opps.append({
+            "id": "O-03", "category": "STRATEGIC",
+            "title": f"Высокая точность прогнозирования: {hv}/100",
+            "detail": f"Историческая валидация подтверждает надёжность системы ({hv}/100). "
+                      f"Можно расширить горизонты прогнозирования.",
+            "metric_value": hv,
+            "impact": min(80, hv),
+            "source": "validation_score",
+        })
+
+    # O4: Positive delta (improving situation)
+    if delta <= -3:
+        opps.append({
+            "id": "O-04", "category": "WATCHLIST",
+            "title": f"Тренд деэскалации: Δ={delta}/день",
+            "detail": f"Риск снижается со скоростью {abs(delta)} пунктов в сутки. "
+                      f"Возможность для стратегической деэскалации.",
+            "metric_value": delta,
+            "impact": min(65, 40 + abs(delta) * 5),
+            "source": "delta_trend",
+        })
+
+    # O5: High alpha actions available
+    ha = so_data.get("high_alpha_actions", []) or []
+    if len(ha) >= 2:
+        opps.append({
+            "id": "O-05", "category": "STRATEGIC",
+            "title": f"Высокоэффективные действия доступны ({len(ha)})",
+            "detail": f"Идентифицировано {len(ha)} действий с альфой выше порога. "
+                      f"Их приоритизация улучшит стратегический результат.",
+            "metric_value": len(ha),
+            "impact": min(70, 40 + len(ha) * 10),
+            "source": "high_alpha",
+        })
+
+    # O6: Decision success rate strong
+    dsr = dq_data.get("decision_success_rate", 50) or 50
+    if dsr >= 65:
+        opps.append({
+            "id": "O-06", "category": "INFORMATIONAL",
+            "title": f"Стратегия результативна: {dsr}% успех",
+            "detail": f"Исторический процент успешных решений {dsr}% — выше среднего. "
+                      f"Поддерживать текущий подход.",
+            "metric_value": dsr,
+            "impact": min(65, dsr),
+            "source": "decision_success",
+        })
+
+    return sorted(opps, key=lambda x: -x["impact"])[:6]
+
+
+def detect_emerging_shifts(
+    snap:     dict,
+    val_data: dict,
+    so_data:  dict,
+) -> list[dict]:
+    """Section C — Forecast Changes: emerging trends and shifts."""
+    shifts: list[dict] = []
+    score  = snap.get("risk_score", 50) or 50
+    delta  = snap.get("delta", 0) or 0
+    level  = snap.get("escalation_level", "stable")
+
+    # Trend direction from SO
+    trend = so_data.get("urgency_adjustment", "neutral")
+    if trend == "reduce":
+        shifts.append({
+            "type": "improving",
+            "title": "Тренд: снижение срочности",
+            "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
+            "direction": "down",
+        })
+    elif trend == "increase":
+        shifts.append({
+            "type": "deteriorating",
+            "title": "Тренд: нарастание давления",
+            "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
+            "direction": "up",
+        })
+
+    bh = val_data.get("best_horizon")
+    wh = val_data.get("worst_horizon")
+    if bh and wh and bh != wh:
+        shifts.append({
+            "type": "horizon_shift",
+            "title": f"Горизонт {bh} точнее, {wh} — слабее",
+            "detail": f"Система прогнозирует надёжнее на горизонте {bh} "
+                      f"и менее точно на {wh}. Скорректируйте горизонты планирования.",
+            "direction": "neutral",
+        })
+
+    return shifts
+
+
+def detect_forecast_degradation(val_data: dict, so_data: dict) -> list[dict]:
+    """Identify horizons/metrics where forecast quality is declining."""
+    degrad = []
+    hz_scores = so_data.get("evolution_record", {})
+    wh = val_data.get("worst_horizon")
+    if wh:
+        degrad.append({
+            "type": "horizon_degradation",
+            "horizon": wh,
+            "detail": f"Худший горизонт прогноза: {wh}. Увеличить частоту переобучения на этом горизонте.",
+        })
+    cdrift = val_data.get("confidence_drift") or 0
+    if abs(cdrift) > 5:
+        degrad.append({
+            "type": "confidence_drift",
+            "horizon": "long",
+            "detail": f"Дрейф уверенности {cdrift:+.1f}pt указывает на деградацию долгосрочных прогнозов.",
+        })
+    return degrad
+
+
+def detect_forecast_improvement(val_data: dict, dq_data: dict) -> list[dict]:
+    """Identify areas where forecast quality is improving."""
+    impr = []
+    bh = val_data.get("best_horizon")
+    if bh:
+        impr.append({
+            "type": "horizon_strength",
+            "horizon": bh,
+            "detail": f"Лучший горизонт прогноза: {bh}. Рассмотреть расширение использования.",
+        })
+    alpha = dq_data.get("alpha_mean", 0) or 0
+    if alpha > 1.0:
+        impr.append({
+            "type": "alpha_positive",
+            "horizon": "all",
+            "detail": f"Положительная альфа стратегии ({alpha:+.2f}pt) — решения превосходят пассивный базис.",
+        })
+    return impr
+
+
+def generate_action_plan(
+    risks: list[dict],
+    opps:  list[dict],
+    snap:  dict,
+    so_data: dict,
+) -> list[dict]:
+    """Section E — Generate prioritised action plan from risks and opportunities."""
+    actions = []
+    score = snap.get("risk_score", 50) or 50
+
+    # Actions from top risks
+    for r in risks[:3]:
+        urgency = r.get("urgency", 50)
+        actions.append({
+            "id":       f"ACT-{r['id']}",
+            "priority": _rec_priority(urgency),
+            "action":   f"Реагировать: {r['title']}",
+            "rationale":r["detail"],
+            "deadline": "немедленно" if urgency >= 80 else "72 часа" if urgency >= 60 else "7 дней",
+            "source":   r["source"],
+        })
+
+    # Actions from top opportunities
+    for o in opps[:2]:
+        impact = o.get("impact", 50)
+        actions.append({
+            "id":       f"ACT-{o['id']}",
+            "priority": _rec_priority(impact * 0.8),
+            "action":   f"Использовать: {o['title']}",
+            "rationale":o["detail"],
+            "deadline": "7 дней" if impact >= 70 else "30 дней",
+            "source":   o["source"],
+        })
+
+    # Confidence target from SO
+    conf_tgt = so_data.get("confidence_target")
+    if conf_tgt and abs(conf_tgt - 65) > 8:
+        actions.append({
+            "id":       "ACT-CONF",
+            "priority": "STRATEGIC",
+            "action":   f"Рекалибровать уверенность прогнозов → {conf_tgt}%",
+            "rationale":"Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+            "deadline": "30 дней",
+            "source":   "confidence_target",
+        })
+
+    # Priority sort
+    prio_order = {c:i for i,c in enumerate(_REC_CATEGORIES)}
+    actions.sort(key=lambda x: prio_order.get(x["priority"], 99))
+    return actions[:8]
+
+
+def rank_recommendations(
+    risks:  list[dict],
+    opps:   list[dict],
+    shifts: list[dict],
+    snap:   dict,
+    val_data: dict,
+    dq_data:  dict,
+    so_data:  dict,
+) -> list[dict]:
+    """Section D — Master ranked list of all recommendations."""
+    recs: list[dict] = []
+
+    # Merge risks and opportunities into unified ranking
+    for r in risks:
+        urgency     = r.get("urgency", 50)
+        fi          = min(100, urgency * 0.9)
+        conf        = val_data.get("historical_validation_score") or 50
+        og          = so_data.get("optimization_gain") or 0
+        dq_sc       = dq_data.get("decision_score") or 50
+
+        rec_score = round(
+            urgency * _REC_W["urgency"]          +
+            fi      * _REC_W["forecast_impact"]  +
+            conf    * _REC_W["confidence"]       +
+            min(100, og * 2) * _REC_W["opt_gain"]+
+            dq_sc   * _REC_W["dq"]
+        )
+        recs.append({
+            "id":            r["id"],
+            "type":          "risk",
+            "priority":      r["category"],
+            "title":         r["title"],
+            "rec_score":     rec_score,
+            "metric_value":  r.get("metric_value"),
+            "source":        r.get("source"),
+        })
+
+    for o in opps:
+        impact      = o.get("impact", 50)
+        conf        = val_data.get("historical_validation_score") or 50
+        og          = so_data.get("optimization_gain") or 0
+        dq_sc       = dq_data.get("decision_score") or 50
+
+        rec_score = round(
+            impact  * _REC_W["urgency"]          +
+            impact  * _REC_W["forecast_impact"]  +
+            conf    * _REC_W["confidence"]       +
+            min(100, og * 2) * _REC_W["opt_gain"]+
+            dq_sc   * _REC_W["dq"]
+        )
+        recs.append({
+            "id":            o["id"],
+            "type":          "opportunity",
+            "priority":      o["category"],
+            "title":         o["title"],
+            "rec_score":     rec_score,
+            "metric_value":  o.get("metric_value"),
+            "source":        o.get("source"),
+        })
+
+    recs.sort(key=lambda x: -x["rec_score"])
+    return recs[:10]
+
+
+def _detect_rec_diagnostics(
+    risks:  list[dict],
+    opps:   list[dict],
+    ranked: list[dict],
+) -> list[dict]:
+    """Detect Recommendation Drift, Priority Inflation, False Escalation, etc."""
+    diags = []
+
+    # Priority Inflation: too many CRITICAL/HIGH
+    critical_count = sum(1 for r in ranked if r["priority"] in ("CRITICAL","HIGH_PRIORITY"))
+    if critical_count > 4:
+        diags.append({
+            "type":   "priority_inflation",
+            "label":  "Инфляция приоритетов",
+            "detail": f"{critical_count} рекомендаций высокого приоритета — возможен шум",
+        })
+
+    # Signal Saturation: score of top rec > 90 on multiple simultaneously
+    high_score = sum(1 for r in ranked if r["rec_score"] >= 80)
+    if high_score >= 3:
+        diags.append({
+            "type":   "signal_saturation",
+            "label":  "Насыщение сигналов",
+            "detail": f"{high_score} рекомендаций с rec_score≥80 — возможна перегрузка",
+        })
+
+    # Blind Spot: no opportunities despite low risk
+    if len(opps) == 0 and len(risks) == 0:
+        diags.append({
+            "type":   "blind_spot",
+            "label":  "Слепое пятно",
+            "detail": "Нет ни рисков, ни возможностей — проверьте полноту данных",
+        })
+
+    return diags
+
+
+def build_executive_summary(
+    iso2:       str,
+    country_name:str,
+    snap:       dict,
+    risks:      list[dict],
+    opps:       list[dict],
+    action_plan:list[dict],
+    srs_score:  float | None,
+) -> dict:
+    """Section F — Executive Summary: top-5 insights for decision-makers."""
+    score  = snap.get("risk_score", 50) or 50
+    delta  = snap.get("delta", 0) or 0
+    domain = snap.get("dominant_domain", "unknown")
+    level  = snap.get("escalation_level", "stable")
+
+    grade, grade_ru = _rec_grade(srs_score)
+
+    top_risk  = risks[0]["title"]  if risks  else "Критических рисков не выявлено"
+    top_opp   = opps[0]["title"]   if opps   else "Явных возможностей не выявлено"
+    top_action= action_plan[0]["action"] if action_plan else "Продолжать мониторинг"
+
+    insights = [
+        f"Текущий уровень риска: {score}/100 ({level}) — {domain}",
+        f"Тренд: {delta:+d}pt/день",
+        f"Приоритетный риск: {top_risk}",
+        f"Приоритетная возможность: {top_opp}",
+        f"Рекомендуемое действие: {top_action}",
+    ]
+
+    return {
+        "country":       iso2,
+        "country_name":  country_name,
+        "date":          TODAY,
+        "generated_at":  datetime.now(timezone.utc).isoformat(),
+        "srs_score":     srs_score,
+        "grade":         grade,
+        "grade_ru":      grade_ru,
+        "risk_score":    score,
+        "delta":         delta,
+        "domain":        domain,
+        "top_risk":      top_risk,
+        "top_opportunity":top_opp,
+        "top_action":    top_action,
+        "insights":      insights,
+        "n_risks":       len(risks),
+        "n_opps":        len(opps),
+        "n_actions":     len(action_plan),
+    }
+
+
+def compute_recommendations(iso2: str, country_name: str, snap: dict) -> dict:
+    """
+    Strategic Recommendation Engine V1.
+    Reads: scenarios, validation, DQ, strategy-optimization.
+    Produces: ranked recommendations, action plan, executive summary.
+
+    RecommendationScore = Urgency×0.30 + ForecastImpact×0.25 + Confidence×0.20
+                        + OptimizationGain×0.15 + DecisionQuality×0.10
+
+    StrategicRecommendationScore = Accuracy×0.30 + Impact×0.25 + Actionability×0.20
+                                 + Confidence×0.15 + Stability×0.10
+    """
+    base_out = {
+        "country": iso2, "country_name": country_name,
+        "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    # Load all upstream data (read-only)
+    def _load(path):
+        return json.loads(path.read_text()) if path.exists() else {}
+
+    val_data = _load(VALIDATION_DIR        / f"{iso2}.json")
+    dq_data  = _load(DQ_DIR                / f"{iso2}.json")
+    so_data  = _load(SO_DIR                / f"{iso2}.json")
+
+    # ── Core pipeline ─────────────────────────────────────────────────────
+    risks   = identify_priority_risks(snap, val_data, dq_data, so_data)
+    opps    = identify_priority_opportunities(snap, so_data, dq_data, val_data)
+    shifts  = detect_emerging_shifts(snap, val_data, so_data)
+    degrad  = detect_forecast_degradation(val_data, so_data)
+    impr    = detect_forecast_improvement(val_data, dq_data)
+    ranked  = rank_recommendations(risks, opps, shifts, snap, val_data, dq_data, so_data)
+    actions = generate_action_plan(risks, opps, snap, so_data)
+    rec_diags=_detect_rec_diagnostics(risks, opps, ranked)
+
+    # ── StrategicRecommendationScore ──────────────────────────────────────
+    hv     = val_data.get("historical_validation_score") or 50
+    dq_sc  = dq_data.get("decision_score") or 50
+    og     = so_data.get("optimization_gain") or 0
+    stab   = so_data.get("stability_index") or 50
+    avg_imp= round(sum(r["urgency"] for r in risks[:3])/max(1,min(3,len(risks)))) if risks else 50
+    act_sc = min(100, len(actions) * 15) if actions else 30  # actionability
+
+    srs = round(
+        hv    * _SRS_W["accuracy"]     +
+        avg_imp * _SRS_W["impact"]     +
+        act_sc  * _SRS_W["actionability"]+
+        min(100, dq_sc) * _SRS_W["confidence"] +
+        stab    * _SRS_W["stability"]
+    )
+    srs_grade, srs_grade_ru = _rec_grade(srs)
+
+    return {
+        **base_out,
+        # Score
+        "srs_score":              srs,
+        "srs_grade":              srs_grade,
+        "srs_grade_ru":           srs_grade_ru,
+        # Section A: risks
+        "priority_risks":         risks,
+        "risk_count":             len(risks),
+        # Section B: opportunities
+        "priority_opportunities": opps,
+        "opp_count":              len(opps),
+        # Section C: forecast changes
+        "emerging_shifts":        shifts,
+        "forecast_degradation":   degrad,
+        "forecast_improvement":   impr,
+        # Section D: ranking
+        "ranked_recommendations": ranked,
+        # Section E: action plan
+        "action_plan":            actions,
+        "action_count":           len(actions),
+        # Diagnostics
+        "rec_diagnostics":        rec_diags,
+        "diagnostic_count":       len(rec_diags),
+        # Context
+        "risk_score":             snap.get("risk_score", 50),
+        "delta":                  snap.get("delta", 0),
+        "domain":                 snap.get("dominant_domain", "unknown"),
+        "history_depth":          len(json.loads((HISTORY_DIR/f"{iso2}.json").read_text()).get("snapshots",[]))
+                                  if (HISTORY_DIR/f"{iso2}.json").exists() else 0,
+    }
+
+
+def save_recommendations(snapshots: list[dict]) -> None:
+    """Compute and save recommendations + executive summaries for all 25 countries."""
+    REC_DIR.mkdir(parents=True, exist_ok=True)
+    EXEC_DIR.mkdir(parents=True, exist_ok=True)
+    global_entries = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            rec = compute_recommendations(iso2, snap["country_name"], snap)
+
+            # per-country recommendations
+            with open(REC_DIR / f"{iso2}.json", "w") as f:
+                json.dump(rec, f, ensure_ascii=False, indent=2)
+
+            # per-country executive summary
+            val_data = json.loads((VALIDATION_DIR/f"{iso2}.json").read_text()) \
+                       if (VALIDATION_DIR/f"{iso2}.json").exists() else {}
+            dq_data  = json.loads((DQ_DIR/f"{iso2}.json").read_text()) \
+                       if (DQ_DIR/f"{iso2}.json").exists() else {}
+            so_data  = json.loads((SO_DIR/f"{iso2}.json").read_text()) \
+                       if (SO_DIR/f"{iso2}.json").exists() else {}
+            exec_sum = build_executive_summary(
+                iso2, snap["country_name"], snap,
+                rec["priority_risks"], rec["priority_opportunities"],
+                rec["action_plan"], rec["srs_score"]
+            )
+            with open(EXEC_DIR / f"{iso2}.json", "w") as f:
+                json.dump(exec_sum, f, ensure_ascii=False, indent=2)
+
+            global_entries.append({
+                "country":     iso2,
+                "country_name":snap["country_name"],
+                "srs_score":   rec["srs_score"],
+                "srs_grade":   rec["srs_grade"],
+                "risk_count":  rec["risk_count"],
+                "opp_count":   rec["opp_count"],
+                "top_priority":rec["priority_risks"][0]["category"]
+                               if rec["priority_risks"] else "INFORMATIONAL",
+                "risk_score":  snap.get("risk_score", 50),
+            })
+
+        except Exception as e:
+            print(f"  [REC] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    # Global recommendations
+    try:
+        by_score   = sorted(global_entries, key=lambda x: -(x["srs_score"] or 0))
+        by_risk    = sorted(global_entries, key=lambda x: -(x["risk_score"] or 0))
+        critical   = [e for e in global_entries if e.get("top_priority") == "CRITICAL"]
+        global_out = {
+            "date":           TODAY,
+            "generated_at":   datetime.now(timezone.utc).isoformat(),
+            "total_countries":len(global_entries),
+            "top_srs":        by_score[:5],
+            "highest_risk":   by_risk[:5],
+            "critical_alerts":critical[:5],
+            "avg_srs_score":  round(sum(e["srs_score"] for e in global_entries)
+                                    / max(1, len(global_entries))),
+        }
+        with open(REC_DIR / "_global.json", "w") as f:
+            json.dump(global_out, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [REC] global FAILED — {e}", file=sys.stderr)
+
+    print(f"[REC] Saved recommendations for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -5578,6 +6248,7 @@ def main():
     save_dashboard(snapshots)
     save_decision_quality(snapshots)
     save_strategy_optimization(snapshots)
+    save_recommendations(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
