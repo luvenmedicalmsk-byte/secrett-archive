@@ -731,6 +731,47 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-so-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
 .cc-so-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 .cc-so-depth{font-size:8px;color:rgba(255,255,255,.2);margin-top:3px}
+/* ── Strategic Recommendation Engine V1 ── */
+.cc-rec{margin-bottom:14px}
+.cc-rec-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-rec-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-rec-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-rec-grade{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;flex-shrink:0;letter-spacing:.06em}
+.cc-rec-grade.Aplus{background:rgba(167,139,250,.18);color:#a78bfa;border:1px solid rgba(167,139,250,.35)}
+.cc-rec-grade.A{background:rgba(34,197,94,.14);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-rec-grade.B{background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.28)}
+.cc-rec-grade.C{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.28)}
+.cc-rec-grade.D{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-rec-grade.F{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.38)}
+.cc-rec-grade.NA{background:rgba(255,255,255,.04);color:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.08)}
+.cc-rec-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.cc-rec-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.cc-rec-section{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:8px 0 5px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.cc-rec-item{padding:5px 0 5px 10px;margin-bottom:5px;border-radius:3px}
+.cc-rec-item.CRITICAL{border-left:3px solid #dc2626;background:rgba(220,38,38,.06)}
+.cc-rec-item.HIGH_PRIORITY{border-left:3px solid #f59e0b;background:rgba(245,158,11,.05)}
+.cc-rec-item.STRATEGIC{border-left:3px solid #60a5fa;background:rgba(96,165,250,.05)}
+.cc-rec-item.WATCHLIST{border-left:3px solid rgba(255,255,255,.15);background:rgba(255,255,255,.02)}
+.cc-rec-item.INFORMATIONAL{border-left:3px solid rgba(255,255,255,.08)}
+.cc-rec-item-header{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.cc-rec-item-cat{font-size:7px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;flex-shrink:0}
+.cc-rec-item-cat.CRITICAL{color:#dc2626}.cc-rec-item-cat.HIGH_PRIORITY{color:#f59e0b}
+.cc-rec-item-cat.STRATEGIC{color:#60a5fa}.cc-rec-item-cat.WATCHLIST{color:rgba(255,255,255,.35)}
+.cc-rec-item-title{font-size:9px;color:rgba(232,224,208,.85);line-height:1.3;flex:1}
+.cc-rec-item-score{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,.3);flex-shrink:0}
+.cc-rec-item-detail{font-size:8px;color:rgba(255,255,255,.35);line-height:1.4}
+.cc-rec-action{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-rec-action:last-child{border-bottom:none}
+.cc-rec-action-prio{font-size:7px;text-transform:uppercase;font-weight:700;flex-shrink:0;width:70px}
+.cc-rec-action-text{font-size:9px;color:rgba(232,224,208,.8);flex:1;line-height:1.3}
+.cc-rec-action-dl{font-size:7px;color:rgba(255,255,255,.25);flex-shrink:0}
+.cc-rec-exec{background:rgba(255,255,255,.03);border-radius:4px;padding:8px;margin-top:6px}
+.cc-rec-exec-title{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:5px}
+.cc-rec-exec-insight{font-size:9px;color:rgba(232,224,208,.65);padding:2px 0;line-height:1.4}
+.cc-rec-exec-insight::before{content:'›  ';color:rgba(255,255,255,.2)}
+.cc-rec-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-rec-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
+.cc-rec-meta{display:flex;gap:8px;font-size:8px;color:rgba(255,255,255,.3);margin-bottom:6px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -2128,6 +2169,7 @@ setInterval(() => {
     <div id="cc-dash-block"></div>
     <div id="cc-dq-block"></div>
     <div id="cc-so-block"></div>
+    <div id="cc-rec-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -2192,10 +2234,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser',rec_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary',rec_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full',rec_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain',rec_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2274,6 +2316,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-dash-block').innerHTML='';
   document.getElementById('cc-dq-block').innerHTML='';
   document.getElementById('cc-so-block').innerHTML='';
+  document.getElementById('cc-rec-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2318,6 +2361,7 @@ window.openCountryCard = async function(cc) {
   fetchDashboard(cc).then(function(dashData) { renderDashboard(dashData, _clientCaps); });
   fetchDecisionQuality(cc).then(function(dqData) { renderDecisionQuality(dqData, _clientCaps); });
   fetchStrategyOptimization(cc).then(function(soData) { renderStrategyOptimization(soData, _clientCaps); });
+  fetchRecommendations(cc).then(function(recData) { renderRecommendations(recData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -5212,6 +5256,166 @@ function renderStrategyOptimization(data,caps){
   block.innerHTML=html;
 }
 function _soCell(val,lbl,col){return '<div class="cc-so-cell"><span class="cc-so-cell-val" style="color:'+(col||'rgba(232,224,208,.7)')+'">'+val+'</span><span class="cc-so-cell-lbl">'+lbl+'</span></div>';}
+
+
+// ── Strategic Recommendation Engine V1 — UI ──────────────────────────────
+var _recCache = {};
+var _REC_GRADE_COL = function(g) {
+  return g==='A+'?'#a78bfa':g==='A'?'#22c55e':g==='B'?'#60a5fa':g==='C'?'#fbbf24':g==='D'?'#f59e0b':g==='F'?'#dc2626':'rgba(255,255,255,.3)';
+};
+var _REC_GRADE_CSS = function(g) { return g==='A+'?'Aplus':g||'NA'; };
+var _REC_PRIO_COL  = function(p) {
+  return p==='CRITICAL'?'#dc2626':p==='HIGH_PRIORITY'?'#f59e0b':p==='STRATEGIC'?'#60a5fa':'rgba(255,255,255,.3)';
+};
+
+async function fetchRecommendations(cc) {
+  if (_recCache[cc]) return _recCache[cc];
+  try {
+    var h = {}; if (_clientToken) h['X-Snapshot-Token'] = _clientToken;
+    var r = await fetch(API + '/api/recommendations/' + cc, {headers:h});
+    if (!r.ok) return null;
+    var d = await r.json(); _recCache[cc] = d; return d;
+  } catch(e) { return null; }
+}
+
+function renderRecommendations(data, caps) {
+  var block = document.getElementById('cc-rec-block');
+  if (!block) return;
+  var access = caps.rec_access || 'teaser';
+  if (!data || data.error) { block.innerHTML = ''; return; }
+
+  var sc    = data.srs_score; var grade = data.srs_grade || 'N/A';
+  var grRu  = data.srs_grade_ru || ''; var gCol = _REC_GRADE_COL(grade);
+  var gCss  = _REC_GRADE_CSS(grade); var barW = sc !== null && sc !== undefined ? Math.min(100, sc) : 0;
+  var rc = data.risk_count || 0; var oc = data.opp_count || 0;
+  var ac = data.action_count || 0; var rs = data.risk_score; var delta = data.delta; var domain = data.domain;
+
+  var html = '<div class="cc-rec">'
+    + '<div class="cc-rec-header">'
+    + '<span class="cc-rec-label">Стратегические рекомендации</span>'
+    + (sc!==null&&sc!==undefined ? '<span class="cc-rec-score" style="color:'+gCol+'">'+sc+'</span>' : '')
+    + '<span class="cc-rec-grade '+gCss+'">'+_esc(grade)+'</span>'
+    + '</div>'
+    + '<div class="cc-rec-bar"><div class="cc-rec-bar-fill" style="width:'+barW+'%;background:'+gCol+'"></div></div>'
+    + '<div class="cc-rec-meta">'
+    + (rs!==undefined?'<span>Риск: '+rs+'</span>':'')
+    + (delta!==undefined?'<span>Δ'+(delta>0?'+':'')+delta+'/д</span>':'')
+    + (domain?'<span>'+_esc(domain)+'</span>':'')
+    + (rc?'<span>⚠ '+rc+' рисков</span>':'')
+    + (oc?'<span>◎ '+oc+' возм.</span>':'')
+    + '</div>';
+
+  // FREE: teaser + top risk
+  if (access === 'teaser') {
+    var tr = data.top_risk_teaser;
+    if (tr) {
+      html += '<div class="cc-rec-item ' + _esc(tr.category) + '">'
+            + '<div class="cc-rec-item-header"><span class="cc-rec-item-cat ' + _esc(tr.category) + '">' + _esc(tr.category) + '</span>'
+            + '<span class="cc-rec-item-title">' + _esc(tr.title) + '</span></div></div>';
+    }
+    html += '<div class="cc-rec-lock">🔒 Полный анализ рекомендаций в Signal PRO</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // SIGNAL+: Section A (risks) + B (opportunities)
+  var risks = data.priority_risks || [];
+  var opps  = data.priority_opportunities || [];
+  if (risks.length) {
+    html += '<div class="cc-rec-section">A · Стратегические риски (' + risks.length + ')</div>';
+    risks.slice(0, 4).forEach(function(r) {
+      html += '<div class="cc-rec-item ' + _esc(r.category) + '">'
+            + '<div class="cc-rec-item-header">'
+            + '<span class="cc-rec-item-cat ' + _esc(r.category) + '">' + _esc(r.category.replace('_',' ')) + '</span>'
+            + '<span class="cc-rec-item-title">' + _esc(r.title) + '</span>'
+            + (r.urgency!==undefined ? '<span class="cc-rec-item-score">' + r.urgency + '</span>' : '')
+            + '</div></div>';
+    });
+  }
+  if (opps.length) {
+    html += '<div class="cc-rec-section">B · Возможности (' + opps.length + ')</div>';
+    opps.slice(0, 3).forEach(function(o) {
+      html += '<div class="cc-rec-item ' + _esc(o.category) + '">'
+            + '<div class="cc-rec-item-header">'
+            + '<span class="cc-rec-item-cat ' + _esc(o.category) + '">' + _esc(o.category.replace('_',' ')) + '</span>'
+            + '<span class="cc-rec-item-title">' + _esc(o.title) + '</span>'
+            + (o.impact!==undefined ? '<span class="cc-rec-item-score">' + o.impact + '</span>' : '')
+            + '</div></div>';
+    });
+  }
+
+  if (access === 'summary') {
+    html += '<div class="cc-rec-lock">🔒 План действий в Strategic PRO</div></div>';
+    block.innerHTML = html; return;
+  }
+
+  // STRATEGIC+: C (shifts) + D (ranked) + E (actions)
+  var shifts = data.emerging_shifts || [];
+  var degrad = data.forecast_degradation || [];
+  var impr   = data.forecast_improvement || [];
+  if (shifts.length || degrad.length || impr.length) {
+    html += '<div class="cc-rec-section">C · Изменения прогнозов</div>';
+    shifts.forEach(function(s) {
+      var icon = s.direction==='up'?'↑':s.direction==='down'?'↓':'→';
+      html += '<div class="cc-rec-item WATCHLIST"><div class="cc-rec-item-header">'
+            + '<span class="cc-rec-item-cat WATCHLIST">' + icon + ' ' + _esc(s.type||'') + '</span>'
+            + '<span class="cc-rec-item-title">' + _esc(s.title||'') + '</span></div></div>';
+    });
+    degrad.forEach(function(d) {
+      html += '<div class="cc-rec-item HIGH_PRIORITY"><div class="cc-rec-item-header">'
+            + '<span class="cc-rec-item-cat HIGH_PRIORITY">↓ деградация</span>'
+            + '<span class="cc-rec-item-title">' + _esc(d.detail||'') + '</span></div></div>';
+    });
+    impr.forEach(function(d) {
+      html += '<div class="cc-rec-item INFORMATIONAL"><div class="cc-rec-item-header">'
+            + '<span class="cc-rec-item-cat INFORMATIONAL" style="color:#22c55e">↑ улучшение</span>'
+            + '<span class="cc-rec-item-title">' + _esc(d.detail||'') + '</span></div></div>';
+    });
+  }
+
+  var ranked = data.ranked_recommendations || [];
+  if (ranked.length) {
+    html += '<div class="cc-rec-section">D · Рейтинг рекомендаций</div>';
+    ranked.slice(0, 5).forEach(function(r, idx) {
+      var pCol = _REC_PRIO_COL(r.priority);
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+            + '<span style="font-size:9px;color:rgba(255,255,255,.2);width:16px">' + (idx+1) + '</span>'
+            + '<span style="flex:1;font-size:9px;color:rgba(232,224,208,.8)">' + _esc(r.title) + '</span>'
+            + '<span style="font-size:8px;color:' + pCol + ';flex-shrink:0">' + (r.rec_score||'') + '</span>'
+            + '</div>';
+    });
+  }
+
+  var actions = data.action_plan || [];
+  if (actions.length) {
+    html += '<div class="cc-rec-section">E · План действий (' + actions.length + ')</div>';
+    actions.slice(0, 5).forEach(function(a) {
+      var pCol = _REC_PRIO_COL(a.priority);
+      html += '<div class="cc-rec-action">'
+            + '<span class="cc-rec-action-prio" style="color:' + pCol + '">' + _esc((a.priority||'').replace('_',' ')) + '</span>'
+            + '<span class="cc-rec-action-text">' + _esc(a.action||'') + '</span>'
+            + '<span class="cc-rec-action-dl">' + _esc(a.deadline||'') + '</span>'
+            + '</div>';
+    });
+  }
+
+  if (access === 'full') {
+    html += '</div>'; block.innerHTML = html; return;
+  }
+
+  // ELITE: Section F — diagnostics + executive summary
+  var diags = data.rec_diagnostics || [];
+  if (diags.length) {
+    html += '<div class="cc-rec-section">Диагностика (' + diags.length + ')</div>';
+    diags.forEach(function(d) {
+      html += '<div class="cc-rec-item WATCHLIST"><div class="cc-rec-item-header">'
+            + '<span class="cc-rec-item-cat WATCHLIST">' + _esc(d.label||d.type||'') + '</span>'
+            + '<span class="cc-rec-item-detail">' + _esc(d.detail||'') + '</span></div></div>';
+    });
+  }
+
+  // Executive summary teaser inline
+  html += '</div>'; block.innerHTML = html;
+}
 
 })(); // end IIFE
 
