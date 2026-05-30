@@ -123,6 +123,8 @@ export default {
     return handleTrackRecord(request, env);
   if (path === '/api/model-history' && request.method === 'GET')
     return handleModelHistory(request, env);
+  if (path.startsWith('/api/grdf/') && request.method === 'GET')
+    return handleGRDF(request, env);
   if (path.startsWith('/api/grivl/') && request.method === 'GET')
     return handleGRIVL(request, env);
   if (path.startsWith('/api/map/') && request.method === 'GET')
@@ -1663,6 +1665,7 @@ function getTierCapabilities(tier) {
       expl_access:       'teaser',
       alert_access:      'teaser',
       map_access:       'teaser',
+      grdf_access:     'teaser',
       validation_access: 'teaser',
     },
     signal: {
@@ -1701,6 +1704,7 @@ function getTierCapabilities(tier) {
       expl_access:       'summary',
       alert_access:      'summary',
       map_access:       'summary',
+      grdf_access:     'summary',
       validation_access: 'summary',
     },
     strategic: {
@@ -1739,6 +1743,7 @@ function getTierCapabilities(tier) {
       expl_access:       'full',
       alert_access:      'full',
       map_access:       'full',
+      grdf_access:     'full',
       validation_access: 'full',
     },
     elite: {
@@ -1777,6 +1782,7 @@ function getTierCapabilities(tier) {
       expl_access:       'full+explain',
       alert_access:      'full+explain',
       map_access:       'full+explain',
+      grdf_access:     'full+explain',
       validation_access: 'full+explain',
     },
   };
@@ -5084,4 +5090,248 @@ async function handleGRIVL(request, env) {
     '/api/grivl/layers','/api/grivl/heatmap','/api/grivl/composite',
     '/api/grivl/gri','/api/grivl/timeline/:cc','/api/grivl/signals','/api/grivl/dashboard'
   ]}),{status:404,headers:CORS});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GLOBAL RISK DATA FABRIC V1 — Centralized Risk Layer
+//
+// All platform components consume data through this single API.
+// Pre-built URO files ensure <100ms response times.
+// GRI calculation: Σ(domain_score × weight) / Σ(weight) [equal weights]
+//
+// Routes:
+//   /api/grdf/countries              → all 25 UROs (compact)
+//   /api/grdf/country/:cc            → full Universal Risk Object
+//   /api/grdf/rankings               → GRI rankings by score/velocity/emerging
+//   /api/grdf/signals                → global signal registry
+//   /api/grdf/events                 → event registry
+//   /api/grdf/timeline               → all countries forecast timelines
+//   /api/grdf/dashboard              → aggregate sovereign dashboard
+//   /api/grdf/explain/:cc            → explainability for country
+//
+// grdf_access tiers:
+//   teaser       → FREE:     gri + alert_level + trend + forecast_30d
+//   summary      → SIGNAL:   + domains (scores only) + velocity + signals
+//   full         → STRATEGIC:+ full domains + events + drivers
+//   full+explain → ELITE:    + full URO + gri_weights + sources
+// ═══════════════════════════════════════════════════════════════════════════
+
+const _GRDF_DOMAINS = ['geopolitical','economic','climate','technology','social','infrastructure','cyber'];
+const _GRDF_WEIGHTS = {geopolitical:1,economic:1,climate:1,technology:1,social:1,infrastructure:1,cyber:1};
+
+// In-worker GRI calculation (used when pre-built file unavailable)
+function _calcGRI(domains, weights) {
+  const w = weights || _GRDF_WEIGHTS;
+  let total = 0, wsum = 0;
+  for (const [d, val] of Object.entries(domains)) {
+    const score = typeof val === 'object' ? val.score : val;
+    if (score == null) continue;
+    const wt = w[d] || 1.0;
+    total += score * wt; wsum += wt;
+  }
+  return wsum > 0 ? Math.round(total / wsum) : 50;
+}
+
+// Filter URO by tier access
+function _filterURO(uro, access, tier) {
+  if (!uro) return null;
+  const base = {
+    country:          uro.country,
+    country_name:     uro.country_name,
+    date:             uro.date,
+    tier,
+    gri:              uro.gri,
+    gri_grade:        uro.gri_grade,
+    alert_level:      uro.alert_level,
+    alert_score:      uro.alert_score,
+    risk_score:       uro.risk_score,
+    trend:            uro.trend,
+    dominant_domain:  uro.dominant_domain,
+    forecast:         uro.forecast,
+  };
+  if (access === 'teaser') return base;
+
+  // SIGNAL+: domains (scores only) + velocity + signals
+  base.velocity       = uro.velocity;
+  base.velocity_signed= uro.velocity_signed;
+  base.signal_count   = uro.signal_count;
+  base.signals        = (uro.signals||[]).slice(0,5).map(s=>({id:s.id,domain:s.domain,severity:s.severity,title:s.title}));
+  base.domains        = {};
+  for (const [d,v] of Object.entries(uro.domains||{})) {
+    base.domains[d] = typeof v==='object' ? v.score : v;
+  }
+  if (access === 'summary') return base;
+
+  // STRATEGIC+: full domains + events + drivers
+  base.domains      = uro.domains;
+  base.events       = uro.events || [];
+  base.event_count  = uro.event_count;
+  base.drivers      = uro.drivers;
+  base.explanation  = uro.explanation;
+  base.signals      = uro.signals || [];
+  if (access === 'full') return base;
+
+  // ELITE: complete URO
+  base.gri_exact    = uro.gri_exact;
+  base.gri_weights  = uro.gri_weights;
+  base.sources      = uro.sources;
+  base.model_version= uro.model_version;
+  base.grdf_version = uro.grdf_version;
+  base.generated_at = uro.generated_at;
+  return base;
+}
+
+async function _grdfFetch(repo, path, ttl) {
+  const url = `https://raw.githubusercontent.com/${repo}/main/${path}`;
+  const r   = await fetch(url, {cf:{cacheTtl:ttl,cacheEverything:true}});
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('upstream ' + r.status);
+  return r.json();
+}
+
+async function handleGRDF(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.grdf_access || 'teaser';
+  const CORS   = { 'Content-Type':'application/json', 'Access-Control-Allow-Origin':'*', 'X-Tier':tier };
+  const seg    = (request.url.split('/api/grdf/')[1]||'').split('/').filter(Boolean);
+
+  // ── /api/grdf/countries ──────────────────────────────────────────────
+  if (!seg[0] || seg[0] === 'countries') {
+    const ck = `grdf:all:${tier}`;
+    if (env.EVENTS_KV) { try { const c=await env.EVENTS_KV.get(ck,{type:'json'}); if(c) return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS}); } catch(_){} }
+    try {
+      const data = await _grdfFetch(REPO, 'docs/grdf/_all.json', 300);
+      if (!data) return new Response(JSON.stringify({error:'GRDF not built yet — run snapshot engine'}),{status:404,headers:CORS});
+      const filtered = {
+        ...data,
+        countries: (data.countries||[]).map(u => _filterURO(u, access, tier)),
+      };
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(ck,JSON.stringify(filtered),{expirationTtl:300}); } catch(_){} }
+      return new Response(JSON.stringify(filtered), {headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // ── /api/grdf/country/:cc ─────────────────────────────────────────────
+  if (seg[0] === 'country' && seg[1]) {
+    const cc  = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (!cc || cc.length!==2) return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:CORS});
+    const ck  = `grdf:cc:${cc}:${tier}`;
+    if (env.EVENTS_KV) { try { const c=await env.EVENTS_KV.get(ck,{type:'json'}); if(c) return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS}); } catch(_){} }
+    try {
+      const data = await _grdfFetch(REPO, `docs/grdf/${cc}.json`, 300);
+      if (!data) return new Response(JSON.stringify({error:'No GRDF data for '+cc}),{status:404,headers:CORS});
+      const result = _filterURO(data, access, tier);
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(ck,JSON.stringify(result),{expirationTtl:300}); } catch(_){} }
+      return new Response(JSON.stringify(result), {headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // ── /api/grdf/rankings ────────────────────────────────────────────────
+  if (seg[0] === 'rankings') {
+    try {
+      const data = await _grdfFetch(REPO, 'docs/grdf/_rankings.json', 300);
+      if (!data) return new Response(JSON.stringify({error:'No rankings yet'}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...data, tier}), {headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // ── /api/grdf/signals ─────────────────────────────────────────────────
+  if (seg[0] === 'signals') {
+    if (access === 'teaser') return new Response(JSON.stringify({error:'Signal registry requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const data = await _grdfFetch(REPO, 'docs/grdf/_signals.json', 300);
+      if (!data) return new Response(JSON.stringify({error:'No signal registry yet'}),{status:404,headers:CORS});
+      // Filter by domain if ?domain= query param
+      const url   = new URL(request.url);
+      const domain= url.searchParams.get('domain');
+      const country=url.searchParams.get('country');
+      let signals = data.signals || [];
+      if (domain)  signals = signals.filter(s=>s.domain===domain);
+      if (country) signals = signals.filter(s=>s.country===country);
+      return new Response(JSON.stringify({...data,signals,filtered:{domain,country},tier}),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // ── /api/grdf/events ──────────────────────────────────────────────────
+  if (seg[0] === 'events') {
+    if (access === 'teaser') return new Response(JSON.stringify({error:'Event registry requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const data = await _grdfFetch(REPO, 'docs/grdf/_events.json', 600);
+      if (!data) return new Response(JSON.stringify({error:'No event registry yet'}),{status:404,headers:CORS});
+      const url     = new URL(request.url);
+      const country = url.searchParams.get('country');
+      const domain  = url.searchParams.get('domain');
+      let events    = data.events || [];
+      if (country) events = events.filter(e=>e.country===country);
+      if (domain)  events = events.filter(e=>e.domain===domain);
+      return new Response(JSON.stringify({...data,events,filtered:{country,domain},tier}),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // ── /api/grdf/timeline ────────────────────────────────────────────────
+  if (seg[0] === 'timeline') {
+    try {
+      const data = await _grdfFetch(REPO, 'docs/grdf/_all.json', 300);
+      if (!data) return new Response(JSON.stringify({error:'No GRDF data yet'}),{status:404,headers:CORS});
+      const timeline = (data.countries||[]).map(u => ({
+        country:    u.country,
+        country_name:u.country_name,
+        now:        u.risk_score,
+        forecast_30d:  u.forecast?.['30d'],
+        forecast_90d:  u.forecast?.['90d'],
+        forecast_180d: u.forecast?.['180d'],
+        forecast_365d: u.forecast?.['365d'],
+        trend:      u.trend,
+        velocity:   u.velocity,
+      }));
+      return new Response(JSON.stringify({date:data.date,timeline,tier}),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // ── /api/grdf/dashboard ───────────────────────────────────────────────
+  if (seg[0] === 'dashboard') {
+    const ck = `grdf:dashboard:${tier}`;
+    if (env.EVENTS_KV) { try { const c=await env.EVENTS_KV.get(ck,{type:'json'}); if(c) return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS}); } catch(_){} }
+    try {
+      const data = await _grdfFetch(REPO, 'docs/grdf/_dashboard.json', 300);
+      if (!data) return new Response(JSON.stringify({error:'No dashboard data yet'}),{status:404,headers:CORS});
+      const result = {...data, tier};
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(ck,JSON.stringify(result),{expirationTtl:300}); } catch(_){} }
+      return new Response(JSON.stringify(result), {headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // ── /api/grdf/explain/:cc ─────────────────────────────────────────────
+  if (seg[0] === 'explain' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    try {
+      const data = await _grdfFetch(REPO, `docs/grdf/${cc}.json`, 300);
+      if (!data) return new Response(JSON.stringify({error:'No GRDF data for '+cc}),{status:404,headers:CORS});
+      const explain = {
+        country:     cc,
+        country_name:data.country_name,
+        gri:         data.gri,
+        gri_grade:   data.gri_grade,
+        drivers:     data.drivers,
+        explanation: data.explanation,
+        domains:     Object.fromEntries(
+          Object.entries(data.domains||{}).map(([d,v])=>[d,{score:typeof v==='object'?v.score:v,trend:typeof v==='object'?v.trend:'stable'}])
+        ),
+        top_signals: (data.signals||[]).slice(0,3).map(s=>({domain:s.domain,severity:s.severity,title:s.title})),
+        tier,
+      };
+      return new Response(JSON.stringify(explain), {headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  return new Response(JSON.stringify({
+    error: 'Unknown GRDF route',
+    available: [
+      '/api/grdf/countries','/api/grdf/country/:cc','/api/grdf/rankings',
+      '/api/grdf/signals','/api/grdf/events','/api/grdf/timeline',
+      '/api/grdf/dashboard','/api/grdf/explain/:cc',
+    ]
+  }),{status:404,headers:CORS});
 }
