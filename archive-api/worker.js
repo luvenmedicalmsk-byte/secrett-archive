@@ -94,6 +94,18 @@ export default {
     return handleStrategy(request, env);
   if (path.startsWith('/api/strategy-feedback/') && request.method === 'GET')
     return handleStrategyFeedback(request, env);
+  // Event Validation Engine V1 — specific routes
+  if (path === '/api/validation/summary' && request.method === 'GET')
+    return handleValidationSummary(request, env);
+  if (path.startsWith('/api/validation/country/') && request.method === 'GET')
+    return handleValidationCountry(request, env);
+  if (path.startsWith('/api/validation/domain/') && request.method === 'GET')
+    return handleValidationDomain(request, env);
+  if (path.startsWith('/api/validation/event/') && request.method === 'GET')
+    return handleValidationEvent(request, env);
+  if (path === '/api/validation/reports/latest' && request.method === 'GET')
+    return handleValidationLatest(request, env);
+  // Legacy: /api/validation/{CC} → historical calibration layer
   if (path.startsWith('/api/validation/') && request.method === 'GET')
     return handleValidation(request, env);
   if (path.startsWith('/api/dashboard/') && request.method === 'GET')
@@ -1640,6 +1652,7 @@ function getTierCapabilities(tier) {
       ase_access:        'teaser',
       grie_access:       'teaser',
       tr_access:         'teaser',
+      validation_access: 'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1674,6 +1687,7 @@ function getTierCapabilities(tier) {
       ase_access:        'summary',
       grie_access:       'summary',
       tr_access:         'summary',
+      validation_access: 'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1708,6 +1722,7 @@ function getTierCapabilities(tier) {
       ase_access:        'full',
       grie_access:       'full',
       tr_access:         'full',
+      validation_access: 'full',
     },
     elite: {
       tier:                'elite',
@@ -1742,6 +1757,7 @@ function getTierCapabilities(tier) {
       ase_access:        'full+explain',
       grie_access:       'full+explain',
       tr_access:         'full+explain',
+      validation_access: 'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -4379,4 +4395,158 @@ function _filterTR(data, access, tier, source, isSingleRecord) {
     source:       'history',
     records,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EVENT VALIDATION ENGINE V1 — archive-api/worker.js endpoints
+//
+// GET /api/validation/summary          → global precision/recall/F1/accuracy
+// GET /api/validation/country/:cc      → per-country metrics
+// GET /api/validation/domain/:domain   → per-domain metrics
+// GET /api/validation/event/:event_id  → single event record + outcome
+// GET /api/validation/reports/latest   → full latest report + country ranking
+//
+// validation_access:
+//   teaser       → FREE:     summary scores only (precision/recall/f1)
+//   summary      → SIGNAL:   + confusion matrix + lead time + MAE
+//   full         → STRATEGIC:+ country metrics + domain metrics
+//   full+explain → ELITE:    + full report + country ranking + raw counts
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function _valFetch(repo, path, ttl) {
+  const url = `https://raw.githubusercontent.com/${repo}/main/${path}`;
+  const r   = await fetch(url, {cf:{cacheTtl:ttl,cacheEverything:true}});
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error('upstream ' + r.status);
+  return r.json();
+}
+
+async function handleValidationSummary(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  const access = caps.validation_access || 'teaser';
+  const cacheKey = `vale:summary:${tier}`;
+
+  if (env.EVENTS_KV) {
+    try { const c = await env.EVENTS_KV.get(cacheKey,{type:'json'}); if(c) return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}}); } catch(_){}
+  }
+  try {
+    const data = await _valFetch(REPO, 'docs/validation/reports/latest.json', 600);
+    if (!data) return new Response(JSON.stringify({error:'No validation data yet — run engines/event_validation.py'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+
+    // teaser: precision/recall/f1 only
+    const base = {
+      generated_at:  data.generated_at,
+      n_outcomes:    data.n_outcomes,
+      precision:     data.precision,
+      recall:        data.recall,
+      f1:            data.f1,
+      accuracy:      data.accuracy,
+      model_version: data.model_version,
+      tier,
+    };
+    if (access === 'teaser') {
+      const result = {...base, _note:'Full metrics require Signal tier'};
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:600}); } catch(_){} }
+      return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+    }
+    // signal+: + confusion matrix + lead time + MAE/RMSE/bias
+    base.TP = data.TP; base.FP = data.FP; base.TN = data.TN; base.FN = data.FN;
+    base.fpr = data.fpr; base.fnr = data.fnr;
+    base.mae = data.mae; base.rmse = data.rmse; base.bias = data.bias;
+    base.brier_score = data.brier_score;
+    base.lead_time_days = data.lead_time_days;
+    base.detection_rate = data.detection_rate;
+    if (access === 'summary') {
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(cacheKey,JSON.stringify(base),{expirationTtl:600}); } catch(_){} }
+      return new Response(JSON.stringify(base),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+    }
+    // full+: already have everything
+    if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(cacheKey,JSON.stringify(base),{expirationTtl:600}); } catch(_){} }
+    return new Response(JSON.stringify(base),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  }
+}
+
+async function handleValidationCountry(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  const access = caps.validation_access || 'teaser';
+  if (access === 'teaser') return new Response(JSON.stringify({error:'Country validation metrics require Signal tier'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cc = (request.url.split('/api/validation/country/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if (!cc||cc.length!==2) return new Response(JSON.stringify({error:'Invalid country code'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try {
+    const data = await _valFetch(REPO, `docs/validation/reports/countries/${cc}.json`, 600);
+    if (!data) return new Response(JSON.stringify({error:'No validation data for '+cc+' yet'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    return new Response(JSON.stringify({...data,tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+  } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}); }
+}
+
+async function handleValidationDomain(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  const access = caps.validation_access || 'teaser';
+  if (access === 'teaser') return new Response(JSON.stringify({error:'Domain validation metrics require Signal tier'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const domain = (request.url.split('/api/validation/domain/')[1]||'').toLowerCase().replace(/[^a-z_]/g,'_');
+  if (!domain) return new Response(JSON.stringify({error:'Domain required'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try {
+    const data = await _valFetch(REPO, `docs/validation/reports/domains/${domain}.json`, 600);
+    if (!data) return new Response(JSON.stringify({error:'No validation data for domain '+domain+' yet'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    return new Response(JSON.stringify({...data,tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+  } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}); }
+}
+
+async function handleValidationEvent(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  const access = caps.validation_access || 'teaser';
+  if (access === 'teaser') return new Response(JSON.stringify({error:'Event records require Signal tier'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const eventId = (request.url.split('/api/validation/event/')[1]||'').replace(/[^A-Za-z0-9_\-]/g,'');
+  if (!eventId) return new Response(JSON.stringify({error:'event_id required'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try {
+    let data = await _valFetch(REPO, `docs/validation/events/${eventId}.json`, 86400);
+    if (!data) data = await _valFetch(REPO, `docs/validation/events/HISTORICAL_${eventId}.json`, 86400);
+    if (!data) return new Response(JSON.stringify({error:'Event '+eventId+' not found'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    return new Response(JSON.stringify({...data,tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+  } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}); }
+}
+
+async function handleValidationLatest(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  const access = caps.validation_access || 'teaser';
+  if (access === 'teaser') return new Response(JSON.stringify({error:'Full report requires Signal tier'}),
+    {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try {
+    const [report, ranking] = await Promise.all([
+      _valFetch(REPO, 'docs/validation/reports/latest.json', 600),
+      _valFetch(REPO, 'docs/validation/reports/country_ranking.json', 600),
+    ]);
+    if (!report) return new Response(JSON.stringify({error:'No validation report yet'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    // For elite: return full report + ranking; for others: summary + ranking
+    const full = access === 'full+explain';
+    const result = full ? {...report, country_ranking: ranking?.ranking||[], tier}
+      : {generated_at:report.generated_at, n_outcomes:report.n_outcomes,
+         precision:report.precision, recall:report.recall, f1:report.f1,
+         accuracy:report.accuracy, mae:report.mae, lead_time_days:report.lead_time_days,
+         country_ranking:(ranking?.ranking||[]).slice(0,10), tier};
+    return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+  } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}); }
 }
