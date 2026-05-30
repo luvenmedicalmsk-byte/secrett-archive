@@ -107,6 +107,10 @@ export default {
   if (path.startsWith('/api/scenario-evolution/') && request.method === 'GET')
     return handleScenarioEvolution(request, env);
 
+  if (path.startsWith('/api/track-record/') && request.method === 'GET')
+    return handleTrackRecord(request, env);
+  if (path === '/api/model-history' && request.method === 'GET')
+    return handleModelHistory(request, env);
   if (path.startsWith('/api/extval/metrics') && request.method === 'GET')
     return handleExtValMetrics(request, env);
   if (path.startsWith('/api/extval/country/') && request.method === 'GET')
@@ -1635,6 +1639,7 @@ function getTierCapabilities(tier) {
       rec_access:        'teaser',
       ase_access:        'teaser',
       grie_access:       'teaser',
+      tr_access:         'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1668,6 +1673,7 @@ function getTierCapabilities(tier) {
       rec_access:        'summary',
       ase_access:        'summary',
       grie_access:       'summary',
+      tr_access:         'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1701,6 +1707,7 @@ function getTierCapabilities(tier) {
       rec_access:        'full',
       ase_access:        'full',
       grie_access:       'full',
+      tr_access:         'full',
     },
     elite: {
       tier:                'elite',
@@ -1734,6 +1741,7 @@ function getTierCapabilities(tier) {
       rec_access:        'full+explain',
       ase_access:        'full+explain',
       grie_access:       'full+explain',
+      tr_access:         'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -4187,4 +4195,188 @@ async function handleExtValLearning(request,env){
     signals:(d.signals||[]).map(s=>({type:s.type,priority:s.priority,action:s.action}))};
   return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
   catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HISTORICAL TRACK RECORD SYSTEM V1 — Worker endpoints
+//
+// GET /api/track-record/{CC}            → full country forecast history
+// GET /api/track-record/{CC}/{DATE}     → specific-date replay
+// GET /api/track-record/metrics         → daily metrics
+// GET /api/model-history                → model version history
+//
+// tr_access:
+//   teaser       → FREE:     risk_score + escalation_level + date only
+//   summary      → SIGNAL:   + forecast_7d + forecast_30d + domain scores
+//   full         → STRATEGIC:+ all forecast horizons + active_signals
+//   full+explain → ELITE:    + hash + validation_readiness + full record
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleTrackRecord(request, env) {
+  const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request, env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.tr_access || 'teaser';
+
+  // Parse: /api/track-record/metrics  OR  /api/track-record/{CC}  OR  /api/track-record/{CC}/{DATE}
+  const parts = request.url.split('/api/track-record/')[1] || '';
+  const segs  = parts.split('/').filter(Boolean);
+
+  // /api/track-record/metrics
+  if (segs[0] === 'metrics') {
+    if (access === 'teaser') return new Response(
+      JSON.stringify({error:'Metrics require Signal tier'}),
+      {status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+    );
+    try {
+      const url = `https://raw.githubusercontent.com/${REPO}/main/docs/track-record/metrics.json`;
+      const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+      if (!r.ok) return new Response(JSON.stringify({error:'No metrics yet'}),
+        {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+      return new Response(await r.text(),
+        {headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+    } catch(e) {
+      return new Response(JSON.stringify({error:String(e)}),
+        {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    }
+  }
+
+  const cc   = (segs[0]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  const date = segs[1] || null;  // YYYY-MM-DD or null
+
+  if (!cc || cc.length !== 2) return new Response(
+    JSON.stringify({error:'Usage: /api/track-record/{CC} or /api/track-record/{CC}/{DATE} or /api/track-record/metrics'}),
+    {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+  );
+
+  // Cache key includes date if present
+  const cacheKey = `tr:${cc}:${date||'latest'}:${tier}`;
+  if (env.EVENTS_KV) {
+    try {
+      const cached = await env.EVENTS_KV.get(cacheKey, {type:'json'});
+      if (cached) return new Response(JSON.stringify(cached),
+        {headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}});
+    } catch(_){}
+  }
+
+  try {
+    let data, source;
+
+    if (date) {
+      // STEP 3 — Forecast replay: fetch specific date from daily archive
+      const dateClean = date.replace(/[^0-9\-]/g,'');
+      const url = `https://raw.githubusercontent.com/${REPO}/main/docs/track-record/daily/${dateClean}.json`;
+      const r   = await fetch(url, {cf:{cacheTtl:86400,cacheEverything:true}});
+      if (r.status === 404) return new Response(
+        JSON.stringify({error:`No track record for ${cc} on ${dateClean} — archive starts 2026-05-30`}),
+        {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+      );
+      if (!r.ok) throw new Error('fetch '+r.status);
+      const daily = await r.json();
+      const record = (daily.records||[]).find(rec => rec.country === cc);
+      if (!record) return new Response(
+        JSON.stringify({error:`No record for ${cc} on ${dateClean}`}),
+        {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+      );
+      data   = record;
+      source = 'daily_archive';
+    } else {
+      // Full history
+      const url = `https://raw.githubusercontent.com/${REPO}/main/docs/track-record/history/${cc}.json`;
+      const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+      if (r.status === 404) return new Response(
+        JSON.stringify({error:`No track record history for ${cc} yet`}),
+        {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
+      );
+      if (!r.ok) throw new Error('fetch '+r.status);
+      data   = await r.json();
+      source = 'history';
+    }
+
+    const result = _filterTR(data, access, tier, source, date != null);
+    if (env.EVENTS_KV) {
+      try { await env.EVENTS_KV.put(cacheKey, JSON.stringify(result), {expirationTtl: date ? 86400 : 600}); }
+      catch(_){}
+    }
+    return new Response(JSON.stringify(result),
+      {headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}});
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  }
+}
+
+async function handleModelHistory(request, env) {
+  const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
+  const tier = _resolveClientTier(request, env);
+  try {
+    const url = `https://raw.githubusercontent.com/${REPO}/main/docs/model-history.json`;
+    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    if (!r.ok) return new Response(JSON.stringify({error:'No model history yet'}),
+      {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    return new Response(await r.text(),
+      {headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+  } catch(e) {
+    return new Response(JSON.stringify({error:String(e)}),
+      {status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  }
+}
+
+function _filterTR(data, access, tier, source, isSingleRecord) {
+  // For single-record (date replay) vs full history list
+  const filterRecord = (rec) => {
+    const base = {
+      country:          rec.country,
+      date:             rec.date,
+      risk_score:       rec.risk_score,
+      escalation_level: rec.escalation_level,
+      dominant_domain:  rec.dominant_domain,
+      delta:            rec.delta,
+      model_version:    rec.model_version,
+    };
+    if (access === 'teaser') return base;
+
+    // SIGNAL+: + forecasts 7d/30d + domain scores
+    base.forecast_7d         = rec.forecast_7d;
+    base.forecast_30d        = rec.forecast_30d;
+    base.geopolitics_score   = rec.geopolitics_score;
+    base.economy_score       = rec.economy_score;
+    base.climate_score       = rec.climate_score;
+    base.technology_score    = rec.technology_score;
+    base.society_score       = rec.society_score;
+    base.signal_count        = rec.signal_count;
+    base.event_count         = rec.event_count;
+    if (access === 'summary') return base;
+
+    // STRATEGIC+: + all forecast horizons + signals
+    base.forecast_90d        = rec.forecast_90d;
+    base.forecast_180d       = rec.forecast_180d;
+    base.forecast_365d       = rec.forecast_365d;
+    base.active_signals      = rec.active_signals;
+    base.architecture_ver    = rec.architecture_ver;
+    if (access === 'full') return base;
+
+    // ELITE: + hash + snapshot_id + validation readiness
+    base.snapshot_id         = rec.snapshot_id;
+    base.hash                = rec.hash;
+    base.timestamp           = rec.timestamp;
+    base.validation          = rec.validation;
+    return base;
+  };
+
+  if (isSingleRecord) {
+    return {tier, source:'daily_archive', record: filterRecord(data)};
+  }
+
+  // History: return metadata + filtered records
+  const records = (data.records || []).map(filterRecord);
+  return {
+    country:      data.country,
+    country_name: data.country_name,
+    record_count: data.record_count,
+    last_updated: data.last_updated,
+    tier,
+    source:       'history',
+    records,
+  };
 }
