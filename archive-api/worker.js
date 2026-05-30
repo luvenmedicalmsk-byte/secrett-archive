@@ -1652,6 +1652,7 @@ function getTierCapabilities(tier) {
       ase_access:        'teaser',
       grie_access:       'teaser',
       tr_access:         'teaser',
+      expl_access:       'teaser',
       validation_access: 'teaser',
     },
     signal: {
@@ -1687,6 +1688,7 @@ function getTierCapabilities(tier) {
       ase_access:        'summary',
       grie_access:       'summary',
       tr_access:         'summary',
+      expl_access:       'summary',
       validation_access: 'summary',
     },
     strategic: {
@@ -1722,6 +1724,7 @@ function getTierCapabilities(tier) {
       ase_access:        'full',
       grie_access:       'full',
       tr_access:         'full',
+      expl_access:       'full',
       validation_access: 'full',
     },
     elite: {
@@ -1757,6 +1760,7 @@ function getTierCapabilities(tier) {
       ase_access:        'full+explain',
       grie_access:       'full+explain',
       tr_access:         'full+explain',
+      expl_access:       'full+explain',
       validation_access: 'full+explain',
     },
   };
