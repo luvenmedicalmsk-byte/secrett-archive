@@ -56,6 +56,8 @@ TR_DIR                = DOCS_DIR / "track-record"
 TR_DAILY_DIR          = TR_DIR   / "daily"
 TR_HIST_DIR           = TR_DIR   / "history"
 EXPL_DIR              = DOCS_DIR / "explanations"
+ALERT_HIST_DIR        = DOCS_DIR / "alerts" / "history"
+ALERT_REP_DIR         = DOCS_DIR / "alerts" / "reports"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -7993,6 +7995,30 @@ def save_explainability() -> None:
     except Exception as e:
         print(f"[EXPL] Error: {e}", file=sys.stderr)
 
+def save_alerts() -> None:
+    """
+    Trigger engines/alert_engine.py after Explainability engine completes.
+    Post-processing layer: Forecast → Validation → Explainability → Alert.
+    Does NOT modify any forecast records.
+    """
+    import subprocess
+    script = Path(__file__).parent / ".." / "engines" / "alert_engine.py"
+    script = script.resolve()
+    if not script.exists():
+        print("[ALERT] Script not found — skipping", file=sys.stderr)
+        return
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script), "--once"],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            print("[ALERT] ✓ Alert engine complete", file=sys.stderr)
+        else:
+            print(f"[ALERT] ✗ {result.stderr[:200]}", file=sys.stderr)
+    except Exception as e:
+        print(f"[ALERT] Error: {e}", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -8060,6 +8086,7 @@ def main():
     save_external_validation()
     save_track_record(snapshots)
     save_explainability()
+    save_alerts()
 
     scores = [s["risk_score"] for s in snapshots]
     print(
