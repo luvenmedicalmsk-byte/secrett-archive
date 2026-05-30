@@ -44,6 +44,9 @@ SO_DIR                = DOCS_DIR / "strategy-optimization"
 SE_DIR                = DOCS_DIR / "strategy-evolution"
 REC_DIR               = DOCS_DIR / "recommendations"
 EXEC_DIR              = DOCS_DIR / "executive-summary"
+ASE_DIR               = DOCS_DIR / "scenario-evolution"
+ASP_DIR               = DOCS_DIR / "scenario-pathways"
+AST_DIR               = DOCS_DIR / "scenario-tree"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -6187,6 +6190,669 @@ def save_recommendations(snapshots: list[dict]) -> None:
 
     print(f"[REC] Saved recommendations for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ADAPTIVE SCENARIO EVOLUTION ENGINE V1
+# Continuously generates, evolves, retires and ranks future pathways.
+# Reads: scenarios, validation, DQ, SO, recommendations.
+# Writes: docs/scenario-evolution/{CC}.json
+#         docs/scenario-pathways/{CC}.json
+#         docs/scenario-tree/{CC}.json
+#         docs/scenario-evolution/_global.json
+# Does NOT modify the base Scenario Engine (generate_scenarios).
+# ═══════════════════════════════════════════════════════════════════════════
+
+# EvolutionScore weights (spec)
+_ASE_W = {"accuracy":0.25,"validity":0.25,"prob_cal":0.20,"adaptability":0.15,"stability":0.15}
+# ScenarioScore weights (spec)
+_SC_SCORE_W = {"probability":0.30,"impact":0.25,"confidence":0.20,"trend":0.15,"validation":0.10}
+
+# Thresholds
+_ASE_ACCEL_THRESH      = 5.0   # signal acceleration to generate new scenario
+_ASE_RETIRE_CONF       = 30.0  # below → retire scenario
+_ASE_PROB_RERANK_DELTA = 15.0  # probability change → re-rank
+_ASE_CONVERGENCE_DIST  = 8.0   # score gap → convergence
+_ASE_DIVERGENCE_DIST   = 25.0  # score gap → divergence
+
+_ASE_STATUS = {
+    "active":     "Активный",
+    "emerging":   "Формирующийся",
+    "converging": "Сходящийся",
+    "diverging":  "Расходящийся",
+    "retiring":   "Устаревающий",
+    "retired":    "Устарел",
+}
+
+def _ase_grade(score: float | None) -> tuple[str,str]:
+    if score is None:   return "N/A","Нет данных"
+    if score >= 88:     return "A+","Самоадаптирующийся"
+    if score >= 76:     return "A","Высокая эволюция"
+    if score >= 62:     return "B","Стабильная эволюция"
+    if score >= 50:     return "C","Умеренная"
+    if score >= 38:     return "D","Слабая"
+    return "F","Требует перезапуска"
+
+
+# ── Core functions ────────────────────────────────────────────────────────
+
+def generate_new_scenarios(
+    snap: dict,
+    base_scenarios: list[dict],
+    val_data: dict,
+    rec_data: dict,
+) -> list[dict]:
+    """
+    Generate additional scenarios triggered by signal acceleration,
+    recommendation conflicts or emerging shifts.
+    Each new scenario is additive — does NOT replace base scenarios.
+    """
+    new_scens: list[dict] = []
+    delta     = snap.get("delta", 0) or 0
+    score     = snap.get("risk_score", 50) or 50
+    domain    = snap.get("dominant_domain","geopolitics")
+    shifts    = rec_data.get("emerging_shifts", []) or []
+    risks     = rec_data.get("priority_risks", []) or []
+
+    # Trigger 1: signal acceleration
+    if abs(delta) >= _ASE_ACCEL_THRESH:
+        direction = "acceleration" if delta > 0 else "deceleration"
+        new_scens.append({
+            "id":          f"ASE-ACC-{abs(int(delta))}",
+            "type":        "acceleration",
+            "name":        f"Сценарий ускорения ({direction})",
+            "trigger":     f"signal_acceleration Δ={delta:+d}",
+            "score":       min(95, max(10, score + delta * 3)),
+            "probability": min(35, max(8, round(abs(delta) * 3.5))),
+            "confidence":  55,
+            "trend_strength": min(100, round(abs(delta) * 10)),
+            "status":      "emerging",
+            "source":      "signal_acceleration",
+            "domain":      domain,
+        })
+
+    # Trigger 2: emerging shifts from recommendations
+    for sh in shifts[:2]:
+        if sh.get("direction") == "up":
+            new_scens.append({
+                "id":          f"ASE-ESC-{sh.get('type','shift')[:4].upper()}",
+                "type":        "escalation_branch",
+                "name":        f"Ветвь эскалации: {sh.get('type','')}",
+                "trigger":     sh.get("title","emerging shift"),
+                "score":       min(95, score + 10),
+                "probability": 18,
+                "confidence":  50,
+                "trend_strength": 65,
+                "status":      "emerging",
+                "source":      "recommendation_shift",
+                "domain":      domain,
+            })
+        elif sh.get("direction") == "down":
+            new_scens.append({
+                "id":          f"ASE-DEC-{sh.get('type','shift')[:4].upper()}",
+                "type":        "deescalation_branch",
+                "name":        f"Ветвь деэскалации: {sh.get('type','')}",
+                "trigger":     sh.get("title","emerging shift"),
+                "score":       max(10, score - 10),
+                "probability": 20,
+                "confidence":  50,
+                "trend_strength": 60,
+                "status":      "emerging",
+                "source":      "recommendation_shift",
+                "domain":      domain,
+            })
+
+    # Trigger 3: critical risk → worst-case branch
+    critical_risks = [r for r in risks if r.get("category") == "CRITICAL"]
+    if critical_risks and score >= 70:
+        new_scens.append({
+            "id":          "ASE-CRIT-WORST",
+            "type":        "critical_branch",
+            "name":        "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+            "trigger":     critical_risks[0].get("title","critical risk"),
+            "score":       min(97, score + 15),
+            "probability": 12,
+            "confidence":  60,
+            "trend_strength": 80,
+            "status":      "emerging",
+            "source":      "critical_risk",
+            "domain":      domain,
+        })
+
+    # Normalise probabilities to ≤ 40 each and strip duplicates
+    seen = set()
+    unique = []
+    for sc in new_scens:
+        if sc["id"] not in seen:
+            seen.add(sc["id"])
+            sc["probability"] = min(40, sc["probability"])
+            unique.append(sc)
+
+    return unique
+
+
+def evolve_existing_scenarios(
+    base_scenarios: list[dict],
+    val_data: dict,
+    delta: float,
+) -> list[dict]:
+    """
+    Evolve base scenarios by updating probabilities and confidence
+    based on recent validation accuracy and signal velocity.
+    Each scenario gets an evolution_delta showing how much it shifted.
+    """
+    evolved = []
+    hv = val_data.get("historical_validation_score") or 50
+    conf_drift = abs(val_data.get("confidence_drift") or 0)
+    accuracy_factor = (hv - 50) / 50.0   # -1..+1
+
+    for sc in base_scenarios:
+        orig_prob = sc.get("probability", 20) or 20
+        orig_conf = sc.get("confidence", sc.get("future_probability", 20)) or 50
+
+        # Probability evolution: high accuracy → more confident in dominant scenario
+        sc_type = sc.get("type","base")
+        if sc_type == "worst" and delta > 0:
+            prob_adj = round(orig_prob * (1 + accuracy_factor * 0.15), 1)
+        elif sc_type == "best" and delta < 0:
+            prob_adj = round(orig_prob * (1 + accuracy_factor * 0.15), 1)
+        else:
+            prob_adj = round(orig_prob * (1 - abs(accuracy_factor) * 0.05), 1)
+
+        prob_adj = max(5, min(60, prob_adj))
+
+        # Confidence evolution: penalise for drift
+        conf_adj = round(max(25, min(95, orig_conf - conf_drift * 0.5)), 1)
+        evolution_delta = round(prob_adj - orig_prob, 1)
+
+        ev_sc = dict(sc)
+        ev_sc["evolved_probability"] = prob_adj
+        ev_sc["evolved_confidence"]  = conf_adj
+        ev_sc["evolution_delta"]     = evolution_delta
+        ev_sc["status"] = "active"
+        evolved.append(ev_sc)
+
+    return evolved
+
+
+def retire_invalid_scenarios(evolved: list[dict], new_scens: list[dict]) -> tuple[list,list]:
+    """
+    Retire scenarios with evolved_confidence < _ASE_RETIRE_CONF
+    or evolved_probability < 5.
+    Returns (active_list, retired_list).
+    """
+    active, retired = [], []
+    for sc in evolved:
+        conf = sc.get("evolved_confidence", sc.get("confidence", 50)) or 50
+        prob = sc.get("evolved_probability", sc.get("probability", 20)) or 20
+        if conf < _ASE_RETIRE_CONF or prob < 5:
+            sc["status"] = "retiring"
+            retired.append(sc)
+        else:
+            active.append(sc)
+    for sc in new_scens:
+        if sc.get("confidence", 50) >= _ASE_RETIRE_CONF:
+            active.append(sc)
+        else:
+            retired.append(sc)
+    return active, retired
+
+
+def detect_scenario_convergence(active: list[dict]) -> list[dict]:
+    """
+    Two scenarios converge if their score gap < _ASE_CONVERGENCE_DIST
+    and probabilities are within 8%.
+    """
+    convergences = []
+    for i, a in enumerate(active):
+        for b in active[i+1:]:
+            s_a  = a.get("score", a.get("s30", 50)) or 50
+            s_b  = b.get("score", b.get("s30", 50)) or 50
+            p_a  = a.get("evolved_probability", a.get("probability", 20)) or 20
+            p_b  = b.get("evolved_probability", b.get("probability", 20)) or 20
+            if abs(s_a - s_b) < _ASE_CONVERGENCE_DIST and abs(p_a - p_b) < 8:
+                convergences.append({
+                    "scenario_a": a.get("type") or a.get("id","?"),
+                    "scenario_b": b.get("type") or b.get("id","?"),
+                    "score_gap":  round(abs(s_a - s_b), 1),
+                    "prob_gap":   round(abs(p_a - p_b), 1),
+                    "label":      f"Сближение: {a.get('name',a.get('type','?'))} ↔ {b.get('name',b.get('type','?'))}",
+                })
+    return convergences
+
+
+def detect_scenario_divergence(active: list[dict]) -> list[dict]:
+    """
+    Two scenarios diverge if score gap > _ASE_DIVERGENCE_DIST
+    and probabilities are each > 15%.
+    """
+    divergences = []
+    for i, a in enumerate(active):
+        for b in active[i+1:]:
+            s_a  = a.get("score", a.get("s30", 50)) or 50
+            s_b  = b.get("score", b.get("s30", 50)) or 50
+            p_a  = a.get("evolved_probability", a.get("probability", 20)) or 20
+            p_b  = b.get("evolved_probability", b.get("probability", 20)) or 20
+            if abs(s_a - s_b) > _ASE_DIVERGENCE_DIST and p_a >= 15 and p_b >= 15:
+                divergences.append({
+                    "scenario_a": a.get("type") or a.get("id","?"),
+                    "scenario_b": b.get("type") or b.get("id","?"),
+                    "score_gap":  round(abs(s_a - s_b), 1),
+                    "label":      f"Расхождение: {a.get('name',a.get('type','?'))} ↔ {b.get('name',b.get('type','?'))}",
+                })
+    return divergences
+
+
+def estimate_path_probability(
+    active:  list[dict],
+    val_data:dict,
+    rec_data:dict,
+) -> list[dict]:
+    """
+    Normalise probabilities across all active scenarios to sum = 100.
+    Apply validation accuracy boost to most probable scenario.
+    Returns pathways (id, probability, score, label, confidence).
+    """
+    if not active:
+        return []
+
+    raw_probs = [(sc.get("evolved_probability") or sc.get("probability") or 20) for sc in active]
+    total = sum(raw_probs) or 1
+    norm  = [round(p / total * 100, 1) for p in raw_probs]
+
+    # Calibrate: if validation accuracy high, boost most probable scenario
+    hv = val_data.get("historical_validation_score") or 50
+    boost_idx = norm.index(max(norm))
+    if hv >= 75:
+        extra = min(5, (hv - 70) * 0.3)
+        norm[boost_idx] = round(norm[boost_idx] + extra, 1)
+        total_n = sum(norm)
+        norm = [round(n/total_n*100, 1) for n in norm]
+        # Fix rounding
+        diff = round(100.0 - sum(norm), 1)
+        norm[0] = round(norm[0] + diff, 1)
+
+    pathways = []
+    for sc, p in zip(active, norm):
+        sc_s = sc.get("score", sc.get("s30", 50)) or 50
+        pathways.append({
+            "id":          sc.get("id") or sc.get("type","?"),
+            "name":        sc.get("name") or sc.get("name_ru","?"),
+            "type":        sc.get("type","?"),
+            "status":      sc.get("status","active"),
+            "probability": p,
+            "score":       sc_s,
+            "confidence":  sc.get("evolved_confidence") or sc.get("confidence", 50) or 50,
+            "trend_strength": sc.get("trend_strength", 50),
+        })
+
+    return sorted(pathways, key=lambda x: -x["probability"])
+
+
+def rank_future_pathways(pathways: list[dict], val_data: dict) -> list[dict]:
+    """
+    Rank by ScenarioScore = Probability×0.30 + Impact×0.25 + Confidence×0.20
+                           + TrendStrength×0.15 + Validation×0.10
+    Impact proxy: abs(score - 50) normalised to 0-100.
+    """
+    hv = val_data.get("historical_validation_score") or 50
+    ranked = []
+    for pw in pathways:
+        prob    = pw["probability"]
+        sc      = pw["score"]
+        conf    = pw["confidence"]
+        trend   = pw.get("trend_strength", 50)
+        impact  = min(100, abs(sc - 50) * 2)
+        sc_score= round(
+            prob  * _SC_SCORE_W["probability"] +
+            impact* _SC_SCORE_W["impact"]      +
+            conf  * _SC_SCORE_W["confidence"]  +
+            trend * _SC_SCORE_W["trend"]       +
+            hv    * _SC_SCORE_W["validation"]
+        )
+        ranked.append({**pw, "scenario_score": sc_score})
+    ranked.sort(key=lambda x: -x["scenario_score"])
+    return ranked
+
+
+def generate_scenario_tree(
+    active:    list[dict],
+    retired:   list[dict],
+    convergences: list[dict],
+    divergences:  list[dict],
+) -> dict:
+    """
+    Build a scenario tree: root → branches → leaves.
+    Convergences become merge nodes; divergences become branch nodes.
+    """
+    nodes = []
+    # Root
+    nodes.append({"id":"ROOT","label":"Текущее состояние","type":"root","depth":0})
+    # Active branches
+    for sc in active:
+        sc_id = sc.get("id") or sc.get("type","?")
+        nodes.append({
+            "id":      sc_id,
+            "label":   sc.get("name") or sc.get("name_ru","?"),
+            "type":    sc.get("type","?"),
+            "status":  sc.get("status","active"),
+            "parent":  "ROOT",
+            "depth":   1,
+            "prob":    sc.get("evolved_probability") or sc.get("probability",20),
+        })
+    # Retired as leaf stubs
+    for sc in retired[:3]:
+        sc_id = (sc.get("id") or sc.get("type","retired")) + "-RET"
+        nodes.append({
+            "id":    sc_id,
+            "label": (sc.get("name") or sc.get("name_ru","?")) + " [устарел]",
+            "type":  "retired",
+            "parent":"ROOT",
+            "depth": 2,
+            "prob":  0,
+        })
+    return {
+        "nodes":        nodes,
+        "convergences": convergences,
+        "divergences":  divergences,
+        "active_count": len(active),
+        "retired_count":len(retired),
+    }
+
+
+def build_future_landscape(
+    ranked:    list[dict],
+    convergences: list[dict],
+    divergences:  list[dict],
+) -> dict:
+    """
+    Section F — Future Landscape Map: high-level narrative of where the
+    system is heading based on ranked pathways.
+    """
+    if not ranked:
+        return {"dominant":"unknown","narrative":"Недостаточно данных","outlook":"unknown"}
+
+    dom = ranked[0]
+    dom_type = dom.get("type","base")
+    dom_prob = dom.get("probability",0)
+    dom_score= dom.get("score",50)
+
+    if dom_type in ("worst","critical_branch","acceleration") and dom_score >= 70:
+        outlook = "deteriorating"
+        narrative = (f"Доминирующий сценарий '{dom.get('name',dom_type)}' "
+                     f"({dom_prob:.0f}%) указывает на ухудшение — скор {dom_score}. "
+                     f"Риск системной эскалации.")
+    elif dom_type in ("best","deescalation_branch") or dom_score < 45:
+        outlook = "improving"
+        narrative = (f"Доминирующий сценарий '{dom.get('name',dom_type)}' "
+                     f"({dom_prob:.0f}%) указывает на улучшение — скор {dom_score}. "
+                     f"Деэскалационный потенциал высок.")
+    else:
+        outlook = "stable"
+        narrative = (f"Базовый сценарий '{dom.get('name',dom_type)}' "
+                     f"({dom_prob:.0f}%) — ситуация стабильна. Скор {dom_score}.")
+
+    return {
+        "dominant_pathway":   dom.get("name", dom_type),
+        "dominant_prob":      dom_prob,
+        "dominant_score":     dom_score,
+        "outlook":            outlook,
+        "narrative":          narrative,
+        "n_convergences":     len(convergences),
+        "n_divergences":      len(divergences),
+        "landscape_complexity":min(100, len(ranked)*10 + len(divergences)*15),
+    }
+
+
+def _detect_ase_diagnostics(
+    active:  list[dict],
+    ranked:  list[dict],
+    convergences: list[dict],
+    divergences:  list[dict],
+    val_data: dict,
+) -> list[dict]:
+    """Spec: Saturation, Drift, Instability, Conflict, Narrative Collapse, Blind Spots."""
+    diags = []
+
+    # Scenario Saturation: too many scenarios
+    if len(active) > 8:
+        diags.append({"type":"scenario_saturation","label":"Насыщение сценариев",
+            "detail":f"{len(active)} активных сценариев — избыточность, агрегировать"})
+
+    # Pathway Instability: high probability spread in ranked
+    if len(ranked) >= 3:
+        probs = [r["probability"] for r in ranked[:3]]
+        spread = max(probs) - min(probs)
+        if spread < 8:
+            diags.append({"type":"pathway_instability","label":"Нестабильность путей",
+                "detail":f"Разброс вероятностей топ-3 сценариев всего {spread:.0f}% — пути неразличимы"})
+
+    # Forecast Conflict: divergences with high probability on both sides
+    high_div = [d for d in divergences if True]
+    if len(high_div) >= 2:
+        diags.append({"type":"forecast_conflict","label":"Конфликт прогнозов",
+            "detail":f"{len(high_div)} пар расходящихся сценариев — прогнозный консенсус нарушен"})
+
+    # Narrative Collapse: no dominant scenario > 30%
+    if ranked and ranked[0]["probability"] < 30:
+        diags.append({"type":"narrative_collapse","label":"Распад нарратива",
+            "detail":f"Доминирующий сценарий набирает лишь {ranked[0]['probability']:.0f}% — нарратив раздроблен"})
+
+    # Future Blind Spots: no improving scenarios
+    improving = [r for r in ranked if r.get("type") in ("best","deescalation_branch")]
+    if not improving:
+        diags.append({"type":"future_blind_spot","label":"Слепое пятно будущего",
+            "detail":"Нет положительных сценариев в активном наборе — потенциал улучшения не отражён"})
+
+    return diags
+
+
+def _compute_evolution_score(
+    evolved:   list[dict],
+    ranked:    list[dict],
+    retired:   list[dict],
+    val_data:  dict,
+    snap:      dict,
+) -> float:
+    """
+    EvolutionScore = ForecastAccuracy×0.25 + ScenarioValidity×0.25
+                   + ProbabilityCalibration×0.20 + Adaptability×0.15 + Stability×0.15
+    """
+    hv      = val_data.get("historical_validation_score") or 50
+    sc_acc  = val_data.get("scenario_accuracy") or 50
+    conf_dr = abs(val_data.get("confidence_drift") or 0)
+
+    # Forecast accuracy
+    fc_acc  = round((hv * 0.60 + sc_acc * 0.40))
+
+    # Scenario validity: % of active scenarios with confidence >= 50
+    n_valid = sum(1 for sc in evolved if (sc.get("evolved_confidence") or sc.get("confidence",50) or 50) >= 50)
+    sc_val  = round(n_valid / max(1, len(evolved)) * 100)
+
+    # Probability calibration: low conf_drift = good
+    prob_cal= max(0, round(100 - conf_dr * 5))
+
+    # Adaptability: new scenarios generated relative to base
+    n_base  = len([e for e in evolved if e.get("type") in ("best","base","stress","worst")])
+    n_new   = len([e for e in evolved if e.get("status") == "emerging"])
+    adapt   = min(100, 50 + n_new * 15)
+
+    # Stability: inverse of retired count
+    stability = max(0, round(100 - len(retired) * 12))
+
+    score = round(
+        fc_acc  * _ASE_W["accuracy"]     +
+        sc_val  * _ASE_W["validity"]     +
+        prob_cal* _ASE_W["prob_cal"]     +
+        adapt   * _ASE_W["adaptability"] +
+        stability*_ASE_W["stability"]
+    )
+    return score, {"fc_acc":fc_acc,"sc_val":sc_val,"prob_cal":prob_cal,"adapt":adapt,"stability":stability}
+
+
+def compute_scenario_evolution(iso2: str, country_name: str, snap: dict) -> dict:
+    """
+    Adaptive Scenario Evolution Engine V1 — full pipeline.
+    """
+    base_out = {
+        "country": iso2, "country_name": country_name,
+        "date": TODAY, "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    def _load(d): return json.loads(d.read_text()) if d.exists() else {}
+
+    sc_data  = _load(SCENARIOS_DIR / f"{iso2}.json")
+    val_data = _load(VALIDATION_DIR / f"{iso2}.json")
+    rec_data = _load(REC_DIR        / f"{iso2}.json")
+    dq_data  = _load(DQ_DIR         / f"{iso2}.json")
+
+    base_scenarios = sc_data.get("scenarios", [])
+    delta          = snap.get("delta", 0) or 0
+    score          = snap.get("risk_score", 50) or 50
+    domain         = snap.get("dominant_domain","geopolitics")
+
+    # ── Pipeline ──────────────────────────────────────────────────────────
+    new_scens  = generate_new_scenarios(snap, base_scenarios, val_data, rec_data)
+    evolved    = evolve_existing_scenarios(base_scenarios, val_data, delta)
+    active, retired = retire_invalid_scenarios(evolved, new_scens)
+    convergences = detect_scenario_convergence(active)
+    divergences  = detect_scenario_divergence(active)
+    pathways   = estimate_path_probability(active, val_data, rec_data)
+    ranked     = rank_future_pathways(pathways, val_data)
+    tree       = generate_scenario_tree(active, retired, convergences, divergences)
+    landscape  = build_future_landscape(ranked, convergences, divergences)
+    diagnostics= _detect_ase_diagnostics(active, ranked, convergences, divergences, val_data)
+
+    # ── Evolution Score ────────────────────────────────────────────────────
+    evo_score, sub_scores = _compute_evolution_score(active, ranked, retired, val_data, snap)
+    grade, grade_ru = _ase_grade(evo_score)
+
+    # ── Diversity Index: how spread are scenario scores ────────────────────
+    sc_scores = [r.get("score",50) for r in ranked] if ranked else [50]
+    if len(sc_scores) >= 2:
+        diversity = min(100, round((max(sc_scores) - min(sc_scores)) * 2))
+    else:
+        diversity = 0
+
+    # ── Future Stability Index ────────────────────────────────────────────
+    if ranked:
+        top_prob = ranked[0]["probability"]
+        stability_idx = min(100, round(top_prob * 1.5 + 10))
+    else:
+        stability_idx = 50
+
+    return {
+        **base_out,
+        # Score
+        "evolution_score":      evo_score,
+        "grade":                grade,
+        "grade_ru":             grade_ru,
+        # A: Active scenarios
+        "active_scenarios":     active,
+        "active_count":         len(active),
+        # B: Emerging scenarios
+        "emerging_scenarios":   [sc for sc in active if sc.get("status")=="emerging"],
+        # C: Converging futures
+        "convergences":         convergences,
+        # D: Diverging futures
+        "divergences":          divergences,
+        # E: Pathway ranking
+        "ranked_pathways":      ranked,
+        "pathway_count":        len(ranked),
+        # F: Future landscape
+        "future_landscape":     landscape,
+        # Diagnostics
+        "diagnostics":          diagnostics,
+        "diagnostic_count":     len(diagnostics),
+        # Indices
+        "scenario_diversity_index": diversity,
+        "future_stability_index":   stability_idx,
+        # Retired
+        "retired_scenarios":    retired,
+        "retired_count":        len(retired),
+        # Sub-scores
+        "sub_scores":           sub_scores,
+        # Meta
+        "history_depth":        len(base_scenarios),
+        "risk_score":           score,
+        "delta":                delta,
+        "domain":               domain,
+    }
+
+
+def save_scenario_evolution(snapshots: list[dict]) -> None:
+    """
+    Save scenario evolution, pathways, tree and global summary for all countries.
+    """
+    ASE_DIR.mkdir(parents=True, exist_ok=True)
+    ASP_DIR.mkdir(parents=True, exist_ok=True)
+    AST_DIR.mkdir(parents=True, exist_ok=True)
+    global_entries = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            result = compute_scenario_evolution(iso2, snap["country_name"], snap)
+
+            # Main evolution file
+            with open(ASE_DIR / f"{iso2}.json","w") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+
+            # Pathways file (slim: ranked_pathways only)
+            pathways_out = {
+                "country":iso2,"country_name":snap["country_name"],"date":TODAY,
+                "ranked_pathways":result["ranked_pathways"],
+                "landscape":result["future_landscape"],
+            }
+            with open(ASP_DIR / f"{iso2}.json","w") as f:
+                json.dump(pathways_out, f, ensure_ascii=False, indent=2)
+
+            # Tree file
+            tree_out = {
+                "country":iso2,"country_name":snap["country_name"],"date":TODAY,
+                **generate_scenario_tree(
+                    result["active_scenarios"],result["retired_scenarios"],
+                    result["convergences"],result["divergences"]
+                )
+            }
+            with open(AST_DIR / f"{iso2}.json","w") as f:
+                json.dump(tree_out, f, ensure_ascii=False, indent=2)
+
+            global_entries.append({
+                "country":         iso2,
+                "country_name":    snap["country_name"],
+                "evolution_score": result["evolution_score"],
+                "grade":           result["grade"],
+                "active_count":    result["active_count"],
+                "diversity_index": result["scenario_diversity_index"],
+                "stability_index": result["future_stability_index"],
+                "outlook":         result["future_landscape"].get("outlook","unknown"),
+                "risk_score":      snap.get("risk_score",50),
+            })
+
+        except Exception as e:
+            print(f"  [ASE] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    # Global summary
+    try:
+        by_evo  = sorted(global_entries, key=lambda x: -(x["evolution_score"] or 0))
+        detr    = [e for e in global_entries if e.get("outlook")=="deteriorating"]
+        impr    = [e for e in global_entries if e.get("outlook")=="improving"]
+        global_out = {
+            "date":            TODAY,
+            "generated_at":    datetime.now(timezone.utc).isoformat(),
+            "total_countries": len(global_entries),
+            "top_evolution":   by_evo[:5],
+            "deteriorating":   sorted(detr, key=lambda x:-x["risk_score"])[:5],
+            "improving":       sorted(impr, key=lambda x: x["risk_score"])[:5],
+            "avg_evolution_score":round(sum(e["evolution_score"] for e in global_entries)
+                                        /max(1,len(global_entries))),
+        }
+        with open(ASE_DIR / "_global.json","w") as f:
+            json.dump(global_out, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  [ASE] global FAILED — {e}", file=sys.stderr)
+
+    print(f"[ASE] Saved scenario evolution for {len(snapshots)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -6249,6 +6915,7 @@ def main():
     save_decision_quality(snapshots)
     save_strategy_optimization(snapshots)
     save_recommendations(snapshots)
+    save_scenario_evolution(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
