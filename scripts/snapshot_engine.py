@@ -51,6 +51,7 @@ GRIE_DIR              = DOCS_DIR / "global-risks"
 RANK_DIR              = DOCS_DIR / "risk-ranking"
 HIER_DIR              = DOCS_DIR / "risk-hierarchy"
 RACC_DIR              = DOCS_DIR / "risk-acceleration"
+EXTVAL_DIR            = DOCS_DIR / "validation-external"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -7532,6 +7533,33 @@ def save_global_risk_intelligence(snapshots: list[dict]) -> None:
 
     print(f"[GRIE] Saved global risk intelligence for {len(snapshots)} countries", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# EXTERNAL VALIDATION — inline trigger (runs external_validation.py)
+# ═══════════════════════════════════════════════════════════════════════════
+def save_external_validation() -> None:
+    """
+    Trigger external_validation.py after all engines complete.
+    Reads: docs/validation-external/events.json
+    Writes: docs/validation-external/metrics.json + country_performance.json
+            + calibration_curve.json + lead_time_analysis.json + learning_signals.json
+    """
+    import subprocess
+    script = Path(__file__).parent / "external_validation.py"
+    if not script.exists():
+        print("[EXTVAL] Script not found — skipping", file=sys.stderr)
+        return
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script)],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            print("[EXTVAL] ✓ External validation complete", file=sys.stderr)
+        else:
+            print(f"[EXTVAL] ✗ {result.stderr[:200]}", file=sys.stderr)
+    except Exception as e:
+        print(f"[EXTVAL] Error: {e}", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -7596,6 +7624,7 @@ def main():
     save_recommendations(snapshots)
     save_scenario_evolution(snapshots)
     save_global_risk_intelligence(snapshots)
+    save_external_validation()
 
     scores = [s["risk_score"] for s in snapshots]
     print(
