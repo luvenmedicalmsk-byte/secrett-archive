@@ -106,6 +106,14 @@ export default {
     return handleRecommendations(request, env);
   if (path.startsWith('/api/scenario-evolution/') && request.method === 'GET')
     return handleScenarioEvolution(request, env);
+  if (path.startsWith('/api/global-risks/') && request.method === 'GET')
+    return handleGlobalRisks(request, env);
+  if (path.startsWith('/api/risk-ranking/') && request.method === 'GET')
+    return handleRiskRanking(request, env);
+  if (path.startsWith('/api/risk-hierarchy/') && request.method === 'GET')
+    return handleRiskHierarchy(request, env);
+  if (path.startsWith('/api/risk-acceleration/') && request.method === 'GET')
+    return handleRiskAcceleration(request, env);
   if (path.startsWith('/api/scenario-pathways/') && request.method === 'GET')
     return handleScenarioPathways(request, env);
   if (path.startsWith('/api/scenario-tree/') && request.method === 'GET')
@@ -1615,6 +1623,7 @@ function getTierCapabilities(tier) {
       so_access:         'teaser',
       rec_access:        'teaser',
       ase_access:        'teaser',
+      grie_access:       'teaser',
     },
     signal: {
       tier:                'signal',
@@ -1647,6 +1656,7 @@ function getTierCapabilities(tier) {
       so_access:         'summary',
       rec_access:        'summary',
       ase_access:        'summary',
+      grie_access:       'summary',
     },
     strategic: {
       tier:                'strategic',
@@ -1679,6 +1689,7 @@ function getTierCapabilities(tier) {
       so_access:         'full',
       rec_access:        'full',
       ase_access:        'full',
+      grie_access:       'full',
     },
     elite: {
       tier:                'elite',
@@ -1711,6 +1722,7 @@ function getTierCapabilities(tier) {
       so_access:         'full+explain',
       rec_access:        'full+explain',
       ase_access:        'full+explain',
+      grie_access:       'full+explain',
     },
   };
   return CAPS[tier] || CAPS.free;
@@ -3978,5 +3990,102 @@ function _filterASE(data, access, tier) {
   base.sub_scores=data.sub_scores||{};
   base.retired_scenarios=data.retired_scenarios||[];
   base.pathway_count=data.pathway_count;
+  return base;
+}
+
+async function _grFetch(repo, cc, folder, ttl) {
+  const url=`https://raw.githubusercontent.com/${repo}/main/docs/${folder}/${cc}.json`;
+  const r=await fetch(url,{cf:{cacheTtl:ttl,cacheEverything:true}});
+  if(r.status===404)return null;if(!r.ok)throw new Error('fetch '+r.status);return r.json();
+}
+
+async function handleGlobalRisks(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  const access=caps.grie_access||'teaser';
+  const raw=(request.url.split('/api/global-risks/')[1]||'').replace(/[^A-Za-z_]/g,'');
+  const isGlobal=raw.toUpperCase()==='_GLOBAL';
+  if(isGlobal){
+    if(access==='teaser')return new Response(JSON.stringify({error:'Global GRIE requires Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    try{const d=await _grFetch(REPO,'_global','global-risks',3600);
+    if(!d)return new Response(JSON.stringify({error:'No global data'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+    return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+    catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+  const cc=raw.toUpperCase().replace('_','');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cacheKey=`grie:${cc}:${tier}`;
+  if(env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(cacheKey,{type:'json'});if(c)return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT','X-Tier':tier}});}catch(_){}}
+  try{const data=await _grFetch(REPO,cc,'global-risks',3600);
+  if(!data)return new Response(JSON.stringify({error:'No GRIE data for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const result=_filterGRIE(data,access,tier);
+  if(env.EVENTS_KV){try{await env.EVENTS_KV.put(cacheKey,JSON.stringify(result),{expirationTtl:3600});}catch(_){}}
+  return new Response(JSON.stringify(result),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleRiskRanking(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  if((caps.grie_access||'teaser')==='teaser')return new Response(JSON.stringify({error:'Risk ranking requires Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cc=(request.url.split('/api/risk-ranking/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _grFetch(REPO,cc,'risk-ranking',3600);if(!d)return new Response(JSON.stringify({error:'No ranking for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleRiskHierarchy(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  if(!['full','full+explain'].includes(caps.grie_access||'teaser'))return new Response(JSON.stringify({error:'Hierarchy requires Strategic tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cc=(request.url.split('/api/risk-hierarchy/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _grFetch(REPO,cc,'risk-hierarchy',3600);if(!d)return new Response(JSON.stringify({error:'No hierarchy for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+async function handleRiskAcceleration(request,env){
+  const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  if((caps.grie_access||'teaser')==='teaser')return new Response(JSON.stringify({error:'Acceleration requires Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  const cc=(request.url.split('/api/risk-acceleration/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
+  if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  try{const d=await _grFetch(REPO,cc,'risk-acceleration',3600);if(!d)return new Response(JSON.stringify({error:'No acceleration for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+  return new Response(JSON.stringify(d),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});}
+  catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+}
+
+function _filterGRIE(data,access,tier){
+  const top=((data.ranked_risks||[])[0])||{};
+  const base={
+    country:data.country,country_name:data.country_name,date:data.date,tier,
+    grie_score:data.grie_score,grade:data.grade,grade_ru:data.grade_ru,
+    risk_score:data.risk_score,delta:data.delta,domain:data.domain,
+    n_critical:data.n_critical,n_high:data.n_high,
+    escalation_level:data.escalation_level,
+    top_risk_title:top.title,top_risk_grade:top.grade,
+  };
+  if(access==='teaser')return base;
+  base.ranked_risks=(data.ranked_risks||[]).slice(0,6).map(r=>({
+    id:r.id,category:r.category,title:r.title,risk_score_grie:r.risk_score_grie,grade:r.grade,
+  }));
+  base.accelerating_risks=data.accelerating_risks||[];
+  base.emerging_risks=data.emerging_risks||[];
+  base.risk_count=data.risk_count;
+  if(access==='summary')return base;
+  base.cascading_risks=data.cascading_risks||[];
+  base.systemic_risks=data.systemic_risks||[];
+  base.risk_convergences=data.risk_convergences||[];
+  base.risk_divergences=data.risk_divergences||[];
+  base.risk_outlook=data.risk_outlook||{};
+  base.ranked_risks=data.ranked_risks||[];
+  if(access==='full')return base;
+  base.hierarchy=data.hierarchy||{};
+  base.velocity=data.velocity||{};
+  base.persistence=data.persistence||{};
+  base.momentum=data.momentum||{};
+  base.history_depth=data.history_depth;
   return base;
 }
