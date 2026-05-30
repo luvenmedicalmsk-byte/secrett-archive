@@ -772,6 +772,41 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cc-rec-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
 .cc-rec-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 .cc-rec-meta{display:flex;gap:8px;font-size:8px;color:rgba(255,255,255,.3);margin-bottom:6px;flex-wrap:wrap}
+/* ── Adaptive Scenario Evolution Engine V1 ── */
+.cc-ase{margin-bottom:14px}
+.cc-ase-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cc-ase-label{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);flex:1}
+.cc-ase-score{font-size:22px;font-weight:700;font-family:'Cormorant Garamond',serif;line-height:1}
+.cc-ase-grade{font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;flex-shrink:0;letter-spacing:.06em}
+.cc-ase-grade.Aplus{background:rgba(167,139,250,.18);color:#a78bfa;border:1px solid rgba(167,139,250,.35)}
+.cc-ase-grade.A{background:rgba(34,197,94,.14);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.cc-ase-grade.B{background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.28)}
+.cc-ase-grade.C{background:rgba(250,204,21,.12);color:#fbbf24;border:1px solid rgba(250,204,21,.28)}
+.cc-ase-grade.D{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.cc-ase-grade.F{background:rgba(220,38,38,.2);color:#dc2626;border:1px solid rgba(220,38,38,.38)}
+.cc-ase-grade.NA{background:rgba(255,255,255,.04);color:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.08)}
+.cc-ase-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-bottom:8px;overflow:hidden}
+.cc-ase-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.cc-ase-section{font-size:7px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);margin:8px 0 5px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,.05)}
+.cc-ase-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px;font-size:8px;color:rgba(255,255,255,.3)}
+.cc-ase-pill{padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}
+.cc-ase-pathway{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-ase-pathway:last-child{border-bottom:none}
+.cc-ase-pw-name{font-size:9px;color:rgba(232,224,208,.8);flex:1;line-height:1.3}
+.cc-ase-pw-bar-wrap{width:60px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;flex-shrink:0}
+.cc-ase-pw-bar{height:100%;border-radius:2px}
+.cc-ase-pw-prob{font-size:9px;font-weight:700;font-family:'Cormorant Garamond',serif;width:32px;text-align:right;flex-shrink:0}
+.cc-ase-pw-status{font-size:7px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;width:60px;text-align:right}
+.cc-ase-convergence{font-size:8px;color:rgba(132,204,22,.7);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-ase-divergence{font-size:8px;color:rgba(245,158,11,.7);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cc-ase-landscape{background:rgba(255,255,255,.03);border-radius:3px;padding:7px;margin-top:5px}
+.cc-ase-landscape-outlook{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.cc-ase-landscape-narrative{font-size:9px;color:rgba(232,224,208,.6);line-height:1.5}
+.cc-ase-diag{padding:3px 0 3px 8px;border-left:2px solid rgba(245,158,11,.4);margin-bottom:3px}
+.cc-ase-diag-label{font-size:8px;color:rgba(232,224,208,.65);font-weight:600}
+.cc-ase-diag-detail{font-size:7px;color:rgba(255,255,255,.3);margin-top:1px;line-height:1.4}
+.cc-ase-teaser{font-size:10px;color:rgba(255,255,255,.25);padding:6px 0;font-style:italic;text-align:center}
+.cc-ase-lock{font-size:9px;color:#B8973A;margin-top:4px;letter-spacing:.06em}
 </style>
 </head>
 <body>
@@ -2170,6 +2205,7 @@ setInterval(() => {
     <div id="cc-dq-block"></div>
     <div id="cc-so-block"></div>
     <div id="cc-rec-block"></div>
+    <div id="cc-ase-block"></div>
 
     <!-- Risk Timeline -->
     <div id="cc-timeline-block"></div>
@@ -2234,10 +2270,10 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 // ── Entitlement Engine V1 — Client Side ─────────────────────────────────
 function _getClientCaps(tier) {
   var C={
-    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser',rec_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary',rec_access:'summary'},
-    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full',rec_access:'full'},
-    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain',rec_access:'full+explain'},
+    free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser',rec_access:'teaser',ase_access:'teaser'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary',rec_access:'summary',ase_access:'summary'},
+    strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full',rec_access:'full',ase_access:'full'},
+    elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain',rec_access:'full+explain',ase_access:'full+explain'},
   };
   return C[tier]||C.free;
 }
@@ -2317,6 +2353,7 @@ window.openCountryCard = async function(cc) {
   document.getElementById('cc-dq-block').innerHTML='';
   document.getElementById('cc-so-block').innerHTML='';
   document.getElementById('cc-rec-block').innerHTML='';
+  document.getElementById('cc-ase-block').innerHTML='';
   document.getElementById('cc-timeline-block').innerHTML='';
   document.getElementById('cc-tl-chart-label').textContent='';
   document.getElementById('cc-outlook-block').innerHTML='';
@@ -2362,6 +2399,7 @@ window.openCountryCard = async function(cc) {
   fetchDecisionQuality(cc).then(function(dqData) { renderDecisionQuality(dqData, _clientCaps); });
   fetchStrategyOptimization(cc).then(function(soData) { renderStrategyOptimization(soData, _clientCaps); });
   fetchRecommendations(cc).then(function(recData) { renderRecommendations(recData, _clientCaps); });
+  fetchScenarioEvolution(cc).then(function(aseData) { renderScenarioEvolution(aseData, _clientCaps); });
 };
 
 // ── Render card from snapshot data ────────────────────────────────────────
@@ -5415,6 +5453,118 @@ function renderRecommendations(data, caps) {
 
   // Executive summary teaser inline
   html += '</div>'; block.innerHTML = html;
+}
+
+
+// ── Adaptive Scenario Evolution Engine V1 — UI ───────────────────────────
+var _aseCache = {};
+var _ASE_GRADE_COL=function(g){return g==='A+'?'#a78bfa':g==='A'?'#22c55e':g==='B'?'#60a5fa':g==='C'?'#fbbf24':g==='D'?'#f59e0b':g==='F'?'#dc2626':'rgba(255,255,255,.3)';};
+var _ASE_GRADE_CSS=function(g){return g==='A+'?'Aplus':g||'NA';};
+var _OUTLOOK_COL={deteriorating:'#ef4444',improving:'#22c55e',stable:'rgba(232,224,208,.6)'};
+var _STATUS_COL={active:'#22c55e',emerging:'#a78bfa',converging:'#60a5fa',diverging:'#f59e0b',retiring:'rgba(255,255,255,.3)',retired:'rgba(255,255,255,.2)'};
+
+async function fetchScenarioEvolution(cc){
+  if(_aseCache[cc])return _aseCache[cc];
+  try{var h={};if(_clientToken)h['X-Snapshot-Token']=_clientToken;
+  var r=await fetch(API+'/api/scenario-evolution/'+cc,{headers:h});
+  if(!r.ok)return null;var d=await r.json();_aseCache[cc]=d;return d;}catch(e){return null;}
+}
+
+function renderScenarioEvolution(data,caps){
+  var block=document.getElementById('cc-ase-block');
+  if(!block)return;
+  var access=caps.ase_access||'teaser';
+  if(!data||data.error){block.innerHTML='';return;}
+  var sc=data.evolution_score;var grade=data.grade||'N/A';var grRu=data.grade_ru||'';
+  var gCol=_ASE_GRADE_COL(grade);var gCss=_ASE_GRADE_CSS(grade);
+  var barW=sc!==null&&sc!==undefined?Math.min(100,sc):0;
+  var ac=data.active_count||0;var di=data.scenario_diversity_index||0;var si=data.future_stability_index||0;
+  var outlook=data.outlook||'stable';var dom=data.dominant_pathway||'';var domP=data.dominant_prob||0;
+  var na='—';
+
+  var html='<div class="cc-ase">'
+    +'<div class="cc-ase-header">'
+    +'<span class="cc-ase-label">Эволюция сценариев</span>'
+    +(sc!==null&&sc!==undefined?'<span class="cc-ase-score" style="color:'+gCol+'">'+sc+'</span>':'')
+    +'<span class="cc-ase-grade '+gCss+'">'+_esc(grade)+'</span>'
+    +'</div>'
+    +'<div class="cc-ase-bar"><div class="cc-ase-bar-fill" style="width:'+barW+'%;background:'+gCol+'"></div></div>'
+    +'<div class="cc-ase-meta">'
+    +(ac?'<span class="cc-ase-pill">'+ac+' активных</span>':'')
+    +(di?'<span class="cc-ase-pill">Разнообразие: '+di+'</span>':'')
+    +(si?'<span class="cc-ase-pill">Стабильность: '+si+'</span>':'')
+    +'</div>';
+
+  if(access==='teaser'){
+    if(dom){html+='<div class="cc-ase-landscape">'
+      +'<div class="cc-ase-landscape-outlook" style="color:'+((_OUTLOOK_COL[outlook])||'#fbbf24')+'">'+_esc(outlook.toUpperCase())+'</div>'
+      +'<div class="cc-ase-landscape-narrative">'+_esc(dom)+' ('+domP+'%)</div>'
+      +'</div>';}
+    html+='<div class="cc-ase-lock">🔒 Детальная эволюция сценариев в Signal PRO</div></div>';
+    block.innerHTML=html;return;
+  }
+
+  // SIGNAL+: A active + B emerging + E pathways
+  var active=data.active_scenarios||[];
+  var emerging=data.emerging_scenarios||[];
+  var pathways=data.ranked_pathways||[];
+  if(active.length){html+='<div class="cc-ase-section">A · Активные сценарии ('+active.length+')</div>';
+    active.slice(0,4).forEach(function(s){
+      var sCol=_STATUS_COL[s.status]||'rgba(232,224,208,.5)';
+      var prob=s.evolved_probability||s.probability||0;
+      html+='<div class="cc-ase-pathway">'
+        +'<span class="cc-ase-pw-name">'+_esc(s.name||s.type||'')+'</span>'
+        +'<div class="cc-ase-pw-bar-wrap"><div class="cc-ase-pw-bar" style="width:'+Math.min(100,prob*2)+'%;background:'+sCol+'"></div></div>'
+        +'<span class="cc-ase-pw-prob" style="color:'+sCol+'">'+prob+'%</span>'
+        +'<span class="cc-ase-pw-status" style="color:'+sCol+'">'+_esc(s.status||'')+'</span>'
+        +'</div>';});}
+  if(emerging.length){html+='<div class="cc-ase-section">B · Формирующиеся ('+emerging.length+')</div>';
+    emerging.slice(0,3).forEach(function(s){
+      html+='<div class="cc-ase-pathway">'
+        +'<span class="cc-ase-pw-name" style="color:#a78bfa">◎ '+_esc(s.name||s.id||'')+'</span>'
+        +'<span class="cc-ase-pw-prob" style="color:#a78bfa">'+( s.probability||0)+'%</span>'
+        +'<span class="cc-ase-pw-status" style="color:#a78bfa">emerging</span>'
+        +'</div>';});}
+
+  if(access==='summary'){html+='<div class="cc-ase-lock">🔒 Детали в Strategic PRO</div></div>';block.innerHTML=html;return;}
+
+  // STRATEGIC+: C convergences + D divergences + E ranked + F landscape
+  var conv=data.convergences||[];
+  var divg=data.divergences||[];
+  if(conv.length){html+='<div class="cc-ase-section">C · Сходимость ('+conv.length+')</div>';
+    conv.forEach(function(c){html+='<div class="cc-ase-convergence">⟶ '+_esc(c.label||'')+'</div>';});}
+  if(divg.length){html+='<div class="cc-ase-section">D · Расхождение ('+divg.length+')</div>';
+    divg.forEach(function(d){html+='<div class="cc-ase-divergence">⟺ '+_esc(d.label||'')+'</div>';});}
+
+  var rp=data.ranked_pathways||[];
+  if(rp.length){html+='<div class="cc-ase-section">E · Рейтинг путей</div>';
+    rp.forEach(function(pw,idx){
+      var pCol=pw.probability>=30?'#22c55e':pw.probability>=20?'#fbbf24':'rgba(232,224,208,.5)';
+      html+='<div class="cc-ase-pathway">'
+        +'<span style="font-size:9px;color:rgba(255,255,255,.2);width:14px">'+(idx+1)+'</span>'
+        +'<span class="cc-ase-pw-name">'+_esc(pw.name||pw.id||'')+'</span>'
+        +'<div class="cc-ase-pw-bar-wrap"><div class="cc-ase-pw-bar" style="width:'+Math.min(100,pw.probability*2)+'%;background:'+pCol+'"></div></div>'
+        +'<span class="cc-ase-pw-prob" style="color:'+pCol+'">'+pw.probability+'%</span>'
+        +'</div>';});}
+
+  var fl=data.future_landscape||{};
+  if(fl.narrative){html+='<div class="cc-ase-section">F · Будущий ландшафт</div>'
+    +'<div class="cc-ase-landscape">'
+    +'<div class="cc-ase-landscape-outlook" style="color:'+((_OUTLOOK_COL[fl.outlook])||'#fbbf24')+'">'+_esc((fl.outlook||'').toUpperCase())+'</div>'
+    +'<div class="cc-ase-landscape-narrative">'+_esc(fl.narrative||'')+'</div>'
+    +'</div>';}
+
+  if(access==='full'){html+='</div>';block.innerHTML=html;return;}
+
+  // ELITE: diagnostics
+  var diags=data.diagnostics||[];
+  if(diags.length){html+='<div class="cc-ase-section">Диагностика ('+diags.length+')</div>';
+    diags.forEach(function(d){html+='<div class="cc-ase-diag">'
+      +'<div class="cc-ase-diag-label">'+_esc(d.label||d.type||'')+'</div>'
+      +'<div class="cc-ase-diag-detail">'+_esc(d.detail||'')+'</div>'
+      +'</div>';});}
+
+  html+='</div>'; block.innerHTML=html;
 }
 
 })(); // end IIFE
