@@ -123,6 +123,8 @@ export default {
     return handleTrackRecord(request, env);
   if (path === '/api/model-history' && request.method === 'GET')
     return handleModelHistory(request, env);
+  if (path.startsWith('/api/map/') && request.method === 'GET')
+    return handleMap(request, env);
   if (path.startsWith('/api/alerts/') && request.method === 'GET')
     return handleAlerts(request, env);
   if (path.startsWith('/api/explainability/') && request.method === 'GET')
@@ -1658,6 +1660,7 @@ function getTierCapabilities(tier) {
       tr_access:         'teaser',
       expl_access:       'teaser',
       alert_access:      'teaser',
+      map_access:       'teaser',
       validation_access: 'teaser',
     },
     signal: {
@@ -1695,6 +1698,7 @@ function getTierCapabilities(tier) {
       tr_access:         'summary',
       expl_access:       'summary',
       alert_access:      'summary',
+      map_access:       'summary',
       validation_access: 'summary',
     },
     strategic: {
@@ -1732,6 +1736,7 @@ function getTierCapabilities(tier) {
       tr_access:         'full',
       expl_access:       'full',
       alert_access:      'full',
+      map_access:       'full',
       validation_access: 'full',
     },
     elite: {
@@ -1769,6 +1774,7 @@ function getTierCapabilities(tier) {
       tr_access:         'full+explain',
       expl_access:       'full+explain',
       alert_access:      'full+explain',
+      map_access:       'full+explain',
       validation_access: 'full+explain',
     },
   };
@@ -4789,4 +4795,125 @@ async function handleAlerts(request, env) {
   }
 
   return new Response(JSON.stringify({error:'Invalid alerts route',available:['/api/alerts/live','/api/alerts/critical','/api/alerts/top','/api/alerts/summary','/api/alerts/:cc','/api/alerts/history/:cc']}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ALERT MAP V1 — API Endpoints
+// GET /api/map/summary     → global alert summary for map header
+// GET /api/map/country/:cc → country alert record for map panel
+// GET /api/map/rankings    → top-10 rankings (score/velocity/emerging)
+// GET /api/map/critical    → CRITICAL + WARNING countries only
+// GET /api/map/trends      → all countries with trend data
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function _mapFetch(repo, path, ttl) {
+  const url=`https://raw.githubusercontent.com/${repo}/main/${path}`;
+  const r=await fetch(url,{cf:{cacheTtl:ttl,cacheEverything:true}});
+  if(r.status===404)return null; if(!r.ok)throw new Error('upstream '+r.status); return r.json();
+}
+
+async function handleMap(request, env) {
+  const REPO   = env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
+  const tier   = _resolveClientTier(request,env);
+  const caps   = getTierCapabilities(tier);
+  const access = caps.map_access||'teaser';
+  const seg    = (request.url.split('/api/map/')[1]||'').split('/').filter(Boolean);
+
+  // /api/map/summary
+  if(seg[0]==='summary'||!seg[0]){
+    const ck=`map:summary:${tier}`;
+    if(env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT'}});}catch(_){}}
+    try{
+      const [latest,rankings]=await Promise.all([
+        _mapFetch(REPO,'docs/alerts/reports/latest.json',300),
+        _mapFetch(REPO,'docs/alerts/rankings/latest.json',300),
+      ]);
+      if(!latest&&!rankings)return new Response(JSON.stringify({error:'No alert data yet — run engines/alert_engine.py'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+      const summary={
+        date:          (latest||rankings)?.date,
+        generated_at:  (latest||rankings)?.generated_at,
+        tier,
+        ...(latest?.summary||{}),
+        highest_risk:  (rankings?.top_score||latest?.top_alert_score||[])[0]||null,
+        fastest_esc:   (rankings?.top_velocity||[])[0]||null,
+      };
+      if(env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(summary),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(summary),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+
+  // /api/map/rankings
+  if(seg[0]==='rankings'){
+    try{
+      const d=await _mapFetch(REPO,'docs/alerts/rankings/latest.json',300);
+      if(!d){
+        // Fallback: build from latest.json
+        const latest=await _mapFetch(REPO,'docs/alerts/reports/latest.json',300);
+        if(!latest)return new Response(JSON.stringify({error:'No ranking data yet'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+        return new Response(JSON.stringify({top_score:latest.top_alert_score||[],top_velocity:latest.top_velocity||[],top_emerging:latest.top_emerging||[],tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+      }
+      return new Response(JSON.stringify({...d,tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+
+  // /api/map/critical
+  if(seg[0]==='critical'){
+    try{
+      const latest=await _mapFetch(REPO,'docs/alerts/reports/latest.json',300);
+      if(!latest)return new Response(JSON.stringify({error:'No alert data yet'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+      const crit=(latest.all_levels||latest.critical_countries||[]).filter(a=>['CRITICAL','WARNING'].includes(a.alert_level));
+      return new Response(JSON.stringify({date:latest.date,count:crit.length,countries:crit,tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+
+  // /api/map/trends
+  if(seg[0]==='trends'){
+    try{
+      const rankings=await _mapFetch(REPO,'docs/alerts/rankings/latest.json',300);
+      const latest  =await _mapFetch(REPO,'docs/alerts/reports/latest.json',300);
+      const entries =(rankings?.top_score||latest?.top_alert_score||latest?.all_levels||[]).map(e=>({
+        country:    e.country||e.cc,
+        alert_level:e.alert_level,
+        alert_score:e.alert_score,
+        trend:      e.trend||'stable',
+        change_7d:  e.change_7d,
+      }));
+      return new Response(JSON.stringify({date:(rankings||latest)?.date,trends:entries,tier}),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+
+  // /api/map/country/:cc
+  if(seg[0]==='country'&&seg[1]){
+    const cc=seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck=`map:cc:${cc}:${tier}`;
+    if(env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify(c),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'HIT'}});}catch(_){}}
+    try{
+      const [alert,expl]=await Promise.all([
+        _mapFetch(REPO,`docs/alerts/reports/${cc}.json`,300),
+        access!=='teaser'?_mapFetch(REPO,`docs/explanations/${cc}.json`,600):Promise.resolve(null),
+      ]);
+      if(!alert)return new Response(JSON.stringify({error:'No alert data for '+cc}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
+      const base={
+        country:alert.country,country_name:alert.country_name,date:alert.date,tier,
+        alert_level:alert.alert_level,alert_score:alert.alert_score,
+        risk_score:alert.risk_score,trend:alert.trend,
+        dominant_domain:alert.dominant_domain,escalation_level:alert.escalation_level,
+      };
+      if(access!=='teaser'){
+        base.confidence=alert.confidence; base.signals=alert.signals;
+        base.top_drivers=alert.top_drivers; base.triggered_rules=alert.triggered_rules;
+        base.delta=alert.delta; base.is_escalation=alert.is_escalation;
+        if(expl){base.contributions=expl.contributions; base.explanation=expl.explanation; base.confidence=expl.confidence||base.confidence;}
+      }
+      if(access==='full'||access==='full+explain'){
+        base.escalation=alert.escalation; base.rules=alert.rules; base.sub_scores=alert.sub_scores;
+        if(expl){base.signal_attribution=expl.signal_attribution; base.trend_detail=expl.trend;}
+      }
+      if(access==='full+explain'){base.hash=alert.hash; base.engine_version=alert.engine_version;}
+      if(env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(base),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(base),{headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Cache':'MISS','X-Tier':tier}});
+    }catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});}
+  }
+
+  return new Response(JSON.stringify({error:'Unknown map route',available:['/api/map/summary','/api/map/rankings','/api/map/critical','/api/map/trends','/api/map/country/:cc']}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
 }
