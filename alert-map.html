@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>Alert Map V1 — Global Risk Intelligence</title>
 <style>
 :root {
@@ -58,6 +58,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 #side-panel.collapsed{transform:translateX(320px);position:absolute;right:0;top:0;bottom:0;z-index:50}
 #side-panel::-webkit-scrollbar{width:4px}
 #side-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* tap-outside overlay (mobile) */
+#panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:49;-webkit-tap-highlight-color:transparent;touch-action:none}
 
 /* ── SVG Map ── */
 #world-svg{width:100%;height:100%;cursor:grab}
@@ -91,7 +93,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 #panel-empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:12px}
 #panel-empty svg{display:block;margin:0 auto 12px;opacity:.2}
 #panel-content{display:none;padding:0}
-#panel-close{position:absolute;top:10px;right:12px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;z-index:10;padding:4px}
+#panel-close{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:50%;color:var(--muted);cursor:pointer;font-size:16px;z-index:55;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;touch-action:manipulation}
 #panel-close:hover{color:var(--text)}
 .pc-header{padding:16px 16px 12px;border-bottom:1px solid var(--border);position:relative}
 .pc-country{font-family:var(--serif);font-size:20px;color:var(--text);margin-bottom:4px}
@@ -170,12 +172,53 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 
 /* ── Mobile ── */
 @media(max-width:768px){
-  #side-panel{width:100%;position:absolute;bottom:0;left:0;right:0;top:auto;height:60vh;border-left:none;border-top:1px solid var(--border);transform:translateY(100%);transition:transform .3s}
-  #side-panel.open{transform:translateY(0)}
+  /* Panel: position:fixed avoids iOS Safari layout shift on scroll */
+  #side-panel{
+    width:100%;
+    position:fixed;
+    bottom:0;left:0;right:0;top:auto;
+    height:66vh;
+    max-height:calc(100vh - 100px);
+    border-left:none;
+    border-top:1px solid var(--border);
+    border-radius:12px 12px 0 0;
+    /* HIDDEN STATE: translateY(100%) — slides fully off-screen downward */
+    transform:translateY(100%);
+    transition:transform .32s cubic-bezier(.4,0,.2,1);
+    z-index:50;
+    will-change:transform;
+    /* iOS smooth momentum scroll */
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    /* iPhone notch safe area */
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  /* ── THE CRITICAL FIX ──────────────────────────────────────────────────
+     .collapsed is translateX(320px) on desktop — neutralize on mobile.
+     Same ID+class specificity, but this rule is LATER in the cascade,
+     so it wins when the mobile @media query is active.           ──── */
+  #side-panel.collapsed{
+    transform:translateY(100%) !important;
+    position:fixed;
+    right:0;left:0;top:auto;bottom:0;
+  }
+  /* OPEN STATE */
+  #side-panel.open{
+    transform:translateY(0) !important;
+  }
+  /* Safety: if both classes somehow coexist, collapsed wins (panel stays hidden) */
+  #side-panel.collapsed.open{
+    transform:translateY(100%) !important;
+  }
+  /* Tap-outside overlay shown on mobile when panel is open */
+  #panel-overlay{display:none}
+  #panel-overlay.visible{display:block}
   #rankings-panel{display:none}
   #legend{right:8px;bottom:8px}
   #layout{height:calc(100vh - 88px)}
   #topbar h1{font-size:14px}
+  /* Close button — larger tap target on mobile */
+  #panel-close{top:10px;right:10px;width:36px;height:36px;font-size:17px}
 }
 </style>
 </head>
@@ -256,6 +299,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
     </div>
   </div>
 
+  <!-- Tap-outside overlay (mobile) -->
+  <div id="panel-overlay" aria-hidden="true"></div>
   <!-- Side panel -->
   <div id="side-panel" class="collapsed">
     <button id="panel-close" onclick="closePanel()">✕</button>
@@ -576,14 +621,37 @@ function selectCountry(cc) {
   openPanel(cc, d);
 }
 
-function openPanel(cc, d) {
-  const panel = document.getElementById('side-panel');
-  const empty = document.getElementById('panel-empty');
-  const content = document.getElementById('panel-content');
+function isMobile() { return window.innerWidth <= 768; }
 
-  panel.classList.remove('collapsed');
-  panel.classList.add('open');
-  empty.style.display = 'none';
+function _setPanelState(open) {
+  var panel   = document.getElementById('side-panel');
+  var overlay = document.getElementById('panel-overlay');
+  if (open) {
+    panel.classList.remove('collapsed');
+    // Force reflow so CSS transition fires correctly on iOS Safari
+    void panel.offsetHeight;
+    panel.classList.add('open');
+    // Prevent body scroll while panel is open on mobile
+    if (isMobile()) {
+      document.body.style.overflow = 'hidden';
+      if (overlay) overlay.classList.add('visible');
+    }
+  } else {
+    panel.classList.remove('open');
+    void panel.offsetHeight;
+    panel.classList.add('collapsed');
+    document.body.style.overflow = '';
+    if (overlay) overlay.classList.remove('visible');
+  }
+}
+
+function openPanel(cc, d) {
+  var panel   = document.getElementById('side-panel');
+  var empty   = document.getElementById('panel-empty');
+  var content = document.getElementById('panel-content');
+
+  _setPanelState(true);
+  empty.style.display   = 'none';
   content.style.display = 'block';
 
   const level     = d.alert_level || 'NONE';
@@ -695,9 +763,7 @@ async function loadExplainability(cc) {
 }
 
 function closePanel() {
-  const panel = document.getElementById('side-panel');
-  panel.classList.add('collapsed');
-  panel.classList.remove('open');
+  _setPanelState(false);
   selectedCC = null;
   renderCountries();
 }
@@ -892,6 +958,74 @@ async function init() {
 
   // Auto-refresh
   setInterval(refreshAll, REFRESH_MS);
+
+  // ── Mobile panel close wiring ──────────────────────────────────────────
+  // Replace inline onclick with addEventListener (more reliable on iOS Safari)
+  var closeBtn = document.getElementById('panel-close');
+  if (closeBtn) {
+    closeBtn.removeAttribute('onclick');
+    closeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      closePanel();
+    });
+  }
+
+  // Tap-outside-overlay → close
+  var overlay = document.getElementById('panel-overlay');
+  if (overlay) {
+    overlay.addEventListener('click', function(e) {
+      e.preventDefault();
+      closePanel();
+    });
+    overlay.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      closePanel();
+    }, { passive: false });
+  }
+
+  // Swipe-down to close on mobile
+  (function() {
+    var panel = document.getElementById('side-panel');
+    var touchStartY = 0, touchStarted = false;
+    panel.addEventListener('touchstart', function(e) {
+      touchStartY  = e.touches[0].clientY;
+      touchStarted = true;
+    }, { passive: true });
+    panel.addEventListener('touchmove', function(e) {
+      if (!touchStarted) return;
+      var dy = e.touches[0].clientY - touchStartY;
+      // Allow swipe down only when scrolled to top of panel
+      if (dy > 0 && panel.scrollTop <= 0) {
+        panel.style.transform = 'translateY(' + Math.min(dy, 200) + 'px)';
+      }
+    }, { passive: true });
+    panel.addEventListener('touchend', function(e) {
+      if (!touchStarted) return;
+      touchStarted = false;
+      var dy = e.changedTouches[0].clientY - touchStartY;
+      panel.style.transform = '';       // remove inline transform
+      if (dy > 80) {
+        closePanel();                   // sufficient swipe → close
+      } else {
+        // Snap back to open
+        panel.classList.remove('collapsed');
+        void panel.offsetHeight;
+        panel.classList.add('open');
+      }
+    }, { passive: true });
+  })();
+
+  // Reset panel state on orientation change
+  window.addEventListener('orientationchange', function() {
+    setTimeout(function() {
+      var panel = document.getElementById('side-panel');
+      if (panel && !panel.classList.contains('open')) {
+        panel.style.transform = '';
+        _setPanelState(false);
+      }
+    }, 300);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);
