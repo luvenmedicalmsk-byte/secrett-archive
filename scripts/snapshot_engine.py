@@ -58,6 +58,7 @@ TR_HIST_DIR           = TR_DIR   / "history"
 EXPL_DIR              = DOCS_DIR / "explanations"
 ALERT_HIST_DIR        = DOCS_DIR / "alerts" / "history"
 ALERT_REP_DIR         = DOCS_DIR / "alerts" / "reports"
+MAP_RANK_DIR          = DOCS_DIR / "alerts" / "rankings"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -8019,6 +8020,58 @@ def save_alerts() -> None:
     except Exception as e:
         print(f"[ALERT] Error: {e}", file=sys.stderr)
 
+def save_alert_rankings(snapshots: list[dict]) -> None:
+    """
+    RANKING ENGINE — generates docs/alerts/rankings/latest.json
+    Consumed by Alert Map V1 /api/map/rankings endpoint.
+    Reads: docs/alerts/reports/{CC}.json
+    Writes: docs/alerts/rankings/latest.json
+    """
+    MAP_RANK_DIR.mkdir(parents=True, exist_ok=True)
+    ALERT_REP_D = DOCS_DIR / "alerts" / "reports"
+
+    entries = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        rep_path = ALERT_REP_D / f"{iso2}.json"
+        if not rep_path.exists():
+            continue
+        try:
+            d = json.loads(rep_path.read_text())
+            entries.append({
+                "cc":           iso2,
+                "country":      iso2,
+                "country_name": snap.get("country_name", iso2),
+                "name":         snap.get("country_name", iso2),
+                "alert_score":  d.get("alert_score", 0),
+                "alert_level":  d.get("alert_level","NONE"),
+                "risk_score":   snap.get("risk_score", 50),
+                "trend":        d.get("trend","stable"),
+                "change_7d":    d.get("rules",{}).get("A_velocity",{}).get("change_7d",0) or 0,
+                "has_emerging": bool(d.get("rules",{}).get("D_emerging",{}).get("triggered")),
+                "confidence":   d.get("confidence",50),
+            })
+        except Exception:
+            pass
+
+    by_score    = sorted(entries, key=lambda x: -(x["alert_score"] or 0))
+    by_velocity = sorted(entries, key=lambda x: -abs(x["change_7d"] or 0))
+    emerging    = [e for e in entries if e["has_emerging"]]
+
+    rankings = {
+        "date":          TODAY,
+        "generated_at":  datetime.now(timezone.utc).isoformat(),
+        "total":         len(entries),
+        "top_score":     by_score[:10],
+        "top_alert_score":by_score[:10],
+        "top_velocity":  by_velocity[:10],
+        "top_emerging":  emerging[:10],
+        "top_confidence":[e for e in sorted(entries, key=lambda x: -(x["confidence"] or 0))][:5],
+    }
+    with open(MAP_RANK_DIR / "latest.json","w") as f:
+        json.dump(rankings, f, ensure_ascii=False, indent=2)
+    print(f"[MAP] Rankings saved: {len(entries)} countries", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -8087,6 +8140,7 @@ def main():
     save_track_record(snapshots)
     save_explainability()
     save_alerts()
+    save_alert_rankings(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
