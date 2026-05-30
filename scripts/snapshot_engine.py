@@ -55,6 +55,7 @@ EXTVAL_DIR            = DOCS_DIR / "validation-external"
 TR_DIR                = DOCS_DIR / "track-record"
 TR_DAILY_DIR          = TR_DIR   / "daily"
 TR_HIST_DIR           = TR_DIR   / "history"
+EXPL_DIR              = DOCS_DIR / "explanations"
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -7967,6 +7968,31 @@ def save_track_record(snapshots: list[dict]) -> None:
     save_tr_metrics(snapshots)  # STEP 6
     print("[TR] Track Record System V1 complete", file=sys.stderr)
 
+def save_explainability() -> None:
+    """
+    Trigger engines/explainability_engine.py after all forecast engines complete.
+    Reads:  docs/snapshots/daily/{TODAY}.json + all enrichment layers
+    Writes: docs/explanations/{CC}.json, ranking.json, _meta.json
+    Does NOT modify any forecast data.
+    """
+    import subprocess
+    script = Path(__file__).parent / ".." / "engines" / "explainability_engine.py"
+    script = script.resolve()
+    if not script.exists():
+        print("[EXPL] Script not found — skipping", file=sys.stderr)
+        return
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script), "--once"],
+            capture_output=True, text=True, timeout=120
+        )
+        if result.returncode == 0:
+            print("[EXPL] ✓ Explainability complete", file=sys.stderr)
+        else:
+            print(f"[EXPL] ✗ {result.stderr[:200]}", file=sys.stderr)
+    except Exception as e:
+        print(f"[EXPL] Error: {e}", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -8033,6 +8059,7 @@ def main():
     save_global_risk_intelligence(snapshots)
     save_external_validation()
     save_track_record(snapshots)
+    save_explainability()
 
     scores = [s["risk_score"] for s in snapshots]
     print(
