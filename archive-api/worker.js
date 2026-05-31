@@ -7312,7 +7312,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/improvement/errors','/api/grdf/improvement/calibration',
       '/api/grdf/improvement/thresholds','/api/grdf/improvement/domains',
       '/api/grdf/improvement/countries','/api/grdf/improvement/opportunities',
+
+  // =========================================================================
+  // GRDF PLATFORM GOVERNANCE PROGRAM V1 API
+  // All routes under /api/grdf/governance/
+  // Architecture frozen. Permanent governance framework. No V14.
+  // =========================================================================
+  if (seg[0] === 'governance') {
+    const gseg = seg[1] || 'dashboard';
+    const CG = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const GOV_FILES = {
+      'dashboard':     'docs/governance/governance_dashboard.json',
+      'kpis':          'docs/governance/platform_kpis.json',
+      'score':         'docs/governance/governance_score.json',
+      'roadmap':       'docs/governance/strategic_roadmap.json',
+      'reports':       'docs/governance/executive_reports.json',
+      'risk-register': 'docs/governance/platform_risk_register.json',
+      'technical-debt':'docs/governance/technical_debt.json',
+      'certification': 'docs/governance/governance_certification.json',
+      'lifecycle':     'docs/governance/platform_lifecycle.json',
+      'quarterly':     'docs/governance/quarterly_review.json',
+    };
+    const GOV_SIGNAL_ONLY = new Set(['risk-register','technical-debt','quarterly','reports']);
+    if (!GOV_FILES[gseg]) return new Response(JSON.stringify({error:'Unknown governance route: '+gseg, available:Object.keys(GOV_FILES)}),{status:404,headers:CG});
+    if (GOV_SIGNAL_ONLY.has(gseg) && access==='teaser') return new Response(JSON.stringify({error:gseg+' requires Signal tier'}),{status:403,headers:CG});
+    const ck = `grdf:gov:${gseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CG});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, GOV_FILES[gseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'Governance '+gseg+' not built yet'}),{status:404,headers:CG});
+      let r;
+      if (access==='teaser') {
+        if (gseg==='dashboard') r={date:d.date,governance_status:d.governance_status,governance_score:d.governance_score,platform_kpis:d.platform_kpis,learning_trends:d.learning_trends,tier};
+        else if (gseg==='kpis') r={date:d.date,kpis:d.kpis,targets:d.targets,kpi_health:d.kpi_health,targets_met_n:d.targets_met_n,tier};
+        else if (gseg==='score') r={date:d.date,governance_score:d.governance_score,governance_grade:d.governance_grade,components:d.components,tier};
+        else if (gseg==='roadmap') r={date:d.date,next_quarter_priorities:d.next_quarter_priorities,completed_initiatives:d.completed_initiatives?.slice(0,5),tier};
+        else if (gseg==='certification') r={date:d.date,governance_certification:d.governance_certification,governance_score:d.governance_score,kpi_health:d.kpi_health,no_v14:d.no_v14,tier};
+        else if (gseg==='lifecycle') r={date:d.date,lifecycle_state:d.lifecycle_state,platform_version:d.platform_version,no_v14:d.no_v14,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CG});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CG});}
+  }
+
       '/api/grdf/improvement/learning-score','/api/grdf/improvement/roadmap',
+      '/api/grdf/governance/dashboard','/api/grdf/governance/kpis',
+      '/api/grdf/governance/score','/api/grdf/governance/roadmap',
+      '/api/grdf/governance/reports','/api/grdf/governance/risk-register',
+      '/api/grdf/governance/technical-debt','/api/grdf/governance/certification',
+      '/api/grdf/governance/lifecycle','/api/grdf/governance/quarterly',
     ]
   }),{status:404,headers:CORS});
 }
