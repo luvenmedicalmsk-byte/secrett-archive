@@ -9327,6 +9327,608 @@ def save_grdf_v2(snapshots: list[dict]) -> None:
 
     print("[GRDF-V2] All 7 phases complete.", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# GLOBAL RISK DATA FABRIC V3 — Multi-Horizon Forecast Engine
+#
+# Extends GRDF V2 with predictive intelligence:
+#   Phase 1: Historical Time Series   → docs/grdf/v3_history_{CC}.json
+#   Phase 2: Trend Detection Engine   → docs/grdf/v3_trends_{CC}.json
+#   Phase 3: Scenario Engine          → docs/grdf/v3_scenarios_{CC}.json
+#   Phase 4: Forecast Consensus       → docs/grdf/v3_forecast_{CC}.json
+#   Phase 5: Forecast API files       → docs/grdf/v3_forecast_{CC}.json (same)
+#   Phase 6: Confidence Engine        → embedded in forecast output
+#   Phase 7: Forecast Dashboard       → docs/grdf/v3_dashboard.json
+#
+# V1 and V2 files are NEVER modified.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Forecast horizons (days)
+_FC_HORIZONS      = [7, 30, 90, 180, 365]
+_FC_HORIZON_NAMES = {7:"7d", 30:"30d", 90:"90d", 180:"180d", 365:"365d"}
+
+# Scenario definitions (Phase 3)
+_SCENARIOS = {
+    "baseline":   {"label":"Baseline",   "label_ru":"Базовый",   "multiplier":1.00, "drift_factor":1.00},
+    "optimistic": {"label":"Optimistic", "label_ru":"Оптимистичный","multiplier":0.80,"drift_factor":0.50},
+    "stress":     {"label":"Stress",     "label_ru":"Стрессовый","multiplier":1.30, "drift_factor":1.50},
+    "extreme":    {"label":"Extreme",    "label_ru":"Экстремальный","multiplier":1.65,"drift_factor":2.20},
+}
+
+# Forecast model weights for consensus (Phase 4)
+_MODEL_WEIGHTS = {
+    "linear":      0.20,
+    "exponential": 0.20,
+    "velocity":    0.25,   # highest weight — velocity most predictive short-term
+    "cascade":     0.20,
+    "correlation": 0.15,
+}
+
+
+# ── Phase 1: Historical Time Series ─────────────────────────────────────
+
+def _load_tr_history_full(iso2: str) -> list[dict]:
+    """Load complete track-record history for a country (all dates)."""
+    p = TR_HIST_DIR / f"{iso2}.json"
+    if not p.exists():
+        return []
+    try:
+        return json.loads(p.read_text()).get("records", [])
+    except Exception:
+        return []
+
+
+def _build_v3_history(iso2: str, snap: dict) -> dict:
+    """
+    Phase 1: Build time-series snapshots for windows 7/30/90/180/365d.
+    Each window contains GRI, URO fields, velocity, domain scores, warning level.
+    """
+    full_history = _load_tr_history_full(iso2)
+    date_map     = {r["date"]: r for r in full_history}
+
+    current_gri  = round(_calc_gri({
+        d: v["score"] for d, v in _get_domain_scores(iso2, snap).items()
+    }))
+
+    windows: dict[str, dict | None] = {}
+    for h in _FC_HORIZONS:
+        from datetime import date as _dt, timedelta as _td
+        target = (_dt.fromisoformat(TODAY) - _td(days=h)).isoformat()
+        # Find nearest record within ±3d
+        rec = date_map.get(target)
+        if rec is None:
+            for offset in range(1, 4):
+                for sign in (1, -1):
+                    chk = (_dt.fromisoformat(target) + _td(days=sign*offset)).isoformat()
+                    if chk in date_map:
+                        rec = date_map[chk]; break
+                if rec: break
+
+        if rec:
+            rec_gri = round(_calc_gri({
+                d: v["score"]
+                for d, v in _get_domain_scores(iso2, rec).items()
+            }))
+            windows[_FC_HORIZON_NAMES[h]] = {
+                "date":           rec.get("date", target),
+                "gri":            rec_gri,
+                "risk_score":     int(rec.get("risk_score", 50) or 50),
+                "delta":          int(rec.get("delta", 0) or 0),
+                "alert_level":    rec.get("alert_level") or rec.get("escalation_level","stable"),
+                "dominant_domain":rec.get("dominant_domain",""),
+            }
+        else:
+            windows[_FC_HORIZON_NAMES[h]] = None   # no history at this window
+
+    # Full rolling scores (last 90 records) for trend computation
+    rolling = [
+        {"date": r.get("date",""), "gri": round(_calc_gri({
+            d: v["score"] for d, v in _get_domain_scores(iso2, r).items()
+        })), "risk_score": int(r.get("risk_score",50) or 50),
+         "delta": int(r.get("delta",0) or 0)}
+        for r in full_history[-90:]
+    ]
+
+    return {
+        "country":        iso2,
+        "country_name":   snap.get("country_name", iso2),
+        "date":           TODAY,
+        "grdf_version":   "3.0",
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "current_gri":    current_gri,
+        "current_score":  int(snap.get("risk_score",50) or 50),
+        "windows":        windows,
+        "rolling_90d":    rolling,
+        "history_depth":  len(full_history),
+    }
+
+
+# ── Phase 2: Trend Detection Engine ─────────────────────────────────────
+
+def _detect_trend(history: list[dict]) -> dict:
+    """
+    Phase 2: Detect acceleration, deceleration, reversal, volatility.
+
+    Uses GRI or risk_score from rolling_90d.
+    trend_score:     net change over last 30d (normalised 0-100)
+    trend_direction: up / down / stable / reversing
+    trend_confidence:based on consistency of recent deltas
+    volatility:      std-dev of 30d scores
+    """
+    if not history:
+        return {"trend_score":50,"trend_direction":"stable","trend_confidence":0.50,
+                "acceleration":0.0,"volatility":0.0,"reversal_detected":False}
+
+    scores  = [h.get("gri") or h.get("risk_score", 50) for h in history]
+    n       = len(scores)
+
+    # 30d window
+    w30     = scores[-30:] if n >= 30 else scores
+    diffs_30= [w30[i]-w30[i-1] for i in range(1,len(w30))] or [0]
+    mean_d  = sum(diffs_30)/len(diffs_30)
+
+    # 7d window for short-term
+    w7      = scores[-7:]  if n >= 7  else scores
+    diffs_7 = [w7[i]-w7[i-1] for i in range(1,len(w7))] or [0]
+    mean_d7 = sum(diffs_7)/len(diffs_7)
+
+    # Acceleration = 2nd derivative (short-term delta minus long-term delta)
+    acceleration = round(mean_d7 - mean_d, 2)
+
+    # Volatility = variance proxy (max-min / mean)
+    mean_score = sum(w30)/len(w30) if w30 else 50
+    volatility = round((max(w30)-min(w30)) / max(1,mean_score) * 100, 1) if w30 else 0.0
+
+    # Reversal detection: short-term direction opposite to long-term
+    lt_up   = mean_d   >  0.3
+    st_up   = mean_d7  >  0.3
+    lt_down = mean_d   < -0.3
+    st_down = mean_d7  < -0.3
+    reversal = (lt_up and st_down) or (lt_down and st_up)
+
+    # Direction
+    if reversal:
+        direction = "reversing"
+    elif acceleration > 0.5 and mean_d7 > 0:
+        direction = "accelerating"
+    elif acceleration < -0.5 and mean_d7 < 0:
+        direction = "decelerating"
+    elif abs(mean_d7) < 0.3:
+        direction = "stable"
+    else:
+        direction = "up" if mean_d7 > 0 else "down"
+
+    # trend_score: normalised 0-100 from net 30d change
+    net_change  = (scores[-1] if scores else 50) - (w30[0] if w30 else 50)
+    trend_score = min(100, max(0, round(50 + net_change * 2)))
+
+    # Confidence: higher when deltas are consistent (low std-dev)
+    if len(diffs_30) > 3:
+        mean_abs = sum(abs(d) for d in diffs_30) / len(diffs_30)
+        std_proxy= sum((d-sum(diffs_30)/len(diffs_30))**2 for d in diffs_30)**0.5 / max(1,len(diffs_30)**0.5)
+        confidence = round(max(0.30, min(0.95, 0.80 - std_proxy*0.05)), 2)
+    else:
+        confidence = 0.55
+
+    return {
+        "trend_score":       trend_score,
+        "trend_direction":   direction,
+        "trend_confidence":  confidence,
+        "acceleration":      acceleration,
+        "mean_delta_7d":     round(mean_d7, 2),
+        "mean_delta_30d":    round(mean_d, 2),
+        "net_change_30d":    round(net_change, 1),
+        "volatility":        volatility,
+        "reversal_detected": reversal,
+    }
+
+
+def _save_v3_trends(iso2: str, snap: dict, rolling: list[dict]) -> dict:
+    """Phase 2: build and save trend analysis."""
+    trend = _detect_trend(rolling)
+    result = {
+        "country":         iso2,
+        "country_name":    snap.get("country_name", iso2),
+        "date":            TODAY,
+        "grdf_version":    "3.0",
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "current_score":   int(snap.get("risk_score", 50) or 50),
+        **trend,
+    }
+    with open(GRDF_DIR / f"v3_trends_{iso2}.json","w") as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+    return trend
+
+
+# ── Phase 3: Scenario Engine ─────────────────────────────────────────────
+
+def _project_scenario(base_score: float, delta: float, horizon: int,
+                       scenario_key: str) -> dict:
+    """
+    Phase 3: Project one scenario for one horizon.
+
+    base_score   = current GRI / risk_score
+    delta        = current velocity (pts/day)
+    horizon      = days ahead
+    scenario_key = baseline / optimistic / stress / extreme
+
+    Formula:
+      drift      = delta × drift_factor × damp(horizon)
+      raw_score  = (base_score + drift × horizon) × multiplier
+      score      = clamp(raw_score, 5, 97)
+      uncertainty= grows with horizon + scenario extremity
+    """
+    sc       = _SCENARIOS[scenario_key]
+    mult     = sc["multiplier"]
+    df       = sc["drift_factor"]
+    # Dampening: longer horizons have diminishing drift
+    damp     = 1.0 / (1.0 + horizon / 180.0)
+    drift    = delta * df * damp
+    raw      = (base_score + drift * horizon) * mult
+    score    = max(5, min(97, round(raw)))
+    # Uncertainty grows with horizon and extremity
+    base_unc = max(2, round(abs(delta) * 0.5 + horizon * 0.04))
+    unc_mult = {"baseline":1.0,"optimistic":1.2,"stress":1.4,"extreme":1.8}[scenario_key]
+    uncertainty = round(base_unc * unc_mult)
+    return {"score": score, "uncertainty": uncertainty}
+
+
+def _build_scenarios(iso2: str, snap: dict, trend: dict) -> dict:
+    """Phase 3: Build four scenario trajectories for all horizons."""
+    base  = int(snap.get("risk_score", 50) or 50)
+    delta = snap.get("delta", 0) or 0
+    # Use trend mean_delta if richer than snap delta
+    eff_delta = trend.get("mean_delta_7d", float(delta))
+
+    scenarios: dict[str, dict] = {}
+    for sc_key in _SCENARIOS:
+        horizons: dict[str, dict] = {}
+        for h in _FC_HORIZONS:
+            hz_name = _FC_HORIZON_NAMES[h]
+            horizons[hz_name] = _project_scenario(base, eff_delta, h, sc_key)
+        scenarios[sc_key] = {
+            "label":    _SCENARIOS[sc_key]["label"],
+            "label_ru": _SCENARIOS[sc_key]["label_ru"],
+            "horizons": horizons,
+        }
+
+    # Determine most likely scenario (based on trend direction)
+    td = trend.get("trend_direction","stable")
+    most_likely = ("stress"     if td in ("accelerating","up") else
+                   "optimistic" if td in ("decelerating","reversing") else
+                   "baseline")
+
+    return {
+        "base_score":   base,
+        "effective_delta": round(eff_delta, 2),
+        "scenarios":    scenarios,
+        "most_likely":  most_likely,
+        "trend_direction": td,
+    }
+
+
+def _save_v3_scenarios(iso2: str, snap: dict, sc_data: dict) -> None:
+    """Phase 3: save scenario file."""
+    with open(GRDF_DIR / f"v3_scenarios_{iso2}.json","w") as f:
+        json.dump({
+            "country":      iso2,
+            "country_name": snap.get("country_name", iso2),
+            "date":         TODAY,
+            "grdf_version": "3.0",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            **sc_data,
+        }, f, ensure_ascii=False, indent=2)
+
+
+# ── Phase 4: Forecast Consensus ──────────────────────────────────────────
+
+def _model_linear(base: float, delta: float, h: int) -> float:
+    """Linear: score = base + delta × h / 7 (weekly rate)."""
+    return base + (delta / 7.0) * h
+
+
+def _model_exponential(base: float, delta: float, h: int) -> float:
+    """Exponential growth/decay: tanh dampening."""
+    rate = delta / max(1, base) * 0.5
+    import math
+    return base * (1 + math.tanh(rate * h / 30))
+
+
+def _model_velocity(base: float, delta: float, h: int) -> float:
+    """Velocity-based: front-weighted with sqrt dampening."""
+    import math
+    return base + delta * math.sqrt(h / 7.0)
+
+
+def _model_cascade(base: float, cascade_score: float, h: int) -> float:
+    """Cascade amplification: cascade risk adds to baseline over time."""
+    amp = cascade_score / 100.0 * (h / 180.0)
+    return base + amp * base * 0.3
+
+
+def _model_correlation(base: float, corr_boost: float, h: int) -> float:
+    """Correlation propagation: correlated domains amplify forecast."""
+    return base + corr_boost * (h / 90.0) * 0.15
+
+
+def _calc_forecast_consensus(
+    base: float, delta: float, h: int,
+    cascade_score: float, corr_boost: float
+) -> dict:
+    """
+    Phase 4: Combine 5 models into a weighted consensus forecast.
+    Returns score ± uncertainty and confidence for each horizon.
+    """
+    raw_models = {
+        "linear":      _model_linear(base, delta, h),
+        "exponential": _model_exponential(base, delta, h),
+        "velocity":    _model_velocity(base, delta, h),
+        "cascade":     _model_cascade(base, cascade_score, h),
+        "correlation": _model_correlation(base, corr_boost, h),
+    }
+    # Weighted consensus
+    wsum  = sum(_MODEL_WEIGHTS[m] * v for m, v in raw_models.items())
+    w_tot = sum(_MODEL_WEIGHTS.values())
+    consensus = wsum / w_tot
+
+    # Clamp
+    consensus = max(5, min(97, round(consensus)))
+
+    # Uncertainty = weighted std-dev of model outputs
+    vals      = list(raw_models.values())
+    mean_v    = sum(vals) / len(vals)
+    variance  = sum((v - mean_v)**2 for v in vals) / len(vals)
+    std_dev   = variance**0.5
+    uncertainty = max(2, round(std_dev * 0.8 + h * 0.02))
+
+    # Confidence: decreases with horizon and high volatility
+    confidence = round(max(0.25, min(0.92, 0.88 - h * 0.001 - std_dev * 0.008)), 2)
+
+    return {
+        "score":        consensus,
+        "uncertainty":  uncertainty,
+        "confidence":   confidence,
+        "interval_low": max(5,  consensus - uncertainty),
+        "interval_high":min(97, consensus + uncertainty),
+        "model_outputs":raw_models,
+    }
+
+
+def _build_v3_forecast(iso2: str, snap: dict, trend: dict, sc_data: dict) -> dict:
+    """
+    Phase 4+5+6: Full forecast record combining 5 models + scenarios + confidence.
+    """
+    base      = int(snap.get("risk_score", 50) or 50)
+    delta     = snap.get("delta", 0) or 0
+    eff_delta = trend.get("mean_delta_7d", float(delta))
+
+    # Cascade and correlation boosts from existing GRDF files
+    cascade_score = 0.0
+    casc_path     = GRDF_DIR / f"v2_cascades_{iso2}.json"
+    if casc_path.exists():
+        try:
+            cd  = json.loads(casc_path.read_text())
+            cascade_score = float(cd.get("max_cascade_score", 0) or 0)
+        except Exception:
+            pass
+
+    corr_boost = 0.0
+    corr_path  = GRDF_DIR / "v2_correlations.json"
+    if corr_path.exists():
+        try:
+            cd   = json.loads(corr_path.read_text())
+            corrs= [c for c in cd.get("correlations",[]) if c.get("strength",0) >= 0.6]
+            corr_boost = min(15.0, sum(c["strength"] for c in corrs[:3]) * 5)
+        except Exception:
+            pass
+
+    # Compute consensus for each horizon
+    horizons: dict[str, dict] = {}
+    for h in _FC_HORIZONS:
+        hz_name     = _FC_HORIZON_NAMES[h]
+        consensus   = _calc_forecast_consensus(base, eff_delta, h, cascade_score, corr_boost)
+        # Enrich with scenario bounds
+        sc_baseline = sc_data["scenarios"]["baseline"]["horizons"][hz_name]["score"]
+        sc_stress   = sc_data["scenarios"]["stress"]["horizons"][hz_name]["score"]
+        sc_extreme  = sc_data["scenarios"]["extreme"]["horizons"][hz_name]["score"]
+        sc_optimist = sc_data["scenarios"]["optimistic"]["horizons"][hz_name]["score"]
+        horizons[hz_name] = {
+            **consensus,
+            "scenario_baseline":   sc_baseline,
+            "scenario_optimistic": sc_optimist,
+            "scenario_stress":     sc_stress,
+            "scenario_extreme":    sc_extreme,
+        }
+
+    # Summary string: "30d → 72 ± 4"
+    summary_lines = [
+        f"{hz_name} → {v['score']} ± {v['uncertainty']}"
+        for hz_name, v in horizons.items()
+        if hz_name in ("30d","90d","180d")
+    ]
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "3.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        # Inputs
+        "base_score":       base,
+        "effective_delta":  round(eff_delta, 2),
+        "cascade_score":    round(cascade_score, 1),
+        "corr_boost":       round(corr_boost, 2),
+        # Trend context
+        "trend_direction":  trend.get("trend_direction","stable"),
+        "trend_confidence": trend.get("trend_confidence", 0.50),
+        "volatility":       trend.get("volatility", 0.0),
+        "most_likely_scenario": sc_data.get("most_likely","baseline"),
+        # Phase 4/5: Forecast horizons
+        "horizons":         horizons,
+        # Phase 6: Confidence summary
+        "confidence_summary": summary_lines,
+        # Model weights reference
+        "model_weights":    _MODEL_WEIGHTS,
+    }
+
+
+# ── Phase 7: Forecast Dashboard ──────────────────────────────────────────
+
+def _save_v3_dashboard(snapshots: list[dict],
+                        all_forecasts: dict[str, dict]) -> None:
+    """
+    Phase 7: Build Forecast Intelligence Dashboard.
+    Widgets:
+      top_escalating    — highest 30d forecast increase
+      top_improving     — highest 30d forecast decrease
+      forecast_90d      — all countries 90d score
+      forecast_180d     — all countries 180d score
+      emerging_instability — high cascade + high velocity
+      global_forecast_map  — compact list for map overlay
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    escalating = []
+    improving  = []
+    fc_90d     = []
+    fc_180d    = []
+    emerging   = []
+    global_map = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        fc   = all_forecasts.get(iso2)
+        if not fc:
+            continue
+
+        score   = int(snap.get("risk_score", 50) or 50)
+        hz      = fc.get("horizons", {})
+        s30     = hz.get("30d",  {}).get("score", score)
+        s90     = hz.get("90d",  {}).get("score", score)
+        s180    = hz.get("180d", {}).get("score", score)
+        delta30 = s30 - score
+        conf30  = hz.get("30d",  {}).get("confidence", 0.60)
+
+        cc_name = snap.get("country_name", iso2)
+        base_rec = {
+            "country": iso2, "country_name": cc_name,
+            "current": score, "trend": fc.get("trend_direction","stable"),
+        }
+
+        if delta30 >= 3:
+            escalating.append({**base_rec,"forecast_30d":s30,"delta_30d":delta30,"confidence":conf30})
+        if delta30 <= -3:
+            improving.append({**base_rec,"forecast_30d":s30,"delta_30d":delta30,"confidence":conf30})
+
+        fc_90d.append({**base_rec, "forecast_90d":s90,
+                       "confidence":hz.get("90d",{}).get("confidence",0.55)})
+        fc_180d.append({**base_rec,"forecast_180d":s180,
+                        "confidence":hz.get("180d",{}).get("confidence",0.45)})
+
+        # Emerging instability: cascade ≥ 40 OR delta ≥ 5 with score ≤ 70
+        if fc.get("cascade_score",0) >= 40 or (abs(snap.get("delta",0) or 0) >= 5 and score <= 70):
+            emerging.append({**base_rec,"cascade_score":fc.get("cascade_score",0),
+                              "forecast_30d":s30,"delta_30d":delta30})
+
+        global_map.append({
+            "country":iso2,"current":score,"forecast_30d":s30,
+            "forecast_90d":s90,"trend":fc.get("trend_direction","stable"),
+            "most_likely_scenario":fc.get("most_likely_scenario","baseline"),
+        })
+
+    # Sort
+    escalating.sort(key=lambda x: -x["delta_30d"])
+    improving.sort(key=lambda x:  x["delta_30d"])
+    fc_90d.sort(key=lambda x:  -x["forecast_90d"])
+    fc_180d.sort(key=lambda x: -x["forecast_180d"])
+    emerging.sort(key=lambda x: -x.get("cascade_score",0))
+    global_map.sort(key=lambda x: -x["forecast_30d"])
+
+    with open(GRDF_DIR / "v3_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":       "3.0",
+            "date":               TODAY,
+            "generated_at":       now_ts,
+            # Widget 1: Top Escalating Countries
+            "top_escalating":     escalating[:10],
+            # Widget 2: Top Improving Countries
+            "top_improving":      improving[:10],
+            # Widget 3: 90-Day Forecast
+            "forecast_90d":       fc_90d[:15],
+            # Widget 4: 180-Day Forecast
+            "forecast_180d":      fc_180d[:15],
+            # Widget 5: Emerging Instability
+            "emerging_instability": emerging[:10],
+            # Widget 6: Global Forecast Map
+            "global_forecast_map":  global_map,
+            # Metadata
+            "model_weights":      _MODEL_WEIGHTS,
+            "scenarios_defined":  list(_SCENARIOS.keys()),
+            "horizons":           list(_FC_HORIZON_NAMES.values()),
+        }, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V3] Phase 7: Forecast Dashboard built", file=sys.stderr)
+
+
+# ── GRDF V3 Orchestrator ─────────────────────────────────────────────────
+
+def save_grdf_v3(snapshots: list[dict]) -> None:
+    """
+    GLOBAL RISK DATA FABRIC V3 — Multi-Horizon Forecast Engine.
+    Runs all 7 phases in dependency order.
+    V1 and V2 files are NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+    all_forecasts: dict[str, dict] = {}
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Phase 1: Historical time series
+            hist = _build_v3_history(iso2, snap)
+            with open(GRDF_DIR / f"v3_history_{iso2}.json","w") as f:
+                json.dump(hist, f, ensure_ascii=False, indent=2)
+
+            rolling = hist.get("rolling_90d", [])
+
+            # Phase 2: Trend detection
+            trend = _save_v3_trends(iso2, snap, rolling)
+
+            # Phase 3: Scenario engine
+            sc_data = _build_scenarios(iso2, snap, trend)
+            _save_v3_scenarios(iso2, snap, sc_data)
+
+            # Phase 4+5+6: Forecast consensus + confidence
+            fc = _build_v3_forecast(iso2, snap, trend, sc_data)
+            with open(GRDF_DIR / f"v3_forecast_{iso2}.json","w") as f:
+                json.dump(fc, f, ensure_ascii=False, indent=2)
+
+            all_forecasts[iso2] = fc
+
+        except Exception as e:
+            print(f"[GRDF-V3] {iso2}: FAILED — {e}", file=sys.stderr)
+
+    # Phase 7: Forecast Dashboard
+    _save_v3_dashboard(snapshots, all_forecasts)
+
+    # Global forecast aggregate
+    global_fc = {
+        "grdf_version":   "3.0",
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "total_countries":len(all_forecasts),
+        "forecasts": {iso2: {
+            "30d":  fc["horizons"].get("30d",{}).get("score"),
+            "90d":  fc["horizons"].get("90d",{}).get("score"),
+            "180d": fc["horizons"].get("180d",{}).get("score"),
+            "365d": fc["horizons"].get("365d",{}).get("score"),
+            "trend":fc.get("trend_direction","stable"),
+            "most_likely_scenario":fc.get("most_likely_scenario","baseline"),
+        } for iso2, fc in all_forecasts.items()},
+    }
+    with open(GRDF_DIR / "v3_forecast_global.json","w") as f:
+        json.dump(global_fc, f, ensure_ascii=False, indent=2)
+
+    print(f"[GRDF-V3] All 7 phases complete. {len(all_forecasts)} countries.", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -9398,6 +10000,7 @@ def main():
     save_alert_rankings(snapshots)
     save_grdf(snapshots)
     save_grdf_v2(snapshots)
+    save_grdf_v3(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
