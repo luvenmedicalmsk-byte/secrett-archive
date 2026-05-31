@@ -7014,10 +7014,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/production/dashboard','/api/grdf/production/security',
       '/api/grdf/production/reliability',
       '/api/grdf/final/certification','/api/grdf/final/sovereign-grade',
+
+  // =========================================================================
+  // GRDF PLATFORM TECHNICAL BASELINE V1 API
+  // All routes under /api/grdf/baseline/
+  // Architecture frozen at V13. Documentation only. Immutable reference.
+  // =========================================================================
+  if (seg[0] === 'baseline') {
+    const bseg = seg[1] || 'v1-0';
+    const CB = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const BL_FILES = {
+      'v1-0':                 'docs/baseline/baseline_v1_0.json',
+      'architecture':         'docs/baseline/baseline_architecture.json',
+      'formulas':             'docs/baseline/baseline_formulas.json',
+      'storage':              'docs/baseline/baseline_storage.json',
+      'api-registry':         'docs/baseline/baseline_api_registry.json',
+      'dashboards':           'docs/baseline/baseline_dashboards.json',
+      'dependency-graph':     'docs/baseline/baseline_dependency_graph.json',
+      'data-sources':         'docs/baseline/baseline_data_sources.json',
+      'certification':        'docs/baseline/baseline_certification.json',
+      'platform-specification':'docs/baseline/baseline_platform_specification.json',
+    };
+    if (!BL_FILES[bseg]) return new Response(JSON.stringify({error:'Unknown baseline route: '+bseg, available:Object.keys(BL_FILES)}),{status:404,headers:CB});
+    const ck = `grdf:bl:${bseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CB});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, BL_FILES[bseg], 3600);
+      if (!d) return new Response(JSON.stringify({error:'Baseline '+bseg+' not yet built'}),{status:404,headers:CB});
+      let r;
+      if (access==='teaser') {
+        if (bseg==='v1-0') r={date:d.date,document:d.document,status:d.status,certification:d.certification,inventory:d.inventory,tier};
+        else if (bseg==='architecture') r={date:d.date,total_layers:d.total_layers,architecture_type:d.architecture_type,layer_names:Object.fromEntries(Object.entries(d.layers||{}).map(([k,v])=>[k,v.name])),tier};
+        else if (bseg==='formulas') r={date:d.date,total_formulas:d.total_formulas,all_weights_certified:d.all_weights_certified,formula_ids:d.formulas?.map(f=>({id:f.id,ver:f.ver,desc:f.desc})),tier};
+        else if (bseg==='platform-specification') r={date:d.date,name:d.name,version:d.version,certification:d.certification,intelligence_question_answered:d.intelligence_question_answered,tier};
+        else if (bseg==='certification') r={date:d.date,final_sovereign:d.final_sovereign,no_v14:d.no_v14,tier};
+        else r={date:d.date,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:3600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CB});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CB});}
+  }
+
       '/api/grdf/final/architecture-review','/api/grdf/final/formula-registry',
       '/api/grdf/final/data-lineage','/api/grdf/final/layer-audit',
       '/api/grdf/final/api-certification','/api/grdf/final/dashboard-certification',
       '/api/grdf/final/production-verification','/api/grdf/final/gap-analysis',
+      '/api/grdf/baseline/v1-0','/api/grdf/baseline/architecture',
+      '/api/grdf/baseline/formulas','/api/grdf/baseline/storage',
+      '/api/grdf/baseline/api-registry','/api/grdf/baseline/dashboards',
+      '/api/grdf/baseline/dependency-graph','/api/grdf/baseline/data-sources',
+      '/api/grdf/baseline/certification','/api/grdf/baseline/platform-specification',
     ]
   }),{status:404,headers:CORS});
 }
