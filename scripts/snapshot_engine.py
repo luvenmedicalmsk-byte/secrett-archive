@@ -15840,6 +15840,778 @@ def save_grdf_v11(snapshots: list) -> None:
     print(f"[GRDF-V11] Autonomous Sovereign Network OPERATIONAL.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V12 -- Planetary Intelligence System
+#
+# Transforms the Autonomous Sovereign Network (V11) into a Planetary
+# Intelligence System -- a unified digital twin of Earth's interconnected
+# systems: climate, energy, food, water, economy, technology, infrastructure.
+#
+# Phase 1:  Planetary Digital Twin          -> v12_planetary_twin.json
+# Phase 2:  Earth Systems Graph             -> v12_earth_systems_graph.json
+# Phase 3:  Global Flow Engine              -> v12_global_flows.json
+# Phase 4:  Planetary Stress Index          -> v12_planetary_stress.json
+# Phase 5:  Global Resilience Engine        -> v12_resilience.json
+# Phase 6:  Planetary Scenario Simulator    -> v12_scenarios.json
+# Phase 7:  Civilization Stability Engine   -> v12_civilization_stability.json
+# Phase 8:  Planetary Coordination Network  -> v12_coordination_network.json
+# Phase 9:  Planetary Alert System          -> v12_planetary_alerts.json
+# Phase 10: Planetary Intelligence Dashboard-> v12_dashboard.json
+#
+# Reads: v1..v11 outputs (read-only).
+# Writes: v12_* only.  V1-V11 NEVER modified.
+# =========================================================================
+
+# 12 planetary domains (Phase 1)
+_V12_DOMAINS = [
+    "climate","energy","food","water","economy","finance",
+    "technology","infrastructure","cyber","population","migration","health",
+]
+
+# Earth system node types (Phase 2)
+_V12_EARTH_NODE_TYPES = [
+    "Country","Region","Ocean","Atmosphere","Infrastructure",
+    "Energy Grid","Food System","Water Basin","Financial System",
+    "Technology Network","Satellite Network","Population Cluster",
+]
+
+# Flow types (Phase 3)
+_V12_FLOW_TYPES = [
+    "energy","food","water","finance","trade",
+    "information","migration","data","resources",
+]
+
+# Scenario classes (Phase 6)
+_V12_SCENARIO_CLASSES = [
+    "baseline","disruption","crisis","recovery","transformation"]
+_V12_FC_HORIZONS_V12 = ["30d","90d","1yr","3yr","5yr","10yr"]
+
+# Resilience domains (Phase 5)
+_V12_RESILIENCE_DOMAINS = [
+    "energy_resilience","food_resilience","water_resilience",
+    "economic_resilience","infrastructure_resilience","cyber_resilience",
+]
+
+# PSI domain weights (Phase 4) — 5 equal × 0.20
+_V12_PSI_WEIGHTS = {
+    "climate":0.20,"economy":0.20,"infrastructure":0.20,
+    "resources":0.20,"geopolitics":0.20,
+}
+
+# CSI weights (Phase 7)
+_V12_CSI_WEIGHTS = {"resilience":0.40,"governance":0.30,"adaptability":0.30}
+
+
+def _v12_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+# ── Phase 1: Planetary Digital Twin ──────────────────────────────────────
+
+def _build_v12_planetary_twin(snapshots: list) -> dict:
+    """
+    Phase 1: Aggregate all 25-country data into a single planetary-level
+    digital twin across 12 domains.
+    Each domain score = mean of its representative country scores.
+    """
+    domain_scores: dict[str, list[float]] = {d: [] for d in _V12_DOMAINS}
+
+    for snap in snapshots:
+        iso2   = snap["country"]
+        dom_s  = _get_domain_scores(iso2, snap)
+        risk   = int(snap.get("risk_score",50) or 50)
+
+        # Map GRDF → planetary domains
+        domain_scores["climate"].append(float(dom_s.get("climate",{}).get("score",risk*0.7)))
+        domain_scores["energy"].append(float(dom_s.get("infrastructure",{}).get("score",risk*0.75)))
+        domain_scores["food"].append(float(dom_s.get("social",{}).get("score",risk*0.65)))
+        domain_scores["water"].append(float(dom_s.get("climate",{}).get("score",risk*0.6)))
+        domain_scores["economy"].append(float(dom_s.get("economic",{}).get("score",risk)))
+        domain_scores["finance"].append(float(dom_s.get("economic",{}).get("score",risk)))
+        domain_scores["technology"].append(float(dom_s.get("technology",{}).get("score",risk*0.8)))
+        domain_scores["infrastructure"].append(float(dom_s.get("infrastructure",{}).get("score",risk*0.85)))
+        domain_scores["cyber"].append(float(dom_s.get("cyber",{}).get("score",risk*0.7)))
+        domain_scores["population"].append(float(dom_s.get("social",{}).get("score",risk*0.6)))
+        domain_scores["migration"].append(float(dom_s.get("social",{}).get("score",risk*0.55)))
+        domain_scores["health"].append(float(dom_s.get("social",{}).get("score",risk*0.65)))
+
+    twin_domains: dict[str, dict] = {}
+    for domain, vals in domain_scores.items():
+        avg   = round(sum(vals)/max(1,len(vals)),1)
+        grade = ("critical" if avg >= 75 else "elevated" if avg >= 55
+                  else "moderate" if avg >= 35 else "stable")
+        twin_domains[domain] = {
+            "avg_score":  avg,
+            "grade":      grade,
+            "n_countries":len(vals),
+        }
+
+    # Planetary composite (mean of all 12 domains)
+    composite = round(sum(v["avg_score"] for v in twin_domains.values()) / len(twin_domains),1)
+    planet_grade = ("critical" if composite >= 75 else "elevated" if composite >= 55
+                     else "moderate" if composite >= 35 else "stable")
+
+    return {
+        "grdf_version":      "12.0",
+        "date":              TODAY,
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "domains":           twin_domains,
+        "composite_score":   composite,
+        "planet_grade":      planet_grade,
+        "total_countries":   len(snapshots),
+    }
+
+
+# ── Phase 2: Earth Systems Graph ──────────────────────────────────────────
+
+def _build_v12_earth_systems_graph(snapshots: list) -> dict:
+    """
+    Phase 2: Global graph of Earth system interdependencies.
+    Nodes: Country, Region, Ocean, Atmosphere, Infrastructure, etc.
+    Edges: DEPENDS_ON, INFLUENCES, SUPPLIES, AMPLIFIES, MITIGATES, DISRUPTS
+    """
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    seen: set = set()
+
+    def add(nid, ntype, label, **kw):
+        if nid not in seen:
+            seen.add(nid)
+            nodes.append({"id":nid,"type":ntype,"label":label,**kw})
+
+    # Atmospheric + ocean systems
+    for sys in ["Arctic","Antarctic","Pacific","Atlantic","Indian","Mediterranean"]:
+        add(f"ATM:{sys}","Atmosphere",f"{sys} Climate System")
+    for oc in ["Pacific Ocean","Atlantic Ocean","Indian Ocean","Arctic Ocean"]:
+        add(f"OCN:{oc[:4]}","Ocean",oc)
+
+    # Regional food/water/energy systems
+    for sys in ["Global Energy Grid","Global Food System","Global Water System",
+                "Global Financial System","Global Technology Network","Global Satellite Network"]:
+        clean = sys.replace(" ","_").upper()[:10]
+        add(f"SYS:{clean}","Infrastructure",sys)
+
+    # Country nodes + domain→system edges
+    for snap in snapshots:
+        iso2  = snap["country"]
+        score = int(snap.get("risk_score",50) or 50)
+        add(f"CC:{iso2}","Country",snap.get("country_name",iso2),risk=score)
+
+        dom_s = _get_domain_scores(iso2, snap)
+        # High energy exposure → links to global energy grid
+        if dom_s.get("infrastructure",{}).get("score",0) >= 55:
+            edges.append({"from":f"CC:{iso2}","to":"SYS:GLOBAL_ENER",
+                           "type":"DEPENDS_ON","weight":round(dom_s["infrastructure"]["score"]/100,3)})
+        # High climate exposure → links to atmosphere
+        if dom_s.get("climate",{}).get("score",0) >= 50:
+            edges.append({"from":"ATM:Arct","to":f"CC:{iso2}",
+                           "type":"INFLUENCES","weight":round(dom_s["climate"]["score"]/100,3)})
+        # Economic → financial system
+        if dom_s.get("economic",{}).get("score",0) >= 50:
+            edges.append({"from":f"CC:{iso2}","to":"SYS:GLOBAL_FINA",
+                           "type":"SUPPLIES","weight":round(dom_s["economic"]["score"]/100,3)})
+
+    # Use V11 cross-country links
+    link_d = _v12_load("v6_country_links.json")
+    for lnk in (link_d.get("matrix") or [])[:50]:
+        a, b = lnk.get("from",""), lnk.get("to","")
+        if a and b and lnk.get("strength",0) >= 0.4:
+            etype = "DISRUPTS" if lnk.get("strength",0) >= 0.7 else "INFLUENCES"
+            edges.append({"from":f"CC:{a}","to":f"CC:{b}","type":etype,
+                           "weight":lnk["strength"]})
+
+    return {
+        "grdf_version":  "12.0",
+        "date":          TODAY,
+        "generated_at":  datetime.now(timezone.utc).isoformat(),
+        "node_count":    len(nodes),
+        "edge_count":    len(edges),
+        "node_types":    _V12_EARTH_NODE_TYPES,
+        "edge_types":    ["DEPENDS_ON","INFLUENCES","SUPPLIES","AMPLIFIES","MITIGATES","DISRUPTS"],
+        "nodes":         nodes,
+        "edges":         edges,
+    }
+
+
+# ── Phase 3: Global Flow Engine ───────────────────────────────────────────
+
+def _compute_flow(flow_type: str, snapshots: list) -> dict:
+    """
+    Phase 3: Model one global flow type.
+    flow_strength    = mean domain score proxy / 100
+    flow_disruption  = fraction of countries with elevated domain risk
+    flow_resilience  = 1 - disruption (simplification)
+    """
+    domain_proxy = {
+        "energy":"infrastructure","food":"social","water":"climate",
+        "finance":"economic","trade":"economic","information":"technology",
+        "migration":"social","data":"technology","resources":"infrastructure",
+    }
+    dom = domain_proxy.get(flow_type,"economic")
+    scores, disrupted = [], 0
+    for snap in snapshots:
+        dom_s   = _get_domain_scores(snap["country"], snap)
+        score   = dom_s.get(dom,{}).get("score",50)
+        scores.append(score)
+        if score >= 60: disrupted += 1
+
+    avg_score   = round(sum(scores)/max(1,len(scores)),1)
+    strength    = round(avg_score/100,3)
+    disruption  = round(disrupted/max(1,len(snapshots)),3)
+    resilience  = round(1.0 - disruption, 3)
+    grade       = ("critical" if disruption >= 0.60 else "high" if disruption >= 0.40
+                    else "moderate" if disruption >= 0.20 else "stable")
+    return {
+        "flow_type":       flow_type,
+        "domain_proxy":    dom,
+        "flow_strength":   strength,
+        "flow_disruption": disruption,
+        "flow_resilience": resilience,
+        "grade":           grade,
+        "n_countries":     len(snapshots),
+        "disrupted_n":     disrupted,
+    }
+
+
+def _build_v12_global_flows(snapshots: list) -> dict:
+    """Phase 3: compute all 9 global flow types."""
+    flows = [_compute_flow(ft, snapshots) for ft in _V12_FLOW_TYPES]
+    flows.sort(key=lambda x: -x["flow_disruption"])
+    worst = flows[0]["flow_type"] if flows else "none"
+
+    return {
+        "grdf_version":  "12.0",
+        "date":          TODAY,
+        "generated_at":  datetime.now(timezone.utc).isoformat(),
+        "flow_types":    _V12_FLOW_TYPES,
+        "flows":         flows,
+        "worst_flow":    worst,
+        "avg_disruption":round(sum(f["flow_disruption"] for f in flows)/max(1,len(flows)),3),
+    }
+
+
+# ── Phase 4: Planetary Stress Index ──────────────────────────────────────
+
+def _psi(climate: float, economy: float, infrastructure: float,
+         resources: float, geopolitics: float) -> float:
+    """
+    PSI = climate*0.20 + economy*0.20 + infrastructure*0.20
+          + resources*0.20 + geopolitics*0.20
+    Weights = 1.00. All 0-100, output 0-100.
+    """
+    return max(0, min(100, round(
+        climate*0.20 + economy*0.20 + infrastructure*0.20
+        + resources*0.20 + geopolitics*0.20
+    )))
+
+
+def _psi_grade(score: float) -> str:
+    if score >= 75: return "critical"
+    if score >= 55: return "elevated"
+    if score >= 35: return "moderate"
+    return "stable"
+
+
+def _build_v12_planetary_stress(snapshots: list, twin: dict) -> dict:
+    """Phase 4: compute Planetary Stress Index from twin domain scores."""
+    d = twin.get("domains",{})
+
+    climate_sc   = d.get("climate",{}).get("avg_score",50)
+    economy_sc   = d.get("economy",{}).get("avg_score",50)
+    infra_sc     = d.get("infrastructure",{}).get("avg_score",50)
+    resources_sc = (d.get("energy",{}).get("avg_score",50) +
+                    d.get("water",{}).get("avg_score",50) +
+                    d.get("food",{}).get("avg_score",50)) / 3.0
+    geo_sc       = round(sum(
+        int(s.get("risk_score",50) or 50) for s in snapshots
+    ) / max(1,len(snapshots)),1)
+
+    psi = _psi(climate_sc, economy_sc, infra_sc, resources_sc, geo_sc)
+    grade = _psi_grade(psi)
+
+    # Trend: compare PSI to previous V11 alert
+    planet_d = _v12_load("v11_planetary_alerts.json")
+    prev_risk = planet_d.get("system_avg_risk",psi)
+    psi_trend = "rising" if psi > prev_risk + 2 else "falling" if psi < prev_risk - 2 else "stable"
+
+    return {
+        "grdf_version":       "12.0",
+        "date":               TODAY,
+        "generated_at":       datetime.now(timezone.utc).isoformat(),
+        "planetary_stress_index": psi,
+        "psi_grade":          grade,
+        "psi_trend":          psi_trend,
+        "components": {
+            "climate":        round(climate_sc,1),
+            "economy":        round(economy_sc,1),
+            "infrastructure": round(infra_sc,1),
+            "resources":      round(resources_sc,1),
+            "geopolitics":    round(geo_sc,1),
+        },
+        "weights":            _V12_PSI_WEIGHTS,
+    }
+
+
+# ── Phase 5: Global Resilience Engine ────────────────────────────────────
+
+def _build_v12_resilience(snapshots: list) -> dict:
+    """
+    Phase 5: Compute global resilience per domain.
+    resilience_score = 100 - mean(domain risk across all countries).
+    """
+    domain_proxy = {
+        "energy_resilience":         "infrastructure",
+        "food_resilience":           "social",
+        "water_resilience":          "climate",
+        "economic_resilience":       "economic",
+        "infrastructure_resilience": "infrastructure",
+        "cyber_resilience":          "cyber",
+    }
+
+    resilience: dict[str, dict] = {}
+    for res_dom, grdf_dom in domain_proxy.items():
+        scores = []
+        for snap in snapshots:
+            dom_s = _get_domain_scores(snap["country"], snap)
+            scores.append(dom_s.get(grdf_dom,{}).get("score",50))
+        avg_risk = round(sum(scores)/max(1,len(scores)),1)
+        res_score = max(5, min(95, round(100 - avg_risk)))
+        resilience[res_dom] = {
+            "resilience_score": res_score,
+            "avg_risk":         avg_risk,
+            "grade":            ("high" if res_score >= 65 else
+                                  "moderate" if res_score >= 45 else "low"),
+        }
+
+    global_res = round(sum(v["resilience_score"] for v in resilience.values())/max(1,len(resilience)),1)
+
+    return {
+        "grdf_version":          "12.0",
+        "date":                  TODAY,
+        "generated_at":          datetime.now(timezone.utc).isoformat(),
+        "global_resilience":     global_res,
+        "resilience_grade":      ("high" if global_res>=65 else "moderate" if global_res>=45 else "low"),
+        "domains":               resilience,
+        "weakest_domain":        min(resilience.items(), key=lambda x: x[1]["resilience_score"])[0],
+        "strongest_domain":      max(resilience.items(), key=lambda x: x[1]["resilience_score"])[0],
+    }
+
+
+# ── Phase 6: Planetary Scenario Simulator ────────────────────────────────
+
+def _v12_project_scenario(psi: float, delta: float, horizon: str,
+                            sc_class: str) -> dict:
+    """
+    Phase 6: Project PSI for one scenario × horizon combination.
+    Multipliers similar to V4 but with 6 time horizons.
+    """
+    _mults = {
+        "baseline":       {"mult":1.00,"drift":1.00},
+        "disruption":     {"mult":1.25,"drift":1.50},
+        "crisis":         {"mult":1.55,"drift":2.00},
+        "recovery":       {"mult":0.85,"drift":0.50},
+        "transformation": {"mult":0.75,"drift":0.30},
+    }
+    _horizon_days = {"30d":30,"90d":90,"1yr":365,"3yr":1095,"5yr":1825,"10yr":3650}
+    days  = _horizon_days.get(horizon, 365)
+    sc    = _mults.get(sc_class, _mults["baseline"])
+    damp  = 1.0 / (1.0 + days / 365.0)
+    drift = delta * sc["drift"] * damp * days / 7
+    raw   = (psi + drift) * sc["mult"]
+    score = max(5, min(97, round(raw)))
+    conf  = round(max(0.15, 0.85 - days * 0.00015), 2)
+    return {"score":score,"confidence":conf}
+
+
+def _build_v12_scenarios(psi: float, snapshots: list) -> dict:
+    """Phase 6: 5 scenario classes × 6 time horizons."""
+    # Mean velocity from all countries
+    deltas = [abs(float(s.get("delta",0) or 0)) for s in snapshots]
+    mean_delta = round(sum(deltas)/max(1,len(deltas)),2)
+
+    scenarios: dict = {}
+    for sc_class in _V12_SCENARIO_CLASSES:
+        horizons: dict = {}
+        for hz in _V12_FC_HORIZONS_V12:
+            horizons[hz] = _v12_project_scenario(psi, mean_delta, hz, sc_class)
+        scenarios[sc_class] = horizons
+
+    # Most probable based on PSI trend
+    psi_trend = _v12_load("v12_planetary_stress.json").get("psi_trend","stable")
+    most_probable = ("disruption" if psi_trend == "rising" else
+                     "recovery"   if psi_trend == "falling" else "baseline")
+
+    return {
+        "grdf_version":    "12.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "current_psi":     round(psi),
+        "mean_delta":      mean_delta,
+        "scenarios":       scenarios,
+        "most_probable":   most_probable,
+        "horizons":        _V12_FC_HORIZONS_V12,
+    }
+
+
+# ── Phase 7: Civilization Stability Engine ────────────────────────────────
+
+def _csi(resilience: float, governance: float, adaptability: float) -> float:
+    """
+    CSI = resilience*0.40 + governance*0.30 + adaptability*0.30
+    All 0-100, output 0-100.
+    """
+    return max(0, min(100, round(resilience*0.40 + governance*0.30 + adaptability*0.30)))
+
+
+def _csi_grade(score: float) -> str:
+    if score >= 70: return "stable"
+    if score >= 45: return "fragile"
+    return "unstable"
+
+
+def _build_v12_civilization_stability(resilience: dict, governance: dict) -> dict:
+    """
+    Phase 7: CSI = resilience*0.40 + governance*0.30 + adaptability*0.30
+    governance   = from V11 governance score
+    adaptability = proxy from V7 learning signal
+    resilience   = global_resilience from Phase 5
+    """
+    global_res   = float(resilience.get("global_resilience",50))
+    gov_score    = float(governance.get("avg_governance_score",60))
+    # Adaptability: from V11 learning
+    learn_d      = _v12_load("v11_learning_engine.json")
+    adapt_signal = float(learn_d.get("learning_signal",50))
+
+    csi   = _csi(global_res, gov_score, adapt_signal)
+    grade = _csi_grade(csi)
+
+    return {
+        "grdf_version":               "12.0",
+        "date":                       TODAY,
+        "generated_at":               datetime.now(timezone.utc).isoformat(),
+        "civilization_stability_index": csi,
+        "csi_grade":                  grade,
+        "components": {
+            "resilience":    round(global_res,1),
+            "governance":    round(gov_score,1),
+            "adaptability":  round(adapt_signal,1),
+        },
+        "weights":                    _V12_CSI_WEIGHTS,
+        "interpretation": (
+            "System is stable and capable of absorbing shocks."
+            if csi >= 70 else
+            "System is fragile; multiple simultaneous shocks pose transition risk."
+            if csi >= 45 else
+            "System is unstable; systemic disruption likely without intervention."
+        ),
+    }
+
+
+# ── Phase 8: Planetary Coordination Network ───────────────────────────────
+
+def _build_v12_coordination_network(snapshots: list) -> dict:
+    """
+    Phase 8: Aggregate V11 cross-border coordination metrics into
+    planetary-level coordination efficiency and response capacity.
+    """
+    cb_d        = _v12_load("v11_cross_border_coordination.json")
+    gov_d       = _v12_load("v11_governance.json")
+
+    avg_eff     = float(cb_d.get("avg_coord_efficiency",50))
+    avg_stab    = float(cb_d.get("avg_stability",50))
+    blocks      = cb_d.get("coordination_blocks",[])
+    gov_grade   = gov_d.get("governance_grade","moderate")
+    avg_gov     = float(gov_d.get("avg_governance_score",60))
+
+    # Cross-region alignment: fraction of blocks with coord_efficiency >= 60
+    n_aligned   = sum(1 for b in blocks if b.get("coordination_efficiency",0) >= 60)
+    alignment   = round(n_aligned / max(1,len(blocks)) * 100)
+
+    # Shared dependencies: count of shared risk domains across regions
+    dep_count: dict = {}
+    for b in blocks:
+        for d in b.get("shared_risks",[]):
+            dep_count[d] = dep_count.get(d,0)+1
+    top_shared = sorted(dep_count.items(), key=lambda x:-x[1])[:5]
+
+    # Global response capacity (0-100)
+    response_cap = round((avg_eff*0.4 + avg_gov*0.3 + avg_stab*0.3))
+
+    return {
+        "grdf_version":             "12.0",
+        "date":                     TODAY,
+        "generated_at":             datetime.now(timezone.utc).isoformat(),
+        "coordination_efficiency":  avg_eff,
+        "cross_region_alignment":   alignment,
+        "shared_dependencies":      [{"domain":d,"count":c} for d,c in top_shared],
+        "global_response_capacity": response_cap,
+        "response_grade":           ("strong" if response_cap>=70 else "moderate" if response_cap>=45 else "weak"),
+        "governance_context":       gov_grade,
+        "regional_stability_avg":   avg_stab,
+        "total_regions":            len(blocks),
+    }
+
+
+# ── Phase 9: Planetary Alert System ──────────────────────────────────────
+
+def _build_v12_planetary_alerts(psi: float, flows: dict,
+                                  csi: dict, twin: dict) -> dict:
+    """
+    Phase 9:
+    planetary_alert = max(planetary_stress, cascading_failures, systemic_disruptions)
+
+    planetary_stress  → alert from PSI
+    cascading_failures→ alert from avg_disruption of flows
+    systemic_disruptions → alert from CSI grade
+    """
+    _alert_lev = ["GREEN","YELLOW","ORANGE","RED","BLACK"]
+    _ord       = lambda l: {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}.get(l,0)
+
+    # PSI → alert
+    psi_grade  = _psi_grade(psi)
+    psi_ord    = {"stable":0,"moderate":1,"elevated":2,"critical":3}.get(psi_grade,0)
+    psi_alert  = _alert_lev[psi_ord]
+
+    # Flow disruption → alert
+    avg_disrupt = float(flows.get("avg_disruption",0))
+    if avg_disrupt >= 0.60:   flow_alert="RED"
+    elif avg_disrupt >= 0.40: flow_alert="ORANGE"
+    elif avg_disrupt >= 0.20: flow_alert="YELLOW"
+    else:                     flow_alert="GREEN"
+
+    # CSI → alert
+    csi_grade   = csi.get("csi_grade","stable")
+    csi_alert   = {"stable":"GREEN","fragile":"ORANGE","unstable":"RED"}.get(csi_grade,"GREEN")
+
+    # planetary_alert = max of three
+    planet_ord  = max(_ord(psi_alert), _ord(flow_alert), _ord(csi_alert))
+    planet_alert= _alert_lev[planet_ord]
+
+    # System status string for dashboard
+    planet_status = ("systemic" if planet_ord >= 4 else "critical" if planet_ord >= 3
+                      else "elevated" if planet_ord >= 2 else
+                      "moderate" if planet_ord >= 1 else "stable")
+
+    return {
+        "grdf_version":    "12.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "planetary_alert": planet_alert,
+        "planet_status":   planet_status,
+        "alert_ord":       planet_ord,
+        "components": {
+            "psi_alert":       psi_alert,
+            "flow_alert":      flow_alert,
+            "csi_alert":       csi_alert,
+        },
+        "planetary_stress_index": round(psi),
+        "avg_flow_disruption":   avg_disrupt,
+        "csi":                   csi.get("civilization_stability_index",50),
+    }
+
+
+# ── Phase 10: Planetary Intelligence Dashboard ────────────────────────────
+
+def _save_v12_dashboard(snapshots: list,
+                         twin: dict, flows: dict, stress: dict,
+                         resilience: dict, scenarios: dict,
+                         csi: dict, coord: dict, alerts: dict) -> None:
+    """
+    Phase 10: 12-layer Planetary Intelligence Dashboard.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Layer 1: global_risk_map
+    risk_map = sorted(
+        [{"country":s["country"],"risk_score":int(s.get("risk_score",50) or 50),
+          "alert_level":s.get("alert_level","NONE") or "NONE"}
+         for s in snapshots], key=lambda x:-x["risk_score"])
+
+    # Layer 2: earth_systems_graph summary
+    esg = _v12_load("v12_earth_systems_graph.json")
+    earth_sys = {"node_count":esg.get("node_count",0),"edge_count":esg.get("edge_count",0)}
+
+    # Layer 3-9: domain layers from twin
+    domain_layers = {
+        "climate_layer":        twin.get("domains",{}).get("climate",{}),
+        "energy_layer":         twin.get("domains",{}).get("energy",{}),
+        "food_layer":           twin.get("domains",{}).get("food",{}),
+        "water_layer":          twin.get("domains",{}).get("water",{}),
+        "economy_layer":        twin.get("domains",{}).get("economy",{}),
+        "infrastructure_layer": twin.get("domains",{}).get("infrastructure",{}),
+        "cyber_layer":          twin.get("domains",{}).get("cyber",{}),
+    }
+
+    # Layer 10: scenario_layer
+    scenario_layer = {
+        "most_probable":    scenarios.get("most_probable","baseline"),
+        "psi_30d":          scenarios.get("scenarios",{}).get("baseline",{}).get("30d",{}).get("score",0),
+        "psi_1yr":          scenarios.get("scenarios",{}).get("baseline",{}).get("1yr",{}).get("score",0),
+    }
+
+    # Layer 11: resilience_layer
+    res_layer = {
+        "global_resilience": resilience.get("global_resilience",50),
+        "weakest":           resilience.get("weakest_domain","?"),
+        "strongest":         resilience.get("strongest_domain","?"),
+    }
+
+    # Layer 12: planetary_alert_layer
+    alert_layer = {
+        "planetary_alert": alerts.get("planetary_alert","GREEN"),
+        "planet_status":   alerts.get("planet_status","stable"),
+        "psi":             alerts.get("planetary_stress_index",0),
+        "csi":             csi.get("civilization_stability_index",50),
+    }
+
+    # Summary
+    summary = {
+        "composite_score":   twin.get("composite_score",50),
+        "planet_grade":      twin.get("planet_grade","stable"),
+        "psi":               stress.get("planetary_stress_index",0),
+        "csi":               csi.get("civilization_stability_index",50),
+        "global_resilience": resilience.get("global_resilience",50),
+        "worst_flow":        flows.get("worst_flow","none"),
+        "response_capacity": coord.get("global_response_capacity",50),
+        "planetary_alert":   alerts.get("planetary_alert","GREEN"),
+        "planet_status":     alerts.get("planet_status","stable"),
+    }
+
+    with open(GRDF_DIR / "v12_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":          "12.0",
+            "date":                  TODAY,
+            "generated_at":          now_ts,
+            "summary":               summary,
+            "global_risk_map":       risk_map,
+            "earth_systems_graph":   earth_sys,
+            **domain_layers,
+            "scenario_layer":        scenario_layer,
+            "resilience_layer":      res_layer,
+            "planetary_alert_layer": alert_layer,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V12] Phase 10: Planetary Intelligence Dashboard (alert={alerts.get('planetary_alert','?')})", file=sys.stderr)
+
+
+# ── V12 Orchestrator ──────────────────────────────────────────────────────
+
+def save_grdf_v12(snapshots: list) -> None:
+    """
+    GRDF V12 -- Planetary Intelligence System.
+    Dependency: V1->...->V11->V12
+    Reads: v1..v11 outputs.  Writes: v12_* only.
+    V1/V2/V3/V4/V5/V6/V7/V8/V9/V10/V11 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Phase 1
+    try:
+        twin = _build_v12_planetary_twin(snapshots)
+        with open(GRDF_DIR / "v12_planetary_twin.json","w") as f:
+            json.dump(twin, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 1: planetary twin composite={twin['composite_score']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] twin: {e}", file=sys.stderr)
+        twin = {"domains":{},"composite_score":50,"planet_grade":"stable","total_countries":0}
+
+    # Phase 2
+    try:
+        esg = _build_v12_earth_systems_graph(snapshots)
+        with open(GRDF_DIR / "v12_earth_systems_graph.json","w") as f:
+            json.dump(esg, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 2: earth graph {esg['node_count']} nodes {esg['edge_count']} edges", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] earth graph: {e}", file=sys.stderr)
+
+    # Phase 3
+    try:
+        flows = _build_v12_global_flows(snapshots)
+        with open(GRDF_DIR / "v12_global_flows.json","w") as f:
+            json.dump(flows, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 3: flows worst={flows['worst_flow']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] flows: {e}", file=sys.stderr)
+        flows = {"worst_flow":"none","avg_disruption":0.2,"flows":[]}
+
+    # Phase 4
+    try:
+        stress = _build_v12_planetary_stress(snapshots, twin)
+        with open(GRDF_DIR / "v12_planetary_stress.json","w") as f:
+            json.dump(stress, f, ensure_ascii=False, indent=2)
+        psi = float(stress["planetary_stress_index"])
+        print(f"[GRDF-V12] Phase 4: PSI={psi} [{stress['psi_grade']}]", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] PSI: {e}", file=sys.stderr)
+        stress = {"planetary_stress_index":50,"psi_grade":"moderate","psi_trend":"stable"}
+        psi = 50.0
+
+    # Phase 5
+    try:
+        resil = _build_v12_resilience(snapshots)
+        with open(GRDF_DIR / "v12_resilience.json","w") as f:
+            json.dump(resil, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 5: global resilience={resil['global_resilience']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] resilience: {e}", file=sys.stderr)
+        resil = {"global_resilience":50,"resilience_grade":"moderate","domains":{},"weakest_domain":"?","strongest_domain":"?"}
+
+    # Phase 6
+    try:
+        scenarios = _build_v12_scenarios(psi, snapshots)
+        with open(GRDF_DIR / "v12_scenarios.json","w") as f:
+            json.dump(scenarios, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 6: scenarios most_probable={scenarios['most_probable']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] scenarios: {e}", file=sys.stderr)
+        scenarios = {"most_probable":"baseline","scenarios":{},"current_psi":int(psi)}
+
+    # Phase 7
+    try:
+        gov_d = _v12_load("v11_governance.json")
+        csi   = _build_v12_civilization_stability(resil, gov_d)
+        with open(GRDF_DIR / "v12_civilization_stability.json","w") as f:
+            json.dump(csi, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 7: CSI={csi['civilization_stability_index']} [{csi['csi_grade']}]", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] CSI: {e}", file=sys.stderr)
+        csi = {"civilization_stability_index":55,"csi_grade":"fragile"}
+
+    # Phase 8
+    try:
+        coord = _build_v12_coordination_network(snapshots)
+        with open(GRDF_DIR / "v12_coordination_network.json","w") as f:
+            json.dump(coord, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 8: coord efficiency={coord['coordination_efficiency']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] coord: {e}", file=sys.stderr)
+        coord = {"coordination_efficiency":50,"global_response_capacity":50,"response_grade":"moderate"}
+
+    # Phase 9
+    try:
+        alerts = _build_v12_planetary_alerts(psi, flows, csi, twin)
+        with open(GRDF_DIR / "v12_planetary_alerts.json","w") as f:
+            json.dump(alerts, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V12] Phase 9: planetary_alert={alerts['planetary_alert']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V12] alerts: {e}", file=sys.stderr)
+        alerts = {"planetary_alert":"GREEN","planet_status":"stable","alert_ord":0}
+
+    # Phase 10
+    try:
+        _save_v12_dashboard(snapshots, twin, flows, stress,
+                            resil, scenarios, csi, coord, alerts)
+    except Exception as e:
+        print(f"[GRDF-V12] dashboard: {e}", file=sys.stderr)
+
+    print("[GRDF-V12] Planetary Intelligence System OPERATIONAL.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -15920,6 +16692,7 @@ def main():
     save_grdf_v9(snapshots)
     save_grdf_v10(snapshots)
     save_grdf_v11(snapshots)
+    save_grdf_v12(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
