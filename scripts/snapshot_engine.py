@@ -13461,6 +13461,762 @@ def save_grdf_v8(snapshots: list) -> None:
     print(f"[GRDF-V8] All 10 phases complete. {len(all_ranked)} countries processed.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V9 -- Autonomous Strategic Intelligence
+#
+# "What must be done automatically right now, given all scenarios?"
+#
+# Phase 1:  Global Action Candidates     -> v9_action_candidates_{CC}.json
+# Phase 2:  Autonomous Priority Score    -> v9_priority_score_{CC}.json
+# Phase 3:  Resource Allocation Engine   -> v9_resource_allocation_{CC}.json
+# Phase 4:  Multi-Risk Optimization      -> v9_multi_risk_plan_{CC}.json
+# Phase 5:  Autonomous Escalation Logic  -> v9_escalation_{CC}.json
+# Phase 6:  Dynamic Playbook Generator   -> v9_dynamic_playbook_{CC}.json
+# Phase 7:  Autonomous Scenario Switching-> v9_active_scenario_{CC}.json
+# Phase 8:  Strategic Coordination Score -> v9_coordination_{CC}.json
+# Phase 9:  Autonomous Confidence        -> v9_autonomous_confidence_{CC}.json
+# Phase 10: Global Autonomous Dashboard  -> v9_dashboard.json
+#
+# Reads: v1..v8 outputs (read-only).
+# Writes: v9_* only.  V1-V8 NEVER modified.
+# =========================================================================
+
+# APS thresholds (Phase 2)
+_V9_APS_GRADES = [(80,"critical"),(60,"high"),(40,"moderate"),(0,"low")]
+
+# Escalation levels (Phase 5)
+_V9_ESC_LEVELS = [(85,"BLACK"),(70,"RED"),(55,"ORANGE"),(35,"YELLOW"),(0,"GREEN")]
+
+# Resource types (Phase 3)
+_V9_RESOURCE_TYPES = ["budget","time","personnel","infrastructure","logistics"]
+
+# Dynamic playbook buckets (Phase 6)
+_V9_PLAYBOOK_BUCKETS = ["24h","7d","30d","90d","1yr"]
+
+# Scenario switch triggers (Phase 7)
+_V9_SWITCH_TRIGGERS = [
+    "probability_change","tte_change","new_risk","cascade_effect"]
+
+
+def _v9_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def _v9_aps_grade(score: float) -> str:
+    for thr, grade in _V9_APS_GRADES:
+        if score >= thr:
+            return grade
+    return "low"
+
+
+def _v9_esc_level(score: float) -> str:
+    for thr, level in _V9_ESC_LEVELS:
+        if score >= thr:
+            return level
+    return "GREEN"
+
+
+# ── Phase 1: Global Action Candidates ────────────────────────────────────
+
+def _build_v9_action_candidates(iso2: str, snap: dict) -> dict:
+    """
+    Phase 1: Pull top actions from V8 ranked responses, playbook, and
+    mitigation scores to form the V9 global action pool for this country.
+    """
+    rank_d  = _v9_load(f"v8_response_rank_{iso2}.json")
+    pb_d    = _v9_load(f"v8_playbook_{iso2}.json")
+    mit_d   = _v9_load(f"v8_mitigation_{iso2}.json")
+    dc_d    = _v9_load(f"v8_decision_confidence_{iso2}.json")
+
+    # V8 top-10 ranked actions
+    v8_top  = (rank_d.get("top10") or [])[:10]
+    # V8 immediate playbook actions
+    imm     = (pb_d.get("playbook") or {}).get("immediate", [])[:3]
+    # V8 top-3 mitigations
+    mit_top = (mit_d.get("mitigations") or [])[:3]
+
+    # Merge and deduplicate by action id
+    seen_ids: set = set()
+    candidates  = []
+    for act in v8_top + imm + mit_top:
+        aid = act.get("id","?")
+        if aid in seen_ids:
+            continue
+        seen_ids.add(aid)
+        candidates.append({
+            "id":           aid,
+            "label":        act.get("label","?"),
+            "domain":       act.get("domain","?"),
+            "rank_score":   act.get("rank_score", act.get("mitigation_score", 50)),
+            "des":          act.get("des", act.get("mitigation_score", 50)),
+            "speed_days":   act.get("speed_days", act.get("speed", 180)),
+            "source":       "v8_rank" if act in v8_top else "v8_playbook" if act in imm else "v8_mitigation",
+        })
+
+    dc_score = float(dc_d.get("decision_confidence", 60))
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "9.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "n_candidates":     len(candidates),
+        "candidates":       sorted(candidates, key=lambda x: -x["rank_score"]),
+        "decision_confidence": dc_score,
+        "ews_context":      float((_v9_load(f"v7_warning_score_{iso2}.json")).get("early_warning_score", 40)),
+    }
+
+
+# ── Phase 2: Autonomous Priority Score ───────────────────────────────────
+
+def _aps(impact: float, urgency: float, feas: float, conf: float) -> float:
+    """
+    APS = impact*0.35 + urgency*0.25 + feasibility*0.20 + confidence*0.20
+    All 0-100 inputs, output 0-100.
+    """
+    return max(0, min(100, round(impact*0.35 + urgency*0.25 + feas*0.20 + conf*0.20)))
+
+
+def _build_v9_priority_score(iso2: str, snap: dict, cands: dict) -> dict:
+    """Phase 2: compute APS for each candidate action."""
+    warn_d  = _v9_load(f"v7_warning_score_{iso2}.json")
+    ews     = float(warn_d.get("early_warning_score", 40))
+    dc      = float(cands.get("decision_confidence", 60))
+
+    scored = []
+    for act in cands.get("candidates", []):
+        impact  = float(act.get("des", 50))
+        urgency = ews                              # EWS drives urgency
+        feas    = float(act.get("des", 50))        # DES proxies feasibility
+        # Speed bonus: faster actions get feasibility boost
+        speed   = act.get("speed_days", 180)
+        feas_adj= min(100, feas + max(0, (180 - speed) / 18))  # +1 per 18d faster
+        aps     = _aps(impact, urgency, feas_adj, dc)
+        scored.append({
+            "id":           act["id"],
+            "label":        act["label"],
+            "domain":       act["domain"],
+            "aps":          aps,
+            "aps_grade":    _v9_aps_grade(aps),
+            "impact":       round(impact),
+            "urgency":      round(urgency),
+            "feasibility":  round(feas_adj),
+            "confidence":   round(dc),
+            "speed_days":   speed,
+        })
+    scored.sort(key=lambda x: -x["aps"])
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "9.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "top_action":       scored[0]["label"] if scored else "none",
+        "top_aps":          scored[0]["aps"]   if scored else 0,
+        "avg_aps":          round(sum(s["aps"] for s in scored)/max(1,len(scored)),1),
+        "scored_actions":   scored,
+    }
+
+
+# ── Phase 3: Resource Allocation Engine ──────────────────────────────────
+
+def _rae(priority: float, resource_avail: float, impl_speed: float) -> float:
+    """
+    RAE = priority*0.50 + resource_availability*0.30 + implementation_speed*0.20
+    """
+    return max(0, min(100, round(priority*0.50 + resource_avail*0.30 + impl_speed*0.20)))
+
+
+def _build_v9_resource_allocation(iso2: str, snap: dict, priority: dict) -> dict:
+    """
+    Phase 3: Allocate resources across top actions.
+    resource_availability = proxy from resilience (V4 stress test).
+    """
+    stress_d = _v9_load("v4_stress_tests.json")
+    st_rec   = next((r for r in stress_d.get("stress_tests",[]) if r.get("country")==iso2), {})
+    resilience = float(st_rec.get("resilience", 50))
+    resource_avail = resilience           # resilient countries have more available resources
+
+    allocations = []
+    scored = priority.get("scored_actions", [])
+    total_aps = max(1, sum(s["aps"] for s in scored[:5]))
+
+    for act in scored[:5]:
+        speed_days  = act.get("speed_days", 180)
+        # Normalised implementation speed 0-100 (7d=100, 730d=0)
+        impl_speed  = max(0, min(100, round((730 - speed_days) / 7.23)))
+        rae_score   = _rae(act["aps"], resource_avail, impl_speed)
+        # Budget share: proportional to APS weight in top-5
+        budget_pct  = round(act["aps"] / total_aps * 100, 1)
+
+        allocations.append({
+            "id":               act["id"],
+            "label":            act["label"],
+            "rae_score":        rae_score,
+            "budget_pct":       budget_pct,
+            "resource_types":   {
+                "budget":         round(budget_pct),
+                "time":           speed_days,
+                "personnel":      round(rae_score * 0.5),
+                "infrastructure": round(rae_score * 0.3),
+                "logistics":      round(rae_score * 0.2),
+            },
+        })
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "9.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "resource_availability": round(resource_avail),
+        "top_allocation":   allocations[0]["label"] if allocations else "none",
+        "allocations":      allocations,
+        "total_budget_tracked": sum(a["budget_pct"] for a in allocations),
+    }
+
+
+# ── Phase 4: Multi-Risk Optimization ─────────────────────────────────────
+
+def _build_v9_multi_risk_plan(iso2: str, snap: dict, priority: dict) -> dict:
+    """
+    Phase 4: Generate an optimized cross-domain action plan.
+    Ensures at least one action per active risk domain.
+    """
+    dom_s = _get_domain_scores(iso2, snap)
+    active_domains = sorted(
+        [(d, v["score"]) for d, v in dom_s.items() if v["score"] >= 45],
+        key=lambda x: -x[1]
+    )
+
+    scored_acts = priority.get("scored_actions", [])
+    # Assign top action per domain
+    domain_coverage: dict = {}
+    global_actions  = []
+
+    for act in scored_acts:
+        dom = act["domain"]
+        if dom not in domain_coverage:
+            domain_coverage[dom] = act
+            global_actions.append({
+                "priority":    len(global_actions)+1,
+                "domain":      dom,
+                "action_id":   act["id"],
+                "action":      act["label"],
+                "aps":         act["aps"],
+            })
+
+    # Fill uncovered active domains with generic action
+    for dom, score in active_domains:
+        if dom not in domain_coverage:
+            global_actions.append({
+                "priority":   len(global_actions)+1,
+                "domain":     dom,
+                "action_id":  "ACT-GEN",
+                "action":     f"Monitor and assess {dom} risk",
+                "aps":        round(score * 0.5),
+            })
+
+    # Optimization score: fraction of active domains covered
+    n_covered = len(domain_coverage)
+    n_active  = max(1, len(active_domains))
+    opt_score = round(n_covered / n_active * 100)
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "9.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "active_domains_n": n_active,
+        "covered_domains_n":n_covered,
+        "optimization_score": opt_score,
+        "multi_risk_plan":  global_actions[:7],
+    }
+
+
+# ── Phase 5: Autonomous Escalation Logic ─────────────────────────────────
+
+def _esc_index(risk_level: float, velocity: float, uncertainty: float) -> float:
+    """
+    Escalation Index = risk_level*0.40 + velocity*0.30 + uncertainty*0.30
+    All 0-100, output 0-100.
+    """
+    return max(0, min(100, round(risk_level*0.40 + velocity*0.30 + uncertainty*0.30)))
+
+
+def _build_v9_escalation(iso2: str, snap: dict) -> dict:
+    """
+    Phase 5: Autonomous escalation logic.
+    risk_level  = risk_score / 100 × 100
+    velocity    = |delta| * 5 (normalised)
+    uncertainty = (100 - decision_confidence)
+    """
+    risk_level  = int(snap.get("risk_score", 50) or 50)
+    delta       = abs(float(snap.get("delta", 0) or 0))
+    velocity    = min(100, round(delta * 5))
+
+    dc_d        = _v9_load(f"v8_decision_confidence_{iso2}.json")
+    dc          = float(dc_d.get("decision_confidence", 60))
+    uncertainty = max(0, round(100 - dc))
+
+    esc_idx   = _esc_index(risk_level, velocity, uncertainty)
+    esc_level = _v9_esc_level(esc_idx)
+
+    # Auto-trigger recommended actions based on escalation level
+    esc_triggers: list = []
+    if esc_idx >= 70:
+        esc_triggers.append("immediate_response_required")
+    if velocity >= 30:
+        esc_triggers.append("velocity_alert")
+    if uncertainty >= 50:
+        esc_triggers.append("high_uncertainty_flag")
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "9.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "escalation_index": esc_idx,
+        "escalation_level": esc_level,
+        "risk_level":       risk_level,
+        "velocity":         velocity,
+        "uncertainty":      uncertainty,
+        "auto_triggers":    esc_triggers,
+        "n_triggers":       len(esc_triggers),
+    }
+
+
+# ── Phase 6: Dynamic Playbook Generator ──────────────────────────────────
+
+def _build_v9_dynamic_playbook(iso2: str, snap: dict, priority: dict,
+                                esc: dict) -> dict:
+    """
+    Phase 6: Generate adaptive playbook for 24h / 7d / 30d / 90d / 1yr.
+    Buckets actions by speed_days + escalation level context.
+    """
+    esc_lvl   = esc.get("escalation_level","GREEN")
+    esc_ord   = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+    esc_boost = esc_ord.get(esc_lvl, 0)    # higher escalation → earlier buckets
+
+    def _bucket(speed_days: int, boost: int) -> str:
+        effective = max(0, speed_days - boost * 15)
+        if effective <= 1:   return "24h"
+        if effective <= 7:   return "7d"
+        if effective <= 30:  return "30d"
+        if effective <= 90:  return "90d"
+        return "1yr"
+
+    playbook: dict[str, list] = {b: [] for b in _V9_PLAYBOOK_BUCKETS}
+    for act in priority.get("scored_actions", []):
+        bucket = _bucket(act.get("speed_days", 180), esc_boost)
+        playbook[bucket].append({
+            "id":     act["id"],
+            "label":  act["label"],
+            "aps":    act["aps"],
+            "domain": act["domain"],
+        })
+
+    # Priority bucket = first non-empty bucket
+    priority_bucket = next((b for b in _V9_PLAYBOOK_BUCKETS if playbook[b]), "1yr")
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "9.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "escalation_level": esc_lvl,
+        "playbook":         playbook,
+        "priority_bucket":  priority_bucket,
+        "n_actions_total":  sum(len(v) for v in playbook.values()),
+    }
+
+
+# ── Phase 7: Autonomous Scenario Switching ───────────────────────────────
+
+def _build_v9_active_scenario(iso2: str, snap: dict) -> dict:
+    """
+    Phase 7: Determine the active scenario and detect any switch triggers.
+    Reads V5 scenarios + V7 probabilities to find whether the current
+    situation requires switching from baseline.
+    """
+    sc_d    = _v9_load(f"v5_scenarios_{iso2}.json")
+    prob_d  = _v9_load(f"v7_probability_{iso2}.json")
+    tte_d   = _v9_load(f"v7_tte_{iso2}.json")
+    trans_d = _v9_load(f"v5_transitions_{iso2}.json")
+
+    current = sc_d.get("most_probable","baseline")
+    p_mat   = float(prob_d.get("p_materialization", 30))
+    tte_cat = tte_d.get("time_to_event","1_year")
+
+    # Switch trigger evaluation
+    triggers_fired: list = []
+
+    # Trigger 1: materialization probability changed significantly
+    if p_mat >= 65:
+        triggers_fired.append({"trigger":"probability_change",
+                               "value": p_mat, "threshold":65})
+
+    # Trigger 2: TTE became urgent
+    if tte_cat in ("immediate","30_days","90_days"):
+        triggers_fired.append({"trigger":"tte_change",
+                               "tte_category": tte_cat})
+
+    # Trigger 3: New risk from signals
+    sig_d = _v9_load(f"v5_signals_{iso2}.json")
+    if sig_d.get("signal_grade","noise") in ("strong","critical"):
+        triggers_fired.append({"trigger":"new_risk",
+                               "signal_grade": sig_d.get("signal_grade")})
+
+    # Trigger 4: cascade effect
+    casc_d = _v9_load(f"v2_cascades_{iso2}.json")
+    if float(casc_d.get("max_cascade_score",0) or 0) >= 70:
+        triggers_fired.append({"trigger":"cascade_effect",
+                               "cascade_score": round(casc_d.get("max_cascade_score",0))})
+
+    # Determine recommended scenario (switch if triggered)
+    recommended = current
+    if triggers_fired:
+        if p_mat >= 80 or tte_cat in ("immediate","30_days"):
+            recommended = "worst"
+        elif p_mat >= 65 or tte_cat == "90_days":
+            recommended = "stress"
+        elif any(t["trigger"]=="probability_change" and t["value"]<40 for t in triggers_fired):
+            recommended = "best_case"
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "9.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "current_scenario": current,
+        "recommended_scenario": recommended,
+        "scenario_switch":  recommended != current,
+        "p_materialization":p_mat,
+        "tte_category":     tte_cat,
+        "triggers_fired":   triggers_fired,
+        "n_triggers":       len(triggers_fired),
+    }
+
+
+# ── Phase 8: Strategic Coordination Score ────────────────────────────────
+
+def _scs(alignment: float, timing: float, efficiency: float) -> float:
+    """
+    SCS = alignment*0.40 + timing*0.30 + efficiency*0.30
+    """
+    return max(0, min(100, round(alignment*0.40 + timing*0.30 + efficiency*0.30)))
+
+
+def _scs_grade(score: float) -> str:
+    if score >= 75: return "strong"
+    if score >= 50: return "moderate"
+    return "weak"
+
+
+def _build_v9_coordination(iso2: str, snap: dict, priority: dict,
+                            esc: dict, active_sc: dict) -> dict:
+    """
+    Phase 8: SCS = alignment*0.40 + timing*0.30 + efficiency*0.30
+    alignment  = % of active domains covered by top-5 actions
+    timing     = inverse of escalation index (faster decisions = better timing)
+    efficiency = average APS of top-5 actions
+    """
+    scored      = priority.get("scored_actions", [])[:5]
+    esc_idx     = float(esc.get("escalation_index", 50))
+    scenario_sw = active_sc.get("scenario_switch", False)
+
+    # Alignment: domain coverage
+    dom_s        = _get_domain_scores(iso2, snap)
+    active_doms  = {d for d, v in dom_s.items() if v["score"] >= 45}
+    covered_doms = {a["domain"] for a in scored}
+    alignment    = round(len(covered_doms & active_doms) / max(1, len(active_doms)) * 100)
+
+    # Timing: low escalation = more time to act = better timing
+    timing       = max(0, round(100 - esc_idx * 0.6))
+
+    # Efficiency: avg APS
+    efficiency   = round(sum(a["aps"] for a in scored) / max(1, len(scored)))
+
+    # Scenario switch penalty
+    if scenario_sw:
+        alignment  = max(0, alignment - 10)  # realignment needed
+
+    scs_score = _scs(alignment, timing, efficiency)
+
+    return {
+        "country":              iso2,
+        "country_name":         snap.get("country_name", iso2),
+        "date":                 TODAY,
+        "grdf_version":         "9.0",
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        "scs":                  scs_score,
+        "scs_grade":            _scs_grade(scs_score),
+        "alignment":            alignment,
+        "timing":               timing,
+        "efficiency":           efficiency,
+        "scenario_switch_active": scenario_sw,
+    }
+
+
+# ── Phase 9: Autonomous Confidence ────────────────────────────────────────
+
+def _ac(fc_conf: float, model_agreement: float, data_quality: float) -> float:
+    """
+    AC = forecast_confidence*0.40 + model_agreement*0.30 + data_quality*0.30
+    """
+    return max(0, min(100, round(fc_conf*0.40 + model_agreement*0.30 + data_quality*0.30)))
+
+
+def _build_v9_autonomous_confidence(iso2: str, snap: dict) -> dict:
+    """
+    Phase 9: Autonomous Confidence (AC) for V9 decisions.
+    Extends V8 DC with model agreement from MC simulations.
+    """
+    dc_d     = _v9_load(f"v8_decision_confidence_{iso2}.json")
+    mc_d     = _v9_load(f"v6_montecarlo_{iso2}.json")
+    fc_d     = _v9_load(f"v3_forecast_{iso2}.json")
+
+    fc_conf_raw = float((fc_d.get("horizons") or {}).get("30d", {}).get("confidence", 0.65) or 0.65)
+    fc_conf     = round(fc_conf_raw * 100)
+
+    # Model agreement: MC p50 vs forecast closeness (V8 uses same logic)
+    mc_p50   = float((mc_d.get("horizons") or {}).get("5yr", {}).get("p50", 50) or 50)
+    fc_365   = float((fc_d.get("horizons") or {}).get("365d", {}).get("score", 50) or 50)
+    agreement_raw = max(0.0, 1.0 - abs(mc_p50 - fc_365) / 50.0)
+    model_agreement = round(agreement_raw * 100)
+
+    # Data quality: count available V1-V8 artefacts
+    artefacts = [
+        f"v3_forecast_{iso2}.json", f"v5_signals_{iso2}.json",
+        f"v6_digital_twin_{iso2}.json", f"v7_warning_score_{iso2}.json",
+        f"v8_response_rank_{iso2}.json",
+    ]
+    present      = sum(1 for a in artefacts if (GRDF_DIR / a).exists())
+    data_quality = round(present / len(artefacts) * 100)
+
+    ac_score = _ac(fc_conf, model_agreement, data_quality)
+
+    return {
+        "country":           iso2,
+        "country_name":      snap.get("country_name", iso2),
+        "date":              TODAY,
+        "grdf_version":      "9.0",
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "autonomous_confidence": ac_score,
+        "ac_grade":          ("high" if ac_score >= 70 else "moderate" if ac_score >= 40 else "low"),
+        "components": {
+            "forecast_confidence": fc_conf,
+            "model_agreement":     model_agreement,
+            "data_quality":        data_quality,
+        },
+    }
+
+
+# ── Phase 10: Global Autonomous Dashboard ────────────────────────────────
+
+def _save_v9_dashboard(snapshots: list,
+                        all_priority: list, all_esc: list, all_rac: list,
+                        all_multi: list, all_pb: list, all_sc: list,
+                        all_coord: list, all_ac: list) -> None:
+    """Phase 10: 10-widget Global Autonomous Dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+    esc_ord = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+
+    # W1: Global Priorities — top APS per country
+    global_priorities = sorted(
+        [{"country":p["country"],"top_action":p["top_action"],"top_aps":p["top_aps"],"aps_grade":(_v9_aps_grade(p["top_aps"]))}
+         for p in all_priority if p.get("top_aps")],
+        key=lambda x: -x["top_aps"])[:10]
+
+    # W2: Active Risks — highest risk + highest esc
+    active_risks = sorted(
+        [{"country":e["country"],"risk_level":e["risk_level"],"esc_idx":e["escalation_index"],"esc_level":e["escalation_level"]}
+         for e in all_esc],
+        key=lambda x: (-esc_ord.get(x["esc_level"],0), -x["esc_idx"]))[:10]
+
+    # W3: Escalation Monitor — RED/BLACK countries
+    esc_monitor = [e for e in all_esc if esc_ord.get(e["escalation_level"],0) >= 3]
+    esc_monitor.sort(key=lambda x: -x["escalation_index"])
+
+    # W4: Resource Allocation — top allocation per country
+    resource_allocation = sorted(
+        [{"country":r["country"],"top_allocation":r["top_allocation"],
+          "resource_availability":r["resource_availability"]}
+         for r in all_rac],
+        key=lambda x: -x["resource_availability"])[:10]
+
+    # W5: Strategic Coordination — SCS distribution
+    coord_summary = sorted(
+        [{"country":c["country"],"scs":c["scs"],"scs_grade":c["scs_grade"],"alignment":c["alignment"]}
+         for c in all_coord],
+        key=lambda x: -x["scs"])[:10]
+
+    # W6: Dynamic Playbooks — how many have 24h priority actions
+    dynamic_playbooks = sorted(
+        [{"country":p["country"],"priority_bucket":p["priority_bucket"],
+          "n_actions":p["n_actions_total"],"esc_level":p["escalation_level"]}
+         for p in all_pb],
+        key=lambda x: esc_ord.get(x["esc_level"],0), reverse=True)[:10]
+
+    # W7: Scenario Switches — countries with active switch
+    scenario_switches = [
+        {"country":s["country"],"from":s["current_scenario"],"to":s["recommended_scenario"],
+         "p_mat":s["p_materialization"],"tte":s["tte_category"]}
+        for s in all_sc if s.get("scenario_switch")
+    ]
+
+    # W8: Autonomous Confidence
+    ac_ranking = sorted(
+        [{"country":a["country"],"ac":a["autonomous_confidence"],"grade":a["ac_grade"]}
+         for a in all_ac],
+        key=lambda x: -x["ac"])[:10]
+
+    # W9: Global Action Atlas
+    global_action_atlas = {p["country"]: {
+        "top_action": p["top_action"],
+        "top_aps":    p["top_aps"],
+        "esc_level":  next((e["escalation_level"] for e in all_esc if e.get("country")==p["country"]), "GREEN"),
+    } for p in all_priority}
+
+    # W10: Global Mission Status
+    avg_aps     = round(sum(p["top_aps"] for p in all_priority)/max(1,len(all_priority)),1)
+    avg_scs     = round(sum(c["scs"]     for c in all_coord)   /max(1,len(all_coord)),1)
+    avg_ac      = round(sum(a["autonomous_confidence"] for a in all_ac)/max(1,len(all_ac)),1)
+    black_n     = sum(1 for e in all_esc if e["escalation_level"]=="BLACK")
+    red_n       = sum(1 for e in all_esc if e["escalation_level"]=="RED")
+    switches_n  = len(scenario_switches)
+    mission_status = {
+        "avg_aps":           avg_aps,
+        "avg_scs":           avg_scs,
+        "avg_autonomous_confidence": avg_ac,
+        "critical_countries_n":   black_n + red_n,
+        "scenario_switches_n":    switches_n,
+        "countries_with_24h_action": sum(1 for p in all_pb if p["priority_bucket"]=="24h"),
+    }
+
+    with open(GRDF_DIR / "v9_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":         "9.0",
+            "date":                 TODAY,
+            "generated_at":         now_ts,
+            "global_priorities":    global_priorities,
+            "active_risks":         active_risks,
+            "escalation_monitor":   esc_monitor,
+            "resource_allocation":  resource_allocation,
+            "strategic_coordination": coord_summary,
+            "dynamic_playbooks":    dynamic_playbooks,
+            "scenario_switches":    scenario_switches,
+            "autonomous_confidence":ac_ranking,
+            "global_action_atlas":  global_action_atlas,
+            "global_mission_status":mission_status,
+        }, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V9] Phase 10: Global Autonomous Dashboard", file=sys.stderr)
+
+
+# ── V9 Orchestrator ───────────────────────────────────────────────────────
+
+def save_grdf_v9(snapshots: list) -> None:
+    """
+    GRDF V9 -- Autonomous Strategic Intelligence.
+    Dependency: V1->V2->...->V8->V9
+    Reads: v1..v8 outputs.  Writes: v9_* only.
+    V1/V2/V3/V4/V5/V6/V7/V8 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    all_priority: list = []
+    all_esc:      list = []
+    all_rac:      list = []
+    all_multi:    list = []
+    all_pb:       list = []
+    all_sc:       list = []
+    all_coord:    list = []
+    all_ac:       list = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Phase 1
+            cands = _build_v9_action_candidates(iso2, snap)
+            with open(GRDF_DIR / f"v9_action_candidates_{iso2}.json","w") as f:
+                json.dump(cands, f, ensure_ascii=False, indent=2)
+
+            # Phase 2
+            prio = _build_v9_priority_score(iso2, snap, cands)
+            prio["country"] = iso2
+            with open(GRDF_DIR / f"v9_priority_score_{iso2}.json","w") as f:
+                json.dump(prio, f, ensure_ascii=False, indent=2)
+            all_priority.append(prio)
+
+            # Phase 3
+            rac = _build_v9_resource_allocation(iso2, snap, prio)
+            rac["country"] = iso2
+            with open(GRDF_DIR / f"v9_resource_allocation_{iso2}.json","w") as f:
+                json.dump(rac, f, ensure_ascii=False, indent=2)
+            all_rac.append(rac)
+
+            # Phase 4
+            multi = _build_v9_multi_risk_plan(iso2, snap, prio)
+            with open(GRDF_DIR / f"v9_multi_risk_plan_{iso2}.json","w") as f:
+                json.dump(multi, f, ensure_ascii=False, indent=2)
+            all_multi.append(multi)
+
+            # Phase 5
+            esc = _build_v9_escalation(iso2, snap)
+            esc["country"] = iso2
+            with open(GRDF_DIR / f"v9_escalation_{iso2}.json","w") as f:
+                json.dump(esc, f, ensure_ascii=False, indent=2)
+            all_esc.append(esc)
+
+            # Phase 6
+            pb = _build_v9_dynamic_playbook(iso2, snap, prio, esc)
+            pb["country"] = iso2
+            with open(GRDF_DIR / f"v9_dynamic_playbook_{iso2}.json","w") as f:
+                json.dump(pb, f, ensure_ascii=False, indent=2)
+            all_pb.append(pb)
+
+            # Phase 7
+            active_sc = _build_v9_active_scenario(iso2, snap)
+            with open(GRDF_DIR / f"v9_active_scenario_{iso2}.json","w") as f:
+                json.dump(active_sc, f, ensure_ascii=False, indent=2)
+            all_sc.append(active_sc)
+
+            # Phase 8
+            coord = _build_v9_coordination(iso2, snap, prio, esc, active_sc)
+            with open(GRDF_DIR / f"v9_coordination_{iso2}.json","w") as f:
+                json.dump(coord, f, ensure_ascii=False, indent=2)
+            all_coord.append(coord)
+
+            # Phase 9
+            ac = _build_v9_autonomous_confidence(iso2, snap)
+            with open(GRDF_DIR / f"v9_autonomous_confidence_{iso2}.json","w") as f:
+                json.dump(ac, f, ensure_ascii=False, indent=2)
+            all_ac.append(ac)
+
+        except Exception as e:
+            print(f"[GRDF-V9] {iso2}: FAILED -- {e}", file=sys.stderr)
+
+    # Phase 10: Dashboard
+    _save_v9_dashboard(
+        snapshots, all_priority, all_esc, all_rac,
+        all_multi, all_pb, all_sc, all_coord, all_ac
+    )
+
+    print(f"[GRDF-V9] All 10 phases complete. {len(all_priority)} countries processed.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -13538,6 +14294,7 @@ def main():
     save_grdf_v6(snapshots)
     save_grdf_v7(snapshots)
     save_grdf_v8(snapshots)
+    save_grdf_v9(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
