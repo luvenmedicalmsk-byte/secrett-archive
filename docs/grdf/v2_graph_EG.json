@@ -2,67 +2,67 @@
   "country": "EG",
   "date": "2026-05-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-05-31T17:05:59.269635+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-05-31T20:58:12.578088+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-EG",
       "type": "Country",
       "label": "EG",
-      "score": 62,
+      "score": 78,
       "props": {
-        "risk_score": 62
+        "risk_score": 78
       }
     },
     {
       "id": "DOMAIN-EG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 45,
-      "trend": "stable"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 11,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 11,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-social",
       "type": "Domain",
       "label": "social",
-      "score": 23,
-      "trend": "stable"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 26,
-      "trend": "stable"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 6,
-      "trend": "stable"
+      "score": 3,
+      "trend": "up"
     },
     {
       "id": "DRIVER-EG-Geopolitical",
@@ -78,6 +78,13 @@
       "id": "DRIVER-EG-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-EG-Израильски",
+      "type": "Signal",
+      "label": "Израильский удар убивает как минимум дво",
+      "severity": 78,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -85,43 +92,43 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-economic",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-climate",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-technology",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-social",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-cyber",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.03
     },
     {
       "from": "DRIVER-EG-Geopolitical",
@@ -140,6 +147,33 @@
       "to": "COUNTRY-EG",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-EG-geopolitical",
+      "to": "DOMAIN-EG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-EG-infrastructure",
+      "to": "DOMAIN-EG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EG-economic",
+      "to": "DOMAIN-EG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-EG-Израильски",
+      "to": "DOMAIN-EG-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.78
     }
   ]
 }
