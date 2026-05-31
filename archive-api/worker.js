@@ -5470,6 +5470,119 @@ async function handleGRDF(request, env) {
     } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
   }
 
+
+  // ── V3 ROUTES — Forecast Intelligence ────────────────────────────────
+  // GET /api/grdf/forecast/:cc         → consensus forecast + confidence ± + scenarios
+  // GET /api/grdf/scenarios/:cc        → 4 scenario trajectories
+  // GET /api/grdf/trends/:cc           → trend analysis (direction, acceleration, volatility)
+  // GET /api/grdf/forecast/global      → global forecast map (all 25 countries)
+
+  // /api/grdf/forecast/global  (must check BEFORE /:cc to avoid cc="global")
+  if (seg[0] === 'forecast' && seg[1] === 'global') {
+    const ck = `grdf:v3fg:${tier}`;
+    if (env.EVENTS_KV) { try { const c=await env.EVENTS_KV.get(ck,{type:'json'}); if(c) return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS}); } catch(_){} }
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v3_forecast_global.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V3 global forecast not built yet — run snapshot engine'}),{status:404,headers:CORS});
+      // Tier filter: teaser = scores only, signal+ = full
+      const r = access === 'teaser'
+        ? {date:d.date,total_countries:d.total_countries,
+           forecasts:Object.fromEntries(Object.entries(d.forecasts||{}).map(([cc,v])=>[cc,{'30d':v['30d'],'trend':v.trend}])),tier}
+        : {...d, tier};
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300}); } catch(_){} }
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/forecast/:cc
+  if (seg[0] === 'forecast' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v3fc:${cc}:${tier}`;
+    if (env.EVENTS_KV) { try { const c=await env.EVENTS_KV.get(ck,{type:'json'}); if(c) return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS}); } catch(_){} }
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v3_forecast_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V3 forecast not built for '+cc}),{status:404,headers:CORS});
+      // Tier access:
+      // teaser:       30d score + trend + most_likely_scenario
+      // summary:      all horizons score + uncertainty + confidence
+      // full:         + scenarios + model_weights + cascade/corr inputs
+      // full+explain: + model_outputs per horizon
+      let r;
+      if (access === 'teaser') {
+        r = {country:d.country,country_name:d.country_name,date:d.date,tier,
+             trend_direction:d.trend_direction,most_likely_scenario:d.most_likely_scenario,
+             forecast_30d:d.horizons?.['30d']?.score,confidence_30d:d.horizons?.['30d']?.confidence,
+             confidence_summary:d.confidence_summary};
+      } else if (access === 'summary') {
+        const hzSummary = {};
+        for (const [hz,v] of Object.entries(d.horizons||{})) {
+          hzSummary[hz] = {score:v.score,uncertainty:v.uncertainty,confidence:v.confidence,
+                           interval_low:v.interval_low,interval_high:v.interval_high};
+        }
+        r = {country:d.country,country_name:d.country_name,date:d.date,tier,
+             trend_direction:d.trend_direction,trend_confidence:d.trend_confidence,
+             volatility:d.volatility,most_likely_scenario:d.most_likely_scenario,
+             base_score:d.base_score,effective_delta:d.effective_delta,
+             horizons:hzSummary,confidence_summary:d.confidence_summary};
+      } else {
+        const hzFiltered = {};
+        for (const [hz,v] of Object.entries(d.horizons||{})) {
+          hzFiltered[hz] = access==='full+explain' ? v
+            : {score:v.score,uncertainty:v.uncertainty,confidence:v.confidence,
+               interval_low:v.interval_low,interval_high:v.interval_high,
+               scenario_baseline:v.scenario_baseline,scenario_stress:v.scenario_stress};
+        }
+        r = {...d, horizons:hzFiltered, tier,
+             model_outputs: access==='full+explain' ? d.horizons : undefined};
+        delete r.model_outputs; // already in horizons for full+explain
+      }
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300}); } catch(_){} }
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/scenarios/:cc
+  if (seg[0] === 'scenarios' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access === 'teaser') return new Response(JSON.stringify({error:'Scenarios require Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v3_scenarios_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V3 scenarios not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d, tier}),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/trends/:cc
+  if (seg[0] === 'trends' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v3_trends_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V3 trends not built for '+cc}),{status:404,headers:CORS});
+      // Teaser: direction + score only
+      const r = access === 'teaser'
+        ? {country:cc,date:d.date,trend_direction:d.trend_direction,
+           trend_score:d.trend_score,current_score:d.current_score,tier}
+        : {...d, tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/v3/dashboard
+  if (seg[0]==='v3' && seg[1]==='dashboard') {
+    const ck = `grdf:v3dash:${tier}`;
+    if (env.EVENTS_KV) { try { const c=await env.EVENTS_KV.get(ck,{type:'json'}); if(c) return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS}); } catch(_){} }
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v3_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V3 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,top_escalating:d.top_escalating?.slice(0,3),
+           top_improving:d.top_improving?.slice(0,3),tier}
+        : {...d, tier};
+      if (env.EVENTS_KV) { try { await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300}); } catch(_){} }
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -5479,6 +5592,8 @@ async function handleGRDF(request, env) {
       '/api/grdf/cascades','/api/grdf/correlations','/api/grdf/warnings',
       '/api/grdf/drivers/:cc','/api/grdf/graph/:cc','/api/grdf/emerging',
       '/api/grdf/global-feed','/api/grdf/v2/dashboard',
+      '/api/grdf/forecast/:cc','/api/grdf/forecast/global',
+      '/api/grdf/scenarios/:cc','/api/grdf/trends/:cc','/api/grdf/v3/dashboard',
     ]
   }),{status:404,headers:CORS});
 }
