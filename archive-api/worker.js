@@ -6828,10 +6828,54 @@ async function handleGRDF(request, env) {
       '/api/grdf/v11/cascades','/api/grdf/v11/resources','/api/grdf/v11/missions',
       '/api/grdf/v11/coordination','/api/grdf/v11/learning','/api/grdf/v11/governance',
       '/api/grdf/v11/planetary-alerts',
+
+  // =========================================================================
+  // GRDF V13 -- Civilization Intelligence System API
+  // All V13 routes under /api/grdf/v13/
+  // =========================================================================
+  if (seg[0] === 'v13') {
+    const v13seg = seg[1] || 'dashboard';
+    const C13 = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const V13_FILES = {
+      'dashboard':              'docs/grdf/v13_dashboard.json',
+      'civilization-state':     'docs/grdf/v13_civilization_state.json',
+      'long-horizon':           'docs/grdf/v13_long_horizon.json',
+      'resource-limits':        'docs/grdf/v13_resource_limits.json',
+      'technology-transitions': 'docs/grdf/v13_technology_transitions.json',
+      'demographics':           'docs/grdf/v13_demographics.json',
+      'resilience':             'docs/grdf/v13_civilization_resilience.json',
+      'pathways':               'docs/grdf/v13_pathways.json',
+      'transitions':            'docs/grdf/v13_transitions.json',
+      'scenarios':              'docs/grdf/v13_century_scenarios.json',
+    };
+    const V13_SIGNAL_ONLY = new Set(['long-horizon','resource-limits','technology-transitions','demographics','pathways','transitions','scenarios']);
+    if (!V13_FILES[v13seg]) return new Response(JSON.stringify({error:'Unknown V13: '+v13seg, available:Object.keys(V13_FILES)}),{status:404,headers:C13});
+    if (V13_SIGNAL_ONLY.has(v13seg) && access==='teaser') return new Response(JSON.stringify({error:v13seg+' requires Signal tier'}),{status:403,headers:C13});
+    const ck = `grdf:v13:${v13seg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:C13});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, V13_FILES[v13seg], 300);
+      if (!d) return new Response(JSON.stringify({error:'V13 '+v13seg+' not built yet'}),{status:404,headers:C13});
+      let r;
+      if (access==='teaser') {
+        if (v13seg==='dashboard') r={date:d.date,civilization_status:d.civilization_status,cri:d.cri,psi_context:d.psi_context,pathway_explorer:d.pathway_explorer,century_scenarios:d.century_scenarios,tier};
+        else if (v13seg==='civilization-state') r={date:d.date,composite_score:d.composite_score,civilization_grade:d.civilization_grade,tier};
+        else if (v13seg==='resilience') r={date:d.date,civilization_resilience_index:d.civilization_resilience_index,cri_grade:d.cri_grade,tier};
+        else r={date:d.date,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:C13});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:C13});}
+  }
+
       '/api/grdf/v12/dashboard','/api/grdf/v12/planetary-twin','/api/grdf/v12/earth-systems',
       '/api/grdf/v12/global-flows','/api/grdf/v12/planetary-stress','/api/grdf/v12/resilience',
       '/api/grdf/v12/scenarios','/api/grdf/v12/civilization-stability',
       '/api/grdf/v12/coordination','/api/grdf/v12/planetary-alerts',
+      '/api/grdf/v13/dashboard','/api/grdf/v13/civilization-state','/api/grdf/v13/long-horizon',
+      '/api/grdf/v13/resource-limits','/api/grdf/v13/technology-transitions',
+      '/api/grdf/v13/demographics','/api/grdf/v13/resilience','/api/grdf/v13/pathways',
+      '/api/grdf/v13/transitions','/api/grdf/v13/scenarios',
     ]
   }),{status:404,headers:CORS});
 }
