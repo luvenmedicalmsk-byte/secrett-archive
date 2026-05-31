@@ -12016,6 +12016,763 @@ def save_grdf_v6(snapshots: list) -> None:
     print(f"[GRDF-V6] All 10 phases complete. Digital Twin operational.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V7 -- Strategic Early Warning System
+#
+# "What will happen next — and when?"
+#
+# Phase 1:  Event Candidate Generation  -> v7_event_candidates_{CC}.json
+# Phase 2:  Early Warning Score         -> v7_warning_score_{CC}.json
+# Phase 3:  Time-To-Event Estimation    -> v7_tte_{CC}.json
+# Phase 4:  Escalation Engine           -> v7_escalation_{CC}.json
+# Phase 5:  Trigger Monitor             -> v7_triggers_live_{CC}.json
+# Phase 6:  Alert Level Classification  -> v7_alerts_{CC}.json
+# Phase 7:  Materialization Probability -> v7_probability_{CC}.json
+# Phase 8:  Global Alert Network        -> v7_global_alert_network.json
+# Phase 9:  Top Risks Ranking           -> v7_top_risks.json
+# Phase 10: Strategic Dashboard         -> v7_dashboard.json
+#
+# Reads: v1..v6 outputs (read-only).
+# Writes: v7_* only.  V1-V6 NEVER modified.
+# =========================================================================
+
+# Alert levels (Phase 6)
+_V7_ALERT_LEVELS = [
+    (90, "BLACK"),
+    (75, "RED"),
+    (60, "ORANGE"),
+    (40, "YELLOW"),
+    (0,  "GREEN"),
+]
+
+# Time-to-event thresholds (Phase 3, spec)
+_V7_TTE_THRESHOLDS = [
+    (0,  15,  "immediate"),
+    (15, 30,  "30_days"),
+    (30, 45,  "90_days"),
+    (45, 60,  "180_days"),
+    (60, 75,  "1_year"),
+    (75, 90,  "3_years"),
+    (90, 101, "5_years"),
+]
+
+# Trigger classes (Phase 5)
+_V7_TRIGGER_CLASSES = [
+    "climate","economic","social","political",
+    "infrastructure","technology","conflict",
+]
+
+
+def _v7_alert_level(score: float) -> str:
+    for thr, level in _V7_ALERT_LEVELS:
+        if score >= thr:
+            return level
+    return "GREEN"
+
+
+def _v7_tte_category(tte_score: float) -> str:
+    for lo, hi, cat in _V7_TTE_THRESHOLDS:
+        if lo <= tte_score < hi:
+            return cat
+    return "5_years"
+
+
+def _v7_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+# ── Phase 1: Event Candidate Generation ──────────────────────────────────
+
+def _build_v7_event_candidates(iso2: str, snap: dict) -> dict:
+    """
+    Phase 1: Generate future event candidates from five sources:
+    - Weak signals (V5)
+    - Forecast anomalies (V3 high-delta horizons)
+    - Scenario transitions (V5 transition matrix)
+    - Cascade acceleration (V2 cascade score)
+    - Bifurcation shifts (V6 bifurcation score)
+    """
+    sig_d    = _v7_load(f"v5_signals_{iso2}.json")
+    fc_d     = _v7_load(f"v3_forecast_{iso2}.json")
+    trans_d  = _v7_load(f"v5_transitions_{iso2}.json")
+    casc_d   = _v7_load(f"v2_cascades_{iso2}.json")
+    bif_d    = _v7_load(f"v6_bifurcation_map.json")
+    state_d  = _v7_load(f"v6_country_state_{iso2}.json")
+
+    candidates = []
+
+    # Source 1: Weak signals
+    sig_score = float(sig_d.get("signal_score", 0))
+    if sig_score >= 30:
+        candidates.append({
+            "source":     "weak_signal",
+            "strength":   sig_score,
+            "horizon":    "30_90_days",
+            "confidence": round(min(0.90, sig_score / 100 * 0.95), 2),
+            "description":f"Weak signal grade={sig_d.get('signal_grade','noise')}",
+            "domains":    [s["domain"] for s in (sig_d.get("domain_signals") or [])[:3]],
+        })
+
+    # Source 2: Forecast anomalies (score diverges > 15 pts from baseline)
+    hz = fc_d.get("horizons", {})
+    base_score = int(snap.get("risk_score", 50) or 50)
+    for hz_name in ["30d","90d","180d","365d"]:
+        hz_score = (hz.get(hz_name) or {}).get("score")
+        if hz_score and abs(hz_score - base_score) >= 15:
+            candidates.append({
+                "source":     "forecast_anomaly",
+                "strength":   min(100, round(abs(hz_score - base_score) * 2)),
+                "horizon":    hz_name,
+                "confidence": (hz.get(hz_name) or {}).get("confidence", 0.6),
+                "description":f"Forecast {hz_name}: {base_score} -> {hz_score}",
+                "domains":    [snap.get("dominant_domain","geopolitical")],
+            })
+
+    # Source 3: High-probability scenario transitions
+    for t in (trans_d.get("transitions") or []):
+        if t.get("probability", 0) >= 0.45 and t.get("to_state") in ("stress","worst","emergent_a"):
+            candidates.append({
+                "source":     "scenario_transition",
+                "strength":   round(t["probability"] * 90),
+                "horizon":    "90_180_days",
+                "confidence": t.get("confidence", 0.65),
+                "description":f"P({t['from_state']}->{t['to_state']})={t['probability']}",
+                "domains":    [snap.get("dominant_domain","geopolitical")],
+            })
+
+    # Source 4: Cascade acceleration
+    cascade = float(casc_d.get("max_cascade_score", 0) or 0)
+    if cascade >= 50:
+        candidates.append({
+            "source":     "cascade_acceleration",
+            "strength":   round(cascade),
+            "horizon":    "90_days",
+            "confidence": 0.78,
+            "description":f"Cascade score {round(cascade)}/100",
+            "domains":    [c.get("trigger_domain","?") for c in (casc_d.get("cascades") or [])[:2]],
+        })
+
+    # Source 5: Bifurcation shift
+    bif_entries = bif_d.get("bifurcation_map", [])
+    bif_rec     = next((b for b in bif_entries if b.get("country") == iso2), {})
+    bif_score   = float(bif_rec.get("bifurcation_score", 0))
+    if bif_score >= 55:
+        candidates.append({
+            "source":     "bifurcation_shift",
+            "strength":   round(bif_score),
+            "horizon":    "180_365_days",
+            "confidence": 0.70,
+            "description":f"Bifurcation grade={bif_rec.get('bifurcation_grade','stable')}",
+            "domains":    [snap.get("dominant_domain","geopolitical")],
+        })
+
+    candidates.sort(key=lambda x: -x["strength"])
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "7.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "n_candidates": len(candidates),
+        "candidates":   candidates,
+        "max_strength": candidates[0]["strength"] if candidates else 0,
+        "top_source":   candidates[0]["source"]   if candidates else "none",
+    }
+
+
+# ── Phase 2: Early Warning Score ─────────────────────────────────────────
+
+def _build_v7_warning_score(iso2: str, snap: dict,
+                              candidates: dict) -> dict:
+    """
+    Phase 2:
+    early_warning_score = signal_score*0.25 + trigger_strength*0.20
+                        + bifurcation_score*0.20 + cascade_score*0.15
+                        + forecast_confidence*0.20
+    Weights sum = 1.00. Output: 0-100.
+    """
+    sig_d    = _v7_load(f"v5_signals_{iso2}.json")
+    trig_d   = _v7_load(f"v5_triggers_{iso2}.json")
+    bif_d    = _v7_load(f"v6_bifurcation_map.json")
+    casc_d   = _v7_load(f"v2_cascades_{iso2}.json")
+    fc_d     = _v7_load(f"v3_forecast_{iso2}.json")
+
+    sig_score      = float(sig_d.get("signal_score", 30))
+    trig_str       = float((trig_d.get("highest_trigger") or {}).get("strength", 20))
+    bif_entries    = bif_d.get("bifurcation_map", [])
+    bif_rec        = next((b for b in bif_entries if b.get("country") == iso2), {})
+    bif_score      = float(bif_rec.get("bifurcation_score", 20))
+    cascade_score  = float(casc_d.get("max_cascade_score", 20) or 20)
+    hz30           = (fc_d.get("horizons") or {}).get("30d") or {}
+    fc_conf_raw    = float(hz30.get("confidence", 0.60))
+    fc_conf_norm   = fc_conf_raw * 100          # 0..100 scale
+
+    # Spec formula
+    ews = round(
+        sig_score      * 0.25 +
+        trig_str       * 0.20 +
+        bif_score      * 0.20 +
+        cascade_score  * 0.15 +
+        fc_conf_norm   * 0.20
+    )
+    ews = max(0, min(100, ews))
+
+    grade = ("critical"   if ews >= 80 else
+             "high"       if ews >= 60 else
+             "elevated"   if ews >= 40 else
+             "low")
+
+    return {
+        "country":            iso2,
+        "country_name":       snap.get("country_name", iso2),
+        "date":               TODAY,
+        "grdf_version":       "7.0",
+        "generated_at":       datetime.now(timezone.utc).isoformat(),
+        "early_warning_score":ews,
+        "warning_grade":      grade,
+        "components": {
+            "signal_score":       round(sig_score),
+            "trigger_strength":   round(trig_str),
+            "bifurcation_score":  round(bif_score),
+            "cascade_score":      round(cascade_score),
+            "forecast_confidence":round(fc_conf_norm),
+        },
+        "n_candidates":       candidates.get("n_candidates", 0),
+        "top_candidate":      (candidates.get("candidates") or [{}])[0],
+    }
+
+
+# ── Phase 3: Time-To-Event Estimation ────────────────────────────────────
+
+def _build_v7_tte(iso2: str, ews: float) -> dict:
+    """
+    Phase 3:
+    time_to_event_score = 100 - early_warning_score
+    Lower tte_score = sooner.
+    """
+    tte_score = max(0, min(100, round(100 - ews)))
+    tte_cat   = _v7_tte_category(tte_score)
+
+    # Map category to human-readable horizon
+    horizon_labels = {
+        "immediate": "< 7 days",
+        "30_days":   "7 – 30 days",
+        "90_days":   "30 – 90 days",
+        "180_days":  "90 – 180 days",
+        "1_year":    "180 days – 1 year",
+        "3_years":   "1 – 3 years",
+        "5_years":   "3 – 5 years",
+    }
+
+    return {
+        "country":              iso2,
+        "date":                 TODAY,
+        "grdf_version":         "7.0",
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        "early_warning_score":  round(ews),
+        "time_to_event_score":  tte_score,
+        "time_to_event":        tte_cat,
+        "horizon_label":        horizon_labels.get(tte_cat,"unknown"),
+        "urgency":              ("critical" if tte_score < 30 else
+                                  "high"     if tte_score < 50 else
+                                  "moderate" if tte_score < 70 else "low"),
+    }
+
+
+# ── Phase 4: Escalation Engine ───────────────────────────────────────────
+
+def _build_v7_escalation(iso2: str, snap: dict, ews: float) -> dict:
+    """
+    Phase 4: Detect acceleration toward critical states.
+    escalation_velocity = (current_ews - prev_ews) / days_elapsed
+    Uses 30d history from TR track-record.
+    """
+    # Load previous early-warning proxy from track-record history
+    hist_p = TR_HIST_DIR / f"{iso2}.json"
+    prev_score = float(snap.get("risk_score", 50) or 50)
+    days_elapsed = 30
+
+    if hist_p.exists():
+        try:
+            recs = json.loads(hist_p.read_text()).get("records", [])
+            if len(recs) >= 30:
+                prev_rec    = recs[-30]
+                prev_score  = float(prev_rec.get("risk_score", prev_score) or prev_score)
+                days_elapsed= 30
+            elif len(recs) >= 7:
+                prev_rec    = recs[-len(recs)//2]
+                prev_score  = float(prev_rec.get("risk_score", prev_score) or prev_score)
+                days_elapsed= len(recs) // 2
+        except Exception:
+            pass
+
+    current_score = float(snap.get("risk_score", 50) or 50)
+    raw_velocity  = (current_score - prev_score) / max(1, days_elapsed)
+    velocity      = round(raw_velocity, 3)
+
+    acc_grade = ("accelerating"   if velocity >  0.5 else
+                 "decelerating"   if velocity < -0.5 else
+                 "stable")
+
+    # Projected score in 30d
+    projected_30d = max(5, min(97, round(current_score + velocity * 30)))
+
+    # Time to threshold crossings
+    crossings = {}
+    for threshold, level in [(80,"critical"),(70,"warning"),(60,"elevated")]:
+        if current_score < threshold and velocity > 0:
+            days_to = round((threshold - current_score) / max(0.001, velocity))
+            crossings[level] = min(3650, days_to)
+        elif current_score >= threshold:
+            crossings[level] = 0   # already crossed
+
+    return {
+        "country":         iso2,
+        "date":            TODAY,
+        "grdf_version":    "7.0",
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "current_score":   round(current_score),
+        "prev_score":      round(prev_score),
+        "days_elapsed":    days_elapsed,
+        "velocity":        velocity,
+        "escalation_grade":acc_grade,
+        "projected_30d":   projected_30d,
+        "threshold_crossings": crossings,
+        "ews":             round(ews),
+    }
+
+
+# ── Phase 5: Trigger Monitor ──────────────────────────────────────────────
+
+def _build_v7_trigger_monitor(iso2: str, snap: dict) -> dict:
+    """
+    Phase 5: Live trigger status across 7 trigger classes.
+    Reads V5 triggers + domain scores to determine activation status.
+    """
+    trig_d  = _v7_load(f"v5_triggers_{iso2}.json")
+    dom_s   = _get_domain_scores(iso2, snap)
+
+    domain_map = {
+        "climate":        "climate",
+        "economic":       "economic",
+        "social":         "social",
+        "political":      "geopolitical",
+        "infrastructure": "infrastructure",
+        "technology":     "technology",
+        "conflict":       "geopolitical",
+    }
+
+    live_triggers = []
+    for tc in _V7_TRIGGER_CLASSES:
+        dom_key   = domain_map.get(tc, tc)
+        d_score   = dom_s.get(dom_key, {}).get("score",  50)
+        d_vel     = dom_s.get(dom_key, {}).get("velocity",0)
+        d_trend   = dom_s.get(dom_key, {}).get("trend","stable")
+
+        # Find V5 trigger strength for this class
+        v5_trig   = next((t for t in (trig_d.get("triggers") or [])
+                          if t.get("trigger") == tc), {})
+        strength  = float(v5_trig.get("strength", round(d_score * 0.5)) or round(d_score * 0.5))
+
+        status = ("firing"   if strength >= 75 else
+                  "elevated" if strength >= 50 else
+                  "watching" if strength >= 25 else
+                  "idle")
+
+        live_triggers.append({
+            "trigger_class":  tc,
+            "domain":         dom_key,
+            "strength":       round(strength),
+            "status":         status,
+            "domain_score":   d_score,
+            "domain_velocity":round(d_vel, 2),
+            "trend":          d_trend,
+            "time_to_fire":   v5_trig.get("time_to_activation", 365),
+        })
+
+    live_triggers.sort(key=lambda x: -x["strength"])
+    firing    = [t for t in live_triggers if t["status"] == "firing"]
+    elevated  = [t for t in live_triggers if t["status"] == "elevated"]
+
+    return {
+        "country":       iso2,
+        "country_name":  snap.get("country_name", iso2),
+        "date":          TODAY,
+        "grdf_version":  "7.0",
+        "generated_at":  datetime.now(timezone.utc).isoformat(),
+        "triggers":      live_triggers,
+        "firing_n":      len(firing),
+        "elevated_n":    len(elevated),
+        "firing":        firing,
+        "top_trigger":   live_triggers[0] if live_triggers else {},
+    }
+
+
+# ── Phase 6: Alert Level Classification ──────────────────────────────────
+
+def _build_v7_alert(iso2: str, snap: dict, ews: float,
+                     tte: dict, escalation: dict) -> dict:
+    """
+    Phase 6: Assign 5-level alert: GREEN / YELLOW / ORANGE / RED / BLACK.
+    Alert is the maximum of:
+    - alert from EWS score
+    - alert from TTE urgency
+    - alert from escalation velocity
+    """
+    ews_level = _v7_alert_level(ews)
+
+    # TTE urgency -> alert
+    tte_urgency = tte.get("urgency","low")
+    tte_level   = {"critical":"RED","high":"ORANGE","moderate":"YELLOW","low":"GREEN"}.get(tte_urgency,"GREEN")
+
+    # Escalation -> alert boost
+    esc_grade   = escalation.get("escalation_grade","stable")
+    esc_level   = "ORANGE" if esc_grade == "accelerating" else "GREEN"
+
+    # Merge: take the most severe
+    order = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+    final = max([ews_level, tte_level, esc_level], key=lambda x: order[x])
+
+    # Apply V1 alert_level as additional input
+    v1_alert = snap.get("alert_level","NONE") or "NONE"
+    v1_map   = {"CRITICAL":"RED","WARNING":"ORANGE","ALERT":"YELLOW","WATCH":"GREEN","NONE":"GREEN"}
+    v1_level = v1_map.get(v1_alert, "GREEN")
+    final    = max([final, v1_level], key=lambda x: order[x])
+
+    return {
+        "country":         iso2,
+        "country_name":    snap.get("country_name", iso2),
+        "date":            TODAY,
+        "grdf_version":    "7.0",
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "alert_level":     final,
+        "ews_level":       ews_level,
+        "tte_level":       tte_level,
+        "escalation_level":esc_level,
+        "v1_level":        v1_level,
+        "ews":             round(ews),
+        "tte":             tte.get("time_to_event","1_year"),
+        "horizon_label":   tte.get("horizon_label","unknown"),
+        "velocity":        escalation.get("velocity", 0),
+        "risk_score":      int(snap.get("risk_score",50) or 50),
+    }
+
+
+# ── Phase 7: Materialization Probability ────────────────────────────────
+
+def _build_v7_probability(iso2: str, ews: float,
+                           trig_mon: dict, casc_d: dict,
+                           bif_score: float) -> dict:
+    """
+    Phase 7:
+    p_materialization = warning*0.35 + trigger*0.25 + cascade*0.20 + bifurcation*0.20
+    Weights sum = 1.00. Output: 0-100 (%).
+    """
+    top_trig_str = float((trig_mon.get("top_trigger") or {}).get("strength", 20))
+    cascade_raw  = float(casc_d.get("max_cascade_score", 20) or 20)
+
+    p_raw = round(
+        ews       * 0.35 +
+        top_trig_str * 0.25 +
+        cascade_raw  * 0.20 +
+        bif_score    * 0.20
+    )
+    p_mat = max(0, min(100, p_raw))
+
+    likelihood = ("very_high"  if p_mat >= 80 else
+                  "high"       if p_mat >= 65 else
+                  "moderate"   if p_mat >= 45 else
+                  "low"        if p_mat >= 25 else
+                  "very_low")
+
+    return {
+        "country":                iso2,
+        "date":                   TODAY,
+        "grdf_version":           "7.0",
+        "generated_at":           datetime.now(timezone.utc).isoformat(),
+        "p_materialization":      p_mat,
+        "likelihood":             likelihood,
+        "components": {
+            "warning_input":        round(ews),
+            "trigger_input":        round(top_trig_str),
+            "cascade_input":        round(cascade_raw),
+            "bifurcation_input":    round(bif_score),
+        },
+    }
+
+
+# ── Phase 8: Global Alert Network ────────────────────────────────────────
+
+def _save_v7_global_alert_network(all_alerts: list[dict],
+                                   all_probs:  list[dict]) -> None:
+    """
+    Phase 8: Build global alert propagation network.
+    Each country broadcasting alert level to its linked neighbours.
+    """
+    link_d  = _v7_load("v6_country_links.json")
+    links   = link_d.get("matrix", [])
+
+    # Build alert broadcast edges
+    alert_order = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+    alert_map   = {a["country"]: a["alert_level"] for a in all_alerts}
+    prob_map    = {p["country"]: p["p_materialization"] for p in all_probs}
+
+    broadcast_edges = []
+    for link in links:
+        src  = link["from"]
+        dst  = link["to"]
+        st   = link["strength"]
+        src_level = alert_map.get(src, "GREEN")
+        if alert_order.get(src_level,0) >= 2:   # ORANGE or higher broadcasts
+            src_prob = prob_map.get(src, 30)
+            broadcast_strength = round(st * src_prob, 1)
+            broadcast_edges.append({
+                "from":       src,
+                "to":         dst,
+                "source_level":    src_level,
+                "link_strength":   st,
+                "broadcast_strength": broadcast_strength,
+            })
+
+    broadcast_edges.sort(key=lambda x: -x["broadcast_strength"])
+
+    # Aggregate receiving alerts per country
+    receiving: dict[str, dict] = {}
+    for edge in broadcast_edges:
+        dst = edge["to"]
+        cur = receiving.get(dst, {"country":dst,"inbound_n":0,"max_broadcast":0,"sources":[]})
+        cur["inbound_n"] += 1
+        cur["max_broadcast"] = max(cur["max_broadcast"], edge["broadcast_strength"])
+        cur["sources"].append(edge["from"])
+        receiving[dst] = cur
+
+    # Alert level counts
+    level_counts: dict[str,int] = {}
+    for a in all_alerts:
+        l = a["alert_level"]
+        level_counts[l] = level_counts.get(l,0) + 1
+
+    with open(GRDF_DIR / "v7_global_alert_network.json","w") as f:
+        json.dump({
+            "grdf_version":   "7.0",
+            "date":           TODAY,
+            "generated_at":   datetime.now(timezone.utc).isoformat(),
+            "level_counts":   level_counts,
+            "broadcast_n":    len(broadcast_edges),
+            "top_broadcasts": broadcast_edges[:20],
+            "receiving_alerts": sorted(receiving.values(),
+                                       key=lambda x: -x["max_broadcast"])[:15],
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V7] Phase 8: {len(broadcast_edges)} broadcast edges", file=sys.stderr)
+
+
+# ── Phase 9: Top Risks Ranking ────────────────────────────────────────────
+
+def _save_v7_top_risks(all_warn: list[dict], all_alerts: list[dict],
+                        all_probs: list[dict], all_cands: list[dict]) -> None:
+    """Phase 9: Global ranking of approaching events."""
+    alert_order = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+    alert_map   = {a["country"]: a for a in all_alerts}
+    prob_map    = {p["country"]: p["p_materialization"] for p in all_probs}
+    cand_map    = {c["country"]: c for c in all_cands}
+
+    entries = []
+    for w in all_warn:
+        iso2   = w["country"]
+        alert  = alert_map.get(iso2, {})
+        prob   = prob_map.get(iso2, 0)
+        cand   = cand_map.get(iso2, {})
+        entries.append({
+            "country":            iso2,
+            "country_name":       w.get("country_name",""),
+            "early_warning_score":w["early_warning_score"],
+            "warning_grade":      w["warning_grade"],
+            "alert_level":        alert.get("alert_level","GREEN"),
+            "p_materialization":  prob,
+            "top_candidate":      cand.get("top_source","none"),
+            "tte":                alert.get("tte","1_year"),
+            "horizon_label":      alert.get("horizon_label","unknown"),
+        })
+
+    # Sort by composite: p_mat*0.5 + ews*0.3 + alert_order*5
+    entries.sort(key=lambda e: -(
+        e["p_materialization"] * 0.5 +
+        e["early_warning_score"] * 0.3 +
+        alert_order.get(e["alert_level"],0) * 5
+    ))
+
+    # By alert level
+    by_level: dict[str,list] = {}
+    for e in entries:
+        l = e["alert_level"]
+        by_level.setdefault(l,[]).append(e)
+
+    with open(GRDF_DIR / "v7_top_risks.json","w") as f:
+        json.dump({
+            "grdf_version":     "7.0",
+            "date":             TODAY,
+            "generated_at":     datetime.now(timezone.utc).isoformat(),
+            "top10_overall":    entries[:10],
+            "critical_n":       len(by_level.get("BLACK",[])) + len(by_level.get("RED",[])),
+            "by_alert_level":   {l: v[:5] for l,v in by_level.items()},
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V7] Phase 9: top risks ranked ({len(entries)} countries)", file=sys.stderr)
+
+
+# ── Phase 10: Strategic Dashboard ────────────────────────────────────────
+
+def _save_v7_dashboard(snapshots: list, all_warn: list, all_alerts: list,
+                        all_tte: list, all_esc: list, all_prob: list,
+                        all_trig: list, top_risks: dict) -> None:
+    """Phase 10: Strategic Early Warning Dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+    alert_order = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+
+    # Sorted views
+    by_ews     = sorted(all_warn,  key=lambda x: -x["early_warning_score"])
+    by_urgency = sorted(all_tte,   key=lambda x:  x["time_to_event_score"])
+    by_vel     = sorted(all_esc,   key=lambda x: -abs(x["velocity"]))
+    by_prob    = sorted(all_prob,  key=lambda x: -x["p_materialization"])
+    critical   = [a for a in all_alerts if alert_order.get(a["alert_level"],0) >= 3]
+
+    # Firing triggers globally
+    global_firing = []
+    for t_rec in all_trig:
+        iso2 = t_rec["country"]
+        for t in (t_rec.get("firing") or []):
+            global_firing.append({**t, "country":iso2})
+    global_firing.sort(key=lambda x: -x["strength"])
+
+    with open(GRDF_DIR / "v7_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":      "7.0",
+            "date":              TODAY,
+            "generated_at":      now_ts,
+            # Summary
+            "summary": {
+                "black_n":  sum(1 for a in all_alerts if a["alert_level"]=="BLACK"),
+                "red_n":    sum(1 for a in all_alerts if a["alert_level"]=="RED"),
+                "orange_n": sum(1 for a in all_alerts if a["alert_level"]=="ORANGE"),
+                "yellow_n": sum(1 for a in all_alerts if a["alert_level"]=="YELLOW"),
+                "green_n":  sum(1 for a in all_alerts if a["alert_level"]=="GREEN"),
+                "immediate_n": sum(1 for t in all_tte if t.get("urgency")=="critical"),
+                "avg_ews":  round(sum(w["early_warning_score"] for w in all_warn)/max(1,len(all_warn)),1),
+                "avg_p_mat":round(sum(p["p_materialization"] for p in all_prob)/max(1,len(all_prob)),1),
+            },
+            # 10 widgets
+            "top_ews_countries":   [{"country":w["country"],"ews":w["early_warning_score"],
+                                      "grade":w["warning_grade"]} for w in by_ews[:10]],
+            "most_urgent_events":  [{"country":t["country"],"tte":t["time_to_event"],
+                                      "horizon":t["horizon_label"],"urgency":t["urgency"]}
+                                     for t in by_urgency[:10]],
+            "fastest_escalating":  [{"country":e["country"],"velocity":e["velocity"],
+                                      "grade":e["escalation_grade"],"projected_30d":e["projected_30d"]}
+                                     for e in by_vel[:10] if abs(e["velocity"]) > 0.1],
+            "critical_alerts":     critical,
+            "global_firing_triggers": global_firing[:15],
+            "probability_ranking": [{"country":p["country"],"p_mat":p["p_materialization"],
+                                      "likelihood":p["likelihood"]} for p in by_prob[:10]],
+            "top_risks":           top_risks.get("top10_overall",[])[:10],
+            "alert_level_map":     {a["country"]:a["alert_level"] for a in all_alerts},
+        }, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V7] Phase 10: Strategic Early Warning Dashboard", file=sys.stderr)
+
+
+# ── V7 Orchestrator ───────────────────────────────────────────────────────
+
+def save_grdf_v7(snapshots: list) -> None:
+    """
+    GRDF V7 -- Strategic Early Warning System.
+    Dependency: V1->V2->V3->V4->V5->V6->V7
+    Reads: v1..v6 outputs.  Writes: v7_* only.
+    V1/V2/V3/V4/V5/V6 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    all_warn:   list[dict] = []
+    all_tte:    list[dict] = []
+    all_alerts: list[dict] = []
+    all_esc:    list[dict] = []
+    all_prob:   list[dict] = []
+    all_trig:   list[dict] = []
+    all_cands:  list[dict] = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Phase 1: event candidates
+            cands = _build_v7_event_candidates(iso2, snap)
+            with open(GRDF_DIR / f"v7_event_candidates_{iso2}.json","w") as f:
+                json.dump(cands, f, ensure_ascii=False, indent=2)
+            all_cands.append(cands)
+
+            # Phase 2: early warning score
+            warn = _build_v7_warning_score(iso2, snap, cands)
+            with open(GRDF_DIR / f"v7_warning_score_{iso2}.json","w") as f:
+                json.dump(warn, f, ensure_ascii=False, indent=2)
+            all_warn.append(warn)
+            ews = warn["early_warning_score"]
+
+            # Phase 3: time-to-event
+            tte = _build_v7_tte(iso2, ews)
+            tte["country"] = iso2
+            with open(GRDF_DIR / f"v7_tte_{iso2}.json","w") as f:
+                json.dump(tte, f, ensure_ascii=False, indent=2)
+            all_tte.append(tte)
+
+            # Phase 4: escalation
+            esc = _build_v7_escalation(iso2, snap, ews)
+            with open(GRDF_DIR / f"v7_escalation_{iso2}.json","w") as f:
+                json.dump(esc, f, ensure_ascii=False, indent=2)
+            all_esc.append(esc)
+
+            # Phase 5: trigger monitor
+            trig = _build_v7_trigger_monitor(iso2, snap)
+            with open(GRDF_DIR / f"v7_triggers_live_{iso2}.json","w") as f:
+                json.dump(trig, f, ensure_ascii=False, indent=2)
+            all_trig.append({**trig, "country": iso2})
+
+            # Phase 6: alert level
+            alert = _build_v7_alert(iso2, snap, ews, tte, esc)
+            with open(GRDF_DIR / f"v7_alerts_{iso2}.json","w") as f:
+                json.dump(alert, f, ensure_ascii=False, indent=2)
+            all_alerts.append(alert)
+
+            # Phase 7: materialization probability
+            casc_d    = _v7_load(f"v2_cascades_{iso2}.json")
+            bif_d     = _v7_load("v6_bifurcation_map.json")
+            bif_rec   = next((b for b in bif_d.get("bifurcation_map",[])
+                               if b.get("country")==iso2), {})
+            bif_score = float(bif_rec.get("bifurcation_score",20))
+            prob = _build_v7_probability(iso2, ews, trig, casc_d, bif_score)
+            with open(GRDF_DIR / f"v7_probability_{iso2}.json","w") as f:
+                json.dump(prob, f, ensure_ascii=False, indent=2)
+            all_prob.append(prob)
+
+        except Exception as e:
+            print(f"[GRDF-V7] {iso2}: FAILED -- {e}", file=sys.stderr)
+
+    # Phase 8: Global alert network
+    _save_v7_global_alert_network(all_alerts, all_prob)
+
+    # Phase 9: Top risks
+    _save_v7_top_risks(all_warn, all_alerts, all_prob, all_cands)
+    top_risks = _v7_load("v7_top_risks.json")
+
+    # Phase 10: Dashboard
+    _save_v7_dashboard(snapshots, all_warn, all_alerts,
+                       all_tte, all_esc, all_prob, all_trig, top_risks)
+
+    print(f"[GRDF-V7] All 10 phases complete. {len(all_warn)} countries processed.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -12091,6 +12848,7 @@ def main():
     save_grdf_v4(snapshots)
     save_grdf_v5(snapshots)
     save_grdf_v6(snapshots)
+    save_grdf_v7(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
