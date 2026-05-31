@@ -7457,8 +7457,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/impact/dashboard','/api/grdf/impact/score',
       '/api/grdf/impact/adoption','/api/grdf/impact/users',
       '/api/grdf/impact/segments','/api/grdf/impact/forecast',
+
+  // =========================================================================
+  // GRDF SUSTAINABILITY & REVENUE PROGRAM V1 API
+  // All routes under /api/grdf/sustainability/
+  // Architecture frozen. Business sustainability only.
+  // =========================================================================
+  if (seg[0] === 'sustainability') {
+    const sseg = seg[1] || 'dashboard';
+    const CS = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const SUST_FILES = {
+      'dashboard':    'docs/sustainability/sustainability_dashboard.json',
+      'score':        'docs/sustainability/sustainability_score.json',
+      'revenue':      'docs/sustainability/revenue_registry.json',
+      'customers':    'docs/sustainability/customer_registry.json',
+      'subscriptions':'docs/sustainability/subscription_analytics.json',
+      'unit-economics':'docs/sustainability/unit_economics.json',
+      'growth':       'docs/sustainability/growth_engine.json',
+      'enterprise':   'docs/sustainability/enterprise_readiness.json',
+      'certification':'docs/sustainability/sustainability_certification.json',
+      'roadmap':      'docs/sustainability/sustainability_roadmap.json',
+    };
+    const SUST_SIGNAL_ONLY = new Set(['revenue','customers','subscriptions','unit-economics','roadmap']);
+    if (!SUST_FILES[sseg]) return new Response(JSON.stringify({error:'Unknown sustainability route: '+sseg, available:Object.keys(SUST_FILES)}),{status:404,headers:CS});
+    if (SUST_SIGNAL_ONLY.has(sseg) && access==='teaser') return new Response(JSON.stringify({error:sseg+' requires Signal tier'}),{status:403,headers:CS});
+    const ck = `grdf:sust:${sseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, SUST_FILES[sseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'Sustainability '+sseg+' not built yet'}),{status:404,headers:CS});
+      let r;
+      if (access==='teaser') {
+        if (sseg==='dashboard') r={date:d.date,sustainability_status:d.sustainability_status,sustainability_score:d.sustainability_score,growth:d.growth,enterprise_readiness:d.enterprise_readiness,tier};
+        else if (sseg==='score') r={date:d.date,sustainability_score:d.sustainability_score,cert_level:d.cert_level,components:d.components,tier};
+        else if (sseg==='growth') r={date:d.date,current_mrr:d.current_mrr,revenue_growth:d.revenue_growth,growth_grade:d.growth_grade,tier};
+        else if (sseg==='enterprise') r={date:d.date,enterprise_readiness_pct:d.enterprise_readiness_pct,enterprise_grade:d.enterprise_grade,readiness_checklist:d.readiness_checklist,tier};
+        else if (sseg==='certification') r={date:d.date,sustainability_certification:d.sustainability_certification,sustainability_score:d.sustainability_score,no_v14:d.no_v14,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CS});}
+  }
+
       '/api/grdf/impact/certification','/api/grdf/impact/roadmap',
       '/api/grdf/impact/consumption','/api/grdf/impact/value',
+      '/api/grdf/sustainability/dashboard','/api/grdf/sustainability/score',
+      '/api/grdf/sustainability/revenue','/api/grdf/sustainability/customers',
+      '/api/grdf/sustainability/subscriptions','/api/grdf/sustainability/unit-economics',
+      '/api/grdf/sustainability/growth','/api/grdf/sustainability/enterprise',
+      '/api/grdf/sustainability/certification','/api/grdf/sustainability/roadmap',
     ]
   }),{status:404,headers:CORS});
 }
