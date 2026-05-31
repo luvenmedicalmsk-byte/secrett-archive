@@ -10380,6 +10380,820 @@ def save_grdf_v4(snapshots: list) -> None:
     print("[GRDF-V4] All 7 phases complete.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V5 -- Autonomous Scenario Intelligence Engine
+#
+# Adds: weak-signal detection, emergent scenarios, trigger detection,
+#       scenario transition matrices, bifurcation mapping, autonomous
+#       narrative engine, global strategic outlook, strategic dashboard.
+#
+# Phase 1: Weak Signal Detection  -> docs/grdf/v5_signals_{CC}.json
+# Phase 2: Scenario Generator     -> docs/grdf/v5_scenarios_{CC}.json
+# Phase 3: Trigger Detection      -> docs/grdf/v5_triggers_{CC}.json
+# Phase 4: Transition Matrix      -> docs/grdf/v5_transitions_{CC}.json
+# Phase 5: Bifurcation Engine     -> docs/grdf/v5_bifurcations_{CC}.json
+# Phase 6: Narrative Engine       -> docs/grdf/v5_intelligence_{CC}.json
+# Phase 7: Global Strategic Outlook -> docs/grdf/v5_global_outlook.json
+# Phase 8: Strategic Dashboard    -> docs/grdf/v5_dashboard.json
+#
+# Reads: v1..v4 outputs (read-only).
+# Writes: v5_* only.  V1/V2/V3/V4 NEVER modified.
+# =========================================================================
+
+import math as _math
+
+# Signal classification thresholds (Phase 1)
+_V5_SIGNAL_GRADES = [
+    (85, "critical"),
+    (70, "strong"),
+    (50, "emerging"),
+    (30, "weak"),
+    (0,  "noise"),
+]
+
+# Scenario state names (Phase 4)
+_V5_STATES = ["baseline","best_case","stress","worst","emergent_a","emergent_b","emergent_c"]
+
+# Trigger types (Phase 3)
+_V5_TRIGGER_TYPES = [
+    "economic","climate","energy","cyber","social","political","supply_chain"]
+
+
+def _v5_signal_grade(score: float) -> str:
+    for thr, grade in _V5_SIGNAL_GRADES:
+        if score >= thr:
+            return grade
+    return "noise"
+
+
+# ── helpers: load V1-V4 artefacts ────────────────────────────────────────
+
+def _v5_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def _v5_snap_history(iso2: str) -> list[dict]:
+    hist_p = TR_HIST_DIR / f"{iso2}.json"
+    if hist_p.exists():
+        try:
+            return json.loads(hist_p.read_text()).get("records", [])
+        except Exception:
+            return []
+    return []
+
+
+# ── Phase 1: Weak Signal Detection ───────────────────────────────────────
+
+def _compute_signal_metrics(snap: dict, history: list[dict],
+                             trend: dict, cascade: float) -> dict:
+    """
+    Phase 1 raw metrics (0-100 each):
+      novelty     -- how different is current state from 90d baseline
+      velocity    -- absolute rate of change (pts/day)
+      persistence -- how many consecutive days the signal has been active
+      acceleration -- 2nd derivative: short-term delta vs long-term delta
+    """
+    score   = int(snap.get("risk_score", 50) or 50)
+    delta   = float(snap.get("delta", 0) or 0)
+    scores  = [h.get("risk_score", 50) or 50 for h in history]
+
+    # Novelty: |current - 90d mean| / std proxy
+    mean90 = (sum(scores[-90:]) / len(scores[-90:])) if len(scores) >= 90 else (sum(scores) / max(1, len(scores)))
+    std_proxy = max(1, (max(scores[-30:]) - min(scores[-30:])) / 2) if len(scores) >= 30 else 10
+    novelty = min(100, round(abs(score - mean90) / std_proxy * 25))
+
+    # Velocity: normalise to 0-100 (20 pts/day = 100)
+    velocity = min(100, round(abs(delta) * 5))
+
+    # Persistence: how many of last 7d show same trend direction
+    if len(scores) >= 7:
+        recent  = scores[-7:]
+        dirs    = [1 if recent[i] > recent[i-1] else -1 for i in range(1, len(recent))]
+        dom_dir = 1 if sum(dirs) > 0 else -1
+        consist = sum(1 for d in dirs if d == dom_dir)
+        persistence = min(100, round(consist / max(1, len(dirs)) * 100))
+    else:
+        persistence = 50
+
+    # Acceleration: trend acceleration from V3 trend data
+    acc_raw = abs(trend.get("acceleration", 0) or 0)
+    acceleration = min(100, round(acc_raw * 20))
+
+    return {
+        "novelty":      novelty,
+        "velocity":     velocity,
+        "persistence":  persistence,
+        "acceleration": acceleration,
+    }
+
+
+def _build_v5_signals(iso2: str, snap: dict) -> dict:
+    """Phase 1: compute signal score and classify weak signals."""
+    history = _v5_snap_history(iso2)
+    trend   = _v5_load(f"v3_trends_{iso2}.json")
+    casc_d  = _v5_load(f"v2_cascades_{iso2}.json")
+    cascade = float(casc_d.get("max_cascade_score", 0) or 0)
+
+    m = _compute_signal_metrics(snap, history, trend, cascade)
+
+    # signal_score = novelty*0.30 + velocity*0.25 + persistence*0.20 + acceleration*0.25
+    signal_score = round(
+        m["novelty"]      * 0.30 +
+        m["velocity"]     * 0.25 +
+        m["persistence"]  * 0.20 +
+        m["acceleration"] * 0.25
+    )
+    signal_score = max(0, min(100, signal_score))
+
+    # Per-domain weak signals
+    dom_s  = _get_domain_scores(iso2, snap)
+    dom_signals = []
+    for d, v in dom_s.items():
+        d_score = v["score"]
+        d_vel   = v.get("velocity", 0)
+        d_trend = v.get("trend", "stable")
+        # A domain fires a signal if score > avg + 15 or velocity > 3
+        avg_all = sum(vv["score"] for vv in dom_s.values()) / max(1, len(dom_s))
+        if d_score > avg_all + 15 or abs(d_vel) >= 3:
+            strength  = min(100, round((d_score - avg_all + abs(d_vel)*5)))
+            dom_signals.append({
+                "domain":    d,
+                "strength":  strength,
+                "velocity":  d_vel,
+                "trend":     d_trend,
+                "grade":     _v5_signal_grade(strength),
+            })
+    dom_signals.sort(key=lambda x: -x["strength"])
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "5.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "signal_score":     signal_score,
+        "signal_grade":     _v5_signal_grade(signal_score),
+        "signal_strength":  m["novelty"],
+        "signal_velocity":  m["velocity"],
+        "signal_novelty":   m["novelty"],
+        "signal_persistence": m["persistence"],
+        "signal_confidence": min(100, round((m["persistence"] + m["velocity"]) / 2)),
+        "acceleration":     m["acceleration"],
+        "domain_signals":   dom_signals,
+        "n_active_signals": len(dom_signals),
+        "cascade_context":  round(cascade),
+    }
+
+
+# ── Phase 2: Scenario Generator ──────────────────────────────────────────
+
+def _emergent_scenario(iso2: str, snap: dict, signals: dict,
+                        label: str, seed: int) -> dict:
+    """
+    Build one emergent scenario from detected weak signals.
+    Uses top-N domain signals as drivers; confidence from signal persistence.
+    """
+    dom_sigs   = signals.get("domain_signals", [])
+    base_score = int(snap.get("risk_score", 50) or 50)
+    delta      = float(snap.get("delta", 0) or 0)
+
+    if not dom_sigs:
+        drivers = [snap.get("dominant_domain","geopolitical")]
+    else:
+        drivers = [s["domain"] for s in dom_sigs[:3]]
+
+    # Emergent scenario projection: use signal velocity to amplify
+    sig_vel  = signals.get("signal_velocity", 0)
+    # Each emergent variant has a different horizon and multiplier
+    variants = {
+        "emergent_a": {"horizon_days": 90,  "mult": 1.20, "desc": "Near-term emergence"},
+        "emergent_b": {"horizon_days": 180, "mult": 1.40, "desc": "Medium-term escalation"},
+        "emergent_c": {"horizon_days": 365, "mult": 1.60, "desc": "Long-term structural shift"},
+    }
+    v = variants.get(label, {"horizon_days": 90, "mult": 1.20, "desc": "Emergent"})
+
+    damp     = 1.0 / (1.0 + v["horizon_days"] / 180.0)
+    proj     = max(5, min(97, round((base_score + sig_vel * damp * 0.5 * (v["horizon_days"]/7)) * v["mult"])))
+    conf_raw = signals.get("signal_confidence", 50)
+
+    return {
+        "scenario_name":      label,
+        "description":        v["desc"],
+        "drivers":            drivers,
+        "confidence":         round(conf_raw * 0.8),
+        "affected_domains":   drivers[:3],
+        "time_horizon":       v["horizon_days"],
+        "projected_score":    proj,
+        "signal_basis":       signals.get("signal_score", 0),
+    }
+
+
+def _build_v5_scenarios(iso2: str, snap: dict, signals: dict) -> dict:
+    """Phase 2: 4 standard + 3 emergent scenarios."""
+    base   = int(snap.get("risk_score", 50) or 50)
+    delta  = float(snap.get("delta", 0) or 0)
+    trend  = _v5_load(f"v3_trends_{iso2}.json")
+    v3fc   = _v5_load(f"v3_forecast_{iso2}.json")
+    hz     = v3fc.get("horizons", {})
+
+    # Standard 4 (from V3 forecast with V5 confidence overlay)
+    sig_conf = signals.get("signal_confidence", 60) / 100
+    standard = {
+        "baseline":   {
+            "projected_score": hz.get("30d", {}).get("score", base),
+            "confidence":      round(hz.get("30d", {}).get("confidence", 0.72) * sig_conf * 100),
+            "time_horizon":    30,
+            "drivers":         [snap.get("dominant_domain","geopolitical")],
+        },
+        "best_case":  {
+            "projected_score": max(5,  round(base * 0.80 + (delta * -1 * 7))),
+            "confidence":      round(0.55 * sig_conf * 100),
+            "time_horizon":    90,
+            "drivers":         ["stabilisation"],
+        },
+        "stress":     {
+            "projected_score": min(97, round(base * 1.30 + abs(delta) * 14)),
+            "confidence":      round(0.65 * sig_conf * 100),
+            "time_horizon":    90,
+            "drivers":         [snap.get("dominant_domain","geopolitical"), "cascade"],
+        },
+        "worst":      {
+            "projected_score": min(97, round(base * 1.65 + abs(delta) * 30)),
+            "confidence":      round(0.40 * sig_conf * 100),
+            "time_horizon":    180,
+            "drivers":         ["systemic_failure", snap.get("dominant_domain","geopolitical")],
+        },
+    }
+
+    emergent = {
+        "emergent_a": _emergent_scenario(iso2, snap, signals, "emergent_a", 1),
+        "emergent_b": _emergent_scenario(iso2, snap, signals, "emergent_b", 2),
+        "emergent_c": _emergent_scenario(iso2, snap, signals, "emergent_c", 3),
+    }
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "5.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "base_score":   base,
+        "standard_scenarios": standard,
+        "emergent_scenarios": emergent,
+        "most_probable": _most_probable_scenario(signals, trend),
+    }
+
+
+def _most_probable_scenario(signals: dict, trend: dict) -> str:
+    sig_score = signals.get("signal_score", 30)
+    direction = trend.get("trend_direction", "stable")
+    if sig_score >= 70 and direction in ("accelerating","up"):
+        return "stress"
+    if sig_score >= 85:
+        return "worst"
+    if direction in ("decelerating","reversing","down"):
+        return "best_case"
+    return "baseline"
+
+
+# ── Phase 3: Trigger Detection ────────────────────────────────────────────
+
+def _build_v5_triggers(iso2: str, snap: dict, signals: dict) -> dict:
+    """
+    Phase 3: trigger_strength = impact * velocity * persistence  (normalised 0-100)
+    Identifies conditions capable of moving country into another scenario.
+    """
+    dom_s   = _get_domain_scores(iso2, snap)
+    delta   = abs(float(snap.get("delta", 0) or 0))
+    base    = int(snap.get("risk_score", 50) or 50)
+    casc    = float(signals.get("cascade_context", 0))
+
+    triggers = []
+    domain_map = {
+        "economic":     "economic",
+        "climate":      "climate",
+        "energy":       "infrastructure",
+        "cyber":        "cyber",
+        "social":       "social",
+        "political":    "geopolitical",
+        "supply_chain": "economic",
+    }
+
+    for ttype in _V5_TRIGGER_TYPES:
+        dom_key  = domain_map.get(ttype, ttype)
+        dom_score = dom_s.get(dom_key, {}).get("score", 50)
+        dom_vel   = abs(dom_s.get(dom_key, {}).get("velocity", 0))
+        dom_trend = dom_s.get(dom_key, {}).get("trend", "stable")
+
+        # impact: normalised domain score
+        impact      = dom_score / 100.0
+        # velocity: normalised domain velocity
+        vel_norm    = min(1.0, dom_vel / 15.0)
+        # persistence: how sustained the signal is
+        persist     = signals.get("signal_persistence", 50) / 100.0
+
+        # trigger_strength = impact * velocity * persistence  (scaled 0-100)
+        raw_strength = impact * vel_norm * persist * 100
+        # Boost if cascade is active
+        if casc >= 50:
+            raw_strength = min(100, raw_strength * 1.30)
+
+        trigger_strength = max(0, min(100, round(raw_strength)))
+
+        # Time to activation: lower strength = longer wait
+        time_to_act = max(7, round(365 * (1 - trigger_strength / 100)))
+
+        if trigger_strength >= 10:
+            triggers.append({
+                "trigger":              ttype,
+                "domain":               dom_key,
+                "strength":             trigger_strength,
+                "impact":               round(impact, 3),
+                "velocity":             round(vel_norm, 3),
+                "persistence":          round(persist, 3),
+                "time_to_activation":   time_to_act,
+                "trend":                dom_trend,
+                "activates":            ("immediately" if trigger_strength >= 75 else
+                                          "soon"         if trigger_strength >= 50 else
+                                          "conditional"),
+            })
+
+    triggers.sort(key=lambda x: -x["strength"])
+
+    return {
+        "country":        iso2,
+        "country_name":   snap.get("country_name", iso2),
+        "date":           TODAY,
+        "grdf_version":   "5.0",
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "triggers":       triggers,
+        "n_triggers":     len(triggers),
+        "highest_trigger":triggers[0] if triggers else {},
+        "immediate_n":    sum(1 for t in triggers if t["activates"] == "immediately"),
+    }
+
+
+# ── Phase 4: Scenario Transition Matrix ──────────────────────────────────
+
+def _transition_prob(from_state: str, to_state: str,
+                      signal_score: float, trigger_strength: float,
+                      cascade: float, trend_dir: str) -> float:
+    """
+    Phase 4: P(from_state -> to_state).
+    Uses signal_score, trigger_strength and cascade as pressure coefficients.
+    Sum of outgoing probabilities from each state = 1.0.
+    """
+    pressure = (signal_score * 0.35 + trigger_strength * 0.40 + cascade * 0.25) / 100.0
+    upward   = trend_dir in ("up", "accelerating")
+    downward = trend_dir in ("down", "decelerating", "reversing")
+
+    # Transition probability table
+    table: dict[tuple[str,str], float] = {
+        # From baseline
+        ("baseline", "best_case"):  max(0.05, 0.30 * (1 - pressure) * (1.5 if downward else 1)),
+        ("baseline", "stress"):     max(0.05, 0.35 * pressure * (1.5 if upward else 1)),
+        ("baseline", "worst"):      max(0.02, 0.10 * pressure * (2 if cascade >= 60 else 1)),
+        ("baseline", "emergent_a"): max(0.02, 0.15 * signal_score / 100),
+        ("baseline", "baseline"):   0.0,  # computed as residual
+        # From stress
+        ("stress",   "worst"):      max(0.05, 0.40 * pressure * (1.5 if upward else 1)),
+        ("stress",   "baseline"):   max(0.05, 0.25 * (1 - pressure) * (1.3 if downward else 1)),
+        ("stress",   "emergent_b"): max(0.02, 0.20 * signal_score / 100),
+        ("stress",   "best_case"):  max(0.02, 0.10 * (1 - pressure)),
+        # From worst
+        ("worst",    "stabilisation"): max(0.03, 0.20 * (1 - pressure)),
+        ("worst",    "collapse"):       max(0.02, 0.30 * pressure),
+        ("worst",    "stress"):         max(0.05, 0.25 * (1 - pressure * 0.5)),
+        ("worst",    "emergent_c"):     max(0.02, 0.15 * signal_score / 100),
+    }
+    return round(table.get((from_state, to_state), 0.05), 3)
+
+
+def _build_v5_transitions(iso2: str, signals: dict,
+                           triggers: dict, trend: dict) -> dict:
+    """Phase 4: Scenario Transition Matrix — probability of moving between states."""
+    sig_score  = float(signals.get("signal_score", 30))
+    trig_max   = float(triggers.get("highest_trigger", {}).get("strength", 0))
+    cascade    = float(signals.get("cascade_context", 0))
+    trend_dir  = trend.get("trend_direction", "stable")
+
+    transitions = []
+    # Define which pairs matter
+    pairs = [
+        ("baseline", "stress"),
+        ("baseline", "worst"),
+        ("baseline", "best_case"),
+        ("baseline", "emergent_a"),
+        ("stress",   "worst"),
+        ("stress",   "baseline"),
+        ("stress",   "emergent_b"),
+        ("stress",   "best_case"),
+        ("worst",    "stabilisation"),
+        ("worst",    "collapse"),
+        ("worst",    "stress"),
+        ("worst",    "emergent_c"),
+    ]
+
+    for from_s, to_s in pairs:
+        prob = _transition_prob(from_s, to_s, sig_score, trig_max, cascade, trend_dir)
+        transitions.append({
+            "from_state": from_s,
+            "to_state":   to_s,
+            "probability":prob,
+            "confidence": round(min(0.90, 0.50 + sig_score / 200), 2),
+        })
+
+    # Normalise so same-from probabilities sum to 1.0
+    from_groups: dict[str, list] = {}
+    for t in transitions:
+        from_groups.setdefault(t["from_state"], []).append(t)
+    for from_s, grp in from_groups.items():
+        total = sum(t["probability"] for t in grp)
+        if total > 0:
+            for t in grp:
+                t["probability"] = round(t["probability"] / total, 3)
+
+    return {
+        "country":       iso2,
+        "country_name":  "",
+        "date":          TODAY,
+        "grdf_version":  "5.0",
+        "generated_at":  datetime.now(timezone.utc).isoformat(),
+        "transitions":   transitions,
+        "n_transitions": len(transitions),
+        "highest_risk_transition": max(transitions, key=lambda x: x["probability"],
+                                       default={}),
+    }
+
+
+# ── Phase 5: Bifurcation Engine ───────────────────────────────────────────
+
+def _build_v5_bifurcations(iso2: str, snap: dict,
+                             signals: dict, triggers: dict) -> dict:
+    """
+    Phase 5: bifurcation_score = volatility*0.4 + cascade*0.3 + trigger_strength*0.3
+    Detect strategic branching points where small changes cause large outcome shifts.
+    """
+    v3trend   = _v5_load(f"v3_trends_{iso2}.json")
+    volatility = float(v3trend.get("volatility", 0) or 0)
+    cascade    = float(signals.get("cascade_context", 0))
+    trig_str   = float(triggers.get("highest_trigger", {}).get("strength", 0))
+    sig_score  = float(signals.get("signal_score", 30))
+
+    # Normalise volatility to 0-100 (max expected volatility ~50)
+    vol_norm = min(100, round(volatility * 2))
+
+    bifurc_score = round(
+        vol_norm   * 0.40 +
+        cascade    * 0.30 +
+        trig_str   * 0.30
+    )
+    bifurc_score = max(0, min(100, bifurc_score))
+
+    grade = ("near-bifurcation" if bifurc_score >= 75 else
+             "critical"         if bifurc_score >= 60 else
+             "unstable"         if bifurc_score >= 40 else
+             "stable")
+
+    # System instability: how spread are domain scores
+    dom_s     = _get_domain_scores(iso2, snap)
+    scores    = [v["score"] for v in dom_s.values()]
+    mean_sc   = sum(scores) / max(1, len(scores))
+    spread    = max(scores) - min(scores) if scores else 0
+    instability = min(100, round(spread * 0.8 + abs(snap.get("delta",0) or 0) * 5))
+
+    # Decision sensitivity: how much leverage a decision would have
+    sensitivity = min(100, round(bifurc_score * 0.6 + sig_score * 0.4))
+
+    # Branch points: top trigger domains as potential decision nodes
+    trig_list = triggers.get("triggers", [])[:3]
+    branch_points = [
+        {"domain": t["trigger"], "leverage": t["strength"],
+         "time_window": t["time_to_activation"]}
+        for t in trig_list
+    ]
+
+    return {
+        "country":              iso2,
+        "country_name":         snap.get("country_name", iso2),
+        "date":                 TODAY,
+        "grdf_version":         "5.0",
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        "bifurcation_score":    bifurc_score,
+        "bifurcation_grade":    grade,
+        "system_instability":   instability,
+        "decision_sensitivity": sensitivity,
+        "volatility_input":     vol_norm,
+        "cascade_input":        round(cascade),
+        "trigger_input":        round(trig_str),
+        "branch_points":        branch_points,
+    }
+
+
+# ── Phase 6: Autonomous Narrative Engine ──────────────────────────────────
+
+def _build_v5_intelligence(iso2: str, snap: dict, signals: dict,
+                            scenarios: dict, triggers: dict,
+                            bifurc: dict) -> dict:
+    """
+    Phase 6: machine-readable strategic intelligence record.
+    Pure structured JSON -- no natural-language paragraphs.
+    """
+    dom_s    = _get_domain_scores(iso2, snap)
+    gri      = round(_calc_gri({d: v["score"] for d, v in dom_s.items()}))
+    dom_sigs = signals.get("domain_signals", [])[:5]
+    trig_top = triggers.get("triggers", [])[:3]
+
+    # Top risks: highest domain scores
+    top_risks = sorted(
+        [{"domain":d,"score":v["score"],"trend":v["trend"]} for d,v in dom_s.items()],
+        key=lambda x: -x["score"]
+    )[:5]
+
+    # Top drivers: from explainability V2 if available
+    expl = _v5_load(f"v2_explain_{iso2}.json")
+    top_drivers = [d.get("driver","?") for d in (expl.get("drivers",[]) or [])[:5]]
+    if not top_drivers:
+        top_drivers = [snap.get("dominant_domain","geopolitical")]
+
+    # Emerging signals
+    emerging = [{"signal":s["domain"],"strength":s["strength"],"grade":s["grade"]}
+                for s in dom_sigs if s["grade"] in ("emerging","strong","critical")]
+
+    # Critical triggers
+    crit_trig = [{"trigger":t["trigger"],"strength":t["strength"],
+                   "activates":t["activates"],"domain":t["domain"]}
+                 for t in trig_top if t["strength"] >= 40]
+
+    # Probable scenario
+    prob_sc = scenarios.get("most_probable","baseline")
+
+    # Monitoring priorities
+    monitoring = sorted(
+        [{"domain":d,"priority":v["score"],"action":"monitor"} for d,v in dom_s.items()
+         if v["score"] >= 60],
+        key=lambda x: -x["priority"]
+    )[:5]
+
+    return {
+        "country":              iso2,
+        "country_name":         snap.get("country_name", iso2),
+        "date":                 TODAY,
+        "grdf_version":         "5.0",
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        "gri":                  gri,
+        "alert_level":          snap.get("alert_level","?") or "?",
+        "signal_grade":         signals.get("signal_grade","noise"),
+        # Phase 6 output fields (spec)
+        "top_risks":            top_risks,
+        "top_drivers":          top_drivers,
+        "emerging_signals":     emerging,
+        "probable_scenario":    prob_sc,
+        "critical_triggers":    crit_trig,
+        "recommended_monitoring": monitoring,
+        "bifurcation_grade":    bifurc.get("bifurcation_grade","stable"),
+        "decision_sensitivity": bifurc.get("decision_sensitivity",0),
+    }
+
+
+# ── Phase 7: Global Strategic Outlook ────────────────────────────────────
+
+def _build_v5_global_outlook(all_intel: list[dict], all_signals: list[dict],
+                               all_bifurc: list[dict]) -> dict:
+    """Phase 7: aggregate 25-country intelligence into global outlook."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Global Scenario Distribution
+    sc_counts: dict[str,int] = {}
+    for intel in all_intel:
+        sc = intel.get("probable_scenario","baseline")
+        sc_counts[sc] = sc_counts.get(sc,0) + 1
+
+    # Global Trigger Map: most common trigger types
+    trigger_freq: dict[str,float] = {}
+    for sig in all_signals:
+        for ds in sig.get("domain_signals",[]):
+            d = ds["domain"]
+            trigger_freq[d] = trigger_freq.get(d,0) + ds["strength"]
+    top_triggers = sorted(trigger_freq.items(), key=lambda x:-x[1])[:7]
+
+    # Global Bifurcation Map
+    bif_by_grade: dict[str,list] = {}
+    for b in all_bifurc:
+        g = b.get("bifurcation_grade","stable")
+        bif_by_grade.setdefault(g,[]).append(b.get("country",""))
+    near_bif = bif_by_grade.get("near-bifurcation",[])
+
+    # Global Weak Signal Map
+    top_signal_countries = sorted(
+        [(s.get("country",""), s.get("signal_score",0)) for s in all_signals],
+        key=lambda x: -x[1]
+    )[:10]
+
+    # Top emerging risks: domains appearing most in emerging signals
+    emerging_freq: dict[str,int] = {}
+    for intel in all_intel:
+        for e in intel.get("emerging_signals",[]):
+            d = e.get("signal","?")
+            emerging_freq[d] = emerging_freq.get(d,0)+1
+    top_emerging = sorted(emerging_freq.items(), key=lambda x:-x[1])[:5]
+
+    # Top systemic risks: highest avg domain score across all countries
+    domain_avgs: dict[str,list] = {}
+    for intel in all_intel:
+        for r in intel.get("top_risks",[]):
+            d = r.get("domain","?")
+            domain_avgs.setdefault(d,[]).append(r.get("score",0))
+    top_systemic = sorted(
+        [(d, round(sum(v)/len(v),1)) for d,v in domain_avgs.items()],
+        key=lambda x:-x[1]
+    )[:5]
+
+    # Strategic opportunities: improving + low-signal countries
+    opportunities = [
+        intel.get("country","") for intel in all_intel
+        if intel.get("signal_grade","noise") in ("noise","weak")
+        and intel.get("gri",100) <= 50
+    ][:5]
+
+    return {
+        "grdf_version":            "5.0",
+        "date":                    TODAY,
+        "generated_at":            now_ts,
+        "total_countries":         len(all_intel),
+        "global_scenario_distribution": sc_counts,
+        "global_trigger_map":      [{"domain":d,"strength":round(s)} for d,s in top_triggers],
+        "global_bifurcation_map":  bif_by_grade,
+        "near_bifurcation_n":      len(near_bif),
+        "near_bifurcation":        near_bif,
+        "global_weak_signal_map":  [{"country":c,"signal_score":s} for c,s in top_signal_countries],
+        "top_emerging_risks":      [{"domain":d,"count":c} for d,c in top_emerging],
+        "top_systemic_risks":      [{"domain":d,"avg_score":s} for d,s in top_systemic],
+        "top_strategic_opportunities": opportunities,
+    }
+
+
+# ── Phase 8: Strategic Dashboard ─────────────────────────────────────────
+
+def _build_v5_dashboard(all_intel: list, all_signals: list,
+                         all_triggers_map: dict, all_trans: list,
+                         all_bifurc: list, global_outlook: dict) -> dict:
+    """Phase 8: 7-widget strategic dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Widget 1: Weak Signals -- top countries by signal_score
+    weak_signals_feed = sorted(
+        [{"country":s["country"],"signal_score":s["signal_score"],
+          "grade":s["signal_grade"],"n_active":s["n_active_signals"]} for s in all_signals],
+        key=lambda x: -x["signal_score"]
+    )[:10]
+
+    # Widget 2: Emerging Scenarios -- most probable scenario per country
+    emerging_scenarios = [
+        {"country":i["country"],"probable":i["probable_scenario"],
+         "signal_grade":i["signal_grade"]} for i in all_intel
+    ]
+
+    # Widget 3: Trigger Monitor -- immediate triggers across all countries
+    trigger_monitor = []
+    for iso2, trigs in all_triggers_map.items():
+        for t in trigs[:2]:
+            if t.get("activates") == "immediately":
+                trigger_monitor.append({"country":iso2,"trigger":t["trigger"],
+                                         "strength":t["strength"],"domain":t["domain"]})
+    trigger_monitor.sort(key=lambda x:-x["strength"])
+
+    # Widget 4: Transition Matrix summary -- highest-prob transitions
+    high_prob_trans = sorted(
+        [{"country":t.get("country",""),"from":t["from_state"],
+          "to":t["to_state"],"probability":t["probability"]}
+         for t in all_trans if t.get("probability",0)>=0.40],
+        key=lambda x:-x["probability"]
+    )[:10]
+
+    # Widget 5: Bifurcation Monitor
+    bif_monitor = sorted(
+        [{"country":b["country"],"score":b["bifurcation_score"],"grade":b["bifurcation_grade"],
+          "instability":b["system_instability"]} for b in all_bifurc],
+        key=lambda x:-x["score"]
+    )[:10]
+
+    # Widget 6: Strategic Outlook = global_outlook summary
+    strat_outlook = {
+        "ssi_context":         global_outlook.get("near_bifurcation_n",0),
+        "top_scenario":        max(global_outlook.get("global_scenario_distribution",{"baseline":1}).items(),
+                                   key=lambda x:x[1])[0],
+        "top_emerging_risk":   (global_outlook.get("top_emerging_risks",[{}]) or [{}])[0].get("domain","?"),
+        "top_systemic_risk":   (global_outlook.get("top_systemic_risks",[{}]) or [{}])[0].get("domain","?"),
+    }
+
+    # Widget 7: Global Intelligence Feed -- top-10 by signal_score
+    global_feed = sorted(
+        [{"country":i["country"],"gri":i["gri"],"signal_grade":i["signal_grade"],
+          "probable_scenario":i["probable_scenario"],
+          "bifurcation_grade":i["bifurcation_grade"]} for i in all_intel],
+        key=lambda x: -x["gri"]
+    )[:10]
+
+    return {
+        "grdf_version":       "5.0",
+        "date":               TODAY,
+        "generated_at":       now_ts,
+        "weak_signals":       weak_signals_feed,
+        "emerging_scenarios": emerging_scenarios,
+        "trigger_monitor":    trigger_monitor,
+        "transition_matrix":  high_prob_trans,
+        "bifurcation_monitor":bif_monitor,
+        "strategic_outlook":  strat_outlook,
+        "global_intelligence_feed": global_feed,
+    }
+
+
+# ── V5 Orchestrator ───────────────────────────────────────────────────────
+
+def save_grdf_v5(snapshots: list) -> None:
+    """
+    GRDF V5 -- Autonomous Scenario Intelligence Engine.
+    Dependency: save_grdf -> save_grdf_v2 -> save_grdf_v3 -> save_grdf_v4 -> save_grdf_v5
+    Reads: v1..v4 outputs.  Writes: v5_* only.
+    V1/V2/V3/V4 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    all_intel:   list[dict] = []
+    all_signals: list[dict] = []
+    all_bifurc:  list[dict] = []
+    all_trans_flat: list[dict] = []
+    all_trig_map:   dict[str, list] = {}
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Phase 1
+            signals = _build_v5_signals(iso2, snap)
+            with open(GRDF_DIR / f"v5_signals_{iso2}.json","w") as f:
+                json.dump(signals, f, ensure_ascii=False, indent=2)
+
+            # Phase 2
+            scenarios = _build_v5_scenarios(iso2, snap, signals)
+            with open(GRDF_DIR / f"v5_scenarios_{iso2}.json","w") as f:
+                json.dump(scenarios, f, ensure_ascii=False, indent=2)
+
+            # Phase 3
+            triggers = _build_v5_triggers(iso2, snap, signals)
+            with open(GRDF_DIR / f"v5_triggers_{iso2}.json","w") as f:
+                json.dump(triggers, f, ensure_ascii=False, indent=2)
+
+            # Phase 4
+            v3trend  = _v5_load(f"v3_trends_{iso2}.json")
+            trans    = _build_v5_transitions(iso2, signals, triggers, v3trend)
+            trans["country_name"] = snap.get("country_name", iso2)
+            with open(GRDF_DIR / f"v5_transitions_{iso2}.json","w") as f:
+                json.dump(trans, f, ensure_ascii=False, indent=2)
+
+            # Phase 5
+            bifurc   = _build_v5_bifurcations(iso2, snap, signals, triggers)
+            with open(GRDF_DIR / f"v5_bifurcations_{iso2}.json","w") as f:
+                json.dump(bifurc, f, ensure_ascii=False, indent=2)
+
+            # Phase 6
+            intel    = _build_v5_intelligence(iso2, snap, signals, scenarios, triggers, bifurc)
+            with open(GRDF_DIR / f"v5_intelligence_{iso2}.json","w") as f:
+                json.dump(intel, f, ensure_ascii=False, indent=2)
+
+            # Collect for global phases
+            all_signals.append(signals)
+            all_bifurc.append(bifurc)
+            all_intel.append(intel)
+            all_trig_map[iso2] = triggers.get("triggers",[])
+            for t in trans.get("transitions",[]):
+                all_trans_flat.append({**t,"country":iso2})
+
+        except Exception as e:
+            print(f"[GRDF-V5] {iso2}: FAILED -- {e}", file=sys.stderr)
+
+    # Phase 7: Global Strategic Outlook
+    global_outlook = _build_v5_global_outlook(all_intel, all_signals, all_bifurc)
+    with open(GRDF_DIR / "v5_global_outlook.json","w") as f:
+        json.dump(global_outlook, f, ensure_ascii=False, indent=2)
+
+    # Phase 8: Strategic Dashboard
+    dashboard = _build_v5_dashboard(
+        all_intel, all_signals, all_trig_map,
+        all_trans_flat, all_bifurc, global_outlook
+    )
+    with open(GRDF_DIR / "v5_dashboard.json","w") as f:
+        json.dump(dashboard, f, ensure_ascii=False, indent=2)
+
+    print(f"[GRDF-V5] All 8 phases complete. {len(all_intel)} countries processed.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -10453,6 +11267,7 @@ def main():
     save_grdf_v2(snapshots)
     save_grdf_v3(snapshots)
     save_grdf_v4(snapshots)
+    save_grdf_v5(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
