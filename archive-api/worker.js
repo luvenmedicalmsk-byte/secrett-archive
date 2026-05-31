@@ -6784,10 +6784,54 @@ async function handleGRDF(request, env) {
       '/api/grdf/v10/dashboard','/api/grdf/v10/missions','/api/grdf/v10/alerts',
       '/api/grdf/v10/agents','/api/grdf/v10/knowledge-graph','/api/grdf/v10/memory',
       '/api/grdf/v10/coordination','/api/grdf/v10/action-atlas','/api/grdf/v10/operations',
+
+  if (seg[0] === 'v12') {
+    const v12seg = seg[1] || 'dashboard';
+    const C12 = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const V12_FILES = {
+      'dashboard':'docs/grdf/v12_dashboard.json',
+      'planetary-twin':'docs/grdf/v12_planetary_twin.json',
+      'earth-systems':'docs/grdf/v12_earth_systems_graph.json',
+      'global-flows':'docs/grdf/v12_global_flows.json',
+      'planetary-stress':'docs/grdf/v12_planetary_stress.json',
+      'resilience':'docs/grdf/v12_resilience.json',
+      'scenarios':'docs/grdf/v12_scenarios.json',
+      'civilization-stability':'docs/grdf/v12_civilization_stability.json',
+      'coordination':'docs/grdf/v12_coordination_network.json',
+      'planetary-alerts':'docs/grdf/v12_planetary_alerts.json',
+    };
+    const V12_SIGNAL_ONLY = new Set(['earth-systems','scenarios','coordination']);
+    if (!V12_FILES[v12seg]) return new Response(JSON.stringify({error:'Unknown V12: '+v12seg}),{status:404,headers:C12});
+    if (V12_SIGNAL_ONLY.has(v12seg) && access==='teaser') return new Response(JSON.stringify({error:v12seg+' requires Signal tier'}),{status:403,headers:C12});
+    const ck = `grdf:v12:${v12seg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:C12});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, V12_FILES[v12seg], 300);
+      if (!d) return new Response(JSON.stringify({error:'V12 '+v12seg+' not built yet'}),{status:404,headers:C12});
+      let r;
+      if (access==='teaser') {
+        if (v12seg==='dashboard') r={date:d.date,summary:d.summary,planetary_alert_layer:d.planetary_alert_layer,global_risk_map:d.global_risk_map?.slice(0,5),tier};
+        else if (v12seg==='planetary-twin') r={date:d.date,composite_score:d.composite_score,planet_grade:d.planet_grade,tier};
+        else if (v12seg==='planetary-stress') r={date:d.date,planetary_stress_index:d.planetary_stress_index,psi_grade:d.psi_grade,psi_trend:d.psi_trend,tier};
+        else if (v12seg==='resilience') r={date:d.date,global_resilience:d.global_resilience,resilience_grade:d.resilience_grade,weakest_domain:d.weakest_domain,tier};
+        else if (v12seg==='global-flows') r={date:d.date,worst_flow:d.worst_flow,avg_disruption:d.avg_disruption,tier};
+        else if (v12seg==='civilization-stability') r={date:d.date,civilization_stability_index:d.civilization_stability_index,csi_grade:d.csi_grade,tier};
+        else if (v12seg==='planetary-alerts') r={date:d.date,planetary_alert:d.planetary_alert,planet_status:d.planet_status,components:d.components,tier};
+        else r={date:d.date,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:C12});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:C12});}
+  }
+
       '/api/grdf/v11/dashboard','/api/grdf/v11/network','/api/grdf/v11/dependencies',
       '/api/grdf/v11/cascades','/api/grdf/v11/resources','/api/grdf/v11/missions',
       '/api/grdf/v11/coordination','/api/grdf/v11/learning','/api/grdf/v11/governance',
       '/api/grdf/v11/planetary-alerts',
+      '/api/grdf/v12/dashboard','/api/grdf/v12/planetary-twin','/api/grdf/v12/earth-systems',
+      '/api/grdf/v12/global-flows','/api/grdf/v12/planetary-stress','/api/grdf/v12/resilience',
+      '/api/grdf/v12/scenarios','/api/grdf/v12/civilization-stability',
+      '/api/grdf/v12/coordination','/api/grdf/v12/planetary-alerts',
     ]
   }),{status:404,headers:CORS});
 }
