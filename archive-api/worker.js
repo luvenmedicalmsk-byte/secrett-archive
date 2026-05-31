@@ -6874,8 +6874,54 @@ async function handleGRDF(request, env) {
       '/api/grdf/v12/coordination','/api/grdf/v12/planetary-alerts',
       '/api/grdf/v13/dashboard','/api/grdf/v13/civilization-state','/api/grdf/v13/long-horizon',
       '/api/grdf/v13/resource-limits','/api/grdf/v13/technology-transitions',
+
+  // =========================================================================
+  // GRDF PLATFORM HARDENING PROGRAM V1 API
+  // All routes under /api/grdf/hardening/
+  // Architecture frozen at V13. No V14.
+  // =========================================================================
+  if (seg[0] === 'hardening') {
+    const hseg = seg[1] || 'certification';
+    const CH = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const H_FILES = {
+      'certification':     'docs/hardening/hardening_certification.json',
+      'formula-audit':     'docs/hardening/hardening_formula_audit.json',
+      'dependency-graph':  'docs/hardening/hardening_dependency_graph.json',
+      'explainability':    'docs/hardening/hardening_explainability.json',
+      'correlation-audit': 'docs/hardening/hardening_correlation_audit.json',
+      'forecast-audit':    'docs/hardening/hardening_forecast_audit.json',
+      'data-quality':      'docs/hardening/hardening_data_quality.json',
+      'api-audit':         'docs/hardening/hardening_api_audit.json',
+      'storage-audit':     'docs/hardening/hardening_storage_audit.json',
+      'performance':       'docs/hardening/hardening_performance.json',
+    };
+    if (!H_FILES[hseg]) return new Response(JSON.stringify({error:'Unknown hardening route: '+hseg, available:Object.keys(H_FILES)}),{status:404,headers:CH});
+    const ck = `grdf:hard:${hseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CH});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, H_FILES[hseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'Hardening '+hseg+' not built yet'}),{status:404,headers:CH});
+      let r;
+      if (access==='teaser') {
+        if (hseg==='certification') r={date:d.date,certification_status:d.certification_status,overall_score:d.overall_score,platform_readiness_score:d.platform_readiness_score,no_v14:d.no_v14,tier};
+        else if (hseg==='formula-audit') r={date:d.date,total:d.total,passed:d.passed,score:d.score,failed_ids:d.failed_ids,tier};
+        else if (hseg==='forecast-audit') r={date:d.date,V3_MAE:d.V3_MAE,V3_grade:d.V3_grade,V7_calibration:d.V7_calibration,status:d.status,tier};
+        else if (hseg==='data-quality') r={date:d.date,completeness_pct:d.completeness_pct,freshness_pct:d.freshness_pct,status:d.status,tier};
+        else if (hseg==='performance') r={date:d.date,performance_grade:d.performance_grade,estimated_storage_mb:d.estimated_storage_mb,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CH});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CH});}
+  }
+
       '/api/grdf/v13/demographics','/api/grdf/v13/resilience','/api/grdf/v13/pathways',
       '/api/grdf/v13/transitions','/api/grdf/v13/scenarios',
+      '/api/grdf/hardening/certification','/api/grdf/hardening/formula-audit',
+      '/api/grdf/hardening/dependency-graph','/api/grdf/hardening/explainability',
+      '/api/grdf/hardening/correlation-audit','/api/grdf/hardening/forecast-audit',
+      '/api/grdf/hardening/data-quality','/api/grdf/hardening/api-audit',
+      '/api/grdf/hardening/storage-audit','/api/grdf/hardening/performance',
     ]
   }),{status:404,headers:CORS});
 }
