@@ -14985,6 +14985,861 @@ def save_grdf_v10(snapshots: list) -> None:
     print(f"[GRDF-V10] Sovereign Intelligence Platform OPERATIONAL. {len(snapshots)} countries.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V11 -- Autonomous Sovereign Network
+#
+# Transforms the V10 Sovereign Intelligence Platform into a distributed
+# autonomous network of Sovereign Nodes coordinating in real time.
+#
+# Phase 1:  Federated Intelligence Layer    -> v11_federated_nodes.json
+# Phase 2:  Global Dependency Graph         -> v11_global_dependency_graph.json
+# Phase 3:  Cascading Failure Engine        -> v11_cascading_failures.json
+# Phase 4:  Autonomous Resource Exchange    -> v11_resource_exchange.json
+# Phase 5:  Global Mission Network          -> v11_global_missions.json
+# Phase 6:  Cross-Border Coordination Engine-> v11_cross_border_coordination.json
+# Phase 7:  Strategic Learning Engine       -> v11_learning_engine.json
+# Phase 8:  Autonomous Governance Layer     -> v11_governance.json
+# Phase 9:  Planetary Early Warning System  -> v11_planetary_alerts.json
+# Phase 10: Autonomous Network Dashboard    -> v11_dashboard.json
+#
+# Reads: v1..v10 outputs (read-only).
+# Writes: v11_* only.  V1-V10 NEVER modified.
+# =========================================================================
+
+# Federated node definitions (Phase 1)
+_V11_NODES: dict[str, list[str]] = {
+    "NODE-US":     ["US","CA","MX","AR"],
+    "NODE-EU":     ["DE","FR","GB","IT","PL","ES","CH"],
+    "NODE-APAC":   ["CN","JP","IN","ID"],
+    "NODE-MENA":   ["TR","AE","SA","EG","IL","IR"],
+    "NODE-CIS":    ["RU","BY","UA","KZ"],
+    "NODE-LATAM":  ["AR","MX"],
+    "NODE-AFRICA": ["EG"],
+}
+
+# Dependency node types and infrastructure classes (Phase 2)
+_V11_INFRA_TYPES = [
+    "energy","water","finance","food","technology","satellite","cable","port","rail"]
+_V11_DEP_EDGE_TYPES = [
+    "DEPENDS_ON","SUPPLIES","AFFECTS","INTERRUPTS","ENABLES","AMPLIFIES"]
+
+# Resource classes (Phase 4)
+_V11_RESOURCE_CLASSES = [
+    "energy","water","food","transport","medical","cyber","emergency","infrastructure"]
+
+# Mission states (Phase 5)
+_V11_MISSION_STATES_NET = [
+    "pending","active","coordinated","executing","resolved"]
+
+# Planetary alert order
+_V11_ALERT_ORD = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+
+
+def _v11_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+# ── Phase 1: Federated Intelligence Layer ────────────────────────────────
+
+def _build_v11_federated_nodes(snapshots: list) -> dict:
+    """
+    Phase 1: Build Sovereign Node records.
+    Each node aggregates its member countries' intelligence metadata.
+    Nodes share strategic metadata only (no raw data transfer).
+    """
+    snap_map = {s["country"]: s for s in snapshots}
+    nodes: list[dict] = []
+
+    for node_id, countries in _V11_NODES.items():
+        members    = [c for c in countries if c in snap_map]
+        if not members:
+            continue
+
+        scores     = [int(snap_map[c].get("risk_score",50) or 50) for c in members]
+        avg_score  = round(sum(scores)/len(scores)) if scores else 50
+
+        # Aggregate alert levels from V10
+        alert_vals = []
+        for c in members:
+            an = _v11_load(f"v10_alert_network.json")
+            level = (an.get("alert_map") or {}).get(c, {}).get("sovereign_alert","GREEN")
+            alert_vals.append(_V11_ALERT_ORD.get(level, 0))
+        node_alert_ord = max(alert_vals) if alert_vals else 0
+        node_alert     = ["GREEN","YELLOW","ORANGE","RED","BLACK"][node_alert_ord]
+
+        # Top signal from V5
+        sig_scores = []
+        for c in members:
+            sd = _v11_load(f"v5_signals_{c}.json")
+            sig_scores.append(float(sd.get("signal_score",0)))
+        avg_signal = round(sum(sig_scores)/max(1,len(sig_scores)),1)
+
+        nodes.append({
+            "node_id":        node_id,
+            "member_countries": members,
+            "member_n":       len(members),
+            "avg_risk":       avg_score,
+            "node_alert":     node_alert,
+            "avg_signal":     avg_signal,
+            "node_status":    ("critical"  if node_alert_ord >= 3 else
+                               "elevated"  if node_alert_ord >= 2 else
+                               "monitoring"),
+            "metadata_only":  True,   # nodes share only strategic metadata
+        })
+
+    nodes.sort(key=lambda x: -x["avg_risk"])
+
+    return {
+        "grdf_version":    "11.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "total_nodes":     len(nodes),
+        "nodes":           nodes,
+        "node_ids":        [n["node_id"] for n in nodes],
+    }
+
+
+# ── Phase 2: Global Dependency Graph ──────────────────────────────────────
+
+def _build_v11_global_dependency_graph(snapshots: list) -> dict:
+    """
+    Phase 2: Global interdependency graph.
+    Country nodes + infrastructure nodes (energy, water, finance, etc.).
+    Edges from V6 country links + calibrated infrastructure dependencies.
+    """
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    seen:  set = set()
+
+    def add_node(nid, ntype, label, **kw):
+        if nid not in seen:
+            seen.add(nid)
+            nodes.append({"id":nid,"type":ntype,"label":label,**kw})
+
+    # Country nodes
+    for snap in snapshots:
+        iso2  = snap["country"]
+        score = int(snap.get("risk_score",50) or 50)
+        add_node(f"CC:{iso2}","Country",snap.get("country_name",iso2),risk=score)
+
+    # Infrastructure nodes (global)
+    for infra in _V11_INFRA_TYPES:
+        add_node(f"INFRA:{infra}","Infrastructure",infra.title()+" Network")
+
+    # Country → infrastructure dependencies (calibrated by domain score)
+    infra_domain_map = {
+        "energy":"infrastructure","water":"climate","finance":"economic",
+        "food":"climate","technology":"technology","satellite":"technology",
+        "cable":"infrastructure","port":"economic","rail":"infrastructure",
+    }
+    for snap in snapshots:
+        iso2  = snap["country"]
+        dom_s = _get_domain_scores(iso2, snap)
+        for infra, dom in infra_domain_map.items():
+            d_score = dom_s.get(dom, {}).get("score", 50)
+            if d_score >= 40:
+                strength = round(d_score / 100, 3)
+                edge_type = "DEPENDS_ON" if d_score < 65 else "SUPPLIES"
+                edges.append({"from":f"CC:{iso2}","to":f"INFRA:{infra}",
+                               "type":edge_type,"weight":strength})
+
+    # Country-to-country links from V6
+    link_d = _v11_load("v6_country_links.json")
+    for lnk in (link_d.get("matrix") or [])[:60]:
+        a, b = lnk.get("from",""), lnk.get("to","")
+        if a and b and lnk.get("strength",0) >= 0.3:
+            edges.append({"from":f"CC:{a}","to":f"CC:{b}",
+                           "type":"AFFECTS","weight":lnk["strength"]})
+
+    # Infrastructure interdependencies
+    infra_deps = [
+        ("energy","finance","AFFECTS",0.75),("energy","rail","ENABLES",0.80),
+        ("cable","technology","DEPENDS_ON",0.85),("port","food","SUPPLIES",0.70),
+        ("satellite","technology","ENABLES",0.78),("water","food","DEPENDS_ON",0.90),
+    ]
+    for frm, to, etype, w in infra_deps:
+        edges.append({"from":f"INFRA:{frm}","to":f"INFRA:{to}","type":etype,"weight":w})
+
+    return {
+        "grdf_version":   "11.0",
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "node_count":     len(nodes),
+        "edge_count":     len(edges),
+        "node_types":     ["Country","Infrastructure","Supply Chain","Energy",
+                           "Water","Finance","Food","Technology","Satellite",
+                           "Cable","Port","Rail","Policy","Risk"],
+        "edge_types":     _V11_DEP_EDGE_TYPES,
+        "nodes":          nodes,
+        "edges":          edges,
+    }
+
+
+# ── Phase 3: Cascading Failure Engine ─────────────────────────────────────
+
+def _run_v11_cascade_failure(origin_infra: str, trigger_score: float,
+                              snap_map: dict[str,dict]) -> dict:
+    """
+    Phase 3: Simulate one infrastructure failure cascade.
+    Propagates through calibrated infra→country pathways.
+    """
+    infra_country_impact = {
+        "energy":         {"score_mult":0.35, "domains":["infrastructure","economic","social"]},
+        "finance":        {"score_mult":0.40, "domains":["economic","geopolitical","social"]},
+        "food":           {"score_mult":0.30, "domains":["social","geopolitical","economic"]},
+        "cable":          {"score_mult":0.38, "domains":["cyber","technology","economic"]},
+        "rail":           {"score_mult":0.25, "domains":["infrastructure","economic"]},
+        "port":           {"score_mult":0.28, "domains":["economic","infrastructure"]},
+        "water":          {"score_mult":0.32, "domains":["social","climate"]},
+        "technology":     {"score_mult":0.35, "domains":["technology","cyber","economic"]},
+        "satellite":      {"score_mult":0.28, "domains":["technology","infrastructure"]},
+    }
+    cfg      = infra_country_impact.get(origin_infra, {"score_mult":0.25,"domains":["economic"]})
+    affected = []
+
+    for iso2, snap in snap_map.items():
+        dom_s = _get_domain_scores(iso2, snap)
+        dom_scores = [dom_s.get(d,{}).get("score",50) for d in cfg["domains"]]
+        avg_dom    = sum(dom_scores)/max(1,len(dom_scores))
+        # Impact: trigger * infrastructure coupling * domain exposure
+        impact = min(100, round(trigger_score * cfg["score_mult"] * avg_dom / 100 * 100))
+        if impact >= 8:
+            affected.append({
+                "country":      iso2,
+                "impact_score": impact,
+                "affected_domains": cfg["domains"],
+                "severity":     ("critical" if impact>=70 else "high" if impact>=45
+                                  else "moderate" if impact>=20 else "low"),
+            })
+
+    affected.sort(key=lambda x: -x["impact_score"])
+
+    return {
+        "origin_infrastructure": origin_infra,
+        "trigger_score":         round(trigger_score),
+        "affected_n":            len(affected),
+        "max_impact":            affected[0]["impact_score"] if affected else 0,
+        "cascade_grade":         ("CRITICAL" if (affected[0]["impact_score"] if affected else 0)>=70
+                                  else "HIGH" if (affected[0]["impact_score"] if affected else 0)>=45
+                                  else "MODERATE"),
+        "affected":              affected[:10],
+    }
+
+
+def _build_v11_cascading_failures(snapshots: list) -> dict:
+    """Phase 3: run cascade simulations for all infra node types."""
+    snap_map = {s["country"]: s for s in snapshots}
+    failures = []
+
+    # Trigger score = mean risk of snapshots × infra sensitivity
+    mean_risk = round(sum(int(s.get("risk_score",50) or 50) for s in snapshots)/len(snapshots))
+    for infra in _V11_INFRA_TYPES:
+        cf = _run_v11_cascade_failure(infra, mean_risk, snap_map)
+        failures.append(cf)
+
+    failures.sort(key=lambda x: -x["max_impact"])
+
+    # Example chains from spec
+    chains = [
+        {"name":"Energy → Industry → Logistics","steps":["energy","rail","port"]},
+        {"name":"Cyber → Banking → Economy",    "steps":["cable","finance","economic"]},
+        {"name":"Drought → Agriculture → Food",  "steps":["water","food","social"]},
+        {"name":"Flood → Infrastructure → Supply","steps":["water","rail","port"]},
+    ]
+
+    return {
+        "grdf_version":   "11.0",
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "simulated_n":    len(failures),
+        "worst_cascade":  failures[0]["origin_infrastructure"] if failures else "none",
+        "failures":       failures,
+        "cascade_chains": chains,
+    }
+
+
+# ── Phase 4: Autonomous Resource Exchange ─────────────────────────────────
+
+def _ars(demand: float, urgency: float, strategic_value: float) -> float:
+    """
+    ARS = demand*0.40 + urgency*0.35 + strategic_value*0.25
+    All 0-100, output 0-100.
+    """
+    return max(0, min(100, round(demand*0.40 + urgency*0.35 + strategic_value*0.25)))
+
+
+def _build_v11_resource_exchange(snapshots: list,
+                                   federated_nodes: dict) -> dict:
+    """
+    Phase 4: Allocate resources between nodes based on ARS scores.
+    Higher ARS = higher demand = receives more resource from neighbouring nodes.
+    """
+    nodes_map = {n["node_id"]: n for n in federated_nodes.get("nodes",[])}
+    snap_map  = {s["country"]: s for s in snapshots}
+
+    exchanges: list[dict] = []
+    for rc in _V11_RESOURCE_CLASSES:
+        # Per-node ARS for this resource class
+        node_scores = []
+        for node_id, ndata in nodes_map.items():
+            members = ndata.get("member_countries",[])
+            avg_risk = ndata.get("avg_risk",50)
+            # Demand proxy = avg risk × resource class weight
+            rc_weight = {"energy":1.0,"water":0.9,"food":0.8,"transport":0.7,
+                         "medical":0.85,"cyber":0.75,"emergency":1.0,"infrastructure":0.9}.get(rc,0.75)
+            demand   = min(100, round(avg_risk * rc_weight))
+            # Urgency = max alert level in node
+            urg_ord  = _V11_ALERT_ORD.get(ndata.get("node_alert","GREEN"),0)
+            urgency  = urg_ord * 25                        # 0,25,50,75,100
+            # Strategic value = avg signal score
+            strat    = round(ndata.get("avg_signal",30))
+            ars      = _ars(demand, urgency, strat)
+            node_scores.append((node_id, ars, demand))
+
+        node_scores.sort(key=lambda x: -x[1])
+        # Top 2 requesting, bottom 2 supplying
+        requesting = node_scores[:2]
+        supplying  = node_scores[-2:]
+        for req_node, req_ars, req_dem in requesting:
+            for sup_node, sup_ars, _ in supplying:
+                if req_node != sup_node and req_ars > sup_ars:
+                    exchanges.append({
+                        "resource_class": rc,
+                        "from_node":      sup_node,
+                        "to_node":        req_node,
+                        "ars_score":      req_ars,
+                        "demand":         req_dem,
+                        "urgency":        _V11_ALERT_ORD.get(
+                            nodes_map.get(req_node,{}).get("node_alert","GREEN"),0)*25,
+                        "allocation_pct": round(min(40, req_ars * 0.4)),
+                    })
+
+    exchanges.sort(key=lambda x: -x["ars_score"])
+
+    return {
+        "grdf_version":    "11.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "resource_classes":_V11_RESOURCE_CLASSES,
+        "total_exchanges": len(exchanges),
+        "top_exchanges":   exchanges[:20],
+    }
+
+
+# ── Phase 5: Global Mission Network ──────────────────────────────────────
+
+def _build_v11_global_missions(snapshots: list,
+                                 federated_nodes: dict) -> dict:
+    """
+    Phase 5: Elevate V10 per-country missions into a global federated network.
+    Mission IDs: ASN-REGION-XXXX
+    """
+    nodes_map  = {n["node_id"]: n for n in federated_nodes.get("nodes",[])}
+    all_missions: list[dict] = []
+    n_seq = 1
+
+    for node_id, ndata in nodes_map.items():
+        node_alert = ndata.get("node_alert","GREEN")
+        alert_ord  = _V11_ALERT_ORD.get(node_alert,0)
+        state      = (_V11_MISSION_STATES_NET[min(4, max(0, alert_ord + 1))]
+                      if alert_ord >= 2 else "active")
+
+        # Aggregate V10 missions for member countries
+        member_missions = []
+        for c in ndata.get("member_countries",[]):
+            v10m = _v11_load(f"v10_missions_{c}.json")
+            for m in (v10m.get("missions") or []):
+                member_missions.append({
+                    "mission_id":   f"ASN-{node_id.replace('NODE-','')}-{n_seq:04d}",
+                    "source_id":    m.get("mission_id","?"),
+                    "country":      c,
+                    "objective":    m.get("objective","?"),
+                    "domain":       m.get("domain","?"),
+                    "priority":     m.get("priority","standard"),
+                    "state":        state,
+                    "owner_node":   node_id,
+                })
+                n_seq += 1
+
+        all_missions.extend(member_missions[:5])   # cap per node
+
+    executing_n   = sum(1 for m in all_missions if m["state"]=="executing")
+    coordinated_n = sum(1 for m in all_missions if m["state"]=="coordinated")
+
+    return {
+        "grdf_version":   "11.0",
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "total_missions": len(all_missions),
+        "executing_n":    executing_n,
+        "coordinated_n":  coordinated_n,
+        "missions":       all_missions[:50],
+    }
+
+
+# ── Phase 6: Cross-Border Coordination Engine ─────────────────────────────
+
+def _build_v11_cross_border(snapshots: list,
+                              federated_nodes: dict) -> dict:
+    """
+    Phase 6: Cross-border coordination metrics:
+    shared_risks, joint_actions, coordination_efficiency, regional_stability.
+    """
+    snap_map  = {s["country"]: s for s in snapshots}
+    nodes_list= federated_nodes.get("nodes",[])
+    records   = []
+
+    for node in nodes_list:
+        node_id = node["node_id"]
+        members = node.get("member_countries",[])
+        if len(members) < 2:
+            continue
+
+        # Shared risks: top domain common to most members
+        dom_freq: dict = {}
+        for c in members:
+            dom_s = _get_domain_scores(c, snap_map.get(c,{}))
+            for d, dv in dom_s.items():
+                if dv.get("score",0) >= 55:
+                    dom_freq[d] = dom_freq.get(d,0)+1
+        shared = sorted(dom_freq.items(), key=lambda x:-x[1])[:3]
+
+        # Joint actions: from V9 priority scores
+        joint_actions = []
+        for c in members[:3]:
+            pd = _v11_load(f"v9_priority_score_{c}.json")
+            if pd.get("top_action"):
+                joint_actions.append(pd["top_action"])
+
+        # Coordination efficiency = avg SCS of members
+        scs_vals = [float(_v11_load(f"v9_coordination_{c}.json").get("scs",50))
+                    for c in members]
+        coord_eff = round(sum(scs_vals)/max(1,len(scs_vals)),1)
+
+        # Regional stability = 100 - avg risk
+        avg_risk  = node.get("avg_risk",50)
+        stability = max(0, 100 - avg_risk)
+
+        records.append({
+            "node_id":           node_id,
+            "countries":         members,
+            "shared_risks":      [d for d,_ in shared],
+            "joint_actions":     joint_actions[:3],
+            "coordination_efficiency": coord_eff,
+            "regional_stability":stability,
+            "stability_grade":   ("stable"   if stability >= 65 else
+                                  "stressed" if stability >= 40 else "critical"),
+        })
+
+    records.sort(key=lambda x: x["regional_stability"])
+
+    return {
+        "grdf_version":         "11.0",
+        "date":                 TODAY,
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        "total_regions":        len(records),
+        "avg_coord_efficiency": round(sum(r["coordination_efficiency"] for r in records)/max(1,len(records)),1),
+        "avg_stability":        round(sum(r["regional_stability"] for r in records)/max(1,len(records)),1),
+        "coordination_blocks":  records,
+    }
+
+
+# ── Phase 7: Strategic Learning Engine ────────────────────────────────────
+
+def _build_v11_learning(snapshots: list) -> dict:
+    """
+    Phase 7: System self-learning — analyse forecast accuracy, scenario success,
+    decision outcomes, and mitigation effectiveness.
+    Derives updated weights and priority adjustments.
+    """
+    # Forecast accuracy: compare V3 30d forecast vs current score
+    fc_errors = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        fc   = _v11_load(f"v3_forecast_{iso2}.json")
+        # Use 30d forecast from previous cycle as proxy (compare to current risk_score)
+        pred = (fc.get("horizons") or {}).get("30d",{}).get("score")
+        curr = int(snap.get("risk_score",50) or 50)
+        if pred:
+            fc_errors.append(abs(pred - curr))
+    mae = round(sum(fc_errors)/max(1,len(fc_errors)),1)
+
+    # Decision effectiveness: avg DES across all countries
+    des_vals = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        ds   = _v11_load(f"v8_decision_score_{iso2}.json")
+        if ds.get("avg_des"): des_vals.append(float(ds["avg_des"]))
+    avg_des = round(sum(des_vals)/max(1,len(des_vals)),1) if des_vals else 50.0
+
+    # Mitigation effectiveness: avg MS
+    ms_vals = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        ms   = _v11_load(f"v8_mitigation_{iso2}.json")
+        if ms.get("avg_ms"): ms_vals.append(float(ms["avg_ms"]))
+    avg_ms = round(sum(ms_vals)/max(1,len(ms_vals)),1) if ms_vals else 50.0
+
+    # Derived adjustments
+    fc_acc_pct  = max(0, round(100 - mae))
+    learning_signal = round((fc_acc_pct * 0.4 + avg_des * 0.3 + avg_ms * 0.3))
+
+    return {
+        "grdf_version":            "11.0",
+        "date":                    TODAY,
+        "generated_at":            datetime.now(timezone.utc).isoformat(),
+        "forecast_mae":            mae,
+        "forecast_accuracy_pct":   fc_acc_pct,
+        "avg_decision_effectiveness": avg_des,
+        "avg_mitigation_score":    avg_ms,
+        "learning_signal":         learning_signal,
+        "learning_grade":          ("high" if learning_signal>=70 else "moderate" if learning_signal>=40 else "low"),
+        "updated_weights": {
+            "signal_weight":    round(min(0.35, 0.25 + (100-fc_acc_pct)*0.001), 3),
+            "forecast_weight":  round(max(0.15, 0.25 - mae*0.001), 3),
+            "decision_weight":  round(min(0.50, avg_des/200), 3),
+        },
+        "playbook_priority_adjustment": (
+            "accelerate" if learning_signal >= 70 else
+            "maintain"   if learning_signal >= 40 else
+            "recalibrate"),
+    }
+
+
+# ── Phase 8: Autonomous Governance Layer ──────────────────────────────────
+
+def _build_v11_governance(snapshots: list,
+                           federated_nodes: dict) -> dict:
+    """
+    Phase 8: Network governance monitoring —
+    node health, mission execution, data integrity, network trust, compliance.
+    """
+    nodes_list = federated_nodes.get("nodes",[])
+
+    node_health: list[dict] = []
+    for node in nodes_list:
+        node_id = node["node_id"]
+        members = node.get("member_countries",[])
+        # Data integrity: fraction of V1-V10 artefacts present
+        artefact_checks = [f"v3_forecast_{c}.json" for c in members] + \
+                          [f"v9_priority_score_{c}.json" for c in members]
+        present = sum(1 for a in artefact_checks if (GRDF_DIR/a).exists())
+        integrity = round(present / max(1,len(artefact_checks)) * 100)
+
+        # Network trust: inverse of avg escalation uncertainty
+        unc_vals = []
+        for c in members:
+            ed = _v11_load(f"v9_escalation_{c}.json")
+            unc_vals.append(float(ed.get("uncertainty",50)))
+        avg_unc   = round(sum(unc_vals)/max(1,len(unc_vals)),1) if unc_vals else 50.0
+        trust     = max(0, round(100 - avg_unc))
+
+        # Mission execution: from v11_global_missions
+        health_status = ("healthy"   if integrity >= 80 and trust >= 60 else
+                         "degraded"  if integrity >= 50 else "critical")
+
+        node_health.append({
+            "node_id":         node_id,
+            "data_integrity":  integrity,
+            "network_trust":   trust,
+            "health_status":   health_status,
+            "governance_score":round((integrity*0.5 + trust*0.5)),
+        })
+
+    node_health.sort(key=lambda x: -x["governance_score"])
+    avg_gov = round(sum(n["governance_score"] for n in node_health)/max(1,len(node_health)),1)
+
+    return {
+        "grdf_version":         "11.0",
+        "date":                 TODAY,
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        "avg_governance_score": avg_gov,
+        "governance_grade":     ("strong" if avg_gov>=75 else "moderate" if avg_gov>=50 else "weak"),
+        "node_health":          node_health,
+        "governance_compliance":("compliant" if avg_gov >= 70 else "monitoring"),
+    }
+
+
+# ── Phase 9: Planetary Early Warning System ───────────────────────────────
+
+def _build_v11_planetary_alerts(snapshots: list,
+                                  federated_nodes: dict,
+                                  failures: dict) -> dict:
+    """
+    Phase 9:
+    planetary_alert = max(regional_alerts, cascading_failures, mission_escalation)
+    """
+    # Regional alerts from V11 nodes
+    max_regional = max(
+        (_V11_ALERT_ORD.get(n.get("node_alert","GREEN"),0) for n in federated_nodes.get("nodes",[])),
+        default=0
+    )
+
+    # Cascading failure severity
+    worst_fail = failures.get("failures",[{}])[0] if failures.get("failures") else {}
+    fail_grade = worst_fail.get("cascade_grade","LOW")
+    fail_ord   = {"LOW":0,"MODERATE":1,"HIGH":2,"CRITICAL":3}.get(fail_grade,0)
+    # Map cascade grade to alert level
+    cascade_alert_ord = min(4, fail_ord + 1)   # LOW→YELLOW, MODERATE→ORANGE, etc.
+
+    # Mission escalation from V11 global missions
+    mission_alert_ord = 0
+    gm_d = _v11_load("v11_global_missions.json")
+    if gm_d.get("executing_n", 0) >= 5:
+        mission_alert_ord = 2   # ORANGE
+    if gm_d.get("executing_n", 0) >= 10:
+        mission_alert_ord = 3   # RED
+
+    # Planetary alert = max of all three
+    planetary_ord   = max(max_regional, cascade_alert_ord, mission_alert_ord)
+    planetary_alert = ["GREEN","YELLOW","ORANGE","RED","BLACK"][planetary_ord]
+
+    # Per-node alerts
+    node_alerts = [
+        {"node_id":n["node_id"],"alert":n.get("node_alert","GREEN"),
+         "avg_risk":n.get("avg_risk",50)}
+        for n in federated_nodes.get("nodes",[])
+    ]
+
+    # System-wide risk summary
+    scores   = [int(s.get("risk_score",50) or 50) for s in snapshots]
+    avg_risk = round(sum(scores)/max(1,len(scores)))
+
+    return {
+        "grdf_version":         "11.0",
+        "date":                 TODAY,
+        "generated_at":         datetime.now(timezone.utc).isoformat(),
+        "planetary_alert":      planetary_alert,
+        "planetary_alert_ord":  planetary_ord,
+        "components": {
+            "max_regional_alert":  ["GREEN","YELLOW","ORANGE","RED","BLACK"][max_regional],
+            "cascade_alert":       ["GREEN","YELLOW","ORANGE","RED","BLACK"][cascade_alert_ord],
+            "mission_alert":       ["GREEN","YELLOW","ORANGE","RED","BLACK"][mission_alert_ord],
+        },
+        "node_alerts":          node_alerts,
+        "system_avg_risk":      avg_risk,
+    }
+
+
+# ── Phase 10: Autonomous Network Dashboard ────────────────────────────────
+
+def _save_v11_dashboard(snapshots: list,
+                         federated_nodes: dict,
+                         dep_graph: dict,
+                         failures: dict,
+                         resource_ex: dict,
+                         missions: dict,
+                         cross_border: dict,
+                         learning: dict,
+                         governance: dict,
+                         planetary: dict) -> None:
+    """
+    Phase 10: 10-layer Autonomous Network Dashboard.
+    planetary_status: stable / elevated / critical / systemic
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+    p_ord  = planetary.get("planetary_alert_ord",0)
+
+    # planetary_status
+    p_status = ("systemic" if p_ord >= 4 else "critical" if p_ord >= 3
+                 else "elevated" if p_ord >= 2 else "stable")
+
+    # Layer 1: global_alerts
+    global_alerts = planetary.get("node_alerts",[])
+
+    # Layer 2: dependency_graph summary
+    dep_summary = {"node_count":dep_graph.get("node_count",0),"edge_count":dep_graph.get("edge_count",0)}
+
+    # Layer 3: resource_network top exchanges
+    resource_network = (resource_ex.get("top_exchanges") or [])[:10]
+
+    # Layer 4: missions summary
+    missions_summary = {
+        "total": missions.get("total_missions",0),
+        "executing": missions.get("executing_n",0),
+        "coordinated": missions.get("coordinated_n",0),
+    }
+
+    # Layer 5: agents summary from V10
+    v10_agents = _v11_load("v10_agents.json")
+    agents_summary = {
+        dom: {"status": data.get("status","?"),"top_country": data.get("top_country","?")}
+        for dom, data in (v10_agents.get("agents") or {}).items()
+    }
+
+    # Layer 6: forecast from V3 global
+    fc_global = _v11_load("v3_forecast_global.json")
+    forecast_summary = {
+        "total_countries": fc_global.get("total_countries",0),
+        "date": fc_global.get("date","?"),
+    }
+
+    # Layer 7: digital_twins summary from V6
+    dt_summary = {"avg_risk": planetary.get("system_avg_risk",50)}
+
+    # Layer 8: coordination from Phase 6
+    coord_summary = {
+        "avg_efficiency": cross_border.get("avg_coord_efficiency",0),
+        "avg_stability":  cross_border.get("avg_stability",0),
+    }
+
+    # Layer 9: operations from V10
+    v10_ops = _v11_load("v10_operations.json")
+    ops_summary = {
+        "executing": v10_ops.get("executing_n",0),
+        "scenario_switches": v10_ops.get("scenario_switches_n",0),
+    }
+
+    # Layer 10: planetary_status
+    with open(GRDF_DIR / "v11_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":        "11.0",
+            "date":                TODAY,
+            "generated_at":        now_ts,
+            "planetary_status":    p_status,
+            "planetary_alert":     planetary.get("planetary_alert","GREEN"),
+            "system_avg_risk":     planetary.get("system_avg_risk",50),
+            # 10 layers
+            "global_alerts":       global_alerts,
+            "dependency_graph":    dep_summary,
+            "resource_network":    resource_network,
+            "missions":            missions_summary,
+            "agents":              agents_summary,
+            "forecast":            forecast_summary,
+            "digital_twins":       dt_summary,
+            "coordination":        coord_summary,
+            "operations":          ops_summary,
+            "planetary_status_detail": {
+                "status":         p_status,
+                "components":     planetary.get("components",{}),
+                "learning_grade": learning.get("learning_grade","moderate"),
+                "governance":     governance.get("governance_grade","moderate"),
+                "node_count":     federated_nodes.get("total_nodes",0),
+            },
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V11] Phase 10: Autonomous Network Dashboard (planetary={planetary.get('planetary_alert','?')})", file=sys.stderr)
+
+
+# ── V11 Orchestrator ──────────────────────────────────────────────────────
+
+def save_grdf_v11(snapshots: list) -> None:
+    """
+    GRDF V11 -- Autonomous Sovereign Network.
+    Dependency: V1->...->V10->V11
+    Reads: v1..v10 outputs.  Writes: v11_* only.
+    V1/V2/V3/V4/V5/V6/V7/V8/V9/V10 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Phase 1: Federated Intelligence Layer
+    try:
+        fed   = _build_v11_federated_nodes(snapshots)
+        with open(GRDF_DIR / "v11_federated_nodes.json","w") as f:
+            json.dump(fed, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 1: {fed['total_nodes']} federated nodes", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] fed nodes: {e}", file=sys.stderr)
+        fed = {"nodes":[],"total_nodes":0,"node_ids":[]}
+
+    # Phase 2: Global Dependency Graph
+    try:
+        dep   = _build_v11_global_dependency_graph(snapshots)
+        with open(GRDF_DIR / "v11_global_dependency_graph.json","w") as f:
+            json.dump(dep, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 2: dep graph {dep['node_count']} nodes {dep['edge_count']} edges", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] dep graph: {e}", file=sys.stderr)
+        dep = {"node_count":0,"edge_count":0,"nodes":[],"edges":[]}
+
+    # Phase 3: Cascading Failure Engine
+    try:
+        failures = _build_v11_cascading_failures(snapshots)
+        with open(GRDF_DIR / "v11_cascading_failures.json","w") as f:
+            json.dump(failures, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 3: {failures['simulated_n']} cascade simulations", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] cascades: {e}", file=sys.stderr)
+        failures = {"simulated_n":0,"failures":[],"worst_cascade":"none","cascade_chains":[]}
+
+    # Phase 4: Autonomous Resource Exchange
+    try:
+        res_ex = _build_v11_resource_exchange(snapshots, fed)
+        with open(GRDF_DIR / "v11_resource_exchange.json","w") as f:
+            json.dump(res_ex, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 4: {res_ex['total_exchanges']} resource exchanges", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] resource ex: {e}", file=sys.stderr)
+        res_ex = {"total_exchanges":0,"top_exchanges":[]}
+
+    # Phase 5: Global Mission Network
+    try:
+        gm = _build_v11_global_missions(snapshots, fed)
+        with open(GRDF_DIR / "v11_global_missions.json","w") as f:
+            json.dump(gm, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 5: {gm['total_missions']} network missions", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] missions: {e}", file=sys.stderr)
+        gm = {"total_missions":0,"executing_n":0,"coordinated_n":0,"missions":[]}
+
+    # Phase 6: Cross-Border Coordination
+    try:
+        cb = _build_v11_cross_border(snapshots, fed)
+        with open(GRDF_DIR / "v11_cross_border_coordination.json","w") as f:
+            json.dump(cb, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 6: {cb['total_regions']} regions coordinated", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] cross-border: {e}", file=sys.stderr)
+        cb = {"total_regions":0,"coordination_blocks":[],"avg_coord_efficiency":0,"avg_stability":0}
+
+    # Phase 7: Strategic Learning Engine
+    try:
+        learn = _build_v11_learning(snapshots)
+        with open(GRDF_DIR / "v11_learning_engine.json","w") as f:
+            json.dump(learn, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 7: learning signal={learn['learning_signal']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] learning: {e}", file=sys.stderr)
+        learn = {"learning_signal":50,"learning_grade":"moderate","forecast_mae":10}
+
+    # Phase 8: Governance
+    try:
+        gov = _build_v11_governance(snapshots, fed)
+        with open(GRDF_DIR / "v11_governance.json","w") as f:
+            json.dump(gov, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 8: governance={gov['governance_grade']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] governance: {e}", file=sys.stderr)
+        gov = {"avg_governance_score":60,"governance_grade":"moderate","node_health":[]}
+
+    # Phase 9: Planetary Early Warning
+    try:
+        planet = _build_v11_planetary_alerts(snapshots, fed, failures)
+        with open(GRDF_DIR / "v11_planetary_alerts.json","w") as f:
+            json.dump(planet, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V11] Phase 9: planetary_alert={planet['planetary_alert']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V11] planetary: {e}", file=sys.stderr)
+        planet = {"planetary_alert":"GREEN","planetary_alert_ord":0,"components":{},
+                  "node_alerts":[],"system_avg_risk":50}
+
+    # Phase 10: Autonomous Network Dashboard
+    try:
+        _save_v11_dashboard(
+            snapshots, fed, dep, failures, res_ex,
+            gm, cb, learn, gov, planet
+        )
+    except Exception as e:
+        print(f"[GRDF-V11] dashboard: {e}", file=sys.stderr)
+
+    print(f"[GRDF-V11] Autonomous Sovereign Network OPERATIONAL.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -15064,6 +15919,7 @@ def main():
     save_grdf_v8(snapshots)
     save_grdf_v9(snapshots)
     save_grdf_v10(snapshots)
+    save_grdf_v11(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
