@@ -7209,7 +7209,60 @@ async function handleGRDF(request, env) {
       '/api/grdf/live/signal-registry','/api/grdf/live/event-tracking',
       '/api/grdf/live/warning-metrics','/api/grdf/live/forecast-metrics',
       '/api/grdf/live/alert-metrics','/api/grdf/live/usage-metrics',
+
+  // =========================================================================
+  // GRDF REAL-WORLD ACCURACY PROGRAM V1 API
+  // All routes under /api/grdf/accuracy/
+  // Architecture frozen. Accuracy measurement only. No V14.
+  //
+  // Success targets:
+  //   Forecast Accuracy ≥ 70% | Warning Precision ≥ 80%
+  //   Calibration Error ≤ 10% | Overall Score ≥ 85
+  // =========================================================================
+  if (seg[0] === 'accuracy') {
+    const aseg = seg[1] || 'dashboard';
+    const CA = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const ACC_FILES = {
+      'dashboard':        'docs/accuracy/accuracy_dashboard.json',
+      'scorecard':        'docs/accuracy/accuracy_scorecard.json',
+      'metrics':          'docs/accuracy/accuracy_metrics.json',
+      'predictions':      'docs/accuracy/prediction_registry.json',
+      'outcomes':         'docs/accuracy/outcome_registry.json',
+      'matching':         'docs/accuracy/prediction_matching.json',
+      'horizons':         'docs/accuracy/horizon_accuracy.json',
+      'calibration':      'docs/accuracy/confidence_calibration.json',
+      'domains':          'docs/accuracy/domain_accuracy.json',
+      'countries':        'docs/accuracy/country_accuracy.json',
+    };
+    const ACC_SIGNAL_ONLY = new Set(['predictions','outcomes','matching','calibration']);
+    if (!ACC_FILES[aseg]) return new Response(JSON.stringify({error:'Unknown accuracy route: '+aseg, available:Object.keys(ACC_FILES)}),{status:404,headers:CA});
+    if (ACC_SIGNAL_ONLY.has(aseg) && access==='teaser') return new Response(JSON.stringify({error:aseg+' requires Signal tier'}),{status:403,headers:CA});
+    const ck = `grdf:acc:${aseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CA});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, ACC_FILES[aseg], 300);
+      if (!d) return new Response(JSON.stringify({error:'Accuracy '+aseg+' not built yet'}),{status:404,headers:CA});
+      let r;
+      if (access==='teaser') {
+        if (aseg==='dashboard') r={date:d.date,dashboard_status:d.dashboard_status,overall_score:d.overall_score,hit_rate:d.hit_rate,domain_accuracy:d.domain_accuracy,accuracy_trends:d.accuracy_trends,tier};
+        else if (aseg==='scorecard') r={date:d.date,overall_accuracy_score:d.overall_accuracy_score,all_targets_met:d.all_targets_met,targets_met:d.targets_met,forecast_score:d.forecast_score,warning_score:d.warning_score,tier};
+        else if (aseg==='metrics') r={date:d.date,accuracy_pct:d.accuracy_pct,precision:d.precision,f1_score:d.f1_score,calibration_error_pct:d.calibration_error_pct,brier_score:d.brier_score,targets:d.targets,tier};
+        else if (aseg==='horizons') r={date:d.date,best_horizon:d.best_horizon,horizons_tested:d.horizons_tested,tier};
+        else if (aseg==='domains') r={date:d.date,best_domain:d.best_domain,worst_domain:d.worst_domain,by_domain:Object.fromEntries((d.domains||[]).filter(x=>x.n>0).map(x=>[x.domain,x.accuracy_pct])),tier};
+        else if (aseg==='countries') r={date:d.date,avg_accuracy_pct:d.avg_accuracy_pct,top10:d.top10,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CA});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CA});}
+  }
+
       '/api/grdf/live/source-reliability','/api/grdf/live/weekly-review',
+      '/api/grdf/accuracy/dashboard','/api/grdf/accuracy/scorecard',
+      '/api/grdf/accuracy/metrics','/api/grdf/accuracy/predictions',
+      '/api/grdf/accuracy/outcomes','/api/grdf/accuracy/matching',
+      '/api/grdf/accuracy/horizons','/api/grdf/accuracy/calibration',
+      '/api/grdf/accuracy/domains','/api/grdf/accuracy/countries',
     ]
   }),{status:404,headers:CORS});
 }
