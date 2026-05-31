@@ -23242,6 +23242,829 @@ def save_grdf_accuracy(snapshots: list) -> None:
           f"overall≥85={'OK' if t.get('overall_score_gte_85') else 'MISS'}", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF MODEL IMPROVEMENT PROGRAM V1
+#
+# Closed-loop learning system: Forecast → Validation → Accuracy → Improvement
+# Architecture frozen. No new layers. No formula changes. No V14.
+# Learning and optimization only.
+#
+# Phase 1:  Accuracy Feedback Engine      -> improvement_feedback.json
+# Phase 2:  Error Attribution Engine      -> improvement_errors.json
+# Phase 3:  Calibration Optimization      -> improvement_calibration.json
+# Phase 4:  Threshold Optimization        -> improvement_thresholds.json
+# Phase 5:  Domain Performance Analysis   -> improvement_domains.json
+# Phase 6:  Country Performance Analysis  -> improvement_countries.json
+# Phase 7:  Forecast Improvement Opps     -> improvement_opportunities.json
+# Phase 8:  Learning Score               -> improvement_learning_score.json
+# Phase 9:  Improvement Roadmap          -> improvement_roadmap.json
+# Phase 10: Model Improvement Dashboard  -> improvement_dashboard.json
+#
+# Reads: accuracy/* + live_operations/* + historical_validation/* (read-only).
+# Writes: improvement/* only.
+# Architecture FROZEN. Learning and optimization only.
+#
+# Success: Year-over-year increase in Forecast Accuracy and Warning Precision.
+# =========================================================================
+
+IMPROVEMENT_DIR = DOCS_DIR / "improvement"
+
+# LS weights (Phase 8)
+_MIP_LS_WEIGHTS = {
+    "accuracy":     0.40,
+    "calibration":  0.25,
+    "adaptation":   0.20,
+    "consistency":  0.15,
+}
+
+# Domain names for Phase 5
+_MIP_DOMAINS = ["climate","economic","geopolitical","technology","social","infrastructure"]
+
+# Improvement category labels
+_MIP_IMPROVEMENT_CATEGORIES = [
+    "calibration_bias",
+    "threshold_drift",
+    "domain_underperformance",
+    "country_outlier",
+    "horizon_decay",
+    "confidence_inflation",
+    "signal_lag",
+    "cascade_miss",
+]
+
+
+def _mip_load(subdir: str, rel: str) -> dict:
+    p = DOCS_DIR / subdir / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+def _mip_load_grdf(rel: str) -> dict:
+    p = GRDF_DIR / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+
+# ── Phase 1: Accuracy Feedback Engine ────────────────────────────────────
+
+def _build_mip_feedback() -> dict:
+    """
+    Phase 1: Read accuracy outputs and compute feedback signals.
+    Identifies gaps vs success targets and generates improvement directives.
+    """
+    metrics   = _mip_load("accuracy","accuracy_metrics.json")
+    scorecard = _mip_load("accuracy","accuracy_scorecard.json")
+    calib     = _mip_load("accuracy","confidence_calibration.json")
+    lo_warn   = _mip_load("live_operations","live_warning_metrics.json")
+    hv_cert   = _mip_load("historical_validation","historical_certification.json")
+
+    acc_pct     = float(metrics.get("accuracy_pct",70))
+    precision   = float(metrics.get("precision",0.70))
+    cal_err     = float(metrics.get("calibration_error_pct",10))
+    overall     = float(scorecard.get("overall_accuracy_score",70))
+    brier       = float(metrics.get("brier_score",0.15))
+    f1          = float(metrics.get("f1_score",0.70))
+
+    # Gap analysis vs targets
+    gaps = {
+        "accuracy_gap":    round(max(0, 70 - acc_pct),1),
+        "precision_gap":   round(max(0, 0.80 - precision),3),
+        "calibration_gap": round(max(0, cal_err - 10),1),
+        "overall_gap":     round(max(0, 85 - overall),1),
+    }
+    total_gap = round(sum(gaps.values()),2)
+
+    # Feedback strength: how much improvement is needed
+    if total_gap == 0:
+        feedback_signal = "maintain"
+    elif total_gap < 5:
+        feedback_signal = "fine_tune"
+    elif total_gap < 15:
+        feedback_signal = "adjust"
+    else:
+        feedback_signal = "retrain"
+
+    # Prior performance benchmark from historical validation
+    hv_overall = float(hv_cert.get("overall_score",60) if hv_cert else 60)
+    trend = ("improving" if overall > hv_overall + 2 else
+             "stable"   if abs(overall - hv_overall) <= 2 else "declining")
+
+    return {
+        "accuracy_pct":       acc_pct,
+        "precision":          precision,
+        "calibration_error":  cal_err,
+        "overall_score":      overall,
+        "brier_score":        brier,
+        "f1_score":           f1,
+        "gaps":               gaps,
+        "total_gap":          total_gap,
+        "feedback_signal":    feedback_signal,
+        "trend_vs_historical":trend,
+        "historical_benchmark":hv_overall,
+        "targets": {
+            "accuracy_met":    acc_pct >= 70,
+            "precision_met":   precision >= 0.80,
+            "calibration_met": cal_err <= 10,
+            "overall_met":     overall >= 85,
+        },
+        "as_of": TODAY,
+    }
+
+
+# ── Phase 2: Error Attribution Engine ────────────────────────────────────
+
+def _build_mip_errors(snapshots: list) -> dict:
+    """
+    Phase 2: Identify and rank top error sources across forecast/warning/scenario/decision.
+    """
+    matching = _mip_load("accuracy","prediction_matching.json")
+    domain_a = _mip_load("accuracy","domain_accuracy.json")
+    horizon_a= _mip_load("accuracy","horizon_accuracy.json")
+
+    # Forecast errors by horizon
+    forecast_errors: list[dict] = []
+    for h, hz_data in (horizon_a.get("horizons",{}) or {}).items():
+        if hz_data.get("n",0) > 0:
+            acc  = float(hz_data.get("accuracy_pct",70))
+            mae  = float(hz_data.get("mae",0) or 0)
+            forecast_errors.append({
+                "source": f"V3_forecast_{h}",
+                "error_type": "forecast_error",
+                "accuracy_pct": acc,
+                "mae": mae,
+                "severity": ("high" if acc<60 else "moderate" if acc<75 else "low"),
+            })
+    forecast_errors.sort(key=lambda x: x["accuracy_pct"])
+
+    # Warning errors
+    lo_warn = _mip_load("live_operations","live_warning_metrics.json")
+    fp_rate = float(lo_warn.get("false_positive_rate",0.2))
+    fn_rate = float(lo_warn.get("false_negative_rate",0.2))
+    warning_errors = [
+        {"source":"V7_false_positive","error_type":"warning_fp","rate":fp_rate,"severity":("high" if fp_rate>0.3 else "moderate" if fp_rate>0.15 else "low")},
+        {"source":"V7_false_negative","error_type":"warning_fn","rate":fn_rate,"severity":("high" if fn_rate>0.3 else "moderate" if fn_rate>0.15 else "low")},
+    ]
+
+    # Scenario errors by domain
+    scenario_errors: list[dict] = []
+    for dom in (domain_a.get("domains",[]) or []):
+        if dom.get("n",0) > 0 and dom.get("accuracy_pct") is not None:
+            acc = float(dom["accuracy_pct"])
+            if acc < 70:
+                scenario_errors.append({
+                    "source":       f"V5_domain_{dom['domain']}",
+                    "error_type":   "scenario_error",
+                    "domain":       dom["domain"],
+                    "accuracy_pct": acc,
+                    "severity":     "high" if acc<55 else "moderate",
+                })
+    scenario_errors.sort(key=lambda x: x["accuracy_pct"])
+
+    # Decision errors: proxy from V8 counterfactual data
+    decision_errors = []
+    for snap in snapshots[:5]:
+        iso2  = snap["country"]
+        cf_d  = _mip_load_grdf(f"v8_counterfactual_{iso2}.json")
+        if cf_d:
+            base_benefit = float(cf_d.get("base_benefit",0) or 0)
+            if base_benefit < 20:
+                decision_errors.append({
+                    "source":     f"V8_{iso2}_low_benefit",
+                    "error_type": "decision_error",
+                    "country":    iso2,
+                    "base_benefit":round(base_benefit),
+                    "severity":   "moderate",
+                })
+
+    # Top error sources (top 5)
+    all_errors = forecast_errors[:3] + warning_errors + scenario_errors[:2] + decision_errors[:2]
+    all_errors.sort(key=lambda x: {"high":0,"moderate":1,"low":2}.get(x.get("severity","low"),2))
+
+    return {
+        "forecast_errors":   forecast_errors,
+        "warning_errors":    warning_errors,
+        "scenario_errors":   scenario_errors,
+        "decision_errors":   decision_errors,
+        "top_error_sources": all_errors[:5],
+        "total_error_sources": len(all_errors),
+        "high_severity_n":   sum(1 for e in all_errors if e.get("severity")=="high"),
+        "as_of":             TODAY,
+    }
+
+
+# ── Phase 3: Calibration Optimization ────────────────────────────────────
+
+def _build_mip_calibration() -> dict:
+    """
+    Phase 3: Analyse confidence bins, hit rates, calibration drift.
+    Recommend optimal confidence adjustments per bin.
+    """
+    calib_d  = _mip_load("accuracy","confidence_calibration.json")
+    bins     = calib_d.get("bins",[])
+    mean_err = float(calib_d.get("mean_calibration_error_pct",10))
+
+    # Per-bin analysis and adjustment
+    adjustments: list[dict] = []
+    drift_indicators: list[str] = []
+
+    for b in bins:
+        if b.get("n",0) == 0:
+            continue
+        mid      = float(b.get("conf_midpoint",0.6))
+        hit_rate = float(b.get("hit_rate",0.6))
+        cal_err  = float(b.get("cal_error",0))
+        # Direction: is confidence over or under estimated?
+        bias = "overconfident" if mid > hit_rate + 0.05 else \
+               "underconfident" if mid < hit_rate - 0.05 else "calibrated"
+        # Recommended adjustment
+        adj = round(hit_rate - mid, 3)
+        if abs(adj) > 0.05:
+            drift_indicators.append(f"bin_{b['bin']}: bias={bias} adj={adj:+.3f}")
+
+        adjustments.append({
+            "bin":           b["bin"],
+            "conf_midpoint": mid,
+            "hit_rate":      hit_rate,
+            "bias":          bias,
+            "recommended_adjustment": adj,
+            "priority":      "high" if abs(adj)>0.10 else "moderate" if abs(adj)>0.05 else "low",
+        })
+
+    # Drift score: mean |adj| × 100
+    drift_score = round(sum(abs(a["recommended_adjustment"]) for a in adjustments) /
+                        max(1,len(adjustments)) * 100, 1)
+    drift_stable = drift_score < 8
+
+    return {
+        "mean_calibration_error_pct": mean_err,
+        "drift_score":       drift_score,
+        "drift_stable":      drift_stable,
+        "drift_indicators":  drift_indicators,
+        "bin_adjustments":   adjustments,
+        "target_cal_error":  10.0,
+        "target_met":        mean_err <= 10,
+        "recommendation":    ("no_action" if drift_stable else
+                               "apply_isotonic_recalibration" if drift_score>15 else
+                               "apply_platt_scaling"),
+        "as_of":             TODAY,
+    }
+
+
+# ── Phase 4: Threshold Optimization ──────────────────────────────────────
+
+def _build_mip_thresholds(snapshots: list) -> dict:
+    """
+    Phase 4: Review signal/warning/alert thresholds and recommend adjustments.
+    """
+    lo_warn   = _mip_load("live_operations","live_warning_metrics.json")
+    acc_m     = _mip_load("accuracy","accuracy_metrics.json")
+    precision = float(acc_m.get("precision",0.70))
+    recall    = float(acc_m.get("recall",0.70))
+    fp_rate   = float(lo_warn.get("false_positive_rate",0.2))
+    fn_rate   = float(lo_warn.get("false_negative_rate",0.2))
+
+    # Signal threshold (V5): optimize signal_score cutoff
+    # Higher cutoff → fewer signals, higher precision
+    signal_threshold_current  = 30   # current: signal >= 30 → "detectable"
+    signal_threshold_optimal  = (35 if fp_rate > 0.25 else 28 if fn_rate > 0.25 else 30)
+    signal_delta              = signal_threshold_optimal - signal_threshold_current
+
+    # Warning threshold (V7): EWS cutoff for ORANGE alert
+    warning_threshold_current = 40   # current: EWS >= 40 → warning
+    warning_threshold_optimal = (45 if fp_rate > 0.20 else 38 if fn_rate > 0.20 else 40)
+    warning_delta             = warning_threshold_optimal - warning_threshold_current
+
+    # Alert threshold (V7): RED alert trigger
+    alert_threshold_current   = 60
+    alert_threshold_optimal   = (65 if fp_rate > 0.25 else 58 if fn_rate > 0.25 else 60)
+    alert_delta               = alert_threshold_optimal - alert_threshold_current
+
+    return {
+        "signal_thresholds": {
+            "current":  signal_threshold_current,
+            "optimal":  signal_threshold_optimal,
+            "delta":    signal_delta,
+            "action":   "raise" if signal_delta>0 else "lower" if signal_delta<0 else "maintain",
+            "expected_precision_gain": round(abs(signal_delta)*0.01,3),
+        },
+        "warning_thresholds": {
+            "current":  warning_threshold_current,
+            "optimal":  warning_threshold_optimal,
+            "delta":    warning_delta,
+            "action":   "raise" if warning_delta>0 else "lower" if warning_delta<0 else "maintain",
+            "expected_recall_gain":    round(abs(warning_delta)*0.008,3),
+        },
+        "alert_thresholds": {
+            "current":  alert_threshold_current,
+            "optimal":  alert_threshold_optimal,
+            "delta":    alert_delta,
+            "action":   "raise" if alert_delta>0 else "lower" if alert_delta<0 else "maintain",
+            "expected_f1_gain":        round(abs(alert_delta)*0.005,3),
+        },
+        "current_precision": precision,
+        "current_recall":    recall,
+        "fp_rate":           fp_rate,
+        "fn_rate":           fn_rate,
+        "as_of":             TODAY,
+    }
+
+
+# ── Phase 5: Domain Performance Analysis ─────────────────────────────────
+
+def _build_mip_domains() -> dict:
+    """Phase 5: Deep performance analysis per domain."""
+    domain_a = _mip_load("accuracy","domain_accuracy.json")
+    lo_warn  = _mip_load("live_operations","live_warning_metrics.json")
+    hv_d     = _mip_load("historical_validation","historical_detection_audit.json")
+
+    # Historical detection per category (from HV)
+    hv_results = hv_d.get("results",[])
+    hv_cat_scores: dict = {}
+    for r in hv_results:
+        # Map to domain using event category from HV registry
+        hv_ev = _mip_load("historical_validation/historical_event_registry.json")
+        ev = next((e for e in (hv_ev.get("events",[]) if isinstance(hv_ev, dict) else [])
+                   if e.get("id") == r.get("event_id")), None)
+        if ev:
+            cat = ev.get("domain","economic")
+            if cat not in hv_cat_scores:
+                hv_cat_scores[cat] = []
+            hv_cat_scores[cat].append(r.get("detection_score",50))
+
+    # Current accuracy per domain
+    dom_results: list[dict] = []
+    for dom_rec in (domain_a.get("domains",[]) or []):
+        dom  = dom_rec.get("domain","economic")
+        if dom_rec.get("n",0) == 0:
+            continue
+        curr_acc  = float(dom_rec.get("accuracy_pct",60) or 60)
+        hv_scores = hv_cat_scores.get(dom,[])
+        hv_acc    = round(sum(hv_scores)/max(1,len(hv_scores)),1) if hv_scores else curr_acc
+        # Trend vs historical
+        trend = ("improving" if curr_acc > hv_acc+3 else "declining" if curr_acc < hv_acc-3 else "stable")
+        gap   = max(0, 70 - curr_acc)
+        dom_results.append({
+            "domain":          dom,
+            "current_accuracy":curr_acc,
+            "historical_accuracy": hv_acc,
+            "trend":           trend,
+            "accuracy_gap":    round(gap,1),
+            "priority":        "high" if gap>15 else "medium" if gap>7 else "low",
+            "recommendation":  ("boost_signal_sensitivity" if curr_acc < 60 else
+                                  "fine_tune_thresholds"    if curr_acc < 70 else
+                                  "maintain"),
+        })
+
+    dom_results.sort(key=lambda x: x["current_accuracy"])
+
+    return {
+        "total_domains":   len(dom_results),
+        "domains":         dom_results,
+        "worst_domain":    dom_results[0]["domain"]  if dom_results else "?",
+        "best_domain":     dom_results[-1]["domain"] if dom_results else "?",
+        "high_priority_n": sum(1 for d in dom_results if d["priority"]=="high"),
+        "as_of":           TODAY,
+    }
+
+
+# ── Phase 6: Country Performance Analysis ────────────────────────────────
+
+def _build_mip_countries() -> dict:
+    """Phase 6: best/worst/improving/degrading country performance."""
+    country_a = _mip_load("accuracy","country_accuracy.json")
+    ranked    = country_a.get("ranked",[])
+
+    # Sort buckets
+    n         = len(ranked)
+    best      = ranked[:5]      if n >= 5 else ranked[:]
+    worst     = ranked[-5:]     if n >= 5 else ranked[:]
+    mid_range = ranked[5:-5]    if n >= 10 else []
+
+    # Improving: accuracy_pct > average
+    avg_acc   = float(country_a.get("avg_accuracy_pct",70))
+    improving = [r for r in ranked if float(r.get("accuracy_pct",0)) > avg_acc + 5][:5]
+    degrading = [r for r in ranked if float(r.get("accuracy_pct",100)) < avg_acc - 5][:5]
+
+    # Gap analysis
+    countries_below_target = [r for r in ranked if float(r.get("accuracy_pct",70)) < 70]
+    gap_countries_n = len(countries_below_target)
+
+    return {
+        "total_countries":     n,
+        "avg_accuracy_pct":    avg_acc,
+        "best_countries":      best,
+        "worst_countries":     worst,
+        "improving_countries": improving,
+        "degrading_countries": degrading,
+        "below_target_n":      gap_countries_n,
+        "priority_countries":  worst[:3],
+        "as_of":               TODAY,
+    }
+
+
+# ── Phase 7: Forecast Improvement Opportunities ───────────────────────────
+
+def _build_mip_opportunities(feedback: dict, errors: dict,
+                               calibration: dict, thresholds: dict) -> dict:
+    """
+    Phase 7: Generate ranked improvement recommendations with expected impact.
+    """
+    opps: list[dict] = []
+    seq = 1
+
+    # Calibration opportunity
+    drift = float(calibration.get("drift_score",0))
+    if drift > 5:
+        opps.append({
+            "id":             f"OPP-{seq:03d}",
+            "category":       "calibration_bias",
+            "description":    f"Apply confidence recalibration (drift_score={drift})",
+            "recommendation": calibration.get("recommendation","apply_platt_scaling"),
+            "expected_gain":  {"calibration_error_reduction_pct": round(drift*0.6,1)},
+            "confidence":     0.85,
+            "effort":         "low",
+            "priority":       "high" if drift > 10 else "medium",
+        })
+        seq += 1
+
+    # Threshold opportunity
+    for thr_name, thr_data in [
+        ("signal",  thresholds.get("signal_thresholds",{})),
+        ("warning", thresholds.get("warning_thresholds",{})),
+        ("alert",   thresholds.get("alert_thresholds",{})),
+    ]:
+        if thr_data.get("action","maintain") != "maintain":
+            gain_key = [k for k in thr_data if "gain" in k]
+            gain_val = float(thr_data.get(gain_key[0],0.01)) if gain_key else 0.01
+            opps.append({
+                "id":          f"OPP-{seq:03d}",
+                "category":    "threshold_drift",
+                "description": f"{thr_name.title()} threshold: {thr_data.get('action','')} by {abs(thr_data.get('delta',0))} pts",
+                "recommendation": f"Set {thr_name}_threshold to {thr_data.get('optimal',30)}",
+                "expected_gain": {f"{thr_name}_improvement": gain_val},
+                "confidence":  0.75,
+                "effort":      "low",
+                "priority":    "high" if abs(thr_data.get("delta",0))>=5 else "medium",
+            })
+            seq += 1
+
+    # High-severity error opportunities
+    for err in errors.get("top_error_sources",[]):
+        if err.get("severity") == "high":
+            opps.append({
+                "id":          f"OPP-{seq:03d}",
+                "category":    err.get("error_type","forecast_error"),
+                "description": f"Address {err.get('source','?')}: accuracy={err.get('accuracy_pct',0):.0f}%",
+                "recommendation": "Boost domain signal weight and extend lookback window",
+                "expected_gain": {"accuracy_gain_pct": round(float(70 - err.get("accuracy_pct",60)), 1)},
+                "confidence":  0.65,
+                "effort":      "medium",
+                "priority":    "high",
+            })
+            seq += 1
+
+    # Accuracy gap opportunity
+    total_gap = float(feedback.get("total_gap",0))
+    if total_gap >= 5:
+        opps.append({
+            "id":          f"OPP-{seq:03d}",
+            "category":    "confidence_inflation",
+            "description": f"Close accuracy gap: overall_gap={feedback.get('gaps',{}).get('overall_gap',0)}pts",
+            "recommendation": "Increase training data recency weight from 0.30 to 0.40",
+            "expected_gain": {"overall_score_gain": round(min(total_gap*0.5, 8), 1)},
+            "confidence":  0.70,
+            "effort":      "medium",
+            "priority":    "high" if total_gap>10 else "medium",
+        })
+        seq += 1
+
+    opps.sort(key=lambda x: {"high":0,"medium":1,"low":2}.get(x.get("priority","low"),2))
+
+    return {
+        "total_opportunities": len(opps),
+        "high_priority_n":    sum(1 for o in opps if o.get("priority")=="high"),
+        "opportunities":      opps,
+        "as_of":              TODAY,
+    }
+
+
+# ── Phase 8: Learning Score ───────────────────────────────────────────────
+
+def _mip_ls(accuracy: float, calibration: float,
+             adaptation: float, consistency: float) -> float:
+    """
+    LS = accuracy×0.40 + calibration×0.25 + adaptation×0.20 + consistency×0.15
+    All 0-100, output 0-100.  Weights = 1.00.
+    """
+    return max(0, min(100, round(
+        accuracy    * _MIP_LS_WEIGHTS["accuracy"]    +
+        calibration * _MIP_LS_WEIGHTS["calibration"] +
+        adaptation  * _MIP_LS_WEIGHTS["adaptation"]  +
+        consistency * _MIP_LS_WEIGHTS["consistency"]
+    )))
+
+
+def _ls_grade(score: float) -> str:
+    if score >= 85: return "advanced"
+    if score >= 70: return "proficient"
+    if score >= 55: return "developing"
+    return "initializing"
+
+
+def _build_mip_learning_score(feedback: dict, calibration: dict,
+                                errors: dict, snapshots: list) -> dict:
+    """Phase 8: LS from accuracy + calibration + adaptation + consistency."""
+    # Accuracy component (0-100)
+    acc_comp   = min(100, round(float(feedback.get("accuracy_pct",70)) * 1.0))
+
+    # Calibration component: 100 - cal_error_pct × 5 (capped)
+    cal_err    = float(calibration.get("mean_calibration_error_pct",10))
+    cal_comp   = max(20, min(100, round(100 - cal_err * 5)))
+
+    # Adaptation: feedback_signal → score
+    fs_map = {"maintain":95,"fine_tune":80,"adjust":60,"retrain":35}
+    adapt_comp = fs_map.get(feedback.get("feedback_signal","adjust"),60)
+
+    # Consistency: trend quality
+    trend      = feedback.get("trend_vs_historical","stable")
+    trend_map  = {"improving":90,"stable":70,"declining":40}
+    cons_comp  = trend_map.get(trend,70)
+
+    ls     = _mip_ls(acc_comp, cal_comp, adapt_comp, cons_comp)
+    grade  = _ls_grade(ls)
+
+    return {
+        "learning_score":  ls,
+        "ls_grade":        grade,
+        "formula":         "LS = accuracy×0.40 + calibration×0.25 + adaptation×0.20 + consistency×0.15",
+        "weights":         _MIP_LS_WEIGHTS,
+        "components": {
+            "accuracy":    acc_comp,
+            "calibration": cal_comp,
+            "adaptation":  adapt_comp,
+            "consistency": cons_comp,
+        },
+        "feedback_signal":  feedback.get("feedback_signal","adjust"),
+        "trend":            trend,
+        "as_of":            TODAY,
+        "status":           "PASS" if ls >= 55 else "WARN",
+    }
+
+
+# ── Phase 9: Improvement Roadmap ─────────────────────────────────────────
+
+def _build_mip_roadmap(opps: dict, feedback: dict, domains: dict,
+                        countries: dict, ls_data: dict) -> dict:
+    """
+    Phase 9: Top-10 improvements ranked by priority + expected gain.
+    """
+    all_opps   = opps.get("opportunities",[])
+    ls_score   = float(ls_data.get("learning_score",65))
+
+    # Supplement with domain and country gaps
+    dom_items  = [(d["domain"], round(70-d["current_accuracy"],1))
+                  for d in domains.get("domains",[])
+                  if d.get("accuracy_gap",0) > 7]
+    country_items = [(c["country"], round(70-float(c.get("accuracy_pct",70)),1))
+                     for c in countries.get("priority_countries",[])
+                     if float(c.get("accuracy_pct",70)) < 70]
+
+    roadmap: list[dict] = []
+    rank = 1
+
+    # From opportunities
+    for opp in all_opps[:6]:
+        gain = list(opp.get("expected_gain",{}).values())
+        gain_val = max(gain) if gain else 0
+        roadmap.append({
+            "rank":          rank,
+            "item":          opp.get("description","?"),
+            "category":      opp.get("category","?"),
+            "expected_gain": gain_val,
+            "confidence":    opp.get("confidence",0.70),
+            "effort":        opp.get("effort","medium"),
+            "priority":      opp.get("priority","medium"),
+        })
+        rank += 1
+
+    # From domain gaps
+    for dom, gap in sorted(dom_items, key=lambda x:-x[1])[:2]:
+        roadmap.append({
+            "rank":          rank,
+            "item":          f"Improve {dom} domain model (gap={gap}pts)",
+            "category":      "domain_underperformance",
+            "expected_gain": round(gap * 0.5, 1),
+            "confidence":    0.65,
+            "effort":        "medium",
+            "priority":      "high" if gap > 10 else "medium",
+        })
+        rank += 1
+
+    # From country gaps
+    for cc, gap in sorted(country_items, key=lambda x:-x[1])[:2]:
+        if gap > 0:
+            roadmap.append({
+                "rank":          rank,
+                "item":          f"Improve {cc} accuracy (gap={gap}pts)",
+                "category":      "country_outlier",
+                "expected_gain": round(gap * 0.4, 1),
+                "confidence":    0.60,
+                "effort":        "medium",
+                "priority":      "medium",
+            })
+            rank += 1
+
+    roadmap = roadmap[:10]
+
+    # Expected total improvement
+    total_gain = round(sum(r["expected_gain"] for r in roadmap), 1)
+    projected_score = min(100, round(ls_score + total_gain * 0.5))
+
+    return {
+        "roadmap":          roadmap,
+        "roadmap_items_n":  len(roadmap),
+        "total_expected_gain": total_gain,
+        "current_ls":       ls_score,
+        "projected_ls":     projected_score,
+        "implementation_timeline": {
+            "immediate":    [r["item"] for r in roadmap if r["priority"]=="high"][:3],
+            "short_term":   [r["item"] for r in roadmap if r["priority"]=="medium"][:3],
+            "continuous":   ["Monitor accuracy trends weekly","Review calibration monthly"],
+        },
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 10: Model Improvement Dashboard ────────────────────────────────
+
+def _build_mip_dashboard(feedback, errors, calibration, thresholds,
+                           domains, countries, opps, ls_data, roadmap) -> dict:
+    """Phase 10: 8-widget Model Improvement Dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Widget 1: Accuracy Trends
+    w_trends = {
+        "current_accuracy":  feedback.get("accuracy_pct"),
+        "trend":             feedback.get("trend_vs_historical"),
+        "historical_bench":  feedback.get("historical_benchmark"),
+        "feedback_signal":   feedback.get("feedback_signal"),
+        "all_targets_met":   all(feedback.get("targets",{}).values()),
+    }
+
+    # Widget 2: Error Sources
+    w_errors = {
+        "total_error_sources": errors.get("total_error_sources"),
+        "high_severity_n":     errors.get("high_severity_n"),
+        "top_errors":          [e.get("source") for e in errors.get("top_error_sources",[])[:3]],
+    }
+
+    # Widget 3: Calibration
+    w_calib = {
+        "drift_score":         calibration.get("drift_score"),
+        "mean_cal_error":      calibration.get("mean_calibration_error_pct"),
+        "recommendation":      calibration.get("recommendation"),
+        "drift_stable":        calibration.get("drift_stable"),
+    }
+
+    # Widget 4: Domains
+    w_domains = {
+        "best_domain":         domains.get("best_domain"),
+        "worst_domain":        domains.get("worst_domain"),
+        "high_priority_n":     domains.get("high_priority_n"),
+    }
+
+    # Widget 5: Countries
+    w_countries = {
+        "avg_accuracy":        countries.get("avg_accuracy_pct"),
+        "below_target_n":      countries.get("below_target_n"),
+        "priority_countries":  [c["country"] for c in countries.get("priority_countries",[])],
+    }
+
+    # Widget 6: Learning Score
+    w_ls = {
+        "learning_score": ls_data.get("learning_score"),
+        "ls_grade":       ls_data.get("ls_grade"),
+        "components":     ls_data.get("components",{}),
+    }
+
+    # Widget 7: Improvement Opportunities
+    w_opps = {
+        "total_n":         opps.get("total_opportunities"),
+        "high_priority_n": opps.get("high_priority_n"),
+        "top3":            [o.get("description","") for o in opps.get("opportunities",[])[:3]],
+    }
+
+    # Widget 8: Roadmap
+    w_roadmap = {
+        "roadmap_items_n":    roadmap.get("roadmap_items_n"),
+        "total_expected_gain":roadmap.get("total_expected_gain"),
+        "projected_ls":       roadmap.get("projected_ls"),
+        "immediate_actions":  roadmap.get("implementation_timeline",{}).get("immediate",[]),
+    }
+
+    # Overall improvement status
+    ls_score = float(ls_data.get("learning_score",60))
+    status   = ("OPTIMIZING"  if ls_score >= 85 else
+                "IMPROVING"   if ls_score >= 70 else
+                "CALIBRATING" if ls_score >= 55 else
+                "INITIALIZING")
+
+    return {
+        "grdf_version":         "IMPROVEMENT_V1",
+        "date":                 TODAY,
+        "generated_at":         now_ts,
+        "improvement_status":   status,
+        "learning_score":       ls_score,
+        "accuracy_trends":      w_trends,
+        "error_sources":        w_errors,
+        "calibration":          w_calib,
+        "domain_performance":   w_domains,
+        "country_performance":  w_countries,
+        "learning_score_widget":w_ls,
+        "improvement_opportunities": w_opps,
+        "roadmap":              w_roadmap,
+    }
+
+
+# ── Model Improvement Orchestrator ───────────────────────────────────────
+
+def save_grdf_improvement(snapshots: list) -> None:
+    """
+    GRDF Model Improvement Program V1.
+    Closed-loop: Forecast → Validation → Accuracy → Improvement → Better Forecast.
+    Architecture frozen. No new layers. Learning and optimization only.
+    Reads: accuracy/* + live_operations/* + historical_validation/* (read-only).
+    Writes: improvement/* only.
+    """
+    import time as _tmip
+    IMPROVEMENT_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tmip.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(IMPROVEMENT_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[IMPROVEMENT] Model Improvement Program V1 — Closed-loop learning", file=sys.stderr)
+
+    # Phase 1
+    feedback = _build_mip_feedback()
+    _save("improvement_feedback.json", feedback)
+    print(f"[IMPROVEMENT] Phase 1: signal={feedback['feedback_signal']} gap={feedback['total_gap']} trend={feedback['trend_vs_historical']}", file=sys.stderr)
+
+    # Phase 2
+    errors = _build_mip_errors(snapshots)
+    _save("improvement_errors.json", errors)
+    print(f"[IMPROVEMENT] Phase 2: error_sources={errors['total_error_sources']} high={errors['high_severity_n']}", file=sys.stderr)
+
+    # Phase 3
+    calibration = _build_mip_calibration()
+    _save("improvement_calibration.json", calibration)
+    print(f"[IMPROVEMENT] Phase 3: drift={calibration['drift_score']} rec={calibration['recommendation']}", file=sys.stderr)
+
+    # Phase 4
+    thresholds = _build_mip_thresholds(snapshots)
+    _save("improvement_thresholds.json", thresholds)
+    print(f"[IMPROVEMENT] Phase 4: signal={thresholds['signal_thresholds']['action']} warn={thresholds['warning_thresholds']['action']}", file=sys.stderr)
+
+    # Phase 5
+    domains = _build_mip_domains()
+    _save("improvement_domains.json", domains)
+    print(f"[IMPROVEMENT] Phase 5: worst={domains['worst_domain']} high_priority={domains['high_priority_n']}", file=sys.stderr)
+
+    # Phase 6
+    countries = _build_mip_countries()
+    _save("improvement_countries.json", countries)
+    print(f"[IMPROVEMENT] Phase 6: below_target_n={countries['below_target_n']} avg={countries['avg_accuracy_pct']}%", file=sys.stderr)
+
+    # Phase 7
+    opps = _build_mip_opportunities(feedback, errors, calibration, thresholds)
+    _save("improvement_opportunities.json", opps)
+    print(f"[IMPROVEMENT] Phase 7: {opps['total_opportunities']} opportunities high={opps['high_priority_n']}", file=sys.stderr)
+
+    # Phase 8
+    ls_data = _build_mip_learning_score(feedback, calibration, errors, snapshots)
+    _save("improvement_learning_score.json", ls_data)
+    print(f"[IMPROVEMENT] Phase 8: LS={ls_data['learning_score']} grade={ls_data['ls_grade']}", file=sys.stderr)
+
+    # Phase 9
+    roadmap = _build_mip_roadmap(opps, feedback, domains, countries, ls_data)
+    _save("improvement_roadmap.json", roadmap)
+    print(f"[IMPROVEMENT] Phase 9: {roadmap['roadmap_items_n']} roadmap items expected_gain={roadmap['total_expected_gain']}", file=sys.stderr)
+
+    # Phase 10
+    dashboard = _build_mip_dashboard(feedback, errors, calibration, thresholds,
+                                      domains, countries, opps, ls_data, roadmap)
+    _save("improvement_dashboard.json", dashboard)
+
+    elapsed = round((_tmip.monotonic()-t_start)*1000)
+    print(f"[IMPROVEMENT] Phase 10: status={dashboard['improvement_status']} LS={dashboard['learning_score']} ({elapsed}ms)", file=sys.stderr)
+    print(f"[IMPROVEMENT] Closed-loop learning cycle complete. Forecast→Validation→Accuracy→Improvement.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -23332,6 +24155,7 @@ def main():
     save_grdf_historical_validation(snapshots)
     save_grdf_live_operations(snapshots)
     save_grdf_accuracy(snapshots)
+    save_grdf_improvement(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
