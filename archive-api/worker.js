@@ -6141,6 +6141,144 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
   }
 
+
+  // =========================================================================
+  // GRDF V8 -- Strategic Decision Intelligence API
+  // GET /api/grdf/decisions/:cc           -> top ranked decisions for country
+  // GET /api/grdf/playbook/:cc            -> strategic playbook (FREE summary / SIGNAL+)
+  // GET /api/grdf/counterfactual/:cc      -> with vs without action simulation
+  // GET /api/grdf/policy-impact/:cc       -> 6 policy model impacts
+  // GET /api/grdf/mitigation/:cc          -> mitigation scores for all actions
+  // GET /api/grdf/decision-confidence/:cc -> DC score
+  // GET /api/grdf/top-decisions           -> global top decisions ranking (FREE)
+  // GET /api/grdf/global-decision-atlas   -> per-country best action map
+  // GET /api/grdf/v8/dashboard            -> Strategic Decision Dashboard
+  // =========================================================================
+
+  // /api/grdf/decisions/:cc
+  if (seg[0] === 'decisions' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v8dec:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v8_response_rank_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 decisions not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,top_action:d.top_action,top_rank_score:d.top10?.[0]?.rank_score,tier}
+        : access==='summary'
+        ? {country:d.country,country_name:d.country_name,top_action:d.top_action,
+           top5:d.top10?.slice(0,5),urgency_norm:d.urgency_norm,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/playbook/:cc
+  if (seg[0] === 'playbook' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v8pb:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v8_playbook_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 playbook not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,priority_bucket:d.priority_bucket,
+           immediate:d.playbook?.immediate?.slice(0,2),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/counterfactual/:cc
+  if (seg[0] === 'counterfactual' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Counterfactual requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v8_counterfactual_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 counterfactual not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/policy-impact/:cc
+  if (seg[0] === 'policy-impact' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Policy impact requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v8_policy_impacts_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 policy impact not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/mitigation/:cc
+  if (seg[0] === 'mitigation' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Mitigation data requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v8_mitigation_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 mitigation not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='summary'
+        ? {country:d.country,top_mitigation:d.top_mitigation,top_ms:d.top_ms,avg_ms:d.avg_ms,tier}
+        : {...d,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/decision-confidence/:cc
+  if (seg[0] === 'decision-confidence' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v8_decision_confidence_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 decision confidence not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,decision_confidence:d.decision_confidence,dc_grade:d.dc_grade,tier}
+        : {...d,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/top-decisions  (FREE)
+  if (seg[0] === 'top-decisions') {
+    const ck = `grdf:v8td:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v8_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = {date:d.date,top_decisions:d.top_decisions,summary:d.summary,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/global-decision-atlas
+  if (seg[0] === 'global-decision-atlas') {
+    if (access==='teaser') return new Response(JSON.stringify({error:'Decision atlas requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v8_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 dashboard not built yet'}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({date:d.date,global_decision_atlas:d.global_decision_atlas,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/v8/dashboard
+  if (seg[0]==='v8' && seg[1]==='dashboard') {
+    const ck = `grdf:v8dash:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v8_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V8 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,summary:d.summary,top_decisions:d.top_decisions?.slice(0,5),
+           national_playbooks:d.national_playbooks?.slice(0,5),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -6168,6 +6306,11 @@ async function handleGRDF(request, env) {
       '/api/grdf/escalation/:cc','/api/grdf/alerts/:cc',
       '/api/grdf/probability/:cc','/api/grdf/global-alert-network',
       '/api/grdf/top-risks','/api/grdf/v7/dashboard',
+      '/api/grdf/decisions/:cc','/api/grdf/playbook/:cc',
+      '/api/grdf/counterfactual/:cc','/api/grdf/policy-impact/:cc',
+      '/api/grdf/mitigation/:cc','/api/grdf/decision-confidence/:cc',
+      '/api/grdf/top-decisions','/api/grdf/global-decision-atlas',
+      '/api/grdf/v8/dashboard',
     ]
   }),{status:404,headers:CORS});
 }
