@@ -6279,6 +6279,150 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
   }
 
+
+  // =========================================================================
+  // GRDF V9 -- Autonomous Strategic Intelligence API
+  // GET /api/grdf/autonomous-priorities/:cc  -> APS scored actions
+  // GET /api/grdf/resource-allocation/:cc    -> RAE resource plan
+  // GET /api/grdf/multi-risk-plan/:cc        -> cross-domain optimized plan
+  // GET /api/grdf/dynamic-playbook/:cc       -> 5-bucket adaptive playbook
+  // GET /api/grdf/active-scenario/:cc        -> current scenario + switch detect
+  // GET /api/grdf/coordination/:cc           -> SCS strategic alignment
+  // GET /api/grdf/autonomous-confidence/:cc  -> AC decision confidence
+  // GET /api/grdf/global-action-atlas        -> per-country action map (FREE)
+  // GET /api/grdf/v9/dashboard               -> Global Autonomous Dashboard
+  // NOTE: /api/grdf/escalation/:cc already registered for V7 (V9 reuses it)
+  // =========================================================================
+
+  // /api/grdf/autonomous-priorities/:cc
+  if (seg[0] === 'autonomous-priorities' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v9ap:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v9_priority_score_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 priorities not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,top_action:d.top_action,top_aps:d.top_aps,
+           aps_grade:(d.top_aps>=80?'critical':d.top_aps>=60?'high':d.top_aps>=40?'moderate':'low'),tier}
+        : access==='summary'
+        ? {country:d.country,country_name:d.country_name,top_action:d.top_action,
+           top_aps:d.top_aps,avg_aps:d.avg_aps,top5:d.scored_actions?.slice(0,5),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/resource-allocation/:cc
+  if (seg[0] === 'resource-allocation' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Resource allocation requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v9_resource_allocation_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 resource allocation not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='summary'
+        ? {country:d.country,top_allocation:d.top_allocation,resource_availability:d.resource_availability,
+           top3:d.allocations?.slice(0,3),tier}
+        : {...d,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/multi-risk-plan/:cc
+  if (seg[0] === 'multi-risk-plan' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Multi-risk plan requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v9_multi_risk_plan_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 multi-risk plan not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/dynamic-playbook/:cc
+  if (seg[0] === 'dynamic-playbook' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v9dp:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v9_dynamic_playbook_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 playbook not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,priority_bucket:d.priority_bucket,escalation_level:d.escalation_level,
+           immediate:d.playbook?.['24h']?.slice(0,2),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/active-scenario/:cc
+  if (seg[0] === 'active-scenario' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v9_active_scenario_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 active scenario not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,current_scenario:d.current_scenario,
+           recommended_scenario:d.recommended_scenario,scenario_switch:d.scenario_switch,tier}
+        : {...d,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/coordination/:cc
+  if (seg[0] === 'coordination' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Coordination data requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v9_coordination_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 coordination not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/autonomous-confidence/:cc
+  if (seg[0] === 'autonomous-confidence' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v9_autonomous_confidence_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 autonomous confidence not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,autonomous_confidence:d.autonomous_confidence,ac_grade:d.ac_grade,tier}
+        : {...d,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/global-action-atlas  (V9 version; FREE)
+  if (seg[0] === 'global-action-atlas') {
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v9_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = {date:d.date,global_action_atlas:d.global_action_atlas,
+                 global_mission_status:d.global_mission_status,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/v9/dashboard
+  if (seg[0]==='v9' && seg[1]==='dashboard') {
+    const ck = `grdf:v9dash:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v9_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V9 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,global_mission_status:d.global_mission_status,
+           global_priorities:d.global_priorities?.slice(0,5),
+           escalation_monitor:d.escalation_monitor?.slice(0,3),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -6311,6 +6455,11 @@ async function handleGRDF(request, env) {
       '/api/grdf/mitigation/:cc','/api/grdf/decision-confidence/:cc',
       '/api/grdf/top-decisions','/api/grdf/global-decision-atlas',
       '/api/grdf/v8/dashboard',
+      '/api/grdf/autonomous-priorities/:cc','/api/grdf/resource-allocation/:cc',
+      '/api/grdf/multi-risk-plan/:cc','/api/grdf/dynamic-playbook/:cc',
+      '/api/grdf/active-scenario/:cc','/api/grdf/coordination/:cc',
+      '/api/grdf/autonomous-confidence/:cc','/api/grdf/global-action-atlas',
+      '/api/grdf/v9/dashboard',
     ]
   }),{status:404,headers:CORS});
 }
