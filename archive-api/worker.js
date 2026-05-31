@@ -6629,9 +6629,165 @@ async function handleGRDF(request, env) {
       '/api/grdf/active-scenario/:cc','/api/grdf/coordination/:cc',
       '/api/grdf/autonomous-confidence/:cc','/api/grdf/global-action-atlas',
       '/api/grdf/v9/dashboard',
+
+  // =========================================================================
+  // GRDF V11 -- Autonomous Sovereign Network API
+  // All V11 routes under /api/grdf/v11/
+  // =========================================================================
+  if (seg[0] === 'v11') {
+    const v11seg = seg[1] || 'dashboard';
+    const CORS11 = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier};
+
+    // /api/grdf/v11/dashboard
+    if (v11seg === 'dashboard') {
+      const ck = `grdf:v11dash:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS11});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_dashboard.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 not built yet'}),{status:404,headers:CORS11});
+        const r = access==='teaser'
+          ? {date:d.date,planetary_status:d.planetary_status,planetary_alert:d.planetary_alert,
+             system_avg_risk:d.system_avg_risk,global_alerts:d.global_alerts?.slice(0,3),tier}
+          : {...d,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/network  (federated nodes)
+    if (v11seg === 'network') {
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_federated_nodes.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 federated nodes not built'}),{status:404,headers:CORS11});
+        const r = access==='teaser'
+          ? {date:d.date,total_nodes:d.total_nodes,node_ids:d.node_ids,tier}
+          : {...d,tier};
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/dependencies
+    if (v11seg === 'dependencies') {
+      if (access==='teaser') return new Response(JSON.stringify({error:'Dependency graph requires Signal tier'}),{status:403,headers:CORS11});
+      const ck = `grdf:v11dep:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS11});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_global_dependency_graph.json',600);
+        if (!d) return new Response(JSON.stringify({error:'V11 dep graph not built'}),{status:404,headers:CORS11});
+        const r = access==='full+explain' ? {...d,tier}
+          : {date:d.date,node_count:d.node_count,edge_count:d.edge_count,
+             node_types:d.node_types,edge_types:d.edge_types,
+             nodes:d.nodes,edges:d.edges?.map(e=>({from:e.from,to:e.to,type:e.type})),tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/cascades
+    if (v11seg === 'cascades') {
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_cascading_failures.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 cascades not built'}),{status:404,headers:CORS11});
+        const r = access==='teaser'
+          ? {date:d.date,simulated_n:d.simulated_n,worst_cascade:d.worst_cascade,
+             cascade_chains:d.cascade_chains,tier}
+          : {...d,tier};
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/resources
+    if (v11seg === 'resources') {
+      if (access==='teaser') return new Response(JSON.stringify({error:'Resource exchange requires Signal tier'}),{status:403,headers:CORS11});
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_resource_exchange.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 resource exchange not built'}),{status:404,headers:CORS11});
+        return new Response(JSON.stringify({...d,tier}),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/missions
+    if (v11seg === 'missions') {
+      const ck = `grdf:v11msn:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS11});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_global_missions.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 missions not built'}),{status:404,headers:CORS11});
+        const r = access==='teaser'
+          ? {date:d.date,total_missions:d.total_missions,executing_n:d.executing_n,
+             coordinated_n:d.coordinated_n,tier}
+          : {...d,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/coordination
+    if (v11seg === 'coordination') {
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_cross_border_coordination.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 coordination not built'}),{status:404,headers:CORS11});
+        const r = access==='teaser'
+          ? {date:d.date,total_regions:d.total_regions,avg_coord_efficiency:d.avg_coord_efficiency,
+             avg_stability:d.avg_stability,tier}
+          : {...d,tier};
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/learning
+    if (v11seg === 'learning') {
+      if (access==='teaser') return new Response(JSON.stringify({error:'Learning engine requires Signal tier'}),{status:403,headers:CORS11});
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_learning_engine.json',600);
+        if (!d) return new Response(JSON.stringify({error:'V11 learning not built'}),{status:404,headers:CORS11});
+        return new Response(JSON.stringify({...d,tier}),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/governance
+    if (v11seg === 'governance') {
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_governance.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 governance not built'}),{status:404,headers:CORS11});
+        const r = access==='teaser'
+          ? {date:d.date,avg_governance_score:d.avg_governance_score,
+             governance_grade:d.governance_grade,governance_compliance:d.governance_compliance,tier}
+          : {...d,tier};
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // /api/grdf/v11/planetary-alerts
+    if (v11seg === 'planetary-alerts') {
+      const ck = `grdf:v11pa:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS11});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO,'docs/grdf/v11_planetary_alerts.json',300);
+        if (!d) return new Response(JSON.stringify({error:'V11 planetary alerts not built'}),{status:404,headers:CORS11});
+        const r = access==='teaser'
+          ? {date:d.date,planetary_alert:d.planetary_alert,components:d.components,
+             system_avg_risk:d.system_avg_risk,tier}
+          : {...d,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS11});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS11});}
+    }
+
+    // Unknown v11 sub-route
+    return new Response(JSON.stringify({error:'Unknown V11 route: '+v11seg,
+      available:['dashboard','network','dependencies','cascades','resources',
+                  'missions','coordination','learning','governance','planetary-alerts']}),
+      {status:404,headers:CORS11});
+  }
+
       '/api/grdf/v10/dashboard','/api/grdf/v10/missions','/api/grdf/v10/alerts',
       '/api/grdf/v10/agents','/api/grdf/v10/knowledge-graph','/api/grdf/v10/memory',
       '/api/grdf/v10/coordination','/api/grdf/v10/action-atlas','/api/grdf/v10/operations',
+      '/api/grdf/v11/dashboard','/api/grdf/v11/network','/api/grdf/v11/dependencies',
+      '/api/grdf/v11/cascades','/api/grdf/v11/resources','/api/grdf/v11/missions',
+      '/api/grdf/v11/coordination','/api/grdf/v11/learning','/api/grdf/v11/governance',
+      '/api/grdf/v11/planetary-alerts',
     ]
   }),{status:404,headers:CORS});
 }
