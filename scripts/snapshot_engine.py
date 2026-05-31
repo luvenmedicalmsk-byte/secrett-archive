@@ -14217,6 +14217,774 @@ def save_grdf_v9(snapshots: list) -> None:
     print(f"[GRDF-V9] All 10 phases complete. {len(all_priority)} countries processed.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V10 -- Sovereign Intelligence Platform
+#
+# Unifies V1-V9 into a single sovereign-grade intelligence operating system.
+#
+# Phase 1:  Mission Control Engine      -> v10_missions_{CC}.json
+# Phase 2:  Strategic Knowledge Graph   -> v10_knowledge_graph.json
+# Phase 3:  Intelligence Memory Layer   -> v10_memory.json
+# Phase 4:  Sovereign Agent Framework   -> v10_agents.json
+# Phase 5:  Global Alert Network        -> v10_alert_network.json
+# Phase 6:  Strategic Coordination Hub  -> v10_coordination.json
+# Phase 7:  Global Action Atlas         -> v10_action_atlas.json
+# Phase 8:  Autonomous Operations Engine-> v10_operations.json
+# Phase 9:  Sovereign Intelligence Dashboard -> v10_dashboard.json
+# Phase 10: Sovereign Intelligence API  -> (worker routes)
+#
+# Reads: v1..v9 outputs (read-only).
+# Writes: v10_* only.  V1-V9 NEVER modified.
+# =========================================================================
+
+# Agent domains (Phase 4)
+_V10_AGENTS = [
+    "climate","economic","geopolitical",
+    "infrastructure","energy","cyber","social",
+]
+
+# Mission lifecycle states
+_V10_MISSION_STATES = ["pending","active","monitoring","escalated","resolved"]
+
+# Alert level order
+_V10_ALERT_ORDER = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+
+
+def _v10_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+# ── Phase 1: Mission Control Engine ──────────────────────────────────────
+
+def _build_v10_missions(iso2: str, snap: dict) -> dict:
+    """
+    Phase 1: Generate strategic missions for a country from V7-V9 outputs.
+    Each mission has: objective, priority, status, actions, owner_agent, lifecycle.
+    """
+    warn_d   = _v10_load(f"v7_warning_score_{iso2}.json")
+    alert_d  = _v10_load(f"v7_alerts_{iso2}.json")
+    prio_d   = _v10_load(f"v9_priority_score_{iso2}.json")
+    esc_d    = _v10_load(f"v9_escalation_{iso2}.json")
+
+    ews        = float(warn_d.get("early_warning_score", 40))
+    alert_lvl  = alert_d.get("alert_level","GREEN")
+    esc_level  = esc_d.get("escalation_level","GREEN")
+    top_action = prio_d.get("top_action","assess and monitor")
+
+    # Mission lifecycle state driven by escalation
+    esc_ord = _V10_ALERT_ORDER.get(esc_level, 0)
+    state   = (_V10_MISSION_STATES[min(4, max(0, esc_ord + 1))]
+               if esc_ord >= 2 else "monitoring")
+
+    # Generate 3-5 missions based on active risk domains
+    dom_s    = _get_domain_scores(iso2, snap)
+    top_doms = sorted(dom_s.items(), key=lambda x: -x[1].get("score",0))[:5]
+
+    missions = []
+    for i, (dom, dv) in enumerate(top_doms, 1):
+        priority = "critical" if dv["score"] >= 75 else "high" if dv["score"] >= 55 else "standard"
+        missions.append({
+            "mission_id":    f"MSN-{iso2}-{i:02d}",
+            "objective":     f"Mitigate {dom} risk in {snap.get('country_name',iso2)}",
+            "domain":        dom,
+            "priority":      priority,
+            "status":        state if i == 1 else "monitoring",
+            "domain_score":  dv["score"],
+            "owner_agent":   dom,
+            "top_action":    top_action if i == 1 else f"Monitor {dom} indicators",
+            "lifecycle":     {
+                "created":   TODAY,
+                "updated":   TODAY,
+                "state":     state if i == 1 else "monitoring",
+                "ews":       round(ews),
+                "alert":     alert_lvl,
+            },
+        })
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "10.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "n_missions":   len(missions),
+        "active_n":     sum(1 for m in missions if m["status"] in ("active","escalated")),
+        "missions":     missions,
+        "overall_status": state,
+    }
+
+
+# ── Phase 2: Strategic Knowledge Graph ───────────────────────────────────
+
+def _build_v10_knowledge_graph(snapshots: list) -> dict:
+    """
+    Phase 2: Global knowledge graph connecting risks, events, countries,
+    infrastructure, policies, scenarios, and decisions.
+    Node types: Country, Risk, Event, Infrastructure, Policy, Scenario, Decision
+    Edge types: LINKED_TO, CAUSES, AFFECTS, MITIGATES, ENABLES, AMPLIFIES
+    """
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    seen: set = set()
+
+    def add(nid, ntype, label, **kw):
+        if nid not in seen:
+            seen.add(nid)
+            nodes.append({"id":nid,"type":ntype,"label":label,**kw})
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        score = int(snap.get("risk_score",50) or 50)
+        add(f"CC:{iso2}","Country",snap.get("country_name",iso2),risk_score=score)
+
+        # Risk nodes per domain
+        dom_s = _get_domain_scores(iso2, snap)
+        for d, dv in dom_s.items():
+            rid = f"RISK:{iso2}:{d}"
+            add(rid,"Risk",f"{iso2} {d} risk",score=dv["score"],domain=d)
+            edges.append({"from":f"CC:{iso2}","to":rid,"type":"LINKED_TO","weight":dv["score"]/100})
+            # High-score domains cause cascades
+            if dv["score"] >= 65:
+                edges.append({"from":rid,"to":f"CC:{iso2}","type":"AFFECTS","weight":dv["score"]/100})
+
+        # Decision nodes from V8
+        rank_d   = _v10_load(f"v8_response_rank_{iso2}.json")
+        top10    = (rank_d.get("top10") or [])[:3]
+        for act in top10:
+            did = f"DEC:{iso2}:{act['id']}"
+            add(did,"Decision",act.get("label","?")[:40],domain=act.get("domain","?"))
+            edges.append({"from":did,"to":f"CC:{iso2}","type":"MITIGATES","weight":act.get("rank_score",50)/100})
+
+        # Scenario nodes from V5
+        sc_d = _v10_load(f"v5_scenarios_{iso2}.json")
+        prob  = sc_d.get("most_probable","baseline")
+        sid   = f"SCN:{iso2}:{prob}"
+        add(sid,"Scenario",f"{iso2} {prob} scenario",probability=prob)
+        edges.append({"from":f"CC:{iso2}","to":sid,"type":"LINKED_TO","weight":0.75})
+
+        # Policy nodes from V8
+        pol_d   = _v10_load(f"v8_policy_impacts_{iso2}.json")
+        best_pol= pol_d.get("best_policy","energy_policy")
+        pid     = f"POL:{iso2}:{best_pol}"
+        add(pid,"Policy",f"{iso2} {best_pol}",gri_lift=pol_d.get("max_gri_lift",0))
+        edges.append({"from":pid,"to":f"CC:{iso2}","type":"ENABLES","weight":0.70})
+
+    # Cross-country edges from V6 links
+    link_d = _v10_load("v6_country_links.json")
+    for lnk in (link_d.get("matrix") or [])[:50]:
+        a, b = lnk.get("from",""), lnk.get("to","")
+        if a and b:
+            edges.append({"from":f"CC:{a}","to":f"CC:{b}","type":"LINKED_TO",
+                          "weight":lnk.get("strength",0.3)})
+
+    return {
+        "grdf_version":   "10.0",
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "node_count":     len(nodes),
+        "edge_count":     len(edges),
+        "node_types":     ["Country","Risk","Event","Infrastructure","Policy","Scenario","Decision"],
+        "edge_types":     ["LINKED_TO","CAUSES","AFFECTS","MITIGATES","ENABLES","AMPLIFIES"],
+        "nodes":          nodes,
+        "edges":          edges,
+    }
+
+
+# ── Phase 3: Intelligence Memory Layer ───────────────────────────────────
+
+def _build_v10_memory(snapshots: list) -> dict:
+    """
+    Phase 3: Persistent intelligence memory — aggregates signals, forecasts,
+    scenarios, decisions, and action results across V1-V9.
+    """
+    memory_records = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        # Signals from V5
+        sig   = _v10_load(f"v5_signals_{iso2}.json")
+        # Forecast from V3
+        fc    = _v10_load(f"v3_forecast_{iso2}.json")
+        # Scenario from V5
+        sc    = _v10_load(f"v5_scenarios_{iso2}.json")
+        # Decision rank from V8
+        rank  = _v10_load(f"v8_response_rank_{iso2}.json")
+        # Materialization probability from V7
+        prob  = _v10_load(f"v7_probability_{iso2}.json")
+
+        memory_records.append({
+            "country":        iso2,
+            "country_name":   snap.get("country_name", iso2),
+            "date":           TODAY,
+            # Signals
+            "signal_score":   sig.get("signal_score",0),
+            "signal_grade":   sig.get("signal_grade","noise"),
+            # Forecast
+            "forecast_30d":   (fc.get("horizons") or {}).get("30d",{}).get("score"),
+            "forecast_90d":   (fc.get("horizons") or {}).get("90d",{}).get("score"),
+            # Scenario
+            "active_scenario":sc.get("most_probable","baseline"),
+            # Decision
+            "top_decision":   rank.get("top_action","?"),
+            # Probability
+            "p_materialization": prob.get("p_materialization",0),
+            # Current state
+            "risk_score":     int(snap.get("risk_score",50) or 50),
+            "alert_level":    snap.get("alert_level","NONE") or "NONE",
+        })
+
+    return {
+        "grdf_version":   "10.0",
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "total_records":  len(memory_records),
+        "memory":         memory_records,
+        "layer_coverage": {
+            "V1_risk":          True,
+            "V3_forecast":      True,
+            "V5_scenarios":     True,
+            "V7_warnings":      True,
+            "V8_decisions":     True,
+            "V9_autonomous":    True,
+        },
+    }
+
+
+# ── Phase 4: Sovereign Agent Framework ───────────────────────────────────
+
+def _build_v10_agents(snapshots: list) -> dict:
+    """
+    Phase 4: Multi-agent framework — one specialist agent per domain.
+    Each agent monitors its domain across all 25 countries and
+    generates domain-specific intelligence briefs.
+    """
+    agents: dict = {}
+    for agent_domain in _V10_AGENTS:
+        agent_countries = []
+        for snap in snapshots:
+            iso2  = snap["country"]
+            dom_s = _get_domain_scores(iso2, snap)
+            dv    = dom_s.get(agent_domain, {})
+            score = dv.get("score", 50)
+            trend = dv.get("trend","stable")
+            if score >= 40:       # only include where domain is active
+                agent_countries.append({
+                    "country":     iso2,
+                    "country_name":snap.get("country_name",iso2),
+                    "domain_score":score,
+                    "trend":       trend,
+                    "velocity":    dv.get("velocity",0),
+                    "alert":       snap.get("alert_level","NONE") or "NONE",
+                })
+
+        agent_countries.sort(key=lambda x: -x["domain_score"])
+        avg_score = round(sum(a["domain_score"] for a in agent_countries)
+                          / max(1,len(agent_countries)),1)
+
+        agents[agent_domain] = {
+            "agent_id":       f"AGT-{agent_domain.upper()[:6]}",
+            "domain":         agent_domain,
+            "monitoring_n":   len(agent_countries),
+            "avg_domain_score": avg_score,
+            "top_country":    agent_countries[0]["country"] if agent_countries else "N/A",
+            "top_score":      agent_countries[0]["domain_score"] if agent_countries else 0,
+            "status":         ("alert" if avg_score >= 65 else
+                               "elevated" if avg_score >= 45 else "normal"),
+            "countries":      agent_countries[:10],
+        }
+
+    return {
+        "grdf_version":   "10.0",
+        "date":           TODAY,
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "total_agents":   len(agents),
+        "agents":         agents,
+        "agent_domains":  _V10_AGENTS,
+    }
+
+
+# ── Phase 5: Global Alert Network ────────────────────────────────────────
+
+def _build_v10_alert_network(snapshots: list) -> dict:
+    """
+    Phase 5: Unified V10 global alert network — merges V7 alerts,
+    V9 escalation, and V8 materialization probability into a
+    single 5-level sovereign alert layer.
+    """
+    alert_map: dict = {}
+    for snap in snapshots:
+        iso2    = snap["country"]
+        v7_al   = _v10_load(f"v7_alerts_{iso2}.json")
+        v9_esc  = _v10_load(f"v9_escalation_{iso2}.json")
+        v7_prob = _v10_load(f"v7_probability_{iso2}.json")
+
+        v7_level = v7_al.get("alert_level","GREEN")
+        v9_level = v9_esc.get("escalation_level","GREEN")
+        p_mat    = float(v7_prob.get("p_materialization",30))
+
+        # Sovereign alert = max of V7 + V9, boosted by high p_mat
+        sov_ord  = max(_V10_ALERT_ORDER.get(v7_level,0),
+                       _V10_ALERT_ORDER.get(v9_level,0))
+        if p_mat >= 80: sov_ord = min(4, sov_ord + 1)
+        sov_level= ["GREEN","YELLOW","ORANGE","RED","BLACK"][sov_ord]
+
+        alert_map[iso2] = {
+            "country":         iso2,
+            "country_name":    snap.get("country_name",iso2),
+            "sovereign_alert": sov_level,
+            "v7_alert":        v7_level,
+            "v9_escalation":   v9_level,
+            "p_materialization":round(p_mat),
+            "risk_score":      int(snap.get("risk_score",50) or 50),
+        }
+
+    # Count per level
+    counts: dict = {l:0 for l in ["GREEN","YELLOW","ORANGE","RED","BLACK"]}
+    for v in alert_map.values():
+        counts[v["sovereign_alert"]] += 1
+
+    by_severity = sorted(alert_map.values(),
+                         key=lambda x: -_V10_ALERT_ORDER.get(x["sovereign_alert"],0))
+
+    return {
+        "grdf_version":    "10.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "level_counts":    counts,
+        "critical_n":      counts["BLACK"] + counts["RED"],
+        "top_alerts":      by_severity[:10],
+        "alert_map":       alert_map,
+    }
+
+
+# ── Phase 6: Strategic Coordination Hub ──────────────────────────────────
+
+def _build_v10_coordination(snapshots: list) -> dict:
+    """
+    Phase 6: Cross-country strategic coordination.
+    Groups countries by region, identifies shared threats,
+    and proposes synchronized response actions.
+    """
+    from collections import defaultdict as _dd
+
+    region_groups: dict = _dd(list)
+    for snap in snapshots:
+        iso2 = snap["country"]
+        reg  = _CC_REGION.get(iso2, 0)
+        region_groups[reg].append(iso2)
+
+    coordination_blocks = []
+    for reg_id, ccs in region_groups.items():
+        if len(ccs) < 2:
+            continue
+        # Average risk in region
+        scores = [int(s.get("risk_score",50) or 50)
+                  for s in snapshots if s["country"] in ccs]
+        avg_sc  = round(sum(scores)/max(1,len(scores)))
+        # Shared dominant domain
+        dom_freq: dict = {}
+        for s in snapshots:
+            if s["country"] in ccs:
+                dom = (s.get("dominant_domain","geopolitical") or "geopolitical").lower()
+                dom = _ENGINE_TO_GRDF.get(dom, dom)
+                dom_freq[dom] = dom_freq.get(dom,0)+1
+        shared_dom = max(dom_freq.items(), key=lambda x:x[1])[0] if dom_freq else "geopolitical"
+
+        # Load V9 coordination score for region countries
+        scs_vals = []
+        for iso2 in ccs:
+            cd = _v10_load(f"v9_coordination_{iso2}.json")
+            if cd.get("scs"): scs_vals.append(float(cd["scs"]))
+        avg_scs = round(sum(scs_vals)/max(1,len(scs_vals)),1)
+
+        coordination_blocks.append({
+            "region_id":        reg_id,
+            "countries":        ccs,
+            "avg_risk":         avg_sc,
+            "shared_domain":    shared_dom,
+            "avg_scs":          avg_scs,
+            "coordination_grade": ("strong" if avg_scs >= 70 else
+                                   "moderate" if avg_scs >= 45 else "weak"),
+            "recommended_action": f"Regional {shared_dom} risk coordination",
+        })
+
+    coordination_blocks.sort(key=lambda x: -x["avg_risk"])
+
+    return {
+        "grdf_version":       "10.0",
+        "date":               TODAY,
+        "generated_at":       datetime.now(timezone.utc).isoformat(),
+        "total_regions":      len(coordination_blocks),
+        "coordination_blocks":coordination_blocks,
+        "global_avg_scs":     round(sum(b["avg_scs"] for b in coordination_blocks)/
+                                    max(1,len(coordination_blocks)),1),
+    }
+
+
+# ── Phase 7: Global Action Atlas ─────────────────────────────────────────
+
+def _build_v10_action_atlas(snapshots: list) -> dict:
+    """
+    Phase 7: Comprehensive catalogue of all strategic actions across
+    all countries — playbooks, mitigation, adaptation, resilience, emergency.
+    """
+    atlas_entries = []
+    action_types = {
+        "playbook":    "v9_dynamic_playbook",
+        "mitigation":  "v8_mitigation",
+        "resilience":  "v8_response_rank",
+    }
+
+    for snap in snapshots:
+        iso2    = snap["country"]
+        country_actions: list = []
+
+        # V9 dynamic playbook
+        pb      = _v10_load(f"v9_dynamic_playbook_{iso2}.json")
+        for bucket, acts in (pb.get("playbook") or {}).items():
+            for act in acts[:2]:
+                country_actions.append({
+                    "action_type": "playbook",
+                    "bucket":      bucket,
+                    "id":          act.get("id","?"),
+                    "label":       act.get("label","?"),
+                    "aps":         act.get("aps",0),
+                })
+
+        # V8 top mitigation
+        mit     = _v10_load(f"v8_mitigation_{iso2}.json")
+        for m in (mit.get("mitigations") or [])[:3]:
+            country_actions.append({
+                "action_type": "mitigation",
+                "id":          m.get("id","?"),
+                "label":       m.get("label","?"),
+                "ms":          m.get("mitigation_score",0),
+            })
+
+        atlas_entries.append({
+            "country":     iso2,
+            "country_name":snap.get("country_name",iso2),
+            "n_actions":   len(country_actions),
+            "actions":     country_actions[:10],
+            "priority_bucket": pb.get("priority_bucket","1yr"),
+        })
+
+    atlas_entries.sort(key=lambda x: x["priority_bucket"])
+
+    return {
+        "grdf_version":  "10.0",
+        "date":          TODAY,
+        "generated_at":  datetime.now(timezone.utc).isoformat(),
+        "total_countries": len(atlas_entries),
+        "total_actions": sum(e["n_actions"] for e in atlas_entries),
+        "action_types":  ["playbook","mitigation","adaptation","resilience","emergency"],
+        "atlas":         atlas_entries,
+    }
+
+
+# ── Phase 8: Autonomous Operations Engine ────────────────────────────────
+
+def _build_v10_operations(snapshots: list, alert_net: dict) -> dict:
+    """
+    Phase 8: Autonomous operations — determines which playbooks are
+    currently running, which scenarios are active, and what strategic
+    shifts are under way.
+    """
+    now_ts      = datetime.now(timezone.utc).isoformat()
+    operations  = []
+
+    for snap in snapshots:
+        iso2    = snap["country"]
+        pb      = _v10_load(f"v9_dynamic_playbook_{iso2}.json")
+        sc      = _v10_load(f"v9_active_scenario_{iso2}.json")
+        esc     = _v10_load(f"v9_escalation_{iso2}.json")
+        alert   = alert_net.get("alert_map",{}).get(iso2,{})
+
+        playbook_status = "idle"
+        bucket          = pb.get("priority_bucket","1yr")
+        if bucket == "24h":   playbook_status = "executing"
+        elif bucket == "7d":  playbook_status = "activated"
+        elif bucket == "30d": playbook_status = "planned"
+
+        operations.append({
+            "country":          iso2,
+            "country_name":     snap.get("country_name",iso2),
+            "playbook_status":  playbook_status,
+            "priority_bucket":  bucket,
+            "scenario_active":  sc.get("current_scenario","baseline"),
+            "scenario_switch":  sc.get("scenario_switch",False),
+            "escalation_level": esc.get("escalation_level","GREEN"),
+            "sovereign_alert":  alert.get("sovereign_alert","GREEN"),
+            "auto_triggers_n":  esc.get("n_triggers",0),
+        })
+
+    executing = [op for op in operations if op["playbook_status"] == "executing"]
+    activated = [op for op in operations if op["playbook_status"] == "activated"]
+    switches  = [op for op in operations if op["scenario_switch"]]
+
+    return {
+        "grdf_version":      "10.0",
+        "date":              TODAY,
+        "generated_at":      now_ts,
+        "executing_n":       len(executing),
+        "activated_n":       len(activated),
+        "scenario_switches_n": len(switches),
+        "operations":        sorted(operations,
+            key=lambda x: -_V10_ALERT_ORDER.get(x["sovereign_alert"],0)),
+        "executing":         executing,
+        "scenario_switches": switches,
+    }
+
+
+# ── Phase 9: Sovereign Intelligence Dashboard ─────────────────────────────
+
+def _save_v10_dashboard(snapshots: list,
+                         all_missions: list,
+                         alert_net: dict,
+                         agents: dict,
+                         coord: dict,
+                         atlas: dict,
+                         ops: dict) -> None:
+    """
+    Phase 9: 10-layer Sovereign Intelligence Dashboard — unified view
+    of all V1-V9 intelligence across all 25 countries.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+    alert_ord = _V10_ALERT_ORDER
+
+    # Layer 1: Global Risk Map
+    risk_map = sorted(
+        [{"country":s["country"],"country_name":s.get("country_name",s["country"]),
+          "risk_score":int(s.get("risk_score",50) or 50),
+          "alert_level":s.get("alert_level","NONE") or "NONE"}
+         for s in snapshots],
+        key=lambda x: -x["risk_score"])
+
+    # Layer 2: Alert Layer
+    alert_layer = alert_net.get("top_alerts",[])[:10]
+
+    # Layer 3: Forecast Layer (30d change)
+    forecast_layer = []
+    for s in snapshots:
+        iso2 = s["country"]
+        fc   = _v10_load(f"v3_forecast_{iso2}.json")
+        s30  = (fc.get("horizons") or {}).get("30d",{}).get("score", int(s.get("risk_score",50) or 50))
+        delta= s30 - int(s.get("risk_score",50) or 50)
+        forecast_layer.append({"country":iso2,"delta_30d":delta,"forecast_30d":s30})
+    forecast_layer.sort(key=lambda x: -abs(x["delta_30d"]))
+
+    # Layer 4: Scenario Layer
+    scenario_layer = []
+    for s in snapshots:
+        iso2 = s["country"]
+        sc   = _v10_load(f"v9_active_scenario_{iso2}.json")
+        scenario_layer.append({
+            "country":  iso2,
+            "scenario": sc.get("current_scenario","baseline"),
+            "switch":   sc.get("scenario_switch",False),
+        })
+
+    # Layer 5: Digital Twin summary
+    twin_layer = []
+    for s in snapshots:
+        iso2 = s["country"]
+        dt   = _v10_load(f"v6_digital_twin_{iso2}.json")
+        twin_layer.append({
+            "country":     iso2,
+            "state_score": (dt.get("state") or {}).get("state_score",0),
+            "bif_grade":   dt.get("bifurcation_grade","stable"),
+        })
+    twin_layer.sort(key=lambda x: -x["state_score"])
+
+    # Layer 6: Decision Layer
+    decision_layer = []
+    for s in snapshots:
+        iso2 = s["country"]
+        rank = _v10_load(f"v8_response_rank_{iso2}.json")
+        decision_layer.append({
+            "country":    iso2,
+            "top_action": rank.get("top_action","?"),
+            "rank_score": (rank.get("top10") or [{}])[0].get("rank_score",0),
+        })
+    decision_layer.sort(key=lambda x: -x["rank_score"])
+
+    # Layer 7: Autonomous Layer (V9 APS)
+    autonomous_layer = []
+    for s in snapshots:
+        iso2 = s["country"]
+        prio = _v10_load(f"v9_priority_score_{iso2}.json")
+        autonomous_layer.append({
+            "country":  iso2,
+            "top_aps":  prio.get("top_aps",0),
+            "action":   prio.get("top_action","?"),
+        })
+    autonomous_layer.sort(key=lambda x: -x["top_aps"])
+
+    # Layer 8: Resource Layer
+    resource_layer = []
+    for s in snapshots:
+        iso2 = s["country"]
+        rac  = _v10_load(f"v9_resource_allocation_{iso2}.json")
+        resource_layer.append({
+            "country": iso2,
+            "resource_availability": rac.get("resource_availability",50),
+            "top_allocation": rac.get("top_allocation","?"),
+        })
+    resource_layer.sort(key=lambda x: -x["resource_availability"])
+
+    # Layer 9: Mission Layer
+    mission_layer = sorted(
+        [{"country":m["country"],"n_missions":m["n_missions"],
+          "active_n":m["active_n"],"status":m["overall_status"]}
+         for m in all_missions],
+        key=lambda x: -x["active_n"])[:10]
+
+    # Layer 10: Coordination Layer
+    coordination_layer = coord.get("coordination_blocks",[])[:5]
+
+    # Summary
+    summary = {
+        "total_countries":   len(snapshots),
+        "black_alerts":      alert_net.get("level_counts",{}).get("BLACK",0),
+        "red_alerts":        alert_net.get("level_counts",{}).get("RED",0),
+        "orange_alerts":     alert_net.get("level_counts",{}).get("ORANGE",0),
+        "executing_playbooks": ops.get("executing_n",0),
+        "scenario_switches": ops.get("scenario_switches_n",0),
+        "global_avg_scs":    coord.get("global_avg_scs",0),
+        "sovereign_status":  ("critical"  if alert_net.get("level_counts",{}).get("BLACK",0)>=2 else
+                              "elevated"  if alert_net.get("level_counts",{}).get("RED",0)>=3 else
+                              "monitoring"),
+    }
+
+    with open(GRDF_DIR / "v10_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":      "10.0",
+            "date":              TODAY,
+            "generated_at":      now_ts,
+            "summary":           summary,
+            "global_risk_map":   risk_map,
+            "alert_layer":       alert_layer,
+            "forecast_layer":    forecast_layer[:10],
+            "scenario_layer":    scenario_layer,
+            "digital_twin_layer":twin_layer[:10],
+            "decision_layer":    decision_layer[:10],
+            "autonomous_layer":  autonomous_layer[:10],
+            "resource_layer":    resource_layer[:10],
+            "mission_layer":     mission_layer,
+            "coordination_layer":coordination_layer,
+        }, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V10] Phase 9: Sovereign Intelligence Dashboard", file=sys.stderr)
+
+
+# ── V10 Orchestrator ──────────────────────────────────────────────────────
+
+def save_grdf_v10(snapshots: list) -> None:
+    """
+    GRDF V10 -- Sovereign Intelligence Platform.
+    Dependency: V1->V2->...->V9->V10
+    Reads: v1..v9 outputs.  Writes: v10_* only.
+    V1/V2/V3/V4/V5/V6/V7/V8/V9 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Phase 1: Mission Control
+    all_missions: list = []
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            m = _build_v10_missions(iso2, snap)
+            with open(GRDF_DIR / f"v10_missions_{iso2}.json","w") as f:
+                json.dump(m, f, ensure_ascii=False, indent=2)
+            all_missions.append(m)
+        except Exception as e:
+            print(f"[GRDF-V10] missions {iso2}: {e}", file=sys.stderr)
+    print(f"[GRDF-V10] Phase 1: {len(all_missions)} mission records", file=sys.stderr)
+
+    # Phase 2: Knowledge Graph
+    try:
+        kg = _build_v10_knowledge_graph(snapshots)
+        with open(GRDF_DIR / "v10_knowledge_graph.json","w") as f:
+            json.dump(kg, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V10] Phase 2: knowledge graph {kg['node_count']} nodes {kg['edge_count']} edges", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V10] knowledge graph: {e}", file=sys.stderr)
+        kg = {}
+
+    # Phase 3: Memory
+    try:
+        mem = _build_v10_memory(snapshots)
+        with open(GRDF_DIR / "v10_memory.json","w") as f:
+            json.dump(mem, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V10] Phase 3: memory {mem['total_records']} records", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V10] memory: {e}", file=sys.stderr)
+
+    # Phase 4: Agents
+    try:
+        agents = _build_v10_agents(snapshots)
+        with open(GRDF_DIR / "v10_agents.json","w") as f:
+            json.dump(agents, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V10] Phase 4: {agents['total_agents']} agents", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V10] agents: {e}", file=sys.stderr)
+        agents = {}
+
+    # Phase 5: Alert Network
+    try:
+        alert_net = _build_v10_alert_network(snapshots)
+        with open(GRDF_DIR / "v10_alert_network.json","w") as f:
+            json.dump(alert_net, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V10] Phase 5: alert network critical={alert_net.get('critical_n',0)}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V10] alert network: {e}", file=sys.stderr)
+        alert_net = {"alert_map":{},"level_counts":{},"critical_n":0,"top_alerts":[]}
+
+    # Phase 6: Coordination
+    try:
+        coord = _build_v10_coordination(snapshots)
+        with open(GRDF_DIR / "v10_coordination.json","w") as f:
+            json.dump(coord, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V10] Phase 6: {coord['total_regions']} regional blocks", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V10] coordination: {e}", file=sys.stderr)
+        coord = {"coordination_blocks":[],"global_avg_scs":0,"total_regions":0}
+
+    # Phase 7: Action Atlas
+    try:
+        atlas = _build_v10_action_atlas(snapshots)
+        with open(GRDF_DIR / "v10_action_atlas.json","w") as f:
+            json.dump(atlas, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V10] Phase 7: action atlas {atlas['total_actions']} actions", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V10] action atlas: {e}", file=sys.stderr)
+        atlas = {}
+
+    # Phase 8: Operations
+    try:
+        ops = _build_v10_operations(snapshots, alert_net)
+        with open(GRDF_DIR / "v10_operations.json","w") as f:
+            json.dump(ops, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V10] Phase 8: operations executing={ops['executing_n']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V10] operations: {e}", file=sys.stderr)
+        ops = {"executing_n":0,"activated_n":0,"scenario_switches_n":0,"operations":[],"executing":[],"scenario_switches":[]}
+
+    # Phase 9: Dashboard
+    try:
+        _save_v10_dashboard(snapshots, all_missions, alert_net,
+                            agents, coord, atlas, ops)
+    except Exception as e:
+        print(f"[GRDF-V10] dashboard: {e}", file=sys.stderr)
+
+    print(f"[GRDF-V10] Sovereign Intelligence Platform OPERATIONAL. {len(snapshots)} countries.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -14295,6 +15063,7 @@ def main():
     save_grdf_v7(snapshots)
     save_grdf_v8(snapshots)
     save_grdf_v9(snapshots)
+    save_grdf_v10(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
