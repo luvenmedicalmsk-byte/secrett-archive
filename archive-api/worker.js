@@ -5863,6 +5863,154 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
   }
 
+
+  // =========================================================================
+  // GRDF V6 -- Global Risk Digital Twin API
+  // GET /api/grdf/digital-twin/:cc  -> full digital twin for country
+  // GET /api/grdf/cascade-map       -> global cascade propagation
+  // GET /api/grdf/global-network    -> 25x25 country link matrix
+  // GET /api/grdf/bifurcations      -> global bifurcation map (V6)
+  // GET /api/grdf/montecarlo/:cc    -> Monte Carlo 10k distribution
+  // GET /api/grdf/system-shocks     -> all 7 system shock results
+  // GET /api/grdf/global-risk-map   -> 5-layer global risk atlas
+  // GET /api/grdf/v6/dashboard      -> Digital Twin Dashboard
+  // =========================================================================
+
+  // /api/grdf/digital-twin/:cc
+  if (seg[0] === 'digital-twin' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v6dt:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v6_digital_twin_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V6 digital twin not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,country_name:d.country_name,date:d.date,
+           state_score:d.state?.state_score,probable_scenario:d.probable_scenario,
+           bifurcation_grade:d.bifurcation_grade,tier}
+        : access==='summary'
+        ? {country:d.country,country_name:d.country_name,state:d.state,forecast:d.forecast,
+           probable_scenario:d.probable_scenario,bifurcation_score:d.bifurcation_score,
+           bifurcation_grade:d.bifurcation_grade,cascade_exposure:d.cascade_exposure,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/montecarlo/:cc
+  if (seg[0] === 'montecarlo' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Monte Carlo data requires Signal tier'}),{status:403,headers:CORS});
+    const ck = `grdf:v6mc:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v6_montecarlo_${cc}.json`, 600);
+      if (!d) return new Response(JSON.stringify({error:'V6 Monte Carlo not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='summary'
+        ? {country:d.country,base_score:d.base_score,p_critical:d.p_critical,
+           p50_5yr:d.horizons?.['5yr']?.p50, p95_5yr:d.horizons?.['5yr']?.p95,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/cascade-map
+  if (seg[0] === 'cascade-map') {
+    const ck = `grdf:v6prop:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v6_propagation_engine.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V6 cascade map not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,origins_simulated:d.origins_simulated,
+           propagations:d.propagations?.map(p=>({origin:p.origin,affected_n:p.affected_n})),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/global-network
+  if (seg[0] === 'global-network') {
+    if (access==='teaser') return new Response(JSON.stringify({error:'Global network requires Signal tier'}),{status:403,headers:CORS});
+    const ck = `grdf:v6net:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v6_country_links.json', 600);
+      if (!d) return new Response(JSON.stringify({error:'V6 country links not built yet'}),{status:404,headers:CORS});
+      const r = access==='full+explain' ? {...d,tier}
+        : {date:d.date,total_links:d.total_links,link_domains:d.link_domains,
+           matrix:d.matrix?.slice(0,50),tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/bifurcations  (V6 global map -- NOTE: distinct from V5 /bifurcations/:cc)
+  if (seg[0] === 'bifurcations' && !seg[1]) {
+    const ck = `grdf:v6bif:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v6_bifurcation_map.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V6 bifurcation map not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,near_bifurcation_n:d.near_bifurcation_n,
+           grade_distribution:d.grade_distribution,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/system-shocks
+  if (seg[0] === 'system-shocks') {
+    const ck = `grdf:v6ss:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v6_system_shocks.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V6 system shocks not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,worst_shock:d.worst_shock,shock_types:d.shock_types,tier}
+        : access==='summary'
+        ? {date:d.date,worst_shock:d.worst_shock,
+           shocks:d.shocks?.map(s=>({shock_type:s.shock_type,global_severity_score:s.global_severity_score,countries_affected:s.countries_affected})),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/global-risk-map
+  if (seg[0] === 'global-risk-map') {
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v6_global_risk_map.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V6 global risk map not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,top_overall:d.top_overall,tier}
+        : {...d,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/v6/dashboard
+  if (seg[0]==='v6' && seg[1]==='dashboard') {
+    const ck = `grdf:v6dash:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v6_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V6 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,world_risk_map:d.world_risk_map?.slice(0,5),
+           strategic_alerts:d.strategic_alerts?.slice(0,3),
+           worst_shock:d.worst_shock,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -5882,6 +6030,10 @@ async function handleGRDF(request, env) {
       '/api/grdf/transitions/:cc','/api/grdf/bifurcations/:cc',
       '/api/grdf/intelligence/:cc','/api/grdf/global-outlook',
       '/api/grdf/v5/dashboard',
+      '/api/grdf/digital-twin/:cc','/api/grdf/montecarlo/:cc',
+      '/api/grdf/cascade-map','/api/grdf/global-network',
+      '/api/grdf/bifurcations','/api/grdf/system-shocks',
+      '/api/grdf/global-risk-map','/api/grdf/v6/dashboard',
     ]
   }),{status:404,headers:CORS});
 }
