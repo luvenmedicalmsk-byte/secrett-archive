@@ -6968,8 +6968,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/production/certification','/api/grdf/production/connectors',
       '/api/grdf/production/freshness','/api/grdf/production/latency',
       '/api/grdf/production/backtesting','/api/grdf/production/alert-validation',
+
+  // =========================================================================
+  // GRDF FINAL SOVEREIGN CERTIFICATION AUDIT API
+  // All routes under /api/grdf/final/
+  // Architecture frozen at V13. No V14. Independent audit.
+  // =========================================================================
+  if (seg[0] === 'final') {
+    const fseg = seg[1] || 'certification';
+    const CF = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const FINAL_FILES = {
+      'certification':            'docs/final/final_certification.json',
+      'sovereign-grade':          'docs/final/final_sovereign_grade.json',
+      'architecture-review':      'docs/final/final_architecture_review.json',
+      'formula-registry':         'docs/final/final_formula_registry.json',
+      'data-lineage':             'docs/final/final_data_lineage.json',
+      'layer-audit':              'docs/final/final_layer_audit.json',
+      'api-certification':        'docs/final/final_api_certification.json',
+      'dashboard-certification':  'docs/final/final_dashboard_certification.json',
+      'production-verification':  'docs/final/final_production_verification.json',
+      'gap-analysis':             'docs/final/final_gap_analysis.json',
+    };
+    const FINAL_SIGNAL_ONLY = new Set(['formula-registry','data-lineage','layer-audit','gap-analysis','production-verification']);
+    if (!FINAL_FILES[fseg]) return new Response(JSON.stringify({error:'Unknown final route: '+fseg, available:Object.keys(FINAL_FILES)}),{status:404,headers:CF});
+    if (FINAL_SIGNAL_ONLY.has(fseg) && access==='teaser') return new Response(JSON.stringify({error:fseg+' requires Signal tier'}),{status:403,headers:CF});
+    const ck = `grdf:final:${fseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CF});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, FINAL_FILES[fseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'Final '+fseg+' not yet built'}),{status:404,headers:CF});
+      let r;
+      if (access==='teaser') {
+        if (fseg==='certification') r={date:d.date,certification:d.certification,overall_sovereign_score:d.overall_sovereign_score,certification_reason:d.certification_reason,no_v14:d.no_v14,tier};
+        else if (fseg==='sovereign-grade') r={date:d.date,overall_sovereign_score:d.overall_sovereign_score,architecture_score:d.architecture_score,security_score:d.security_score,reliability_score:d.reliability_score,tier};
+        else if (fseg==='architecture-review') r={date:d.date,architecture_clean:d.architecture_clean,circular_deps:d.circular_deps,orphan_modules:d.orphan_modules,status:d.status,tier};
+        else if (fseg==='api-certification') r={date:d.date,total_endpoints:d.total_endpoints,coverage_pct:d.coverage_pct,envelope_consistent:d.envelope_consistent,status:d.status,tier};
+        else if (fseg==='dashboard-certification') r={date:d.date,present_n:d.present_n,total_n:d.total_n,responsive_ui:d.responsive_ui,status:d.status,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CF});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CF});}
+  }
+
       '/api/grdf/production/dashboard','/api/grdf/production/security',
       '/api/grdf/production/reliability',
+      '/api/grdf/final/certification','/api/grdf/final/sovereign-grade',
+      '/api/grdf/final/architecture-review','/api/grdf/final/formula-registry',
+      '/api/grdf/final/data-lineage','/api/grdf/final/layer-audit',
+      '/api/grdf/final/api-certification','/api/grdf/final/dashboard-certification',
+      '/api/grdf/final/production-verification','/api/grdf/final/gap-analysis',
     ]
   }),{status:404,headers:CORS});
 }
