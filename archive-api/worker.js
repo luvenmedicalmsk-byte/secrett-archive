@@ -6918,10 +6918,58 @@ async function handleGRDF(request, env) {
       '/api/grdf/v13/demographics','/api/grdf/v13/resilience','/api/grdf/v13/pathways',
       '/api/grdf/v13/transitions','/api/grdf/v13/scenarios',
       '/api/grdf/hardening/certification','/api/grdf/hardening/formula-audit',
+
+  // =========================================================================
+  // GRDF PRODUCTION READINESS PROGRAM V1 API
+  // All routes under /api/grdf/production/
+  // Architecture frozen at V13. No V14. SOVEREIGN_GRADE target.
+  // =========================================================================
+  if (seg[0] === 'production') {
+    const pseg = seg[1] || 'certification';
+    const CP = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const PROD_FILES = {
+      'certification':           'docs/production/production_certification.json',
+      'connectors':              'docs/production/production_connectors.json',
+      'pipeline':                'docs/production/production_pipeline_validation.json',
+      'freshness':               'docs/production/production_freshness.json',
+      'latency':                 'docs/production/production_latency.json',
+      'backtesting':             'docs/production/production_backtesting.json',
+      'alert-validation':        'docs/production/production_alert_validation.json',
+      'dashboard':               'docs/production/production_dashboard_audit.json',
+      'security':                'docs/production/production_security.json',
+      'reliability':             'docs/production/production_reliability.json',
+    };
+    const PROD_SIGNAL_ONLY = new Set(['pipeline','latency','backtesting','alert-validation','security']);
+    if (!PROD_FILES[pseg]) return new Response(JSON.stringify({error:'Unknown production route: '+pseg, available:Object.keys(PROD_FILES)}),{status:404,headers:CP});
+    if (PROD_SIGNAL_ONLY.has(pseg) && access==='teaser') return new Response(JSON.stringify({error:pseg+' requires Signal tier'}),{status:403,headers:CP});
+    const ck = `grdf:prod:${pseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CP});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, PROD_FILES[pseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'Production '+pseg+' not built yet'}),{status:404,headers:CP});
+      let r;
+      if (access==='teaser') {
+        if (pseg==='certification') r={date:d.date,certification_level:d.certification_level,overall_readiness_score:d.overall_readiness_score,security_score:d.security_score,no_v14:d.no_v14,tier};
+        else if (pseg==='connectors') r={date:d.date,active_n:d.active_n,total_connectors:d.total_connectors,avg_availability:d.avg_availability,status:d.status,tier};
+        else if (pseg==='freshness') r={date:d.date,fresh_rate_pct:d.fresh_rate_pct,freshness_grade:d.freshness_grade,status:d.status,tier};
+        else if (pseg==='reliability') r={date:d.date,reliability_score:d.reliability_score,uptime_estimate_pct:d.uptime_estimate_pct,status:d.status,tier};
+        else if (pseg==='dashboard') r={date:d.date,files_present:d.files_present,files_total:d.files_total,responsive_ui:d.responsive_ui,status:d.status,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CP});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CP});}
+  }
+
       '/api/grdf/hardening/dependency-graph','/api/grdf/hardening/explainability',
       '/api/grdf/hardening/correlation-audit','/api/grdf/hardening/forecast-audit',
       '/api/grdf/hardening/data-quality','/api/grdf/hardening/api-audit',
       '/api/grdf/hardening/storage-audit','/api/grdf/hardening/performance',
+      '/api/grdf/production/certification','/api/grdf/production/connectors',
+      '/api/grdf/production/freshness','/api/grdf/production/latency',
+      '/api/grdf/production/backtesting','/api/grdf/production/alert-validation',
+      '/api/grdf/production/dashboard','/api/grdf/production/security',
+      '/api/grdf/production/reliability',
     ]
   }),{status:404,headers:CORS});
 }
