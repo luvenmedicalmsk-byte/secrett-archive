@@ -5733,6 +5733,136 @@ async function handleGRDF(request, env) {
     } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
   }
 
+
+  // =========================================================================
+  // GRDF V5 -- Autonomous Scenario Intelligence Engine API
+  // GET /api/grdf/signals/:cc       -> weak signal scores for country
+  // GET /api/grdf/triggers/:cc      -> trigger detection for country
+  // GET /api/grdf/transitions/:cc   -> scenario transition matrix for country
+  // GET /api/grdf/bifurcations/:cc  -> bifurcation analysis for country
+  // GET /api/grdf/intelligence/:cc  -> autonomous narrative (Phase 6)
+  // GET /api/grdf/global-outlook    -> Phase 7 global strategic outlook
+  // GET /api/grdf/v5/dashboard      -> Phase 8 strategic dashboard
+  // =========================================================================
+
+  // /api/grdf/signals/:cc  (V5 weak signals -- not to be confused with v1 /signals)
+  if (seg[0] === 'signals' && seg[1] && seg[1].length === 2) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v5sig:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v5_signals_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V5 signals not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,signal_score:d.signal_score,signal_grade:d.signal_grade,
+           n_active_signals:d.n_active_signals,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/triggers/:cc
+  if (seg[0] === 'triggers' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Trigger data requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v5_triggers_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V5 triggers not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/transitions/:cc
+  if (seg[0] === 'transitions' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Transition matrix requires Signal tier'}),{status:403,headers:CORS});
+    const ck = `grdf:v5tr:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v5_transitions_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V5 transitions not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='summary'
+        ? {country:d.country,n_transitions:d.n_transitions,
+           highest_risk_transition:d.highest_risk_transition,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/bifurcations/:cc
+  if (seg[0] === 'bifurcations' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v5bif:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v5_bifurcations_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V5 bifurcations not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,bifurcation_score:d.bifurcation_score,
+           bifurcation_grade:d.bifurcation_grade,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/intelligence/:cc  (Phase 6)
+  if (seg[0] === 'intelligence' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v5int:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v5_intelligence_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V5 intelligence not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,gri:d.gri,probable_scenario:d.probable_scenario,
+           signal_grade:d.signal_grade,bifurcation_grade:d.bifurcation_grade,tier}
+        : access==='summary'
+        ? {country:d.country,country_name:d.country_name,gri:d.gri,
+           probable_scenario:d.probable_scenario,signal_grade:d.signal_grade,
+           top_risks:d.top_risks?.slice(0,3),top_drivers:d.top_drivers?.slice(0,3),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/global-outlook  (Phase 7)
+  if (seg[0] === 'global-outlook') {
+    const ck = `grdf:v5go:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v5_global_outlook.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V5 global outlook not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,near_bifurcation_n:d.near_bifurcation_n,
+           top_emerging_risks:d.top_emerging_risks?.slice(0,3),
+           top_systemic_risks:d.top_systemic_risks?.slice(0,3),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/v5/dashboard  (Phase 8)
+  if (seg[0]==='v5' && seg[1]==='dashboard') {
+    const ck = `grdf:v5dash:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v5_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V5 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,weak_signals:d.weak_signals?.slice(0,3),
+           emerging_scenarios:d.emerging_scenarios?.slice(0,3),
+           strategic_outlook:d.strategic_outlook,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -5748,6 +5878,10 @@ async function handleGRDF(request, env) {
       '/api/grdf/stress-test/:cc','/api/grdf/resilience/:cc',
       '/api/grdf/system-graph','/api/grdf/outcomes/:cc',
       '/api/grdf/strategic-outlook','/api/grdf/v4/dashboard',
+      '/api/grdf/signals/:cc','/api/grdf/triggers/:cc',
+      '/api/grdf/transitions/:cc','/api/grdf/bifurcations/:cc',
+      '/api/grdf/intelligence/:cc','/api/grdf/global-outlook',
+      '/api/grdf/v5/dashboard',
     ]
   }),{status:404,headers:CORS});
 }
