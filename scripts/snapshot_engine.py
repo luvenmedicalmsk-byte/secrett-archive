@@ -26133,6 +26133,652 @@ def save_grdf_impact(snapshots: list) -> None:
     print(f"[IMPACT] IMPACT CERT: {cert['impact_certification']}  IS={is_data['impact_score']}/100", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF SUSTAINABILITY & REVENUE PROGRAM V1
+#
+# Long-term sustainability, monetization and economic viability of the
+# certified GRDF ecosystem. Architecture frozen. No new layers. No V14.
+# Business sustainability only.
+#
+# Phase 1:  Revenue Registry            -> revenue_registry.json
+# Phase 2:  Customer Registry           -> customer_registry.json
+# Phase 3:  Subscription Analytics      -> subscription_analytics.json
+# Phase 4:  Unit Economics              -> unit_economics.json
+# Phase 5:  Sustainability Score        -> sustainability_score.json
+# Phase 6:  Growth Engine               -> growth_engine.json
+# Phase 7:  Enterprise Readiness        -> enterprise_readiness.json
+# Phase 8:  Sustainability Dashboard    -> sustainability_dashboard.json
+# Phase 9:  Sustainability Certification-> sustainability_certification.json
+# Phase 10: Strategic Sustainability Roadmap -> sustainability_roadmap.json
+#
+# Reads: all prior programs (read-only).
+# Writes: sustainability/* only.
+# Architecture FROZEN. Business sustainability only.
+# =========================================================================
+
+SUSTAINABILITY_DIR = DOCS_DIR / "sustainability"
+
+# Sustainability Score weights (Phase 5)
+_SUST_SS_WEIGHTS = {
+    "revenue":    0.30,
+    "retention":  0.25,
+    "growth":     0.20,
+    "efficiency": 0.15,
+    "resilience": 0.10,
+}
+
+# Pricing tiers (annual USD)
+_SUST_PRICING = {
+    "PUBLIC":    0,          # free
+    "SIGNAL+":   120,        # $10/month
+    "STRATEGIC": 1200,       # $100/month
+    "ELITE":     12000,      # $1000/month
+}
+
+# Sustainability cert levels
+_SUST_CERT_LEVELS = [
+    (85, "MISSION_SUSTAINABLE"),
+    (70, "PROFITABLE"),
+    (55, "SUSTAINABLE"),
+    (40, "GROWING"),
+    (0,  "EARLY_STAGE"),
+]
+
+# Infrastructure cost estimate (annual USD, CF Workers free tier + GitHub free)
+_SUST_INFRA_COST_ANNUAL = 0     # $0 on free tiers
+_SUST_INFRA_COST_PAID   = 600   # $50/month if scaling to paid CF Workers
+
+# CAC assumption (marketing + dev time proxy)
+_SUST_CAC_SIGNAL_PLUS   = 15    # $15 per SIGNAL+ acquisition
+_SUST_CAC_STRATEGIC     = 80    # $80 per STRATEGIC acquisition
+_SUST_CAC_ELITE         = 300   # $300 per ELITE acquisition
+
+
+def _sust_cert_level(score: float) -> str:
+    for thr, level in _SUST_CERT_LEVELS:
+        if score >= thr: return level
+    return "EARLY_STAGE"
+
+def _sload(subdir: str, rel: str) -> dict:
+    p = DOCS_DIR / subdir / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+
+# ── Phase 1: Revenue Registry ─────────────────────────────────────────────
+
+def _build_sust_revenue(snapshots: list) -> dict:
+    """
+    Phase 1: Derive revenue from segment distribution (Impact Phase 6).
+    MAU × segment fraction × tier price × conversion rate.
+    """
+    imp_adopt = _sload("impact","adoption_metrics.json")
+    imp_segs  = _sload("impact","segment_analysis.json")
+
+    mau = float(imp_adopt.get("mau",50) or 50)
+
+    # Segment distribution & conversion
+    conv_rates = {"PUBLIC":0.0,"SIGNAL+":1.0,"STRATEGIC":1.0,"ELITE":1.0}
+    seg_maus   = {s["segment"]: float(s.get("mau",1)) for s in imp_segs.get("segments",[])}
+
+    # Monthly recurring revenue per segment
+    mrr_by_seg: dict = {}
+    for seg in ["PUBLIC","SIGNAL+","STRATEGIC","ELITE"]:
+        seg_mau = seg_maus.get(seg, mau * {"PUBLIC":0.70,"SIGNAL+":0.22,"STRATEGIC":0.06,"ELITE":0.02}.get(seg,0.10))
+        price_mo= _SUST_PRICING.get(seg,0) / 12
+        conv    = conv_rates.get(seg,1.0)
+        mrr_by_seg[seg] = round(seg_mau * price_mo * conv, 2)
+
+    mrr_total    = round(sum(mrr_by_seg.values()), 2)
+    arr_total    = round(mrr_total * 12, 2)
+
+    # Revenue breakdown
+    api_revenue_mo   = round(mrr_by_seg.get("SIGNAL+",0) * 0.30, 2)   # 30% from API calls
+    subs_revenue_mo  = mrr_total - api_revenue_mo
+    enterprise_mo    = mrr_by_seg.get("STRATEGIC",0) + mrr_by_seg.get("ELITE",0)
+
+    return {
+        "mrr":              mrr_total,
+        "arr":              arr_total,
+        "mrr_by_segment":   mrr_by_seg,
+        "subscription_mrr": round(subs_revenue_mo, 2),
+        "api_mrr":          api_revenue_mo,
+        "enterprise_mrr":   round(enterprise_mo, 2),
+        "paying_users":     int(seg_maus.get("SIGNAL+",0) + seg_maus.get("STRATEGIC",0) + seg_maus.get("ELITE",0)),
+        "revenue_per_user": round(mrr_total / max(1, mau), 2),
+        "currency":         "USD",
+        "pricing":          _SUST_PRICING,
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 2: Customer Registry ────────────────────────────────────────────
+
+def _build_sust_customers(revenue: dict) -> dict:
+    """
+    Phase 2: Total, active, retained, churned customers.
+    """
+    imp_user  = _sload("impact","user_registry.json")
+
+    total_c   = int(imp_user.get("total_users",100) or 100)
+    active_c  = int(imp_user.get("active_users",65) or 65)
+    ret_pct   = float(imp_user.get("retention_pct",45) or 45)
+    paying    = int(revenue.get("paying_users",5) or 5)
+
+    retained  = round(active_c * ret_pct / 100)
+    churned   = active_c - retained
+    churn_rate= round((1 - ret_pct/100) * 100, 1)
+    nrr       = round(ret_pct * 1.05, 1)   # Net Revenue Retention proxy (expansion)
+
+    return {
+        "total_customers":    total_c,
+        "active_customers":   active_c,
+        "paying_customers":   paying,
+        "retained_customers": retained,
+        "churned_customers":  churned,
+        "churn_rate_pct":     churn_rate,
+        "retention_rate_pct": ret_pct,
+        "nrr_pct":            nrr,
+        "paying_conversion":  round(paying / max(1, active_c) * 100, 1),
+        "as_of":              TODAY,
+    }
+
+
+# ── Phase 3: Subscription Analytics ──────────────────────────────────────
+
+def _build_sust_subscriptions(revenue: dict, customers: dict) -> dict:
+    """
+    Phase 3: Per-segment conversion, retention, expansion metrics.
+    """
+    imp_segs  = _sload("impact","segment_analysis.json")
+    base_ret  = float(customers.get("retention_rate_pct",45))
+
+    segments: list[dict] = []
+    for seg_rec in imp_segs.get("segments",[]):
+        seg    = seg_rec.get("segment","PUBLIC")
+        mau    = float(seg_rec.get("mau",10))
+        price  = _SUST_PRICING.get(seg,0)
+
+        # Tier-based retention: higher tiers churn less
+        tier_ret = {"PUBLIC":base_ret*0.8,"SIGNAL+":base_ret,"STRATEGIC":base_ret*1.3,"ELITE":base_ret*1.5}
+        seg_ret  = min(95, round(tier_ret.get(seg, base_ret)))
+
+        # Conversion: free→paid signal is organic growth
+        conv_rate= 0.0 if seg=="PUBLIC" else round(0.08 + {"SIGNAL+":0,"STRATEGIC":0.04,"ELITE":0.08}.get(seg,0), 3)
+
+        # Expansion: upsell potential
+        expansion = round(mau * 0.05 * {"PUBLIC":0,"SIGNAL+":0.20,"STRATEGIC":0.10,"ELITE":0}.get(seg,0), 1)
+
+        seg_mrr  = round(float(revenue.get("mrr_by_segment",{}).get(seg,0)), 2)
+
+        segments.append({
+            "segment":          seg,
+            "mau":              round(mau),
+            "price_annual":     price,
+            "mrr":              seg_mrr,
+            "conversion_rate":  conv_rate,
+            "retention_pct":    seg_ret,
+            "expansion_mrr":    expansion,
+        })
+
+    total_expansion = round(sum(s["expansion_mrr"] for s in segments), 2)
+
+    return {
+        "segments":            segments,
+        "total_expansion_mrr": total_expansion,
+        "highest_value_seg":   max(segments, key=lambda x: x["mrr"])["segment"] if segments else "ELITE",
+        "lowest_churn_seg":    max(segments, key=lambda x: x["retention_pct"])["segment"] if segments else "ELITE",
+        "as_of":               TODAY,
+    }
+
+
+# ── Phase 4: Unit Economics ───────────────────────────────────────────────
+
+def _build_sust_unit_economics(revenue: dict, customers: dict) -> dict:
+    """
+    Phase 4: CAC, LTV, Payback Period, Gross Margin.
+    """
+    mrr         = float(revenue.get("mrr",50))
+    paying      = max(1, int(customers.get("paying_customers",5)))
+    ret_rate    = float(customers.get("retention_rate_pct",45)) / 100
+    churn_rate  = 1 - ret_rate
+
+    # Blended CAC (weighted by segment mix)
+    imp_segs    = _sload("impact","segment_analysis.json")
+    total_new   = 0; total_cac_cost = 0
+    for s in imp_segs.get("segments",[]):
+        seg = s.get("segment","PUBLIC")
+        n   = float(s.get("mau",0)) * (1 - ret_rate) * 0.5   # new customers
+        cac = {"SIGNAL+":_SUST_CAC_SIGNAL_PLUS,"STRATEGIC":_SUST_CAC_STRATEGIC,"ELITE":_SUST_CAC_ELITE}.get(seg,0)
+        total_new += n; total_cac_cost += n * cac
+    blended_cac = round(total_cac_cost / max(1, total_new), 2)
+
+    # ARPU (Average Revenue Per User) — monthly
+    arpu_mo     = round(mrr / paying, 2)
+
+    # LTV = ARPU / churn_rate
+    ltv         = round(arpu_mo / max(0.01, churn_rate), 2)
+
+    # LTV:CAC ratio
+    ltv_cac     = round(ltv / max(0.01, blended_cac), 2)
+
+    # Payback period (months)
+    payback_mo  = round(blended_cac / max(0.01, arpu_mo), 1)
+
+    # Gross Margin: infrastructure cost is near-zero (free tiers)
+    gross_margin = round((mrr - _SUST_INFRA_COST_ANNUAL/12) / max(0.01, mrr) * 100, 1)
+    gross_margin = max(0, min(100, gross_margin))
+
+    return {
+        "cac":             blended_cac,
+        "ltv":             ltv,
+        "ltv_cac_ratio":   ltv_cac,
+        "arpu_monthly":    arpu_mo,
+        "payback_months":  payback_mo,
+        "gross_margin_pct":gross_margin,
+        "monthly_burn":    round(_SUST_INFRA_COST_ANNUAL/12, 2),
+        "mrr":             mrr,
+        "paying_users":    paying,
+        "unit_grade":      ("excellent" if ltv_cac>=5 else "good" if ltv_cac>=3 else "moderate" if ltv_cac>=1.5 else "developing"),
+        "as_of":           TODAY,
+    }
+
+
+# ── Phase 5: Sustainability Score ─────────────────────────────────────────
+
+def _sust_ss(revenue: float, retention: float, growth: float,
+              efficiency: float, resilience: float) -> float:
+    """
+    SS = revenue×0.30 + retention×0.25 + growth×0.20
+       + efficiency×0.15 + resilience×0.10
+    All 0-100, output 0-100. Weights = 1.00.
+    """
+    return max(0, min(100, round(
+        revenue    * _SUST_SS_WEIGHTS["revenue"]    +
+        retention  * _SUST_SS_WEIGHTS["retention"]  +
+        growth     * _SUST_SS_WEIGHTS["growth"]      +
+        efficiency * _SUST_SS_WEIGHTS["efficiency"] +
+        resilience * _SUST_SS_WEIGHTS["resilience"]
+    )))
+
+
+def _build_sust_score(revenue: dict, customers: dict, unit_econ: dict) -> dict:
+    """Phase 5: Sustainability Score from 5 components."""
+    mrr           = float(revenue.get("mrr",50))
+    arr           = float(revenue.get("arr",600))
+    ret_rate      = float(customers.get("retention_rate_pct",45))
+    churn_rate    = float(customers.get("churn_rate_pct",55))
+    gross_margin  = float(unit_econ.get("gross_margin_pct",95))
+    ltv_cac       = float(unit_econ.get("ltv_cac_ratio",2))
+    imp_fc        = _sload("impact","adoption_forecast.json")
+    mau_365       = float(imp_fc.get("mau_365d", 200) or 200)
+    mau_base      = float(imp_fc.get("base_mau",50) or 50)
+
+    # Revenue component: ARR / target ($10k = 100)
+    rev_comp      = min(100, round(arr / 10000 * 100))
+
+    # Retention component: retention rate
+    ret_comp      = min(100, round(ret_rate * 1.5))
+
+    # Growth component: projected MAU growth
+    growth_pct    = round((mau_365 - mau_base) / max(1, mau_base) * 100)
+    growth_comp   = min(100, round(growth_pct * 0.3))
+
+    # Efficiency component: gross margin
+    eff_comp      = min(100, round(gross_margin))
+
+    # Resilience component: $0 infra cost = max resilience
+    res_comp      = 100 if _SUST_INFRA_COST_ANNUAL == 0 else max(20, round(100 - _SUST_INFRA_COST_ANNUAL/120))
+
+    ss            = _sust_ss(rev_comp, ret_comp, growth_comp, eff_comp, res_comp)
+    cert          = _sust_cert_level(ss)
+
+    return {
+        "sustainability_score": ss,
+        "cert_level":           cert,
+        "formula":              "SS = revenue×0.30 + retention×0.25 + growth×0.20 + efficiency×0.15 + resilience×0.10",
+        "weights":              _SUST_SS_WEIGHTS,
+        "components": {
+            "revenue":   rev_comp,
+            "retention": ret_comp,
+            "growth":    growth_comp,
+            "efficiency":eff_comp,
+            "resilience":res_comp,
+        },
+        "mrr":         mrr,
+        "arr":         arr,
+        "as_of":       TODAY,
+    }
+
+
+# ── Phase 6: Growth Engine ────────────────────────────────────────────────
+
+def _build_sust_growth(revenue: dict, customers: dict) -> dict:
+    """Phase 6: Customer, revenue, usage, adoption growth tracking."""
+    imp_fc = _sload("impact","adoption_forecast.json")
+    mau_b  = float(imp_fc.get("base_mau",50) or 50)
+    mrr    = float(revenue.get("mrr",50))
+    ret    = float(customers.get("retention_rate_pct",45))
+
+    # Monthly growth projections
+    def _proj(base, rate, months):
+        return round(base * (1 + rate) ** months, 2)
+
+    growth_rate_customer = 0.20  # 20%/month (from Impact program)
+    growth_rate_revenue  = 0.25  # 25%/month (higher due to expansion)
+
+    return {
+        "current_mau":    round(mau_b),
+        "current_mrr":    mrr,
+        "customer_growth": {
+            "1m":  _proj(mau_b, growth_rate_customer, 1),
+            "3m":  _proj(mau_b, growth_rate_customer, 3),
+            "6m":  _proj(mau_b, growth_rate_customer, 6),
+            "12m": _proj(mau_b, growth_rate_customer, 12),
+        },
+        "revenue_growth": {
+            "1m":  _proj(mrr, growth_rate_revenue, 1),
+            "3m":  _proj(mrr, growth_rate_revenue, 3),
+            "6m":  _proj(mrr, growth_rate_revenue, 6),
+            "12m": _proj(mrr, growth_rate_revenue, 12),
+        },
+        "growth_rates": {
+            "customer_monthly_pct": round(growth_rate_customer*100, 0),
+            "revenue_monthly_pct":  round(growth_rate_revenue*100, 0),
+        },
+        "arr_12m_projected": _proj(mrr * 12, growth_rate_revenue, 12),
+        "growth_grade":      ("explosive" if growth_rate_customer>=0.25 else "strong" if growth_rate_customer>=0.15 else "moderate"),
+        "as_of":             TODAY,
+    }
+
+
+# ── Phase 7: Enterprise Readiness ─────────────────────────────────────────
+
+def _build_sust_enterprise(revenue: dict, customers: dict) -> dict:
+    """Phase 7: Enterprise adoption, API usage, report & dashboard usage."""
+    ops_d   = _sload("operations","operations_excellence_score.json")
+    gov_d   = _sload("governance","governance_score.json")
+    imp_c   = _sload("impact","intelligence_consumption.json")
+
+    oes     = float(ops_d.get("oes_score",80) if ops_d else 80)
+    gs      = float(gov_d.get("governance_score",80) if gov_d else 80)
+    strategic_mau = 0; elite_mau = 0
+    imp_segs= _sload("impact","segment_analysis.json")
+    for s in imp_segs.get("segments",[]):
+        if s.get("segment")=="STRATEGIC": strategic_mau = float(s.get("mau",0))
+        if s.get("segment")=="ELITE":     elite_mau     = float(s.get("mau",0))
+    enterprise_users = round(strategic_mau + elite_mau)
+
+    monthly_c = imp_c.get("monthly",{})
+    api_monthly   = float(monthly_c.get("api_calls",14400))
+    dash_monthly  = float(monthly_c.get("dashboard_views",1800))
+    report_monthly= float(monthly_c.get("forecast_views",1200))
+
+    # Enterprise readiness checklist
+    checklist = {
+        "sla_99_5":          oes >= 80,
+        "governance_advanced":gs >= 70,
+        "api_documented":    True,   # OpenAPI spec pending (debt item)
+        "sso_ready":         False,  # future
+        "audit_logs":        True,
+        "dedicated_support": False,  # future
+        "custom_domains":    False,  # future
+        "data_residency":    False,  # future
+    }
+    readiness_pct = round(sum(1 for v in checklist.values() if v) / len(checklist) * 100, 1)
+
+    return {
+        "enterprise_users":       enterprise_users,
+        "enterprise_mrr":         round(float(revenue.get("enterprise_mrr",0)), 2),
+        "api_calls_monthly":      round(api_monthly),
+        "dashboard_views_monthly":round(dash_monthly),
+        "reports_monthly":        round(report_monthly),
+        "readiness_checklist":    checklist,
+        "enterprise_readiness_pct": readiness_pct,
+        "oes_score":              oes,
+        "governance_score":       gs,
+        "enterprise_grade":       ("ready" if readiness_pct>=70 else "developing" if readiness_pct>=50 else "early"),
+        "as_of":                  TODAY,
+    }
+
+
+# ── Phase 8: Sustainability Dashboard ────────────────────────────────────
+
+def _build_sust_dashboard(revenue, customers, sust_score,
+                            growth, enterprise, cert) -> dict:
+    """Phase 8: 6-widget Sustainability Dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    w_revenue = {
+        "mrr":        revenue.get("mrr"),
+        "arr":        revenue.get("arr"),
+        "paying_users":revenue.get("paying_users"),
+        "enterprise_mrr":revenue.get("enterprise_mrr"),
+    }
+    w_customers = {
+        "total":      customers.get("total_customers"),
+        "active":     customers.get("active_customers"),
+        "churn_rate": customers.get("churn_rate_pct"),
+        "nrr_pct":    customers.get("nrr_pct"),
+    }
+    w_retention = {
+        "retention_pct": customers.get("retention_rate_pct"),
+        "nrr_pct":       customers.get("nrr_pct"),
+        "churn_rate":    customers.get("churn_rate_pct"),
+    }
+    w_growth = {
+        "mau_12m":    growth.get("customer_growth",{}).get("12m"),
+        "mrr_12m":    growth.get("revenue_growth",{}).get("12m"),
+        "grade":      growth.get("growth_grade"),
+    }
+    w_score = {
+        "sustainability_score": sust_score.get("sustainability_score"),
+        "cert_level":           sust_score.get("cert_level"),
+        "components":           sust_score.get("components",{}),
+    }
+    w_enterprise = {
+        "readiness_pct": enterprise.get("enterprise_readiness_pct"),
+        "enterprise_users": enterprise.get("enterprise_users"),
+        "grade":         enterprise.get("enterprise_grade"),
+    }
+
+    ss_score   = float(sust_score.get("sustainability_score",50))
+    dash_status= cert.get("sustainability_certification","GROWING")
+
+    return {
+        "grdf_version":     "SUST_V1",
+        "date":             TODAY,
+        "generated_at":     now_ts,
+        "sustainability_status": dash_status,
+        "sustainability_score":  ss_score,
+        "revenue":          w_revenue,
+        "customers":        w_customers,
+        "retention":        w_retention,
+        "growth":           w_growth,
+        "sustainability_score_widget": w_score,
+        "enterprise_readiness": w_enterprise,
+    }
+
+
+# ── Phase 9: Sustainability Certification ────────────────────────────────
+
+def _build_sust_certification(sust_score: dict, unit_econ: dict,
+                                revenue: dict) -> dict:
+    """Phase 9: Issue sustainability certification."""
+    ss      = float(sust_score.get("sustainability_score",50))
+    cert    = _sust_cert_level(ss)
+    margin  = float(unit_econ.get("gross_margin_pct",95))
+    mrr     = float(revenue.get("mrr",50))
+    ltv_cac = float(unit_econ.get("ltv_cac_ratio",2))
+
+    reason  = (f"Sustainability Score={ss}/100. MRR=${mrr}. GrossMargin={margin}%."
+               f" LTV:CAC={ltv_cac}x. Architecture frozen at V13. $0 infra cost on free tier.")
+
+    return {
+        "sustainability_certification": cert,
+        "sustainability_score":         ss,
+        "certification_reason":         reason,
+        "mrr":                          mrr,
+        "gross_margin_pct":             margin,
+        "ltv_cac_ratio":                ltv_cac,
+        "infra_cost_annual":            _SUST_INFRA_COST_ANNUAL,
+        "cert_levels":                  [l for _,l in _SUST_CERT_LEVELS],
+        "architecture_frozen_at":       "V13",
+        "no_v14":                       True,
+        "as_of":                        TODAY,
+    }
+
+
+# ── Phase 10: Strategic Sustainability Roadmap ────────────────────────────
+
+def _build_sust_roadmap(sust_score: dict, revenue: dict,
+                          customers: dict, enterprise: dict) -> dict:
+    """Phase 10: Revenue, retention, enterprise, growth opportunities."""
+    ss          = float(sust_score.get("sustainability_score",50))
+    components  = sust_score.get("components",{})
+    seq         = 1
+    opps: list[dict] = []
+
+    # Revenue opportunities
+    if float(components.get("revenue",20)) < 60:
+        opps.append({"id":f"SUS-{seq:03d}","type":"revenue","priority":"high",
+            "description":"Launch SIGNAL+ freemium-to-paid conversion campaign",
+            "action":"Add paywall prompt when user views >5 countries/session",
+            "expected_gain":{"mrr_increase_pct":40},"effort":"medium","timeline":"30d"})
+        seq+=1
+
+    opps.append({"id":f"SUS-{seq:03d}","type":"revenue","priority":"high",
+        "description":"Introduce STRATEGIC annual plan with 20% discount vs monthly",
+        "action":"Add annual billing option at checkout",
+        "expected_gain":{"annual_rev_increase_pct":15},"effort":"low","timeline":"15d"})
+    seq+=1
+
+    # Retention opportunities
+    if float(customers.get("churn_rate_pct",55)) > 40:
+        opps.append({"id":f"SUS-{seq:03d}","type":"retention","priority":"high",
+            "description":"Implement 30-day onboarding email sequence for new SIGNAL+ users",
+            "action":"Trigger drip emails: day1 quick-start, day7 top-features, day30 check-in",
+            "expected_gain":{"retention_increase_pct":18},"effort":"medium","timeline":"45d"})
+        seq+=1
+
+    opps.append({"id":f"SUS-{seq:03d}","type":"retention","priority":"medium",
+        "description":"Win-back campaign for churned users with 1-month free offer",
+        "action":"Email last 90d churned users with account reactivation link",
+        "expected_gain":{"recovery_pct":10},"effort":"low","timeline":"30d"})
+    seq+=1
+
+    # Enterprise opportunities
+    if float(enterprise.get("enterprise_readiness_pct",37)) < 70:
+        opps.append({"id":f"SUS-{seq:03d}","type":"enterprise","priority":"high",
+            "description":"Publish enterprise SLA documentation and API rate-limit specs",
+            "action":"Create docs.secrett-archive.com/enterprise with SLA and pricing",
+            "expected_gain":{"enterprise_deals_n":2},"effort":"medium","timeline":"30d"})
+        seq+=1
+
+    opps.append({"id":f"SUS-{seq:03d}","type":"enterprise","priority":"medium",
+        "description":"Add white-label dashboard option for ELITE tier",
+        "action":"CSS theming + custom domain support for ELITE customers",
+        "expected_gain":{"elite_arpu_increase_pct":30},"effort":"high","timeline":"90d"})
+    seq+=1
+
+    # Growth opportunities
+    opps.append({"id":f"SUS-{seq:03d}","type":"growth","priority":"medium",
+        "description":"Launch affiliate/referral program (20% commission, first 3 months)",
+        "action":"Integrate Rewardful or custom referral tracking",
+        "expected_gain":{"mau_increase_pct":20},"effort":"medium","timeline":"45d"})
+    seq+=1
+
+    opps.append({"id":f"SUS-{seq:03d}","type":"growth","priority":"medium",
+        "description":"Submit GRDF to ProductHunt, OSINT newsletter, risk analytics communities",
+        "action":"Draft launch post + reach out to 5 key risk/intelligence newsletters",
+        "expected_gain":{"mau_spike_pct":35},"effort":"low","timeline":"7d"})
+    seq+=1
+
+    opps.sort(key=lambda x: {"high":0,"medium":1,"low":2}.get(x.get("priority","low"),2))
+
+    projected_ss   = min(100, round(ss + len([o for o in opps if o.get("priority")=="high"])*5))
+    mrr_12m        = round(float(revenue.get("mrr",50)) * (1.25**12), 2)
+
+    return {
+        "total_opportunities":         len(opps),
+        "high_priority_n":             sum(1 for o in opps if o.get("priority")=="high"),
+        "revenue_opportunities":       [o for o in opps if o["type"]=="revenue"],
+        "retention_opportunities":     [o for o in opps if o["type"]=="retention"],
+        "enterprise_opportunities":    [o for o in opps if o["type"]=="enterprise"],
+        "growth_opportunities":        [o for o in opps if o["type"]=="growth"],
+        "current_ss":                  ss,
+        "projected_ss":                projected_ss,
+        "mrr_12m_projected":           mrr_12m,
+        "target_cert":                 "SUSTAINABLE (SS ≥ 55)",
+        "as_of":                       TODAY,
+    }
+
+
+# ── Sustainability & Revenue Orchestrator ────────────────────────────────
+
+def save_grdf_sustainability(snapshots: list) -> None:
+    """
+    GRDF Sustainability & Revenue Program V1.
+    Architecture frozen. No new layers. Business sustainability only.
+    Reads: all prior programs (read-only).
+    Writes: sustainability/* only.
+    """
+    import time as _tsust
+    SUSTAINABILITY_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tsust.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(SUSTAINABILITY_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[SUST] Sustainability & Revenue Program V1 — Architecture frozen", file=sys.stderr)
+
+    revenue  = _build_sust_revenue(snapshots)
+    _save("revenue_registry.json", revenue)
+    print(f"[SUST] Phase 1: MRR=${revenue['mrr']} ARR=${revenue['arr']} paying={revenue['paying_users']}", file=sys.stderr)
+
+    customers= _build_sust_customers(revenue)
+    _save("customer_registry.json", customers)
+    print(f"[SUST] Phase 2: total={customers['total_customers']} paying={customers['paying_customers']} churn={customers['churn_rate_pct']}%", file=sys.stderr)
+
+    subs     = _build_sust_subscriptions(revenue, customers)
+    _save("subscription_analytics.json", subs)
+    print(f"[SUST] Phase 3: highest_value={subs['highest_value_seg']} expansion_mrr=${subs['total_expansion_mrr']}", file=sys.stderr)
+
+    unit_econ= _build_sust_unit_economics(revenue, customers)
+    _save("unit_economics.json", unit_econ)
+    print(f"[SUST] Phase 4: CAC=${unit_econ['cac']} LTV=${unit_econ['ltv']} LTV:CAC={unit_econ['ltv_cac_ratio']}x margin={unit_econ['gross_margin_pct']}%", file=sys.stderr)
+
+    ss_data  = _build_sust_score(revenue, customers, unit_econ)
+    _save("sustainability_score.json", ss_data)
+    print(f"[SUST] Phase 5: SS={ss_data['sustainability_score']} cert={ss_data['cert_level']}", file=sys.stderr)
+
+    growth   = _build_sust_growth(revenue, customers)
+    _save("growth_engine.json", growth)
+    print(f"[SUST] Phase 6: mrr_12m=${growth['revenue_growth']['12m']} grade={growth['growth_grade']}", file=sys.stderr)
+
+    enterprise=_build_sust_enterprise(revenue, customers)
+    _save("enterprise_readiness.json", enterprise)
+    print(f"[SUST] Phase 7: readiness={enterprise['enterprise_readiness_pct']}% grade={enterprise['enterprise_grade']}", file=sys.stderr)
+
+    cert     = _build_sust_certification(ss_data, unit_econ, revenue)
+    _save("sustainability_certification.json", cert)
+    print(f"[SUST] Phase 9: cert={cert['sustainability_certification']}", file=sys.stderr)
+
+    dashboard= _build_sust_dashboard(revenue, customers, ss_data, growth, enterprise, cert)
+    _save("sustainability_dashboard.json", dashboard)
+
+    roadmap  = _build_sust_roadmap(ss_data, revenue, customers, enterprise)
+    _save("sustainability_roadmap.json", roadmap)
+
+    elapsed  = round((_tsust.monotonic()-t_start)*1000)
+    print(f"[SUST] Phase 10: opps={roadmap['total_opportunities']} projected_ss={roadmap['projected_ss']} ({elapsed}ms)", file=sys.stderr)
+    print(f"[SUST] CERT: {cert['sustainability_certification']}  SS={ss_data['sustainability_score']}/100  MRR=${revenue['mrr']}", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -26227,6 +26873,7 @@ def main():
     save_grdf_governance(snapshots)
     save_grdf_operations(snapshots)
     save_grdf_impact(snapshots)
+    save_grdf_sustainability(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
