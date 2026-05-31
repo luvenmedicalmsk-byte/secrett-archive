@@ -16612,6 +16612,832 @@ def save_grdf_v12(snapshots: list) -> None:
     print("[GRDF-V12] Planetary Intelligence System OPERATIONAL.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V13 -- Civilization Intelligence System
+#
+# "What are the probable pathways of civilization over the next 10-100 years?"
+#
+# Phase 1:  Civilization State Engine      -> v13_civilization_state.json
+# Phase 2:  Long Horizon Engine            -> v13_long_horizon.json
+# Phase 3:  Resource Limits Engine         -> v13_resource_limits.json
+# Phase 4:  Technology Transition Engine   -> v13_technology_transitions.json
+# Phase 5:  Demographic Dynamics Engine    -> v13_demographics.json
+# Phase 6:  Civilization Resilience Index  -> v13_civilization_resilience.json
+# Phase 7:  Civilization Pathways Engine   -> v13_pathways.json
+# Phase 8:  Global Transition Detector     -> v13_transitions.json
+# Phase 9:  Century Scenario Simulator     -> v13_century_scenarios.json
+# Phase 10: Civilization Dashboard         -> v13_dashboard.json
+#
+# Reads: v1..v12 outputs (read-only).
+# Writes: v13_* only.  V1-V12 NEVER modified.
+# =========================================================================
+
+import math as _m13
+
+# Civilization state domains (Phase 1)
+_V13_CIV_DOMAINS = [
+    "population","energy","resources","food","water",
+    "technology","economy","governance","infrastructure",
+    "knowledge","innovation","security",
+]
+
+# Long-horizon years (Phase 2)
+_V13_HORIZONS_YR = [10, 25, 50, 75, 100]
+
+# Technology transition domains (Phase 4)
+_V13_TECH_DOMAINS = [
+    "artificial_intelligence","automation","energy_systems",
+    "biotechnology","space_systems","computing",
+]
+
+# Civilization pathway classes (Phase 7)
+_V13_PATHWAY_CLASSES = [
+    "continuation","acceleration","transformation",
+    "fragmentation","collapse","recovery",
+]
+
+# Structural transition types (Phase 8)
+_V13_TRANSITION_TYPES = [
+    "energy_transition","ai_transition","demographic_transition",
+    "financial_transition","governance_transition",
+]
+
+# Century scenario years (Phase 9)
+_V13_CENTURY_YEARS = [2035, 2050, 2075, 2100]
+_V13_CENTURY_CASES = ["best_case","base_case","stress_case","transformation_case"]
+
+# CRI weights (Phase 6)
+_V13_CRI_WEIGHTS = {
+    "resilience":   0.30,
+    "adaptability": 0.25,
+    "innovation":   0.20,
+    "resources":    0.15,
+    "governance":   0.10,
+}
+
+
+def _v13_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+# ── Phase 1: Civilization State Engine ────────────────────────────────────
+
+def _build_v13_civilization_state(snapshots: list) -> dict:
+    """
+    Phase 1: Build global civilization state vector across 12 domains.
+    Reads V12 planetary twin as primary source, supplements with V1-V11.
+    """
+    twin = _v13_load("v12_planetary_twin.json")
+    csi_d= _v13_load("v12_civilization_stability.json")
+    res_d= _v13_load("v12_resilience.json")
+    gov_d= _v13_load("v11_governance.json")
+
+    twin_doms = twin.get("domains",{})
+    psi       = float(_v13_load("v12_planetary_stress.json").get("planetary_stress_index",50))
+
+    # Per-domain proxies
+    domain_map = {
+        "population":     twin_doms.get("population",{}).get("avg_score",50),
+        "energy":         twin_doms.get("energy",{}).get("avg_score",50),
+        "resources":      (twin_doms.get("water",{}).get("avg_score",50) +
+                           twin_doms.get("food",{}).get("avg_score",50)) / 2,
+        "food":           twin_doms.get("food",{}).get("avg_score",50),
+        "water":          twin_doms.get("water",{}).get("avg_score",50),
+        "technology":     twin_doms.get("technology",{}).get("avg_score",50),
+        "economy":        twin_doms.get("economy",{}).get("avg_score",50),
+        "governance":     float(gov_d.get("avg_governance_score",60)),
+        "infrastructure": twin_doms.get("infrastructure",{}).get("avg_score",50),
+        "knowledge":      twin_doms.get("technology",{}).get("avg_score",50),
+        "innovation":     twin_doms.get("technology",{}).get("avg_score",50) * 0.85,
+        "security":       twin_doms.get("cyber",{}).get("avg_score",50),
+    }
+
+    civ_state = {}
+    for dom, raw_score in domain_map.items():
+        score = max(0, min(100, round(float(raw_score),1)))
+        grade = ("critical" if score >= 70 else "stressed" if score >= 50
+                  else "moderate" if score >= 30 else "healthy")
+        civ_state[dom] = {"score":score,"grade":grade}
+
+    composite = round(sum(v["score"] for v in civ_state.values()) / len(civ_state),1)
+    civ_grade  = ("critical"  if composite >= 70 else "stressed"  if composite >= 50
+                   else "moderate" if composite >= 30 else "healthy")
+
+    return {
+        "grdf_version":      "13.0",
+        "date":              TODAY,
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "composite_score":   composite,
+        "civilization_grade":civ_grade,
+        "domains":           civ_state,
+        "psi_context":       round(psi),
+        "csi_context":       csi_d.get("civilization_stability_index",50),
+        "total_countries":   len(snapshots),
+    }
+
+
+# ── Phase 2: Long Horizon Engine ──────────────────────────────────────────
+
+def _project_v13_horizon(composite: float, psi: float,
+                           delta: float, years: int) -> dict:
+    """
+    Phase 2: Project civilization composite score at a multi-decade horizon.
+    Uses damped velocity with uncertainty widening.
+    """
+    damp    = 1.0 / (1.0 + years / 25.0)      # faster decay over decades
+    drift   = delta * damp * years * 52        # weekly deltas × weeks
+    drift   = max(-40, min(40, drift))         # cap drift at ±40 pts
+    score   = max(5, min(95, round(composite + drift)))
+    # Uncertainty widens with horizon
+    sigma   = min(30, round(years * 0.25))
+    lo      = max(5, score - sigma)
+    hi      = min(95, score + sigma)
+    conf    = round(max(0.10, 0.90 - years * 0.007), 2)
+    grade   = ("critical" if score>=70 else "stressed" if score>=50
+                else "moderate" if score>=30 else "healthy")
+    return {
+        "horizon_years":   years,
+        "projected_score": score,
+        "confidence":      conf,
+        "uncertainty_lo":  lo,
+        "uncertainty_hi":  hi,
+        "grade":           grade,
+    }
+
+
+def _build_v13_long_horizon(civ_state: dict, snapshots: list) -> dict:
+    """Phase 2: 5 long-horizon forecasts (10/25/50/75/100 yr)."""
+    composite = float(civ_state.get("composite_score",50))
+    psi       = float(civ_state.get("psi_context",50))
+    deltas    = [abs(float(s.get("delta",0) or 0)) for s in snapshots]
+    mean_delta= sum(deltas)/max(1,len(deltas))
+
+    horizons = {}
+    for yr in _V13_HORIZONS_YR:
+        horizons[f"{yr}yr"] = _project_v13_horizon(composite, psi, mean_delta/7, yr)
+
+    # Trend direction
+    h10  = horizons["10yr"]["projected_score"]
+    h100 = horizons["100yr"]["projected_score"]
+    trend = ("deteriorating" if h100 > h10 + 5 else
+             "improving"     if h100 < h10 - 5 else "stable")
+
+    return {
+        "grdf_version":     "13.0",
+        "date":             TODAY,
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "current_score":    round(composite),
+        "horizons":         horizons,
+        "long_term_trend":  trend,
+        "horizon_years":    _V13_HORIZONS_YR,
+    }
+
+
+# ── Phase 3: Resource Limits Engine ──────────────────────────────────────
+
+def _build_v13_resource_limits(snapshots: list) -> dict:
+    """
+    Phase 3: Track strategic resource constraints.
+    Derives scarcity signals from domain risk scores across V1-V12.
+    """
+    twin  = _v13_load("v12_planetary_twin.json")
+    flows = _v13_load("v12_global_flows.json")
+    doms  = twin.get("domains",{})
+
+    def _flow_disruption(ft: str) -> float:
+        for f in (flows.get("flows") or []):
+            if f.get("flow_type") == ft:
+                return float(f.get("flow_disruption",0.2))
+        return 0.2
+
+    # Scarcity: disruption × domain score proxy
+    energy_avail  = max(5, min(95, round(100 - (doms.get("energy",{}).get("avg_score",50) * 0.7
+                                                + _flow_disruption("energy")*50))))
+    water_avail   = max(5, min(95, round(100 - (doms.get("water",{}).get("avg_score",50) * 0.75
+                                                + _flow_disruption("water")*50))))
+    food_cap      = max(5, min(95, round(100 - (doms.get("food",{}).get("avg_score",50) * 0.70
+                                                + _flow_disruption("food")*50))))
+    # Critical minerals: technology + infrastructure proxy
+    minerals_raw  = (doms.get("technology",{}).get("avg_score",50) +
+                     doms.get("infrastructure",{}).get("avg_score",50)) / 2
+    minerals_avail= max(5, min(95, round(100 - minerals_raw * 0.65)))
+    # Industrial capacity: economy + infrastructure
+    industry_raw  = (doms.get("economy",{}).get("avg_score",50) +
+                     doms.get("infrastructure",{}).get("avg_score",50)) / 2
+    industry_cap  = max(5, min(95, round(100 - industry_raw * 0.60)))
+
+    resources = {
+        "energy_availability":  {"availability": energy_avail,
+                                  "grade": ("critical" if energy_avail<35 else
+                                             "stressed" if energy_avail<55 else "adequate")},
+        "water_availability":   {"availability": water_avail,
+                                  "grade": ("critical" if water_avail<35 else
+                                             "stressed" if water_avail<55 else "adequate")},
+        "food_capacity":        {"availability": food_cap,
+                                  "grade": ("critical" if food_cap<35 else
+                                             "stressed" if food_cap<55 else "adequate")},
+        "critical_minerals":    {"availability": minerals_avail,
+                                  "grade": ("critical" if minerals_avail<35 else
+                                             "stressed" if minerals_avail<55 else "adequate")},
+        "industrial_capacity":  {"availability": industry_cap,
+                                  "grade": ("critical" if industry_cap<35 else
+                                             "stressed" if industry_cap<55 else "adequate")},
+    }
+
+    avg_avail = round(sum(v["availability"] for v in resources.values())/len(resources),1)
+
+    return {
+        "grdf_version":       "13.0",
+        "date":               TODAY,
+        "generated_at":       datetime.now(timezone.utc).isoformat(),
+        "global_availability":avg_avail,
+        "resource_grade":     ("critical" if avg_avail<35 else
+                                "stressed" if avg_avail<55 else "adequate"),
+        "resources":          resources,
+        "worst_resource":     min(resources.items(), key=lambda x:x[1]["availability"])[0],
+        "best_resource":      max(resources.items(), key=lambda x:x[1]["availability"])[0],
+    }
+
+
+# ── Phase 4: Technology Transition Engine ────────────────────────────────
+
+def _build_v13_tech_transitions(snapshots: list, civ_state: dict) -> dict:
+    """
+    Phase 4: Track major technology transitions across 6 domains.
+    Maturity = proxy from technology/innovation domain scores.
+    """
+    tech_score = float(civ_state.get("domains",{}).get("technology",{}).get("score",50))
+    innov_score= float(civ_state.get("domains",{}).get("innovation",{}).get("score",50))
+
+    # V11 learning signal as proxy for tech acceleration
+    learn = _v13_load("v11_learning_engine.json")
+    ls    = float(learn.get("learning_signal",50))
+
+    # Transition readiness proxy per domain
+    readiness_map = {
+        "artificial_intelligence": min(95, round(ls * 0.8 + innov_score * 0.2)),
+        "automation":              min(95, round(tech_score * 0.65 + ls * 0.35)),
+        "energy_systems":          min(95, round(100 - float(civ_state.get("domains",{}).get("energy",{}).get("score",50)))),
+        "biotechnology":           min(95, round(innov_score * 0.70 + ls * 0.30)),
+        "space_systems":           min(95, round(innov_score * 0.50 + tech_score * 0.50)),
+        "computing":               min(95, round(tech_score * 0.55 + ls * 0.45)),
+    }
+
+    transitions = {}
+    for dom, readiness in readiness_map.items():
+        phase = ("emerging"    if readiness < 35 else
+                 "developing"  if readiness < 55 else
+                 "scaling"     if readiness < 75 else
+                 "dominant")
+        # Estimated years to mainstream (lower readiness = longer wait)
+        yrs_to_main = max(3, round((100 - readiness) * 0.5))
+        transitions[dom] = {
+            "readiness_score":     readiness,
+            "transition_phase":    phase,
+            "years_to_mainstream": yrs_to_main,
+            "disruption_potential":min(100, round(readiness * 0.9)),
+        }
+
+    avg_readiness = round(sum(v["readiness_score"] for v in transitions.values())/len(transitions),1)
+
+    return {
+        "grdf_version":      "13.0",
+        "date":              TODAY,
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "avg_readiness":     avg_readiness,
+        "tech_grade":        ("advanced" if avg_readiness>=65 else
+                               "developing" if avg_readiness>=40 else "early"),
+        "transitions":       transitions,
+        "most_advanced":     max(transitions.items(), key=lambda x:x[1]["readiness_score"])[0],
+        "fastest_disruption":max(transitions.items(), key=lambda x:x[1]["disruption_potential"])[0],
+    }
+
+
+# ── Phase 5: Demographic Dynamics Engine ─────────────────────────────────
+
+def _build_v13_demographics(snapshots: list, civ_state: dict) -> dict:
+    """
+    Phase 5: Model global demographic dynamics.
+    Uses social/population scores + V12 flows (migration).
+    """
+    pop_score  = float(civ_state.get("domains",{}).get("population",{}).get("score",50))
+    mig_score  = float(civ_state.get("domains",{}).get("migration",{}).get("score",50))
+    gov_score  = float(civ_state.get("domains",{}).get("governance",{}).get("score",60))
+
+    # Flow disruption for migration
+    flows = _v13_load("v12_global_flows.json")
+    mig_disrupt = next((f.get("flow_disruption",0.2) for f in flows.get("flows",[])
+                         if f.get("flow_type")=="migration"), 0.2)
+
+    # V11 node data for regional population stress
+    fed  = _v13_load("v11_federated_nodes.json")
+    node_risks = [n.get("avg_risk",50) for n in fed.get("nodes",[])]
+    avg_node   = round(sum(node_risks)/max(1,len(node_risks)),1)
+
+    # Proxy metrics
+    pop_pressure    = min(100, round(pop_score * 0.8 + avg_node * 0.2))
+    urbanization    = min(100, round(70 - gov_score * 0.1 + pop_score * 0.1))
+    mig_pressure    = min(100, round(mig_score * 0.7 + mig_disrupt * 50))
+    age_stress      = min(100, round(pop_score * 0.5 + avg_node * 0.5))
+    dependency_ratio= min(100, round(age_stress * 0.6 + mig_pressure * 0.4))
+
+    trend = ("growing"   if pop_pressure > 65 else
+             "stable"    if pop_pressure > 40 else "declining")
+
+    return {
+        "grdf_version":        "13.0",
+        "date":                TODAY,
+        "generated_at":        datetime.now(timezone.utc).isoformat(),
+        "population_pressure": pop_pressure,
+        "urbanization_index":  urbanization,
+        "migration_pressure":  mig_pressure,
+        "age_stress":          age_stress,
+        "dependency_ratio":    dependency_ratio,
+        "global_trend":        trend,
+        "migration_disruption":round(mig_disrupt,3),
+        "demographic_grade":   ("critical" if pop_pressure>=70 else
+                                 "stressed"  if pop_pressure>=50 else "stable"),
+    }
+
+
+# ── Phase 6: Civilization Resilience Index ────────────────────────────────
+
+def _cri(resilience: float, adaptability: float, innovation: float,
+          resources: float, governance: float) -> float:
+    """
+    CRI = resilience×0.30 + adaptability×0.25 + innovation×0.20
+          + resources×0.15 + governance×0.10
+    Weights = 1.00.  All 0-100, output 0-100.
+    """
+    return max(0, min(100, round(
+        resilience   * 0.30 +
+        adaptability * 0.25 +
+        innovation   * 0.20 +
+        resources    * 0.15 +
+        governance   * 0.10
+    )))
+
+
+def _cri_grade(score: float) -> str:
+    if score >= 80: return "adaptive"
+    if score >= 60: return "stable"
+    if score >= 30: return "vulnerable"
+    return "fragile"
+
+
+def _build_v13_civilization_resilience(civ_state: dict, res_d: dict,
+                                        tech_d: dict, gov_d: dict) -> dict:
+    """Phase 6: CRI = res×0.30 + adapt×0.25 + innov×0.20 + resources×0.15 + gov×0.10"""
+    doms = civ_state.get("domains",{})
+
+    resil_raw   = float(_v13_load("v12_resilience.json").get("global_resilience",50))
+    adapt_raw   = float(tech_d.get("avg_readiness",50))     # tech readiness ≈ adaptability
+    innov_raw   = float(doms.get("innovation",{}).get("score",50))
+    # Invert resources: high availability = high CRI contribution
+    resources_raw = float(res_d.get("global_availability",50))
+    gov_raw     = float(gov_d.get("avg_governance_score",60))
+
+    cri   = _cri(resil_raw, adapt_raw, innov_raw, resources_raw, gov_raw)
+    grade = _cri_grade(cri)
+
+    return {
+        "grdf_version":              "13.0",
+        "date":                      TODAY,
+        "generated_at":              datetime.now(timezone.utc).isoformat(),
+        "civilization_resilience_index": cri,
+        "cri_grade":                 grade,
+        "components": {
+            "resilience":   round(resil_raw,1),
+            "adaptability": round(adapt_raw,1),
+            "innovation":   round(innov_raw,1),
+            "resources":    round(resources_raw,1),
+            "governance":   round(gov_raw,1),
+        },
+        "weights":                   _V13_CRI_WEIGHTS,
+    }
+
+
+# ── Phase 7: Civilization Pathways Engine ────────────────────────────────
+
+def _build_v13_pathways(civ_state: dict, long_horizon: dict,
+                         cri: dict, tech_d: dict) -> dict:
+    """
+    Phase 7: Generate civilization trajectory classes with probabilities.
+    Probabilities are derived from CRI, long-horizon trend, and tech readiness.
+    Sum of probabilities = 1.00.
+    """
+    cri_score  = float(cri.get("civilization_resilience_index",50))
+    lh_trend   = long_horizon.get("long_term_trend","stable")
+    civ_grade  = civ_state.get("civilization_grade","moderate")
+    tech_grade = tech_d.get("tech_grade","developing")
+
+    # Base probability weights adjusted by inputs
+    _pw = {
+        "continuation":   max(0.05, 0.35 * (cri_score/100) * (1.0 if lh_trend!="deteriorating" else 0.6)),
+        "acceleration":   max(0.02, 0.25 * (cri_score/100) * (1.5 if tech_grade=="advanced" else 1.0)),
+        "transformation": max(0.02, 0.15 * (1.0 if civ_grade in ("healthy","moderate") else 0.5)),
+        "fragmentation":  max(0.02, 0.12 * (1.0 + (1-cri_score/100))),
+        "collapse":       max(0.01, 0.05 * (1.0 + (1-cri_score/100)*2) * (1.5 if lh_trend=="deteriorating" else 1.0)),
+        "recovery":       max(0.02, 0.08 * (cri_score/100)),
+    }
+    total = sum(_pw.values())
+    probs = {k: round(v/total, 3) for k, v in _pw.items()}
+
+    most_probable = max(probs.items(), key=lambda x: x[1])[0]
+
+    # Time horizons per pathway
+    pathway_horizon = {
+        "continuation":  "10-25yr",  "acceleration": "10-50yr",
+        "transformation":"25-75yr",  "fragmentation":"10-50yr",
+        "collapse":      "10-25yr",  "recovery":     "25-100yr",
+    }
+
+    pathways = [
+        {"pathway": k, "probability": probs[k],
+         "horizon": pathway_horizon[k],
+         "drivers": _pathway_drivers(k, civ_state)}
+        for k in _V13_PATHWAY_CLASSES
+    ]
+    pathways.sort(key=lambda x: -x["probability"])
+
+    return {
+        "grdf_version":    "13.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "most_probable":   most_probable,
+        "pathways":        pathways,
+        "cri_context":     round(cri_score),
+        "trend_context":   lh_trend,
+    }
+
+
+def _pathway_drivers(pathway: str, civ_state: dict) -> list:
+    doms  = civ_state.get("domains",{})
+    top3  = sorted(doms.items(), key=lambda x: -x[1].get("score",0))[:3]
+    drivers = {
+        "continuation":  ["governance","economy","infrastructure"],
+        "acceleration":  ["technology","innovation","energy"],
+        "transformation":["innovation","energy","governance"],
+        "fragmentation": [d for d,_ in top3],
+        "collapse":      [d for d,_ in top3[:2]] + ["governance"],
+        "recovery":      ["governance","resources","food"],
+    }
+    return drivers.get(pathway,["economy"])
+
+
+# ── Phase 8: Global Transition Detector ──────────────────────────────────
+
+def _build_v13_transitions(civ_state: dict, tech_d: dict,
+                             cri: dict) -> dict:
+    """
+    Phase 8: Detect major structural transitions in progress.
+    Status: pre-transition / active / consolidating / complete
+    """
+    doms       = civ_state.get("domains",{})
+    cri_score  = float(cri.get("civilization_resilience_index",50))
+
+    def _status(readiness: float) -> str:
+        if readiness >= 75: return "consolidating"
+        if readiness >= 55: return "active"
+        if readiness >= 35: return "pre-transition"
+        return "pre-transition"
+
+    td = tech_d.get("transitions",{})
+    transitions = {
+        "energy_transition": {
+            "status":     _status(td.get("energy_systems",{}).get("readiness_score",40)),
+            "readiness":  td.get("energy_systems",{}).get("readiness_score",40),
+            "driver":     "energy_systems",
+            "impact":     "high",
+        },
+        "ai_transition": {
+            "status":     _status(td.get("artificial_intelligence",{}).get("readiness_score",55)),
+            "readiness":  td.get("artificial_intelligence",{}).get("readiness_score",55),
+            "driver":     "artificial_intelligence",
+            "impact":     "transformative",
+        },
+        "demographic_transition": {
+            "status":     ("active" if doms.get("population",{}).get("score",50) >= 55
+                            else "pre-transition"),
+            "readiness":  doms.get("population",{}).get("score",50),
+            "driver":     "population",
+            "impact":     "high",
+        },
+        "financial_transition": {
+            "status":     _status(td.get("computing",{}).get("readiness_score",45)),
+            "readiness":  doms.get("economy",{}).get("score",50),
+            "driver":     "economy",
+            "impact":     "moderate",
+        },
+        "governance_transition": {
+            "status":     ("active" if cri_score < 50 else "pre-transition"),
+            "readiness":  doms.get("governance",{}).get("score",60),
+            "driver":     "governance",
+            "impact":     "systemic",
+        },
+    }
+
+    active_n = sum(1 for t in transitions.values() if t["status"] in ("active","consolidating"))
+
+    return {
+        "grdf_version":    "13.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "transitions":     transitions,
+        "active_n":        active_n,
+        "transition_grade":("high_flux" if active_n >= 4 else
+                             "moderate_flux" if active_n >= 2 else "low_flux"),
+    }
+
+
+# ── Phase 9: Century Scenario Simulator ──────────────────────────────────
+
+def _project_century_case(composite: float, delta: float, year: int,
+                            case: str) -> dict:
+    """
+    Phase 9: Project civilization state to a target year under a scenario case.
+    Base year = current; years_ahead = target_year - THIS_YEAR.
+    """
+    base_year  = int(TODAY.split("-")[0]) if "-" in TODAY else 2026
+    years_ahead= max(1, year - base_year)
+
+    case_params = {
+        "best_case":          {"mult":0.80,"drift_factor":0.30},
+        "base_case":          {"mult":1.00,"drift_factor":0.70},
+        "stress_case":        {"mult":1.35,"drift_factor":1.30},
+        "transformation_case":{"mult":0.65,"drift_factor":0.20},
+    }
+    p     = case_params.get(case, case_params["base_case"])
+    damp  = 1.0 / (1.0 + years_ahead / 25.0)
+    drift = delta * damp * years_ahead * 52 * p["drift_factor"]
+    drift = max(-50, min(50, drift))
+    score = max(5, min(95, round((composite + drift) * p["mult"])))
+    conf  = round(max(0.05, 0.85 - years_ahead * 0.006), 2)
+
+    grade = ("critical" if score>=70 else "stressed" if score>=50
+              else "moderate" if score>=30 else "healthy")
+
+    return {"year":year,"case":case,"score":score,"confidence":conf,"grade":grade}
+
+
+def _build_v13_century_scenarios(civ_state: dict, snapshots: list) -> dict:
+    """Phase 9: 4 cases × 4 target years = 16 scenario projections."""
+    composite   = float(civ_state.get("composite_score",50))
+    deltas      = [abs(float(s.get("delta",0) or 0)) for s in snapshots]
+    mean_delta  = sum(deltas)/max(1,len(deltas)) / 7   # weekly→daily
+
+    scenarios: list[dict] = []
+    for case in _V13_CENTURY_CASES:
+        for year in _V13_CENTURY_YEARS:
+            scenarios.append(_project_century_case(composite, mean_delta, year, case))
+
+    # Organise by year
+    by_year: dict = {}
+    for sc in scenarios:
+        yr = sc["year"]
+        by_year.setdefault(yr,{})[sc["case"]] = {"score":sc["score"],"confidence":sc["confidence"],"grade":sc["grade"]}
+
+    best_2100 = by_year.get(2100,{}).get("best_case",{}).get("score",composite)
+    base_2100 = by_year.get(2100,{}).get("base_case",{}).get("score",composite)
+
+    return {
+        "grdf_version":    "13.0",
+        "date":            TODAY,
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "current_score":   round(composite),
+        "scenarios":       scenarios,
+        "by_year":         by_year,
+        "target_years":    _V13_CENTURY_YEARS,
+        "scenario_cases":  _V13_CENTURY_CASES,
+        "outlook_2100":    ("optimistic" if base_2100 < best_2100 * 0.85 else
+                             "concerning" if base_2100 > composite + 10 else "uncertain"),
+    }
+
+
+# ── Phase 10: Civilization Dashboard ──────────────────────────────────────
+
+def _save_v13_dashboard(civ_state: dict, long_horizon: dict,
+                         res_limits: dict, tech_trans: dict,
+                         demographics: dict, cri: dict,
+                         pathways: dict, transitions: dict,
+                         century: dict) -> None:
+    """Phase 10: 10-widget Civilization Dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Widget 1: Civilization State
+    w_civ_state = {
+        "composite_score":   civ_state.get("composite_score"),
+        "civilization_grade":civ_state.get("civilization_grade"),
+        "top_stressed_domains": sorted(
+            [(d,v["score"]) for d,v in civ_state.get("domains",{}).items()],
+            key=lambda x:-x[1])[:5],
+    }
+
+    # Widget 2: Long Horizon Outlook
+    w_long_horizon = {
+        "trend":      long_horizon.get("long_term_trend"),
+        "score_10yr": long_horizon.get("horizons",{}).get("10yr",{}).get("projected_score"),
+        "score_50yr": long_horizon.get("horizons",{}).get("50yr",{}).get("projected_score"),
+        "score_100yr":long_horizon.get("horizons",{}).get("100yr",{}).get("projected_score"),
+    }
+
+    # Widget 3: Resource Limits
+    w_resources = {
+        "global_availability": res_limits.get("global_availability"),
+        "resource_grade":      res_limits.get("resource_grade"),
+        "worst_resource":      res_limits.get("worst_resource"),
+    }
+
+    # Widget 4: Technology Transitions
+    w_tech = {
+        "avg_readiness":   tech_trans.get("avg_readiness"),
+        "tech_grade":      tech_trans.get("tech_grade"),
+        "most_advanced":   tech_trans.get("most_advanced"),
+    }
+
+    # Widget 5: Demographics
+    w_demo = {
+        "population_pressure": demographics.get("population_pressure"),
+        "global_trend":        demographics.get("global_trend"),
+        "demographic_grade":   demographics.get("demographic_grade"),
+    }
+
+    # Widget 6: Resilience Index
+    w_cri = {
+        "cri":       cri.get("civilization_resilience_index"),
+        "cri_grade": cri.get("cri_grade"),
+    }
+
+    # Widget 7: Transition Monitor
+    w_transitions = {
+        "active_n":        transitions.get("active_n"),
+        "transition_grade":transitions.get("transition_grade"),
+        "transitions":     {k:v["status"] for k,v in transitions.get("transitions",{}).items()},
+    }
+
+    # Widget 8: Pathway Explorer
+    w_pathways = {
+        "most_probable": pathways.get("most_probable"),
+        "top3": [{
+            "pathway":     p["pathway"],
+            "probability": p["probability"],
+        } for p in (pathways.get("pathways") or [])[:3]],
+    }
+
+    # Widget 9: Century Scenarios
+    w_century = {
+        "outlook_2100":   century.get("outlook_2100"),
+        "base_2050":      century.get("by_year",{}).get(2050,{}).get("base_case",{}).get("score"),
+        "base_2100":      century.get("by_year",{}).get(2100,{}).get("base_case",{}).get("score"),
+        "best_2100":      century.get("by_year",{}).get(2100,{}).get("best_case",{}).get("score"),
+    }
+
+    # Widget 10: Civilization Status (summary)
+    cri_score   = float(cri.get("civilization_resilience_index",50))
+    psi_context = float(civ_state.get("psi_context",50))
+    civ_status  = ("adaptive"   if cri_score >= 80 else
+                   "stable"     if cri_score >= 60 else
+                   "vulnerable" if cri_score >= 30 else "fragile")
+
+    with open(GRDF_DIR / "v13_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":           "13.0",
+            "date":                   TODAY,
+            "generated_at":           now_ts,
+            "civilization_status":    civ_status,
+            "cri":                    round(cri_score),
+            "psi_context":            round(psi_context),
+            "civilization_state":     w_civ_state,
+            "long_horizon_outlook":   w_long_horizon,
+            "resource_limits":        w_resources,
+            "technology_transitions": w_tech,
+            "demographics":           w_demo,
+            "resilience_index":       w_cri,
+            "transition_monitor":     w_transitions,
+            "pathway_explorer":       w_pathways,
+            "century_scenarios":      w_century,
+            "civilization_summary":   {"status":civ_status,"cri":round(cri_score),"psi":round(psi_context)},
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V13] Phase 10: Civilization Dashboard (status={civ_status})", file=sys.stderr)
+
+
+# ── V13 Orchestrator ──────────────────────────────────────────────────────
+
+def save_grdf_v13(snapshots: list) -> None:
+    """
+    GRDF V13 -- Civilization Intelligence System.
+    Dependency: V1->...->V12->V13
+    Reads: v1..v12 outputs.  Writes: v13_* only.
+    V1/V2/V3/V4/V5/V6/V7/V8/V9/V10/V11/V12 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Phase 1
+    try:
+        civ = _build_v13_civilization_state(snapshots)
+        with open(GRDF_DIR / "v13_civilization_state.json","w") as f:
+            json.dump(civ, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 1: civilization composite={civ['composite_score']} [{civ['civilization_grade']}]", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] civ state: {e}", file=sys.stderr)
+        civ = {"composite_score":50,"civilization_grade":"moderate","domains":{},"psi_context":50,"csi_context":50,"total_countries":0}
+
+    # Phase 2
+    try:
+        lh = _build_v13_long_horizon(civ, snapshots)
+        with open(GRDF_DIR / "v13_long_horizon.json","w") as f:
+            json.dump(lh, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 2: long_term_trend={lh['long_term_trend']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] long horizon: {e}", file=sys.stderr)
+        lh = {"long_term_trend":"stable","horizons":{},"current_score":50}
+
+    # Phase 3
+    try:
+        res_lim = _build_v13_resource_limits(snapshots)
+        with open(GRDF_DIR / "v13_resource_limits.json","w") as f:
+            json.dump(res_lim, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 3: resource_grade={res_lim['resource_grade']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] resources: {e}", file=sys.stderr)
+        res_lim = {"global_availability":55,"resource_grade":"adequate","resources":{},"worst_resource":"?","best_resource":"?"}
+
+    # Phase 4
+    try:
+        tech = _build_v13_tech_transitions(snapshots, civ)
+        with open(GRDF_DIR / "v13_technology_transitions.json","w") as f:
+            json.dump(tech, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 4: tech_grade={tech['tech_grade']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] tech: {e}", file=sys.stderr)
+        tech = {"avg_readiness":50,"tech_grade":"developing","transitions":{},"most_advanced":"?","fastest_disruption":"?"}
+
+    # Phase 5
+    try:
+        demo = _build_v13_demographics(snapshots, civ)
+        with open(GRDF_DIR / "v13_demographics.json","w") as f:
+            json.dump(demo, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 5: global_trend={demo['global_trend']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] demographics: {e}", file=sys.stderr)
+        demo = {"population_pressure":50,"global_trend":"stable","demographic_grade":"stable"}
+
+    # Phase 6
+    try:
+        gov_d = _v13_load("v11_governance.json")
+        cri   = _build_v13_civilization_resilience(civ, res_lim, tech, gov_d)
+        with open(GRDF_DIR / "v13_civilization_resilience.json","w") as f:
+            json.dump(cri, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 6: CRI={cri['civilization_resilience_index']} [{cri['cri_grade']}]", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] CRI: {e}", file=sys.stderr)
+        cri = {"civilization_resilience_index":50,"cri_grade":"vulnerable"}
+
+    # Phase 7
+    try:
+        paths = _build_v13_pathways(civ, lh, cri, tech)
+        with open(GRDF_DIR / "v13_pathways.json","w") as f:
+            json.dump(paths, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 7: most_probable={paths['most_probable']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] pathways: {e}", file=sys.stderr)
+        paths = {"most_probable":"continuation","pathways":[],"cri_context":50}
+
+    # Phase 8
+    try:
+        trans = _build_v13_transitions(civ, tech, cri)
+        with open(GRDF_DIR / "v13_transitions.json","w") as f:
+            json.dump(trans, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 8: active_transitions={trans['active_n']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] transitions: {e}", file=sys.stderr)
+        trans = {"active_n":0,"transition_grade":"low_flux","transitions":{}}
+
+    # Phase 9
+    try:
+        cent = _build_v13_century_scenarios(civ, snapshots)
+        with open(GRDF_DIR / "v13_century_scenarios.json","w") as f:
+            json.dump(cent, f, ensure_ascii=False, indent=2)
+        print(f"[GRDF-V13] Phase 9: outlook_2100={cent['outlook_2100']}", file=sys.stderr)
+    except Exception as e:
+        print(f"[GRDF-V13] century: {e}", file=sys.stderr)
+        cent = {"outlook_2100":"uncertain","by_year":{},"scenarios":[]}
+
+    # Phase 10
+    try:
+        _save_v13_dashboard(civ, lh, res_lim, tech, demo, cri, paths, trans, cent)
+    except Exception as e:
+        print(f"[GRDF-V13] dashboard: {e}", file=sys.stderr)
+
+    print("[GRDF-V13] Civilization Intelligence System OPERATIONAL.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -16693,6 +17519,7 @@ def main():
     save_grdf_v10(snapshots)
     save_grdf_v11(snapshots)
     save_grdf_v12(snapshots)
+    save_grdf_v13(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
