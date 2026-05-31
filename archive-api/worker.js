@@ -7063,7 +7063,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/baseline/formulas','/api/grdf/baseline/storage',
       '/api/grdf/baseline/api-registry','/api/grdf/baseline/dashboards',
       '/api/grdf/baseline/dependency-graph','/api/grdf/baseline/data-sources',
+
+  // =========================================================================
+  // GRDF CHANGE CONTROL SYSTEM V1 API
+  // All routes under /api/grdf/change-control/
+  // Baseline V1.0 frozen reference. All changes require CCR audit trail.
+  // =========================================================================
+  if (seg[0] === 'change-control') {
+    const cseg = seg[1] || 'dashboard';
+    const CC = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const CCS_FILES = {
+      'dashboard':                 'docs/change_control/change_control_dashboard.json',
+      'requests':                  'docs/change_control/change_requests.json',
+      'impact-analysis':           'docs/change_control/change_impact_analysis.json',
+      'compatibility':             'docs/change_control/change_compatibility.json',
+      'diff':                      'docs/change_control/change_diff.json',
+      'risk':                      'docs/change_control/change_risk.json',
+      'certification-requirements':'docs/change_control/change_certification_requirement.json',
+      'version-registry':          'docs/change_control/version_registry.json',
+      'release-registry':          'docs/change_control/release_registry.json',
+      'council-report':            'docs/change_control/architecture_council_report.json',
+    };
+    const CCS_SIGNAL_ONLY = new Set(['impact-analysis','compatibility','diff','risk','certification-requirements']);
+    if (!CCS_FILES[cseg]) return new Response(JSON.stringify({error:'Unknown CCS route: '+cseg, available:Object.keys(CCS_FILES)}),{status:404,headers:CC});
+    if (CCS_SIGNAL_ONLY.has(cseg) && access==='teaser') return new Response(JSON.stringify({error:cseg+' requires Signal tier'}),{status:403,headers:CC});
+    const ck = `grdf:ccs:${cseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CC});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, CCS_FILES[cseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'CCS '+cseg+' not built yet'}),{status:404,headers:CC});
+      let r;
+      if (access==='teaser') {
+        if (cseg==='dashboard') r={date:d.date,summary:d.summary,version_registry:d.version_registry,certification_status:d.certification_status,tier};
+        else if (cseg==='requests') r={date:d.date,total_requests:d.total_requests,open_n:d.open_n,deployed_n:d.deployed_n,id_format:d.id_format,tier};
+        else if (cseg==='version-registry') r={date:d.date,current_version:d.current_version,current_status:d.current_status,next_patch:d.next_patch,next_minor:d.next_minor,tier};
+        else if (cseg==='release-registry') r={date:d.date,active_release:d.active_release,total_released:d.total_released,pipeline:d.pipeline,tier};
+        else if (cseg==='council-report') r={date:d.date,recommendation:d.recommendation,cert_level:d.cert_level,cert_score:d.cert_score,council_score:d.council_score,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CC});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CC});}
+  }
+
       '/api/grdf/baseline/certification','/api/grdf/baseline/platform-specification',
+      '/api/grdf/change-control/dashboard','/api/grdf/change-control/requests',
+      '/api/grdf/change-control/impact-analysis','/api/grdf/change-control/compatibility',
+      '/api/grdf/change-control/diff','/api/grdf/change-control/risk',
+      '/api/grdf/change-control/certification-requirements',
+      '/api/grdf/change-control/version-registry','/api/grdf/change-control/release-registry',
+      '/api/grdf/change-control/council-report',
     ]
   }),{status:404,headers:CORS});
 }
