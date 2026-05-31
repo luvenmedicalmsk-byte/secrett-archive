@@ -7360,8 +7360,57 @@ async function handleGRDF(request, env) {
       '/api/grdf/governance/dashboard','/api/grdf/governance/kpis',
       '/api/grdf/governance/score','/api/grdf/governance/roadmap',
       '/api/grdf/governance/reports','/api/grdf/governance/risk-register',
+
+  // =========================================================================
+  // GRDF OPERATIONS EXCELLENCE PROGRAM V1 API
+  // All routes under /api/grdf/operations/
+  // Architecture frozen. Operational excellence only.
+  // =========================================================================
+  if (seg[0] === 'operations') {
+    const oseg = seg[1] || 'dashboard';
+    const CO = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const OPS_FILES = {
+      'dashboard':     'docs/operations/operations_dashboard.json',
+      'service-levels':'docs/operations/service_levels.json',
+      'reliability':   'docs/operations/reliability_monitoring.json',
+      'incidents':     'docs/operations/incident_registry.json',
+      'metrics':       'docs/operations/operational_metrics.json',
+      'capacity':      'docs/operations/capacity_planning.json',
+      'score':         'docs/operations/operations_excellence_score.json',
+      'certification': 'docs/operations/operations_certification.json',
+      'risks':         'docs/operations/operational_risks.json',
+      'optimization':  'docs/operations/operations_optimization.json',
+    };
+    const OPS_SIGNAL_ONLY = new Set(['incidents','risks','optimization','capacity']);
+    if (!OPS_FILES[oseg]) return new Response(JSON.stringify({error:'Unknown operations route: '+oseg, available:Object.keys(OPS_FILES)}),{status:404,headers:CO});
+    if (OPS_SIGNAL_ONLY.has(oseg) && access==='teaser') return new Response(JSON.stringify({error:oseg+' requires Signal tier'}),{status:403,headers:CO});
+    const ck = `grdf:ops:${oseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CO});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, OPS_FILES[oseg], 300);
+      if (!d) return new Response(JSON.stringify({error:'Operations '+oseg+' not built yet'}),{status:404,headers:CO});
+      let r;
+      if (access==='teaser') {
+        if (oseg==='dashboard') r={date:d.date,ops_status:d.ops_status,oes_score:d.oes_score,service_health:d.service_health,uptime:d.uptime,performance:d.performance,tier};
+        else if (oseg==='service-levels') r={date:d.date,overall_health:d.overall_health,slo_met_n:d.slo_met_n,total_slos:d.total_slos,actuals:d.actuals,tier};
+        else if (oseg==='reliability') r={date:d.date,uptime_pct:d.uptime_pct,mttr_min:d.mttr_min,reliability_score:d.reliability_score,mttr_grade:d.mttr_grade,tier};
+        else if (oseg==='score') r={date:d.date,oes_score:d.oes_score,cert_level:d.cert_level,components:d.components,tier};
+        else if (oseg==='certification') r={date:d.date,operations_certification:d.operations_certification,oes_score:d.oes_score,no_v14:d.no_v14,tier};
+        else if (oseg==='metrics') r={date:d.date,api_latency_ms:d.api_latency_ms,processing_latency_ms:d.processing_latency_ms,overall_grade:d.overall_grade,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CO});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CO});}
+  }
+
       '/api/grdf/governance/technical-debt','/api/grdf/governance/certification',
       '/api/grdf/governance/lifecycle','/api/grdf/governance/quarterly',
+      '/api/grdf/operations/dashboard','/api/grdf/operations/service-levels',
+      '/api/grdf/operations/reliability','/api/grdf/operations/incidents',
+      '/api/grdf/operations/metrics','/api/grdf/operations/capacity',
+      '/api/grdf/operations/score','/api/grdf/operations/certification',
+      '/api/grdf/operations/risks','/api/grdf/operations/optimization',
     ]
   }),{status:404,headers:CORS});
 }
