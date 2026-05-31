@@ -7160,7 +7160,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/historical/events','/api/grdf/historical/replay',
       '/api/grdf/historical/detection','/api/grdf/historical/lead-time',
       '/api/grdf/historical/forecast-accuracy','/api/grdf/historical/alert-accuracy',
+
+  // =========================================================================
+  // GRDF LIVE OPERATIONS PROGRAM V1 API
+  // All routes under /api/grdf/live/
+  // Architecture frozen at V13. Operations monitoring only.
+  // =========================================================================
+  if (seg[0] === 'live') {
+    const lseg = seg[1] || 'dashboard';
+    const CL = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const LIVE_FILES = {
+      'dashboard':         'docs/live_operations/live_operations_dashboard.json',
+      'operational-health':'docs/live_operations/live_operational_health.json',
+      'signal-registry':   'docs/live_operations/live_signal_registry.json',
+      'event-tracking':    'docs/live_operations/live_event_tracking.json',
+      'warning-metrics':   'docs/live_operations/live_warning_metrics.json',
+      'forecast-metrics':  'docs/live_operations/live_forecast_metrics.json',
+      'alert-metrics':     'docs/live_operations/live_alert_metrics.json',
+      'usage-metrics':     'docs/live_operations/live_usage_metrics.json',
+      'source-reliability':'docs/live_operations/live_source_reliability.json',
+      'weekly-review':     'docs/live_operations/weekly_intelligence_review.json',
+    };
+    const LIVE_SIGNAL_ONLY = new Set(['event-tracking','forecast-metrics','alert-metrics','usage-metrics']);
+    if (!LIVE_FILES[lseg]) return new Response(JSON.stringify({error:'Unknown live route: '+lseg, available:Object.keys(LIVE_FILES)}),{status:404,headers:CL});
+    if (LIVE_SIGNAL_ONLY.has(lseg) && access==='teaser') return new Response(JSON.stringify({error:lseg+' requires Signal tier'}),{status:403,headers:CL});
+    const ck = `grdf:live:${lseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CL});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, LIVE_FILES[lseg], 300);
+      if (!d) return new Response(JSON.stringify({error:'Live '+lseg+' not built yet'}),{status:404,headers:CL});
+      let r;
+      if (access==='teaser') {
+        if (lseg==='dashboard') r={date:d.date,overall_status:d.overall_status,ohs_score:d.ohs_score,top_risks:d.top_risks?.slice(0,3),global_activity:d.global_activity,platform_status:d.platform_status,tier};
+        else if (lseg==='operational-health') r={date:d.date,ohs_score:d.ohs_score,ohs_grade:d.ohs_grade,components:d.components,tier};
+        else if (lseg==='signal-registry') r={date:d.date,total_sources:d.total_sources,total_signals_per_day:d.total_signals_per_day,avg_signal_quality:d.avg_signal_quality,tier};
+        else if (lseg==='warning-metrics') r={date:d.date,warning_count:d.warning_count,warning_precision:d.warning_precision,warning_f1:d.warning_f1,status:d.status,tier};
+        else if (lseg==='source-reliability') r={date:d.date,healthy_n:d.healthy_n,total_sources:d.total_sources,avg_availability_pct:d.avg_availability_pct,sla_met:d.sla_met,tier};
+        else if (lseg==='weekly-review') r={date:d.date,summary:d.summary,top_risks:d.top_risks,top_warnings:d.top_warnings,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CL});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CL});}
+  }
+
       '/api/grdf/historical/scenario-validation','/api/grdf/historical/decision-validation',
+      '/api/grdf/live/dashboard','/api/grdf/live/operational-health',
+      '/api/grdf/live/signal-registry','/api/grdf/live/event-tracking',
+      '/api/grdf/live/warning-metrics','/api/grdf/live/forecast-metrics',
+      '/api/grdf/live/alert-metrics','/api/grdf/live/usage-metrics',
+      '/api/grdf/live/source-reliability','/api/grdf/live/weekly-review',
     ]
   }),{status:404,headers:CORS});
 }
