@@ -12773,6 +12773,694 @@ def save_grdf_v7(snapshots: list) -> None:
     print(f"[GRDF-V7] All 10 phases complete. {len(all_warn)} countries processed.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V8 -- Strategic Decision Intelligence
+#
+# "What should be done now to reduce future risk?"
+#
+# Phase 1:  Decision Candidate Engine    -> v8_decision_candidates_{CC}.json
+# Phase 2:  Decision Effectiveness Score -> v8_decision_score_{CC}.json
+# Phase 3:  Cost-Benefit Engine          -> v8_cost_benefit_{CC}.json
+# Phase 4:  Strategic Response Ranking   -> v8_response_rank_{CC}.json
+# Phase 5:  Counterfactual Simulation    -> v8_counterfactual_{CC}.json
+# Phase 6:  Policy Impact Simulator      -> v8_policy_impacts_{CC}.json
+# Phase 7:  Strategic Playbook Engine    -> v8_playbook_{CC}.json
+# Phase 8:  Autonomous Mitigation Engine -> v8_mitigation_{CC}.json
+# Phase 9:  Decision Confidence Engine   -> v8_decision_confidence_{CC}.json
+# Phase 10: Strategic Decision Dashboard -> v8_dashboard.json
+#
+# Reads: v1..v7 outputs (read-only).
+# Writes: v8_* only.  V1-V7 NEVER modified.
+# =========================================================================
+
+import math as _m8
+
+# Decision action catalogue
+_V8_ACTION_CATALOGUE: list[dict] = [
+    # (id, label, domain, risk_reduction, resilience_gain, feasibility, base_cost, speed_days)
+    {"id":"ACT-01","label":"Diversify import sources",      "domain":"economic",        "rr":0.72,"rg":0.65,"feas":0.80,"cost_idx":40, "speed":90},
+    {"id":"ACT-02","label":"Relocate critical infrastructure","domain":"infrastructure", "rr":0.68,"rg":0.75,"feas":0.45,"cost_idx":85, "speed":730},
+    {"id":"ACT-03","label":"Increase strategic reserves",   "domain":"energy",          "rr":0.65,"rg":0.70,"feas":0.85,"cost_idx":55, "speed":180},
+    {"id":"ACT-04","label":"Build redundant supply chains", "domain":"economic",        "rr":0.60,"rg":0.68,"feas":0.70,"cost_idx":60, "speed":365},
+    {"id":"ACT-05","label":"Regulatory intervention",       "domain":"geopolitical",    "rr":0.55,"rg":0.50,"feas":0.75,"cost_idx":30, "speed":60},
+    {"id":"ACT-06","label":"Investment acceleration",       "domain":"technology",      "rr":0.58,"rg":0.72,"feas":0.65,"cost_idx":70, "speed":270},
+    {"id":"ACT-07","label":"Emergency response activation", "domain":"infrastructure",  "rr":0.80,"rg":0.60,"feas":0.90,"cost_idx":35, "speed":7},
+    {"id":"ACT-08","label":"Cyber defense reinforcement",   "domain":"cyber",           "rr":0.75,"rg":0.65,"feas":0.80,"cost_idx":45, "speed":30},
+    {"id":"ACT-09","label":"Climate adaptation programme",  "domain":"climate",         "rr":0.62,"rg":0.80,"feas":0.60,"cost_idx":75, "speed":540},
+    {"id":"ACT-10","label":"Social resilience investment",  "domain":"social",          "rr":0.50,"rg":0.75,"feas":0.70,"cost_idx":50, "speed":365},
+    {"id":"ACT-11","label":"Energy grid diversification",   "domain":"energy",          "rr":0.70,"rg":0.78,"feas":0.55,"cost_idx":80, "speed":450},
+    {"id":"ACT-12","label":"Diplomatic de-escalation",     "domain":"geopolitical",    "rr":0.65,"rg":0.55,"feas":0.60,"cost_idx":20, "speed":45},
+    {"id":"ACT-13","label":"Early warning system upgrade",  "domain":"technology",      "rr":0.55,"rg":0.60,"feas":0.85,"cost_idx":25, "speed":90},
+    {"id":"ACT-14","label":"Financial stability measures",  "domain":"economic",        "rr":0.60,"rg":0.62,"feas":0.75,"cost_idx":55, "speed":60},
+    {"id":"ACT-15","label":"Migration management policy",   "domain":"social",          "rr":0.48,"rg":0.55,"feas":0.65,"cost_idx":40, "speed":120},
+]
+
+# Policy types (Phase 6)
+_V8_POLICY_TYPES = [
+    "energy_policy","climate_adaptation","infrastructure_investment",
+    "migration_policy","economic_intervention","strategic_reserves",
+]
+
+
+def _v8_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+# ── Phase 1: Decision Candidate Engine ───────────────────────────────────
+
+def _build_v8_candidates(iso2: str, snap: dict) -> dict:
+    """
+    Phase 1: Generate strategic response actions for this country's risk cluster.
+    Filters action catalogue to those most relevant to dominant domains.
+    """
+    dom_s   = _get_domain_scores(iso2, snap)
+    warn_d  = _v8_load(f"v7_warning_score_{iso2}.json")
+    alert_d = _v8_load(f"v7_alerts_{iso2}.json")
+
+    ews        = float(warn_d.get("early_warning_score", 40))
+    alert_lvl  = alert_d.get("alert_level","GREEN")
+    alert_ord  = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+    urgency    = alert_ord.get(alert_lvl, 0)
+
+    # Find top-2 domains by score
+    top_domains = sorted(dom_s.items(), key=lambda x: -x[1].get("score",0))[:3]
+    top_dom_ids  = {d for d,_ in top_domains}
+
+    candidates = []
+    for act in _V8_ACTION_CATALOGUE:
+        # Relevance: action domain matches a top-risk domain
+        dom_match = act["domain"] in top_dom_ids or urgency >= 3
+        if not dom_match:
+            continue
+        # Urgency scaling: high alert -> favour fast actions
+        urgency_bonus = urgency * 0.05
+        effective_feas = min(1.0, act["feas"] + urgency_bonus)
+        candidates.append({
+            **act,
+            "feasibility_adjusted": round(effective_feas, 3),
+            "urgency_context":      alert_lvl,
+            "ews_context":          round(ews),
+        })
+
+    # Always include emergency response if alert >= ORANGE
+    if urgency >= 2 and not any(c["id"]=="ACT-07" for c in candidates):
+        act = next(a for a in _V8_ACTION_CATALOGUE if a["id"]=="ACT-07")
+        candidates.append({**act,"feasibility_adjusted":act["feas"],"urgency_context":alert_lvl,"ews_context":round(ews)})
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "8.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "n_candidates": len(candidates),
+        "candidates":   candidates,
+        "dominant_domains": [d for d,_ in top_domains],
+        "alert_level":  alert_lvl,
+        "ews":          round(ews),
+    }
+
+
+# ── Phase 2: Decision Effectiveness Score ────────────────────────────────
+
+def _des(rr: float, rg: float, feas: float, conf: float) -> float:
+    """
+    DES = risk_reduction*0.40 + resilience_gain*0.30 + feasibility*0.20 + confidence*0.10
+    All inputs 0-1, output 0-100.
+    """
+    return max(0, min(100, round((rr*0.40 + rg*0.30 + feas*0.20 + conf*0.10) * 100)))
+
+
+def _des_grade(score: float) -> str:
+    if score >= 75: return "strategic"
+    if score >= 50: return "effective"
+    if score >= 25: return "moderate"
+    return "ineffective"
+
+
+def _build_v8_decision_scores(iso2: str, snap: dict, cands: dict) -> dict:
+    """Phase 2: score each candidate action with DES formula."""
+    fc_d     = _v8_load(f"v3_forecast_{iso2}.json")
+    conf_raw = float((fc_d.get("horizons") or {}).get("30d", {}).get("confidence", 0.65) or 0.65)
+
+    scored = []
+    for act in cands.get("candidates", []):
+        des = _des(act["rr"], act["rg"],
+                   act.get("feasibility_adjusted", act["feas"]), conf_raw)
+        scored.append({
+            "id":           act["id"],
+            "label":        act["label"],
+            "domain":       act["domain"],
+            "des":          des,
+            "des_grade":    _des_grade(des),
+            "risk_reduction":   round(act["rr"] * 100),
+            "resilience_gain":  round(act["rg"] * 100),
+            "feasibility":      round(act.get("feasibility_adjusted", act["feas"]) * 100),
+            "confidence":       round(conf_raw * 100),
+        })
+    scored.sort(key=lambda x: -x["des"])
+
+    return {
+        "country":         iso2,
+        "country_name":    snap.get("country_name", iso2),
+        "date":            TODAY,
+        "grdf_version":    "8.0",
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "top_des":         scored[0]["des"] if scored else 0,
+        "top_action":      scored[0]["label"] if scored else "none",
+        "scored_actions":  scored,
+        "avg_des":         round(sum(s["des"] for s in scored)/max(1,len(scored)),1),
+    }
+
+
+# ── Phase 3: Cost-Benefit Engine ─────────────────────────────────────────
+
+def _cbi(benefit: float, cost: float) -> float:
+    """CBI = expected_benefit / implementation_cost  (normalised, 0..5+)."""
+    return round(benefit / max(1, cost), 3)
+
+
+def _cbi_grade(cbi: float) -> str:
+    if cbi >= 2.0: return "low_cost_high_impact"
+    if cbi >= 1.0: return "medium_cost_high_impact"
+    return "high_cost_strategic"
+
+
+def _build_v8_cost_benefit(iso2: str, snap: dict, cands: dict, scores: dict) -> dict:
+    """Phase 3: CBI = expected_benefit / implementation_cost."""
+    scored_map = {s["id"]: s for s in scores.get("scored_actions", [])}
+    cb_list = []
+    for act in cands.get("candidates", []):
+        s = scored_map.get(act["id"], {})
+        benefit = float(s.get("des", 50))            # DES as proxy for benefit (0-100)
+        cost    = float(act.get("cost_idx", 50))     # cost_idx 1-100
+        cbi     = _cbi(benefit, cost)
+        cb_list.append({
+            "id":            act["id"],
+            "label":         act["label"],
+            "cbi":           cbi,
+            "cbi_grade":     _cbi_grade(cbi),
+            "expected_benefit": round(benefit),
+            "implementation_cost": round(cost),
+            "speed_days":    act.get("speed", 180),
+        })
+    cb_list.sort(key=lambda x: -x["cbi"])
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "8.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "best_cbi_action": cb_list[0]["label"] if cb_list else "none",
+        "best_cbi":        cb_list[0]["cbi"]   if cb_list else 0,
+        "cost_benefit":    cb_list,
+    }
+
+
+# ── Phase 4: Strategic Response Ranking ──────────────────────────────────
+
+def _rank_score(des: float, cbi: float, urgency_norm: float) -> float:
+    """rank_score = DES*0.50 + CBI_norm*0.30 + urgency*0.20"""
+    cbi_norm = min(100, round(cbi * 20))    # CBI to 0-100 (CBI 5 = 100)
+    return max(0, min(100, round(des*0.50 + cbi_norm*0.30 + urgency_norm*0.20)))
+
+
+def _build_v8_response_rank(iso2: str, snap: dict,
+                              scores: dict, cb: dict, ews: float) -> dict:
+    """Phase 4: rank_score = DES*0.50 + CBI*0.30 + urgency*0.20"""
+    urgency_norm = min(100, round(ews))
+    scored_map = {s["id"]: s for s in scores.get("scored_actions", [])}
+    cbi_map    = {c["id"]: c for c in cb.get("cost_benefit", [])}
+    ids        = list(scored_map.keys())
+
+    ranked = []
+    for aid in ids:
+        s   = scored_map[aid]
+        c   = cbi_map.get(aid, {})
+        rs  = _rank_score(s["des"], c.get("cbi", 1.0), urgency_norm)
+        ranked.append({
+            "rank":         0,   # set below
+            "id":           aid,
+            "label":        s["label"],
+            "domain":       s["domain"],
+            "rank_score":   rs,
+            "des":          s["des"],
+            "des_grade":    s["des_grade"],
+            "cbi":          c.get("cbi", 0),
+            "speed_days":   c.get("speed_days", 180),
+        })
+    ranked.sort(key=lambda x: -x["rank_score"])
+    for i, r in enumerate(ranked, 1):
+        r["rank"] = i
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "8.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "top10":        ranked[:10],
+        "top_action":   ranked[0]["label"] if ranked else "none",
+        "urgency_norm": urgency_norm,
+    }
+
+
+# ── Phase 5: Counterfactual Simulation ───────────────────────────────────
+
+def _project_cf(base: float, delta: float, years: int,
+                act_taken: bool, rr: float) -> dict:
+    """
+    Phase 5: simulate one horizon with vs without action.
+    With action: risk_reduction dampens the projected score.
+    Without action: unconstrained trend propagation.
+    """
+    damp   = 1.0 / (1.0 + years / 5.0)
+    drift  = delta * damp * 365 / 7
+    raw_no = max(5, min(97, round((base + drift)))  )
+    raw_ac = max(5, min(97, round((base + drift) * (1.0 - rr * 0.5)))) if act_taken else raw_no
+    return {
+        "with_action":    raw_ac,
+        "without_action": raw_no,
+        "risk_reduction": max(0, raw_no - raw_ac),
+        "pct_reduction":  round((raw_no - raw_ac) / max(1, raw_no) * 100, 1),
+    }
+
+
+def _build_v8_counterfactual(iso2: str, snap: dict, top_action: dict) -> dict:
+    """Phase 5: counterfactual for top-ranked action across 1/3/5/10 year horizons."""
+    base  = int(snap.get("risk_score", 50) or 50)
+    delta = float(snap.get("delta", 0) or 0)
+    rr    = float(top_action.get("rr", 0.60))
+
+    horizons = {}
+    for yr in [1, 3, 5, 10]:
+        horizons[f"{yr}yr"] = _project_cf(base, delta, yr, True, rr)
+
+    net_10yr = horizons["10yr"]["risk_reduction"]
+    return {
+        "country":         iso2,
+        "country_name":    snap.get("country_name", iso2),
+        "date":            TODAY,
+        "grdf_version":    "8.0",
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        "action_taken":    top_action.get("label","N/A"),
+        "action_id":       top_action.get("id","?"),
+        "base_score":      base,
+        "mean_delta":      round(delta, 2),
+        "risk_reduction_coeff": round(rr, 3),
+        "horizons":        horizons,
+        "net_10yr_reduction": net_10yr,
+        "verdict":         ("high_impact" if net_10yr >= 15 else
+                            "moderate_impact" if net_10yr >= 5 else
+                            "low_impact"),
+    }
+
+
+# ── Phase 6: Policy Impact Simulator ─────────────────────────────────────
+
+def _policy_impact(policy: str, base: float, delta: float,
+                    dom_s: dict) -> dict:
+    """
+    Phase 6: estimate impact of each policy model on GRI and domains.
+    Each policy targets specific domains with a risk-reduction multiplier.
+    """
+    _policy_domain_map: dict[str, tuple[str, float]] = {
+        "energy_policy":              ("energy",         0.55),
+        "climate_adaptation":         ("climate",        0.62),
+        "infrastructure_investment":  ("infrastructure", 0.58),
+        "migration_policy":           ("social",         0.40),
+        "economic_intervention":      ("economic",       0.52),
+        "strategic_reserves":         ("energy",         0.48),
+    }
+    dom_key, rr_coeff = _policy_domain_map.get(policy, ("economic", 0.40))
+    dom_score  = dom_s.get(dom_key, {}).get("score", 50)
+    new_dom_sc = max(5, round(dom_score * (1.0 - rr_coeff)))
+    gri_delta  = round((dom_score - new_dom_sc) * 0.15)   # partial GRI lift
+
+    return {
+        "policy":            policy,
+        "target_domain":     dom_key,
+        "current_domain_score": dom_score,
+        "post_policy_score": new_dom_sc,
+        "domain_reduction":  dom_score - new_dom_sc,
+        "estimated_gri_lift":gri_delta,
+        "implementation_time_days": {"energy_policy":365,"climate_adaptation":730,
+            "infrastructure_investment":540,"migration_policy":270,
+            "economic_intervention":180,"strategic_reserves":365}.get(policy,365),
+    }
+
+
+def _build_v8_policy_impacts(iso2: str, snap: dict) -> dict:
+    """Phase 6: simulate all policy types."""
+    dom_s  = _get_domain_scores(iso2, snap)
+    base   = int(snap.get("risk_score", 50) or 50)
+    delta  = float(snap.get("delta", 0) or 0)
+
+    policies = [_policy_impact(p, base, delta, dom_s) for p in _V8_POLICY_TYPES]
+    policies.sort(key=lambda x: -x["estimated_gri_lift"])
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "8.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "base_gri":     base,
+        "policies":     policies,
+        "best_policy":  policies[0]["policy"] if policies else "none",
+        "max_gri_lift": policies[0]["estimated_gri_lift"] if policies else 0,
+    }
+
+
+# ── Phase 7: Strategic Playbook Engine ───────────────────────────────────
+
+def _build_v8_playbook(iso2: str, snap: dict, ranked: dict) -> dict:
+    """
+    Phase 7: Map ranked actions to playbook timelines:
+    Immediate / 90-day / 1-year / 3-year / 10-year
+    """
+    def _bucket(speed_days):
+        if speed_days <= 14:   return "immediate"
+        if speed_days <= 90:   return "90_day"
+        if speed_days <= 365:  return "1_year"
+        if speed_days <= 1095: return "3_year"
+        return "10_year"
+
+    playbook: dict[str, list] = {
+        "immediate":[], "90_day":[], "1_year":[], "3_year":[], "10_year":[]
+    }
+    for r in (ranked.get("top10") or []):
+        bucket = _bucket(r.get("speed_days", 180))
+        playbook[bucket].append({
+            "rank":         r["rank"],
+            "id":           r["id"],
+            "label":        r["label"],
+            "rank_score":   r["rank_score"],
+            "des":          r["des"],
+            "speed_days":   r.get("speed_days", 180),
+        })
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "8.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "playbook":     playbook,
+        "priority_bucket": "immediate" if playbook["immediate"] else
+                           "90_day"    if playbook["90_day"]    else "1_year",
+    }
+
+
+# ── Phase 8: Autonomous Mitigation Engine ────────────────────────────────
+
+def _ms(effectiveness: float, speed: float, feas: float, rg: float) -> float:
+    """
+    MS = effectiveness*0.40 + speed*0.20 + feasibility*0.20 + resilience_gain*0.20
+    All 0-1 inputs, output 0-100.
+    """
+    return max(0, min(100, round((effectiveness*0.40 + speed*0.20 + feas*0.20 + rg*0.20) * 100)))
+
+
+def _build_v8_mitigation(iso2: str, snap: dict, cands: dict) -> dict:
+    """Phase 8: Mitigation Score for every candidate action."""
+    mitigations = []
+    for act in cands.get("candidates", []):
+        # Speed normalised: 7d action = speed 1.0, 730d = 0.05
+        speed_norm = max(0.05, min(1.0, 1.0 - act.get("speed", 180) / 730.0))
+        ms = _ms(act["rr"], speed_norm, act.get("feasibility_adjusted", act["feas"]), act["rg"])
+        mitigations.append({
+            "id":           act["id"],
+            "label":        act["label"],
+            "domain":       act["domain"],
+            "mitigation_score": ms,
+            "ms_grade":     ("critical" if ms >= 75 else "high" if ms >= 50 else
+                             "moderate" if ms >= 25 else "low"),
+            "effectiveness":round(act["rr"] * 100),
+            "speed_norm":   round(speed_norm, 3),
+            "speed_days":   act.get("speed", 180),
+        })
+    mitigations.sort(key=lambda x: -x["mitigation_score"])
+
+    return {
+        "country":        iso2,
+        "country_name":   snap.get("country_name", iso2),
+        "date":           TODAY,
+        "grdf_version":   "8.0",
+        "generated_at":   datetime.now(timezone.utc).isoformat(),
+        "top_mitigation": mitigations[0]["label"] if mitigations else "none",
+        "top_ms":         mitigations[0]["mitigation_score"] if mitigations else 0,
+        "mitigations":    mitigations,
+        "avg_ms":         round(sum(m["mitigation_score"] for m in mitigations)/max(1,len(mitigations)),1),
+    }
+
+
+# ── Phase 9: Decision Confidence Engine ──────────────────────────────────
+
+def _dc(fc_conf: float, data_quality: float, model_agreement: float) -> float:
+    """
+    DC = forecast_confidence*0.50 + data_quality*0.30 + model_agreement*0.20
+    All 0-1, output 0-100.
+    """
+    return max(0, min(100, round((fc_conf*0.50 + data_quality*0.30 + model_agreement*0.20) * 100)))
+
+
+def _build_v8_decision_confidence(iso2: str, snap: dict) -> dict:
+    """Phase 9: Confidence in the decision recommendation."""
+    fc_d     = _v8_load(f"v3_forecast_{iso2}.json")
+    expl_d   = _v8_load(f"v2_explain_{iso2}.json")
+    mc_d     = _v8_load(f"v6_montecarlo_{iso2}.json")
+
+    # Forecast confidence from V3
+    fc_conf_raw = float((fc_d.get("horizons") or {}).get("30d", {}).get("confidence", 0.65) or 0.65)
+
+    # Data quality proxy: coverage of V1-V7 artefacts
+    artefacts  = [f"v3_forecast_{iso2}.json","v5_signals_{iso2}.json",
+                   f"v6_digital_twin_{iso2}.json","v7_warning_score_{iso2}.json"]
+    present    = sum(1 for a in artefacts if (GRDF_DIR / a).exists())
+    dq         = present / len(artefacts)
+
+    # Model agreement: MC p50 vs forecast p50 closeness
+    mc_p50 = float((mc_d.get("horizons") or {}).get("5yr", {}).get("p50", 50) or 50)
+    fc_365 = float((fc_d.get("horizons") or {}).get("365d", {}).get("score", 50) or 50)
+    agreement  = max(0.0, 1.0 - abs(mc_p50 - fc_365) / 50.0)
+
+    dc_score = _dc(fc_conf_raw, dq, agreement)
+
+    return {
+        "country":          iso2,
+        "country_name":     snap.get("country_name", iso2),
+        "date":             TODAY,
+        "grdf_version":     "8.0",
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "decision_confidence": dc_score,
+        "dc_grade":         ("high" if dc_score >= 70 else "moderate" if dc_score >= 40 else "low"),
+        "components": {
+            "forecast_confidence": round(fc_conf_raw * 100),
+            "data_quality":        round(dq * 100),
+            "model_agreement":     round(agreement * 100),
+        },
+    }
+
+
+# ── Phase 10: Strategic Decision Dashboard ────────────────────────────────
+
+def _save_v8_dashboard(snapshots: list,
+                        all_ranked: list, all_cf: list,
+                        all_mit: list,   all_dc: list,
+                        all_policy: list, all_pb: list) -> None:
+    """Phase 10: 10-widget Strategic Decision Dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # W1: Top Decisions (highest rank_score across all countries)
+    top_decisions = sorted(
+        [{"country":r["country"],"action":r["top_action"],"rank_score":(r["top10"][0]["rank_score"] if r.get("top10") else 0)}
+         for r in all_ranked],
+        key=lambda x: -x["rank_score"])[:10]
+
+    # W2: Top Risk Reductions (highest net_10yr_reduction)
+    top_risk_reductions = sorted(
+        [{"country":c["country"],"action":c["action_taken"],"net_10yr":c["net_10yr_reduction"]}
+         for c in all_cf],
+        key=lambda x: -x["net_10yr"])[:10]
+
+    # W3: Cost vs Impact (best CBI)
+    cost_impact = []
+    for r in all_ranked:
+        top10 = r.get("top10", [])
+        if top10:
+            best = max(top10, key=lambda x: x.get("cbi",0))
+            cost_impact.append({"country":r["country"],"action":best["label"],"cbi":best.get("cbi",0),"des":best["des"]})
+    cost_impact.sort(key=lambda x: -x["cbi"])
+
+    # W4: Resilience Gains (avg DES resilience_gain)
+    resilience_gains = sorted(
+        [{"country":r["country"],"avg_des":r.get("avg_des",0)} for r in
+         [_v8_load(f"v8_decision_score_{s['country']}.json") for s in snapshots]
+         if r and "avg_des" in r],
+        key=lambda x: -x["avg_des"])[:10]
+
+    # W5: Strategic Priorities (top immediate + 90d actions globally)
+    strategic_priorities = []
+    for pb in all_pb:
+        for act in (pb.get("playbook",{}).get("immediate",[]) + pb.get("playbook",{}).get("90_day",[]))[:2]:
+            strategic_priorities.append({"country":pb["country"],"action":act["label"],"rank_score":act["rank_score"],"bucket":pb["priority_bucket"]})
+    strategic_priorities.sort(key=lambda x: -x["rank_score"])
+
+    # W6: Policy Simulator summary
+    policy_summary = sorted(
+        [{"country":p["country"],"best_policy":p["best_policy"],"gri_lift":p["max_gri_lift"]}
+         for p in all_policy],
+        key=lambda x: -x["gri_lift"])[:10]
+
+    # W7: Counterfactual results
+    cf_summary = sorted(
+        [{"country":c["country"],"action":c["action_taken"],"verdict":c["verdict"],"net_10yr":c["net_10yr_reduction"]}
+         for c in all_cf],
+        key=lambda x: -x["net_10yr"])[:10]
+
+    # W8: Decision Confidence ranking
+    dc_ranking = sorted(
+        [{"country":d["country"],"dc":d["decision_confidence"],"grade":d["dc_grade"]}
+         for d in all_dc],
+        key=lambda x: -x["dc"])[:10]
+
+    # W9: National Playbooks (per country priority)
+    national_playbooks = [
+        {"country":pb["country"],"priority_bucket":pb["priority_bucket"],
+         "immediate_n":len(pb.get("playbook",{}).get("immediate",[])),
+         "top_immediate":pb.get("playbook",{}).get("immediate",[{}])[0].get("label","none")}
+        for pb in all_pb
+    ]
+
+    # W10: Global Decision Atlas (per-country best action)
+    global_atlas = {r["country"]: {
+        "top_action":   r["top_action"],
+        "rank_score":   r["top10"][0]["rank_score"] if r.get("top10") else 0,
+    } for r in all_ranked}
+
+    # Summary stats
+    avg_dc  = round(sum(d["decision_confidence"] for d in all_dc) / max(1,len(all_dc)),1)
+    avg_mit = round(sum(m["avg_ms"]              for m in all_mit) / max(1,len(all_mit)),1)
+
+    with open(GRDF_DIR / "v8_dashboard.json","w") as f:
+        json.dump({
+            "grdf_version":        "8.0",
+            "date":                TODAY,
+            "generated_at":        now_ts,
+            "summary": {
+                "avg_decision_confidence": avg_dc,
+                "avg_mitigation_score":    avg_mit,
+                "countries_with_immediate_action": sum(
+                    1 for pb in all_pb if pb.get("playbook",{}).get("immediate")),
+            },
+            "top_decisions":           top_decisions,
+            "top_risk_reductions":     top_risk_reductions,
+            "cost_vs_impact":          cost_impact[:10],
+            "resilience_gains":        resilience_gains,
+            "strategic_priorities":    strategic_priorities[:10],
+            "policy_simulator":        policy_summary,
+            "counterfactual_results":  cf_summary,
+            "decision_confidence":     dc_ranking,
+            "national_playbooks":      national_playbooks,
+            "global_decision_atlas":   global_atlas,
+        }, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V8] Phase 10: Strategic Decision Dashboard", file=sys.stderr)
+
+
+# ── V8 Orchestrator ───────────────────────────────────────────────────────
+
+def save_grdf_v8(snapshots: list) -> None:
+    """
+    GRDF V8 -- Strategic Decision Intelligence.
+    Dependency: V1->V2->V3->V4->V5->V6->V7->V8
+    Reads: v1..v7 outputs.  Writes: v8_* only.
+    V1/V2/V3/V4/V5/V6/V7 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    all_ranked:   list[dict] = []
+    all_cf:       list[dict] = []
+    all_mit:      list[dict] = []
+    all_dc:       list[dict] = []
+    all_policy:   list[dict] = []
+    all_pb:       list[dict] = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            # Phase 1
+            cands = _build_v8_candidates(iso2, snap)
+            with open(GRDF_DIR / f"v8_decision_candidates_{iso2}.json","w") as f:
+                json.dump(cands, f, ensure_ascii=False, indent=2)
+
+            # Phase 2
+            scores = _build_v8_decision_scores(iso2, snap, cands)
+            with open(GRDF_DIR / f"v8_decision_score_{iso2}.json","w") as f:
+                json.dump(scores, f, ensure_ascii=False, indent=2)
+
+            # Phase 3
+            cb = _build_v8_cost_benefit(iso2, snap, cands, scores)
+            with open(GRDF_DIR / f"v8_cost_benefit_{iso2}.json","w") as f:
+                json.dump(cb, f, ensure_ascii=False, indent=2)
+
+            # Phase 4 (needs EWS from V7)
+            warn_d  = _v8_load(f"v7_warning_score_{iso2}.json")
+            ews     = float(warn_d.get("early_warning_score", 40))
+            ranked  = _build_v8_response_rank(iso2, snap, scores, cb, ews)
+            ranked["country"] = iso2
+            with open(GRDF_DIR / f"v8_response_rank_{iso2}.json","w") as f:
+                json.dump(ranked, f, ensure_ascii=False, indent=2)
+            all_ranked.append(ranked)
+
+            # Phase 5
+            top_act = next((a for a in _V8_ACTION_CATALOGUE if a["id"] == (ranked.get("top10") or [{}])[0].get("id","ACT-01")), _V8_ACTION_CATALOGUE[0])
+            cf = _build_v8_counterfactual(iso2, snap, top_act)
+            with open(GRDF_DIR / f"v8_counterfactual_{iso2}.json","w") as f:
+                json.dump(cf, f, ensure_ascii=False, indent=2)
+            all_cf.append(cf)
+
+            # Phase 6
+            pol = _build_v8_policy_impacts(iso2, snap)
+            with open(GRDF_DIR / f"v8_policy_impacts_{iso2}.json","w") as f:
+                json.dump(pol, f, ensure_ascii=False, indent=2)
+            all_policy.append(pol)
+
+            # Phase 7
+            pb = _build_v8_playbook(iso2, snap, ranked)
+            with open(GRDF_DIR / f"v8_playbook_{iso2}.json","w") as f:
+                json.dump(pb, f, ensure_ascii=False, indent=2)
+            all_pb.append(pb)
+
+            # Phase 8
+            mit = _build_v8_mitigation(iso2, snap, cands)
+            with open(GRDF_DIR / f"v8_mitigation_{iso2}.json","w") as f:
+                json.dump(mit, f, ensure_ascii=False, indent=2)
+            all_mit.append(mit)
+
+            # Phase 9
+            dc = _build_v8_decision_confidence(iso2, snap)
+            with open(GRDF_DIR / f"v8_decision_confidence_{iso2}.json","w") as f:
+                json.dump(dc, f, ensure_ascii=False, indent=2)
+            all_dc.append(dc)
+
+        except Exception as e:
+            print(f"[GRDF-V8] {iso2}: FAILED -- {e}", file=sys.stderr)
+
+    # Phase 10: dashboard
+    _save_v8_dashboard(snapshots, all_ranked, all_cf, all_mit,
+                       all_dc, all_policy, all_pb)
+
+    print(f"[GRDF-V8] All 10 phases complete. {len(all_ranked)} countries processed.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -12849,6 +13537,7 @@ def main():
     save_grdf_v5(snapshots)
     save_grdf_v6(snapshots)
     save_grdf_v7(snapshots)
+    save_grdf_v8(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
