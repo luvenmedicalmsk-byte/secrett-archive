@@ -11194,6 +11194,828 @@ def save_grdf_v5(snapshots: list) -> None:
     print(f"[GRDF-V5] All 8 phases complete. {len(all_intel)} countries processed.", file=sys.stderr)
 
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V6 -- Global Risk Digital Twin
+#
+# Transforms GRDF from Scenario Intelligence into a full Digital Twin of
+# the world risk system: 25 countries modeled simultaneously as a single
+# interconnected organism with cross-border cascade propagation,
+# Monte Carlo simulations, bifurcation mapping, and system-shock testing.
+#
+# Phase 1:  Country State Engine      -> v6_country_state_{CC}.json
+# Phase 2:  Global Link Engine        -> v6_country_links.json
+# Phase 3:  Cascade Propagation Engine-> v6_propagation_engine.json
+# Phase 4:  Digital Twin Engine       -> v6_digital_twin_{CC}.json
+# Phase 5:  Monte Carlo Engine        -> v6_montecarlo_{CC}.json
+# Phase 6:  System Shock Engine       -> v6_system_shocks.json
+# Phase 7:  Bifurcation Mapping       -> v6_bifurcation_map.json
+# Phase 8:  Global Risk Atlas         -> v6_global_risk_map.json
+# Phase 9:  Global Outlook Engine     -> v6_global_outlook.json (alias alias)
+# Phase 10: Digital Twin Dashboard    -> v6_dashboard.json
+#
+# Reads: v1..v5 outputs (read-only).
+# Writes: v6_* only.  V1-V5 NEVER modified.
+# =========================================================================
+
+import math as _m
+import random as _rng
+
+_RNG_SEED = 20260530   # deterministic Monte Carlo
+
+# Country linkage weights (Phase 2)
+# Tuples: (economic, energy, trade, climate, geopolitical, technology, social)
+# represent how strongly two countries are coupled across 7 link domains.
+_LINK_DOMAINS = ["economic","energy","trade","climate","geopolitical","technology","social"]
+
+# Per-country region cluster (for link-matrix distance proxy)
+_CC_REGION: dict[str,int] = {
+    "RU":1,"BY":1,"UA":1,"KZ":1,
+    "DE":2,"FR":2,"GB":2,"IT":2,"PL":2,"ES":2,"CH":2,
+    "US":3,"CA":3,"MX":3,"AR":3,
+    "CN":4,"JP":4,"IN":4,"ID":4,
+    "TR":5,"AE":5,"SA":5,"EG":5,"IL":5,"IR":5,
+}
+
+# System shock types (Phase 6)
+_V6_SHOCK_TYPES = [
+    "financial_crisis","energy_crisis","climate_catastrophe",
+    "geopolitical_conflict","technology_disruption","pandemic","multidomain_crisis",
+]
+
+# Bifurcation thresholds (Phase 7, updated spec)
+_V6_BIF_THRESHOLDS = [(85,"critical_transition"),(70,"near_bifurcation"),(40,"unstable"),(0,"stable")]
+
+
+# ── helpers ──────────────────────────────────────────────────────────────
+
+def _v6_load(path_rel: str) -> dict:
+    p = GRDF_DIR / path_rel
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def _v6_bif_grade(score: float) -> str:
+    for thr, grade in _V6_BIF_THRESHOLDS:
+        if score >= thr:
+            return grade
+    return "stable"
+
+
+def _v6_countries_list() -> list[str]:
+    return [s["country"] for s in COUNTRIES.values()] if hasattr(COUNTRIES,"values") else list(_CC_REGION.keys())
+
+
+# ── Phase 1: Country State Engine ────────────────────────────────────────
+
+def _build_v6_country_state(iso2: str, snap: dict) -> dict:
+    """
+    Phase 1: Dynamic country profile aggregating V1-V5 outputs.
+
+    country_state = mean(GRI, URO_score, velocity_norm, SSI_inverse,
+                         vulnerability, signal_score)
+
+    All inputs normalised to 0-100. State score = 0..100.
+    """
+    # GRI from V1 URO
+    uro      = _v6_load(f"{iso2}.json")
+    gri      = int(uro.get("gri", snap.get("risk_score", 50) or 50))
+
+    # URO score (V1 risk_score)
+    uro_score= int(snap.get("risk_score", 50) or 50)
+
+    # Velocity normalised (V3 trend)
+    trend    = _v6_load(f"v3_trends_{iso2}.json")
+    vel_raw  = abs(trend.get("mean_delta_7d", snap.get("delta", 0) or 0) or 0)
+    vel_norm = min(100, round(vel_raw * 5))
+
+    # SSI inverse from V4 stress test (low resilience -> high state stress)
+    stress   = _v6_load(f"v4_stress_tests.json")
+    st_rec   = next((r for r in stress.get("stress_tests",[]) if r.get("country")==iso2), {})
+    resilience   = int(st_rec.get("resilience",   50))
+    vulnerability= int(st_rec.get("vulnerability", 50))
+    ssi_inverse  = max(0, 100 - resilience)   # low resilience = high stress
+
+    # Signal score from V5
+    sig_d    = _v6_load(f"v5_signals_{iso2}.json")
+    sig_score= int(sig_d.get("signal_score", 30))
+
+    # Composite state score
+    state_score = round((gri + uro_score + vel_norm + ssi_inverse + vulnerability + sig_score) / 6)
+    state_score = max(0, min(100, state_score))
+
+    # Bifurcation from V5
+    bif_d    = _v6_load(f"v5_bifurcations_{iso2}.json")
+    bif_score= int(bif_d.get("bifurcation_score", 0))
+
+    # Cascade exposure from V2
+    casc_d   = _v6_load(f"v2_cascades_{iso2}.json")
+    cascade  = float(casc_d.get("max_cascade_score", 0) or 0)
+
+    # Forecast delta from V3
+    fc_d     = _v6_load(f"v3_forecast_{iso2}.json")
+    fc_30    = (fc_d.get("horizons") or {}).get("30d", {}).get("score", uro_score)
+    fc_delta = int(fc_30) - uro_score if fc_30 else 0
+
+    return {
+        "country":         iso2,
+        "country_name":    snap.get("country_name", iso2),
+        "date":            TODAY,
+        "grdf_version":    "6.0",
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        # Core fields
+        "state_score":     state_score,
+        "gri":             gri,
+        "uro_score":       uro_score,
+        "velocity":        round(vel_raw, 2),
+        "velocity_norm":   vel_norm,
+        "ssi_inverse":     ssi_inverse,
+        "resilience":      resilience,
+        "vulnerability":   vulnerability,
+        "signal_score":    sig_score,
+        "bifurcation_score": bif_score,
+        "cascade_exposure":  round(cascade),
+        "forecast_delta":    fc_delta,
+        "dominant_domain": snap.get("dominant_domain","geopolitical"),
+        "alert_level":     snap.get("alert_level","NONE") or "NONE",
+    }
+
+
+# ── Phase 2: Global Link Engine ───────────────────────────────────────────
+
+def _link_strength(iso2_a: str, iso2_b: str,
+                    state_a: dict, state_b: dict) -> float:
+    """
+    Phase 2: compute bilateral link strength between two countries.
+    Same-region countries are more tightly coupled (×1.30).
+    Link = mean(vulnerability_a, vulnerability_b) / 100 × region_factor.
+    """
+    reg_a = _CC_REGION.get(iso2_a, 0)
+    reg_b = _CC_REGION.get(iso2_b, 0)
+    region_factor = 1.30 if reg_a == reg_b else 1.00
+
+    # Base strength from bilateral risk overlap
+    va = state_a.get("vulnerability", 50)
+    vb = state_b.get("vulnerability", 50)
+    gri_a = state_a.get("gri", 50)
+    gri_b = state_b.get("gri", 50)
+
+    base = (va + vb) / 200.0 * 0.5 + (gri_a + gri_b) / 200.0 * 0.5
+    strength = round(min(1.0, base * region_factor), 3)
+    return strength
+
+
+def _save_v6_links(state_map: dict[str, dict]) -> dict[tuple[str,str], float]:
+    """Phase 2: build 25×25 country link matrix."""
+    ccs     = sorted(state_map.keys())
+    matrix  = []
+    lu: dict[tuple[str,str], float] = {}
+
+    for a in ccs:
+        for b in ccs:
+            if a == b:
+                continue
+            st = _link_strength(a, b, state_map[a], state_map[b])
+            if st >= 0.15:          # only meaningful links
+                matrix.append({
+                    "from": a, "to": b,
+                    "strength": st,
+                    "primary_domain": _primary_link_domain(a, b),
+                    "region_coupled": _CC_REGION.get(a,0) == _CC_REGION.get(b,0),
+                })
+                lu[(a, b)] = st
+
+    # Per-domain breakdown (simplified equal weight)
+    with open(GRDF_DIR / "v6_country_links.json", "w") as f:
+        json.dump({
+            "grdf_version": "6.0",
+            "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "link_domains": _LINK_DOMAINS,
+            "total_links":  len(matrix),
+            "matrix":       matrix,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V6] Phase 2: {len(matrix)} country links", file=sys.stderr)
+    return lu
+
+
+def _primary_link_domain(a: str, b: str) -> str:
+    """Heuristic: major link domain between two countries."""
+    energy_pairs = {frozenset(p) for p in [("RU","DE"),("RU","FR"),("RU","IT"),
+                    ("SA","US"),("AE","IN"),("IR","CN"),("KZ","CN"),("RU","CN")]}
+    geo_pairs    = {frozenset(p) for p in [("RU","UA"),("IL","IR"),("US","CN"),
+                    ("IN","CN"),("US","RU"),("TR","RU"),("BY","UA")]}
+    pair = frozenset([a, b])
+    if pair in energy_pairs:   return "energy"
+    if pair in geo_pairs:      return "geopolitical"
+    return "economic"
+
+
+# ── Phase 3: Cascade Propagation Engine ──────────────────────────────────
+
+def _propagate_shock(origin: str, shock_strength: float,
+                      link_lu: dict, state_map: dict,
+                      max_hops: int = 5) -> list[dict]:
+    """
+    Phase 3: Propagate a shock from origin country through the link network.
+
+    propagation = shock_strength × link_strength × resilience_factor
+    attenuation = 0.90 ^ distance_hops
+
+    Returns list of {country, hop, propagated_strength, absorbed}.
+    """
+    if origin not in state_map:
+        return []
+
+    visited: dict[str, float] = {origin: shock_strength}
+    frontier = [(origin, shock_strength, 0)]
+    results  = []
+
+    while frontier:
+        src, strength, hop = frontier.pop(0)
+        if hop >= max_hops:
+            continue
+
+        for (a, b), link_st in link_lu.items():
+            if a != src:
+                continue
+            if b in visited:
+                continue
+
+            resilience  = state_map[b].get("resilience", 50) / 100.0
+            res_factor  = max(0.2, 1.0 - resilience * 0.4)    # 0.2..0.8
+            attenuation = 0.90 ** (hop + 1)
+            prop_str    = round(strength * link_st * res_factor * attenuation, 3)
+
+            if prop_str < 0.01:
+                continue
+
+            visited[b]  = prop_str
+            frontier.append((b, prop_str, hop + 1))
+            results.append({
+                "from":                src,
+                "to":                  b,
+                "hop":                 hop + 1,
+                "propagated_strength": prop_str,
+                "link_strength":       link_st,
+                "resilience_factor":   round(res_factor, 3),
+                "attenuation":         round(attenuation, 3),
+                "absorbed":            round(1 - prop_str / max(0.001, strength), 3),
+            })
+
+    return sorted(results, key=lambda x: -x["propagated_strength"])
+
+
+def _save_v6_propagation(state_map: dict, link_lu: dict) -> None:
+    """Phase 3: propagate shocks from top-5 highest-state countries."""
+    # Top 5 highest-state countries as shock origins
+    origins = sorted(state_map.items(), key=lambda x: -x[1]["state_score"])[:5]
+    all_props = []
+
+    for iso2, state in origins:
+        shock_str = state["state_score"] / 100.0
+        prop = _propagate_shock(iso2, shock_str, link_lu, state_map)
+        all_props.append({
+            "origin":          iso2,
+            "origin_name":     state["country_name"],
+            "shock_strength":  round(shock_str, 3),
+            "affected_n":      len(prop),
+            "propagation":     prop[:20],      # top-20 hops per origin
+        })
+
+    with open(GRDF_DIR / "v6_propagation_engine.json", "w") as f:
+        json.dump({
+            "grdf_version": "6.0",
+            "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "max_hops": 5,
+            "propagation_formula": "shock * link * resilience_factor * (0.90^hop)",
+            "origins_simulated": len(all_props),
+            "propagations": all_props,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V6] Phase 3: cascade propagation from {len(all_props)} origins", file=sys.stderr)
+
+
+# ── Phase 4: Digital Twin Engine ─────────────────────────────────────────
+
+def _build_v6_digital_twin(iso2: str, snap: dict,
+                             state: dict, link_lu: dict,
+                             state_map: dict) -> dict:
+    """
+    Phase 4: Full digital twin for one country.
+    Aggregates V1-V5 artefacts + V6 state + propagation context.
+    """
+    # V3 forecast
+    fc_d   = _v6_load(f"v3_forecast_{iso2}.json")
+    hz     = fc_d.get("horizons", {})
+
+    # V5 scenarios and transitions
+    sc_d   = _v6_load(f"v5_scenarios_{iso2}.json")
+    tr_d   = _v6_load(f"v5_transitions_{iso2}.json")
+    trig_d = _v6_load(f"v5_triggers_{iso2}.json")
+    bif_d  = _v6_load(f"v5_bifurcations_{iso2}.json")
+    int_d  = _v6_load(f"v5_intelligence_{iso2}.json")
+
+    # Top bilateral links
+    top_links = sorted(
+        [(b, st) for (a,b),st in link_lu.items() if a == iso2],
+        key=lambda x: -x[1]
+    )[:5]
+
+    # Incoming shocks: what arrives from others
+    incoming = sorted(
+        [(a, st) for (a,b),st in link_lu.items() if b == iso2],
+        key=lambda x: -state_map.get(a,{}).get("state_score",0)
+    )[:5]
+
+    return {
+        "country":         iso2,
+        "country_name":    snap.get("country_name", iso2),
+        "date":            TODAY,
+        "grdf_version":    "6.0",
+        "generated_at":    datetime.now(timezone.utc).isoformat(),
+        # Current state (Phase 1)
+        "state":           state,
+        # Forecast horizons (V3)
+        "forecast": {
+            "30d":  hz.get("30d",  {}).get("score"),
+            "90d":  hz.get("90d",  {}).get("score"),
+            "180d": hz.get("180d", {}).get("score"),
+            "365d": hz.get("365d", {}).get("score"),
+        },
+        # Scenarios (V5)
+        "probable_scenario": sc_d.get("most_probable","baseline"),
+        "standard_scenarios":sc_d.get("standard_scenarios",{}),
+        "emergent_scenarios":sc_d.get("emergent_scenarios",{}),
+        # Triggers and transitions (V5)
+        "top_triggers":     (trig_d.get("triggers") or [])[:5],
+        "transitions":      (tr_d.get("transitions") or [])[:8],
+        # Bifurcation (V5/V6)
+        "bifurcation_score":bif_d.get("bifurcation_score",0),
+        "bifurcation_grade":bif_d.get("bifurcation_grade","stable"),
+        # Cascades (V2)
+        "cascade_exposure": state.get("cascade_exposure",0),
+        # Strategic intelligence (V5)
+        "probable_scenario_basis": int_d.get("signal_grade","noise"),
+        "top_drivers":             int_d.get("top_drivers",[]),
+        "recommended_monitoring":  int_d.get("recommended_monitoring",[]),
+        # Network context (V6)
+        "top_outbound_links": [{"country":b,"strength":st} for b,st in top_links],
+        "top_inbound_links":  [{"country":a,"strength":st} for a,st in incoming],
+    }
+
+
+# ── Phase 5: Monte Carlo Engine ──────────────────────────────────────────
+
+_MC_N      = 10_000
+_MC_HORIZONS = [1, 3, 5, 10]   # years
+
+
+def _run_montecarlo(iso2: str, snap: dict, state: dict) -> dict:
+    """
+    Phase 5: 10 000 deterministic Monte Carlo simulations.
+    Each simulation draws random delta from N(mean_delta, sigma) and projects
+    score over the horizon. Returns percentile distribution.
+    """
+    rng = _rng.Random(_RNG_SEED + abs(hash(iso2)) % 1_000_000)
+
+    base    = int(snap.get("risk_score", 50) or 50)
+    delta   = float(snap.get("delta", 0) or 0)
+    casc    = float(state.get("cascade_exposure", 0))
+    vuln    = state.get("vulnerability", 50) / 100.0
+
+    # Sigma: proportional to volatility + cascade exposure
+    trend_d = _v6_load(f"v3_trends_{iso2}.json")
+    sigma   = max(1.0, trend_d.get("volatility", 5.0) or 5.0) * 0.4 + casc * 0.03
+
+    results: dict[str, dict] = {}
+    for yr in _MC_HORIZONS:
+        scores: list[float] = []
+        days = yr * 365
+        for _ in range(_MC_N):
+            # Random walk: cumulative sum of daily deltas
+            mean_d = delta / 7.0    # weekly->daily
+            sigma_d= sigma / 30.0   # monthly->daily
+            # Simplified: draw one representative quarterly delta
+            n_quarters = max(1, days // 90)
+            quarterly_deltas = [rng.gauss(mean_d * 90, sigma_d * 90 * _m.sqrt(n_quarters))
+                                 for _ in range(n_quarters)]
+            cumulative = sum(quarterly_deltas)
+            # Vulnerability amplifier
+            raw = base + cumulative * (1 + vuln * 0.3)
+            raw = max(5, min(97, raw))
+            scores.append(raw)
+
+        scores.sort()
+        p = lambda pct: round(scores[int((_MC_N-1) * pct / 100)])
+        results[f"{yr}yr"] = {
+            "p5":   p(5), "p25": p(25), "p50": p(50),
+            "p75": p(75), "p95": p(95),
+            "mean": round(sum(scores)/_MC_N, 1),
+            "std":  round((_m.sqrt(sum((s-sum(scores)/_MC_N)**2 for s in scores)/_MC_N)), 1),
+            "n_simulations": _MC_N,
+        }
+
+    # Probability of CRITICAL state (score >= 80)
+    worst_scores = [results[f"{yr}yr"]["p95"] for yr in _MC_HORIZONS]
+    p_critical = round(sum(1 for s in worst_scores if s >= 80) / len(worst_scores) * 100)
+
+    return {
+        "country":      iso2,
+        "country_name": snap.get("country_name", iso2),
+        "date":         TODAY,
+        "grdf_version": "6.0",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "n_simulations":_MC_N,
+        "base_score":   base,
+        "mean_delta":   round(delta, 2),
+        "sigma":        round(sigma, 2),
+        "horizons":     results,
+        "p_critical":   p_critical,
+        "rng_seed":     _RNG_SEED,
+    }
+
+
+# ── Phase 6: System Shock Engine ─────────────────────────────────────────
+
+def _system_shock_impact(shock_type: str, state_map: dict,
+                          link_lu: dict) -> dict:
+    """
+    Phase 6: Simulate a global system shock.
+    Shock hits the most vulnerable countries hardest, then propagates.
+    """
+    # Domain sensitivity per shock type
+    domain_sensitivity: dict[str,str] = {
+        "financial_crisis":      "economic",
+        "energy_crisis":         "energy",
+        "climate_catastrophe":   "climate",
+        "geopolitical_conflict": "geopolitical",
+        "technology_disruption": "cyber",
+        "pandemic":              "social",
+        "multidomain_crisis":    "geopolitical",  # hits everything
+    }
+    primary_domain = domain_sensitivity.get(shock_type, "economic")
+
+    # Initial impact: top-5 most vulnerable countries
+    sorted_by_vuln = sorted(state_map.items(), key=lambda x: -x[1]["vulnerability"])
+    epicenters      = sorted_by_vuln[:5]
+
+    # Propagation from each epicenter
+    total_impact: dict[str,float] = {}
+    for iso2, state in epicenters:
+        base_impact = state["vulnerability"] / 100.0 * 0.85
+        prop = _propagate_shock(iso2, base_impact, link_lu, state_map, max_hops=3)
+        for hop in prop:
+            cc  = hop["to"]
+            val = hop["propagated_strength"]
+            total_impact[cc] = min(1.0, total_impact.get(cc,0) + val)
+
+    # Build impact map
+    impact_map = [
+        {"country": cc,
+         "country_name": state_map.get(cc, {}).get("country_name", cc),
+         "impact_score": round(val * 100),
+         "severity": ("critical" if val >= 0.7 else "high" if val >= 0.5
+                      else "moderate" if val >= 0.3 else "low")}
+        for cc, val in sorted(total_impact.items(), key=lambda x: -x[1])
+    ]
+
+    global_severity = round(sum(val * 100 for val in total_impact.values()) / max(1, len(total_impact)))
+    return {
+        "shock_type":      shock_type,
+        "primary_domain":  primary_domain,
+        "epicenters":      [e[0] for e in epicenters],
+        "countries_affected": len(impact_map),
+        "global_severity_score": global_severity,
+        "impact_map":      impact_map[:20],
+    }
+
+
+def _save_v6_system_shocks(state_map: dict, link_lu: dict) -> None:
+    """Phase 6: run all 7 global system shocks."""
+    shocks = [_system_shock_impact(t, state_map, link_lu)
+              for t in _V6_SHOCK_TYPES]
+    worst  = max(shocks, key=lambda x: x["global_severity_score"])
+    with open(GRDF_DIR / "v6_system_shocks.json", "w") as f:
+        json.dump({
+            "grdf_version": "6.0",
+            "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "shock_types":  _V6_SHOCK_TYPES,
+            "worst_shock":  worst["shock_type"],
+            "shocks":       shocks,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V6] Phase 6: {len(shocks)} system shocks. Worst: {worst['shock_type']}", file=sys.stderr)
+
+
+# ── Phase 7: Bifurcation Mapping Engine ──────────────────────────────────
+
+def _build_v6_bifurcation_score(state: dict) -> tuple[float, str]:
+    """
+    Phase 7:
+    bifurcation_score = volatility*0.35 + cascade*0.35 + trigger*0.30
+    (V6 weights differ from V5 volatility*0.40)
+    """
+    v5_bif   = _v6_load(f"v5_bifurcations_{state['country']}.json")
+    # Use V5 inputs with V6 weighting
+    vol_norm  = float(v5_bif.get("volatility_input",  state.get("velocity_norm",0)))
+    cascade   = float(state.get("cascade_exposure",   0))
+    trig_str  = float(v5_bif.get("trigger_input",     state.get("signal_score",0)))
+
+    score = max(0, min(100, round(vol_norm*0.35 + cascade*0.35 + trig_str*0.30)))
+    return score, _v6_bif_grade(score)
+
+
+def _save_v6_bifurcation_map(state_map: dict) -> None:
+    """Phase 7: global bifurcation map."""
+    entries = []
+    for iso2, state in state_map.items():
+        score, grade = _build_v6_bifurcation_score(state)
+        entries.append({
+            "country":           iso2,
+            "country_name":      state["country_name"],
+            "bifurcation_score": score,
+            "bifurcation_grade": grade,
+            "state_score":       state["state_score"],
+            "cascade_exposure":  state["cascade_exposure"],
+        })
+    entries.sort(key=lambda x: -x["bifurcation_score"])
+
+    grade_dist: dict[str,int] = {}
+    for e in entries:
+        g = e["bifurcation_grade"]
+        grade_dist[g] = grade_dist.get(g,0) + 1
+
+    with open(GRDF_DIR / "v6_bifurcation_map.json", "w") as f:
+        json.dump({
+            "grdf_version":   "6.0",
+            "date": TODAY,
+            "generated_at":   datetime.now(timezone.utc).isoformat(),
+            "formula":        "volatility*0.35 + cascade*0.35 + trigger*0.30",
+            "thresholds":     {"critical_transition":85,"near_bifurcation":70,"unstable":40,"stable":0},
+            "grade_distribution": grade_dist,
+            "near_bifurcation_n": grade_dist.get("near_bifurcation",0) + grade_dist.get("critical_transition",0),
+            "bifurcation_map":entries,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V6] Phase 7: bifurcation map. Critical: {grade_dist.get('critical_transition',0)}", file=sys.stderr)
+
+
+# ── Phase 8: Global Risk Atlas ────────────────────────────────────────────
+
+def _save_v6_global_risk_map(state_map: dict) -> None:
+    """
+    Phase 8: Global Risk Atlas -- per-domain risk layer for all countries.
+    Layers: climate, economic, geopolitical, technology, social.
+    """
+    layers: dict[str, list] = {d:[] for d in ["climate","economic","geopolitical","technology","social"]}
+    for iso2, state in state_map.items():
+        dom_s = _get_domain_scores(iso2, {})   # empty snap, will use fallback
+        # Try to get live snap from state metadata
+        for domain in layers:
+            grdf_domain = domain
+            d_score = dom_s.get(grdf_domain, {}).get("score", state["gri"])
+            layers[domain].append({
+                "country":       iso2,
+                "country_name":  state["country_name"],
+                "score":         d_score,
+                "state_score":   state["state_score"],
+            })
+
+    for domain in layers:
+        layers[domain].sort(key=lambda x: -x["score"])
+
+    with open(GRDF_DIR / "v6_global_risk_map.json", "w") as f:
+        json.dump({
+            "grdf_version": "6.0",
+            "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "layers": layers,
+            "top_overall": sorted(
+                [{"country":iso2,"state_score":st["state_score"],"gri":st["gri"]}
+                 for iso2,st in state_map.items()],
+                key=lambda x: -x["state_score"])[:10],
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V6] Phase 8: global risk atlas ({len(state_map)} countries, 5 layers)", file=sys.stderr)
+
+
+# ── Phase 9: Global Outlook Engine ────────────────────────────────────────
+
+def _save_v6_global_outlook(state_map: dict, mc_map: dict,
+                              bif_data: dict) -> None:
+    """
+    Phase 9: synthesise global outlook from all V6 outputs.
+    Top10 lists: high-risk, rising, systemic cascades, bifurcation zones.
+    """
+    sorted_state  = sorted(state_map.values(), key=lambda x: -x["state_score"])
+    sorted_rising = sorted(state_map.values(), key=lambda x: -abs(x.get("forecast_delta",0)))
+    bif_entries   = sorted(bif_data.get("bifurcation_map",[]), key=lambda x:-x["bifurcation_score"])
+
+    # Rising risk countries (positive forecast delta only)
+    rising = [s for s in sorted_rising if s.get("forecast_delta",0) > 0][:10]
+
+    # Systemic cascade: highest cascade_exposure
+    systemic = sorted(state_map.values(), key=lambda x: -x.get("cascade_exposure",0))[:10]
+
+    # Monte Carlo p95 at 5yr horizon
+    mc_risky = sorted(
+        [{"country":iso2,"p95_5yr":data.get("horizons",{}).get("5yr",{}).get("p95",50)}
+         for iso2,data in mc_map.items()],
+        key=lambda x: -x["p95_5yr"]
+    )[:10]
+
+    with open(GRDF_DIR / "v6_global_outlook.json", "w") as f:
+        json.dump({
+            "grdf_version":        "6.0",
+            "date": TODAY,
+            "generated_at":        datetime.now(timezone.utc).isoformat(),
+            "top10_high_risk":     [{"country":s["country"],"state_score":s["state_score"]}
+                                    for s in sorted_state[:10]],
+            "top10_rising_risks":  [{"country":s["country"],"forecast_delta":s.get("forecast_delta",0)}
+                                    for s in rising],
+            "top10_systemic":      [{"country":s["country"],"cascade_exposure":s.get("cascade_exposure",0)}
+                                    for s in systemic],
+            "top10_bifurcation":   [{"country":e["country"],"bifurcation_score":e["bifurcation_score"],
+                                     "grade":e["bifurcation_grade"]} for e in bif_entries[:10]],
+            "top10_montecarlo_p95":mc_risky,
+        }, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V6] Phase 9: global outlook", file=sys.stderr)
+
+
+# ── Phase 10: Digital Twin Dashboard ──────────────────────────────────────
+
+def _save_v6_dashboard(state_map: dict, link_lu: dict,
+                        mc_map: dict, bif_data: dict,
+                        shocks_data: dict) -> None:
+    """
+    Phase 10: 10-widget strategic dashboard for the Digital Twin.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # W1: World Risk Map
+    world_risk_map = sorted(
+        [{"country":iso2,"state_score":st["state_score"],
+          "gri":st["gri"],"alert_level":st.get("alert_level","NONE")}
+         for iso2,st in state_map.items()],
+        key=lambda x: -x["state_score"])
+
+    # W2: SSI Heatmap (inverse resilience)
+    ssi_heatmap = sorted(
+        [{"country":iso2,"ssi_inverse":st["ssi_inverse"],"resilience":st["resilience"]}
+         for iso2,st in state_map.items()],
+        key=lambda x: -x["ssi_inverse"])[:15]
+
+    # W3: Cascade Network top links
+    top_links = sorted(link_lu.items(), key=lambda x: -x[1])[:20]
+    cascade_network = [{"from":a,"to":b,"strength":s} for (a,b),s in top_links]
+
+    # W4: Digital Twin Viewer (per-country state summary)
+    dt_viewer = [{"country":iso2,"state_score":st["state_score"],
+                  "signal_score":st["signal_score"],"bifurcation_score":st["bifurcation_score"]}
+                 for iso2,st in sorted(state_map.items(), key=lambda x:-x[1]["state_score"])[:10]]
+
+    # W5: Bifurcation Monitor
+    bif_mon = bif_data.get("bifurcation_map",[])[:10]
+
+    # W6: Scenario Explorer (most probable scenarios)
+    sc_dist: dict[str,list] = {}
+    for iso2 in state_map:
+        sc_d = _v6_load(f"v5_scenarios_{iso2}.json")
+        prob = sc_d.get("most_probable","baseline")
+        sc_dist.setdefault(prob,[]).append(iso2)
+
+    # W7: Monte Carlo Explorer (p50 at 5yr)
+    mc_explorer = sorted(
+        [{"country":iso2,"p50_5yr":data.get("horizons",{}).get("5yr",{}).get("p50",50),
+          "p95_5yr":data.get("horizons",{}).get("5yr",{}).get("p95",50)}
+         for iso2,data in mc_map.items()],
+        key=lambda x: -x["p50_5yr"])[:10]
+
+    # W8: Global Outlook (from Phase 9)
+    outlook_d = _v6_load("v6_global_outlook.json")
+
+    # W9: Strategic Alerts (critical-state countries)
+    strategic_alerts = [
+        {"country":iso2,"state_score":st["state_score"],"alert_level":st.get("alert_level","NONE"),
+         "vulnerability":st["vulnerability"]}
+        for iso2,st in state_map.items()
+        if st["state_score"] >= 65 or st.get("alert_level") in ("CRITICAL","WARNING")
+    ]
+    strategic_alerts.sort(key=lambda x: -x["state_score"])
+
+    # W10: Sovereign Intelligence Panel
+    sov_intel = []
+    for iso2 in [s["country"] for s in world_risk_map[:10]]:
+        int_d = _v6_load(f"v5_intelligence_{iso2}.json")
+        sov_intel.append({
+            "country":           iso2,
+            "state_score":       state_map.get(iso2,{}).get("state_score",0),
+            "probable_scenario": int_d.get("probable_scenario","baseline"),
+            "signal_grade":      int_d.get("signal_grade","noise"),
+            "bifurcation_grade": int_d.get("bifurcation_grade","stable"),
+        })
+
+    with open(GRDF_DIR / "v6_dashboard.json", "w") as f:
+        json.dump({
+            "grdf_version": "6.0",
+            "date": TODAY,
+            "generated_at": now_ts,
+            "world_risk_map":       world_risk_map,
+            "ssi_heatmap":          ssi_heatmap,
+            "cascade_network":      cascade_network,
+            "digital_twin_viewer":  dt_viewer,
+            "bifurcation_monitor":  bif_mon,
+            "scenario_distribution":sc_dist,
+            "montecarlo_explorer":  mc_explorer,
+            "global_outlook":       outlook_d.get("top10_high_risk",[]),
+            "strategic_alerts":     strategic_alerts,
+            "sovereign_intelligence":sov_intel,
+            "worst_shock":          shocks_data.get("worst_shock","?"),
+        }, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V6] Phase 10: Digital Twin Dashboard", file=sys.stderr)
+
+
+# ── V6 Orchestrator ───────────────────────────────────────────────────────
+
+def save_grdf_v6(snapshots: list) -> None:
+    """
+    GRDF V6 -- Global Risk Digital Twin orchestrator.
+    Dependency: V1->V2->V3->V4->V5->V6
+    Reads: v1..v5 outputs.  Writes: v6_* only.
+    V1/V2/V3/V4/V5 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Phase 1: Build country states
+    state_map: dict[str, dict] = {}
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            state = _build_v6_country_state(iso2, snap)
+            state_map[iso2] = state
+            with open(GRDF_DIR / f"v6_country_state_{iso2}.json","w") as f:
+                json.dump(state, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[GRDF-V6] state {iso2}: {e}", file=sys.stderr)
+
+    print(f"[GRDF-V6] Phase 1: {len(state_map)} country states", file=sys.stderr)
+
+    # Phase 2: Global link matrix
+    link_lu = _save_v6_links(state_map)
+
+    # Phase 3: Cascade propagation
+    _save_v6_propagation(state_map, link_lu)
+
+    # Phase 4: Digital twins
+    mc_map: dict[str, dict] = {}
+    for snap in snapshots:
+        iso2 = snap["country"]
+        if iso2 not in state_map:
+            continue
+        try:
+            dt = _build_v6_digital_twin(iso2, snap, state_map[iso2], link_lu, state_map)
+            with open(GRDF_DIR / f"v6_digital_twin_{iso2}.json","w") as f:
+                json.dump(dt, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[GRDF-V6] twin {iso2}: {e}", file=sys.stderr)
+    print(f"[GRDF-V6] Phase 4: digital twins built", file=sys.stderr)
+
+    # Phase 5: Monte Carlo
+    for snap in snapshots:
+        iso2 = snap["country"]
+        if iso2 not in state_map:
+            continue
+        try:
+            mc = _run_montecarlo(iso2, snap, state_map[iso2])
+            with open(GRDF_DIR / f"v6_montecarlo_{iso2}.json","w") as f:
+                json.dump(mc, f, ensure_ascii=False, indent=2)
+            mc_map[iso2] = mc
+        except Exception as e:
+            print(f"[GRDF-V6] mc {iso2}: {e}", file=sys.stderr)
+    print(f"[GRDF-V6] Phase 5: Monte Carlo ({_MC_N} sims x {len(mc_map)} countries)", file=sys.stderr)
+
+    # Phase 6: System shocks
+    _save_v6_system_shocks(state_map, link_lu)
+
+    # Phase 7: Bifurcation mapping
+    _save_v6_bifurcation_map(state_map)
+
+    # Phase 8: Global risk atlas
+    _save_v6_global_risk_map(state_map)
+
+    # Phase 9: Global outlook (needs bifurcation data)
+    bif_data = _v6_load("v6_bifurcation_map.json")
+    _save_v6_global_outlook(state_map, mc_map, bif_data)
+
+    # Phase 10: Dashboard
+    shocks_data = _v6_load("v6_system_shocks.json")
+    _save_v6_dashboard(state_map, link_lu, mc_map, bif_data, shocks_data)
+
+    print(f"[GRDF-V6] All 10 phases complete. Digital Twin operational.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -11268,6 +12090,7 @@ def main():
     save_grdf_v3(snapshots)
     save_grdf_v4(snapshots)
     save_grdf_v5(snapshots)
+    save_grdf_v6(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
