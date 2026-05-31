@@ -7409,8 +7409,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/operations/dashboard','/api/grdf/operations/service-levels',
       '/api/grdf/operations/reliability','/api/grdf/operations/incidents',
       '/api/grdf/operations/metrics','/api/grdf/operations/capacity',
+
+  // =========================================================================
+  // GRDF IMPACT & ADOPTION PROGRAM V1 API
+  // All routes under /api/grdf/impact/
+  // Architecture frozen. Impact measurement only.
+  // =========================================================================
+  if (seg[0] === 'impact') {
+    const iseg = seg[1] || 'dashboard';
+    const CI = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const IMP_FILES = {
+      'dashboard':    'docs/impact/impact_dashboard.json',
+      'score':        'docs/impact/impact_score.json',
+      'adoption':     'docs/impact/adoption_metrics.json',
+      'users':        'docs/impact/user_registry.json',
+      'segments':     'docs/impact/segment_analysis.json',
+      'forecast':     'docs/impact/adoption_forecast.json',
+      'certification':'docs/impact/impact_certification.json',
+      'roadmap':      'docs/impact/growth_roadmap.json',
+      'consumption':  'docs/impact/intelligence_consumption.json',
+      'value':        'docs/impact/user_value_assessment.json',
+    };
+    const IMP_SIGNAL_ONLY = new Set(['users','segments','consumption','value','roadmap']);
+    if (!IMP_FILES[iseg]) return new Response(JSON.stringify({error:'Unknown impact route: '+iseg, available:Object.keys(IMP_FILES)}),{status:404,headers:CI});
+    if (IMP_SIGNAL_ONLY.has(iseg) && access==='teaser') return new Response(JSON.stringify({error:iseg+' requires Signal tier'}),{status:403,headers:CI});
+    const ck = `grdf:imp:${iseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CI});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, IMP_FILES[iseg], 300);
+      if (!d) return new Response(JSON.stringify({error:'Impact '+iseg+' not built yet'}),{status:404,headers:CI});
+      let r;
+      if (access==='teaser') {
+        if (iseg==='dashboard') r={date:d.date,impact_status:d.impact_status,impact_score:d.impact_score,active_users:d.active_users,adoption_trends:d.adoption_trends,tier};
+        else if (iseg==='score') r={date:d.date,impact_score:d.impact_score,cert_level:d.cert_level,components:d.components,tier};
+        else if (iseg==='adoption') r={date:d.date,dau:d.dau,mau:d.mau,stickiness_pct:d.stickiness_pct,adoption_grade:d.adoption_grade,top_feature:d.top_feature,tier};
+        else if (iseg==='forecast') r={date:d.date,base_mau:d.base_mau,mau_365d:d.mau_365d,outlook:d.outlook,tier};
+        else if (iseg==='certification') r={date:d.date,impact_certification:d.impact_certification,impact_score:d.impact_score,no_v14:d.no_v14,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CI});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CI});}
+  }
+
       '/api/grdf/operations/score','/api/grdf/operations/certification',
       '/api/grdf/operations/risks','/api/grdf/operations/optimization',
+      '/api/grdf/impact/dashboard','/api/grdf/impact/score',
+      '/api/grdf/impact/adoption','/api/grdf/impact/users',
+      '/api/grdf/impact/segments','/api/grdf/impact/forecast',
+      '/api/grdf/impact/certification','/api/grdf/impact/roadmap',
+      '/api/grdf/impact/consumption','/api/grdf/impact/value',
     ]
   }),{status:404,headers:CORS});
 }
