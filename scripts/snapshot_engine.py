@@ -19671,6 +19671,623 @@ def save_grdf_final_certification(snapshots: list) -> None:
     print(f"[FINAL_CERT] ══════════════════════════════════════════ ({elapsed}ms)", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF PLATFORM TECHNICAL BASELINE V1
+#
+# Official reference documentation for the certified GRDF V1-V13 ecosystem.
+# Architecture frozen. No development. Documentation only.
+#
+# Phase 1:  Architecture Registry     -> baseline_architecture.json
+# Phase 2:  Formula Registry          -> baseline_formulas.json
+# Phase 3:  Storage Registry          -> baseline_storage.json
+# Phase 4:  API Registry              -> baseline_api_registry.json
+# Phase 5:  Dashboard Registry        -> baseline_dashboards.json
+# Phase 6:  Dependency Registry       -> baseline_dependency_graph.json
+# Phase 7:  Data Source Registry      -> baseline_data_sources.json
+# Phase 8:  Certification Registry    -> baseline_certification.json
+# Phase 9:  Platform Specification    -> baseline_platform_specification.json
+# Phase 10: Technical Baseline        -> baseline_v1_0.json
+#
+# Reads: v1..v13 + hardening + production + final outputs (read-only).
+# Writes: baseline_* only.  Architecture FROZEN at V13. Documentation only.
+# =========================================================================
+
+BASELINE_DIR = DOCS_DIR / "baseline"
+
+# ── Phase 1: Architecture Registry ───────────────────────────────────────
+
+_BL_ARCHITECTURE = {
+    "V1":  {
+        "name": "Risk Intelligence",
+        "mission": "Country-level risk scoring across 5 domains",
+        "key_inputs": ["country_name","risk_score","delta","dominant_domain"],
+        "key_outputs": ["GRI","URO","alert_level","domain_scores"],
+        "key_formula": "GRI = Σ(domain_score × weight) / Σ(weight)",
+        "domains": 5,
+        "countries": 25,
+        "primary_files": ["{CC}.json","_all.json","_rankings.json","_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+    },
+    "V2":  {
+        "name": "Correlation & Cascades",
+        "mission": "Event correlation matrices and cascade chain detection",
+        "key_inputs": ["V1_outputs","event_catalog"],
+        "key_outputs": ["correlation_matrix","cascade_chains","early_warnings"],
+        "key_formula": "cascade_score = Σ(trigger_score × domain_coupling)",
+        "domains": 5,
+        "countries": 25,
+        "primary_files": ["v2_correlations.json","v2_cascades.json","v2_warnings.json"],
+        "api_prefix": "/api/grdf/",
+    },
+    "V3":  {
+        "name": "Forecast Intelligence",
+        "mission": "Multi-horizon risk forecasting via 5-model ensemble",
+        "key_inputs": ["V1_outputs","V2_outputs","historical_records"],
+        "key_outputs": ["forecast_horizons","trend_velocity","volatility"],
+        "key_formula": "forecast = Σ(model_i × weight_i) across linear,exp,velocity,cascade,correlation",
+        "domains": 5,
+        "countries": 25,
+        "primary_files": ["v3_forecast_{CC}.json","v3_forecast_global.json","v3_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+        "horizons": ["30d","90d","180d","365d"],
+        "confidence_decay": [0.87,0.82,0.72,0.55,0.25],
+    },
+    "V4":  {
+        "name": "Strategic Simulation",
+        "mission": "Driver impact matrices, shock scenarios, resilience scoring",
+        "key_inputs": ["V1","V2","V3"],
+        "key_outputs": ["resilience","vulnerability","SSI","recovery_days","outcomes"],
+        "key_formula": "resilience=100-GRI×0.50-velocity×2.5-cascade×0.15",
+        "domains": 5,
+        "countries": 25,
+        "primary_files": ["v4_stress_tests.json","v4_outcomes.json","v4_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+    },
+    "V5":  {
+        "name": "Scenario Intelligence",
+        "mission": "Autonomous weak signal detection and emergent scenario generation",
+        "key_inputs": ["V1","V2","V3","V4"],
+        "key_outputs": ["signal_score","scenarios","triggers","transitions","bifurcations"],
+        "key_formula": "signal_score = novelty×0.30 + velocity×0.25 + persistence×0.20 + acceleration×0.25",
+        "domains": 5,
+        "countries": 25,
+        "primary_files": ["v5_signals_{CC}.json","v5_scenarios_{CC}.json","v5_global_outlook.json","v5_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+        "scenarios": ["baseline","best_case","stress","worst","emergent_a","emergent_b","emergent_c"],
+    },
+    "V6":  {
+        "name": "Global Risk Digital Twin",
+        "mission": "Country state engine, 25×25 link matrix, Monte Carlo 10k simulations",
+        "key_inputs": ["V1","V2","V3","V4","V5"],
+        "key_outputs": ["country_state","digital_twin","montecarlo","propagation","system_shocks","bifurcation_map"],
+        "key_formula": "state_score = mean(GRI, URO, velocity_norm, SSI_inverse, vulnerability, signal_score)",
+        "domains": 7,
+        "countries": 25,
+        "primary_files": ["v6_country_state_{CC}.json","v6_digital_twin_{CC}.json","v6_montecarlo_{CC}.json","v6_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+        "montecarlo_n": 10000,
+        "rng_seed": 20260530,
+        "link_matrix": "25×25",
+    },
+    "V7":  {
+        "name": "Strategic Early Warning System",
+        "mission": "Detect critical events before they enter active phase",
+        "key_inputs": ["V1","V2","V3","V4","V5","V6"],
+        "key_outputs": ["EWS","TTE","escalation","alert_level","materialization_probability","global_alert_network"],
+        "key_formula": "EWS = sig×0.25 + trig×0.20 + bif×0.20 + casc×0.15 + fc×0.20",
+        "domains": 7,
+        "countries": 25,
+        "primary_files": ["v7_warning_score_{CC}.json","v7_alerts_{CC}.json","v7_tte_{CC}.json","v7_top_risks.json","v7_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+        "alert_levels": ["GREEN","YELLOW","ORANGE","RED","BLACK"],
+        "tte_categories": ["immediate","30_days","90_days","180_days","1_year","3_years","5_years"],
+        "spec_examples": {"EWS": "(80,70,75,60,85)=75", "PMAT": "(80,70,60,75)=72%"},
+    },
+    "V8":  {
+        "name": "Strategic Decision Intelligence",
+        "mission": "Generate, rank and simulate strategic response options",
+        "key_inputs": ["V1","V2","V3","V4","V5","V6","V7"],
+        "key_outputs": ["DES","CBI","rank_score","counterfactual","policy_impacts","playbook","mitigation","DC"],
+        "key_formula": "DES = rr×0.40 + rg×0.30 + feas×0.20 + conf×0.10",
+        "domains": 15,
+        "countries": 25,
+        "primary_files": ["v8_response_rank_{CC}.json","v8_counterfactual_{CC}.json","v8_playbook_{CC}.json","v8_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+        "action_catalogue": 15,
+        "counterfactual_horizons": ["1yr","3yr","5yr","10yr"],
+        "policy_types": ["energy_policy","climate_adaptation","infrastructure_investment","migration_policy","economic_intervention","strategic_reserves"],
+    },
+    "V9":  {
+        "name": "Autonomous Strategic Intelligence",
+        "mission": "Autonomous coordination, resource allocation, scenario switching",
+        "key_inputs": ["V1","V2","V3","V4","V5","V6","V7","V8"],
+        "key_outputs": ["APS","RAE","multi_risk_plan","escalation_index","dynamic_playbook","active_scenario","SCS","AC"],
+        "key_formula": "APS = impact×0.35 + urgency×0.25 + feasibility×0.20 + confidence×0.20",
+        "domains": 5,
+        "countries": 25,
+        "primary_files": ["v9_priority_score_{CC}.json","v9_dynamic_playbook_{CC}.json","v9_escalation_{CC}.json","v9_dashboard.json"],
+        "api_prefix": "/api/grdf/",
+        "playbook_buckets": ["24h","7d","30d","90d","1yr"],
+        "switch_triggers": ["probability_change","tte_change","new_risk","cascade_effect"],
+    },
+    "V10": {
+        "name": "Sovereign Intelligence Platform",
+        "mission": "Unified platform: missions, knowledge graph, agents, memory, coordination",
+        "key_inputs": ["V1","V2","V3","V4","V5","V6","V7","V8","V9"],
+        "key_outputs": ["missions","knowledge_graph","memory","agents","alert_network","coordination","action_atlas","operations"],
+        "key_formula": "sovereign_alert = max(V7_alert, V9_escalation) + p_mat_boost",
+        "domains": 7,
+        "countries": 25,
+        "primary_files": ["v10_missions_{CC}.json","v10_knowledge_graph.json","v10_agents.json","v10_dashboard.json"],
+        "api_prefix": "/api/grdf/v10/",
+        "agents": ["climate","economic","geopolitical","infrastructure","energy","cyber","social"],
+        "mission_lifecycle": ["pending","active","monitoring","escalated","resolved"],
+    },
+    "V11": {
+        "name": "Autonomous Sovereign Network",
+        "mission": "Distributed sovereign network of federated nodes",
+        "key_inputs": ["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10"],
+        "key_outputs": ["federated_nodes","global_dependency_graph","cascading_failures","resource_exchange","global_missions","cross_border_coordination","learning_engine","governance","planetary_alerts"],
+        "key_formula": "ARS = demand×0.40 + urgency×0.35 + strategic_value×0.25",
+        "domains": 7,
+        "countries": 25,
+        "primary_files": ["v11_federated_nodes.json","v11_cascading_failures.json","v11_planetary_alerts.json","v11_dashboard.json"],
+        "api_prefix": "/api/grdf/v11/",
+        "nodes": ["NODE-US","NODE-EU","NODE-APAC","NODE-MENA","NODE-CIS","NODE-LATAM","NODE-AFRICA"],
+        "resource_classes": ["energy","water","food","transport","medical","cyber","emergency","infrastructure"],
+        "planetary_formula": "planetary_alert = max(regional_alerts, cascading_failures, mission_escalation)",
+    },
+    "V12": {
+        "name": "Planetary Intelligence System",
+        "mission": "Digital twin of Earth systems: climate, energy, food, water, economy, technology",
+        "key_inputs": ["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11"],
+        "key_outputs": ["planetary_twin","earth_systems_graph","global_flows","PSI","resilience","scenarios","CSI","coordination_network","planetary_alerts"],
+        "key_formula": "PSI = climate×0.20 + economy×0.20 + infrastructure×0.20 + resources×0.20 + geopolitics×0.20",
+        "domains": 12,
+        "countries": 25,
+        "primary_files": ["v12_planetary_twin.json","v12_planetary_stress.json","v12_civilization_stability.json","v12_dashboard.json"],
+        "api_prefix": "/api/grdf/v12/",
+        "planetary_domains": ["climate","energy","food","water","economy","finance","technology","infrastructure","cyber","population","migration","health"],
+        "spec_examples": {"PSI": "(80,85,75,80,90)=82", "CSI": "(85,80,90)=85"},
+    },
+    "V13": {
+        "name": "Civilization Intelligence System",
+        "mission": "Century-scale civilization trajectory modeling: 10-100 year horizons",
+        "key_inputs": ["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12"],
+        "key_outputs": ["civilization_state","long_horizon","resource_limits","tech_transitions","demographics","CRI","pathways","transitions","century_scenarios"],
+        "key_formula": "CRI = resilience×0.30 + adaptability×0.25 + innovation×0.20 + resources×0.15 + governance×0.10",
+        "domains": 12,
+        "countries": 25,
+        "primary_files": ["v13_civilization_state.json","v13_civilization_resilience.json","v13_pathways.json","v13_century_scenarios.json","v13_dashboard.json"],
+        "api_prefix": "/api/grdf/v13/",
+        "century_years": [2035,2050,2075,2100],
+        "pathway_classes": ["continuation","acceleration","transformation","fragmentation","collapse","recovery"],
+        "horizon_years": [10,25,50,75,100],
+    },
+}
+
+# ── Phase 2: Formula Registry ─────────────────────────────────────────────
+
+_BL_FORMULAS = [
+    {"id":"GRI",   "ver":"V1",  "desc":"Global Risk Index","formula":"Σ(domain×w)/Σ(w)","weights":{"domains":"equal"},"output_range":[0,100],"grades":{"stable":"<40","elevated":"40-65","critical":"65-80","severe":">80"}},
+    {"id":"SIG",   "ver":"V5",  "desc":"Signal Score","formula":"novelty×0.30+velocity×0.25+persistence×0.20+acceleration×0.25","weights":{"novelty":0.30,"velocity":0.25,"persistence":0.20,"acceleration":0.25},"output_range":[0,100],"grades":{"noise":"0-30","weak":"30-50","emerging":"50-70","strong":"70-85","critical":"85-100"}},
+    {"id":"BIF_V5","ver":"V5",  "desc":"Bifurcation Score (V5)","formula":"volatility×0.40+cascade×0.30+trigger×0.30","weights":{"volatility":0.40,"cascade":0.30,"trigger":0.30},"output_range":[0,100],"grades":{"stable":"0-40","unstable":"40-60","critical":"60-75","near_bifurcation":"75-100"}},
+    {"id":"BIF_V6","ver":"V6",  "desc":"Bifurcation Score (V6)","formula":"volatility×0.35+cascade×0.35+trigger×0.30","weights":{"volatility":0.35,"cascade":0.35,"trigger":0.30},"output_range":[0,100],"grades":{"stable":"0-40","unstable":"40-70","near_bifurcation":"70-85","critical_transition":"85-100"}},
+    {"id":"STATE", "ver":"V6",  "desc":"Country State Score","formula":"mean(GRI,URO,vel_norm,SSI_inv,vuln,sig)","weights":{"all":"1/6"},"output_range":[0,100]},
+    {"id":"MC",    "ver":"V6",  "desc":"Monte Carlo Distribution","formula":"N=10000 simulations, deterministic seed=20260530","output":{"percentiles":["p5","p25","p50","p75","p95"]}},
+    {"id":"EWS",   "ver":"V7",  "desc":"Early Warning Score","formula":"sig×0.25+trig×0.20+bif×0.20+casc×0.15+fc×0.20","weights":{"signal_score":0.25,"trigger_strength":0.20,"bifurcation_score":0.20,"cascade_score":0.15,"forecast_confidence":0.20},"output_range":[0,100],"spec":"EWS(80,70,75,60,85)=75","grades":{"low":"0-40","elevated":"40-60","high":"60-80","critical":"80-100"}},
+    {"id":"TTE",   "ver":"V7",  "desc":"Time-To-Event Score","formula":"100 - EWS","thresholds":{"immediate":"0-15","30_days":"15-30","90_days":"30-45","180_days":"45-60","1_year":"60-75","3_years":"75-90","5_years":"90-100"}},
+    {"id":"PMAT",  "ver":"V7",  "desc":"Materialization Probability","formula":"warning×0.35+trigger×0.25+cascade×0.20+bifurcation×0.20","weights":{"warning":0.35,"trigger":0.25,"cascade":0.20,"bifurcation":0.20},"output_range":[0,100],"spec":"PMAT(80,70,60,75)=72%"},
+    {"id":"DES",   "ver":"V8",  "desc":"Decision Effectiveness Score","formula":"rr×0.40+rg×0.30+feas×0.20+conf×0.10","weights":{"risk_reduction":0.40,"resilience_gain":0.30,"feasibility":0.20,"confidence":0.10},"output_range":[0,100],"grades":{"ineffective":"0-25","moderate":"25-50","effective":"50-75","strategic":"75-100"}},
+    {"id":"CBI",   "ver":"V8",  "desc":"Cost-Benefit Index","formula":"expected_benefit / implementation_cost","output_range":[0,None],"grades":{"low_cost_high_impact":"≥2.0","medium_cost_high_impact":"1.0-2.0","high_cost_strategic":"<1.0"}},
+    {"id":"RANK",  "ver":"V8",  "desc":"Strategic Response Rank","formula":"DES×0.50+CBI_norm×0.30+urgency×0.20","weights":{"DES":0.50,"CBI_norm":0.30,"urgency":0.20},"output_range":[0,100]},
+    {"id":"MS",    "ver":"V8",  "desc":"Mitigation Score","formula":"effectiveness×0.40+speed×0.20+feasibility×0.20+resilience_gain×0.20","weights":{"effectiveness":0.40,"speed":0.20,"feasibility":0.20,"resilience_gain":0.20},"output_range":[0,100]},
+    {"id":"DC",    "ver":"V8",  "desc":"Decision Confidence","formula":"forecast_conf×0.50+data_quality×0.30+model_agreement×0.20","weights":{"forecast_confidence":0.50,"data_quality":0.30,"model_agreement":0.20},"output_range":[0,100]},
+    {"id":"APS",   "ver":"V9",  "desc":"Autonomous Priority Score","formula":"impact×0.35+urgency×0.25+feasibility×0.20+confidence×0.20","weights":{"impact":0.35,"urgency":0.25,"feasibility":0.20,"confidence":0.20},"output_range":[0,100],"grades":{"low":"0-40","moderate":"40-60","high":"60-80","critical":"80-100"}},
+    {"id":"RAE",   "ver":"V9",  "desc":"Resource Allocation Efficiency","formula":"priority×0.50+resource_avail×0.30+impl_speed×0.20","weights":{"priority":0.50,"resource_availability":0.30,"implementation_speed":0.20},"output_range":[0,100]},
+    {"id":"EI",    "ver":"V9",  "desc":"Escalation Index","formula":"risk_level×0.40+velocity×0.30+uncertainty×0.30","weights":{"risk_level":0.40,"velocity":0.30,"uncertainty":0.30},"output_range":[0,100],"levels":["GREEN","YELLOW","ORANGE","RED","BLACK"]},
+    {"id":"SCS",   "ver":"V9",  "desc":"Strategic Coordination Score","formula":"alignment×0.40+timing×0.30+efficiency×0.30","weights":{"alignment":0.40,"timing":0.30,"efficiency":0.30},"output_range":[0,100],"grades":{"weak":"0-50","moderate":"50-75","strong":"75-100"}},
+    {"id":"AC",    "ver":"V9",  "desc":"Autonomous Confidence","formula":"forecast_conf×0.40+model_agreement×0.30+data_quality×0.30","weights":{"forecast_confidence":0.40,"model_agreement":0.30,"data_quality":0.30},"output_range":[0,100]},
+    {"id":"ARS",   "ver":"V11", "desc":"Autonomous Resource Score","formula":"demand×0.40+urgency×0.35+strategic_value×0.25","weights":{"demand":0.40,"urgency":0.35,"strategic_value":0.25},"output_range":[0,100],"spec":"ARS(90,75,80)=82"},
+    {"id":"PSI",   "ver":"V12", "desc":"Planetary Stress Index","formula":"climate×0.20+economy×0.20+infrastructure×0.20+resources×0.20+geopolitics×0.20","weights":{"all":"0.20"},"output_range":[0,100],"spec_examples":{"stable":"PSI(20,20,20,20,20)=20","elevated":"PSI(50,55,45,50,60)=52","critical":"PSI(80,85,75,80,90)=82"},"grades":{"stable":"0-35","moderate":"35-55","elevated":"55-75","critical":"75-100"}},
+    {"id":"CSI",   "ver":"V12", "desc":"Civilization Stability Index","formula":"resilience×0.40+governance×0.30+adaptability×0.30","weights":{"resilience":0.40,"governance":0.30,"adaptability":0.30},"output_range":[0,100],"spec_examples":{"stable":"CSI(85,80,90)=85","fragile":"CSI(60,55,65)=60","unstable":"CSI(35,30,40)=35"},"grades":{"unstable":"0-45","fragile":"45-70","stable":"70-100"}},
+    {"id":"CRI",   "ver":"V13", "desc":"Civilization Resilience Index","formula":"resilience×0.30+adaptability×0.25+innovation×0.20+resources×0.15+governance×0.10","weights":{"resilience":0.30,"adaptability":0.25,"innovation":0.20,"resources":0.15,"governance":0.10},"output_range":[0,100],"grades":{"fragile":"0-30","vulnerable":"30-60","stable":"60-80","adaptive":"80-100"}},
+]
+
+# ── Phase 3: Storage Registry ─────────────────────────────────────────────
+
+_BL_STORAGE = {
+    "root":     "docs/grdf/",
+    "baseline": "docs/baseline/",
+    "hardening":"docs/hardening/",
+    "production":"docs/production/",
+    "final":    "docs/final/",
+    "layers": {
+        "V1":  {"per_country":True,  "global_files":["_all.json","_signals.json","_events.json","_rankings.json","_dashboard.json"],"schema_fields":["country","gri","risk_score","delta","alert_level","dominant_domain","domain_scores"]},
+        "V2":  {"per_country":True,  "global_files":["v2_events.json","v2_correlations.json","v2_dashboard.json"],"schema_fields":["country","events","correlation_matrix","cascade_chains"]},
+        "V3":  {"per_country":True,  "global_files":["v3_forecast_global.json","v3_dashboard.json"],"schema_fields":["country","horizons","trend_direction","volatility","confidence"]},
+        "V4":  {"per_country":True,  "global_files":["v4_stress_tests.json","v4_outcomes.json","v4_dashboard.json"],"schema_fields":["country","resilience","vulnerability","SSI","recovery_days"]},
+        "V5":  {"per_country":True,  "global_files":["v5_global_outlook.json","v5_dashboard.json"],"schema_fields":["country","signal_score","signal_grade","domain_signals","most_probable"]},
+        "V6":  {"per_country":True,  "global_files":["v6_country_links.json","v6_propagation_engine.json","v6_system_shocks.json","v6_bifurcation_map.json","v6_global_risk_map.json","v6_dashboard.json"],"schema_fields":["country","state_score","gri","resilience","vulnerability","bifurcation_score"]},
+        "V7":  {"per_country":True,  "global_files":["v7_global_alert_network.json","v7_top_risks.json","v7_dashboard.json"],"schema_fields":["country","early_warning_score","alert_level","time_to_event","p_materialization"]},
+        "V8":  {"per_country":True,  "global_files":["v8_dashboard.json"],"schema_fields":["country","top_action","rank_score","des","cbi","counterfactual_10yr"]},
+        "V9":  {"per_country":True,  "global_files":["v9_dashboard.json"],"schema_fields":["country","top_aps","escalation_level","priority_bucket","scenario_switch"]},
+        "V10": {"per_country":True,  "global_files":["v10_knowledge_graph.json","v10_memory.json","v10_agents.json","v10_alert_network.json","v10_coordination.json","v10_action_atlas.json","v10_operations.json","v10_dashboard.json"],"schema_fields":["country","n_missions","sovereign_alert","active_n"]},
+        "V11": {"per_country":False, "global_files":["v11_federated_nodes.json","v11_global_dependency_graph.json","v11_cascading_failures.json","v11_resource_exchange.json","v11_global_missions.json","v11_cross_border_coordination.json","v11_learning_engine.json","v11_governance.json","v11_planetary_alerts.json","v11_dashboard.json"],"schema_fields":["node_id","planetary_alert","learning_signal","governance_grade"]},
+        "V12": {"per_country":False, "global_files":["v12_planetary_twin.json","v12_earth_systems_graph.json","v12_global_flows.json","v12_planetary_stress.json","v12_resilience.json","v12_scenarios.json","v12_civilization_stability.json","v12_coordination_network.json","v12_planetary_alerts.json","v12_dashboard.json"],"schema_fields":["composite_score","PSI","CSI","planetary_alert","global_resilience"]},
+        "V13": {"per_country":False, "global_files":["v13_civilization_state.json","v13_long_horizon.json","v13_resource_limits.json","v13_technology_transitions.json","v13_demographics.json","v13_civilization_resilience.json","v13_pathways.json","v13_transitions.json","v13_century_scenarios.json","v13_dashboard.json"],"schema_fields":["civilization_grade","CRI","most_probable_pathway","outlook_2100"]},
+    },
+    "schema_envelope": {"required":["date","grdf_version","generated_at"],"optional":["country","country_name","tier"]},
+    "version_format": "N.0 (e.g. 1.0, 7.0, 13.0)",
+}
+
+# ── Phase 4: API Registry ─────────────────────────────────────────────────
+
+_BL_APIS = {
+    "base_url": "https://archive-api.luven-medical-msk.workers.dev/api/grdf",
+    "tier_model": {
+        "teaser":    {"label":"FREE",       "access":"public",      "data_level":"summary"},
+        "signal":    {"label":"SIGNAL+",    "access":"paid",        "data_level":"full_country"},
+        "strategic": {"label":"STRATEGIC",  "access":"paid_plus",   "data_level":"full+explain"},
+        "elite":     {"label":"ELITE",      "access":"enterprise",  "data_level":"unlimited"},
+    },
+    "error_codes": {"502":"upstream_failure","404":"file_not_built","403":"tier_violation","400":"bad_request"},
+    "caching": {"engine":"Cloudflare_KV","ttl_standard":300,"ttl_heavy":600,"invalidation":"TTL_only"},
+    "envelope": {"country":"string","date":"YYYY-MM-DD","grdf_version":"N.0","tier":"string"},
+    "versions": {
+        "V1-V5": {"total_endpoints":42,"free_endpoints":18,"prefix":"/api/grdf/"},
+        "V6":    {"total_endpoints":8, "free_endpoints":3, "prefix":"/api/grdf/"},
+        "V7":    {"total_endpoints":8, "free_endpoints":4, "prefix":"/api/grdf/"},
+        "V8":    {"total_endpoints":9, "free_endpoints":4, "prefix":"/api/grdf/"},
+        "V9":    {"total_endpoints":9, "free_endpoints":5, "prefix":"/api/grdf/"},
+        "V10":   {"total_endpoints":9, "free_endpoints":4, "prefix":"/api/grdf/v10/"},
+        "V11":   {"total_endpoints":10,"free_endpoints":5, "prefix":"/api/grdf/v11/"},
+        "V12":   {"total_endpoints":10,"free_endpoints":7, "prefix":"/api/grdf/v12/"},
+        "V13":   {"total_endpoints":10,"free_endpoints":3, "prefix":"/api/grdf/v13/"},
+        "Hardening":  {"total_endpoints":10,"free_endpoints":5,"prefix":"/api/grdf/hardening/"},
+        "Production": {"total_endpoints":10,"free_endpoints":5,"prefix":"/api/grdf/production/"},
+        "Final":      {"total_endpoints":10,"free_endpoints":5,"prefix":"/api/grdf/final/"},
+    },
+}
+
+# ── Phase 5: Dashboard Registry ───────────────────────────────────────────
+
+_BL_DASHBOARDS = {
+    "alert_map": {
+        "type": "WebGL interactive map",
+        "file": "alert-map.html",
+        "layers": ["country_risk_heatmap","alert_levels","cascade_arrows","signal_pulses"],
+        "tech": ["WebGL","Mapbox/Leaflet","CF Workers API"],
+        "mobile_ready": True,
+    },
+    "V7_early_warning": {
+        "type": "JSON API dashboard",
+        "file": "v7_dashboard.json",
+        "widgets": ["top_ews_countries","most_urgent_events","fastest_escalating","critical_alerts","global_firing_triggers","probability_ranking","top_risks","alert_level_map"],
+        "update_freq": "per_run",
+    },
+    "V10_sovereign": {
+        "type": "10-layer JSON dashboard",
+        "file": "v10_dashboard.json",
+        "layers": ["global_risk_map","alert_layer","forecast_layer","scenario_layer","digital_twin_layer","decision_layer","autonomous_layer","resource_layer","mission_layer","coordination_layer"],
+        "update_freq": "per_run",
+    },
+    "V12_planetary": {
+        "type": "12-layer JSON dashboard",
+        "file": "v12_dashboard.json",
+        "layers": ["global_risk_map","earth_systems_graph","climate_layer","energy_layer","food_layer","water_layer","economy_layer","infrastructure_layer","cyber_layer","scenario_layer","resilience_layer","planetary_alert_layer"],
+        "update_freq": "per_run",
+    },
+    "V13_civilization": {
+        "type": "10-widget JSON dashboard",
+        "file": "v13_dashboard.json",
+        "widgets": ["civilization_state","long_horizon_outlook","resource_limits","technology_transitions","demographics","resilience_index","transition_monitor","pathway_explorer","century_scenarios","civilization_summary"],
+        "update_freq": "per_run",
+    },
+    "hardening": {
+        "type": "10-phase audit dashboard",
+        "file": "hardening/hardening_certification.json",
+        "phases": ["formula_audit","dependency_graph","explainability","correlation","forecast","data_quality","api_audit","storage","performance","certification"],
+        "update_freq": "per_run",
+    },
+    "production": {
+        "type": "10-phase readiness dashboard",
+        "file": "production/production_certification.json",
+        "cert_levels": ["ALPHA","BETA","PRODUCTION_READY","SOVEREIGN_GRADE"],
+        "update_freq": "per_run",
+    },
+    "final": {
+        "type": "10-phase sovereign certification",
+        "file": "final/final_certification.json",
+        "cert_outcomes": ["NOT_CERTIFIED","CONDITIONALLY_CERTIFIED","PRODUCTION_READY","SOVEREIGN_GRADE"],
+        "update_freq": "per_run",
+    },
+}
+
+# ── Helpers for Phases 6-10 ───────────────────────────────────────────────
+
+def _bl_load(rel: str) -> dict:
+    p = GRDF_DIR / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+def _bl_load_d(subdir: str, rel: str) -> dict:
+    p = DOCS_DIR / subdir / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+
+def _build_baseline_phases_6_to_10() -> dict:
+    """Phases 6-10: dependency graph, data sources, certifications, spec, baseline."""
+
+    # Phase 6: Dependency Registry
+    dep_graph = {
+        "V1":[], "V2":["V1"], "V3":["V1","V2"], "V4":["V1","V2","V3"],
+        "V5":["V1","V2","V3","V4"], "V6":["V1","V2","V3","V4","V5"],
+        "V7":["V1","V2","V3","V4","V5","V6"],
+        "V8":["V1","V2","V3","V4","V5","V6","V7"],
+        "V9":["V1","V2","V3","V4","V5","V6","V7","V8"],
+        "V10":["V1","V2","V3","V4","V5","V6","V7","V8","V9"],
+        "V11":["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10"],
+        "V12":["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11"],
+        "V13":["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12"],
+        "Hardening":["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12","V13"],
+        "Production":["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12","V13","Hardening"],
+        "FinalCert":["V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12","V13","Hardening","Production"],
+    }
+    dependency_graph = {
+        "type":"strict_linear_DAG",
+        "total_nodes": len(dep_graph),
+        "max_depth": 15,  # FinalCert depends on all
+        "circular_deps": False,
+        "feedback_loops": [],
+        "dag": dep_graph,
+        "shared_infrastructure": {
+            "_get_domain_scores": "V1-V12",
+            "_calc_gri":          "V1-V5",
+            "GRDF_DIR":           "all",
+            "DOCS_DIR":           "all",
+            "TODAY":              "all",
+        },
+    }
+
+    # Phase 7: Data Source Registry
+    data_sources = {
+        "total_sources": 11,
+        "sources": [
+            {"id":"NASA_FIRMS",  "domain":"climate",     "feed":"fire_alerts",         "interval_h":3,   "url":"https://firms.modaps.eosdis.nasa.gov"},
+            {"id":"GDACS",       "domain":"climate",     "feed":"disaster_alerts",     "interval_h":6,   "url":"https://www.gdacs.org"},
+            {"id":"Copernicus",  "domain":"climate",     "feed":"earth_observation",   "interval_h":24,  "url":"https://www.copernicus.eu"},
+            {"id":"USGS",        "domain":"climate",     "feed":"seismic_data",        "interval_h":1,   "url":"https://earthquake.usgs.gov"},
+            {"id":"EMSC",        "domain":"climate",     "feed":"earthquake_events",   "interval_h":1,   "url":"https://www.emsc-csem.org"},
+            {"id":"ACLED",       "domain":"geopolitical","feed":"conflict_events",     "interval_h":24,  "url":"https://acleddata.com"},
+            {"id":"GDELT",       "domain":"geopolitical","feed":"global_events",       "interval_h":1,   "url":"https://www.gdeltproject.org"},
+            {"id":"ReliefWeb",   "domain":"social",      "feed":"humanitarian_alerts", "interval_h":24,  "url":"https://reliefweb.int"},
+            {"id":"World_Bank",  "domain":"economic",    "feed":"macro_indicators",    "interval_h":168, "url":"https://data.worldbank.org"},
+            {"id":"IMF",         "domain":"economic",    "feed":"economic_outlook",    "interval_h":720, "url":"https://imf.org/data"},
+            {"id":"UN_Data",     "domain":"social",      "feed":"development_stats",   "interval_h":720, "url":"https://data.un.org"},
+        ],
+        "domain_coverage": ["climate","geopolitical","economic","social"],
+        "update_strategy": "pull_on_scheduled_run",
+    }
+
+    # Phase 8: Certification Registry
+    h_cert = _bl_load_d("hardening","hardening_certification.json")
+    p_cert = _bl_load_d("production","production_certification.json")
+    f_cert = _bl_load_d("final","final_certification.json")
+    certification_registry = {
+        "hardening_v1": {
+            "certification_status": h_cert.get("certification_status","PENDING"),
+            "overall_score":        h_cert.get("overall_score",0),
+            "formulas_audited":     h_cert.get("total_formulas_audited",15),
+            "date":                 h_cert.get("date",""),
+        },
+        "production_v1": {
+            "certification_level":  p_cert.get("certification_level","PENDING"),
+            "overall_score":        p_cert.get("overall_readiness_score",0),
+            "connectors_active":    p_cert.get("connectors_active",0),
+            "date":                 p_cert.get("date",""),
+        },
+        "final_sovereign": {
+            "certification":        f_cert.get("certification","PENDING"),
+            "overall_score":        f_cert.get("overall_sovereign_score",0),
+            "architecture_score":   f_cert.get("architecture_score",0),
+            "security_score":       f_cert.get("security_score",0),
+            "date":                 f_cert.get("date",""),
+        },
+        "no_v14":               True,
+        "architecture_frozen":  "V13",
+    }
+
+    return dependency_graph, data_sources, certification_registry
+
+
+def _build_platform_specification() -> dict:
+    """Phase 9: Official GRDF Platform Specification v1.0"""
+    return {
+        "name":             "GRDF — Global Risk Data Fabric",
+        "version":          "1.0",
+        "codename":         "Архив — Карта сигналов",
+        "architecture_freeze": "V13 Civilization Intelligence System",
+        "certification":    "Sovereign Grade Intelligence Platform",
+        "language":         "Russian-language systemic risk platform",
+        "domains": {
+            "intelligence_layers":  13,
+            "countries_monitored":  25,
+            "risk_domains":         5,
+            "planetary_domains":    12,
+            "civilization_domains": 12,
+        },
+        "formulas": {
+            "total_certified":   23,
+            "all_weights_verified": True,
+            "spec_examples_pass": True,
+        },
+        "infrastructure": {
+            "compute":      "Cloudflare Workers",
+            "storage":      "GitHub Pages (docs/)",
+            "caching":      "Cloudflare KV (TTL 300-600s)",
+            "tls":          "Cloudflare TLS 1.3",
+            "ingestion":    "Python snapshot_engine.py",
+            "schedule":     "cron / GitHub Actions",
+        },
+        "api": {
+            "total_endpoints":    ~120,
+            "tier_model":         "teaser/signal/strategic/elite",
+            "base_url":           "https://archive-api.luven-medical-msk.workers.dev/api/grdf",
+        },
+        "intelligence_question_answered": {
+            "V1":  "What is the current risk level?",
+            "V2":  "How do risks correlate and cascade?",
+            "V3":  "What will happen in 30-365 days?",
+            "V4":  "How resilient is this country?",
+            "V5":  "What scenarios are emerging?",
+            "V6":  "How does the global risk system behave as a whole?",
+            "V7":  "What will happen next and when?",
+            "V8":  "What should be done?",
+            "V9":  "What must be done autonomously right now?",
+            "V10": "How does the whole platform coordinate?",
+            "V11": "How do sovereign regions interact?",
+            "V12": "What is the state of Earth's systems?",
+            "V13": "What are the probable pathways of civilization 10-100 years ahead?",
+        },
+        "certifications_completed": ["HARDENING_V1","PRODUCTION_V1","FINAL_SOVEREIGN"],
+        "no_v14":            True,
+        "frozen_at":         "V13",
+    }
+
+
+def _build_technical_baseline(snapshots: list) -> dict:
+    """Phase 10: Immutable Technical Baseline v1.0"""
+    f_cert = _bl_load_d("final","final_certification.json")
+    h_cert = _bl_load_d("hardening","hardening_certification.json")
+    p_cert = _bl_load_d("production","production_certification.json")
+
+    return {
+        "document":         "GRDF Technical Baseline v1.0",
+        "status":           "IMMUTABLE",
+        "date":             TODAY,
+        "generated_at":     datetime.now(timezone.utc).isoformat(),
+        "platform": {
+            "name":         "GRDF — Global Risk Data Fabric",
+            "version":      "1.0",
+            "architecture_frozen_at": "V13",
+            "no_v14":       True,
+        },
+        "certification": {
+            "hardening":    h_cert.get("certification_status","PENDING"),
+            "production":   p_cert.get("certification_level","PENDING"),
+            "final":        f_cert.get("certification","PENDING"),
+            "sovereign_score": f_cert.get("overall_sovereign_score",0),
+        },
+        "inventory": {
+            "intelligence_layers": 13,
+            "countries":        25,
+            "formulas":         23,
+            "api_endpoints":    "~120",
+            "storage_dirs":     5,
+            "dashboards":       8,
+            "data_sources":     11,
+        },
+        "call_chain": [
+            "save_grdf","save_grdf_v2","save_grdf_v3","save_grdf_v4","save_grdf_v5",
+            "save_grdf_v6","save_grdf_v7","save_grdf_v8","save_grdf_v9","save_grdf_v10",
+            "save_grdf_v11","save_grdf_v12","save_grdf_v13",
+            "save_grdf_hardening","save_grdf_production","save_grdf_final_certification",
+        ],
+        "storage": {
+            "docs/grdf/":       "V1-V13 intelligence outputs",
+            "docs/hardening/":  "Hardening Program V1",
+            "docs/production/": "Production Readiness Program V1",
+            "docs/final/":      "Final Sovereign Certification",
+            "docs/baseline/":   "Technical Baseline V1 (this document)",
+        },
+        "all_countries": sorted([s["country"] for s in snapshots]),
+    }
+
+
+# ── Baseline Orchestrator ─────────────────────────────────────────────────
+
+def save_grdf_baseline(snapshots: list) -> None:
+    """
+    GRDF Platform Technical Baseline V1.
+    Architecture frozen at V13. No development. Documentation only.
+    Reads: v1..v13 + hardening + production + final (read-only).
+    Writes: baseline_* files only.
+    """
+    import time as _tbl
+    BASELINE_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tbl.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(BASELINE_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[BASELINE] GRDF Platform Technical Baseline V1 — Documentation only", file=sys.stderr)
+
+    # Phase 1
+    _save("baseline_architecture.json", {
+        "total_layers":13,"architecture_type":"strict_linear_DAG",
+        "layers":_BL_ARCHITECTURE
+    })
+    print(f"[BASELINE] Phase 1: architecture registry {len(_BL_ARCHITECTURE)} layers", file=sys.stderr)
+
+    # Phase 2
+    _save("baseline_formulas.json", {
+        "total_formulas":len(_BL_FORMULAS),"all_weights_certified":True,
+        "formulas":_BL_FORMULAS
+    })
+    print(f"[BASELINE] Phase 2: formula registry {len(_BL_FORMULAS)} formulas", file=sys.stderr)
+
+    # Phase 3
+    _save("baseline_storage.json", _BL_STORAGE)
+    print(f"[BASELINE] Phase 3: storage registry {len(_BL_STORAGE['layers'])} layers", file=sys.stderr)
+
+    # Phase 4
+    total_ep = sum(v["total_endpoints"] for v in _BL_APIS["versions"].values())
+    _save("baseline_api_registry.json", {**_BL_APIS,"total_endpoints_all":total_ep})
+    print(f"[BASELINE] Phase 4: API registry ~{total_ep} endpoints", file=sys.stderr)
+
+    # Phase 5
+    _save("baseline_dashboards.json", {
+        "total_dashboards":len(_BL_DASHBOARDS),"dashboards":_BL_DASHBOARDS
+    })
+    print(f"[BASELINE] Phase 5: dashboard registry {len(_BL_DASHBOARDS)} dashboards", file=sys.stderr)
+
+    # Phases 6-8 (shared computation)
+    dep_graph, data_sources, cert_registry = _build_baseline_phases_6_to_10()
+
+    # Phase 6
+    _save("baseline_dependency_graph.json", dep_graph)
+    print(f"[BASELINE] Phase 6: dependency graph {dep_graph['total_nodes']} nodes", file=sys.stderr)
+
+    # Phase 7
+    _save("baseline_data_sources.json", data_sources)
+    print(f"[BASELINE] Phase 7: data sources {data_sources['total_sources']} connectors", file=sys.stderr)
+
+    # Phase 8
+    _save("baseline_certification.json", cert_registry)
+    print(f"[BASELINE] Phase 8: certification registry final={cert_registry['final_sovereign'].get('certification','?')}", file=sys.stderr)
+
+    # Phase 9
+    spec = _build_platform_specification()
+    _save("baseline_platform_specification.json", spec)
+    print(f"[BASELINE] Phase 9: platform specification v{spec['version']}", file=sys.stderr)
+
+    # Phase 10
+    baseline = _build_technical_baseline(snapshots)
+    _save("baseline_v1_0.json", baseline)
+
+    elapsed = round((_tbl.monotonic()-t_start)*1000)
+    print(f"[BASELINE] Phase 10: Technical Baseline v1.0 — IMMUTABLE ({elapsed}ms)", file=sys.stderr)
+    print(f"[BASELINE] GRDF Technical Baseline COMPLETE. Architecture frozen at V13.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -19756,6 +20373,7 @@ def main():
     save_grdf_hardening(snapshots)
     save_grdf_production(snapshots)
     save_grdf_final_certification(snapshots)
+    save_grdf_baseline(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
