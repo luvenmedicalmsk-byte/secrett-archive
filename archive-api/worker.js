@@ -6011,6 +6011,136 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
   }
 
+
+  // =========================================================================
+  // GRDF V7 -- Strategic Early Warning System API
+  // GET /api/grdf/warnings/:cc        -> early warning score (FREE)
+  // GET /api/grdf/time-to-event/:cc   -> TTE estimation (SIGNAL+)
+  // GET /api/grdf/escalation/:cc      -> escalation velocity (SIGNAL+)
+  // GET /api/grdf/alerts/:cc          -> current alert level (FREE)
+  // GET /api/grdf/probability/:cc     -> materialization probability (SIGNAL+)
+  // GET /api/grdf/global-alert-network -> global alert propagation (SIGNAL+)
+  // GET /api/grdf/top-risks           -> global top-risk ranking (FREE)
+  // GET /api/grdf/v7/dashboard        -> Strategic EW Dashboard (FREE/SIGNAL+)
+  // =========================================================================
+
+  // /api/grdf/warnings/:cc
+  if (seg[0] === 'warnings' && seg[1] && seg[1].length === 2) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v7ws:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v7_warning_score_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 warning score not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,early_warning_score:d.early_warning_score,warning_grade:d.warning_grade,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/alerts/:cc  (V7 -- GREEN/YELLOW/ORANGE/RED/BLACK; distinct from V1 /api/alerts/:cc)
+  if (seg[0] === 'alerts' && seg[1] && seg[1].length === 2) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v7al:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v7_alerts_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 alert not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:d.country,alert_level:d.alert_level,ews:d.ews,tte:d.tte,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/time-to-event/:cc
+  if (seg[0] === 'time-to-event' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'TTE requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v7_tte_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 TTE not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/escalation/:cc
+  if (seg[0] === 'escalation' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Escalation data requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v7_escalation_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 escalation not built for '+cc}),{status:404,headers:CORS});
+      const r = access==='summary'
+        ? {country:d.country,velocity:d.velocity,escalation_grade:d.escalation_grade,
+           projected_30d:d.projected_30d,ews:d.ews,tier}
+        : {...d,tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/probability/:cc
+  if (seg[0] === 'probability' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Probability requires Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, `docs/grdf/v7_probability_${cc}.json`, 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 probability not built for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...d,tier}),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/global-alert-network
+  if (seg[0] === 'global-alert-network') {
+    if (access==='teaser') return new Response(JSON.stringify({error:'Global alert network requires Signal tier'}),{status:403,headers:CORS});
+    const ck = `grdf:v7gan:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v7_global_alert_network.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 alert network not built yet'}),{status:404,headers:CORS});
+      const r = {...d, tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/top-risks
+  if (seg[0] === 'top-risks') {
+    const ck = `grdf:v7tr:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v7_top_risks.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 top risks not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,critical_n:d.critical_n,
+           top5:d.top10_overall?.slice(0,5).map(e=>({country:e.country,alert_level:e.alert_level,tte:e.tte})),tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
+  // /api/grdf/v7/dashboard
+  if (seg[0]==='v7' && seg[1]==='dashboard') {
+    const ck = `grdf:v7dash:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v7_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V7 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,summary:d.summary,
+           top5_ews:d.top_ews_countries?.slice(0,5),
+           critical_alerts:d.critical_alerts?.slice(0,3),
+           alert_level_map:d.alert_level_map,tier}
+        : {...d,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -6034,6 +6164,10 @@ async function handleGRDF(request, env) {
       '/api/grdf/cascade-map','/api/grdf/global-network',
       '/api/grdf/bifurcations','/api/grdf/system-shocks',
       '/api/grdf/global-risk-map','/api/grdf/v6/dashboard',
+      '/api/grdf/warnings/:cc','/api/grdf/time-to-event/:cc',
+      '/api/grdf/escalation/:cc','/api/grdf/alerts/:cc',
+      '/api/grdf/probability/:cc','/api/grdf/global-alert-network',
+      '/api/grdf/top-risks','/api/grdf/v7/dashboard',
     ]
   }),{status:404,headers:CORS});
 }
