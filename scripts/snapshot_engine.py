@@ -8602,6 +8602,731 @@ def save_grdf(snapshots: list[dict]) -> None:
 
     print(f"[GRDF] Built {len(all_uros)} UROs  signals={len(all_signals)}", file=sys.stderr)
 
+# ═══════════════════════════════════════════════════════════════════════════
+# GLOBAL RISK DATA FABRIC V2 — Event Correlation & Early Warning Engine
+#
+# Extends GRDF V1 (data fabric) with:
+#   Phase 1: Global Event Registry   → docs/grdf/v2_events.json
+#   Phase 2: Signal Correlation Engine → docs/grdf/v2_correlations.json
+#   Phase 3: Cascade Detection Engine  → docs/grdf/v2_cascades.json
+#   Phase 4: Early Warning Engine       → docs/grdf/v2_warnings.json
+#   Phase 5: Knowledge Graph            → docs/grdf/v2_graph_{CC}.json
+#   Phase 6: Explainability V2          → docs/grdf/v2_explain_{CC}.json
+#   Phase 7: Sovereign Early Warning Dashboard → docs/grdf/v2_dashboard.json
+#
+# All V2 outputs are additive — GRDF V1 files are NEVER modified.
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Cascade chains definition (Phase 2/3) ────────────────────────────────
+# Each chain: trigger_domain → [downstream], strength, lag_days
+_CASCADE_CHAINS: list[dict] = [
+    {
+        "id":      "CHAIN-CLIMATE-ENERGY",
+        "name":    "Wildfire → Energy → Supply Chain → Economy",
+        "trigger": "climate",
+        "steps":   [
+            {"domain":"infrastructure","strength":0.82,"confidence":0.90,"lag_days":7,  "label":"Grid / Energy failure"},
+            {"domain":"economic",      "strength":0.68,"confidence":0.85,"lag_days":14, "label":"Supply disruption"},
+            {"domain":"economic",      "strength":0.55,"confidence":0.78,"lag_days":30, "label":"Economic loss"},
+        ],
+    },
+    {
+        "id":      "CHAIN-CYBER-INFRA",
+        "name":    "Cyber Attack → Infrastructure → Finance → Society",
+        "trigger": "cyber",
+        "steps":   [
+            {"domain":"infrastructure","strength":0.88,"confidence":0.92,"lag_days":1,  "label":"Infrastructure failure"},
+            {"domain":"economic",      "strength":0.74,"confidence":0.87,"lag_days":5,  "label":"Financial disruption"},
+            {"domain":"social",        "strength":0.61,"confidence":0.80,"lag_days":14, "label":"Social instability"},
+        ],
+    },
+    {
+        "id":      "CHAIN-DROUGHT-FOOD",
+        "name":    "Drought → Agriculture → Food Prices → Migration → Conflict",
+        "trigger": "climate",
+        "steps":   [
+            {"domain":"economic",      "strength":0.75,"confidence":0.88,"lag_days":30, "label":"Agricultural loss"},
+            {"domain":"social",        "strength":0.70,"confidence":0.85,"lag_days":60, "label":"Food price inflation"},
+            {"domain":"social",        "strength":0.65,"confidence":0.82,"lag_days":90, "label":"Migration surge"},
+            {"domain":"geopolitical",  "strength":0.58,"confidence":0.75,"lag_days":180,"label":"Conflict escalation"},
+        ],
+    },
+    {
+        "id":      "CHAIN-GEO-ENERGY",
+        "name":    "Geopolitical Conflict → Energy → Economy → Social",
+        "trigger": "geopolitical",
+        "steps":   [
+            {"domain":"infrastructure","strength":0.80,"confidence":0.88,"lag_days":3,  "label":"Energy supply shock"},
+            {"domain":"economic",      "strength":0.72,"confidence":0.85,"lag_days":14, "label":"Economic stress"},
+            {"domain":"social",        "strength":0.60,"confidence":0.78,"lag_days":45, "label":"Social pressure"},
+        ],
+    },
+    {
+        "id":      "CHAIN-INFRA-SUPPLY",
+        "name":    "Infrastructure Failure → Supply Chain → Economy",
+        "trigger": "infrastructure",
+        "steps":   [
+            {"domain":"economic",      "strength":0.78,"confidence":0.87,"lag_days":7,  "label":"Supply disruption"},
+            {"domain":"economic",      "strength":0.65,"confidence":0.82,"lag_days":21, "label":"Economic slowdown"},
+            {"domain":"social",        "strength":0.50,"confidence":0.72,"lag_days":60, "label":"Social strain"},
+        ],
+    },
+]
+
+# ── Phase 1: Event Registry object builders ──────────────────────────────
+
+def _build_v2_event(ev: dict, idx: int) -> dict:
+    """Build Phase 1 event object from historical events DB entry."""
+    return {
+        "event_id":   ev.get("id") or f"EVT-{ev.get('date','?')}-{idx+1:03d}",
+        "country":    ev.get("country",""),
+        "domain":     _ENGINE_TO_GRDF.get(ev.get("domain",""), ev.get("domain","")),
+        "title":      (ev.get("description","") or "Event")[:60],
+        "severity":   int(ev.get("actual_severity", 50) or 50),
+        "confidence": round(0.85 if ev.get("is_systemic") else 0.75, 2),
+        "timestamp":  ev.get("date",""),
+        "source":     _EV_SOURCE_MAP.get(ev.get("domain",""), "ReliefWeb"),
+        "is_systemic":bool(ev.get("is_systemic",False)),
+        "cascade_triggered": bool(ev.get("cascade_triggered",False)),
+    }
+
+_EV_SOURCE_MAP = {
+    "climate":"NASA FIRMS / EONET", "infrastructure":"GDACS / ReliefWeb",
+    "geopolitics":"ACLED / GDELT",  "geopolitical":"ACLED / GDELT",
+    "economy":"World Bank",         "economic":"World Bank",
+    "health":"WHO / ReliefWeb",     "supply_chain":"GDELT",
+    "energy":"Copernicus EMS",      "cyber":"CISA / NCSC",
+    "social":"ACLED",               "governance":"ACLED",
+}
+
+def _save_v2_events(events_db: list[dict]) -> None:
+    """Phase 1: save unified event registry."""
+    registry = [_build_v2_event(ev, i) for i, ev in enumerate(events_db)]
+    # Sort by severity desc
+    registry.sort(key=lambda e: -e["severity"])
+
+    with open(GRDF_DIR / "v2_events.json","w") as f:
+        json.dump({
+            "grdf_version": "2.0",
+            "date":         TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "total":        len(registry),
+            "sources":      ["NASA FIRMS","GDACS","Copernicus EMS","USGS","ACLED","ReliefWeb","GDELT"],
+            "events":       registry,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V2] Phase 1: {len(registry)} events registered", file=sys.stderr)
+
+
+# ── Phase 2: Signal Correlation Engine ───────────────────────────────────
+
+def _compute_correlation_matrix(snapshots: list[dict]) -> dict:
+    """
+    Phase 2: For each pair of domains, compute cross-country correlation strength.
+    strength = mean(min(d1,d2)/max(d1,d2)) across all countries where both > threshold.
+    """
+    domains  = _GRDF_DOMAINS
+    pairwise = {f"{d1}:{d2}": [] for d1 in domains for d2 in domains if d1 < d2}
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        dom_s = _get_domain_scores(iso2, snap)
+        scores = {d: dom_s[d]["score"] for d in domains}
+        for pair in pairwise:
+            d1, d2 = pair.split(":")
+            s1, s2 = scores.get(d1,0), scores.get(d2,0)
+            if s1 >= 30 and s2 >= 30:          # both active
+                mn, mx = min(s1,s2), max(s1,s2)
+                pairwise[pair].append(mn/mx if mx else 0)
+
+    correlations = []
+    for pair, vals in pairwise.items():
+        if not vals: continue
+        d1, d2 = pair.split(":")
+        strength    = round(sum(vals)/len(vals), 3)
+        confidence  = round(min(0.99, len(vals)/25 * 0.92), 2)   # normalised to 25 countries
+        # Best-matching chain lag
+        best_lag = 0
+        for chain in _CASCADE_CHAINS:
+            if chain["trigger"] == d1:
+                for step in chain["steps"]:
+                    if step["domain"] == d2:
+                        best_lag = step["lag_days"]; break
+
+        if strength >= 0.35:       # meaningful only
+            correlations.append({
+                "pair":       pair,
+                "domain_a":   d1,
+                "domain_b":   d2,
+                "strength":   strength,
+                "confidence": confidence,
+                "lag_days":   best_lag,
+                "n_countries":len(vals),
+            })
+
+    correlations.sort(key=lambda x: -x["strength"])
+    return correlations
+
+
+def _save_v2_correlations(snapshots: list[dict]) -> None:
+    """Phase 2: save domain correlation matrix."""
+    corrs = _compute_correlation_matrix(snapshots)
+    # Also save chain definitions
+    with open(GRDF_DIR / "v2_correlations.json","w") as f:
+        json.dump({
+            "grdf_version":  "2.0",
+            "date":          TODAY,
+            "generated_at":  datetime.now(timezone.utc).isoformat(),
+            "correlations":  corrs,
+            "cascade_chains":_CASCADE_CHAINS,
+            "total_pairs":   len(corrs),
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V2] Phase 2: {len(corrs)} domain correlations computed", file=sys.stderr)
+
+
+# ── Phase 3: Cascade Detection Engine ────────────────────────────────────
+
+def _detect_cascades(iso2: str, snap: dict) -> list[dict]:
+    """
+    Phase 3: For each cascade chain, check if trigger domain is elevated
+    and compute cascade score based on downstream domain scores.
+    cascade_score = trigger_score × Σ(step.strength × downstream_score / 100) / n_steps
+    Normalised 0–100.
+    """
+    dom_s   = _get_domain_scores(iso2, snap)
+    scores  = {d: dom_s[d]["score"] for d in _GRDF_DOMAINS}
+    active_cascades = []
+
+    for chain in _CASCADE_CHAINS:
+        trigger_d = chain["trigger"]
+        trig_s    = scores.get(trigger_d, 0)
+        if trig_s < 40:
+            continue          # trigger domain not elevated — cascade inactive
+
+        step_contribs = []
+        for step in chain["steps"]:
+            ds = scores.get(step["domain"], 0)
+            step_contribs.append(step["strength"] * ds / 100)
+
+        if not step_contribs:
+            continue
+
+        cascade_raw = trig_s * sum(step_contribs) / len(step_contribs)
+        cascade_score = min(100, max(0, round(cascade_raw)))
+
+        grade = ("CRITICAL" if cascade_score >= 75 else
+                 "HIGH"     if cascade_score >= 50 else
+                 "MODERATE" if cascade_score >= 25 else "LOW")
+
+        active_cascades.append({
+            "chain_id":      chain["id"],
+            "chain_name":    chain["name"],
+            "trigger_domain":trigger_d,
+            "trigger_score": trig_s,
+            "cascade_score": cascade_score,
+            "cascade_grade": grade,
+            "steps":         [
+                {**step, "current_score": scores.get(step["domain"], 0)}
+                for step in chain["steps"]
+            ],
+        })
+
+    active_cascades.sort(key=lambda x: -x["cascade_score"])
+    return active_cascades
+
+
+def _save_v2_cascades(snapshots: list[dict]) -> None:
+    """Phase 3: compute and save cascade detection for all countries."""
+    all_cascades = []
+
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            cascades = _detect_cascades(iso2, snap)
+            country_max = cascades[0]["cascade_score"] if cascades else 0
+            country_record = {
+                "country":       iso2,
+                "country_name":  snap.get("country_name", iso2),
+                "max_cascade_score":   country_max,
+                "active_cascades_n":   len(cascades),
+                "cascades":            cascades,
+            }
+            all_cascades.append(country_record)
+
+            # Per-country cascade file for graph/:cc
+            with open(GRDF_DIR / f"v2_cascades_{iso2}.json","w") as f:
+                json.dump({**country_record,
+                    "date":TODAY,"grdf_version":"2.0",
+                    "generated_at":datetime.now(timezone.utc).isoformat()},
+                    f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[GRDF-V2] cascade {iso2}: {e}", file=sys.stderr)
+
+    # Global cascades summary
+    all_cascades.sort(key=lambda x: -x["max_cascade_score"])
+    critical = [c for c in all_cascades if c["max_cascade_score"] >= 75]
+
+    with open(GRDF_DIR / "v2_cascades.json","w") as f:
+        json.dump({
+            "grdf_version":   "2.0",
+            "date":           TODAY,
+            "generated_at":   datetime.now(timezone.utc).isoformat(),
+            "critical_count": len(critical),
+            "top_cascades":   all_cascades[:10],
+            "all_countries":  [{
+                "country": c["country"],"country_name":c["country_name"],
+                "max_cascade_score":c["max_cascade_score"],
+                "active_cascades_n":c["active_cascades_n"],
+            } for c in all_cascades],
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V2] Phase 3: cascades computed, {len(critical)} critical", file=sys.stderr)
+
+
+# ── Phase 4: Early Warning Engine ────────────────────────────────────────
+
+def _apply_warning_rules(iso2: str, snap: dict, cascades: list[dict],
+                          history: list[dict]) -> list[dict]:
+    """
+    Phase 4: Apply early warning rules A–D.
+    Rule A: velocity > 5 pts/day
+    Rule B: any domain score grew > 20% in 30d
+    Rule C: cascade_score > 75
+    Rule D: ≥ 3 domains escalating simultaneously (delta > 0)
+    """
+    score   = snap.get("risk_score", 50) or 50
+    delta   = snap.get("delta", 0) or 0
+    dom_s   = _get_domain_scores(iso2, snap)
+    warnings = []
+
+    # Rule A: velocity > 5
+    vel = abs(delta)
+    if vel >= 5:
+        warnings.append({
+            "rule":           "A",
+            "rule_name":      "High Velocity",
+            "warning_level":  "CRITICAL" if vel >= 20 else "WARNING" if vel >= 10 else "ALERT",
+            "country":        iso2,
+            "trigger":        f"velocity={vel:.1f} pts/day",
+            "confidence":     round(min(0.95, 0.70 + vel * 0.01), 2),
+            "value":          vel,
+        })
+
+    # Rule B: domain score growth > 20% in 30d
+    if len(history) >= 30:
+        for d in _GRDF_DOMAINS:
+            old_snap   = history[-30]
+            old_dom    = _get_domain_scores(iso2, old_snap)
+            old_score  = old_dom[d]["score"]
+            cur_score  = dom_s[d]["score"]
+            if old_score > 0:
+                growth = (cur_score - old_score) / old_score * 100
+                if growth >= 20:
+                    warnings.append({
+                        "rule":          "B",
+                        "rule_name":     "Domain Score Growth",
+                        "warning_level": "WARNING" if growth >= 40 else "ALERT",
+                        "country":       iso2,
+                        "trigger":       f"{d} +{growth:.0f}% in 30d",
+                        "confidence":    0.82,
+                        "domain":        d,
+                        "growth_pct":    round(growth, 1),
+                    })
+
+    # Rule C: cascade_score > 75
+    for c in cascades:
+        if c["cascade_score"] >= 75:
+            warnings.append({
+                "rule":          "C",
+                "rule_name":     "Critical Cascade",
+                "warning_level": "CRITICAL",
+                "country":       iso2,
+                "trigger":       f"cascade={c['cascade_score']} — {c['chain_name'][:40]}",
+                "confidence":    0.88,
+                "chain_id":      c["chain_id"],
+                "cascade_score": c["cascade_score"],
+            })
+
+    # Rule D: ≥ 3 domains escalating simultaneously
+    escalating = [d for d in _GRDF_DOMAINS
+                  if dom_s[d]["trend"] in ("up",) and dom_s[d]["velocity"] >= 1.0]
+    if len(escalating) >= 3:
+        warnings.append({
+            "rule":          "D",
+            "rule_name":     "Multi-Domain Escalation",
+            "warning_level": "CRITICAL" if len(escalating) >= 5 else "WARNING",
+            "country":       iso2,
+            "trigger":       f"{len(escalating)} domains escalating: {', '.join(escalating[:4])}",
+            "confidence":    round(0.75 + len(escalating) * 0.04, 2),
+            "domains":       escalating,
+        })
+
+    return warnings
+
+
+def _save_v2_warnings(snapshots: list[dict], all_cascades_map: dict) -> None:
+    """Phase 4: generate early warnings for all countries."""
+    now_ts     = datetime.now(timezone.utc).isoformat()
+    all_warnings: list[dict] = []
+
+    for snap in snapshots:
+        iso2    = snap["country"]
+        cascades= all_cascades_map.get(iso2, [])
+        hist_path = TR_HIST_DIR / f"{iso2}.json"
+        history: list[dict] = []
+        if hist_path.exists():
+            try: history = json.loads(hist_path.read_text()).get("records", [])
+            except Exception: pass
+
+        ws = _apply_warning_rules(iso2, snap, cascades, history)
+        for w in ws:
+            w["timestamp"] = now_ts
+            w["risk_score"] = snap.get("risk_score", 50)
+            all_warnings.append(w)
+
+    # Aggregate
+    critical = [w for w in all_warnings if w["warning_level"]=="CRITICAL"]
+    warning  = [w for w in all_warnings if w["warning_level"]=="WARNING"]
+    alert_l  = [w for w in all_warnings if w["warning_level"]=="ALERT"]
+
+    with open(GRDF_DIR / "v2_warnings.json","w") as f:
+        json.dump({
+            "grdf_version":  "2.0",
+            "date":          TODAY,
+            "generated_at":  now_ts,
+            "total":         len(all_warnings),
+            "by_level": {"CRITICAL":len(critical),"WARNING":len(warning),"ALERT":len(alert_l)},
+            "warnings":      sorted(all_warnings,
+                                    key=lambda w: {"CRITICAL":3,"WARNING":2,"ALERT":1}.get(w["warning_level"],0),
+                                    reverse=True),
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V2] Phase 4: {len(all_warnings)} warnings ({len(critical)} CRITICAL)", file=sys.stderr)
+
+
+# ── Phase 5: Knowledge Graph ──────────────────────────────────────────────
+
+def _build_knowledge_graph(iso2: str, snap: dict, cascades: list[dict]) -> dict:
+    """
+    Phase 5: Build knowledge graph for one country.
+    Node types: Country, Domain, Signal, Risk, Driver
+    Edge types: CAUSES, AMPLIFIES, CORRELATES, ESCALATES, MITIGATES
+    """
+    dom_s   = _get_domain_scores(iso2, snap)
+    drivers = _build_drivers(iso2, snap, dom_s)
+    score   = snap.get("risk_score", 50) or 50
+
+    nodes: list[dict] = []
+    edges: list[dict] = []
+
+    # Country node
+    nodes.append({"id":f"COUNTRY-{iso2}","type":"Country","label":iso2,
+                  "score":score,"props":{"risk_score":score}})
+
+    # Domain nodes + edges to country
+    for d, v in dom_s.items():
+        nid = f"DOMAIN-{iso2}-{d}"
+        nodes.append({"id":nid,"type":"Domain","label":d,
+                      "score":v["score"],"trend":v["trend"]})
+        edges.append({"from":f"COUNTRY-{iso2}","to":nid,
+                      "type":"CORRELATES","weight":v["score"]/100})
+
+    # Driver nodes + CAUSES edges
+    for drv in drivers[:3]:
+        did = f"DRIVER-{iso2}-{drv}"
+        nodes.append({"id":did,"type":"Driver","label":drv})
+        edges.append({"from":did,"to":f"COUNTRY-{iso2}","type":"CAUSES","weight":0.8})
+
+    # Cascade edges
+    for c in cascades[:3]:
+        trig_nid = f"DOMAIN-{iso2}-{c['trigger_domain']}"
+        prev_nid = trig_nid
+        for step in c["steps"][:3]:
+            step_nid = f"DOMAIN-{iso2}-{step['domain']}"
+            etype = ("ESCALATES" if step["strength"] >= 0.75 else
+                     "AMPLIFIES" if step["strength"] >= 0.55 else "CORRELATES")
+            edges.append({
+                "from":    prev_nid,
+                "to":      step_nid,
+                "type":    etype,
+                "weight":  step["strength"],
+                "lag_days":step["lag_days"],
+            })
+            prev_nid = step_nid
+
+    # Signal nodes
+    drivers_dom  = snap.get("drivers", []) or []
+    for drv in drivers_dom[:5]:
+        dom  = _ENGINE_TO_GRDF.get((drv.get("domain","") or "").lower(), "geopolitical")
+        snid = f"SIGNAL-{iso2}-{drv.get('name','?')[:10].replace(' ','_')}"
+        nodes.append({"id":snid,"type":"Signal","label":(drv.get("name","")[:40] or "signal"),
+                      "severity":int(drv.get("severity",50) or 50),"domain":dom})
+        edges.append({"from":snid,"to":f"DOMAIN-{iso2}-{dom}","type":"AMPLIFIES",
+                      "weight":round((drv.get("severity",50) or 50)/100,2)})
+
+    return {
+        "country":  iso2,
+        "date":     TODAY,
+        "grdf_version":"2.0",
+        "generated_at":datetime.now(timezone.utc).isoformat(),
+        "node_count": len(nodes),
+        "edge_count": len(edges),
+        "nodes":    nodes,
+        "edges":    edges,
+    }
+
+
+def _save_v2_graphs(snapshots: list[dict], all_cascades_map: dict) -> None:
+    """Phase 5: build and save knowledge graphs."""
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            cascades = all_cascades_map.get(iso2, [])
+            graph    = _build_knowledge_graph(iso2, snap, cascades)
+            with open(GRDF_DIR / f"v2_graph_{iso2}.json","w") as f:
+                json.dump(graph, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[GRDF-V2] graph {iso2}: {e}", file=sys.stderr)
+    print(f"[GRDF-V2] Phase 5: {len(snapshots)} knowledge graphs built", file=sys.stderr)
+
+
+# ── Phase 6: Explainability V2 ────────────────────────────────────────────
+
+def _build_explain_v2(iso2: str, snap: dict) -> dict:
+    """
+    Phase 6: Enhanced explainability with driver attribution and forecast consensus.
+    Each driver gets a +N contribution to GRI.
+    """
+    dom_s   = _get_domain_scores(iso2, snap)
+    gri     = round(_calc_gri({d: v["score"] for d, v in dom_s.items()}))
+    drivers = _build_drivers(iso2, snap, dom_s)
+    base    = snap.get("risk_score", 50) or 50
+    forecast= _build_forecast(snap)
+
+    # Compute driver contributions (+N to GRI)
+    driver_contributions: list[dict] = []
+    for i, drv in enumerate(drivers[:5]):
+        # Contribution = domain score above mean × weight
+        domain = _ENGINE_TO_GRDF.get(drv.lower(), "geopolitical")
+        d_score = dom_s.get(domain, {}).get("score", 50)
+        mean_score = sum(v["score"] for v in dom_s.values()) / len(dom_s)
+        contrib = max(0, round((d_score - mean_score) * _GRDF_WEIGHTS.get(domain, 1.0) / 7))
+        driver_contributions.append({
+            "rank":         i + 1,
+            "driver":       drv,
+            "domain":       domain,
+            "score":        d_score,
+            "contribution": f"+{contrib}" if contrib >= 0 else str(contrib),
+            "contribution_int": contrib,
+        })
+
+    # Forecast consensus: collect from multiple horizon forecasts
+    fc_consensus = {
+        "30d":  {"score": forecast["30d"],  "confidence": 0.82},
+        "90d":  {"score": forecast["90d"],  "confidence": 0.72},
+        "180d": {"score": forecast["180d"], "confidence": 0.60},
+        "365d": {"score": forecast["365d"], "confidence": 0.45},
+    }
+
+    return {
+        "country":           iso2,
+        "country_name":      snap.get("country_name", iso2),
+        "gri":               gri,
+        "gri_grade":         _gri_grade(gri),
+        "date":              TODAY,
+        "grdf_version":      "2.0",
+        "generated_at":      datetime.now(timezone.utc).isoformat(),
+        "explanation":       f"{snap.get('country_name',iso2)}: GRI={gri}/100. "
+                             f"Primary driver: {drivers[0] if drivers else 'N/A'}. "
+                             f"Forecast 30d → {forecast['30d']}.",
+        "drivers":           driver_contributions,
+        "domains":           dom_s,
+        "forecast_consensus":fc_consensus,
+    }
+
+
+def _save_v2_explain(snapshots: list[dict]) -> None:
+    """Phase 6: save explainability V2 for all countries."""
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            expl = _build_explain_v2(iso2, snap)
+            with open(GRDF_DIR / f"v2_explain_{iso2}.json","w") as f:
+                json.dump(expl, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[GRDF-V2] explain {iso2}: {e}", file=sys.stderr)
+    print(f"[GRDF-V2] Phase 6: explainability V2 built", file=sys.stderr)
+
+
+# ── Phase 7: Sovereign Early Warning Dashboard ────────────────────────────
+
+def _save_v2_dashboard(snapshots: list[dict], all_cascades_map: dict,
+                        warnings: list[dict]) -> None:
+    """
+    Phase 7: Sovereign Early Warning Dashboard — all widget data.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+    gri_map: dict[str, float] = {}
+    for snap in snapshots:
+        iso2 = snap["country"]
+        dom_s = _get_domain_scores(iso2, snap)
+        gri_map[iso2] = _calc_gri({d: v["score"] for d, v in dom_s.items()})
+
+    by_gri     = sorted(gri_map.items(), key=lambda x: -x[1])
+    by_velocity= sorted(snapshots, key=lambda s: -abs(s.get("delta",0) or 0))
+    global_warnings = warnings
+    critical_w = [w for w in global_warnings if w.get("warning_level")=="CRITICAL"]
+    warning_w  = [w for w in global_warnings if w.get("warning_level")=="WARNING"]
+
+    # Cascades: top CRITICAL
+    crit_cascades = []
+    for iso2, cascades in all_cascades_map.items():
+        for c in cascades:
+            if c["cascade_score"] >= 75:
+                crit_cascades.append({
+                    "country":      iso2,
+                    "chain_name":   c["chain_name"],
+                    "cascade_score":c["cascade_score"],
+                    "cascade_grade":c["cascade_grade"],
+                })
+    crit_cascades.sort(key=lambda x: -x["cascade_score"])
+
+    # Cross-domain correlations summary
+    corr_path = GRDF_DIR / "v2_correlations.json"
+    top_corrs = []
+    if corr_path.exists():
+        try:
+            top_corrs = json.loads(corr_path.read_text()).get("correlations",[])[:5]
+        except Exception:
+            pass
+
+    # Emerging threats: high velocity + low baseline
+    emerging = [s for s in snapshots
+                if abs(s.get("delta",0) or 0) >= 3
+                and (s.get("risk_score",50) or 50) <= 70][:10]
+
+    # Forecast consensus
+    fc_consensus = []
+    for snap in snapshots:
+        fc = _build_forecast(snap)
+        delta_30 = fc["30d"] - (snap.get("risk_score",50) or 50)
+        if abs(delta_30) >= 5:
+            fc_consensus.append({
+                "country":    snap["country"],
+                "country_name":snap.get("country_name",snap["country"]),
+                "now":        snap.get("risk_score",50),
+                "forecast_30d":fc["30d"],
+                "delta_30d":  delta_30,
+                "trend":      "up" if delta_30>0 else "down",
+            })
+    fc_consensus.sort(key=lambda x: -abs(x["delta_30d"]))
+
+    dashboard = {
+        "grdf_version":   "2.0",
+        "date":           TODAY,
+        "generated_at":   now_ts,
+        # Widget: Critical Cascades
+        "critical_cascades":    crit_cascades[:5],
+        "critical_cascades_n":  len(crit_cascades),
+        # Widget: Fastest Escalating Countries
+        "fastest_escalating":   [
+            {"country":s["country"],"country_name":s.get("country_name",s["country"]),
+             "velocity":abs(s.get("delta",0) or 0),"risk_score":s.get("risk_score",50)}
+            for s in by_velocity[:10] if abs(s.get("delta",0) or 0) >= 1
+        ],
+        # Widget: Emerging Threats (high velocity, moderate baseline)
+        "emerging_threats":     [
+            {"country":s["country"],"country_name":s.get("country_name",s["country"]),
+             "risk_score":s.get("risk_score",50),"delta":s.get("delta",0)}
+            for s in emerging
+        ],
+        # Widget: Top Drivers (global — most common across countries)
+        "global_top_drivers":   _global_top_drivers(snapshots),
+        # Widget: Global Warning Feed
+        "warning_feed":         [
+            {"country":w["country"],"rule":w["rule"],"warning_level":w["warning_level"],
+             "trigger":w["trigger"],"confidence":w["confidence"]}
+            for w in global_warnings[:20]
+        ],
+        "warning_feed_n":       len(global_warnings),
+        "warning_critical_n":   len(critical_w),
+        "warning_warning_n":    len(warning_w),
+        # Widget: Cross-Domain Correlations
+        "top_correlations":     top_corrs,
+        # Widget: Forecast Consensus
+        "forecast_consensus":   fc_consensus[:10],
+        # Standard summary
+        "summary": {
+            "critical": sum(1 for _,g in by_gri if g>=80),
+            "high":     sum(1 for _,g in by_gri if 65<=g<80),
+            "elevated": sum(1 for _,g in by_gri if 50<=g<65),
+            "moderate": sum(1 for _,g in by_gri if g<50),
+            "avg_gri":  round(sum(v for _,v in by_gri)/max(1,len(by_gri)),1),
+            "highest_risk_country": by_gri[0][0] if by_gri else "N/A",
+            "highest_risk_gri":     round(by_gri[0][1]) if by_gri else 0,
+        },
+        "gri_ranking":          [{"country":cc,"gri":round(g)} for cc,g in by_gri],
+    }
+    with open(GRDF_DIR / "v2_dashboard.json","w") as f:
+        json.dump(dashboard, f, ensure_ascii=False, indent=2)
+    print("[GRDF-V2] Phase 7: Sovereign dashboard built", file=sys.stderr)
+
+
+def _global_top_drivers(snapshots: list[dict]) -> list[dict]:
+    """Aggregate top drivers across all countries by frequency."""
+    freq: dict[str, int] = {}
+    for snap in snapshots:
+        for drv in (snap.get("drivers",[]) or [])[:3]:
+            dom = _ENGINE_TO_GRDF.get((drv.get("domain","") or "").lower(), "geopolitical")
+            freq[dom] = freq.get(dom, 0) + 1
+    return sorted([{"domain":d,"count":c} for d,c in freq.items()], key=lambda x:-x["count"])[:7]
+
+
+# ── GRDF V2 Orchestrator ──────────────────────────────────────────────────
+
+def save_grdf_v2(snapshots: list[dict]) -> None:
+    """
+    GLOBAL RISK DATA FABRIC V2 — orchestrator.
+    Runs all 7 phases in dependency order.
+    V1 files are NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+    events_db = _load_events_db()
+
+    # Phase 1: Event Registry
+    _save_v2_events(events_db)
+
+    # Phase 2: Signal Correlation Engine
+    _save_v2_correlations(snapshots)
+
+    # Phase 3: Cascade Detection — build cascade map for downstream phases
+    all_cascades_map: dict[str, list[dict]] = {}
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            cascades = _detect_cascades(iso2, snap)
+            all_cascades_map[iso2] = cascades
+        except Exception:
+            all_cascades_map[iso2] = []
+    _save_v2_cascades(snapshots)
+
+    # Phase 4: Early Warning Engine
+    _save_v2_warnings(snapshots, all_cascades_map)
+
+    # Phase 5: Knowledge Graph
+    _save_v2_graphs(snapshots, all_cascades_map)
+
+    # Phase 6: Explainability V2
+    _save_v2_explain(snapshots)
+
+    # Phase 7: Sovereign Dashboard (needs all previous outputs)
+    # Reload warnings for dashboard
+    warnings: list[dict] = []
+    warn_path = GRDF_DIR / "v2_warnings.json"
+    if warn_path.exists():
+        try: warnings = json.loads(warn_path.read_text()).get("warnings", [])
+        except Exception: pass
+    _save_v2_dashboard(snapshots, all_cascades_map, warnings)
+
+    print("[GRDF-V2] All 7 phases complete.", file=sys.stderr)
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -8672,6 +9397,7 @@ def main():
     save_alerts()
     save_alert_rankings(snapshots)
     save_grdf(snapshots)
+    save_grdf_v2(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
