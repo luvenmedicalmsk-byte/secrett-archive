@@ -7261,8 +7261,58 @@ async function handleGRDF(request, env) {
       '/api/grdf/accuracy/dashboard','/api/grdf/accuracy/scorecard',
       '/api/grdf/accuracy/metrics','/api/grdf/accuracy/predictions',
       '/api/grdf/accuracy/outcomes','/api/grdf/accuracy/matching',
+
+  // =========================================================================
+  // GRDF MODEL IMPROVEMENT PROGRAM V1 API
+  // All routes under /api/grdf/improvement/
+  // Architecture frozen. Learning and optimization only.
+  // Closed-loop: Forecast → Validation → Accuracy → Improvement → Better Forecast
+  // =========================================================================
+  if (seg[0] === 'improvement') {
+    const mseg = seg[1] || 'dashboard';
+    const CM = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const MIP_FILES = {
+      'dashboard':      'docs/improvement/improvement_dashboard.json',
+      'feedback':       'docs/improvement/improvement_feedback.json',
+      'errors':         'docs/improvement/improvement_errors.json',
+      'calibration':    'docs/improvement/improvement_calibration.json',
+      'thresholds':     'docs/improvement/improvement_thresholds.json',
+      'domains':        'docs/improvement/improvement_domains.json',
+      'countries':      'docs/improvement/improvement_countries.json',
+      'opportunities':  'docs/improvement/improvement_opportunities.json',
+      'learning-score': 'docs/improvement/improvement_learning_score.json',
+      'roadmap':        'docs/improvement/improvement_roadmap.json',
+    };
+    const MIP_SIGNAL_ONLY = new Set(['errors','calibration','thresholds','opportunities']);
+    if (!MIP_FILES[mseg]) return new Response(JSON.stringify({error:'Unknown improvement route: '+mseg, available:Object.keys(MIP_FILES)}),{status:404,headers:CM});
+    if (MIP_SIGNAL_ONLY.has(mseg) && access==='teaser') return new Response(JSON.stringify({error:mseg+' requires Signal tier'}),{status:403,headers:CM});
+    const ck = `grdf:mip:${mseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CM});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, MIP_FILES[mseg], 300);
+      if (!d) return new Response(JSON.stringify({error:'Improvement '+mseg+' not built yet'}),{status:404,headers:CM});
+      let r;
+      if (access==='teaser') {
+        if (mseg==='dashboard') r={date:d.date,improvement_status:d.improvement_status,learning_score:d.learning_score,accuracy_trends:d.accuracy_trends,roadmap:d.roadmap,tier};
+        else if (mseg==='feedback') r={date:d.date,accuracy_pct:d.accuracy_pct,feedback_signal:d.feedback_signal,trend_vs_historical:d.trend_vs_historical,targets:d.targets,tier};
+        else if (mseg==='learning-score') r={date:d.date,learning_score:d.learning_score,ls_grade:d.ls_grade,components:d.components,tier};
+        else if (mseg==='domains') r={date:d.date,best_domain:d.best_domain,worst_domain:d.worst_domain,high_priority_n:d.high_priority_n,tier};
+        else if (mseg==='countries') r={date:d.date,avg_accuracy_pct:d.avg_accuracy_pct,below_target_n:d.below_target_n,priority_countries:d.priority_countries,tier};
+        else if (mseg==='roadmap') r={date:d.date,roadmap_items_n:d.roadmap_items_n,total_expected_gain:d.total_expected_gain,projected_ls:d.projected_ls,immediate_actions:d.implementation_timeline?.immediate,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CM});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CM});}
+  }
+
       '/api/grdf/accuracy/horizons','/api/grdf/accuracy/calibration',
       '/api/grdf/accuracy/domains','/api/grdf/accuracy/countries',
+      '/api/grdf/improvement/dashboard','/api/grdf/improvement/feedback',
+      '/api/grdf/improvement/errors','/api/grdf/improvement/calibration',
+      '/api/grdf/improvement/thresholds','/api/grdf/improvement/domains',
+      '/api/grdf/improvement/countries','/api/grdf/improvement/opportunities',
+      '/api/grdf/improvement/learning-score','/api/grdf/improvement/roadmap',
     ]
   }),{status:404,headers:CORS});
 }
