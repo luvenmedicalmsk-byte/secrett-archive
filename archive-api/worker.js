@@ -5583,6 +5583,156 @@ async function handleGRDF(request, env) {
     } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
   }
 
+
+  // =========================================================================
+  // GRDF V4 -- Strategic Simulation Engine API
+  // GET /api/grdf/simulate             -> shock simulation for given type+severity
+  // GET /api/grdf/stress-test/:country -> stress test for one country
+  // GET /api/grdf/resilience/:country  -> resilience + vulnerability scores
+  // GET /api/grdf/system-graph         -> global V4 system graph
+  // GET /api/grdf/outcomes/:country    -> 4-scenario x 4-year outcomes
+  // GET /api/grdf/strategic-outlook    -> strategic outlook all countries
+  // GET /api/grdf/shock/:type          -> all scenarios for one shock type
+  // GET /api/grdf/v4/dashboard         -> V4 Strategic Dashboard
+  // =========================================================================
+
+  // /api/grdf/simulate  (?shock=energy&severity=80)
+  if (seg[0] === 'simulate') {
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_shocks.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V4 shocks not built yet'}),{status:404,headers:CORS});
+      const url2 = new URL(request.url);
+      const shockType = url2.searchParams.get('shock');
+      const severity  = parseInt(url2.searchParams.get('severity') || '80', 10);
+      // Find best match from pre-built scenarios
+      const all = d.shocks || [];
+      let match = all.find(s => s.shock === shockType && s.severity === severity);
+      if (!match) match = all.find(s => s.shock === shockType);
+      if (!match) return new Response(JSON.stringify({
+        error:'Shock type not found', available: d.shock_types}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({...match, tier, available_types:d.shock_types}),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/shock/:type  -> all three severity scenarios for one shock type
+  if (seg[0] === 'shock' && seg[1]) {
+    const shockType = seg[1].toLowerCase().replace(/[^a-z_]/g,'');
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_shocks.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V4 shocks not built yet'}),{status:404,headers:CORS});
+      const scenarios = (d.shocks||[]).filter(s => s.shock === shockType);
+      if (!scenarios.length) return new Response(JSON.stringify({
+        error:'Shock type not found', available:d.shock_types}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({shock:shockType,scenarios,tier}),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/stress-test/:country
+  if (seg[0] === 'stress-test' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    const ck = `grdf:v4st:${cc}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_stress_tests.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V4 stress tests not built yet'}),{status:404,headers:CORS});
+      const rec = (d.stress_tests||[]).find(r => r.country === cc);
+      if (!rec) return new Response(JSON.stringify({error:'No stress test for '+cc}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {country:rec.country,stress_grade:rec.stress_grade,resilience:rec.resilience,vulnerability:rec.vulnerability,tier}
+        : {...rec, tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/resilience/:country  (alias: stress-test with resilience-focused output)
+  if (seg[0] === 'resilience' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_stress_tests.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V4 stress tests not built yet'}),{status:404,headers:CORS});
+      const rec = (d.stress_tests||[]).find(r => r.country === cc);
+      if (!rec) return new Response(JSON.stringify({error:'No resilience data for '+cc}),{status:404,headers:CORS});
+      return new Response(JSON.stringify({
+        country:rec.country,country_name:rec.country_name,date:rec.date,
+        resilience:rec.resilience,vulnerability:rec.vulnerability,
+        exposure:rec.exposure,recovery_days:rec.recovery_days,
+        gri:rec.gri,stress_grade:rec.stress_grade,tier}),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/system-graph
+  if (seg[0] === 'system-graph') {
+    if (access==='teaser') return new Response(JSON.stringify({error:'System graph requires Signal tier'}),{status:403,headers:CORS});
+    const ck = `grdf:v4sg:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_system_graph.json', 600);
+      if (!d) return new Response(JSON.stringify({error:'V4 system graph not built yet'}),{status:404,headers:CORS});
+      const r = access==='full+explain' ? {...d,tier}
+        : {node_count:d.node_count,edge_count:d.edge_count,node_types:d.node_types,
+           edge_types:d.edge_types,
+           nodes:d.nodes,
+           edges:d.edges.map(e=>({from:e.from,to:e.to,type:e.type})),
+           tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/outcomes/:country
+  if (seg[0] === 'outcomes' && seg[1]) {
+    const cc = seg[1].toUpperCase().replace(/[^A-Z]/g,'');
+    if (access==='teaser') return new Response(JSON.stringify({error:'Strategic outcomes require Signal tier'}),{status:403,headers:CORS});
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_outcomes.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V4 outcomes not built yet'}),{status:404,headers:CORS});
+      const rec = (d.outcomes||[]).find(r => r.country === cc);
+      if (!rec) return new Response(JSON.stringify({error:'No outcomes for '+cc}),{status:404,headers:CORS});
+      const r = access==='summary'
+        ? {country:rec.country,country_name:rec.country_name,
+           base_score:rec.base_score,strategic_trajectory:rec.strategic_trajectory,
+           worst_case_10yr:rec.worst_case_10yr,
+           base_case:{['1yr']:rec.base_case['1yr'],['3yr']:rec.base_case['3yr']},tier}
+        : {...rec, tier};
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/strategic-outlook
+  if (seg[0] === 'strategic-outlook') {
+    const ck = `grdf:v4so:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V4 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,system_stability_index:d.system_stability_index,ssi_grade:d.ssi_grade,
+           top_vulnerable:d.top_vulnerable?.slice(0,3),tier}
+        : {date:d.date,strategic_outlook:d.strategic_outlook,
+           system_stability_index:d.system_stability_index,ssi_grade:d.ssi_grade,
+           avg_vulnerability:d.avg_vulnerability,avg_resilience:d.avg_resilience,tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
+  // /api/grdf/v4/dashboard
+  if (seg[0]==='v4' && seg[1]==='dashboard') {
+    const ck = `grdf:v4dash:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, 'docs/grdf/v4_dashboard.json', 300);
+      if (!d) return new Response(JSON.stringify({error:'V4 dashboard not built yet'}),{status:404,headers:CORS});
+      const r = access==='teaser'
+        ? {date:d.date,system_stability_index:d.system_stability_index,ssi_grade:d.ssi_grade,
+           top_vulnerable:d.top_vulnerable?.slice(0,3),top_resilient:d.top_resilient?.slice(0,3),tier}
+        : {...d, tier};
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CORS});
+    } catch(e) { return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS}); }
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -5594,6 +5744,10 @@ async function handleGRDF(request, env) {
       '/api/grdf/global-feed','/api/grdf/v2/dashboard',
       '/api/grdf/forecast/:cc','/api/grdf/forecast/global',
       '/api/grdf/scenarios/:cc','/api/grdf/trends/:cc','/api/grdf/v3/dashboard',
+      '/api/grdf/simulate','/api/grdf/shock/:type',
+      '/api/grdf/stress-test/:cc','/api/grdf/resilience/:cc',
+      '/api/grdf/system-graph','/api/grdf/outcomes/:cc',
+      '/api/grdf/strategic-outlook','/api/grdf/v4/dashboard',
     ]
   }),{status:404,headers:CORS});
 }
