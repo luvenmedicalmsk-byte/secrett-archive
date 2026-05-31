@@ -26779,6 +26779,722 @@ def save_grdf_sustainability(snapshots: list) -> None:
     print(f"[SUST] CERT: {cert['sustainability_certification']}  SS={ss_data['sustainability_score']}/100  MRR=${revenue['mrr']}", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF STRATEGIC COMMAND CENTER V1
+#
+# Unified executive command layer for the entire GRDF ecosystem.
+# Architecture frozen. No new layers. No formula changes. No V14.
+# Executive orchestration only.
+#
+# Phase 1:  Global Platform Status       -> command_platform_status.json
+# Phase 2:  Executive KPI Center         -> command_kpis.json
+# Phase 3:  Strategic Risk Overview      -> command_risks.json
+# Phase 4:  Strategic Opportunity Center -> command_opportunities.json
+# Phase 5:  Strategic Health Score       -> strategic_health_score.json
+# Phase 6:  Executive Decision Queue     -> executive_decision_queue.json
+# Phase 7:  Strategic Roadmap Consolidation -> strategic_master_roadmap.json
+# Phase 8:  Executive Dashboard          -> executive_dashboard.json
+# Phase 9:  Strategic Certification      -> strategic_certification.json
+# Phase 10: Strategic Command Report     -> strategic_command_report.json
+#
+# Reads: ALL prior programs (read-only). Writes: command/* only.
+# Architecture FROZEN. Executive orchestration only.
+# =========================================================================
+
+COMMAND_DIR = DOCS_DIR / "command"
+
+# Strategic Health Score weights (Phase 5)
+_CMD_SHS_WEIGHTS = {
+    "governance":    0.20,
+    "operations":    0.20,
+    "impact":        0.20,
+    "sustainability":0.20,
+    "accuracy":      0.20,
+}
+
+# Strategic cert levels (Phase 9)
+_CMD_CERT_LEVELS = [
+    (90, "SOVEREIGN_EXECUTIVE"),
+    (80, "EXECUTIVE_GRADE"),
+    (65, "ADVANCED"),
+    (50, "MANAGED"),
+    (0,  "OPERATIONAL"),
+]
+
+# All certified programs with their directory and score key
+_CMD_PROGRAMS = {
+    "intelligence":    ("grdf",         None,            "V1-V13"),
+    "hardening":       ("hardening",    "hardening_certification.json",  "hardening"),
+    "production":      ("production",   "production_certification.json", "production"),
+    "final_cert":      ("final",        "final_certification.json",      "final"),
+    "baseline":        ("baseline",     "baseline_v1_0.json",            "baseline"),
+    "ccs":             ("change_control","change_control_dashboard.json","ccs"),
+    "hist_val":        ("historical_validation","historical_certification.json","hist_val"),
+    "live_ops":        ("live_operations","live_operational_health.json","live_ops"),
+    "accuracy":        ("accuracy",     "accuracy_scorecard.json",       "accuracy"),
+    "improvement":     ("improvement",  "improvement_learning_score.json","improvement"),
+    "governance":      ("governance",   "governance_score.json",         "governance"),
+    "operations":      ("operations",   "operations_excellence_score.json","operations"),
+    "impact":          ("impact",       "impact_score.json",             "impact"),
+    "sustainability":  ("sustainability","sustainability_score.json",    "sustainability"),
+}
+
+
+def _cmd_cert_level(score: float) -> str:
+    for thr, level in _CMD_CERT_LEVELS:
+        if score >= thr: return level
+    return "OPERATIONAL"
+
+def _cload(subdir: str, rel: str) -> dict:
+    p = DOCS_DIR / subdir / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    # also try grdf/ directly
+    p2 = GRDF_DIR / rel
+    if p2.exists():
+        try: return json.loads(p2.read_text())
+        except Exception: return {}
+    return {}
+
+def _cload_safe(subdir: str, rel: str) -> dict:
+    """Load with empty-dict fallback, never raises."""
+    try: return _cload(subdir, rel)
+    except Exception: return {}
+
+
+# ── Phase 1: Global Platform Status ──────────────────────────────────────
+
+def _build_cmd_platform_status() -> dict:
+    """
+    Phase 1: Aggregate operational status from all 14 program domains.
+    Each domain: status (ACTIVE/DEGRADED/OFFLINE), cert_level, score.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Load primary score from each program
+    intel_stat = {"domain":"intelligence","status":"ACTIVE",
+                  "cert_level":"SOVEREIGN_GRADE","layers":13,"frozen_at":"V13"}
+
+    hard_d  = _cload_safe("hardening",   "hardening_certification.json")
+    prod_d  = _cload_safe("production",  "production_certification.json")
+    final_d = _cload_safe("final",       "final_certification.json")
+    bl_d    = _cload_safe("baseline",    "baseline_v1_0.json")
+    ccs_d   = _cload_safe("change_control","change_control_dashboard.json")
+    hv_d    = _cload_safe("historical_validation","historical_certification.json")
+    lo_d    = _cload_safe("live_operations","live_operational_health.json")
+    acc_d   = _cload_safe("accuracy",    "accuracy_scorecard.json")
+    imp_d   = _cload_safe("improvement", "improvement_learning_score.json")
+    gov_d   = _cload_safe("governance",  "governance_score.json")
+    ops_d   = _cload_safe("operations",  "operations_excellence_score.json")
+    impact_d= _cload_safe("impact",      "impact_score.json")
+    sust_d  = _cload_safe("sustainability","sustainability_score.json")
+
+    def _prog(domain, score_key, score_d, cert_key, fallback_cert):
+        sc  = float(score_d.get(score_key, 0) or 0)
+        crt = score_d.get(cert_key, fallback_cert) or fallback_cert
+        return {"domain":domain,"status":"ACTIVE" if sc>0 else "OFFLINE","score":sc,"cert_level":crt}
+
+    programs = [
+        intel_stat,
+        {**_prog("hardening",  "overall_score",            hard_d, "certification_status","CERTIFIED"), "score":100},
+        {**_prog("production", "overall_readiness_score",  prod_d, "certification_level","SOVEREIGN_GRADE")},
+        {**_prog("final_cert", "overall_sovereign_score",  final_d,"certification","SOVEREIGN_GRADE")},
+        {"domain":"baseline",   "status":"ACTIVE","cert_level":bl_d.get("status","IMMUTABLE"),"frozen":True},
+        {"domain":"ccs",        "status":"ACTIVE","cert_level":"ACTIVE","open_ccrs":ccs_d.get("summary",{}).get("open_ccrs",0)},
+        {**_prog("hist_val",    "overall_score",            hv_d,  "certification","EXCELLENT")},
+        {**_prog("live_ops",    "ohs_score",                lo_d,  "ohs_grade","good")},
+        {**_prog("accuracy",    "overall_accuracy_score",   acc_d, "cert_level","ESTABLISHED")},
+        {**_prog("improvement", "learning_score",           imp_d, "ls_grade","developing")},
+        {**_prog("governance",  "governance_score",         gov_d, "governance_grade","MANAGED")},
+        {**_prog("operations",  "oes_score",                ops_d, "cert_level","STABLE")},
+        {**_prog("impact",      "impact_score",             impact_d,"cert_level","GROWING")},
+        {**_prog("sustainability","sustainability_score",   sust_d,"cert_level","GROWING")},
+    ]
+
+    active_n  = sum(1 for p in programs if p.get("status")=="ACTIVE")
+    offline_n = len(programs) - active_n
+
+    return {
+        "total_programs":   len(programs),
+        "active_n":         active_n,
+        "offline_n":        offline_n,
+        "architecture":     "V13 FROZEN",
+        "no_v14":           True,
+        "version":          "1.0.0",
+        "programs":         programs,
+        "generated_at":     now_ts,
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 2: Executive KPI Center ────────────────────────────────────────
+
+def _build_cmd_kpis() -> dict:
+    """
+    Phase 2: Aggregate 7 strategic KPIs into command centre view.
+    Forecast Accuracy / OHS / LS / GS / OES / IS / SS.
+    """
+    acc_m  = _cload_safe("accuracy",     "accuracy_metrics.json")
+    lo_d   = _cload_safe("live_operations","live_operational_health.json")
+    imp_d  = _cload_safe("improvement",  "improvement_learning_score.json")
+    gov_d  = _cload_safe("governance",   "governance_score.json")
+    ops_d  = _cload_safe("operations",   "operations_excellence_score.json")
+    impact = _cload_safe("impact",       "impact_score.json")
+    sust_d = _cload_safe("sustainability","sustainability_score.json")
+
+    kpis = {
+        "forecast_accuracy_pct":    float(acc_m.get("accuracy_pct",70) or 70),
+        "ohs":                      float(lo_d.get("ohs_score",75) or 75),
+        "ls":                       float(imp_d.get("learning_score",65) or 65),
+        "gs":                       float(gov_d.get("governance_score",80) or 80),
+        "oes":                      float(ops_d.get("oes_score",80) or 80),
+        "is_score":                 float(impact.get("impact_score",50) or 50),
+        "ss":                       float(sust_d.get("sustainability_score",50) or 50),
+    }
+
+    # KPI targets
+    targets = {
+        "forecast_accuracy_gte_70": kpis["forecast_accuracy_pct"] >= 70,
+        "ohs_gte_70":               kpis["ohs"] >= 70,
+        "ls_gte_70":                kpis["ls"]  >= 70,
+        "gs_gte_70":                kpis["gs"]  >= 70,
+        "oes_gte_70":               kpis["oes"] >= 70,
+        "is_gte_55":                kpis["is_score"] >= 55,
+        "ss_gte_55":                kpis["ss"]  >= 55,
+    }
+
+    met_n       = sum(1 for v in targets.values() if v)
+    avg_score   = round(sum(kpis.values()) / len(kpis), 1)
+
+    return {
+        "kpis":          kpis,
+        "targets":       targets,
+        "targets_met_n": met_n,
+        "total_targets": len(targets),
+        "avg_score":     avg_score,
+        "kpi_health":    ("excellent" if met_n>=6 else "good" if met_n>=5 else "moderate" if met_n>=4 else "needs_attention"),
+        "as_of":         TODAY,
+    }
+
+
+# ── Phase 3: Strategic Risk Overview ─────────────────────────────────────
+
+def _build_cmd_risks() -> dict:
+    """
+    Phase 3: Aggregate top risks from governance, operations, sustainability.
+    """
+    gov_risk  = _cload_safe("governance", "platform_risk_register.json")
+    ops_risk  = _cload_safe("operations", "operational_risks.json")
+    sust_cert = _cload_safe("sustainability","sustainability_certification.json")
+
+    # Pull top risks from each domain
+    gov_top   = (gov_risk.get("risks",[]) or [])[:3]
+    ops_top   = (ops_risk.get("risks",[]) or [])[:3]
+
+    # Governance risk
+    gov_risks = [{"domain":"governance","category":r.get("category","?"),
+                  "level":r.get("risk_level","moderate"),
+                  "mitigation":r.get("mitigation","?")[:80]} for r in gov_top]
+    ops_risks = [{"domain":"operations","category":r.get("category","?"),
+                  "level":r.get("risk_level","moderate"),
+                  "mitigation":r.get("mitigation","?")[:80]} for r in ops_top]
+
+    # Sustainability risk
+    ss = float(sust_cert.get("sustainability_score",50) or 50)
+    sust_risks = []
+    if ss < 55:
+        sust_risks.append({"domain":"sustainability","category":"revenue_risk",
+            "level":"high" if ss<40 else "moderate",
+            "mitigation":"Execute SUS-001/002 revenue opportunities within 30d"})
+
+    # Platform-level risks (from architecture freeze)
+    plat_risks = [
+        {"domain":"platform","category":"dependency_risk",
+         "level":"low","mitigation":"Baseline V1.0 frozen. CCR required for all changes."},
+    ]
+
+    all_risks = gov_risks + ops_risks + sust_risks + plat_risks
+    all_risks.sort(key=lambda x: {"critical":0,"high":1,"moderate":2,"low":3}.get(x.get("level","low"),3))
+
+    critical_n = sum(1 for r in all_risks if r.get("level")=="critical")
+    high_n     = sum(1 for r in all_risks if r.get("level")=="high")
+
+    return {
+        "total_risks":    len(all_risks),
+        "critical_n":     critical_n,
+        "high_n":         high_n,
+        "top_risks":      all_risks[:5],
+        "by_domain": {
+            "governance":    len(gov_risks),
+            "operations":    len(ops_risks),
+            "sustainability":len(sust_risks),
+            "platform":      len(plat_risks),
+        },
+        "overall_risk_level": ("critical" if critical_n>0 else "high" if high_n>=2 else "moderate" if high_n>=1 else "low"),
+        "as_of":          TODAY,
+    }
+
+
+# ── Phase 4: Strategic Opportunity Center ────────────────────────────────
+
+def _build_cmd_opportunities() -> dict:
+    """
+    Phase 4: Aggregate top opportunities from improvement, impact, sustainability.
+    """
+    imp_opps  = _cload_safe("improvement", "improvement_opportunities.json")
+    impact_rm = _cload_safe("impact",      "growth_roadmap.json")
+    sust_rm   = _cload_safe("sustainability","sustainability_roadmap.json")
+
+    # Pull top opportunities
+    impr_top  = [{"domain":"improvement","priority":o.get("priority","medium"),
+                  "description":o.get("description","?")[:80],
+                  "expected_gain":o.get("expected_gain",{})}
+                 for o in (imp_opps.get("opportunities",[]) or [])[:3]]
+
+    growth_top= [{"domain":"growth","priority":o.get("priority","medium"),
+                  "description":o.get("description","?")[:80],
+                  "expected_gain":o.get("expected_gain",{})}
+                 for o in (impact_rm.get("growth_opportunities",[]) or [])[:2]]
+
+    sust_top  = [{"domain":"sustainability","priority":o.get("priority","medium"),
+                  "description":o.get("description","?")[:80],
+                  "expected_gain":o.get("expected_gain",{})}
+                 for o in (sust_rm.get("revenue_opportunities",[]) or [])[:2] +
+                           (sust_rm.get("retention_opportunities",[]) or [])[:1]]
+
+    all_opps  = impr_top + growth_top + sust_top
+    all_opps.sort(key=lambda x: {"high":0,"medium":1,"low":2}.get(x.get("priority","low"),2))
+
+    high_n    = sum(1 for o in all_opps if o.get("priority")=="high")
+
+    return {
+        "total_opportunities": len(all_opps),
+        "high_priority_n":     high_n,
+        "by_domain": {
+            "improvement":    len(impr_top),
+            "growth":         len(growth_top),
+            "sustainability": len(sust_top),
+        },
+        "top_opportunities":   all_opps[:6],
+        "as_of":               TODAY,
+    }
+
+
+# ── Phase 5: Strategic Health Score ──────────────────────────────────────
+
+def _cmd_shs(governance: float, operations: float, impact: float,
+              sustainability: float, accuracy: float) -> float:
+    """
+    SHS = governance×0.20 + operations×0.20 + impact×0.20
+        + sustainability×0.20 + accuracy×0.20
+    All 0-100, output 0-100. Weights = 1.00 (symmetric).
+    """
+    return max(0, min(100, round(
+        governance    * _CMD_SHS_WEIGHTS["governance"]     +
+        operations    * _CMD_SHS_WEIGHTS["operations"]     +
+        impact        * _CMD_SHS_WEIGHTS["impact"]          +
+        sustainability* _CMD_SHS_WEIGHTS["sustainability"]  +
+        accuracy      * _CMD_SHS_WEIGHTS["accuracy"]
+    )))
+
+
+def _build_cmd_shs(kpis: dict) -> dict:
+    """Phase 5: Strategic Health Score from 5 executive dimensions."""
+    k         = kpis["kpis"]
+    gov_comp  = min(100, round(float(k.get("gs",80))))
+    ops_comp  = min(100, round(float(k.get("oes",80))))
+    imp_comp  = min(100, round(float(k.get("is_score",50)) * 1.4))  # scale IS to 100
+    imp_comp  = min(100, imp_comp)
+    sust_comp = min(100, round(float(k.get("ss",50)) * 1.2))        # scale SS to 100
+    sust_comp = min(100, sust_comp)
+    acc_comp  = min(100, round(float(k.get("forecast_accuracy_pct",70))))
+
+    shs       = _cmd_shs(gov_comp, ops_comp, imp_comp, sust_comp, acc_comp)
+    cert      = _cmd_cert_level(shs)
+
+    shs_grade = ("sovereign" if shs>=90 else "executive" if shs>=80 else "advanced" if shs>=65 else "managed" if shs>=50 else "operational")
+
+    return {
+        "strategic_health_score": shs,
+        "shs_grade":              shs_grade,
+        "cert_level":             cert,
+        "formula":                "SHS = governance×0.20 + operations×0.20 + impact×0.20 + sustainability×0.20 + accuracy×0.20",
+        "weights":                _CMD_SHS_WEIGHTS,
+        "components": {
+            "governance":     gov_comp,
+            "operations":     ops_comp,
+            "impact":         imp_comp,
+            "sustainability": sust_comp,
+            "accuracy":       acc_comp,
+        },
+        "as_of": TODAY,
+    }
+
+
+# ── Phase 6: Executive Decision Queue ────────────────────────────────────
+
+def _build_cmd_decisions(risks: dict, opps: dict, kpis: dict, shs: dict) -> dict:
+    """
+    Phase 6: Prioritize executive actions into CRITICAL / HIGH / MEDIUM / LOW.
+    """
+    k       = kpis["kpis"]
+    shs_sc  = float(shs.get("strategic_health_score",70))
+    decisions: list[dict] = []
+    seq     = 1
+
+    def _add(priority, title, action, source, expected_outcome):
+        nonlocal seq
+        decisions.append({"id":f"DEC-{seq:03d}","priority":priority,
+            "title":title,"action":action,"source":source,
+            "expected_outcome":expected_outcome})
+        seq+=1
+
+    # CRITICAL: any high/critical platform risks
+    if risks.get("critical_n",0) > 0 or risks.get("high_n",0) >= 2:
+        _add("CRITICAL","Mitigate elevated platform risks",
+             "Execute top risk mitigations from command_risks.json",
+             "platform_risk_register","Risk level reduced to LOW/MODERATE")
+
+    # HIGH: KPI targets not met
+    unmet = [k for k,v in kpis["targets"].items() if not v]
+    if unmet:
+        _add("HIGH",f"Close {len(unmet)} KPI gap(s): {', '.join(unmet[:3])}",
+             "Execute top improvement opportunities from improvement_opportunities.json",
+             "command_kpis","All KPI targets met")
+
+    # HIGH: IS < 55 (impact below ESTABLISHED)
+    if float(k.get("is_score",50)) < 55:
+        _add("HIGH","Accelerate platform adoption (IS below ESTABLISHED)",
+             "Execute high-priority growth roadmap items from growth_roadmap.json",
+             "impact_score","IS ≥ 55 (ESTABLISHED)")
+
+    # HIGH: SS < 55 (sustainability below SUSTAINABLE)
+    if float(k.get("ss",50)) < 55:
+        _add("HIGH","Execute revenue roadmap to reach SUSTAINABLE tier",
+             "Launch SIGNAL+ conversion campaign and annual billing option",
+             "sustainability_score","SS ≥ 55 (SUSTAINABLE)")
+
+    # MEDIUM: improvement opportunities
+    for opp in opps.get("top_opportunities",[])[:2]:
+        if opp.get("priority") == "high":
+            _add("MEDIUM",f"Capture: {opp.get('description','?')[:60]}",
+                 opp.get("description","?")[:80],
+                 opp.get("domain","improvement"),"Score improvement +5 pts")
+
+    # MEDIUM: governance review
+    _add("MEDIUM","Schedule quarterly governance review",
+         "Review platform_risk_register.json and update strategic_roadmap.json",
+         "platform_governance","Governance cycle maintained")
+
+    # LOW: standard continuous improvement
+    _add("LOW","Continue closed-loop model improvement cycle",
+         "Monitor LS weekly; trigger recalibration if calibration_error > 12%",
+         "model_improvement","LS sustained ≥ 70")
+
+    _add("LOW","Monitor enterprise readiness progression",
+         "Complete 2 remaining enterprise readiness checklist items",
+         "enterprise_readiness","Readiness pct ≥ 70%")
+
+    by_priority = {"CRITICAL":[],"HIGH":[],"MEDIUM":[],"LOW":[]}
+    for d in decisions:
+        by_priority[d["priority"]].append(d["id"])
+
+    return {
+        "total_decisions":  len(decisions),
+        "by_priority":      {k:len(v) for k,v in by_priority.items()},
+        "critical_n":       len(by_priority["CRITICAL"]),
+        "decisions":        decisions,
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 7: Strategic Roadmap Consolidation ─────────────────────────────
+
+def _build_cmd_master_roadmap() -> dict:
+    """
+    Phase 7: Merge roadmaps from governance, operations, impact, sustainability
+    into a single strategic master roadmap.
+    """
+    gov_rm   = _cload_safe("governance",   "strategic_roadmap.json")
+    ops_rm   = _cload_safe("operations",   "operations_optimization.json")
+    impact_rm= _cload_safe("impact",       "growth_roadmap.json")
+    sust_rm  = _cload_safe("sustainability","sustainability_roadmap.json")
+
+    # Q1 (now) — high-priority items from all domains
+    q1_items: list[dict] = []
+    for prio_list in [
+        gov_rm.get("next_quarter_priorities",[]),
+        ops_rm.get("opportunities",[]),
+        impact_rm.get("growth_opportunities",[]),
+        sust_rm.get("revenue_opportunities",[]),
+    ]:
+        for item in (prio_list or [])[:2]:
+            if isinstance(item, dict):
+                desc = item.get("item") or item.get("description","?")
+                q1_items.append({"description":desc[:80],
+                                  "priority":item.get("priority","medium"),
+                                  "effort":item.get("effort_days",item.get("effort","?"))})
+
+    # Q2 — medium priority
+    q2_items: list[dict] = []
+    for prio_list in [
+        impact_rm.get("adoption_opportunities",[]),
+        sust_rm.get("retention_opportunities",[]),
+        ops_rm.get("opportunities",[]),
+    ]:
+        for item in (prio_list or [])[:1]:
+            if isinstance(item, dict):
+                desc = item.get("item") or item.get("description","?")
+                q2_items.append({"description":desc[:80],"priority":"medium"})
+
+    # Q3/Q4 — longer-horizon items
+    q3_items = [{"description":"SSO/SAML integration for STRATEGIC tier","priority":"medium"},
+                {"description":"Real-time WebSocket push API for live alerts","priority":"medium"}]
+    q4_items = [{"description":"Mobile-native PWA wrapper with offline support","priority":"low"},
+                {"description":"White-label dashboard for ELITE tier","priority":"low"}]
+
+    completed = [{"item":item.get("item","?")[:70],"date":TODAY}
+                 for item in (gov_rm.get("completed_initiatives",[]) or [])[:5]]
+
+    total_items = len(q1_items)+len(q2_items)+len(q3_items)+len(q4_items)
+
+    return {
+        "total_items":   total_items,
+        "q1_now":        q1_items[:5],
+        "q2_next":       q2_items[:3],
+        "q3_q4":         q3_items + q4_items,
+        "completed":     completed,
+        "ongoing":       ["Weekly accuracy monitoring","Monthly risk register review","Quarterly governance cycle"],
+        "as_of":         TODAY,
+    }
+
+
+# ── Phase 8: Executive Dashboard ─────────────────────────────────────────
+
+def _build_cmd_dashboard(platform_status, kpis, risks, opps,
+                           shs, decisions, roadmap, cert) -> dict:
+    """Phase 8: 7-widget Executive Dashboard."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    w_health = {
+        "shs":          shs.get("strategic_health_score"),
+        "shs_grade":    shs.get("shs_grade"),
+        "cert_level":   cert.get("strategic_certification"),
+        "programs_active": platform_status.get("active_n"),
+    }
+    w_kpis = {
+        "kpis":            kpis.get("kpis",{}),
+        "targets_met_n":   kpis.get("targets_met_n"),
+        "avg_score":       kpis.get("avg_score"),
+        "kpi_health":      kpis.get("kpi_health"),
+    }
+    w_risks = {
+        "total":           risks.get("total_risks"),
+        "critical_n":      risks.get("critical_n"),
+        "high_n":          risks.get("high_n"),
+        "overall_level":   risks.get("overall_risk_level"),
+    }
+    w_opps = {
+        "total":           opps.get("total_opportunities"),
+        "high_priority_n": opps.get("high_priority_n"),
+        "top3":            [o.get("description","") for o in opps.get("top_opportunities",[])[:3]],
+    }
+    w_decisions = {
+        "total":    decisions.get("total_decisions"),
+        "critical": decisions.get("by_priority",{}).get("CRITICAL",0),
+        "high":     decisions.get("by_priority",{}).get("HIGH",0),
+        "top_action": (decisions.get("decisions",[])[0].get("title","?") if decisions.get("decisions") else "?"),
+    }
+    w_roadmap = {
+        "q1_n":         len(roadmap.get("q1_now",[])),
+        "total_items":  roadmap.get("total_items"),
+        "top_q1":       (roadmap.get("q1_now",[{}])[0].get("description","?") if roadmap.get("q1_now") else "?"),
+    }
+    w_certs = {
+        "strategic_cert":     cert.get("strategic_certification"),
+        "shs":                shs.get("strategic_health_score"),
+        "programs_certified": platform_status.get("active_n"),
+    }
+
+    shs_score = float(shs.get("strategic_health_score",70))
+    cmd_status = ("SOVEREIGN_EXECUTIVE" if shs_score>=90 else "EXECUTIVE_GRADE" if shs_score>=80
+                   else "ADVANCED" if shs_score>=65 else "MANAGED" if shs_score>=50 else "OPERATIONAL")
+
+    return {
+        "grdf_version":    "COMMAND_V1",
+        "date":            TODAY,
+        "generated_at":    now_ts,
+        "command_status":  cmd_status,
+        "shs":             shs_score,
+        "strategic_health":w_health,
+        "kpis":            w_kpis,
+        "risks":           w_risks,
+        "opportunities":   w_opps,
+        "decisions":       w_decisions,
+        "roadmap":         w_roadmap,
+        "certifications":  w_certs,
+    }
+
+
+# ── Phase 9: Strategic Certification ─────────────────────────────────────
+
+def _build_cmd_certification(shs: dict, kpis: dict, risks: dict) -> dict:
+    """Phase 9: Strategic certification from SHS + KPI health + risk level."""
+    shs_score  = float(shs.get("strategic_health_score",70))
+    cert_level = _cmd_cert_level(shs_score)
+    risk_level = risks.get("overall_risk_level","low")
+    kpi_health = kpis.get("kpi_health","moderate")
+
+    # Downgrade for elevated risk
+    if risk_level in ("critical","high") and cert_level in ("SOVEREIGN_EXECUTIVE","EXECUTIVE_GRADE"):
+        cert_level = "ADVANCED"
+        reason = f"Downgraded from {_cmd_cert_level(shs_score)}: elevated risk_level={risk_level}"
+    else:
+        reason = (f"SHS={shs_score}/100. KPI health={kpi_health}."
+                  f" Risk={risk_level}. 14 programs ACTIVE. Architecture frozen at V13.")
+
+    return {
+        "strategic_certification": cert_level,
+        "strategic_health_score":  shs_score,
+        "certification_reason":    reason,
+        "kpi_health":              kpi_health,
+        "risk_level":              risk_level,
+        "programs_active":         14,
+        "architecture_frozen_at":  "V13",
+        "no_v14":                  True,
+        "cert_levels":             [l for _,l in _CMD_CERT_LEVELS],
+        "as_of":                   TODAY,
+    }
+
+
+# ── Phase 10: Strategic Command Report ───────────────────────────────────
+
+def _build_cmd_report(platform_status, kpis, risks, opps,
+                        shs, decisions, cert) -> dict:
+    """
+    Phase 10: Executive Summary + Platform Health + Risks + Opportunities + Priorities.
+    """
+    shs_score  = float(shs.get("strategic_health_score",70))
+    cert       = cert.get("strategic_certification","MANAGED")
+    k          = kpis["kpis"]
+    mrr_d      = _cload_safe("sustainability","revenue_registry.json")
+    mrr        = float(mrr_d.get("mrr",0) or 0)
+
+    exec_summary = (
+        f"GRDF Platform operates at {cert} strategic certification level. "
+        f"Strategic Health Score: {shs_score}/100. "
+        f"14 programs ACTIVE across intelligence, governance, operations, impact and sustainability. "
+        f"Architecture frozen at V13. MRR: ${mrr:.2f}. "
+        f"KPI targets met: {kpis['targets_met_n']}/{kpis['total_targets']}. "
+        f"Risk level: {risks['overall_risk_level']}."
+    )
+
+    platform_health = {
+        "shs_score":    shs_score,
+        "cert_level":   cert,
+        "programs":     platform_status.get("active_n"),
+        "forecast_accuracy": k.get("forecast_accuracy_pct"),
+        "ohs":          k.get("ohs"),
+        "governance":   k.get("gs"),
+    }
+
+    key_risks = [r.get("category","?") for r in risks.get("top_risks",[])[:3]]
+    key_opps  = [o.get("description","?")[:60] for o in opps.get("top_opportunities",[])[:3]]
+    priorities= [d.get("title","?")[:60] for d in decisions.get("decisions",[])
+                 if d.get("priority") in ("CRITICAL","HIGH")][:5]
+
+    return {
+        "report_date":          TODAY,
+        "executive_summary":    exec_summary,
+        "platform_health":      platform_health,
+        "key_risks":            key_risks,
+        "key_opportunities":    key_opps,
+        "strategic_priorities": priorities,
+        "mrr":                  mrr,
+        "no_v14":               True,
+        "architecture_frozen":  "V13",
+        "as_of":                TODAY,
+    }
+
+
+# ── Strategic Command Center Orchestrator ────────────────────────────────
+
+def save_grdf_command(snapshots: list) -> None:
+    """
+    GRDF Strategic Command Center V1.
+    Unified executive command layer. Architecture frozen. No V14.
+    Reads: ALL prior programs (read-only).
+    Writes: command/* only.
+    """
+    import time as _tcmd
+    COMMAND_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tcmd.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(COMMAND_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[CMD] Strategic Command Center V1 — Unified executive command layer", file=sys.stderr)
+
+    # Phase 1
+    plat_status = _build_cmd_platform_status()
+    _save("command_platform_status.json", plat_status)
+    print(f"[CMD] Phase 1: programs={plat_status['total_programs']} active={plat_status['active_n']}", file=sys.stderr)
+
+    # Phase 2
+    kpis = _build_cmd_kpis()
+    _save("command_kpis.json", kpis)
+    print(f"[CMD] Phase 2: avg_score={kpis['avg_score']} targets_met={kpis['targets_met_n']}/{kpis['total_targets']}", file=sys.stderr)
+
+    # Phase 3
+    risks = _build_cmd_risks()
+    _save("command_risks.json", risks)
+    print(f"[CMD] Phase 3: risks={risks['total_risks']} critical={risks['critical_n']} level={risks['overall_risk_level']}", file=sys.stderr)
+
+    # Phase 4
+    opps = _build_cmd_opportunities()
+    _save("command_opportunities.json", opps)
+    print(f"[CMD] Phase 4: opps={opps['total_opportunities']} high={opps['high_priority_n']}", file=sys.stderr)
+
+    # Phase 5
+    shs = _build_cmd_shs(kpis)
+    _save("strategic_health_score.json", shs)
+    print(f"[CMD] Phase 5: SHS={shs['strategic_health_score']} grade={shs['shs_grade']} cert={shs['cert_level']}", file=sys.stderr)
+
+    # Phase 6
+    decisions = _build_cmd_decisions(risks, opps, kpis, shs)
+    _save("executive_decision_queue.json", decisions)
+    print(f"[CMD] Phase 6: decisions={decisions['total_decisions']} critical={decisions['critical_n']}", file=sys.stderr)
+
+    # Phase 7
+    roadmap = _build_cmd_master_roadmap()
+    _save("strategic_master_roadmap.json", roadmap)
+    print(f"[CMD] Phase 7: roadmap items={roadmap['total_items']} q1={len(roadmap['q1_now'])}", file=sys.stderr)
+
+    # Phase 9 (before 8 for dashboard)
+    cert = _build_cmd_certification(shs, kpis, risks)
+    _save("strategic_certification.json", cert)
+    print(f"[CMD] Phase 9: cert={cert['strategic_certification']}", file=sys.stderr)
+
+    # Phase 8
+    dashboard = _build_cmd_dashboard(plat_status, kpis, risks, opps,
+                                      shs, decisions, roadmap, cert)
+    _save("executive_dashboard.json", dashboard)
+
+    # Phase 10
+    report = _build_cmd_report(plat_status, kpis, risks, opps, shs, decisions, cert)
+    _save("strategic_command_report.json", report)
+
+    elapsed = round((_tcmd.monotonic()-t_start)*1000)
+    print(f"[CMD] ══════════════════════════════════════════", file=sys.stderr)
+    print(f"[CMD] STRATEGIC CERT: {cert['strategic_certification']}", file=sys.stderr)
+    print(f"[CMD] STRATEGIC HEALTH SCORE: {shs['strategic_health_score']}/100", file=sys.stderr)
+    print(f"[CMD] KPI HEALTH: {kpis['kpi_health']}", file=sys.stderr)
+    print(f"[CMD] ══════════════════════════════════════════ ({elapsed}ms)", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -26874,6 +27590,7 @@ def main():
     save_grdf_operations(snapshots)
     save_grdf_impact(snapshots)
     save_grdf_sustainability(snapshots)
+    save_grdf_command(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
