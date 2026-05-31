@@ -9929,6 +9929,457 @@ def save_grdf_v3(snapshots: list[dict]) -> None:
 
     print(f"[GRDF-V3] All 7 phases complete. {len(all_forecasts)} countries.", file=sys.stderr)
 
+# =========================================================================
+# GLOBAL RISK DATA FABRIC V4 -- Strategic Simulation Engine
+#
+# Transforms GRDF from Forecast Intelligence into Strategic Simulation.
+# Phase 1: Driver Impact Matrix    -> docs/grdf/v4_driver_matrix.json
+# Phase 2: Shock Engine            -> docs/grdf/v4_shocks.json
+# Phase 3: Cascade Simulator       -> docs/grdf/v4_simulations.json
+# Phase 4: Country Stress Test     -> docs/grdf/v4_stress_tests.json
+# Phase 5: Global System Graph     -> docs/grdf/v4_system_graph.json
+# Phase 6: Strategic Outcome Eng   -> docs/grdf/v4_outcomes.json
+# Phase 7: Strategic Dashboard     -> docs/grdf/v4_dashboard.json
+#
+# Reads: docs/grdf/v2_*, v3_*     (read-only)
+# Writes: docs/grdf/v4_*          (V1/V2/V3 NEVER modified)
+# =========================================================================
+
+_V4_DOMAINS = [
+    "climate","geopolitical","economic",
+    "infrastructure","cyber","energy","social",
+]
+
+_V4_SHOCK_TYPES = list(_V4_DOMAINS)
+
+_V4_IMPACT_RAW: list[tuple] = [
+    ("energy",        "economic",       0.84, 0.88),
+    ("energy",        "infrastructure", 0.79, 0.85),
+    ("energy",        "social",         0.65, 0.80),
+    ("climate",       "energy",         0.78, 0.84),
+    ("climate",       "infrastructure", 0.72, 0.82),
+    ("climate",       "economic",       0.68, 0.79),
+    ("climate",       "social",         0.60, 0.76),
+    ("geopolitical",  "economic",       0.80, 0.87),
+    ("geopolitical",  "energy",         0.74, 0.83),
+    ("geopolitical",  "infrastructure", 0.65, 0.78),
+    ("geopolitical",  "social",         0.70, 0.82),
+    ("cyber",         "infrastructure", 0.88, 0.92),
+    ("cyber",         "economic",       0.74, 0.87),
+    ("cyber",         "social",         0.55, 0.79),
+    ("infrastructure","economic",       0.76, 0.86),
+    ("infrastructure","social",         0.62, 0.78),
+    ("economic",      "social",         0.72, 0.84),
+    ("economic",      "geopolitical",   0.58, 0.75),
+    ("social",        "geopolitical",   0.55, 0.72),
+    ("social",        "economic",       0.50, 0.70),
+]
+
+_V4_OUTCOME_HORIZONS  = [1, 3, 5, 10]
+_V4_OUTCOME_SCENARIOS = ["best_case","base_case","stress_case","worst_case"]
+_V4_OUTCOME_MULT: dict = {
+    "best_case":  {"mult": 0.75, "drift": 0.40},
+    "base_case":  {"mult": 1.00, "drift": 1.00},
+    "stress_case":{"mult": 1.35, "drift": 1.60},
+    "worst_case": {"mult": 1.70, "drift": 2.30},
+}
+
+
+def _v4_impact_lookup() -> dict:
+    lu: dict = {}
+    for frm, to, st, cf in _V4_IMPACT_RAW:
+        lu[(frm, to)] = (st, cf)
+    for d1 in _V4_DOMAINS:
+        for d2 in _V4_DOMAINS:
+            if d1 != d2 and (d1, d2) not in lu:
+                lu[(d1, d2)] = (0.30, 0.55)
+    return lu
+
+
+def _v4_domain_scores(iso2: str, snap: dict) -> dict:
+    dom7 = _get_domain_scores(iso2, snap)
+    return {
+        "climate":        dom7.get("climate",        {}).get("score", 50),
+        "geopolitical":   dom7.get("geopolitical",   {}).get("score", 50),
+        "economic":       dom7.get("economic",       {}).get("score", 50),
+        "infrastructure": dom7.get("infrastructure", {}).get("score", 50),
+        "cyber":          dom7.get("cyber",          {}).get("score", 50),
+        "energy":         dom7.get("infrastructure", {}).get("score", 50),
+        "social":         dom7.get("social",         {}).get("score", 50),
+    }
+
+
+# -- Phase 1 ---------------------------------------------------------------
+
+def _save_v4_driver_matrix(lu: dict) -> None:
+    matrix = []
+    for (frm, to), (st, cf) in lu.items():
+        matrix.append({
+            "from":            frm,
+            "to":              to,
+            "impact_strength": round(st, 3),
+            "confidence":      round(cf, 3),
+            "direction":       "amplifies" if st >= 0.70 else "correlates",
+        })
+    matrix.sort(key=lambda x: -x["impact_strength"])
+    with open(GRDF_DIR / "v4_driver_matrix.json", "w") as f:
+        json.dump({
+            "grdf_version": "4.0", "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "domains": _V4_DOMAINS, "pair_count": len(matrix),
+            "matrix": matrix,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V4] Phase 1: driver matrix {len(matrix)} pairs", file=sys.stderr)
+
+
+# -- Phase 2 ---------------------------------------------------------------
+
+def _simulate_v4_shock(shock: str, severity: float, lu: dict) -> dict:
+    direct: list[dict] = []
+    for (frm, to), (st, _cf) in lu.items():
+        if frm != shock:
+            continue
+        imp = min(100, round(severity * st))
+        if imp >= 10:
+            direct.append({"domain": to, "impact_score": imp,
+                           "impact_strength": round(st, 3), "order": 1})
+    direct.sort(key=lambda x: -x["impact_score"])
+    second: list[dict] = []
+    if direct:
+        top = direct[0]["domain"]
+        for (frm2, to2), (st2, _) in lu.items():
+            if frm2 != top:
+                continue
+            if any(d["domain"] == to2 for d in direct):
+                continue
+            imp2 = min(100, round(severity * direct[0]["impact_strength"] * st2 * 0.5))
+            if imp2 >= 8:
+                second.append({"domain": to2, "impact_score": imp2,
+                               "impact_strength": round(st2 * 0.5, 3), "order": 2})
+    affected = direct + second
+    total    = round(sum(a["impact_score"] for a in affected) / max(1, len(affected)))
+    grade    = ("CRITICAL" if total >= 75 else "HIGH" if total >= 50
+                else "MODERATE" if total >= 25 else "LOW")
+    return {
+        "shock": shock, "severity": int(severity),
+        "total_impact_score": total, "impact_grade": grade,
+        "affected_domains": affected, "n_affected": len(affected),
+    }
+
+
+def _save_v4_shocks(lu: dict) -> None:
+    shocks = []
+    for shock in _V4_SHOCK_TYPES:
+        for sev, label in [(60,"moderate"), (80,"severe"), (95,"extreme")]:
+            rec = _simulate_v4_shock(shock, sev, lu)
+            rec["severity_label"] = label
+            shocks.append(rec)
+    with open(GRDF_DIR / "v4_shocks.json", "w") as f:
+        json.dump({
+            "grdf_version": "4.0", "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "shock_types": _V4_SHOCK_TYPES, "total_scenarios": len(shocks),
+            "shocks": shocks,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V4] Phase 2: {len(shocks)} shock scenarios", file=sys.stderr)
+
+
+# -- Phase 3 ---------------------------------------------------------------
+
+def _simulate_v4_cascade(chain: dict, trig_sev: float, lu: dict) -> dict:
+    steps_out = []
+    cum = trig_sev
+    for n, step in enumerate(chain.get("steps", []), start=1):
+        prev_d = chain["trigger"] if n == 1 else chain["steps"][n-2]["domain"]
+        base_st = lu.get((prev_d, step["domain"]), (step["strength"], 0.80))[0]
+        att     = 0.85 ** n
+        prop_st = round(base_st * att, 3)
+        score   = max(0, min(100, round(cum * prop_st)))
+        cum     = score * 0.90
+        steps_out.append({
+            "step_number":          n,
+            "from_domain":          prev_d,
+            "to_domain":            step["domain"],
+            "propagation_strength": prop_st,
+            "propagated_score":     score,
+            "expected_delay_days":  step.get("lag_days", n * 10),
+            "label":                step.get("label", ""),
+        })
+    cas = steps_out[0]["propagated_score"] if steps_out else 0
+    grade = ("CRITICAL" if cas >= 75 else "HIGH" if cas >= 50
+             else "MODERATE" if cas >= 25 else "LOW")
+    return {
+        "chain_id": chain["id"], "chain_name": chain["name"],
+        "trigger_domain": chain["trigger"], "trigger_severity": int(trig_sev),
+        "cascade_score": cas, "cascade_grade": grade,
+        "total_steps": len(steps_out), "steps": steps_out,
+        "max_delay_days": max((s["expected_delay_days"] for s in steps_out), default=0),
+    }
+
+
+def _save_v4_simulations(lu: dict) -> None:
+    sims = []
+    for chain in _CASCADE_CHAINS:
+        for sev, label in [(60,"moderate"), (80,"severe"), (95,"extreme")]:
+            rec = _simulate_v4_cascade(chain, sev, lu)
+            rec["severity_label"] = label
+            sims.append(rec)
+    with open(GRDF_DIR / "v4_simulations.json", "w") as f:
+        json.dump({
+            "grdf_version": "4.0", "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "chains_simulated": len(_CASCADE_CHAINS),
+            "total_simulations": len(sims), "simulations": sims,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V4] Phase 3: {len(sims)} cascade simulations", file=sys.stderr)
+
+
+# -- Phase 4 ---------------------------------------------------------------
+
+def _v4_stress_country(iso2: str, snap: dict, lu: dict) -> dict:
+    # resilience   = 100 - gri*0.50 - velocity*2.5 - cascade*0.15
+    # vulnerability= cascade*0.40 + corr_density*30 + vel_trend*5 + fc_delta*0.8
+    # exposure     = gri*0.45 + high_domains*8 + cascade*0.20
+    # recovery_days= 90 + vulnerability*4.5 + gri*1.5
+    base  = int(snap.get("risk_score", 50) or 50)
+    delta = abs(snap.get("delta", 0) or 0)
+    dom_s = _get_domain_scores(iso2, snap)
+    gri   = round(_calc_gri({d: v["score"] for d, v in dom_s.items()}))
+    cascade = 0.0
+    cp = GRDF_DIR / f"v2_cascades_{iso2}.json"
+    if cp.exists():
+        try:
+            cascade = float(json.loads(cp.read_text()).get("max_cascade_score", 0) or 0)
+        except Exception:
+            pass
+    fc30 = int((snap.get("forecast_30d") or {}).get("base_case")
+               or min(95, max(5, base + delta * 3)))
+    fc_delta     = fc30 - base
+    mean_score   = sum(v["score"] for v in dom_s.values()) / max(1, len(dom_s))
+    corr_density = sum(1 for v in dom_s.values() if v["score"] > mean_score) / max(1, len(dom_s))
+    dom_snap = (snap.get("dominant_domain","") or "").lower()
+    dom_v4   = _ENGINE_TO_GRDF.get(dom_snap, dom_snap)
+    vel_trend= dom_s.get(dom_v4, {}).get("velocity", delta)
+    resilience   = max(5, min(95, round(100 - gri*0.50 - delta*2.5 - cascade*0.15)))
+    vulnerability= max(5, min(95, round(
+        cascade*0.40 + corr_density*30 + min(30, abs(vel_trend)*5) + max(0, fc_delta)*0.8)))
+    exposure     = max(5, min(95, round(
+        gri*0.45 + sum(1 for v in dom_s.values() if v["score"]>=65)*8 + cascade*0.20)))
+    recovery     = min(730, max(30, round(90 + vulnerability*4.5 + gri*1.5)))
+    return {
+        "country": iso2, "country_name": snap.get("country_name", iso2),
+        "date": TODAY, "gri": gri,
+        "resilience": resilience, "vulnerability": vulnerability,
+        "exposure": exposure, "recovery_days": recovery,
+        "cascade_score": round(cascade), "forecast_delta_30d": fc_delta,
+        "stress_grade": ("CRITICAL" if vulnerability>=75 else "HIGH" if vulnerability>=55
+                          else "MODERATE" if vulnerability>=35 else "LOW"),
+    }
+
+
+def _save_v4_stress_tests(snapshots: list, lu: dict) -> dict:
+    results: dict = {}
+    for snap in snapshots:
+        iso2 = snap["country"]
+        try:
+            results[iso2] = _v4_stress_country(iso2, snap, lu)
+        except Exception as e:
+            print(f"[GRDF-V4] stress {iso2}: {e}", file=sys.stderr)
+    sv = sorted(results.values(), key=lambda x: -x["vulnerability"])
+    sr = sorted(results.values(), key=lambda x: -x["resilience"])
+    with open(GRDF_DIR / "v4_stress_tests.json", "w") as f:
+        json.dump({
+            "grdf_version": "4.0", "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "total_countries": len(results),
+            "top_vulnerable":  [{"country":r["country"],"vulnerability":r["vulnerability"],
+                                  "recovery_days":r["recovery_days"]} for r in sv[:10]],
+            "top_resilient":   [{"country":r["country"],"resilience":r["resilience"]}
+                                 for r in sr[:10]],
+            "stress_tests":    list(results.values()),
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V4] Phase 4: {len(results)} stress tests", file=sys.stderr)
+    return results
+
+
+# -- Phase 5 ---------------------------------------------------------------
+
+def _save_v4_system_graph(snapshots: list, stress_map: dict, lu: dict) -> None:
+    nodes: list[dict] = []; edges: list[dict] = []; seen: set = set()
+    def n(nid, ntype, label, **kw):
+        if nid not in seen:
+            seen.add(nid)
+            nodes.append({"id":nid,"type":ntype,"label":label,**kw})
+    for d in _V4_DOMAINS:
+        n(f"DOM:{d}", "Domain", d)
+    for (frm, to), (st, _) in lu.items():
+        if st < 0.45:
+            continue
+        etype = "ESCALATES" if st>=0.75 else "AMPLIFIES" if st>=0.60 else "CORRELATES"
+        edges.append({"from":f"DOM:{frm}","to":f"DOM:{to}","type":etype,"weight":round(st,3)})
+    for snap in snapshots:
+        iso2 = snap["country"]
+        st   = stress_map.get(iso2, {})
+        n(f"CC:{iso2}","Country",snap.get("country_name",iso2),
+          gri=st.get("gri",50),vulnerability=st.get("vulnerability",50),
+          resilience=st.get("resilience",50))
+        dom_s   = _get_domain_scores(iso2, snap)
+        dom_raw = (snap.get("dominant_domain","") or "").lower()
+        dom_v4  = _ENGINE_TO_GRDF.get(dom_raw, dom_raw)
+        if dom_v4 in _V4_DOMAINS:
+            ds = dom_s.get(dom_v4,{}).get("score",50)
+            edges.append({"from":f"CC:{iso2}","to":f"DOM:{dom_v4}",
+                          "type":"ESCALATES" if ds>=70 else "CORRELATES","weight":round(ds/100,2)})
+        casc = st.get("cascade_score",0)
+        if casc >= 50:
+            for ch in _CASCADE_CHAINS[:2]:
+                if ch["trigger"]==dom_v4 and ch["steps"]:
+                    fstep = ch["steps"][0]["domain"]
+                    if fstep in _V4_DOMAINS:
+                        edges.append({"from":f"CC:{iso2}","to":f"DOM:{fstep}",
+                                      "type":"AMPLIFIES","weight":round(casc/100,2)})
+    cp = GRDF_DIR / "v2_cascades.json"
+    if cp.exists():
+        try:
+            for tc in json.loads(cp.read_text()).get("top_cascades",[])[:5]:
+                cc = tc.get("country","")
+                for cas in (tc.get("cascades",[]) or [])[:2]:
+                    rid = f"RISK:{cc}:{cas.get('chain_id','?')[:8]}"
+                    n(rid,"Risk",f"{cc}: {cas.get('chain_name','')[:30]}",
+                      score=cas.get("cascade_score",0))
+                    edges.append({"from":f"CC:{cc}","to":rid,"type":"CAUSES","weight":0.85})
+        except Exception:
+            pass
+    with open(GRDF_DIR / "v4_system_graph.json", "w") as f:
+        json.dump({
+            "grdf_version": "4.0", "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "node_count": len(nodes), "edge_count": len(edges),
+            "node_types": ["Country","Domain","Signal","Driver","Risk"],
+            "edge_types":  ["CAUSES","AMPLIFIES","CORRELATES","ESCALATES","MITIGATES"],
+            "nodes": nodes, "edges": edges,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V4] Phase 5: system graph {len(nodes)} nodes {len(edges)} edges", file=sys.stderr)
+
+
+# -- Phase 6 ---------------------------------------------------------------
+
+def _v4_project_outcome(base: float, delta: float, years: int, sc_key: str) -> dict:
+    import math
+    sc   = _V4_OUTCOME_MULT[sc_key]
+    damp = math.log(1 + years) / math.log(11)
+    drift= delta * sc["drift"] * damp * 365 / 7
+    raw  = (base + drift) * sc["mult"]
+    score= max(5, min(97, round(raw)))
+    conf = round(max(0.15, 0.85 - years*0.07), 2)
+    unc  = round(min(40, years*3 + abs(delta)*2))
+    return {"score":score,"uncertainty":unc,"confidence":conf,
+            "interval_low":max(5,score-unc),"interval_high":min(97,score+unc)}
+
+
+def _save_v4_outcomes(snapshots: list) -> None:
+    outcomes = []
+    for snap in snapshots:
+        iso2  = snap["country"]
+        base  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        rec: dict = {"country":iso2,"country_name":snap.get("country_name",iso2),
+                     "base_score":base,"date":TODAY}
+        for sc in _V4_OUTCOME_SCENARIOS:
+            rec[sc] = {f"{y}yr": _v4_project_outcome(base, delta, y, sc)
+                       for y in _V4_OUTCOME_HORIZONS}
+        b10 = rec["base_case"]["10yr"]["score"]
+        rec["strategic_trajectory"] = ("escalating"  if b10 > base+10 else
+                                        "stabilising" if abs(b10-base)<=10 else "improving")
+        rec["worst_case_10yr"] = rec["worst_case"]["10yr"]["score"]
+        outcomes.append(rec)
+    with open(GRDF_DIR / "v4_outcomes.json", "w") as f:
+        json.dump({
+            "grdf_version": "4.0", "date": TODAY,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "horizons_years": _V4_OUTCOME_HORIZONS,
+            "scenarios": _V4_OUTCOME_SCENARIOS,
+            "total_countries": len(outcomes), "outcomes": outcomes,
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V4] Phase 6: {len(outcomes)} strategic outcomes", file=sys.stderr)
+
+
+# -- Phase 7 ---------------------------------------------------------------
+
+def _save_v4_dashboard(snapshots: list, stress_map: dict) -> None:
+    # SSI = 100 - mean_vuln*0.6 + mean_res*0.4 - 50
+    now_ts    = datetime.now(timezone.utc).isoformat()
+    sv        = sorted(stress_map.values(), key=lambda x: -x["vulnerability"])
+    sr        = sorted(stress_map.values(), key=lambda x: -x["resilience"])
+    vuln_vals = [st["vulnerability"] for st in stress_map.values()]
+    res_vals  = [st["resilience"]    for st in stress_map.values()]
+    mean_v    = sum(vuln_vals)/max(1,len(vuln_vals))
+    mean_r    = sum(res_vals) /max(1,len(res_vals))
+    ssi       = max(0, min(100, round(100 - mean_v*0.6 + mean_r*0.4 - 50)))
+    top_casc: list[dict] = []
+    cp = GRDF_DIR / "v2_cascades.json"
+    if cp.exists():
+        try:
+            top_casc = json.loads(cp.read_text()).get("top_cascades",[])[:5]
+        except Exception:
+            pass
+    outlook: list[dict] = []
+    op = GRDF_DIR / "v4_outcomes.json"
+    if op.exists():
+        try:
+            for oc in json.loads(op.read_text()).get("outcomes",[])[:10]:
+                outlook.append({"country":oc["country"],"country_name":oc["country_name"],
+                                 "base_now":oc["base_score"],
+                                 "base_3yr":oc["base_case"]["3yr"]["score"],
+                                 "base_10yr":oc["base_case"]["10yr"]["score"],
+                                 "trajectory":oc["strategic_trajectory"],
+                                 "worst_10yr":oc["worst_case_10yr"]})
+        except Exception:
+            pass
+    with open(GRDF_DIR / "v4_dashboard.json", "w") as f:
+        json.dump({
+            "grdf_version": "4.0", "date": TODAY, "generated_at": now_ts,
+            "global_stress_map": [
+                {"country":st["country"],"country_name":st["country_name"],
+                 "resilience":st["resilience"],"vulnerability":st["vulnerability"],
+                 "recovery_days":st["recovery_days"],"stress_grade":st["stress_grade"]}
+                for st in sorted(stress_map.values(), key=lambda x: x["country"])],
+            "top_vulnerable":  [{"country":r["country"],"vulnerability":r["vulnerability"],
+                                  "recovery_days":r["recovery_days"],"gri":r["gri"]}
+                                 for r in sv[:10]],
+            "top_resilient":   [{"country":r["country"],"resilience":r["resilience"],
+                                  "gri":r["gri"]} for r in sr[:10]],
+            "top_cascades":    top_casc,
+            "shock_types":     _V4_SHOCK_TYPES,
+            "shock_data_path": "docs/grdf/v4_shocks.json",
+            "strategic_outlook": outlook,
+            "system_stability_index": ssi,
+            "ssi_grade":       ("stable" if ssi>=70 else "stressed" if ssi>=45 else "critical"),
+            "avg_vulnerability": round(mean_v,1),
+            "avg_resilience":    round(mean_r,1),
+        }, f, ensure_ascii=False, indent=2)
+    print(f"[GRDF-V4] Phase 7: Strategic Dashboard SSI={ssi}", file=sys.stderr)
+
+
+# -- V4 Orchestrator -------------------------------------------------------
+
+def save_grdf_v4(snapshots: list) -> None:
+    """GRDF V4 -- Strategic Simulation Engine.
+    Dependency: save_grdf -> save_grdf_v2 -> save_grdf_v3 -> save_grdf_v4
+    Reads: v2_*/v3_*  |  Writes: v4_*  |  V1/V2/V3 NEVER modified.
+    """
+    GRDF_DIR.mkdir(parents=True, exist_ok=True)
+    lu = _v4_impact_lookup()
+    _save_v4_driver_matrix(lu)
+    _save_v4_shocks(lu)
+    _save_v4_simulations(lu)
+    stress_map = _save_v4_stress_tests(snapshots, lu)
+    _save_v4_system_graph(snapshots, stress_map, lu)
+    _save_v4_outcomes(snapshots)
+    _save_v4_dashboard(snapshots, stress_map)
+    print("[GRDF-V4] All 7 phases complete.", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -10001,6 +10452,7 @@ def main():
     save_grdf(snapshots)
     save_grdf_v2(snapshots)
     save_grdf_v3(snapshots)
+    save_grdf_v4(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
