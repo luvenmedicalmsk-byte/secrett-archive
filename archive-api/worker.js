@@ -6423,6 +6423,175 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
   }
 
+
+  // =========================================================================
+  // GRDF V10 -- Sovereign Intelligence Platform API
+  // GET /api/grdf/v10/dashboard        -> Sovereign Intelligence Dashboard (10 layers)
+  // GET /api/grdf/v10/missions         -> Mission Control + per-country missions
+  // GET /api/grdf/v10/alerts           -> Sovereign Alert Network
+  // GET /api/grdf/v10/agents           -> 7-agent intelligence framework
+  // GET /api/grdf/v10/knowledge-graph  -> Strategic Knowledge Graph
+  // GET /api/grdf/v10/memory           -> Intelligence Memory Layer
+  // GET /api/grdf/v10/coordination     -> Strategic Coordination Hub
+  // GET /api/grdf/v10/action-atlas     -> Global Action Atlas
+  // GET /api/grdf/v10/operations       -> Autonomous Operations status
+  // =========================================================================
+
+  // All V10 routes are under /api/grdf/v10/
+  if (seg[0] === 'v10') {
+    const v10seg = seg[1] || 'dashboard';
+
+    // /api/grdf/v10/dashboard
+    if (v10seg === 'dashboard') {
+      const ck = `grdf:v10dash:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_dashboard.json', 300);
+        if (!d) return new Response(JSON.stringify({error:'V10 dashboard not built yet'}),{status:404,headers:CORS});
+        const r = access==='teaser'
+          ? {date:d.date,summary:d.summary,
+             top5_risk:d.global_risk_map?.slice(0,5),
+             alert_layer:d.alert_layer?.slice(0,3),tier}
+          : {...d,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/missions  (aggregated or ?cc= for per-country)
+    if (v10seg === 'missions') {
+      const url2 = new URL(request.url);
+      const cc   = url2.searchParams.get('cc')?.toUpperCase().replace(/[^A-Z]/g,'');
+      try {
+        if (cc) {
+          const d = await _grdfFetch(REPO, `docs/grdf/v10_missions_${cc}.json`, 300);
+          if (!d) return new Response(JSON.stringify({error:'V10 missions not built for '+cc}),{status:404,headers:CORS});
+          const r = access==='teaser'
+            ? {country:d.country,n_missions:d.n_missions,overall_status:d.overall_status,tier}
+            : {...d,tier};
+          return new Response(JSON.stringify(r),{headers:CORS});
+        }
+        // No cc: return summary from dashboard mission_layer
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_dashboard.json', 300);
+        if (!d) return new Response(JSON.stringify({error:'V10 not built yet'}),{status:404,headers:CORS});
+        return new Response(JSON.stringify({date:d.date,mission_layer:d.mission_layer,tier}),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/alerts
+    if (v10seg === 'alerts') {
+      const ck = `grdf:v10al:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_alert_network.json', 300);
+        if (!d) return new Response(JSON.stringify({error:'V10 alert network not built yet'}),{status:404,headers:CORS});
+        const r = access==='teaser'
+          ? {date:d.date,level_counts:d.level_counts,critical_n:d.critical_n,
+             top5:d.top_alerts?.slice(0,5),tier}
+          : {...d,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/agents
+    if (v10seg === 'agents') {
+      if (access==='teaser') return new Response(JSON.stringify({error:'Agent data requires Signal tier'}),{status:403,headers:CORS});
+      const ck = `grdf:v10ag:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_agents.json', 600);
+        if (!d) return new Response(JSON.stringify({error:'V10 agents not built yet'}),{status:404,headers:CORS});
+        const r = access==='summary'
+          ? {date:d.date,total_agents:d.total_agents,
+             summary:Object.fromEntries(Object.entries(d.agents||{}).map(([k,v])=>[k,{status:v.status,top_country:v.top_country,avg_score:v.avg_domain_score}])),tier}
+          : {...d,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/knowledge-graph
+    if (v10seg === 'knowledge-graph') {
+      if (access==='teaser') return new Response(JSON.stringify({error:'Knowledge graph requires Signal tier'}),{status:403,headers:CORS});
+      const ck = `grdf:v10kg:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_knowledge_graph.json', 600);
+        if (!d) return new Response(JSON.stringify({error:'V10 knowledge graph not built yet'}),{status:404,headers:CORS});
+        const r = access==='full+explain' ? {...d,tier}
+          : {date:d.date,node_count:d.node_count,edge_count:d.edge_count,
+             node_types:d.node_types,edge_types:d.edge_types,
+             nodes:d.nodes,edges:d.edges?.map(e=>({from:e.from,to:e.to,type:e.type})),tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/memory
+    if (v10seg === 'memory') {
+      if (access==='teaser') return new Response(JSON.stringify({error:'Memory layer requires Signal tier'}),{status:403,headers:CORS});
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_memory.json', 300);
+        if (!d) return new Response(JSON.stringify({error:'V10 memory not built yet'}),{status:404,headers:CORS});
+        const url3 = new URL(request.url);
+        const cc   = url3.searchParams.get('cc')?.toUpperCase().replace(/[^A-Z]/g,'');
+        const mem  = cc ? d.memory?.filter(m=>m.country===cc) : d.memory;
+        return new Response(JSON.stringify({date:d.date,total_records:d.total_records,
+          layer_coverage:d.layer_coverage,memory:mem,tier}),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/coordination
+    if (v10seg === 'coordination') {
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_coordination.json', 300);
+        if (!d) return new Response(JSON.stringify({error:'V10 coordination not built yet'}),{status:404,headers:CORS});
+        const r = access==='teaser'
+          ? {date:d.date,total_regions:d.total_regions,global_avg_scs:d.global_avg_scs,tier}
+          : {...d,tier};
+        return new Response(JSON.stringify(r),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/action-atlas
+    if (v10seg === 'action-atlas') {
+      if (access==='teaser') return new Response(JSON.stringify({error:'Action atlas requires Signal tier'}),{status:403,headers:CORS});
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_action_atlas.json', 300);
+        if (!d) return new Response(JSON.stringify({error:'V10 action atlas not built yet'}),{status:404,headers:CORS});
+        const url4 = new URL(request.url);
+        const cc   = url4.searchParams.get('cc')?.toUpperCase().replace(/[^A-Z]/g,'');
+        const atlas= cc ? d.atlas?.filter(a=>a.country===cc) : d.atlas?.slice(0,25);
+        return new Response(JSON.stringify({date:d.date,total_countries:d.total_countries,
+          total_actions:d.total_actions,action_types:d.action_types,atlas,tier}),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // /api/grdf/v10/operations
+    if (v10seg === 'operations') {
+      const ck = `grdf:v10op:${tier}`;
+      if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CORS});}catch(_){}}
+      try {
+        const d = await _grdfFetch(REPO, 'docs/grdf/v10_operations.json', 300);
+        if (!d) return new Response(JSON.stringify({error:'V10 operations not built yet'}),{status:404,headers:CORS});
+        const r = access==='teaser'
+          ? {date:d.date,executing_n:d.executing_n,activated_n:d.activated_n,
+             scenario_switches_n:d.scenario_switches_n,
+             executing:d.executing?.slice(0,3),tier}
+          : {...d,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CORS});
+      } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
+    }
+
+    // Unknown v10 sub-route
+    return new Response(JSON.stringify({error:'Unknown V10 route: '+v10seg,
+      available:['dashboard','missions','alerts','agents','knowledge-graph',
+                  'memory','coordination','action-atlas','operations']}),
+      {status:404,headers:CORS});
+  }
+
   return new Response(JSON.stringify({
     error: 'Unknown GRDF route',
     available: [
@@ -6460,6 +6629,9 @@ async function handleGRDF(request, env) {
       '/api/grdf/active-scenario/:cc','/api/grdf/coordination/:cc',
       '/api/grdf/autonomous-confidence/:cc','/api/grdf/global-action-atlas',
       '/api/grdf/v9/dashboard',
+      '/api/grdf/v10/dashboard','/api/grdf/v10/missions','/api/grdf/v10/alerts',
+      '/api/grdf/v10/agents','/api/grdf/v10/knowledge-graph','/api/grdf/v10/memory',
+      '/api/grdf/v10/coordination','/api/grdf/v10/action-atlas','/api/grdf/v10/operations',
     ]
   }),{status:404,headers:CORS});
 }
