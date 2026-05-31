@@ -7111,8 +7111,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/change-control/impact-analysis','/api/grdf/change-control/compatibility',
       '/api/grdf/change-control/diff','/api/grdf/change-control/risk',
       '/api/grdf/change-control/certification-requirements',
+
+  // =========================================================================
+  // GRDF HISTORICAL VALIDATION PROGRAM V2 API
+  // All routes under /api/grdf/historical/
+  // Architecture frozen. Validation only. 20 real-world events 2021-2023.
+  // =========================================================================
+  if (seg[0] === 'historical') {
+    const hseg = seg[1] || 'certification';
+    const CH = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const HV_FILES = {
+      'certification':       'docs/historical_validation/historical_certification.json',
+      'scorecard':           'docs/historical_validation/historical_scorecard.json',
+      'events':              'docs/historical_validation/historical_event_registry.json',
+      'replay':              'docs/historical_validation/historical_replay.json',
+      'detection':           'docs/historical_validation/historical_detection_audit.json',
+      'lead-time':           'docs/historical_validation/historical_lead_time.json',
+      'forecast-accuracy':   'docs/historical_validation/historical_forecast_accuracy.json',
+      'alert-accuracy':      'docs/historical_validation/historical_alert_accuracy.json',
+      'scenario-validation': 'docs/historical_validation/historical_scenario_validation.json',
+      'decision-validation': 'docs/historical_validation/historical_decision_validation.json',
+    };
+    const HV_SIGNAL_ONLY = new Set(['replay','detection','lead-time','scenario-validation','decision-validation']);
+    if (!HV_FILES[hseg]) return new Response(JSON.stringify({error:'Unknown historical route: '+hseg, available:Object.keys(HV_FILES)}),{status:404,headers:CH});
+    if (HV_SIGNAL_ONLY.has(hseg) && access==='teaser') return new Response(JSON.stringify({error:hseg+' requires Signal tier'}),{status:403,headers:CH});
+    const ck = `grdf:hv:${hseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CH});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, HV_FILES[hseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'Historical '+hseg+' not built yet'}),{status:404,headers:CH});
+      let r;
+      if (access==='teaser') {
+        if (hseg==='certification') r={date:d.date,certification:d.certification,overall_score:d.overall_score,events_tested:d.events_tested,strengths:d.strengths?.slice(0,2),tier};
+        else if (hseg==='scorecard') r={date:d.date,overall_score:d.overall_score,cert_level:d.cert_level,detection_score:d.detection_score,forecast_score:d.forecast_score,alert_score:d.alert_score,tier};
+        else if (hseg==='events') r={date:d.date,total_events:d.total_events,categories:d.categories,date_range:d.date_range,black_alerts:d.black_alerts,tier};
+        else if (hseg==='forecast-accuracy') r={date:d.date,mae:d.mae,rmse:d.rmse,direction_accuracy_pct:d.direction_accuracy_pct,forecast_grade:d.forecast_grade,tier};
+        else if (hseg==='alert-accuracy') r={date:d.date,precision:d.precision,recall:d.recall,f1_score:d.f1_score,status:d.status,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CH});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CH});}
+  }
+
       '/api/grdf/change-control/version-registry','/api/grdf/change-control/release-registry',
       '/api/grdf/change-control/council-report',
+      '/api/grdf/historical/certification','/api/grdf/historical/scorecard',
+      '/api/grdf/historical/events','/api/grdf/historical/replay',
+      '/api/grdf/historical/detection','/api/grdf/historical/lead-time',
+      '/api/grdf/historical/forecast-accuracy','/api/grdf/historical/alert-accuracy',
+      '/api/grdf/historical/scenario-validation','/api/grdf/historical/decision-validation',
     ]
   }),{status:404,headers:CORS});
 }
