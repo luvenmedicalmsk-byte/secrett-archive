@@ -7506,7 +7506,56 @@ async function handleGRDF(request, env) {
       '/api/grdf/sustainability/revenue','/api/grdf/sustainability/customers',
       '/api/grdf/sustainability/subscriptions','/api/grdf/sustainability/unit-economics',
       '/api/grdf/sustainability/growth','/api/grdf/sustainability/enterprise',
+
+  // =========================================================================
+  // GRDF STRATEGIC COMMAND CENTER V1 API
+  // All routes under /api/grdf/command/
+  // Architecture frozen. Executive orchestration only.
+  // Unified command layer over all 14 GRDF programs.
+  // =========================================================================
+  if (seg[0] === 'command') {
+    const cseg2 = seg[1] || 'dashboard';
+    const CC2 = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const CMD_FILES = {
+      'dashboard':    'docs/command/executive_dashboard.json',
+      'health':       'docs/command/strategic_health_score.json',
+      'kpis':         'docs/command/command_kpis.json',
+      'risks':        'docs/command/command_risks.json',
+      'opportunities':'docs/command/command_opportunities.json',
+      'decisions':    'docs/command/executive_decision_queue.json',
+      'roadmap':      'docs/command/strategic_master_roadmap.json',
+      'certification':'docs/command/strategic_certification.json',
+      'status':       'docs/command/command_platform_status.json',
+      'report':       'docs/command/strategic_command_report.json',
+    };
+    const CMD_SIGNAL_ONLY = new Set(['risks','opportunities','decisions','roadmap','report']);
+    if (!CMD_FILES[cseg2]) return new Response(JSON.stringify({error:'Unknown command route: '+cseg2, available:Object.keys(CMD_FILES)}),{status:404,headers:CC2});
+    if (CMD_SIGNAL_ONLY.has(cseg2) && access==='teaser') return new Response(JSON.stringify({error:cseg2+' requires Signal tier'}),{status:403,headers:CC2});
+    const ck = `grdf:cmd:${cseg2}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CC2});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, CMD_FILES[cseg2], 300);
+      if (!d) return new Response(JSON.stringify({error:'Command '+cseg2+' not built yet'}),{status:404,headers:CC2});
+      let r;
+      if (access==='teaser') {
+        if (cseg2==='dashboard') r={date:d.date,command_status:d.command_status,shs:d.shs,strategic_health:d.strategic_health,kpis:d.kpis,tier};
+        else if (cseg2==='health') r={date:d.date,strategic_health_score:d.strategic_health_score,shs_grade:d.shs_grade,cert_level:d.cert_level,components:d.components,tier};
+        else if (cseg2==='kpis') r={date:d.date,kpis:d.kpis,targets_met_n:d.targets_met_n,avg_score:d.avg_score,kpi_health:d.kpi_health,tier};
+        else if (cseg2==='certification') r={date:d.date,strategic_certification:d.strategic_certification,strategic_health_score:d.strategic_health_score,kpi_health:d.kpi_health,no_v14:d.no_v14,tier};
+        else if (cseg2==='status') r={date:d.date,total_programs:d.total_programs,active_n:d.active_n,architecture:d.architecture,no_v14:d.no_v14,tier};
+        else r={date:d.date,status:d.status,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CC2});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CC2});}
+  }
+
       '/api/grdf/sustainability/certification','/api/grdf/sustainability/roadmap',
+      '/api/grdf/command/dashboard','/api/grdf/command/health',
+      '/api/grdf/command/kpis','/api/grdf/command/risks',
+      '/api/grdf/command/opportunities','/api/grdf/command/decisions',
+      '/api/grdf/command/roadmap','/api/grdf/command/certification',
+      '/api/grdf/command/status','/api/grdf/command/report',
     ]
   }),{status:404,headers:CORS});
 }
