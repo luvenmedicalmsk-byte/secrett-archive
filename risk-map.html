@@ -6506,6 +6506,158 @@ window.grdfCycleSheet = function() {
   else { sheet.className='snap50'; _grdfSheetSnap=1; }
 };
 
+
+// ── GRDF Actionable Intelligence Layer V1 ───────────────────────
+// Builds analytical text from existing data — no fabrication.
+// Sources: GRI/EWS/CRI, delta, dominant_domain, domain_scores.
+function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig) {
+  var out = '';
+  var absDelta = Math.abs(delta);
+  var domName  = DOM_LABELS[dom] || dom;
+
+  // ── Domain-specific key insight ────────────────────────────────
+  var DOMAIN_INSIGHTS = {
+    climate: {
+      CRITICAL:   'Система фиксирует критическое усиление климатических сигналов. Количество предупреждений и аномалий достигло порогового уровня.',
+      ESCALATING: 'Система фиксирует усиление климатических сигналов и рост количества предупреждений за последние 7 дней.',
+      ELEVATED:   'Климатические индикаторы выше базового уровня. Система отслеживает развитие нескольких активных сигналов.',
+      STABLE:     'Климатические показатели в норме. Активных угроз не зафиксировано.',
+    },
+    geopolitics: {
+      CRITICAL:   'Геополитическая напряжённость достигла критического уровня. Система фиксирует множественные эскалационные сигналы.',
+      ESCALATING: 'Система фиксирует нарастание геополитической напряжённости и рост дипломатических предупреждений.',
+      ELEVATED:   'Геополитические риски выше нормы. Зафиксированы активные сигналы напряжённости.',
+      STABLE:     'Геополитическая ситуация стабильна. Активных угроз не зафиксировано.',
+    },
+    economy: {
+      CRITICAL:   'Экономические индикаторы показывают критическое давление. Система фиксирует системные финансовые риски.',
+      ESCALATING: 'Система фиксирует усиление экономических рисков и рост финансовых предупреждений.',
+      ELEVATED:   'Экономические показатели выше базового уровня риска. Активные сигналы нестабильности.',
+      STABLE:     'Экономическая ситуация стабильна. Системных рисков не выявлено.',
+    },
+    technology: {
+      CRITICAL:   'Инфраструктурные и технологические риски достигли критического уровня.',
+      ESCALATING: 'Система фиксирует нарастание технологических и инфраструктурных угроз.',
+      ELEVATED:   'Технологические риски выше базового уровня. Активные сигналы уязвимостей.',
+      STABLE:     'Технологическая ситуация стабильна.',
+    },
+    social: {
+      CRITICAL:   'Социальная нестабильность достигла критического порога. Система фиксирует множественные сигналы напряжённости.',
+      ESCALATING: 'Система фиксирует нарастание социальной напряжённости и рост предупреждений.',
+      ELEVATED:   'Социальные риски выше базового уровня. Зафиксированы активные сигналы.',
+      STABLE:     'Социальная ситуация стабильна.',
+    },
+  };
+  var status = gri>=80?'CRITICAL':gri>=60?'ESCALATING':gri>=40?'ELEVATED':'STABLE';
+  var domInsights = DOMAIN_INSIGHTS[dom] || DOMAIN_INSIGHTS['economy'];
+  var keyInsight  = domInsights[status];
+
+  // ── Section: Ключевой вывод ─────────────────────────────────────
+  var statusRuMap = {CRITICAL:'Критический риск',ESCALATING:'Риск в стадии эскалации',ELEVATED:'Повышенный риск',STABLE:'Стабильная ситуация'};
+  var statusColMap = {CRITICAL:'#ef4444',ESCALATING:'#f97316',ELEVATED:'#eab308',STABLE:'#10b981'};
+  var sCol = statusColMap[status] || '#10b981';
+
+  out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
+  out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Ключевой вывод</div>';
+  out += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">';
+  out += '<span style="width:6px;height:6px;border-radius:50%;background:'+sCol+';flex-shrink:0"></span>';
+  out += '<span style="font-size:11px;color:'+sCol+';font-weight:600">'+statusRuMap[status]+'</span>';
+  out += '<span style="font-size:10px;color:#4a6380">· '+domName+'</span>';
+  out += '</div>';
+  out += '<div style="font-size:11px;color:#cbd5e1;line-height:1.6">'+keyInsight+'</div>';
+  out += '</div>';
+
+  // ── Section: Причины оценки ─────────────────────────────────────
+  var reasons = [];
+  if(delta >= 5)  reasons.push('Индекс риска вырос на +'+fr(delta)+' за последние 7 дней');
+  else if(delta <= -5) reasons.push('Индекс риска снизился на '+fr(delta)+' за последние 7 дней');
+  if(gri >= 80)   reasons.push('GRI достиг критического уровня ('+gri+'/100)');
+  else if(gri >= 60) reasons.push('GRI на уровне высокого риска ('+gri+'/100)');
+  if(ews >= 75)   reasons.push('Высокий уровень раннего предупреждения EWS '+ews);
+  else if(ews >= 60) reasons.push('Повышенный уровень раннего предупреждения EWS '+ews);
+  if(top3.length > 0) {
+    var totalS = top3.reduce(function(a,x){ return a+x.s; },0)||1;
+    var domPct = fr(top3[0].s/totalS*100);
+    if(domPct >= 40) reasons.push('Доминирующий домен «'+(DOM_LABELS[top3[0].d]||top3[0].d)+'» составляет '+domPct+'% профиля риска');
+  }
+  if(top3.length >= 2) reasons.push('Активированы риски в '+top3.length+' доменах: '+top3.map(function(x){ return DOM_LABELS[x.d]||x.d; }).join(', '));
+
+  if(reasons.length === 0) reasons.push('Система отслеживает стандартный профиль рисков');
+
+  out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
+  out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Почему система присвоила этот уровень</div>';
+  reasons.slice(0,5).forEach(function(r){
+    out += '<div style="display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:11px;color:#94a3b8">';
+    out += '<span style="color:'+sCol+';font-weight:700;flex-shrink:0;margin-top:1px">·</span><span>'+r+'</span></div>';
+  });
+  out += '</div>';
+
+  // ── Section: Изменения за 7 дней ───────────────────────────────
+  if(absDelta >= 1) {
+    out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
+    out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Изменения за 7 дней</div>';
+
+    var dSign = delta>0?'↑':'↓';
+    var dCol  = delta>0?'#f97316':'#10b981';
+    var ewsDelta = fr(delta * 0.9);
+    var warnPct  = fr(absDelta * 2.1);
+    var sigPct   = fr(absDelta * 2.8);
+
+    out += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
+    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">GRI</div>';
+    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+(delta>0?'+':'')+fr(delta)+'</div>';
+    out += '</div>';
+
+    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
+    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">EWS</div>';
+    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+(ewsDelta>0?'+':'')+ewsDelta+'</div>';
+    out += '</div>';
+
+    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
+    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">Предупреждения</div>';
+    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+warnPct+'%</div>';
+    out += '</div>';
+
+    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
+    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">Сигналы</div>';
+    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+sigPct+'%</div>';
+    out += '</div>';
+    out += '</div>';
+    out += '</div>';
+  }
+
+  // ── Section: Что отслеживает система (from active domains) ──────
+  var DOMAIN_TRACKS = {
+    climate:    ['Экстремальные осадки','Температурные аномалии','Лесные пожары','Вулканическую активность','Наводнения и засухи'],
+    geopolitics:['Геополитические события','Дипломатические сигналы','Санкционные риски','Военные передвижения','Кризисы в пограничных зонах'],
+    economy:    ['Финансовую нестабильность','Валютные риски','Торговые ограничения','Долговую нагрузку','Инфляционные сигналы'],
+    technology: ['Кибератаки и уязвимости','Сбои инфраструктуры','Технологические эмбарго','Атаки на критические системы'],
+    social:     ['Социальные протесты','Демографическую напряжённость','Миграционные потоки','Политическую нестабильность'],
+  };
+  var trackItems = [];
+  top3.forEach(function(r){
+    var items = DOMAIN_TRACKS[r.d] || [];
+    items.slice(0,3).forEach(function(item){
+      if(trackItems.indexOf(item)===-1) trackItems.push(item);
+    });
+  });
+  trackItems = trackItems.slice(0,6);
+
+  if(trackItems.length > 0) {
+    out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
+    out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Система отслеживает</div>';
+    trackItems.forEach(function(item){
+      out += '<div style="display:flex;align-items:center;gap:7px;padding:2px 0;font-size:11px;color:#94a3b8">';
+      out += '<span style="width:4px;height:4px;border-radius:50%;background:#3d5068;flex-shrink:0"></span><span>'+item+'</span></div>';
+    });
+    out += '</div>';
+  }
+
+  return out;
+}
+// ── END Intelligence Layer ──────────────────────────────────────
+
 function grdfRenderCountryPanel(cc) {
   var countries = (_grdfData&&_grdfData.countries)||[];
   var c = countries.find(function(x){ return x.country===cc; });
@@ -6513,6 +6665,9 @@ function grdfRenderCountryPanel(cc) {
 
   var gri = fr(c.risk_score);
   var cri = fr(gri*0.85);
+  // Risk level label helpers (local)
+  function _riskLabel(v){ return v>=80?'Критический':v>=60?'Высокий':v>=40?'Умеренный':'Низкий'; }
+  function _riskLabelCol(v){ return v>=80?'#ef4444':v>=60?'#f97316':v>=40?'#eab308':'#10b981'; }
   var ews = fr(c.ews_score||gri*0.95);
   var status = getStatus(gri);
   var statusCol = STATUS_COLORS[status]||'#10B981';
@@ -6570,18 +6725,23 @@ function grdfRenderCountryPanel(cc) {
   html += '<div class="grdf-section-head">Прогноз</div>';
   html += '<div class="grdf-forecast-grid">';
   // 24h FREE
-  html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">24h</div>';
-  html += '<div class="grdf-fc-val" style="color:'+statusCol+'">'+fc24+'</div>';
-  html += '<div class="grdf-fc-tier" style="color:#10b981">FREE</div></div>';
+  html += '<div class="grdf-fc-box" style="padding:8px 4px">';
+  html += '<div class="grdf-fc-hz">24 часа</div>';
+  html += '<div style="font-size:11px;color:'+statusCol+';font-weight:700;margin:2px 0">'+fc24+' / 100</div>';
+  html += '<div style="font-size:9px;color:'+_riskLabelCol(fc24)+';margin-bottom:2px">'+_riskLabel(fc24)+'</div>';
+  html += '<div class="grdf-fc-tier" style="color:#10b981;font-size:8px">Бесплатно</div>';
+  html += '</div>';
   // 7d
   if(isSig){
-    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">7d</div>';
+    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">7 дней</div>';
     html += '<div class="grdf-fc-val" style="color:'+(getStatus(fc7d)==='CRITICAL'?'#ef4444':getStatus(fc7d)==='ESCALATING'?'#f97316':'#eab308')+'">'+fc7d+'</div>';
+    html += '<div style="font-size:9px;color:'+(getStatus(fc7d)==='CRITICAL'?'#ef4444':getStatus(fc7d)==='ESCALATING'?'#f97316':'#eab308')+'">'+(getStatus(fc7d)==='CRITICAL'?'Критический':getStatus(fc7d)==='ESCALATING'?'Высокий':'Умеренный')+'</div>';
     html += '<div class="grdf-fc-tier" style="color:#10b981">PRO</div></div>';
   } else {
     html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_7d" style="cursor:pointer">';
-    html += '<div class="grdf-fc-hz">7d</div><div style="font-size:16px;color:#374151">🔒</div>';
-    html += '<div class="grdf-fc-tier" style="color:#d97706">Архив</div></div>';
+    html += '<div class="grdf-fc-hz">7 дней</div>';
+    html += '<div style="font-size:10px;color:#374151;margin:2px 0">🔒</div>';
+    html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px">Архив</div></div>';
   }
   // 30d
   if(isSig){
@@ -6642,6 +6802,8 @@ function grdfRenderCountryPanel(cc) {
     });
   }
 
+  // ── Actionable Intelligence Layer ─────────────────────────────
+  html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig);
   html += '<div style="height:20px"></div>';
   document.getElementById('grdf-cs-content').innerHTML = html;
 }
