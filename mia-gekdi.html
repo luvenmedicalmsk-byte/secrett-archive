@@ -264,6 +264,18 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .drv-deltas{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
 .drv-delta-item{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:3px}
 
+
+.scn-slider-wrap{margin-bottom:10px}
+.scn-slider-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.scn-slider-name{font-size:11px;color:var(--text2)}
+.scn-slider-val{font-family:var(--mono);font-size:11px;font-weight:600}
+input[type=range].scn-range{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:rgba(255,255,255,.08);outline:none}
+input[type=range].scn-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+.scn-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:9px;padding:12px 14px;text-align:center}
+.scn-card-label{font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.scn-card-val{font-size:22px;font-weight:700;font-family:var(--mono)}
+.scn-card-delta{font-size:10px;font-family:var(--mono);margin-top:3px}
+
 </style>
 </head>
 <body>
@@ -326,6 +338,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button class="sn-btn" onclick="goSection('s16')" data-s="s16">&#127942;<span class="sn-tip">Strategy</span></button>
     <button class="sn-btn" onclick="goSection('s16')" data-s="s16">&#9655;<span class="sn-tip">Decisions</span></button>
     <button class="sn-btn" onclick="goSection('s17')" data-s="s17">&#128200;<span class="sn-tip">Validation</span></button>
+    <button class="sn-btn" onclick="goSection('s18')" data-s="s18">&#127981;<span class="sn-tip">Scenarios</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -1410,6 +1423,98 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
 
     </div><!-- /s17 -->
+
+
+    <!-- ─ S18: SCENARIO INTELLIGENCE ENGINE ─ -->
+    <div class="section" id="s18">
+      <div class="s-head">
+        <div class="s-tag">18</div>
+        <div class="s-title">Scenario Intelligence Engine</div>
+        <div class="s-badge badge-orange">&#127981; WHAT IF?</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;font-style:italic">Model alternative futures. Understand consequences before they happen.</div>
+
+      <!-- 01+02: SCENARIO LAB + IMPACT SIMULATOR -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 01+02 · Scenario Lab &amp; Impact Simulator</div>
+        <div class="grid-2">
+          <div class="sum-card">
+            <div class="sum-title"><span>&#9881;</span>Adjust Risk Drivers</div>
+            <div id="scn-sliders"></div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button onclick="runScenario()" style="flex:1;padding:9px 0;background:linear-gradient(135deg,#1a3a2a,#0f2a1a);border:1px solid rgba(16,185,129,.3);border-radius:7px;color:var(--green);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#9654; Simulate</button>
+              <button onclick="resetScenario()" style="padding:9px 14px;background:transparent;border:0.5px solid var(--border2);border-radius:7px;color:var(--text3);font-size:11px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">Reset</button>
+            </div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-title"><span>&#128200;</span>Impact on Global Indices</div>
+            <div id="scn-impact" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="scn-card"><div class="scn-card-label">GRI</div><div class="scn-card-val" id="scn-gri">—</div><div class="scn-card-delta" id="scn-gri-d">base</div></div>
+              <div class="scn-card"><div class="scn-card-label">EWS</div><div class="scn-card-val" id="scn-ews">—</div><div class="scn-card-delta" id="scn-ews-d">base</div></div>
+              <div class="scn-card"><div class="scn-card-label">FC 24h</div><div class="scn-card-val" id="scn-f24">—</div><div class="scn-card-delta" id="scn-f24-d">base</div></div>
+              <div class="scn-card"><div class="scn-card-label">FC 7d</div><div class="scn-card-val" id="scn-f7">—</div><div class="scn-card-delta" id="scn-f7-d">base</div></div>
+              <div class="scn-card"><div class="scn-card-label">FC 30d</div><div class="scn-card-val" id="scn-f30">—</div><div class="scn-card-delta" id="scn-f30-d">base</div></div>
+              <div class="scn-card"><div class="scn-card-label">FC 90d</div><div class="scn-card-val" id="scn-f90">—</div><div class="scn-card-delta" id="scn-f90-d">base</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03: SCENARIO COMPARISON -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9878;</span> 03 · Scenario Comparison</div>
+        <div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap">
+          <button onclick="saveScenario('A')" style="padding:6px 14px;background:rgba(59,130,246,.1);border:0.5px solid #3b82f6;border-radius:6px;color:#3b82f6;font-size:11px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">Save as Scenario A</button>
+          <button onclick="saveScenario('B')" style="padding:6px 14px;background:rgba(249,115,22,.1);border:0.5px solid #f97316;border-radius:6px;color:#f97316;font-size:11px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">Save as Scenario B</button>
+          <button onclick="clearScenarios()" style="padding:6px 14px;background:transparent;border:0.5px solid var(--border2);border-radius:6px;color:var(--text3);font-size:11px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">Clear</button>
+        </div>
+        <div id="scn-comparison"></div>
+      </div>
+
+      <!-- 04: CASCADE SIMULATION -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128259;</span> 04 · Cascade Simulation</div>
+        <div class="sum-card">
+          <div id="scn-cascade"><div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Run a simulation to see cascade effects</div></div>
+        </div>
+      </div>
+
+      <!-- 05: COUNTRY IMPACT VIEW -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127758;</span> 05 · Country Impact View</div>
+        <div style="margin-bottom:8px">
+          <select id="scn-country-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;outline:none;width:100%" onchange="buildCountryImpact(this.value)">
+            <option value="">Select country to see scenario impact...</option>
+          </select>
+        </div>
+        <div id="scn-country-out"><div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Select a country after running a simulation</div></div>
+      </div>
+
+      <!-- 06: BEST / WORST CASE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9878;</span> 06 · Best / Base / Worst Case</div>
+        <div class="tbl-outer" style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table id="scn-bwc-table">
+            <thead><tr><th>Horizon</th><th>Best Case</th><th>Base Case</th><th>Worst Case</th><th>Spread</th></tr></thead>
+            <tbody id="scn-bwc-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 07: AI SCENARIO BRIEFING -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#129302;</span> 07 · AI Scenario Briefing</div>
+        <div style="margin-bottom:8px">
+          <button onclick="generateScenarioBrief()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#1a1a3a,#0f0f2a);border:1px solid rgba(168,85,247,.3);border-radius:8px;color:#a855f7;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Generate Scenario Brief</button>
+        </div>
+        <div id="scn-brief-out">
+          <div class="sum-card" style="border:0.5px solid rgba(168,85,247,.15)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Run a simulation first, then generate a scenario brief</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s18 -->
 
   </div><!-- /main -->
 </div><!-- /dashboard -->
@@ -2591,7 +2696,7 @@ var INFLUENCE_SCORES = [
 
 function loadCausalityEngine() {
     loadStrategicDecisionCenter(cc);
-    loadForecastValidation(cc);
+    loadForecastValidation(cc); loadScenarioEngine(cc);
   populateSelects();
   buildDepCanvas();
   buildCascades();
@@ -4202,6 +4307,356 @@ window.generateValidationReport = function() {
     h += '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</span></div></div>';
     el.innerHTML = h;
   }, 900);
+};
+
+
+// ── S18: SCENARIO INTELLIGENCE ENGINE ──────────────────────────
+var _scn = {
+  countries:   [],
+  baseGRI:     65,
+  baseEWS:     62,
+  sliders:     {},
+  current:     null,
+  savedA:      null,
+  savedB:      null,
+};
+
+var SCN_DRIVERS = [
+  {key:'climate',    name:'Climate Stress',        col:'#10b981', weight:0.18},
+  {key:'economy',    name:'Economic Stress',        col:'#3b82f6', weight:0.16},
+  {key:'political',  name:'Political Instability',  col:'#f97316', weight:0.20},
+  {key:'migration',  name:'Migration Pressure',     col:'#ef4444', weight:0.17},
+  {key:'energy',     name:'Energy Risk',            col:'#eab308', weight:0.12},
+  {key:'water',      name:'Water Scarcity',         col:'#10b981', weight:0.09},
+  {key:'cyber',      name:'Cyber Risk',             col:'#a855f7', weight:0.08},
+];
+
+function loadScenarioEngine(countries) {
+  _scn.countries = countries;
+  // Base metrics from live data
+  if (countries.length) {
+    _scn.baseGRI = fr(countries.reduce(function(a,c){ return a+(c.risk_score||0);},0)/countries.length);
+    _scn.baseEWS = fr(_scn.baseGRI * 0.95);
+  }
+  // Seed sliders from GLOBAL_DRIVERS
+  var drvs = _liveDrv();
+  SCN_DRIVERS.forEach(function(sd) {
+    var match = drvs.find(function(d){ return d.name.toLowerCase().indexOf(sd.key) >= 0; });
+    _scn.sliders[sd.key] = match ? fr((match.score - 65) / 65 * 50) : 0;
+  });
+  _buildSliders();
+  _runImpact();
+  _buildBWC();
+  _buildComparison();
+  // Populate country select
+  var sel = document.getElementById('scn-country-sel');
+  if (sel && sel.options.length < 3) {
+    countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).forEach(function(c) {
+      var opt = document.createElement('option');
+      opt.value = c.country;
+      opt.textContent = flag(c.country)+' '+(c.country_name||c.country)+' (GRI '+fr(c.risk_score)+')';
+      sel.appendChild(opt);
+    });
+  }
+}
+
+function _buildSliders() {
+  var h = '';
+  SCN_DRIVERS.forEach(function(d) {
+    var val = _scn.sliders[d.key] || 0;
+    var vc  = val > 0 ? 'var(--red)' : val < 0 ? 'var(--green)' : 'var(--text3)';
+    var vs  = val > 0 ? '+'+val+'%' : val+'%';
+    h += '<div class="scn-slider-wrap">';
+    h += '<div class="scn-slider-label">';
+    h += '<span class="scn-slider-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+d.col+';margin-right:5px"></span>'+d.name+'</span>';
+    h += '<span class="scn-slider-val" style="color:'+vc+'" id="scn-sv-'+d.key+'">'+vs+'</span>';
+    h += '</div>';
+    h += '<input type="range" class="scn-range" min="-50" max="50" value="'+val+'" id="scn-sl-'+d.key+'"';
+    h += ' oninput="_onSlider(\''+d.key+'\',this.value)"';
+    h += ' style="accent-color:'+d.col+'">';
+    h += '</div>';
+  });
+  var el = document.getElementById('scn-sliders');
+  if (el) el.innerHTML = h;
+}
+
+window._onSlider = function(key, val) {
+  _scn.sliders[key] = parseInt(val);
+  var vc = val > 0 ? 'var(--red)' : val < 0 ? 'var(--green)' : 'var(--text3)';
+  var vs = val > 0 ? '+'+val+'%' : val+'%';
+  var label = document.getElementById('scn-sv-'+key);
+  if (label) { label.textContent = vs; label.style.color = vc; }
+};
+
+// Core scenario computation
+function _computeScenario(sliders) {
+  var totalShift = 0;
+  SCN_DRIVERS.forEach(function(d) {
+    totalShift += (sliders[d.key] || 0) * d.weight;
+  });
+  var gri  = Math.max(0, Math.min(100, fr(_scn.baseGRI + totalShift * 0.6)));
+  var ews  = Math.max(0, Math.min(100, fr(_scn.baseEWS  + totalShift * 0.55)));
+  var cri  = fr(gri * 0.87);
+  var f24  = Math.max(0, Math.min(100, fr(gri  + totalShift * 0.08)));
+  var f7   = Math.max(0, Math.min(100, fr(gri  + totalShift * 0.25)));
+  var f30  = Math.max(0, Math.min(100, fr(gri  + totalShift * 0.55)));
+  var f90  = Math.max(0, Math.min(100, fr(gri  + totalShift * 0.80)));
+  var conf = Math.max(40, Math.min(95, fr(80 - Math.abs(totalShift) * 0.4)));
+  return { gri:gri, ews:ews, cri:cri, f24:f24, f7:f7, f30:f30, f90:f90,
+           conf:conf, totalShift:totalShift, sliders:sliders };
+}
+
+function _runImpact() {
+  var s = _computeScenario(_scn.sliders);
+  _scn.current = s;
+  var base = { gri:_scn.baseGRI, ews:_scn.baseEWS,
+               f24:_scn.baseGRI, f7:fr(_scn.baseGRI*1.02), f30:fr(_scn.baseGRI*1.05), f90:fr(_scn.baseGRI*1.08) };
+  function setCard(id, did, val, bval) {
+    var el = document.getElementById(id);
+    var de = document.getElementById(did);
+    if (!el || !de) return;
+    var col = riskCol(val);
+    el.textContent = val;
+    el.style.color = col;
+    var diff = val - bval;
+    var dc = diff > 0 ? 'var(--red)' : diff < 0 ? 'var(--green)' : 'var(--text3)';
+    de.textContent = (diff > 0 ? '+' : '') + diff;
+    de.style.color = dc;
+  }
+  setCard('scn-gri','scn-gri-d', s.gri, base.gri);
+  setCard('scn-ews','scn-ews-d', s.ews, base.ews);
+  setCard('scn-f24','scn-f24-d', s.f24, base.f24);
+  setCard('scn-f7', 'scn-f7-d',  s.f7,  base.f7);
+  setCard('scn-f30','scn-f30-d', s.f30, base.f30);
+  setCard('scn-f90','scn-f90-d', s.f90, base.f90);
+  _buildCascade(s);
+  _buildBWC();
+}
+
+window.runScenario = function() { _runImpact(); };
+
+window.resetScenario = function() {
+  SCN_DRIVERS.forEach(function(d) { _scn.sliders[d.key] = 0; });
+  _buildSliders();
+  _runImpact();
+};
+
+// 03: SCENARIO COMPARISON
+window.saveScenario = function(label) {
+  if (!_scn.current) return;
+  var snap = { label:label, s:JSON.parse(JSON.stringify(_scn.current)), sliders:JSON.parse(JSON.stringify(_scn.sliders)) };
+  if (label === 'A') _scn.savedA = snap;
+  else               _scn.savedB = snap;
+  _buildComparison();
+};
+
+window.clearScenarios = function() { _scn.savedA = null; _scn.savedB = null; _buildComparison(); };
+
+function _buildComparison() {
+  var base = { label:'Base Case', gri:_scn.baseGRI, ews:_scn.baseEWS,
+               f7:fr(_scn.baseGRI*1.02), f30:fr(_scn.baseGRI*1.05), conf:80, col:'var(--text2)' };
+  var scenarios = [base];
+  if (_scn.savedA) scenarios.push({ label:'Scenario A', col:'#3b82f6',
+    gri:_scn.savedA.s.gri, ews:_scn.savedA.s.ews, f7:_scn.savedA.s.f7, f30:_scn.savedA.s.f30, conf:_scn.savedA.s.conf });
+  if (_scn.savedB) scenarios.push({ label:'Scenario B', col:'#f97316',
+    gri:_scn.savedB.s.gri, ews:_scn.savedB.s.ews, f7:_scn.savedB.s.f7, f30:_scn.savedB.s.f30, conf:_scn.savedB.s.conf });
+  if (!_scn.current) scenarios.push({ label:'Current', col:'var(--gold)',
+    gri:_scn.baseGRI, ews:_scn.baseEWS, f7:_scn.baseGRI, f30:_scn.baseGRI, conf:80 });
+  else scenarios.push({ label:'Current Sim', col:'var(--gold)',
+    gri:_scn.current.gri, ews:_scn.current.ews, f7:_scn.current.f7, f30:_scn.current.f30, conf:_scn.current.conf });
+  var h = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="min-width:380px">';
+  h += '<thead><tr><th>Metric</th>';
+  scenarios.forEach(function(sc) { h += '<th style="color:'+sc.col+'">'+sc.label+'</th>'; });
+  h += '</tr></thead><tbody>';
+  var rows = [
+    {label:'GRI',      keys:'gri'},
+    {label:'EWS',      keys:'ews'},
+    {label:'FC 7d',    keys:'f7'},
+    {label:'FC 30d',   keys:'f30'},
+    {label:'Confidence',keys:'conf'},
+  ];
+  rows.forEach(function(row) {
+    h += '<tr><td style="color:var(--text3)">'+row.label+'</td>';
+    scenarios.forEach(function(sc) {
+      var v   = sc[row.keys];
+      var col = row.keys === 'conf' ? 'var(--green)' : riskCol(v);
+      h += '<td style="font-family:var(--mono);color:'+col+'">'+v+(row.keys==='conf'?'%':'')+'</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  var el = document.getElementById('scn-comparison');
+  if (el) el.innerHTML = h;
+}
+
+// 04: CASCADE SIMULATION — from CAUSALITY_DATA
+function _buildCascade(scen) {
+  var drvs = _liveDrv();
+  // Find the most-shifted driver
+  var maxKey = null; var maxAbs = 0;
+  SCN_DRIVERS.forEach(function(sd) {
+    var abs = Math.abs(scen.sliders[sd.key] || 0);
+    if (abs > maxAbs) { maxAbs = abs; maxKey = sd.key; }
+  });
+  if (!maxKey || maxAbs === 0) {
+    var el = document.getElementById('scn-cascade');
+    if (el) el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Adjust a driver to see cascade effects</div>';
+    return;
+  }
+  var sd    = SCN_DRIVERS.find(function(d){ return d.key === maxKey; });
+  var shift = scen.sliders[maxKey];
+  var drv   = drvs.find(function(d){ return d.name.toLowerCase().indexOf(maxKey) >= 0; });
+  var caus  = (typeof CAUSALITY_DATA !== 'undefined' && drv) ? CAUSALITY_DATA[drv.name] : null;
+  var h = '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">Primary driver change: <span style="color:'+sd.col+'">'+sd.name+'</span> '+(shift>0?'+':'')+shift+'%</div>';
+  // Level 1: primary
+  h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid '+sd.col+'">';
+  h += '<span style="font-size:11px;color:'+sd.col+';font-weight:600">'+sd.name+'</span>';
+  h += '<span style="font-family:var(--mono);font-size:11px;color:'+(shift>0?'var(--red)':'var(--green)')+';margin-left:auto">'+(shift>0?'+':'')+shift+'%</span></div>';
+  // Level 2: GRI/EWS impact
+  h += '<div style="text-align:center;padding:3px 0;color:var(--text3);font-size:12px">&#8595;</div>';
+  var griDelta = fr(shift * sd.weight * 0.6);
+  h += '<div style="display:flex;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid var(--gold)">';
+  h += '<span style="font-size:11px;color:var(--gold)">GRI / EWS Impact</span>';
+  h += '<span style="font-family:var(--mono);font-size:11px;color:'+(griDelta>0?'var(--red)':'var(--green)')+';margin-left:auto">'+(griDelta>0?'+':'')+griDelta+' pts</span></div>';
+  // Level 3: causality chain effects
+  if (caus && caus.effects) {
+    h += '<div style="text-align:center;padding:3px 0;color:var(--text3);font-size:12px">&#8595;</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:5px">';
+    caus.effects.slice(0,4).forEach(function(eff) {
+      var effDelta = fr(eff.delta * shift / 10);
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid '+eff.col+'">';
+      h += '<span style="font-size:11px;color:var(--text2);flex:1">'+eff.name+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:'+(effDelta>0?'var(--red)':'var(--green)')+'">'+(effDelta>0?'+':'')+effDelta+'</span></div>';
+    });
+    h += '</div>';
+  }
+  // Level 4: forecast impact
+  h += '<div style="text-align:center;padding:3px 0;color:var(--text3);font-size:12px">&#8595;</div>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid var(--green)">';
+  h += '<span style="font-size:10px;color:var(--text3)">Forecast impact:</span>';
+  [{hz:'24h',delta:fr(shift*sd.weight*0.05)},{hz:'7d',delta:fr(shift*sd.weight*0.15)},{hz:'30d',delta:fr(shift*sd.weight*0.33)},{hz:'90d',delta:fr(shift*sd.weight*0.55)}].forEach(function(fi) {
+    var fc = fi.delta>0?'var(--red)':fi.delta<0?'var(--green)':'var(--text3)';
+    h += '<span style="font-size:10px;font-family:var(--mono);color:'+fc+'">'+fi.hz+': '+(fi.delta>0?'+':'')+fi.delta+'</span>';
+  });
+  h += '</div>';
+  var el = document.getElementById('scn-cascade');
+  if (el) el.innerHTML = h;
+}
+
+// 05: COUNTRY IMPACT VIEW
+window.buildCountryImpact = function(cc) {
+  if (!cc || !_scn.countries.length) return;
+  var c   = _scn.countries.find(function(x){ return x.country === cc; });
+  if (!c) return;
+  var gri = fr(c.risk_score);
+  var scen = _scn.current || _computeScenario(_scn.sliders);
+  var shift = scen.totalShift || 0;
+  var newGri = Math.max(0, Math.min(100, fr(gri + shift * 0.5)));
+  var newEws = fr(newGri * 0.95);
+  var dGri   = newGri - gri;
+  var col    = dGri > 0 ? 'var(--red)' : dGri < 0 ? 'var(--green)' : 'var(--text3)';
+  var h = '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg3);border-radius:8px;margin-bottom:10px">';
+  h += '<span style="font-size:28px">'+flag(cc)+'</span>';
+  h += '<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+(c.country_name||cc)+'</div>';
+  h += '<div style="font-size:11px;color:var(--text3);margin-top:2px">Base GRI: <span style="color:'+riskCol(gri)+'">'+gri+'</span> &#8594; Scenario GRI: <span style="color:'+riskCol(newGri)+'">'+newGri+'</span></div></div>';
+  h += '<span style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+col+'">'+(dGri>0?'+':'')+dGri+'</span></div>';
+  var metrics = [
+    {label:'GRI',     base:gri,        scen:newGri},
+    {label:'EWS',     base:fr(gri*.95),scen:newEws},
+    {label:'CRI',     base:fr(gri*.87),scen:fr(newGri*.87)},
+    {label:'FC 24h',  base:gri,        scen:fr(newGri + shift*0.05)},
+    {label:'FC 7d',   base:fr(gri*1.02),scen:fr(newGri + shift*0.15)},
+    {label:'FC 30d',  base:fr(gri*1.05),scen:fr(newGri + shift*0.33)},
+  ];
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">';
+  metrics.forEach(function(m) {
+    var md = fr(m.scen) - fr(m.base);
+    var mc = md > 0 ? 'var(--red)' : md < 0 ? 'var(--green)' : 'var(--text3)';
+    h += '<div style="background:var(--bg3);border-radius:7px;padding:9px;text-align:center">';
+    h += '<div style="font-size:9px;color:var(--text3);margin-bottom:3px">'+m.label+'</div>';
+    h += '<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+riskCol(fr(m.scen))+'">'+fr(m.scen)+'</div>';
+    h += '<div style="font-family:var(--mono);font-size:10px;color:'+mc+'">'+(md>0?'+':'')+md+'</div></div>';
+  });
+  h += '</div>';
+  var el = document.getElementById('scn-country-out');
+  if (el) el.innerHTML = h;
+};
+
+// 06: BEST / WORST CASE
+function _buildBWC() {
+  var base = _scn.baseGRI;
+  var horizons = [
+    {lbl:'30d',  mf:0.55},
+    {lbl:'90d',  mf:0.80},
+    {lbl:'180d', mf:1.10},
+    {lbl:'365d', mf:1.40},
+  ];
+  var drvs = _liveDrv();
+  var avgD7  = drvs.reduce(function(a,d){ return a+d.d7;},0)  / (drvs.length||1);
+  var avgD30 = drvs.reduce(function(a,d){ return a+d.d30;},0) / (drvs.length||1);
+  var h = '';
+  horizons.forEach(function(hz) {
+    var bestShift  = -Math.abs(avgD30) * hz.mf - 5;
+    var worstShift =  Math.abs(avgD30) * hz.mf * 1.5 + 8;
+    var baseVal    = Math.max(0, Math.min(100, fr(base + avgD7 * hz.mf * 0.3)));
+    var bestVal    = Math.max(0, Math.min(100, fr(base + bestShift)));
+    var worstVal   = Math.max(0, Math.min(100, fr(base + worstShift)));
+    var spread     = worstVal - bestVal;
+    h += '<tr>';
+    h += '<td style="color:var(--gold);font-family:var(--mono)">'+hz.lbl+'</td>';
+    h += '<td style="color:var(--green);font-family:var(--mono)">'+bestVal+'<span style="font-size:9px;color:var(--text3)"> ('+fr(bestShift)+')</span></td>';
+    h += '<td style="color:'+riskCol(baseVal)+';font-family:var(--mono)">'+baseVal+'</td>';
+    h += '<td style="color:var(--red);font-family:var(--mono)">'+worstVal+'<span style="font-size:9px;color:var(--text3)"> (+'+fr(worstShift)+')</span></td>';
+    h += '<td style="color:var(--orange);font-family:var(--mono)">'+spread+'</td>';
+    h += '</tr>';
+  });
+  var tb = document.getElementById('scn-bwc-body');
+  if (tb) tb.innerHTML = h;
+}
+
+// 07: AI SCENARIO BRIEFING
+window.generateScenarioBrief = function() {
+  var el = document.getElementById('scn-brief-out');
+  if (!el) return;
+  el.innerHTML = '<div class="sum-card"><div class="loading">Generating Scenario Brief...</div></div>';
+  setTimeout(function() {
+    var scen = _scn.current || _computeScenario(_scn.sliders);
+    var base = _scn.baseGRI;
+    var dGRI = scen.gri - base;
+    var dCol = dGRI > 0 ? 'var(--red)' : dGRI < 0 ? 'var(--green)' : 'var(--text3)';
+    var now  = new Date().toUTCString().replace('GMT','UTC');
+    // Identify most-shifted drivers
+    var shifted = SCN_DRIVERS.filter(function(d){ return Math.abs(scen.sliders[d.key]||0) > 5; })
+      .sort(function(a,b){ return Math.abs(scen.sliders[b.key]||0) - Math.abs(scen.sliders[a.key]||0); });
+    var scenLabel = dGRI > 10 ? 'Escalation Scenario' : dGRI < -10 ? 'De-escalation Scenario' : 'Baseline Adjustment';
+    var secs = [
+      {t:'SCENARIO TYPE', c:'var(--purple)',
+       v:scenLabel+'. Total driver shift: '+(scen.totalShift>0?'+':'')+fr(scen.totalShift)+'%. Confidence: '+scen.conf+'%.'},
+      {t:'CURRENT STATE', c:'var(--blue)',
+       v:'Base GRI: '+base+'. Scenario GRI: '+scen.gri+' ('+(dGRI>0?'+':'')+dGRI+'). '+_scn.countries.length+' countries monitored.'},
+      {t:'MODIFIED DRIVERS', c:'var(--orange)',
+       v:shifted.length ? shifted.map(function(d){ var v=scen.sliders[d.key]||0; return d.name+(v>0?' +':' ')+v+'%'; }).join(', ') : 'No significant driver changes.'},
+      {t:'EXPECTED EFFECTS', c:'var(--red)',
+       v:'GRI change: '+(dGRI>0?'+':'')+dGRI+'. EWS: '+(scen.ews-base>0?'+':'')+fr(scen.ews-_scn.baseEWS)+'. Forecast 7d: '+scen.f7+'. Forecast 30d: '+scen.f30+'.'},
+      {t:'CASCADE EFFECTS', c:'var(--orange)',
+       v:shifted.length ? 'Primary cascade from '+shifted[0].name+'. Secondary effects expected on connected drivers via causality chain.' : 'Minimal cascade activity.'},
+      {t:'FORECAST CHANGES', c:'var(--gold)',
+       v:'24h: '+scen.f24+' | 7d: '+scen.f7+' | 30d: '+scen.f30+' | 90d: '+scen.f90},
+      {t:'CONFIDENCE', c:'var(--green)',
+       v:'Model confidence: '+scen.conf+'%. '+(Math.abs(scen.totalShift)>30?'High uncertainty — extreme scenario.':'Standard uncertainty range.')},
+    ];
+    var h = '<div style="background:rgba(168,85,247,.04);border:0.5px solid rgba(168,85,247,.2);border-radius:10px;padding:16px">';
+    h += '<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:#a855f7;letter-spacing:.2em">AI SCENARIO BRIEF</div>';
+    h += '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; '+scenLabel+'</div></div>';
+    h += '<div style="height:0.5px;background:rgba(168,85,247,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s) {
+      h += '<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h += '<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(168,85,247,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">GRI: '+base+' &#8594; '+scen.gri+' &#183; Confidence: '+scen.conf+'% &#183; '+now+'</div>';
+    h += '</div>';
+    el.innerHTML = h;
+  }, 800);
 };
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
