@@ -1675,6 +1675,8 @@ function loadSnapshot(){
     setText('si-end',fmtTime(new Date())+' UTC');
     setText('si-dur','3m 12s');
     buildForecastTable(cc); buildHeatmap(cc); buildEWFeed(cc); buildDomainFlow(cc); buildHourlyChart(sigs); buildBriefing(cc,d);
+    // Validate matured archived forecasts on every snapshot refresh
+    _validateArchivedForecasts(cc);
   });
 }
 function loadStats(){
@@ -1720,9 +1722,19 @@ function loadAlerts(){
 function buildForecastTable(cc){
   var sorted=cc.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,20);
   var html='';
+  // Build drivers snapshot for archiving
+  var drvSnap = _liveDrv().slice(0,4).map(function(d){
+    return { name:d.name, score:d.score, weight:d.weight||0 };
+  });
   sorted.forEach(function(c){
     var gri=fr(c.risk_score),ews=fr(c.ews_score||gri*.95),cri=fr(gri*.85);
     var d=parseFloat(c.delta||0),f24=fr(gri+d*.15),f7=fr(gri+d),f30=fr(gri+d*2.5),f90=fr(gri+d*4);
+    // Archive each horizon forecast (real, not reconstructed)
+    var conf=Math.max(60,fr(85-Math.abs(d)*1.5));
+    _archiveForecast(c.country,c.country_name||c.country,'h24', f24, conf, drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h7d', f7,  Math.max(55,conf-4), drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h30d',f30, Math.max(50,conf-8), drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h90d',f90, Math.max(45,conf-12),drvSnap);
     var ds=d>0?'+':''; var dc=d>0?'#ef4444':d<0?'#10b981':'var(--text3)';
     html+='<tr><td><div class="td-country"><span class="td-flag">'+flag(c.country)+'</span>'+esc(c.country_name||c.country)+'</div></td>';
     html+='<td style="color:'+riskCol(gri)+'">'+gri+'</td><td style="color:'+riskCol(ews)+'">'+ews+'</td><td>'+cri+'</td>';
@@ -3947,6 +3959,125 @@ function _sdcBuildExecDash(countries, risks, opps) {
 
 
 // ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// FORECAST ARCHIVE — true time-series forecast tracking
+// Every generated forecast is stored with full metadata.
+// Validation: compare stored forecast vs observed value at maturity.
+// ══════════════════════════════════════════════════════════════
+var FORECAST_ARCHIVE = [];  // rolling 2000 entries
+var _archiveSeq = 0;        // monotonic forecast ID
+
+// ── HORIZON millisecond durations ────────────────────────────
+var _HZ_MS = { h24:86400000, h7d:604800000, h30d:2592000000, h90d:7776000000 };
+
+// ── SAVE FORECAST ─────────────────────────────────────────────
+// Called every time a forecast is generated for a country/horizon.
+// drivers_snapshot: array of {name, score, weight} at generation time.
+function _archiveForecast(country, countryName, horizon, predicted,
+                           confidence, driversSnapshot) {
+  var id = 'F' + String(++_archiveSeq).padStart(6,'0')
+             + '-' + country + '-' + horizon;
+  var entry = {
+    forecast_id:      id,
+    country:          country,
+    country_name:     countryName,
+    horizon:          horizon,
+    timestamp:        Date.now(),
+    matures_at:       Date.now() + (_HZ_MS[horizon] || _HZ_MS.h7d),
+    predicted_value:  predicted,
+    confidence:       confidence,
+    drivers_snapshot: driversSnapshot || [],
+    validated:        false,
+    actual_value:     null,
+    error:            null,
+    validated_at:     null,
+  };
+  FORECAST_ARCHIVE.push(entry);
+  if (FORECAST_ARCHIVE.length > 2000) FORECAST_ARCHIVE.shift();
+  return entry;
+}
+
+// ── VALIDATE ARCHIVED FORECASTS ──────────────────────────────
+// For each archived forecast that has matured:
+//   compare predicted_value vs current observed risk_score
+//   compute error → feed into LFE
+function _validateArchivedForecasts(countries) {
+  var now      = Date.now();
+  var toValidate = FORECAST_ARCHIVE.filter(function(f) {
+    return !f.validated && f.matures_at <= now;
+  });
+  if (!toValidate.length) return 0;
+  // Build country lookup
+  var ccLookup = {};
+  countries.forEach(function(c) { ccLookup[c.country] = c; });
+  var validated = 0;
+  toValidate.forEach(function(f) {
+    var c = ccLookup[f.country];
+    if (!c) return;
+    // Actual value = current observed GRI at maturity time
+    var actual = fr(c.risk_score);
+    f.actual_value  = actual;
+    f.error         = Math.abs(f.predicted_value - actual);
+    f.validated     = true;
+    f.validated_at  = now;
+    // Identify the primary driver from snapshot
+    var primaryDrv = f.drivers_snapshot.length
+      ? f.drivers_snapshot.sort(function(a,b){ return b.weight-a.weight; })[0].name
+      : 'Unknown';
+    // Feed into LFE — real validated outcome
+    if (typeof _lfeRecord === 'function') {
+      _lfeRecord(f.forecast_id, primaryDrv, f.horizon,
+                 f.predicted_value, actual, f.confidence);
+    }
+    validated++;
+  });
+  // Run retraining if we have new validated entries
+  if (validated > 0 && typeof _retrainWeights === 'function') {
+    var newEntries = FORECAST_ARCHIVE
+      .filter(function(f){ return f.validated && f.validated_at === now; })
+      .map(function(f){
+        return {
+          driver:        f.drivers_snapshot.length
+            ? f.drivers_snapshot.sort(function(a,b){return b.weight-a.weight;})[0].name
+            : 'Unknown',
+          horizon:       f.horizon,
+          error:         f.error,
+          error_norm:    Math.min(1, f.error / 20),
+          direction:     f.error <= 5 ? 1 : f.error <= 10 ? 0 : -1,
+          learning_delta:_lfeWeightDelta
+            ? _lfeWeightDelta(f.error, f.confidence, f.horizon).delta
+            : (f.error <= 5 ? 0.05 : -0.05),
+          confidence:    f.confidence,
+          success:       f.error <= 5,
+        };
+      });
+    _retrainWeights(newEntries);
+  }
+  return validated;
+}
+
+// ── ARCHIVE STATS ────────────────────────────────────────────
+function _archiveStats() {
+  var total     = FORECAST_ARCHIVE.length;
+  var pending   = FORECAST_ARCHIVE.filter(function(f){ return !f.validated; }).length;
+  var validated = total - pending;
+  var accurate  = FORECAST_ARCHIVE.filter(function(f){ return f.validated && f.error<=5; }).length;
+  var avgErr    = validated > 0
+    ? fr(FORECAST_ARCHIVE.filter(function(f){ return f.validated; })
+        .reduce(function(a,f){ return a+f.error; },0) / validated)
+    : 0;
+  return { total:total, pending:pending, validated:validated,
+           accurate:accurate, avgErr:avgErr,
+           accuracy: validated>0 ? fr(accurate/validated*100) : 0 };
+}
+
+window.FORECAST_ARCHIVE         = FORECAST_ARCHIVE;
+window._archiveForecast          = _archiveForecast;
+window._validateArchivedForecasts = _validateArchivedForecasts;
+window._archiveStats             = _archiveStats;
+// END FORECAST ARCHIVE
+
 // LEARNING FEEDBACK ENGINE — closed-loop, error-weighted, real data
 // Data flow: countries.delta (real) → registry → weights → confidence → engines
 var _lfe = {
@@ -4172,53 +4303,30 @@ function _updateOppConf(opps) {
 function _runLearningCycle(countries, valMetrics) {
   var drvs       = _liveDrv();
   var newEntries = [];
-  countries.slice(0,15).forEach(function(c, ci) {
-    var gri   = fr(c.risk_score);
-    var delta = parseFloat(c.delta||0);   // REAL observed 7d change
-    // ── Reconstruct forecasts from real observed data ─────────────
-    var horz = [
-      { key:'h24',  pred: fr(gri - delta * (1/7)), actual: gri, confKey:'h24'  },
-      { key:'h7d',  pred: fr(gri - delta),          actual: gri, confKey:'h7d'  },
-      { key:'h30d', pred: fr(gri - delta * 4.3),    actual: gri, confKey:'h30d' },
-      { key:'h90d', pred: fr(gri - delta * 12.9),   actual: gri, confKey:'h90d' },
-    ];
-    // Map dominant domain to best matching driver
-    var dom    = (c.dominant_domain||'').toLowerCase();
-    var topDrv = drvs.find(function(d){ return d.name.toLowerCase().indexOf(dom)>=0; }) || drvs[0];
-    var drvName= topDrv ? topDrv.name : 'Unknown';
-    horz.forEach(function(hz, hi) {
-      var confVal = _lfe.forecastConf[hz.confKey] || 74;
-      // Confidence adjusted by how stable this country is
-      var stab    = Math.max(0, 1 - Math.abs(delta)/20);
-      var finalConf = fr(confVal * stab * 0.5 + confVal * 0.5);
-      var entry = _lfeRecord(
-        'FC-'+ci+'-'+hi+'-'+Date.now(),
-        drvName, hz.key, hz.pred, hz.actual, finalConf
-      );
-      newEntries.push(entry);
-    });
-  });
-  // If API validation data available, add API-sourced entries
-  if (valMetrics && valMetrics.h24) {
+  // ── Step 1: Validate any matured archived forecasts (real outcomes) ──
+  var nValidated = _validateArchivedForecasts(countries);
+  // ── Step 2: API accuracy as direct learning signal ────────────────
+  // Use /api/validation/summary accuracy as ground-truth for horizon confidence
+  if (valMetrics) {
     ['h24','h7d','h30d','h90d'].forEach(function(key) {
-      if (!valMetrics[key]) return;
-      var apiAcc  = valMetrics[key];
-      var apiErr  = fr((100-apiAcc)*0.6);  // approximate error from accuracy
-      var topDrv  = drvs[0];
-      if (topDrv) {
-        var entry = _lfeRecord(
-          'FC-API-'+key+'-'+Date.now(),
-          topDrv.name, key,
-          fr(_lfe.forecastConf[key] || 74), // predicted confidence
-          apiAcc,                            // actual accuracy as outcome
-          90                                 // high confidence in API source
+      var apiAcc = valMetrics[key];
+      if (!apiAcc || apiAcc <= 0) return;
+      // Each driver gets an API-sourced accuracy entry
+      drvs.slice(0,5).forEach(function(drv) {
+        var drvConf = _lfe.driverConf[drv.name] || 74;
+        var entry   = _lfeRecord(
+          'FC-API-'+key+'-'+drv.name.replace(/\s/g,'')+'-'+Date.now(),
+          drv.name, key,
+          fr(_lfe.forecastConf[key] || 74),  // system's predicted accuracy
+          apiAcc,                              // API observed accuracy
+          Math.min(92, 80 + fr(apiAcc * 0.1)) // high trust in API source
         );
         newEntries.push(entry);
-      }
+      });
     });
   }
-  // Retrain weights with all new entries
-  _retrainWeights(newEntries);
+  // Retrain only if we have new non-archive entries
+  if (newEntries.length > 0) _retrainWeights(newEntries);
   // Update all confidence layers
   _updateDriverConfidence(countries);
   _updateForecastConfidence(valMetrics);
@@ -4323,15 +4431,16 @@ function _deriveAccuracy(countries, baseRate, horizonDays) {
 
 // 08: VALIDATION DASHBOARD
 function _valBuildDashboard(m) {
+  var archSt2 = _archiveStats();
   var cards = [
-    {label:'Forecasts Checked',  val:fmt(m.totalChecked),  col:'var(--blue)'},
-    {label:'Forecasts Accurate', val:fmt(m.totalAccurate), col:'var(--green)'},
-    {label:'Forecasts Failed',   val:fmt(m.totalFailed),   col:'var(--red)'},
-    {label:'Average Error',      val:m.avgError+' pts',    col:'var(--orange)'},
-    {label:'Best Horizon',       val:m.bestHorizon,        col:'var(--green)'},
-    {label:'Worst Horizon',      val:m.worstHorizon,       col:'var(--red)'},
-    {label:'Overall Accuracy',   val:m.overall+'%',        col:'var(--gold)'},
-    {label:'Reliability Score',  val:m.reliability+'%',    col:'var(--green)'},
+    {label:'Archive Total',      val:fmt(archSt2.total),    col:'var(--blue)'},
+    {label:'Pending Validation', val:fmt(archSt2.pending),  col:'var(--orange)'},
+    {label:'Archive Validated',  val:fmt(archSt2.validated),col:'var(--green)'},
+    {label:'Archive Accuracy',   val:archSt2.accuracy+'%',  col:'var(--gold)'},
+    {label:'Avg Archive Error',  val:archSt2.avgErr+' pts', col:'var(--red)'},
+    {label:'LFE Registry',       val:fmt(_lfe.registry.length), col:'var(--blue)'},
+    {label:'Overall Accuracy',   val:m.overall+'%',         col:'var(--gold)'},
+    {label:'Reliability Score',  val:m.reliability+'%',     col:'var(--green)'},
   ];
   var h = '';
   cards.forEach(function(c) {
@@ -4473,18 +4582,21 @@ function _valBuildModelLearning(m) {
   var drvs = _liveDrv();
   // LFE stats
   var regTotal   = _lfe.registry.length;
-  // Error-weighted success rate
+  // Error-weighted success rate from LFE registry
   var wSucc=0; var tw=0;
   _lfe.registry.forEach(function(e){ var w=1-(e.error_norm||0); wSucc+=(e.direction>0?w:0); tw+=w; });
   var regRate    = tw>0 ? fr(wSucc/tw*100) : 0;
   var avgErr     = regTotal>0 ? fr(_lfe.registry.reduce(function(a,e){return a+e.error;},0)/regTotal) : 0;
   var wChanges   = _lfe.weightHistory.length;
-  var headerH = '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">';
-  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(16,185,129,.1);color:var(--green)">Registry: '+regTotal+'</span>';
-  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(212,175,90,.1);color:var(--gold)">Weighted Accuracy: '+regRate+'%</span>';
-  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(239,68,68,.1);color:var(--red)">Avg Error: '+avgErr+' pts</span>';
-  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(59,130,246,.1);color:var(--blue)">Weight Changes: '+wChanges+'</span>';
-  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.05);color:var(--text3)">Last: '+(typeof _lfe.lastUpdate === 'object' && _lfe.lastUpdate ? _lfe.lastUpdate.toUTCString().slice(0,16)+'...' : '—')+'</span>';
+  // Forecast Archive stats
+  var archSt     = _archiveStats();
+  var headerH = '<div style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap">';
+  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(59,130,246,.1);color:var(--blue)">Archive: '+archSt.total+'</span>';
+  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(249,115,22,.1);color:var(--orange)">Pending: '+archSt.pending+'</span>';
+  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(16,185,129,.1);color:var(--green)">Validated: '+archSt.validated+' ('+archSt.accuracy+'%)</span>';
+  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(239,68,68,.1);color:var(--red)">Avg Error: '+archSt.avgErr+' pts</span>';
+  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(212,175,90,.1);color:var(--gold)">LFE Weighted: '+regRate+'%</span>';
+  headerH += '<span style="font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(255,255,255,.05);color:var(--text3)">Wt.Changes: '+wChanges+'</span>';
   headerH += '</div>';
   // Weight Change History table (last 6)
   if (_lfe.weightHistory.length > 0) {
