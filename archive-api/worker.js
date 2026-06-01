@@ -2546,7 +2546,7 @@ function _filterPropagation(data, access, tier) {
     return base;
   }
 
-  // SIGNAL+: primary impacts
+  // SIGNAL PRO: primary impacts
   const stripChannel = access !== 'full+explain';
   base.primary_impacts = (data.primary_impacts || []).map(p => {
     const item = {
@@ -2653,7 +2653,7 @@ function _filterSystemic(data, access, tier) {
 
   if (access === 'score') return base;
 
-  // SIGNAL+: level + combo count
+  // SIGNAL PRO: level + combo count
   base.systemic_level    = data.systemic_level;
   base.systemic_level_ru = data.systemic_level_ru;
   base.active_domain_count = data.active_domain_count;
@@ -2749,7 +2749,7 @@ function _filterEarlyWarning(data, access, tier) {
 
   if (access === 'score') return base;
 
-  // SIGNAL+: level + trend + count
+  // SIGNAL PRO: level + trend + count
   base.warning_level    = data.warning_level;
   base.warning_level_ru = data.warning_level_ru;
   base.warning_label    = data.warning_label;
@@ -2849,7 +2849,7 @@ function _filterDecisionSupport(data, access, tier) {
 
   if (access === 'score') return base;
 
-  // SIGNAL+: level + pressure
+  // SIGNAL PRO: level + pressure
   base.decision_level     = data.decision_level;
   base.decision_label_ru  = data.decision_label_ru;
   base.decision_pressure  = data.decision_pressure;
@@ -2947,7 +2947,7 @@ function _filterResilience(data, access, tier) {
 
   if (access === 'score') return base;
 
-  // SIGNAL+: pressure + capacity scores
+  // SIGNAL PRO: pressure + capacity scores
   base.resilience_pressure = data.resilience_pressure;
   base.pressure_level      = data.pressure_level;
   base.pressure_level_ru   = data.pressure_level_ru;
@@ -3048,7 +3048,7 @@ function _filterCalibration(data, access, tier) {
   };
   if (access === 'score') return base;
 
-  // SIGNAL+: bias label + accuracy
+  // SIGNAL PRO: bias label + accuracy
   const m7  = data.metrics_7d  || {};
   const m30 = data.metrics_30d || {};
   base.bias_7d          = m7.bias;
@@ -3157,7 +3157,7 @@ function _filterStrategy(data, access, tier) {
   };
   if (access === 'teaser') return base;
 
-  // SIGNAL+: preparedness + monitoring + top action (without confidence)
+  // SIGNAL PRO: preparedness + monitoring + top action (without confidence)
   base.preparedness_level    = data.preparedness_level;
   base.preparedness_level_ru = data.preparedness_level_ru;
   base.monitoring_priority   = data.monitoring_priority;
@@ -3264,7 +3264,7 @@ function _filterFeedback(data, access, tier) {
   };
   if (access === 'teaser') return base;
 
-  // SIGNAL+: + rates + confidence + horizon
+  // SIGNAL PRO: + rates + confidence + horizon
   base.strategy_partial_rate  = data.strategy_partial_rate;
   base.strategy_failure_rate  = data.strategy_failure_rate;
   base.success_score          = data.success_score;
@@ -3362,7 +3362,7 @@ function _filterValidation(data, access, tier) {
   };
   if (access === 'teaser') return base;
 
-  // SIGNAL+: accuracy summary + bias + best/worst horizon
+  // SIGNAL PRO: accuracy summary + bias + best/worst horizon
   base.state_accuracy        = data.state_accuracy;
   base.scenario_accuracy     = data.scenario_accuracy;
   base.systematic_bias       = data.systematic_bias;
@@ -3515,7 +3515,7 @@ function _filterDashboard(data, access, tier) {
   };
   if (access === 'teaser') return base;
 
-  // SIGNAL+: Section A + B summary
+  // SIGNAL PRO: Section A + B summary
   base.validation_score      = data.validation_score;
   base.validation_grade      = data.validation_grade;
   base.forecast_accuracy     = data.forecast_accuracy;
@@ -3654,7 +3654,7 @@ function _filterDQ(data, access, tier) {
   };
   if (access === 'teaser') return base;
 
-  // SIGNAL+: Section A + action ranking top-3
+  // SIGNAL PRO: Section A + action ranking top-3
   base.decision_success_rate    = data.decision_success_rate;
   base.outcome_improvement_pct  = data.outcome_improvement_pct;
   base.expected_actual_gap      = data.expected_actual_gap;
@@ -3777,7 +3777,7 @@ function _filterSO(data, access, tier) {
   };
   if (access==='teaser') return base;
 
-  // SIGNAL+: Section A (sub-scores) + B (high-alpha)
+  // SIGNAL PRO: Section A (sub-scores) + B (high-alpha)
   base.decision_score_base   = data.decision_score_base;
   base.predicted_next_score  = data.predicted_next_score;
   base.optimization_gain     = data.optimization_gain;
@@ -3930,7 +3930,7 @@ function _filterRec(data, access, tier) {
     if (top) base.top_risk_teaser = {title:top.title, category:top.category, urgency:top.urgency};
     return base;
   }
-  // SIGNAL+: full A (risks) + B (opps)
+  // SIGNAL PRO: full A (risks) + B (opps)
   base.priority_risks        = (data.priority_risks||[]).map(r=>({
     id:r.id, category:r.category, title:r.title, urgency:r.urgency, source:r.source
   }));
@@ -4378,7 +4378,7 @@ function _filterTR(data, access, tier, source, isSingleRecord) {
     };
     if (access === 'teaser') return base;
 
-    // SIGNAL+: + forecasts 7d/30d + domain scores
+    // SIGNAL PRO: + forecasts 7d/30d + domain scores
     base.forecast_7d         = rec.forecast_7d;
     base.forecast_30d        = rec.forecast_30d;
     base.geopolitics_score   = rec.geopolitics_score;
@@ -4704,7 +4704,7 @@ function _filterAlert(data, access, tier) {
     dominant_domain:  data.dominant_domain,
   };
   if (access === 'teaser') return base;
-  // SIGNAL+
+  // SIGNAL PRO
   base.confidence      = data.confidence;
   base.signals         = data.signals;
   base.top_drivers     = data.top_drivers;
@@ -5151,7 +5151,7 @@ function _filterURO(uro, access, tier) {
   };
   if (access === 'teaser') return base;
 
-  // SIGNAL+: domains (scores only) + velocity + signals
+  // SIGNAL PRO: domains (scores only) + velocity + signals
   base.velocity       = uro.velocity;
   base.velocity_signed= uro.velocity_signed;
   base.signal_count   = uro.signal_count;
@@ -5396,7 +5396,7 @@ async function handleGRDF(request, env) {
       let warnings  = d.warnings || [];
       if (level)   warnings = warnings.filter(w => w.warning_level === level.toUpperCase());
       if (country) warnings = warnings.filter(w => w.country === country.toUpperCase());
-      // FREE: summary only; SIGNAL+: full feed
+      // FREE: summary only; SIGNAL PRO: full feed
       const result = access === 'teaser'
         ? {date:d.date, by_level:d.by_level, total:d.total, tier,
            top3: warnings.slice(0,3).map(w=>({country:w.country,warning_level:w.warning_level,rule:w.rule}))}
@@ -6015,13 +6015,13 @@ async function handleGRDF(request, env) {
   // =========================================================================
   // GRDF V7 -- Strategic Early Warning System API
   // GET /api/grdf/warnings/:cc        -> early warning score (FREE)
-  // GET /api/grdf/time-to-event/:cc   -> TTE estimation (SIGNAL+)
-  // GET /api/grdf/escalation/:cc      -> escalation velocity (SIGNAL+)
+  // GET /api/grdf/time-to-event/:cc   -> TTE estimation (SIGNAL PRO)
+  // GET /api/grdf/escalation/:cc      -> escalation velocity (SIGNAL PRO)
   // GET /api/grdf/alerts/:cc          -> current alert level (FREE)
-  // GET /api/grdf/probability/:cc     -> materialization probability (SIGNAL+)
-  // GET /api/grdf/global-alert-network -> global alert propagation (SIGNAL+)
+  // GET /api/grdf/probability/:cc     -> materialization probability (SIGNAL PRO)
+  // GET /api/grdf/global-alert-network -> global alert propagation (SIGNAL PRO)
   // GET /api/grdf/top-risks           -> global top-risk ranking (FREE)
-  // GET /api/grdf/v7/dashboard        -> Strategic EW Dashboard (FREE/SIGNAL+)
+  // GET /api/grdf/v7/dashboard        -> Strategic EW Dashboard (FREE/SIGNAL PRO)
   // =========================================================================
 
   // /api/grdf/warnings/:cc
@@ -6145,7 +6145,7 @@ async function handleGRDF(request, env) {
   // =========================================================================
   // GRDF V8 -- Strategic Decision Intelligence API
   // GET /api/grdf/decisions/:cc           -> top ranked decisions for country
-  // GET /api/grdf/playbook/:cc            -> strategic playbook (FREE summary / SIGNAL+)
+  // GET /api/grdf/playbook/:cc            -> strategic playbook (FREE summary / SIGNAL PRO)
   // GET /api/grdf/counterfactual/:cc      -> with vs without action simulation
   // GET /api/grdf/policy-impact/:cc       -> 6 policy model impacts
   // GET /api/grdf/mitigation/:cc          -> mitigation scores for all actions
@@ -7701,9 +7701,37 @@ async function handleGRDF(request, env) {
       '/api/grdf/feed/normalization','/api/grdf/feed/attribution',
       '/api/grdf/ews/dashboard','/api/grdf/ews/score',
       '/api/grdf/ews/forecast','/api/grdf/ews/warnings',
+
+  // =========================================================================
+  // GRDF COMMERCIAL ARCHITECTURE V1
+  // FREE → SIGNAL PRO → STRATEGIC PRO → ELITE INTELLIGENCE
+  // Archive Member: SIGNAL PRO included, STRATEGIC PRO -35%, ELITE INTELLIGENCE -35%
+  // =========================================================================
+  if (seg[0] === 'commercial') {
+    const comseg = seg[1] || 'architecture';
+    const CCOM = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const COM_FILES = {
+      'architecture': 'docs/commercial/commercial_architecture.json',
+      'tiers':        'docs/commercial/commercial_tiers.json',
+      'archive':      'docs/commercial/archive_member_benefits.json',
+      'audit':        'docs/commercial/commercial_migration_audit.json',
+    };
+    if (!COM_FILES[comseg]) return new Response(JSON.stringify({error:'Unknown commercial route: '+comseg,available:Object.keys(COM_FILES)}),{status:404,headers:CCOM});
+    const ck = `grdf:com:${comseg}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CCOM});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, COM_FILES[comseg], 3600);
+      if (!d) return new Response(JSON.stringify({error:'Commercial '+comseg+' not built yet'}),{status:404,headers:CCOM});
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(d),{expirationTtl:3600});}catch(_){}}
+      return new Response(JSON.stringify({...d,tier}),{headers:CCOM});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CCOM});}
+  }
+
       '/api/grdf/ews/certification','/api/grdf/ews/countries',
       '/api/grdf/ews/scenarios','/api/grdf/ews/momentum',
       '/api/grdf/ews/history','/api/grdf/ews/cross-domain',
+      '/api/grdf/commercial/architecture','/api/grdf/commercial/tiers',
+      '/api/grdf/commercial/archive','/api/grdf/commercial/audit',
     ]
   }),{status:404,headers:CORS});
 }
