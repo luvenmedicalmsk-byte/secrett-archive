@@ -1896,7 +1896,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadDecisionCenter(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadDecisionCenter(cc); }; loadStrategicDecisionCenter(cc); }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -2468,6 +2468,7 @@ var INFLUENCE_SCORES = [
 ];
 
 function loadCausalityEngine() {
+    loadStrategicDecisionCenter(cc);
   populateSelects();
   buildDepCanvas();
   buildCascades();
@@ -2831,7 +2832,7 @@ function buildDecSummary(countries) {
     {label:'Critical Decisions', val:SDC_DECISIONS.filter(function(d){ return d.pri === 'CRITICAL'; }).length, col:'var(--red)'},
     {label:'High Priority',       val:SDC_DECISIONS.filter(function(d){ return d.pri === 'HIGH'; }).length,     col:'var(--orange)'},
     {label:'Emerging Risks',      val:critical + high,                                                           col:'var(--gold)'},
-    {label:'Opportunities',       val:SDC_OPPS.length,                                                           col:'var(--green)'},
+    {label:'Opportunities',       val:opps.length,                                                           col:'var(--green)'},
   ];
   var h = '';
   kpis.forEach(function(k) {
@@ -2860,7 +2861,7 @@ function buildDecSummary(countries) {
 
 function buildRiskMatrix() {
   var h = '';
-  SDC_RISKS.forEach(function(r) {
+  risks.forEach(function(r) {
     var pc = r.priority === 'CRITICAL' ? 'risk-crit' : r.priority === 'HIGH' ? 'risk-high' : r.priority === 'MEDIUM' ? 'risk-med' : 'risk-low';
     var sc = r.status === 'ACTION' ? 'var(--red)' : r.status === 'MONITOR' ? 'var(--orange)' : 'var(--text3)';
     h += '<tr>';
@@ -3118,7 +3119,7 @@ function _computeResilience(countries) {
       if (ds[k]) domAgg[k].push(parseFloat(ds[k]));
     });
   });
-  function avgArr(arr){ return arr.length ? Math.round(arr.reduce(function(a,v){ return a+v;},0)/arr.length) : 60; }
+  function avgArr(arr){ if(!arr.length){ var avgG=countries.reduce(function(a,c){return a+(c.risk_score||60);},0)/(countries.length||1); return Math.round(avgG); } return Math.round(arr.reduce(function(a,v){return a+v;},0)/arr.length); }
   // Resilience = inverse of average risk (100 - avg_domain_risk, normalized)
   var climateRisk = avgArr(domAgg.climate);
   var geoRisk     = avgArr(domAgg.geopolitics);
