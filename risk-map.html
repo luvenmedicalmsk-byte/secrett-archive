@@ -6487,6 +6487,19 @@ window.grdfOnDataLoad = function(data) {
 };
 
 // ── Sprint 3: Country sheet ──────────────────────────────────────
+// Helper: reset scroll in all possible ways
+function _grdfScrollReset() {
+  var cs = document.getElementById('grdf-cs-content');
+  if(!cs) return;
+  cs.scrollTop = 0;
+  cs.scrollLeft = 0;
+  // Force layout recalc for iOS Safari
+  cs.style.overflow = 'hidden';
+  cs.offsetHeight; // trigger reflow
+  cs.style.overflow = '';
+  cs.scrollTop = 0;
+}
+
 window.grdfOpenCountrySheet = function(cc) {
   if(window.innerWidth > 900) return; // desktop uses existing modal
   _grdfCurrentCountry = cc;
@@ -6494,15 +6507,20 @@ window.grdfOpenCountrySheet = function(cc) {
   var drawer = document.getElementById('grdf-intel-drawer');
   if(!sheet) return;
   if(drawer) drawer.style.display='none';
+  // POINT 1: reset before render (synchronous)
+  _grdfScrollReset();
   grdfRenderCountryPanel(cc);
+  // POINT 2: reset immediately after render (synchronous)
+  _grdfScrollReset();
   _grdfSheetSnap = 2;
   sheet.className = 'snap50';
   setTimeout(function(){
     sheet.className='snap90';
     _grdfSheetSnap=2;
-    // Scroll content to top when opening
-    var cs=document.getElementById('grdf-cs-content');
-    if(cs) cs.scrollTop=0;
+    // POINT 3: reset after animation starts (50ms)
+    _grdfScrollReset();
+    // POINT 4: insurance reset after animation completes (350ms)
+    setTimeout(_grdfScrollReset, 320);
   }, 50);
 };
 
@@ -6821,7 +6839,12 @@ function grdfRenderCountryPanel(cc) {
   html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig);
   // Bottom padding: 56px nav + 24px safe area + 20px buffer = 100px
   html += '<div style="height:100px"></div>';
-  document.getElementById('grdf-cs-content').innerHTML = html;
+  var _csEl = document.getElementById('grdf-cs-content');
+  if(_csEl) {
+    _csEl.scrollTop = 0;       // reset BEFORE setting content
+    _csEl.innerHTML = html;
+    _csEl.scrollTop = 0;       // reset AFTER setting content (point 5)
+  }
 }
 
 // ── Sprint 4: Intelligence drawer ────────────────────────────────
