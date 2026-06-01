@@ -26169,10 +26169,10 @@ _SUST_SS_WEIGHTS = {
 
 # Pricing tiers (annual USD)
 _SUST_PRICING = {
-    "PUBLIC":    0,          # free
-    "SIGNAL PRO":   120,        # $10/month
-    "STRATEGIC": 1200,       # $100/month
-    "ELITE":     12000,      # $1000/month
+    "PUBLIC":    0,       # free
+    "SIGNAL PRO": 4900,   # 4 900 ₽/month
+    "STRATEGIC": 29900,   # 29 900 ₽/month
+    "ELITE":     150000,  # 150 000 ₽/month
 }
 
 # Sustainability cert levels
@@ -26189,9 +26189,9 @@ _SUST_INFRA_COST_ANNUAL = 0     # $0 on free tiers
 _SUST_INFRA_COST_PAID   = 600   # $50/month if scaling to paid CF Workers
 
 # CAC assumption (marketing + dev time proxy)
-_SUST_CAC_SIGNAL_PLUS   = 15    # $15 per SIGNAL PRO acquisition
-_SUST_CAC_STRATEGIC     = 80    # $80 per STRATEGIC acquisition
-_SUST_CAC_ELITE         = 300   # $300 per ELITE acquisition
+_SUST_CAC_SIGNAL_PRO    = 900   # 900 ₽ per SIGNAL PRO acquisition
+_SUST_CAC_STRATEGIC     = 4000  # 4 000 ₽ per STRATEGIC acquisition
+_SUST_CAC_ELITE         = 15000 # 15 000 ₽ per ELITE acquisition
 
 
 def _sust_cert_level(score: float) -> str:
@@ -26351,7 +26351,7 @@ def _build_sust_unit_economics(revenue: dict, customers: dict) -> dict:
     for s in imp_segs.get("segments",[]):
         seg = s.get("segment","PUBLIC")
         n   = float(s.get("mau",0)) * (1 - ret_rate) * 0.5   # new customers
-        cac = {"SIGNAL PRO":_SUST_CAC_SIGNAL_PLUS,"STRATEGIC":_SUST_CAC_STRATEGIC,"ELITE":_SUST_CAC_ELITE}.get(seg,0)
+        cac = {"SIGNAL PRO":_SUST_CAC_SIGNAL_PRO,"STRATEGIC":_SUST_CAC_STRATEGIC,"ELITE":_SUST_CAC_ELITE}.get(seg,0)
         total_new += n; total_cac_cost += n * cac
     blended_cac = round(total_cac_cost / max(1, total_new), 2)
 
@@ -29833,6 +29833,7 @@ _COM_TIERS = {
         "name":       "FREE",
         "deprecated_alias": None,
         "purpose":    "Platform visibility and awareness",
+        "price_monthly_rub": 0,
         "price_monthly_usd": 0,
         "features": [
             "Risk Map","Public Signals","Critical Events","Basic EWS",
@@ -29844,6 +29845,7 @@ _COM_TIERS = {
         "name":       "SIGNAL PRO",
         "deprecated_alias": "SIGNAL+",
         "purpose":    "Operational Intelligence Layer",
+        "price_monthly_rub": 4900,
         "price_monthly_usd": 10,
         "features": [
             "Full Risk Map","Full EWS","Alert Feed","Daily AI Briefing",
@@ -29857,6 +29859,7 @@ _COM_TIERS = {
         "name":       "STRATEGIC PRO",
         "deprecated_alias": None,
         "purpose":    "Strategic Intelligence Layer",
+        "price_monthly_rub": 29900,
         "price_monthly_usd": 100,
         "includes_lower": True,
         "features": [
@@ -29873,6 +29876,7 @@ _COM_TIERS = {
         "name":       "ELITE INTELLIGENCE",
         "deprecated_alias": None,
         "purpose":    "Institutional Intelligence Layer",
+        "price_monthly_rub": 150000,
         "price_monthly_usd": 1000,
         "includes_lower": True,
         "features": [
@@ -29949,7 +29953,18 @@ def _build_archive_member_benefits() -> dict:
     """Archive Member Program benefits registry."""
     return {
         **_COM_ARCHIVE_MEMBER,
-        "signal_pro_price_usd_monthly": 0,    # included
+        # RUB pricing (primary)
+        "signal_pro_price_rub_monthly":      0,
+        "signal_pro_full_price_rub":         4900,
+        "strategic_pro_full_price_rub":      29900,
+        "strategic_pro_member_price_rub":    19435,
+        "elite_full_price_rub":              150000,
+        "elite_member_price_rub":            97500,
+        "annual_saving_strategic_rub":       round((29900 * 0.35) * 12),
+        "annual_saving_elite_rub":           round((150000 * 0.35) * 12),
+        "currency_primary":                  "RUB",
+        # USD pricing
+        "signal_pro_price_usd_monthly": 0,
         "strategic_pro_full_price":     100,
         "strategic_pro_member_price":   round(100 * 0.65),
         "elite_full_price":             1000,
