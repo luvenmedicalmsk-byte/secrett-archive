@@ -105,6 +105,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   margin-left:var(--sb);
   padding:16px;
   min-height:calc(100vh - var(--tb));
+  touch-action:pan-y;
 }
 
 /* ── SECTION ─────────────────────────────────────────────────────── */
@@ -133,7 +134,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   overflow-x:auto;overflow-y:hidden;
   -webkit-overflow-scrolling:touch;
   scroll-snap-type:x mandatory;
-  touch-action:pan-x;
+  touch-action:pan-x pan-y;
   display:flex;gap:10px;
   padding-bottom:6px;
   scrollbar-width:none;
@@ -161,7 +162,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 .sum-title span{font-size:14px}
 
 /* ── TABLE ────────────────────────────────────────────────────────── */
-.tbl-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x;border-radius:8px;border:0.5px solid var(--border)}
+.tbl-outer{overflow-x:auto;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y pan-x;border-radius:8px;border:0.5px solid var(--border)}
 table{width:100%;border-collapse:collapse;min-width:540px}
 thead tr{background:rgba(0,0,0,.4)}
 th{padding:8px 10px;font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;text-align:left;font-weight:500;white-space:nowrap;font-family:var(--mono)}
@@ -386,9 +387,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
 
     <!-- ─ S3: FORECAST ENGINE ─ -->
-    <div class="section" id="s3">
+    <div class="section" id="s3" style="touch-action:pan-y">
       <div class="s-head"><div class="s-tag">03</div><div class="s-title">Forecast Engine</div></div>
-      <div class="tbl-outer">
+      <div class="tbl-outer" style="max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
         <table id="forecast-table">
           <thead><tr><th>Country</th><th>GRI</th><th>EWS</th><th>CRI</th><th>FC24h</th><th>FC7d</th><th>FC30d</th><th>FC90d</th><th>Δ7d</th><th>Status</th></tr></thead>
           <tbody id="forecast-body"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
@@ -411,7 +412,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <div style="margin-top:10px">
         <div class="sum-card">
           <div class="sum-title"><span>🌍</span>Active Warning Feed</div>
-          <div class="tbl-outer" style="max-height:260px;overflow-y:auto;border:none">
+          <div class="tbl-outer" style="max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;border:none">
             <table><thead><tr><th>Country</th><th>Domain</th><th>Level</th><th>Time</th><th>Source</th></tr></thead>
             <tbody id="ew-feed"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody></table>
           </div>
