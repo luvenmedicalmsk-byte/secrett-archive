@@ -7730,8 +7730,45 @@ async function handleGRDF(request, env) {
       '/api/grdf/ews/certification','/api/grdf/ews/countries',
       '/api/grdf/ews/scenarios','/api/grdf/ews/momentum',
       '/api/grdf/ews/history','/api/grdf/ews/cross-domain',
+
+  // =========================================================================
+  // GRDF MOBILE UX AUDIT V1 API
+  // All routes under /api/grdf/mobile/
+  // Architecture frozen. UX redesign specs for institutional platform.
+  // =========================================================================
+  if (seg[0] === 'mobile') {
+    const mseg = seg[1] || 'audit';
+    const CMX = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const MUX_FILES = {
+      'audit':        'docs/mobile_ux/mobile_ux_audit.json',
+      'layout':       'docs/mobile_ux/mobile_layout.json',
+      'status-bar':   'docs/mobile_ux/mobile_status_bar.json',
+      'filters':      'docs/mobile_ux/mobile_filter_drawer.json',
+      'navigation':   'docs/mobile_ux/mobile_navigation.json',
+      'drawer':       'docs/mobile_ux/mobile_intelligence_drawer.json',
+      'country-panel':'docs/mobile_ux/mobile_country_panel.json',
+      'tiers':        'docs/mobile_ux/mobile_commercial_tiers.json',
+      'accuracy':     'docs/mobile_ux/mobile_forecast_accuracy.json',
+      'conversion':   'docs/mobile_ux/mobile_conversion.json',
+    };
+    if (!MUX_FILES[mseg]) return new Response(JSON.stringify({error:'Unknown mobile route: '+mseg,available:Object.keys(MUX_FILES)}),{status:404,headers:CMX});
+    const ck = `grdf:mux:${mseg}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CMX});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, MUX_FILES[mseg], 3600);
+      if (!d) return new Response(JSON.stringify({error:'Mobile UX '+mseg+' not built yet'}),{status:404,headers:CMX});
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(d),{expirationTtl:3600});}catch(_){}}
+      return new Response(JSON.stringify({...d,tier}),{headers:CMX});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CMX});}
+  }
+
       '/api/grdf/commercial/architecture','/api/grdf/commercial/tiers',
       '/api/grdf/commercial/archive','/api/grdf/commercial/audit',
+      '/api/grdf/mobile/audit','/api/grdf/mobile/layout',
+      '/api/grdf/mobile/status-bar','/api/grdf/mobile/filters',
+      '/api/grdf/mobile/navigation','/api/grdf/mobile/drawer',
+      '/api/grdf/mobile/country-panel','/api/grdf/mobile/tiers',
+      '/api/grdf/mobile/accuracy','/api/grdf/mobile/conversion',
     ]
   }),{status:404,headers:CORS});
 }
