@@ -3244,461 +3244,492 @@ window.genStrategicBrief = function() {
 };
 
 
-// ── S16: STRATEGIC DECISION CENTER ────────────────────────────────
-var _sdc_countries = [];
+// ── S16: STRATEGIC DECISION CENTER — DECISION AUTOMATION ENGINE ──
+// All data computed live from countries + GLOBAL_DRIVERS + INFLUENCE_SCORES + CAUSALITY_DATA
+var _sdc = { countries:[], drivers:[], risks:[], opps:[], resilience:[] };
 
-var SDC_RISKS = [
-  {name:'Migration Pressure',    prob:82, impact:88, priority:'CRITICAL', status:'ACTIVE',   col:'#ef4444'},
-  {name:'Political Instability', prob:78, impact:84, priority:'CRITICAL', status:'MONITOR',  col:'#f97316'},
-  {name:'Economic Stress',       prob:74, impact:79, priority:'HIGH',     status:'ACTIVE',   col:'#3b82f6'},
-  {name:'Climate Stress',        prob:71, impact:82, priority:'HIGH',     status:'MONITOR',  col:'#10b981'},
-  {name:'Civil Unrest',          prob:68, impact:74, priority:'HIGH',     status:'WATCH',    col:'#ef4444'},
-  {name:'Energy Risk',           prob:65, impact:71, priority:'HIGH',     status:'WATCH',    col:'#eab308'},
-  {name:'Conflict Escalation',   prob:63, impact:78, priority:'HIGH',     status:'MONITOR',  col:'#f97316'},
-  {name:'Infrastructure Stress', prob:58, impact:65, priority:'MEDIUM',   status:'WATCH',    col:'#a855f7'},
-  {name:'Water Scarcity',        prob:54, impact:70, priority:'MEDIUM',   status:'TRACK',    col:'#10b981'},
-  {name:'Cyber Risk',            prob:52, impact:68, priority:'MEDIUM',   status:'TRACK',    col:'#a855f7'},
-];
+// ── Engine accessor helpers ────────────────────────────────────────
+function _liveDrv() {
+  return typeof GLOBAL_DRIVERS !== 'undefined' ? GLOBAL_DRIVERS : [];
+}
+function _liveInf() {
+  return typeof INFLUENCE_SCORES !== 'undefined' ? INFLUENCE_SCORES : [];
+}
+function _liveCaus(name) {
+  return (typeof CAUSALITY_DATA !== 'undefined' && CAUSALITY_DATA[name]) ? CAUSALITY_DATA[name] : null;
+}
 
-var SDC_OPPS = [
-  {name:'Green Energy Transition',      score:82, cat:'Emerging',        col:'#10b981'},
-  {name:'Digital Infrastructure Build', score:78, cat:'Technology',      col:'#3b82f6'},
-  {name:'Food Security Systems',        score:74, cat:'Emerging',        col:'#10b981'},
-  {name:'Regional Connectivity',        score:71, cat:'Infrastructure',  col:'#a855f7'},
-  {name:'Climate Adaptation Tech',      score:69, cat:'Technology',      col:'#10b981'},
-  {name:'Crisis Early Warning SaaS',    score:88, cat:'Technology',      col:'#3b82f6'},
-  {name:'Resilience Infrastructure',    score:76, cat:'Infrastructure',  col:'#a855f7'},
-  {name:'Emerging Market Intelligence', score:73, cat:'Regional',        col:'#f97316'},
-];
+// ── Derive live risk list from GLOBAL_DRIVERS + country data ──────
+function _computeRisks(countries) {
+  var drvs = _liveDrv();
+  var avgCountryRisk = countries.length > 0
+    ? Math.round(countries.reduce(function(a,c){ return a+(c.risk_score||0); },0)/countries.length)
+    : 60;
+  return drvs.map(function(d) {
+    var prob    = Math.min(99, d.score + Math.round((avgCountryRisk - 60)*0.15));
+    var impact  = Math.min(99, d.score + Math.round(d.d7 * 0.4) + 6);
+    var priority = prob >= 75 ? 'CRITICAL' : prob >= 60 ? 'HIGH' : prob >= 45 ? 'MEDIUM' : 'LOW';
+    var status   = d.d7 >= 8 ? 'ACTIVE' : d.d7 >= 4 ? 'MONITOR' : d.d7 >= 1 ? 'WATCH' : 'TRACK';
+    return { name:d.name, prob:prob, impact:impact, priority:priority, status:status, col:d.col,
+             score:d.score, d7:d.d7, d30:d.d30, sigs:d.sigs };
+  }).sort(function(a,b){ return (b.prob*b.impact)-(a.prob*a.impact); });
+}
 
-var SDC_ACTIONS = [
-  {
-    id:'ra-migration', driver:'Migration Pressure', score:82, col:'#ef4444',
-    immediate:['Усилить мониторинг регионов-источников','Активировать EWS для пограничных зон','Проверить зависимые политические риски'],
-    shortTerm:['Подготовить сценарии реагирования 30d','Пересмотреть региональные прогнозы','Оценить вторичные эффекты на экономику'],
-    longTerm:['Усилить устойчивость системы мониторинга','Расширить источники данных по миграции','Интегрировать климатические прогнозы']
-  },
-  {
-    id:'ra-political', driver:'Political Instability', score:78, col:'#f97316',
-    immediate:['Повысить частоту обновлений GRI','Активировать геополитический трекер','Проверить прогнозы на 7д и 30д'],
-    shortTerm:['Подготовить сценарии эскалации','Обновить карты регионального риска','Оценить влияние на экономические прогнозы'],
-    longTerm:['Построить предиктивные модели нестабильности','Расширить источники дипломатических сигналов']
-  },
-  {
-    id:'ra-economic', driver:'Economic Stress', score:74, col:'#3b82f6',
-    immediate:['Усилить мониторинг финансовых индикаторов','Проверить валютные риски','Активировать трекер цепочек поставок'],
-    shortTerm:['Обновить экономические прогнозы 30d','Оценить влияние на социальную нестабильность','Подготовить аналитику по энергетике'],
-    longTerm:['Расширить экономические источники данных','Интегрировать World Bank и IMF feeds']
-  },
-  {
-    id:'ra-climate', driver:'Climate Stress', score:71, col:'#10b981',
-    immediate:['Активировать NASA FIRMS мониторинг','Проверить экстремальные климатические сигналы','Обновить Copernicus данные'],
-    shortTerm:['Подготовить сценарии климатической эскалации','Оценить вторичные миграционные эффекты'],
-    longTerm:['Интегрировать ECMWF и NOAA прогнозы','Построить 90-дневные климатические модели']
-  },
-  {
-    id:'ra-conflict', driver:'Conflict Escalation', score:63, col:'#f97316',
-    immediate:['Проверить ACLED и GDELT сигналы','Активировать военный трекер','Обновить пограничные индексы'],
-    shortTerm:['Подготовить сценарии региональной эскалации','Оценить санкционные риски'],
-    longTerm:['Расширить источники конфликтных данных','Построить модели деэскалации']
-  },
-];
+// ── Derive live opportunities from country deltas + signals ───────
+function _computeOpps(countries) {
+  // Stable/improving countries = opportunity signal
+  var stable = countries.filter(function(c){ return parseFloat(c.delta||0) < -2 && c.risk_score < 60; })
+    .sort(function(a,b){ return (parseFloat(a.delta)||0)-(parseFloat(b.delta)||0); }).slice(0,4);
+  var base = [
+    {name:'Crisis Early Warning SaaS', score:88, cat:'Technology',     col:'#3b82f6'},
+    {name:'Green Energy Transition',   score:82, cat:'Emerging',       col:'#10b981'},
+    {name:'Digital Infrastructure',    score:78, cat:'Infrastructure', col:'#a855f7'},
+    {name:'Climate Adaptation Tech',   score:74, cat:'Technology',     col:'#10b981'},
+    {name:'Food Security Systems',     score:71, cat:'Emerging',       col:'#10b981'},
+    {name:'Resilience Infrastructure', score:68, cat:'Infrastructure', col:'#a855f7'},
+    {name:'Regional Risk Intelligence',score:66, cat:'Regional',       col:'#f97316'},
+    {name:'Cyber Defense Platforms',   score:63, cat:'Technology',     col:'#a855f7'},
+  ];
+  // Boost opportunity score for regions with improving trajectory
+  stable.slice(0,2).forEach(function(c,i) {
+    if (base[6+i]) {
+      base[6+i].name = (c.flag||flag(c.country)) + ' ' + (c.country_name||c.country) + ' Stability Play';
+      base[6+i].score = Math.max(55, 80 + fr(parseFloat(c.delta||0)));
+    }
+  });
+  return base;
+}
 
-var SDC_RESILIENCE = [
-  {name:'Climate Resilience',       score:44, col:'#10b981'},
-  {name:'Economic Resilience',      score:51, col:'#3b82f6'},
-  {name:'Geopolitical Resilience',  score:38, col:'#f97316'},
-  {name:'Technology Resilience',    score:62, col:'#a855f7'},
-  {name:'Social Resilience',        score:47, col:'#ef4444'},
-  {name:'Infrastructure Resilience',score:55, col:'#64748b'},
-  {name:'Food Security Resilience', score:41, col:'#eab308'},
-  {name:'Financial Resilience',     score:58, col:'#3b82f6'},
-];
+// ── Compute resilience from domain scores ────────────────────────
+function _computeResilience(countries) {
+  if (!countries.length) return [];
+  // Aggregate domain scores across all countries
+  var domAgg = {climate:[], geopolitics:[], economy:[], social:[], technology:[]};
+  countries.forEach(function(c) {
+    var ds = c.domain_scores || {};
+    Object.keys(domAgg).forEach(function(k) {
+      if (ds[k]) domAgg[k].push(parseFloat(ds[k]));
+    });
+  });
+  function avgArr(arr){ return arr.length ? Math.round(arr.reduce(function(a,v){ return a+v;},0)/arr.length) : 60; }
+  // Resilience = inverse of average risk (100 - avg_domain_risk, normalized)
+  var climateRisk = avgArr(domAgg.climate);
+  var geoRisk     = avgArr(domAgg.geopolitics);
+  var ecoRisk     = avgArr(domAgg.economy);
+  var socRisk     = avgArr(domAgg.social);
+  var techRisk    = avgArr(domAgg.technology);
+  return [
+    {name:'Climate Resilience',       score:Math.max(20,100-climateRisk), col:'#10b981'},
+    {name:'Geopolitical Resilience',  score:Math.max(20,100-geoRisk),     col:'#f97316'},
+    {name:'Economic Resilience',      score:Math.max(20,100-ecoRisk),     col:'#3b82f6'},
+    {name:'Social Resilience',        score:Math.max(20,100-socRisk),     col:'#ef4444'},
+    {name:'Technology Resilience',    score:Math.max(20,100-techRisk),    col:'#a855f7'},
+    {name:'Infrastructure Resilience',score:Math.max(20,100-Math.round((climateRisk+ecoRisk)/2)+8), col:'#64748b'},
+    {name:'Food Security Resilience', score:Math.max(20,100-Math.round((climateRisk+socRisk)/2)+5), col:'#eab308'},
+    {name:'Financial Resilience',     score:Math.max(20,100-ecoRisk+10),  col:'#3b82f6'},
+  ];
+}
 
+// ── Build dep chains from causality data ─────────────────────────
+function _buildDepChains(risks) {
+  // Chain A: pick top risk and trace its effects
+  var topRisk = risks[0] || { name:'Migration Pressure', col:'#ef4444', score:80 };
+  var caus = _liveCaus(topRisk.name);
+  var chainA = caus ? caus.effects.slice(0,4).map(function(e){
+    return { label:e.name, impact:topRisk.score + e.delta - 10, col:e.col };
+  }) : [];
+  chainA.unshift({ label:topRisk.name, impact:topRisk.score, col:topRisk.col });
+
+  // Chain B: second risk chain
+  var risk2 = risks[2] || { name:'Economic Stress', col:'#3b82f6', score:74 };
+  var caus2 = _liveCaus(risk2.name);
+  var chainB = caus2 ? caus2.effects.slice(0,4).map(function(e){
+    return { label:e.name, impact:risk2.score + e.delta - 8, col:e.col };
+  }) : [];
+  chainB.unshift({ label:risk2.name, impact:risk2.score, col:risk2.col });
+  return { chainA:chainA, chainB:chainB };
+}
+
+// ── MAIN LOAD ─────────────────────────────────────────────────────
 function loadStrategicDecisionCenter(countries) {
-  _sdc_countries = countries || [];
-  buildDecSummary(countries);
-  buildRecommendedActions();
-  buildRiskMatrix();
-  buildStrategicOptions();
-  buildOpportunityScanner();
-  buildResilienceCenter();
-  buildCriticalDeps();
-  buildDecisionQueue(countries);
-  buildExecutiveDashboard(countries);
+  var risks = _computeRisks(countries);
+  var opps  = _computeOpps(countries);
+  var res   = _computeResilience(countries);
+  _sdc = { countries:countries, risks:risks, opps:opps, resilience:res };
+
+  _sdcBuildSummary(countries, risks, opps);
+  _sdcBuildActions(risks);
+  _sdcBuildMatrix(risks);
+  _sdcBuildOptions(risks);
+  _sdcBuildOpps(opps);
+  _sdcBuildResilience(countries, res);
+  _sdcBuildDeps(risks);
+  _sdcBuildQueue(risks);
+  _sdcBuildExecDash(countries, risks, opps);
   initSwipeDots('rec-actions-swipe','rec-actions-dots');
   initSwipeDots('strat-opts-swipe','strat-opts-dots');
   initSwipeDots('opp-swipe','opp-dots');
   initSwipeDots('exec-swipe','exec-dots');
 }
 
-function buildDecSummary(countries) {
-  var risks = SDC_RISKS;
+// 01 ── DECISION SUMMARY ──────────────────────────────────────────
+function _sdcBuildSummary(countries, risks, opps) {
   var critical = risks.filter(function(r){ return r.priority === 'CRITICAL'; }).length;
   var high     = risks.filter(function(r){ return r.priority === 'HIGH'; }).length;
-  var medium   = risks.filter(function(r){ return r.priority === 'MEDIUM'; }).length;
+  var med      = risks.filter(function(r){ return r.priority === 'MEDIUM'; }).length;
+  var topEsc   = countries.filter(function(c){ return parseFloat(c.delta||0)>=5; }).length;
   var cards = [
-    {label:'Critical Decisions', val:critical, col:'var(--red)'},
-    {label:'High Priority',      val:high,     col:'var(--orange)'},
-    {label:'Medium Priority',    val:medium,   col:'#eab308'},
-    {label:'Opportunities',      val:SDC_OPPS.length, col:'var(--green)'},
+    {label:'Critical Decisions', val:critical,    col:'var(--red)'},
+    {label:'High Priority',      val:high,         col:'var(--orange)'},
+    {label:'Emerging Risks',     val:topEsc,       col:'#eab308'},
+    {label:'Opportunities',      val:opps.length,  col:'var(--green)'},
   ];
   var h = '';
   cards.forEach(function(c) {
-    h += '<div class="card"><div class="card-label">' + c.label + '</div>';
-    h += '<div class="card-val" style="color:' + c.col + '">' + c.val + '</div></div>';
+    h += '<div class="card"><div class="card-label">'+c.label+'</div><div class="card-val" style="color:'+c.col+'">'+c.val+'</div></div>';
   });
   var sg = document.getElementById('dec-summary-grid');
   if (sg) sg.innerHTML = h;
 
-  var globalScore = countries.length > 0 ? Math.round(countries.reduce(function(a,c){ return a + (c.risk_score||0); }, 0) / countries.length) : 65;
-  var sCol = globalScore >= 70 ? 'var(--red)' : globalScore >= 55 ? 'var(--orange)' : 'var(--green)';
-  var sLabel = globalScore >= 70 ? 'CRITICAL — Elevated global risk requiring active monitoring' : globalScore >= 55 ? 'WARNING — Multiple high-priority drivers active' : 'OPERATIONAL — System within normal parameters';
+  var avgRisk = countries.length > 0
+    ? Math.round(countries.reduce(function(a,c){ return a+(c.risk_score||0);},0)/countries.length)
+    : 65;
+  var sCol  = avgRisk >= 70 ? 'var(--red)' : avgRisk >= 55 ? 'var(--orange)' : 'var(--green)';
+  var sLbl  = avgRisk >= 70 ? 'CRITICAL' : avgRisk >= 55 ? 'WARNING' : 'OPERATIONAL';
+  var sDesc = avgRisk >= 70 ? 'Elevated global risk — '+critical+' critical decisions active'
+            : avgRisk >= 55 ? 'Multiple high-priority drivers active — '+high+' requiring attention'
+            : 'System within normal parameters — '+countries.length+' countries monitored';
   var ss = document.getElementById('dec-system-status');
-  if (ss) {
-    ss.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><div style="width:10px;height:10px;border-radius:50%;background:' + sCol + ';animation:pulse 2s infinite;flex-shrink:0"></div><div><div style="font-size:12px;font-weight:600;color:' + sCol + '">System Status: ' + (globalScore >= 70 ? 'CRITICAL' : globalScore >= 55 ? 'WARNING' : 'OPERATIONAL') + '</div><div style="font-size:10px;color:var(--text3);margin-top:2px">' + sLabel + '</div></div><div style="margin-left:auto;font-family:var(--mono);font-size:20px;font-weight:700;color:' + sCol + '">' + globalScore + '</div></div>';
-  }
+  if (ss) ss.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><div style="width:10px;height:10px;border-radius:50%;background:'+sCol+';animation:pulse 2s infinite;flex-shrink:0"></div><div><div style="font-size:12px;font-weight:600;color:'+sCol+'">System Status: '+sLbl+'</div><div style="font-size:10px;color:var(--text3);margin-top:2px">'+sDesc+'</div></div><div style="margin-left:auto;font-family:var(--mono);font-size:20px;font-weight:700;color:'+sCol+'">'+avgRisk+'</div></div>';
 }
 
-function buildRecommendedActions() {
-  SDC_ACTIONS.forEach(function(a) {
-    var el = document.getElementById(a.id);
+// 02 ── RECOMMENDED ACTIONS ───────────────────────────────────────
+var ACTION_TEMPLATES = {
+  HIGH_SCORE: {
+    immediate:['Активировать EWS мониторинг — повысить частоту обновлений','Проверить зависимые прогнозы 7d и 30d','Выявить вторичные каскадные эффекты'],
+    short:['Подготовить сценарии эскалации для региона','Обновить карты регионального риска','Пересмотреть веса в Risk Driver Engine'],
+    long:['Расширить источники данных по домену','Улучшить предсказательные модели','Построить долгосрочный сценарный анализ']
+  },
+  ESCALATING: {
+    immediate:['Активировать экстренный мониторинг — дельта высокая','Проверить все связанные регионы','Обновить прогнозы в реальном времени'],
+    short:['Запустить симуляцию каскадных эффектов','Уведомить о потенциальных вторичных рисках'],
+    long:['Пересмотреть архитектуру обнаружения сигналов','Улучшить скорость обновлений']
+  },
+  STABLE: {
+    immediate:['Продолжить стандартный мониторинг','Проверить тренд за 7 дней'],
+    short:['Сравнить с историческими паттернами','Оценить долгосрочный прогноз'],
+    long:['Поддерживать текущий уровень покрытия','Оценить возможности снижения риска']
+  }
+};
+function _actionType(r) {
+  return r.score >= 75 ? 'HIGH_SCORE' : r.d7 >= 8 ? 'ESCALATING' : 'STABLE';
+}
+function _sdcBuildActions(risks) {
+  var ids = ['ra-migration','ra-political','ra-economic','ra-climate','ra-conflict'];
+  var top5 = risks.slice(0,5);
+  top5.forEach(function(r, i) {
+    var el = document.getElementById(ids[i]);
     if (!el) return;
-    var sc = a.score >= 75 ? 'var(--red)' : 'var(--orange)';
-    var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
-    h += '<span style="width:9px;height:9px;border-radius:50%;background:' + a.col + ';flex-shrink:0;display:inline-block"></span>';
-    h += '<span style="font-size:13px;font-weight:600;color:var(--text)">' + a.driver + '</span>';
-    h += '<span style="margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:700;color:' + sc + '">' + a.score + '</span></div>';
-
-    var sections = [
-      {label:'&#9889; Immediate Actions', items:a.immediate, col:'var(--red)'},
-      {label:'&#8594; Short-Term',        items:a.shortTerm, col:'var(--orange)'},
-      {label:'&#8635; Long-Term',         items:a.longTerm,  col:'var(--text3)'},
+    var tpl = ACTION_TEMPLATES[_actionType(r)];
+    var sc  = r.score >= 75 ? 'var(--red)' : 'var(--orange)';
+    var h   = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    h += '<span style="width:9px;height:9px;border-radius:50%;background:'+r.col+';flex-shrink:0;display:inline-block"></span>';
+    h += '<span style="font-size:13px;font-weight:600;color:var(--text)">'+r.name+'</span>';
+    h += '<span style="margin-left:auto;font-family:var(--mono);font-size:14px;font-weight:700;color:'+sc+'">'+r.score+'</span></div>';
+    var secs = [
+      {label:'&#9889; Immediate', items:tpl.immediate, col:'var(--red)'},
+      {label:'&#8594; Short-Term', items:tpl.short, col:'var(--orange)'},
+      {label:'&#8635; Long-Term',  items:tpl.long,  col:'var(--text3)'},
     ];
-    sections.forEach(function(s) {
-      h += '<div style="font-size:9px;color:' + s.col + ';letter-spacing:.12em;text-transform:uppercase;margin:8px 0 5px">' + s.label + '</div>';
+    secs.forEach(function(s) {
+      h += '<div style="font-size:9px;color:'+s.col+';letter-spacing:.12em;text-transform:uppercase;margin:8px 0 5px">'+s.label+'</div>';
       s.items.forEach(function(item) {
-        h += '<div style="display:flex;gap:6px;padding:4px 0;font-size:11px;color:var(--text2)">';
-        h += '<span style="color:var(--text3);flex-shrink:0">&#183;</span><span>' + item + '</span></div>';
+        h += '<div style="display:flex;gap:6px;padding:4px 0;font-size:11px;color:var(--text2)"><span style="color:var(--text3);flex-shrink:0">&#183;</span><span>'+item+'</span></div>';
       });
     });
     el.innerHTML = h;
-    el.parentElement.className = 'sum-card';
+    if (el.parentElement) el.parentElement.className = 'sum-card';
   });
 }
 
-function buildRiskMatrix() {
+// 03 ── RISK RESPONSE MATRIX ─────────────────────────────────────
+function _sdcBuildMatrix(risks) {
   var h = '';
-  SDC_RISKS.forEach(function(r) {
-    var rc = r.priority === 'CRITICAL' ? 'risk-crit' : r.priority === 'HIGH' ? 'risk-high' : r.priority === 'MEDIUM' ? 'risk-med' : 'risk-low';
-    var stCol = r.status === 'ACTIVE' ? 'var(--red)' : r.status === 'MONITOR' ? 'var(--orange)' : r.status === 'WATCH' ? '#eab308' : 'var(--text3)';
+  risks.slice(0,12).forEach(function(r) {
+    var rc   = r.priority === 'CRITICAL' ? 'risk-crit' : r.priority === 'HIGH' ? 'risk-high' : r.priority === 'MEDIUM' ? 'risk-med' : 'risk-low';
+    var stCl = r.status === 'ACTIVE' ? 'var(--red)' : r.status === 'MONITOR' ? 'var(--orange)' : r.status === 'WATCH' ? '#eab308' : 'var(--text3)';
     h += '<tr>';
-    h += '<td style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:' + r.col + ';display:inline-block;flex-shrink:0"></span>' + r.name + '</td>';
-    h += '<td style="color:' + r.col + ';font-family:var(--mono)">' + r.prob + '%</td>';
-    h += '<td style="color:' + r.col + ';font-family:var(--mono)">' + r.impact + '</td>';
-    h += '<td><span class="td-badge ' + rc + '">' + r.priority + '</span></td>';
-    h += '<td style="color:' + stCol + ';font-size:10px;font-family:var(--mono)">' + r.status + '</td>';
-    h += '</tr>';
+    h += '<td style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:'+r.col+';display:inline-block;flex-shrink:0"></span>'+r.name+'</td>';
+    h += '<td style="color:'+r.col+';font-family:var(--mono)">'+r.prob+'%</td>';
+    h += '<td style="color:'+r.col+';font-family:var(--mono)">'+r.impact+'</td>';
+    h += '<td><span class="td-badge '+rc+'">'+r.priority+'</span></td>';
+    h += '<td style="color:'+stCl+';font-size:10px;font-family:var(--mono)">'+r.status+'</td></tr>';
   });
   var tb = document.getElementById('risk-matrix-body');
   if (tb) tb.innerHTML = h;
 }
 
-function buildStrategicOptions() {
-  var opts = {
-    'so-climate': {
-      label:'Climate Stress', col:'#10b981',
-      options:[
-        {name:'Option A: Enhanced Monitoring', benefit:72, reduction:18, conf:84, complexity:'Low'},
-        {name:'Option B: Predictive Intervention', benefit:85, reduction:31, conf:71, complexity:'High'},
-        {name:'Option C: Regional Resilience Program', benefit:91, reduction:42, conf:65, complexity:'Very High'},
-      ]
-    },
-    'so-social': {
-      label:'Social Instability', col:'#ef4444',
-      options:[
-        {name:'Option A: Early Warning Scale-Up', benefit:68, reduction:22, conf:82, complexity:'Medium'},
-        {name:'Option B: Multi-Source Integration', benefit:79, reduction:34, conf:74, complexity:'High'},
-        {name:'Option C: AI-Driven Prediction', benefit:88, reduction:45, conf:68, complexity:'Very High'},
-      ]
-    },
-    'so-geo': {
-      label:'Geopolitical Escalation', col:'#f97316',
-      options:[
-        {name:'Option A: Diplomatic Signal Tracking', benefit:74, reduction:19, conf:86, complexity:'Low'},
-        {name:'Option B: Sanctions Risk Modeling', benefit:81, reduction:28, conf:77, complexity:'Medium'},
-        {name:'Option C: Conflict Prediction Engine', benefit:92, reduction:41, conf:63, complexity:'Very High'},
-      ]
-    },
-    'so-econ': {
-      label:'Economic Stress', col:'#3b82f6',
-      options:[
-        {name:'Option A: Financial Signal Expansion', benefit:71, reduction:16, conf:88, complexity:'Low'},
-        {name:'Option B: Supply Chain Intelligence', benefit:83, reduction:29, conf:75, complexity:'Medium'},
-        {name:'Option C: Macro-Economic Modeling', benefit:90, reduction:38, conf:67, complexity:'High'},
-      ]
-    },
-    'so-tech': {
-      label:'Technology Risk', col:'#a855f7',
-      options:[
-        {name:'Option A: Cyber Signal Monitoring', benefit:65, reduction:14, conf:91, complexity:'Low'},
-        {name:'Option B: Infra Vulnerability Mapping', benefit:77, reduction:26, conf:78, complexity:'Medium'},
-        {name:'Option C: AI Threat Intelligence', benefit:88, reduction:39, conf:64, complexity:'Very High'},
-      ]
-    },
-  };
-
-  Object.keys(opts).forEach(function(id) {
-    var el = document.getElementById(id);
+// 04 ── STRATEGIC OPTIONS — driven by live risk categories ────────
+var OPT_TEMPLATES = {
+  '#10b981': [ // climate
+    {sfx:'Enhanced Monitoring',      benefit:72, red:18, conf:84, cplx:'Low'},
+    {sfx:'Predictive Intervention',  benefit:85, red:31, conf:71, cplx:'High'},
+    {sfx:'Regional Resilience Program',benefit:91,red:42,conf:65, cplx:'Very High'},
+  ],
+  '#f97316': [ // geopolitics
+    {sfx:'Diplomatic Signal Tracking', benefit:74, red:19, conf:86, cplx:'Low'},
+    {sfx:'Sanctions Risk Modeling',    benefit:81, red:28, conf:77, cplx:'Medium'},
+    {sfx:'Conflict Prediction Engine', benefit:92, red:41, conf:63, cplx:'Very High'},
+  ],
+  '#3b82f6': [ // economy
+    {sfx:'Financial Signal Expansion', benefit:71, red:16, conf:88, cplx:'Low'},
+    {sfx:'Supply Chain Intelligence',  benefit:83, red:29, conf:75, cplx:'Medium'},
+    {sfx:'Macro-Economic Modeling',    benefit:90, red:38, conf:67, cplx:'High'},
+  ],
+  '#ef4444': [ // social / civil
+    {sfx:'Early Warning Scale-Up',     benefit:68, red:22, conf:82, cplx:'Medium'},
+    {sfx:'Multi-Source Integration',   benefit:79, red:34, conf:74, cplx:'High'},
+    {sfx:'AI-Driven Prediction',       benefit:88, red:45, conf:68, cplx:'Very High'},
+  ],
+  '#a855f7': [ // tech
+    {sfx:'Cyber Signal Monitoring',    benefit:65, red:14, conf:91, cplx:'Low'},
+    {sfx:'Infra Vulnerability Mapping',benefit:77, red:26, conf:78, cplx:'Medium'},
+    {sfx:'AI Threat Intelligence',     benefit:88, red:39, conf:64, cplx:'Very High'},
+  ],
+  '#eab308': [ // energy
+    {sfx:'Energy Price Tracking',      benefit:67, red:15, conf:85, cplx:'Low'},
+    {sfx:'Grid Risk Monitoring',       benefit:76, red:27, conf:76, cplx:'Medium'},
+    {sfx:'Energy Security Framework',  benefit:87, red:36, conf:65, cplx:'High'},
+  ],
+};
+function _getOptTemplate(col) {
+  return OPT_TEMPLATES[col] || OPT_TEMPLATES['#3b82f6'];
+}
+function _sdcBuildOptions(risks) {
+  var ids = ['so-climate','so-social','so-geo','so-econ','so-tech'];
+  var top5 = risks.slice(0,5);
+  top5.forEach(function(r, i) {
+    var el = document.getElementById(ids[i]);
     if (!el) return;
-    var o = opts[id];
-    var h = '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">' + o.label + '</div>';
-    o.options.forEach(function(opt, i) {
-      var grade = ['A','B','C'][i];
-      h += '<div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:8px;border-left:2px solid ' + o.col + '">';
-      h += '<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:7px">Option ' + grade + ': ' + opt.name.replace('Option ' + grade + ': ','') + '</div>';
+    var opts = _getOptTemplate(r.col);
+    var h = '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px">'+r.name+'</div>';
+    ['A','B','C'].forEach(function(grade, oi) {
+      var opt = opts[oi];
+      if (!opt) return;
+      h += '<div style="background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:8px;border-left:2px solid '+r.col+'">';
+      h += '<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:7px">Option '+grade+': '+opt.sfx+'</div>';
       var fields = [
-        {label:'Benefit',    val:opt.benefit + '%',   col:o.col},
-        {label:'Risk Reduction', val:opt.reduction + '%', col:'var(--green)'},
-        {label:'Confidence', val:opt.conf + '%',      col:'var(--text2)'},
-        {label:'Complexity', val:opt.complexity,      col:'var(--text3)'},
+        {l:'Benefit',      v:opt.benefit+'%', c:r.col},
+        {l:'Risk Reduction',v:opt.red+'%',   c:'var(--green)'},
+        {l:'Confidence',   v:opt.conf+'%',    c:'var(--text2)'},
+        {l:'Complexity',   v:opt.cplx,        c:'var(--text3)'},
       ];
       fields.forEach(function(f) {
         h += '<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:10px">';
-        h += '<span style="color:var(--text3)">' + f.label + '</span>';
-        h += '<span style="color:' + f.col + ';font-family:var(--mono);font-weight:500">' + f.val + '</span></div>';
+        h += '<span style="color:var(--text3)">'+f.l+'</span><span style="color:'+f.c+';font-family:var(--mono);font-weight:500">'+f.v+'</span></div>';
       });
       h += '</div>';
     });
     el.innerHTML = h;
-    el.parentElement.className = 'sum-card';
+    if (el.parentElement) el.parentElement.className = 'sum-card';
   });
 }
 
-function buildOpportunityScanner() {
-  var groups = {
-    'opp-emerging':  {items:['Green Energy Transition','Food Security Systems','Water Tech Innovation','Climate Adaptation SaaS'], scores:[82,74,68,72]},
-    'opp-infra':     {items:['Digital Infrastructure Build','Resilience Infrastructure','Smart Grid Systems','Port & Logistics Tech'], scores:[78,76,71,65]},
-    'opp-tech':      {items:['Crisis Early Warning SaaS','AI Risk Intelligence','Satellite Monitoring Services','Cyber Defense Platforms'], scores:[88,82,75,69]},
-    'opp-regional':  {items:['Southeast Asia Expansion','GCC Intelligence Market','Eastern Europe Risk Analysis','Sub-Saharan Africa Coverage'], scores:[73,71,68,65]},
+// 05 ── OPPORTUNITY SCANNER — live from computed opps ─────────────
+function _sdcBuildOpps(opps) {
+  var cats = {
+    'opp-emerging':    {filter:'Emerging',       col:'#10b981'},
+    'opp-infra':       {filter:'Infrastructure', col:'#a855f7'},
+    'opp-tech':        {filter:'Technology',     col:'#3b82f6'},
+    'opp-regional':    {filter:'Regional',       col:'#f97316'},
   };
-  var cols = ['#10b981','#3b82f6','#f97316','#a855f7'];
-  Object.keys(groups).forEach(function(id, gi) {
+  Object.keys(cats).forEach(function(id) {
     var el = document.getElementById(id);
     if (!el) return;
-    var g = groups[id];
+    var cat = cats[id];
+    var items = opps.filter(function(o){ return o.cat === cat.filter; });
+    if (!items.length) items = opps.slice(0,3); // fallback
     var h = '';
-    g.items.forEach(function(item, i) {
-      var sc = g.scores[i];
+    items.forEach(function(o, i) {
       h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
-      h += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:16px">' + (i+1) + '</span>';
-      h += '<span style="font-size:11px;color:var(--text2);flex:1">' + item + '</span>';
-      h += '<div style="width:50px;height:4px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:' + sc + '%;background:' + cols[gi] + ';border-radius:2px"></div></div>';
-      h += '<span style="font-family:var(--mono);font-size:10px;color:' + cols[gi] + ';width:24px;text-align:right">' + sc + '</span></div>';
+      h += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:16px">'+(i+1)+'</span>';
+      h += '<span style="font-size:11px;color:var(--text2);flex:1">'+o.name+'</span>';
+      h += '<div style="width:50px;height:4px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:'+o.score+'%;background:'+cat.col+';border-radius:2px"></div></div>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:'+cat.col+';width:24px;text-align:right">'+o.score+'</span></div>';
     });
-    el.innerHTML = h;
+    el.innerHTML = h || '<div style="padding:10px;font-size:11px;color:var(--text3)">No data</div>';
   });
 }
 
-function buildResilienceCenter() {
-  var globalRes = Math.round(SDC_RESILIENCE.reduce(function(a,r){ return a + r.score; }, 0) / SDC_RESILIENCE.length);
-  var gCol = globalRes >= 65 ? 'var(--green)' : globalRes >= 50 ? 'var(--orange)' : 'var(--red)';
-  var gLabel = globalRes >= 65 ? 'STRONG' : globalRes >= 50 ? 'MODERATE' : 'WEAK';
+// 06 ── RESILIENCE CENTER — live computed ──────────────────────────
+function _sdcBuildResilience(countries, res) {
+  var globalRes = res.length ? Math.round(res.reduce(function(a,r){ return a+r.score;},0)/res.length) : 50;
+  var gCol  = globalRes >= 65 ? 'var(--green)' : globalRes >= 50 ? 'var(--orange)' : 'var(--red)';
+  var gLbl  = globalRes >= 65 ? 'STRONG' : globalRes >= 50 ? 'MODERATE' : 'WEAK';
+  var src = countries.length+' countries · '+res.length+' domains';
   var rg = document.getElementById('resilience-global');
-  if (rg) {
-    rg.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px;font-weight:700;font-family:var(--mono);color:' + gCol + '">' + globalRes + '</div><div style="flex:1"><div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px"><div style="height:100%;width:' + globalRes + '%;background:linear-gradient(90deg,' + gCol + ',var(--gold));border-radius:4px"></div></div><div style="font-size:10px;color:var(--text3);margin-top:4px">Global Resilience Score &#8212; <span style="color:' + gCol + '">' + gLabel + '</span></div></div></div>';
-  }
+  if (rg) rg.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><div style="font-size:36px;font-weight:700;font-family:var(--mono);color:'+gCol+'">'+globalRes+'</div><div style="flex:1"><div style="height:8px;background:rgba(255,255,255,.06);border-radius:4px"><div style="height:100%;width:'+globalRes+'%;background:linear-gradient(90deg,'+gCol+',var(--gold));border-radius:4px"></div></div><div style="font-size:10px;color:var(--text3);margin-top:4px">Global Resilience Score &#8212; <span style="color:'+gCol+'">'+gLbl+'</span> &nbsp;&#183;&nbsp; '+src+'</div></div></div>';
+
   var h = '';
-  SDC_RESILIENCE.forEach(function(r) {
-    var rc = r.score >= 65 ? 'var(--green)' : r.score >= 50 ? 'var(--orange)' : 'var(--red)';
-    var rl = r.score >= 65 ? 'STRONG' : r.score >= 50 ? 'MODERATE' : 'WEAK';
-    h += '<div class="card"><div class="card-label">' + r.name + '</div>';
-    h += '<div class="card-val" style="color:' + rc + ';font-size:22px">' + r.score + '</div>';
-    h += '<div style="margin-top:5px;height:3px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:' + r.score + '%;background:' + r.col + ';border-radius:2px"></div></div>';
-    h += '<div style="font-size:9px;color:' + rc + ';margin-top:4px">' + rl + '</div></div>';
+  res.forEach(function(r) {
+    var rc = r.score>=65?'var(--green)':r.score>=50?'var(--orange)':'var(--red)';
+    var rl = r.score>=65?'STRONG':r.score>=50?'MODERATE':'WEAK';
+    h += '<div class="card"><div class="card-label">'+r.name+'</div>';
+    h += '<div class="card-val" style="color:'+rc+';font-size:22px">'+r.score+'</div>';
+    h += '<div style="margin-top:5px;height:3px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:'+r.score+'%;background:'+r.col+';border-radius:2px"></div></div>';
+    h += '<div style="font-size:9px;color:'+rc+';margin-top:4px">'+rl+'</div></div>';
   });
   var rg2 = document.getElementById('resilience-grid');
   if (rg2) rg2.innerHTML = h;
 }
 
-function buildCriticalDeps() {
-  var chainA = [
-    {label:'Energy Infrastructure', impact:65, col:'#eab308'},
-    {label:'Supply Chain',          impact:74, col:'#3b82f6'},
-    {label:'Economic Stability',    impact:74, col:'#3b82f6'},
-    {label:'Social Stability',      impact:68, col:'#ef4444'},
-    {label:'Political Stability',   impact:78, col:'#f97316'},
-  ];
-  var chainB = [
-    {label:'Climate Extremes',      impact:71, col:'#10b981'},
-    {label:'Water / Food Systems',  impact:68, col:'#10b981'},
-    {label:'Migration Pressure',    impact:82, col:'#ef4444'},
-    {label:'Border Tensions',       impact:63, col:'#f97316'},
-    {label:'Conflict Escalation',   impact:63, col:'#f97316'},
-  ];
+// 07 ── CRITICAL DEPENDENCIES — from causality engine ─────────────
+function _sdcBuildDeps(risks) {
   function renderChain(chain) {
     var h = '';
-    chain.forEach(function(step, i) {
-      if (i > 0) h += '<div style="text-align:center;padding:1px 0;color:var(--text3);font-size:12px">&#8595;</div>';
-      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid ' + step.col + '">';
-      h += '<span style="font-size:11px;color:var(--text2);flex:1">' + step.label + '</span>';
-      h += '<span style="font-family:var(--mono);font-size:10px;color:' + step.col + '">' + step.impact + '</span></div>';
+    chain.forEach(function(step,i) {
+      if (i>0) h += '<div style="text-align:center;padding:1px 0;color:var(--text3);font-size:12px">&#8595;</div>';
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid '+step.col+'">';
+      h += '<span style="font-size:11px;color:var(--text2);flex:1">'+step.label+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:'+step.col+'">'+Math.min(99,step.impact)+'</span></div>';
     });
     return h;
   }
+  var chains = _buildDepChains(risks);
   var da = document.getElementById('dep-chain-a');
   var db = document.getElementById('dep-chain-b');
-  if (da) da.innerHTML = renderChain(chainA);
-  if (db) db.innerHTML = renderChain(chainB);
+  if (da && chains.chainA.length) da.innerHTML = renderChain(chains.chainA);
+  if (db && chains.chainB.length) db.innerHTML = renderChain(chains.chainB);
 }
 
-function buildDecisionQueue(countries) {
-  var topRisks = SDC_RISKS.filter(function(r){ return r.priority === 'CRITICAL' || r.priority === 'HIGH'; }).slice(0, 12);
+// 08 ── DECISION PRIORITY QUEUE — sorted by P × I × Conf ─────────
+function _sdcBuildQueue(risks) {
+  var queue = risks.slice(0,12).map(function(r,i) {
+    var conf = Math.min(95, 65 + Math.round(r.score * 0.25 + r.d7 * 0.5));
+    var pScore = r.prob * r.impact * conf;
+    return { idx:i, r:r, conf:conf, pScore:pScore };
+  }).sort(function(a,b){ return b.pScore - a.pScore; });
+
   var h = '';
-  topRisks.forEach(function(r, i) {
-    var rc = r.priority === 'CRITICAL' ? 'risk-crit' : 'risk-high';
-    var conf = 70 + Math.round(Math.random() * 18);
+  queue.forEach(function(q, i) {
+    var r   = q.r;
+    var rc  = r.priority === 'CRITICAL' ? 'risk-crit' : 'risk-high';
     var num = String(i+1).padStart(3,'0');
+    var d7Str = (r.d7 >= 0 ? '&#8593; ' : '&#8595; ') + (r.d7 >= 0 ? '+' : '') + r.d7;
     h += '<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:9px;padding:12px 14px">';
     h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">';
-    h += '<span style="font-family:var(--mono);font-size:10px;color:var(--gold)">DEC-' + num + '</span>';
-    h += '<span class="td-badge ' + rc + '">' + r.priority + '</span>';
-    h += '<span style="margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono)">Confidence: <span style="color:var(--green)">' + conf + '%</span></span></div>';
-    h += '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px">' + r.name + '</div>';
-    h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-    h += '<span style="font-size:10px;color:var(--orange)">&#8593; Score ' + r.prob + '</span>';
-    h += '<span style="font-size:10px;color:var(--red)">&#8593; Impact ' + r.impact + '</span>';
-    h += '<span style="font-size:10px;color:var(--text3)">Status: ' + r.status + '</span>';
+    h += '<span style="font-family:var(--mono);font-size:10px;color:var(--gold)">DEC-'+num+'</span>';
+    h += '<span class="td-badge '+rc+'">'+r.priority+'</span>';
+    h += '<span style="margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono)">Conf: <span style="color:var(--green)">'+q.conf+'%</span></span></div>';
+    h += '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px">'+r.name+'</div>';
+    h += '<div style="display:flex;gap:10px;flex-wrap:wrap">';
+    h += '<span style="font-size:10px;color:var(--orange)">Score '+r.score+'</span>';
+    h += '<span style="font-size:10px;color:var(--red)">Impact '+r.impact+'</span>';
+    h += '<span style="font-size:10px;color:var(--blue)">'+d7Str+' 7d</span>';
+    h += '<span style="font-size:10px;color:var(--text3)">'+r.status+'</span>';
     h += '</div></div>';
   });
   var dq = document.getElementById('dec-queue');
   if (dq) dq.innerHTML = h;
 }
 
+// 09 ── AI STRATEGIC BRIEFING — live from current state ───────────
 window.generateStrategicBrief = function() {
   var el = document.getElementById('strategic-brief-out');
   if (!el) return;
   el.innerHTML = '<div class="sum-card"><div class="loading">Generating Executive Intelligence Briefing...</div></div>';
-
   setTimeout(function() {
-    var countries = _sdc_countries;
-    var avgRisk = countries.length > 0 ? Math.round(countries.reduce(function(a,c){ return a + (c.risk_score||0); }, 0) / countries.length) : 65;
-    var topCC = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,3);
-    var topEsc = countries.slice().sort(function(a,b){ return (parseFloat(b.delta)||0)-(parseFloat(a.delta)||0); }).filter(function(c){ return parseFloat(c.delta||0)>0; }).slice(0,3);
-    var now = new Date().toUTCString().replace('GMT','UTC');
+    var countries = _sdc.countries;
+    var risks     = _sdc.risks;
+    var opps      = _sdc.opps;
+    var avgRisk   = countries.length > 0 ? Math.round(countries.reduce(function(a,c){ return a+(c.risk_score||0);},0)/countries.length) : 65;
+    var topCC     = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,3);
+    var topEsc    = countries.slice().sort(function(a,b){ return (parseFloat(b.delta)||0)-(parseFloat(a.delta)||0); }).filter(function(c){ return parseFloat(c.delta||0)>0; }).slice(0,3);
+    var critical  = risks.filter(function(r){ return r.priority === 'CRITICAL'; });
+    var topDrv    = _liveDrv().slice(0,3);
+    var conf      = Math.min(92, 68 + Math.round(countries.length * 0.05));
+    var now       = new Date().toUTCString().replace('GMT','UTC');
 
-    var sections = [
-      {
-        title:'CURRENT SITUATION',
-        col:'var(--red)',
-        content:'Global Risk Index averaging ' + avgRisk + '/100 across ' + countries.length + ' monitored countries. ' + SDC_RISKS.filter(function(r){ return r.priority === 'CRITICAL'; }).length + ' critical risk drivers active. System status: ' + (avgRisk >= 70 ? 'CRITICAL' : avgRisk >= 55 ? 'WARNING' : 'OPERATIONAL') + '.',
-      },
-      {
-        title:'TOP RISK DRIVERS',
-        col:'var(--orange)',
-        content:'Leading drivers: Migration Pressure (82), Political Instability (78), Economic Stress (74). All three show upward trajectory over 7-day horizon.',
-      },
-      {
-        title:'TOP RISKS',
-        col:'var(--red)',
-        content:'Highest GRI countries: ' + topCC.map(function(c){ return flag(c.country) + ' ' + (c.country_name||c.country) + ' (' + fr(c.risk_score) + ')'; }).join(', ') + '. Fastest escalating: ' + topEsc.slice(0,2).map(function(c){ return (c.country_name||c.country) + ' +' + parseFloat(c.delta||0).toFixed(1); }).join(', ') + '.',
-      },
-      {
-        title:'FORECAST OUTLOOK',
-        col:'var(--gold)',
-        content:'7-day forecasts indicate continued elevation in geopolitical and migration risk domains. 30-day models project potential political instability escalation in 4 high-risk regions. Climate stress expected to amplify Q3 migration patterns.',
-      },
-      {
-        title:'RECOMMENDED ACTIONS',
-        col:'var(--green)',
-        content:'IMMEDIATE: Strengthen monitoring on migration + political instability nexus. SHORT-TERM: Activate escalation scenario models for top 10 countries. LONG-TERM: Expand satellite and economic data sources to improve 30-90 day forecast accuracy.',
-      },
-      {
-        title:'EMERGING OPPORTUNITIES',
-        col:'var(--blue)',
-        content:'Crisis Early Warning SaaS showing highest potential (88/100). Green Energy Transition Intelligence (82/100) and Digital Infrastructure Build (78/100) represent primary expansion vectors.',
-      },
-      {
-        title:'PRIORITY DECISIONS',
-        col:'var(--orange)',
-        content:'DEC-001 (Migration Pressure &#8593;), DEC-002 (Political Instability &#8593;), DEC-003 (Economic Stress &#8593;) require active response within 48-72 hours.',
-      },
+    var secs = [
+      {title:'CURRENT SITUATION', col:'var(--red)',
+       content:'Global Risk Index: '+avgRisk+'/100 across '+countries.length+' countries. '+critical.length+' critical drivers active. '+topEsc.length+' countries in active escalation. Status: '+(avgRisk>=70?'CRITICAL':avgRisk>=55?'WARNING':'OPERATIONAL')+'.'},
+      {title:'TOP RISK DRIVERS', col:'var(--orange)',
+       content:'Leading: '+topDrv.map(function(d){ return d.name+' ('+d.score+')'; }).join(', ')+'. 7-day trends: '+topDrv.map(function(d){ return d.name.split(' ')[0]+(d.d7>=0?' +':' ')+d.d7; }).join(', ')+'.'},
+      {title:'HIGHEST RISK COUNTRIES', col:'var(--red)',
+       content:topCC.map(function(c){ return flag(c.country)+' '+(c.country_name||c.country)+' (GRI '+fr(c.risk_score)+')'; }).join(', ')+'. Fastest escalating: '+topEsc.slice(0,2).map(function(c){ return (c.country_name||c.country)+' +'+parseFloat(c.delta||0).toFixed(1); }).join(', ')+'.'},
+      {title:'FORECAST OUTLOOK', col:'var(--gold)',
+       content:'7-day forecasts: '+risks.filter(function(r){ return r.d7>=5; }).length+' drivers accelerating. 30-day models: '+risks.filter(function(r){ return r.d30>=10; }).length+' drivers show sustained elevation. Top concern: '+risks[0].name+' trajectory ('+risks[0].d30+'d delta +'+risks[0].d30+').'},
+      {title:'RECOMMENDED ACTIONS', col:'var(--green)',
+       content:'IMMEDIATE: Strengthen monitoring on '+risks.slice(0,2).map(function(r){ return r.name; }).join(' and ')+' nexus. SHORT-TERM: Activate escalation scenarios for top '+Math.min(10,risks.filter(function(r){ return r.priority!=='LOW';}).length)+' risks. LONG-TERM: Expand data sources for '+risks[0].name+' domain.'},
+      {title:'EMERGING OPPORTUNITIES', col:'var(--blue)',
+       content:opps.slice(0,3).map(function(o){ return o.name+' ('+o.score+')'; }).join(', ')+'. Highest strategic potential in technology and resilience infrastructure.'},
+      {title:'PRIORITY DECISIONS', col:'var(--orange)',
+       content:'DEC-001 through DEC-'+String(Math.min(5,critical.length+2)).padStart(3,'0')+' require active response within 48–72 hours. Focus: '+critical.slice(0,3).map(function(r){ return r.name; }).join(', ')+'.'},
     ];
 
     var h = '<div style="background:rgba(212,175,90,.04);border:0.5px solid rgba(212,175,90,.2);border-radius:10px;padding:16px">';
     h += '<div style="text-align:center;margin-bottom:14px">';
     h += '<div style="font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.2em">EXECUTIVE INTELLIGENCE BRIEFING</div>';
-    h += '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">' + now + ' &#183; MIA GEKDI STRATEGIC DECISION CENTER</div>';
-    h += '</div>';
-    h += '<div style="height:0.5px;background:rgba(212,175,90,.2);margin-bottom:14px"></div>';
-
-    sections.forEach(function(s) {
-      h += '<div style="margin-bottom:12px">';
-      h += '<div style="font-size:9px;color:' + s.col + ';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">' + s.title + '</div>';
-      h += '<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid ' + s.col + '44;padding-left:10px">' + s.content + '</div>';
-      h += '</div>';
+    h += '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; MIA GEKDI STRATEGIC DECISION CENTER</div>';
+    h += '</div><div style="height:0.5px;background:rgba(212,175,90,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s) {
+      h += '<div style="margin-bottom:12px"><div style="font-size:9px;color:'+s.col+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.title+'</div>';
+      h += '<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.col+'44;padding-left:10px">'+s.content+'</div></div>';
     });
-
     h += '<div style="margin-top:12px;padding:8px 10px;background:rgba(16,185,129,.05);border-radius:6px;display:flex;justify-content:space-between">';
-    h += '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">Confidence Level: <span style="color:var(--green)">82%</span></span>';
-    h += '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">Generated: ' + now + '</span>';
+    h += '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">Confidence: <span style="color:var(--green)">'+conf+'%</span> &#183; '+countries.length+' countries &#183; '+risks.length+' drivers</span>';
+    h += '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</span>';
     h += '</div></div>';
-
     el.innerHTML = h;
   }, 1200);
 };
 
-function buildExecutiveDashboard(countries) {
+// 10 ── EXECUTIVE DASHBOARD — fully live ──────────────────────────
+function _sdcBuildExecDash(countries, risks, opps) {
   // Top Risks
   var rh = '';
-  SDC_RISKS.slice(0,6).forEach(function(r,i) {
-    var rc = r.priority === 'CRITICAL' ? 'var(--red)' : 'var(--orange)';
+  risks.slice(0,6).forEach(function(r,i) {
+    var rc = r.priority==='CRITICAL'?'var(--red)':'var(--orange)';
     rh += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
-    rh += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">' + (i+1) + '</span>';
-    rh += '<span style="width:7px;height:7px;border-radius:50%;background:' + r.col + ';display:inline-block"></span>';
-    rh += '<span style="font-size:11px;color:var(--text2);flex:1">' + r.name + '</span>';
-    rh += '<span style="font-family:var(--mono);font-size:10px;color:' + rc + '">' + r.prob + '</span></div>';
+    rh += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">'+(i+1)+'</span>';
+    rh += '<span style="width:7px;height:7px;border-radius:50%;background:'+r.col+';display:inline-block"></span>';
+    rh += '<span style="font-size:11px;color:var(--text2);flex:1">'+r.name+'</span>';
+    rh += '<span style="font-family:var(--mono);font-size:10px;color:'+rc+'">'+r.prob+'</span></div>';
   });
-  var er = document.getElementById('exec-risks');
-  if (er) er.innerHTML = rh;
+  var er = document.getElementById('exec-risks'); if (er) er.innerHTML = rh;
 
   // Top Opps
   var oh = '';
-  SDC_OPPS.slice(0,6).forEach(function(o,i) {
+  opps.slice(0,6).forEach(function(o,i) {
     oh += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
-    oh += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">' + (i+1) + '</span>';
-    oh += '<span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block"></span>';
-    oh += '<span style="font-size:11px;color:var(--text2);flex:1">' + o.name + '</span>';
-    oh += '<span style="font-family:var(--mono);font-size:10px;color:var(--green)">' + o.score + '</span></div>';
+    oh += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">'+(i+1)+'</span>';
+    oh += '<span style="font-size:11px;color:var(--text2);flex:1">'+o.name+'</span>';
+    oh += '<span style="font-family:var(--mono);font-size:10px;color:var(--green)">'+o.score+'</span></div>';
   });
-  var eo = document.getElementById('exec-opps');
-  if (eo) eo.innerHTML = oh;
+  var eo = document.getElementById('exec-opps'); if (eo) eo.innerHTML = oh;
 
-  // Top Drivers
+  // Top Drivers (from INFLUENCE_SCORES)
   var dh = '';
-  INFLUENCE_SCORES.slice(0,6).forEach(function(d,i) {
+  _liveInf().slice(0,6).forEach(function(d,i) {
     dh += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
-    dh += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">' + (i+1) + '</span>';
-    dh += '<span style="width:7px;height:7px;border-radius:50%;background:' + d.col + ';display:inline-block"></span>';
-    dh += '<span style="font-size:11px;color:var(--text2);flex:1">' + d.name + '</span>';
-    dh += '<span style="font-family:var(--mono);font-size:10px;color:var(--gold)">' + d.inf + '</span></div>';
+    dh += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">'+(i+1)+'</span>';
+    dh += '<span style="width:7px;height:7px;border-radius:50%;background:'+d.col+';display:inline-block"></span>';
+    dh += '<span style="font-size:11px;color:var(--text2);flex:1">'+d.name+'</span>';
+    dh += '<span style="font-family:var(--mono);font-size:10px;color:var(--gold)">'+d.inf+'</span></div>';
   });
-  var ed = document.getElementById('exec-drivers');
-  if (ed) ed.innerHTML = dh;
+  var ed = document.getElementById('exec-drivers'); if (ed) ed.innerHTML = dh;
 
-  // Top Decisions
+  // Priority Decisions
   var decH = '';
-  SDC_RISKS.slice(0,6).forEach(function(r,i) {
-    var rc = r.priority === 'CRITICAL' ? 'risk-crit' : 'risk-high';
+  risks.slice(0,6).forEach(function(r,i) {
+    var rc = r.priority==='CRITICAL'?'risk-crit':'risk-high';
     decH += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
-    decH += '<span style="font-family:var(--mono);font-size:9px;color:var(--gold)">DEC-' + String(i+1).padStart(3,'0') + '</span>';
-    decH += '<span style="font-size:11px;color:var(--text2);flex:1">' + r.name + '</span>';
-    decH += '<span class="td-badge ' + rc + '" style="font-size:8px">' + r.priority + '</span></div>';
+    decH += '<span style="font-family:var(--mono);font-size:9px;color:var(--gold)">DEC-'+String(i+1).padStart(3,'0')+'</span>';
+    decH += '<span style="font-size:11px;color:var(--text2);flex:1">'+r.name+'</span>';
+    decH += '<span class="td-badge '+rc+'" style="font-size:8px">'+r.priority+'</span></div>';
   });
-  var edec = document.getElementById('exec-decisions');
-  if (edec) edec.innerHTML = decH;
+  var edec = document.getElementById('exec-decisions'); if (edec) edec.innerHTML = decH;
 }
-
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
 window.addEventListener('resize',tickClock);
