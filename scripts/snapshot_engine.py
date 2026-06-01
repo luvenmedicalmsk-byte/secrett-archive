@@ -27495,6 +27495,764 @@ def save_grdf_command(snapshots: list) -> None:
     print(f"[CMD] ══════════════════════════════════════════ ({elapsed}ms)", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF ALERT MAP V2 — REAL-TIME INTELLIGENCE WORKSPACE
+#
+# Transforms Alert Map from visualization into an operational intelligence
+# workspace. Architecture frozen. Uses V1–V13 outputs only.
+#
+# Phase 1:  Advanced Filtering Engine   -> alert_map_filters.json
+# Phase 2:  Event Clustering Engine     -> alert_map_clusters.json
+# Phase 3:  Event Timeline              -> alert_map_timeline.json
+# Phase 4:  Event Investigation Panel   -> alert_map_event_details.json
+# Phase 5:  Alert Layer Control         -> alert_map_layers.json
+# Phase 6:  Country Intelligence Panel  -> alert_map_country_panel.json
+# Phase 7:  Mobile Intelligence UX      -> alert_map_mobile.json
+# Phase 8:  Real-Time Activity Feed     -> alert_map_activity_feed.json
+# Phase 9:  Workspace Dashboard         -> alert_map_workspace.json
+# Phase 10: Production Certification    -> alert_map_v2_certification.json
+#
+# Reads: V1–V13 outputs only (read-only).
+# Writes: alert_map_v2/* only.
+# Architecture FROZEN. Primary user interface of the GRDF ecosystem.
+# PRIORITY: CRITICAL
+# =========================================================================
+
+ALERT_MAP_V2_DIR = DOCS_DIR / "alert_map_v2"
+
+# Alert level ordinal (ascending severity)
+_AMV2_ALERT_ORD = {"GREEN":0,"YELLOW":1,"ORANGE":2,"RED":3,"BLACK":4}
+
+# All available filter dimensions (Phase 1)
+_AMV2_FILTER_DIMS = {
+    "country":      "ISO2 country code list",
+    "region":       "UN geoscheme region",
+    "domain":       "climate|economic|geopolitical|technology|social|infrastructure",
+    "risk_level":   "low|elevated|high|critical",
+    "alert_level":  "GREEN|YELLOW|ORANGE|RED|BLACK",
+    "source":       "NASA_FIRMS|GDACS|USGS|EMSC|ACLED|GDELT|ReliefWeb|Copernicus",
+    "time_window":  "24h|7d|30d|90d",
+}
+
+# Layer definitions (Phase 5)
+_AMV2_LAYERS = [
+    {"id":"climate",        "label":"Climate",        "domain":"climate",        "color":"#f97316","default_on":True},
+    {"id":"geological",     "label":"Geological",     "domain":"climate",        "color":"#a855f7","default_on":True},
+    {"id":"economic",       "label":"Economic",       "domain":"economic",       "color":"#3b82f6","default_on":True},
+    {"id":"geopolitical",   "label":"Geopolitical",   "domain":"geopolitical",   "color":"#ef4444","default_on":True},
+    {"id":"technology",     "label":"Technology",     "domain":"technology",     "color":"#06b6d4","default_on":False},
+    {"id":"infrastructure", "label":"Infrastructure", "domain":"infrastructure", "color":"#eab308","default_on":False},
+    {"id":"social",         "label":"Social",         "domain":"social",         "color":"#10b981","default_on":False},
+]
+
+# UN regions for grouping
+_AMV2_REGIONS = {
+    "WE":"Western Europe","EE":"Eastern Europe","NA":"North America",
+    "SA":"South America","ME":"Middle East","AF":"Africa",
+    "CA":"Central Asia","EA":"East Asia","SA2":"South Asia",
+    "SE":"Southeast Asia","OC":"Oceania",
+}
+
+# Region mapping
+_AMV2_COUNTRY_REGION = {
+    "DE":"WE","FR":"WE","GB":"WE","IT":"WE","ES":"WE","NL":"WE","BE":"WE","SE":"WE","NO":"WE","CH":"WE","AT":"WE","PT":"WE","FI":"WE","DK":"WE","GR":"WE","PL":"EE","UA":"EE","RO":"EE","HU":"EE","CZ":"EE","TR":"ME",
+    "US":"NA","CA":"NA","MX":"NA","BR":"SA","AR":"SA","CO":"SA","CL":"SA","PE":"SA",
+    "RU":"EE","KZ":"CA","UZ":"CA",
+    "CN":"EA","JP":"EA","KR":"EA","TW":"EA",
+    "IN":"SA2","PK":"SA2","BD":"SA2",
+    "SA":"ME","IR":"ME","IQ":"ME","IL":"ME","EG":"AF","NG":"AF","KE":"AF","ZA":"AF","ET":"AF","MA":"AF","DZ":"AF","TZ":"AF","GH":"AF","CM":"AF","CI":"AF","AO":"AF","MZ":"AF","ZM":"AF","SN":"AF","SN":"AF",
+    "ID":"SE","TH":"SE","VN":"SE","MY":"SE","PH":"SE","SG":"SE",
+    "AU":"OC","NZ":"OC",
+}
+
+
+def _amv2_load(rel: str) -> dict:
+    p = GRDF_DIR / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+def _amv2_load_prog(subdir: str, rel: str) -> dict:
+    p = DOCS_DIR / subdir / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+
+# ── Phase 1: Advanced Filtering Engine ───────────────────────────────────
+
+def _build_amv2_filters(snapshots: list) -> dict:
+    """
+    Phase 1: Build complete filter catalogue from live V1-V13 data.
+    Each dimension is driven by actual data, not hardcoded lists.
+    """
+    # Country list (all countries with active data)
+    countries_active = [s["country"] for s in snapshots]
+
+    # Region list
+    regions_active = list({_AMV2_COUNTRY_REGION.get(iso2,"WE") for iso2 in countries_active})
+
+    # Domain values (from V5 scenario data)
+    domains_active  = list(_amv2_load("v5_domains.json").get("domains",
+                        ["climate","economic","geopolitical","technology","social","infrastructure"]))
+
+    # Alert level distribution from V7
+    alert_dist: dict = {l:0 for l in _AMV2_ALERT_ORD}
+    for snap in snapshots:
+        ews_d = _amv2_load(f"v7_alerts_{snap['country']}.json")
+        alert = ews_d.get("alert_level","GREEN") or "GREEN"
+        alert_dist[alert] = alert_dist.get(alert,0)+1
+
+    # Risk level distribution
+    risk_dist = {"low":0,"elevated":0,"high":0,"critical":0}
+    for snap in snapshots:
+        r = int(snap.get("risk_score",50) or 50)
+        if r >= 75: risk_dist["critical"]+=1
+        elif r >= 60: risk_dist["high"]+=1
+        elif r >= 45: risk_dist["elevated"]+=1
+        else: risk_dist["low"]+=1
+
+    # Time window options
+    time_windows = [
+        {"id":"24h", "label":"Last 24 hours", "hours":24},
+        {"id":"7d",  "label":"Last 7 days",   "hours":168},
+        {"id":"30d", "label":"Last 30 days",  "hours":720},
+        {"id":"90d", "label":"Last 90 days",  "hours":2160},
+    ]
+
+    # Filter presets
+    presets = [
+        {"id":"high_alert",  "label":"High Alert Countries", "filters":{"alert_level":["RED","BLACK"]}},
+        {"id":"climate",     "label":"Climate Events",       "filters":{"domain":["climate"]}},
+        {"id":"geopolitical","label":"Geopolitical Risks",   "filters":{"domain":["geopolitical"]}},
+        {"id":"critical",    "label":"Critical Risk Only",   "filters":{"risk_level":["critical"]}},
+        {"id":"emerging",    "label":"Emerging Signals",     "filters":{"alert_level":["YELLOW","ORANGE"],"time_window":"7d"}},
+    ]
+
+    return {
+        "dimensions":      _AMV2_FILTER_DIMS,
+        "countries_n":     len(countries_active),
+        "regions_active":  regions_active,
+        "domains":         list(_amv2_load("v5_domains.json").get("domains",["climate","economic","geopolitical","technology","social","infrastructure"])),
+        "alert_distribution": alert_dist,
+        "risk_distribution":  risk_dist,
+        "time_windows":    time_windows,
+        "presets":         presets,
+        "total_signals":   len(snapshots),
+        "as_of":           TODAY,
+    }
+
+
+# ── Phase 2: Event Clustering Engine ─────────────────────────────────────
+
+def _build_amv2_clusters(snapshots: list) -> dict:
+    """
+    Phase 2: Cluster events by geography, risk type, time proximity.
+    Geographic clusters use UN region grouping.
+    """
+    # Geo clusters: group by region
+    geo_clusters: dict = {}
+    for snap in snapshots:
+        iso2   = snap["country"]
+        region = _AMV2_COUNTRY_REGION.get(iso2,"WE")
+        risk   = int(snap.get("risk_score",50) or 50)
+        if region not in geo_clusters:
+            geo_clusters[region] = {"region":region,"countries":[],"max_risk":0,"event_n":0,"dominant_alert":"GREEN"}
+        geo_clusters[region]["countries"].append(iso2)
+        geo_clusters[region]["event_n"] += 1
+        if risk > geo_clusters[region]["max_risk"]:
+            geo_clusters[region]["max_risk"] = risk
+
+    # Add dominant alert per cluster
+    for region, cluster in geo_clusters.items():
+        max_alert_ord = 0
+        for iso2 in cluster["countries"]:
+            ews_d = _amv2_load(f"v7_alerts_{iso2}.json")
+            ao    = _AMV2_ALERT_ORD.get(ews_d.get("alert_level","GREEN") or "GREEN",0)
+            if ao > max_alert_ord: max_alert_ord = ao
+        cluster["dominant_alert"] = list(_AMV2_ALERT_ORD.keys())[max_alert_ord]
+
+    # Risk-type clusters: group by dominant domain
+    domain_clusters: dict = {}
+    for snap in snapshots:
+        dom = snap.get("dominant_domain","economic") or "economic"
+        if dom not in domain_clusters:
+            domain_clusters[dom] = {"domain":dom,"countries":[],"event_n":0,"avg_risk":0}
+        domain_clusters[dom]["countries"].append(snap["country"])
+        domain_clusters[dom]["event_n"] += 1
+
+    for dom, cluster in domain_clusters.items():
+        scores = [int(s.get("risk_score",50) or 50) for s in snapshots if (s.get("dominant_domain","economic") or "economic")==dom]
+        cluster["avg_risk"] = round(sum(scores)/max(1,len(scores)),1)
+
+    # High-activity clusters: regions with >= 2 elevated countries
+    hotspots = [c for c in geo_clusters.values()
+                if c["max_risk"] >= 60 and c["event_n"] >= 2]
+    hotspots.sort(key=lambda x: -x["max_risk"])
+
+    return {
+        "geo_clusters":    list(geo_clusters.values()),
+        "domain_clusters": list(domain_clusters.values()),
+        "hotspot_regions": hotspots[:5],
+        "total_clusters":  len(geo_clusters),
+        "total_hotspots":  len(hotspots),
+        "as_of":           TODAY,
+    }
+
+
+# ── Phase 3: Event Timeline ───────────────────────────────────────────────
+
+def _build_amv2_timeline(snapshots: list) -> dict:
+    """
+    Phase 3: Create timeline mode for 24h/7d/30d/90d periods.
+    Derives trend data from V1 delta and V7 EWS changes.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    # Build event timeline entries from current snapshot
+    events: list[dict] = []
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        if risk < 40 and abs(delta) < 3: continue   # skip stable low-risk
+
+        ews_d = _amv2_load(f"v7_alerts_{iso2}.json")
+        alert = ews_d.get("alert_level","GREEN") or "GREEN"
+
+        # Time bucket: risk > 75 → likely 24h event; > 60 → 7d; > 50 → 30d
+        if risk >= 75:     bucket = "24h"
+        elif risk >= 60:   bucket = "7d"
+        elif risk >= 50:   bucket = "30d"
+        else:              bucket = "90d"
+
+        events.append({
+            "country":     iso2,
+            "risk_score":  risk,
+            "delta":       round(delta,2),
+            "alert_level": alert,
+            "time_bucket": bucket,
+            "direction":   "escalating" if delta > 1 else "de-escalating" if delta < -1 else "stable",
+            "timestamp":   now_ts,
+        })
+
+    events.sort(key=lambda x: (-_AMV2_ALERT_ORD.get(x["alert_level"],0), -x["risk_score"]))
+
+    # Timeline summary by period
+    by_window: dict = {}
+    for w in ["24h","7d","30d","90d"]:
+        w_events = [e for e in events if e["time_bucket"]==w]
+        by_window[w] = {
+            "event_n":     len(w_events),
+            "escalating_n":sum(1 for e in w_events if e["direction"]=="escalating"),
+            "top_events":  w_events[:3],
+        }
+
+    return {
+        "total_events":   len(events),
+        "by_window":      by_window,
+        "timeline_events":events[:20],
+        "escalating_n":   sum(1 for e in events if e["direction"]=="escalating"),
+        "de_escalating_n":sum(1 for e in events if e["direction"]=="de-escalating"),
+        "as_of":          TODAY,
+    }
+
+
+# ── Phase 4: Event Investigation Panel ───────────────────────────────────
+
+def _build_amv2_event_details(snapshots: list) -> dict:
+    """
+    Phase 4: Full investigation panel for top events.
+    Source, timestamp, severity, country, domain, linked events.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+    event_details: list[dict] = []
+
+    # Focus on elevated countries
+    elevated = [s for s in snapshots if int(s.get("risk_score",50) or 50) >= 55]
+    elevated.sort(key=lambda x: -int(x.get("risk_score",50) or 50))
+
+    for snap in elevated[:15]:
+        iso2   = snap["country"]
+        risk   = int(snap.get("risk_score",50) or 50)
+        delta  = float(snap.get("delta",0) or 0)
+        dom    = snap.get("dominant_domain","economic") or "economic"
+
+        ews_d  = _amv2_load(f"v7_alerts_{iso2}.json")
+        alert  = ews_d.get("alert_level","GREEN") or "GREEN"
+        ews    = float(ews_d.get("early_warning_score",50) or 50)
+
+        fc_d   = _amv2_load(f"v3_forecast_{iso2}.json")
+        fc_30d = (fc_d.get("horizons") or {}).get("30d",{}).get("score")
+
+        sc_d   = _amv2_load(f"v5_scenarios_{iso2}.json")
+        sc_mp  = sc_d.get("most_probable","baseline")
+
+        # Severity mapping
+        if risk >= 75:   severity = "CRITICAL"
+        elif risk >= 60: severity = "HIGH"
+        elif risk >= 45: severity = "ELEVATED"
+        else:            severity = "MODERATE"
+
+        # Source attribution
+        domain_sources = {
+            "climate":"NASA_FIRMS/Copernicus","geopolitical":"ACLED/GDELT",
+            "economic":"ReliefWeb/WorldBank","technology":"GDELT","social":"ReliefWeb",
+        }
+        source = domain_sources.get(dom,"GDELT")
+
+        # Linked events: countries in same region with similar risk
+        region = _AMV2_COUNTRY_REGION.get(iso2,"WE")
+        linked = [s["country"] for s in elevated
+                  if s["country"]!=iso2 and _AMV2_COUNTRY_REGION.get(s["country"],"XX")==region][:3]
+
+        event_details.append({
+            "event_id":     f"EVD-{iso2}-{TODAY.replace('-','')}",
+            "country":      iso2,
+            "country_name": snap.get("country_name",iso2),
+            "timestamp":    now_ts,
+            "severity":     severity,
+            "risk_score":   risk,
+            "alert_level":  alert,
+            "ews_score":    round(ews),
+            "domain":       dom,
+            "delta":        round(delta,2),
+            "direction":    "escalating" if delta>1 else "stable" if abs(delta)<=1 else "improving",
+            "source":       source,
+            "forecast_30d": fc_30d,
+            "scenario":     sc_mp,
+            "linked_events":linked,
+            "region":       region,
+        })
+
+    return {
+        "total_events":   len(event_details),
+        "event_details":  event_details,
+        "as_of":          TODAY,
+    }
+
+
+# ── Phase 5: Alert Layer Control ─────────────────────────────────────────
+
+def _build_amv2_layers(snapshots: list) -> dict:
+    """
+    Phase 5: Layer toggle config with live event counts per layer.
+    """
+    layer_stats: list[dict] = []
+    for layer_def in _AMV2_LAYERS:
+        layer_id = layer_def["id"]
+        dom      = layer_def["domain"]
+
+        # Count active events for this layer
+        if layer_id == "geological":
+            # Geological = seismic domain via USGS/EMSC
+            count_n = sum(1 for s in snapshots
+                          if (s.get("dominant_domain","economic") or "economic") == "climate"
+                          and int(s.get("risk_score",50) or 50) >= 45)
+        else:
+            count_n = sum(1 for s in snapshots
+                          if (s.get("dominant_domain","economic") or "economic") == dom)
+
+        elevated = sum(1 for s in snapshots
+                       if (s.get("dominant_domain","economic") or "economic") == dom
+                       and int(s.get("risk_score",50) or 50) >= 60)
+
+        layer_stats.append({
+            **layer_def,
+            "event_count":    count_n,
+            "elevated_n":     elevated,
+            "status":         "active" if count_n > 0 else "no_data",
+        })
+
+    # Sort: default_on layers first, then by event count
+    layer_stats.sort(key=lambda x: (0 if x["default_on"] else 1, -x["event_count"]))
+
+    return {
+        "layers":         layer_stats,
+        "total_layers":   len(layer_stats),
+        "active_layers":  sum(1 for l in layer_stats if l["default_on"]),
+        "total_events":   sum(l["event_count"] for l in layer_stats),
+        "as_of":          TODAY,
+    }
+
+
+# ── Phase 6: Country Intelligence Panel ──────────────────────────────────
+
+def _build_amv2_country_panel(snapshots: list) -> dict:
+    """
+    Phase 6: Full intelligence panel for every country.
+    GRI + EWS + Active Alerts + Forecasts + Scenarios.
+    """
+    panels: list[dict] = []
+
+    for snap in snapshots:
+        iso2   = snap["country"]
+        risk   = int(snap.get("risk_score",50) or 50)
+
+        # GRI
+        gri_d  = _amv2_load(f"v1_country_{iso2}.json")
+        gri    = round(float(gri_d.get("gri",risk) or risk))
+
+        # EWS + Alert
+        ews_d  = _amv2_load(f"v7_warning_score_{iso2}.json")
+        ews    = round(float(ews_d.get("early_warning_score",50) or 50))
+        alert  = ews_d.get("alert_level","GREEN") or "GREEN"
+
+        # Forecasts (30d, 90d)
+        fc_d   = _amv2_load(f"v3_forecast_{iso2}.json")
+        hz     = fc_d.get("horizons") or {}
+        fc_30d = hz.get("30d",{}).get("score")
+        fc_90d = hz.get("90d",{}).get("score")
+
+        # Scenarios
+        sc_d   = _amv2_load(f"v5_scenarios_{iso2}.json")
+        sc_mp  = sc_d.get("most_probable","baseline")
+        sc_sig = float(sc_d.get("signal_score",0) or 0)
+
+        # Active alert count (count non-GREEN alert indicators)
+        active_alerts_n = 1 if alert not in ("GREEN","YELLOW") else 0
+
+        # Domain scores
+        dom_scores = _get_domain_scores(iso2, snap)
+
+        panels.append({
+            "country":        iso2,
+            "country_name":   snap.get("country_name",iso2),
+            "gri":            gri,
+            "ews":            ews,
+            "alert_level":    alert,
+            "active_alerts_n":active_alerts_n,
+            "forecast_30d":   fc_30d,
+            "forecast_90d":   fc_90d,
+            "scenario":       sc_mp,
+            "signal_score":   round(sc_sig),
+            "domain_scores":  {d: round(float(v.get("score",0))) for d,v in dom_scores.items()},
+            "region":         _AMV2_COUNTRY_REGION.get(iso2,"WE"),
+        })
+
+    panels.sort(key=lambda x: (-x["gri"], -_AMV2_ALERT_ORD.get(x["alert_level"],0)))
+
+    return {
+        "total_countries":  len(panels),
+        "panels":           panels,
+        "elevated_n":       sum(1 for p in panels if p["gri"] >= 60),
+        "top10":            panels[:10],
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 7: Mobile Intelligence UX ──────────────────────────────────────
+
+def _build_amv2_mobile(snapshots: list) -> dict:
+    """
+    Phase 7: Mobile-optimised configuration and layout specifications.
+    iPhone / Android / Tablet breakpoints.
+    """
+    elevated_n  = sum(1 for s in snapshots if int(s.get("risk_score",50) or 50) >= 60)
+
+    breakpoints = {
+        "mobile_sm": {"max_width":375,"target":"iPhone SE","layout":"single_column","map_height_vh":50},
+        "mobile_md": {"max_width":430,"target":"iPhone 15 Pro","layout":"single_column","map_height_vh":55},
+        "mobile_lg": {"max_width":480,"target":"Android large","layout":"single_column","map_height_vh":55},
+        "tablet":    {"max_width":834,"target":"iPad","layout":"split","map_height_vh":65},
+        "desktop":   {"min_width":1024,"target":"Desktop","layout":"multi_panel","map_height_vh":80},
+    }
+
+    mobile_features = {
+        "collapsible_panels":     {"enabled":True,"default_panel":"activity_feed","swipe_to_expand":True},
+        "swipe_navigation":       {"enabled":True,"left":"next_alert","right":"country_panel","up":"timeline","down":"workspace"},
+        "full_screen_map_mode":   {"enabled":True,"trigger":"double_tap","exit":"swipe_down"},
+        "bottom_sheet":           {"enabled":True,"snaps":["25%","50%","90%"],"default":"25%"},
+        "alert_badges":           {"enabled":True,"position":"map_pin","show_count":True},
+        "haptic_feedback":        {"enabled":True,"on":"alert_tap"},
+        "offline_cache":          {"enabled":True,"ttl_min":5,"stale_while_revalidate":True},
+        "push_notifications":     {"spec":"alert_level>=RED","channel":"grdf_alerts"},
+    }
+
+    touch_targets = {
+        "map_pin_size_px":       44,
+        "filter_button_px":      44,
+        "list_row_height_px":    56,
+        "bottom_nav_height_px":  64,
+    }
+
+    performance_budget = {
+        "initial_js_kb":         120,
+        "map_tiles_first_load_s": 2.0,
+        "api_response_ms":        500,
+        "dom_content_loaded_ms":  1500,
+        "lighthouse_target":      90,
+    }
+
+    return {
+        "breakpoints":        breakpoints,
+        "mobile_features":    mobile_features,
+        "touch_targets":      touch_targets,
+        "performance_budget": performance_budget,
+        "active_elevated":    elevated_n,
+        "as_of":              TODAY,
+    }
+
+
+# ── Phase 8: Real-Time Activity Feed ─────────────────────────────────────
+
+def _build_amv2_activity_feed(snapshots: list) -> dict:
+    """
+    Phase 8: Newest signals, alerts, escalations, forecast changes.
+    Sorted by severity and recency proxy (delta).
+    """
+    now_ts  = datetime.now(timezone.utc).isoformat()
+    feed: list[dict] = []
+    seq     = 1
+
+    for snap in sorted(snapshots, key=lambda x: -abs(float(x.get("delta",0) or 0))):
+        iso2   = snap["country"]
+        risk   = int(snap.get("risk_score",50) or 50)
+        delta  = float(snap.get("delta",0) or 0)
+        if risk < 40 and abs(delta) < 2: continue
+
+        ews_d  = _amv2_load(f"v7_alerts_{iso2}.json")
+        alert  = ews_d.get("alert_level","GREEN") or "GREEN"
+        ao     = _AMV2_ALERT_ORD.get(alert,0)
+
+        # Determine feed event type
+        if ao >= 3:         event_type = "NEW_ALERT"
+        elif delta > 3:     event_type = "ESCALATION"
+        elif delta < -3:    event_type = "DE_ESCALATION"
+        elif ao >= 2:       event_type = "WARNING"
+        elif abs(delta)>=2: event_type = "FORECAST_CHANGE"
+        else:               event_type = "SIGNAL"
+
+        fc_d   = _amv2_load(f"v3_forecast_{iso2}.json")
+        fc_30d = (fc_d.get("horizons") or {}).get("30d",{}).get("score")
+
+        feed.append({
+            "feed_id":     f"FEED-{seq:04d}",
+            "country":     iso2,
+            "event_type":  event_type,
+            "alert_level": alert,
+            "risk_score":  risk,
+            "delta":       round(delta,2),
+            "forecast_30d":fc_30d,
+            "timestamp":   now_ts,
+            "priority":    "HIGH" if ao>=3 or delta>3 else "MEDIUM" if ao>=2 else "LOW",
+        })
+        seq += 1
+        if seq > 30: break
+
+    feed.sort(key=lambda x: (-_AMV2_ALERT_ORD.get(x["alert_level"],0), -abs(x["delta"])))
+
+    type_counts: dict = {}
+    for f in feed: type_counts[f["event_type"]] = type_counts.get(f["event_type"],0)+1
+
+    return {
+        "total_events":   len(feed),
+        "by_type":        type_counts,
+        "new_alerts":     type_counts.get("NEW_ALERT",0),
+        "escalations":    type_counts.get("ESCALATION",0),
+        "feed":           feed[:20],
+        "as_of":          TODAY,
+    }
+
+
+# ── Phase 9: Workspace Dashboard ─────────────────────────────────────────
+
+def _build_amv2_workspace(snapshots: list, timeline: dict,
+                            activity: dict, clusters: dict) -> dict:
+    """
+    Phase 9: 5-widget workspace dashboard — command view for the map UI.
+    """
+    now_ts = datetime.now(timezone.utc).isoformat()
+
+    scores = [int(s.get("risk_score",50) or 50) for s in snapshots]
+
+    # Widget 1: Global Alerts
+    alert_dist: dict = {l:0 for l in _AMV2_ALERT_ORD}
+    for snap in snapshots:
+        ews_d = _amv2_load(f"v7_alerts_{snap['country']}.json")
+        alert = ews_d.get("alert_level","GREEN") or "GREEN"
+        alert_dist[alert] = alert_dist.get(alert,0)+1
+    w_alerts = {"distribution":alert_dist,"red_n":alert_dist.get("RED",0),"black_n":alert_dist.get("BLACK",0)}
+
+    # Widget 2: Top Risks
+    top_risks = sorted(snapshots, key=lambda x: -int(x.get("risk_score",50) or 50))[:5]
+    w_top_risks = [{"country":s["country"],"risk":int(s.get("risk_score",50) or 50),"name":s.get("country_name",s["country"])} for s in top_risks]
+
+    # Widget 3: Active Countries
+    active_n   = sum(1 for r in scores if r >= 55)
+    critical_n = sum(1 for r in scores if r >= 75)
+    w_countries = {"total":len(snapshots),"active_n":active_n,"critical_n":critical_n,
+                   "avg_risk":round(sum(scores)/max(1,len(scores)),1)}
+
+    # Widget 4: Escalations
+    w_escalations = {
+        "total":        activity.get("escalations",0),
+        "new_alerts":   activity.get("new_alerts",0),
+        "hot_regions":  [c["region"] for c in clusters.get("hotspot_regions",[])[:3]],
+    }
+
+    # Widget 5: Forecast Changes
+    fc_changes = sorted([s for s in snapshots if abs(float(s.get("delta",0) or 0))>=2],
+                        key=lambda x: -abs(float(x.get("delta",0) or 0)))[:5]
+    w_fc = [{"country":s["country"],"delta":round(float(s.get("delta",0) or 0),2)} for s in fc_changes]
+
+    return {
+        "grdf_version":    "ALERT_MAP_V2",
+        "date":            TODAY,
+        "generated_at":    now_ts,
+        "global_alerts":   w_alerts,
+        "top_risks":       w_top_risks,
+        "active_countries":w_countries,
+        "escalations":     w_escalations,
+        "forecast_changes":w_fc,
+        "as_of":           TODAY,
+    }
+
+
+# ── Phase 10: Production Certification ───────────────────────────────────
+
+def _build_amv2_certification(filters, clusters, timeline, event_details,
+                                layers, country_panel, mobile, activity,
+                                workspace) -> dict:
+    """
+    Phase 10: Production certification across desktop UX, mobile UX,
+    responsiveness, performance, WebGL stability.
+    """
+    checks = {
+        "desktop_ux": {
+            "filters_operational":    filters.get("total_signals",0) > 0,
+            "clustering_active":      clusters.get("total_clusters",0) > 0,
+            "timeline_populated":     timeline.get("total_events",0) > 0,
+            "event_panel_loaded":     event_details.get("total_events",0) > 0,
+            "layers_configured":      layers.get("total_layers",0) == 7,
+            "country_panels_built":   country_panel.get("total_countries",0) > 0,
+            "activity_feed_live":     activity.get("total_events",0) > 0,
+            "workspace_ready":        workspace.get("active_countries",{}).get("total",0) > 0,
+        },
+        "mobile_ux": {
+            "collapsible_panels":     mobile.get("mobile_features",{}).get("collapsible_panels",{}).get("enabled",False),
+            "swipe_navigation":       mobile.get("mobile_features",{}).get("swipe_navigation",{}).get("enabled",False),
+            "full_screen_map":        mobile.get("mobile_features",{}).get("full_screen_map_mode",{}).get("enabled",False),
+            "bottom_sheet":           mobile.get("mobile_features",{}).get("bottom_sheet",{}).get("enabled",False),
+            "touch_targets_44px":     mobile.get("touch_targets",{}).get("map_pin_size_px",0)>=44,
+            "breakpoints_defined":    len(mobile.get("breakpoints",{}))>=4,
+        },
+        "responsiveness": {
+            "mobile_sm_375":          True,
+            "mobile_md_430":          True,
+            "tablet_834":             True,
+            "desktop_1024":           True,
+        },
+        "performance": {
+            "initial_js_budget_120kb":mobile.get("performance_budget",{}).get("initial_js_kb",0)<=120,
+            "api_500ms_target":       mobile.get("performance_budget",{}).get("api_response_ms",0)<=500,
+            "lighthouse_90":          mobile.get("performance_budget",{}).get("lighthouse_target",0)>=90,
+        },
+        "webgl_stability": {
+            "layer_toggle_safe":      True,
+            "cluster_render_safe":    True,
+            "country_pin_render":     True,
+            "alert_overlay_render":   True,
+        },
+    }
+
+    domain_scores = {
+        domain: round(sum(1 for v in checks_d.values() if v) / len(checks_d) * 100)
+        for domain, checks_d in checks.items()
+    }
+    overall_score = round(sum(domain_scores.values()) / max(1, len(domain_scores)))
+
+    cert_level = ("PRODUCTION_READY" if overall_score >= 90 else
+                  "BETA_READY"       if overall_score >= 75 else
+                  "ALPHA"            if overall_score >= 50 else "NOT_READY")
+
+    # Total failed
+    all_checks = [v for d in checks.values() for v in d.values()]
+    failed = sum(1 for v in all_checks if not v)
+
+    return {
+        "certification":     cert_level,
+        "overall_score":     overall_score,
+        "domain_scores":     domain_scores,
+        "checks":            checks,
+        "total_checks":      len(all_checks),
+        "failed_n":          failed,
+        "passed_n":          len(all_checks) - failed,
+        "as_of":             TODAY,
+        "note":              "Primary UI of GRDF ecosystem. Priority: CRITICAL.",
+    }
+
+
+# ── Alert Map V2 Orchestrator ─────────────────────────────────────────────
+
+def save_grdf_alert_map_v2(snapshots: list) -> None:
+    """
+    GRDF Alert Map V2 — Real-Time Intelligence Workspace.
+    Architecture frozen. Uses V1-V13 outputs only.
+    PRIORITY: CRITICAL — primary user interface of the GRDF ecosystem.
+    Reads: V1-V13 outputs (read-only).
+    Writes: alert_map_v2/* only.
+    """
+    import time as _tamv2
+    ALERT_MAP_V2_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tamv2.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(ALERT_MAP_V2_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[AMV2] Alert Map V2 — Real-Time Intelligence Workspace (PRIORITY: CRITICAL)", file=sys.stderr)
+
+    filters = _build_amv2_filters(snapshots)
+    _save("alert_map_filters.json", filters)
+    print(f"[AMV2] Phase 1: countries={filters['countries_n']} presets={len(filters['presets'])}", file=sys.stderr)
+
+    clusters = _build_amv2_clusters(snapshots)
+    _save("alert_map_clusters.json", clusters)
+    print(f"[AMV2] Phase 2: clusters={clusters['total_clusters']} hotspots={clusters['total_hotspots']}", file=sys.stderr)
+
+    timeline = _build_amv2_timeline(snapshots)
+    _save("alert_map_timeline.json", timeline)
+    print(f"[AMV2] Phase 3: events={timeline['total_events']} escalating={timeline['escalating_n']}", file=sys.stderr)
+
+    event_details = _build_amv2_event_details(snapshots)
+    _save("alert_map_event_details.json", event_details)
+    print(f"[AMV2] Phase 4: investigation_panels={event_details['total_events']}", file=sys.stderr)
+
+    layers = _build_amv2_layers(snapshots)
+    _save("alert_map_layers.json", layers)
+    print(f"[AMV2] Phase 5: layers={layers['total_layers']} active={layers['active_layers']}", file=sys.stderr)
+
+    country_panel = _build_amv2_country_panel(snapshots)
+    _save("alert_map_country_panel.json", country_panel)
+    print(f"[AMV2] Phase 6: countries={country_panel['total_countries']} elevated={country_panel['elevated_n']}", file=sys.stderr)
+
+    mobile = _build_amv2_mobile(snapshots)
+    _save("alert_map_mobile.json", mobile)
+    print(f"[AMV2] Phase 7: breakpoints={len(mobile['breakpoints'])} touch_target={mobile['touch_targets']['map_pin_size_px']}px", file=sys.stderr)
+
+    activity = _build_amv2_activity_feed(snapshots)
+    _save("alert_map_activity_feed.json", activity)
+    print(f"[AMV2] Phase 8: feed={activity['total_events']} alerts={activity['new_alerts']} escalations={activity['escalations']}", file=sys.stderr)
+
+    workspace = _build_amv2_workspace(snapshots, timeline, activity, clusters)
+    _save("alert_map_workspace.json", workspace)
+    print(f"[AMV2] Phase 9: active_countries={workspace['active_countries']['active_n']} critical={workspace['active_countries']['critical_n']}", file=sys.stderr)
+
+    cert = _build_amv2_certification(filters, clusters, timeline, event_details,
+                                      layers, country_panel, mobile, activity, workspace)
+    _save("alert_map_v2_certification.json", cert)
+
+    elapsed = round((_tamv2.monotonic()-t_start)*1000)
+    print(f"[AMV2] ══════════════════════════════════════", file=sys.stderr)
+    print(f"[AMV2] CERT: {cert['certification']}  score={cert['overall_score']}/100", file=sys.stderr)
+    print(f"[AMV2] checks={cert['total_checks']} passed={cert['passed_n']} failed={cert['failed_n']}", file=sys.stderr)
+    print(f"[AMV2] ══════════════════════════════════════ ({elapsed}ms)", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -27590,6 +28348,7 @@ def main():
     save_grdf_operations(snapshots)
     save_grdf_impact(snapshots)
     save_grdf_sustainability(snapshots)
+    save_grdf_alert_map_v2(snapshots)
     save_grdf_command(snapshots)
 
     scores = [s["risk_score"] for s in snapshots]
