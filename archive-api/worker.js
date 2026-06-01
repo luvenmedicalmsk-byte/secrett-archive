@@ -7554,8 +7554,58 @@ async function handleGRDF(request, env) {
       '/api/grdf/command/dashboard','/api/grdf/command/health',
       '/api/grdf/command/kpis','/api/grdf/command/risks',
       '/api/grdf/command/opportunities','/api/grdf/command/decisions',
+
+  // =========================================================================
+  // GRDF ALERT MAP V2 — REAL-TIME INTELLIGENCE WORKSPACE API
+  // All routes under /api/grdf/alert-map/
+  // Architecture frozen. Primary UI. Uses V1-V13 outputs only.
+  // PRIORITY: CRITICAL
+  // =========================================================================
+  if (seg[0] === 'alert-map') {
+    const amseg = seg[1] || 'workspace';
+    const CAM = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const AMV2_FILES = {
+      'workspace':      'docs/alert_map_v2/alert_map_workspace.json',
+      'filters':        'docs/alert_map_v2/alert_map_filters.json',
+      'clusters':       'docs/alert_map_v2/alert_map_clusters.json',
+      'timeline':       'docs/alert_map_v2/alert_map_timeline.json',
+      'events':         'docs/alert_map_v2/alert_map_event_details.json',
+      'layers':         'docs/alert_map_v2/alert_map_layers.json',
+      'country-panel':  'docs/alert_map_v2/alert_map_country_panel.json',
+      'mobile':         'docs/alert_map_v2/alert_map_mobile.json',
+      'activity':       'docs/alert_map_v2/alert_map_activity_feed.json',
+      'certification':  'docs/alert_map_v2/alert_map_v2_certification.json',
+    };
+    const AMV2_SIGNAL_ONLY = new Set(['events','clusters','timeline','country-panel']);
+    if (!AMV2_FILES[amseg]) return new Response(JSON.stringify({error:'Unknown alert-map route: '+amseg, available:Object.keys(AMV2_FILES)}),{status:404,headers:CAM});
+    if (AMV2_SIGNAL_ONLY.has(amseg) && access==='teaser') return new Response(JSON.stringify({error:amseg+' requires Signal tier'}),{status:403,headers:CAM});
+    const ck = `grdf:am2:${amseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CAM});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, AMV2_FILES[amseg], 120);
+      if (!d) return new Response(JSON.stringify({error:'Alert Map V2 '+amseg+' not built yet'}),{status:404,headers:CAM});
+      let r;
+      if (access==='teaser') {
+        if (amseg==='workspace') r={date:d.date,global_alerts:d.global_alerts,top_risks:d.top_risks,active_countries:{total:d.active_countries?.total,active_n:d.active_countries?.active_n,critical_n:d.active_countries?.critical_n},escalations:{total:d.escalations?.total,new_alerts:d.escalations?.new_alerts},tier};
+        else if (amseg==='filters') r={date:d.date,dimensions:d.dimensions,countries_n:d.countries_n,alert_distribution:d.alert_distribution,risk_distribution:d.risk_distribution,presets:d.presets,tier};
+        else if (amseg==='layers') r={date:d.date,layers:d.layers,active_layers:d.active_layers,total_events:d.total_events,tier};
+        else if (amseg==='activity') r={date:d.date,total_events:d.total_events,by_type:d.by_type,new_alerts:d.new_alerts,escalations:d.escalations,feed:d.feed?.slice(0,8),tier};
+        else if (amseg==='mobile') r={date:d.date,breakpoints:d.breakpoints,mobile_features:d.mobile_features,performance_budget:d.performance_budget,tier};
+        else if (amseg==='certification') r={date:d.date,certification:d.certification,overall_score:d.overall_score,domain_scores:d.domain_scores,passed_n:d.passed_n,failed_n:d.failed_n,tier};
+        else r={date:d.date,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:120});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CAM});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CAM});}
+  }
+
       '/api/grdf/command/roadmap','/api/grdf/command/certification',
       '/api/grdf/command/status','/api/grdf/command/report',
+      '/api/grdf/alert-map/workspace','/api/grdf/alert-map/filters',
+      '/api/grdf/alert-map/clusters','/api/grdf/alert-map/timeline',
+      '/api/grdf/alert-map/events','/api/grdf/alert-map/layers',
+      '/api/grdf/alert-map/country-panel','/api/grdf/alert-map/mobile',
+      '/api/grdf/alert-map/activity','/api/grdf/alert-map/certification',
     ]
   }),{status:404,headers:CORS});
 }
