@@ -27536,13 +27536,13 @@ _AMV2_FILTER_DIMS = {
 
 # Layer definitions (Phase 5)
 _AMV2_LAYERS = [
-    {"id":"climate",        "label":"Climate",        "domain":"climate",        "color":"#f97316","default_on":True},
-    {"id":"geological",     "label":"Geological",     "domain":"climate",        "color":"#a855f7","default_on":True},
-    {"id":"economic",       "label":"Economic",       "domain":"economic",       "color":"#3b82f6","default_on":True},
-    {"id":"geopolitical",   "label":"Geopolitical",   "domain":"geopolitical",   "color":"#ef4444","default_on":True},
-    {"id":"technology",     "label":"Technology",     "domain":"technology",     "color":"#06b6d4","default_on":False},
-    {"id":"infrastructure", "label":"Infrastructure", "domain":"infrastructure", "color":"#eab308","default_on":False},
-    {"id":"social",         "label":"Social",         "domain":"social",         "color":"#10b981","default_on":False},
+    {"id":"climate",        "label":"Climate",        "domain":"climate",        "color":"#10B981","default_on":True},
+    {"id":"geological",     "label":"Geological",     "domain":"climate",        "color":"#065F46","default_on":True},
+    {"id":"economic",       "label":"Economic",       "domain":"economic",       "color":"#3B82F6","default_on":True},
+    {"id":"geopolitical",   "label":"Geopolitical",   "domain":"geopolitical",   "color":"#F97316","default_on":True},
+    {"id":"technology",     "label":"Technology",     "domain":"technology",     "color":"#A855F7","default_on":False},
+    {"id":"infrastructure", "label":"Infrastructure", "domain":"infrastructure", "color":"#1E3A8A","default_on":False},
+    {"id":"social",         "label":"Social",         "domain":"social",         "color":"#EF4444","default_on":False},
 ]
 
 # UN regions for grouping
