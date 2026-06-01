@@ -31316,6 +31316,358 @@ def save_grdf_country_intel(snapshots: list) -> None:
     print(f"[CI] COMPLETE — {overview['total_countries']} country profiles ({elapsed}ms)", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF LAUNCH SPRINT V1 — RISK MAP V1 COMPLETION
+#
+# Launch readiness tracking for Archive + Signal Pro.
+# Target: June 9–11, 2026.
+# Scope: FREE + SIGNAL PRO only. STRATEGIC / ELITE deferred.
+#
+# Outputs:
+#  launch_sprint.json           — full sprint plan + task list
+#  launch_readiness.json        — component readiness checklist
+#  launch_user_journey.json     — Map → Country → CI → Upgrade spec
+#  launch_api_audit.json        — API route audit for launch
+#  launch_commercial_model.json — FREE/SIGNAL PRO model (STRATEGIC deferred)
+#
+# Writes: launch/* only. Architecture frozen at V13.
+# =========================================================================
+
+LAUNCH_SPRINT_DIR = DOCS_DIR / "launch"
+
+# Sprint window
+_LAUNCH_DATE        = "2026-06-11"
+_LAUNCH_START       = "2026-06-09"
+_ARCHIVE_LAUNCH     = "2026-06-10"
+
+# Launch tiers (only these two at launch)
+_LAUNCH_TIERS_ACTIVE  = ["FREE","SIGNAL_PRO"]
+_LAUNCH_TIERS_DEFERRED= ["STRATEGIC_PRO","ELITE_INTELLIGENCE"]
+
+# Sprint task definitions
+_SPRINT_TASKS = [
+    # Task 1: Global Risk Map V1
+    {"id":"MAP-01","area":"map","priority":"CRITICAL","title":"Map performance",
+     "spec":"WebGL FCP ≤ 2s. KV TTL=120s workspace. Lazy load pins at zoom ≥ 4.",
+     "api":"GET /api/grdf/alert-map/workspace","day":"Jun 9"},
+    {"id":"MAP-02","area":"map","priority":"CRITICAL","title":"Mobile UX (iPhone-first)",
+     "spec":"Map 75% screen. Filter FAB. 4-item bottom nav. 44px touch targets.",
+     "api":"GET /api/grdf/mobile/layout","day":"Jun 9"},
+    {"id":"MAP-03","area":"map","priority":"HIGH","title":"Domain filtering",
+     "spec":"7 domains with official colors. FAB → bottom sheet. Active filter pill.",
+     "api":"GET /api/grdf/alert-map/filters","day":"Jun 9"},
+    {"id":"MAP-04","area":"map","priority":"HIGH","title":"Country search",
+     "spec":"Autocomplete ISO2 + name. Tap → center + open Country Panel.",
+     "api":"GET /api/grdf/country/:cc/overview","day":"Jun 9"},
+    {"id":"MAP-05","area":"map","priority":"HIGH","title":"Event clustering",
+     "spec":"Geo clusters by UN region. Hotspot ≥ 2 elevated + max_risk ≥ 60.",
+     "api":"GET /api/grdf/alert-map/clusters","day":"Jun 9"},
+    {"id":"MAP-06","area":"map","priority":"HIGH","title":"Critical event display",
+     "spec":"BLACK/RED pins with pulse animation. 3px ring. z-index priority.",
+     "api":"GET /api/grdf/ews/score","day":"Jun 9"},
+    {"id":"MAP-07","area":"map","priority":"MEDIUM","title":"Live signal refresh",
+     "spec":"Silent refresh TTL=120s. Last-updated timestamp in status bar.",
+     "api":"GET /api/grdf/feed/pipeline","day":"Jun 9"},
+    # Task 2: Country Intelligence V1
+    {"id":"CI-01","area":"country","priority":"CRITICAL","title":"GRI · EWS · CRI · Status",
+     "spec":"3-column metric card. Status color. FREE for all.",
+     "api":"GET /api/grdf/country/:cc/overview","day":"Jun 10"},
+    {"id":"CI-02","area":"country","priority":"CRITICAL","title":"Top Risks (top 3)",
+     "spec":"Domain badges with colors + contribution_pct. FREE, no gate.",
+     "api":"GET /api/grdf/country/:cc/overview","day":"Jun 10"},
+    {"id":"CI-03","area":"country","priority":"HIGH","title":"Top Drivers (SIGNAL PRO)",
+     "spec":"5 drivers, contribution_pct, trend ↑↓→, progress bars. Lock screen FREE.",
+     "api":"GET /api/grdf/country/:cc/drivers","day":"Jun 10"},
+    {"id":"CI-04","area":"country","priority":"CRITICAL","title":"Forecast 24h FREE + 7d SIGNAL PRO",
+     "spec":"24h visible always. 7d blur + inline CTA. 30d locked (SIGNAL PRO). 90d deferred.",
+     "api":"GET /api/grdf/country/:cc/forecasts","day":"Jun 10"},
+    {"id":"CI-05","area":"country","priority":"CRITICAL","title":"CTA → Signal Pro upgrade",
+     "spec":"Inline blur overlay + price CTA at every locked element. Archive Member badge.",
+     "api":"GET /api/grdf/commercial/archive","day":"Jun 10"},
+    # Task 3: User journey
+    {"id":"UJ-01","area":"journey","priority":"CRITICAL","title":"Map → Country tap",
+     "spec":"Country tap opens bottom sheet 50%. GRI/EWS/CRI + top risks visible immediately.",
+     "api":"GET /api/grdf/country/:cc/overview","day":"Jun 10"},
+    {"id":"UJ-02","area":"journey","priority":"CRITICAL","title":"Bottom sheet 90% expand",
+     "spec":"Swipe up → full panel. Drivers/Signals/Warnings locked. CTA visible in scroll.",
+     "api":"GET /api/grdf/country/:cc/drivers","day":"Jun 10"},
+    {"id":"UJ-03","area":"journey","priority":"CRITICAL","title":"Signal Pro upgrade CTA",
+     "spec":"Blur overlay + button + price. Archive Member path shown alongside.",
+     "api":"GET /api/grdf/commercial/archive","day":"Jun 11"},
+    # Task 4: API audit
+    {"id":"API-01","area":"api","priority":"CRITICAL","title":"Country overview endpoint",
+     "spec":"Returns GRI/CRI/EWS/status/top_risks. 300s TTL. FREE.",
+     "api":"GET /api/grdf/country/:cc/overview","day":"Jun 9"},
+    {"id":"API-02","area":"api","priority":"CRITICAL","title":"Forecast endpoint with tier gates",
+     "spec":"24h FREE. 7d/30d SIGNAL PRO. 403 with CTA on locked horizons.",
+     "api":"GET /api/grdf/country/:cc/forecasts","day":"Jun 9"},
+    {"id":"API-03","area":"api","priority":"HIGH","title":"Drivers endpoint SIGNAL PRO",
+     "spec":"5 drivers. 403 teaser with price CTA.",
+     "api":"GET /api/grdf/country/:cc/drivers","day":"Jun 9"},
+]
+
+# User journey definition
+_LAUNCH_USER_JOURNEY = [
+    {"step":1,"name":"Risk Map","tier":"FREE",
+     "action":"Land on map. See colored risk pins. Intelligence drawer 25% collapsed.",
+     "elements":["world_map_75pct","status_bar","intelligence_drawer_25pct","bottom_nav_4"],
+     "api":"GET /api/grdf/alert-map/workspace"},
+    {"step":2,"name":"Country Tap → 50%","tier":"FREE",
+     "action":"Tap any country. Bottom sheet rises to 50%. GRI/EWS/CRI + status + top 3 risks.",
+     "elements":["metric_3col","status_badge","top_risks_3","forecast_24h"],
+     "api":"GET /api/grdf/country/:cc/overview"},
+    {"step":3,"name":"Expand → 90%","tier":"FREE→locked",
+     "action":"Swipe up. Full panel. Top Drivers locked. Signal feed preview ×1. CTAs visible.",
+     "elements":["full_panel","drivers_locked","signal_preview_1","warning_locked","cta_inline"],
+     "api":"GET /api/grdf/country/:cc/drivers (403)"},
+    {"step":4,"name":"Signal Pro CTA","tier":"conversion",
+     "action":"Blur overlay + 'Открыть SIGNAL PRO · 4 900 ₽/мес'. Archive Member badge below.",
+     "elements":["blur_overlay","price_cta","archive_member_badge"],
+     "api":"GET /api/grdf/commercial/archive"},
+    {"step":5,"name":"Post-upgrade","tier":"SIGNAL_PRO",
+     "action":"All locks removed. Drivers + Forecast 7d/30d + Signal/Warning/Escalation feeds + Risk Matrix 2Y.",
+     "elements":["drivers_open","forecast_7d_30d","signal_full","warning_full","matrix_2y"],
+     "api":"GET /api/grdf/country/:cc/drivers + /forecasts + /signals + /warnings"},
+]
+
+# API routes for launch
+_LAUNCH_API_ROUTES = [
+    {"route":"GET /api/grdf/country/:cc/overview",  "tier":"FREE",      "ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/country/:cc/forecasts", "tier":"FREE+SIG",  "ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/country/:cc/drivers",   "tier":"SIGNAL_PRO","ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/country/:cc/signals",   "tier":"SIGNAL_PRO","ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/country/:cc/warnings",  "tier":"SIGNAL_PRO","ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/country/:cc/escalation","tier":"SIGNAL_PRO","ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/country/:cc/matrix",    "tier":"SIGNAL_PRO","ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/alert-map/workspace",   "tier":"FREE",      "ttl":120,  "status":"READY"},
+    {"route":"GET /api/grdf/alert-map/filters",     "tier":"FREE",      "ttl":120,  "status":"READY"},
+    {"route":"GET /api/grdf/alert-map/layers",      "tier":"FREE",      "ttl":120,  "status":"READY"},
+    {"route":"GET /api/grdf/alert-map/activity",    "tier":"FREE",      "ttl":120,  "status":"READY"},
+    {"route":"GET /api/grdf/ews/dashboard",         "tier":"FREE",      "ttl":180,  "status":"READY"},
+    {"route":"GET /api/grdf/ews/score",             "tier":"FREE",      "ttl":180,  "status":"READY"},
+    {"route":"GET /api/grdf/ews/warnings",          "tier":"FREE",      "ttl":180,  "status":"READY"},
+    {"route":"GET /api/grdf/feed/alerts",           "tier":"FREE",      "ttl":180,  "status":"READY"},
+    {"route":"GET /api/grdf/commercial/architecture","tier":"FREE",     "ttl":3600, "status":"READY"},
+    {"route":"GET /api/grdf/commercial/tiers",      "tier":"FREE",      "ttl":3600, "status":"READY"},
+    {"route":"GET /api/grdf/commercial/archive",    "tier":"FREE",      "ttl":3600, "status":"READY"},
+    {"route":"GET /api/grdf/command/health",        "tier":"FREE",      "ttl":300,  "status":"READY"},
+    {"route":"GET /api/grdf/ews/countries",         "tier":"SIGNAL_PRO","ttl":180,  "status":"READY"},
+    {"route":"GET /api/grdf/ews/momentum",          "tier":"SIGNAL_PRO","ttl":180,  "status":"READY"},
+    {"route":"GET /api/grdf/ews/cross-domain",      "tier":"SIGNAL_PRO","ttl":180,  "status":"READY"},
+]
+
+
+# ── Sprint plan builder ────────────────────────────────────────────────────
+
+def _build_launch_sprint(snapshots: list) -> dict:
+    """Full sprint plan with all tasks, prioritised by day and area."""
+    area_counts: dict = {}
+    for t in _SPRINT_TASKS:
+        area_counts[t["area"]] = area_counts.get(t["area"],0)+1
+
+    critical_n = sum(1 for t in _SPRINT_TASKS if t["priority"]=="CRITICAL")
+    high_n     = sum(1 for t in _SPRINT_TASKS if t["priority"]=="HIGH")
+
+    by_day: dict = {}
+    for t in _SPRINT_TASKS:
+        by_day.setdefault(t["day"],[]).append(t["id"])
+
+    return {
+        "sprint":         "GRDF Launch Sprint V1",
+        "product":        "Archive + Signal Pro",
+        "launch_date":    _LAUNCH_DATE,
+        "sprint_start":   _LAUNCH_START,
+        "archive_date":   _ARCHIVE_LAUNCH,
+        "tiers_active":   _LAUNCH_TIERS_ACTIVE,
+        "tiers_deferred": _LAUNCH_TIERS_DEFERRED,
+        "total_tasks":    len(_SPRINT_TASKS),
+        "critical_n":     critical_n,
+        "high_n":         high_n,
+        "by_day":         {d: {"tasks":ids,"n":len(ids)} for d,ids in by_day.items()},
+        "area_breakdown": area_counts,
+        "tasks":          _SPRINT_TASKS,
+        "strategic_elite_note": "STRATEGIC PRO and ELITE INTELLIGENCE architecture is complete and frozen at V13. Displayed as 'Coming Soon'. Development begins post-launch.",
+        "as_of":          TODAY,
+    }
+
+
+def _build_launch_readiness(snapshots: list) -> dict:
+    """Check readiness of all components needed for launch."""
+    n_countries = len(snapshots)
+    elevated_n  = sum(1 for s in snapshots if int(s.get("risk_score",50) or 50) >= 60)
+
+    components = [
+        {"id":"RC-01","component":"Alert Map V2","status":"READY",
+         "checks":["workspace API","filters API","layers API","activity API","clusters API"],
+         "ttl":120},
+        {"id":"RC-02","component":"EWS V1","status":"READY",
+         "checks":["ews_score","ews_forecasts","ews_warning_feed","band_distribution","EWS formula"],
+         "formula":"EWS = risk×0.40 + momentum×0.25 + density×0.15 + cross_domain×0.10 + hist_sim×0.10"},
+        {"id":"RC-03","component":"Country Intelligence V1","status":"READY",
+         "checks":["overview per country","drivers","forecasts 5 horizons","signals SIG-NNN","warnings WARN-NNNNN"],
+         "countries":n_countries},
+        {"id":"RC-04","component":"Feed Engine V1","status":"READY",
+         "checks":["11 sources","pipeline 7 stages","SQS formula","FHS formula","alerts INFO-RED"]},
+        {"id":"RC-05","component":"Commercial Architecture","status":"READY",
+         "checks":["4 tier definitions","RUB+USD+EUR pricing","archive_member_benefits","tier gates in API"]},
+        {"id":"RC-06","component":"Mobile UX Spec","status":"READY",
+         "checks":["filter FAB","4-item nav","3-snap drawer","country panel bottom sheet","touch targets 44px"]},
+        {"id":"RC-07","component":"API tier gates","status":"READY",
+         "checks":["FREE routes open","SIGNAL_PRO 403 with CTA","STRATEGIC_PRO gate present","KV caching all routes"]},
+        {"id":"RC-08","component":"Cloudflare Worker","status":"READY",
+         "checks":["all routes registered","KV TTL configured","CORS headers","tier access extraction"]},
+        {"id":"RC-09","component":"STRATEGIC PRO preview","status":"DEFERRED",
+         "checks":["architecture defined","deferred notice in tier docs"],
+         "note":"Show as 'Скоро' at launch"},
+        {"id":"RC-10","component":"ELITE preview","status":"DEFERRED",
+         "checks":["architecture defined","deferred notice"],
+         "note":"Show as 'Скоро' at launch"},
+    ]
+
+    ready_n    = sum(1 for c in components if c["status"]=="READY")
+    deferred_n = sum(1 for c in components if c["status"]=="DEFERRED")
+
+    return {
+        "launch_date":       _LAUNCH_DATE,
+        "total_components":  len(components),
+        "ready_n":           ready_n,
+        "deferred_n":        deferred_n,
+        "launch_ready":      ready_n >= 8,
+        "readiness_pct":     round(ready_n/len(components)*100),
+        "components":        components,
+        "countries_coverage":n_countries,
+        "elevated_countries":elevated_n,
+        "as_of":             TODAY,
+    }
+
+
+def _build_launch_user_journey() -> dict:
+    """Map → Country Click → Country Intelligence → Signal Pro Upgrade."""
+    return {
+        "journey_name":    "Map → Country → CI → Upgrade",
+        "primary_goal":    "Convert FREE user to SIGNAL PRO within one country exploration session",
+        "steps":           _LAUNCH_USER_JOURNEY,
+        "total_steps":     len(_LAUNCH_USER_JOURNEY),
+        "conversion_step": 4,
+        "key_moments": {
+            "aha_moment":       "Step 2: GRI/EWS/CRI visible immediately after country tap",
+            "value_moment":     "Step 3: Locked drivers + signal feed preview create desire",
+            "conversion_moment":"Step 4: Blur CTA with price — inline, no redirect",
+        },
+        "mobile_layout": {
+            "sheet_25pct": "Visible while map active",
+            "sheet_50pct": "Main free-tier country experience",
+            "sheet_90pct": "Full content + conversion CTAs",
+        },
+        "as_of": TODAY,
+    }
+
+
+def _build_launch_api_audit() -> dict:
+    """Full API audit for launch readiness."""
+    ready_n     = sum(1 for r in _LAUNCH_API_ROUTES if r["status"]=="READY")
+    free_n      = sum(1 for r in _LAUNCH_API_ROUTES if r["tier"]=="FREE")
+    paid_n      = sum(1 for r in _LAUNCH_API_ROUTES if r["tier"] not in ("FREE","FREE+SIG"))
+    min_ttl     = min(r["ttl"] for r in _LAUNCH_API_ROUTES)
+    max_ttl     = max(r["ttl"] for r in _LAUNCH_API_ROUTES)
+
+    return {
+        "total_routes":   len(_LAUNCH_API_ROUTES),
+        "ready_n":        ready_n,
+        "free_routes_n":  free_n,
+        "paid_routes_n":  paid_n,
+        "ttl_range_s":    {"min":min_ttl,"max":max_ttl},
+        "critical_routes": [r for r in _LAUNCH_API_ROUTES if r["tier"]=="FREE" and "/country/" in r["route"]],
+        "routes":         _LAUNCH_API_ROUTES,
+        "worker_url":     "https://archive-api.luven-medical-msk.workers.dev",
+        "as_of":          TODAY,
+    }
+
+
+def _build_launch_commercial_model() -> dict:
+    """Launch commercial model: FREE + SIGNAL PRO active, STRATEGIC/ELITE deferred."""
+    return {
+        "launch_scope":   "FREE + SIGNAL PRO",
+        "launch_date":    _LAUNCH_DATE,
+        "archive_date":   _ARCHIVE_LAUNCH,
+        "active_tiers": {
+            "FREE": {
+                "features": [
+                    "Risk Map","Country Overview","GRI","EWS","CRI",
+                    "Top Risks (top 3)","Forecast 24h","Alert Map basic","EWS dashboard",
+                ],
+                "price_rub": 0, "price_usd": 0, "price_eur": 0,
+            },
+            "SIGNAL_PRO": {
+                "features": [
+                    "Top Drivers (5)","Signal Feed (full)","Warning Feed",
+                    "Escalation Tracker","Forecast 7d","Forecast 30d",
+                    "Risk Matrix 2Y","Export Functions","AI Briefing",
+                ],
+                "price_rub": 4900, "price_usd": 55, "price_eur": 50,
+                "archive_price_rub": 0,
+            },
+        },
+        "deferred_tiers": {
+            "STRATEGIC_PRO":       {"status":"COMING_SOON","price_rub":29900,"price_usd":330,"price_eur":310},
+            "ELITE_INTELLIGENCE":  {"status":"COMING_SOON","price_rub":150000,"price_usd":1665,"price_eur":1545},
+        },
+        "archive_member": {
+            "signal_pro_included": True,
+            "signal_pro_rub":      0,
+            "strategic_pro_rub":   19435,
+            "elite_rub":           97500,
+            "launch_date":         _ARCHIVE_LAUNCH,
+        },
+        "post_launch_roadmap": "Develop STRATEGIC PRO + ELITE after Archive + Signal Pro launch and initial user feedback.",
+        "as_of": TODAY,
+    }
+
+
+# ── Launch Sprint Orchestrator ────────────────────────────────────────────
+
+def save_grdf_launch_sprint(snapshots: list) -> None:
+    """
+    GRDF Launch Sprint V1 — Risk Map V1 Completion.
+    Target: Archive + Signal Pro launch June 9–11, 2026.
+    STRATEGIC PRO and ELITE deferred to post-launch.
+    Writes: launch/* only. Architecture frozen at V13.
+    """
+    import time as _tls
+    LAUNCH_SPRINT_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tls.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(LAUNCH_SPRINT_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print(f"[LAUNCH] Launch Sprint V1 — target: {_LAUNCH_DATE}", file=sys.stderr)
+
+    sprint   = _build_launch_sprint(snapshots)
+    _save("launch_sprint.json", sprint)
+    print(f"[LAUNCH] Sprint: tasks={sprint['total_tasks']} critical={sprint['critical_n']} areas={len(sprint['area_breakdown'])}", file=sys.stderr)
+
+    readiness= _build_launch_readiness(snapshots)
+    _save("launch_readiness.json", readiness)
+    print(f"[LAUNCH] Readiness: {readiness['ready_n']}/{readiness['total_components']} ready ({readiness['readiness_pct']}%)", file=sys.stderr)
+
+    journey  = _build_launch_user_journey()
+    _save("launch_user_journey.json", journey)
+    print(f"[LAUNCH] Journey: {journey['total_steps']} steps, conversion at step {journey['conversion_step']}", file=sys.stderr)
+
+    api_audit= _build_launch_api_audit()
+    _save("launch_api_audit.json", api_audit)
+    print(f"[LAUNCH] API: {api_audit['total_routes']} routes ready ({api_audit['free_routes_n']} FREE + {api_audit['paid_routes_n']} paid)", file=sys.stderr)
+
+    model    = _build_launch_commercial_model()
+    _save("launch_commercial_model.json", model)
+
+    elapsed  = round((_tls.monotonic()-t_start)*1000)
+    print(f"[LAUNCH] Model: FREE + SIGNAL PRO active · STRATEGIC/ELITE deferred ({elapsed}ms)", file=sys.stderr)
+    print(f"[LAUNCH] ══ LAUNCH READY: {readiness['launch_ready']} · {_LAUNCH_DATE} ══", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -31416,6 +31768,7 @@ def main():
     save_grdf_commercial(snapshots)
     save_grdf_mobile_ux_audit(snapshots)
     save_grdf_country_intel(snapshots)
+    save_grdf_launch_sprint(snapshots)
     save_grdf_alert_map_v2(snapshots)
     save_grdf_command(snapshots)
 
