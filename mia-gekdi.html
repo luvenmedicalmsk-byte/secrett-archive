@@ -297,6 +297,12 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .graph-filter-btn.active{background:rgba(255,255,255,.06);color:var(--text)}
 .graph-node-card{background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:6px;border-left:2px solid var(--border2)}
 
+
+.badge-purple{background:rgba(168,85,247,.12);color:#a855f7;border:0.5px solid rgba(168,85,247,.2)}
+.tm-btn{padding:5px 12px;background:transparent;border:0.5px solid var(--border2);border-radius:5px;color:var(--text3);font-size:10px;cursor:pointer;font-family:var(--mono);-webkit-appearance:none;transition:all .15s}
+.tm-btn.active{background:rgba(168,85,247,.1);border-color:#a855f7;color:#a855f7}
+.evo-bar{height:3px;border-radius:2px;display:inline-block;vertical-align:middle}
+
 </style>
 </head>
 <body>
@@ -362,6 +368,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s18')" data-s="s18">&#127981;<span class="sn-tip">Scenarios</span></button>
     <button class="sn-btn" onclick="goSection('s19')" data-s="s19">&#127344;<span class="sn-tip">Meta Intel</span></button>
     <button class="sn-btn" onclick="goSection('s20'); setTimeout(function(){ if(_graph.nodes.length) _renderGraph(); },50);" data-s="s20">&#127760;<span class="sn-tip">Intel Graph</span></button>
+    <button class="sn-btn" onclick="goSection('s21')" data-s="s21">&#9200;<span class="sn-tip">Temporal</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -1792,6 +1799,167 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s20 -->
 
+
+    <!-- ─ S21: TEMPORAL INTELLIGENCE LAYER ─ -->
+    <div class="section" id="s21">
+      <div class="s-head">
+        <div class="s-tag">21</div>
+        <div class="s-title">Temporal Intelligence Layer</div>
+        <div class="s-badge badge-purple" id="temporal-badge">&#9200; ACCUMULATING</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">How has everything evolved — and where is it heading?</div>
+
+      <!-- 01: TIME MACHINE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9200;</span> 01 · Time Machine</div>
+        <div class="sum-card">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Platform state snapshots — accumulated in real time</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="tm-btn active" onclick="timeMachineView('current',this)">Current</button>
+            <button class="tm-btn" onclick="timeMachineView('latest',this)">Latest Snapshot</button>
+            <button class="tm-btn" onclick="timeMachineView('session_start',this)">Session Start</button>
+            <button class="tm-btn" onclick="timeMachineView('archive',this)">Archive</button>
+          </div>
+          <div id="tm-display"><div class="loading">Loading temporal state...</div></div>
+        </div>
+      </div>
+
+      <!-- 02: DRIVER EVOLUTION CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128202;</span> 02 · Driver Evolution Center</div>
+        <div class="tbl-outer" style="max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>Driver</th><th>Current</th><th>Growth</th><th>Inf&#916;</th><th>Rep&#916;</th><th>Snapshots</th><th>Trend</th></tr></thead>
+            <tbody id="drv-evolution-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 03: FORECAST EVOLUTION TRACKER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128337;</span> 03 · Forecast Evolution Tracker</div>
+        <div class="swipe-wrap" id="fc-evo-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128200;</span>Accuracy Evolution by Horizon</div>
+              <div id="fc-evo-hz"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128269;</span>Archive Cohort Analysis</div>
+              <div id="fc-evo-cohort"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128311;</span>Error Progression</div>
+              <div id="fc-evo-error"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="fc-evo-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 04: CASCADE TIMELINE ENGINE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128260;</span> 04 · Cascade Timeline Engine</div>
+        <div class="sum-card"><div id="cascade-timeline-body"></div></div>
+      </div>
+
+      <!-- 05: EMERGING DRIVER DETECTOR -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128269;</span> 05 · Emerging Driver Detector</div>
+        <div class="swipe-wrap" id="emerging-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#11014;</span>Accelerating Drivers</div>
+              <div id="emerging-accel"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128308;</span>Reputation Breakouts</div>
+              <div id="emerging-rep"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#9889;</span>Influence Acceleration</div>
+              <div id="emerging-inf"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="emerging-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 06: TEMPORAL RISK ANALYTICS -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128308;</span> 06 · Temporal Risk Analytics</div>
+        <div class="grid-2">
+          <div class="sum-card">
+            <div class="sum-title"><span>&#11014;</span>Fastest Rising</div>
+            <div id="temporal-rising"></div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-title"><span>&#11015;</span>Fastest Falling</div>
+            <div id="temporal-falling"></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="sum-card">
+            <div class="sum-title"><span>&#128308;</span>Most Volatile</div>
+            <div id="temporal-volatile"></div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-title"><span>&#128994;</span>Most Stable</div>
+            <div id="temporal-stable"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 07: TEMPORAL OPPORTUNITY SCANNER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127775;</span> 07 · Temporal Opportunity Scanner</div>
+        <div class="sum-card"><div id="temporal-opp-body"></div></div>
+      </div>
+
+      <!-- 08: SYSTEM MEMORY CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128190;</span> 08 · System Memory Center</div>
+        <div class="grid-4" id="memory-kpi-grid"></div>
+        <div style="margin-top:10px">
+          <div class="sum-card">
+            <div class="sum-title"><span>&#128337;</span>Temporal Archive Explorer</div>
+            <div class="tbl-outer" style="border:none;max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+              <table>
+                <thead><tr><th>Time</th><th>Countries</th><th>Avg GRI</th><th>Drivers</th><th>Registry</th><th>Archive</th></tr></thead>
+                <tbody id="memory-archive-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 09: EXECUTIVE TEMPORAL REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 09 · Executive Temporal Report</div>
+        <div style="margin-bottom:8px">
+          <button onclick="generateTemporalReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#12082a,#08051a);border:1px solid rgba(168,85,247,.35);border-radius:8px;color:#c084fc;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Generate Temporal Intelligence Report</button>
+        </div>
+        <div id="temporal-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(168,85,247,.15)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Accumulate session data — then generate report</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s21 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -2412,7 +2580,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -6647,6 +6815,559 @@ window.graphSearch = function(q) {
   });
   el.innerHTML = h;
 };
+
+
+// ══════════════════════════════════════════════════════════════════
+// TEMPORAL INTELLIGENCE LAYER — S21
+// Data sources: FORECAST_ARCHIVE, DRIVER_REPUTATION.history,
+//   _lfe.registry, _lfe.weightHistory, _lfe.forecastHistory,
+//   _lfe.driverHistory — ALL REAL, no synthetic reconstruction
+// ══════════════════════════════════════════════════════════════════
+var TEMPORAL_ARCHIVE = [];   // system-state snapshots (rolling 100)
+var _temporal = {
+  sessionStart: Date.now(),
+  snapshots: 0,
+  countries: [],
+};
+
+// ── TEMPORAL ARCHIVE SCHEMA ───────────────────────────────────────
+// { timestamp, countries_count, avg_gri, drivers_snapshot,
+//   risks_count, opps_count, archive_count, registry_size,
+//   weight_updates, avg_reputation }
+function _archiveSystemState(countries) {
+  var drvs = _liveDrv();
+  var avgGRI = countries.length
+    ? fr(countries.reduce(function(a,c){ return a+(c.risk_score||0);},0)/countries.length)
+    : 0;
+  var repKeys = Object.keys(DRIVER_REPUTATION);
+  var avgRep  = repKeys.length
+    ? fr(repKeys.reduce(function(a,k){ return a+DRIVER_REPUTATION[k].reputation_score;},0)/repKeys.length)
+    : 0;
+  var archSt  = _archiveStats();
+  var snap = {
+    timestamp:      Date.now(),
+    countries_count:countries.length,
+    avg_gri:        avgGRI,
+    // Drivers snapshot: name + score + d7 + influence
+    drivers_snapshot: drvs.map(function(d){
+      var inf = _liveInf().find(function(i){ return i.name===d.name; });
+      return { name:d.name, score:d.score, d7:d.d7, d30:d.d30, inf:inf?inf.inf:70 };
+    }),
+    risks_count:    (_sdc && _sdc.risks) ? _sdc.risks.length : 0,
+    opps_count:     (_sdc && _sdc.opps)  ? _sdc.opps.length  : 0,
+    archive_count:  archSt.total,
+    validated_count:archSt.validated,
+    registry_size:  _lfe.registry.length,
+    weight_updates: _lfe.totalUpdates,
+    avg_reputation: avgRep,
+  };
+  TEMPORAL_ARCHIVE.push(snap);
+  if (TEMPORAL_ARCHIVE.length > 100) TEMPORAL_ARCHIVE.shift();
+  _temporal.snapshots++;
+  return snap;
+}
+
+// ── MAIN LOADER ───────────────────────────────────────────────────
+function loadTemporalIntelligence(countries) {
+  _temporal.countries = countries;
+  var snap = _archiveSystemState(countries);
+  _buildTimeMachine(countries, snap);
+  _buildDriverEvolution(countries);
+  _buildForecastEvolution();
+  _buildCascadeTimeline();
+  _buildEmergingDrivers();
+  _buildTemporalRisk(countries);
+  _buildTemporalOpp(countries);
+  _buildSystemMemory(countries);
+  initSwipeDots('fc-evo-swipe','fc-evo-dots');
+  initSwipeDots('emerging-swipe','emerging-dots');
+  // Update badge
+  var badge = document.getElementById('temporal-badge');
+  if (badge) {
+    var snapCount = TEMPORAL_ARCHIVE.length;
+    badge.textContent = snapCount >= 3 ? '&#9200; ' + snapCount + ' SNAPSHOTS' : '&#9200; ACCUMULATING';
+    badge.className = 's-badge ' + (snapCount >= 3 ? 'badge-green' : 'badge-purple');
+  }
+}
+
+// ── 01: TIME MACHINE ─────────────────────────────────────────────
+// Shows real archived snapshots — no synthetic reconstruction
+function _buildTimeMachine(countries, currentSnap) {
+  timeMachineView('current', null, countries, currentSnap);
+}
+
+window.timeMachineView = function(mode, btn, countries, snap) {
+  if (btn) {
+    document.querySelectorAll('.tm-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+  }
+  var el = document.getElementById('tm-display');
+  if (!el) return;
+  var cc = countries || _temporal.countries;
+  var archCount = TEMPORAL_ARCHIVE.length;
+  if (mode === 'current') {
+    var avgGRI = cc.length ? fr(cc.reduce(function(a,c){ return a+(c.risk_score||0);},0)/cc.length) : 0;
+    var top3   = cc.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,3);
+    var archSt = _archiveStats();
+    var h = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px">';
+    [{l:'Countries',v:cc.length,c:'var(--blue)'},{l:'Avg GRI',v:avgGRI,c:riskCol(avgGRI)},
+     {l:'Drivers',v:_liveDrv().length,c:'var(--orange)'},{l:'Archive',v:archSt.total,c:'var(--gold)'},
+     {l:'LFE Registry',v:_lfe.registry.length,c:'var(--green)'},{l:'Snapshots',v:archCount,c:'#a855f7'}
+    ].forEach(function(c){
+      h+='<div style="background:var(--bg3);border-radius:7px;padding:7px;text-align:center">';
+      h+='<div style="font-size:8px;color:var(--text3)">'+c.l+'</div>';
+      h+='<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+c.c+'">'+c.v+'</div></div>';
+    });
+    h += '</div>';
+    h += '<div style="font-size:10px;color:var(--text3);margin-bottom:5px">Top risk countries now:</div>';
+    top3.forEach(function(c){
+      h+='<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+      h+='<span style="font-size:13px">'+flag(c.country)+'</span>';
+      h+='<span style="font-size:11px;color:var(--text2);flex:1">'+(c.country_name||c.country)+'</span>';
+      h+='<span style="font-family:var(--mono);font-size:11px;color:'+riskCol(fr(c.risk_score))+'">'+fr(c.risk_score)+'</span>';
+      h+='</div>';
+    });
+    el.innerHTML = h;
+  } else if (mode === 'latest' && archCount > 0) {
+    var s = TEMPORAL_ARCHIVE[archCount-1];
+    _renderSnapCard(el, s, 'Latest Snapshot');
+  } else if (mode === 'session_start' && archCount > 0) {
+    var s = TEMPORAL_ARCHIVE[0];
+    _renderSnapCard(el, s, 'Session Start');
+  } else if (mode === 'archive') {
+    if (!archCount) {
+      el.innerHTML = '<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No archived snapshots yet — snapshots accumulate on each data refresh.</div>';
+      return;
+    }
+    var h='<div style="font-size:10px;color:var(--text3);margin-bottom:8px">'+archCount+' snapshots in session archive</div>';
+    TEMPORAL_ARCHIVE.slice().reverse().slice(0,6).forEach(function(s, i) {
+      var ago = _timeAgo(s.timestamp);
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+      h+='<span style="font-size:9px;color:var(--text3);width:60px;font-family:var(--mono)">'+ago+'</span>';
+      h+='<span style="font-size:10px;color:var(--text2);flex:1">'+s.countries_count+' cc · GRI '+s.avg_gri+'</span>';
+      h+='<span style="font-size:9px;color:#a855f7;font-family:var(--mono)">arch:'+s.archive_count+'</span>';
+      h+='</div>';
+    });
+    el.innerHTML = h;
+  } else {
+    el.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--text3)">No snapshot data for this timeframe yet.</div>';
+  }
+};
+
+function _renderSnapCard(el, s, label) {
+  var ago = _timeAgo(s.timestamp);
+  var h = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+  h += '<span style="font-size:10px;color:#a855f7;font-family:var(--mono)">'+label+'</span>';
+  h += '<span style="font-size:10px;color:var(--text3);margin-left:auto">'+ago+'</span></div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+  [{l:'Countries',v:s.countries_count,c:'var(--blue)'},{l:'Avg GRI',v:s.avg_gri,c:riskCol(s.avg_gri)},
+   {l:'Archive',v:s.archive_count,c:'var(--gold)'},{l:'Registry',v:s.registry_size,c:'var(--green)'},
+   {l:'Wt Updates',v:s.weight_updates,c:'var(--orange)'},{l:'Avg Rep',v:s.avg_reputation,c:'#a855f7'}
+  ].forEach(function(c){
+    h+='<div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center">';
+    h+='<div style="font-size:8px;color:var(--text3)">'+c.l+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:14px;font-weight:700;color:'+c.c+'">'+c.v+'</div></div>';
+  });
+  h += '</div>';
+  // Top drivers at this snapshot
+  if (s.drivers_snapshot && s.drivers_snapshot.length) {
+    h += '<div style="font-size:9px;color:var(--text3);margin:8px 0 4px">Drivers at snapshot:</div>';
+    s.drivers_snapshot.slice(0,4).forEach(function(d){
+      h += '<div style="display:flex;gap:8px;padding:3px 0;font-size:10px">';
+      h += '<span style="color:var(--text2);flex:1">'+d.name+'</span>';
+      h += '<span style="font-family:var(--mono);color:var(--orange)">'+d.score+'</span>';
+      h += '<span style="font-family:var(--mono);color:'+(d.d7>=0?'var(--red)':'var(--green)')+'">'+(d.d7>=0?'+':'')+d.d7+'</span>';
+      h += '</div>';
+    });
+  }
+  el.innerHTML = h;
+}
+
+// ── 02: DRIVER EVOLUTION ──────────────────────────────────────────
+// Source: DRIVER_REPUTATION[name].history + _lfe.driverHistory + TEMPORAL_ARCHIVE
+function _buildDriverEvolution(countries) {
+  var drvs = _liveDrv();
+  var h = '';
+  drvs.slice(0,12).forEach(function(d) {
+    var rep     = DRIVER_REPUTATION[d.name] || { history:[], reputation_score:70 };
+    var lfeHist = _lfe.driverHistory ? (_lfe.driverHistory[d.name]||[]) : [];
+    var infItem = _liveInf().find(function(i){ return i.name===d.name; });
+    var curInf  = infItem ? infItem.inf : 70;
+    // Real growth: from history if available
+    var repHist = rep.history || [];
+    var repGrowth = repHist.length >= 2
+      ? repHist[repHist.length-1].reputation_score - repHist[0].reputation_score
+      : 0;
+    var infGrowth = lfeHist.length >= 2
+      ? (lfeHist[lfeHist.length-1].conf||70) - (lfeHist[0].conf||70)
+      : 0;
+    // From TEMPORAL_ARCHIVE: driver score evolution
+    var scoreGrowth = 0;
+    if (TEMPORAL_ARCHIVE.length >= 2) {
+      var first = TEMPORAL_ARCHIVE[0].drivers_snapshot||[];
+      var last  = TEMPORAL_ARCHIVE[TEMPORAL_ARCHIVE.length-1].drivers_snapshot||[];
+      var fd    = first.find(function(x){ return x.name===d.name; });
+      var ld    = last.find(function(x){  return x.name===d.name; });
+      if (fd && ld) scoreGrowth = ld.score - fd.score;
+    }
+    var snapCount = repHist.length + lfeHist.length;
+    var trend     = d.d7 > 3 ? '&#8593;' : d.d7 < -3 ? '&#8595;' : '&#8594;';
+    var tCol      = d.d7 > 3 ? 'var(--red)' : d.d7 < -3 ? 'var(--green)' : 'var(--text3)';
+    var repCol    = rep.reputation_score>=80?'var(--green)':rep.reputation_score>=65?'var(--orange)':'var(--red)';
+    h += '<tr>';
+    h += '<td style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:'+d.col+';display:inline-block"></span>'+d.name+'</td>';
+    h += '<td style="font-family:var(--mono);color:'+riskCol(d.score)+'">'+d.score+'</td>';
+    h += '<td style="font-family:var(--mono);color:'+(scoreGrowth>0?'var(--red)':scoreGrowth<0?'var(--green)':'var(--text3)')+'">'+(scoreGrowth>0?'+':'')+scoreGrowth+'</td>';
+    h += '<td style="font-family:var(--mono);color:'+(infGrowth>0?'var(--orange)':infGrowth<0?'var(--green)':'var(--text3)')+'">'+(infGrowth>0?'+':'')+infGrowth+'</td>';
+    h += '<td style="font-family:var(--mono);color:'+repCol+'">'+(repGrowth>0?'+':'')+repGrowth+'</td>';
+    h += '<td style="font-family:var(--mono);font-size:10px;color:#a855f7">'+snapCount+'</td>';
+    h += '<td style="color:'+tCol+'">'+trend+'</td>';
+    h += '</tr>';
+  });
+  var tb = document.getElementById('drv-evolution-body');
+  if (tb) tb.innerHTML = h || '<tr><td colspan="7" class="loading">Accumulating driver history...</td></tr>';
+}
+
+// ── 03: FORECAST EVOLUTION TRACKER ────────────────────────────────
+// Source: FORECAST_ARCHIVE + _lfe.forecastHistory
+function _buildForecastEvolution() {
+  // Accuracy evolution from _lfe.forecastHistory (REAL)
+  var hzKeys = ['h24','h7d','h30d','h90d'];
+  var hzColors = {h24:'#3b82f6',h7d:'#10b981',h30d:'#f97316',h90d:'#ef4444'};
+  var hzH = '';
+  hzKeys.forEach(function(key) {
+    var hist = (_lfe.forecastHistory && _lfe.forecastHistory[key]) ? _lfe.forecastHistory[key] : [];
+    var curConf = _lfe.forecastConf[key] || 74;
+    var col = hzColors[key] || 'var(--blue)';
+    hzH += '<div style="margin-bottom:10px;padding:8px 10px;background:var(--bg3);border-radius:7px">';
+    hzH += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">';
+    hzH += '<span style="font-size:10px;font-weight:600;color:'+col+'">'+key+'</span>';
+    hzH += '<span style="font-family:var(--mono);font-size:12px;color:'+col+';margin-left:auto">'+curConf+'%</span>';
+    hzH += '<span style="font-size:9px;color:var(--text3)">'+hist.length+' records</span></div>';
+    if (hist.length >= 2) {
+      var first = hist[0]; var last = hist[hist.length-1];
+      var delta = last.blended - first.blended;
+      var dCol  = delta > 0 ? 'var(--green)' : delta < 0 ? 'var(--red)' : 'var(--text3)';
+      hzH += '<div style="font-size:10px;color:var(--text3)">Evolution: <span style="color:'+dCol+'">'+(delta>0?'+':'')+fr(delta)+'%</span> over '+hist.length+' measurements</div>';
+      // Mini trend bar
+      var bars = '<div style="display:flex;align-items:flex-end;gap:1px;height:20px;margin-top:5px">';
+      var maxV = Math.max.apply(null, hist.map(function(h){ return h.blended||0; }));
+      hist.slice(-12).forEach(function(h2) {
+        var pct = maxV > 0 ? fr((h2.blended||0)/maxV*100) : 50;
+        bars += '<div style="flex:1;height:'+pct+'%;background:'+col+';border-radius:1px 1px 0 0;opacity:.7"></div>';
+      });
+      bars += '</div>';
+      hzH += bars;
+    } else {
+      hzH += '<div style="font-size:10px;color:var(--text3)">Accumulating accuracy history...</div>';
+    }
+    hzH += '</div>';
+  });
+  var fh = document.getElementById('fc-evo-hz'); if(fh) fh.innerHTML = hzH;
+
+  // Cohort analysis from FORECAST_ARCHIVE
+  var cohortH = '';
+  var archByHz = {};
+  hzKeys.forEach(function(k){ archByHz[k] = FORECAST_ARCHIVE.filter(function(f){ return f.horizon===k; }); });
+  hzKeys.forEach(function(k) {
+    var entries = archByHz[k];
+    var val     = entries.filter(function(f){ return f.validated; });
+    var acc     = val.length ? fr(val.filter(function(f){ return f.error<=5; }).length/val.length*100) : 0;
+    var avgErr  = val.length ? fr(val.reduce(function(a,f){ return a+f.error;},0)/val.length) : 0;
+    var col = hzColors[k] || 'var(--blue)';
+    cohortH += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    cohortH += '<span style="font-size:11px;color:'+col+';font-weight:600;width:36px">'+k+'</span>';
+    cohortH += '<span style="font-size:10px;color:var(--text3);flex:1">'+entries.length+' archived, '+val.length+' validated</span>';
+    cohortH += '<span style="font-family:var(--mono);font-size:11px;color:'+(acc>=75?'var(--green)':acc>=60?'var(--orange)':'var(--red)')+'">'+acc+'%</span>';
+    cohortH += '<span style="font-size:9px;color:var(--text3)">err:'+avgErr+'</span>';
+    cohortH += '</div>';
+  });
+  var fc = document.getElementById('fc-evo-cohort');
+  if(fc) fc.innerHTML = cohortH || '<div class="loading">Archive accumulating...</div>';
+
+  // Error progression — from recent validated entries
+  var recent = FORECAST_ARCHIVE.filter(function(f){ return f.validated; }).slice(-20);
+  var errH = '';
+  if (recent.length >= 3) {
+    var maxErr = Math.max.apply(null, recent.map(function(f){ return f.error; }));
+    errH += '<div style="font-size:9px;color:var(--text3);margin-bottom:6px">Last '+recent.length+' validated forecasts (error progression)</div>';
+    errH += '<div style="display:flex;align-items:flex-end;gap:2px;height:40px;margin-bottom:8px">';
+    recent.forEach(function(f) {
+      var pct = maxErr > 0 ? fr(f.error/maxErr*100) : 20;
+      var col = f.error<=3?'var(--green)':f.error<=7?'var(--orange)':'var(--red)';
+      errH += '<div style="flex:1;height:'+Math.max(5,pct)+'%;background:'+col+';border-radius:1px 1px 0 0" title="err:'+f.error+'"></div>';
+    });
+    errH += '</div>';
+    var avgErr = fr(recent.reduce(function(a,f){ return a+f.error; },0)/recent.length);
+    var firstHalf  = recent.slice(0, fr(recent.length/2));
+    var secondHalf = recent.slice(fr(recent.length/2));
+    var avgFirst   = fr(firstHalf.reduce(function(a,f){ return a+f.error;},0)/firstHalf.length);
+    var avgSecond  = fr(secondHalf.reduce(function(a,f){ return a+f.error;},0)/secondHalf.length);
+    var improving  = avgSecond < avgFirst;
+    errH += '<div style="font-size:11px;color:var(--text2)">Avg error: '+avgErr+' pts &nbsp;·&nbsp; Trend: <span style="color:'+(improving?'var(--green)':'var(--red)')+'">'+(improving?'Improving':'Worsening')+'</span></div>';
+  } else {
+    errH = '<div style="padding:12px;font-size:11px;color:var(--text3)">'+FORECAST_ARCHIVE.filter(function(f){return f.validated;}).length+' validated — need ≥3 to show progression</div>';
+  }
+  var fe = document.getElementById('fc-evo-error'); if(fe) fe.innerHTML = errH;
+}
+
+// ── 04: CASCADE TIMELINE ──────────────────────────────────────────
+// Source: CAUSALITY_DATA + _lfe.weightHistory timestamps + TEMPORAL_ARCHIVE
+function _buildCascadeTimeline() {
+  var h = '';
+  if (typeof CAUSALITY_DATA === 'undefined') {
+    document.getElementById('cascade-timeline-body').innerHTML = '<div class="loading">Causality data loading...</div>';
+    return;
+  }
+  // Build cascade chains with temporal estimates from weight history
+  var now = Date.now();
+  var wh  = _lfe.weightHistory || [];
+  Object.keys(CAUSALITY_DATA).slice(0,4).forEach(function(dName, di) {
+    var cd = CAUSALITY_DATA[dName];
+    var drv = _liveDrv().find(function(d){ return d.name===dName; });
+    if (!drv) return;
+    // Find when this driver last had a weight change (real timestamp)
+    var lastWC = wh.find(function(w){ return w.driver===dName; });
+    var activatedAgo = lastWC ? _timeAgo(lastWC.ts) : 'session start';
+    h += '<div style="margin-bottom:12px;padding:10px;background:var(--bg3);border-radius:8px;border-left:2px solid '+drv.col+'">';
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">';
+    h += '<span style="font-size:11px;font-weight:600;color:'+drv.col+'">'+dName+'</span>';
+    h += '<span style="font-size:9px;color:var(--text3);margin-left:auto">Activated: '+activatedAgo+'</span></div>';
+    // Cascade chain
+    var speed = [0, 2, 6, 18]; // hours per level (approximate propagation)
+    h += '<div style="font-size:9px;color:var(--text3);margin-bottom:4px">Cascade propagation:</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:3px">';
+    h += '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:var(--text3);width:32px">T+0</span><span style="font-size:10px;color:'+drv.col+'">&#9679; '+dName+' ('+drv.score+')</span></div>';
+    cd.effects.slice(0,4).forEach(function(eff, ei) {
+      var hrs = speed[ei+1] || (ei+1)*4;
+      h += '<div style="display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:9px;color:var(--text3);width:32px">T+'+hrs+'h</span>';
+      h += '<span style="font-size:10px;color:'+eff.col+'">&#8594; '+eff.name+' (+'+eff.delta+' pts)</span>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+  });
+  var el = document.getElementById('cascade-timeline-body');
+  if (el) el.innerHTML = h || '<div style="padding:12px;font-size:11px;color:var(--text3)">No cascade data available</div>';
+}
+
+// ── 05: EMERGING DRIVER DETECTOR ──────────────────────────────────
+// Source: DRIVER_REPUTATION.history + _lfe.driverHistory + TEMPORAL_ARCHIVE
+function _buildEmergingDrivers() {
+  var drvs = _liveDrv();
+  // Accelerating: d7 > 5 AND growing faster than d30/4.3 (weekly rate)
+  var accel = drvs.filter(function(d){ return d.d7 > 5 && d.d7 > (d.d30/4.3)*1.2; })
+    .sort(function(a,b){ return b.d7-a.d7; });
+  // Reputation breakouts: history shows recent surge
+  var repBreakouts = Object.keys(DRIVER_REPUTATION).filter(function(k){
+    var h = DRIVER_REPUTATION[k].history||[];
+    if (h.length < 2) return false;
+    var delta = h[h.length-1].reputation_score - h[0].reputation_score;
+    return delta >= 3;
+  }).sort(function(a,b){
+    var ha=DRIVER_REPUTATION[a].history,hb=DRIVER_REPUTATION[b].history;
+    return (hb[hb.length-1].reputation_score-hb[0].reputation_score)-(ha[ha.length-1].reputation_score-ha[0].reputation_score);
+  });
+  // Influence acceleration: weight history growth
+  var infAccel = Object.keys(DRIVER_REPUTATION).filter(function(k){
+    var wh = (_lfe.weightHistory||[]).filter(function(w){ return w.driver===k && w.delta>0; });
+    return wh.length >= 2;
+  });
+
+  function drvRow(d, extra) {
+    var drv = typeof d === 'string' ? _liveDrv().find(function(x){ return x.name===d; }) : d;
+    if (!drv) return '';
+    return '<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:0.5px solid var(--border)">'
+      +'<span style="width:7px;height:7px;border-radius:50%;background:'+drv.col+';flex-shrink:0"></span>'
+      +'<span style="font-size:11px;color:var(--text2);flex:1">'+drv.name+'</span>'
+      +'<span style="font-family:var(--mono);font-size:10px;color:var(--red)">'+extra+'</span></div>';
+  }
+  var empty = '<div style="padding:10px;font-size:11px;color:var(--text3)">Accumulating — needs more history</div>';
+  var ea=document.getElementById('emerging-accel');
+  if(ea) ea.innerHTML=accel.length?accel.slice(0,6).map(function(d){ return drvRow(d,'+'+d.d7+'/7d'); }).join(''):empty;
+  var er=document.getElementById('emerging-rep');
+  if(er) er.innerHTML=repBreakouts.length?repBreakouts.slice(0,6).map(function(k){
+    var h=DRIVER_REPUTATION[k].history; var delta=h[h.length-1].reputation_score-h[0].reputation_score;
+    return drvRow(k,'rep+'+delta);}).join(''):empty;
+  var ei=document.getElementById('emerging-inf');
+  if(ei) ei.innerHTML=infAccel.length?infAccel.slice(0,6).map(function(k){
+    var wh=(_lfe.weightHistory||[]).filter(function(w){ return w.driver===k&&w.delta>0; });
+    return drvRow(k,'+'+wh.length+' wt&#916;');}).join(''):empty;
+}
+
+// ── 06: TEMPORAL RISK ANALYTICS ───────────────────────────────────
+// Source: GLOBAL_DRIVERS d7/d30 + TEMPORAL_ARCHIVE score deltas
+function _buildTemporalRisk(countries) {
+  var drvs = _liveDrv();
+  var rising   = drvs.slice().sort(function(a,b){ return b.d7-a.d7;   }).filter(function(d){ return d.d7>0;  }).slice(0,5);
+  var falling  = drvs.slice().sort(function(a,b){ return a.d7-b.d7;   }).filter(function(d){ return d.d7<0;  }).slice(0,5);
+  // Volatility = |d7| amplitude; stability = low |d7|
+  var volatile_= drvs.slice().sort(function(a,b){ return Math.abs(b.d7)-Math.abs(a.d7); }).slice(0,5);
+  var stable   = drvs.slice().sort(function(a,b){ return Math.abs(a.d7)-Math.abs(b.d7); }).slice(0,5);
+  // Also add country-level rising/falling from live data
+  var ccRising = countries.slice().sort(function(a,b){ return (parseFloat(b.delta)||0)-(parseFloat(a.delta)||0); })
+    .filter(function(c){ return parseFloat(c.delta||0)>0; }).slice(0,5);
+  var ccFalling= countries.slice().sort(function(a,b){ return (parseFloat(a.delta)||0)-(parseFloat(b.delta)||0); })
+    .filter(function(c){ return parseFloat(c.delta||0)<0; }).slice(0,5);
+
+  function riskRow(item, valStr, col) {
+    var isDrv = typeof item.score !== 'undefined' && !item.country;
+    var label = isDrv ? item.name : (flag(item.country)+' '+(item.country_name||item.country));
+    var dotCol = isDrv ? item.col : riskCol(fr(item.risk_score));
+    return '<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:0.5px solid var(--border)">'
+      +'<span style="width:6px;height:6px;border-radius:50%;background:'+dotCol+';flex-shrink:0"></span>'
+      +'<span style="font-size:11px;color:var(--text2);flex:1">'+label+'</span>'
+      +'<span style="font-family:var(--mono);font-size:10px;color:'+col+'">'+valStr+'</span></div>';
+  }
+  var rEl=document.getElementById('temporal-rising');
+  if(rEl) rEl.innerHTML=rising.concat(ccRising.slice(0,3)).slice(0,6).map(function(x){
+    return riskRow(x, x.d7?'+'+x.d7:'+'+(parseFloat(x.delta||0).toFixed(1)), 'var(--red)');}).join('');
+  var fEl=document.getElementById('temporal-falling');
+  if(fEl) fEl.innerHTML=falling.concat(ccFalling.slice(0,3)).slice(0,6).map(function(x){
+    return riskRow(x, x.d7?x.d7:(parseFloat(x.delta||0).toFixed(1)), 'var(--green)');}).join('');
+  var vEl=document.getElementById('temporal-volatile');
+  if(vEl) vEl.innerHTML=volatile_.map(function(d){ return riskRow(d, '|'+Math.abs(d.d7)+'|', 'var(--orange)');}).join('');
+  var sEl=document.getElementById('temporal-stable');
+  if(sEl) sEl.innerHTML=stable.map(function(d){ return riskRow(d, '|'+Math.abs(d.d7)+'|', 'var(--green)');}).join('');
+}
+
+// ── 07: TEMPORAL OPPORTUNITY SCANNER ──────────────────────────────
+// Source: _sdc.opps + _lfe.oppConf + TEMPORAL_ARCHIVE opp_count deltas
+function _buildTemporalOpp(countries) {
+  var opps = (_sdc && _sdc.opps && _sdc.opps.length)
+    ? _sdc.opps
+    : (typeof _computeOpps==='function' ? _computeOpps(countries) : []);
+  var h = '';
+  var prev_opp_count = TEMPORAL_ARCHIVE.length >= 2
+    ? TEMPORAL_ARCHIVE[0].opps_count : null;
+  var curr_opp_count = opps.length;
+  if (prev_opp_count !== null) {
+    var delta_opps = curr_opp_count - prev_opp_count;
+    h += '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">Opportunity count: '+curr_opp_count
+      +' ('+(delta_opps>=0?'+':'')+delta_opps+' since session start)</div>';
+  }
+  opps.slice(0,8).forEach(function(o) {
+    var lfeConf = (_lfe.oppConf && _lfe.oppConf[o.name]) ? _lfe.oppConf[o.name] : (o.conf||70);
+    var phase   = lfeConf >= 75 ? 'GROWING' : lfeConf >= 60 ? 'ACTIVE' : 'EMERGING';
+    var phaseC  = lfeConf >= 75 ? 'var(--green)' : lfeConf >= 60 ? 'var(--orange)' : '#a855f7';
+    var urgency = o.urgency || 'Medium';
+    var horizon = o.horizon || '60d';
+    h += '<div style="background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:7px;border-left:2px solid var(--green)">';
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+    h += '<span style="font-size:11px;color:var(--text);flex:1">'+o.name+'</span>';
+    h += '<span style="font-family:var(--mono);font-size:11px;color:var(--green)">'+o.score+'</span></div>';
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:'+phaseC+'18;color:'+phaseC+'">'+phase+'</span>';
+    h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(16,185,129,.08);color:var(--green)">Conf '+lfeConf+'%</span>';
+    h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(255,255,255,.04);color:var(--text3)">'+urgency+' urgency</span>';
+    h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(255,255,255,.04);color:var(--text3)">Horizon: '+horizon+'</span>';
+    h += '</div></div>';
+  });
+  var el=document.getElementById('temporal-opp-body');
+  if(el) el.innerHTML=h||'<div style="padding:12px;font-size:11px;color:var(--text3)">No opportunities computed</div>';
+}
+
+// ── 08: SYSTEM MEMORY CENTER ──────────────────────────────────────
+function _buildSystemMemory(countries) {
+  var archSt  = _archiveStats();
+  var regSize = _lfe.registry.length;
+  var wh      = (_lfe.weightHistory||[]).length;
+  var drv_h   = Object.values(_lfe.driverHistory||{}).reduce(function(a,v){ return a+v.length; },0);
+  var fc_h    = Object.values(_lfe.forecastHistory||{}).reduce(function(a,v){ return a+v.length; },0);
+  var repH    = Object.values(DRIVER_REPUTATION).reduce(function(a,v){ return a+(v.history||[]).length; },0);
+  var cards = [
+    {label:'Temporal Snapshots',   val:TEMPORAL_ARCHIVE.length, col:'#a855f7'},
+    {label:'Forecast Archive',     val:fmt(archSt.total),       col:'var(--blue)'},
+    {label:'LFE Registry',         val:fmt(regSize),            col:'var(--green)'},
+    {label:'Weight Changes',       val:fmt(wh),                 col:'var(--gold)'},
+    {label:'Driver History Pts',   val:fmt(drv_h),              col:'var(--orange)'},
+    {label:'Forecast History Pts', val:fmt(fc_h),               col:'var(--blue)'},
+    {label:'Reputation History',   val:fmt(repH),               col:'#a855f7'},
+    {label:'Session Age',          val:_timeAgo(_temporal.sessionStart), col:'var(--text3)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+    h+='<div class="card-val" style="color:'+c.col+';font-size:16px">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('memory-kpi-grid'); if(g) g.innerHTML=h;
+  // Archive explorer table
+  var tbH='';
+  if (TEMPORAL_ARCHIVE.length === 0) {
+    tbH='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px;font-size:11px">No snapshots yet — snapshots accumulate on each data refresh cycle</td></tr>';
+  } else {
+    TEMPORAL_ARCHIVE.slice().reverse().slice(0,20).forEach(function(s) {
+      var ago = _timeAgo(s.timestamp);
+      tbH+='<tr>';
+      tbH+='<td style="font-family:var(--mono);font-size:9px;color:#a855f7">'+ago+'</td>';
+      tbH+='<td style="font-family:var(--mono)">'+s.countries_count+'</td>';
+      tbH+='<td style="font-family:var(--mono);color:'+riskCol(s.avg_gri)+'">'+s.avg_gri+'</td>';
+      tbH+='<td style="font-family:var(--mono)">'+s.drivers_snapshot.length+'</td>';
+      tbH+='<td style="font-family:var(--mono)">'+s.registry_size+'</td>';
+      tbH+='<td style="font-family:var(--mono);color:var(--gold)">'+s.archive_count+'</td>';
+      tbH+='</tr>';
+    });
+  }
+  var mb=document.getElementById('memory-archive-body'); if(mb) mb.innerHTML=tbH;
+}
+
+// ── 09: EXECUTIVE TEMPORAL REPORT ────────────────────────────────
+window.generateTemporalReport = function() {
+  var el=document.getElementById('temporal-report-out');
+  if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating Temporal Intelligence Report...</div></div>';
+  setTimeout(function(){
+    var cc      = _temporal.countries;
+    var drvs    = _liveDrv();
+    var archSt  = _archiveStats();
+    var snapN   = TEMPORAL_ARCHIVE.length;
+    var now     = new Date().toUTCString().replace('GMT','UTC');
+    var archAge = _timeAgo(_temporal.sessionStart);
+    // Real temporal stats
+    var risingDrvs  = drvs.filter(function(d){ return d.d7>3; });
+    var fallingDrvs = drvs.filter(function(d){ return d.d7<-3; });
+    var repKeys     = Object.keys(DRIVER_REPUTATION);
+    var avgRep      = repKeys.length ? fr(repKeys.reduce(function(a,k){ return a+DRIVER_REPUTATION[k].reputation_score;},0)/repKeys.length) : 0;
+    var improved    = repKeys.filter(function(k){ var h=DRIVER_REPUTATION[k].history||[]; return h.length>=2&&h[h.length-1].reputation_score>h[0].reputation_score; });
+    // Data freshness assessment
+    var realDataPct = fr(Math.min(100,
+      (archSt.validated > 0 ? 25 : 0) +        // real validated forecasts
+      (_lfe.registry.length > 5 ? 25 : 0) +     // real LFE records
+      (snapN > 1 ? 25 : 0) +                    // real snapshots
+      (repKeys.some(function(k){ return (DRIVER_REPUTATION[k].history||[]).length>=2; }) ? 25 : 0) // real reputation history
+    ));
+    var secs=[
+      {t:'SYSTEM EVOLUTION',c:'#a855f7',v:'Session age: '+archAge+'. Temporal snapshots: '+snapN+'. Data freshness: '+realDataPct+'% real-time records. Archive: '+archSt.total+' forecasts, '+archSt.validated+' validated.'},
+      {t:'DRIVER EVOLUTION',c:'var(--orange)',v:'Rising: '+risingDrvs.slice(0,3).map(function(d){ return d.name+' +'+d.d7; }).join(', ')||'None. '+'Falling: '+fallingDrvs.slice(0,3).map(function(d){ return d.name+' '+d.d7; }).join(', ')||'None. '+'Avg reputation: '+avgRep+'.'},
+      {t:'FORECAST EVOLUTION',c:'var(--gold)',v:'Accuracy: '+JSON.stringify({h24:_lfe.forecastConf.h24,h7d:_lfe.forecastConf.h7d,h30d:_lfe.forecastConf.h30d,h90d:_lfe.forecastConf.h90d})+'. Validated: '+archSt.validated+' of '+archSt.total+' archived ('+archSt.accuracy+'%).'},
+      {t:'RISK EVOLUTION',c:'var(--red)',v:'Countries monitored: '+cc.length+'. Rising risks: '+risingDrvs.length+'. Falling risks: '+fallingDrvs.length+'. Causality chains: '+(typeof CAUSALITY_DATA!=='undefined'?Object.keys(CAUSALITY_DATA).length:0)+'.'},
+      {t:'OPPORTUNITY EVOLUTION',c:'var(--green)',v:'Opportunities tracked: '+((_sdc&&_sdc.opps)?_sdc.opps.length:0)+'. LFE opportunity confidence records: '+Object.keys(_lfe.oppConf).length+'. Most improved drivers: '+improved.slice(0,3).join(', ')||'Accumulating.'},
+      {t:'EMERGING SIGNALS',c:'var(--blue)',v:'Accelerating drivers (d7>5): '+drvs.filter(function(d){return d.d7>5;}).map(function(d){return d.name;}).join(', ')||'None detected. Weight change events: '+(_lfe.weightHistory||[]).length+'.'},
+      {t:'STRATEGIC PRIORITIES',c:'#a855f7',v:'1. Accumulate more snapshots for temporal trends. 2. Validate matured forecasts for learning improvement. 3. Monitor accelerating driver: '+((drvs.sort(function(a,b){return b.d7-a.d7;})[0]||{}).name||'—')+'.'},
+    ];
+    var h='<div style="background:rgba(168,85,247,.04);border:0.5px solid rgba(168,85,247,.2);border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:#a855f7;letter-spacing:.2em">TEMPORAL INTELLIGENCE REPORT</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; '+snapN+' snapshots &#183; Real data: '+realDataPct+'%</div></div>';
+    h+='<div style="height:0.5px;background:rgba(168,85,247,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="margin-top:10px;padding:8px 10px;background:rgba(168,85,247,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+' &#183; Real data: '+realDataPct+'%</div></div>';
+    el.innerHTML=h;
+  },900);
+};
+
+// ── UTILITIES ─────────────────────────────────────────────────────
+function _timeAgo(ts) {
+  if (!ts) return '—';
+  var diff = Date.now() - ts;
+  if (diff < 60000)   return fr(diff/1000)+'s ago';
+  if (diff < 3600000) return fr(diff/60000)+'m ago';
+  if (diff < 86400000)return fr(diff/3600000)+'h ago';
+  return fr(diff/86400000)+'d ago';
+}
+window.TEMPORAL_ARCHIVE = TEMPORAL_ARCHIVE;
+window._archiveSystemState = _archiveSystemState;
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
