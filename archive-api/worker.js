@@ -7819,7 +7819,43 @@ async function handleGRDF(request, env) {
       '/api/grdf/country/:cc/forecasts','/api/grdf/country/:cc/signals',
       '/api/grdf/country/:cc/warnings','/api/grdf/country/:cc/escalation',
       '/api/grdf/country/:cc/matrix','/api/grdf/country/:cc/mobile',
+
+  // =========================================================================
+  // GRDF LAUNCH SPRINT V1 API — Launch Readiness & Sprint Tracking
+  // Routes under /api/grdf/launch/
+  // Archive + Signal Pro launch: June 9-11, 2026
+  // STRATEGIC PRO and ELITE: deferred to post-launch
+  // =========================================================================
+  if (seg[0] === 'launch') {
+    const lseg = seg[1] || 'readiness';
+    const CLS = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const LAUNCH_FILES = {
+      'sprint':    'docs/launch/launch_sprint.json',
+      'readiness': 'docs/launch/launch_readiness.json',
+      'journey':   'docs/launch/launch_user_journey.json',
+      'api':       'docs/launch/launch_api_audit.json',
+      'commercial':'docs/launch/launch_commercial_model.json',
+    };
+    if (!LAUNCH_FILES[lseg]) return new Response(JSON.stringify({error:'Unknown launch route: '+lseg,available:Object.keys(LAUNCH_FILES)}),{status:404,headers:CLS});
+    const ck = `grdf:launch:${lseg}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CLS});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, LAUNCH_FILES[lseg], 600);
+      if (!d) return new Response(JSON.stringify({error:'Launch '+lseg+' not built yet'}),{status:404,headers:CLS});
+      if (lseg==='readiness') {
+        const r = {date:d.date,launch_date:d.launch_date,launch_ready:d.launch_ready,readiness_pct:d.readiness_pct,ready_n:d.ready_n,total_components:d.total_components,countries_coverage:d.countries_coverage,tier};
+        if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:600});}catch(_){}}
+        return new Response(JSON.stringify(r),{headers:CLS});
+      }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(d),{expirationTtl:600});}catch(_){}}
+      return new Response(JSON.stringify({...d,tier}),{headers:CLS});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CLS});}
+  }
+
       '/api/grdf/country/:cc/commercial','/api/grdf/country/:cc/conversion',
+      '/api/grdf/launch/sprint','/api/grdf/launch/readiness',
+      '/api/grdf/launch/journey','/api/grdf/launch/api',
+      '/api/grdf/launch/commercial',
     ]
   }),{status:404,headers:CORS});
 }
