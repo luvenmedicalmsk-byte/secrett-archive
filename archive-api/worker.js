@@ -7604,8 +7604,58 @@ async function handleGRDF(request, env) {
       '/api/grdf/alert-map/workspace','/api/grdf/alert-map/filters',
       '/api/grdf/alert-map/clusters','/api/grdf/alert-map/timeline',
       '/api/grdf/alert-map/events','/api/grdf/alert-map/layers',
+
+  // =========================================================================
+  // GRDF INTELLIGENCE FEED ENGINE V1 API
+  // All routes under /api/grdf/feed/
+  // Central real-time signal pipeline. Architecture frozen at V13.
+  // Signal chain: Sources → Feed Engine → V1-V13 → Alert Map V2 → Command
+  // =========================================================================
+  if (seg[0] === 'feed') {
+    const fseg = seg[1] || 'dashboard';
+    const CF = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const FEED_FILES = {
+      'dashboard':     'docs/feed/feed_health_score.json',
+      'sources':       'docs/feed/feed_sources.json',
+      'quality':       'docs/feed/feed_quality.json',
+      'pipeline':      'docs/feed/feed_pipeline.json',
+      'alerts':        'docs/feed/feed_alerts.json',
+      'analytics':     'docs/feed/feed_analytics.json',
+      'health':        'docs/feed/feed_health_score.json',
+      'certification': 'docs/feed/feed_certification.json',
+      'normalization': 'docs/feed/feed_normalization.json',
+      'attribution':   'docs/feed/feed_attribution.json',
+    };
+    const FEED_SIGNAL_ONLY = new Set(['normalization','attribution','analytics']);
+    if (!FEED_FILES[fseg]) return new Response(JSON.stringify({error:'Unknown feed route: '+fseg, available:Object.keys(FEED_FILES)}),{status:404,headers:CF});
+    if (FEED_SIGNAL_ONLY.has(fseg) && access==='teaser') return new Response(JSON.stringify({error:fseg+' requires Signal tier'}),{status:403,headers:CF});
+    const ck = `grdf:feed:${fseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CF});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, FEED_FILES[fseg], 180);
+      if (!d) return new Response(JSON.stringify({error:'Feed '+fseg+' not built yet'}),{status:404,headers:CF});
+      let r;
+      if (access==='teaser') {
+        if (fseg==='dashboard'||fseg==='health') r={date:d.date,fhs_score:d.fhs_score,fhs_grade:d.fhs_grade,components:d.components,pipeline_health:d.pipeline_health,tier};
+        else if (fseg==='sources') r={date:d.date,total_sources:d.total_sources,active_n:d.active_n,avg_availability:d.avg_availability,domain_distribution:d.domain_distribution,tier};
+        else if (fseg==='quality') r={date:d.date,sqs:d.sqs,sqs_grade:d.sqs_grade,components:d.components,total_signals:d.total_signals,tier};
+        else if (fseg==='pipeline') r={date:d.date,pipeline_health:d.pipeline_health,events_published:d.events_published,events_per_hour:d.events_per_hour,processing_latency_ms:d.processing_latency_ms,tier};
+        else if (fseg==='alerts') r={date:d.date,active_alerts_n:d.active_alerts_n,escalations_n:d.escalations_n,new_alerts_n:d.new_alerts_n,level_distribution:d.level_distribution,alerts:d.alerts?.slice(0,5),tier};
+        else if (fseg==='certification') r={date:d.date,certification:d.certification,cert_score:d.cert_score,sqs:d.sqs,fhs:d.fhs,passed_n:d.passed_n,signal_chain:d.signal_chain,tier};
+        else r={date:d.date,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:180});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CF});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CF});}
+  }
+
       '/api/grdf/alert-map/country-panel','/api/grdf/alert-map/mobile',
       '/api/grdf/alert-map/activity','/api/grdf/alert-map/certification',
+      '/api/grdf/feed/dashboard','/api/grdf/feed/sources',
+      '/api/grdf/feed/quality','/api/grdf/feed/pipeline',
+      '/api/grdf/feed/alerts','/api/grdf/feed/analytics',
+      '/api/grdf/feed/health','/api/grdf/feed/certification',
+      '/api/grdf/feed/normalization','/api/grdf/feed/attribution',
     ]
   }),{status:404,headers:CORS});
 }
