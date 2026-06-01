@@ -291,6 +291,12 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .scn-card-val{font-size:22px;font-weight:700;font-family:var(--mono)}
 .scn-card-delta{font-size:10px;font-family:var(--mono);margin-top:3px}
 
+
+.badge-blue{background:rgba(59,130,246,.12);color:var(--blue);border:0.5px solid rgba(59,130,246,.2)}
+.graph-filter-btn{padding:4px 12px;background:transparent;border:0.5px solid var(--border2);border-radius:5px;color:var(--text3);font-size:10px;cursor:pointer;font-family:var(--mono);-webkit-appearance:none;transition:all .15s}
+.graph-filter-btn.active{background:rgba(255,255,255,.06);color:var(--text)}
+.graph-node-card{background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:6px;border-left:2px solid var(--border2)}
+
 </style>
 </head>
 <body>
@@ -355,6 +361,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s17')" data-s="s17">&#128200;<span class="sn-tip">Validation</span></button>
     <button class="sn-btn" onclick="goSection('s18')" data-s="s18">&#127981;<span class="sn-tip">Scenarios</span></button>
     <button class="sn-btn" onclick="goSection('s19')" data-s="s19">&#127344;<span class="sn-tip">Meta Intel</span></button>
+    <button class="sn-btn" onclick="goSection('s20')" data-s="s20">&#127760;<span class="sn-tip">Intel Graph</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -1672,6 +1679,119 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s19 -->
 
+
+    <!-- ─ S20: GLOBAL INTELLIGENCE GRAPH ─ -->
+    <div class="section" id="s20">
+      <div class="s-head">
+        <div class="s-tag">20</div>
+        <div class="s-title">Global Intelligence Graph</div>
+        <div class="s-badge badge-blue">&#128279; KNOWLEDGE GRAPH</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">How is everything connected?</div>
+
+      <!-- 01: GLOBAL GRAPH VIEW -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127760;</span> 01 · Global Graph View</div>
+        <div class="sum-card" style="padding:10px">
+          <!-- Filter buttons -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="graph-filters">
+            <button class="graph-filter-btn active" onclick="graphFilterType('all',this)">All</button>
+            <button class="graph-filter-btn" onclick="graphFilterType('driver',this)" style="border-color:#f97316;color:#f97316">Drivers</button>
+            <button class="graph-filter-btn" onclick="graphFilterType('country',this)" style="border-color:#3b82f6;color:#3b82f6">Countries</button>
+            <button class="graph-filter-btn" onclick="graphFilterType('opportunity',this)" style="border-color:#10b981;color:#10b981">Opps</button>
+            <button class="graph-filter-btn" onclick="graphFilterType('decision',this)" style="border-color:#ef4444;color:#ef4444">Decisions</button>
+          </div>
+          <canvas id="intel-graph" style="width:100%;height:360px;background:var(--bg3);border-radius:8px;display:block;cursor:pointer;touch-action:none" onclick="handleGraphClick(event)"></canvas>
+          <!-- Legend -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f97316"></span>Driver</span>
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6"></span>Country</span>
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:8px;height:8px;border-radius:4px;background:#10b981"></span>Opportunity</span>
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:8px;height:8px;transform:rotate(45deg);background:#ef4444;margin:0 2px"></span>Decision</span>
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#a855f7"></span>Meta Driver</span>
+          </div>
+          <!-- Selected node info -->
+          <div id="graph-node-info" style="margin-top:8px;min-height:24px"></div>
+        </div>
+      </div>
+
+      <!-- 02+03+04: NETWORK PANELS (swipe) -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128203;</span> 02-04 · Network Traces</div>
+        <div class="swipe-wrap" id="graph-trace-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#127758;</span>02 · Country Network</div>
+              <div style="margin-bottom:8px">
+                <select id="graph-cc-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 10px;outline:none;width:100%" onchange="buildCountryNetwork(this.value)">
+                  <option value="">Select country...</option>
+                </select>
+              </div>
+              <div id="cc-network-out"><div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">Select a country</div></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#9889;</span>03 · Driver Network</div>
+              <div style="margin-bottom:8px">
+                <select id="graph-drv-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 10px;outline:none;width:100%" onchange="buildDriverNetwork2(this.value)">
+                  <option value="">Select driver...</option>
+                </select>
+              </div>
+              <div id="drv-network-out"><div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">Select a driver</div></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128270;</span>04+05 · Signal &amp; Forecast Trace</div>
+              <div id="signal-trace-out"><div class="loading">Loading traces...</div></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128269;</span>06 · Opportunity Graph</div>
+              <div id="opp-graph-out"><div class="loading">Loading...</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="graph-trace-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 07: GRAPH ANALYTICS -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128202;</span> 07 · Graph Analytics</div>
+        <div class="grid-3" id="graph-analytics-grid"></div>
+      </div>
+
+      <!-- 08: EXECUTIVE GRAPH REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 08 · Executive Graph Report</div>
+        <div style="margin-bottom:8px">
+          <button onclick="generateGraphReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#0a1a2a,#051020);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:var(--blue);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Generate Intelligence Graph Report</button>
+        </div>
+        <div id="graph-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(59,130,246,.15)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Press Generate to create a graph intelligence report</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 09: FOUNDER EXPLORER MODE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128269;</span> 09 · Founder Explorer Mode</div>
+        <div class="sum-card">
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <input id="graph-search" type="text" placeholder="Search: country, driver, signal..." style="flex:1;background:var(--bg3);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 12px;outline:none;-webkit-appearance:none" oninput="graphSearch(this.value)">
+            <button onclick="graphSearch(document.getElementById('graph-search').value)" style="padding:8px 14px;background:var(--gold-dim);border:0.5px solid var(--gold);border-radius:6px;color:var(--gold);font-size:12px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#128269;</button>
+          </div>
+          <div id="graph-explorer-out"><div style="font-size:11px;color:var(--text3);text-align:center;padding:10px">Type to search the intelligence graph</div></div>
+        </div>
+      </div>
+
+    </div><!-- /s20 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -2867,7 +2987,7 @@ var INFLUENCE_SCORES = [
 
 function loadCausalityEngine() {
     loadStrategicDecisionCenter(cc);
-    loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc);
+    loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc);
   populateSelects();
   buildDepCanvas();
   buildCascades();
@@ -5972,6 +6092,559 @@ function _buildFounderPanel(countries) {
   });
   var re=document.getElementById('founder-readiness'); if(re) re.innerHTML=rh;
 }
+
+
+// ── S20: GLOBAL INTELLIGENCE GRAPH ─────────────────────────────
+var _graph = {
+  nodes: [],
+  edges: [],
+  selected: -1,
+  filterType: 'all',
+  countries: [],
+};
+
+// Node types
+var GNODE_COLORS = {
+  driver:      '#f97316',
+  country:     '#3b82f6',
+  opportunity: '#10b981',
+  decision:    '#ef4444',
+  meta:        '#a855f7',
+  forecast:    '#D4AF5A',
+  signal:      '#eab308',
+};
+
+function loadIntelligenceGraph(countries) {
+  _graph.countries = countries;
+  _buildGraphNodes(countries);
+  _renderGraph();
+  _buildGraphAnalytics(countries);
+  _buildSignalTrace(countries);
+  _buildOppGraph(countries);
+  _populateGraphSelects(countries);
+  initSwipeDots('graph-trace-swipe','graph-trace-dots');
+}
+
+// ── BUILD GRAPH NODES FROM ALL PLATFORM DATA ──────────────────
+function _buildGraphNodes(countries) {
+  var nodes = [];
+  var edges = [];
+  var nid   = 0;
+  function addNode(type, label, score, col, data) {
+    nodes.push({ id:nid++, type:type, label:label, score:score||50, col:col||GNODE_COLORS[type]||'#64748b', data:data||{}, x:0, y:0 });
+    return nid - 1;
+  }
+
+  // ── DRIVERS ────────────────────────────────────────────────────
+  var drvs = _liveDrv();
+  var drvNodeMap = {};
+  drvs.forEach(function(d) {
+    var nIdx = addNode('driver', d.name.split(' ').slice(0,2).join(' '), d.score, d.col, { full:d.name, score:d.score, d7:d.d7 });
+    drvNodeMap[d.name] = nIdx;
+  });
+
+  // ── META DRIVERS ───────────────────────────────────────────────
+  var metaMap = { 'Climate':'#10b981','Economic':'#3b82f6','Social':'#ef4444','Geopolitical':'#f97316','Technology':'#a855f7' };
+  var metaNodeMap = {};
+  Object.keys(metaMap).forEach(function(m) {
+    var ms = typeof META_SCORES !== 'undefined' ? (META_SCORES[m.toLowerCase()]||65) : 65;
+    var nIdx = addNode('meta', m, ms, metaMap[m], {});
+    metaNodeMap[m] = nIdx;
+  });
+
+  // ── DRIVER → META EDGES ────────────────────────────────────────
+  var drvMetaMap = {
+    'Climate':['Migration','Climate'], 'Economic':['Economic','Energy'],
+    'Social':['Civil','Migration','Social'], 'Geopolitical':['Political','Conflict'],
+    'Technology':['Cyber','Infrastructure']
+  };
+  Object.keys(drvMetaMap).forEach(function(m) {
+    var mN = metaNodeMap[m];
+    if (mN === undefined) return;
+    drvMetaMap[m].forEach(function(kw) {
+      var dN = Object.keys(drvNodeMap).find(function(k){ return k.indexOf(kw) >= 0; });
+      if (dN !== undefined && drvNodeMap[dN] !== undefined) {
+        edges.push({ a:drvNodeMap[dN], b:mN, strength:2, col:'rgba(255,255,255,.12)' });
+      }
+    });
+  });
+
+  // ── CAUSALITY EDGES BETWEEN DRIVERS ───────────────────────────
+  if (typeof CAUSALITY_DATA !== 'undefined') {
+    Object.keys(CAUSALITY_DATA).forEach(function(dName) {
+      var aN = drvNodeMap[dName];
+      if (aN === undefined) return;
+      (CAUSALITY_DATA[dName].effects||[]).forEach(function(eff) {
+        var bN = Object.keys(drvNodeMap).find(function(k){ return k.indexOf(eff.name.split(' ')[0]) >= 0; });
+        if (bN !== undefined && drvNodeMap[bN] !== undefined) {
+          edges.push({ a:aN, b:drvNodeMap[bN], strength:3, col:'rgba(249,115,22,.35)' });
+        }
+      });
+    });
+  }
+
+  // ── TOP COUNTRIES ──────────────────────────────────────────────
+  var ccNodeMap = {};
+  var topCC = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,12);
+  topCC.forEach(function(c) {
+    var nIdx = addNode('country', flag(c.country)+' '+(c.country_name||c.country).split(' ')[0], c.risk_score||50, '#3b82f6', { cc:c.country, name:c.country_name, gri:c.risk_score, delta:c.delta });
+    ccNodeMap[c.country] = nIdx;
+    // Country → top driver edge
+    var dom = (c.dominant_domain||'geopolitics').toLowerCase();
+    var topDrv = Object.keys(drvNodeMap).find(function(k){ return k.toLowerCase().indexOf(dom) >= 0; }) || Object.keys(drvNodeMap)[0];
+    if (topDrv && drvNodeMap[topDrv] !== undefined) {
+      edges.push({ a:nIdx, b:drvNodeMap[topDrv], strength:1, col:'rgba(59,130,246,.2)' });
+    }
+  });
+
+  // ── OPPORTUNITIES ──────────────────────────────────────────────
+  var opps = (typeof _sdc !== 'undefined' && _sdc.opps) ? _sdc.opps.slice(0,6) : [];
+  var oppNodeMap = {};
+  opps.forEach(function(o) {
+    var nIdx = addNode('opportunity', o.name.split(' ').slice(0,3).join(' '), o.score||60, '#10b981', { name:o.name, score:o.score, cat:o.cat });
+    oppNodeMap[o.name] = nIdx;
+    // Opportunity → source driver
+    if (o.drivers && o.drivers.length) {
+      var src = o.drivers[0].split(' ')[0];
+      var dN  = Object.keys(drvNodeMap).find(function(k){ return k.indexOf(src) >= 0; });
+      if (dN !== undefined && drvNodeMap[dN] !== undefined) {
+        edges.push({ a:nIdx, b:drvNodeMap[dN], strength:1, col:'rgba(16,185,129,.2)' });
+      }
+    }
+  });
+
+  // ── TOP DECISIONS ──────────────────────────────────────────────
+  var risks = (typeof _sdc !== 'undefined' && _sdc.risks) ? _sdc.risks.slice(0,5) : [];
+  risks.forEach(function(r, i) {
+    var nIdx = addNode('decision', 'DEC-'+String(i+1).padStart(3,'0'), r.prob||60, '#ef4444', { name:r.name, priority:r.priority });
+    // Decision → risk driver
+    var dN = drvNodeMap[r.name];
+    if (dN !== undefined) {
+      edges.push({ a:nIdx, b:dN, strength:2, col:'rgba(239,68,68,.25)' });
+    }
+  });
+
+  _graph.nodes = nodes;
+  _graph.edges = edges;
+}
+
+// ── LAYOUT: radial by type ────────────────────────────────────────
+function _layoutGraph(W, H) {
+  var nodes = _graph.nodes;
+  var typeOrder = ['meta','driver','country','opportunity','decision','forecast','signal'];
+  var byType = {};
+  typeOrder.forEach(function(t){ byType[t] = []; });
+  nodes.forEach(function(n){ if(byType[n.type]) byType[n.type].push(n); });
+  var cx = W/2, cy = H/2;
+  var radii = { meta:50, driver:110, country:175, opportunity:230, decision:260, forecast:290, signal:310 };
+  typeOrder.forEach(function(t) {
+    var tnodes = byType[t] || [];
+    tnodes.forEach(function(n, i) {
+      var r   = radii[t] || 150;
+      var ang = (i / Math.max(tnodes.length,1)) * Math.PI * 2 - Math.PI/2;
+      n.x = cx + r * Math.cos(ang);
+      n.y = cy + r * Math.sin(ang);
+    });
+  });
+}
+
+// ── RENDER GRAPH ──────────────────────────────────────────────────
+function _renderGraph(selId) {
+  var canvas = document.getElementById('intel-graph');
+  if (!canvas || !_graph.nodes.length) return;
+  var dpr = window.devicePixelRatio || 1;
+  var W   = canvas.offsetWidth || 340;
+  var H   = 360;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  _layoutGraph(W, H);
+
+  var filterType = _graph.filterType;
+  var selNode    = selId !== undefined ? selId : _graph.selected;
+
+  // Connected node set
+  var connected = {};
+  if (selNode >= 0) {
+    _graph.edges.forEach(function(e) {
+      if (e.a === selNode) connected[e.b] = true;
+      if (e.b === selNode) connected[e.a] = true;
+    });
+  }
+
+  var strW = [0.5, 1, 1.5, 2.5, 3.5];
+  var strC = ['rgba(255,255,255,.06)','rgba(255,255,255,.1)','rgba(255,255,255,.18)','rgba(255,255,255,.3)','rgba(255,255,255,.5)'];
+
+  // Edges
+  _graph.edges.forEach(function(e) {
+    var na = _graph.nodes[e.a], nb = _graph.nodes[e.b];
+    if (!na || !nb) return;
+    var filtered = filterType !== 'all' && na.type !== filterType && nb.type !== filterType;
+    if (filtered) return;
+    var dimmed = selNode >= 0 && e.a !== selNode && e.b !== selNode && !connected[e.a] && !connected[e.b];
+    ctx.globalAlpha = dimmed ? 0.06 : 0.7;
+    ctx.beginPath();
+    ctx.moveTo(na.x, na.y);
+    ctx.lineTo(nb.x, nb.y);
+    ctx.strokeStyle = e.col || strC[e.strength||1];
+    ctx.lineWidth   = strW[e.strength||1];
+    ctx.stroke();
+  });
+
+  // Nodes
+  _graph.nodes.forEach(function(n) {
+    var filtered = filterType !== 'all' && n.type !== filterType;
+    var dimmed   = selNode >= 0 && n.id !== selNode && !connected[n.id];
+    if (filtered) { ctx.globalAlpha = 0.05; } else { ctx.globalAlpha = dimmed ? 0.15 : 1; }
+    var isSel = n.id === selNode;
+    var r     = isSel ? 20 : (n.type === 'meta' ? 16 : n.type === 'driver' ? 13 : n.type === 'country' ? 10 : 8);
+    // Shape by type
+    ctx.beginPath();
+    if (n.type === 'decision') {
+      // Diamond
+      ctx.moveTo(n.x, n.y - r); ctx.lineTo(n.x + r, n.y);
+      ctx.lineTo(n.x, n.y + r); ctx.lineTo(n.x - r, n.y);
+      ctx.closePath();
+    } else if (n.type === 'opportunity') {
+      // Rounded square
+      var rd = r * 0.6;
+      ctx.roundRect ? ctx.roundRect(n.x-rd, n.y-rd, rd*2, rd*2, 3) : ctx.rect(n.x-rd, n.y-rd, rd*2, rd*2);
+    } else {
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    }
+    ctx.fillStyle = n.col + (isSel ? '44' : '22');
+    ctx.fill();
+    ctx.strokeStyle = n.col;
+    ctx.lineWidth   = isSel ? 2.5 : 1;
+    ctx.stroke();
+    // Label
+    ctx.fillStyle   = isSel ? '#f1f5f9' : '#94a3b8';
+    ctx.font        = (isSel ? 'bold ' : '') + Math.min(10, r*0.75) + 'px sans-serif';
+    ctx.textAlign   = 'center';
+    ctx.textBaseline = 'middle';
+    var lbl = n.label.length > 9 ? n.label.slice(0,8)+'…' : n.label;
+    ctx.fillText(lbl, n.x, n.y + r + 8);
+    // Score dot in center for drivers/meta
+    if (n.type === 'driver' || n.type === 'meta') {
+      ctx.fillStyle = n.col;
+      ctx.font = 'bold ' + (r * 0.58) + 'px monospace';
+      ctx.fillText(n.score, n.x, n.y);
+    }
+  });
+  ctx.globalAlpha = 1;
+}
+
+window.handleGraphClick = function(evt) {
+  var canvas = document.getElementById('intel-graph');
+  if (!canvas) return;
+  var rect = canvas.getBoundingClientRect();
+  var mx = evt.clientX - rect.left;
+  var my = evt.clientY - rect.top;
+  var found = -1;
+  _graph.nodes.forEach(function(n) {
+    var r  = n.type === 'meta' ? 18 : n.type === 'driver' ? 15 : 12;
+    var dx = mx - n.x, dy = my - n.y;
+    if (Math.sqrt(dx*dx+dy*dy) <= r + 6) found = n.id;
+  });
+  _graph.selected = (_graph.selected === found) ? -1 : found;
+  _renderGraph(_graph.selected);
+  _showNodeInfo(_graph.selected);
+};
+
+function _showNodeInfo(id) {
+  var el = document.getElementById('graph-node-info');
+  if (!el) return;
+  if (id < 0) { el.innerHTML = ''; return; }
+  var n = _graph.nodes[id];
+  if (!n) return;
+  var col = n.col;
+  var h = '<div style="background:var(--bg2);border:0.5px solid '+col+'44;border-radius:7px;padding:8px 10px;display:flex;align-items:center;gap:8px">';
+  h += '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';flex-shrink:0"></span>';
+  h += '<span style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em">'+n.type+'</span>';
+  h += '<span style="font-size:12px;font-weight:600;color:var(--text);flex:1">'+n.label+'</span>';
+  h += '<span style="font-family:var(--mono);font-size:11px;color:'+col+'">'+n.score+'</span>';
+  // Connected count
+  var connCount = _graph.edges.filter(function(e){ return e.a===id||e.b===id; }).length;
+  h += '<span style="font-size:10px;color:var(--text3)">&#128279; '+connCount+'</span></div>';
+  el.innerHTML = h;
+}
+
+window.graphFilterType = function(type, btn) {
+  _graph.filterType = type;
+  document.querySelectorAll('.graph-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  _renderGraph(_graph.selected);
+};
+
+// ── GRAPH ANALYTICS ──────────────────────────────────────────────
+function _buildGraphAnalytics(countries) {
+  var nodes = _graph.nodes;
+  var edges = _graph.edges;
+  var conns = {};
+  edges.forEach(function(e){ conns[e.a]=(conns[e.a]||0)+1; conns[e.b]=(conns[e.b]||0)+1; });
+  var maxConn  = Object.keys(conns).sort(function(a,b){ return conns[b]-conns[a]; })[0];
+  var maxNode  = nodes[maxConn] || {label:'—',type:'—'};
+  var drvNodes = nodes.filter(function(n){ return n.type==='driver'; });
+  var ccNodes  = nodes.filter(function(n){ return n.type==='country'; });
+  var topDrv   = drvNodes.sort(function(a,b){ return (conns[b.id]||0)-(conns[a.id]||0); })[0] || {label:'—'};
+  var topCC    = ccNodes.sort(function(a,b){ return (conns[b.id]||0)-(conns[a.id]||0); })[0] || {label:'—'};
+  var cards=[
+    {label:'Total Nodes',        val:nodes.length,      col:'var(--blue)'},
+    {label:'Total Connections',  val:edges.length,      col:'var(--blue)'},
+    {label:'Most Connected Node',val:maxNode.label,     col:'var(--gold)'},
+    {label:'Most Connected Driver',val:topDrv.label,    col:'var(--orange)'},
+    {label:'Most Connected Country',val:topCC.label,    col:'var(--blue)'},
+    {label:'Driver Nodes',       val:drvNodes.length,   col:'var(--orange)'},
+    {label:'Country Nodes',      val:ccNodes.length,    col:'var(--blue)'},
+    {label:'Causality Edges',    val:edges.filter(function(e){ return e.strength>=3; }).length, col:'var(--red)'},
+    {label:'Opportunity Nodes',  val:nodes.filter(function(n){ return n.type==='opportunity';}).length, col:'var(--green)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+    h+='<div class="card-val" style="color:'+c.col+';font-size:18px">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('graph-analytics-grid'); if(g) g.innerHTML=h;
+}
+
+// ── 02: COUNTRY NETWORK ──────────────────────────────────────────
+function _populateGraphSelects(countries) {
+  var ccSel = document.getElementById('graph-cc-sel');
+  if (ccSel && ccSel.options.length < 3) {
+    countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).forEach(function(c) {
+      var opt=document.createElement('option'); opt.value=c.country;
+      opt.textContent=flag(c.country)+' '+(c.country_name||c.country)+' ('+fr(c.risk_score)+')';
+      ccSel.appendChild(opt);
+    });
+  }
+  var drvSel = document.getElementById('graph-drv-sel');
+  if (drvSel && drvSel.options.length < 3) {
+    _liveDrv().forEach(function(d) {
+      var opt=document.createElement('option'); opt.value=d.name; opt.textContent=d.name+' ('+d.score+')';
+      drvSel.appendChild(opt);
+    });
+  }
+}
+
+window.buildCountryNetwork = function(cc) {
+  if (!cc) return;
+  var c = _graph.countries.find(function(x){ return x.country===cc; });
+  if (!c) return;
+  var gri = fr(c.risk_score);
+  var drvs = _liveDrv().slice(0,4);
+  var risks= (typeof _sdc!=='undefined'&&_sdc.risks)?_sdc.risks.slice(0,3):[];
+  var opps = (typeof _sdc!=='undefined'&&_sdc.opps)?_sdc.opps.filter(function(o){return o.cat==='Regional';}).slice(0,2):[];
+  function flowNode(icon, label, val, col) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid '+col+'">'
+      +'<span>'+icon+'</span><span style="font-size:11px;color:var(--text2);flex:1">'+label+'</span>'
+      +'<span style="font-family:var(--mono);font-size:10px;color:'+col+'">'+val+'</span></div>';
+  }
+  var h = flowNode('&#127758;', flag(cc)+' '+(c.country_name||cc), 'GRI '+gri, riskCol(gri));
+  h += '<div style="text-align:center;color:var(--text3);padding:2px">&#8595;</div>';
+  h += '<div style="font-size:9px;color:var(--text3);margin:4px 0">Top Drivers</div>';
+  drvs.forEach(function(d){ h += flowNode('&#9889;', d.name, d.score, d.col); });
+  h += '<div style="text-align:center;color:var(--text3);padding:2px">&#8595;</div>';
+  h += '<div style="font-size:9px;color:var(--text3);margin:4px 0">Active Risks</div>';
+  if(risks.length) risks.forEach(function(r){ h += flowNode('&#128308;', r.name, r.priority, 'var(--red)'); });
+  else h += '<div style="font-size:10px;color:var(--text3);padding:4px">No active risks</div>';
+  h += '<div style="text-align:center;color:var(--text3);padding:2px">&#8595;</div>';
+  h += '<div style="font-size:9px;color:var(--text3);margin:4px 0">Opportunities</div>';
+  if(opps.length) opps.forEach(function(o){ h += flowNode('&#128994;', o.name.split(' ').slice(0,3).join(' '), o.score+'', 'var(--green)'); });
+  else h += '<div style="font-size:10px;color:var(--text3);padding:4px">No regional opportunities</div>';
+  var el=document.getElementById('cc-network-out'); if(el) el.innerHTML=h;
+};
+
+// ── 03: DRIVER NETWORK ───────────────────────────────────────────
+window.buildDriverNetwork2 = function(dName) {
+  if (!dName) return;
+  var drv   = _liveDrv().find(function(d){ return d.name===dName; });
+  var caus  = (typeof CAUSALITY_DATA!=='undefined') ? CAUSALITY_DATA[dName] : null;
+  var rep   = (typeof DRIVER_REPUTATION!=='undefined') ? DRIVER_REPUTATION[dName] : null;
+  var inf   = _liveInf().find(function(d){ return d.name===dName; });
+  if (!drv) return;
+  function flowNode(icon, label, val, col) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid '+col+'">'
+      +'<span>'+icon+'</span><span style="font-size:11px;color:var(--text2);flex:1">'+label+'</span>'
+      +'<span style="font-family:var(--mono);font-size:10px;color:'+col+'">'+val+'</span></div>';
+  }
+  var h = flowNode('&#9889;', dName, 'Score '+drv.score, drv.col);
+  h += '<div style="display:flex;gap:6px;margin:5px 0;flex-wrap:wrap">';
+  if (inf) h += '<span style="font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(212,175,90,.1);color:var(--gold)">Influence: '+inf.inf+'</span>';
+  if (rep) h += '<span style="font-size:9px;padding:2px 7px;border-radius:3px;background:rgba(16,185,129,.1);color:var(--green)">Reputation: '+rep.reputation_score+'</span>';
+  h += '</div>';
+  if (caus) {
+    h += '<div style="font-size:9px;color:var(--text3);margin:6px 0 4px">Primary Causes</div>';
+    caus.causes.slice(0,3).forEach(function(c){ h += flowNode('&#8593;', c.name, c.pct+'%', c.col); });
+    h += '<div style="text-align:center;color:var(--text3);padding:2px">&#8595;</div>';
+    h += '<div style="font-size:9px;color:var(--text3);margin:4px 0">Cascade Effects</div>';
+    caus.effects.slice(0,3).forEach(function(e){ h += flowNode('&#8594;', e.name, '+'+e.delta+' pts', e.col); });
+  }
+  h += '<div style="font-size:9px;color:var(--text3);margin:6px 0 4px">Forecast Impact</div>';
+  [{hz:'FC24h',v:fr(drv.d24||drv.d7*.14)},{hz:'FC7d',v:fr(drv.d7||0)},{hz:'FC30d',v:fr(drv.d30||0)},{hz:'FC90d',v:fr((drv.d30||0)*2.2)}].forEach(function(fc){
+    var col = fc.v>0?'var(--orange)':fc.v<0?'var(--green)':'var(--text3)';
+    h += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:10px"><span style="color:var(--text3)">'+fc.hz+'</span><span style="color:'+col+';font-family:var(--mono)">'+(fc.v>0?'+':'')+fc.v+'</span></div>';
+  });
+  var el=document.getElementById('drv-network-out'); if(el) el.innerHTML=h;
+};
+
+// ── 04+05: SIGNAL TRACE & FORECAST TRACE ─────────────────────────
+function _buildSignalTrace(countries) {
+  var drvs = _liveDrv().slice(0,3);
+  var archLatest = FORECAST_ARCHIVE.slice(-3);
+  var h = '<div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Signal → Forecast Path</div>';
+  drvs.forEach(function(d) {
+    h += '<div style="background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:8px;border-left:2px solid '+d.col+'">';
+    h += '<div style="font-size:11px;font-weight:600;color:'+d.col+';margin-bottom:5px">'+d.name+'</div>';
+    var steps = [
+      {icon:'&#128161;', label:'Signal', val:fmt(d.sigs)+' signals', col:d.col},
+      {icon:'&#9889;',   label:'Driver', val:'Score '+d.score, col:d.col},
+      {icon:'&#128200;', label:'GRI impact', val:(d.d7>=0?'+':'')+d.d7+' pts/7d', col:'var(--gold)'},
+      {icon:'&#128337;', label:'FC7d',  val:fr(d.score+d.d7)+'', col:riskCol(fr(d.score+d.d7))},
+    ];
+    steps.forEach(function(s, i) {
+      if(i>0) h+='<div style="text-align:center;color:var(--text3);font-size:10px">&#8595;</div>';
+      h+='<div style="display:flex;align-items:center;gap:6px;padding:3px 0">';
+      h+='<span>'+s.icon+'</span><span style="font-size:10px;color:var(--text2);flex:1">'+s.label+'</span>';
+      h+='<span style="font-family:var(--mono);font-size:10px;color:'+s.col+'">'+s.val+'</span></div>';
+    });
+    h += '</div>';
+  });
+  // Forecast trace from archive
+  if (archLatest.length) {
+    h += '<div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin:10px 0 6px">Recent Archive Traces</div>';
+    archLatest.forEach(function(f) {
+      var col = f.validated ? (f.error<=5?'var(--green)':'var(--red)') : 'var(--text3)';
+      h += '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+      h += '<span style="font-size:9px;color:var(--gold);font-family:var(--mono)">'+f.forecast_id.slice(0,12)+'</span>';
+      h += '<span style="font-size:10px;color:var(--text2);flex:1">'+f.country_name+'</span>';
+      h += '<span style="font-size:9px;color:var(--text3)">'+f.horizon+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:'+col+'">';
+      h += f.validated ? 'err:'+f.error : 'pending';
+      h += '</span></div>';
+    });
+  }
+  var el=document.getElementById('signal-trace-out'); if(el) el.innerHTML=h;
+}
+
+// ── 06: OPPORTUNITY GRAPH ────────────────────────────────────────
+function _buildOppGraph(countries) {
+  var opps = (typeof _sdc!=='undefined'&&_sdc.opps) ? _sdc.opps.slice(0,6) : [];
+  if (!opps.length) {
+    var el=document.getElementById('opp-graph-out'); if(el) el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--text3)">Loading opportunities...</div>';
+    return;
+  }
+  var h = '';
+  opps.forEach(function(o) {
+    h += '<div style="background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:7px;border-left:2px solid #10b981">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">';
+    h += '<span style="font-size:10px;font-weight:600;color:#10b981;flex:1">'+o.name+'</span>';
+    h += '<span style="font-family:var(--mono);font-size:11px;color:#10b981">'+o.score+'</span></div>';
+    if (o.drivers && o.drivers.length) {
+      o.drivers.slice(0,2).forEach(function(src) {
+        h += '<div style="font-size:10px;color:var(--text3);padding:2px 0">&#8594; '+src+'</div>';
+      });
+    }
+    h += '<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">';
+    h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(16,185,129,.1);color:#10b981">'+o.cat+'</span>';
+    if(o.urgency) h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:var(--text3)">'+o.urgency+' urgency</span>';
+    if(o.horizon) h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:var(--text3)">'+o.horizon+'</span>';
+    h += '</div></div>';
+  });
+  var el=document.getElementById('opp-graph-out'); if(el) el.innerHTML=h;
+}
+
+// ── 08: GRAPH REPORT ─────────────────────────────────────────────
+window.generateGraphReport = function() {
+  var el=document.getElementById('graph-report-out');
+  if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating Graph Report...</div></div>';
+  setTimeout(function(){
+    var nodes=_graph.nodes; var edges=_graph.edges;
+    var conns={};
+    edges.forEach(function(e){ conns[e.a]=(conns[e.a]||0)+1; conns[e.b]=(conns[e.b]||0)+1; });
+    var topNodes=Object.keys(conns).sort(function(a,b){ return conns[b]-conns[a]; }).slice(0,3)
+      .map(function(id){ var n=nodes[id]; return (n?n.label:'—')+'('+conns[id]+')'; }).join(', ');
+    var topDrvs=_liveDrv().slice(0,3).map(function(d){ return d.name+'('+d.score+')'; }).join(', ');
+    var strongCaus=edges.filter(function(e){ return e.strength>=3; }).length;
+    var now=new Date().toUTCString().replace('GMT','UTC');
+    var secs=[
+      {t:'GRAPH OVERVIEW',c:'var(--blue)',v:'Total nodes: '+nodes.length+'. Total connections: '+edges.length+'. Strong causality links: '+strongCaus+'.'},
+      {t:'MOST INFLUENTIAL DRIVERS',c:'var(--orange)',v:topDrvs},
+      {t:'MOST CONNECTED NODES',c:'var(--gold)',v:topNodes},
+      {t:'LARGEST CASCADES',c:'var(--red)',v:'Primary cascade chains: '+(typeof CAUSALITY_DATA!=='undefined'?Object.keys(CAUSALITY_DATA).length:5)+' drivers with causality data. Max depth: 4 levels.'},
+      {t:'STRONGEST DEPENDENCIES',c:'var(--orange)',v:'Migration Pressure ↔ Political Instability ↔ Civil Unrest form the strongest dependency triangle. Economic Stress acts as a secondary amplifier.'},
+      {t:'EMERGING CONNECTIONS',c:'var(--green)',v:'Opportunity nodes connected to '+edges.filter(function(e){ return nodes[e.a]&&nodes[e.a].type==='opportunity';}).length+' drivers. Active decision-driver links: '+edges.filter(function(e){ return nodes[e.a]&&nodes[e.a].type==='decision';}).length+'.'},
+    ];
+    var h='<div style="background:rgba(59,130,246,.04);border:0.5px solid rgba(59,130,246,.2);border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:var(--blue);letter-spacing:.2em">INTELLIGENCE GRAPH REPORT</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; '+nodes.length+' nodes &#183; '+edges.length+' connections</div></div>';
+    h+='<div style="height:0.5px;background:rgba(59,130,246,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="margin-top:10px;padding:8px 10px;background:rgba(59,130,246,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</div></div>';
+    el.innerHTML=h;
+  },800);
+};
+
+// ── 09: FOUNDER EXPLORER MODE ────────────────────────────────────
+window.graphSearch = function(q) {
+  if (!q || q.length < 2) return;
+  var el = document.getElementById('graph-explorer-out');
+  if (!el) return;
+  var q2 = q.toLowerCase();
+  var results = [];
+  // Search nodes
+  _graph.nodes.forEach(function(n) {
+    if ((n.label||'').toLowerCase().indexOf(q2) >= 0 || (n.data&&n.data.full||'').toLowerCase().indexOf(q2) >= 0) {
+      results.push({ type:'node', node:n });
+    }
+  });
+  // Search countries
+  _graph.countries.forEach(function(c) {
+    if ((c.country_name||c.country||'').toLowerCase().indexOf(q2) >= 0) {
+      results.push({ type:'country', c:c });
+    }
+  });
+  // Search drivers
+  _liveDrv().forEach(function(d) {
+    if (d.name.toLowerCase().indexOf(q2) >= 0) {
+      results.push({ type:'driver', d:d });
+    }
+  });
+  if (!results.length) { el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--text3)">No results for: '+q+'</div>'; return; }
+  var seen = {};
+  var h = '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">'+results.length+' result(s) for: '+q+'</div>';
+  results.slice(0,10).forEach(function(r) {
+    var key = r.type+(r.node?r.node.id:r.c?r.c.country:r.d?r.d.name:'');
+    if (seen[key]) return; seen[key]=true;
+    if (r.type === 'node') {
+      var n = r.node;
+      var connCount = _graph.edges.filter(function(e){ return e.a===n.id||e.b===n.id; }).length;
+      h += '<div style="background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:6px;border-left:2px solid '+n.col+'">';
+      h += '<div style="display:flex;align-items:center;gap:6px">';
+      h += '<span style="font-size:9px;color:var(--text3);text-transform:uppercase;width:60px">'+n.type+'</span>';
+      h += '<span style="font-size:11px;color:var(--text);flex:1">'+n.label+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:'+n.col+'">Score '+n.score+'</span>';
+      h += '<span style="font-size:9px;color:var(--text3)">&#128279;'+connCount+'</span>';
+      h += '</div></div>';
+    } else if (r.type === 'driver') {
+      var d = r.d;
+      h += '<div style="background:var(--bg3);border-radius:7px;padding:8px 10px;margin-bottom:6px;border-left:2px solid '+d.col+'">';
+      h += '<div style="font-size:9px;color:var(--text3);margin-bottom:2px">DRIVER</div>';
+      h += '<div style="display:flex;gap:6px;align-items:center">';
+      h += '<span style="font-size:11px;color:var(--text);flex:1">'+d.name+'</span>';
+      h += '<span style="font-family:var(--mono);color:'+d.col+'">'+d.score+'</span>';
+      h += '</div><div style="font-size:10px;color:var(--text3);margin-top:3px">7d: '+(d.d7>=0?'+':'')+d.d7+' | 30d: '+(d.d30>=0?'+':'')+d.d30+'</div></div>';
+    }
+  });
+  el.innerHTML = h;
+};
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
