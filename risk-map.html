@@ -1021,18 +1021,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .grdf-scroll-body::-webkit-scrollbar{width:2px}
 .grdf-scroll-body::-webkit-scrollbar-thumb{background:#1e3a5f}
 /* Country Intelligence Panel — full scrollable content */
-/* Sticky header — always visible above scrollable content */
-#grdf-cs-sticky{
-  flex-shrink:0;
-  display:none;
-  padding:10px 14px 10px;
-  background:#09131e;
-  border-bottom:0.5px solid #1a2e48;
-}
-#grdf-cs-sticky .cs-flag{font-size:28px;line-height:1}
-#grdf-cs-sticky .cs-name{font-size:17px;font-weight:700;color:#f1f5f9;margin-top:1px}
-#grdf-cs-sticky .cs-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;margin-top:4px}
-#grdf-cs-sticky .cs-close{background:none;border:none;color:#4a6380;font-size:22px;cursor:pointer;padding:4px;line-height:1;pointer-events:auto!important}
 #grdf-cs-content{
   flex:1;
   overflow-y:auto;
@@ -1041,6 +1029,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 }
 #grdf-cs-content::-webkit-scrollbar{width:2px}
 #grdf-cs-content::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:1px}
+/* Sticky country header — always visible */
+#grdf-cs-sticky{
+  display:none;flex-shrink:0;
+  background:#09131e;
+  border-bottom:0.5px solid #1a2e48;
+  padding:10px 14px 10px;
+}
 
 /* ── Sprint 4: Intelligence Drawer ── */
 #grdf-intel-drawer{
@@ -6190,17 +6185,16 @@ function _evM(val, lbl, col) {
 <!-- Sprint 3: Country Intelligence bottom sheet -->
 <div id="grdf-country-sheet">
   <div class="grdf-sheet-handle" id="grdf-cs-handle" onclick="grdfCycleSheet()"></div>
-  <!-- Sticky header: flag + country name + risk level — always visible -->
   <div id="grdf-cs-sticky">
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="cs-flag" id="grdf-cs-flag">🌍</span>
+        <span id="grdf-cs-flag" style="font-size:28px;line-height:1">🌍</span>
         <div>
-          <div class="cs-name" id="grdf-cs-name">—</div>
-          <span class="cs-status" id="grdf-cs-status"></span>
+          <div id="grdf-cs-name" style="font-size:17px;font-weight:700;color:#f1f5f9;margin-bottom:3px"></div>
+          <div id="grdf-cs-badge" style="display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:5px"></div>
         </div>
       </div>
-      <button class="cs-close" onclick="grdfCloseCountrySheet()">×</button>
+      <button onclick="grdfCloseCountrySheet()" style="background:none;border:none;color:#4a6380;font-size:22px;cursor:pointer;padding:4px;pointer-events:auto!important">×</button>
     </div>
   </div>
   <div id="grdf-cs-content"></div>
@@ -6550,12 +6544,12 @@ window.grdfOpenCountrySheet = function(cc) {
 };
 
 window.grdfCloseCountrySheet = function() {
-  var sheet = document.getElementById('grdf-country-sheet');
+  var sheet  = document.getElementById('grdf-country-sheet');
   var drawer = document.getElementById('grdf-intel-drawer');
   var sticky = document.getElementById('grdf-cs-sticky');
-  if(sheet) { sheet.className=''; _grdfSheetSnap=0; _grdfCurrentCountry=null; }
-  if(sticky) sticky.style.display='none';
-  if(drawer) drawer.style.display='flex';
+  if(sheet)  { sheet.className=''; _grdfSheetSnap=0; _grdfCurrentCountry=null; }
+  if(sticky) { sticky.style.display='none'; }
+  if(drawer) { drawer.style.display='flex'; }
 };
 
 window.grdfCycleSheet = function() {
@@ -6747,25 +6741,28 @@ function grdfRenderCountryPanel(cc) {
 
   var html = '';
 
-  // ── Sticky header (outside scroll area) ─────────────────
-  var stickyEl = document.getElementById('grdf-cs-sticky');
-  var flagEl   = document.getElementById('grdf-cs-flag');
-  var nameEl   = document.getElementById('grdf-cs-name');
-  var statEl   = document.getElementById('grdf-cs-status');
-  if(stickyEl){ stickyEl.style.display='block'; }
-  if(flagEl)  { flagEl.textContent = _flag(c.country); }
-  if(nameEl)  { nameEl.textContent = esc(c.country_name||cc); }
-  if(statEl)  {
-    statEl.textContent = STATUS_RU[status]||status;
-    statEl.style.cssText = 'display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;margin-top:4px;background:'+statusCol+'1a+\';\'+'border:0.5px solid '+statusCol+'33;color:'+statusCol;
-  }
+  // Sticky header: populate (outside scroll area)
+  (function(){ // IIFE to avoid variable pollution
+    var se=document.getElementById('grdf-cs-sticky');
+    var sf=document.getElementById('grdf-cs-flag');
+    var sn=document.getElementById('grdf-cs-name');
+    var sb=document.getElementById('grdf-cs-badge');
+    if(se) se.style.display='block';
+    if(sf) sf.textContent=_flag(c.country);
+    if(sn) sn.textContent=c.country_name||cc;
+    if(sb){
+      sb.textContent=STATUS_RU[status]||status;
+      sb.style.background=statusCol.replace('#','')!==statusCol ? statusCol+'22':'rgba(16,185,129,.15)';
+      sb.style.color=statusCol;
+      sb.style.border='0.5px solid '+statusCol;
+    }
+  })();
 
-  // Archive badge if Signal Pro
+
+  // Archive badge (country name/flag now in sticky header)
   if(isSig){
     html += '<div class="grdf-archive-badge"><span>⭐ Участник Архива</span><small> · Прогноз 7д включён</small></div>';
   }
-  // (country name/flag now in sticky header above — not in scroll content)
-
   // Metrics
   html += '<div class="grdf-metrics">';
   html += '<div class="grdf-metric"><div class="grdf-metric-val" style="color:'+statusCol+'">'+gri+'</div><div class="grdf-metric-lbl">GRI</div></div>';
