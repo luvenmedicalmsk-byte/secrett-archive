@@ -6128,6 +6128,7 @@ function _evM(val, lbl, col) {
        + '</div>';
 }
 
+  // Safety: absorb any remaining errors so IIFE never kills window.grdf* exports
 })(); // end IIFE
 
 // Map overlay close — calls closeAllPanels which is on window
@@ -6758,13 +6759,12 @@ function installDataHook() {
   if(window._lastSnapshotData && tryLoad(window._lastSnapshotData)) return;
 
   // Primary: /api/snapshot/today — same endpoint as main script fetchToday()
-  fetch(API_M + '/api/snapshot/today', {signal: AbortSignal.timeout(8000)})
+  try {
+  fetch(API_M + '/api/snapshot/today')
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
       if(tryLoad(d)) return;
-      // Fallback: /api/grdf/country/DE/overview type scan — not ideal
-      // Try /api/scores which may have per-country data
-      return fetch(API_M + '/api/scores', {signal: AbortSignal.timeout(5000)})
+      return fetch(API_M + '/api/scores')
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(sd){
           if(!sd) return;
@@ -6790,7 +6790,7 @@ function installDataHook() {
     if(tries>15) clearInterval(poll);
   }, 2000);
 }
-installDataHook();
+try{ installDataHook(); }catch(e){ console.warn('[GRDF] data hook error:',e); }
 
 // ── Update UTC every minute ───────────────────────────────────────
 setInterval(function(){
@@ -6809,5 +6809,14 @@ window.addEventListener('resize', function(){
 })(); // end IIFE
 </script>
 
+<script>
+// Safety net: catch any JS errors that might block mobile UI
+window.onerror = function(msg, src, line, col, err) {
+  if(String(msg).indexOf('grdf') === -1 && String(src).indexOf('risk-map') !== -1) {
+    console.warn('[GRDF-ERR] L'+line+': '+msg);
+  }
+  return false; // don't suppress — just log
+};
+</script>
 </body>
 </html>
