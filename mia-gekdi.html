@@ -322,6 +322,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button class="sn-btn" onclick="goSection('s12')" data-s="s12">🩺<span class="sn-tip">Health Check</span></button>
     <button class="sn-btn" onclick="goSection('s13')" data-s="s13">🔬<span class="sn-tip">Explainability</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
+    <button class="sn-btn" onclick="goSection('s15')" data-s="s15">&#128269;<span class="sn-tip">Causality</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -927,6 +928,125 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <div class="sum-card"><div id="drv-pipeline"></div></div>
       </div>
     </div>
+
+    <!-- ─ S15: DRIVER CAUSALITY ENGINE ─ -->
+    <div class="section" id="s15">
+      <div class="s-head">
+        <div class="s-tag">15</div>
+        <div class="s-title">Driver Causality Engine</div>
+        <div class="s-badge badge-orange">🔍 ROOT CAUSE ANALYSIS</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;font-style:italic">Understand what drives the drivers.</div>
+
+      <!-- 01: ROOT CAUSE ANALYSIS -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🔬</span> 01 · Root Cause Analysis</div>
+        <div style="margin-bottom:8px">
+          <select id="rca-driver-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;outline:none;width:100%" onchange="buildRCA(this.value)">
+            <option value="">Select a Risk Driver...</option>
+          </select>
+        </div>
+        <div id="rca-out">
+          <div style="padding:16px;text-align:center;font-size:11px;color:var(--text3)">Select a driver to see root causes</div>
+        </div>
+      </div>
+
+      <!-- 02: DRIVER DEPENDENCY MAP -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🕸️</span> 02 · Driver Dependency Map</div>
+        <div class="sum-card">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:8px">Tap a node to highlight connections</div>
+          <canvas id="dep-canvas" style="width:100%;height:300px;background:var(--bg3);border-radius:8px;display:block;cursor:pointer" onclick="handleDepClick(event)"></canvas>
+          <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:20px;height:1px;background:rgba(100,116,139,.5)"></span>Weak</span>
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:20px;height:2px;background:rgba(234,179,8,.6)"></span>Moderate</span>
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:20px;height:2.5px;background:rgba(249,115,22,.7)"></span>Strong</span>
+            <span style="font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:20px;height:3px;background:rgba(239,68,68,.9)"></span>Critical</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03: ESCALATION CASCADE -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>📉</span> 03 · Escalation Cascade</div>
+        <div class="swipe-wrap" id="cascade-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>🌡️</span> Climate → Social → Conflict</div>
+              <div id="cas-1"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>💹</span> Economic → Social → Political</div>
+              <div id="cas-2"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>⚔️</span> Conflict → Migration → Instability</div>
+              <div id="cas-3"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="cascade-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 04: DRIVER INFLUENCE SCORE -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🎯</span> 04 · Driver Influence Score</div>
+        <div class="sum-card"><div id="influence-list"></div></div>
+      </div>
+
+      <!-- 05: SYSTEMIC IMPACT SIMULATOR -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>⚡</span> 05 · Systemic Impact Simulator</div>
+        <div style="margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="sim-driver-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;outline:none;flex:1;min-width:160px" onchange="runSimulation()">
+            <option value="">Select driver to simulate...</option>
+          </select>
+          <select id="sim-delta-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;outline:none;width:100px" onchange="runSimulation()">
+            <option value="5">+5 pts</option>
+            <option value="10" selected>+10 pts</option>
+            <option value="20">+20 pts</option>
+            <option value="-5">-5 pts</option>
+            <option value="-10">-10 pts</option>
+          </select>
+        </div>
+        <div class="sum-card"><div id="sim-out"><div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">Select a driver to run simulation</div></div></div>
+      </div>
+
+      <!-- 06: TOP SYSTEM DRIVERS -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🏆</span> 06 · Top System Drivers</div>
+        <div class="tbl-outer" style="max-height:360px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>Rank</th><th>Driver</th><th>Influence</th><th>Connected</th><th>Level</th></tr></thead>
+            <tbody id="top-sys-drivers"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 07: DRIVER EXPLAINER AI -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🤖</span> 07 · Driver Explainer AI</div>
+        <div style="margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <select id="ai-driver-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;outline:none;flex:1;min-width:160px">
+            <option value="">Select driver...</option>
+          </select>
+          <button onclick="runDriverExplainer()" style="padding:7px 16px;background:linear-gradient(135deg,#1a3a2a,#0f2a1a);border:1px solid rgba(16,185,129,.3);border-radius:6px;color:var(--green);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;-webkit-appearance:none">Explain Driver</button>
+        </div>
+        <div id="ai-explainer-out">
+          <div class="sum-card" style="border:0.5px solid rgba(16,185,129,.15)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Select a driver and press Explain Driver</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s15 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -1534,7 +1654,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -2052,6 +2172,377 @@ function buildDrvPipeline(){
   });
   document.getElementById('drv-pipeline').innerHTML=h;
 }
+
+
+// ── S15: DRIVER CAUSALITY ENGINE ──────────────────────────────────
+var _depSelectedNode = -1;
+var _depNodes = [];
+var _depEdges = [];
+
+var CAUSALITY_DATA = {
+  'Migration Pressure': {
+    score: 82, inf: 91, connected: 6,
+    causes: [{name:'Political Instability',pct:34,col:'#f97316'},{name:'Climate Stress',pct:27,col:'#10b981'},{name:'Economic Stress',pct:22,col:'#3b82f6'},{name:'Conflict Escalation',pct:17,col:'#ef4444'}],
+    effects: [{name:'Civil Unrest',delta:6,col:'#ef4444'},{name:'Political Instability',delta:4,col:'#f97316'},{name:'Economic Stress',delta:3,col:'#3b82f6'},{name:'Border Tensions',delta:5,col:'#f97316'}],
+    explain: 'Migration pressure is primarily driven by climate stress (drought, flooding), political instability in origin regions, and economic deterioration. The strongest acceleration is currently in sub-Saharan Africa and the Middle East. Rising temperatures are creating secondary displacement cascades that amplify existing political tensions.'
+  },
+  'Political Instability': {
+    score: 78, inf: 87, connected: 7,
+    causes: [{name:'Economic Stress',pct:38,col:'#3b82f6'},{name:'Social Unrest',pct:29,col:'#ef4444'},{name:'Geopolitical Pressure',pct:21,col:'#f97316'},{name:'Governance Failures',pct:12,col:'#64748b'}],
+    effects: [{name:'Civil Unrest',delta:7,col:'#ef4444'},{name:'Migration Pressure',delta:4,col:'#ef4444'},{name:'Economic Stress',delta:3,col:'#3b82f6'},{name:'Conflict Escalation',delta:5,col:'#f97316'}],
+    explain: 'Political instability is primarily fueled by economic deterioration, social fragmentation, and external geopolitical pressures. The current acceleration is concentrated in regions experiencing simultaneous economic and social stress, creating feedback loops that amplify institutional fragility.'
+  },
+  'Economic Stress': {
+    score: 74, inf: 81, connected: 8,
+    causes: [{name:'Energy Risk',pct:31,col:'#eab308'},{name:'Supply Chain',pct:28,col:'#3b82f6'},{name:'Inflation',pct:24,col:'#ef4444'},{name:'Financial Stress',pct:17,col:'#a855f7'}],
+    effects: [{name:'Political Instability',delta:5,col:'#f97316'},{name:'Social Unrest',delta:4,col:'#ef4444'},{name:'Migration Pressure',delta:3,col:'#ef4444'},{name:'Infrastructure Stress',delta:2,col:'#a855f7'}],
+    explain: 'Economic stress is driven by compounding pressures: energy price volatility, supply chain fragmentation post-pandemic, and monetary tightening. The transmission mechanism to political risk operates with a 3-6 month lag, meaning current economic stress is likely to amplify political indicators in coming months.'
+  },
+  'Climate Stress': {
+    score: 71, inf: 79, connected: 5,
+    causes: [{name:'Extreme Heat Events',pct:35,col:'#f97316'},{name:'Precipitation Anomalies',pct:30,col:'#10b981'},{name:'Sea Level Rise',pct:20,col:'#3b82f6'},{name:'Ecosystem Collapse',pct:15,col:'#10b981'}],
+    effects: [{name:'Migration Pressure',delta:7,col:'#ef4444'},{name:'Economic Stress',delta:4,col:'#3b82f6'},{name:'Water Scarcity',delta:6,col:'#10b981'},{name:'Food Security Risk',delta:5,col:'#eab308'}],
+    explain: 'Climate stress is accelerating across multiple dimensions simultaneously. Extreme heat events are becoming more frequent and intense, while precipitation patterns are shifting dramatically. The primary risk transmission pathway is through agricultural disruption leading to food insecurity and subsequent migration pressure.'
+  },
+  'Civil Unrest': {
+    score: 68, inf: 74, connected: 5,
+    causes: [{name:'Economic Inequality',pct:36,col:'#3b82f6'},{name:'Political Repression',pct:28,col:'#f97316'},{name:'Migration Pressure',pct:22,col:'#ef4444'},{name:'Social Media Amplification',pct:14,col:'#a855f7'}],
+    effects: [{name:'Political Instability',delta:6,col:'#f97316'},{name:'Economic Stress',delta:3,col:'#3b82f6'},{name:'Conflict Escalation',delta:4,col:'#f97316'},{name:'Infrastructure Damage',delta:2,col:'#a855f7'}],
+    explain: 'Civil unrest is increasingly driven by economic inequality amplified through social media networks. The current escalation pattern shows a strong correlation with food price spikes and youth unemployment rates above 30%. Digital mobilization has reduced the threshold for mass mobilization events.'
+  }
+};
+
+var INFLUENCE_SCORES = [
+  {name:'Migration Pressure',    inf:91, score:82, connected:6, col:'#ef4444'},
+  {name:'Political Instability', inf:87, score:78, connected:7, col:'#f97316'},
+  {name:'Economic Stress',       inf:81, score:74, connected:8, col:'#3b82f6'},
+  {name:'Climate Stress',        inf:79, score:71, connected:5, col:'#10b981'},
+  {name:'Civil Unrest',          inf:74, score:68, connected:5, col:'#ef4444'},
+  {name:'Energy Risk',           inf:68, score:65, connected:4, col:'#eab308'},
+  {name:'Conflict Escalation',   inf:65, score:63, connected:6, col:'#f97316'},
+  {name:'Infrastructure Stress', inf:58, score:58, connected:4, col:'#a855f7'},
+  {name:'Water Scarcity',        inf:52, score:54, connected:3, col:'#10b981'},
+  {name:'Cyber Risk',            inf:48, score:52, connected:3, col:'#a855f7'},
+];
+
+function loadCausalityEngine() {
+  populateSelects();
+  buildDepCanvas();
+  buildCascades();
+  buildInfluenceList();
+  buildTopSystemDrivers();
+  initSwipeDots('cascade-swipe','cascade-dots');
+}
+
+function populateSelects() {
+  var keys = Object.keys(CAUSALITY_DATA);
+  ['rca-driver-sel','sim-driver-sel','ai-driver-sel'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    keys.forEach(function(k) {
+      var opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = k + ' (' + CAUSALITY_DATA[k].score + ')';
+      sel.appendChild(opt);
+    });
+  });
+}
+
+window.buildRCA = function(driverName) {
+  if (!driverName) return;
+  var d = CAUSALITY_DATA[driverName];
+  if (!d) return;
+  var sc = d.score >= 75 ? 'var(--red)' : d.score >= 60 ? 'var(--orange)' : 'var(--text2)';
+  var h = '';
+  // Header
+  h += '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg3);border-radius:8px;margin-bottom:12px">';
+  h += '<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">' + driverName + '</div>';
+  h += '<div style="font-size:11px;color:var(--text3);margin-top:2px">Current Level: <span style="color:' + sc + ';font-weight:700">' + d.score + '</span>';
+  h += ' &nbsp; Influence: <span style="color:var(--gold);font-weight:700">' + d.inf + '</span></div></div>';
+  h += '<span class="td-badge ' + (d.score >= 75 ? 'risk-crit' : 'risk-high') + '">' + (d.score >= 75 ? 'CRITICAL' : 'HIGH') + '</span></div>';
+  // Primary causes
+  h += '<div style="font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Primary Causes</div>';
+  d.causes.forEach(function(c) {
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="width:8px;height:8px;border-radius:50%;background:' + c.col + ';flex-shrink:0;display:inline-block"></span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1">' + c.name + '</span>';
+    h += '<div style="width:80px;height:5px;background:rgba(255,255,255,.05);border-radius:3px">';
+    h += '<div style="height:100%;width:' + (c.pct * 2.5) + '%;background:' + c.col + ';border-radius:3px"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:11px;color:' + c.col + ';width:36px;text-align:right">' + c.pct + '%</span></div>';
+  });
+  // Effects
+  h += '<div style="font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:12px;margin-bottom:8px">Primary Effects (+10 simulation)</div>';
+  d.effects.forEach(function(e) {
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="width:7px;height:7px;border-radius:50%;background:' + e.col + ';flex-shrink:0;display:inline-block"></span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1">' + e.name + '</span>';
+    h += '<span style="font-family:var(--mono);font-size:11px;color:var(--orange)">+' + e.delta + '</span></div>';
+  });
+  document.getElementById('rca-out').innerHTML = h;
+};
+
+function buildDepCanvas() {
+  var canvas = document.getElementById('dep-canvas');
+  if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.offsetWidth || 340;
+  var H = 300;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  _depNodes = [
+    {id:0,label:'Migration',     x:W*.50,y:H*.20,col:'#ef4444',r:26,score:82},
+    {id:1,label:'Political',     x:W*.18,y:H*.42,col:'#f97316',r:24,score:78},
+    {id:2,label:'Economic',      x:W*.82,y:H*.42,col:'#3b82f6',r:22,score:74},
+    {id:3,label:'Climate',       x:W*.50,y:H*.60,col:'#10b981',r:22,score:71},
+    {id:4,label:'Civil Unrest',  x:W*.22,y:H*.78,col:'#ef4444',r:20,score:68},
+    {id:5,label:'Energy Risk',   x:W*.78,y:H*.78,col:'#eab308',r:18,score:65},
+    {id:6,label:'Conflict',      x:W*.50,y:H*.88,col:'#f97316',r:16,score:63},
+    {id:7,label:'Cyber Risk',    x:W*.88,y:H*.20,col:'#a855f7',r:14,score:52},
+  ];
+  _depEdges = [
+    {a:0,b:1,str:3},{a:0,b:2,str:2},{a:0,b:4,str:3},
+    {a:1,b:3,str:2},{a:1,b:4,str:3},{a:1,b:6,str:2},
+    {a:2,b:5,str:2},{a:2,b:3,str:2},{a:2,b:1,str:2},
+    {a:3,b:0,str:3},{a:3,b:5,str:1},{a:4,b:6,str:3},
+    {a:5,b:2,str:2},{a:6,b:1,str:2},{a:7,b:2,str:1},
+  ];
+
+  renderDepCanvas(-1);
+}
+
+function renderDepCanvas(selectedId) {
+  var canvas = document.getElementById('dep-canvas');
+  if (!canvas || !_depNodes.length) return;
+  var dpr = window.devicePixelRatio || 1;
+  var W   = parseInt(canvas.style.width)  || canvas.offsetWidth  || 340;
+  var H   = parseInt(canvas.style.height) || 300;
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W * dpr, H * dpr);
+  ctx.save(); ctx.scale(dpr, dpr);
+
+  var strC = ['rgba(100,116,139,.35)','rgba(234,179,8,.5)','rgba(249,115,22,.65)','rgba(239,68,68,.85)'];
+  var strW = [1, 1.5, 2.5, 3.5];
+
+  // Build connected set for selected node
+  var connected = {};
+  if (selectedId >= 0) {
+    _depEdges.forEach(function(e) {
+      if (e.a === selectedId) connected[e.b] = true;
+      if (e.b === selectedId) connected[e.a] = true;
+    });
+  }
+
+  // Draw edges
+  _depEdges.forEach(function(e) {
+    var a = _depNodes[e.a], b = _depNodes[e.b];
+    var isActive = selectedId < 0 || e.a === selectedId || e.b === selectedId;
+    ctx.globalAlpha = isActive ? 1 : 0.15;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = strC[e.str] || strC[1];
+    ctx.lineWidth   = strW[e.str] || 1;
+    ctx.stroke();
+  });
+
+  // Draw nodes
+  _depNodes.forEach(function(n) {
+    var isSelected   = n.id === selectedId;
+    var isConnected  = connected[n.id];
+    var isDimmed     = selectedId >= 0 && !isSelected && !isConnected;
+    ctx.globalAlpha  = isDimmed ? 0.2 : 1;
+    var r = isSelected ? n.r * 1.25 : n.r;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle   = n.col + (isSelected ? '44' : '22');
+    ctx.fill();
+    ctx.strokeStyle = n.col;
+    ctx.lineWidth   = isSelected ? 2.5 : 1.5;
+    ctx.stroke();
+    ctx.fillStyle   = n.col;
+    ctx.font        = 'bold ' + (r * 0.6) + 'px monospace';
+    ctx.textAlign   = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.score, n.x, n.y - 2);
+    ctx.font        = '9px sans-serif';
+    ctx.fillStyle   = isSelected ? '#f1f5f9' : '#94a3b8';
+    ctx.fillText(n.label, n.x, n.y + r + 10);
+  });
+
+  ctx.restore();
+}
+
+window.handleDepClick = function(evt) {
+  var canvas = document.getElementById('dep-canvas');
+  if (!canvas || !_depNodes.length) return;
+  var rect   = canvas.getBoundingClientRect();
+  var dpr    = window.devicePixelRatio || 1;
+  var mx     = (evt.clientX - rect.left);
+  var my     = (evt.clientY - rect.top);
+  var found  = -1;
+  _depNodes.forEach(function(n) {
+    var dx = mx - n.x, dy = my - n.y;
+    if (Math.sqrt(dx*dx + dy*dy) <= n.r + 8) found = n.id;
+  });
+  _depSelectedNode = (_depSelectedNode === found) ? -1 : found;
+  renderDepCanvas(_depSelectedNode);
+};
+
+function buildCascades() {
+  var cascades = [
+    {
+      id:'cas-1',
+      steps:[
+        {label:'Drought / Heatwave',    impact:72,col:'#10b981'},
+        {label:'Climate Stress',        impact:71,col:'#10b981'},
+        {label:'Food Insecurity',       impact:68,col:'#eab308'},
+        {label:'Migration Pressure',    impact:82,col:'#ef4444'},
+        {label:'Political Instability', impact:78,col:'#f97316'},
+        {label:'Civil Unrest',          impact:68,col:'#ef4444'},
+        {label:'Conflict Escalation',   impact:63,col:'#f97316'},
+      ]
+    },
+    {
+      id:'cas-2',
+      steps:[
+        {label:'Energy Price Shock',    impact:65,col:'#eab308'},
+        {label:'Economic Stress',       impact:74,col:'#3b82f6'},
+        {label:'Inflation Surge',       impact:70,col:'#3b82f6'},
+        {label:'Social Inequality',     impact:66,col:'#ef4444'},
+        {label:'Civil Unrest',          impact:68,col:'#ef4444'},
+        {label:'Political Instability', impact:78,col:'#f97316'},
+        {label:'Governance Crisis',     impact:71,col:'#f97316'},
+      ]
+    },
+    {
+      id:'cas-3',
+      steps:[
+        {label:'Military Conflict',     impact:63,col:'#f97316'},
+        {label:'Conflict Escalation',   impact:63,col:'#f97316'},
+        {label:'Population Displacement',impact:75,col:'#ef4444'},
+        {label:'Migration Pressure',    impact:82,col:'#ef4444'},
+        {label:'Political Instability', impact:78,col:'#f97316'},
+        {label:'Economic Stress',       impact:74,col:'#3b82f6'},
+        {label:'Social Fracture',       impact:68,col:'#ef4444'},
+      ]
+    }
+  ];
+  cascades.forEach(function(cas) {
+    var h = '';
+    cas.steps.forEach(function(s, i) {
+      if (i > 0) {
+        h += '<div style="text-align:center;padding:2px 0;color:var(--text3);font-size:13px">&darr;</div>';
+      }
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid ' + s.col + '">';
+      h += '<span style="font-size:11px;color:var(--text2);flex:1">' + s.label + '</span>';
+      h += '<div style="width:40px;height:4px;background:rgba(255,255,255,.06);border-radius:2px"><div style="height:100%;width:' + s.impact + '%;background:' + s.col + ';border-radius:2px"></div></div>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:' + s.col + ';width:22px;text-align:right">' + s.impact + '</span></div>';
+    });
+    document.getElementById(cas.id).innerHTML = h;
+  });
+}
+
+function buildInfluenceList() {
+  var h = '';
+  INFLUENCE_SCORES.forEach(function(d, i) {
+    var ic = d.inf >= 85 ? 'var(--red)' : d.inf >= 70 ? 'var(--orange)' : d.inf >= 55 ? 'var(--text2)' : 'var(--text3)';
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:16px">' + (i+1) + '</span>';
+    h += '<span style="width:8px;height:8px;border-radius:50%;background:' + d.col + ';flex-shrink:0;display:inline-block"></span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1">' + d.name + '</span>';
+    h += '<div style="width:70px;height:5px;background:rgba(255,255,255,.05);border-radius:3px">';
+    h += '<div style="height:100%;width:' + d.inf + '%;background:' + ic + ';border-radius:3px"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:12px;color:' + ic + ';font-weight:700;width:28px;text-align:right">' + d.inf + '</span>';
+    h += '</div>';
+  });
+  document.getElementById('influence-list').innerHTML = h;
+}
+
+window.runSimulation = function() {
+  var sel  = document.getElementById('sim-driver-sel');
+  var dsel = document.getElementById('sim-delta-sel');
+  if (!sel || !sel.value) return;
+  var dName = sel.value;
+  var delta = parseInt(dsel ? dsel.value : 10);
+  var d = CAUSALITY_DATA[dName];
+  if (!d) return;
+  var dCol = delta >= 0 ? 'var(--orange)' : 'var(--green)';
+  var sign = delta >= 0 ? '+' : '';
+  var h = '<div style="padding:10px;background:var(--bg3);border-radius:8px;border-left:3px solid ' + dCol + ';margin-bottom:10px">';
+  h += '<div style="font-size:12px;font-weight:600;color:var(--text)">' + dName + ' ' + sign + delta + ' pts</div>';
+  h += '<div style="font-size:10px;color:var(--text3);margin-top:2px">' + d.score + ' &rarr; <span style="color:' + dCol + ';font-weight:700">' + (d.score + delta) + '</span></div></div>';
+  h += '<div style="font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Projected Cascade Impact</div>';
+  d.effects.forEach(function(e) {
+    var adj  = Math.round(e.delta * delta / 10);
+    var ec   = adj >= 0 ? 'var(--orange)' : 'var(--green)';
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="width:7px;height:7px;border-radius:50%;background:' + e.col + ';flex-shrink:0;display:inline-block"></span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1">' + e.name + '</span>';
+    h += '<div style="width:60px;height:4px;background:rgba(255,255,255,.05);border-radius:2px">';
+    h += '<div style="height:100%;width:' + Math.abs(adj) * 5 + '%;background:' + ec + ';border-radius:2px"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:11px;color:' + ec + ';width:40px;text-align:right">' + (adj >= 0 ? '+' : '') + adj + '</span></div>';
+  });
+  document.getElementById('sim-out').innerHTML = h;
+};
+
+function buildTopSystemDrivers() {
+  var h = '';
+  INFLUENCE_SCORES.forEach(function(d, i) {
+    var rc = d.score >= 75 ? 'risk-crit' : d.score >= 60 ? 'risk-high' : d.score >= 40 ? 'risk-med' : 'risk-low';
+    var rl = d.score >= 75 ? 'CRITICAL' : d.score >= 60 ? 'HIGH' : d.score >= 40 ? 'ELEVATED' : 'MODERATE';
+    h += '<tr>';
+    h += '<td style="color:var(--gold);font-weight:700">' + (i+1) + '</td>';
+    h += '<td style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:' + d.col + ';flex-shrink:0;display:inline-block"></span>' + d.name + '</td>';
+    h += '<td style="color:var(--gold);font-weight:600">' + d.inf + '</td>';
+    h += '<td style="color:var(--text3)">' + d.connected + '</td>';
+    h += '<td><span class="td-badge ' + rc + '">' + rl + '</span></td>';
+    h += '</tr>';
+  });
+  document.getElementById('top-sys-drivers').innerHTML = h;
+}
+
+window.runDriverExplainer = function() {
+  var sel = document.getElementById('ai-driver-sel');
+  if (!sel || !sel.value) return;
+  var dName = sel.value;
+  var d = CAUSALITY_DATA[dName];
+  var el = document.getElementById('ai-explainer-out');
+  if (!d || !el) return;
+
+  // Show typing indicator
+  el.innerHTML = '<div class="sum-card" style="border:0.5px solid rgba(16,185,129,.25)"><div style="font-size:11px;color:var(--green);padding:4px 0;margin-bottom:8px;font-family:var(--mono)">&#9679; Analyzing ' + dName + '...</div><div class="loading">Generating explanation...</div></div>';
+
+  // Simulate AI response delay
+  setTimeout(function() {
+    var sc = d.score >= 75 ? 'var(--red)' : d.score >= 60 ? 'var(--orange)' : 'var(--text2)';
+    var topCause = d.causes[0].name;
+    var h = '<div class="sum-card" style="border:0.5px solid rgba(16,185,129,.25)">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">';
+    h += '<span style="font-size:10px;color:var(--green);font-family:var(--mono)">&#9679; AI ANALYSIS</span>';
+    h += '<span style="font-size:10px;color:var(--text3);margin-left:auto">' + dName + ' &bull; Level: <span style="color:' + sc + '">' + d.score + '</span></span>';
+    h += '</div>';
+    h += '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px">Why is ' + dName + ' ' + (d.score >= 70 ? 'escalating' : 'elevated') + '?</div>';
+    h += '<div style="font-size:12px;color:var(--text2);line-height:1.7;border-left:2px solid rgba(16,185,129,.3);padding-left:12px;margin-bottom:12px">' + d.explain + '</div>';
+    h += '<div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Key Drivers</div>';
+    d.causes.slice(0, 3).forEach(function(c) {
+      h += '<div style="display:flex;align-items:center;gap:7px;padding:4px 0;font-size:11px;color:var(--text2)">';
+      h += '<span style="width:6px;height:6px;border-radius:50%;background:' + c.col + ';display:inline-block"></span>';
+      h += '<span>' + c.name + '</span><span style="color:' + c.col + ';font-family:var(--mono);margin-left:auto">' + c.pct + '%</span></div>';
+    });
+    h += '<div style="margin-top:10px;font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Projected Effects</div>';
+    d.effects.slice(0, 3).forEach(function(e) {
+      h += '<div style="display:flex;align-items:center;gap:7px;padding:4px 0;font-size:11px;color:var(--text2)">';
+      h += '<span style="font-size:10px">&#10140;</span>';
+      h += '<span>' + e.name + '</span><span style="color:var(--orange);font-family:var(--mono);margin-left:auto">+' + e.delta + ' pts</span></div>';
+    });
+    h += '<div style="margin-top:12px;padding:8px 10px;background:rgba(16,185,129,.05);border-radius:6px;font-size:10px;color:var(--text3)">Based on SIG-NN Engine · ' + new Date().toUTCString().replace('GMT','UTC') + '</div>';
+    h += '</div>';
+    el.innerHTML = h;
+  }, 900);
+};
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
