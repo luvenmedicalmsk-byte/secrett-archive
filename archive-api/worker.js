@@ -7655,7 +7655,55 @@ async function handleGRDF(request, env) {
       '/api/grdf/feed/quality','/api/grdf/feed/pipeline',
       '/api/grdf/feed/alerts','/api/grdf/feed/analytics',
       '/api/grdf/feed/health','/api/grdf/feed/certification',
+
+  // =========================================================================
+  // GRDF EARLY WARNING SYSTEM V1 API — PREDICTIVE RISK ESCALATION ENGINE
+  // All routes under /api/grdf/ews/
+  // Position: Feed Engine → EWS → Alert Map V2 → Command
+  // Detects escalation BEFORE events occur. Architecture frozen at V13.
+  // =========================================================================
+  if (seg[0] === 'ews') {
+    const eseg = seg[1] || 'dashboard';
+    const CE = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const EWS_FILES = {
+      'dashboard':    'docs/ews/ews_score.json',
+      'score':        'docs/ews/ews_score.json',
+      'forecast':     'docs/ews/ews_forecasts.json',
+      'warnings':     'docs/ews/ews_warning_feed.json',
+      'certification':'docs/ews/ews_certification.json',
+      'countries':    'docs/ews/ews_country_panel.json',
+      'scenarios':    'docs/ews/ews_scenarios.json',
+      'momentum':     'docs/ews/ews_momentum.json',
+      'history':      'docs/ews/ews_history.json',
+      'cross-domain': 'docs/ews/ews_cross_domain.json',
+    };
+    const EWS_SIGNAL_ONLY = new Set(['countries','scenarios','momentum','history','cross-domain']);
+    if (!EWS_FILES[eseg]) return new Response(JSON.stringify({error:'Unknown EWS route: '+eseg, available:Object.keys(EWS_FILES)}),{status:404,headers:CE});
+    if (EWS_SIGNAL_ONLY.has(eseg) && access==='teaser') return new Response(JSON.stringify({error:eseg+' requires Signal tier'}),{status:403,headers:CE});
+    const ck = `grdf:ews:${eseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CE});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, EWS_FILES[eseg], 180);
+      if (!d) return new Response(JSON.stringify({error:'EWS '+eseg+' not built yet'}),{status:404,headers:CE});
+      let r;
+      if (access==='teaser') {
+        if (eseg==='dashboard'||eseg==='score') r={date:d.date,total_countries:d.total_countries,band_distribution:d.band_distribution,top10_black_red:d.top10_black_red?.slice(0,5),formula:d.formula,tier};
+        else if (eseg==='forecast') r={date:d.date,total_countries:d.total_countries,horizons:d.horizons,top_escalation_7d:d.top_escalation_7d,tier};
+        else if (eseg==='warnings') r={date:d.date,total_warnings:d.total_warnings,by_category:d.by_category,critical_n:d.critical_n,escalation_n:d.escalation_n,warnings:d.warnings?.slice(0,6),tier};
+        else if (eseg==='certification') r={date:d.date,certification:d.certification,cert_score:d.cert_score,avg_ews_score:d.avg_ews_score,passed_n:d.passed_n,signal_chain:d.signal_chain,no_v14:d.no_v14,tier};
+        else r={date:d.date,tier};
+      } else { r={...d,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:180});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CE});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CE});}
+  }
+
       '/api/grdf/feed/normalization','/api/grdf/feed/attribution',
+      '/api/grdf/ews/dashboard','/api/grdf/ews/score',
+      '/api/grdf/ews/forecast','/api/grdf/ews/warnings',
+      '/api/grdf/ews/certification','/api/grdf/ews/countries',
+      '/api/grdf/ews/scenarios','/api/grdf/ews/momentum',
+      '/api/grdf/ews/history','/api/grdf/ews/cross-domain',
     ]
   }),{status:404,headers:CORS});
 }
