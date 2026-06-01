@@ -2,32 +2,32 @@
   "country": "IL",
   "date": "2026-06-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-01T17:34:05.255519+00:00",
+  "generated_at": "2026-06-01T22:36:44.923622+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 70,
+      "score": 71,
       "props": {
-        "risk_score": 70
+        "risk_score": 71
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
       "score": 35,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -80,23 +80,23 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Иран_замор",
+      "id": "SIGNAL-IL-Трамп_гово",
       "type": "Signal",
-      "label": "Иран замораживает обмен сообщениями с СШ",
+      "label": "Трамп говорит, что Хезболла и Израиль со",
+      "severity": 74,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Врач_ЦАХАЛ",
+      "type": "Signal",
+      "label": "Врач ЦАХАЛа убит, 7 ранены в результате ",
       "severity": 73,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Последние_",
+      "id": "SIGNAL-IL-Война_в_За",
       "type": "Signal",
-      "label": "Последние новости о войне Иран-США: Трам",
-      "severity": 72,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Под_атакой",
-      "type": "Signal",
-      "label": "Под атакой коалиции, председатель Верхов",
+      "label": "Война в Западной Азии в прямом эфире: Тр",
       "severity": 69,
       "domain": "geopolitical"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IL",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IL",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-Иран_замор",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Трамп_гово",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-IL-Врач_ЦАХАЛ",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.73
     },
     {
-      "from": "SIGNAL-IL-Последние_",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-IL-Под_атакой",
+      "from": "SIGNAL-IL-Война_в_За",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.69

@@ -2,67 +2,67 @@
   "country": "IT",
   "date": "2026-06-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-01T17:34:05.256712+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-01T22:36:44.924442+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 59,
+      "score": 61,
       "props": {
-        "risk_score": 59
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 20,
-      "trend": "down"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -80,18 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IT-Мерц_собер",
+      "id": "SIGNAL-IT-Землетрясе",
       "type": "Signal",
-      "label": "Мерц соберет европейских лидеров перед с",
-      "severity": 58,
-      "domain": "geopolitical"
+      "label": "Землетрясение M6.2 -- 17 km WSW of Scarc",
+      "severity": 62,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-IT-Антидискри",
+      "id": "SIGNAL-IT-Полиция_Ме",
       "type": "Signal",
-      "label": "Антидискриминационное подразделение Мини",
-      "severity": 58,
+      "label": "Полиция Мехико применяет слезоточивый га",
+      "severity": 61,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-IT-Оборона_Ко",
+      "type": "Signal",
+      "label": "Оборона Костянтинівки, бої за Лиманщину ",
+      "severity": 57,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -99,43 +106,43 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-IT-Geopolitical",
@@ -156,16 +163,85 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IT-Мерц_собер",
-      "to": "DOMAIN-IT-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.58
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IT-Антидискри",
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
       "to": "DOMAIN-IT-social",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-IT-Землетрясе",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-IT-Полиция_Ме",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.61
+    },
+    {
+      "from": "SIGNAL-IT-Оборона_Ко",
+      "to": "DOMAIN-IT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.57
     }
   ]
 }

@@ -2,9 +2,9 @@
   "country": "DE",
   "date": "2026-06-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-01T17:34:05.247706+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-01T22:36:44.918448+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-DE",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
+      "score": 58,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -80,18 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-Зеленый_ур",
+      "id": "SIGNAL-DE-Зеленое_пр",
       "type": "Signal",
-      "label": "Зеленый уровень угрозы наводнения в Герм",
+      "label": "Зеленое предупреждение о наводнении в Ге",
       "severity": 63,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-DE-Мерц_собер",
-      "type": "Signal",
-      "label": "Мерц соберет европейских лидеров перед с",
-      "severity": 58,
-      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-DE-Germany_Is",
@@ -106,7 +99,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-DE",
@@ -118,7 +111,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-DE",
@@ -163,16 +156,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-DE-Зеленый_ур",
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-DE-Зеленое_пр",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-DE-Мерц_собер",
-      "to": "DOMAIN-DE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     },
     {
       "from": "SIGNAL-DE-Germany_Is",

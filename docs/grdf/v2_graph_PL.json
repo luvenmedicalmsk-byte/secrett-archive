@@ -2,67 +2,67 @@
   "country": "PL",
   "date": "2026-06-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-01T17:34:05.254908+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-01T22:36:44.923203+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 59,
+      "score": 61,
       "props": {
-        "risk_score": 59
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 22,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-PL-Geopolitical",
@@ -80,18 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Бывший_пол",
+      "type": "Signal",
+      "label": "Бывший польский посол возвращает украинс",
+      "severity": 70,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-PL-Польский_ч",
       "type": "Signal",
-      "label": "Польский чиновник заявил, что Зеленскому",
+      "label": "Польский чиновник говорит, что Зеленском",
       "severity": 58,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-PL-Мерц_собер",
+      "id": "SIGNAL-PL-IF2_tornad",
       "type": "Signal",
-      "label": "Мерц соберет европейских лидеров перед с",
-      "severity": 58,
-      "domain": "geopolitical"
+      "label": "IF2 tornado damages 18 structures near B",
+      "severity": 51,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -99,43 +106,43 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-PL-Geopolitical",
@@ -156,16 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-PL-geopolitical",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PL-Бывший_пол",
+      "to": "DOMAIN-PL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.7
+    },
+    {
       "from": "SIGNAL-PL-Польский_ч",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-PL-Мерц_собер",
-      "to": "DOMAIN-PL-geopolitical",
+      "from": "SIGNAL-PL-IF2_tornad",
+      "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.51
     }
   ]
 }
