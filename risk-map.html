@@ -6434,10 +6434,10 @@ var DOM_LABELS = {
   geopolitics:'Геополитика', technology:'Технологии', social:'Социум', infrastructure:'Инфраструктура'
 };
 var STATUS_COLORS = {STABLE:'#10B981',ELEVATED:'#EAB308',ESCALATING:'#F97316',CRITICAL:'#EF4444'};
-var STATUS_RU = {STABLE:'Стабильно',ELEVATED:'Повышен',ESCALATING:'Эскалация',CRITICAL:'Критично'};
+var STATUS_RU = {STABLE:'Умеренный риск',ELEVATED:'Повышенный риск',ESCALATING:'Высокий риск',CRITICAL:'Критично'};
 var LEVEL_C = {RED:'#EF4444',ORANGE:'#F97316',YELLOW:'#EAB308',GREEN:'#10B981'};
 
-function getStatus(gri){ return gri>=75?'CRITICAL':gri>=60?'ESCALATING':gri>=45?'ELEVATED':'STABLE'; }
+function getStatus(gri){ return gri>=80?'CRITICAL':gri>=60?'ESCALATING':gri>=40?'ELEVATED':'STABLE'; }
 function fr(v){ return Math.round(v||0); }
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -6553,7 +6553,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig) {
   var keyInsight  = domInsights[status];
 
   // ── Section: Ключевой вывод ─────────────────────────────────────
-  var statusRuMap = {CRITICAL:'Критический риск',ESCALATING:'Риск в стадии эскалации',ELEVATED:'Повышенный риск',STABLE:'Стабильная ситуация'};
+  var statusRuMap = {CRITICAL:'🔴 Критично',ESCALATING:'🟠 Высокий риск',ELEVATED:'🟡 Повышенный риск',STABLE:'🟢 Умеренный риск'};
   var statusColMap = {CRITICAL:'#ef4444',ESCALATING:'#f97316',ELEVATED:'#eab308',STABLE:'#10b981'};
   var sCol = statusColMap[status] || '#10b981';
 
@@ -6694,7 +6694,7 @@ function grdfRenderCountryPanel(cc) {
 
   // Header
   html += '<div class="grdf-cp-header">';
-  html += '<div class="grdf-cp-flag-name"><span class="grdf-cp-flag">'+(c.flag||'🌍')+'</span>';
+  html += '<div class="grdf-cp-flag-name"><span class="grdf-cp-flag">'+_flag(c.country)+'</span>';
   html += '<div><div class="grdf-cp-name">'+esc(c.country_name||cc)+'</div>';
   html += '<span class="grdf-cp-status" style="background:'+statusCol+'1a;border:0.5px solid '+statusCol+'33;color:'+statusCol+'">';
   html += '<span style="width:5px;height:5px;border-radius:50%;background:'+statusCol+';display:inline-block"></span> '+(STATUS_RU[status]||status)+'</span>';
@@ -6956,13 +6956,14 @@ function grdfPopulateWarnings(countries) {
   var html = '';
   warned.forEach(function(c){
     var gri = fr(c.risk_score);
-    var lv = gri>=75?'RED':gri>=60?'ORANGE':gri>=45?'YELLOW':'GREEN';
+    var lv = gri>=80?'RED':gri>=60?'ORANGE':gri>=40?'YELLOW':'GREEN';
     var lc = LEVEL_C[lv]||'#888';
     html += '<div class="grdf-warn-row">';
     html += '<span class="grdf-sig-dot" style="background:'+lc+';width:8px;height:8px;margin-top:3px"></span>';
     html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+_flag(c.country)+' '+esc(c.country_name||c.country)+' · GRI '+gri+'</div>';
     html += '<div style="font-size:9px;color:#3d5068;margin-top:1px">Δ '+(c.delta>=0?'+':'')+parseFloat(c.delta||0).toFixed(1)+' · '+(c.dominant_domain||'')+'</div></div>';
-    html += '<span style="font-size:9px;padding:2px 5px;border-radius:3px;background:'+lc+'20;color:'+lc+';font-weight:500">'+lv+'</span>';
+    var LV_RU={RED:'Критично',ORANGE:'Высокий',YELLOW:'Повышенный',GREEN:'Умеренный'};
+    html += '<span style="font-size:9px;padding:2px 5px;border-radius:3px;background:'+lc+'20;color:'+lc+';font-weight:500">'+(LV_RU[lv]||lv)+'</span>';
     html += '</div>';
   });
   body.innerHTML = html;
@@ -6982,7 +6983,7 @@ function grdfPopulateCountriesList(countries) {
     var sc  = STATUS_COLORS[getStatus(gri)]||'#888';
     var delta = parseFloat(c.delta||0);
     html += '<div class="grdf-country-row" data-grdf-cc="'+esc(c.country)+'" onclick="grdfOpenCountrySheet(this.dataset.grdfCc)">';
-    html += '<div class="grdf-country-avatar" style="background:'+sc+'18;border:1.5px solid '+sc+'30">'+_flag(c.country)+'</div>';
+    html += '<div class="grdf-country-avatar" style="background:'+sc+'18;border:1.5px solid '+sc+'30;font-size:20px">'+_flag(c.country)+'</div>';
     html += '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#e2e8f0">'+esc(c.country_name||c.country)+'</div>';
     html += '<div style="font-size:10px;color:#3d5068;margin-top:1px">GRI '+gri+' · EWS '+fr(c.ews_score||gri)+'</div></div>';
     html += '<div style="text-align:right"><div style="font-size:10px;color:'+sc+';font-weight:500">'+STATUS_RU[getStatus(gri)]+'</div>';
