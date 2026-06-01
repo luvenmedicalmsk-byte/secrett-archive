@@ -303,6 +303,15 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .tm-btn.active{background:rgba(168,85,247,.1);border-color:#a855f7;color:#a855f7}
 .evo-bar{height:3px;border-radius:2px;display:inline-block;vertical-align:middle}
 
+
+.pm-key{color:#a855f7;font-family:var(--mono);font-size:10px}
+.pm-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:9px;font-family:var(--mono)}
+.pm-badge.ok{background:rgba(16,185,129,.1);color:var(--green);border:0.5px solid rgba(16,185,129,.2)}
+.pm-badge.warn{background:rgba(249,115,22,.1);color:var(--orange);border:0.5px solid rgba(249,115,22,.2)}
+.pm-badge.empty{background:rgba(100,116,139,.1);color:var(--text3);border:0.5px solid var(--border)}
+.pm-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.badge-indigo{background:rgba(99,102,241,.12);color:#818cf8;border:0.5px solid rgba(99,102,241,.25)}
+
 </style>
 </head>
 <body>
@@ -369,6 +378,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s19')" data-s="s19">&#127344;<span class="sn-tip">Meta Intel</span></button>
     <button class="sn-btn" onclick="goSection('s20'); setTimeout(function(){ if(_graph.nodes.length) _renderGraph(); },50);" data-s="s20">&#127760;<span class="sn-tip">Intel Graph</span></button>
     <button class="sn-btn" onclick="goSection('s21')" data-s="s21">&#9200;<span class="sn-tip">Temporal</span></button>
+    <button class="sn-btn" onclick="goSection('s22')" data-s="s22">&#128190;<span class="sn-tip">Memory</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -1960,6 +1970,128 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s21 -->
 
+
+    <!-- ─ S22: PERSISTENT INTELLIGENCE MEMORY ─ -->
+    <div class="section" id="s22">
+      <div class="s-head">
+        <div class="s-tag">22</div>
+        <div class="s-title">Persistent Intelligence Memory</div>
+        <div class="s-badge badge-indigo" id="pm-status-badge">&#128190; LOADING</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Multi-session learning retention · Auditable forecast history · Long-term institutional memory</div>
+
+      <!-- 01: MEMORY HEALTH DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128200;</span> 01 · Memory Health Dashboard</div>
+        <div class="grid-4" id="pm-health-grid"></div>
+        <div style="margin-top:8px" id="pm-store-status"></div>
+      </div>
+
+      <!-- 02: FORECAST ARCHIVE EXPLORER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128270;</span> 02 · Forecast Archive Explorer</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="fc-filters">
+          <button class="graph-filter-btn active" onclick="fcExplore('all',this)">All</button>
+          <button class="graph-filter-btn" onclick="fcExplore('validated',this)" style="border-color:var(--green);color:var(--green)">Validated</button>
+          <button class="graph-filter-btn" onclick="fcExplore('pending',this)" style="border-color:var(--orange);color:var(--orange)">Pending</button>
+          <button class="graph-filter-btn" onclick="fcExplore('accurate',this)" style="border-color:var(--blue);color:var(--blue)">Accurate</button>
+        </div>
+        <div class="tbl-outer" style="max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>ID</th><th>Country</th><th>Hz</th><th>GRI&#x2193;</th><th>Actual</th><th>Error</th><th>Status</th></tr></thead>
+            <tbody id="fc-explore-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 03: HISTORICAL INTELLIGENCE EXPLORER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128337;</span> 03 · Historical Intelligence Explorer</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="tm-btn active" onclick="histView('all',this)">All</button>
+          <button class="tm-btn" onclick="histView('session',this)">Session</button>
+          <button class="tm-btn" onclick="histView('stats',this)">Stats</button>
+        </div>
+        <div class="sum-card"><div id="hist-explore-body"><div class="loading">Loading snapshots...</div></div></div>
+      </div>
+
+      <!-- 04: DRIVER REPUTATION ARCHIVE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9889;</span> 04 · Driver Reputation Archive</div>
+        <div class="tbl-outer" style="max-height:290px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>Driver</th><th>Rep&#x2193;</th><th>24h Acc</th><th>7d Acc</th><th>Avg Err</th><th>History Pts</th><th>Trend</th></tr></thead>
+            <tbody id="pm-rep-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 05: LEARNING MEMORY CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#129504;</span> 05 · Learning Memory Center</div>
+        <div class="swipe-wrap" id="lm-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128202;</span>Registry Explorer</div>
+              <div id="pm-registry-exp"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#9881;</span>Weight Update History</div>
+              <div id="pm-weight-hist"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128200;</span>Horizon Confidence Memory</div>
+              <div id="pm-hz-memory"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="lm-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 06: SCENARIO MEMORY VAULT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 06 · Scenario Memory Vault</div>
+        <div class="sum-card"><div id="pm-scenario-vault"></div></div>
+      </div>
+
+      <!-- 07: INTELLIGENCE GRAPH HISTORY -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128279;</span> 07 · Intelligence Graph History</div>
+        <div class="sum-card"><div id="pm-graph-hist-body"></div></div>
+      </div>
+
+      <!-- 08: DATA INTEGRITY & RECOVERY -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128737;</span> 08 · Data Integrity &amp; Recovery</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <button onclick="runIntegrityCheck()" style="flex:1;padding:8px 0;background:rgba(59,130,246,.08);border:0.5px solid rgba(59,130,246,.3);border-radius:6px;color:var(--blue);font-size:11px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#128737; Check Integrity</button>
+          <button onclick="clearPersistentMemory()" style="flex:1;padding:8px 0;background:rgba(239,68,68,.06);border:0.5px solid rgba(239,68,68,.25);border-radius:6px;color:var(--red);font-size:11px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#128465; Clear Memory</button>
+          <button onclick="persistMemory();buildPM()" style="flex:1;padding:8px 0;background:rgba(16,185,129,.08);border:0.5px solid rgba(16,185,129,.25);border-radius:6px;color:var(--green);font-size:11px;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#128190; Force Save</button>
+        </div>
+        <div class="sum-card"><div id="pm-integrity-body"></div></div>
+      </div>
+
+      <!-- 09: EXECUTIVE MEMORY REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 09 · Executive Memory Report</div>
+        <div style="margin-bottom:8px">
+          <button onclick="generateMemoryReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#0f0a1e,#070511);border:1px solid rgba(99,102,241,.35);border-radius:8px;color:#818cf8;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Generate Memory Intelligence Report</button>
+        </div>
+        <div id="pm-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(99,102,241,.15)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Press Generate to create persistent memory report</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s22 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -2580,7 +2712,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -4614,6 +4746,390 @@ window._validateForecastDimensions = _validateForecastDimensions;
 window._updateDriverReputation   = _updateDriverReputation;
 window._initDriverReputation     = _initDriverReputation;
 // END FORECAST ARCHIVE
+
+
+// ══════════════════════════════════════════════════════════════
+// PERSISTENT INTELLIGENCE MEMORY ENGINE
+// Survives: page refresh, browser restart, platform updates
+// Storage: localStorage keys prefixed 'mia-pm-'
+// Limits: 500 forecasts, 100 snapshots, 500 registry entries,
+//         200 weight changes, full driver/forecast histories
+// ══════════════════════════════════════════════════════════════
+
+var PM_KEYS = {
+  forecasts:   'mia-pm-forecasts',
+  temporal:    'mia-pm-temporal',
+  reputation:  'mia-pm-reputation',
+  registry:    'mia-pm-registry',
+  weights:     'mia-pm-weights',
+  drvHist:     'mia-pm-drv-hist',
+  fcHist:      'mia-pm-fc-hist',
+  scenarios:   'mia-pm-scenarios',
+  graphHist:   'mia-pm-graph-hist',
+  index:       'mia-pm-index',
+  integrity:   'mia-pm-integrity',
+};
+
+// Memory state
+var MEMORY_INDEX = {
+  total_forecasts:      0,
+  validated_forecasts:  0,
+  total_snapshots:      0,
+  total_learning_cycles:0,
+  total_weight_updates: 0,
+  oldest_record:        null,
+  newest_record:        null,
+  last_persist:         null,
+  schema_version:       '1.0',
+  integrity_score:      100,
+  storage_bytes:        0,
+};
+
+// ── SAFE localStorage wrappers ────────────────────────────────
+function _pmSet(key, val) {
+  try {
+    var s = JSON.stringify(val);
+    localStorage.setItem(key, s);
+    return s.length;
+  } catch(e) {
+    console.warn('PM write failed:', key, e.message);
+    return 0;
+  }
+}
+function _pmGet(key) {
+  try {
+    var s = localStorage.getItem(key);
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+}
+function _pmDel(key) { try { localStorage.removeItem(key); } catch(e) {} }
+function _pmSize() {
+  var bytes = 0;
+  try {
+    Object.values(PM_KEYS).forEach(function(k) {
+      var v = localStorage.getItem(k);
+      if (v) bytes += v.length * 2; // UTF-16 approx
+    });
+  } catch(e) {}
+  return bytes;
+}
+
+// ── CHECKSUM (simple hash for integrity) ─────────────────────
+function _pmChecksum(obj) {
+  var s = JSON.stringify(obj);
+  var h = 0;
+  for (var i = 0; i < Math.min(s.length, 1000); i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h |= 0;
+  }
+  return (h >>> 0).toString(16);
+}
+
+// ════════════════════════════════════════════════════════════
+// PERSIST FUNCTIONS — each write operation hooks here
+// ════════════════════════════════════════════════════════════
+
+function persistForecastArchive() {
+  // Keep last 500 entries (newest + all validated)
+  var validated = FORECAST_ARCHIVE.filter(function(f){ return f.validated; });
+  var pending   = FORECAST_ARCHIVE.filter(function(f){ return !f.validated; }).slice(-200);
+  var toStore   = validated.slice(-300).concat(pending);
+  _pmSet(PM_KEYS.forecasts, { entries: toStore, checksum: _pmChecksum(toStore), ts: Date.now() });
+}
+
+function persistTemporalArchive() {
+  _pmSet(PM_KEYS.temporal, { entries: TEMPORAL_ARCHIVE, checksum: _pmChecksum(TEMPORAL_ARCHIVE), ts: Date.now() });
+}
+
+function persistDriverReputation() {
+  _pmSet(PM_KEYS.reputation, { data: DRIVER_REPUTATION, checksum: _pmChecksum(DRIVER_REPUTATION), ts: Date.now() });
+}
+
+function persistLearningRegistry() {
+  var toStore = _lfe.registry.slice(-500);
+  _pmSet(PM_KEYS.registry, { entries: toStore, totalUpdates: _lfe.totalUpdates,
+    forecastConf: _lfe.forecastConf, scenarioConf: _lfe.scenarioConf,
+    driverConf: _lfe.driverConf, checksum: _pmChecksum(toStore), ts: Date.now() });
+}
+
+function persistWeightHistory() {
+  _pmSet(PM_KEYS.weights, { entries: _lfe.weightHistory||[], checksum: _pmChecksum(_lfe.weightHistory||[]), ts: Date.now() });
+}
+
+function persistDriverHistory() {
+  _pmSet(PM_KEYS.drvHist, { data: _lfe.driverHistory||{}, ts: Date.now() });
+}
+
+function persistForecastHistory() {
+  _pmSet(PM_KEYS.fcHist, { data: _lfe.forecastHistory||{}, ts: Date.now() });
+}
+
+function persistScenarioArchive() {
+  var scenarios = [];
+  if (typeof _scn !== 'undefined') {
+    if (_scn.savedA) scenarios.push({ label:'A', ts:Date.now(), data:_scn.savedA });
+    if (_scn.savedB) scenarios.push({ label:'B', ts:Date.now(), data:_scn.savedB });
+  }
+  var existing = (_pmGet(PM_KEYS.scenarios)||{}).entries || [];
+  var merged   = existing.concat(scenarios).slice(-50);
+  _pmSet(PM_KEYS.scenarios, { entries: merged, ts: Date.now() });
+}
+
+function persistGraphHistory() {
+  if (typeof _graph === 'undefined' || !_graph.nodes.length) return;
+  var snap = {
+    ts:         Date.now(),
+    node_count: _graph.nodes.length,
+    edge_count: _graph.edges.length,
+    by_type:    {},
+  };
+  _graph.nodes.forEach(function(n){
+    snap.by_type[n.type] = (snap.by_type[n.type]||0)+1;
+  });
+  var existing = (_pmGet(PM_KEYS.graphHist)||{}).entries || [];
+  existing.push(snap);
+  if (existing.length > 100) existing = existing.slice(-100);
+  _pmSet(PM_KEYS.graphHist, { entries: existing, ts: Date.now() });
+}
+
+// ── MASTER PERSIST ────────────────────────────────────────────
+function persistMemory() {
+  persistForecastArchive();
+  persistTemporalArchive();
+  persistDriverReputation();
+  persistLearningRegistry();
+  persistWeightHistory();
+  persistDriverHistory();
+  persistForecastHistory();
+  persistScenarioArchive();
+  persistGraphHistory();
+  // Update index
+  var archSt = typeof _archiveStats === 'function' ? _archiveStats() : {total:0,validated:0};
+  MEMORY_INDEX.total_forecasts       = archSt.total;
+  MEMORY_INDEX.validated_forecasts   = archSt.validated;
+  MEMORY_INDEX.total_snapshots       = TEMPORAL_ARCHIVE.length;
+  MEMORY_INDEX.total_learning_cycles = _lfe.totalUpdates;
+  MEMORY_INDEX.total_weight_updates  = (_lfe.weightHistory||[]).length;
+  MEMORY_INDEX.last_persist          = Date.now();
+  MEMORY_INDEX.storage_bytes         = _pmSize();
+  if (FORECAST_ARCHIVE.length > 0) {
+    var sorted = FORECAST_ARCHIVE.slice().sort(function(a,b){ return a.timestamp-b.timestamp; });
+    MEMORY_INDEX.oldest_record = sorted[0].timestamp;
+    MEMORY_INDEX.newest_record = sorted[sorted.length-1].timestamp;
+  }
+  _pmSet(PM_KEYS.index, MEMORY_INDEX);
+}
+
+// ════════════════════════════════════════════════════════════
+// RESTORE FUNCTIONS — called on startup before loadSnapshot
+// ════════════════════════════════════════════════════════════
+
+function restoreForecastArchive() {
+  var d = _pmGet(PM_KEYS.forecasts);
+  if (!d || !d.entries) return 0;
+  // Integrity check
+  var check = _pmChecksum(d.entries);
+  if (check !== d.checksum) {
+    console.warn('PM: Forecast archive checksum mismatch — skipping restore');
+    return 0;
+  }
+  // Merge: keep existing in-memory + restored (deduplicate by forecast_id)
+  var existing_ids = {};
+  FORECAST_ARCHIVE.forEach(function(f){ existing_ids[f.forecast_id]=true; });
+  var restored = 0;
+  d.entries.forEach(function(f) {
+    if (!existing_ids[f.forecast_id]) {
+      FORECAST_ARCHIVE.unshift(f); // restore at front (older)
+      restored++;
+    }
+  });
+  if (FORECAST_ARCHIVE.length > 2000) FORECAST_ARCHIVE.splice(0, FORECAST_ARCHIVE.length - 2000);
+  return restored;
+}
+
+function restoreTemporalArchive() {
+  var d = _pmGet(PM_KEYS.temporal);
+  if (!d || !d.entries) return 0;
+  var check = _pmChecksum(d.entries);
+  if (check !== d.checksum) return 0;
+  var existing_ts = {};
+  TEMPORAL_ARCHIVE.forEach(function(s){ existing_ts[s.timestamp]=true; });
+  var restored = 0;
+  d.entries.forEach(function(s) {
+    if (!existing_ts[s.timestamp]) {
+      TEMPORAL_ARCHIVE.unshift(s);
+      restored++;
+    }
+  });
+  if (TEMPORAL_ARCHIVE.length > 100) TEMPORAL_ARCHIVE.splice(0, TEMPORAL_ARCHIVE.length - 100);
+  return restored;
+}
+
+function restoreDriverReputation() {
+  var d = _pmGet(PM_KEYS.reputation);
+  if (!d || !d.data) return 0;
+  var restored = 0;
+  Object.keys(d.data).forEach(function(k) {
+    if (!DRIVER_REPUTATION[k]) {
+      DRIVER_REPUTATION[k] = d.data[k];
+      restored++;
+    } else {
+      // Merge history: prepend old history entries
+      var existing_ts = {};
+      (DRIVER_REPUTATION[k].history||[]).forEach(function(h){ existing_ts[h.ts]=true; });
+      (d.data[k].history||[]).forEach(function(h) {
+        if (!existing_ts[h.ts]) DRIVER_REPUTATION[k].history.unshift(h);
+      });
+    }
+  });
+  return restored;
+}
+
+function restoreLearningRegistry() {
+  var d = _pmGet(PM_KEYS.registry);
+  if (!d || !d.entries) return 0;
+  var check = _pmChecksum(d.entries);
+  if (check !== d.checksum) return 0;
+  // Restore confidences
+  if (d.forecastConf) Object.keys(d.forecastConf).forEach(function(k){ _lfe.forecastConf[k] = d.forecastConf[k]; });
+  if (d.scenarioConf) _lfe.scenarioConf = d.scenarioConf;
+  if (d.driverConf)   Object.keys(d.driverConf).forEach(function(k){ _lfe.driverConf[k] = d.driverConf[k]; });
+  if (d.totalUpdates) _lfe.totalUpdates = Math.max(_lfe.totalUpdates, d.totalUpdates);
+  // Merge registry
+  var existing_ids = {};
+  _lfe.registry.forEach(function(e){ existing_ids[e.forecast_id]=true; });
+  var restored = 0;
+  d.entries.forEach(function(e) {
+    if (!existing_ids[e.forecast_id]) {
+      _lfe.registry.unshift(e);
+      restored++;
+    }
+  });
+  if (_lfe.registry.length > 500) _lfe.registry.splice(0, _lfe.registry.length - 500);
+  return restored;
+}
+
+function restoreWeightHistory() {
+  var d = _pmGet(PM_KEYS.weights);
+  if (!d || !d.entries) return 0;
+  var check = _pmChecksum(d.entries);
+  if (check !== d.checksum) return 0;
+  if (!_lfe.weightHistory) _lfe.weightHistory = [];
+  var existing_ts = {};
+  _lfe.weightHistory.forEach(function(w){ existing_ts[w.ts+w.driver]=true; });
+  var restored = 0;
+  d.entries.forEach(function(w) {
+    if (!existing_ts[w.ts+w.driver]) {
+      _lfe.weightHistory.unshift(w);
+      restored++;
+    }
+  });
+  if (_lfe.weightHistory.length > 200) _lfe.weightHistory.splice(0, _lfe.weightHistory.length - 200);
+  return restored;
+}
+
+function restoreDriverHistory() {
+  var d = _pmGet(PM_KEYS.drvHist);
+  if (!d || !d.data) return 0;
+  if (!_lfe.driverHistory) _lfe.driverHistory = {};
+  Object.keys(d.data).forEach(function(k) {
+    if (!_lfe.driverHistory[k]) _lfe.driverHistory[k] = d.data[k];
+    else {
+      var existing_ts = {};
+      _lfe.driverHistory[k].forEach(function(h){ existing_ts[h.ts]=true; });
+      d.data[k].forEach(function(h){ if(!existing_ts[h.ts]) _lfe.driverHistory[k].unshift(h); });
+    }
+  });
+  return Object.keys(d.data).length;
+}
+
+function restoreForecastHistory() {
+  var d = _pmGet(PM_KEYS.fcHist);
+  if (!d || !d.data) return 0;
+  if (!_lfe.forecastHistory) _lfe.forecastHistory = {};
+  Object.keys(d.data).forEach(function(k) {
+    if (!_lfe.forecastHistory[k]) _lfe.forecastHistory[k] = d.data[k];
+    else {
+      var existing_ts = {};
+      _lfe.forecastHistory[k].forEach(function(h){ existing_ts[h.ts]=true; });
+      d.data[k].forEach(function(h){ if(!existing_ts[h.ts]) _lfe.forecastHistory[k].unshift(h); });
+    }
+  });
+  return Object.keys(d.data).length;
+}
+
+function restoreScenarioArchive() {
+  // Scenarios are UI-only; restore into memory but don't auto-apply
+  var d = _pmGet(PM_KEYS.scenarios);
+  if (d) window._pm_restored_scenarios = d.entries || [];
+  return (d && d.entries) ? d.entries.length : 0;
+}
+
+function restoreGraphHistory() {
+  // Graph history is read-only at restore — loaded into window for S22 UI
+  var d = _pmGet(PM_KEYS.graphHist);
+  if (d) window._pm_graph_history = d.entries || [];
+  return (d && d.entries) ? d.entries.length : 0;
+}
+
+// ── MASTER RESTORE (called on page load) ─────────────────────
+var _pmRestoreStats = { forecasts:0, temporal:0, reputation:0,
+  registry:0, weights:0, drvHist:0, fcHist:0, scenarios:0, graph:0 };
+
+function loadPersistentMemory() {
+  _pmRestoreStats.forecasts  = restoreForecastArchive();
+  _pmRestoreStats.temporal   = restoreTemporalArchive();
+  _pmRestoreStats.reputation = restoreDriverReputation();
+  _pmRestoreStats.registry   = restoreLearningRegistry();
+  _pmRestoreStats.weights    = restoreWeightHistory();
+  _pmRestoreStats.drvHist    = restoreDriverHistory();
+  _pmRestoreStats.fcHist     = restoreForecastHistory();
+  _pmRestoreStats.scenarios  = restoreScenarioArchive();
+  _pmRestoreStats.graph      = restoreGraphHistory();
+  // Restore index
+  var savedIndex = _pmGet(PM_KEYS.index);
+  if (savedIndex) {
+    Object.keys(savedIndex).forEach(function(k){
+      if (MEMORY_INDEX[k] !== undefined) MEMORY_INDEX[k] = savedIndex[k];
+    });
+  }
+  var total = Object.values(_pmRestoreStats).reduce(function(a,v){ return a+v; },0);
+  console.log('[PM] Restored ' + total + ' records from persistent memory');
+  return _pmRestoreStats;
+}
+
+// ── DATA INTEGRITY CHECKER ────────────────────────────────────
+function _pmCheckIntegrity() {
+  var issues = [];
+  var score  = 100;
+  // Check forecasts
+  var fc = _pmGet(PM_KEYS.forecasts);
+  if (fc) {
+    if (_pmChecksum(fc.entries) !== fc.checksum) { issues.push('Forecast archive checksum mismatch'); score -= 15; }
+    var orphaned = (fc.entries||[]).filter(function(f){ return !f.forecast_id; }).length;
+    if (orphaned > 0) { issues.push(orphaned + ' forecasts missing forecast_id'); score -= 5; }
+  } else { issues.push('No persistent forecast archive'); score -= 10; }
+  // Check registry
+  var reg = _pmGet(PM_KEYS.registry);
+  if (reg) {
+    if (_pmChecksum(reg.entries) !== reg.checksum) { issues.push('Registry checksum mismatch'); score -= 10; }
+  } else { issues.push('No persistent registry'); score -= 5; }
+  // Check temporal
+  var tmp = _pmGet(PM_KEYS.temporal);
+  if (!tmp) { issues.push('No temporal archive'); score -= 5; }
+  MEMORY_INDEX.integrity_score = Math.max(0, score);
+  _pmSet(PM_KEYS.integrity, { score: score, issues: issues, ts: Date.now() });
+  return { score: score, issues: issues };
+}
+
+// Expose
+window.MEMORY_INDEX           = MEMORY_INDEX;
+window.PM_KEYS                = PM_KEYS;
+window.persistMemory          = persistMemory;
+window.loadPersistentMemory   = loadPersistentMemory;
+window._pmCheckIntegrity      = _pmCheckIntegrity;
+window._pmRestoreStats        = _pmRestoreStats;
+// END PERSISTENT MEMORY ENGINE
 
 // LEARNING FEEDBACK ENGINE — closed-loop, error-weighted, real data
 // Data flow: countries.delta (real) → registry → weights → confidence → engines
@@ -6864,6 +7380,8 @@ function _archiveSystemState(countries) {
   TEMPORAL_ARCHIVE.push(snap);
   if (TEMPORAL_ARCHIVE.length > 100) TEMPORAL_ARCHIVE.shift();
   _temporal.snapshots++;
+  // Persist after every snapshot (non-blocking)
+  setTimeout(function(){ if(typeof persistMemory==='function') persistMemory(); }, 100);
   return snap;
 }
 
@@ -7368,6 +7886,410 @@ function _timeAgo(ts) {
 }
 window.TEMPORAL_ARCHIVE = TEMPORAL_ARCHIVE;
 window._archiveSystemState = _archiveSystemState;
+
+
+// ── S22: PERSISTENT INTELLIGENCE MEMORY UI ──────────────────
+function loadPersistentMemoryUI(countries) {
+  buildPM();
+  initSwipeDots('lm-swipe','lm-dots');
+}
+
+function buildPM() {
+  _pmBuildHealthDash();
+  _pmBuildFcExplore('all');
+  _pmBuildHistExplore('all');
+  _pmBuildRepArchive();
+  _pmBuildLearningMemory();
+  _pmBuildScenarioVault();
+  _pmBuildGraphHistory();
+  _pmBuildIntegrity();
+  // Persist on every UI build
+  persistMemory();
+}
+
+// 01: MEMORY HEALTH DASHBOARD
+function _pmBuildHealthDash() {
+  var idx    = MEMORY_INDEX;
+  var bytes  = _pmSize();
+  var kb     = fr(bytes/1024);
+  var maxKB  = 5120; // 5MB estimated limit
+  var utilPct= Math.min(100, fr(kb/maxKB*100));
+  var integ  = (_pmGet(PM_KEYS.integrity)||{}).score || 100;
+  var lastP  = idx.last_persist ? _timeAgo(idx.last_persist) : 'never';
+  var oldest = idx.oldest_record ? _timeAgo(idx.oldest_record) : '—';
+  var newestR= idx.newest_record ? _timeAgo(idx.newest_record) : '—';
+  var cards = [
+    {label:'Total Forecasts',    val:fmt(FORECAST_ARCHIVE.length),       col:'var(--blue)'},
+    {label:'Validated',          val:fmt((FORECAST_ARCHIVE.filter(function(f){return f.validated;}).length)), col:'var(--green)'},
+    {label:'Temporal Snapshots', val:TEMPORAL_ARCHIVE.length,            col:'#a855f7'},
+    {label:'LFE Registry',       val:fmt(_lfe.registry.length),          col:'var(--gold)'},
+    {label:'Weight Changes',     val:fmt((_lfe.weightHistory||[]).length),col:'var(--orange)'},
+    {label:'Storage Used',       val:kb+' KB',                           col:utilPct>80?'var(--red)':'var(--green)'},
+    {label:'Integrity Score',    val:integ+'%',                          col:integ>=90?'var(--green)':integ>=70?'var(--orange)':'var(--red)'},
+    {label:'Last Persist',       val:lastP,                              col:'var(--text3)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+    h+='<div class="card-val" style="color:'+c.col+';font-size:17px">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('pm-health-grid'); if(g) g.innerHTML=h;
+  // Storage bars
+  var stores = [
+    {k:'Forecasts', sz:_pmGetSize(PM_KEYS.forecasts),  col:'var(--blue)'},
+    {k:'Registry',  sz:_pmGetSize(PM_KEYS.registry),   col:'var(--green)'},
+    {k:'Temporal',  sz:_pmGetSize(PM_KEYS.temporal),   col:'#a855f7'},
+    {k:'Reputation',sz:_pmGetSize(PM_KEYS.reputation), col:'var(--orange)'},
+    {k:'Weights',   sz:_pmGetSize(PM_KEYS.weights),    col:'var(--gold)'},
+  ];
+  var sh='<div style="margin-top:6px">';
+  sh+='<div style="font-size:9px;color:var(--text3);margin-bottom:5px">Storage allocation ('+kb+' KB / '+maxKB+' KB max)</div>';
+  stores.forEach(function(s){
+    var p=Math.min(100, fr(s.sz/1024/maxKB*100));
+    sh+='<div style="display:flex;align-items:center;gap:7px;padding:3px 0">';
+    sh+='<span style="font-size:9px;color:var(--text3);width:60px">'+s.k+'</span>';
+    sh+='<div style="flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:'+p+'%;background:'+s.col+';border-radius:2px"></div></div>';
+    sh+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:44px;text-align:right">'+fr(s.sz/1024)+' KB</span>';
+    sh+='</div>';
+  });
+  sh+='</div>';
+  var ss=document.getElementById('pm-store-status'); if(ss) ss.innerHTML=sh;
+  // Badge
+  var badge=document.getElementById('pm-status-badge');
+  if(badge){
+    var hasData = FORECAST_ARCHIVE.length>0 || TEMPORAL_ARCHIVE.length>0;
+    badge.textContent = hasData ? '&#128190; PERSISTENT' : '&#128190; INITIALISING';
+    badge.className = 's-badge ' + (hasData?'badge-green':'badge-indigo');
+  }
+}
+function _pmGetSize(key){
+  try { var v=localStorage.getItem(key); return v?v.length*2:0; } catch(e){ return 0; }
+}
+
+// 02: FORECAST ARCHIVE EXPLORER
+window.fcExplore = function(mode, btn) {
+  if(btn){ document.querySelectorAll('#fc-filters .graph-filter-btn').forEach(function(b){b.classList.remove('active');}); btn.classList.add('active'); }
+  _pmBuildFcExplore(mode);
+};
+function _pmBuildFcExplore(mode) {
+  var entries = FORECAST_ARCHIVE.slice();
+  if (mode==='validated') entries = entries.filter(function(f){ return f.validated; });
+  else if (mode==='pending') entries = entries.filter(function(f){ return !f.validated; });
+  else if (mode==='accurate') entries = entries.filter(function(f){ return f.validated && f.error<=5; });
+  entries = entries.slice().reverse().slice(0,30);
+  var h='';
+  entries.forEach(function(f) {
+    var gri     = f.predicted&&f.predicted.gri ? f.predicted.gri : (f.predicted_value||'—');
+    var actual  = f.actual&&f.actual.gri ? f.actual.gri : (f.actual_value||'—');
+    var errV    = f.error!==null ? f.error : '—';
+    var errCol  = f.error!==null ? (f.error<=3?'var(--green)':f.error<=7?'var(--orange)':'var(--red)') : 'var(--text3)';
+    var st      = !f.validated ? 'PENDING' : f.error<=5 ? 'ACCURATE' : 'ERROR';
+    var sc      = !f.validated ? 'risk-low' : f.error<=5 ? 'risk-low' : 'risk-high';
+    h+='<tr>';
+    h+='<td style="font-family:var(--mono);font-size:9px;color:var(--gold)">'+f.forecast_id.slice(0,10)+'</td>';
+    h+='<td><div style="display:flex;align-items:center;gap:4px"><span style="font-size:11px">'+flag(f.country)+'</span><span style="font-size:10px">'+((f.country_name||f.country).slice(0,8))+'</span></div></td>';
+    h+='<td style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+f.horizon+'</td>';
+    h+='<td style="font-family:var(--mono);font-size:10px;color:'+riskCol(gri)+'">'+gri+'</td>';
+    h+='<td style="font-family:var(--mono);font-size:10px">'+actual+'</td>';
+    h+='<td style="font-family:var(--mono);font-size:10px;color:'+errCol+'">'+errV+'</td>';
+    h+='<td><span class="td-badge '+sc+'">'+st+'</span></td>';
+    h+='</tr>';
+  });
+  var tb=document.getElementById('fc-explore-body');
+  if(tb) tb.innerHTML=h||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:14px;font-size:11px">No forecasts match filter</td></tr>';
+}
+
+// 03: HISTORICAL INTELLIGENCE EXPLORER
+window.histView = function(mode, btn) {
+  if(btn){ document.querySelectorAll('.tm-btn').forEach(function(b){b.classList.remove('active');}); btn.classList.add('active'); }
+  _pmBuildHistExplore(mode);
+};
+function _pmBuildHistExplore(mode) {
+  var el=document.getElementById('hist-explore-body'); if(!el) return;
+  var snaps = TEMPORAL_ARCHIVE.slice().reverse();
+  if (!snaps.length) { el.innerHTML='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No snapshots yet — accumulating on each data refresh</div>'; return; }
+  if (mode==='stats') {
+    var avgGRI = fr(snaps.reduce(function(a,s){return a+s.avg_gri;},0)/snaps.length);
+    var maxGRI = Math.max.apply(null,snaps.map(function(s){return s.avg_gri;}));
+    var minGRI = Math.min.apply(null,snaps.map(function(s){return s.avg_gri;}));
+    var h = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:8px">';
+    [{l:'Snapshots',v:snaps.length,c:'#a855f7'},{l:'Avg GRI',v:avgGRI,c:riskCol(avgGRI)},
+     {l:'GRI Range',v:minGRI+'-'+maxGRI,c:'var(--orange)'},
+     {l:'Countries',v:snaps[0].countries_count,c:'var(--blue)'},
+     {l:'Oldest',v:_timeAgo(snaps[snaps.length-1].timestamp),c:'var(--text3)'},
+     {l:'Newest',v:_timeAgo(snaps[0].timestamp),c:'var(--green)'}
+    ].forEach(function(c){
+      h+='<div style="background:var(--bg3);border-radius:7px;padding:7px;text-align:center">';
+      h+='<div style="font-size:8px;color:var(--text3)">'+c.l+'</div>';
+      h+='<div style="font-family:var(--mono);font-size:14px;font-weight:700;color:'+c.c+'">'+c.v+'</div></div>';
+    });
+    h+='</div>';
+    // Mini GRI sparkline from snapshots
+    if (snaps.length >= 3) {
+      h+='<div style="font-size:9px;color:var(--text3);margin-bottom:4px">GRI evolution across snapshots:</div>';
+      h+='<div style="display:flex;align-items:flex-end;gap:2px;height:32px">';
+      var maxV=Math.max.apply(null,snaps.map(function(s){return s.avg_gri;}));
+      snaps.slice(0,20).reverse().forEach(function(s){
+        var p=maxV>0?fr(s.avg_gri/maxV*100):50;
+        h+='<div style="flex:1;height:'+Math.max(5,p)+'%;background:'+riskCol(s.avg_gri)+';border-radius:1px 1px 0 0;opacity:.8"></div>';
+      });
+      h+='</div>';
+    }
+    el.innerHTML=h;
+  } else {
+    var showN = mode==='session' ? snaps.length : Math.min(snaps.length, 15);
+    var h='<div style="font-size:10px;color:var(--text3);margin-bottom:6px">'+snaps.length+' temporal snapshots in memory</div>';
+    snaps.slice(0,showN).forEach(function(s){
+      var ago=_timeAgo(s.timestamp);
+      h+='<div class="pm-row">';
+      h+='<span style="font-family:var(--mono);font-size:9px;color:#a855f7;width:56px">'+ago+'</span>';
+      h+='<span style="font-size:10px;color:var(--text2);flex:1">'+s.countries_count+' countries · GRI '+s.avg_gri+'</span>';
+      h+='<span class="pm-badge '+(s.archive_count>0?'ok':'empty')+'">arch:'+s.archive_count+'</span>';
+      h+='<span class="pm-badge '+(s.registry_size>0?'ok':'empty')+'">reg:'+s.registry_size+'</span>';
+      h+='</div>';
+    });
+    el.innerHTML=h;
+  }
+}
+
+// 04: DRIVER REPUTATION ARCHIVE
+function _pmBuildRepArchive() {
+  var repKeys = Object.keys(DRIVER_REPUTATION).sort(function(a,b){
+    return DRIVER_REPUTATION[b].reputation_score - DRIVER_REPUTATION[a].reputation_score;
+  });
+  var h='';
+  repKeys.slice(0,12).forEach(function(k){
+    var r = DRIVER_REPUTATION[k];
+    var hist = r.history||[];
+    var trend = hist.length>=2 ? (hist[hist.length-1].reputation_score-hist[0].reputation_score) : 0;
+    var tCol  = trend>0?'var(--green)':trend<0?'var(--red)':'var(--text3)';
+    var rc    = r.reputation_score>=80?'var(--green)':r.reputation_score>=65?'var(--orange)':'var(--red)';
+    var drv   = _liveDrv().find(function(d){return d.name===k;});
+    h+='<tr>';
+    h+='<td style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:'+(drv?drv.col:'#64748b')+';display:inline-block"></span>'+k+'</td>';
+    h+='<td style="font-family:var(--mono);color:'+rc+';font-weight:700">'+r.reputation_score+'</td>';
+    h+='<td style="font-family:var(--mono);color:'+(r.accuracy_24h>=80?'var(--green)':'var(--orange)')+'">'+r.accuracy_24h+'%</td>';
+    h+='<td style="font-family:var(--mono);color:'+(r.accuracy_7d>=75?'var(--green)':'var(--orange)')+'">'+r.accuracy_7d+'%</td>';
+    h+='<td style="font-family:var(--mono);color:var(--red)">'+r.avg_error+'</td>';
+    h+='<td style="font-family:var(--mono);color:#a855f7">'+hist.length+'</td>';
+    h+='<td style="color:'+tCol+'">'+(trend>0?'+':'')+trend+'</td>';
+    h+='</tr>';
+  });
+  var tb=document.getElementById('pm-rep-body');
+  if(tb) tb.innerHTML=h||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:12px;font-size:11px">No reputation data — runs after first validation cycle</td></tr>';
+}
+
+// 05: LEARNING MEMORY CENTER
+function _pmBuildLearningMemory() {
+  // Registry explorer
+  var reg = _lfe.registry.slice().reverse().slice(0,15);
+  var rh  = '';
+  if(reg.length) {
+    rh += '<div style="font-size:9px;color:var(--text3);margin-bottom:6px">'+_lfe.registry.length+' total entries (last '+reg.length+' shown)</div>';
+    reg.forEach(function(e){
+      var dc=e.direction>0?'var(--green)':e.direction<0?'var(--red)':'var(--text3)';
+      rh+='<div class="pm-row">';
+      rh+='<span style="font-size:9px;color:var(--text3);font-family:var(--mono);width:36px">'+e.horizon+'</span>';
+      rh+='<span style="font-size:10px;color:var(--text2);flex:1">'+e.driver.split(' ').slice(0,2).join(' ')+'</span>';
+      rh+='<span style="font-family:var(--mono);font-size:10px;color:'+dc+'">err:'+e.error+'</span>';
+      rh+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">'+(e.learning_delta>0?'+':'')+e.learning_delta+'</span>';
+      rh+='</div>';
+    });
+  } else { rh='<div style="padding:10px;font-size:11px;color:var(--text3)">Registry accumulating...</div>'; }
+  var re=document.getElementById('pm-registry-exp'); if(re) re.innerHTML=rh;
+
+  // Weight history
+  var wh = (_lfe.weightHistory||[]).slice().reverse().slice(0,12);
+  var wh_h='';
+  if(wh.length){
+    wh_h+='<div style="font-size:9px;color:var(--text3);margin-bottom:6px">'+(_lfe.weightHistory||[]).length+' weight changes persisted</div>';
+    wh.forEach(function(w){
+      var dc=w.delta>0?'var(--green)':w.delta<0?'var(--red)':'var(--text3)';
+      wh_h+='<div class="pm-row">';
+      wh_h+='<span style="font-size:10px;color:var(--text2);flex:1">'+w.driver.split(' ').slice(0,2).join(' ')+'</span>';
+      wh_h+='<span style="font-size:9px;color:var(--text3)">'+w.type+'</span>';
+      wh_h+='<span style="font-family:var(--mono);font-size:10px;color:'+dc+'">'+(w.delta>0?'+':'')+w.delta.toFixed(3)+'</span>';
+      wh_h+='</div>';
+    });
+  } else { wh_h='<div style="padding:10px;font-size:11px;color:var(--text3)">Weight history accumulating...</div>'; }
+  var we=document.getElementById('pm-weight-hist'); if(we) we.innerHTML=wh_h;
+
+  // Horizon confidence memory
+  var hzKeys=['h24','h7d','h30d','h90d'];
+  var hz_h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">LFE forecast confidence (persisted across sessions)</div>';
+  hzKeys.forEach(function(k){
+    var conf = _lfe.forecastConf[k]||74;
+    var hist = (_lfe.forecastHistory&&_lfe.forecastHistory[k]) ? _lfe.forecastHistory[k].length : 0;
+    var col  = conf>=80?'var(--green)':conf>=70?'var(--orange)':'var(--red)';
+    hz_h+='<div class="pm-row">';
+    hz_h+='<span style="font-size:11px;font-weight:600;color:'+col+';width:36px">'+k+'</span>';
+    hz_h+='<div style="flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:2px"><div style="height:100%;width:'+conf+'%;background:'+col+';border-radius:2px"></div></div>';
+    hz_h+='<span style="font-family:var(--mono);font-size:11px;color:'+col+';width:32px;text-align:right">'+conf+'%</span>';
+    hz_h+='<span class="pm-badge '+(hist>0?'ok':'empty')+'" style="margin-left:4px">'+hist+' pts</span>';
+    hz_h+='</div>';
+  });
+  var he=document.getElementById('pm-hz-memory'); if(he) he.innerHTML=hz_h;
+}
+
+// 06: SCENARIO MEMORY VAULT
+function _pmBuildScenarioVault() {
+  var saved = window._pm_restored_scenarios || [];
+  // Also include current session scenarios
+  if (typeof _scn!=='undefined') {
+    if (_scn.savedA) saved = saved.filter(function(s){return s.label!=='A';}).concat([{label:'A',ts:Date.now(),data:_scn.savedA}]);
+    if (_scn.savedB) saved = saved.filter(function(s){return s.label!=='B';}).concat([{label:'B',ts:Date.now(),data:_scn.savedB}]);
+  }
+  var el=document.getElementById('pm-scenario-vault');
+  if(!el) return;
+  if(!saved.length){ el.innerHTML='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No saved scenarios. Use Scenario Engine (S18) to save scenarios.</div>'; return; }
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">'+saved.length+' scenarios in vault</div>';
+  saved.forEach(function(s){
+    var sc = s.data && s.data.s;
+    var col = s.label==='A'?'#3b82f6':'#f97316';
+    h+='<div style="background:var(--bg3);border-radius:7px;padding:9px 11px;margin-bottom:7px;border-left:2px solid '+col+'">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:'+col+';font-weight:700">Scenario '+s.label+'</span>';
+    h+='<span style="font-size:9px;color:var(--text3);margin-left:auto">'+_timeAgo(s.ts)+'</span></div>';
+    if(sc){
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      [{l:'GRI',v:sc.gri,c:riskCol(sc.gri)},{l:'EWS',v:sc.ews,c:riskCol(sc.ews)},
+       {l:'FC7d',v:sc.f7,c:riskCol(sc.f7)},{l:'Conf',v:sc.conf+'%',c:'var(--green)'}
+      ].forEach(function(m){
+        h+='<span style="font-size:9px;padding:2px 7px;border-radius:3px;background:'+m.c+'18;color:'+m.c+'">'+m.l+': '+m.v+'</span>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+// 07: INTELLIGENCE GRAPH HISTORY
+function _pmBuildGraphHistory() {
+  var hist = window._pm_graph_history || [];
+  // Add current graph state if available
+  if(typeof _graph!=='undefined'&&_graph.nodes.length){
+    var curr = {ts:Date.now(),node_count:_graph.nodes.length,edge_count:_graph.edges.length,by_type:{}};
+    _graph.nodes.forEach(function(n){ curr.by_type[n.type]=(curr.by_type[n.type]||0)+1; });
+    hist = hist.concat([curr]);
+  }
+  var el=document.getElementById('pm-graph-hist-body'); if(!el) return;
+  if(!hist.length){ el.innerHTML='<div style="padding:12px;text-align:center;font-size:11px;color:var(--text3)">No graph history — accumulates as you navigate the platform</div>'; return; }
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">'+hist.length+' graph evolution snapshots</div>';
+  // Sparkline: node count
+  if(hist.length>=3){
+    h+='<div style="font-size:9px;color:var(--text3);margin-bottom:4px">Node count evolution:</div>';
+    h+='<div style="display:flex;align-items:flex-end;gap:2px;height:28px;margin-bottom:8px">';
+    var maxN=Math.max.apply(null,hist.map(function(s){return s.node_count;}));
+    hist.slice(-16).forEach(function(s){
+      var p=maxN>0?fr(s.node_count/maxN*100):50;
+      h+='<div style="flex:1;height:'+Math.max(5,p)+'%;background:#818cf8;border-radius:1px 1px 0 0;opacity:.7"></div>';
+    });
+    h+='</div>';
+  }
+  h+='<div style="overflow-x:auto"><table style="min-width:340px;font-size:10px">';
+  h+='<thead><tr><th>Time</th><th>Nodes</th><th>Edges</th><th>Drivers</th><th>Countries</th></tr></thead><tbody>';
+  hist.slice().reverse().slice(0,8).forEach(function(s){
+    h+='<tr>';
+    h+='<td style="font-family:var(--mono);font-size:9px;color:#818cf8">'+_timeAgo(s.ts)+'</td>';
+    h+='<td style="font-family:var(--mono)">'+s.node_count+'</td>';
+    h+='<td style="font-family:var(--mono)">'+s.edge_count+'</td>';
+    h+='<td style="font-family:var(--mono);color:var(--orange)">'+((s.by_type&&s.by_type.driver)||0)+'</td>';
+    h+='<td style="font-family:var(--mono);color:var(--blue)">'+((s.by_type&&s.by_type.country)||0)+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
+// 08: DATA INTEGRITY & RECOVERY
+window.runIntegrityCheck = function() {
+  var result = _pmCheckIntegrity();
+  persistMemory();
+  _pmBuildIntegrity();
+};
+window.clearPersistentMemory = function() {
+  if(!confirm('Clear ALL persistent memory? This cannot be undone.')) return;
+  Object.values(PM_KEYS).forEach(function(k){ _pmDel(k); });
+  var el=document.getElementById('pm-integrity-body');
+  if(el) el.innerHTML='<div style="padding:12px;text-align:center;font-size:11px;color:var(--orange)">Memory cleared. Refresh page to restart accumulation.</div>';
+  _pmBuildHealthDash();
+};
+function _pmBuildIntegrity() {
+  var integ = _pmGet(PM_KEYS.integrity) || { score:100, issues:[], ts:null };
+  var restore = _pmRestoreStats;
+  var h='<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">';
+  h+='<span style="font-size:24px;font-weight:700;font-family:var(--mono);color:'+(integ.score>=90?'var(--green)':integ.score>=70?'var(--orange)':'var(--red)')+'">'+integ.score+'%</span>';
+  h+='<span style="font-size:11px;color:var(--text3)">Integrity Score</span>';
+  h+='<span style="margin-left:auto;font-size:9px;color:var(--text3)">'+(_timeAgo(integ.ts))+'</span></div>';
+  // Restore stats
+  h+='<div style="font-size:9px;color:var(--text3);margin-bottom:5px">Records restored from localStorage this session:</div>';
+  var stores=[
+    {l:'Forecasts',   v:restore.forecasts},
+    {l:'Snapshots',   v:restore.temporal},
+    {l:'Reputation',  v:restore.reputation},
+    {l:'Registry',    v:restore.registry},
+    {l:'Weights',     v:restore.weights},
+    {l:'Drv History', v:restore.drvHist},
+    {l:'Fc History',  v:restore.fcHist},
+    {l:'Scenarios',   v:restore.scenarios},
+    {l:'Graph Hist',  v:restore.graph},
+  ];
+  h+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">';
+  stores.forEach(function(s){
+    h+='<span class="pm-badge '+(s.v>0?'ok':'empty')+'">'+s.l+': '+s.v+'</span>';
+  });
+  h+='</div>';
+  if(integ.issues&&integ.issues.length){
+    h+='<div style="font-size:9px;color:var(--orange);margin-bottom:4px">Issues detected:</div>';
+    integ.issues.forEach(function(i){ h+='<div style="font-size:10px;color:var(--text2);padding:2px 0">&#9888; '+i+'</div>'; });
+  } else {
+    h+='<div style="font-size:10px;color:var(--green)">&#10003; No integrity issues detected</div>';
+  }
+  var el=document.getElementById('pm-integrity-body'); if(el) el.innerHTML=h;
+}
+
+// 09: EXECUTIVE MEMORY REPORT
+window.generateMemoryReport = function() {
+  var el=document.getElementById('pm-report-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating Memory Report...</div></div>';
+  persistMemory();
+  setTimeout(function(){
+    var idx   = MEMORY_INDEX;
+    var archSt= _archiveStats();
+    var repN  = Object.keys(DRIVER_REPUTATION).length;
+    var integ = (_pmGet(PM_KEYS.integrity)||{}).score||100;
+    var kb    = fr(_pmSize()/1024);
+    var restoredTotal = Object.values(_pmRestoreStats).reduce(function(a,v){return a+v;},0);
+    var now   = new Date().toUTCString().replace('GMT','UTC');
+    var secs=[
+      {t:'ARCHIVE HEALTH',c:'#818cf8',
+       v:'Storage: '+kb+' KB. Integrity: '+integ+'%. Restored: '+restoredTotal+' records from localStorage. Forecast archive: '+FORECAST_ARCHIVE.length+' entries ('+archSt.validated+' validated).'},
+      {t:'FORECAST HISTORY',c:'var(--gold)',
+       v:'Archive total: '+FORECAST_ARCHIVE.length+'. Validated: '+archSt.validated+' ('+archSt.accuracy+'%). Avg error: '+archSt.avgErr+'. Best horizon: '+(archSt.bestHz||'24h')+'.'},
+      {t:'LEARNING HISTORY',c:'var(--green)',
+       v:'LFE registry: '+_lfe.registry.length+'. Weight changes: '+(_lfe.weightHistory||[]).length+'. Total updates: '+_lfe.totalUpdates+'. Horizon confidence: '
+       +JSON.stringify({h24:_lfe.forecastConf.h24,h7d:_lfe.forecastConf.h7d})+'.'},
+      {t:'REPUTATION EVOLUTION',c:'var(--orange)',
+       v:'Drivers tracked: '+repN+'. Reputation history points: '+Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+(v.history||[]).length;},0)+'.'},
+      {t:'SCENARIO HISTORY',c:'var(--blue)',
+       v:'Scenarios in vault: '+((window._pm_restored_scenarios||[]).length+(_scn&&_scn.savedA?1:0)+(_scn&&_scn.savedB?1:0))+'.'},
+      {t:'KNOWLEDGE GROWTH',c:'#a855f7',
+       v:'Temporal snapshots: '+TEMPORAL_ARCHIVE.length+'. Graph history: '+((window._pm_graph_history||[]).length)+' evolution snapshots. Total memory records: '+fmt(FORECAST_ARCHIVE.length+_lfe.registry.length+TEMPORAL_ARCHIVE.length)+'.'},
+      {t:'STRATEGIC RECOMMENDATIONS',c:'#818cf8',
+       v:'1. Allow platform to accumulate ≥50 snapshots for trend analysis. 2. Forecasts auto-validate on refresh. 3. Keep storage below 4MB. 4. Driver reputation improves with more validation cycles.'},
+    ];
+    var h='<div style="background:rgba(99,102,241,.04);border:0.5px solid rgba(99,102,241,.2);border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:#818cf8;letter-spacing:.2em">PERSISTENT MEMORY REPORT</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; '+kb+' KB &#183; Integrity '+integ+'%</div></div>';
+    h+='<div style="height:0.5px;background:rgba(99,102,241,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="margin-top:10px;padding:8px 10px;background:rgba(99,102,241,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+' &#183; '+kb+' KB total</div></div>';
+    el.innerHTML=h;
+  },800);
+};
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
