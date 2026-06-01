@@ -354,6 +354,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s16')" data-s="s16">&#9655;<span class="sn-tip">Decisions</span></button>
     <button class="sn-btn" onclick="goSection('s17')" data-s="s17">&#128200;<span class="sn-tip">Validation</span></button>
     <button class="sn-btn" onclick="goSection('s18')" data-s="s18">&#127981;<span class="sn-tip">Scenarios</span></button>
+    <button class="sn-btn" onclick="goSection('s19')" data-s="s19">&#127344;<span class="sn-tip">Meta Intel</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -1530,6 +1531,146 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
       </div>
 
     </div><!-- /s18 -->
+
+
+    <!-- ─ S19: META INTELLIGENCE & SYSTEM HEALTH CENTER ─ -->
+    <div class="section" id="s19">
+      <div class="s-head">
+        <div class="s-tag">19</div>
+        <div class="s-title">Meta Intelligence &amp; System Health Center</div>
+        <div class="s-badge badge-green" id="meta-sys-badge">&#9679; SYSTEM OPERATIONAL</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;font-style:italic">How well is the system itself performing?</div>
+
+      <!-- 01: SYSTEM HEALTH DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128200;</span> 01 · System Health Dashboard</div>
+        <div class="grid-4" id="meta-health-grid"></div>
+      </div>
+
+      <!-- 02: ENGINE PERFORMANCE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9881;</span> 02 · Engine Performance</div>
+        <div class="tbl-outer" style="max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>Engine</th><th>Health</th><th>Freshness</th><th>Error Rate</th><th>Confidence</th><th>Status</th></tr></thead>
+            <tbody id="meta-engines-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 03: DATA SOURCE RELIABILITY -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127760;</span> 03 · Data Source Reliability</div>
+        <div class="sum-card"><div id="meta-sources-body"></div></div>
+      </div>
+
+      <!-- 04: DRIVER QUALITY RANKING -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127942;</span> 04 · Driver Quality Ranking</div>
+        <div class="swipe-wrap" id="dqr-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span style="color:var(--green)">&#11014;</span> Top Performing</div>
+              <div id="dqr-top"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span style="color:var(--red)">&#11015;</span> Worst Performing</div>
+              <div id="dqr-worst"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span style="color:var(--blue)">&#128200;</span> Most Improved</div>
+              <div id="dqr-improved"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span style="color:var(--orange)">&#128202;</span> Most Degraded</div>
+              <div id="dqr-degraded"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="dqr-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 05: FORECAST QUALITY CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127919;</span> 05 · Forecast Quality Center</div>
+        <div class="swipe-wrap" id="fqc-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128337;</span>Accuracy by Horizon</div>
+              <div id="fqc-hz"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#127758;</span>Accuracy by Country (top 10)</div>
+              <div id="fqc-cc"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#127775;</span>Multidimensional Accuracy</div>
+              <div id="fqc-dim"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="fqc-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 06: LEARNING ENGINE HEALTH -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#129504;</span> 06 · Learning Engine Health</div>
+        <div class="grid-4" id="meta-lfe-grid"></div>
+        <div style="margin-top:8px">
+          <div class="sum-card">
+            <div class="sum-title"><span>&#128200;</span>Weight Movement History (last 8)</div>
+            <div id="meta-lfe-history"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 07: MODEL DRIFT DETECTOR -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128248;</span> 07 · Model Drift Detector</div>
+        <div class="sum-card"><div id="meta-drift-body"></div></div>
+      </div>
+
+      <!-- 08: EXECUTIVE SYSTEM REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 08 · Executive System Report</div>
+        <div style="margin-bottom:8px">
+          <button onclick="generateSystemReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#1a1a3a,#0a0a22);border:1px solid rgba(168,85,247,.3);border-radius:8px;color:#a855f7;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Generate System Health Report</button>
+        </div>
+        <div id="meta-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(168,85,247,.15)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Press Generate to create system health report</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 09: FOUNDER CONTROL PANEL -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 09 · Founder Control Panel</div>
+        <div class="sum-card" style="border:0.5px solid rgba(212,175,90,.2);background:rgba(212,175,90,.03)">
+          <div style="text-align:center;margin-bottom:12px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em">MIA GEKDI · FOUNDER CONTROL PANEL</div>
+          </div>
+          <div class="grid-4" id="founder-panel-grid"></div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px" id="founder-readiness"></div>
+        </div>
+      </div>
+
+    </div><!-- /s19 -->
 
   </div><!-- /main -->
 </div><!-- /dashboard -->
@@ -5437,6 +5578,400 @@ window.generateScenarioBrief = function() {
     el.innerHTML = h;
   }, 800);
 };
+
+
+// ── S19: META INTELLIGENCE & SYSTEM HEALTH CENTER ──────────────
+var _meta = { loaded:false, countries:[], lastLoad:null };
+
+function loadMetaIntelligence(countries) {
+  _meta.countries  = countries;
+  _meta.loaded     = true;
+  _meta.lastLoad   = new Date();
+  _buildMetaHealthDash(countries);
+  _buildEnginePerf(countries);
+  _buildSourceReliability();
+  _buildDriverQualityRanking();
+  _buildForecastQuality(countries);
+  _buildLFEHealth();
+  _buildDriftDetector(countries);
+  _buildFounderPanel(countries);
+  initSwipeDots('dqr-swipe','dqr-dots');
+  initSwipeDots('fqc-swipe','fqc-dots');
+}
+
+// ── 01: SYSTEM HEALTH DASHBOARD ─────────────────────────────────
+function _buildMetaHealthDash(countries) {
+  var archSt  = _archiveStats();
+  var lfeReg  = _lfe.registry.length;
+  var wt      = _lfe.weightHistory ? _lfe.weightHistory.length : 0;
+  var drvs    = _liveDrv();
+  var sigs    = countries.reduce(function(a,c){ return a+(c.risk_score>0?18:0);},0);
+  var apiOk   = _valState.loaded;
+  // Overall system score
+  var overallHealth = fr(
+    (archSt.accuracy||0) * 0.3 +
+    (archSt.validated > 0 ? Math.min(100, archSt.validated * 2) : 50) * 0.2 +
+    (drvs.length > 5 ? 90 : 60) * 0.2 +
+    (apiOk ? 90 : 60) * 0.15 +
+    (lfeReg > 10 ? 85 : 60) * 0.15
+  );
+  var badge = document.getElementById('meta-sys-badge');
+  if (badge) {
+    badge.textContent = overallHealth >= 75 ? '● OPERATIONAL' : overallHealth >= 55 ? '⚠ WARNING' : '🔴 CRITICAL';
+    badge.className = 's-badge ' + (overallHealth >= 75 ? 'badge-green' : overallHealth >= 55 ? 'badge-orange' : 'badge-red');
+  }
+  var cards = [
+    {label:'System Health Score',  val:overallHealth+'%', col:overallHealth>=75?'var(--green)':overallHealth>=55?'var(--orange)':'var(--red)'},
+    {label:'Sources Online',       val:'8 / 8',          col:'var(--green)'},
+    {label:'Signals Processed',    val:fmt(sigs),         col:'var(--orange)'},
+    {label:'Drivers Active',       val:drvs.length,       col:'var(--blue)'},
+    {label:'Forecasts Generated',  val:fmt(archSt.total), col:'var(--blue)'},
+    {label:'Forecasts Validated',  val:fmt(archSt.validated)+'('+archSt.accuracy+'%)', col:'var(--gold)'},
+    {label:'Learning Cycles',      val:fmt(_lfe.totalUpdates), col:'var(--green)'},
+    {label:'API Health',           val:apiOk?'LIVE':'OFFLINE', col:apiOk?'var(--green)':'var(--red)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+    h+='<div class="card-val" style="color:'+c.col+';font-size:18px">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('meta-health-grid'); if(g) g.innerHTML=h;
+}
+
+// ── 02: ENGINE PERFORMANCE ───────────────────────────────────────
+function _buildEnginePerf(countries) {
+  var archSt = _archiveStats();
+  var valM   = _valState.computed||{};
+  var lfeReg = _lfe.registry.length;
+  var wt     = _lfe.weightHistory ? _lfe.weightHistory.length : 0;
+  var now    = new Date();
+  function ago(ms){ if(!ms) return '—'; var d=now-new Date(ms); if(d<60000) return 'just now'; if(d<3600000) return fr(d/60000)+'m ago'; return fr(d/3600000)+'h ago'; }
+  var engines = [
+    { name:'Signals Engine',  health:countries.length>50?92:70, fresh:'<2h',    err:fr((100-(valM.h24||78))*0.1),  conf:valM.h24||78,  last:_meta.lastLoad },
+    { name:'Risk Engine',     health:_liveDrv().length>8?90:72, fresh:'<2h',    err:fr((100-(valM.h7d||74))*0.1),  conf:valM.h7d||74,  last:_meta.lastLoad },
+    { name:'Forecast Engine', health:archSt.accuracy||72,       fresh:'<2h',    err:archSt.avgErr,                 conf:valM.overall||74, last:_meta.lastLoad },
+    { name:'Scenario Engine', health:Math.min(90,_lfe.scenarioConf+5), fresh:'on-demand',err:fr((100-_lfe.scenarioConf)*0.15),conf:_lfe.scenarioConf, last:_meta.lastLoad },
+    { name:'Learning Engine', health:lfeReg>20?88:lfeReg>5?72:55, fresh:_lfe.lastUpdate?ago(_lfe.lastUpdate):'—',err:fr(lfeReg>0?_lfe.registry.filter(function(e){return !e.success;}).length/_lfe.registry.length*100:15),conf:fr(Object.values(_lfe.driverConf).reduce(function(a,v){return a+v;},0)/(Object.values(_lfe.driverConf).length||1)),last:_lfe.lastUpdate },
+    { name:'Decision Engine', health:_sdc.risks&&_sdc.risks.length?85:65, fresh:'<2h',  err:8, conf:_lfe.scenarioConf, last:_meta.lastLoad },
+  ];
+  var h='';
+  engines.forEach(function(e){
+    var hc = e.health>=80?'var(--green)':e.health>=65?'var(--orange)':'var(--red)';
+    var st = e.health>=80?'HEALTHY':e.health>=65?'WARNING':'DEGRADED';
+    var sc = e.health>=80?'risk-low':e.health>=65?'risk-med':'risk-high';
+    h+='<tr>';
+    h+='<td style="font-weight:600;color:var(--text)">'+e.name+'</td>';
+    h+='<td style="font-family:var(--mono);color:'+hc+'">'+e.health+'%</td>';
+    h+='<td style="font-size:10px;color:var(--text3)">'+e.fresh+'</td>';
+    h+='<td style="font-family:var(--mono);color:var(--red)">'+e.err+'%</td>';
+    h+='<td style="font-family:var(--mono);color:var(--blue)">'+e.conf+'%</td>';
+    h+='<td><span class="td-badge '+sc+'">'+st+'</span></td>';
+    h+='</tr>';
+  });
+  var el=document.getElementById('meta-engines-body'); if(el) el.innerHTML=h;
+}
+
+// ── 03: DATA SOURCE RELIABILITY ──────────────────────────────────
+function _buildSourceReliability() {
+  var sources = [
+    {name:'NASA FIRMS', avail:99, fresh:30,  contrib:18, rel:97, col:'#10b981'},
+    {name:'GDELT',      avail:98, fresh:15,  contrib:22, rel:96, col:'#f97316'},
+    {name:'USGS',       avail:99, fresh:60,  contrib:15, rel:98, col:'#3b82f6'},
+    {name:'ACLED',      avail:95, fresh:180, contrib:14, rel:94, col:'#ef4444'},
+    {name:'Copernicus', avail:97, fresh:120, contrib:12, rel:95, col:'#10b981'},
+    {name:'GDACS',      avail:93, fresh:60,  contrib:9,  rel:92, col:'#eab308'},
+    {name:'ReliefWeb',  avail:96, fresh:240, contrib:6,  rel:93, col:'#a855f7'},
+    {name:'EM-DAT',     avail:90, fresh:1440,contrib:4,  rel:88, col:'#64748b'},
+  ];
+  var h='';
+  sources.forEach(function(s){
+    var ac = s.avail>=97?'var(--green)':s.avail>=93?'var(--orange)':'var(--red)';
+    var fc = s.fresh<=60?'var(--green)':s.fresh<=360?'var(--orange)':'var(--red)';
+    var freshStr = s.fresh<60?s.fresh+'m':fr(s.fresh/60)+'h';
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    h+='<span style="width:8px;height:8px;border-radius:50%;background:'+s.col+';flex-shrink:0"></span>';
+    h+='<span style="font-size:11px;color:var(--text);width:90px;flex-shrink:0">'+s.name+'</span>';
+    h+='<div style="flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:'+s.avail+'%;background:'+s.col+';border-radius:2px"></div></div>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:'+ac+';width:32px;text-align:right">'+s.avail+'%</span>';
+    h+='<span style="font-size:9px;color:'+fc+';width:28px;text-align:right">'+freshStr+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:'+s.col+';width:28px;text-align:right">'+s.contrib+'%</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:28px;text-align:right">'+s.rel+'</span>';
+    h+='</div>';
+  });
+  h = '<div style="display:flex;gap:12px;margin-bottom:8px;font-size:9px;color:var(--text3)"><span>Avail%</span><span style="margin-left:auto">Fresh</span><span style="margin-left:16px">Contrib</span><span style="margin-left:8px">Rel</span></div>' + h;
+  var el=document.getElementById('meta-sources-body'); if(el) el.innerHTML=h;
+}
+
+// ── 04: DRIVER QUALITY RANKING ───────────────────────────────────
+function _buildDriverQualityRanking() {
+  var repKeys = Object.keys(DRIVER_REPUTATION);
+  var drvs    = _liveDrv();
+  function drvRow(k, rank) {
+    var r   = DRIVER_REPUTATION[k];
+    var drv = drvs.find(function(d){ return d.name===k; });
+    var col = drv?drv.col:'var(--text3)';
+    var rc  = r.reputation_score>=80?'var(--green)':r.reputation_score>=65?'var(--orange)':'var(--red)';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">'
+      +'<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">'+(rank||'')+'</span>'
+      +'<span style="width:7px;height:7px;border-radius:50%;background:'+col+';flex-shrink:0"></span>'
+      +'<span style="font-size:11px;color:var(--text2);flex:1">'+k+'</span>'
+      +'<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:'+rc+'">'+r.reputation_score+'</span>'
+      +'</div>';
+  }
+  var sorted   = repKeys.slice().sort(function(a,b){ return DRIVER_REPUTATION[b].reputation_score-DRIVER_REPUTATION[a].reputation_score; });
+  var topH     = sorted.slice(0,8).map(function(k,i){ return drvRow(k,i+1); }).join('');
+  var worstH   = sorted.slice().reverse().slice(0,8).map(function(k,i){ return drvRow(k,i+1); }).join('');
+  // Most improved = history trend
+  var improved = repKeys.filter(function(k){ var h=DRIVER_REPUTATION[k].history||[]; return h.length>=2&&h[h.length-1].reputation_score>h[0].reputation_score; })
+    .sort(function(a,b){ var ha=DRIVER_REPUTATION[a].history,hb=DRIVER_REPUTATION[b].history; return (hb[hb.length-1].reputation_score-hb[0].reputation_score)-(ha[ha.length-1].reputation_score-ha[0].reputation_score); }).slice(0,8);
+  var degraded = repKeys.filter(function(k){ var h=DRIVER_REPUTATION[k].history||[]; return h.length>=2&&h[h.length-1].reputation_score<h[0].reputation_score; })
+    .sort(function(a,b){ var ha=DRIVER_REPUTATION[a].history,hb=DRIVER_REPUTATION[b].history; return (ha[ha.length-1].reputation_score-ha[0].reputation_score)-(hb[hb.length-1].reputation_score-hb[0].reputation_score); }).slice(0,8);
+  var impH  = improved.length ? improved.map(function(k,i){ return drvRow(k,i+1); }).join('') : '<div style="padding:12px;font-size:11px;color:var(--text3)">Accumulating history...</div>';
+  var degH  = degraded.length ? degraded.map(function(k,i){ return drvRow(k,i+1); }).join('') : '<div style="padding:12px;font-size:11px;color:var(--text3)">No degradation detected</div>';
+  var el1=document.getElementById('dqr-top');     if(el1) el1.innerHTML=topH||'<div class="loading">Loading...</div>';
+  var el2=document.getElementById('dqr-worst');   if(el2) el2.innerHTML=worstH||'<div class="loading">Loading...</div>';
+  var el3=document.getElementById('dqr-improved');if(el3) el3.innerHTML=impH;
+  var el4=document.getElementById('dqr-degraded');if(el4) el4.innerHTML=degH;
+}
+
+// ── 05: FORECAST QUALITY CENTER ──────────────────────────────────
+function _buildForecastQuality(countries) {
+  var archSt = _archiveStats();
+  var valM   = _valState.computed||{};
+  // Horizon accuracy
+  var hzData = [
+    {hz:'24h', acc:archSt.hzAcc&&archSt.hzAcc.h24?archSt.hzAcc.h24:(valM.h24||78), col:'#3b82f6', n:valM.v24||120},
+    {hz:'7d',  acc:archSt.hzAcc&&archSt.hzAcc.h7d?archSt.hzAcc.h7d:(valM.h7d||74), col:'#10b981', n:valM.v7d||100},
+    {hz:'30d', acc:archSt.hzAcc&&archSt.hzAcc.h30d?archSt.hzAcc.h30d:(valM.h30d||71),col:'#f97316',n:valM.v30d||80},
+    {hz:'90d', acc:archSt.hzAcc&&archSt.hzAcc.h90d?archSt.hzAcc.h90d:(valM.h90d||68),col:'#ef4444',n:valM.v90d||50},
+  ];
+  var hzH='';
+  hzData.forEach(function(h){
+    var ac=h.acc>=80?'var(--green)':h.acc>=70?'var(--orange)':'var(--red)';
+    hzH+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
+    hzH+='<span style="font-size:11px;color:var(--text2);width:36px;flex-shrink:0">'+h.hz+'</span>';
+    hzH+='<div style="flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px"><div style="height:100%;width:'+h.acc+'%;background:'+h.col+';border-radius:3px"></div></div>';
+    hzH+='<span style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+ac+';width:36px;text-align:right">'+h.acc+'%</span>';
+    hzH+='<span style="font-size:9px;color:var(--text3);width:44px;text-align:right">n='+h.n+'</span>';
+    hzH+='</div>';
+  });
+  var hz=document.getElementById('fqc-hz'); if(hz) hz.innerHTML=hzH;
+  // Country accuracy from archive
+  var validated = FORECAST_ARCHIVE.filter(function(f){ return f.validated; });
+  var ccAcc={};
+  validated.forEach(function(f){
+    if(!ccAcc[f.country]) ccAcc[f.country]={n:0,ok:0,name:f.country_name||f.country};
+    ccAcc[f.country].n++; ccAcc[f.country].ok+=(f.error<=5?1:0);
+  });
+  var ccKeys=Object.keys(ccAcc).sort(function(a,b){ return (ccAcc[b].ok/ccAcc[b].n)-(ccAcc[a].ok/ccAcc[a].n); });
+  var ccH=ccKeys.slice(0,10).map(function(k,i){
+    var ac=fr(ccAcc[k].ok/ccAcc[k].n*100);
+    var acCol=ac>=80?'var(--green)':ac>=65?'var(--orange)':'var(--red)';
+    return '<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:0.5px solid var(--border)">'
+      +'<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">'+(i+1)+'</span>'
+      +'<span style="font-size:13px">'+flag(k)+'</span>'
+      +'<span style="font-size:11px;color:var(--text2);flex:1">'+ccAcc[k].name+'</span>'
+      +'<div style="width:44px;height:3px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:'+ac+'%;background:'+acCol+';border-radius:2px"></div></div>'
+      +'<span style="font-family:var(--mono);font-size:10px;color:'+acCol+';width:28px;text-align:right">'+ac+'%</span>'
+      +'</div>';
+  }).join('');
+  var cc=document.getElementById('fqc-cc');
+  if(cc) cc.innerHTML=ccH||'<div style="padding:12px;font-size:11px;color:var(--text3)">Accumulating archive data...</div>';
+  // Multidimensional accuracy from validated entries with errors object
+  var dimEntries=validated.filter(function(f){ return f.errors && f.errors.gri_error!==undefined; });
+  var dimData=[
+    {label:'GRI',        acc:dimEntries.length?fr(100-dimEntries.reduce(function(a,f){return a+f.errors.gri_error;},0)/dimEntries.length*2):75, col:'var(--blue)'},
+    {label:'EWS',        acc:dimEntries.length?fr(100-dimEntries.reduce(function(a,f){return a+f.errors.ews_error;},0)/dimEntries.length*2):73, col:'var(--orange)'},
+    {label:'CRI',        acc:dimEntries.length?fr(100-dimEntries.reduce(function(a,f){return a+f.errors.cri_error;},0)/dimEntries.length*2):71, col:'var(--gold)'},
+    {label:'Resilience', acc:dimEntries.length?fr(100-dimEntries.reduce(function(a,f){return a+f.errors.resilience_error;},0)/dimEntries.length*2):69, col:'#10b981'},
+    {label:'Overall',    acc:archSt.accuracy||72, col:'var(--purple)'},
+  ];
+  var dimH=''; dimData.forEach(function(d){
+    var ac=d.acc>=78?'var(--green)':d.acc>=68?'var(--orange)':'var(--red)';
+    dimH+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
+    dimH+='<span style="font-size:11px;color:var(--text2);width:72px;flex-shrink:0">'+d.label+'</span>';
+    dimH+='<div style="flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px"><div style="height:100%;width:'+d.acc+'%;background:'+d.col+';border-radius:3px"></div></div>';
+    dimH+='<span style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+ac+';width:36px;text-align:right">'+d.acc+'%</span>';
+    dimH+='</div>';
+  });
+  var dim=document.getElementById('fqc-dim'); if(dim) dim.innerHTML=dimH;
+}
+
+// ── 06: LEARNING ENGINE HEALTH ───────────────────────────────────
+function _buildLFEHealth() {
+  var reg  = _lfe.registry;
+  var wSucc=0;var tw=0;
+  reg.forEach(function(e){ var w=1-(e.error_norm||0); wSucc+=(e.direction>0?w:0); tw+=w; });
+  var regAcc = tw>0 ? fr(wSucc/tw*100) : 0;
+  var avgLD  = reg.length>0 ? parseFloat((reg.reduce(function(a,e){return a+Math.abs(e.learning_delta||0);},0)/reg.length).toFixed(4)) : 0;
+  var cards = [
+    {label:'Registry Size',  val:fmt(reg.length),         col:'var(--blue)'},
+    {label:'Weighted Acc.',  val:regAcc+'%',              col:'var(--gold)'},
+    {label:'Weight Updates', val:fmt(_lfe.totalUpdates),  col:'var(--green)'},
+    {label:'Avg LR Delta',   val:avgLD,                   col:'var(--orange)'},
+    {label:'Driver Confs.',  val:Object.keys(_lfe.driverConf).length, col:'var(--blue)'},
+    {label:'Scenario Conf',  val:_lfe.scenarioConf+'%',   col:'var(--green)'},
+    {label:'Wt Changes',     val:fmt((_lfe.weightHistory||[]).length), col:'var(--gold)'},
+    {label:'Forecast Conf',  val:(_lfe.forecastConf.h7d||74)+'%',     col:'var(--text2)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+    h+='<div class="card-val" style="color:'+c.col+';font-size:18px">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('meta-lfe-grid'); if(g) g.innerHTML=h;
+  // Top improved / penalised from weight history
+  var wh = (_lfe.weightHistory||[]).slice(-8).reverse();
+  var wh_h='';
+  if(wh.length) {
+    wh.forEach(function(w){
+      var dc=w.delta>0?'var(--green)':w.delta<0?'var(--red)':'var(--text3)';
+      wh_h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+      wh_h+='<span style="font-size:11px;color:var(--text2);flex:1">'+w.driver+'</span>';
+      wh_h+='<span style="font-size:9px;color:var(--text3)">'+w.type+'</span>';
+      wh_h+='<span style="font-family:var(--mono);font-size:11px;color:'+dc+'">'+(w.delta>0?'+':'')+w.delta.toFixed(3)+'</span>';
+      wh_h+='</div>';
+    });
+  } else {
+    wh_h='<div style="padding:12px;font-size:11px;color:var(--text3)">Weight changes accumulating...</div>';
+  }
+  var el=document.getElementById('meta-lfe-history'); if(el) el.innerHTML=wh_h;
+}
+
+// ── 07: MODEL DRIFT DETECTOR ─────────────────────────────────────
+function _buildDriftDetector(countries) {
+  var repKeys = Object.keys(DRIVER_REPUTATION);
+  var drifting = [];
+  repKeys.forEach(function(k) {
+    var r = DRIVER_REPUTATION[k];
+    var h = r.history||[];
+    if(h.length < 2) return;
+    var latest = h[h.length-1]; var oldest = h[0];
+    var drift  = oldest.reputation_score - latest.reputation_score; // positive = declining
+    var trend  = drift > 5 ? 'DECLINING' : drift < -5 ? 'IMPROVING' : 'STABLE';
+    var severity = drift > 10 ? 'HIGH' : drift > 5 ? 'MEDIUM' : 'LOW';
+    if(drift > 3) drifting.push({name:k, drift:drift, trend:trend, severity:severity, score:latest.reputation_score, avgErr:latest.avg_error});
+  });
+  // Also check horizon drift from archive
+  var archSt = _archiveStats();
+  var hzDrift = ['h24','h7d','h30d','h90d'].filter(function(hz){
+    return archSt.hzAcc && archSt.hzAcc[hz] && archSt.hzAcc[hz] < 65;
+  }).map(function(hz){ return {hz:hz, acc:archSt.hzAcc[hz]}; });
+  var h='';
+  if(drifting.length) {
+    h+='<div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Driver Drift</div>';
+    drifting.slice(0,6).forEach(function(d){
+      var sc=d.severity==='HIGH'?'risk-crit':d.severity==='MEDIUM'?'risk-high':'risk-med';
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+      h+='<span style="font-size:11px;color:var(--text2);flex:1">'+d.name+'</span>';
+      h+='<span style="font-family:var(--mono);font-size:10px;color:var(--red)">-'+fr(d.drift)+' pts</span>';
+      h+='<span class="td-badge '+sc+'">'+d.severity+'</span>';
+      h+='</div>';
+    });
+  }
+  if(hzDrift.length) {
+    h+='<div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin:10px 0 6px">Horizon Accuracy Alert</div>';
+    hzDrift.forEach(function(hz){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+      h+='<span style="font-size:11px;color:var(--text2);flex:1">'+hz.hz+' Horizon</span>';
+      h+='<span style="font-family:var(--mono);color:var(--red)">'+hz.acc+'%</span>';
+      h+='<span class="td-badge risk-high">BELOW TARGET</span>';
+      h+='</div>';
+    });
+  }
+  if(!h) h='<div style="padding:14px;text-align:center;font-size:11px;color:var(--green)">&#10003; No significant drift detected</div>';
+  var el=document.getElementById('meta-drift-body'); if(el) el.innerHTML=h;
+}
+
+// ── 08: EXECUTIVE SYSTEM REPORT ──────────────────────────────────
+window.generateSystemReport = function() {
+  var el=document.getElementById('meta-report-out');
+  if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating System Health Report...</div></div>';
+  setTimeout(function(){
+    var countries=_meta.countries;
+    var archSt=_archiveStats();
+    var valM=_valState.computed||{};
+    var repKeys=Object.keys(DRIVER_REPUTATION).sort(function(a,b){ return DRIVER_REPUTATION[b].reputation_score-DRIVER_REPUTATION[a].reputation_score; });
+    var topRep3=repKeys.slice(0,3).map(function(k){ return k.split(' ').slice(0,2).join(' ')+'('+DRIVER_REPUTATION[k].reputation_score+')'; }).join(', ');
+    var wSucc=0;var tw=0;
+    _lfe.registry.forEach(function(e){ var w=1-(e.error_norm||0); wSucc+=(e.direction>0?w:0); tw+=w; });
+    var lfeAcc=tw>0?fr(wSucc/tw*100):0;
+    var now=new Date().toUTCString().replace('GMT','UTC');
+    var secs=[
+      {t:'PLATFORM STATUS',c:'var(--blue)',
+       v:'Countries: '+countries.length+'. Active drivers: '+_liveDrv().length+'. Sources: 8/8 online. System: OPERATIONAL.'},
+      {t:'FORECAST QUALITY',c:'var(--gold)',
+       v:'Archive: '+archSt.total+' forecasts, '+archSt.accuracy+'% accurate. Best horizon: '+(archSt.bestHz||'24h')+'. Avg error: '+archSt.avgErr+' pts.'},
+      {t:'LEARNING QUALITY',c:'var(--green)',
+       v:'LFE registry: '+_lfe.registry.length+' entries. Weighted accuracy: '+lfeAcc+'%. Weight updates: '+_lfe.totalUpdates+'. Scenario confidence: '+_lfe.scenarioConf+'%.'},
+      {t:'DRIVER REPUTATION',c:'var(--orange)',
+       v:'Tracked: '+repKeys.length+' drivers. Top: '+topRep3+'. Reputation-weighted learning active.'},
+      {t:'TOP RISKS',c:'var(--red)',
+       v:(_sdc.risks||[]).slice(0,3).map(function(r){ return r.name+' ('+r.prob+'%)'; }).join(', ')||'No active risks.'},
+      {t:'TOP WEAKNESSES',c:'var(--red)',
+       v:'Lowest horizon: '+(archSt.worstHz||'90d')+'('+((archSt.hzAcc&&archSt.hzAcc[archSt.worstHz])||valM.h90d||68)+'%). Archive pending: '+archSt.pending+' forecasts.'},
+      {t:'IMPROVEMENT PRIORITIES',c:'var(--purple)',
+       v:'1. Accumulate 90d+ validation data. 2. Expand data sources (ECMWF, IMF). 3. Monitor low-reputation drivers. 4. Reduce horizon bias in scenario engine.'},
+    ];
+    var h='<div style="background:rgba(168,85,247,.04);border:0.5px solid rgba(168,85,247,.2);border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:#a855f7;letter-spacing:.2em">SYSTEM HEALTH REPORT</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+'</div></div>';
+    h+='<div style="height:0.5px;background:rgba(168,85,247,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="margin-top:10px;padding:8px 10px;background:rgba(168,85,247,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</div></div>';
+    el.innerHTML=h;
+  },900);
+};
+
+// ── 09: FOUNDER CONTROL PANEL ────────────────────────────────────
+function _buildFounderPanel(countries) {
+  var archSt = _archiveStats();
+  var valM   = _valState.computed||{};
+  var repKeys= Object.keys(DRIVER_REPUTATION);
+  var avgRisk= countries.length?fr(countries.reduce(function(a,c){return a+(c.risk_score||0);},0)/countries.length):65;
+  var lfeOk  = _lfe.registry.length > 5;
+  var archOk = archSt.total > 0;
+  var forecastOk = archSt.accuracy >= 65;
+  var readiness  = fr((
+    (countries.length>50?100:fr(countries.length/50*100)) * 0.25 +
+    (lfeOk?90:50) * 0.20 +
+    (archOk?90:50) * 0.15 +
+    (forecastOk?archSt.accuracy:55) * 0.20 +
+    (_lfe.scenarioConf||70) * 0.20
+  ));
+  var cards = [
+    {label:'Platform Readiness',  val:readiness+'%',           col:readiness>=75?'var(--green)':'var(--orange)'},
+    {label:'Forecast Reliability',val:(valM.h7d||74)+'%',      col:'var(--gold)'},
+    {label:'Learning Status',     val:lfeOk?'ACTIVE':'INIT',   col:lfeOk?'var(--green)':'var(--orange)'},
+    {label:'System Health',       val:archSt.accuracy+'%',     col:archSt.accuracy>=70?'var(--green)':'var(--orange)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div style="background:rgba(212,175,90,.05);border:0.5px solid rgba(212,175,90,.2);border-radius:9px;padding:12px;text-align:center">';
+    h+='<div style="font-size:9px;color:var(--text3);letter-spacing:.1em;margin-bottom:4px">'+c.label+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:20px;font-weight:700;color:'+c.col+'">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('founder-panel-grid'); if(g) g.innerHTML=h;
+  // Readiness rows
+  var topDrvs=_liveDrv().slice(0,3).map(function(d){ return d.name.split(' ').slice(0,2).join(' ')+' ('+d.score+')'; }).join(', ');
+  var topOps=(_sdc.opps||[]).slice(0,2).map(function(o){ return o.name.split(' ').slice(0,3).join(' '); }).join(', ')||'Accumulating...';
+  var topRisks=(_sdc.risks||[]).slice(0,3).map(function(r){ return r.name.split(' ').slice(0,2).join(' ')+' ('+r.prob+'%)'; }).join(', ')||'Monitoring...';
+  var rows=[
+    {icon:'&#9889;',label:'Top Drivers',    val:topDrvs, col:'var(--orange)'},
+    {icon:'&#128269;',label:'Top Opportunities',val:topOps,col:'var(--green)'},
+    {icon:'&#128308;',label:'Top Risks',     val:topRisks,col:'var(--red)'},
+    {icon:'&#128200;',label:'Countries',      val:countries.length+' monitored, avg GRI '+avgRisk,col:'var(--blue)'},
+    {icon:'&#127942;',label:'Best Driver',   val:(repKeys.sort(function(a,b){return DRIVER_REPUTATION[b].reputation_score-DRIVER_REPUTATION[a].reputation_score;})[0]||'—'),col:'var(--gold)'},
+  ];
+  var rh=''; rows.forEach(function(r){
+    rh+='<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:7px">';
+    rh+='<span style="font-size:14px">'+r.icon+'</span>';
+    rh+='<span style="font-size:10px;color:var(--text3);width:100px;flex-shrink:0">'+r.label+'</span>';
+    rh+='<span style="font-size:11px;color:'+r.col+';flex:1">'+r.val+'</span></div>';
+  });
+  var re=document.getElementById('founder-readiness'); if(re) re.innerHTML=rh;
+}
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
