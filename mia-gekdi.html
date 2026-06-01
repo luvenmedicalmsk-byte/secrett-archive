@@ -312,6 +312,13 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .pm-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
 .badge-indigo{background:rgba(99,102,241,.12);color:#818cf8;border:0.5px solid rgba(99,102,241,.25)}
 
+
+.vault-badge{padding:2px 8px;border-radius:4px;font-size:9px;font-family:var(--mono);border:0.5px solid}
+.vault-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.badge-vault{background:rgba(16,185,129,.1);color:var(--green);border:0.5px solid rgba(16,185,129,.25)}
+.lineage-step{padding:7px 10px;border-radius:7px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.lineage-arrow{text-align:center;color:var(--text3);font-size:10px;padding:1px 0}
+
 </style>
 </head>
 <body>
@@ -379,6 +386,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s20'); setTimeout(function(){ if(_graph.nodes.length) _renderGraph(); },50);" data-s="s20">&#127760;<span class="sn-tip">Intel Graph</span></button>
     <button class="sn-btn" onclick="goSection('s21')" data-s="s21">&#9200;<span class="sn-tip">Temporal</span></button>
     <button class="sn-btn" onclick="goSection('s22')" data-s="s22">&#128190;<span class="sn-tip">Memory</span></button>
+    <button class="sn-btn" onclick="goSection('s23')" data-s="s23">&#128274;<span class="sn-tip">Vault</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -2092,6 +2100,119 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s22 -->
 
+
+    <!-- ─ S23: SOVEREIGN INTELLIGENCE VAULT ─ -->
+    <div class="section" id="s23">
+      <div class="s-head">
+        <div class="s-tag">23</div>
+        <div class="s-title">Sovereign Intelligence Vault</div>
+        <div class="s-badge badge-vault" id="vault-badge">&#128274; INITIALISING</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">IndexedDB sovereign storage · JSON export/import · Full audit trail · Multi-year retention</div>
+
+      <!-- 01: VAULT HEALTH DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128200;</span> 01 · Vault Health Dashboard</div>
+        <div class="grid-4" id="vault-health-grid"><div class="loading">Initialising vault...</div></div>
+        <!-- Storage layer status -->
+        <div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap" id="vault-layer-status"></div>
+      </div>
+
+      <!-- SYNC ACTIONS -->
+      <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="vaultSync()" style="flex:1;padding:9px 0;background:rgba(16,185,129,.08);border:0.5px solid rgba(16,185,129,.3);border-radius:7px;color:var(--green);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#8593; Sync to Vault</button>
+        <button onclick="vaultExport()" style="flex:1;padding:9px 0;background:rgba(59,130,246,.08);border:0.5px solid rgba(59,130,246,.3);border-radius:7px;color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#8681; Export JSON</button>
+        <label style="flex:1;padding:9px 0;background:rgba(212,175,90,.06);border:0.5px solid rgba(212,175,90,.3);border-radius:7px;color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:center;display:flex;align-items:center;justify-content:center">
+          &#8679; Import JSON
+          <input type="file" accept=".json" onchange="importVault(this)" style="display:none">
+        </label>
+        <button onclick="vaultBackup()" style="flex:1;padding:9px 0;background:rgba(168,85,247,.06);border:0.5px solid rgba(168,85,247,.3);border-radius:7px;color:#a855f7;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);-webkit-appearance:none">&#128190; Backup</button>
+      </div>
+
+      <!-- 02-07: VAULT STORES (swipe) -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128279;</span> 02-07 · Vault Stores</div>
+        <div class="swipe-wrap" id="vault-stores-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128337;</span>02 · Forecast Vault</div>
+              <div id="vault-fc-body"><div class="loading">Loading...</div></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#9200;</span>03 · Temporal Vault</div>
+              <div id="vault-temporal-body"><div class="loading">Loading...</div></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#129504;</span>04 · Learning Vault</div>
+              <div id="vault-learning-body"><div class="loading">Loading...</div></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#9889;</span>05 · Reputation Vault</div>
+              <div id="vault-rep-body"><div class="loading">Loading...</div></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#127981;</span>06+07 · Scenario &amp; Graph Vault</div>
+              <div id="vault-scenario-graph-body"><div class="loading">Loading...</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="vault-stores-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span>
+          <span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 08: FORECAST AUDIT TRAIL -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128203;</span> 08 · Forecast Audit Trail</div>
+        <div class="tbl-outer" style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>ID</th><th>Country</th><th>Hz</th><th>Created</th><th>Status</th><th>Checksum</th></tr></thead>
+            <tbody id="vault-audit-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 09: INTELLIGENCE LINEAGE ENGINE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128260;</span> 09 · Intelligence Lineage Engine</div>
+        <div style="margin-bottom:8px">
+          <select id="lineage-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 10px;outline:none;width:100%" onchange="buildLineage(this.value)">
+            <option value="">Select driver to trace lineage...</option>
+          </select>
+        </div>
+        <div id="lineage-body"><div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Select a driver to see full intelligence lineage chain</div></div>
+      </div>
+
+      <!-- 10: BACKUP CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128737;</span> 10 · Intelligence Backup Center</div>
+        <div class="sum-card"><div id="vault-backup-body"><div class="loading">Loading backups...</div></div></div>
+      </div>
+
+      <!-- 11: EXECUTIVE VAULT REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 11 · Executive Vault Report</div>
+        <div style="margin-bottom:8px">
+          <button onclick="generateVaultReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#04100a,#021208);border:1px solid rgba(16,185,129,.3);border-radius:8px;color:var(--green);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Generate Vault Intelligence Report</button>
+        </div>
+        <div id="vault-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(16,185,129,.12)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Press Generate to create sovereign vault report</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s23 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -2712,7 +2833,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -4749,6 +4870,358 @@ window._initDriverReputation     = _initDriverReputation;
 
 
 // ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// SOVEREIGN INTELLIGENCE VAULT ENGINE
+// Storage: IndexedDB (primary, ~50MB+) + localStorage (fallback)
+// Sync: Export/Import JSON vault + Worker API endpoint
+// Governance: Every object has {id,created_at,source,lineage,checksum,version,audit_status}
+// ══════════════════════════════════════════════════════════════
+
+var VAULT_DB_NAME    = 'SovereignIntelligenceVault';
+var VAULT_DB_VERSION = 1;
+var VAULT_WORKER_URL = 'https://archive-api.luven-medical-msk.workers.dev';
+var _vaultDB         = null;
+var _vaultState = {
+  ready:       false,
+  idb_support: typeof indexedDB !== 'undefined',
+  last_sync:   null,
+  sync_count:  0,
+  backup_count:0,
+  integrity:   100,
+};
+
+// ── GOVERNANCE WRAPPER ────────────────────────────────────────
+// Every vault object must be wrapped before storage
+function _vaultWrap(obj, source, lineage) {
+  var str = JSON.stringify(obj);
+  var h = 0;
+  for (var i=0; i<Math.min(str.length,500); i++) { h=((h<<5)-h)+str.charCodeAt(i); h|=0; }
+  return {
+    id:           obj.forecast_id || obj.timestamp || ('V-'+Date.now()+'-'+Math.random().toString(36).slice(2,6)),
+    created_at:   obj.timestamp || obj.ts || Date.now(),
+    updated_at:   Date.now(),
+    source:       source || 'platform',
+    lineage:      lineage || [],
+    checksum:     (h>>>0).toString(16),
+    version:      '1.0',
+    audit_status: 'active',
+    payload:      obj,
+  };
+}
+
+// ── INDEXEDDB INIT ────────────────────────────────────────────
+function _initVaultDB() {
+  return new Promise(function(resolve) {
+    if (!_vaultState.idb_support) { resolve(false); return; }
+    try {
+      var req = indexedDB.open(VAULT_DB_NAME, VAULT_DB_VERSION);
+      req.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        var stores = ['forecasts','temporal','reputation','registry',
+                      'weights','drv_history','fc_history','scenarios',
+                      'graph','lineage','backups'];
+        stores.forEach(function(s) {
+          if (!db.objectStoreNames.contains(s)) {
+            db.createObjectStore(s, { keyPath:'id' });
+          }
+        });
+      };
+      req.onsuccess = function(e) {
+        _vaultDB = e.target.result;
+        _vaultState.ready = true;
+        resolve(true);
+      };
+      req.onerror = function() { resolve(false); };
+    } catch(e) { resolve(false); }
+  });
+}
+
+// ── IDB READ/WRITE ────────────────────────────────────────────
+function _idbPut(storeName, record) {
+  return new Promise(function(resolve) {
+    if (!_vaultDB) { resolve(false); return; }
+    try {
+      var tx  = _vaultDB.transaction([storeName], 'readwrite');
+      var req = tx.objectStore(storeName).put(record);
+      req.onsuccess = function(){ resolve(true); };
+      req.onerror   = function(){ resolve(false); };
+    } catch(e) { resolve(false); }
+  });
+}
+
+function _idbGetAll(storeName) {
+  return new Promise(function(resolve) {
+    if (!_vaultDB) { resolve([]); return; }
+    try {
+      var tx  = _vaultDB.transaction([storeName], 'readonly');
+      var req = tx.objectStore(storeName).getAll();
+      req.onsuccess = function(){ resolve(req.result||[]); };
+      req.onerror   = function(){ resolve([]); };
+    } catch(e) { resolve([]); }
+  });
+}
+
+function _idbCount(storeName) {
+  return new Promise(function(resolve) {
+    if (!_vaultDB) { resolve(0); return; }
+    try {
+      var tx  = _vaultDB.transaction([storeName], 'readonly');
+      var req = tx.objectStore(storeName).count();
+      req.onsuccess = function(){ resolve(req.result||0); };
+      req.onerror   = function(){ resolve(0); };
+    } catch(e) { resolve(0); }
+  });
+}
+
+// ── VAULT WRITE FUNCTIONS ─────────────────────────────────────
+function vaultWriteForecasts() {
+  if (!_vaultState.ready) return Promise.resolve(0);
+  var promises = FORECAST_ARCHIVE.slice(-500).map(function(f) {
+    return _idbPut('forecasts', _vaultWrap(f, 'buildForecastTable', ['countries','drivers']));
+  });
+  return Promise.all(promises).then(function(){ return promises.length; });
+}
+
+function vaultWriteTemporal() {
+  if (!_vaultState.ready) return Promise.resolve(0);
+  var promises = TEMPORAL_ARCHIVE.slice(-100).map(function(s) {
+    return _idbPut('temporal', _vaultWrap(s, '_archiveSystemState', ['countries','lfe','archive']));
+  });
+  return Promise.all(promises).then(function(){ return promises.length; });
+}
+
+function vaultWriteReputation() {
+  if (!_vaultState.ready) return Promise.resolve(0);
+  var promises = Object.keys(DRIVER_REPUTATION).map(function(k) {
+    var r = DRIVER_REPUTATION[k];
+    var wrapped = _vaultWrap(r, '_updateDriverReputation', ['_validateArchivedForecasts']);
+    wrapped.id  = 'rep-' + k.replace(/\s/g,'-').toLowerCase();
+    return _idbPut('reputation', wrapped);
+  });
+  return Promise.all(promises).then(function(){ return promises.length; });
+}
+
+function vaultWriteRegistry() {
+  if (!_vaultState.ready) return Promise.resolve(0);
+  var promises = _lfe.registry.slice(-500).map(function(e) {
+    return _idbPut('registry', _vaultWrap(e, '_lfeRecord', [e.driver, e.horizon]));
+  });
+  return Promise.all(promises).then(function(){ return promises.length; });
+}
+
+function vaultWriteWeights() {
+  if (!_vaultState.ready) return Promise.resolve(0);
+  var promises = (_lfe.weightHistory||[]).slice(-200).map(function(w) {
+    var wrapped = _vaultWrap(w, '_retrainWeights', [w.driver]);
+    wrapped.id  = 'wh-' + w.ts + '-' + (w.driver||'').replace(/\s/g,'-').slice(0,10);
+    return _idbPut('weights', wrapped);
+  });
+  return Promise.all(promises).then(function(){ return promises.length; });
+}
+
+function vaultWriteScenarios() {
+  if (!_vaultState.ready) return Promise.resolve(0);
+  var scenarios = [];
+  if (typeof _scn !== 'undefined') {
+    if (_scn.savedA) scenarios.push({id:'scn-A',label:'A',ts:Date.now(),data:_scn.savedA});
+    if (_scn.savedB) scenarios.push({id:'scn-B',label:'B',ts:Date.now(),data:_scn.savedB});
+  }
+  var promises = scenarios.map(function(s) {
+    return _idbPut('scenarios', _vaultWrap(s, 'saveScenario', ['_computeScenario']));
+  });
+  return Promise.all(promises).then(function(){ return promises.length; });
+}
+
+function vaultWriteGraph() {
+  if (!_vaultState.ready || typeof _graph==='undefined' || !_graph.nodes.length) return Promise.resolve(0);
+  var snap = {
+    id:         'graph-' + Date.now(),
+    timestamp:  Date.now(),
+    node_count: _graph.nodes.length,
+    edge_count: _graph.edges.length,
+    by_type:    {},
+    top_nodes:  _graph.nodes.slice(0,8).map(function(n){ return {id:n.id,type:n.type,label:n.label,score:n.score}; }),
+  };
+  _graph.nodes.forEach(function(n){ snap.by_type[n.type]=(snap.by_type[n.type]||0)+1; });
+  return _idbPut('graph', _vaultWrap(snap, 'loadIntelligenceGraph', ['countries','CAUSALITY_DATA']))
+    .then(function(){ return 1; });
+}
+
+// ── LINEAGE WRITE ─────────────────────────────────────────────
+function _writeLineageEntry(objectId, objectType, chain) {
+  if (!_vaultState.ready) return Promise.resolve(false);
+  var entry = {
+    id:          'lin-' + objectId,
+    object_id:   objectId,
+    object_type: objectType,
+    chain:       chain,   // [{step, source, ts}]
+    created_at:  Date.now(),
+    checksum:    objectId.slice(0,8),
+    version:     '1.0',
+    audit_status:'active',
+    source:      'lineage_engine',
+    lineage:     [],
+  };
+  return _idbPut('lineage', entry);
+}
+
+// ── BACKUP ────────────────────────────────────────────────────
+function createVaultBackup() {
+  if (!_vaultState.ready) return Promise.resolve(null);
+  var backup = {
+    id:             'backup-' + Date.now(),
+    created_at:     Date.now(),
+    forecast_count: FORECAST_ARCHIVE.length,
+    temporal_count: TEMPORAL_ARCHIVE.length,
+    registry_count: _lfe.registry.length,
+    rep_count:      Object.keys(DRIVER_REPUTATION).length,
+    weight_count:   (_lfe.weightHistory||[]).length,
+    checksum:       _pmChecksum({fc:FORECAST_ARCHIVE.length,ta:TEMPORAL_ARCHIVE.length}),
+    version:        '1.0',
+    audit_status:   'backup',
+    source:         'createVaultBackup',
+    lineage:        [],
+  };
+  _vaultState.backup_count++;
+  return _idbPut('backups', backup).then(function(){ return backup; });
+}
+
+// ── MASTER SYNC ───────────────────────────────────────────────
+function syncVault() {
+  return _initVaultDB().then(function(ok) {
+    if (!ok) { console.warn('Vault: IndexedDB not available'); return { ok:false, written:0 }; }
+    return Promise.all([
+      vaultWriteForecasts(),
+      vaultWriteTemporal(),
+      vaultWriteReputation(),
+      vaultWriteRegistry(),
+      vaultWriteWeights(),
+      vaultWriteScenarios(),
+      vaultWriteGraph(),
+    ]).then(function(counts) {
+      var total = counts.reduce(function(a,v){ return a+(v||0); },0);
+      _vaultState.last_sync = Date.now();
+      _vaultState.sync_count++;
+      // Also sync to localStorage as backup layer
+      if (typeof persistMemory === 'function') persistMemory();
+      return { ok:true, written:total };
+    });
+  });
+}
+
+// ── EXPORT VAULT (JSON download) ──────────────────────────────
+function exportVault() {
+  var vault = {
+    metadata: {
+      exported_at:    Date.now(),
+      schema_version: '1.0',
+      platform:       'MIA GEKDI',
+      counts: {
+        forecasts:  FORECAST_ARCHIVE.length,
+        temporal:   TEMPORAL_ARCHIVE.length,
+        registry:   _lfe.registry.length,
+        reputation: Object.keys(DRIVER_REPUTATION).length,
+        weights:    (_lfe.weightHistory||[]).length,
+      },
+    },
+    forecasts:    FORECAST_ARCHIVE.slice(-500),
+    temporal:     TEMPORAL_ARCHIVE,
+    reputation:   DRIVER_REPUTATION,
+    registry:     _lfe.registry.slice(-500),
+    weights:      (_lfe.weightHistory||[]).slice(-200),
+    drv_history:  _lfe.driverHistory||{},
+    fc_history:   _lfe.forecastHistory||{},
+    scenarios:    window._pm_restored_scenarios||[],
+    graph_history:window._pm_graph_history||[],
+    forecast_conf:_lfe.forecastConf,
+    scenario_conf:_lfe.scenarioConf,
+    driver_conf:  _lfe.driverConf,
+    memory_index: MEMORY_INDEX,
+  };
+  var blob = new Blob([JSON.stringify(vault, null, 0)], {type:'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = 'mia-vault-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  return vault.metadata.counts;
+}
+
+// ── IMPORT VAULT ──────────────────────────────────────────────
+function importVault(fileInput) {
+  var file = fileInput.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var vault = JSON.parse(e.target.result);
+      if (!vault.metadata) { alert('Invalid vault file'); return; }
+      // Restore with deduplication
+      var fc_added=0, ta_added=0, reg_added=0;
+      // Forecasts
+      var fc_ids = {}; FORECAST_ARCHIVE.forEach(function(f){ fc_ids[f.forecast_id]=true; });
+      (vault.forecasts||[]).forEach(function(f){
+        if (!fc_ids[f.forecast_id]) { FORECAST_ARCHIVE.unshift(f); fc_added++; }
+      });
+      // Temporal
+      var ta_ts = {}; TEMPORAL_ARCHIVE.forEach(function(s){ ta_ts[s.timestamp]=true; });
+      (vault.temporal||[]).forEach(function(s){
+        if (!ta_ts[s.timestamp]) { TEMPORAL_ARCHIVE.unshift(s); ta_added++; }
+      });
+      // Registry
+      var reg_ids = {}; _lfe.registry.forEach(function(e){ reg_ids[e.forecast_id]=true; });
+      (vault.registry||[]).forEach(function(e){
+        if (!reg_ids[e.forecast_id]) { _lfe.registry.unshift(e); reg_added++; }
+      });
+      // Reputation (merge histories)
+      Object.keys(vault.reputation||{}).forEach(function(k){
+        if (!DRIVER_REPUTATION[k]) DRIVER_REPUTATION[k] = vault.reputation[k];
+        else {
+          var ex_ts={}; (DRIVER_REPUTATION[k].history||[]).forEach(function(h){ ex_ts[h.ts]=true; });
+          (vault.reputation[k].history||[]).forEach(function(h){
+            if (!ex_ts[h.ts]) DRIVER_REPUTATION[k].history.unshift(h);
+          });
+        }
+      });
+      // Confs
+      if (vault.forecast_conf) Object.keys(vault.forecast_conf).forEach(function(k){ _lfe.forecastConf[k]=vault.forecast_conf[k]; });
+      if (vault.driver_conf)   Object.keys(vault.driver_conf).forEach(function(k){ _lfe.driverConf[k]=vault.driver_conf[k]; });
+      // Persist
+      if (typeof persistMemory==='function') persistMemory();
+      syncVault().then(function(){ buildS23(); });
+      alert('Vault imported: '+fc_added+' forecasts, '+ta_added+' snapshots, '+reg_added+' registry entries');
+    } catch(err) { alert('Import failed: '+err.message); }
+  };
+  reader.readAsText(file);
+}
+
+// ── VAULT COUNTS (async) ──────────────────────────────────────
+function _getVaultCounts() {
+  if (!_vaultState.ready) {
+    return Promise.resolve({forecasts:0,temporal:0,reputation:0,registry:0,weights:0,scenarios:0,graph:0,lineage:0,backups:0});
+  }
+  return Promise.all([
+    _idbCount('forecasts'),_idbCount('temporal'),_idbCount('reputation'),
+    _idbCount('registry'),_idbCount('weights'),_idbCount('scenarios'),
+    _idbCount('graph'),_idbCount('lineage'),_idbCount('backups'),
+  ]).then(function(c){
+    return {forecasts:c[0],temporal:c[1],reputation:c[2],registry:c[3],
+            weights:c[4],scenarios:c[5],graph:c[6],lineage:c[7],backups:c[8]};
+  });
+}
+
+window.syncVault      = syncVault;
+window.exportVault    = exportVault;
+window.importVault    = importVault;
+window.createVaultBackup = createVaultBackup;
+window._vaultState    = _vaultState;
+window._getVaultCounts = _getVaultCounts;
+// END SOVEREIGN VAULT ENGINE
+
 // PERSISTENT INTELLIGENCE MEMORY ENGINE
 // Survives: page refresh, browser restart, platform updates
 // Storage: localStorage keys prefixed 'mia-pm-'
@@ -5095,6 +5568,8 @@ function loadPersistentMemory() {
   }
   var total = Object.values(_pmRestoreStats).reduce(function(a,v){ return a+v; },0);
   console.log('[PM] Restored ' + total + ' records from persistent memory');
+  // Kick off IDB init in background
+  _initVaultDB().then(function(ok){ if(ok) { _vaultState.ready=ok; } });
   return _pmRestoreStats;
 }
 
@@ -8289,6 +8764,342 @@ window.generateMemoryReport = function() {
     h+='<div style="margin-top:10px;padding:8px 10px;background:rgba(99,102,241,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+' &#183; '+kb+' KB total</div></div>';
     el.innerHTML=h;
   },800);
+};
+
+
+// ── S23: SOVEREIGN INTELLIGENCE VAULT UI ────────────────────
+function loadSovereignVault(countries) {
+  _initVaultDB().then(function(ok) {
+    _vaultState.ready = ok;
+    buildS23();
+    _populateLineageSel();
+    initSwipeDots('vault-stores-swipe','vault-stores-dots');
+  });
+}
+
+function buildS23() {
+  _buildVaultHealth();
+  _buildVaultStores();
+  _buildAuditTrail();
+  _buildVaultBackups();
+}
+
+// SYNC ACTIONS
+window.vaultSync = function() {
+  var el=document.getElementById('vault-badge');
+  if(el){ el.textContent='&#8593; SYNCING...'; el.className='s-badge badge-orange'; }
+  syncVault().then(function(res){
+    buildS23();
+    if(el){ el.textContent=res.ok?('&#128274; VAULT LIVE'):('&#128274; LS ONLY'); el.className='s-badge badge-vault'; }
+  });
+};
+window.vaultExport = function() {
+  var counts = exportVault();
+  alert('Vault exported: '+JSON.stringify(counts));
+};
+window.vaultBackup = function() {
+  createVaultBackup().then(function(b){
+    if(b) { _buildVaultBackups(); alert('Backup created: '+b.id); }
+  });
+};
+
+// 01: VAULT HEALTH DASHBOARD
+function _buildVaultHealth() {
+  _getVaultCounts().then(function(vc) {
+    var lsSize   = fr(Object.values(PM_KEYS).reduce(function(a,k){ try{var v=localStorage.getItem(k);return a+(v?v.length*2:0);}catch(e){return a;}},0)/1024);
+    var cards = [
+      {label:'IDB Forecasts',    val:vc.forecasts,            col:'var(--blue)'},
+      {label:'IDB Temporal',     val:vc.temporal,             col:'#a855f7'},
+      {label:'IDB Registry',     val:vc.registry,             col:'var(--green)'},
+      {label:'IDB Reputation',   val:vc.reputation,           col:'var(--orange)'},
+      {label:'IDB Weights',      val:vc.weights,              col:'var(--gold)'},
+      {label:'IDB Backups',      val:vc.backups,              col:'#818cf8'},
+      {label:'LS Fallback',      val:lsSize+' KB',            col:'var(--text3)'},
+      {label:'Sync Count',       val:_vaultState.sync_count,  col:'var(--green)'},
+    ];
+    var h=''; cards.forEach(function(c){
+      h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+      h+='<div class="card-val" style="color:'+c.col+';font-size:17px">'+c.val+'</div></div>';
+    });
+    var g=document.getElementById('vault-health-grid'); if(g) g.innerHTML=h;
+    // Layer status
+    var layers=[
+      {l:'IndexedDB',     ok:_vaultState.ready,   note:_vaultState.ready?'Active (~50MB)':'Not available'},
+      {l:'localStorage',  ok:true,                note:lsSize+' KB used'},
+      {l:'JSON Export',   ok:true,                note:'On-demand download'},
+      {l:'Last Sync',     ok:_vaultState.last_sync!==null, note:_vaultState.last_sync?_timeAgo(_vaultState.last_sync):'Never'},
+    ];
+    var sh=''; layers.forEach(function(l){
+      sh+='<span class="vault-badge" style="background:rgba('+(l.ok?'16,185,129':'249,115,22')+',.1);color:'+(l.ok?'var(--green)':'var(--orange)')+';border-color:rgba('+(l.ok?'16,185,129':'249,115,22')+',.25)">'+l.l+': '+l.note+'</span>';
+    });
+    var ls=document.getElementById('vault-layer-status'); if(ls) ls.innerHTML=sh;
+    // Badge
+    var badge=document.getElementById('vault-badge');
+    if(badge){
+      var hasIDB = _vaultState.ready && vc.forecasts>0;
+      badge.textContent = hasIDB?'&#128274; VAULT LIVE':(_vaultState.ready?'&#128274; VAULT READY':'&#128274; LS ONLY');
+      badge.className   = 's-badge '+(hasIDB?'badge-green':'badge-vault');
+    }
+  });
+}
+
+// 02-07: VAULT STORES
+function _buildVaultStores() {
+  // 02: Forecast Vault
+  _idbGetAll('forecasts').then(function(vaultFc) {
+    var source  = vaultFc.length > 0 ? vaultFc : FORECAST_ARCHIVE.slice(-15).map(function(f){return {payload:f,checksum:'live',created_at:f.timestamp};});
+    var val     = source.filter(function(r){ return (r.payload||r).validated; });
+    var h = '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">'+source.length+' vault entries · '+val.length+' validated</div>';
+    source.slice(0,8).forEach(function(r){
+      var f = r.payload||r;
+      var gri = f.predicted&&f.predicted.gri ? f.predicted.gri : (f.predicted_value||'—');
+      h += '<div class="vault-row">';
+      h += '<span style="font-size:9px;color:var(--gold);font-family:var(--mono);width:60px">'+(f.forecast_id||'').slice(0,10)+'</span>';
+      h += '<span style="font-size:11px">'+flag(f.country||'')+'</span>';
+      h += '<span style="font-size:10px;color:var(--text2);flex:1">'+(f.country_name||f.country||'')+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:'+riskCol(gri)+'">'+gri+'</span>';
+      h += '<span class="vault-badge" style="background:rgba('+(f.validated?'16,185,129':'249,115,22')+',.1);color:'+(f.validated?'var(--green)':'var(--orange)')+';border-color:transparent">'+(f.validated?'VAL':'PEND')+'</span>';
+      h += '</div>';
+    });
+    var el=document.getElementById('vault-fc-body'); if(el) el.innerHTML=h;
+  });
+
+  // 03: Temporal Vault
+  _idbGetAll('temporal').then(function(vaultTa) {
+    var source = vaultTa.length>0 ? vaultTa : TEMPORAL_ARCHIVE.slice(-8).map(function(s){return {payload:s,checksum:'live',created_at:s.timestamp};});
+    var h = '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">'+source.length+' temporal vault entries</div>';
+    source.slice(0,8).forEach(function(r){
+      var s = r.payload||r;
+      h += '<div class="vault-row">';
+      h += '<span style="font-size:9px;color:#a855f7;font-family:var(--mono);width:56px">'+_timeAgo(s.timestamp||r.created_at)+'</span>';
+      h += '<span style="font-size:10px;color:var(--text2);flex:1">'+s.countries_count+' cc · GRI '+s.avg_gri+'</span>';
+      h += '<span style="font-size:9px;color:var(--text3)">arch:'+s.archive_count+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:9px;color:var(--green);margin-left:4px">'+(r.checksum||'live').slice(0,6)+'</span>';
+      h += '</div>';
+    });
+    var el=document.getElementById('vault-temporal-body'); if(el) el.innerHTML=h;
+  });
+
+  // 04: Learning Vault
+  _idbGetAll('registry').then(function(vaultReg) {
+    var source = vaultReg.length>0 ? vaultReg : _lfe.registry.slice(-10).map(function(e){return {payload:e,checksum:'live'};});
+    var wh     = (_lfe.weightHistory||[]).slice(-5);
+    var h = '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">'+source.length+' registry · '+(_lfe.weightHistory||[]).length+' weight changes</div>';
+    source.slice(0,5).forEach(function(r){
+      var e = r.payload||r;
+      var dc = e.direction>0?'var(--green)':e.direction<0?'var(--red)':'var(--text3)';
+      h += '<div class="vault-row">';
+      h += '<span style="font-size:9px;color:var(--text3);width:36px">'+e.horizon+'</span>';
+      h += '<span style="font-size:10px;color:var(--text2);flex:1">'+(e.driver||'').split(' ').slice(0,2).join(' ')+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:'+dc+'">err:'+e.error+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">'+(e.learning_delta||0).toFixed?e.learning_delta.toFixed(3):e.learning_delta+'</span>';
+      h += '</div>';
+    });
+    if (wh.length) {
+      h += '<div style="font-size:9px;color:var(--text3);margin:8px 0 4px">Recent weight updates:</div>';
+      wh.forEach(function(w){
+        var dc=w.delta>0?'var(--green)':w.delta<0?'var(--red)':'var(--text3)';
+        h+='<div class="vault-row"><span style="font-size:10px;color:var(--text2);flex:1">'+w.driver.split(' ').slice(0,2).join(' ')+'</span><span style="font-size:9px;color:var(--text3)">'+w.type+'</span><span style="font-family:var(--mono);font-size:10px;color:'+dc+'">'+(w.delta>0?'+':'')+w.delta.toFixed(3)+'</span></div>';
+      });
+    }
+    var el=document.getElementById('vault-learning-body'); if(el) el.innerHTML=h;
+  });
+
+  // 05: Reputation Vault
+  _idbGetAll('reputation').then(function(vaultRep) {
+    var repK = Object.keys(DRIVER_REPUTATION).sort(function(a,b){ return DRIVER_REPUTATION[b].reputation_score-DRIVER_REPUTATION[a].reputation_score; });
+    var h = '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">'+repK.length+' drivers · '+(vaultRep.length)+' vault entries</div>';
+    repK.slice(0,8).forEach(function(k){
+      var r = DRIVER_REPUTATION[k];
+      var drv = _liveDrv().find(function(d){return d.name===k;});
+      var rc = r.reputation_score>=80?'var(--green)':r.reputation_score>=65?'var(--orange)':'var(--red)';
+      h += '<div class="vault-row">';
+      h += '<span style="width:6px;height:6px;border-radius:50%;background:'+(drv?drv.col:'#64748b')+';flex-shrink:0"></span>';
+      h += '<span style="font-size:11px;color:var(--text2);flex:1">'+k+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:11px;color:'+rc+';font-weight:700">'+r.reputation_score+'</span>';
+      h += '<span style="font-size:9px;color:var(--text3);margin-left:4px">'+((r.history||[]).length)+' pts</span>';
+      h += '</div>';
+    });
+    var el=document.getElementById('vault-rep-body'); if(el) el.innerHTML=h;
+  });
+
+  // 06+07: Scenario + Graph
+  Promise.all([_idbGetAll('scenarios'),_idbGetAll('graph')]).then(function(res){
+    var scenarios=res[0], graphs=res[1];
+    var currScn=[]; if(typeof _scn!=='undefined'){ if(_scn.savedA) currScn.push({label:'A',data:_scn.savedA}); if(_scn.savedB) currScn.push({label:'B',data:_scn.savedB}); }
+    var h='<div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Scenario Vault</div>';
+    if(currScn.length||scenarios.length){
+      (scenarios.length?scenarios.slice(-4).map(function(s){return s.payload||s;}):currScn).forEach(function(s){
+        var sc=s.data&&s.data.s;
+        h+='<div class="vault-row"><span style="font-size:10px;color:#3b82f6;font-weight:600">Scn '+s.label+'</span>';
+        if(sc){h+='<span style="font-size:10px;color:var(--text2);flex:1;margin-left:8px">GRI:'+sc.gri+' EWS:'+sc.ews+' Conf:'+sc.conf+'%</span>';}
+        else{h+='<span style="font-size:10px;color:var(--text3);flex:1;margin-left:8px">No scenario data</span>';}
+        h+='</div>';
+      });
+    } else { h+='<div style="font-size:11px;color:var(--text3);padding:8px">No saved scenarios — use Scenario Engine S18</div>'; }
+    // Graph vault
+    h+='<div style="font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin:12px 0 7px">Graph History Vault</div>';
+    var graphSource = graphs.length>0 ? graphs.map(function(g){return g.payload||g;}) : (window._pm_graph_history||[]);
+    if(graphSource.length){
+      graphSource.slice(-5).reverse().forEach(function(g){
+        h+='<div class="vault-row"><span style="font-size:9px;color:#818cf8;font-family:var(--mono);width:50px">'+_timeAgo(g.timestamp||g.ts)+'</span><span style="font-size:10px;color:var(--text2);flex:1">'+g.node_count+' nodes</span><span style="font-size:9px;color:var(--text3)">'+g.edge_count+' edges</span></div>';
+      });
+    } else { h+='<div style="font-size:11px;color:var(--text3);padding:8px">Navigate to S20 to build graph history</div>'; }
+    var el=document.getElementById('vault-scenario-graph-body'); if(el) el.innerHTML=h;
+  });
+}
+
+// 08: FORECAST AUDIT TRAIL
+function _buildAuditTrail() {
+  var h='';
+  var entries = FORECAST_ARCHIVE.slice(-20).reverse();
+  entries.forEach(function(f) {
+    var str = JSON.stringify(f);
+    var hv  = 0;
+    for(var i=0;i<Math.min(str.length,200);i++){hv=((hv<<5)-hv)+str.charCodeAt(i);hv|=0;}
+    var checksum = (hv>>>0).toString(16).slice(0,6);
+    var st  = !f.validated?'PENDING':f.error<=5?'ACCURATE':'ERROR';
+    var sc  = !f.validated?'risk-low':f.error<=5?'risk-low':'risk-high';
+    h+='<tr>';
+    h+='<td style="font-family:var(--mono);font-size:9px;color:var(--gold)">'+(f.forecast_id||'').slice(0,10)+'</td>';
+    h+='<td><div style="display:flex;align-items:center;gap:4px"><span style="font-size:11px">'+flag(f.country||'')+'</span><span style="font-size:10px">'+((f.country_name||f.country||'').slice(0,7))+'</span></div></td>';
+    h+='<td style="font-family:var(--mono);font-size:9px;color:var(--text3)">'+f.horizon+'</td>';
+    h+='<td style="font-size:9px;color:var(--text3)">'+_timeAgo(f.timestamp)+'</td>';
+    h+='<td><span class="td-badge '+sc+'">'+st+'</span></td>';
+    h+='<td style="font-family:var(--mono);font-size:9px;color:#818cf8">'+checksum+'</td>';
+    h+='</tr>';
+  });
+  var el=document.getElementById('vault-audit-body');
+  if(el) el.innerHTML=h||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:12px;font-size:11px">No forecasts in archive yet</td></tr>';
+}
+
+// 09: LINEAGE ENGINE
+function _populateLineageSel() {
+  var sel=document.getElementById('lineage-sel'); if(!sel) return;
+  if(sel.options.length>1) return;
+  _liveDrv().forEach(function(d){
+    var opt=document.createElement('option'); opt.value=d.name;
+    opt.textContent=d.name+' ('+d.score+')'; sel.appendChild(opt);
+  });
+}
+
+window.buildLineage = function(dName) {
+  var el=document.getElementById('lineage-body'); if(!el) return;
+  if(!dName){ el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--text3)">Select a driver</div>'; return; }
+  var drv   = _liveDrv().find(function(d){return d.name===dName;});
+  var rep   = DRIVER_REPUTATION[dName]||{reputation_score:70,accuracy_7d:72,avg_error:5};
+  var caus  = (typeof CAUSALITY_DATA!=='undefined') ? CAUSALITY_DATA[dName] : null;
+  var col   = drv?drv.col:'var(--text3)';
+  var regE  = _lfe.registry.filter(function(e){return e.driver===dName;});
+  var whe   = (_lfe.weightHistory||[]).filter(function(w){return w.driver===dName;});
+  var arcFc = FORECAST_ARCHIVE.filter(function(f){ return f.drivers_snapshot&&f.drivers_snapshot.some(function(s){return s.name===dName;}); });
+
+  function step(icon, label, val, bg) {
+    return '<div class="lineage-step" style="background:'+bg+';border-left:2px solid '+col+'">'
+      +'<span style="font-size:14px">'+icon+'</span>'
+      +'<div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--text)">'+label+'</div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:1px">'+val+'</div></div></div>';
+  }
+  var h='<div style="font-size:10px;color:var(--text3);margin-bottom:8px">Full intelligence lineage for <span style="color:'+col+'">'+dName+'</span></div>';
+  // Signal → Driver
+  h+=step('&#128161;','Signal',fmt(drv?drv.sigs:0)+' signals processed','var(--bg3)');
+  h+='<div class="lineage-arrow">&#8595;</div>';
+  h+=step('&#9889;','Driver',dName+' · Score '+(drv?drv.score:0)+' · 7d '+(drv&&drv.d7>=0?'+':'')+((drv?drv.d7:0)),'var(--bg3)');
+  h+='<div class="lineage-arrow">&#8595;</div>';
+  // Causality effects
+  if(caus&&caus.effects&&caus.effects.length){
+    h+=step('&#128260;','Cascade',caus.effects.slice(0,3).map(function(e){return e.name+'(+'+e.delta+')'}).join(' · '),'rgba('+(col.includes('orange')?'249,115,22':'100,116,139')+', .08)');
+    h+='<div class="lineage-arrow">&#8595;</div>';
+  }
+  // Forecast
+  var fcCount = arcFc.length;
+  h+=step('&#128337;','Forecast Archive',fcCount+' forecasts attributed · Conf '+rep.accuracy_7d+'%','var(--bg3)');
+  h+='<div class="lineage-arrow">&#8595;</div>';
+  // Validation
+  var valFc = arcFc.filter(function(f){return f.validated;});
+  h+=step('&#9989;','Validation',valFc.length+' validated · Avg error '+rep.avg_error+' pts · Rep score '+rep.reputation_score,'var(--bg3)');
+  h+='<div class="lineage-arrow">&#8595;</div>';
+  // Learning
+  h+=step('&#129504;','Learning',regE.length+' registry entries · '+whe.length+' weight updates','rgba(16,185,129,.06)');
+  h+='<div class="lineage-arrow">&#8595;</div>';
+  // Decision
+  var sdcRisk = (_sdc&&_sdc.risks) ? _sdc.risks.find(function(r){return r.name===dName;}) : null;
+  h+=step('&#128308;','Decision Impact',sdcRisk?('Priority: '+sdcRisk.priority+' · '+sdcRisk.prob+'% prob'):'Driver influences decision queue','var(--bg3)');
+  // Write lineage to vault
+  _writeLineageEntry(dName.replace(/\s/g,'-'), 'driver',
+    ['signal','driver','cascade','forecast','validation','learning','decision']);
+  el.innerHTML=h;
+};
+
+// 10: BACKUP CENTER
+function _buildVaultBackups() {
+  _idbGetAll('backups').then(function(backups) {
+    var lmBackup = window._pm_restored_scenarios; // using as reference
+    var el=document.getElementById('vault-backup-body'); if(!el) return;
+    if(!backups.length){
+      el.innerHTML='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No backups yet. Press &#128190; Backup to create a recovery point.</div>';
+      return;
+    }
+    var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">'+backups.length+' backups in vault</div>';
+    backups.slice().reverse().slice(0,6).forEach(function(b){
+      var bp = b.payload||b;
+      var sc = bp.checksum ? bp.checksum.slice(0,6) : '—';
+      h+='<div class="vault-row">';
+      h+='<span style="font-family:var(--mono);font-size:9px;color:#818cf8;width:60px">'+_timeAgo(bp.created_at||b.created_at)+'</span>';
+      h+='<span style="font-size:10px;color:var(--text2);flex:1">FC:'+bp.forecast_count+' TA:'+bp.temporal_count+' Reg:'+bp.registry_count+'</span>';
+      h+='<span class="vault-badge" style="background:rgba(16,185,129,.1);color:var(--green);border-color:transparent">'+sc+'</span>';
+      h+='</div>';
+    });
+    el.innerHTML=h;
+  });
+}
+
+// 11: EXECUTIVE VAULT REPORT
+window.generateVaultReport = function() {
+  var el=document.getElementById('vault-report-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating Vault Report...</div></div>';
+  syncVault().then(function(syncRes){
+    _getVaultCounts().then(function(vc){
+      var archSt  = _archiveStats();
+      var repN    = Object.keys(DRIVER_REPUTATION).length;
+      var lsKB    = fr(Object.values(PM_KEYS).reduce(function(a,k){ try{var v=localStorage.getItem(k); return a+(v?v.length*2:0);}catch(e){return a;}},0)/1024);
+      var now     = new Date().toUTCString().replace('GMT','UTC');
+      var integ   = 100;
+      if(!_vaultState.ready) integ-=20;
+      if(FORECAST_ARCHIVE.length===0) integ-=15;
+      if(_lfe.registry.length===0) integ-=10;
+      var secs=[
+        {t:'ARCHIVE HEALTH',c:'var(--green)',
+         v:'IndexedDB: '+(_vaultState.ready?'Active':'Unavailable')+'. IDB forecasts: '+vc.forecasts+'. localStorage: '+lsKB+' KB. Integrity: '+integ+'%. Sync count: '+_vaultState.sync_count+'.'},
+        {t:'FORECAST ARCHIVE STATUS',c:'var(--gold)',
+         v:'Total: '+FORECAST_ARCHIVE.length+'. Validated: '+archSt.validated+' ('+archSt.accuracy+'%). Avg error: '+archSt.avgErr+'. Vault entries: '+vc.forecasts+'.'},
+        {t:'LEARNING STATUS',c:'#a855f7',
+         v:'Registry: '+_lfe.registry.length+' entries. Weight changes: '+(_lfe.weightHistory||[]).length+'. Total update cycles: '+_lfe.totalUpdates+'. Vault registry: '+vc.registry+'.'},
+        {t:'REPUTATION EVOLUTION',c:'var(--orange)',
+         v:'Drivers tracked: '+repN+'. Total history points: '+Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+(v.history||[]).length;},0)+'. Vault reputation entries: '+vc.reputation+'.'},
+        {t:'SCENARIO ARCHIVE STATUS',c:'var(--blue)',
+         v:'Scenarios in vault: '+vc.scenarios+'. Graph snapshots: '+vc.graph+'. Lineage entries: '+vc.lineage+'.'},
+        {t:'GRAPH ARCHIVE STATUS',c:'#818cf8',
+         v:'Graph vault entries: '+vc.graph+'. Temporal vault: '+vc.temporal+' snapshots. Total vault records: '+fmt(Object.values(vc).reduce(function(a,v){return a+v;},0))+'.'},
+        {t:'INTEGRITY STATUS',c:integ>=90?'var(--green)':'var(--orange)',
+         v:'Score: '+integ+'%. IDB available: '+_vaultState.ready+'. Backup count: '+vc.backups+'. Sync operations: '+_vaultState.sync_count+'.'},
+        {t:'RECOVERY STATUS',c:'var(--blue)',
+         v:'localStorage restore: active. IndexedDB restore: '+((_vaultState.ready)?'active':'unavailable')+'. JSON export: available. Import: available.'},
+        {t:'STRATEGIC RECOMMENDATIONS',c:'var(--green)',
+         v:'1. Export vault weekly for off-device backup. 2. Run Sync after major analysis sessions. 3. Create backup before platform updates. 4. IDB storage: ~50MB available.'},
+      ];
+      var h='<div style="background:rgba(16,185,129,.04);border:0.5px solid rgba(16,185,129,.2);border-radius:10px;padding:16px">';
+      h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:var(--green);letter-spacing:.2em">SOVEREIGN VAULT REPORT</div>';
+      h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; IDB: '+(vc.forecasts+vc.temporal+vc.registry)+' records &#183; LS: '+lsKB+' KB</div></div>';
+      h+='<div style="height:0.5px;background:rgba(16,185,129,.2);margin-bottom:14px"></div>';
+      secs.forEach(function(s){
+        h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+        h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+      });
+      h+='<div style="margin-top:10px;padding:8px 10px;background:rgba(16,185,129,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</div></div>';
+      el.innerHTML=h;
+    });
+  });
 };
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
