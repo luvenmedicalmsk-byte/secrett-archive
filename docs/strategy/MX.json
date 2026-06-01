@@ -1,103 +1,114 @@
 {
   "country": "MX",
   "country_name": "Мексика",
-  "date": "2026-05-31",
-  "generated_at": "2026-05-31T20:58:12.032688+00:00",
-  "strategy_score": 50,
+  "date": "2026-06-01",
+  "generated_at": "2026-06-01T03:39:11.803550+00:00",
+  "strategy_score": 66,
   "strategy_confidence": 50,
-  "urgency_level": "critical",
-  "urgency_level_ru": "Критическая",
-  "urgency_color": "#ef4444",
-  "preparedness_level": "emergency",
-  "preparedness_level_ru": "Чрезвычайная готовность",
-  "monitoring_priority": 4,
-  "monitoring_ru": "Ежечасно",
+  "urgency_level": "maximum",
+  "urgency_level_ru": "Максимальная",
+  "urgency_color": "#dc2626",
+  "preparedness_level": "maximum",
+  "preparedness_level_ru": "Максимальная готовность",
+  "monitoring_priority": 5,
+  "monitoring_ru": "Непрерывно",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "CA-01",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
-      "expiry": "state transition",
-      "confidence": 61,
+      "action": "КАСКАДНЫЙ КРИЗИС — МАКСИМАЛЬНАЯ ТРЕВОГА",
+      "detail": "Системный каскадный сбой. Все механизмы реагирования активированы немедленно",
+      "trigger": "cascade state",
+      "expiry": "cascade resolution",
+      "confidence": 47,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
-      "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
+      "id": "CA-02",
+      "priority": 1,
+      "action": "Полная активация антикризисного центра",
+      "detail": "Непрерывная работа антикризисного центра, координация всех задействованных сторон",
       "trigger": "always",
-      "expiry": "deescalation confirmed",
-      "confidence": 61,
+      "expiry": "cascade resolved",
+      "confidence": 47,
+      "domain_context": "climate",
+      "horizon_relevant": "30d"
+    },
+    {
+      "id": "CA-03",
+      "priority": 1,
+      "action": "Изоляция критических систем",
+      "detail": "Предотвратить дальнейшее распространение каскада на смежные домены",
+      "trigger": "systemic_combos > 2",
+      "expiry": "cascade isolated",
+      "confidence": 47,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 2,
-  "state": "critical",
-  "dominant_scenario": "best",
-  "scenario_score": 30,
-  "instability": 23,
+  "action_count": 3,
+  "state": "cascade",
+  "dominant_scenario": "worst",
+  "scenario_score": 52,
+  "instability": 68,
   "calibration_grade": "unknown",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 71 (+8pt)",
+      "condition": "risk_score ≥ 86 (+8pt)",
       "leads_to": "cascade",
-      "probability": 18
+      "probability": 31
     },
     {
       "condition": "delta ≥ 6 за 24ч",
       "leads_to": "cascade",
-      "probability": 12
+      "probability": 34
     },
     {
       "condition": "Worst-case 30d ≥ 95",
       "leads_to": "cascade",
-      "probability": 22
+      "probability": 41
     },
     {
       "condition": "Новый критический драйвер в climate",
       "leads_to": "cascade",
-      "probability": 18
+      "probability": 24
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 79,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     },
     {
       "horizon": "90 дней",
-      "score": 70,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     },
     {
       "horizon": "180 дней",
-      "score": 62,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     },
     {
       "horizon": "365 дней",
-      "score": 55,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     }
   ],
   "probabilities": {
-    "worst": 22,
-    "stress": 23,
-    "base": 23,
-    "best": 32
+    "worst": 41,
+    "stress": 30,
+    "base": 6,
+    "best": 23
   }
 }
