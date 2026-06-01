@@ -361,7 +361,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s17')" data-s="s17">&#128200;<span class="sn-tip">Validation</span></button>
     <button class="sn-btn" onclick="goSection('s18')" data-s="s18">&#127981;<span class="sn-tip">Scenarios</span></button>
     <button class="sn-btn" onclick="goSection('s19')" data-s="s19">&#127344;<span class="sn-tip">Meta Intel</span></button>
-    <button class="sn-btn" onclick="goSection('s20')" data-s="s20">&#127760;<span class="sn-tip">Intel Graph</span></button>
+    <button class="sn-btn" onclick="goSection('s20'); setTimeout(function(){ if(_graph.nodes.length) _renderGraph(); },50);" data-s="s20">&#127760;<span class="sn-tip">Intel Graph</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -2412,7 +2412,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadDecisionCenter(cc); }; loadStrategicDecisionCenter(cc); }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -2986,8 +2986,6 @@ var INFLUENCE_SCORES = [
 ];
 
 function loadCausalityEngine() {
-    loadStrategicDecisionCenter(cc);
-    loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc);
   populateSelects();
   buildDepCanvas();
   buildCascades();
@@ -6117,12 +6115,14 @@ var GNODE_COLORS = {
 function loadIntelligenceGraph(countries) {
   _graph.countries = countries;
   _buildGraphNodes(countries);
-  _renderGraph();
   _buildGraphAnalytics(countries);
   _buildSignalTrace(countries);
   _buildOppGraph(countries);
   _populateGraphSelects(countries);
   initSwipeDots('graph-trace-swipe','graph-trace-dots');
+  // Defer canvas render: section may not be visible, offsetWidth = 0
+  setTimeout(function(){ _renderGraph(); }, 300);
+  setTimeout(function(){ _renderGraph(); }, 1200); // second pass
 }
 
 // ── BUILD GRAPH NODES FROM ALL PLATFORM DATA ──────────────────
@@ -6253,7 +6253,7 @@ function _renderGraph(selId) {
   var canvas = document.getElementById('intel-graph');
   if (!canvas || !_graph.nodes.length) return;
   var dpr = window.devicePixelRatio || 1;
-  var W   = canvas.offsetWidth || 340;
+  var W   = (canvas.offsetWidth > 10 ? canvas.offsetWidth : (document.body.clientWidth - 52 - 32)) || 340;
   var H   = 360;
   canvas.width  = W * dpr;
   canvas.height = H * dpr;
@@ -6532,9 +6532,11 @@ function _buildSignalTrace(countries) {
 
 // ── 06: OPPORTUNITY GRAPH ────────────────────────────────────────
 function _buildOppGraph(countries) {
-  var opps = (typeof _sdc!=='undefined'&&_sdc.opps) ? _sdc.opps.slice(0,6) : [];
+  var opps = (typeof _sdc!=='undefined'&&_sdc.opps&&_sdc.opps.length)
+    ? _sdc.opps.slice(0,6)
+    : (typeof _computeOpps==='function' ? _computeOpps(_graph.countries).slice(0,6) : []);
   if (!opps.length) {
-    var el=document.getElementById('opp-graph-out'); if(el) el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--text3)">Loading opportunities...</div>';
+    var el=document.getElementById('opp-graph-out'); if(el) el.innerHTML='<div style="padding:12px;font-size:11px;color:var(--text3)">No opportunities yet — reload page</div>';
     return;
   }
   var h = '';
