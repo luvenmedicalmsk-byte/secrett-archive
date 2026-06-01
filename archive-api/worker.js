@@ -7768,7 +7768,58 @@ async function handleGRDF(request, env) {
       '/api/grdf/mobile/status-bar','/api/grdf/mobile/filters',
       '/api/grdf/mobile/navigation','/api/grdf/mobile/drawer',
       '/api/grdf/mobile/country-panel','/api/grdf/mobile/tiers',
+
+  if (seg[0] === 'country' && seg[1]) {
+    const cc = seg[1].toUpperCase();
+    const ciseg = seg[2] || 'overview';
+    const CCI = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
+    const CI_FREE = new Set(['overview']);
+    const CI_SIG  = new Set(['drivers','signals','warnings','escalation','matrix']);
+    const CI_STR  = new Set(['scenarios','historical']);
+    const CI_FILES = {
+      'overview':  'docs/country_intel/ci_overview.json',
+      'drivers':   'docs/country_intel/ci_drivers.json',
+      'forecasts': 'docs/country_intel/ci_forecasts.json',
+      'signals':   'docs/country_intel/ci_signals.json',
+      'warnings':  'docs/country_intel/ci_warnings.json',
+      'escalation':'docs/country_intel/ci_escalation.json',
+      'matrix':    'docs/country_intel/ci_risk_matrix.json',
+      'commercial':'docs/country_intel/ci_commercial.json',
+      'mobile':    'docs/country_intel/ci_mobile.json',
+      'conversion':'docs/country_intel/ci_conversion.json',
+    };
+    if (!CI_FILES[ciseg]) return new Response(JSON.stringify({error:'Unknown country route: '+ciseg,cc,available:Object.keys(CI_FILES)}),{status:404,headers:CCI});
+    if (CI_SIG.has(ciseg) && access==='teaser') return new Response(JSON.stringify({error:ciseg+' requires SIGNAL PRO',tier:'SIGNAL_PRO',cta:'4 900 ₽/мес · $55 · €50'}),{status:403,headers:CCI});
+    if (CI_STR.has(ciseg) && !['strategic_pro','elite'].includes(tier)) return new Response(JSON.stringify({error:ciseg+' requires STRATEGIC PRO',tier:'STRATEGIC_PRO',cta:'29 900 ₽/мес · $330 · €310'}),{status:403,headers:CCI});
+    const ck = `grdf:ci:${cc}:${ciseg}:${tier}`;
+    if (env.EVENTS_KV){try{const c=await env.EVENTS_KV.get(ck,{type:'json'});if(c)return new Response(JSON.stringify({...c,_cache:'HIT'}),{headers:CCI});}catch(_){}}
+    try {
+      const d = await _grdfFetch(REPO, CI_FILES[ciseg], 300);
+      if (!d) return new Response(JSON.stringify({error:'Country intel not built yet'}),{status:404,headers:CCI});
+      let r;
+      if (ciseg==='overview') {
+        const ov = (d.overviews||[]).find(o=>o.country===cc) || (d.top10_by_gri||[]).find(o=>o.country===cc);
+        if (!ov) return new Response(JSON.stringify({error:'Country '+cc+' not found'}),{status:404,headers:CCI});
+        r = access==='teaser' ? {country:ov.country,gri:ov.gri,cri:ov.cri,ews:ov.ews,status:ov.status,top_risks:ov.top_risks,tier} : {...ov,tier};
+      } else if (ciseg==='forecasts') {
+        const fc = (d.forecasts||[]).find(f=>f.country===cc);
+        if (!fc) return new Response(JSON.stringify({error:'No forecast for '+cc}),{status:404,headers:CCI});
+        const hz = fc.horizons||{};
+        if (access==='teaser') r={country:cc,current:fc.current,horizons:{'24h':hz['24h']},tier};
+        else if (tier==='signal_pro') r={country:cc,current:fc.current,horizons:{'24h':hz['24h'],'7d':hz['7d'],'30d':hz['30d']},tier};
+        else r={...fc,tier};
+      } else { r={...d,_cc:cc,tier}; }
+      if (env.EVENTS_KV){try{await env.EVENTS_KV.put(ck,JSON.stringify(r),{expirationTtl:300});}catch(_){}}
+      return new Response(JSON.stringify(r),{headers:CCI});
+    } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CCI});}
+  }
+
       '/api/grdf/mobile/accuracy','/api/grdf/mobile/conversion',
+      '/api/grdf/country/:cc/overview','/api/grdf/country/:cc/drivers',
+      '/api/grdf/country/:cc/forecasts','/api/grdf/country/:cc/signals',
+      '/api/grdf/country/:cc/warnings','/api/grdf/country/:cc/escalation',
+      '/api/grdf/country/:cc/matrix','/api/grdf/country/:cc/mobile',
+      '/api/grdf/country/:cc/commercial','/api/grdf/country/:cc/conversion',
     ]
   }),{status:404,headers:CORS});
 }
