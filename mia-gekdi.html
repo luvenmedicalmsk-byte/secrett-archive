@@ -1729,12 +1729,13 @@ function buildForecastTable(cc){
   sorted.forEach(function(c){
     var gri=fr(c.risk_score),ews=fr(c.ews_score||gri*.95),cri=fr(gri*.85);
     var d=parseFloat(c.delta||0),f24=fr(gri+d*.15),f7=fr(gri+d),f30=fr(gri+d*2.5),f90=fr(gri+d*4);
-    // Archive each horizon forecast (real, not reconstructed)
+    // Archive multidimensional forecasts (real, not reconstructed)
     var conf=Math.max(60,fr(85-Math.abs(d)*1.5));
-    _archiveForecast(c.country,c.country_name||c.country,'h24', f24, conf, drvSnap);
-    _archiveForecast(c.country,c.country_name||c.country,'h7d', f7,  Math.max(55,conf-4), drvSnap);
-    _archiveForecast(c.country,c.country_name||c.country,'h30d',f30, Math.max(50,conf-8), drvSnap);
-    _archiveForecast(c.country,c.country_name||c.country,'h90d',f90, Math.max(45,conf-12),drvSnap);
+    function _mkPred(g){ return {gri:g, ews:fr(g*.95), cri:fr(g*.87), resilience:fr(100-g*.7)}; }
+    _archiveForecast(c.country,c.country_name||c.country,'h24', _mkPred(f24), conf,          drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h7d', _mkPred(f7),  Math.max(55,conf-4), drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h30d',_mkPred(f30), Math.max(50,conf-8), drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h90d',_mkPred(f90), Math.max(45,conf-12),drvSnap);
     var ds=d>0?'+':''; var dc=d>0?'#ef4444':d<0?'#10b981':'var(--text3)';
     html+='<tr><td><div class="td-country"><span class="td-flag">'+flag(c.country)+'</span>'+esc(c.country_name||c.country)+'</div></td>';
     html+='<td style="color:'+riskCol(gri)+'">'+gri+'</td><td style="color:'+riskCol(ews)+'">'+ews+'</td><td>'+cri+'</td>';
@@ -2185,6 +2186,8 @@ var META_SCORES = {climate:71, eco:74, social:79, geo:76, tech:52};
 var META_COLS   = {climate:'#10b981', eco:'#3b82f6', social:'#ef4444', geo:'#f97316', tech:'#a855f7'};
 
 function loadRiskDrivers(countries) {
+  // Init driver reputation from live GLOBAL_DRIVERS
+  if (typeof _initDriverReputation === 'function') _initDriverReputation();
   _drvCountries = countries;
   buildArchFlow();
   buildTopDrivers();
@@ -3965,19 +3968,23 @@ function _sdcBuildExecDash(countries, risks, opps) {
 // Every generated forecast is stored with full metadata.
 // Validation: compare stored forecast vs observed value at maturity.
 // ══════════════════════════════════════════════════════════════
-var FORECAST_ARCHIVE = [];  // rolling 2000 entries
-var _archiveSeq = 0;        // monotonic forecast ID
+var FORECAST_ARCHIVE = [];   // rolling 2000 multidimensional entries
+var _archiveSeq = 0;
 
-// ── HORIZON millisecond durations ────────────────────────────
+// ── DRIVER REPUTATION SYSTEM ─────────────────────────────────
+// Per-driver historical accuracy across horizons and dimensions
+var DRIVER_REPUTATION = {};
+
 var _HZ_MS = { h24:86400000, h7d:604800000, h30d:2592000000, h90d:7776000000 };
 
-// ── SAVE FORECAST ─────────────────────────────────────────────
-// Called every time a forecast is generated for a country/horizon.
-// drivers_snapshot: array of {name, score, weight} at generation time.
+// ── BLOCK 01: MULTIDIMENSIONAL _archiveForecast ───────────────
+// predicted = { gri, ews, cri, resilience }
 function _archiveForecast(country, countryName, horizon, predicted,
                            confidence, driversSnapshot) {
-  var id = 'F' + String(++_archiveSeq).padStart(6,'0')
-             + '-' + country + '-' + horizon;
+  var predObj = typeof predicted === 'object' && predicted !== null
+    ? predicted
+    : { gri: predicted, ews: fr(predicted * 0.95), cri: fr(predicted * 0.87), resilience: fr(100 - predicted * 0.6) };
+  var id = 'F' + String(++_archiveSeq).padStart(6,'0') + '-' + country + '-' + horizon;
   var entry = {
     forecast_id:      id,
     country:          country,
@@ -3985,12 +3992,15 @@ function _archiveForecast(country, countryName, horizon, predicted,
     horizon:          horizon,
     timestamp:        Date.now(),
     matures_at:       Date.now() + (_HZ_MS[horizon] || _HZ_MS.h7d),
-    predicted_value:  predicted,
+    predicted:        predObj,         // { gri, ews, cri, resilience }
+    predicted_value:  predObj.gri,     // backward compat
+    actual:           null,            // { gri, ews, cri, resilience }
+    actual_value:     null,
+    errors:           null,            // { gri_error, ews_error, cri_error, resilience_error, overall }
+    error:            null,
     confidence:       confidence,
     drivers_snapshot: driversSnapshot || [],
     validated:        false,
-    actual_value:     null,
-    error:            null,
     validated_at:     null,
   };
   FORECAST_ARCHIVE.push(entry);
@@ -3998,84 +4008,184 @@ function _archiveForecast(country, countryName, horizon, predicted,
   return entry;
 }
 
-// ── VALIDATE ARCHIVED FORECASTS ──────────────────────────────
-// For each archived forecast that has matured:
-//   compare predicted_value vs current observed risk_score
-//   compute error → feed into LFE
+// ── BLOCK 02: MULTIDIMENSIONAL VALIDATOR ──────────────────────
+// Derives actual EWS/CRI/Resilience from country live state
+function _getActualDimensions(c) {
+  var gri  = fr(c.risk_score);
+  var ews  = c.ews_score  ? fr(c.ews_score)  : fr(gri * 0.95);
+  var cri  = c.cri        ? fr(c.cri)         : fr(gri * 0.87);
+  // Resilience = inverse of average domain risk
+  var ds   = c.domain_scores || {};
+  var vals = Object.values(ds).map(parseFloat).filter(function(v){ return !isNaN(v); });
+  var resilience = vals.length ? fr(100 - vals.reduce(function(a,v){ return a+v;},0)/vals.length) : fr(100 - gri * 0.7);
+  return { gri:gri, ews:ews, cri:cri, resilience:resilience };
+}
+
+function _validateForecastDimensions(f, actual) {
+  var p = f.predicted;
+  return {
+    gri_error:        Math.abs((p.gri  || 0) - actual.gri),
+    ews_error:        Math.abs((p.ews  || 0) - actual.ews),
+    cri_error:        Math.abs((p.cri  || 0) - actual.cri),
+    resilience_error: Math.abs((p.resilience || 0) - actual.resilience),
+    overall:          fr((
+      Math.abs((p.gri||0) - actual.gri) * 0.40 +
+      Math.abs((p.ews||0) - actual.ews) * 0.30 +
+      Math.abs((p.cri||0) - actual.cri) * 0.20 +
+      Math.abs((p.resilience||0) - actual.resilience) * 0.10
+    )),
+  };
+}
+
 function _validateArchivedForecasts(countries) {
-  var now      = Date.now();
-  var toValidate = FORECAST_ARCHIVE.filter(function(f) {
-    return !f.validated && f.matures_at <= now;
-  });
+  var now        = Date.now();
+  var toValidate = FORECAST_ARCHIVE.filter(function(f){ return !f.validated && f.matures_at <= now; });
   if (!toValidate.length) return 0;
-  // Build country lookup
   var ccLookup = {};
-  countries.forEach(function(c) { ccLookup[c.country] = c; });
-  var validated = 0;
+  countries.forEach(function(c){ ccLookup[c.country] = c; });
+  var validated  = 0;
+  var newEntries = [];
   toValidate.forEach(function(f) {
     var c = ccLookup[f.country];
     if (!c) return;
-    // Actual value = current observed GRI at maturity time
-    var actual = fr(c.risk_score);
-    f.actual_value  = actual;
-    f.error         = Math.abs(f.predicted_value - actual);
-    f.validated     = true;
-    f.validated_at  = now;
-    // Identify the primary driver from snapshot
+    var actual       = _getActualDimensions(c);
+    f.actual         = actual;
+    f.actual_value   = actual.gri;
+    f.errors         = _validateForecastDimensions(f, actual);
+    f.error          = f.errors.overall;
+    f.validated      = true;
+    f.validated_at   = now;
+    // Update Driver Reputation
     var primaryDrv = f.drivers_snapshot.length
-      ? f.drivers_snapshot.sort(function(a,b){ return b.weight-a.weight; })[0].name
+      ? f.drivers_snapshot.sort(function(a,b){ return b.weight - a.weight; })[0].name
       : 'Unknown';
-    // Feed into LFE — real validated outcome
+    _updateDriverReputation(primaryDrv, f.horizon, f.errors, f.confidence);
+    // Feed LFE with multidimensional error
     if (typeof _lfeRecord === 'function') {
-      _lfeRecord(f.forecast_id, primaryDrv, f.horizon,
-                 f.predicted_value, actual, f.confidence);
+      _lfeRecord(f.forecast_id, primaryDrv, f.horizon, f.predicted_value, actual.gri, f.confidence);
     }
+    // Prepare retraining entry with reputation factor
+    var rep        = DRIVER_REPUTATION[primaryDrv] || { reputation_score: 70 };
+    var repFactor  = rep.reputation_score / 100;
+    var ld         = typeof _lfeWeightDelta === 'function'
+      ? _lfeWeightDelta(f.errors.overall, f.confidence, f.horizon)
+      : { delta: f.errors.overall <= 5 ? 0.05 : -0.05, errorNorm: f.errors.overall/20, direction: f.errors.overall<=5?1:-1 };
+    newEntries.push({
+      driver:         primaryDrv,
+      horizon:        f.horizon,
+      error:          f.errors.overall,
+      error_norm:     ld.errorNorm,
+      direction:      ld.direction,
+      learning_delta: ld.delta * repFactor,    // reputation-weighted delta
+      confidence:     f.confidence,
+      success:        f.errors.overall <= 5,
+      reputation_factor: repFactor,
+    });
     validated++;
   });
-  // Run retraining if we have new validated entries
-  if (validated > 0 && typeof _retrainWeights === 'function') {
-    var newEntries = FORECAST_ARCHIVE
-      .filter(function(f){ return f.validated && f.validated_at === now; })
-      .map(function(f){
-        return {
-          driver:        f.drivers_snapshot.length
-            ? f.drivers_snapshot.sort(function(a,b){return b.weight-a.weight;})[0].name
-            : 'Unknown',
-          horizon:       f.horizon,
-          error:         f.error,
-          error_norm:    Math.min(1, f.error / 20),
-          direction:     f.error <= 5 ? 1 : f.error <= 10 ? 0 : -1,
-          learning_delta:_lfeWeightDelta
-            ? _lfeWeightDelta(f.error, f.confidence, f.horizon).delta
-            : (f.error <= 5 ? 0.05 : -0.05),
-          confidence:    f.confidence,
-          success:       f.error <= 5,
-        };
-      });
+  if (newEntries.length > 0 && typeof _retrainWeights === 'function') {
     _retrainWeights(newEntries);
   }
   return validated;
 }
 
-// ── ARCHIVE STATS ────────────────────────────────────────────
-function _archiveStats() {
-  var total     = FORECAST_ARCHIVE.length;
-  var pending   = FORECAST_ARCHIVE.filter(function(f){ return !f.validated; }).length;
-  var validated = total - pending;
-  var accurate  = FORECAST_ARCHIVE.filter(function(f){ return f.validated && f.error<=5; }).length;
-  var avgErr    = validated > 0
-    ? fr(FORECAST_ARCHIVE.filter(function(f){ return f.validated; })
-        .reduce(function(a,f){ return a+f.error; },0) / validated)
-    : 0;
-  return { total:total, pending:pending, validated:validated,
-           accurate:accurate, avgErr:avgErr,
-           accuracy: validated>0 ? fr(accurate/validated*100) : 0 };
+// ── BLOCK 03: DRIVER REPUTATION SYSTEM ───────────────────────
+function _updateDriverReputation(driverName, horizon, errors, confidence) {
+  if (!DRIVER_REPUTATION[driverName]) {
+    DRIVER_REPUTATION[driverName] = {
+      driver:        driverName,
+      accuracy_24h:  75, accuracy_7d: 72, accuracy_30d: 69, accuracy_90d: 65,
+      confidence:    70, success_rate: 0.70, avg_error: 5,
+      reputation_score: 70, last_update: null,
+      history: [],
+    };
+  }
+  var rep = DRIVER_REPUTATION[driverName];
+  var acc = Math.max(0, Math.min(100, fr(100 - errors.overall * 2)));
+  // EMA update per horizon
+  var hKey = 'accuracy_' + horizon.replace('h','');
+  if (rep[hKey] !== undefined) rep[hKey] = fr(rep[hKey] * 0.75 + acc * 0.25);
+  // Overall success rate EMA
+  var success = errors.overall <= 5;
+  rep.success_rate = parseFloat((rep.success_rate * 0.85 + (success ? 1 : 0) * 0.15).toFixed(3));
+  // Avg error EMA
+  rep.avg_error = parseFloat((rep.avg_error * 0.8 + errors.overall * 0.2).toFixed(2));
+  // Reputation score = weighted combination
+  rep.reputation_score = Math.max(10, Math.min(100, fr(
+    rep.accuracy_24h * 0.25 +
+    rep.accuracy_7d  * 0.30 +
+    rep.accuracy_30d * 0.25 +
+    rep.accuracy_90d * 0.20
+  )));
+  rep.confidence   = Math.max(40, Math.min(98, fr(confidence * 0.3 + rep.reputation_score * 0.7)));
+  rep.last_update  = new Date();
+  // History entry (rolling 50)
+  rep.history.push({ ts: Date.now(), reputation_score: rep.reputation_score,
+    avg_error: rep.avg_error, success_rate: fr(rep.success_rate * 100),
+    confidence: rep.confidence });
+  if (rep.history.length > 50) rep.history.shift();
 }
 
-window.FORECAST_ARCHIVE         = FORECAST_ARCHIVE;
+// Initialize reputation for all known drivers on load
+function _initDriverReputation() {
+  var drvs = typeof GLOBAL_DRIVERS !== 'undefined' ? GLOBAL_DRIVERS : [];
+  drvs.forEach(function(d) {
+    if (!DRIVER_REPUTATION[d.name]) {
+      _updateDriverReputation(d.name, 'h7d',
+        { gri_error:5, ews_error:4, cri_error:4, resilience_error:3, overall:4 }, 75);
+    }
+  });
+}
+
+// ── ARCHIVE STATS (multidimensional) ─────────────────────────
+function _archiveStats() {
+  var total     = FORECAST_ARCHIVE.length;
+  var validated = FORECAST_ARCHIVE.filter(function(f){ return f.validated; });
+  var pending   = total - validated.length;
+  var accurate  = validated.filter(function(f){ return f.error <= 5; }).length;
+  var avgErr    = validated.length
+    ? fr(validated.reduce(function(a,f){ return a+f.error; },0) / validated.length)
+    : 0;
+  // Per-horizon accuracy
+  var hzAcc = {};
+  ['h24','h7d','h30d','h90d'].forEach(function(h) {
+    var hv = validated.filter(function(f){ return f.horizon === h; });
+    hzAcc[h] = hv.length ? fr(hv.filter(function(f){ return f.error<=5; }).length/hv.length*100) : 0;
+  });
+  var bestHz  = Object.keys(hzAcc).sort(function(a,b){ return hzAcc[b]-hzAcc[a]; })[0] || 'h24';
+  var worstHz = Object.keys(hzAcc).sort(function(a,b){ return hzAcc[a]-hzAcc[b]; })[0] || 'h90d';
+  // Per-country accuracy
+  var ccAcc   = {};
+  validated.forEach(function(f){
+    if (!ccAcc[f.country]) ccAcc[f.country] = { n:0, acc:0 };
+    ccAcc[f.country].n++;
+    ccAcc[f.country].acc += f.error <= 5 ? 1 : 0;
+  });
+  var ccNames = Object.keys(ccAcc);
+  var mostAccCC  = ccNames.sort(function(a,b){ return (ccAcc[b].acc/ccAcc[b].n)-(ccAcc[a].acc/ccAcc[a].n); })[0];
+  var leastAccCC = ccNames.sort(function(a,b){ return (ccAcc[a].acc/ccAcc[a].n)-(ccAcc[b].acc/ccAcc[b].n); })[0];
+  // Per-driver accuracy from reputation
+  var repKeys  = Object.keys(DRIVER_REPUTATION);
+  var bestDrv  = repKeys.sort(function(a,b){ return DRIVER_REPUTATION[b].reputation_score - DRIVER_REPUTATION[a].reputation_score; })[0];
+  var worstDrv = repKeys.sort(function(a,b){ return DRIVER_REPUTATION[a].reputation_score - DRIVER_REPUTATION[b].reputation_score; })[0];
+  return {
+    total: total, pending: pending, validated: validated.length,
+    accurate: accurate, avgErr: avgErr,
+    accuracy: validated.length > 0 ? fr(accurate/validated.length*100) : 0,
+    hzAcc: hzAcc, bestHz: bestHz, worstHz: worstHz,
+    mostAccCC: mostAccCC||'—', leastAccCC: leastAccCC||'—',
+    bestDrv: bestDrv||'—', worstDrv: worstDrv||'—',
+  };
+}
+
+window.FORECAST_ARCHIVE          = FORECAST_ARCHIVE;
+window.DRIVER_REPUTATION         = DRIVER_REPUTATION;
 window._archiveForecast          = _archiveForecast;
 window._validateArchivedForecasts = _validateArchivedForecasts;
 window._archiveStats             = _archiveStats;
+window._validateForecastDimensions = _validateForecastDimensions;
+window._updateDriverReputation   = _updateDriverReputation;
+window._initDriverReputation     = _initDriverReputation;
 // END FORECAST ARCHIVE
 
 // LEARNING FEEDBACK ENGINE — closed-loop, error-weighted, real data
@@ -4215,9 +4325,15 @@ function _updateDriverConfidence(countries) {
     }
     var extremePenalty = d.score >= 88 ? 6 : d.score <= 25 ? 4 : 0;
     var conf = Math.max(40, Math.min(96, regConf - extremePenalty));
-    // EMA merge with prior LFE value (alpha=0.4)
+    // Blend with Driver Reputation score if available
+    var rep = (typeof DRIVER_REPUTATION !== 'undefined' && DRIVER_REPUTATION[d.name])
+      ? DRIVER_REPUTATION[d.name].reputation_score
+      : conf;
+    // EMA: 50% reputation, 30% prior LFE, 20% fresh signal
     if (_lfe.driverConf[d.name]) {
-      conf = fr(_lfe.driverConf[d.name] * 0.6 + conf * 0.4);
+      conf = fr(rep * 0.50 + _lfe.driverConf[d.name] * 0.30 + conf * 0.20);
+    } else {
+      conf = fr(rep * 0.60 + conf * 0.40);
     }
     _lfe.driverConf[d.name] = conf;
   });
@@ -4641,6 +4757,54 @@ function _valBuildModelLearning(m) {
     h += '</tr>';
   });
   h += '</tbody></table></div>';
+  // ── Block 04: Driver Reputation Rankings ─────────────────────
+  var repKeys = Object.keys(DRIVER_REPUTATION);
+  if (repKeys.length > 0) {
+    h += '<div style="margin-top:12px">';
+    h += '<div style="font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">Driver Reputation System</div>';
+    h += '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">';
+    h += '<table style="min-width:500px;font-size:10px"><thead><tr>';
+    h += '<th>Driver</th><th>Reputation</th><th>24h Acc</th><th>7d Acc</th><th>30d Acc</th><th>90d Acc</th><th>Avg Err</th></tr></thead><tbody>';
+    repKeys.sort(function(a,b){ return DRIVER_REPUTATION[b].reputation_score - DRIVER_REPUTATION[a].reputation_score; })
+      .slice(0,8).forEach(function(k) {
+        var r = DRIVER_REPUTATION[k];
+        var rc = r.reputation_score >= 80 ? 'var(--green)' : r.reputation_score >= 65 ? 'var(--orange)' : 'var(--red)';
+        var drv = _liveDrv().find(function(d){ return d.name === k; });
+        var col = drv ? drv.col : 'var(--text3)';
+        h += '<tr>';
+        h += '<td style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;background:'+col+';display:inline-block"></span>'+k.split(' ').slice(0,2).join(' ')+'</td>';
+        h += '<td style="font-family:var(--mono);color:'+rc+';font-weight:700">'+r.reputation_score+'</td>';
+        h += '<td style="font-family:var(--mono);color:'+(r.accuracy_24h>=80?'var(--green)':'var(--orange)')+'">'+r.accuracy_24h+'%</td>';
+        h += '<td style="font-family:var(--mono);color:'+(r.accuracy_7d>=75?'var(--green)':'var(--orange)')+'">'+r.accuracy_7d+'%</td>';
+        h += '<td style="font-family:var(--mono)">'+r.accuracy_30d+'%</td>';
+        h += '<td style="font-family:var(--mono);color:var(--text3)">'+r.accuracy_90d+'%</td>';
+        h += '<td style="font-family:var(--mono);color:var(--red)">'+r.avg_error+'</td>';
+        h += '</tr>';
+      });
+    h += '</tbody></table></div></div>';
+    // ── Block 08: Forecast Archive Analytics ─────────────────────
+    var ast = _archiveStats();
+    h += '<div style="margin-top:12px">';
+    h += '<div style="font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px">Forecast Archive Analytics</div>';
+    h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+    var aCards = [
+      {l:'Stored',       v:fmt(ast.total),       c:'var(--blue)'},
+      {l:'Validated',    v:fmt(ast.validated),   c:'var(--green)'},
+      {l:'Pending',      v:fmt(ast.pending),     c:'var(--orange)'},
+      {l:'Avg Error',    v:ast.avgErr+' pts',    c:'var(--red)'},
+      {l:'Best Horizon', v:ast.bestHz,           c:'var(--green)'},
+      {l:'Worst Horizon',v:ast.worstHz,          c:'var(--red)'},
+      {l:'Best Driver',  v:(ast.bestDrv||'—').split(' ').slice(0,2).join(' '), c:'var(--green)'},
+      {l:'Worst Driver', v:(ast.worstDrv||'—').split(' ').slice(0,2).join(' '),c:'var(--red)'},
+      {l:'Archive Acc',  v:ast.accuracy+'%',     c:'var(--gold)'},
+    ];
+    aCards.forEach(function(ac) {
+      h += '<div style="background:var(--bg3);border-radius:7px;padding:8px;text-align:center">';
+      h += '<div style="font-size:8px;color:var(--text3);margin-bottom:3px">'+ac.l+'</div>';
+      h += '<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+ac.c+'">'+ac.v+'</div></div>';
+    });
+    h += '</div></div>';
+  }
   var el = document.getElementById('model-learning');
   if (el) el.innerHTML = h;
 }
@@ -4746,6 +4910,9 @@ window.generateValidationReport = function() {
     var bestDrv  = _liveDrv().slice(0,1)[0] || { name:'Migration Pressure', score:82 };
     var worstHorizErr = fr((100 - m[m.worstHorizon.replace('d','').replace('h','') === '24' ? 'h24' : 'h'+m.worstHorizon]) * 0.6);
 
+    var ast3  = _archiveStats();
+    var repK3  = Object.keys(DRIVER_REPUTATION).sort(function(a,b){ return DRIVER_REPUTATION[b].reputation_score - DRIVER_REPUTATION[a].reputation_score; });
+    var topRep = repK3.slice(0,3).map(function(k){ return k.split(' ').slice(0,2).join(' ')+'('+DRIVER_REPUTATION[k].reputation_score+')'; }).join(', ');
     var secs = [
       {t:'FORECAST ACCURACY SUMMARY', c:'var(--blue)',
        v:'Overall accuracy: '+m.overall+'%. Best horizon: '+m.bestHorizon+' ('+m['h'+m.bestHorizon.replace('d','').replace('h','') === '24' ? 'h24' : 'h'+m.bestHorizon]+'%). Total forecasts verified: '+fmt(m.totalChecked)+'.'},
@@ -4759,6 +4926,12 @@ window.generateValidationReport = function() {
        v:'1. Expand 90d+ training data. 2. Reduce '+m.worstHorizon+' horizon variance. 3. Add economic leading indicators to improve 30d accuracy.'},
       {t:'RECOMMENDATIONS', c:'var(--green)',
        v:'Continue accumulating validation data. Prioritise 7d and 30d horizon calibration. Integrate ECMWF climate data to reduce climate forecast errors.'},
+      {t:'DRIVER REPUTATION RANKING', c:'var(--gold)',
+       v:'Top drivers: '+topRep+'. Reputation-weighted learning active. Low-reputation drivers penalised '+
+         fr((1.0 + (1.0 - 0.5) * 0.5)*100-100)+'% more on failure.'},
+      {t:'ARCHIVE ANALYTICS', c:'var(--blue)',
+       v:'Archive: '+ast3.total+' forecasts, '+ast3.validated+' validated ('+ast3.accuracy+'% accurate). '+
+         'Best horizon: '+ast3.bestHz+'. Avg error: '+ast3.avgErr+' pts. Best driver: '+(ast3.bestDrv||'—')+'.'},
     ];
 
     var h = '<div style="background:rgba(59,130,246,.04);border:0.5px solid rgba(59,130,246,.2);border-radius:10px;padding:16px">';
