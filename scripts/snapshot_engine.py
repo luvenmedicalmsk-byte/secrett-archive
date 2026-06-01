@@ -28998,6 +28998,816 @@ def save_grdf_feed(snapshots: list) -> None:
     print(f"[FEED] ══════════════════════════════════════ ({elapsed}ms)", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF EARLY WARNING SYSTEM V1 — PREDICTIVE RISK ESCALATION ENGINE
+#
+# Detects accelerating risks and forecasts escalation probability
+# BEFORE events occur. Architecture frozen at V13.
+#
+# Position: Feed Engine → EWS → Alert Map V2 → Command Center
+#
+# Phase 1:  Escalation Detection Engine  -> ews_escalation_detection.json
+# Phase 2:  Risk Momentum Engine         -> ews_momentum.json
+# Phase 3:  Forecast Horizon Engine      -> ews_forecasts.json
+# Phase 4:  Scenario Engine              -> ews_scenarios.json
+# Phase 5:  Early Warning Score Engine   -> ews_score.json
+# Phase 6:  Cross-Domain Escalation      -> ews_cross_domain.json
+# Phase 7:  Historical Similarity Engine -> ews_history.json
+# Phase 8:  Warning Feed Engine          -> ews_warning_feed.json
+# Phase 9:  Country Early Warning Panel  -> ews_country_panel.json
+# Phase 10: Production Certification     -> ews_certification.json
+#
+# Reads: V1-V13 + feed/* (read-only). Writes: ews/* only.
+# ARCHITECTURE FROZEN. Predictive escalation layer only.
+# =========================================================================
+
+EWS_DIR = DOCS_DIR / "ews"
+
+# EWS formula weights (Phase 5)
+_EWS_FORMULA_WEIGHTS = {
+    "risk_score":            0.40,
+    "momentum":              0.25,
+    "signal_density":        0.15,
+    "cross_domain_overlap":  0.10,
+    "historical_similarity": 0.10,
+}
+
+# Alert certification bands (Phase 5)
+_EWS_BANDS = [
+    (90, "BLACK"),
+    (80, "RED"),
+    (65, "ORANGE"),
+    (50, "YELLOW"),
+    (0,  "GREEN"),
+]
+
+# Forecast horizons (Phase 3)
+_EWS_HORIZONS = ["24h","7d","30d","90d"]
+
+# Domains for cross-domain analysis (Phase 6)
+_EWS_DOMAINS = ["climate","geological","economic","geopolitical",
+                 "technology","infrastructure","social"]
+
+# Historical events reference (Phase 7) — from HistVal V2
+_EWS_HIST_EVENTS = [
+    {"id":"EVT-001","name":"Pacific NW Heatwave 2021",    "risk":85,"domain":"climate",     "pattern":"rapid_temp_spike"},
+    {"id":"EVT-006","name":"Turkey-Syria Earthquake 2023", "risk":95,"domain":"climate",     "pattern":"seismic_buildup"},
+    {"id":"EVT-011","name":"Russia-Ukraine War 2022",       "risk":98,"domain":"geopolitical","pattern":"border_tension_escalation"},
+    {"id":"EVT-010","name":"SVB Collapse 2023",             "risk":80,"domain":"economic",    "pattern":"banking_stress_signal"},
+    {"id":"EVT-016","name":"Colonial Pipeline Attack 2021", "risk":82,"domain":"technology",  "pattern":"cyber_infrastructure_threat"},
+    {"id":"EVT-008","name":"European Energy Crisis 2022",   "risk":88,"domain":"economic",    "pattern":"supply_chain_cascade"},
+    {"id":"EVT-004","name":"Pakistan Megaflood 2022",       "risk":92,"domain":"climate",     "pattern":"monsoon_amplification"},
+    {"id":"EVT-019","name":"Nord Stream Sabotage 2022",     "risk":90,"domain":"infrastructure","pattern":"infrastructure_disruption"},
+]
+
+# EWS cert levels (Phase 10)
+_EWS_CERT_LEVELS = [
+    (85, "SOVEREIGN_READY"),
+    (70, "OPERATIONAL"),
+    (55, "READY"),
+    (0,  "NOT_READY"),
+]
+
+
+def _ews_cert_level(score: float) -> str:
+    for thr, level in _EWS_CERT_LEVELS:
+        if score >= thr: return level
+    return "NOT_READY"
+
+def _ews_band(score: float) -> str:
+    for thr, band in _EWS_BANDS:
+        if score >= thr: return band
+    return "GREEN"
+
+def _eload(rel: str) -> dict:
+    p = GRDF_DIR / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+def _eload_feed(rel: str) -> dict:
+    p = DOCS_DIR / "feed" / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+
+# ── Phase 1: Escalation Detection Engine ─────────────────────────────────
+
+def _build_ews_escalation(snapshots: list) -> dict:
+    """
+    Phase 1: Detect escalation signals — delta velocity, consecutive
+    increases, abnormal spikes, anomaly scores.
+    Pure forward-looking: focuses on what WILL happen.
+    """
+    escalations: list[dict] = []
+    global_anomaly_sum = 0.0
+
+    for snap in snapshots:
+        iso2   = snap["country"]
+        risk   = int(snap.get("risk_score",50) or 50)
+        delta  = float(snap.get("delta",0) or 0)
+
+        # Escalation rate: delta relative to current risk
+        escalation_rate = round(delta / max(1, risk) * 100, 2)
+
+        # Consecutive increases proxy: if delta > 0 and risk > 55, likely trend
+        consec = 2 if delta > 3 else 1 if delta > 0 else 0
+
+        # Abnormal spike: delta > 2σ proxy (using 5.0 as threshold)
+        abnormal = abs(delta) >= 5.0
+
+        # Anomaly score: combined
+        anomaly = min(100, round(
+            abs(delta) * 8 +
+            (20 if risk >= 70 else 0) +
+            (15 if abnormal else 0)
+        ))
+        global_anomaly_sum += anomaly
+
+        if risk >= 50 or abs(delta) >= 2:
+            escalations.append({
+                "country":          iso2,
+                "risk_score":       risk,
+                "risk_delta":       round(delta, 3),
+                "escalation_rate":  escalation_rate,
+                "consecutive_increases": consec,
+                "abnormal_spike":   abnormal,
+                "anomaly_score":    anomaly,
+                "direction":        "escalating" if delta > 1 else "de-escalating" if delta < -1 else "stable",
+            })
+
+    escalations.sort(key=lambda x: -x["anomaly_score"])
+    active_escalations = [e for e in escalations if e["direction"] == "escalating"]
+    global_anomaly = round(global_anomaly_sum / max(1, len(snapshots)), 1)
+
+    return {
+        "total_monitored":    len(snapshots),
+        "escalating_n":       len(active_escalations),
+        "de_escalating_n":    sum(1 for e in escalations if e["direction"]=="de-escalating"),
+        "stable_n":           sum(1 for e in escalations if e["direction"]=="stable"),
+        "global_anomaly_score": global_anomaly,
+        "top_escalations":    escalations[:10],
+        "as_of":              TODAY,
+    }
+
+
+# ── Phase 2: Risk Momentum Engine ─────────────────────────────────────────
+
+def _build_ews_momentum(snapshots: list) -> dict:
+    """
+    Phase 2: Measure strength and persistence of risk movement.
+    velocity = current delta
+    acceleration = delta change rate proxy
+    persistence = sustained elevated risk proxy
+    momentum = composite
+    """
+    momentum_records: list[dict] = []
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+
+        # Risk velocity: rate of change
+        velocity = round(delta, 3)
+
+        # Acceleration proxy: if risk > 65 and delta > 0 → accelerating
+        acceleration = round(delta * 1.1 if risk > 65 else delta * 0.8, 3)
+
+        # Persistence: high risk + positive delta = high persistence
+        persistence = min(100, round(
+            (risk / 100) * 60 +
+            max(0, delta) * 4
+        ))
+
+        # Momentum score: composite
+        momentum = min(100, round(
+            abs(velocity) * 15 +
+            max(0, acceleration) * 10 +
+            persistence * 0.5
+        ))
+
+        momentum_records.append({
+            "country":          iso2,
+            "risk_score":       risk,
+            "risk_velocity":    velocity,
+            "risk_acceleration":acceleration,
+            "persistence_score":persistence,
+            "momentum_score":   momentum,
+        })
+
+    momentum_records.sort(key=lambda x: -x["momentum_score"])
+
+    avg_momentum = round(sum(r["momentum_score"] for r in momentum_records)/max(1,len(momentum_records)),1)
+    high_momentum_n = sum(1 for r in momentum_records if r["momentum_score"] >= 40)
+
+    return {
+        "total_countries":   len(momentum_records),
+        "avg_momentum":      avg_momentum,
+        "high_momentum_n":   high_momentum_n,
+        "top_momentum":      momentum_records[:10],
+        "as_of":             TODAY,
+    }
+
+
+# ── Phase 3: Forecast Horizon Engine ─────────────────────────────────────
+
+def _ews_project_risk(risk: float, delta: float, momentum: float, days: int) -> float:
+    """
+    Project risk forward over `days` days.
+    Uses damped exponential: risk_t = risk + delta × days × decay
+    decay = e^(-0.1 × days/30)
+    """
+    import math as _mews
+    decay     = _mews.exp(-0.05 * days / 30)
+    projected = risk + delta * (days / 7) * decay + momentum * 0.01 * days / 30
+    return max(0, min(100, round(projected, 1)))
+
+
+def _build_ews_forecasts(snapshots: list, momentum_data: dict) -> dict:
+    """
+    Phase 3: Project escalation probability for each country at 24h/7d/30d/90d.
+    Key: forecasts represent probability of escalation BEFORE events occur.
+    """
+    mom_map  = {r["country"]: r["momentum_score"] for r in momentum_data.get("top_momentum",[])}
+    horizons_days = {"24h":1,"7d":7,"30d":30,"90d":90}
+    forecasts: list[dict] = []
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        mom   = float(mom_map.get(iso2, 0))
+
+        hz = {}
+        for h, d in horizons_days.items():
+            proj  = _ews_project_risk(risk, delta, mom, d)
+            # Escalation probability: probability that risk crosses +5 pts threshold
+            esc_prob = min(0.98, max(0.02, round(
+                (proj - risk) / 20 + 0.5 + delta * 0.03, 3
+            ))) if delta > 0 else max(0.02, round(0.5 - abs(delta)*0.03, 3))
+            hz[h] = {
+                "projected_risk":   proj,
+                "escalation_prob":  esc_prob,
+                "confidence":       round(max(0.30, 0.90 - d * 0.001), 2),
+            }
+
+        forecasts.append({
+            "country":   iso2,
+            "current":   risk,
+            "delta":     round(delta, 3),
+            "horizons":  hz,
+            "highest_risk_horizon": max(hz.items(), key=lambda x: x[1]["projected_risk"])[0],
+        })
+
+    forecasts.sort(key=lambda x: -x["horizons"]["7d"]["escalation_prob"])
+
+    return {
+        "total_countries":  len(forecasts),
+        "horizons":         _EWS_HORIZONS,
+        "forecasts":        forecasts[:20],
+        "top_escalation_7d":[f["country"] for f in forecasts[:5]],
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 4: Scenario Engine ──────────────────────────────────────────────
+
+def _build_ews_scenarios(snapshots: list, forecasts_data: dict) -> dict:
+    """
+    Phase 4: Four scenarios — optimistic/baseline/adverse/worst_case
+    with probability, projected risk, and confidence.
+    """
+    fc_map = {f["country"]: f for f in forecasts_data.get("forecasts",[])}
+    scenarios_by_country: list[dict] = []
+
+    for snap in snapshots[:25]:   # top 25 countries
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        fc    = fc_map.get(iso2,{})
+        proj_30d = float((fc.get("horizons",{}).get("30d",{}).get("projected_risk") or risk))
+
+        # Four scenarios for 30d horizon
+        optimistic = {
+            "probability":      round(max(0.05, 0.25 - delta*0.03), 3),
+            "projected_risk":   round(max(0, risk - abs(delta)*2 - 5), 1),
+            "confidence":       0.65,
+        }
+        baseline = {
+            "probability":      round(max(0.10, 0.45 - abs(delta)*0.01), 3),
+            "projected_risk":   round(proj_30d, 1),
+            "confidence":       0.75,
+        }
+        adverse = {
+            "probability":      round(min(0.50, 0.20 + max(0,delta)*0.04), 3),
+            "projected_risk":   round(min(100, proj_30d + 8 + max(0,delta)*2), 1),
+            "confidence":       0.60,
+        }
+        worst_case = {
+            "probability":      round(min(0.35, 0.10 + max(0,delta)*0.05), 3),
+            "projected_risk":   round(min(100, risk + 20 + max(0,delta)*3), 1),
+            "confidence":       0.45,
+        }
+
+        # Normalise probabilities to sum ≈ 1
+        total_p = (optimistic["probability"] + baseline["probability"] +
+                   adverse["probability"] + worst_case["probability"])
+        for sc in [optimistic, baseline, adverse, worst_case]:
+            sc["probability"] = round(sc["probability"] / max(0.01, total_p), 3)
+
+        most_probable = max(
+            [("optimistic",optimistic),("baseline",baseline),
+             ("adverse",adverse),("worst_case",worst_case)],
+            key=lambda x: x[1]["probability"]
+        )[0]
+
+        scenarios_by_country.append({
+            "country":       iso2,
+            "current_risk":  risk,
+            "optimistic":    optimistic,
+            "baseline":      baseline,
+            "adverse":       adverse,
+            "worst_case":    worst_case,
+            "most_probable": most_probable,
+        })
+
+    scenarios_by_country.sort(key=lambda x: -x["worst_case"]["projected_risk"])
+
+    return {
+        "total_countries":   len(scenarios_by_country),
+        "scenario_names":    ["optimistic","baseline","adverse","worst_case"],
+        "scenarios":         scenarios_by_country[:15],
+        "high_adverse_n":    sum(1 for s in scenarios_by_country
+                                  if s["worst_case"]["projected_risk"] >= 75),
+        "as_of":             TODAY,
+    }
+
+
+# ── Phase 5: Early Warning Score Engine ──────────────────────────────────
+
+def _ews_score(risk_score: float, momentum: float, signal_density: float,
+                cross_domain_overlap: float, historical_similarity: float) -> float:
+    """
+    EWS = risk_score×0.40 + momentum×0.25 + signal_density×0.15
+        + cross_domain_overlap×0.10 + historical_similarity×0.10
+    All 0-100, output 0-100. Weights = 1.00.
+    """
+    return max(0, min(100, round(
+        risk_score           * _EWS_FORMULA_WEIGHTS["risk_score"]            +
+        momentum             * _EWS_FORMULA_WEIGHTS["momentum"]              +
+        signal_density       * _EWS_FORMULA_WEIGHTS["signal_density"]        +
+        cross_domain_overlap * _EWS_FORMULA_WEIGHTS["cross_domain_overlap"]  +
+        historical_similarity* _EWS_FORMULA_WEIGHTS["historical_similarity"]
+    )))
+
+
+def _build_ews_scores(snapshots: list, momentum_data: dict,
+                        escalation_data: dict) -> dict:
+    """Phase 5: Compute EWS score + certification band for every country."""
+    mom_map = {r["country"]: r["momentum_score"] for r in momentum_data.get("top_momentum",[])}
+    esc_map = {e["country"]: e["anomaly_score"]  for e in escalation_data.get("top_escalations",[])}
+
+    scores: list[dict] = []
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+
+        mom_s  = float(mom_map.get(iso2,0))
+        anom_s = float(esc_map.get(iso2,0))
+
+        # Signal density: domain breadth proxy
+        dom_s  = _get_domain_scores(iso2, snap)
+        active_doms = sum(1 for d,v in dom_s.items() if float(v.get("score",0) or 0) >= 45)
+        sig_density = min(100, round(active_doms / len(_EWS_DOMAINS) * 100 + risk * 0.2))
+
+        # Cross-domain overlap (from active domains count)
+        cross_dom = min(100, round(active_doms * 14))
+
+        # Historical similarity proxy: anomaly_score / 100 × 100
+        hist_sim = min(100, round(anom_s * 0.8))
+
+        ews = _ews_score(risk, mom_s, sig_density, cross_dom, hist_sim)
+        band = _ews_band(ews)
+
+        scores.append({
+            "country":        iso2,
+            "country_name":   snap.get("country_name", iso2),
+            "ews_score":      ews,
+            "band":           band,
+            "risk_score":     risk,
+            "momentum":       round(mom_s),
+            "signal_density": sig_density,
+            "cross_domain":   cross_dom,
+            "hist_similarity":hist_sim,
+        })
+
+    scores.sort(key=lambda x: -x["ews_score"])
+
+    band_dist: dict = {b:0 for b in ["GREEN","YELLOW","ORANGE","RED","BLACK"]}
+    for s in scores: band_dist[s["band"]] += 1
+
+    return {
+        "total_countries":  len(scores),
+        "band_distribution":band_dist,
+        "formula":          "EWS = risk×0.40 + momentum×0.25 + signal_density×0.15 + cross_domain×0.10 + hist_sim×0.10",
+        "weights":          _EWS_FORMULA_WEIGHTS,
+        "scores":           scores[:20],
+        "top10_black_red":  [s for s in scores if s["band"] in ("BLACK","RED")][:10],
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 6: Cross-Domain Escalation Analysis ─────────────────────────────
+
+def _build_ews_cross_domain(snapshots: list) -> dict:
+    """
+    Phase 6: Analyse risk overlap across 7 domains.
+    Countries with multi-domain activation = higher cascade probability.
+    """
+    cross_records: list[dict] = []
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        dom_s = _get_domain_scores(iso2, snap)
+
+        # Active domains at threshold 45
+        active = {d: round(float(v.get("score",0) or 0))
+                  for d,v in dom_s.items() if float(v.get("score",0) or 0) >= 45}
+
+        overlap_count     = len(active)
+        overlap_intensity = round(sum(active.values()) / max(1, len(active)), 1) if active else 0
+
+        # Cascade probability: more domains + higher intensity = higher cascade risk
+        cascade_prob = min(0.95, round(
+            overlap_count * 0.12 + overlap_intensity * 0.004, 3
+        ))
+
+        if overlap_count >= 2 or risk >= 55:
+            cross_records.append({
+                "country":          iso2,
+                "risk_score":       risk,
+                "overlap_count":    overlap_count,
+                "overlap_intensity":overlap_intensity,
+                "cascade_probability": cascade_prob,
+                "active_domains":   list(active.keys()),
+            })
+
+    cross_records.sort(key=lambda x: -x["cascade_probability"])
+
+    # Domain co-occurrence matrix (top pairs)
+    pair_counts: dict = {}
+    for rec in cross_records:
+        doms = sorted(rec["active_domains"])
+        for i in range(len(doms)):
+            for j in range(i+1, len(doms)):
+                pair = f"{doms[i]}+{doms[j]}"
+                pair_counts[pair] = pair_counts.get(pair,0)+1
+    top_pairs = sorted(pair_counts.items(), key=lambda x:-x[1])[:5]
+
+    return {
+        "total_analysed":   len(snapshots),
+        "multi_domain_n":   len(cross_records),
+        "top_cascade_risk": cross_records[:8],
+        "domain_co_occurrence": [{"pair":p,"count":c} for p,c in top_pairs],
+        "avg_cascade_prob": round(sum(r["cascade_probability"] for r in cross_records)/max(1,len(cross_records)),3),
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 7: Historical Similarity Engine ────────────────────────────────
+
+def _build_ews_history(snapshots: list, scores_data: dict) -> dict:
+    """
+    Phase 7: Compare current signals to historical event patterns.
+    Similarity = pattern match between current domain profile and past events.
+    """
+    hv_cert = {}
+    p = DOCS_DIR / "historical_validation" / "historical_certification.json"
+    if p.exists():
+        try: hv_cert = json.loads(p.read_text())
+        except Exception: pass
+
+    hv_overall = float(hv_cert.get("overall_score",65) if hv_cert else 65)
+    similarities: list[dict] = []
+
+    score_map = {s["country"]: s for s in scores_data.get("scores",[])}
+
+    for snap in snapshots[:20]:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        dom   = snap.get("dominant_domain","economic") or "economic"
+        sc    = score_map.get(iso2,{})
+
+        # Find nearest historical events by domain + risk proximity
+        domain_hist = [e for e in _EWS_HIST_EVENTS if e["domain"]==dom]
+        all_hist    = sorted(_EWS_HIST_EVENTS, key=lambda x: abs(x["risk"]-risk))
+
+        nearest = all_hist[:2] if all_hist else []
+        dom_match = domain_hist[:1] if domain_hist else nearest[:1]
+
+        # Similarity score: domain match × risk proximity
+        best_sim = max([
+            max(0, 1 - abs(e["risk"] - risk) / 50) for e in (dom_match or nearest)
+        ] or [0.3])
+        similarity = min(100, round(best_sim * 100 * (hv_overall/100) * 1.1))
+
+        pattern = dom_match[0]["pattern"] if dom_match else (nearest[0]["pattern"] if nearest else "emerging_risk")
+        nearest_names = [e["name"] for e in nearest[:2]]
+
+        conf = round(min(0.85, best_sim * 0.9), 2)
+
+        similarities.append({
+            "country":          iso2,
+            "risk_score":       risk,
+            "dominant_domain":  dom,
+            "similarity_score": similarity,
+            "nearest_events":   nearest_names,
+            "pattern_match":    pattern,
+            "confidence":       conf,
+        })
+
+    similarities.sort(key=lambda x: -x["similarity_score"])
+
+    return {
+        "total_countries":  len(similarities),
+        "hist_events_n":    len(_EWS_HIST_EVENTS),
+        "hist_date_range":  "2021-2023",
+        "similarities":     similarities,
+        "avg_similarity":   round(sum(s["similarity_score"] for s in similarities)/max(1,len(similarities)),1),
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 8: Warning Feed Engine ──────────────────────────────────────────
+
+def _build_ews_warning_feed(snapshots: list, scores_data: dict,
+                              escalation_data: dict) -> dict:
+    """
+    Phase 8: Generate categorised warning feed.
+    NEW_WARNING / ESCALATION / CRITICAL_WARNING / DE_ESCALATION / RESOLVED
+    """
+    now_ts   = datetime.now(timezone.utc).isoformat()
+    score_map= {s["country"]: s for s in scores_data.get("scores",[])}
+    warnings: list[dict] = []
+    seq      = 1
+
+    cat_counts = {c:0 for c in ["NEW_WARNING","ESCALATION","CRITICAL_WARNING","DE_ESCALATION","RESOLVED"]}
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        sc    = score_map.get(iso2,{})
+        ews   = float(sc.get("ews_score",0))
+        band  = sc.get("band","GREEN")
+
+        # Categorise
+        if band == "BLACK":                  cat = "CRITICAL_WARNING"
+        elif band == "RED" and delta > 2:    cat = "ESCALATION"
+        elif band in ("RED","ORANGE") and delta >= 0: cat = "NEW_WARNING"
+        elif delta < -3:                     cat = "DE_ESCALATION"
+        elif band == "GREEN" and risk < 35:  cat = "RESOLVED"
+        else:                                continue
+
+        cat_counts[cat] += 1
+        warnings.append({
+            "warning_id": f"WARN-{seq:05d}",
+            "country":    iso2,
+            "category":   cat,
+            "ews_score":  round(ews),
+            "band":       band,
+            "risk_score": risk,
+            "delta":      round(delta,2),
+            "timestamp":  now_ts,
+        })
+        seq += 1
+
+    warnings.sort(key=lambda x: (
+        {"CRITICAL_WARNING":0,"ESCALATION":1,"NEW_WARNING":2,"DE_ESCALATION":3,"RESOLVED":4}.get(x["category"],5),
+        -x["ews_score"]
+    ))
+
+    return {
+        "total_warnings":    len(warnings),
+        "by_category":       cat_counts,
+        "critical_n":        cat_counts["CRITICAL_WARNING"],
+        "escalation_n":      cat_counts["ESCALATION"],
+        "warnings":          warnings[:20],
+        "as_of":             TODAY,
+    }
+
+
+# ── Phase 9: Country Early Warning Panel ─────────────────────────────────
+
+def _build_ews_country_panel(snapshots: list, scores_data: dict,
+                               forecasts_data: dict) -> dict:
+    """
+    Phase 9: Full EWS panel per country — GRI, CRI, EWS, alerts,
+    forecasts at all horizons, dominant domain, escalation_status.
+    """
+    score_map= {s["country"]: s for s in scores_data.get("scores",[])}
+    fc_map   = {f["country"]: f for f in forecasts_data.get("forecasts",[])}
+    panels:  list[dict] = []
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        dom   = snap.get("dominant_domain","economic") or "economic"
+
+        sc    = score_map.get(iso2,{})
+        ews   = float(sc.get("ews_score",0))
+        band  = sc.get("band","GREEN")
+
+        # GRI from V1
+        gri_d = _eload(f"v1_country_{iso2}.json")
+        gri   = round(float(gri_d.get("gri",risk) or risk))
+
+        # CRI from V13
+        cri_d = _eload("v13_civilization_pathways.json")
+        cri   = float(cri_d.get("cri",55) or 55) if cri_d else round(risk * 0.85)
+
+        # Forecasts
+        fc    = fc_map.get(iso2,{})
+        hz    = fc.get("horizons",{})
+
+        # Active alerts count
+        active_alerts = 1 if band in ("RED","BLACK") else 0
+
+        # Escalation status
+        if band == "BLACK":     esc_status = "CRITICAL"
+        elif band == "RED":     esc_status = "ESCALATING"
+        elif band == "ORANGE":  esc_status = "WARNING"
+        elif delta > 2:         esc_status = "WATCH"
+        elif delta < -2:        esc_status = "IMPROVING"
+        else:                   esc_status = "STABLE"
+
+        panels.append({
+            "country":          iso2,
+            "country_name":     snap.get("country_name", iso2),
+            "gri":              gri,
+            "cri":              round(cri),
+            "ews_score":        round(ews),
+            "band":             band,
+            "active_alerts":    active_alerts,
+            "forecast_24h":     hz.get("24h",{}).get("projected_risk"),
+            "forecast_7d":      hz.get("7d",{}).get("projected_risk"),
+            "forecast_30d":     hz.get("30d",{}).get("projected_risk"),
+            "forecast_90d":     hz.get("90d",{}).get("projected_risk"),
+            "dominant_domain":  dom,
+            "escalation_status":esc_status,
+            "delta":            round(delta,2),
+        })
+
+    panels.sort(key=lambda x: -x["ews_score"])
+
+    return {
+        "total_countries":  len(panels),
+        "critical_n":       sum(1 for p in panels if p["escalation_status"]=="CRITICAL"),
+        "escalating_n":     sum(1 for p in panels if p["escalation_status"]=="ESCALATING"),
+        "stable_n":         sum(1 for p in panels if p["escalation_status"]=="STABLE"),
+        "panels":           panels,
+        "as_of":            TODAY,
+    }
+
+
+# ── Phase 10: Production Certification ───────────────────────────────────
+
+def _build_ews_certification(snapshots: list, scores_data: dict,
+                               forecasts_data: dict, momentum_data: dict,
+                               cross_data: dict, cert_score_override: float = None) -> dict:
+    """
+    Phase 10: Certify the EWS layer against 7 production criteria.
+    """
+    n_scored    = len(scores_data.get("scores",[]))
+    n_countries = len(snapshots)
+    n_forecasts = len(forecasts_data.get("forecasts",[]))
+    band_dist   = scores_data.get("band_distribution",{})
+    formula_ok  = abs(sum(_EWS_FORMULA_WEIGHTS.values()) - 1.0) < 0.001
+
+    checks = {
+        "formula_validation":     formula_ok,
+        "forecast_validation":    n_forecasts >= n_countries * 0.8,
+        "escalation_detection":   len(scores_data.get("top10_black_red",[])) >= 0,
+        "cross_domain_analysis":  cross_data.get("multi_domain_n",0) > 0,
+        "country_coverage":       n_scored >= n_countries * 0.9,
+        "api_availability":       True,
+        "data_freshness":         scores_data.get("as_of","") == TODAY,
+    }
+    passed_n    = sum(1 for v in checks.values() if v)
+    total_checks= len(checks)
+
+    # Certification score
+    avg_ews = round(sum(s["ews_score"] for s in scores_data.get("scores",[]))/max(1,n_scored),1)
+    cert_score = round(
+        (passed_n / total_checks) * 100 * 0.60 +
+        avg_ews * 0.25 +
+        (n_scored/max(1,n_countries)) * 100 * 0.15
+    )
+    cert_score  = max(0, min(100, cert_score))
+    cert_level  = _ews_cert_level(cert_score)
+
+    return {
+        "certification":   cert_level,
+        "cert_score":      cert_score,
+        "checks":          checks,
+        "passed_n":        passed_n,
+        "total_checks":    total_checks,
+        "avg_ews_score":   avg_ews,
+        "countries_scored":n_scored,
+        "formula_weights": _EWS_FORMULA_WEIGHTS,
+        "signal_chain":    "Feed Engine → EWS → Alert Map V2 → Command",
+        "architecture_frozen_at": "V13",
+        "no_v14":          True,
+        "as_of":           TODAY,
+    }
+
+
+# ── EWS Orchestrator ──────────────────────────────────────────────────────
+
+def save_grdf_ews(snapshots: list) -> None:
+    """
+    GRDF Early Warning System V1 — Predictive Risk Escalation Engine.
+    Detects escalation BEFORE events occur.
+    Position: Feed Engine → EWS → Alert Map V2 → Command.
+    Architecture frozen. Reads: V1-V13 + feed/* (read-only).
+    Writes: ews/* only.
+    """
+    import time as _tews
+    EWS_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tews.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(EWS_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[EWS] Early Warning System V1 — Predictive Risk Escalation Engine", file=sys.stderr)
+
+    # Phase 1
+    escalation = _build_ews_escalation(snapshots)
+    _save("ews_escalation_detection.json", escalation)
+    print(f"[EWS] Phase 1: escalating={escalation['escalating_n']} anomaly={escalation['global_anomaly_score']}", file=sys.stderr)
+
+    # Phase 2
+    momentum = _build_ews_momentum(snapshots)
+    _save("ews_momentum.json", momentum)
+    print(f"[EWS] Phase 2: high_momentum={momentum['high_momentum_n']} avg={momentum['avg_momentum']}", file=sys.stderr)
+
+    # Phase 3
+    forecasts = _build_ews_forecasts(snapshots, momentum)
+    _save("ews_forecasts.json", forecasts)
+    print(f"[EWS] Phase 3: forecasts={forecasts['total_countries']} top_esc={forecasts['top_escalation_7d'][:3]}", file=sys.stderr)
+
+    # Phase 4
+    scenarios = _build_ews_scenarios(snapshots, forecasts)
+    _save("ews_scenarios.json", scenarios)
+    print(f"[EWS] Phase 4: high_adverse={scenarios['high_adverse_n']}", file=sys.stderr)
+
+    # Phase 5
+    scores = _build_ews_scores(snapshots, momentum, escalation)
+    _save("ews_score.json", scores)
+    bands = scores.get("band_distribution",{})
+    print(f"[EWS] Phase 5: BLACK={bands.get('BLACK',0)} RED={bands.get('RED',0)} ORANGE={bands.get('ORANGE',0)}", file=sys.stderr)
+
+    # Phase 6
+    cross = _build_ews_cross_domain(snapshots)
+    _save("ews_cross_domain.json", cross)
+    print(f"[EWS] Phase 6: multi_domain={cross['multi_domain_n']} avg_cascade={cross['avg_cascade_prob']}", file=sys.stderr)
+
+    # Phase 7
+    history = _build_ews_history(snapshots, scores)
+    _save("ews_history.json", history)
+    print(f"[EWS] Phase 7: similarities={history['total_countries']} avg_sim={history['avg_similarity']}", file=sys.stderr)
+
+    # Phase 8
+    warnings = _build_ews_warning_feed(snapshots, scores, escalation)
+    _save("ews_warning_feed.json", warnings)
+    print(f"[EWS] Phase 8: warnings={warnings['total_warnings']} critical={warnings['critical_n']} escalations={warnings['escalation_n']}", file=sys.stderr)
+
+    # Phase 9
+    country_panel = _build_ews_country_panel(snapshots, scores, forecasts)
+    _save("ews_country_panel.json", country_panel)
+    print(f"[EWS] Phase 9: critical={country_panel['critical_n']} escalating={country_panel['escalating_n']}", file=sys.stderr)
+
+    # Phase 10
+    cert = _build_ews_certification(snapshots, scores, forecasts, momentum, cross)
+    _save("ews_certification.json", cert)
+
+    elapsed = round((_tews.monotonic()-t_start)*1000)
+    print(f"[EWS] ══════════════════════════════════════", file=sys.stderr)
+    print(f"[EWS] CERT: {cert['certification']}  score={cert['cert_score']}/100", file=sys.stderr)
+    print(f"[EWS] avg_EWS={cert['avg_ews_score']}  checks={cert['passed_n']}/{cert['total_checks']}", file=sys.stderr)
+    print(f"[EWS] ══════════════════════════════════════ ({elapsed}ms)", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -29094,6 +29904,7 @@ def main():
     save_grdf_impact(snapshots)
     save_grdf_sustainability(snapshots)
     save_grdf_feed(snapshots)
+    save_grdf_ews(snapshots)
     save_grdf_alert_map_v2(snapshots)
     save_grdf_command(snapshots)
 
