@@ -323,6 +323,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button class="sn-btn" onclick="goSection('s13')" data-s="s13">🔬<span class="sn-tip">Explainability</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
     <button class="sn-btn" onclick="goSection('s15')" data-s="s15">&#128269;<span class="sn-tip">Causality</span></button>
+    <button class="sn-btn" onclick="goSection('s16')" data-s="s16">&#9655;<span class="sn-tip">Decisions</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -1047,6 +1048,123 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
     </div><!-- /s15 -->
 
+
+    <!-- ─ S16: STRATEGIC DECISION CENTER ─ -->
+    <div class="section" id="s16">
+      <div class="s-head">
+        <div class="s-tag">16</div>
+        <div class="s-title">Strategic Decision Center</div>
+        <div class="s-badge badge-red">&#9881; DECISION ENGINE</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:16px;font-style:italic">Data &rarr; Signals &rarr; Drivers &rarr; Forecasts &rarr; <strong style="color:var(--gold)">What to do next?</strong></div>
+
+      <!-- 01: DECISION SUMMARY -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9889;</span> 01 &middot; Decision Summary</div>
+        <div class="grid-4" id="dec-summary-kpi"></div>
+        <div style="margin-top:10px" id="dec-summary-bar"></div>
+      </div>
+
+      <!-- 02: RECOMMENDED ACTIONS -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9654;</span> 02 &middot; Recommended Actions</div>
+        <div class="swipe-wrap" id="rec-actions-swipe">
+          <div class="swipe-card"><div class="sum-card" id="ra-0"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="ra-1"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="ra-2"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="ra-3"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="ra-4"></div></div>
+        </div>
+        <div class="swipe-dots" id="rec-actions-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 03: RISK RESPONSE MATRIX -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9632;</span> 03 &middot; Risk Response Matrix</div>
+        <div class="tbl-outer" style="max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>Risk</th><th>Prob.</th><th>Impact</th><th>Priority</th><th>Status</th></tr></thead>
+            <tbody id="risk-matrix-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 04: STRATEGIC OPTIONS -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9881;</span> 04 &middot; Strategic Options</div>
+        <div class="swipe-wrap" id="strat-opts-swipe">
+          <div class="swipe-card"><div class="sum-card" id="so-climate"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="so-economic"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="so-social"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="so-geo"></div></div>
+        </div>
+        <div class="swipe-dots" id="strat-opts-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 05: OPPORTUNITY SCANNER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127775;</span> 05 &middot; Opportunity Scanner</div>
+        <div id="opp-scanner"></div>
+      </div>
+
+      <!-- 06: RESILIENCE CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128737;</span> 06 &middot; Resilience Center</div>
+        <div class="grid-3" id="resilience-grid"></div>
+      </div>
+
+      <!-- 07: CRITICAL DEPENDENCIES -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128279;</span> 07 &middot; Critical Dependencies</div>
+        <div class="swipe-wrap" id="dep-chains-swipe">
+          <div class="swipe-card"><div class="sum-card" id="dc-energy"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="dc-food"></div></div>
+          <div class="swipe-card"><div class="sum-card" id="dc-digital"></div></div>
+        </div>
+        <div class="swipe-dots" id="dep-chains-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 08: DECISION PRIORITY QUEUE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128203;</span> 08 &middot; Decision Priority Queue</div>
+        <div id="dec-queue"></div>
+      </div>
+
+      <!-- 09: AI STRATEGIC BRIEFING -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#129504;</span> 09 &middot; AI Strategic Briefing</div>
+        <div style="margin-bottom:8px">
+          <button onclick="genStrategicBrief()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#1a2a4a,#0f1a3a);border:1px solid rgba(59,130,246,.3);border-radius:8px;color:var(--blue);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;-webkit-appearance:none">&#9654; Generate Strategic Brief</button>
+        </div>
+        <div id="ai-brief-out">
+          <div class="sum-card" style="border:0.5px solid rgba(59,130,246,.12)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Press Generate to compile Executive Intelligence Briefing</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10: EXECUTIVE DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127775;</span> 10 &middot; Executive Dashboard</div>
+        <div class="swipe-wrap" id="exec-dash-swipe">
+          <div class="swipe-card"><div class="sum-card"><div class="sum-title"><span>&#128308;</span> Top Risks</div><div id="ed-risks"></div></div></div>
+          <div class="swipe-card"><div class="sum-card"><div class="sum-title"><span>&#127775;</span> Top Opportunities</div><div id="ed-opps"></div></div></div>
+          <div class="swipe-card"><div class="sum-card"><div class="sum-title"><span>&#9889;</span> Top Drivers</div><div id="ed-drivers"></div></div></div>
+          <div class="swipe-card"><div class="sum-card"><div class="sum-title"><span>&#128203;</span> Priority Decisions</div><div id="ed-decisions"></div></div></div>
+        </div>
+        <div class="swipe-dots" id="exec-dash-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+    </div><!-- /s16 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -1654,7 +1772,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadDecisionCenter(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -2542,6 +2660,463 @@ window.runDriverExplainer = function() {
     h += '</div>';
     el.innerHTML = h;
   }, 900);
+};
+
+
+// ── S16: STRATEGIC DECISION CENTER ───────────────────────────────
+var _sdcCountries = [];
+
+var SDC_RISKS = [
+  {risk:'Migration Pressure',    prob:85, impact:88, priority:'CRITICAL', status:'MONITOR',  col:'#ef4444'},
+  {risk:'Political Instability', prob:80, impact:84, priority:'CRITICAL', status:'ACTION',   col:'#f97316'},
+  {risk:'Economic Stress',       prob:74, impact:80, priority:'HIGH',     status:'MONITOR',  col:'#3b82f6'},
+  {risk:'Climate Stress',        prob:70, impact:76, priority:'HIGH',     status:'TRACK',    col:'#10b981'},
+  {risk:'Civil Unrest',          prob:68, impact:72, priority:'HIGH',     status:'MONITOR',  col:'#ef4444'},
+  {risk:'Energy Risk',           prob:62, impact:70, priority:'MEDIUM',   status:'WATCH',    col:'#eab308'},
+  {risk:'Conflict Escalation',   prob:60, impact:75, priority:'HIGH',     status:'ACTION',   col:'#f97316'},
+  {risk:'Cyber Risk',            prob:55, impact:65, priority:'MEDIUM',   status:'WATCH',    col:'#a855f7'},
+  {risk:'Water Scarcity',        prob:52, impact:68, priority:'MEDIUM',   status:'TRACK',    col:'#10b981'},
+  {risk:'Infrastructure Stress', prob:48, impact:60, priority:'MEDIUM',   status:'WATCH',    col:'#64748b'},
+];
+
+var SDC_ACTIONS = [
+  {
+    driver: 'Migration Pressure',
+    score: 82, col: '#ef4444',
+    immediate: ['Усилить мониторинг миграционных маршрутов', 'Проверить зависимые регионы на уязвимость', 'Активировать EWS-уведомления для приграничных стран'],
+    shortTerm: ['Подготовить сценарии реагирования S1-S3', 'Обновить риск-профили 12 затронутых стран', 'Запустить дополнительный сбор данных ACLED'],
+    longTerm:  ['Укрепить устойчивость мониторинговой сети', 'Расширить покрытие источников для региона', 'Разработать прогнозную модель 90d для кризиса']
+  },
+  {
+    driver: 'Political Instability',
+    score: 78, col: '#f97316',
+    immediate: ['Активировать Escalation Tracker для 8 стран', 'Обновить FC7d прогнозы для зон риска', 'Проверить сигналы GDELT на всплески напряжённости'],
+    shortTerm: ['Подготовить аналитическую записку по 5 регионам', 'Усилить мониторинг дипломатических сигналов', 'Запустить Scenario Engine для 3 сценариев'],
+    longTerm:  ['Интегрировать новые источники политических данных', 'Разработать Regime Change Indicator', 'Построить исторический сравнительный анализ']
+  },
+  {
+    driver: 'Economic Stress',
+    score: 74, col: '#3b82f6',
+    immediate: ['Проверить корреляцию с инфляционными сигналами', 'Обновить Currency Risk индикаторы', 'Сверить данные с World Bank и IMF'],
+    shortTerm: ['Подготовить Economic Resilience отчёт', 'Обновить Supply Chain Risk для топ-20 стран', 'Активировать Banking Stress Monitor'],
+    longTerm:  ['Подключить Trading Economics API', 'Расширить Economic Domain до 15 под-индикаторов', 'Построить долгосрочный прогноз на 180d']
+  },
+  {
+    driver: 'Climate Stress',
+    score: 71, col: '#10b981',
+    immediate: ['Проверить NASA FIRMS на новые пожарные аномалии', 'Обновить Precipitation Anomaly Index', 'Сверить Copernicus с текущими данными'],
+    shortTerm: ['Подготовить Climate Resilience отчёт для 30 стран', 'Обновить Water Scarcity прогнозы', 'Запустить Drought Early Warning'],
+    longTerm:  ['Подключить ECMWF и NOAA как источники', 'Разработать Climate Risk 5-летний горизонт', 'Построить интеграцию с Sentinel-2/3']
+  },
+  {
+    driver: 'Conflict Escalation',
+    score: 63, col: '#f97316',
+    immediate: ['Активировать ACLED мониторинг для активных зон', 'Проверить Military Movement сигналы', 'Обновить Border Tension индикаторы'],
+    shortTerm: ['Подготовить Conflict Risk отчёт', 'Обновить Force Concentration карту', 'Запустить Escalation Cascade симулятор'],
+    longTerm:  ['Расширить Conflict Domain до 12 под-индикаторов', 'Интегрировать OCHA данные', 'Построить Conflict Transition модель']
+  }
+];
+
+var SDC_OPPS = [
+  {cat:'Infrastructure',  name:'Зелёная энергетика', pot:87, trend:'UP',   col:'#10b981'},
+  {cat:'Technology',      name:'AI Risk Monitoring',  pot:84, trend:'UP',   col:'#a855f7'},
+  {cat:'Regional',        name:'Southeast Asia Growth',pot:79, trend:'UP',  col:'#3b82f6'},
+  {cat:'Regional',        name:'Gulf Stabilisation',   pot:74, trend:'FLAT',col:'#eab308'},
+  {cat:'Technology',      name:'Satellite Intel Exp.', pot:71, trend:'UP',   col:'#a855f7'},
+  {cat:'Infrastructure',  name:'Critical Infra Shield',pot:68, trend:'UP',   col:'#10b981'},
+  {cat:'Emerging',        name:'Digital Resilience',   pot:65, trend:'UP',   col:'#3b82f6'},
+  {cat:'Strategic',       name:'Predictive Diplomacy', pot:62, trend:'UP',   col:'#f97316'},
+];
+
+var SDC_RESILIENCE = [
+  {label:'Global Resilience',    score:62, lv:'Moderate', col:'#eab308'},
+  {label:'Climate Resilience',   score:58, lv:'Moderate', col:'#10b981'},
+  {label:'Economic Resilience',  score:65, lv:'Moderate', col:'#3b82f6'},
+  {label:'Geopolitical',         score:54, lv:'Weak',     col:'#f97316'},
+  {label:'Technology Resilience',score:71, lv:'Moderate', col:'#a855f7'},
+  {label:'Social Resilience',    score:49, lv:'Weak',     col:'#ef4444'},
+];
+
+var SDC_DECISIONS = [
+  {id:'DEC-001',pri:'CRITICAL',reason:'Migration Pressure + Political Instability escalating',conf:82,col:'#ef4444'},
+  {id:'DEC-002',pri:'CRITICAL',reason:'Economic Stress correlating with Social Unrest signals',conf:79,col:'#ef4444'},
+  {id:'DEC-003',pri:'HIGH',    reason:'FC7d upgraded for 6 countries simultaneously',conf:74,col:'#f97316'},
+  {id:'DEC-004',pri:'HIGH',    reason:'Climate cascade risk detected in 3 regions',conf:71,col:'#f97316'},
+  {id:'DEC-005',pri:'HIGH',    reason:'Conflict Escalation signals above threshold',conf:68,col:'#f97316'},
+  {id:'DEC-006',pri:'MEDIUM',  reason:'Energy Risk correlation with Political Instability',conf:64,col:'#eab308'},
+  {id:'DEC-007',pri:'MEDIUM',  reason:'Water Scarcity trending upward in 5 countries',conf:61,col:'#eab308'},
+  {id:'DEC-008',pri:'MEDIUM',  reason:'Cyber Risk signals increasing in Infrastructure domain',conf:58,col:'#eab308'},
+];
+
+function loadDecisionCenter(countries) {
+  _sdcCountries = countries;
+  buildDecSummary(countries);
+  buildRecommendedActions();
+  buildRiskMatrix();
+  buildStrategicOptions();
+  buildOpportunityScanner();
+  buildResilienceCenter();
+  buildDependencyChains();
+  buildDecisionQueue(countries);
+  buildExecutiveDashboard(countries);
+  initSwipeDots('rec-actions-swipe','rec-actions-dots');
+  initSwipeDots('strat-opts-swipe','strat-opts-dots');
+  initSwipeDots('dep-chains-swipe','dep-chains-dots');
+  initSwipeDots('exec-dash-swipe','exec-dash-dots');
+}
+
+function buildDecSummary(countries) {
+  var critical = countries.filter(function(c){ return c.risk_score >= 80; }).length;
+  var high     = countries.filter(function(c){ return c.risk_score >= 60 && c.risk_score < 80; }).length;
+  var medium   = countries.filter(function(c){ return c.risk_score >= 40 && c.risk_score < 60; }).length;
+  var low      = Math.max(0, countries.length - critical - high - medium);
+  var kpis = [
+    {label:'Critical Decisions', val:SDC_DECISIONS.filter(function(d){ return d.pri === 'CRITICAL'; }).length, col:'var(--red)'},
+    {label:'High Priority',       val:SDC_DECISIONS.filter(function(d){ return d.pri === 'HIGH'; }).length,     col:'var(--orange)'},
+    {label:'Emerging Risks',      val:critical + high,                                                           col:'var(--gold)'},
+    {label:'Opportunities',       val:SDC_OPPS.length,                                                           col:'var(--green)'},
+  ];
+  var h = '';
+  kpis.forEach(function(k) {
+    h += '<div class="card"><div class="card-label">' + k.label + '</div>';
+    h += '<div class="card-val" style="color:' + k.col + '">' + k.val + '</div></div>';
+  });
+  document.getElementById('dec-summary-kpi').innerHTML = h;
+
+  // Status bar
+  var total = critical + high + medium + low || 1;
+  var b = '<div style="height:8px;border-radius:4px;overflow:hidden;display:flex;margin-top:4px">';
+  b += '<div style="height:100%;width:' + fr(critical/total*100) + '%;background:var(--red)"></div>';
+  b += '<div style="height:100%;width:' + fr(high/total*100) + '%;background:var(--orange)"></div>';
+  b += '<div style="height:100%;width:' + fr(medium/total*100) + '%;background:var(--gold)"></div>';
+  b += '<div style="height:100%;flex:1;background:var(--green)"></div>';
+  b += '</div>';
+  b += '<div style="display:flex;gap:10px;margin-top:5px;flex-wrap:wrap">';
+  [{label:'Critical',val:critical,col:'var(--red)'},{label:'High',val:high,col:'var(--orange)'},{label:'Medium',val:medium,col:'var(--gold)'},{label:'Low',val:low,col:'var(--green)'}].forEach(function(s) {
+    b += '<span style="font-size:10px;color:' + s.col + ';display:flex;align-items:center;gap:4px">';
+    b += '<span style="width:6px;height:6px;border-radius:50%;background:' + s.col + ';display:inline-block"></span>' + s.label + ': ' + s.val + '</span>';
+  });
+  b += '</div>';
+  document.getElementById('dec-summary-bar').innerHTML = b;
+}
+
+function buildRecommendedActions() {
+  SDC_ACTIONS.forEach(function(a, i) {
+    var el = document.getElementById('ra-' + i);
+    if (!el) return;
+    var h = '<div class="sum-title" style="color:' + a.col + '"><span>&#9654;</span> ' + a.driver + ' (' + a.score + ')</div>';
+    var sections = [
+      {label:'Immediate Actions', items:a.immediate, col:'var(--red)'},
+      {label:'Short-Term Actions',items:a.shortTerm,  col:'var(--orange)'},
+      {label:'Long-Term Actions', items:a.longTerm,   col:'var(--text3)'},
+    ];
+    sections.forEach(function(s) {
+      h += '<div style="font-size:9px;color:' + s.col + ';letter-spacing:.12em;text-transform:uppercase;margin:10px 0 5px">' + s.label + '</div>';
+      s.items.forEach(function(item) {
+        h += '<div style="display:flex;align-items:flex-start;gap:7px;padding:4px 0;border-bottom:0.5px solid var(--border);font-size:11px;color:var(--text2)">';
+        h += '<span style="color:' + s.col + ';flex-shrink:0;margin-top:1px">&#9679;</span><span>' + item + '</span></div>';
+      });
+    });
+    el.innerHTML = h;
+  });
+}
+
+function buildRiskMatrix() {
+  var h = '';
+  SDC_RISKS.forEach(function(r) {
+    var pc = r.priority === 'CRITICAL' ? 'risk-crit' : r.priority === 'HIGH' ? 'risk-high' : r.priority === 'MEDIUM' ? 'risk-med' : 'risk-low';
+    var sc = r.status === 'ACTION' ? 'var(--red)' : r.status === 'MONITOR' ? 'var(--orange)' : 'var(--text3)';
+    h += '<tr>';
+    h += '<td style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:' + r.col + ';flex-shrink:0;display:inline-block"></span>' + r.risk + '</td>';
+    h += '<td style="font-family:var(--mono)">' + r.prob + '%</td>';
+    h += '<td style="font-family:var(--mono)">' + r.impact + '</td>';
+    h += '<td><span class="td-badge ' + pc + '">' + r.priority + '</span></td>';
+    h += '<td style="font-size:10px;color:' + sc + ';font-family:var(--mono)">' + r.status + '</td>';
+    h += '</tr>';
+  });
+  document.getElementById('risk-matrix-body').innerHTML = h;
+}
+
+function buildStrategicOptions() {
+  var opts = [
+    {
+      id:'so-climate', title:'Climate Stress', col:'#10b981',
+      options:[
+        {name:'Option A: Early Warning Expansion', benefit:82, risk_red:18, conf:78, complexity:'Medium'},
+        {name:'Option B: Regional Climate Data Hub', benefit:74, risk_red:24, conf:71, complexity:'High'},
+        {name:'Option C: AI Climate Prediction', benefit:88, risk_red:31, conf:65, complexity:'Very High'},
+      ]
+    },
+    {
+      id:'so-economic', title:'Economic Stress', col:'#3b82f6',
+      options:[
+        {name:'Option A: Real-time IMF/WB Integration', benefit:79, risk_red:22, conf:82, complexity:'Medium'},
+        {name:'Option B: Currency Risk Tracker', benefit:72, risk_red:18, conf:76, complexity:'Low'},
+        {name:'Option C: Supply Chain Intelligence', benefit:84, risk_red:28, conf:69, complexity:'High'},
+      ]
+    },
+    {
+      id:'so-social', title:'Social Instability', col:'#ef4444',
+      options:[
+        {name:'Option A: Migration Flow Monitoring', benefit:85, risk_red:26, conf:80, complexity:'Medium'},
+        {name:'Option B: Social Media Signal Feed', benefit:78, risk_red:20, conf:72, complexity:'High'},
+        {name:'Option C: Community Resilience Index', benefit:71, risk_red:15, conf:68, complexity:'Medium'},
+      ]
+    },
+    {
+      id:'so-geo', title:'Geopolitical Escalation', col:'#f97316',
+      options:[
+        {name:'Option A: Diplomatic Signal Tracker', benefit:83, risk_red:24, conf:77, complexity:'Medium'},
+        {name:'Option B: Military Movement Monitor', benefit:76, risk_red:30, conf:65, complexity:'High'},
+        {name:'Option C: Conflict Prediction Model', benefit:89, risk_red:35, conf:61, complexity:'Very High'},
+      ]
+    }
+  ];
+  opts.forEach(function(meta) {
+    var el = document.getElementById(meta.id);
+    if (!el) return;
+    var h = '<div class="sum-title" style="color:' + meta.col + '"><span>&#9881;</span> ' + meta.title + '</div>';
+    meta.options.forEach(function(opt) {
+      var cplxCol = opt.complexity === 'Low' ? 'var(--green)' : opt.complexity === 'Medium' ? 'var(--text3)' : opt.complexity === 'High' ? 'var(--orange)' : 'var(--red)';
+      h += '<div style="background:var(--bg3);border-radius:7px;padding:10px;margin-bottom:8px">';
+      h += '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:7px">' + opt.name + '</div>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+      [
+        {label:'Expected Benefit',      val:opt.benefit + '%',   col:'var(--green)'},
+        {label:'Risk Reduction',        val:'-' + opt.risk_red + '%', col:'var(--green)'},
+        {label:'Confidence',            val:opt.conf + '%',      col:'var(--gold)'},
+        {label:'Complexity',            val:opt.complexity,      col:cplxCol},
+      ].forEach(function(f) {
+        h += '<div style="font-size:10px"><div style="color:var(--text3);margin-bottom:2px">' + f.label + '</div>';
+        h += '<div style="font-family:var(--mono);font-size:11px;color:' + f.col + '">' + f.val + '</div></div>';
+      });
+      h += '</div></div>';
+    });
+    el.innerHTML = h;
+  });
+}
+
+function buildOpportunityScanner() {
+  var catCols = {Infrastructure:'#10b981', Technology:'#a855f7', Regional:'#3b82f6', Emerging:'#eab308', Strategic:'#f97316'};
+  var h = '';
+  SDC_OPPS.forEach(function(o, i) {
+    var col = catCols[o.cat] || 'var(--text2)';
+    var tc  = o.trend === 'UP' ? 'var(--green)' : 'var(--text3)';
+    var ta  = o.trend === 'UP' ? '&#8593;' : '&#8594;';
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:16px">' + (i+1) + '</span>';
+    h += '<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:' + col + '20;color:' + col + ';border:0.5px solid ' + col + '33;flex-shrink:0">' + o.cat + '</span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1">' + o.name + '</span>';
+    h += '<div style="width:50px;height:4px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:' + o.pot + '%;background:' + col + ';border-radius:2px"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:10px;color:' + col + ';width:24px;text-align:right">' + o.pot + '</span>';
+    h += '<span style="font-size:12px;color:' + tc + ';width:14px;text-align:right">' + ta + '</span>';
+    h += '</div>';
+  });
+  document.getElementById('opp-scanner').innerHTML = '<div class="sum-card">' + h + '</div>';
+}
+
+function buildResilienceCenter() {
+  var lvCols = {'Weak':'var(--red)', 'Moderate':'var(--orange)', 'Strong':'var(--green)', 'Highly Resilient':'var(--green)'};
+  var h = '';
+  SDC_RESILIENCE.forEach(function(r) {
+    var lc = lvCols[r.lv] || 'var(--text3)';
+    h += '<div class="card">';
+    h += '<div class="card-label">' + r.label + '</div>';
+    h += '<div class="card-val" style="color:' + r.col + '">' + r.score + '</div>';
+    h += '<div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin:6px 0 4px">';
+    h += '<div style="height:100%;width:' + r.score + '%;background:' + r.col + ';border-radius:2px"></div></div>';
+    h += '<div style="font-size:9px;color:' + lc + '">' + r.lv + '</div>';
+    h += '</div>';
+  });
+  document.getElementById('resilience-grid').innerHTML = h;
+}
+
+function buildDependencyChains() {
+  var chains = [
+    {
+      id:'dc-energy', title:'Energy Infrastructure',
+      steps:[
+        {label:'Energy Supply Disruption',     risk:65, col:'#eab308'},
+        {label:'Industrial Output Decline',    risk:68, col:'#f97316'},
+        {label:'Supply Chain Breakdown',       risk:72, col:'#f97316'},
+        {label:'Economic Instability',         risk:74, col:'#3b82f6'},
+        {label:'Social Unrest',                risk:68, col:'#ef4444'},
+        {label:'Political Destabilisation',    risk:78, col:'#f97316'},
+      ]
+    },
+    {
+      id:'dc-food', title:'Food Security Chain',
+      steps:[
+        {label:'Climate Shock / Drought',      risk:71, col:'#10b981'},
+        {label:'Agricultural Failure',         risk:68, col:'#eab308'},
+        {label:'Food Price Shock',             risk:74, col:'#eab308'},
+        {label:'Social Hunger Pressure',       risk:76, col:'#ef4444'},
+        {label:'Migration Surge',              risk:82, col:'#ef4444'},
+        {label:'Political Instability',        risk:78, col:'#f97316'},
+      ]
+    },
+    {
+      id:'dc-digital', title:'Digital Infrastructure',
+      steps:[
+        {label:'Cyberattack / Grid Attack',    risk:52, col:'#a855f7'},
+        {label:'Communications Disruption',    risk:58, col:'#a855f7'},
+        {label:'Financial System Failure',     risk:65, col:'#3b82f6'},
+        {label:'Economic Shock',               risk:74, col:'#3b82f6'},
+        {label:'Supply Chain Paralysis',       risk:70, col:'#f97316'},
+        {label:'Cascade Political Crisis',     risk:78, col:'#f97316'},
+      ]
+    }
+  ];
+  chains.forEach(function(ch) {
+    var el = document.getElementById(ch.id);
+    if (!el) return;
+    var h = '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">' + ch.title + '</div>';
+    ch.steps.forEach(function(s, i) {
+      if (i > 0) h += '<div style="text-align:center;padding:2px 0;color:var(--text3);font-size:12px">&darr;</div>';
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:6px;border-left:2px solid ' + s.col + '">';
+      h += '<span style="font-size:11px;color:var(--text2);flex:1">' + s.label + '</span>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:' + s.col + '">' + s.risk + '</span>';
+      h += '</div>';
+    });
+    el.innerHTML = h;
+  });
+}
+
+function buildDecisionQueue(countries) {
+  var topEsc = countries.slice().sort(function(a,b){ return (parseFloat(b.delta)||0)-(parseFloat(a.delta)||0); }).slice(0,3);
+  var dynamicDecs = topEsc.map(function(c, i) {
+    var d = parseFloat(c.delta || 0);
+    return {
+      id: 'DEC-00' + (SDC_DECISIONS.length + i + 1),
+      pri: d >= 8 ? 'CRITICAL' : 'HIGH',
+      reason: (c.country_name || c.country) + ' GRI ' + fr(c.risk_score) + ' delta +' + d.toFixed(1),
+      conf: fr(68 + d),
+      col: d >= 8 ? '#ef4444' : '#f97316'
+    };
+  });
+  var allDecs = SDC_DECISIONS.concat(dynamicDecs).slice(0, 20);
+  var h = '';
+  allDecs.forEach(function(d) {
+    var pc = d.pri === 'CRITICAL' ? 'risk-crit' : d.pri === 'HIGH' ? 'risk-high' : 'risk-med';
+    h += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:7px;border-left:2px solid ' + d.col + ';margin-bottom:6px">';
+    h += '<div style="flex-shrink:0"><div style="font-family:var(--mono);font-size:10px;color:var(--gold);font-weight:700">' + d.id + '</div>';
+    h += '<span class="td-badge ' + pc + '" style="margin-top:3px;display:block;text-align:center">' + d.pri + '</span></div>';
+    h += '<div style="flex:1"><div style="font-size:11px;color:var(--text2);line-height:1.5">' + d.reason + '</div>';
+    h += '<div style="font-size:9px;color:var(--text3);margin-top:3px;font-family:var(--mono)">Confidence: <span style="color:var(--gold)">' + d.conf + '%</span></div></div>';
+    h += '</div>';
+  });
+  document.getElementById('dec-queue').innerHTML = h;
+}
+
+function buildExecutiveDashboard(countries) {
+  var byGri = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); });
+  // Top Risks
+  var hr = '';
+  byGri.slice(0,5).forEach(function(c,i) {
+    var sc = riskCol(fr(c.risk_score));
+    hr += '<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+    hr += '<span style="font-size:13px">' + flag(c.country) + '</span>';
+    hr += '<span style="font-size:11px;color:var(--text2);flex:1">' + (c.country_name||c.country) + '</span>';
+    hr += '<span style="font-family:var(--mono);font-size:11px;color:' + sc + ';font-weight:600">' + fr(c.risk_score) + '</span>';
+    hr += '</div>';
+  });
+  document.getElementById('ed-risks').innerHTML = hr;
+
+  // Top Opportunities
+  var ho = '';
+  SDC_OPPS.slice(0,5).forEach(function(o) {
+    var col = ({Infrastructure:'#10b981',Technology:'#a855f7',Regional:'#3b82f6',Emerging:'#eab308',Strategic:'#f97316'})[o.cat] || 'var(--text2)';
+    ho += '<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+    ho += '<span style="width:7px;height:7px;border-radius:50%;background:' + col + ';display:inline-block;flex-shrink:0"></span>';
+    ho += '<span style="font-size:11px;color:var(--text2);flex:1">' + o.name + '</span>';
+    ho += '<span style="font-family:var(--mono);font-size:10px;color:' + col + '">' + o.pot + '</span>';
+    ho += '</div>';
+  });
+  document.getElementById('ed-opps').innerHTML = ho;
+
+  // Top Drivers
+  var hd = '';
+  INFLUENCE_SCORES.slice(0,5).forEach(function(d) {
+    hd += '<div style="display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+    hd += '<span style="width:7px;height:7px;border-radius:50%;background:' + d.col + ';display:inline-block;flex-shrink:0"></span>';
+    hd += '<span style="font-size:11px;color:var(--text2);flex:1">' + d.name + '</span>';
+    hd += '<span style="font-family:var(--mono);font-size:10px;color:var(--gold)">' + d.inf + '</span>';
+    hd += '</div>';
+  });
+  document.getElementById('ed-drivers').innerHTML = hd;
+
+  // Priority Decisions
+  var hdec = '';
+  SDC_DECISIONS.slice(0,5).forEach(function(d) {
+    var dc = d.pri === 'CRITICAL' ? 'var(--red)' : 'var(--orange)';
+    hdec += '<div style="display:flex;align-items:flex-start;gap:7px;padding:6px 0;border-bottom:0.5px solid var(--border)">';
+    hdec += '<span style="font-family:var(--mono);font-size:9px;color:' + dc + ';font-weight:700;flex-shrink:0;margin-top:1px">' + d.id + '</span>';
+    hdec += '<span style="font-size:10px;color:var(--text2);flex:1;line-height:1.5">' + d.reason + '</span>';
+    hdec += '</div>';
+  });
+  document.getElementById('ed-decisions').innerHTML = hdec;
+}
+
+window.genStrategicBrief = function() {
+  var el = document.getElementById('ai-brief-out');
+  if (!el) return;
+  el.innerHTML = '<div class="sum-card" style="border:0.5px solid rgba(59,130,246,.25)"><div class="loading">Compiling Executive Intelligence Briefing...</div></div>';
+  setTimeout(function() {
+    var now = new Date().toUTCString().replace('GMT','UTC');
+    var topCC = _sdcCountries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); });
+    var topEsc = _sdcCountries.slice().sort(function(a,b){ return (parseFloat(b.delta)||0)-(parseFloat(a.delta)||0); }).filter(function(c){ return parseFloat(c.delta||0)>0; });
+    var critN = topCC.filter(function(c){ return c.risk_score>=80; }).length;
+
+    var h = '<div class="sum-card" style="border:0.5px solid rgba(59,130,246,.25)">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+    h += '<div><div style="font-size:14px;font-weight:700;color:var(--text)">Executive Intelligence Briefing</div>';
+    h += '<div style="font-size:10px;color:var(--text3);margin-top:2px">Strategic Risk Intelligence Platform &bull; Founder Access Only</div></div>';
+    h += '<div style="font-family:var(--mono);font-size:9px;color:var(--text3)">' + now + '</div></div>';
+
+    var sections = [
+      {
+        icon:'&#128200;', title:'Current Situation',
+        body: _sdcCountries.length + ' countries monitored. ' + critN + ' at critical risk. '
+          + topEsc.length + ' countries showing escalation. System status: OPERATIONAL.'
+      },
+      {
+        icon:'&#9889;', title:'Top Drivers',
+        body: 'Migration Pressure (82) and Political Instability (78) are the primary systemic risk drivers. Economic Stress (74) is amplifying cascade effects across 8 interconnected domains.'
+      },
+      {
+        icon:'&#128308;', title:'Top Risks',
+        body: (topCC.slice(0,3).map(function(c){ return (c.country_name||c.country) + ' (GRI ' + fr(c.risk_score) + ')'; }).join(', ')) + ' represent highest immediate risk concentration.'
+      },
+      {
+        icon:'&#128202;', title:'Forecast Outlook',
+        body: 'FC7d models indicate escalation pressure in ' + Math.min(6, topEsc.length) + ' countries. Climate cascade risk elevated. 30d horizon shows continued pressure unless intervention actions are taken.'
+      },
+      {
+        icon:'&#9654;', title:'Recommended Actions',
+        body: '1. Intensify monitoring for Migration + Political Instability nexus. 2. Update Scenario Engine for top 5 escalating countries. 3. Review Climate cascade chain for 3 affected regions.'
+      },
+      {
+        icon:'&#127775;', title:'Emerging Opportunities',
+        body: 'Green Energy Infrastructure (potential: 87), AI Risk Monitoring Expansion (84), Southeast Asia Growth Window (79) represent highest-potential strategic opportunities.'
+      },
+      {
+        icon:'&#128203;', title:'Priority Decisions',
+        body: 'DEC-001 (CRITICAL): Migration + Political escalation requires immediate response. DEC-002 (CRITICAL): Economic-Social correlation demands scenario preparation. DEC-003 (HIGH): FC7d upgrade for 6 countries.'
+      },
+    ];
+    sections.forEach(function(s) {
+      h += '<div style="margin-bottom:10px;padding:10px;background:var(--bg3);border-radius:7px">';
+      h += '<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:5px">' + s.icon + ' ' + s.title + '</div>';
+      h += '<div style="font-size:11px;color:var(--text2);line-height:1.6">' + s.body + '</div>';
+      h += '</div>';
+    });
+
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">';
+    h += '<div style="font-size:10px;color:var(--text3)">Confidence Level: <span style="color:var(--gold);font-weight:600">79%</span></div>';
+    h += '<div style="font-size:9px;color:var(--text3);font-family:var(--mono)">SIG-NN v13 &bull; ' + now + '</div>';
+    h += '</div></div>';
+    el.innerHTML = h;
+  }, 1200);
 };
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
