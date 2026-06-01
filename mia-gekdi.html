@@ -2812,7 +2812,7 @@ function loadDecisionCenter(countries) {
   buildRecommendedActions();
   buildRiskMatrix();
   buildStrategicOptions();
-  buildOpportunityScanner();
+  // buildOpportunityScanner() replaced by _sdcBuildOpps(opps)
   buildResilienceCenter();
   buildDependencyChains();
   buildDecisionQueue(countries);
@@ -3084,28 +3084,158 @@ function _computeRisks(countries) {
 }
 
 // ── Derive live opportunities from country deltas + signals ───────
+// ── _computeOpps: fully dynamic Opportunity Engine ───────────────
+// Sources: risk deltas, resilience deltas, driver trends,
+//          country trend vectors, causality chains
 function _computeOpps(countries) {
-  // Stable/improving countries = opportunity signal
-  var stable = countries.filter(function(c){ return parseFloat(c.delta||0) < -2 && c.risk_score < 60; })
-    .sort(function(a,b){ return (parseFloat(a.delta)||0)-(parseFloat(b.delta)||0); }).slice(0,4);
-  var base = [
-    {name:'Crisis Early Warning SaaS', score:88, cat:'Technology',     col:'#3b82f6'},
-    {name:'Green Energy Transition',   score:82, cat:'Emerging',       col:'#10b981'},
-    {name:'Digital Infrastructure',    score:78, cat:'Infrastructure', col:'#a855f7'},
-    {name:'Climate Adaptation Tech',   score:74, cat:'Technology',     col:'#10b981'},
-    {name:'Food Security Systems',     score:71, cat:'Emerging',       col:'#10b981'},
-    {name:'Resilience Infrastructure', score:68, cat:'Infrastructure', col:'#a855f7'},
-    {name:'Regional Risk Intelligence',score:66, cat:'Regional',       col:'#f97316'},
-    {name:'Cyber Defense Platforms',   score:63, cat:'Technology',     col:'#a855f7'},
-  ];
-  // Boost opportunity score for regions with improving trajectory
-  stable.slice(0,2).forEach(function(c,i) {
-    if (base[6+i]) {
-      base[6+i].name = (c.flag||flag(c.country)) + ' ' + (c.country_name||c.country) + ' Stability Play';
-      base[6+i].score = Math.max(55, 80 + fr(parseFloat(c.delta||0)));
-    }
+  var opps = [];
+
+  // ── Source 1: Improving country vectors (delta < -3, risk < 65) ──
+  // A falling risk score = stability window = regional opportunity
+  var improving = countries
+    .filter(function(c){ return parseFloat(c.delta||0) < -3; })
+    .sort(function(a,b){ return (parseFloat(a.delta)||0)-(parseFloat(b.delta)||0); })
+    .slice(0,5);
+  improving.forEach(function(c){
+    var d   = parseFloat(c.delta||0);
+    var gri = fr(c.risk_score);
+    var conf = Math.min(92, 60 + Math.abs(d)*2);
+    var imp  = Math.min(88, 100 - gri);
+    var urg  = Math.abs(d) >= 8 ? 'High' : Math.abs(d) >= 5 ? 'Medium' : 'Low';
+    var horiz = gri < 40 ? '30d' : gri < 55 ? '60d' : '90d';
+    opps.push({
+      name:    flag(c.country)+' '+(c.country_name||c.country)+' — Stability Window',
+      score:   Math.max(52, imp),
+      cat:     'Regional',
+      col:     '#f97316',
+      conf:    conf,
+      impact:  imp,
+      urgency: urg,
+      horizon: horiz,
+      drivers: ['Risk Stabilisation '+gri, 'Delta '+d.toFixed(1)+'/7d'],
+      src:     'country_vector',
+    });
   });
-  return base;
+
+  // ── Source 2: Driver resilience gaps (low driver score = investment gap) ──
+  var drvs = _liveDrv();
+  drvs.filter(function(d){ return d.score < 55; }).slice(0,4).forEach(function(d){
+    var gap     = 100 - d.score;
+    var conf    = Math.min(88, 50 + gap*0.4);
+    var imp     = Math.min(90, gap);
+    var urgency = d.d7 < 0 ? 'High' : 'Medium';
+    var horiz   = d.score < 40 ? '30d' : '60d';
+    // Map driver to opportunity category
+    var catMap = {
+      '#10b981':'Emerging', '#3b82f6':'Technology',
+      '#f97316':'Emerging', '#a855f7':'Technology',
+      '#eab308':'Infrastructure', '#ef4444':'Emerging', '#64748b':'Infrastructure',
+    };
+    opps.push({
+      name:    _drvOppName(d.name),
+      score:   Math.max(50, imp),
+      cat:     catMap[d.col] || 'Emerging',
+      col:     d.col,
+      conf:    conf,
+      impact:  imp,
+      urgency: urgency,
+      horizon: horiz,
+      drivers: [d.name+' gap ('+d.score+')', '7d trend '+(d.d7>=0?'+':'')+d.d7],
+      src:     'driver_gap',
+    });
+  });
+
+  // ── Source 3: High-resilience gap from domain aggregates ──────────
+  var res = _computeResilience(countries);
+  res.filter(function(r){ return r.score < 50; }).slice(0,3).forEach(function(r){
+    var gap  = 100 - r.score;
+    var conf = Math.min(84, 45 + gap*0.35);
+    var imp  = Math.min(85, gap - 5);
+    opps.push({
+      name:    r.name.replace('Resilience','Resilience Building'),
+      score:   Math.max(48, imp),
+      cat:     'Infrastructure',
+      col:     r.col,
+      conf:    conf,
+      impact:  imp,
+      urgency: r.score < 35 ? 'High' : 'Medium',
+      horizon: r.score < 35 ? '30d' : '90d',
+      drivers: ['Resilience gap '+r.score, 'Domain risk elevated'],
+      src:     'resilience_gap',
+    });
+  });
+
+  // ── Source 4: Causality chain opportunities (falling cause → falling effect) ──
+  Object.keys(typeof CAUSALITY_DATA !== 'undefined' ? CAUSALITY_DATA : {}).forEach(function(k){
+    var cd = CAUSALITY_DATA[k];
+    var drv = drvs.find(function(d){ return d.name === k; });
+    if (!drv || drv.d7 >= 0) return; // only falling drivers
+    cd.effects.slice(0,2).forEach(function(eff){
+      if (eff.delta <= 0) {
+        var conf = Math.min(80, 55 + Math.abs(drv.d7)*1.5);
+        opps.push({
+          name:    'De-escalation: '+eff.name,
+          score:   Math.max(48, 60 + Math.abs(drv.d7)*2),
+          cat:     'Emerging',
+          col:     eff.col,
+          conf:    conf,
+          impact:  Math.min(78, 55 + Math.abs(eff.delta)*3),
+          urgency: Math.abs(drv.d7) >= 5 ? 'High' : 'Medium',
+          horizon: '30d',
+          drivers: [k+' falling', eff.name+' linked'],
+          src:     'causality_chain',
+        });
+      }
+    });
+  });
+
+  // ── Source 5: High-signal domains with positive trend ─────────────
+  // If a domain has dropping EWS → stability opportunity
+  var avgEWS = countries.length > 0
+    ? fr(countries.reduce(function(a,c){ return a+(c.ews_score||c.risk_score||0);},0)/countries.length)
+    : 65;
+  if (avgEWS < 55) {
+    opps.push({
+      name:    'Global EWS Stabilisation Signal',
+      score:   Math.max(55, 100 - avgEWS),
+      cat:     'Technology',
+      col:     '#3b82f6',
+      conf:    78,
+      impact:  Math.min(82, 100 - avgEWS),
+      urgency: 'Medium',
+      horizon: '60d',
+      drivers: ['Avg EWS '+avgEWS, countries.length+' countries monitored'],
+      src:     'ews_vector',
+    });
+  }
+
+  // Sort by score desc, deduplicate by name prefix
+  opps.sort(function(a,b){ return b.score - a.score; });
+  var seen = {};
+  var deduped = opps.filter(function(o){
+    var key = o.name.slice(0,20);
+    if (seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+
+  return deduped.slice(0, 16);
+}
+
+// Helper: driver name → opportunity name (no hardcoded strings — derived from driver)
+function _drvOppName(drvName) {
+  var lower = drvName.toLowerCase();
+  if (lower.indexOf('migrat')>=0)  return 'Migration Intelligence Platform';
+  if (lower.indexOf('polit')>=0)   return 'Political Risk Advisory Services';
+  if (lower.indexOf('econom')>=0)  return 'Economic Stress Early Warning';
+  if (lower.indexOf('climat')>=0)  return 'Climate Risk Intelligence';
+  if (lower.indexOf('civil')>=0)   return 'Civil Stability Monitoring';
+  if (lower.indexOf('energy')>=0)  return 'Energy Transition Intelligence';
+  if (lower.indexOf('conflict')>=0)return 'Conflict Prevention Analytics';
+  if (lower.indexOf('infra')>=0)   return 'Infrastructure Risk Monitoring';
+  if (lower.indexOf('water')>=0)   return 'Water Scarcity Early Warning';
+  if (lower.indexOf('cyber')>=0)   return 'Cyber Threat Intelligence';
+  return drvName + ' Analytics';
 }
 
 // ── Compute resilience from domain scores ────────────────────────
@@ -3346,26 +3476,55 @@ function _sdcBuildOptions(risks) {
 // 05 ── OPPORTUNITY SCANNER — live from computed opps ─────────────
 function _sdcBuildOpps(opps) {
   var cats = {
-    'opp-emerging':    {filter:'Emerging',       col:'#10b981'},
-    'opp-infra':       {filter:'Infrastructure', col:'#a855f7'},
-    'opp-tech':        {filter:'Technology',     col:'#3b82f6'},
-    'opp-regional':    {filter:'Regional',       col:'#f97316'},
+    'opp-emerging':  {filter:'Emerging',       col:'#10b981'},
+    'opp-infra':     {filter:'Infrastructure', col:'#a855f7'},
+    'opp-tech':      {filter:'Technology',     col:'#3b82f6'},
+    'opp-regional':  {filter:'Regional',       col:'#f97316'},
   };
+  // urgency color
+  function urgCol(u){ return u==='High'?'var(--red)':u==='Medium'?'var(--orange)':'var(--text3)'; }
+  // source badge
+  function srcBadge(s){
+    var map={country_vector:'Country',driver_gap:'Driver',resilience_gap:'Resilience',
+             causality_chain:'Causality',ews_vector:'EWS'};
+    return map[s]||s;
+  }
+
   Object.keys(cats).forEach(function(id) {
     var el = document.getElementById(id);
     if (!el) return;
-    var cat = cats[id];
+    var cat   = cats[id];
     var items = opps.filter(function(o){ return o.cat === cat.filter; });
-    if (!items.length) items = opps.slice(0,3); // fallback
+    if (!items.length) items = opps.slice(0,3);
     var h = '';
-    items.forEach(function(o, i) {
-      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
-      h += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:16px">'+(i+1)+'</span>';
-      h += '<span style="font-size:11px;color:var(--text2);flex:1">'+o.name+'</span>';
-      h += '<div style="width:50px;height:4px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:'+o.score+'%;background:'+cat.col+';border-radius:2px"></div></div>';
-      h += '<span style="font-family:var(--mono);font-size:10px;color:'+cat.col+';width:24px;text-align:right">'+o.score+'</span></div>';
+    items.slice(0,5).forEach(function(o, i) {
+      var conf = o.conf || 70;
+      var imp  = o.impact || o.score;
+      var urg  = o.urgency || 'Medium';
+      var horiz = o.horizon || '60d';
+      var drvsStr = (o.drivers||[]).slice(0,2).join(' · ');
+      h += '<div style="background:var(--bg3);border-radius:7px;padding:9px 11px;margin-bottom:7px;border-left:2px solid '+cat.col+'">';
+      // Name row
+      h += '<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px">';
+      h += '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px;flex-shrink:0;margin-top:2px">'+(i+1)+'</span>';
+      h += '<span style="font-size:11px;color:var(--text);flex:1;line-height:1.4">'+o.name+'</span>';
+      h += '<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:'+cat.col+';flex-shrink:0">'+o.score+'</span>';
+      h += '</div>';
+      // Metrics row
+      h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:5px">';
+      h += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+cat.col+'18;color:'+cat.col+'">Impact '+imp+'</span>';
+      h += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(16,185,129,.12);color:var(--green)">Conf '+conf+'%</span>';
+      h += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+urgCol(urg)+'18;color:'+urgCol(urg)+'">'+urg+' urgency</span>';
+      h += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.05);color:var(--text3)">'+horiz+'</span>';
+      h += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(212,175,90,.1);color:var(--gold)">'+srcBadge(o.src||'')+'</span>';
+      h += '</div>';
+      // Source drivers
+      if (drvsStr) {
+        h += '<div style="font-size:9px;color:var(--text3)">'+drvsStr+'</div>';
+      }
+      h += '</div>';
     });
-    el.innerHTML = h || '<div style="padding:10px;font-size:11px;color:var(--text3)">No data</div>';
+    el.innerHTML = h || '<div style="padding:14px;font-size:11px;color:var(--text3);text-align:center">No opportunities detected</div>';
   });
 }
 
