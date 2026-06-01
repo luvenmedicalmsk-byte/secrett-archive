@@ -30677,6 +30677,645 @@ def save_grdf_mobile_ux_audit(snapshots: list) -> None:
     print(f"[MUX] REDESIGN SPEC COMPLETE — map {layout['current_map_coverage_pct']}%→{layout['target_map_coverage_pct']}% ({elapsed}ms)", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF COUNTRY INTELLIGENCE ARCHITECTURE V1
+#
+# Complete Country Intelligence Panel architecture.
+# Primary intelligence product · Main conversion funnel.
+# Benchmark: Palantir / Dataminr / Bloomberg Intelligence / Stratfor / S&P
+#
+# Part 1:  Executive Overview          -> ci_overview.json
+# Part 2:  Risk Drivers                -> ci_drivers.json
+# Part 3:  Forecast Engine             -> ci_forecasts.json
+# Part 4:  Signal Feed                 -> ci_signals.json
+# Part 5:  Warning Feed                -> ci_warnings.json
+# Part 6:  Escalation Tracker         -> ci_escalation.json
+# Part 7:  Risk Matrix                 -> ci_risk_matrix.json
+# Part 8:  Commercial Architecture     -> ci_commercial.json
+# Part 9:  Mobile Layout               -> ci_mobile.json
+# Part 10: Conversion Touchpoints      -> ci_conversion.json
+#
+# Writes: country_intel/* only. Architecture frozen at V13.
+# =========================================================================
+
+COUNTRY_INTEL_DIR = DOCS_DIR / "country_intel"
+
+# Status thresholds (Part 1)
+_CI_STATUS_LEVELS = [
+    (75, "CRITICAL"),
+    (60, "ESCALATING"),
+    (45, "ELEVATED"),
+    (0,  "STABLE"),
+]
+
+# Forecast horizons with tier gates (Part 3)
+_CI_FORECAST_TIERS = {
+    "24h":  "FREE",
+    "7d":   "SIGNAL_PRO",
+    "30d":  "STRATEGIC_PRO",
+    "90d":  "STRATEGIC_PRO",
+    "180d": "STRATEGIC_PRO",
+}
+
+# Risk Matrix tier gates (Part 7)
+_CI_MATRIX_TIERS = {
+    "2Y":  "SIGNAL_PRO",
+    "5Y":  "STRATEGIC_PRO",
+    "10Y": "STRATEGIC_PRO",
+}
+
+# Conversion touchpoints (Part 10)
+_CI_CONVERSION_POINTS = [
+    {"id":"CIP-001","trigger":"forecast_30d_tap",    "lock_tier":"SIGNAL_PRO",    "price_rub":4900,   "price_usd":55,  "cta":"Открыть SIGNAL PRO"},
+    {"id":"CIP-002","trigger":"forecast_90d_tap",    "lock_tier":"STRATEGIC_PRO", "price_rub":29900,  "price_usd":330, "cta":"Открыть STRATEGIC PRO"},
+    {"id":"CIP-003","trigger":"risk_matrix_5y_tap",  "lock_tier":"STRATEGIC_PRO", "price_rub":29900,  "price_usd":330, "cta":"Risk Matrix 5Y · STRATEGIC PRO"},
+    {"id":"CIP-004","trigger":"scenario_adverse_tap","lock_tier":"STRATEGIC_PRO", "price_rub":29900,  "price_usd":330, "cta":"Разблокировать Scenario Engine"},
+    {"id":"CIP-005","trigger":"analytics_banner",    "lock_tier":"ARCHIVE_MEMBER","price_rub":0,      "price_usd":0,   "cta":"Archive Members: SIGNAL PRO в подарок + −35%"},
+]
+
+# Domain display colors (Part 2)
+_CI_DOMAIN_COLORS = {
+    "climate":        "#10B981",
+    "geological":     "#065F46",
+    "economic":       "#3B82F6",
+    "geopolitical":   "#F97316",
+    "technology":     "#A855F7",
+    "social":         "#EF4444",
+    "infrastructure": "#1E3A8A",
+}
+
+
+def _ci_status(risk: int) -> str:
+    for thr, status in _CI_STATUS_LEVELS:
+        if risk >= thr: return status
+    return "STABLE"
+
+def _ciload(rel: str) -> dict:
+    p = GRDF_DIR / rel
+    if p.exists():
+        try: return json.loads(p.read_text())
+        except Exception: return {}
+    return {}
+
+def _ci_ews_load(iso2: str) -> dict:
+    # try ews score file first, then fall back to v7
+    for subdir in ["ews","grdf"]:
+        if subdir == "ews":
+            p = DOCS_DIR / "ews" / "ews_score.json"
+            if p.exists():
+                try:
+                    d = json.loads(p.read_text())
+                    for rec in d.get("scores",[]):
+                        if rec.get("country") == iso2:
+                            return rec
+                except Exception: pass
+        else:
+            return _ciload(f"v7_warning_score_{iso2}.json")
+    return {}
+
+
+# ── Part 1: Executive Overview ────────────────────────────────────────────
+
+def _build_ci_overview(snapshots: list) -> dict:
+    """Part 1: Executive overview for every country."""
+    overviews: list[dict] = []
+
+    for snap in snapshots:
+        iso2   = snap["country"]
+        risk   = int(snap.get("risk_score",50) or 50)
+        delta  = float(snap.get("delta",0) or 0)
+        dom    = snap.get("dominant_domain","economic") or "economic"
+        status = _ci_status(risk)
+
+        ews_rec  = _ci_ews_load(iso2)
+        ews      = int(ews_rec.get("ews_score", round(risk*0.95)) or round(risk*0.95))
+        band     = ews_rec.get("band", _ci_status(ews).replace("ESCALATING","ORANGE").replace("ELEVATED","YELLOW").replace("STABLE","GREEN").replace("CRITICAL","RED"))
+        cri      = round(risk * 0.85)
+
+        gri_d    = _ciload(f"v1_country_{iso2}.json")
+        gri      = round(float(gri_d.get("gri",risk) or risk))
+
+        dom_s    = _get_domain_scores(iso2, snap)
+        top_risks= sorted(
+            [{"domain":d,"score":round(float(v.get("score",0) or 0)),
+              "color":_CI_DOMAIN_COLORS.get(d,"#6B7280")}
+             for d,v in dom_s.items() if float(v.get("score",0) or 0) >= 35],
+            key=lambda x: -x["score"]
+        )[:3]
+
+        overviews.append({
+            "country":        iso2,
+            "country_name":   snap.get("country_name",iso2),
+            "gri":            gri,
+            "cri":            cri,
+            "ews":            ews,
+            "ews_band":       band,
+            "status":         status,
+            "dominant_domain":dom,
+            "delta":          round(delta,3),
+            "top_risks":      top_risks,
+            "tier_gates": {
+                "overview_gri_cri_ews": "FREE",
+                "status_color":         "FREE",
+                "top_risks_top3":       "FREE",
+                "full_drivers":         "SIGNAL_PRO",
+            },
+        })
+
+    overviews.sort(key=lambda x: (-x["gri"], -_CI_STATUS_LEVELS[0][0]))
+
+    status_dist = {"STABLE":0,"ELEVATED":0,"ESCALATING":0,"CRITICAL":0}
+    for o in overviews: status_dist[o["status"]] += 1
+
+    return {
+        "total_countries":   len(overviews),
+        "status_distribution": status_dist,
+        "color_system": {
+            "STABLE":    "#10B981",
+            "ELEVATED":  "#EAB308",
+            "ESCALATING":"#F97316",
+            "CRITICAL":  "#EF4444",
+        },
+        "overviews":         overviews,
+        "top10_by_gri":      overviews[:10],
+        "as_of":             TODAY,
+    }
+
+
+# ── Part 2: Risk Drivers ──────────────────────────────────────────────────
+
+def _build_ci_drivers(snapshots: list) -> dict:
+    """Part 2: Top 5 active risk drivers per country with contribution % and trend."""
+    all_drivers: list[dict] = []
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        dom_s = _get_domain_scores(iso2, snap)
+
+        # Score per domain
+        raw_scores = {d: float(v.get("score",0) or 0) for d,v in dom_s.items()}
+        total_score= max(1, sum(raw_scores.values()))
+
+        drivers: list[dict] = []
+        for dom, score in sorted(raw_scores.items(), key=lambda x:-x[1])[:5]:
+            if score < 20: continue
+            contribution_pct = round(score / total_score * 100, 1)
+            # Trend: compare domain score to average
+            avg_dom = total_score / max(1, len(raw_scores))
+            trend = "↑" if score > avg_dom * 1.1 else "↓" if score < avg_dom * 0.9 else "→"
+            drivers.append({
+                "domain":           dom,
+                "score":            round(score),
+                "contribution_pct": contribution_pct,
+                "trend":            trend,
+                "color":            _CI_DOMAIN_COLORS.get(dom,"#6B7280"),
+            })
+
+        if drivers:
+            all_drivers.append({
+                "country":           iso2,
+                "country_name":      snap.get("country_name",iso2),
+                "risk_score":        risk,
+                "drivers":           drivers,
+                "primary_driver":    drivers[0]["domain"] if drivers else "economic",
+                "driver_count":      len(drivers),
+                "tier_gate":         "SIGNAL_PRO",
+            })
+
+    all_drivers.sort(key=lambda x: -x["risk_score"])
+    return {
+        "total_countries":   len(all_drivers),
+        "tier_gate":         "SIGNAL_PRO",
+        "free_preview_n":    3,
+        "driver_schema":     ["domain","score","contribution_pct","trend","color"],
+        "country_drivers":   all_drivers[:20],
+        "as_of":             TODAY,
+    }
+
+
+# ── Part 3: Forecast Engine ───────────────────────────────────────────────
+
+def _build_ci_forecasts(snapshots: list) -> dict:
+    """Part 3: Multi-horizon forecasts per country with tier gates."""
+    import math as _mcf
+    forecasts: list[dict] = []
+
+    for snap in snapshots:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+
+        ews_rec = _ci_ews_load(iso2)
+        mom     = float(ews_rec.get("momentum", 20) or 20)
+
+        hz: dict = {}
+        for h, days_map in [("24h",1),("7d",7),("30d",30),("90d",90),("180d",180)]:
+            decay    = _mcf.exp(-0.05 * days_map / 30)
+            proj     = max(0, min(100, round(risk + delta*(days_map/7)*decay + mom*0.01*days_map/30, 1)))
+            esc_prob = min(0.98, max(0.02, round(delta*0.03 + proj/200 + 0.3, 3)))
+            conf     = round(max(0.30, 0.90 - days_map*0.001), 2)
+            tier     = _CI_FORECAST_TIERS.get(h,"STRATEGIC_PRO")
+            hz[h] = {
+                "projected_risk":   proj,
+                "escalation_prob":  esc_prob,
+                "confidence":       conf,
+                "tier":             tier,
+                "locked":           tier != "FREE",
+            }
+
+        forecasts.append({
+            "country":    iso2,
+            "current":    risk,
+            "delta":      round(delta,3),
+            "horizons":   hz,
+            "free_horizons":   ["24h"],
+            "signal_pro_horizons": ["7d","30d"],
+            "strategic_horizons":  ["90d","180d"],
+        })
+
+    forecasts.sort(key=lambda x: -x["horizons"]["7d"]["escalation_prob"])
+    return {
+        "total_countries":  len(forecasts),
+        "tier_gates":       _CI_FORECAST_TIERS,
+        "horizons_schema":  ["24h","7d","30d","90d","180d"],
+        "forecasts":        forecasts[:20],
+        "top_escalating_7d":[f["country"] for f in forecasts[:5]],
+        "as_of":            TODAY,
+    }
+
+
+# ── Part 4: Signal Feed ───────────────────────────────────────────────────
+
+def _build_ci_signals(snapshots: list) -> dict:
+    """Part 4: SIG-NNN signal feed per country, priority-ranked."""
+    now_ts  = datetime.now(timezone.utc).isoformat()
+    feeds: list[dict] = []
+
+    for snap in sorted(snapshots, key=lambda x: -int(x.get("risk_score",50) or 50))[:25]:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        dom   = snap.get("dominant_domain","economic") or "economic"
+
+        signals = []
+        seq     = 1
+        for priority, threshold, desc in [
+            ("HIGH",   70, f"Risk index elevated: {risk}/100"),
+            ("MEDIUM", 55, f"Domain pressure: {dom} contributing {round(risk*0.4)}%"),
+            ("LOW",    40, f"Signal activity +{round(abs(delta),1)}pt"),
+        ]:
+            if risk >= threshold:
+                signals.append({
+                    "signal_id":f"SIG-{iso2}-{seq:02d}",
+                    "priority": priority,
+                    "domain":   dom,
+                    "message":  desc,
+                    "delta":    round(delta,2),
+                    "timestamp":now_ts,
+                })
+                seq += 1
+
+        if signals:
+            feeds.append({
+                "country":     iso2,
+                "signal_count":len(signals),
+                "signals":     signals,
+                "free_preview":signals[:1],
+                "tier_gate":   "SIGNAL_PRO",
+            })
+
+    return {
+        "total_countries": len(feeds),
+        "tier_gate":       "SIGNAL_PRO",
+        "free_preview_n":  1,
+        "signal_feeds":    feeds[:15],
+        "as_of":           TODAY,
+    }
+
+
+# ── Part 5: Warning Feed ──────────────────────────────────────────────────
+
+def _build_ci_warnings(snapshots: list) -> dict:
+    """Part 5: WARN-NNNNN warning feed per country with severity levels."""
+    now_ts = datetime.now(timezone.utc).isoformat()
+    feeds: list[dict] = []
+    warn_seq = 1
+
+    for snap in sorted(snapshots, key=lambda x: -int(x.get("risk_score",50) or 50)):
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+
+        # Map to warning level
+        if risk >= 80:   level = "RED"
+        elif risk >= 65: level = "ORANGE"
+        elif risk >= 50: level = "WARNING"
+        elif risk >= 35: level = "WATCH"
+        else:            level = "INFO"
+
+        if level not in ("INFO",) or abs(delta) >= 2:
+            warns = [{
+                "warning_id": f"WARN-{warn_seq:05d}",
+                "level":      level,
+                "risk_score": risk,
+                "delta":      round(delta,2),
+                "message":    f"{level}: Risk index {risk}/100, delta {'+' if delta>=0 else ''}{round(delta,1)}",
+                "timestamp":  now_ts,
+            }]
+            warn_seq += 1
+            feeds.append({
+                "country":      iso2,
+                "warning_level":level,
+                "warnings":     warns,
+                "tier_gate":    "SIGNAL_PRO",
+            })
+
+    feeds.sort(key=lambda x: {"RED":0,"ORANGE":1,"WARNING":2,"WATCH":3,"INFO":4}.get(x["warning_level"],5))
+    return {
+        "total_warnings":  len(feeds),
+        "severity_levels": ["INFO","WATCH","WARNING","ORANGE","RED"],
+        "tier_gate":       "SIGNAL_PRO",
+        "warning_feeds":   feeds[:20],
+        "as_of":           TODAY,
+    }
+
+
+# ── Part 6: Escalation Tracker ────────────────────────────────────────────
+
+def _build_ci_escalation(snapshots: list) -> dict:
+    """Part 6: Escalation tracker — NEW_ALERT / ESCALATION / DE_ESCALATION."""
+    now_ts    = datetime.now(timezone.utc).isoformat()
+    events: list[dict] = []
+    seq       = 1
+
+    for snap in sorted(snapshots, key=lambda x: -abs(float(x.get("delta",0) or 0))):
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        if abs(delta) < 1.5 and risk < 55: continue
+
+        event_type = ("NEW_ALERT"      if risk >= 75 else
+                      "ESCALATION"     if delta > 2 else
+                      "DE_ESCALATION"  if delta < -2 else "WATCH")
+
+        events.append({
+            "event_id":   f"ESC-{iso2}-{seq:03d}",
+            "country":    iso2,
+            "event_type": event_type,
+            "risk_score": risk,
+            "delta":      round(delta,2),
+            "timestamp":  now_ts,
+            "timeline":   [
+                {"t":"T-30d","risk":max(0,risk-round(abs(delta)*4))},
+                {"t":"T-7d", "risk":max(0,risk-round(abs(delta)*1.5))},
+                {"t":"Now",  "risk":risk},
+            ],
+        })
+        seq += 1
+
+    events.sort(key=lambda x: {"NEW_ALERT":0,"ESCALATION":1,"DE_ESCALATION":2,"WATCH":3}.get(x["event_type"],4))
+    return {
+        "total_events":     len(events),
+        "new_alerts_n":     sum(1 for e in events if e["event_type"]=="NEW_ALERT"),
+        "escalations_n":    sum(1 for e in events if e["event_type"]=="ESCALATION"),
+        "de_escalations_n": sum(1 for e in events if e["event_type"]=="DE_ESCALATION"),
+        "tier_gate":        "SIGNAL_PRO",
+        "timeline_window":  "30d",
+        "events":           events[:15],
+        "as_of":            TODAY,
+    }
+
+
+# ── Part 7: Risk Matrix ───────────────────────────────────────────────────
+
+def _build_ci_risk_matrix(snapshots: list) -> dict:
+    """Part 7: Risk Matrix — 2Y (SIGNAL PRO) / 5Y / 10Y (STRATEGIC PRO)."""
+    matrix_data: list[dict] = []
+
+    for snap in snapshots[:20]:
+        iso2   = snap["country"]
+        risk   = int(snap.get("risk_score",50) or 50)
+        delta  = float(snap.get("delta",0) or 0)
+        dom_s  = _get_domain_scores(iso2, snap)
+
+        domain_scores = {d: round(float(v.get("score",0) or 0))
+                         for d,v in dom_s.items()}
+
+        # Project simple matrix
+        matrix_2y  = {m: min(100,round(risk + delta*(m/12)*0.8)) for m in range(1,25)}
+        matrix_5y  = {y: min(100,round(risk + delta*(y)*0.3)) for y in range(1,6)}
+        matrix_10y = {y: min(100,round(risk + delta*(y)*0.15)) for y in range(1,11)}
+
+        matrix_data.append({
+            "country":      iso2,
+            "current_risk": risk,
+            "domain_scores":domain_scores,
+            "matrix_2y":    {"data":matrix_2y,  "tier":"SIGNAL_PRO",    "locked":True},
+            "matrix_5y":    {"data":matrix_5y,  "tier":"STRATEGIC_PRO", "locked":True},
+            "matrix_10y":   {"data":matrix_10y, "tier":"STRATEGIC_PRO", "locked":True},
+        })
+
+    return {
+        "total_countries": len(matrix_data),
+        "tier_gates":      _CI_MATRIX_TIERS,
+        "horizons":        {"2Y":"SIGNAL_PRO","5Y":"STRATEGIC_PRO","10Y":"STRATEGIC_PRO"},
+        "matrices":        matrix_data[:10],
+        "as_of":           TODAY,
+    }
+
+
+# ── Part 8: Commercial Architecture ──────────────────────────────────────
+
+def _build_ci_commercial() -> dict:
+    """Part 8: Full commercial architecture for Country Intelligence Panel."""
+    return {
+        "primary_role":     "Country Intelligence Panel is the primary conversion funnel",
+        "conversion_funnel":"FREE → SIGNAL PRO → STRATEGIC PRO → ELITE INTELLIGENCE",
+        "tiers": {
+            "FREE": {
+                "visible": ["GRI","CRI","EWS","status","top_risks_3","forecast_24h"],
+                "locked":  ["forecast_30d","forecast_90d","risk_matrix","scenario_engine",
+                            "signal_feed_full","warning_feed","escalation_tracker"],
+                "price_rub":  0,
+            },
+            "SIGNAL_PRO": {
+                "unlocked": ["country_profile_full","risk_drivers","forecast_30d",
+                             "active_alerts","risk_matrix_2y","cascade_monitoring",
+                             "ai_briefing","export_functions","signal_feed_full",
+                             "warning_feed","escalation_tracker"],
+                "locked":   ["forecast_90d","forecast_180d","scenario_engine",
+                             "risk_matrix_5y","risk_matrix_10y","historical_analogues"],
+                "price_rub":  4900, "price_usd": 55, "price_eur": 50,
+            },
+            "STRATEGIC_PRO": {
+                "unlocked": ["forecast_90d","forecast_180d","scenario_engine",
+                             "risk_matrix_5y","risk_matrix_10y","historical_analogues",
+                             "cross_domain_analysis","strategic_reports","api_access"],
+                "locked":   ["executive_briefings","custom_intelligence","white_label"],
+                "price_rub":  29900, "price_usd": 330, "price_eur": 310,
+            },
+            "ELITE_INTELLIGENCE": {
+                "unlocked": ["executive_briefings","custom_intelligence","real_time_streaming",
+                             "full_api","white_label","institutional_integrations","sla"],
+                "locked":   [],
+                "price_rub":  150000, "price_usd": 1665, "price_eur": 1545,
+            },
+        },
+        "archive_member": {
+            "signal_pro_included": True,
+            "strategic_pro_rub":   19435,
+            "elite_rub":           97500,
+        },
+        "as_of": TODAY,
+    }
+
+
+# ── Part 9: Mobile Layout ─────────────────────────────────────────────────
+
+def _build_ci_mobile() -> dict:
+    """Part 9: iPhone-first mobile layout spec for Country Intelligence Panel."""
+    return {
+        "trigger":        "country_tap_on_map",
+        "animation":      "slide_up_bottom_sheet",
+        "presentation":   "bottom_sheet",
+        "snap_states": {
+            "25pct": {
+                "visible_height_vh": 25,
+                "content": ["country_name","flag","status_badge","gri_ews_cri_row"],
+                "interaction": "drag_up_to_expand",
+            },
+            "50pct": {
+                "visible_height_vh": 50,
+                "content": ["header","metrics_3col","top_risks","forecast_24h_7d"],
+                "interaction": "drag_to_expand_or_collapse",
+            },
+            "90pct": {
+                "visible_height_vh": 90,
+                "content": ["full_panel","risk_drivers","all_forecasts","signal_feed",
+                            "warning_feed","escalation_tracker","conversion_cta"],
+                "interaction": "scrollable_within_sheet",
+                "scroll": True,
+            },
+        },
+        "gestures": {
+            "drag_up":        "expand_snap",
+            "drag_down":      "collapse_snap",
+            "swipe_down_fast":"dismiss_to_map",
+            "map_tap":        "dismiss_or_collapse",
+            "close_button":   "dismiss_to_map",
+        },
+        "breakpoints": {
+            "iphone_se_375":     {"map_visible_vh":20,"panel_vh":80},
+            "iphone_15_390":     {"map_visible_vh":20,"panel_vh":80},
+            "iphone_15pro_430":  {"map_visible_vh":25,"panel_vh":75},
+            "android_480":       {"map_visible_vh":22,"panel_vh":78},
+        },
+        "touch_targets_px":  44,
+        "handle_visible":    True,
+        "handle_height_px":  20,
+        "as_of":             TODAY,
+    }
+
+
+# ── Part 10: Conversion Touchpoints ──────────────────────────────────────
+
+def _build_ci_conversion(snapshots: list) -> dict:
+    """Part 10: Full conversion touchpoint architecture."""
+    n_countries = len(snapshots)
+    elevated_n  = sum(1 for s in snapshots if int(s.get("risk_score",50) or 50) >= 60)
+
+    touchpoints = []
+    for cp in _CI_CONVERSION_POINTS:
+        touchpoints.append({
+            **cp,
+            "lock_screen_type": ("blur_preview"   if "forecast" in cp["trigger"] else
+                                  "partial_preview" if "scenario" in cp["trigger"] else
+                                  "upsell_banner"   if "banner" in cp["trigger"] else
+                                  "inline_paywall"),
+            "value_prop": {
+                "CIP-001": "Forecast 30d pour tous les pays. Escalation probability.",
+                "CIP-002": "90d + 180d strategic horizon. Historical analogues.",
+                "CIP-003": "Risk Matrix 5Y/10Y. Full domain breakdown. 10 years outlook.",
+                "CIP-004": "Baseline + Adverse + Worst-case scenarios. Probability distribution.",
+                "CIP-005": "SIGNAL PRO included. STRATEGIC PRO −35%. ELITE −35%. Permanent.",
+            }.get(cp["id"],""),
+        })
+
+    return {
+        "total_touchpoints":      len(touchpoints),
+        "primary_conversion":     "FREE → SIGNAL PRO",
+        "secondary_conversion":   "SIGNAL PRO → STRATEGIC PRO",
+        "touchpoints":            touchpoints,
+        "estimated_exposure_pct": round(elevated_n/max(1,n_countries)*100,1),
+        "lock_screen_types":      ["blur_preview","partial_preview","inline_paywall","upsell_banner"],
+        "as_of":                  TODAY,
+    }
+
+
+# ── Country Intelligence Architecture Orchestrator ────────────────────────
+
+def save_grdf_country_intel(snapshots: list) -> None:
+    """
+    GRDF Country Intelligence Architecture V1.
+    Primary intelligence product. Main conversion funnel.
+    Benchmark: Palantir / Dataminr / Bloomberg Intelligence / Stratfor / S&P.
+    Writes: country_intel/* only. Architecture frozen at V13.
+    """
+    import time as _tci
+    COUNTRY_INTEL_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tci.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(COUNTRY_INTEL_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[CI] Country Intelligence Architecture V1 — Primary intelligence product", file=sys.stderr)
+
+    overview = _build_ci_overview(snapshots)
+    _save("ci_overview.json", overview)
+    print(f"[CI] Part 1: countries={overview['total_countries']} critical={overview['status_distribution'].get('CRITICAL',0)}", file=sys.stderr)
+
+    drivers  = _build_ci_drivers(snapshots)
+    _save("ci_drivers.json", drivers)
+    print(f"[CI] Part 2: drivers built for {drivers['total_countries']} countries", file=sys.stderr)
+
+    forecasts= _build_ci_forecasts(snapshots)
+    _save("ci_forecasts.json", forecasts)
+    print(f"[CI] Part 3: forecasts={forecasts['total_countries']} top_esc7d={forecasts['top_escalating_7d'][:3]}", file=sys.stderr)
+
+    signals  = _build_ci_signals(snapshots)
+    _save("ci_signals.json", signals)
+    print(f"[CI] Part 4: signal_feeds={signals['total_countries']}", file=sys.stderr)
+
+    warnings = _build_ci_warnings(snapshots)
+    _save("ci_warnings.json", warnings)
+    print(f"[CI] Part 5: warnings={warnings['total_warnings']}", file=sys.stderr)
+
+    escalation=_build_ci_escalation(snapshots)
+    _save("ci_escalation.json", escalation)
+    print(f"[CI] Part 6: escalations={escalation['escalations_n']} alerts={escalation['new_alerts_n']}", file=sys.stderr)
+
+    matrix   = _build_ci_risk_matrix(snapshots)
+    _save("ci_risk_matrix.json", matrix)
+    print(f"[CI] Part 7: matrices={matrix['total_countries']} tiers=2Y/5Y/10Y", file=sys.stderr)
+
+    commercial=_build_ci_commercial()
+    _save("ci_commercial.json", commercial)
+
+    mobile   = _build_ci_mobile()
+    _save("ci_mobile.json", mobile)
+
+    conversion=_build_ci_conversion(snapshots)
+    _save("ci_conversion.json", conversion)
+
+    elapsed  = round((_tci.monotonic()-t_start)*1000)
+    print(f"[CI] Part 10: touchpoints={conversion['total_touchpoints']} funnel=FREE→SIGNAL PRO→STRATEGIC", file=sys.stderr)
+    print(f"[CI] COMPLETE — {overview['total_countries']} country profiles ({elapsed}ms)", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -30776,6 +31415,7 @@ def main():
     save_grdf_ews(snapshots)
     save_grdf_commercial(snapshots)
     save_grdf_mobile_ux_audit(snapshots)
+    save_grdf_country_intel(snapshots)
     save_grdf_alert_map_v2(snapshots)
     save_grdf_command(snapshots)
 
