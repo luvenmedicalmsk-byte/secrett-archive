@@ -6128,7 +6128,6 @@ function _evM(val, lbl, col) {
        + '</div>';
 }
 
-  // Safety: absorb any remaining errors so IIFE never kills window.grdf* exports
 })(); // end IIFE
 
 // Map overlay close — calls closeAllPanels which is on window
@@ -6185,22 +6184,21 @@ function _evM(val, lbl, col) {
   <div class="grdf-drawer-body" id="grdf-drawer-body"></div>
 </div>
 
-<!-- Archive CTA modal -->
+<!-- Sprint 5: Upgrade modal -->
 <div id="grdf-upgrade-modal">
   <div id="grdf-upgrade-panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-size:15px;font-weight:600;color:#f1f5f9">Доступно участникам Архива</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:600;color:#f1f5f9" id="grdf-up-title">Доступно участникам Архива</div>
       <button class="grdf-upgrade-close" onclick="grdfCloseUpgrade()">×</button>
     </div>
-    <div style="background:rgba(16,185,129,.08);border:0.5px solid #10b981;border-radius:9px;padding:13px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:500;color:#10b981;margin-bottom:4px">🔒 Прогноз на 7 дней</div>
-      <div style="font-size:11px;color:#6ee7b7;line-height:1.6">Прогноз на 7 дней доступен участникам Архива.</div>
-    </div>
-    <button class="grdf-cta-btn" id="grdf-up-cta" onclick="grdfActivateSignalPro()" style="background:#065f46;border:1px solid #10b981;color:#6ee7b7;padding:13px 0;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:block;width:100%;font-family:Montserrat,sans-serif">
+    <div class="grdf-lock-box" id="grdf-up-body"></div>
+    <button class="grdf-cta-btn grdf-cta-primary" id="grdf-up-cta" onclick="grdfActivateSignalPro()">
       Получить доступ к Архиву
     </button>
-    <div style="text-align:center;font-size:10px;color:#4a6380;margin-top:10px;line-height:1.6">
-      Участники Архива получают прогноз 7д и приоритетный доступ к платформе.
+    <div style="text-align:center;font-size:10px;color:#3d5068;margin:5px 0">$55 · €50 · Отмена в любой момент</div>
+    <div class="grdf-archive-banner" onclick="grdfActivateSignalPro()">
+      <span style="font-size:12px;color:#10b981;font-weight:500">⭐ Участникам Архива: Сигнал Про в подарок</span><br>
+      <span style="font-size:10px;color:#6ee7b7">Прогноз 7д включён · Приоритетный доступ</span>
     </div>
   </div>
 </div>
@@ -6288,10 +6286,21 @@ function _evM(val, lbl, col) {
         </div>
       </div>
     </div>
-    <div style="margin-top:12px;background:rgba(16,185,129,.08);border:0.5px solid #10b981;border-radius:9px;padding:14px">
-      <div style="font-size:12px;font-weight:500;color:#10b981;margin-bottom:5px">⭐ Программа для участников Архива</div>
-      <div style="font-size:11px;color:#6ee7b7;margin-bottom:12px;line-height:1.6">Участники Архива получают прогноз на 7 дней и приоритетный доступ к платформе.</div>
-      <button onclick="grdfActivateSignalPro()" style="display:block;width:100%;padding:12px 0;border-radius:8px;background:#065f46;border:1px solid #10b981;color:#6ee7b7;font-size:13px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Получить доступ к Архиву</button>
+    <div style="margin-top:12px;background:rgba(16,185,129,.08);border:0.5px solid #10b981;border-radius:9px;padding:13px">
+      <div style="font-size:11px;font-weight:500;color:#10b981;margin-bottom:3px">⭐ Программа для участников Архива</div>
+      <div style="font-size:10px;color:#6ee7b7;margin-bottom:9px">Сигнал Про включён · Прогноз 7д включён · Участник Архива</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#10b981;font-weight:500">Сигнал Про</div>
+          <div style="font-size:14px;color:#f1f5f9;font-weight:600">0 ₽</div>
+          <div style="font-size:9px;color:#374151;text-decoration:line-through">4 900 ₽</div>
+        </div>
+        <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#3b82f6;font-weight:500">Стратегик Про</div>
+          <div style="font-size:14px;color:#f1f5f9;font-weight:600">19 435 ₽</div>
+          <div style="font-size:9px;color:#374151;text-decoration:line-through">29 900 ₽</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -6452,7 +6461,7 @@ function grdfRenderCountryPanel(cc) {
 
   // Archive badge if Signal Pro
   if(isSig){
-    html += '<div class="grdf-archive-badge"><span>⭐ Участник Архива</span><small> · Прогноз 7д включён</small></div>';
+    html += '<div class="grdf-archive-badge"><span>⭐ Участник Архива</span><small> · Signal Pro included · Priority access</small></div>';
   }
 
   // Header
@@ -6484,32 +6493,69 @@ function grdfRenderCountryPanel(cc) {
   });
   html += '</div>';
 
-  // ── LAUNCH Jun 9-11: FREE=24h, ARCHIVE=7d only ──────────────
+  // Forecast
   html += '<div class="grdf-section-head">Прогноз</div>';
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 14px 10px">';
-  html += '<div class="grdf-fc-box" style="padding:10px 6px">';
-  html += '<div class="grdf-fc-hz">24 часа</div>';
-  html += '<div class="grdf-fc-val" style="font-size:22px;color:'+statusCol+'">'+fc24+'</div>';
-  html += '<div class="grdf-fc-tier" style="color:#10b981;font-size:9px">Бесплатно</div></div>';
+  html += '<div class="grdf-forecast-grid">';
+  // 24h FREE
+  html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">24h</div>';
+  html += '<div class="grdf-fc-val" style="color:'+statusCol+'">'+fc24+'</div>';
+  html += '<div class="grdf-fc-tier" style="color:#10b981">FREE</div></div>';
+  // 7d
   if(isSig){
-    html += '<div class="grdf-fc-box" style="padding:10px 6px">';
-    html += '<div class="grdf-fc-hz">7 дней</div>';
-    html += '<div class="grdf-fc-val" style="font-size:22px;color:'+(getStatus(fc7d)===\'CRITICAL\'?\'#ef4444\':getStatus(fc7d)===\'ESCALATING\'?\'#f97316\':\'#eab308\')+'">'+fc7d+'</div>';
-    html += '<div class="grdf-fc-tier" style="color:#10b981;font-size:9px">Архив</div></div>';
+    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">7d</div>';
+    html += '<div class="grdf-fc-val" style="color:'+(getStatus(fc7d)==='CRITICAL'?'#ef4444':getStatus(fc7d)==='ESCALATING'?'#f97316':'#eab308')+'">'+fc7d+'</div>';
+    html += '<div class="grdf-fc-tier" style="color:#10b981">PRO</div></div>';
   } else {
-    html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(\'forecast_7d\')" style="cursor:pointer;padding:10px 6px">';
-    html += '<div class="grdf-fc-hz">7 дней</div>';
-    html += '<div style="font-size:20px;color:#374151;margin:4px 0">🔒</div>';
-    html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:9px">Архив</div></div>';
+    html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_7d" style="cursor:pointer">';
+    html += '<div class="grdf-fc-hz">7d</div><div style="font-size:16px;color:#374151">🔒</div>';
+    html += '<div class="grdf-fc-tier" style="color:#d97706">Архив</div></div>';
   }
+  // 30d
+  if(isSig){
+    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">30d</div>';
+    html += '<div class="grdf-fc-val" style="color:#60a5fa">'+fc30d+'</div>';
+    html += '<div class="grdf-fc-tier" style="color:#10b981">PRO</div></div>';
+  } else {
+    html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_30d" style="cursor:pointer">';
+    html += '<div class="grdf-fc-hz">30d</div><div style="font-size:16px;color:#374151">🔒</div>';
+    html += '<div class="grdf-fc-tier" style="color:#ef4444">SIG</div></div>';
+  }
+  // 90d always locked at launch
+  html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_90d" style="cursor:pointer">';
+  html += '<div class="grdf-fc-hz">90d</div><div style="font-size:16px;color:#2d3f55">🔒</div>';
+  html += '<div class="grdf-fc-tier" style="color:#2d3f55">STR</div></div>';
   html += '</div>';
-  if(!isSig){
-    html += '<div style="margin:0 14px 12px;padding:12px;background:rgba(16,185,129,.08);border:0.5px solid #10b981;border-radius:10px">';
-    html += '<div style="font-size:12px;color:#10b981;font-weight:500;margin-bottom:4px">Доступно участникам Архива</div>';
-    html += '<div style="font-size:11px;color:#6ee7b7;margin-bottom:10px">Прогноз на 7 дней доступен участникам Архива.</div>';
-    html += '<button onclick="grdfActivateSignalPro()" style="display:block;width:100%;padding:11px 0;border-radius:8px;background:#065f46;border:1px solid #10b981;color:#6ee7b7;font-size:13px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Получить доступ к Архиву</button>';
+
+  // Drivers
+  html += '<div class="grdf-section-head">Риск-драйверы</div>';
+  if(isSig){
+    html += '<div style="padding:0 14px 8px">';
+    top3.forEach(function(r){
+      var dc = DOM_COLORS[r.d]||'#888';
+      var pct = fr(r.s/totalDS*100);
+      var trend = pct>35?'↑':pct>20?'→':'↓';
+      html += '<div style="margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+      html += '<span style="font-size:11px;color:#cbd5e1;display:flex;align-items:center;gap:4px">';
+      html += '<span style="width:5px;height:5px;border-radius:50%;background:'+dc+';display:inline-block"></span>';
+      html += (DOM_LABELS[r.d]||r.d)+'</span>';
+      html += '<span style="font-size:11px;color:'+dc+';font-weight:500">'+pct+'% '+trend+'</span></div>';
+      html += '<div style="height:2.5px;background:#1a2840;border-radius:2px">';
+      html += '<div style="height:100%;width:'+Math.min(pct*2.2,100)+'%;background:'+dc+';border-radius:2px"></div></div>';
+      html += '</div>';
+    });
     html += '</div>';
+  } else {
+    html += '<div style="margin:0 14px 8px"><div style="background:rgba(0,0,0,.4);border-radius:8px;border:0.5px solid #2d3f55;padding:13px;text-align:center">';
+    html += '<div style="font-size:18px;margin-bottom:6px">🔒</div>';
+    html += '<div style="font-size:12px;font-weight:500;color:#e2e8f0;margin-bottom:2px">Риск-драйверы · Signal Feed</div>';
+    html += '<div style="font-size:10px;color:#4a6380;margin-bottom:9px">5 драйверов + SIG-NNN сигналы</div>';
+    html += '<button onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="drivers" style="display:block;width:100%;padding:10px 0;border-radius:7px;background:#15803d;border:none;color:#dcfce7;font-size:12px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Открыть Signal Pro · 4 900 ₽/мес</button>';
+    html += '<div style="margin-top:7px;font-size:10px;color:#10b981;cursor:pointer;text-decoration:underline" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="archive">⭐ Участникам Архива: Сигнал Про в подарок →</div>';
+    html += '</div></div>';
   }
+
+  // Signals preview
   if(isSig){
     html += '<div class="grdf-section-head">Последние сигналы</div>';
     var sigs = (_grdfData&&_grdfData.events||[]).filter(function(e){ return e.country_code===cc||e.iso===cc; }).slice(0,3);
@@ -6591,9 +6637,27 @@ window.grdfToggleAllDomains = function() {
   if(allFb) allFb.click();
 };
 
-// Archive CTA — единственная точка конверсии до 21 июня
+// ── Sprint 5: Upgrade modal ───────────────────────────────────────
+var UPGRADE_MSGS = {
+  forecast_7d: ['7d Forecast','Прогноз на 7 дней · вероятность эскалации'],
+  forecast_30d:['30d Forecast','30-дневный стратегический прогноз'],
+  forecast_90d:['90d · Strategic Pro','90-дневный горизонт — входит в Strategic Pro (Скоро)'],
+  drivers:     ['Риск-драйверы','5 драйверов с вкладом и трендами'],
+  signals:     ['Signal + Warning Feed','SIG-NNN · WARN-NNNNN потоки событий'],
+  matrix:      ['Risk Matrix 2Y','Матрица рисков 7 доменов · 24 месяца'],
+  archive:     ['Archive Member','Signal Pro включён навсегда'],
+};
 window.grdfOpenUpgrade = function(feature) {
   var modal = document.getElementById('grdf-upgrade-modal');
+  var title = document.getElementById('grdf-up-title');
+  var body  = document.getElementById('grdf-up-body');
+  var msg   = UPGRADE_MSGS[feature]||['Signal Pro','Расширенный доступ'];
+  var isStr = feature==='forecast_90d';
+  if(title) title.textContent = isStr ? 'Strategic Pro' : 'Signal Pro';
+  if(body)  body.innerHTML = '<div style="font-size:12px;font-weight:500;color:#e2e8f0;margin-bottom:3px">🔒 '+msg[0]+'</div>'
+    +'<div style="font-size:10px;color:#4a6380">'+msg[1]+'</div>';
+  var cta = document.getElementById('grdf-up-cta');
+  if(cta){ if(isStr){ cta.style.display='none'; } else { cta.style.display='block'; } }
   if(modal) modal.classList.add('open');
 };
 window.grdfCloseUpgrade = function() {
@@ -6759,12 +6823,13 @@ function installDataHook() {
   if(window._lastSnapshotData && tryLoad(window._lastSnapshotData)) return;
 
   // Primary: /api/snapshot/today — same endpoint as main script fetchToday()
-  try {
-  fetch(API_M + '/api/snapshot/today')
+  fetch(API_M + '/api/snapshot/today', {signal: AbortSignal.timeout(8000)})
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
       if(tryLoad(d)) return;
-      return fetch(API_M + '/api/scores')
+      // Fallback: /api/grdf/country/DE/overview type scan — not ideal
+      // Try /api/scores which may have per-country data
+      return fetch(API_M + '/api/scores', {signal: AbortSignal.timeout(5000)})
         .then(function(r){ return r.ok ? r.json() : null; })
         .then(function(sd){
           if(!sd) return;
@@ -6790,7 +6855,7 @@ function installDataHook() {
     if(tries>15) clearInterval(poll);
   }, 2000);
 }
-try{ installDataHook(); }catch(e){ console.warn('[GRDF] data hook error:',e); }
+installDataHook();
 
 // ── Update UTC every minute ───────────────────────────────────────
 setInterval(function(){
@@ -6809,14 +6874,5 @@ window.addEventListener('resize', function(){
 })(); // end IIFE
 </script>
 
-<script>
-// Safety net: catch any JS errors that might block mobile UI
-window.onerror = function(msg, src, line, col, err) {
-  if(String(msg).indexOf('grdf') === -1 && String(src).indexOf('risk-map') !== -1) {
-    console.warn('[GRDF-ERR] L'+line+': '+msg);
-  }
-  return false; // don't suppress — just log
-};
-</script>
 </body>
 </html>
