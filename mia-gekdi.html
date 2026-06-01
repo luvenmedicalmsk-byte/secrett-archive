@@ -269,8 +269,23 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .scn-slider-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .scn-slider-name{font-size:11px;color:var(--text2)}
 .scn-slider-val{font-family:var(--mono);font-size:11px;font-weight:600}
-input[type=range].scn-range{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:rgba(255,255,255,.08);outline:none}
-input[type=range].scn-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+input[type=range].scn-range{
+  width:100%;-webkit-appearance:none;appearance:none;
+  height:20px;background:transparent;outline:none;cursor:pointer;
+  touch-action:pan-y;margin:4px 0;
+}
+input[type=range].scn-range::-webkit-slider-runnable-track{
+  height:4px;border-radius:2px;background:rgba(255,255,255,.12);
+}
+input[type=range].scn-range::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--gold);cursor:pointer;
+  border:2.5px solid var(--bg);margin-top:-8px;
+  box-shadow:0 0 0 2px rgba(212,175,90,.25);
+}
+input[type=range].scn-range::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.12)}
+input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);cursor:pointer}
 .scn-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:9px;padding:12px 14px;text-align:center}
 .scn-card-label{font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
 .scn-card-val{font-size:22px;font-weight:700;font-family:var(--mono)}
@@ -4332,11 +4347,18 @@ var SCN_DRIVERS = [
 ];
 
 function loadScenarioEngine(countries) {
-  _scn.countries = countries;
+  // Fallback: pull from sibling engines if passed empty
+  var cc = (countries && countries.length > 0) ? countries
+         : (typeof _sdc !== 'undefined' && _sdc.countries && _sdc.countries.length ? _sdc.countries
+         : (typeof _valState !== 'undefined' && _valState.countries && _valState.countries.length ? _valState.countries
+         : []));
+  _scn.countries = cc;
   // Base metrics from live data
-  if (countries.length) {
-    _scn.baseGRI = fr(countries.reduce(function(a,c){ return a+(c.risk_score||0);},0)/countries.length);
+  if (cc.length) {
+    _scn.baseGRI = fr(cc.reduce(function(a,c){ return a+(c.risk_score||0);},0)/cc.length);
     _scn.baseEWS = fr(_scn.baseGRI * 0.95);
+  } else {
+    _scn.baseGRI = 65; _scn.baseEWS = 62; // safe defaults
   }
   // Seed sliders from GLOBAL_DRIVERS
   var drvs = _liveDrv();
@@ -4366,7 +4388,7 @@ function _buildSliders() {
     var val = _scn.sliders[d.key] || 0;
     var vc  = val > 0 ? 'var(--red)' : val < 0 ? 'var(--green)' : 'var(--text3)';
     var vs  = val > 0 ? '+'+val+'%' : val+'%';
-    h += '<div class="scn-slider-wrap">';
+    h += '<div class="scn-slider-wrap" style="padding:4px 0">';
     h += '<div class="scn-slider-label">';
     h += '<span class="scn-slider-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+d.col+';margin-right:5px"></span>'+d.name+'</span>';
     h += '<span class="scn-slider-val" style="color:'+vc+'" id="scn-sv-'+d.key+'">'+vs+'</span>';
@@ -4498,9 +4520,32 @@ function _buildCascade(scen) {
     var abs = Math.abs(scen.sliders[sd.key] || 0);
     if (abs > maxAbs) { maxAbs = abs; maxKey = sd.key; }
   });
+  // If no slider moved, show top live driver cascade as default
   if (!maxKey || maxAbs === 0) {
-    var el = document.getElementById('scn-cascade');
-    if (el) el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Adjust a driver to see cascade effects</div>';
+    var drvs0 = _liveDrv();
+    if (drvs0.length) {
+      var topDrv = drvs0[0];
+      var sd0  = SCN_DRIVERS.find(function(d){ return topDrv.name.toLowerCase().indexOf(d.key) >= 0; }) || SCN_DRIVERS[0];
+      var caus0 = (typeof CAUSALITY_DATA !== 'undefined') ? CAUSALITY_DATA[topDrv.name] : null;
+      var h0 = '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">Default: top live driver — adjust sliders to model custom scenarios</div>';
+      h0 += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid '+sd0.col+'">';
+      h0 += '<span style="font-size:11px;color:'+sd0.col+';font-weight:600">'+topDrv.name+'</span>';
+      h0 += '<span style="font-family:var(--mono);font-size:10px;color:var(--orange);margin-left:auto">Score '+topDrv.score+' | 7d +'+(topDrv.d7>=0?'+':'')+topDrv.d7+'</span></div>';
+      if (caus0 && caus0.effects) {
+        h0 += '<div style="text-align:center;padding:3px 0;color:var(--text3);font-size:12px">&#8595;</div><div style="display:flex;flex-direction:column;gap:5px">';
+        caus0.effects.slice(0,4).forEach(function(eff) {
+          h0 += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border-radius:7px;border-left:2px solid '+eff.col+'">';
+          h0 += '<span style="font-size:11px;color:var(--text2);flex:1">'+eff.name+'</span>';
+          h0 += '<span style="font-family:var(--mono);font-size:10px;color:var(--orange)">+'+eff.delta+'</span></div>';
+        });
+        h0 += '</div>';
+      }
+      var el0 = document.getElementById('scn-cascade');
+      if (el0) el0.innerHTML = h0;
+    } else {
+      var el = document.getElementById('scn-cascade');
+      if (el) el.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Adjust a driver to see cascade effects</div>';
+    }
     return;
   }
   var sd    = SCN_DRIVERS.find(function(d){ return d.key === maxKey; });
