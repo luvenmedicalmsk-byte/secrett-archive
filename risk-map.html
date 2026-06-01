@@ -1021,6 +1021,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .grdf-scroll-body::-webkit-scrollbar{width:2px}
 .grdf-scroll-body::-webkit-scrollbar-thumb{background:#1e3a5f}
 /* Country Intelligence Panel — full scrollable content */
+/* Sticky header — always visible above scrollable content */
+#grdf-cs-sticky{
+  flex-shrink:0;
+  display:none;
+  padding:10px 14px 10px;
+  background:#09131e;
+  border-bottom:0.5px solid #1a2e48;
+}
+#grdf-cs-sticky .cs-flag{font-size:28px;line-height:1}
+#grdf-cs-sticky .cs-name{font-size:17px;font-weight:700;color:#f1f5f9;margin-top:1px}
+#grdf-cs-sticky .cs-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;margin-top:4px}
+#grdf-cs-sticky .cs-close{background:none;border:none;color:#4a6380;font-size:22px;cursor:pointer;padding:4px;line-height:1;pointer-events:auto!important}
 #grdf-cs-content{
   flex:1;
   overflow-y:auto;
@@ -6178,6 +6190,19 @@ function _evM(val, lbl, col) {
 <!-- Sprint 3: Country Intelligence bottom sheet -->
 <div id="grdf-country-sheet">
   <div class="grdf-sheet-handle" id="grdf-cs-handle" onclick="grdfCycleSheet()"></div>
+  <!-- Sticky header: flag + country name + risk level — always visible -->
+  <div id="grdf-cs-sticky">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="cs-flag" id="grdf-cs-flag">🌍</span>
+        <div>
+          <div class="cs-name" id="grdf-cs-name">—</div>
+          <span class="cs-status" id="grdf-cs-status"></span>
+        </div>
+      </div>
+      <button class="cs-close" onclick="grdfCloseCountrySheet()">×</button>
+    </div>
+  </div>
   <div id="grdf-cs-content"></div>
 </div>
 
@@ -6527,7 +6552,9 @@ window.grdfOpenCountrySheet = function(cc) {
 window.grdfCloseCountrySheet = function() {
   var sheet = document.getElementById('grdf-country-sheet');
   var drawer = document.getElementById('grdf-intel-drawer');
-  if(sheet){ sheet.className=''; _grdfSheetSnap=0; _grdfCurrentCountry=null; }
+  var sticky = document.getElementById('grdf-cs-sticky');
+  if(sheet) { sheet.className=''; _grdfSheetSnap=0; _grdfCurrentCountry=null; }
+  if(sticky) sticky.style.display='none';
   if(drawer) drawer.style.display='flex';
 };
 
@@ -6720,20 +6747,24 @@ function grdfRenderCountryPanel(cc) {
 
   var html = '';
 
-  // Archive badge if Signal Pro
-  if(isSig){
-    html += '<div class="grdf-archive-badge"><span>⭐ Участник Архива</span><small> · Signal Pro included · Priority access</small></div>';
+  // ── Sticky header (outside scroll area) ─────────────────
+  var stickyEl = document.getElementById('grdf-cs-sticky');
+  var flagEl   = document.getElementById('grdf-cs-flag');
+  var nameEl   = document.getElementById('grdf-cs-name');
+  var statEl   = document.getElementById('grdf-cs-status');
+  if(stickyEl){ stickyEl.style.display='block'; }
+  if(flagEl)  { flagEl.textContent = _flag(c.country); }
+  if(nameEl)  { nameEl.textContent = esc(c.country_name||cc); }
+  if(statEl)  {
+    statEl.textContent = STATUS_RU[status]||status;
+    statEl.style.cssText = 'display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;margin-top:4px;background:'+statusCol+'1a+\';\'+'border:0.5px solid '+statusCol+'33;color:'+statusCol;
   }
 
-  // Header
-  html += '<div class="grdf-cp-header">';
-  html += '<div class="grdf-cp-flag-name"><span class="grdf-cp-flag">'+_flag(c.country)+'</span>';
-  html += '<div><div class="grdf-cp-name">'+esc(c.country_name||cc)+'</div>';
-  html += '<span class="grdf-cp-status" style="background:'+statusCol+'1a;border:0.5px solid '+statusCol+'33;color:'+statusCol+'">';
-  html += '<span style="width:5px;height:5px;border-radius:50%;background:'+statusCol+';display:inline-block"></span> '+(STATUS_RU[status]||status)+'</span>';
-  html += '</div></div>';
-  html += '<button class="grdf-cp-close" onclick="grdfCloseCountrySheet()">×</button>';
-  html += '</div>';
+  // Archive badge if Signal Pro
+  if(isSig){
+    html += '<div class="grdf-archive-badge"><span>⭐ Участник Архива</span><small> · Прогноз 7д включён</small></div>';
+  }
+  // (country name/flag now in sticky header above — not in scroll content)
 
   // Metrics
   html += '<div class="grdf-metrics">';
