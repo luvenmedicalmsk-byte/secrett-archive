@@ -6544,7 +6544,7 @@ function grdfPopulateDrawer(countries) {
   topCountries.forEach(function(c){
     var gri = fr(c.risk_score);
     var sc = STATUS_COLORS[getStatus(gri)]||'#888';
-    html += '<div class="grdf-sig-row" onclick="grdfNavTo('map');grdfOpenCountrySheet(''+esc(c.country)+'')" style="cursor:pointer">';
+    html += '<div class="grdf-sig-row" data-grdf-cc="'+esc(c.country)+'" data-grdf-nav="map" onclick="grdfOpenCountrySheet(this.dataset.grdfCc)" style="cursor:pointer">';
     html += '<span class="grdf-sig-dot" style="background:'+sc+'"></span>';
     html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+(c.flag||'🌍')+' '+esc(c.country_name||c.country)+'</div>';
     html += '<div style="font-size:9px;color:#4a6380;margin-top:1px">GRI '+gri+' · '+(c.dominant_domain||'')+'</div></div>';
@@ -6696,7 +6696,7 @@ function grdfPopulateCountriesList(countries) {
     var gri = fr(c.risk_score);
     var sc  = STATUS_COLORS[getStatus(gri)]||'#888';
     var delta = parseFloat(c.delta||0);
-    html += '<div class="grdf-country-row" onclick="grdfNavTo('map');setTimeout(function(){ grdfOpenCountrySheet(''+esc(c.country)+''); },100)">';
+    html += '<div class="grdf-country-row" data-grdf-cc="'+esc(c.country)+'" onclick="grdfOpenCountrySheet(this.dataset.grdfCc)">';
     html += '<div class="grdf-country-avatar" style="background:'+sc+'18;border:1.5px solid '+sc+'30">'+(c.flag||'🌍')+'</div>';
     html += '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#e2e8f0">'+esc(c.country_name||c.country)+'</div>';
     html += '<div style="font-size:10px;color:#3d5068;margin-top:1px">GRI '+gri+' · EWS '+fr(c.ews_score||gri)+'</div></div>';
