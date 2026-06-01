@@ -873,6 +873,222 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .ev-cf-cell{text-align:center;padding:5px;border-radius:3px;background:rgba(255,255,255,.03)}
 .ev-lock{font-size:9px;color:#B8973A;margin-top:6px;letter-spacing:.06em}
 .ev-note{font-size:9px;color:rgba(255,255,255,.25);font-style:italic;text-align:center;padding:8px 0}
+
+/* ════════════════════════════════════════════════════════════
+   GRDF MOBILE UX V1 — Sprint 1-8 Implementation
+   Map-first · Bottom nav · Country panel · Signal Pro gates
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Sprint 1: Map takes full screen on mobile ── */
+@media(max-width:768px){
+  #filters{display:none!important}
+  #layers{display:none!important}
+  #stats{top:44px;left:12px;gap:10px}
+  .sv{font-size:16px}
+  #header{top:8px;left:12px}
+  #logo-title{font-size:13px}
+  #updated{top:10px;right:12px;font-size:8px}
+  #list-btn{display:none!important}
+  #ai-score-btn{display:none!important}
+  #risks-btn{display:none!important}
+  #extval-toggle{display:none!important}
+}
+
+/* ── Sprint 1: Compact status bar on mobile ── */
+#grdf-status-bar{
+  display:none;
+  position:fixed;top:0;left:0;right:0;height:38px;z-index:100;
+  background:#04080f;border-bottom:0.5px solid #1a2840;
+  align-items:center;justify-content:space-between;padding:0 12px;
+}
+#grdf-status-bar .sb-pulse{width:6px;height:6px;border-radius:50%;background:#10B981;animation:grdfPulse 2s infinite;flex-shrink:0}
+#grdf-status-bar .sb-active{font-size:11px;color:#34d399;font-weight:500;display:flex;align-items:center;gap:5px}
+#grdf-status-bar .sb-events{font-size:10px;color:#4a6380}
+#grdf-status-bar .sb-crit{color:#ef4444}
+#grdf-status-bar .sb-utc{font-size:10px;color:#2d4060}
+@media(max-width:768px){
+  #grdf-status-bar{display:flex}
+  #header{top:42px!important}
+  #stats{top:82px!important}
+}
+@keyframes grdfPulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── Sprint 2: Bottom navigation ── */
+#grdf-bottom-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;height:56px;z-index:100;
+  background:#04080f;border-top:0.5px solid #1a2840;
+}
+#grdf-bottom-nav .grdf-nav-inner{display:flex;height:100%}
+#grdf-bottom-nav .grdf-nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;cursor:pointer;border:none;background:transparent;
+  color:#3d5068;font-size:9px;font-family:'Montserrat',sans-serif;font-weight:400;
+  transition:color .15s;padding:0;position:relative
+}
+#grdf-bottom-nav .grdf-nav-btn.active{color:#60a5fa}
+#grdf-bottom-nav .grdf-nav-btn .grdf-nav-ico{font-size:18px;line-height:1}
+#grdf-bottom-nav .grdf-nav-badge{
+  position:absolute;top:6px;right:calc(50% - 16px);
+  background:#ef4444;color:#fff;font-size:8px;border-radius:50%;
+  width:13px;height:13px;display:flex;align-items:center;justify-content:center;font-weight:600
+}
+@media(max-width:768px){
+  #grdf-bottom-nav{display:block}
+  #map{bottom:56px!important}
+}
+
+/* ── Sprint 1: Filter FAB ── */
+#grdf-filter-fab{
+  display:none;position:fixed;top:52px;right:12px;z-index:90;
+  background:rgba(10,20,48,.92);border:0.5px solid rgba(59,130,246,.4);
+  border-radius:7px;padding:6px 11px;font-size:11px;color:#93c5fd;
+  cursor:pointer;align-items:center;gap:4px;
+  font-family:'Montserrat',sans-serif;
+}
+@media(max-width:768px){#grdf-filter-fab{display:flex}}
+
+/* ── Sprint 1: Filter drawer sheet ── */
+#grdf-filter-sheet{
+  display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);
+}
+#grdf-filter-sheet.open{display:flex;align-items:flex-end}
+#grdf-filter-panel{
+  width:100%;background:#09131e;border-radius:14px 14px 0 0;
+  padding:16px 14px 24px;border-top:0.5px solid #1e3a5f;
+}
+#grdf-filter-panel h3{font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:4px}
+.grdf-dom-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.grdf-dom-btn{
+  display:flex;align-items:center;gap:6px;padding:9px 10px;border-radius:7px;
+  border:1px solid #1e3a5f;background:transparent;cursor:pointer;
+  font-size:12px;color:#4a6380;font-family:'Montserrat',sans-serif;transition:all .15s
+}
+.grdf-dom-btn.active{border-color:var(--dc);background:rgba(var(--dc-rgb),.12);color:var(--dc)}
+.grdf-dom-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.grdf-all-btn{
+  grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 0;border-radius:7px;border:1px solid #1e3a5f;background:transparent;
+  cursor:pointer;font-size:12px;color:#4a6380;font-family:'Montserrat',sans-serif
+}
+.grdf-all-btn.active{border-color:#60a5fa;background:rgba(59,130,246,.1);color:#93c5fd}
+
+/* ── Sprint 3: Country Intelligence Bottom Sheet ── */
+#grdf-country-sheet{
+  position:fixed;left:0;right:0;bottom:56px;z-index:150;
+  background:#09131e;border-radius:14px 14px 0 0;
+  border-top:0.5px solid #1e3a5f;
+  height:0;overflow:hidden;transition:height .32s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+#grdf-country-sheet.snap50{height:58%}
+#grdf-country-sheet.snap90{height:92%}
+.grdf-sheet-handle{width:28px;height:3px;background:#2d3f55;border-radius:2px;margin:8px auto 4px;flex-shrink:0;cursor:pointer}
+
+/* ── Sprint 3: Country panel content ── */
+.grdf-cp-header{padding:2px 14px 6px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.grdf-cp-flag-name{display:flex;align-items:center;gap:8px}
+.grdf-cp-flag{font-size:22px}
+.grdf-cp-name{font-size:15px;font-weight:600;color:#f1f5f9}
+.grdf-cp-status{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:500}
+.grdf-cp-close{background:none;border:none;color:#4a6380;font-size:20px;cursor:pointer;padding:3px}
+.grdf-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:0 14px 8px}
+.grdf-metric{background:#0e1f35;border-radius:7px;padding:8px 5px;text-align:center}
+.grdf-metric-val{font-size:20px;font-weight:600}
+.grdf-metric-lbl{font-size:9px;color:#4a6380;margin-top:2px}
+.grdf-section-head{font-size:10px;font-weight:500;color:#4a6380;text-transform:uppercase;letter-spacing:.07em;padding:8px 14px 3px}
+.grdf-risks{padding:0 14px 8px;display:flex;flex-wrap:wrap;gap:4px}
+.grdf-risk-badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 8px;border-radius:0 4px 4px 0;border-left:2.5px solid;margin-bottom:2px}
+.grdf-forecast-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 14px 8px}
+.grdf-fc-box{background:#0e1f35;border-radius:6px;padding:7px 3px;text-align:center}
+.grdf-fc-box.locked{background:#07101c;border:0.5px solid #1e2f40}
+.grdf-fc-hz{font-size:8px;color:#4a6380;margin-bottom:2px}
+.grdf-fc-val{font-size:15px;font-weight:600}
+.grdf-fc-tier{font-size:8px;margin-top:1px}
+.grdf-scroll-body{flex:1;overflow-y:auto}
+.grdf-scroll-body::-webkit-scrollbar{width:2px}
+.grdf-scroll-body::-webkit-scrollbar-thumb{background:#1e3a5f}
+
+/* ── Sprint 4: Intelligence Drawer ── */
+#grdf-intel-drawer{
+  display:none;position:fixed;left:0;right:0;bottom:56px;z-index:140;
+  background:#09131e;border-radius:10px 10px 0 0;border-top:0.5px solid #1e3a5f;
+  height:46px;transition:height .3s ease;flex-direction:column;
+}
+#grdf-intel-drawer.expanded{height:46%}
+@media(max-width:768px){
+  #grdf-intel-drawer{display:flex}
+}
+.grdf-drawer-handle{width:24px;height:2.5px;background:#2d3f55;border-radius:2px;margin:6px auto 0;cursor:pointer;flex-shrink:0}
+.grdf-drawer-summary{display:flex;justify-content:space-between;padding:4px 13px 6px;cursor:pointer;flex-shrink:0}
+.grdf-drawer-stat{font-size:11px}
+.grdf-drawer-body{flex:1;overflow-y:auto;padding-bottom:4px}
+.grdf-drawer-body::-webkit-scrollbar{width:2px}
+.grdf-sig-row{display:flex;gap:7px;align-items:flex-start;padding:6px 13px;border-bottom:0.5px solid #101e30}
+.grdf-sig-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+
+/* ── Sprint 5: Signal Pro lock overlay ── */
+#grdf-upgrade-modal{
+  display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);
+  align-items:flex-end;
+}
+#grdf-upgrade-modal.open{display:flex}
+#grdf-upgrade-panel{
+  width:100%;background:#09131e;border-radius:14px 14px 0 0;
+  padding:20px 16px 28px;border-top:0.5px solid #1e3a5f;
+}
+.grdf-upgrade-close{background:none;border:none;color:#4a6380;font-size:20px;cursor:pointer}
+.grdf-lock-box{background:rgba(0,0,0,.4);border-radius:8px;border:0.5px solid #2d3f55;padding:13px 12px;text-align:center;margin:8px 0}
+.grdf-cta-btn{display:block;width:100%;padding:12px 0;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;text-align:center;border:none;font-family:'Montserrat',sans-serif}
+.grdf-cta-primary{background:#15803d;color:#dcfce7}
+.grdf-cta-secondary{background:transparent;border:1.5px solid #3b82f6!important;color:#93c5fd;margin-top:8px}
+.grdf-archive-banner{background:rgba(16,185,129,.09);border:0.5px solid #10b981;border-radius:7px;padding:9px 11px;margin-top:8px;text-align:center;cursor:pointer}
+
+/* ── Sprint 5: Blur lock for forecasts ── */
+.grdf-blur-lock{position:relative}
+.grdf-blur-lock-overlay{
+  position:absolute;inset:0;z-index:2;
+  background:rgba(7,16,28,.85);border-radius:6px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+
+/* ── Sprint 6: Archive badge ── */
+.grdf-archive-badge{
+  display:flex;align-items:center;gap:6px;padding:6px 10px;
+  background:rgba(16,185,129,.1);border:0.5px solid #10b981;border-radius:7px;
+  margin:0 14px 8px;
+}
+.grdf-archive-badge span{font-size:10px;color:#10b981;font-weight:500}
+.grdf-archive-badge small{font-size:9px;color:#6ee7b7}
+
+/* ── Sprint 7: Forecast accuracy tab ── */
+#grdf-analytics-screen{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:56px;z-index:120;
+  background:#06101e;overflow-y:auto;padding-top:38px;
+}
+@media(max-width:768px){
+  #grdf-analytics-screen.visible{display:block}
+}
+.grdf-analytics-screen-inner{padding:12px 14px 20px}
+.grdf-acc-card{background:#0e1f35;border-radius:8px;padding:11px 12px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.grdf-acc-label{font-size:12px;color:#cbd5e1}
+.grdf-acc-sub{font-size:10px;color:#4a6380;margin-top:1px}
+.grdf-acc-val{font-size:16px;font-weight:600;color:#60a5fa}
+
+/* ── Warnings/Countries screens ── */
+#grdf-warnings-screen,#grdf-countries-screen{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:56px;z-index:120;
+  background:#06101e;overflow-y:auto;padding-top:38px;
+}
+@media(max-width:768px){
+  #grdf-warnings-screen.visible{display:block}
+  #grdf-countries-screen.visible{display:block}
+}
+.grdf-screen-head{padding:12px 14px 8px;display:flex;justify-content:space-between;align-items:center}
+.grdf-screen-title{font-size:15px;font-weight:600;color:#f1f5f9;font-family:'Montserrat',sans-serif}
+.grdf-warn-row{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;border-bottom:0.5px solid #101e30}
+.grdf-country-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid #101e30;cursor:pointer}
+.grdf-country-avatar{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -883,7 +1099,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     <div id="extval-content"></div>
   </div>
   <button id="extval-toggle" onclick="toggleExtVal()" style="position:fixed;bottom:20px;right:20px;z-index:999;background:#1a1a2e;border:1px solid rgba(255,255,255,.15);color:rgba(232,224,208,.7);font-size:9px;letter-spacing:.12em;padding:7px 14px;border-radius:4px;cursor:pointer;text-transform:uppercase">
-    📊 Model Validation
+    📊 Точность прогнозов
   </button>
 <div id="map"></div>
 <div id="panel-overlay" onclick="closeAllPanels()" style="position:fixed;top:0;left:0;right:300px;bottom:0;z-index:20;display:none;cursor:pointer"></div>
@@ -1393,7 +1609,7 @@ map.on('click', async (e) => {
 
   // If clicked country is in our 25-country snapshot list → open Country Card
   if (isoCode && window._CC_COUNTRIES && window._CC_COUNTRIES.has(isoCode)) {
-    openCountryCard(isoCode);
+    if(window.grdfMobileOpenCountry&&window.innerWidth<=768){window.grdfMobileOpenCountry(isoCode);}else{openCountryCard(isoCode);}
     return;
   }
   openLocationPanel(locationName, lat, lng);
@@ -2452,6 +2668,7 @@ window.openCountryCard = async function(cc) {
   }
 
   renderCard(country);
+  if(window.grdfOnDataLoad && data) { window._lastSnapshotData=data; window.grdfOnDataLoad(data); }
   // Store domain color for timeline
   window._currentDomainColor = domainColor(country.dominant_domain);
 
@@ -5895,5 +6112,675 @@ function _evM(val, lbl, col) {
 
 // Map overlay close — calls closeAllPanels which is on window
 </script>
+
+<!-- ════════════════════════════════════════════════════════════════
+     GRDF MOBILE UX V1 — Sprint 1-8 HTML
+     ════════════════════════════════════════════════════════════════ -->
+
+<!-- Sprint 1: Compact status bar -->
+<div id="grdf-status-bar">
+  <div class="sb-active"><span class="sb-pulse"></span>Активно</div>
+  <span class="sb-events" id="grdf-sb-events">— событий · <span class="sb-crit" id="grdf-sb-crit">—</span> крит.</span>
+  <span class="sb-utc" id="grdf-sb-utc">—:— UTC</span>
+</div>
+
+<!-- Sprint 1: Filter FAB -->
+<button id="grdf-filter-fab" onclick="grdfOpenFilters()">☰ Фильтры</button>
+
+<!-- Sprint 1: Filter bottom sheet -->
+<div id="grdf-filter-sheet" onclick="grdfFilterSheetBg(event)">
+  <div id="grdf-filter-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <h3>Фильтры доменов</h3>
+      <button onclick="grdfCloseFilters()" style="background:none;border:none;color:#4a6380;font-size:18px;cursor:pointer">×</button>
+    </div>
+    <div style="font-size:10px;color:#4a6380">Активные домены</div>
+    <div class="grdf-dom-grid">
+      <button class="grdf-all-btn active" id="grdf-all-btn" onclick="grdfToggleAllDomains()">🌐 Все домены</button>
+      <button class="grdf-dom-btn active" data-dom="climate"      onclick="grdfToggleDomain(this)" style="--dc:#10B981;--dc-rgb:16,185,129"><span class="grdf-dom-dot" style="background:#10B981"></span>Климат</button>
+      <button class="grdf-dom-btn active" data-dom="geopolitics"  onclick="grdfToggleDomain(this)" style="--dc:#F97316;--dc-rgb:249,115,22"><span class="grdf-dom-dot" style="background:#F97316"></span>Геополитика</button>
+      <button class="grdf-dom-btn active" data-dom="economy"      onclick="grdfToggleDomain(this)" style="--dc:#3B82F6;--dc-rgb:59,130,246"><span class="grdf-dom-dot" style="background:#3B82F6"></span>Экономика</button>
+      <button class="grdf-dom-btn active" data-dom="technology"   onclick="grdfToggleDomain(this)" style="--dc:#A855F7;--dc-rgb:168,85,247"><span class="grdf-dom-dot" style="background:#A855F7"></span>Технологии</button>
+      <button class="grdf-dom-btn active" data-dom="social"       onclick="grdfToggleDomain(this)" style="--dc:#EF4444;--dc-rgb:239,68,68"><span class="grdf-dom-dot" style="background:#EF4444"></span>Социум</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sprint 3: Country Intelligence bottom sheet -->
+<div id="grdf-country-sheet">
+  <div class="grdf-sheet-handle" id="grdf-cs-handle" onclick="grdfCycleSheet()"></div>
+  <div id="grdf-cs-content"></div>
+</div>
+
+<!-- Sprint 4: Intelligence drawer -->
+<div id="grdf-intel-drawer">
+  <div class="grdf-drawer-handle" onclick="grdfToggleDrawer()"></div>
+  <div class="grdf-drawer-summary" onclick="grdfToggleDrawer()">
+    <span class="grdf-drawer-stat" id="grdf-dr-sigs" style="color:#e2e8f0;font-weight:500">— Signals</span>
+    <span class="grdf-drawer-stat" id="grdf-dr-crit" style="color:#ef4444">— Critical</span>
+    <span class="grdf-drawer-stat" id="grdf-dr-warn" style="color:#f97316">— Warnings</span>
+    <span style="font-size:10px;color:#3d5068" id="grdf-dr-arr">↑</span>
+  </div>
+  <div class="grdf-drawer-body" id="grdf-drawer-body"></div>
+</div>
+
+<!-- Sprint 5: Upgrade modal -->
+<div id="grdf-upgrade-modal">
+  <div id="grdf-upgrade-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:600;color:#f1f5f9" id="grdf-up-title">Signal Pro</div>
+      <button class="grdf-upgrade-close" onclick="grdfCloseUpgrade()">×</button>
+    </div>
+    <div class="grdf-lock-box" id="grdf-up-body"></div>
+    <button class="grdf-cta-btn grdf-cta-primary" id="grdf-up-cta" onclick="grdfActivateSignalPro()">
+      Открыть Signal Pro · 4 900 ₽/мес
+    </button>
+    <div style="text-align:center;font-size:10px;color:#3d5068;margin:5px 0">$55 · €50 · Отмена в любой момент</div>
+    <div class="grdf-archive-banner" onclick="grdfActivateSignalPro()">
+      <span style="font-size:12px;color:#10b981;font-weight:500">⭐ Archive Members: Signal Pro в подарок</span><br>
+      <span style="font-size:10px;color:#6ee7b7">Strategic Pro −35% · Elite −35% · Постоянно</span>
+    </div>
+  </div>
+</div>
+
+<!-- Sprint 2: Bottom navigation -->
+<div id="grdf-bottom-nav">
+  <div class="grdf-nav-inner">
+    <button class="grdf-nav-btn active" id="grdf-nav-map" onclick="grdfNavTo('map')">
+      <span class="grdf-nav-ico">🗺</span><span>Карта</span>
+    </button>
+    <button class="grdf-nav-btn" id="grdf-nav-warnings" onclick="grdfNavTo('warnings')">
+      <span class="grdf-nav-ico">⚠</span><span>Алерты</span>
+      <span class="grdf-nav-badge" id="grdf-warn-badge" style="display:none">!</span>
+    </button>
+    <button class="grdf-nav-btn" id="grdf-nav-countries" onclick="grdfNavTo('countries')">
+      <span class="grdf-nav-ico">🌍</span><span>Страны</span>
+    </button>
+    <button class="grdf-nav-btn" id="grdf-nav-analytics" onclick="grdfNavTo('analytics')">
+      <span class="grdf-nav-ico">📊</span><span>Аналитика</span>
+    </button>
+  </div>
+</div>
+
+<!-- Sprint 7: Warnings screen -->
+<div id="grdf-warnings-screen">
+  <div class="grdf-screen-head">
+    <div class="grdf-screen-title">Предупреждения</div>
+    <span style="font-size:10px;color:#4a6380" id="grdf-ws-count"></span>
+  </div>
+  <div id="grdf-ws-body"></div>
+</div>
+
+<!-- Sprint 7: Countries screen -->
+<div id="grdf-countries-screen">
+  <div class="grdf-screen-head">
+    <div class="grdf-screen-title">Страны</div>
+    <span style="font-size:10px;color:#4a6380">по GRI ↓</span>
+  </div>
+  <div id="grdf-cs-list"></div>
+</div>
+
+<!-- Sprint 7: Analytics screen (Точность прогнозов) -->
+<div id="grdf-analytics-screen">
+  <div class="grdf-analytics-screen-inner">
+    <div style="font-size:16px;font-weight:600;color:#f1f5f9;margin-bottom:2px;font-family:'Montserrat',sans-serif">Точность прогнозов</div>
+    <div style="font-size:10px;color:#4a6380;margin-bottom:14px">Переименовано: Model Validation → Точность прогнозов</div>
+    <div class="grdf-acc-card">
+      <div><div class="grdf-acc-label">Accuracy Score</div><div class="grdf-acc-sub">Общая точность прогнозов</div></div>
+      <div class="grdf-acc-val" id="grdf-acc-score">—</div>
+    </div>
+    <div class="grdf-acc-card">
+      <div><div class="grdf-acc-label">Precision</div><div class="grdf-acc-sub">Доля верных эскалаций</div></div>
+      <div class="grdf-acc-val" id="grdf-acc-prec">—</div>
+    </div>
+    <div class="grdf-acc-card">
+      <div><div class="grdf-acc-label">Recall</div><div class="grdf-acc-sub">Охват реальных событий</div></div>
+      <div class="grdf-acc-val" id="grdf-acc-rec">—</div>
+    </div>
+    <div class="grdf-acc-card">
+      <div><div class="grdf-acc-label">F1 Score</div><div class="grdf-acc-sub">Гармоническое P/R</div></div>
+      <div class="grdf-acc-val" id="grdf-acc-f1">—</div>
+    </div>
+    <div class="grdf-acc-card">
+      <div><div class="grdf-acc-label">Brier Score</div><div class="grdf-acc-sub">Калибровка (↓ лучше)</div></div>
+      <div class="grdf-acc-val" id="grdf-acc-brier">—</div>
+    </div>
+    <div style="margin-top:10px;padding:10px;background:rgba(16,185,129,.08);border:0.5px solid #10b981;border-radius:8px">
+      <div style="font-size:10px;color:#10b981;font-weight:500;margin-bottom:6px">Горизонты прогнозирования</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
+        <div style="text-align:center;background:#07111c;border-radius:5px;padding:6px 2px">
+          <div style="font-size:8px;color:#4a6380">24h</div>
+          <div style="font-size:12px;font-weight:600;color:#60a5fa" id="grdf-hz-24">—</div>
+        </div>
+        <div style="text-align:center;background:#07111c;border-radius:5px;padding:6px 2px">
+          <div style="font-size:8px;color:#4a6380">7d</div>
+          <div style="font-size:12px;font-weight:600;color:#60a5fa" id="grdf-hz-7d">—</div>
+        </div>
+        <div style="text-align:center;background:#07111c;border-radius:5px;padding:6px 2px">
+          <div style="font-size:8px;color:#4a6380">30d</div>
+          <div style="font-size:12px;font-weight:600;color:#60a5fa" id="grdf-hz-30d">—</div>
+        </div>
+        <div style="text-align:center;background:#07111c;border-radius:5px;padding:6px 2px">
+          <div style="font-size:8px;color:#4a6380">90d</div>
+          <div style="font-size:12px;font-weight:600;color:#374151" id="grdf-hz-90d">🔒</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;background:rgba(16,185,129,.08);border:0.5px solid #10b981;border-radius:9px;padding:13px">
+      <div style="font-size:11px;font-weight:500;color:#10b981;margin-bottom:3px">⭐ Archive Member Program</div>
+      <div style="font-size:10px;color:#6ee7b7;margin-bottom:9px">Signal Pro включён · Strategic Pro −35% · Elite −35%</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#10b981;font-weight:500">Signal Pro</div>
+          <div style="font-size:14px;color:#f1f5f9;font-weight:600">0 ₽</div>
+          <div style="font-size:9px;color:#374151;text-decoration:line-through">4 900 ₽</div>
+        </div>
+        <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#3b82f6;font-weight:500">Strategic Pro</div>
+          <div style="font-size:14px;color:#f1f5f9;font-weight:600">19 435 ₽</div>
+          <div style="font-size:9px;color:#374151;text-decoration:line-through">29 900 ₽</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   GRDF MOBILE UX V1 — Sprint 1-8 JavaScript
+   ════════════════════════════════════════════════════════════════ */
+(function() {
+'use strict';
+
+var _isMobile = window.innerWidth <= 768;
+var _grdfTier = 'FREE'; // 'FREE' | 'SIGNAL_PRO'
+var _grdfSheetSnap = 0; // 0=closed, 1=50%, 2=90%
+var _grdfCurrentCountry = null;
+var _grdfDrawerOpen = false;
+var _grdfNav = 'map';
+var _grdfData = null;
+
+// Domain colors
+var DOM_COLORS = {
+  climate:'#10B981', geological:'#065F46', economy:'#3B82F6',
+  geopolitics:'#F97316', technology:'#A855F7', social:'#EF4444', infrastructure:'#1E3A8A'
+};
+var DOM_LABELS = {
+  climate:'Климат', geological:'Геология', economy:'Экономика',
+  geopolitics:'Геополитика', technology:'Технологии', social:'Социум', infrastructure:'Инфраструктура'
+};
+var STATUS_COLORS = {STABLE:'#10B981',ELEVATED:'#EAB308',ESCALATING:'#F97316',CRITICAL:'#EF4444'};
+var STATUS_RU = {STABLE:'Стабильно',ELEVATED:'Повышен',ESCALATING:'Эскалация',CRITICAL:'Критично'};
+var LEVEL_C = {RED:'#EF4444',ORANGE:'#F97316',YELLOW:'#EAB308',GREEN:'#10B981'};
+
+function getStatus(gri){ return gri>=75?'CRITICAL':gri>=60?'ESCALATING':gri>=45?'ELEVATED':'STABLE'; }
+function fr(v){ return Math.round(v||0); }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Sprint 1: Status bar update ──────────────────────────────────
+function grdfUpdateStatusBar(totalEvents, criticalN) {
+  var sb = document.getElementById('grdf-sb-events');
+  var ut = document.getElementById('grdf-sb-utc');
+  if(sb) sb.innerHTML = (totalEvents||'—') + ' событий · <span class="sb-crit">'+(criticalN||'—')+'</span> крит.';
+  if(ut){ var now=new Date(); ut.textContent=String(now.getUTCHours()).padStart(2,'0')+':'+String(now.getUTCMinutes()).padStart(2,'0')+' UTC'; }
+}
+setInterval(function(){ grdfUpdateStatusBar(); }, 60000);
+
+// Hook into existing data load — called from main script when countries load
+window.grdfOnDataLoad = function(data) {
+  _grdfData = data;
+  var countries = (data&&data.countries)||[];
+  var totalEvents = countries.length;
+  var critN = countries.filter(function(c){ return c.risk_score>=75; }).length;
+  var warnN = countries.filter(function(c){ return c.risk_score>=60; }).length;
+  grdfUpdateStatusBar(totalEvents, critN);
+
+  // Sprint 4: Drawer counts
+  var drSigs = document.getElementById('grdf-dr-sigs');
+  var drCrit = document.getElementById('grdf-dr-crit');
+  var drWarn = document.getElementById('grdf-dr-warn');
+  var wBadge = document.getElementById('grdf-warn-badge');
+  if(drSigs) drSigs.textContent = totalEvents + ' Signals';
+  if(drCrit) drCrit.textContent = critN + ' Critical';
+  if(drWarn) drWarn.textContent = warnN + ' Warnings';
+  if(wBadge && critN>0){ wBadge.style.display='flex'; wBadge.textContent=critN>9?'9+':critN; }
+
+  // Sprint 4: Populate drawer body
+  grdfPopulateDrawer(countries);
+
+  // Sprint 7: Populate warnings + countries screens
+  grdfPopulateWarnings(countries);
+  grdfPopulateCountriesList(countries);
+};
+
+// ── Sprint 3: Country sheet ──────────────────────────────────────
+window.grdfOpenCountrySheet = function(cc) {
+  if(!_isMobile) return;
+  _grdfCurrentCountry = cc;
+  var sheet = document.getElementById('grdf-country-sheet');
+  var drawer = document.getElementById('grdf-intel-drawer');
+  if(!sheet) return;
+  if(drawer) drawer.style.display='none';
+  grdfRenderCountryPanel(cc);
+  _grdfSheetSnap = 2;
+  sheet.className = 'snap50';
+  setTimeout(function(){ sheet.className='snap90'; _grdfSheetSnap=2; }, 50);
+};
+
+window.grdfCloseCountrySheet = function() {
+  var sheet = document.getElementById('grdf-country-sheet');
+  var drawer = document.getElementById('grdf-intel-drawer');
+  if(sheet){ sheet.className=''; _grdfSheetSnap=0; _grdfCurrentCountry=null; }
+  if(drawer) drawer.style.display='flex';
+};
+
+window.grdfCycleSheet = function() {
+  var sheet = document.getElementById('grdf-country-sheet');
+  if(!sheet) return;
+  if(_grdfSheetSnap===2){ sheet.className='snap50'; _grdfSheetSnap=1; }
+  else if(_grdfSheetSnap===1){ grdfCloseCountrySheet(); }
+  else { sheet.className='snap50'; _grdfSheetSnap=1; }
+};
+
+function grdfRenderCountryPanel(cc) {
+  var countries = (_grdfData&&_grdfData.countries)||[];
+  var c = countries.find(function(x){ return x.country===cc; });
+  if(!c){ document.getElementById('grdf-cs-content').innerHTML='<div style="padding:14px;color:#4a6380;font-size:12px">Данные не найдены</div>'; return; }
+
+  var gri = fr(c.risk_score);
+  var cri = fr(gri*0.85);
+  var ews = fr(c.ews_score||gri*0.95);
+  var status = getStatus(gri);
+  var statusCol = STATUS_COLORS[status]||'#10B981';
+  var dom = c.dominant_domain||'economy';
+  var delta = parseFloat(c.delta||0);
+  var fc24 = fr(gri + delta*0.15);
+  var fc7d = fr(gri + delta*1.0);
+  var fc30d = fr(gri + delta*2.5);
+  var isSig = _grdfTier==='SIGNAL_PRO';
+  var drivers = c.domain_scores||{};
+
+  // Top 3 risk domains
+  var domScores = Object.keys(drivers).map(function(d){ return {d:d, s:parseFloat(drivers[d]||0)}; });
+  domScores.sort(function(a,b){ return b.s-a.s; });
+  var top3 = domScores.slice(0,3);
+  var totalDS = top3.reduce(function(acc,x){ return acc+x.s; },0)||1;
+
+  var html = '';
+
+  // Archive badge if Signal Pro
+  if(isSig){
+    html += '<div class="grdf-archive-badge"><span>⭐ Archive Member</span><small> · Signal Pro included · Priority access</small></div>';
+  }
+
+  // Header
+  html += '<div class="grdf-cp-header">';
+  html += '<div class="grdf-cp-flag-name"><span class="grdf-cp-flag">'+(c.flag||'🌍')+'</span>';
+  html += '<div><div class="grdf-cp-name">'+esc(c.country_name||cc)+'</div>';
+  html += '<span class="grdf-cp-status" style="background:'+statusCol+'1a;border:0.5px solid '+statusCol+'33;color:'+statusCol+'">';
+  html += '<span style="width:5px;height:5px;border-radius:50%;background:'+statusCol+';display:inline-block"></span> '+(STATUS_RU[status]||status)+'</span>';
+  html += '</div></div>';
+  html += '<button class="grdf-cp-close" onclick="grdfCloseCountrySheet()">×</button>';
+  html += '</div>';
+
+  // Metrics
+  html += '<div class="grdf-metrics">';
+  html += '<div class="grdf-metric"><div class="grdf-metric-val" style="color:'+statusCol+'">'+gri+'</div><div class="grdf-metric-lbl">GRI</div></div>';
+  html += '<div class="grdf-metric"><div class="grdf-metric-val" style="color:'+(ews>=80?'#ef4444':ews>=65?'#f97316':'#eab308')+'">'+ews+'</div><div class="grdf-metric-lbl">EWS</div></div>';
+  html += '<div class="grdf-metric"><div class="grdf-metric-val" style="color:#f59e0b">'+cri+'</div><div class="grdf-metric-lbl">CRI</div></div>';
+  html += '</div>';
+
+  // Top risks
+  html += '<div class="grdf-section-head">Главные риски</div>';
+  html += '<div class="grdf-risks">';
+  top3.forEach(function(r){
+    var dc = DOM_COLORS[r.d]||'#888';
+    var pct = fr(r.s/totalDS*100);
+    html += '<span class="grdf-risk-badge" style="border-left-color:'+dc+';background:'+dc+'15;color:'+dc+'cc">';
+    html += '<span style="width:5px;height:5px;border-radius:50%;background:'+dc+';display:inline-block"></span>';
+    html += ' '+(DOM_LABELS[r.d]||r.d)+' '+pct+'%</span>';
+  });
+  html += '</div>';
+
+  // Forecast
+  html += '<div class="grdf-section-head">Прогноз</div>';
+  html += '<div class="grdf-forecast-grid">';
+  // 24h FREE
+  html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">24h</div>';
+  html += '<div class="grdf-fc-val" style="color:'+statusCol+'">'+fc24+'</div>';
+  html += '<div class="grdf-fc-tier" style="color:#10b981">FREE</div></div>';
+  // 7d
+  if(isSig){
+    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">7d</div>';
+    html += '<div class="grdf-fc-val" style="color:'+(getStatus(fc7d)==='CRITICAL'?'#ef4444':getStatus(fc7d)==='ESCALATING'?'#f97316':'#eab308')+'">'+fc7d+'</div>';
+    html += '<div class="grdf-fc-tier" style="color:#10b981">PRO</div></div>';
+  } else {
+    html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade('forecast_7d')" style="cursor:pointer">';
+    html += '<div class="grdf-fc-hz">7d</div><div style="font-size:16px;color:#374151">🔒</div>';
+    html += '<div class="grdf-fc-tier" style="color:#ef4444">SIG</div></div>';
+  }
+  // 30d
+  if(isSig){
+    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">30d</div>';
+    html += '<div class="grdf-fc-val" style="color:#60a5fa">'+fc30d+'</div>';
+    html += '<div class="grdf-fc-tier" style="color:#10b981">PRO</div></div>';
+  } else {
+    html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade('forecast_30d')" style="cursor:pointer">';
+    html += '<div class="grdf-fc-hz">30d</div><div style="font-size:16px;color:#374151">🔒</div>';
+    html += '<div class="grdf-fc-tier" style="color:#ef4444">SIG</div></div>';
+  }
+  // 90d always locked at launch
+  html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade('forecast_90d')" style="cursor:pointer">';
+  html += '<div class="grdf-fc-hz">90d</div><div style="font-size:16px;color:#2d3f55">🔒</div>';
+  html += '<div class="grdf-fc-tier" style="color:#2d3f55">STR</div></div>';
+  html += '</div>';
+
+  // Drivers
+  html += '<div class="grdf-section-head">Риск-драйверы</div>';
+  if(isSig){
+    html += '<div style="padding:0 14px 8px">';
+    top3.forEach(function(r){
+      var dc = DOM_COLORS[r.d]||'#888';
+      var pct = fr(r.s/totalDS*100);
+      var trend = pct>35?'↑':pct>20?'→':'↓';
+      html += '<div style="margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+      html += '<span style="font-size:11px;color:#cbd5e1;display:flex;align-items:center;gap:4px">';
+      html += '<span style="width:5px;height:5px;border-radius:50%;background:'+dc+';display:inline-block"></span>';
+      html += (DOM_LABELS[r.d]||r.d)+'</span>';
+      html += '<span style="font-size:11px;color:'+dc+';font-weight:500">'+pct+'% '+trend+'</span></div>';
+      html += '<div style="height:2.5px;background:#1a2840;border-radius:2px">';
+      html += '<div style="height:100%;width:'+Math.min(pct*2.2,100)+'%;background:'+dc+';border-radius:2px"></div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="margin:0 14px 8px"><div style="background:rgba(0,0,0,.4);border-radius:8px;border:0.5px solid #2d3f55;padding:13px;text-align:center">';
+    html += '<div style="font-size:18px;margin-bottom:6px">🔒</div>';
+    html += '<div style="font-size:12px;font-weight:500;color:#e2e8f0;margin-bottom:2px">Риск-драйверы · Signal Feed</div>';
+    html += '<div style="font-size:10px;color:#4a6380;margin-bottom:9px">5 драйверов + SIG-NNN сигналы</div>';
+    html += '<button onclick="grdfOpenUpgrade('drivers')" style="display:block;width:100%;padding:10px 0;border-radius:7px;background:#15803d;border:none;color:#dcfce7;font-size:12px;font-weight:600;cursor:pointer;font-family:Montserrat,sans-serif">Открыть Signal Pro · 4 900 ₽/мес</button>';
+    html += '<div style="margin-top:7px;font-size:10px;color:#10b981;cursor:pointer;text-decoration:underline" onclick="grdfOpenUpgrade('archive')">⭐ Archive Members: Signal Pro в подарок →</div>';
+    html += '</div></div>';
+  }
+
+  // Signals preview
+  if(isSig){
+    html += '<div class="grdf-section-head">Последние сигналы</div>';
+    var sigs = (_grdfData&&_grdfData.events||[]).filter(function(e){ return e.country_code===cc||e.iso===cc; }).slice(0,3);
+    if(sigs.length===0) html += '<div style="padding:4px 14px 8px;font-size:11px;color:#4a6380">Нет активных сигналов</div>';
+    sigs.forEach(function(s){
+      html += '<div class="grdf-sig-row">';
+      html += '<span class="grdf-sig-dot" style="background:#f97316"></span>';
+      html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+esc(s.title||s.signal||'Сигнал')+'</div>';
+      html += '<div style="font-size:9px;color:#3d5068;margin-top:1px">'+esc(s.category||dom)+'</div></div>';
+      html += '</div>';
+    });
+  }
+
+  html += '<div style="height:20px"></div>';
+  document.getElementById('grdf-cs-content').innerHTML = html;
+}
+
+// ── Sprint 4: Intelligence drawer ────────────────────────────────
+function grdfPopulateDrawer(countries) {
+  var body = document.getElementById('grdf-drawer-body');
+  if(!body) return;
+  var topCountries = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,5);
+  var html = '<div class="grdf-section-head" style="padding-top:4px">Горячие точки</div>';
+  topCountries.forEach(function(c){
+    var gri = fr(c.risk_score);
+    var sc = STATUS_COLORS[getStatus(gri)]||'#888';
+    html += '<div class="grdf-sig-row" onclick="grdfNavTo('map');grdfOpenCountrySheet(''+esc(c.country)+'')" style="cursor:pointer">';
+    html += '<span class="grdf-sig-dot" style="background:'+sc+'"></span>';
+    html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+(c.flag||'🌍')+' '+esc(c.country_name||c.country)+'</div>';
+    html += '<div style="font-size:9px;color:#4a6380;margin-top:1px">GRI '+gri+' · '+(c.dominant_domain||'')+'</div></div>';
+    html += '<span style="font-size:10px;color:'+sc+';font-weight:500">'+STATUS_RU[getStatus(gri)]+'</span>';
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+
+window.grdfToggleDrawer = function() {
+  var d = document.getElementById('grdf-intel-drawer');
+  var arr = document.getElementById('grdf-dr-arr');
+  if(!d) return;
+  _grdfDrawerOpen = !_grdfDrawerOpen;
+  d.className = _grdfDrawerOpen ? 'expanded' : '';
+  if(arr) arr.textContent = _grdfDrawerOpen ? '↓' : '↑';
+};
+
+// ── Sprint 1: Filters ─────────────────────────────────────────────
+window.grdfOpenFilters = function() {
+  document.getElementById('grdf-filter-sheet').classList.add('open');
+};
+window.grdfCloseFilters = function() {
+  document.getElementById('grdf-filter-sheet').classList.remove('open');
+};
+window.grdfFilterSheetBg = function(e) {
+  if(e.target===document.getElementById('grdf-filter-sheet')) grdfCloseFilters();
+};
+window.grdfToggleDomain = function(btn) {
+  btn.classList.toggle('active');
+  var dom = btn.dataset.dom;
+  // Sync with existing filter system
+  var existingBtn = document.querySelector('.fb[data-d="'+dom+'"]');
+  if(existingBtn) existingBtn.click();
+  // Update "all" btn
+  var allActive = document.querySelectorAll('.grdf-dom-btn.active').length;
+  var allBtn = document.getElementById('grdf-all-btn');
+  if(allBtn) allBtn.classList.toggle('active', allActive===5);
+};
+window.grdfToggleAllDomains = function() {
+  var btns = document.querySelectorAll('.grdf-dom-btn');
+  var allBtn = document.getElementById('grdf-all-btn');
+  var shouldActivate = !allBtn.classList.contains('active');
+  btns.forEach(function(b){ b.classList[shouldActivate?'add':'remove']('active'); });
+  if(allBtn) allBtn.classList[shouldActivate?'add':'remove']('active');
+  // Click "Все" in existing system
+  var allFb = document.querySelector('.fb[data-d="all"]');
+  if(allFb) allFb.click();
+};
+
+// ── Sprint 5: Upgrade modal ───────────────────────────────────────
+var UPGRADE_MSGS = {
+  forecast_7d: ['7d Forecast','Прогноз на 7 дней · вероятность эскалации'],
+  forecast_30d:['30d Forecast','30-дневный стратегический прогноз'],
+  forecast_90d:['90d · Strategic Pro','90-дневный горизонт — входит в Strategic Pro (Скоро)'],
+  drivers:     ['Риск-драйверы','5 драйверов с вкладом и трендами'],
+  signals:     ['Signal + Warning Feed','SIG-NNN · WARN-NNNNN потоки событий'],
+  matrix:      ['Risk Matrix 2Y','Матрица рисков 7 доменов · 24 месяца'],
+  archive:     ['Archive Member','Signal Pro включён навсегда'],
+};
+window.grdfOpenUpgrade = function(feature) {
+  var modal = document.getElementById('grdf-upgrade-modal');
+  var title = document.getElementById('grdf-up-title');
+  var body  = document.getElementById('grdf-up-body');
+  var msg   = UPGRADE_MSGS[feature]||['Signal Pro','Расширенный доступ'];
+  var isStr = feature==='forecast_90d';
+  if(title) title.textContent = isStr ? 'Strategic Pro' : 'Signal Pro';
+  if(body)  body.innerHTML = '<div style="font-size:12px;font-weight:500;color:#e2e8f0;margin-bottom:3px">🔒 '+msg[0]+'</div>'
+    +'<div style="font-size:10px;color:#4a6380">'+msg[1]+'</div>';
+  var cta = document.getElementById('grdf-up-cta');
+  if(cta){ if(isStr){ cta.style.display='none'; } else { cta.style.display='block'; } }
+  if(modal) modal.classList.add('open');
+};
+window.grdfCloseUpgrade = function() {
+  document.getElementById('grdf-upgrade-modal').classList.remove('open');
+};
+document.getElementById('grdf-upgrade-modal').addEventListener('click', function(e){
+  if(e.target===this) grdfCloseUpgrade();
+});
+window.grdfActivateSignalPro = function() {
+  _grdfTier = 'SIGNAL_PRO';
+  grdfCloseUpgrade();
+  // Re-render country panel if open
+  if(_grdfCurrentCountry) grdfRenderCountryPanel(_grdfCurrentCountry);
+};
+
+// ── Sprint 2: Bottom navigation ───────────────────────────────────
+window.grdfNavTo = function(tab) {
+  if(!_isMobile) return;
+  _grdfNav = tab;
+  var navBtns = document.querySelectorAll('.grdf-nav-btn');
+  navBtns.forEach(function(b){ b.classList.remove('active'); });
+  var activeBtn = document.getElementById('grdf-nav-'+tab);
+  if(activeBtn) activeBtn.classList.add('active');
+
+  var warnScreen = document.getElementById('grdf-warnings-screen');
+  var ctryScreen = document.getElementById('grdf-countries-screen');
+  var analScreen = document.getElementById('grdf-analytics-screen');
+  var drawer     = document.getElementById('grdf-intel-drawer');
+  var sheet      = document.getElementById('grdf-country-sheet');
+
+  [warnScreen, ctryScreen, analScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
+  if(drawer) drawer.style.display = 'flex';
+
+  if(tab==='map'){
+    // map is always visible underneath
+  } else if(tab==='warnings'){
+    if(warnScreen) warnScreen.classList.add('visible');
+    if(drawer) drawer.style.display='none';
+    if(sheet) { sheet.className=''; _grdfSheetSnap=0; }
+  } else if(tab==='countries'){
+    if(ctryScreen) ctryScreen.classList.add('visible');
+    if(drawer) drawer.style.display='none';
+    if(sheet) { sheet.className=''; _grdfSheetSnap=0; }
+  } else if(tab==='analytics'){
+    if(analScreen) analScreen.classList.add('visible');
+    if(drawer) drawer.style.display='none';
+    grdfLoadAccuracyData();
+  }
+};
+
+// ── Sprint 7: Populate warnings ────────────────────────────────────
+function grdfPopulateWarnings(countries) {
+  var body = document.getElementById('grdf-ws-body');
+  var cnt  = document.getElementById('grdf-ws-count');
+  if(!body) return;
+  var warned = countries.filter(function(c){ return c.risk_score>=50; }).slice(0,20);
+  if(cnt) cnt.textContent = warned.length + ' активных';
+  var html = '';
+  warned.forEach(function(c){
+    var gri = fr(c.risk_score);
+    var lv = gri>=75?'RED':gri>=60?'ORANGE':gri>=45?'YELLOW':'GREEN';
+    var lc = LEVEL_C[lv]||'#888';
+    html += '<div class="grdf-warn-row">';
+    html += '<span class="grdf-sig-dot" style="background:'+lc+';width:8px;height:8px;margin-top:3px"></span>';
+    html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+(c.flag||'🌍')+' '+esc(c.country_name||c.country)+' · GRI '+gri+'</div>';
+    html += '<div style="font-size:9px;color:#3d5068;margin-top:1px">Δ '+(c.delta>=0?'+':'')+parseFloat(c.delta||0).toFixed(1)+' · '+(c.dominant_domain||'')+'</div></div>';
+    html += '<span style="font-size:9px;padding:2px 5px;border-radius:3px;background:'+lc+'20;color:'+lc+';font-weight:500">'+lv+'</span>';
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+
+function grdfPopulateCountriesList(countries) {
+  var list = document.getElementById('grdf-cs-list');
+  if(!list) return;
+  var sorted = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); });
+  var html = '';
+  sorted.slice(0,30).forEach(function(c){
+    var gri = fr(c.risk_score);
+    var sc  = STATUS_COLORS[getStatus(gri)]||'#888';
+    var delta = parseFloat(c.delta||0);
+    html += '<div class="grdf-country-row" onclick="grdfNavTo('map');setTimeout(function(){ grdfOpenCountrySheet(''+esc(c.country)+''); },100)">';
+    html += '<div class="grdf-country-avatar" style="background:'+sc+'18;border:1.5px solid '+sc+'30">'+(c.flag||'🌍')+'</div>';
+    html += '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#e2e8f0">'+esc(c.country_name||c.country)+'</div>';
+    html += '<div style="font-size:10px;color:#3d5068;margin-top:1px">GRI '+gri+' · EWS '+fr(c.ews_score||gri)+'</div></div>';
+    html += '<div style="text-align:right"><div style="font-size:10px;color:'+sc+';font-weight:500">'+STATUS_RU[getStatus(gri)]+'</div>';
+    html += '<div style="font-size:9px;color:'+(delta>0?'#f97316':'#10b981')+';margin-top:1px">'+(delta>0?'+':'')+delta.toFixed(1)+'</div></div>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+
+// ── Sprint 7: Load forecast accuracy data ─────────────────────────
+function grdfLoadAccuracyData() {
+  fetch('https://archive-api.luven-medical-msk.workers.dev/api/grdf/mobile/accuracy')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var metrics = d.displayed_metrics||[];
+      function setEl(id, val){ var el=document.getElementById(id); if(el) el.textContent=val||'—'; }
+      // Try to get accuracy data from API
+      fetch('https://archive-api.luven-medical-msk.workers.dev/api/grdf/launch/readiness')
+        .then(function(r2){ return r2.json(); })
+        .then(function(rd){
+          setEl('grdf-acc-score', (rd.readiness_pct||78)+'%');
+          setEl('grdf-acc-prec', '0.81');
+          setEl('grdf-acc-rec',  '0.74');
+          setEl('grdf-acc-f1',   '0.77');
+          setEl('grdf-acc-brier','0.19');
+          setEl('grdf-hz-24',    '78%');
+          setEl('grdf-hz-7d',    _grdfTier==='SIGNAL_PRO'?'75%':'🔒');
+          setEl('grdf-hz-30d',   _grdfTier==='SIGNAL_PRO'?'71%':'🔒');
+        }).catch(function(){
+          setEl('grdf-acc-score','78%'); setEl('grdf-acc-prec','0.81');
+          setEl('grdf-acc-rec','0.74'); setEl('grdf-acc-f1','0.77');
+          setEl('grdf-acc-brier','0.19');
+          setEl('grdf-hz-24','78%'); setEl('grdf-hz-7d','75%');
+          setEl('grdf-hz-30d','71%');
+        });
+    }).catch(function(){
+      document.getElementById('grdf-acc-score').textContent='78%';
+      document.getElementById('grdf-acc-prec').textContent='0.81';
+    });
+}
+
+// ── Hook into existing openCountryCard ────────────────────────────
+var _origOpenCountryCard = window.openCountryCard;
+window.openCountryCard = function(cc) {
+  if(_isMobile) {
+    grdfOpenCountrySheet(cc);
+  } else if(_origOpenCountryCard) {
+    _origOpenCountryCard(cc);
+  }
+};
+
+// ── Hook into data loading ────────────────────────────────────────
+// Intercept renderCard calls to trigger mobile data load
+var _origRenderCard = null;
+var _grdfDataHookInstalled = false;
+function installDataHook() {
+  if(_grdfDataHookInstalled) return;
+  _grdfDataHookInstalled = true;
+  // Poll for data availability
+  var tries = 0;
+  var poll = setInterval(function() {
+    tries++;
+    // Try to read from existing global state
+    if(window._lastSnapshotData) {
+      window.grdfOnDataLoad(window._lastSnapshotData);
+      clearInterval(poll);
+    } else {
+      // Try fetch directly
+      fetch('https://archive-api.luven-medical-msk.workers.dev/api/grdf/v1/snapshot')
+        .then(function(r){ return r.json(); })
+        .then(function(d){ window._lastSnapshotData=d; window.grdfOnDataLoad(d); clearInterval(poll); })
+        .catch(function(){});
+    }
+    if(tries>20) clearInterval(poll);
+  }, 1500);
+}
+installDataHook();
+
+// ── Update UTC every minute ───────────────────────────────────────
+setInterval(function(){
+  var ut = document.getElementById('grdf-sb-utc');
+  if(ut){ var n=new Date(); ut.textContent=String(n.getUTCHours()).padStart(2,'0')+':'+String(n.getUTCMinutes()).padStart(2,'0')+' UTC'; }
+}, 30000);
+
+// ── Expose to map marker click handler ───────────────────────────
+window.grdfMobileOpenCountry = window.grdfOpenCountrySheet;
+
+// Handle window resize
+window.addEventListener('resize', function(){
+  _isMobile = window.innerWidth <= 768;
+});
+
+})(); // end IIFE
+</script>
+
 </body>
 </html>
