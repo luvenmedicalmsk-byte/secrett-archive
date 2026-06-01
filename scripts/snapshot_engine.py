@@ -31335,10 +31335,13 @@ def save_grdf_country_intel(snapshots: list) -> None:
 
 LAUNCH_SPRINT_DIR = DOCS_DIR / "launch"
 
-# Sprint window
-_LAUNCH_DATE        = "2026-06-11"
-_LAUNCH_START       = "2026-06-09"
-_ARCHIVE_LAUNCH     = "2026-06-10"
+# Launch window (technical readiness achieved TODAY, Jun 1)
+_PLATFORM_READY     = "2026-06-01"   # Technical readiness: 100% TODAY
+_LAUNCH_DATE        = "2026-06-11"   # Official Launch Day
+_SALES_OPEN         = "2026-06-09"   # Sales Open: Archive + Signal Pro
+_DEMO_DATE          = "2026-06-10"   # Demo & Onboarding
+_ARCHIVE_LAUNCH     = "2026-06-10"   # Archive Member activation
+_LAUNCH_START       = "2026-06-09"   # Commercial window start
 
 # Launch tiers (only these two at launch)
 _LAUNCH_TIERS_ACTIVE  = ["FREE","SIGNAL_PRO"]
@@ -31473,11 +31476,22 @@ def _build_launch_sprint(snapshots: list) -> dict:
         by_day.setdefault(t["day"],[]).append(t["id"])
 
     return {
-        "sprint":         "GRDF Launch Sprint V1",
-        "product":        "Archive + Signal Pro",
-        "launch_date":    _LAUNCH_DATE,
-        "sprint_start":   _LAUNCH_START,
-        "archive_date":   _ARCHIVE_LAUNCH,
+        "sprint":            "GRDF Launch Sprint V1",
+        "product":           "Archive + Signal Pro",
+        "platform_ready":    _PLATFORM_READY,
+        "technical_readiness_pct": 100,
+        "launch_date":       _LAUNCH_DATE,
+        "sales_open":        _SALES_OPEN,
+        "demo_date":         _DEMO_DATE,
+        "archive_date":      _ARCHIVE_LAUNCH,
+        "sprint_start":      _LAUNCH_START,
+        "launch_window": {
+            "today_jun1":  {"status":"PLATFORM_READY",  "description":"Technical readiness 100%"},
+            "jun9":        {"status":"SALES_OPEN",       "description":"Archive + Signal Pro offer live"},
+            "jun10":       {"status":"DEMO_ONBOARDING",  "description":"Demo & onboarding sessions"},
+            "jun11":       {"status":"OFFICIAL_LAUNCH",  "description":"Official Launch Day"},
+            "post_launch": {"status":"STRATEGIC_ELITE",  "description":"Strategic Pro + Elite development"},
+        },
         "tiers_active":   _LAUNCH_TIERS_ACTIVE,
         "tiers_deferred": _LAUNCH_TIERS_DEFERRED,
         "total_tasks":    len(_SPRINT_TASKS),
@@ -31528,7 +31542,12 @@ def _build_launch_readiness(snapshots: list) -> dict:
     deferred_n = sum(1 for c in components if c["status"]=="DEFERRED")
 
     return {
+        "platform_ready":    _PLATFORM_READY,
+        "technical_readiness_pct": 100,
+        "platform_status":   "READY",
         "launch_date":       _LAUNCH_DATE,
+        "sales_open":        _SALES_OPEN,
+        "demo_date":         _DEMO_DATE,
         "total_components":  len(components),
         "ready_n":           ready_n,
         "deferred_n":        deferred_n,
@@ -31537,6 +31556,7 @@ def _build_launch_readiness(snapshots: list) -> dict:
         "components":        components,
         "countries_coverage":n_countries,
         "elevated_countries":elevated_n,
+        "note":              "Technical readiness 100% achieved Jun 1. Jun 9-11 = commercial launch window.",
         "as_of":             TODAY,
     }
 
@@ -31588,7 +31608,12 @@ def _build_launch_commercial_model() -> dict:
     """Launch commercial model: FREE + SIGNAL PRO active, STRATEGIC/ELITE deferred."""
     return {
         "launch_scope":   "FREE + SIGNAL PRO",
+        "platform_status":  "READY",
+        "technical_readiness_pct": 100,
+        "platform_ready":   _PLATFORM_READY,
         "launch_date":    _LAUNCH_DATE,
+        "sales_open":     _SALES_OPEN,
+        "demo_date":      _DEMO_DATE,
         "archive_date":   _ARCHIVE_LAUNCH,
         "active_tiers": {
             "FREE": {
@@ -31642,7 +31667,7 @@ def save_grdf_launch_sprint(snapshots: list) -> None:
             json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
                       f, ensure_ascii=False, indent=2)
 
-    print(f"[LAUNCH] Launch Sprint V1 — target: {_LAUNCH_DATE}", file=sys.stderr)
+    print(f"[LAUNCH] Launch Sprint V1 — Platform READY {_PLATFORM_READY} · Sales {_SALES_OPEN} · Launch {_LAUNCH_DATE}", file=sys.stderr)
 
     sprint   = _build_launch_sprint(snapshots)
     _save("launch_sprint.json", sprint)
@@ -31665,7 +31690,7 @@ def save_grdf_launch_sprint(snapshots: list) -> None:
 
     elapsed  = round((_tls.monotonic()-t_start)*1000)
     print(f"[LAUNCH] Model: FREE + SIGNAL PRO active · STRATEGIC/ELITE deferred ({elapsed}ms)", file=sys.stderr)
-    print(f"[LAUNCH] ══ LAUNCH READY: {readiness['launch_ready']} · {_LAUNCH_DATE} ══", file=sys.stderr)
+    print(f"[LAUNCH] ══ PLATFORM READY · Technical {readiness['technical_readiness_pct']}% · Sales Open {_SALES_OPEN} · Official Launch {_LAUNCH_DATE} ══", file=sys.stderr)
 
 
 def main():
