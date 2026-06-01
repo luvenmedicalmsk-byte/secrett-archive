@@ -887,7 +887,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   .sv{font-size:16px}
   #header{top:8px;left:12px}
   #logo-title{font-size:13px}
-  #updated{top:10px;right:12px;font-size:8px}
+  #live-status{display:none!important}
+  #updated{display:none!important}
   #list-btn{display:none!important}
   #ai-score-btn{display:none!important}
   #risks-btn{display:none!important}
@@ -1089,7 +1090,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 /* ── Warnings/Countries screens ── */
 #grdf-warnings-screen,#grdf-countries-screen{
   display:none;position:fixed;top:0;left:0;right:0;bottom:56px;z-index:120;
-  background:#06101e;overflow-y:auto;padding-top:38px;
+  background:#06101e;overflow-y:auto;padding-top:42px;
 }
 @media(max-width:768px){
   #grdf-warnings-screen.visible{display:block}
@@ -2679,7 +2680,10 @@ window.openCountryCard = async function(cc) {
   }
 
   renderCard(country);
-  if(window.grdfOnDataLoad && data) { window._lastSnapshotData=data; window.grdfOnDataLoad(data); }
+  if(window.grdfOnDataLoad && data) {
+    window._lastSnapshotData = data;
+    window.grdfOnDataLoad(data);
+  }
   // Store domain color for timeline
   window._currentDomainColor = domainColor(country.dominant_domain);
 
@@ -6167,9 +6171,9 @@ function _evM(val, lbl, col) {
 <div id="grdf-intel-drawer">
   <div class="grdf-drawer-handle" onclick="grdfToggleDrawer()"></div>
   <div class="grdf-drawer-summary" onclick="grdfToggleDrawer()">
-    <span class="grdf-drawer-stat" id="grdf-dr-sigs" style="color:#e2e8f0;font-weight:500">— Signals</span>
-    <span class="grdf-drawer-stat" id="grdf-dr-crit" style="color:#ef4444">— Critical</span>
-    <span class="grdf-drawer-stat" id="grdf-dr-warn" style="color:#f97316">— Warnings</span>
+    <span class="grdf-drawer-stat" id="grdf-dr-sigs" style="color:#e2e8f0;font-weight:500">— Сигналов</span>
+    <span class="grdf-drawer-stat" id="grdf-dr-crit" style="color:#ef4444">— Критичных</span>
+    <span class="grdf-drawer-stat" id="grdf-dr-warn" style="color:#f97316">— Предупреждений</span>
     <span style="font-size:10px;color:#3d5068" id="grdf-dr-arr">↑</span>
   </div>
   <div class="grdf-drawer-body" id="grdf-drawer-body"></div>
@@ -6353,9 +6357,9 @@ window.grdfOnDataLoad = function(data) {
   var drCrit = document.getElementById('grdf-dr-crit');
   var drWarn = document.getElementById('grdf-dr-warn');
   var wBadge = document.getElementById('grdf-warn-badge');
-  if(drSigs) drSigs.textContent = totalEvents + ' Signals';
-  if(drCrit) drCrit.textContent = critN + ' Critical';
-  if(drWarn) drWarn.textContent = warnN + ' Warnings';
+  if(drSigs) drSigs.textContent = totalEvents + ' Сигналов';
+  if(drCrit) drCrit.textContent = critN + ' Критичных';
+  if(drWarn) drWarn.textContent = warnN + ' Предупреждений';
   if(wBadge && critN>0){ wBadge.style.display='flex'; wBadge.textContent=critN>9?'9+':critN; }
 
   // Sprint 4: Populate drawer body
@@ -6539,6 +6543,10 @@ function grdfRenderCountryPanel(cc) {
 function grdfPopulateDrawer(countries) {
   var body = document.getElementById('grdf-drawer-body');
   if(!body) return;
+  if(!countries || !countries.length){
+    body.innerHTML='<div style="padding:10px 13px;font-size:11px;color:#4a6380">Загрузка данных...</div>';
+    return;
+  }
   var topCountries = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,5);
   var html = '<div class="grdf-section-head" style="padding-top:4px">Горячие точки</div>';
   topCountries.forEach(function(c){
@@ -6670,6 +6678,10 @@ function grdfPopulateWarnings(countries) {
   var body = document.getElementById('grdf-ws-body');
   var cnt  = document.getElementById('grdf-ws-count');
   if(!body) return;
+  if(!countries || !countries.length){
+    body.innerHTML='<div style="padding:20px 14px;font-size:12px;color:#4a6380;text-align:center">Загрузка...</div>';
+    return;
+  }
   var warned = countries.filter(function(c){ return c.risk_score>=50; }).slice(0,20);
   if(cnt) cnt.textContent = warned.length + ' активных';
   var html = '';
@@ -6690,6 +6702,10 @@ function grdfPopulateWarnings(countries) {
 function grdfPopulateCountriesList(countries) {
   var list = document.getElementById('grdf-cs-list');
   if(!list) return;
+  if(!countries || !countries.length){
+    list.innerHTML='<div style="padding:20px 14px;font-size:12px;color:#4a6380;text-align:center">Загрузка стран...</div>';
+    return;
+  }
   var sorted = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); });
   var html = '';
   sorted.slice(0,30).forEach(function(c){
@@ -6756,23 +6772,54 @@ var _grdfDataHookInstalled = false;
 function installDataHook() {
   if(_grdfDataHookInstalled) return;
   _grdfDataHookInstalled = true;
-  // Poll for data availability
-  var tries = 0;
-  var poll = setInterval(function() {
+  var API_M = 'https://archive-api.luven-medical-msk.workers.dev';
+
+  function tryLoad(d) {
+    if(!d) return false;
+    var countries = d.countries || d.data || (Array.isArray(d) ? d : null);
+    if(countries && countries.length > 0) {
+      window._lastSnapshotData = {countries: countries};
+      window.grdfOnDataLoad({countries: countries});
+      return true;
+    }
+    return false;
+  }
+
+  // Immediately try: if _lastSnapshotData already set (from renderCard hook)
+  if(window._lastSnapshotData && tryLoad(window._lastSnapshotData)) return;
+
+  // Primary: /api/snapshot/today — same endpoint as main script fetchToday()
+  fetch(API_M + '/api/snapshot/today', {signal: AbortSignal.timeout(8000)})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(tryLoad(d)) return;
+      // Fallback: /api/grdf/country/DE/overview type scan — not ideal
+      // Try /api/scores which may have per-country data
+      return fetch(API_M + '/api/scores', {signal: AbortSignal.timeout(5000)})
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(sd){
+          if(!sd) return;
+          // scores may have countries array or domain_summary
+          if(sd.countries) tryLoad(sd);
+          else if(sd.domain_summary) {
+            // Build minimal synthetic data from domain summary for status bar
+            var synth = {countries:[]};
+            window.grdfOnDataLoad(synth);
+          }
+        });
+    })
+    .catch(function(){});
+
+  // Also poll every 2s for _lastSnapshotData (set by renderCard hook when user taps country)
+  var tries=0;
+  var poll=setInterval(function(){
     tries++;
-    // Try to read from existing global state
-    if(window._lastSnapshotData) {
+    if(window._lastSnapshotData){
       window.grdfOnDataLoad(window._lastSnapshotData);
       clearInterval(poll);
-    } else {
-      // Try fetch directly
-      fetch('https://archive-api.luven-medical-msk.workers.dev/api/grdf/v1/snapshot')
-        .then(function(r){ return r.json(); })
-        .then(function(d){ window._lastSnapshotData=d; window.grdfOnDataLoad(d); clearInterval(poll); })
-        .catch(function(){});
     }
-    if(tries>20) clearInterval(poll);
-  }, 1500);
+    if(tries>15) clearInterval(poll);
+  }, 2000);
 }
 installDataHook();
 
