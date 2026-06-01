@@ -246,6 +246,15 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 .loading{color:var(--text3);font-size:11px;font-family:var(--mono);padding:18px;text-align:center;animation:blink 1.5s infinite}
 @keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+
+.drv-period-btn{padding:5px 14px;background:transparent;border:0.5px solid var(--border2);border-radius:5px;color:var(--text3);font-size:10px;cursor:pointer;font-family:var(--mono);-webkit-appearance:none}
+.drv-period-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.drv-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:9px;padding:13px 14px}
+.drv-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px}
+.drv-score{font-size:26px;font-weight:700;font-family:var(--mono)}
+.drv-deltas{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap}
+.drv-delta-item{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:3px}
+
 </style>
 </head>
 <body>
@@ -303,6 +312,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <button class="sn-btn" onclick="goSection('s11')" data-s="s11">🔗<span class="sn-tip">Infra</span></button>
     <button class="sn-btn" onclick="goSection('s12')" data-s="s12">🩺<span class="sn-tip">Health Check</span></button>
     <button class="sn-btn" onclick="goSection('s13')" data-s="s13">🔬<span class="sn-tip">Explainability</span></button>
+    <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
   <div id="main">
@@ -727,6 +737,128 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
 
     </div><!-- /s13 -->
+
+
+    <!-- ─ S14: RISK DRIVER INTELLIGENCE CENTER ─ -->
+    <div class="section" id="s14">
+      <div class="s-head">
+        <div class="s-tag">14</div>
+        <div class="s-title">Risk Driver Intelligence Center</div>
+        <div class="s-badge badge-orange">⚡ DRIVER ENGINE</div>
+      </div>
+
+      <!-- Architecture flow -->
+      <div class="sum-card" style="margin-bottom:14px">
+        <div class="sum-title"><span>🔗</span>Intelligence Architecture</div>
+        <div style="display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 0">
+          <div id="arch-flow"></div>
+        </div>
+      </div>
+
+      <!-- 01: TOP GLOBAL RISK DRIVERS -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🌍</span> 01 · Top Global Risk Drivers</div>
+        <div id="top-drivers-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
+      </div>
+
+      <!-- 02: DRIVER IMPACT ENGINE -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>📊</span> 02 · Driver Impact Engine</div>
+        <div class="sum-card">
+          <div class="sum-title"><span>📈</span>Global Risk Contribution</div>
+          <div id="driver-impact"></div>
+        </div>
+      </div>
+
+      <!-- 03: DRIVER NETWORK MAP -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🕸️</span> 03 · Driver Network Map</div>
+        <div class="sum-card">
+          <canvas id="driver-network" style="width:100%;height:280px;background:var(--bg3);border-radius:8px;display:block"></canvas>
+        </div>
+      </div>
+
+      <!-- 04: COUNTRY DRIVER EXPLAINER -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🌍</span> 04 · Country Driver Explainer</div>
+        <div style="margin-bottom:8px">
+          <select id="drv-country-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;outline:none;width:100%" onchange="buildCountryDrivers(this.value)">
+            <option value="">Select country...</option>
+          </select>
+        </div>
+        <div id="country-drivers-out">
+          <div style="padding:18px;text-align:center;font-size:11px;color:var(--text3)">Select a country to see risk drivers</div>
+        </div>
+      </div>
+
+      <!-- 05: DRIVER MOMENTUM -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>⚡</span> 05 · Driver Momentum</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <button class="drv-period-btn active" onclick="setMomentumPeriod('7d',this)">7d</button>
+          <button class="drv-period-btn" onclick="setMomentumPeriod('30d',this)">30d</button>
+          <button class="drv-period-btn" onclick="setMomentumPeriod('24h',this)">24h</button>
+        </div>
+        <div class="sum-card">
+          <div id="driver-momentum"></div>
+        </div>
+      </div>
+
+      <!-- 06: META DRIVER CENTER -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🧬</span> 06 · Meta Driver Center</div>
+        <div class="swipe-wrap" id="meta-drv-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title" style="color:#10b981"><span>🌡️</span> Climate Stress</div>
+              <div id="meta-climate"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title" style="color:#3b82f6"><span>💹</span> Economic Stress</div>
+              <div id="meta-eco"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title" style="color:#ef4444"><span>👥</span> Social Instability</div>
+              <div id="meta-social"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title" style="color:#f97316"><span>⚔️</span> Geopolitical Escalation</div>
+              <div id="meta-geo"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title" style="color:#a855f7"><span>💻</span> Technology Risk</div>
+              <div id="meta-tech"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="meta-drv-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 07: DRIVER → FORECAST ENGINE -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🔮</span> 07 · Driver → Forecast Engine</div>
+        <div id="drv-forecast-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
+      </div>
+
+      <!-- 08: RISK DRIVER PIPELINE -->
+      <div style="margin-bottom:18px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🔗</span> 08 · Risk Driver Pipeline</div>
+        <div class="sum-card">
+          <div id="drv-pipeline"></div>
+        </div>
+      </div>
+
+    </div><!-- /s14 -->
 
   </div><!-- /main -->
 </div><!-- /dashboard -->
@@ -1335,10 +1467,362 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0) loadExplainability(cc); }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
+
+
+// ── S14: RISK DRIVER INTELLIGENCE CENTER ─────────────────────────
+var _drvCountries = [];
+var _momentumPeriod = '7d';
+
+var GLOBAL_DRIVERS = [
+  {name:'Migration Pressure',     score:82, d24:3,  d7:15, d30:22,  sigs:1284, events:24590, col:'#ef4444', fc30:'UP'},
+  {name:'Political Instability',  score:78, d24:2,  d7:12, d30:18,  sigs:1150, events:21200, col:'#f97316', fc30:'UP'},
+  {name:'Economic Stress',        score:74, d24:-1, d7:8,  d30:14,  sigs:980,  events:18400, col:'#3b82f6', fc30:'UP'},
+  {name:'Climate Stress',         score:71, d24:1,  d7:6,  d30:11,  sigs:920,  events:17100, col:'#10b981', fc30:'STABLE'},
+  {name:'Civil Unrest',           score:68, d24:4,  d7:11, d30:16,  sigs:840,  events:15600, col:'#ef4444', fc30:'UP'},
+  {name:'Energy Risk',            score:65, d24:-2, d7:4,  d30:7,   sigs:720,  events:13200, col:'#eab308', fc30:'STABLE'},
+  {name:'Conflict Escalation',    score:63, d24:2,  d7:9,  d30:14,  sigs:690,  events:12800, col:'#f97316', fc30:'UP'},
+  {name:'Infrastructure Stress',  score:58, d24:0,  d7:3,  d30:5,   sigs:580,  events:10700, col:'#a855f7', fc30:'STABLE'},
+  {name:'Water Scarcity',         score:54, d24:1,  d7:5,  d30:10,  sigs:510,  events:9400,  col:'#10b981', fc30:'UP'},
+  {name:'Cyber Risk',             score:52, d24:3,  d7:7,  d30:12,  sigs:480,  events:8900,  col:'#a855f7', fc30:'UP'},
+];
+
+var META_DRIVERS = {
+  climate:['Wildfires','Drought','Floods','Heatwaves'],
+  eco:    ['Inflation','Energy Crisis','Banking Stress','Supply Chain'],
+  social: ['Migration Surge','Protests','Civil Unrest','Inequality'],
+  geo:    ['Military Incidents','Sanctions','Border Tensions','Force Concentration'],
+  tech:   ['Cyberattacks','Satellite Failures','Grid Vulnerabilities','Infra Incidents'],
+};
+
+var META_SCORES = {climate:71, eco:74, social:79, geo:76, tech:52};
+var META_COLS   = {climate:'#10b981', eco:'#3b82f6', social:'#ef4444', geo:'#f97316', tech:'#a855f7'};
+
+function loadRiskDrivers(countries) {
+  _drvCountries = countries;
+  buildArchFlow();
+  buildTopDrivers();
+  buildDriverImpact();
+  buildDriverNetwork();
+  buildDriverMomentum('7d');
+  buildMetaDrivers();
+  buildDrvForecast();
+  buildDrvPipeline();
+  populateDrvCountrySelect(countries);
+  initSwipeDots('meta-drv-swipe','meta-drv-dots');
+}
+
+function buildArchFlow() {
+  var steps = ['Raw Events','Signals','Risk Drivers','Meta Drivers','GRI/EWS','Forecasts'];
+  var cols  = ['var(--blue)','var(--orange)','var(--gold)','var(--red)','var(--green)','var(--green)'];
+  var counts= ['1M+ /day','50K','500+','30–50','198 cc','792'];
+  var h = '<div style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch">';
+  steps.forEach(function(s,i) {
+    if (i > 0) h += '<div style="color:var(--text3);font-size:12px;flex-shrink:0">→</div>';
+    h += '<div style="flex-shrink:0;background:var(--bg3);border:0.5px solid ' + cols[i] + '44;border-radius:7px;padding:7px 10px;text-align:center">';
+    h += '<div style="font-size:10px;font-weight:600;color:' + cols[i] + '">' + s + '</div>';
+    h += '<div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">' + counts[i] + '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+  document.getElementById('arch-flow').innerHTML = h;
+}
+
+function buildTopDrivers() {
+  var h = '';
+  GLOBAL_DRIVERS.forEach(function(d) {
+    var dSign7  = d.d7  >= 0 ? '+' : '';
+    var dSign30 = d.d30 >= 0 ? '+' : '';
+    var dCol7   = d.d7  >= 0 ? 'var(--orange)' : 'var(--green)';
+    var dCol30  = d.d30 >= 0 ? 'var(--orange)' : 'var(--green)';
+    var scoreCol = d.score >= 75 ? 'var(--red)' : d.score >= 60 ? 'var(--orange)' : 'var(--text2)';
+    h += '<div class="drv-card">';
+    h += '<div class="drv-name">' + d.name + '</div>';
+    h += '<div style="display:flex;align-items:baseline;gap:8px">';
+    h += '<div class="drv-score" style="color:' + scoreCol + '">' + d.score + '</div>';
+    h += '<div style="flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:3px">';
+    h += '<div style="height:100%;width:' + d.score + '%;background:' + d.col + ';border-radius:2px"></div></div></div>';
+    h += '<div class="drv-deltas">';
+    h += '<span class="drv-delta-item" style="background:' + dCol7 + '20;color:' + dCol7 + '">7d: ' + dSign7 + d.d7 + '</span>';
+    h += '<span class="drv-delta-item" style="background:' + dCol30 + '20;color:' + dCol30 + '">30d: ' + dSign30 + d.d30 + '</span>';
+    h += '<span class="drv-delta-item" style="background:rgba(255,255,255,.05);color:var(--text3)">↑ ' + fmt(d.sigs) + ' sig</span>';
+    h += '</div></div>';
+  });
+  document.getElementById('top-drivers-grid').innerHTML = h;
+}
+
+function buildDriverImpact() {
+  var impacts = [
+    {name:'Political Instability', pct:24, col:'#f97316'},
+    {name:'Migration Pressure',    pct:18, col:'#ef4444'},
+    {name:'Economic Stress',       pct:16, col:'#3b82f6'},
+    {name:'Climate Stress',        pct:14, col:'#10b981'},
+    {name:'Infrastructure Stress', pct:11, col:'#a855f7'},
+    {name:'Conflict Escalation',   pct:9,  col:'#f97316'},
+    {name:'Cyber Risk',            pct:8,  col:'#a855f7'},
+  ];
+  var h = '';
+  impacts.forEach(function(item) {
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="font-size:11px;color:var(--text2);width:160px;flex-shrink:0">' + item.name + '</span>';
+    h += '<div style="flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px">';
+    h += '<div style="height:100%;width:' + (item.pct * 4) + '%;background:' + item.col + ';border-radius:3px;transition:width .6s"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:11px;color:' + item.col + ';width:36px;text-align:right">' + item.pct + '%</span>';
+    h += '</div>';
+  });
+  document.getElementById('driver-impact').innerHTML = h;
+}
+
+function buildDriverNetwork() {
+  var canvas = document.getElementById('driver-network');
+  if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.offsetWidth || 340;
+  var H = 280;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  var nodes = [
+    {id:0, label:'Migration',     x:W*0.5, y:H*0.25, col:'#ef4444', r:28, score:82},
+    {id:1, label:'Political',     x:W*0.2, y:H*0.5,  col:'#f97316', r:26, score:78},
+    {id:2, label:'Civil Unrest',  x:W*0.8, y:H*0.5,  col:'#ef4444', r:24, score:68},
+    {id:3, label:'Economic',      x:W*0.35,y:H*0.75, col:'#3b82f6', r:24, score:74},
+    {id:4, label:'Climate',       x:W*0.65,y:H*0.75, col:'#10b981', r:22, score:71},
+    {id:5, label:'Border',        x:W*0.15,y:H*0.2,  col:'#f97316', r:18, score:58},
+    {id:6, label:'Energy',        x:W*0.85,y:H*0.25, col:'#eab308', r:20, score:65},
+  ];
+  var edges = [
+    {a:0,b:1,str:3},{a:0,b:2,str:3},{a:0,b:5,str:2},
+    {a:1,b:3,str:3},{a:1,b:5,str:2},{a:2,b:3,str:2},
+    {a:2,b:6,str:2},{a:3,b:4,str:2},{a:4,b:6,str:1},
+  ];
+  var strCols = ['rgba(100,116,139,.3)','rgba(234,179,8,.4)','rgba(249,115,22,.5)','rgba(239,68,68,.7)'];
+  var strW    = [1, 1.5, 2, 3];
+
+  // Draw edges
+  edges.forEach(function(e) {
+    var a = nodes[e.a], b = nodes[e.b];
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = strCols[e.str] || strCols[1];
+    ctx.lineWidth   = strW[e.str] || 1;
+    ctx.stroke();
+  });
+
+  // Draw nodes
+  nodes.forEach(function(n) {
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fillStyle = n.col + '22';
+    ctx.fill();
+    ctx.strokeStyle = n.col;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = n.col;
+    ctx.font = 'bold ' + (n.r * 0.6) + 'px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.score, n.x, n.y - 2);
+    ctx.font = '9px Space Grotesk, sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(n.label, n.x, n.y + n.r + 10);
+  });
+
+  // Legend
+  var legItems = ['Weak','Moderate','Strong','Critical'];
+  legItems.forEach(function(l, i) {
+    ctx.beginPath();
+    ctx.moveTo(10, H - 40 + i * 10);
+    ctx.lineTo(30, H - 40 + i * 10);
+    ctx.strokeStyle = strCols[i];
+    ctx.lineWidth   = strW[i];
+    ctx.stroke();
+    ctx.fillStyle = '#4a6380';
+    ctx.font = '9px Space Grotesk, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(l, 34, H - 40 + i * 10 + 3);
+  });
+}
+
+function buildDriverMomentum(period) {
+  var sorted = GLOBAL_DRIVERS.slice().sort(function(a, b) {
+    var va = period === '24h' ? a.d24 : period === '7d' ? a.d7 : a.d30;
+    var vb = period === '24h' ? b.d24 : period === '7d' ? b.d7 : b.d30;
+    return vb - va;
+  });
+  var h = '';
+  sorted.forEach(function(d, i) {
+    var val = period === '24h' ? d.d24 : period === '7d' ? d.d7 : d.d30;
+    var isUp = val >= 0;
+    var dCol = isUp ? 'var(--orange)' : 'var(--green)';
+    var arrow = isUp ? '↑' : '↓';
+    var pct = Math.abs(val / 30 * 100);
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="font-size:11px;color:var(--text3);font-family:var(--mono);width:16px">' + (i+1) + '</span>';
+    h += '<span style="width:8px;height:8px;border-radius:50%;background:' + d.col + ';flex-shrink:0;display:inline-block"></span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1">' + d.name + '</span>';
+    h += '<div style="width:60px;height:4px;background:rgba(255,255,255,.05);border-radius:2px">';
+    h += '<div style="height:100%;width:' + pct + '%;background:' + dCol + ';border-radius:2px"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:11px;color:' + dCol + ';width:40px;text-align:right">' + arrow + (val >= 0 ? '+' : '') + val + '</span>';
+    h += '</div>';
+  });
+  document.getElementById('driver-momentum').innerHTML = h;
+}
+
+window.setMomentumPeriod = function(period, btn) {
+  _momentumPeriod = period;
+  document.querySelectorAll('.drv-period-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  buildDriverMomentum(period);
+};
+
+function buildMetaDrivers() {
+  var metaData = {
+    climate: ['Wildfires','Drought','Floods','Heatwaves'],
+    eco:     ['Inflation','Energy Crisis','Banking Stress','Supply Chain'],
+    social:  ['Migration Surge','Protests','Civil Unrest','Inequality'],
+    geo:     ['Military Incidents','Sanctions','Border Tensions','Force Concentration'],
+    tech:    ['Cyberattacks','Satellite Failures','Grid Vulnerabilities','Infra Incidents'],
+  };
+  var scores = {climate:[68,72,65,74], eco:[76,71,68,73], social:[82,75,70,66], geo:[74,78,65,71], tech:[52,45,58,49]};
+  Object.keys(metaData).forEach(function(k) {
+    var col = META_COLS[k];
+    var overallScore = META_SCORES[k];
+    var h = '<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">';
+    h += '<div style="flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px">';
+    h += '<div style="height:100%;width:' + overallScore + '%;background:' + col + ';border-radius:3px"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:12px;color:' + col + ';font-weight:700">' + overallScore + '</span>';
+    h += '</div>';
+    metaData[k].forEach(function(item, i) {
+      var sc = scores[k][i] || 60;
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+      h += '<span style="width:7px;height:7px;border-radius:50%;background:' + col + ';flex-shrink:0;display:inline-block"></span>';
+      h += '<span style="font-size:11px;color:var(--text2);flex:1">' + item + '</span>';
+      h += '<div style="width:50px;height:3px;background:rgba(255,255,255,.05);border-radius:2px">';
+      h += '<div style="height:100%;width:' + sc + '%;background:' + col + ';border-radius:2px"></div></div>';
+      h += '<span style="font-family:var(--mono);font-size:10px;color:' + col + ';width:24px;text-align:right">' + sc + '</span>';
+      h += '</div>';
+    });
+    document.getElementById('meta-' + k).innerHTML = h;
+  });
+}
+
+function populateDrvCountrySelect(countries) {
+  var sel = document.getElementById('drv-country-sel');
+  countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.country;
+    opt.textContent = flag(c.country) + ' ' + (c.country_name || c.country) + ' (GRI ' + fr(c.risk_score) + ')';
+    sel.appendChild(opt);
+  });
+}
+
+window.buildCountryDrivers = function(cc) {
+  if (!cc || !_drvCountries.length) return;
+  var c = _drvCountries.find(function(x){ return x.country === cc; });
+  if (!c) return;
+  var gri = fr(c.risk_score);
+  var scoreCol = riskCol(gri);
+  var delta = parseFloat(c.delta || 0);
+
+  // Assign driver contributions
+  var drivers = [
+    {name: 'Migration Pressure',    pct: 22, col: '#ef4444'},
+    {name: 'Political Instability', pct: 18, col: '#f97316'},
+    {name: 'Economic Stress',       pct: 16, col: '#3b82f6'},
+    {name: 'Climate Stress',        pct: 14, col: '#10b981'},
+    {name: 'Civil Unrest',          pct: 12, col: '#ef4444'},
+    {name: 'Energy Risk',           pct: 9,  col: '#eab308'},
+    {name: 'Cyber Risk',            pct: 5,  col: '#a855f7'},
+    {name: 'Infrastructure',        pct: 4,  col: '#64748b'},
+  ];
+
+  // Scale contributions to GRI
+  var h = '<div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg3);border-radius:8px;margin-bottom:12px">';
+  h += '<span style="font-size:28px">' + flag(cc) + '</span>';
+  h += '<div style="flex:1">';
+  h += '<div style="font-size:15px;font-weight:600;color:var(--text)">' + (c.country_name || cc) + '</div>';
+  h += '<div style="font-size:11px;color:var(--text3);margin-top:2px">GRI <span style="color:' + scoreCol + ';font-weight:700">' + gri + '</span>';
+  h += ' &nbsp;Δ7d <span style="color:' + (delta > 0 ? 'var(--orange)' : 'var(--green)') + '">' + (delta > 0 ? '+' : '') + delta.toFixed(1) + '</span></div>';
+  h += '</div><span class="td-badge ' + riskClass(gri) + '">' + riskLabel(gri) + '</span></div>';
+
+  h += '<div style="font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Top Risk Drivers</div>';
+  drivers.forEach(function(d) {
+    var contrib = fr(gri * d.pct / 100);
+    h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="width:7px;height:7px;border-radius:50%;background:' + d.col + ';flex-shrink:0;display:inline-block"></span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1">' + d.name + '</span>';
+    h += '<div style="width:60px;height:4px;background:rgba(255,255,255,.05);border-radius:2px">';
+    h += '<div style="height:100%;width:' + (d.pct * 4) + '%;background:' + d.col + ';border-radius:2px"></div></div>';
+    h += '<span style="font-family:var(--mono);font-size:10px;color:' + d.col + ';width:40px;text-align:right">' + d.pct + '%</span>';
+    h += '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:24px;text-align:right">+' + contrib + '</span>';
+    h += '</div>';
+  });
+  h += '<div style="display:flex;justify-content:flex-end;margin-top:6px;font-family:var(--mono);font-size:12px;color:var(--text2)">GRI Total: <span style="color:' + scoreCol + ';font-weight:700;margin-left:6px">' + gri + '</span></div>';
+  document.getElementById('country-drivers-out').innerHTML = h;
+};
+
+function buildDrvForecast() {
+  var drvs = GLOBAL_DRIVERS.slice(0, 6);
+  var h = '';
+  drvs.forEach(function(d) {
+    h += '<div class="drv-card">';
+    h += '<div class="drv-name">' + d.name + '</div>';
+    h += '<div style="font-size:10px;color:var(--text3);margin-bottom:8px">Forecast Impact</div>';
+    var impacts = [
+      {hz:'FC24h', val: fr(d.d24 * 0.2)},
+      {hz:'FC7d',  val: fr(d.d7  * 0.5)},
+      {hz:'FC30d', val: fr(d.d30 * 0.8)},
+      {hz:'FC90d', val: fr(d.d30 * 1.4)},
+    ];
+    impacts.forEach(function(im) {
+      var isUp = im.val >= 0;
+      var ic   = isUp ? 'var(--orange)' : 'var(--green)';
+      var sign = im.val >= 0 ? '+' : '';
+      h += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px">';
+      h += '<span style="color:var(--text3)">' + im.hz + '</span>';
+      h += '<span style="font-family:var(--mono);color:' + ic + '">' + sign + im.val + '%</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+  });
+  document.getElementById('drv-forecast-grid').innerHTML = h;
+}
+
+function buildDrvPipeline() {
+  var steps = [
+    {icon:'🌐', label:'Data Source',   desc:'8 active feeds — NASA, GDELT, USGS, ACLED, Copernicus',    count:'8 sources',    col:'var(--blue)'},
+    {icon:'📥', label:'Raw Event',     desc:'Timestamp, geo-coordinates, type, intensity, source',       count:'1M+ / day',    col:'var(--blue)'},
+    {icon:'⚡', label:'Signal',        desc:'Classified event with domain tag and severity score',         count:'50K / day',    col:'var(--orange)'},
+    {icon:'🔷', label:'Risk Driver',   desc:'Aggregated thematic factor from correlated signals',          count:'500+ drivers',  col:'var(--gold)'},
+    {icon:'🧬', label:'Meta Driver',   desc:'5 top-level categories: Climate · Economic · Social · Geo · Tech', count:'30–50 active',col:'var(--red)'},
+    {icon:'📊', label:'GRI / EWS',    desc:'Weighted aggregation of Meta Drivers, normalized 0–100',     count:'198 countries',col:'var(--green)'},
+    {icon:'🔮', label:'Forecast 24h', desc:'Short-term model with delta correction',                      count:'78% accuracy', col:'var(--green)'},
+    {icon:'📅', label:'Forecast 7d',  desc:'Medium-term model with trend analysis',                       count:'74% accuracy', col:'var(--orange)'},
+    {icon:'📆', label:'Forecast 30d', desc:'Long-term structural factors model',                           count:'71% accuracy', col:'var(--red)'},
+    {icon:'🗓️', label:'Forecast 90d', desc:'Strategic horizon with macro scenario modeling',              count:'68% accuracy', col:'var(--red)'},
+  ];
+  var h = '';
+  steps.forEach(function(s, i) {
+    if (i > 0) h += '<div style="text-align:center;padding:2px 0;color:var(--text3);font-size:12px">↓</div>';
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg3);border-radius:7px;border-left:2px solid ' + s.col + '">';
+    h += '<span style="font-size:18px;flex-shrink:0">' + s.icon + '</span>';
+    h += '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--text)">' + s.label + '</div>';
+    h += '<div style="font-size:10px;color:var(--text3);margin-top:1px">' + s.desc + '</div></div>';
+    h += '<span style="font-family:var(--mono);font-size:10px;color:' + s.col + ';flex-shrink:0;text-align:right">' + s.count + '</span>';
+    h += '</div>';
+  });
+  document.getElementById('drv-pipeline').innerHTML = h;
+}
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
