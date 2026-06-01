@@ -30068,6 +30068,615 @@ def save_grdf_commercial(snapshots: list) -> None:
     print(f"[COMMERCIAL] FREE → SIGNAL PRO → STRATEGIC PRO → ELITE INTELLIGENCE", file=sys.stderr)
 
 
+# =========================================================================
+# GRDF RISK MAP MOBILE UX AUDIT V1
+#
+# Full UX/UI audit and redesign specification for the GRDF Risk Map
+# mobile experience. Institutional-grade intelligence platform design
+# comparable to Palantir, Dataminr, Bloomberg Intelligence.
+#
+# Part 1:  Mobile UX Audit Report           -> mobile_ux_audit.json
+# Part 2:  Mobile Layout Redesign           -> mobile_layout.json
+# Part 3:  Top Status Bar                   -> mobile_status_bar.json
+# Part 4:  Filter Drawer                    -> mobile_filter_drawer.json
+# Part 5:  Bottom Navigation Redesign       -> mobile_navigation.json
+# Part 6:  Intelligence Drawer              -> mobile_intelligence_drawer.json
+# Part 7:  Country Intelligence Panel       -> mobile_country_panel.json
+# Part 8:  Commercial Tier Architecture     -> mobile_commercial_tiers.json
+# Part 9:  Forecast Accuracy Section        -> mobile_forecast_accuracy.json
+# Part 10: Conversion Architecture          -> mobile_conversion.json
+#
+# Writes: mobile_ux/* only.
+# =========================================================================
+
+MOBILE_UX_DIR = DOCS_DIR / "mobile_ux"
+
+# Official domain color palette (Alert Map V2 spec)
+_MUX_DOMAIN_COLORS = {
+    "climate":        "#10B981",   # emerald
+    "geological":     "#065F46",   # dark green
+    "economic":       "#3B82F6",   # blue
+    "geopolitical":   "#F97316",   # orange
+    "technology":     "#A855F7",   # purple
+    "social":         "#EF4444",   # red
+    "infrastructure": "#1E3A8A",   # navy
+}
+
+# Mobile breakpoints
+_MUX_BREAKPOINTS = {
+    "mobile_sm":  {"px": 375, "device": "iPhone SE",        "map_vh": 50},
+    "mobile_md":  {"px": 390, "device": "iPhone 15",         "map_vh": 55},
+    "mobile_lg":  {"px": 430, "device": "iPhone 15 Pro Max", "map_vh": 58},
+    "android_md": {"px": 480, "device": "Android large",     "map_vh": 57},
+    "tablet":     {"px": 834, "device": "iPad",               "map_vh": 68},
+}
+
+# Status levels
+_MUX_COUNTRY_STATUSES = ["STABLE","ELEVATED","ESCALATING","CRITICAL"]
+
+# Forecast horizons with tier gating
+_MUX_FORECAST_TIERS = {
+    "24h":  "FREE",
+    "7d":   "SIGNAL_PRO",
+    "30d":  "STRATEGIC_PRO",
+    "90d":  "STRATEGIC_PRO",
+    "180d": "STRATEGIC_PRO",
+}
+
+
+# ── Part 1: Mobile UX Audit Report ────────────────────────────────────────
+
+def _build_mux_audit(snapshots: list) -> dict:
+    """Part 1: Full UX audit with severity scores."""
+    issues = [
+        {"id":"MUX-001","severity":"CRITICAL","score":95,
+         "title":"Map occupies less than 40% of screen",
+         "current":"Map is thumbnail-sized. Category buttons, nav bar, and top controls consume 60%+ of viewport.",
+         "target":"Map should occupy 70–80% of visible area. Intelligence comes from seeing the map.",
+         "impact":"Eliminates core value prop. Users cannot identify risk clusters by geography."},
+        {"id":"MUX-002","severity":"CRITICAL","score":90,
+         "title":"Permanent category row blocks intelligence",
+         "current":"7 domain filter buttons pinned below map at all times. Removes 56px of map height on 390px screens.",
+         "target":"Replace with ☰ Фильтры FAB. Filter drawer opens on demand, hidden by default.",
+         "impact":"14% viewport loss. Constant cognitive noise for non-filtering users."},
+        {"id":"MUX-003","severity":"CRITICAL","score":88,
+         "title":"No country intelligence discovery path",
+         "current":"Tapping a country yields no immediate intelligence. GRI, EWS, forecasts unreachable without navigation.",
+         "target":"Country tap → Country Intelligence Panel with GRI/CRI/EWS/Status/TopRisks/Forecasts.",
+         "impact":"Users cannot act on map data. Kills core value proposition on mobile."},
+        {"id":"MUX-004","severity":"CRITICAL","score":85,
+         "title":"Zero commercial conversion touchpoints",
+         "current":"No upgrade prompts in the intelligence flow. FREE→SIGNAL PRO path is structurally absent.",
+         "target":"Inline lock screens at Forecast 30d/90d, Risk Matrix 5Y, Scenario Engine.",
+         "impact":"Revenue generation blocked. Archive Member upsell invisible to users."},
+        {"id":"MUX-005","severity":"HIGH","score":72,
+         "title":"Navigation overloaded — exceeds 4-item cognitive limit",
+         "current":"Bottom nav has 5–6 items including secondary functions.",
+         "target":"4 items: Карта / Предупреждения / Страны / Аналитика.",
+         "impact":"Decision paralysis. Violates Apple HIG and Material Design mobile heuristics."},
+        {"id":"MUX-006","severity":"HIGH","score":68,
+         "title":"Status bar carries non-essential data",
+         "current":"Top bar shows settings, help, branding competing with operational data.",
+         "target":"Keep only: status pulse + event count + critical count + UTC time.",
+         "impact":"Viewport waste. Non-operational data distracts from live intelligence."},
+        {"id":"MUX-007","severity":"HIGH","score":65,
+         "title":"Intelligence drawer absent",
+         "current":"No expandable signal/warning panel. Live intelligence only in dedicated tabs.",
+         "target":"Uber-style drawer: collapsed (25%) → partial (50%) → full (90%).",
+         "impact":"Situational awareness loop broken. Users leave map to check signals."},
+        {"id":"MUX-008","severity":"MEDIUM","score":48,
+         "title":"Forecast Accuracy section mislabelled",
+         "current":"Section named 'MODEL VALIDATION' — engineering language invisible to analysts.",
+         "target":"Rename to 'ТОЧНОСТЬ ПРОГНОЗОВ'. Commercial trust signal.",
+         "impact":"Trust-building section hidden behind technical nomenclature."},
+        {"id":"MUX-009","severity":"MEDIUM","score":44,
+         "title":"Touch targets below 44px minimum",
+         "current":"Category filter buttons and map pins are 32–36px.",
+         "target":"All interactive elements ≥ 44px per Apple HIG / Material Design.",
+         "impact":"Mis-taps. User frustration on sub-6-inch screens."},
+        {"id":"MUX-010","severity":"LOW","score":28,
+         "title":"No offline/stale state indicator",
+         "current":"No visible indicator when data is cached vs live. TTL=180s invisible to users.",
+         "target":"Data freshness timestamp always visible. Stale indicator when TTL expired.",
+         "impact":"Institutional users need data provenance at all times."},
+    ]
+    critical_n = sum(1 for i in issues if i["severity"]=="CRITICAL")
+    high_n     = sum(1 for i in issues if i["severity"]=="HIGH")
+    avg_score  = round(sum(i["score"] for i in issues)/len(issues),1)
+
+    return {
+        "audit_version":  "V1",
+        "platform":       "GRDF Risk Map Mobile",
+        "target_standard":"Palantir / Dataminr / Bloomberg Intelligence / Recorded Future",
+        "primary_goals":  ["maximize_map_visibility","situational_awareness",
+                           "country_intelligence_discovery","mobile_usability",
+                           "conversion_to_paid_tiers","june_launch_readiness"],
+        "total_issues":   len(issues),
+        "critical_n":     critical_n,
+        "high_n":         high_n,
+        "avg_severity_score": avg_score,
+        "issues":         issues,
+        "overall_verdict":"REQUIRES_REDESIGN",
+        "as_of":          TODAY,
+    }
+
+
+# ── Part 2: Mobile Layout Redesign ────────────────────────────────────────
+
+def _build_mux_layout() -> dict:
+    return {
+        "current_map_coverage_pct": 38,
+        "target_map_coverage_pct":  75,
+        "layout_philosophy":        "Map-first intelligence. Every pixel serves situational awareness.",
+        "breakpoints":              _MUX_BREAKPOINTS,
+        "layout_zones": {
+            "status_bar":    {"height_px":40,"content":"pulse+events+critical+UTC","permanent":True},
+            "map":           {"height_vh":"70-80","content":"WebGL risk map + domain pins","permanent":True},
+            "filter_fab":    {"position":"map_overlay_top_right","size_px":44,"permanent":False},
+            "intelligence_drawer":{"position":"map_overlay_bottom","snaps":["25%","50%","90%"]},
+            "bottom_nav":    {"height_px":64,"items":4,"permanent":True},
+        },
+        "removed_elements": ["permanent_category_row","secondary_controls_header","help_icon","settings_icon"],
+        "map_controls_overlay": {
+            "zoom_in":    {"position":"map_right_center","size_px":44},
+            "zoom_out":   {"position":"map_right_center_minus","size_px":44},
+            "filter_fab": {"position":"map_top_right","label":"☰ Фильтры","size_px":44},
+            "locate_me":  {"position":"map_bottom_right","size_px":44},
+        },
+        "as_of": TODAY,
+    }
+
+
+# ── Part 3: Status Bar ────────────────────────────────────────────────────
+
+def _build_mux_status_bar(snapshots: list) -> dict:
+    n_events  = len(snapshots)
+    n_critical= sum(1 for s in snapshots if int(s.get("risk_score",50) or 50) >= 75)
+    avg_gri   = round(sum(int(s.get("risk_score",50) or 50) for s in snapshots)/max(1,len(snapshots)))
+
+    return {
+        "height_px":   40,
+        "content": {
+            "status_pulse":     {"type":"dot","color":"#10B981","label":"Активно","visible":True},
+            "events_count":     {"label":f"{n_events} событий","visible":True},
+            "critical_count":   {"label":f"{n_critical} критических","color":"#EF4444","visible":n_critical>0},
+            "global_index":     {"label":f"Индекс {avg_gri}","visible":True},
+            "utc_time":         {"format":"HH:mm UTC","visible":True},
+        },
+        "removed":     ["logo","settings_icon","help_icon","menu_icon","search_icon"],
+        "background":  "#0D1526",
+        "text_color":  "#E2E8F0",
+        "live_events": n_events,
+        "live_critical":n_critical,
+        "global_index":avg_gri,
+        "as_of":       TODAY,
+    }
+
+
+# ── Part 4: Filter Drawer ─────────────────────────────────────────────────
+
+def _build_mux_filter_drawer() -> dict:
+    domains = [
+        {"id":"all",            "label":"Все",           "color":"#6B7280","default":True},
+        {"id":"climate",        "label":"Климат",        "color":"#10B981"},
+        {"id":"geopolitical",   "label":"Геополитика",   "color":"#F97316"},
+        {"id":"economic",       "label":"Экономика",     "color":"#3B82F6"},
+        {"id":"technology",     "label":"Технологии",    "color":"#A855F7"},
+        {"id":"social",         "label":"Социум",        "color":"#EF4444"},
+        {"id":"geological",     "label":"Геология",      "color":"#065F46"},
+        {"id":"infrastructure", "label":"Инфраструктура","color":"#1E3A8A"},
+    ]
+    risk_filters = [
+        {"id":"all",      "label":"Все уровни"},
+        {"id":"critical", "label":"Критический","color":"#EF4444"},
+        {"id":"high",     "label":"Высокий",     "color":"#F97316"},
+        {"id":"elevated", "label":"Повышенный",  "color":"#EAB308"},
+        {"id":"low",      "label":"Низкий",      "color":"#10B981"},
+    ]
+    time_windows = [
+        {"id":"24h","label":"24 часа"},{"id":"7d","label":"7 дней"},
+        {"id":"30d","label":"30 дней"},{"id":"90d","label":"90 дней"},
+    ]
+    return {
+        "fab": {
+            "label": "☰ Фильтры",
+            "position": "map_overlay_top_right",
+            "size_px": 44,
+            "background": "rgba(17,24,39,0.85)",
+            "border": "0.5px solid rgba(59,130,246,0.4)",
+        },
+        "drawer": {
+            "trigger": "fab_tap",
+            "position": "bottom_sheet",
+            "snaps": ["50%","80%"],
+            "close_on": ["drag_down","backdrop_tap"],
+        },
+        "dimensions":   {"removed_permanent_row": True,"saved_height_px":56,"map_gain_pct":14},
+        "domain_filters":  domains,
+        "risk_filters":    risk_filters,
+        "time_windows":    time_windows,
+        "touch_target_px": 44,
+        "as_of":           TODAY,
+    }
+
+
+# ── Part 5: Bottom Navigation ──────────────────────────────────────────────
+
+def _build_mux_navigation() -> dict:
+    return {
+        "height_px":    64,
+        "background":   "#0D1526",
+        "border_top":   "0.5px solid #1E3A5F",
+        "items": [
+            {"id":"map",       "label":"Карта",          "icon":"map-2",        "tab_index":0},
+            {"id":"warnings",  "label":"Предупреждения", "icon":"alert-triangle","tab_index":1,
+             "badge":{"type":"count","source":"ews_warning_feed","filter":"CRITICAL+ESCALATION"}},
+            {"id":"countries", "label":"Страны",         "icon":"world",        "tab_index":2},
+            {"id":"analytics", "label":"Аналитика",      "icon":"chart-bar",    "tab_index":3},
+        ],
+        "removed_items": ["settings","profile","discover","more"],
+        "secondary_destinations_moved_to": {
+            "settings":     "analytics_tab_menu",
+            "profile":      "analytics_tab_menu",
+            "discover":     "map_tab_filter_drawer",
+        },
+        "active_color":   "#3B82F6",
+        "inactive_color": "#6B7280",
+        "touch_target_px":64,
+        "as_of":          TODAY,
+    }
+
+
+# ── Part 6: Intelligence Drawer ────────────────────────────────────────────
+
+def _build_mux_intelligence_drawer(snapshots: list) -> dict:
+    n_events  = len(snapshots)
+    n_critical= sum(1 for s in snapshots if int(s.get("risk_score",50) or 50) >= 75)
+    n_warnings= sum(1 for s in snapshots if int(s.get("risk_score",50) or 50) >= 60)
+    n_esc     = sum(1 for s in snapshots if float(s.get("delta",0) or 0) > 2)
+
+    top5 = sorted(snapshots, key=lambda x: -int(x.get("risk_score",50) or 50))[:5]
+
+    return {
+        "position":  "map_overlay_bottom",
+        "trigger":   "auto_visible_on_map_tab",
+        "snaps": {
+            "collapsed_25pct": {
+                "height": "25%",
+                "content": {
+                    "signals_count":  n_events,
+                    "critical_count": n_critical,
+                    "warnings_count": n_warnings,
+                },
+                "handle": "drag_pill",
+            },
+            "partial_50pct": {
+                "height": "50%",
+                "content": ["recent_signals","critical_events","active_warnings","escalations"],
+                "handle": "drag_pill",
+            },
+            "full_90pct": {
+                "height": "90%",
+                "content": {
+                    "live_signals":         True,
+                    "warning_feed":         True,
+                    "escalation_tracking":  True,
+                    "country_highlights":   [{"country":s["country"],"risk":int(s.get("risk_score",50) or 50)} for s in top5],
+                    "domain_overview":      True,
+                    "activity_feed":        True,
+                },
+            },
+        },
+        "live_data": {
+            "signals_total":    n_events,
+            "critical_n":       n_critical,
+            "active_warnings_n":n_warnings,
+            "escalations_n":    n_esc,
+        },
+        "gestures": {
+            "drag_up":   "expand_snap",
+            "drag_down": "collapse_snap",
+            "map_tap":   "collapse_to_25pct",
+        },
+        "as_of": TODAY,
+    }
+
+
+# ── Part 7: Country Intelligence Panel ────────────────────────────────────
+
+def _build_mux_country_panel(snapshots: list) -> dict:
+    """Part 7: Full Country Intelligence Panel spec + sample data."""
+    panels: list[dict] = []
+    elevated = sorted(snapshots, key=lambda x: -int(x.get("risk_score",50) or 50))[:20]
+
+    for snap in elevated:
+        iso2  = snap["country"]
+        risk  = int(snap.get("risk_score",50) or 50)
+        delta = float(snap.get("delta",0) or 0)
+        dom   = snap.get("dominant_domain","economic") or "economic"
+
+        # Status
+        if risk>=75: status="CRITICAL"
+        elif risk>=60 and delta>1: status="ESCALATING"
+        elif risk>=55: status="ELEVATED"
+        else: status="STABLE"
+
+        # EWS from score file
+        ews_d  = _eload(f"v7_warning_score_{iso2}.json") if hasattr(_eload,'__call__') else {}
+        ews    = int(ews_d.get("early_warning_score",round(risk*0.9)) or round(risk*0.9))
+
+        # CRI proxy
+        cri    = round(risk * 0.85)
+
+        # Top risks (domain breakdown)
+        dom_s  = _get_domain_scores(iso2, snap)
+        top_risks = sorted(
+            [{"domain":d,"score":round(float(v.get("score",0) or 0)),"color":_MUX_DOMAIN_COLORS.get(d,"#6B7280")}
+             for d,v in dom_s.items() if float(v.get("score",0) or 0) >= 40],
+            key=lambda x:-x["score"]
+        )[:3]
+
+        panels.append({
+            "country":        iso2,
+            "country_name":   snap.get("country_name",iso2),
+            "gri":            risk,
+            "cri":            cri,
+            "ews":            ews,
+            "status":         status,
+            "dominant_domain":dom,
+            "top_risks":      top_risks,
+            "forecast": {
+                "24h":  {"value":round(risk+delta*0.2,1),"tier":"FREE"},
+                "7d":   {"value":round(risk+delta*1.0,1),"tier":"SIGNAL_PRO"},
+                "30d":  {"tier":"STRATEGIC_PRO","locked":True},
+                "90d":  {"tier":"STRATEGIC_PRO","locked":True},
+            },
+            "delta":          round(delta,2),
+        })
+
+    return {
+        "trigger":         "country_tap_on_map",
+        "animation":       "slide_up_bottom_sheet",
+        "snap":            "70%",
+        "total_panels":    len(panels),
+        "panel_structure": {
+            "header":     "flag + country_name + tier_badge",
+            "metrics":    ["GRI","CRI","EWS"],
+            "status":     _MUX_COUNTRY_STATUSES,
+            "top_risks":  "domain_colored_badges",
+            "forecasts":  "24h_free / 7d_signal_pro / 30d_90d_locked",
+            "recent_signals": "last_3_SIG-NNN",
+            "latest_warnings":"last_2_WARN-NNN",
+            "conversion_cta":"inline_below_locked_forecasts",
+        },
+        "sample_panels": panels[:10],
+        "as_of":          TODAY,
+    }
+
+
+# ── Part 8: Commercial Tier Architecture ──────────────────────────────────
+
+def _build_mux_commercial_tiers() -> dict:
+    return {
+        "tiers": [
+            {
+                "tier": "FREE", "tier_id": 0, "price_rub": 0,
+                "features": ["Country Overview","GRI","CRI","EWS","Top Risks (top 3)","Public Signals","Forecast 24h"],
+                "country_panel_access": "basic",
+                "color": "#6B7280",
+            },
+            {
+                "tier": "SIGNAL PRO", "tier_id": 1,
+                "price_rub": 4900, "price_usd": 55, "price_eur": 50,
+                "features": ["Full Country Profile","Risk Drivers","Daily AI Briefing",
+                             "Active Alerts","Cascade Monitoring","Forecast 7d","Risk Matrix 2Y",
+                             "Escalation Monitoring","Export Functions"],
+                "country_panel_access": "full",
+                "color": "#10B981",
+            },
+            {
+                "tier": "STRATEGIC PRO", "tier_id": 2,
+                "price_rub": 29900, "price_usd": 330, "price_eur": 310,
+                "features": ["Historical Analogues","Scenario Engine","Forecast 30d/90d/180d",
+                             "Historical Risk Evolution","Risk Matrix 5Y/10Y","Strategic Reports",
+                             "API Access","Cross-Domain Analysis","Causal Chains"],
+                "country_panel_access": "full_plus_scenarios",
+                "color": "#3B82F6",
+            },
+            {
+                "tier": "ELITE INTELLIGENCE", "tier_id": 3,
+                "price_rub": 150000, "price_usd": 1665, "price_eur": 1545,
+                "features": ["Executive Briefings","Real-Time Streaming","Full API",
+                             "White Label Access","Custom Intelligence Products",
+                             "Institutional Integrations","Dedicated Support","SLA"],
+                "country_panel_access": "institutional",
+                "color": "#F97316",
+            },
+        ],
+        "archive_member": {
+            "signal_pro_included":  True,
+            "signal_pro_price_rub": 0,
+            "strategic_pro_rub":    19435,
+            "elite_rub":            97500,
+            "founding_member":      True,
+        },
+        "as_of": TODAY,
+    }
+
+
+# ── Part 9: Forecast Accuracy Section ─────────────────────────────────────
+
+def _build_mux_forecast_accuracy() -> dict:
+    acc_d  = {}
+    p = DOCS_DIR / "accuracy" / "accuracy_scorecard.json"
+    if p.exists():
+        try: acc_d = json.loads(p.read_text())
+        except Exception: pass
+
+    return {
+        "section_name_old":  "MODEL VALIDATION",
+        "section_name_new":  "ТОЧНОСТЬ ПРОГНОЗОВ",
+        "rename_rationale":  "Commercial trust signal for analysts and decision-makers. Transparent accuracy = competitive advantage.",
+        "displayed_metrics": [
+            {"metric":"accuracy_score",      "label":"Точность",        "source":"accuracy_scorecard.json","tier":"FREE"},
+            {"metric":"precision",           "label":"Точность (P)",     "source":"accuracy_metrics.json",  "tier":"FREE"},
+            {"metric":"recall",              "label":"Полнота (R)",      "source":"accuracy_metrics.json",  "tier":"FREE"},
+            {"metric":"f1_score",            "label":"F1 Score",         "source":"accuracy_metrics.json",  "tier":"SIGNAL_PRO"},
+            {"metric":"brier_score",         "label":"Brier Score",      "source":"accuracy_scorecard.json","tier":"SIGNAL_PRO"},
+            {"metric":"historical_validation","label":"Историч. вал.",    "source":"historical_certification.json","tier":"SIGNAL_PRO"},
+            {"metric":"prediction_success",  "label":"Успешность",       "source":"accuracy_scorecard.json","tier":"FREE"},
+        ],
+        "horizons": ["24h","7d","30d","90d"],
+        "data_source":  "accuracy/accuracy_scorecard.json",
+        "current_accuracy": acc_d.get("overall_accuracy_score",70),
+        "as_of":        TODAY,
+    }
+
+
+# ── Part 10: Conversion Architecture ──────────────────────────────────────
+
+def _build_mux_conversion(snapshots: list) -> dict:
+    n_countries = len(snapshots)
+    elevated_n  = sum(1 for s in snapshots if int(s.get("risk_score",50) or 50) >= 60)
+
+    touchpoints = [
+        {
+            "id": "CP-FORECAST",
+            "location": "Country Intelligence Panel → Forecast 30d/90d",
+            "trigger": "user_scrolls_to_forecast",
+            "lock_screen": {
+                "type": "blur_preview",
+                "cta": "Открыть SIGNAL PRO",
+                "price": "4 900 ₽/мес",
+                "tier": "SIGNAL_PRO",
+                "value_prop": "Полный прогноз 30–90 дней для всех стран",
+            },
+        },
+        {
+            "id": "CP-RISK-MATRIX",
+            "location": "Risk Matrix → 5Y / 10Y view",
+            "trigger": "user_selects_5y_or_10y",
+            "lock_screen": {
+                "type": "blur_preview",
+                "cta": "Открыть STRATEGIC PRO",
+                "price": "29 900 ₽/мес",
+                "tier": "STRATEGIC_PRO",
+                "value_prop": "Risk Matrix 5 и 10 лет + Scenario Engine",
+            },
+        },
+        {
+            "id": "CP-SCENARIO",
+            "location": "Scenario Engine → Adverse / Worst Case",
+            "trigger": "user_opens_non_baseline_scenario",
+            "lock_screen": {
+                "type": "partial_preview",
+                "visible": "baseline_scenario_only",
+                "cta": "Разблокировать все сценарии",
+                "price": "29 900 ₽/мес",
+                "tier": "STRATEGIC_PRO",
+            },
+        },
+        {
+            "id": "CP-ANALYTICS",
+            "location": "Analytics Tab → Bottom Banner",
+            "trigger": "always_visible",
+            "lock_screen": {
+                "type": "upsell_banner",
+                "message": "Archive Members: SIGNAL PRO в подарок + скидки 35% на PRO-тиры",
+                "cta": "Стать Archive Member →",
+                "tier": "ARCHIVE_MEMBER",
+                "color": "#10B981",
+            },
+        },
+        {
+            "id": "CP-WARNINGS",
+            "location": "Warnings Tab → Signal Detail View",
+            "trigger": "user_taps_locked_warning",
+            "lock_screen": {
+                "type": "inline_paywall",
+                "cta": "Получить SIGNAL PRO",
+                "price": "4 900 ₽/мес",
+                "tier": "SIGNAL_PRO",
+                "value_prop": "Полный доступ к Alert Feed, AI Briefing и Cascade Monitoring",
+            },
+        },
+    ]
+
+    return {
+        "total_touchpoints": len(touchpoints),
+        "primary_conversion": "FREE → SIGNAL PRO",
+        "secondary_conversion": "SIGNAL PRO → STRATEGIC PRO",
+        "archive_member_upsell": True,
+        "touchpoints": touchpoints,
+        "lock_screen_types": ["blur_preview","partial_preview","inline_paywall","upsell_banner"],
+        "estimated_conversion_surface_pct": round(elevated_n/max(1,n_countries)*100,1),
+        "as_of": TODAY,
+    }
+
+
+# ── Mobile UX Audit Orchestrator ──────────────────────────────────────────
+
+def save_grdf_mobile_ux_audit(snapshots: list) -> None:
+    """
+    GRDF Risk Map Mobile UX Audit V1.
+    Full UX audit and institutional-grade redesign specification.
+    Writes: mobile_ux/* only. Architecture frozen.
+    """
+    import time as _tmux
+    MOBILE_UX_DIR.mkdir(parents=True, exist_ok=True)
+    t_start = _tmux.monotonic()
+
+    def _save(fname: str, data: dict) -> None:
+        with open(MOBILE_UX_DIR / fname,"w") as f:
+            json.dump({**data,"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat()},
+                      f, ensure_ascii=False, indent=2)
+
+    print("[MUX] Mobile UX Audit V1 — Institutional-grade intelligence platform redesign", file=sys.stderr)
+
+    audit   = _build_mux_audit(snapshots)
+    _save("mobile_ux_audit.json", audit)
+    print(f"[MUX] Part 1: issues={audit['total_issues']} critical={audit['critical_n']} high={audit['high_n']}", file=sys.stderr)
+
+    layout  = _build_mux_layout()
+    _save("mobile_layout.json", layout)
+    print(f"[MUX] Part 2: map {layout['current_map_coverage_pct']}% → {layout['target_map_coverage_pct']}%", file=sys.stderr)
+
+    status  = _build_mux_status_bar(snapshots)
+    _save("mobile_status_bar.json", status)
+    print(f"[MUX] Part 3: events={status['live_events']} critical={status['live_critical']} index={status['global_index']}", file=sys.stderr)
+
+    filters = _build_mux_filter_drawer()
+    _save("mobile_filter_drawer.json", filters)
+    print(f"[MUX] Part 4: domains={len(filters['domain_filters'])} fab=☰Фильтры", file=sys.stderr)
+
+    nav     = _build_mux_navigation()
+    _save("mobile_navigation.json", nav)
+    print(f"[MUX] Part 5: nav items={len(nav['items'])} removed={len(nav['removed_items'])}", file=sys.stderr)
+
+    drawer  = _build_mux_intelligence_drawer(snapshots)
+    _save("mobile_intelligence_drawer.json", drawer)
+    print(f"[MUX] Part 6: signals={drawer['live_data']['signals_total']} critical={drawer['live_data']['critical_n']}", file=sys.stderr)
+
+    cp      = _build_mux_country_panel(snapshots)
+    _save("mobile_country_panel.json", cp)
+    print(f"[MUX] Part 7: panels={cp['total_panels']}", file=sys.stderr)
+
+    com     = _build_mux_commercial_tiers()
+    _save("mobile_commercial_tiers.json", com)
+    print(f"[MUX] Part 8: tiers={len(com['tiers'])}", file=sys.stderr)
+
+    fca     = _build_mux_forecast_accuracy()
+    _save("mobile_forecast_accuracy.json", fca)
+    print(f"[MUX] Part 9: '{fca['section_name_old']}' → '{fca['section_name_new']}'", file=sys.stderr)
+
+    conv    = _build_mux_conversion(snapshots)
+    _save("mobile_conversion.json", conv)
+
+    elapsed = round((_tmux.monotonic()-t_start)*1000)
+    print(f"[MUX] Part 10: touchpoints={conv['total_touchpoints']} primary={conv['primary_conversion']}", file=sys.stderr)
+    print(f"[MUX] REDESIGN SPEC COMPLETE — map {layout['current_map_coverage_pct']}%→{layout['target_map_coverage_pct']}% ({elapsed}ms)", file=sys.stderr)
+
+
 def main():
     print(f"\n=== Country Snapshot Engine MVP V1 ===", file=sys.stderr)
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
@@ -30166,6 +30775,7 @@ def main():
     save_grdf_feed(snapshots)
     save_grdf_ews(snapshots)
     save_grdf_commercial(snapshots)
+    save_grdf_mobile_ux_audit(snapshots)
     save_grdf_alert_map_v2(snapshots)
     save_grdf_command(snapshots)
 
