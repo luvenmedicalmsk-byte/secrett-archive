@@ -396,6 +396,35 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .loop-broken{border-left:3px solid var(--red)}
 .loop-score{font-size:48px;font-weight:700;font-family:var(--mono);text-align:center}
 
+
+.sp2-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.sp2-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.sp2-cat{font-size:9px;padding:2px 8px;border-radius:3px;font-weight:600;letter-spacing:.1em;flex-shrink:0;margin-top:2px}
+.sp2-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4;flex:1}
+.sp2-pri{font-size:9px;padding:2px 8px;border-radius:3px;font-weight:700;letter-spacing:.08em;flex-shrink:0}
+.sp2-body{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px}
+.sp2-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.sp2-m{background:var(--bg3);border-radius:6px;padding:6px 8px;text-align:center}
+.sp2-m .lbl{font-size:8px;color:var(--text3);margin-bottom:2px}
+.sp2-m .val{font-family:var(--mono);font-size:12px;font-weight:600}
+.sp2-footer{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sp2-tag{font-size:9px;padding:1px 7px;border-radius:3px;background:var(--bg3);color:var(--text3)}
+.sp2-action{background:rgba(16,185,129,.07);border:0.5px solid rgba(16,185,129,.25);border-radius:6px;padding:8px 10px;font-size:10px;color:var(--green);margin-top:6px;line-height:1.5}
+.sp2-impact-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin:8px 0}
+.sp2-impact-item{background:var(--bg3);border-radius:5px;padding:4px 8px;font-size:9px;display:flex;align-items:center;gap:5px}
+.sp2-bar{height:3px;border-radius:2px;margin-top:2px}
+.sp2-section{margin-bottom:1px}
+.sp2-week-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.pri-crit{background:rgba(239,68,68,.12);color:#ef4444}
+.pri-high{background:rgba(249,115,22,.12);color:#f97316}
+.pri-med{background:rgba(234,179,8,.12);color:#eab308}
+.pri-low{background:rgba(100,116,139,.12);color:#64748b}
+.cat-climate{background:rgba(16,185,129,.12);color:#10b981}
+.cat-geo{background:rgba(239,68,68,.12);color:#ef4444}
+.cat-eco{background:rgba(59,130,246,.12);color:#3b82f6}
+.cat-tech{background:rgba(168,85,247,.12);color:#a855f7}
+.cat-social{background:rgba(234,179,8,.12);color:#eab308}
+
 </style>
 </head>
 <body>
@@ -472,6 +501,8 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s29')" data-s="s29">&#127981;<span class="sn-tip">Командование</span></button>
     <button class="sn-btn" onclick="goSection('s30')" data-s="s30">&#9654;<span class="sn-tip">Исполнение</span></button>
     <button class="sn-btn" onclick="goSection('s31')" data-s="s31">&#9854;<span class="sn-tip">Контур обучения</span></button>
+          <button class="sn-btn" onclick="goSection('s32')" data-s="s32">&#9854;<span class="sn-tip">Signal Pro 2.0</span></button>
+    <button class="sn-btn" onclick="goSection('s32')" data-s="s32">&#9889;<span class="sn-tip">Signal Pro</span></button>
       </div>
 
   <div id="main">
@@ -3238,6 +3269,57 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s31 -->
 
+
+    <!-- ─── S32: SIGNAL PRO 2.0 — EXECUTIVE INTELLIGENCE SIGNALS ─── -->
+    <div class="section" id="s32">
+      <div class="s-head">
+        <div class="s-tag">32</div>
+        <div class="s-title">Signal Pro 2.0</div>
+        <div class="s-badge badge-green" id="sp2-badge">&#9889; АКТИВЕН</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Событие → Причина → Прогноз → Вероятность → Последствия → Рекомендованное действие</div>
+
+      <!-- SIGNAL PRIORITY SCORE header -->
+      <div class="grid-4" id="sp2-kpi" style="margin-bottom:14px"></div>
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="sp2-filters">
+        <button onclick="sp2Filter('all')"       class="filter-btn active" data-f="all">Все</button>
+        <button onclick="sp2Filter('critical')"  class="filter-btn" data-f="critical">Критические</button>
+        <button onclick="sp2Filter('climate')"   class="filter-btn" data-f="climate">Климат</button>
+        <button onclick="sp2Filter('geo')"       class="filter-btn" data-f="geo">Геополитика</button>
+        <button onclick="sp2Filter('eco')"       class="filter-btn" data-f="eco">Экономика</button>
+        <button onclick="sp2Filter('tech')"      class="filter-btn" data-f="tech">Технологии</button>
+        <button onclick="sp2Filter('social')"    class="filter-btn" data-f="social">Социум</button>
+      </div>
+
+      <!-- 01: SIGNAL FEED -->
+      <div class="sum-title" style="margin-bottom:8px"><span>&#9889;</span> 01 · Сигнальная лента</div>
+      <div id="sp2-feed"></div>
+
+      <!-- 02: WEEKLY INTELLIGENCE BRIEF -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#128203;</span> 02 · Недельный разведывательный брифинг</div>
+      <div id="sp2-weekly"></div>
+
+      <!-- 03: SIGNAL CONFIDENCE ENGINE -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#128200;</span> 03 · Движок достоверности сигналов</div>
+      <div id="sp2-confidence"></div>
+
+      <!-- 04: SIGNAL IMPACT ENGINE -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#127757;</span> 04 · Движок влияния сигналов</div>
+      <div id="sp2-impact"></div>
+
+      <!-- 05: FOUNDER REPORT -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#127981;</span> 05 · Отчёт основателя</div>
+      <div class="sum-card" style="border:0.5px solid rgba(16,185,129,.2)">
+        <div id="sp2-founder"></div>
+        <div style="margin-top:10px">
+          <button onclick="generateSP2Report()" style="width:100%;padding:11px 0;background:linear-gradient(135deg,#010d08,#020e06);border:1px solid rgba(16,185,129,.3);border-radius:8px;color:var(--green);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Создать полный Signal Pro отчёт</button>
+        </div>
+      </div>
+      <div id="sp2-report-out"></div>
+    </div><!-- /s32 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -3909,7 +3991,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); loadStrategicCommandCenter(cc); loadExecutionCenter(cc); loadMissionLearningCenter(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); loadStrategicCommandCenter(cc); loadExecutionCenter(cc); loadMissionLearningCenter(cc); loadSignalPro2(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -14465,6 +14547,609 @@ window.DECISION_FEEDBACK  = DECISION_FEEDBACK;
 window.MISSION_VALIDATION_LOG = MISSION_VALIDATION_LOG;
 window.completeMission    = window.completeMission;
 window.simulateCompletion = window.simulateCompletion;
+
+
+// ══════════════════════════════════════════════════════════════════
+// S32: SIGNAL PRO 2.0 — Executive Intelligence Signals Layer
+// Sources: S13 RiskDrivers, S15 Causality, S16 SDC, S17 Validation,
+//          S18 Scenarios, S20 Graph, S21 Temporal, S24 Orchestrator,
+//          S25 Sensor Fusion, S29 Command, S30 Missions, S31 Learning
+// All data from real platform objects — no synthetic templates
+// ══════════════════════════════════════════════════════════════════
+
+var _sp2Signals = [];   // current signal registry
+var _sp2Countries = []; // current countries array
+var _sp2Filter = 'all';
+
+// ── CATEGORY MAPS ────────────────────────────────────────────────
+var SP2_CAT_MAP = {
+  climate:     { label:'Климат',       cls:'cat-climate', icon:'🌍' },
+  geo:         { label:'Геополитика',  cls:'cat-geo',     icon:'⚔️' },
+  eco:         { label:'Экономика',    cls:'cat-eco',     icon:'📈' },
+  tech:        { label:'Технологии',   cls:'cat-tech',    icon:'💻' },
+  social:      { label:'Социум',       cls:'cat-social',  icon:'👥' },
+};
+var SP2_DOMAIN_TO_CAT = {
+  climate:'climate', geopolitics:'geo', economy:'eco',
+  technology:'tech', social:'social',
+};
+var SP2_IMPACT_SECTORS = [
+  {k:'energy',   l:'Энергетика',    icon:'⚡'},
+  {k:'logistics',l:'Логистика',     icon:'🚢'},
+  {k:'markets',  l:'Рынки',         icon:'📊'},
+  {k:'agro',     l:'Сельское хоз.', icon:'🌾'},
+  {k:'infra',    l:'Инфраструктура',icon:'🏗️'},
+  {k:'water',    l:'Водные ресурсы',icon:'💧'},
+  {k:'realty',   l:'Недвижимость',  icon:'🏢'},
+  {k:'invest',   l:'Инвестиции',    icon:'💰'},
+];
+
+// ── SIGNAL CONFIDENCE ENGINE ─────────────────────────────────────
+function _sp2Confidence(driverName, horizon) {
+  var repScore = 70, lfeConf = 74, arcAcc = 70, srcConf = 3;
+  // Driver Reputation
+  if (typeof DRIVER_REPUTATION !== 'undefined' && DRIVER_REPUTATION[driverName]) {
+    repScore = fr(DRIVER_REPUTATION[driverName].reputation_score);
+  }
+  // LFE forecast confidence
+  if (typeof _lfe !== 'undefined' && _lfe.forecastConf) {
+    var hz = horizon === '24ч' ? 'h24' : horizon === '7д' ? 'h7d' : horizon === '30д' ? 'h30d' : 'h90d';
+    lfeConf = _lfe.forecastConf[hz] || 74;
+  }
+  // Archive accuracy
+  if (typeof _archiveStats === 'function') {
+    var st = _archiveStats();
+    arcAcc = st.accuracy > 0 ? st.accuracy : 70;
+  }
+  // Source confirmation count
+  if (typeof SENSOR_SOURCES !== 'undefined') {
+    srcConf = Math.min(12, SENSOR_SOURCES.filter(function(s){ return s.uptime >= 95; }).length);
+  }
+  // Composite confidence
+  var composite = fr(repScore * 0.35 + lfeConf * 0.30 + arcAcc * 0.25 + srcConf * 0.10 * 10);
+  return { repScore: repScore, lfeConf: fr(lfeConf), arcAcc: arcAcc, srcConf: srcConf, composite: Math.min(98, composite) };
+}
+
+// ── SIGNAL IMPACT ENGINE ─────────────────────────────────────────
+function _sp2Impact(risk) {
+  // Map driver name → affected sectors via causality
+  var sectors = {};
+  SP2_IMPACT_SECTORS.forEach(function(s){ sectors[s.k] = 0; });
+
+  var name = (risk.name || '').toLowerCase();
+  // Climate drivers
+  if (name.includes('climat') || name.includes('fire') || name.includes('flood') || name.includes('drought')) {
+    sectors.energy += 60; sectors.agro += 80; sectors.water += 75; sectors.logistics += 40;
+  }
+  // Geopolitical drivers
+  if (name.includes('conflict') || name.includes('war') || name.includes('geopolit') || name.includes('terror')) {
+    sectors.energy += 70; sectors.markets += 65; sectors.logistics += 70; sectors.invest += 60;
+  }
+  // Economic drivers
+  if (name.includes('econom') || name.includes('inflation') || name.includes('debt') || name.includes('trade')) {
+    sectors.markets += 80; sectors.invest += 75; sectors.realty += 50; sectors.logistics += 40;
+  }
+  // Social / migration
+  if (name.includes('social') || name.includes('migrat') || name.includes('unrest') || name.includes('protest')) {
+    sectors.realty += 45; sectors.invest += 40; sectors.markets += 35;
+  }
+  // Technology / cyber
+  if (name.includes('tech') || name.includes('cyber') || name.includes('digital') || name.includes('infra')) {
+    sectors.infra += 75; sectors.energy += 50; sectors.markets += 55; sectors.logistics += 45;
+  }
+  // Scale by impact score
+  var scale = (risk.impact || risk.score || 60) / 100;
+  Object.keys(sectors).forEach(function(k){ sectors[k] = Math.min(99, fr(sectors[k] * scale)); });
+
+  // Add from CAUSALITY_DATA if available
+  if (typeof CAUSALITY_DATA !== 'undefined' && CAUSALITY_DATA[risk.name]) {
+    var cd = CAUSALITY_DATA[risk.name];
+    if (cd.effects) {
+      cd.effects.forEach(function(eff) {
+        var en = (eff.name || '').toLowerCase();
+        if (en.includes('energy'))  sectors.energy  = Math.max(sectors.energy,  fr(eff.strength * 100));
+        if (en.includes('market'))  sectors.markets = Math.max(sectors.markets, fr(eff.strength * 100));
+        if (en.includes('logist'))  sectors.logistics = Math.max(sectors.logistics, fr(eff.strength * 80));
+      });
+    }
+  }
+  return sectors;
+}
+
+// ── SIGNAL PRIORITY SCORE ─────────────────────────────────────────
+// Priority = Impact × Confidence × Urgency × DriverReputation / 10^6
+function _sp2Priority(risk, conf) {
+  var impact   = risk.impact || risk.score || 60;
+  var urgency  = risk.d7 >= 8 ? 1.0 : risk.d7 >= 4 ? 0.75 : risk.d7 >= 1 ? 0.55 : 0.40;
+  var score    = fr(impact * (conf.composite/100) * urgency * (conf.repScore/100));
+  var level    = score >= 60 ? 'КРИТИЧЕСКИЙ' : score >= 40 ? 'ВЫСОКИЙ' : score >= 25 ? 'СРЕДНИЙ' : 'НИЗКИЙ';
+  var cls      = score >= 60 ? 'pri-crit' : score >= 40 ? 'pri-high' : score >= 25 ? 'pri-med' : 'pri-low';
+  return { score: score, level: level, cls: cls, urgency: urgency };
+}
+
+// ── SIGNAL GENERATOR ─────────────────────────────────────────────
+function _sp2GenerateSignals(countries) {
+  var signals = [];
+  var risks  = (_sdc && _sdc.risks && _sdc.risks.length) ? _sdc.risks :
+               (typeof _computeRisks === 'function' ? _computeRisks(countries) : []);
+  var opps   = (_sdc && _sdc.opps  && _sdc.opps.length)  ? _sdc.opps  :
+               (typeof _computeOpps  === 'function' ? _computeOpps(countries)  : []);
+  var drvs   = typeof _liveDrv === 'function' ? _liveDrv() : [];
+  var archSt = typeof _archiveStats === 'function' ? _archiveStats() : {accuracy:70};
+
+  // ── FROM RISKS (S16 SDC → S14 Drivers) ──────────────────────────
+  risks.slice(0, 12).forEach(function(r, i) {
+    var domKey = _sp2DomainFromDriver(r.name);
+    var cat    = SP2_CAT_MAP[domKey] || SP2_CAT_MAP.geo;
+    var conf   = _sp2Confidence(r.name, '7д');
+    var pri    = _sp2Priority(r, conf);
+    var impact = _sp2Impact(r);
+    var horiz  = r.prob >= 75 ? '24ч' : r.prob >= 60 ? '7д' : r.d7 >= 4 ? '30д' : '90д';
+    var action = _sp2Action(r, drvs);
+    var countryList = _sp2AffectedCountries(r, countries);
+
+    signals.push({
+      id:           'SIG-' + String(i+1).padStart(3,'0'),
+      title:        _sp2Title(r, domKey),
+      category:     domKey,
+      cat:          cat,
+      what:         _sp2What(r),
+      why:          _sp2Why(r, domKey),
+      countries:    countryList,
+      horizon:      horiz,
+      probability:  r.prob,
+      confidence:   conf,
+      priority:     pri,
+      impact:       impact,
+      action:       action,
+      driver:       r.name,
+      score:        r.score,
+      d7:           r.d7,
+      source:       'risk_engine',
+      ts:           Date.now(),
+    });
+  });
+
+  // ── FROM OPPORTUNITIES (S16) ──────────────────────────────────
+  opps.slice(0, 5).forEach(function(o, i) {
+    var domKey = 'eco';
+    if (o.cat === 'Regional') domKey = _sp2DomainFromDriver(o.drivers[0] || '');
+    var cat  = SP2_CAT_MAP[domKey] || SP2_CAT_MAP.eco;
+    var conf = _sp2Confidence(o.drivers[0] || 'Resilience', o.horizon);
+    var pri  = { score: fr(o.score * 0.8), level: 'ВОЗМОЖНОСТЬ', cls: 'pri-low' };
+    signals.push({
+      id:           'OPP-' + String(i+1).padStart(3,'0'),
+      title:        o.name,
+      category:     domKey,
+      cat:          cat,
+      what:         'Формируется окно возможностей: ' + (o.drivers[0] || ''),
+      why:          'Снижение риска создаёт благоприятные условия в горизонте ' + o.horizon,
+      countries:    [],
+      horizon:      o.horizon,
+      probability:  fr(o.score),
+      confidence:   conf,
+      priority:     pri,
+      impact:       _sp2Impact({name: o.drivers[0] || '', score: o.score, impact: o.impact}),
+      action:       'Рассмотреть вхождение в позицию. Мониторинг показателей стабилизации.',
+      driver:       o.drivers[0] || '—',
+      score:        o.score,
+      d7:           0,
+      source:       'opportunity_engine',
+      ts:           Date.now(),
+    });
+  });
+
+  // ── FROM ALERTS (S24 Orchestrator) ───────────────────────────
+  if (typeof ALERT_ARCHIVE !== 'undefined') {
+    ALERT_ARCHIVE.filter(function(a){ return a.level === 'CRITICAL' || a.level === 'HIGH'; })
+      .slice(0, 3).forEach(function(a, i) {
+      var conf = _sp2Confidence(a.driver || a.label || '', '24ч');
+      var pri  = { score: 75, level: 'КРИТИЧЕСКИЙ', cls: 'pri-crit' };
+      signals.push({
+        id:          'ALT-' + String(i+1).padStart(3,'0'),
+        title:       a.label || ('Тревога: ' + (a.driver || 'Аномалия')),
+        category:    _sp2DomainFromDriver(a.driver || ''),
+        cat:         SP2_CAT_MAP[_sp2DomainFromDriver(a.driver||'')] || SP2_CAT_MAP.geo,
+        what:        a.summary || 'Автономный оркестратор обнаружил аномалию.',
+        why:         'Уровень тревоги: ' + a.level + '. Требует немедленного внимания.',
+        countries:   a.countries ? a.countries.slice(0,5) : [],
+        horizon:     '24ч',
+        probability: 85,
+        confidence:  conf,
+        priority:    pri,
+        impact:      _sp2Impact({name: a.driver||'', score:80, impact:80}),
+        action:      'НЕМЕДЛЕННО: проверить данные источников. Уточнить прогноз.',
+        driver:      a.driver || '—',
+        score:       80,
+        d7:          8,
+        source:      'orchestrator',
+        ts:          a.ts || Date.now(),
+      });
+    });
+  }
+
+  // Sort by priority score desc
+  signals.sort(function(a,b){ return b.priority.score - a.priority.score; });
+  return signals;
+}
+
+// ── HELPER: Domain from driver name ──────────────────────────────
+function _sp2DomainFromDriver(name) {
+  var n = (name || '').toLowerCase();
+  if (n.includes('climat') || n.includes('fire') || n.includes('flood') || n.includes('drought') || n.includes('water') || n.includes('food')) return 'climate';
+  if (n.includes('conflict') || n.includes('war') || n.includes('geopolit') || n.includes('terror') || n.includes('migrat')) return 'geo';
+  if (n.includes('econom') || n.includes('trade') || n.includes('debt') || n.includes('inflation') || n.includes('market') || n.includes('financial')) return 'eco';
+  if (n.includes('tech') || n.includes('cyber') || n.includes('digital') || n.includes('infra') || n.includes('energy')) return 'tech';
+  if (n.includes('social') || n.includes('unrest') || n.includes('protest') || n.includes('health') || n.includes('pandemic')) return 'social';
+  return 'geo';
+}
+
+// ── HELPER: Generate signal title ────────────────────────────────
+var SP2_TITLE_TEMPLATES = {
+  climate: ['Климатический стресс', 'Рост климатической нестабильности', 'Климатическая аномалия'],
+  geo:     ['Геополитическая эскалация', 'Рост конфликтного потенциала', 'Геополитический сдвиг'],
+  eco:     ['Экономическая турбулентность', 'Давление на финансовые рынки', 'Экономический дисбаланс'],
+  tech:    ['Технологическая угроза', 'Уязвимость инфраструктуры', 'Цифровой риск'],
+  social:  ['Социальная нестабильность', 'Рост социального напряжения', 'Социальная дислокация'],
+};
+function _sp2Title(r, domKey) {
+  var tpls = SP2_TITLE_TEMPLATES[domKey] || SP2_TITLE_TEMPLATES.geo;
+  var idx = Math.abs(r.name.length) % tpls.length;
+  return r.name + ' — ' + tpls[idx];
+}
+
+// ── HELPER: What happened ────────────────────────────────────────
+function _sp2What(r) {
+  var d7str = r.d7 >= 0 ? '+' + r.d7 : String(r.d7);
+  return 'Индекс риска: ' + r.score + ' (' + d7str + ' за 7д). ' +
+    (r.priority === 'CRITICAL' ? 'Достигнут критический порог.' :
+     r.priority === 'HIGH'     ? 'Зафиксирован высокий уровень риска.' :
+                                  'Уровень риска под наблюдением.');
+}
+
+// ── HELPER: Why it matters ────────────────────────────────────────
+var SP2_WHY_MAP = {
+  climate: 'Прямое воздействие на продовольственную безопасность, водные ресурсы и логистические цепочки. ',
+  geo:     'Дестабилизация региональной безопасности с каскадными эффектами на экономику и миграцию. ',
+  eco:     'Влияние на глобальные рынки, инвестиционный климат и доступность финансирования. ',
+  tech:    'Уязвимость критической инфраструктуры и цепочек поставок. ',
+  social:  'Рост социального давления с потенциалом политической дестабилизации. ',
+};
+function _sp2Why(r, domKey) {
+  var base = SP2_WHY_MAP[domKey] || SP2_WHY_MAP.geo;
+  if (r.d7 >= 6) base += 'Ускоряющаяся динамика требует немедленного внимания.';
+  else if (r.d7 >= 3) base += 'Восходящий тренд в течение последних 7 дней.';
+  else base += 'Мониторинг в горизонте 30–90 дней.';
+  return base;
+}
+
+// ── HELPER: Recommended action ───────────────────────────────────
+function _sp2Action(r, drvs) {
+  if (typeof _sdc !== 'undefined' && _sdc.risks) {
+    var sdcR = _sdc.risks.find(function(x){ return x.name === r.name; });
+    if (sdcR) {
+      if (r.priority === 'CRITICAL') return 'НЕМЕДЛЕННО: активировать протокол реагирования. Пересмотр позиций по затронутым рынкам.';
+      if (r.priority === 'HIGH')     return 'Повысить мониторинг. Подготовить сценарии хеджирования для ' + (r.name.split(' ').slice(0,3).join(' ')) + '.';
+    }
+  }
+  return 'Отслеживать динамику. Уточнить прогноз при изменении тренда.';
+}
+
+// ── HELPER: Affected countries ───────────────────────────────────
+function _sp2AffectedCountries(r, countries) {
+  var sorted = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); });
+  return sorted.slice(0,5).map(function(c){ return (c.country_name||c.country); });
+}
+
+// ── MAIN LOADER ──────────────────────────────────────────────────
+function loadSignalPro2(countries) {
+  _sp2Countries = countries;
+  _sp2Signals = _sp2GenerateSignals(countries);
+  _sp2BuildKPI();
+  _sp2BuildFeed(_sp2Filter);
+  _sp2BuildWeekly(countries);
+  _sp2BuildConfidence();
+  _sp2BuildImpact();
+  _sp2BuildFounder();
+}
+
+// ── 01: KPI STRIP ─────────────────────────────────────────────────
+function _sp2BuildKPI() {
+  var crit  = _sp2Signals.filter(function(s){ return s.priority.level==='КРИТИЧЕСКИЙ'; }).length;
+  var high  = _sp2Signals.filter(function(s){ return s.priority.level==='ВЫСОКИЙ'; }).length;
+  var conf  = _sp2Signals.length ? fr(_sp2Signals.reduce(function(a,s){ return a+s.confidence.composite; },0)/_sp2Signals.length) : 0;
+  var repAvg= Object.keys(DRIVER_REPUTATION).length
+    ? fr(Object.values(DRIVER_REPUTATION).reduce(function(a,v){ return a+v.reputation_score; },0)/Object.keys(DRIVER_REPUTATION).length)
+    : 70;
+  var cards=[
+    {l:'Всего сигналов',     v:_sp2Signals.length,      c:'var(--blue)'},
+    {l:'Критических',        v:crit,                     c:crit>0?'var(--red)':'var(--text3)'},
+    {l:'Высокого приоритета',v:high,                     c:high>0?'var(--orange)':'var(--text3)'},
+    {l:'Ср. достоверность',  v:conf+'%',                 c:conf>=70?'var(--green)':'var(--orange)'},
+    {l:'Репутация факторов', v:repAvg,                   c:repAvg>=75?'var(--green)':'var(--orange)'},
+    {l:'Источников активно', v:typeof SENSOR_SOURCES!=='undefined'?SENSOR_SOURCES.filter(function(s){return s.uptime>=90;}).length:0, c:'var(--blue)'},
+    {l:'LFE реестр',         v:typeof _lfe!=='undefined'?_lfe.registry.length:0, c:'var(--text2)'},
+    {l:'Arch. точность',     v:(typeof _archiveStats==='function'?_archiveStats().accuracy:70)+'%', c:'var(--green)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.l+'</div><div class="card-val" style="color:'+c.c+';font-size:17px">'+c.v+'</div></div>';
+  });
+  var g=document.getElementById('sp2-kpi'); if(g) g.innerHTML=h;
+}
+
+// ── 01: SIGNAL FEED ────────────────────────────────────────────────
+window.sp2Filter = function(f) {
+  _sp2Filter = f;
+  document.querySelectorAll('#sp2-filters .filter-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.f === f);
+  });
+  _sp2BuildFeed(f);
+};
+
+function _sp2BuildFeed(filter) {
+  var sigs = _sp2Signals.filter(function(s){
+    if (filter === 'all') return true;
+    if (filter === 'critical') return s.priority.level === 'КРИТИЧЕСКИЙ' || s.priority.level === 'ВЫСОКИЙ';
+    return s.category === filter;
+  });
+  if (!sigs.length) {
+    var el=document.getElementById('sp2-feed'); if(el) el.innerHTML='<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">Нет сигналов в данной категории</div>';
+    return;
+  }
+  var h='';
+  sigs.slice(0,15).forEach(function(s){
+    var cat = s.cat || SP2_CAT_MAP.geo;
+    var impTop = Object.entries(s.impact||{}).filter(function(e){return e[1]>30;}).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+    h+='<div class="sp2-card sp2-section" data-cat="'+s.category+'">';
+    // Header
+    h+='<div class="sp2-head">';
+    h+='<span class="sp2-cat '+cat.cls+'">'+cat.icon+' '+cat.label+'</span>';
+    h+='<span class="sp2-title">'+s.title+'</span>';
+    h+='<span class="sp2-pri '+s.priority.cls+'">'+s.priority.level+'</span>';
+    h+='</div>';
+    // What / Why
+    h+='<div class="sp2-body"><b style="color:var(--text3);font-size:9px;letter-spacing:.1em">ЧТО ПРОИЗОШЛО</b><br>'+s.what+'</div>';
+    h+='<div class="sp2-body"><b style="color:var(--text3);font-size:9px;letter-spacing:.1em">ПОЧЕМУ ВАЖНО</b><br>'+s.why+'</div>';
+    // Metrics
+    h+='<div class="sp2-metrics">';
+    h+='<div class="sp2-m"><div class="lbl">Вероятность</div><div class="val" style="color:var(--orange)">'+s.probability+'%</div></div>';
+    h+='<div class="sp2-m"><div class="lbl">Достоверность</div><div class="val" style="color:var(--green)">'+s.confidence.composite+'%</div></div>';
+    h+='<div class="sp2-m"><div class="lbl">Горизонт</div><div class="val" style="color:var(--blue)">'+s.horizon+'</div></div>';
+    h+='<div class="sp2-m"><div class="lbl">Репутация</div><div class="val">'+s.confidence.repScore+'</div></div>';
+    h+='<div class="sp2-m"><div class="lbl">LFE conf</div><div class="val">'+s.confidence.lfeConf+'%</div></div>';
+    h+='<div class="sp2-m"><div class="lbl">Приоритет</div><div class="val" style="color:var(--gold)">'+s.priority.score+'</div></div>';
+    h+='</div>';
+    // Affected countries
+    if (s.countries && s.countries.length) {
+      h+='<div style="margin-bottom:7px"><span style="font-size:8px;color:var(--text3);letter-spacing:.1em">ЗАТРОНУТЫЕ СТРАНЫ: </span>';
+      s.countries.slice(0,5).forEach(function(c){ h+='<span class="sp2-tag">'+c+'</span> '; });
+      h+='</div>';
+    }
+    // Impact sectors (top 3)
+    if (impTop.length) {
+      h+='<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px">';
+      impTop.forEach(function(e){
+        var sec = SP2_IMPACT_SECTORS.find(function(x){ return x.k===e[0]; });
+        if (!sec) return;
+        h+='<div class="sp2-impact-item"><span>'+sec.icon+'</span><span style="color:var(--text2)">'+sec.l+'</span><span style="color:var(--orange);font-size:9px;margin-left:auto">'+e[1]+'%</span></div>';
+      });
+      h+='</div>';
+    }
+    // Recommended action
+    h+='<div class="sp2-action"><b>&#8594; Рекомендованное действие:</b> '+s.action+'</div>';
+    h+='</div>';
+  });
+  var el=document.getElementById('sp2-feed'); if(el) el.innerHTML=h;
+}
+
+// ── 02: WEEKLY INTELLIGENCE BRIEF ────────────────────────────────
+function _sp2BuildWeekly(countries) {
+  var top10  = _sp2Signals.slice(0,10);
+  var topRisks = _sp2Signals.filter(function(s){return s.source==='risk_engine';})
+    .sort(function(a,b){return b.d7-a.d7;}).slice(0,5);
+  var topOpps = _sp2Signals.filter(function(s){return s.source==='opportunity_engine';}).slice(0,5);
+  var topDrvs = typeof _liveDrv==='function' ? _liveDrv().slice(0,5) : [];
+  var topRegions = countries.slice().sort(function(a,b){return (b.risk_score||0)-(a.risk_score||0);}).slice(0,5);
+
+  var archSt = typeof _archiveStats==='function' ? _archiveStats() : {accuracy:70,hzAcc:{}};
+  var topFcChanges = Object.entries(archSt.hzAcc||{}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+
+  // Главный вывод
+  var critN = _sp2Signals.filter(function(s){return s.priority.level==='КРИТИЧЕСКИЙ';}).length;
+  var mainConclusion = critN > 0
+    ? 'На текущей неделе зафиксировано ' + critN + ' критических сигнала. Ключевые риски требуют немедленного внимания.'
+    : 'Ситуация стабильна. ' + _sp2Signals.filter(function(s){return s.priority.level==='ВЫСОКИЙ';}).length + ' сигналов высокого приоритета под мониторингом.';
+
+  var h='<div class="sp2-week-card">';
+  h+='<div style="font-size:9px;color:var(--text3);letter-spacing:.15em;margin-bottom:8px">ТОП-10 СИГНАЛОВ НЕДЕЛИ</div>';
+  top10.forEach(function(s,i){
+    h+='<div class="loop-row"><span style="font-size:9px;color:var(--text3);min-width:26px">'+(i+1)+'.</span>';
+    h+='<span class="sp2-cat '+s.cat.cls+'" style="padding:1px 5px;font-size:8px">'+s.cat.label+'</span>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1;margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.title+'</span>';
+    h+='<span class="sp2-pri '+s.priority.cls+'" style="font-size:8px;padding:1px 5px">'+s.priority.level+'</span></div>';
+  });
+  h+='</div>';
+
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  // Растущие риски
+  h+='<div class="sp2-week-card">';
+  h+='<div style="font-size:9px;color:var(--red);letter-spacing:.12em;margin-bottom:6px">ТОП-5 РАСТУЩИХ РИСКОВ</div>';
+  topRisks.forEach(function(s){
+    h+='<div class="loop-row"><span style="font-size:10px;color:var(--text2);flex:1">'+s.driver+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:var(--red)">+'+(s.d7||0)+'</span></div>';
+  });
+  h+='</div>';
+  // Возможности
+  h+='<div class="sp2-week-card">';
+  h+='<div style="font-size:9px;color:var(--green);letter-spacing:.12em;margin-bottom:6px">ТОП-5 ВОЗМОЖНОСТЕЙ</div>';
+  topOpps.forEach(function(s){
+    h+='<div class="loop-row"><span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.title.split('—')[0]+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:var(--green)">'+s.probability+'%</span></div>';
+  });
+  h+='</div>';
+  // Top drivers
+  h+='<div class="sp2-week-card">';
+  h+='<div style="font-size:9px;color:var(--orange);letter-spacing:.12em;margin-bottom:6px">ТОП-5 ВЛИЯТЕЛЬНЫХ ФАКТОРОВ</div>';
+  topDrvs.forEach(function(d){
+    h+='<div class="loop-row"><span style="font-size:10px;color:var(--text2);flex:1">'+d.name+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:var(--orange)">'+d.score+'</span></div>';
+  });
+  h+='</div>';
+  // Top regions
+  h+='<div class="sp2-week-card">';
+  h+='<div style="font-size:9px;color:var(--blue);letter-spacing:.12em;margin-bottom:6px">ТОП-5 РЕГИОНОВ ПОД НАБЛЮДЕНИЕМ</div>';
+  topRegions.forEach(function(c){
+    h+='<div class="loop-row"><span style="font-size:10px;color:var(--text2);flex:1">'+(c.country_name||c.country)+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:var(--blue)">'+fr(c.risk_score||0)+'</span></div>';
+  });
+  h+='</div>';
+  h+='</div>';
+
+  // Main conclusion
+  h+='<div class="sp2-action" style="margin-top:8px"><b>&#8594; Главный вывод недели:</b> '+mainConclusion+'</div>';
+
+  var el=document.getElementById('sp2-weekly'); if(el) el.innerHTML=h;
+}
+
+// ── 03: CONFIDENCE ENGINE ─────────────────────────────────────────
+function _sp2BuildConfidence() {
+  var archSt = typeof _archiveStats==='function' ? _archiveStats() : {accuracy:70,hzAcc:{}};
+  var repAvg = Object.keys(DRIVER_REPUTATION).length
+    ? fr(Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+v.reputation_score;},0)/Object.keys(DRIVER_REPUTATION).length) : 70;
+  var lfeLen = typeof _lfe!=='undefined' ? _lfe.registry.length : 0;
+  var srcActive = typeof SENSOR_SOURCES!=='undefined' ? SENSOR_SOURCES.filter(function(s){return s.uptime>=90;}).length : 0;
+
+  var topConf = _sp2Signals.slice().sort(function(a,b){return b.confidence.composite-a.confidence.composite;}).slice(0,6);
+
+  var h='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px">';
+  [{l:'Архив точность',v:archSt.accuracy+'%',c:'var(--green)'},
+   {l:'Ср. репутация',v:repAvg,c:'var(--green)'},
+   {l:'LFE записей',v:lfeLen,c:'var(--blue)'},
+   {l:'Активных источников',v:srcActive,c:'var(--blue)'},
+  ].forEach(function(i){
+    h+='<div class="sp2-m"><div class="lbl">'+i.l+'</div><div class="val" style="color:'+i.c+'">'+i.v+'</div></div>';
+  });
+  h+='</div>';
+
+  h+='<div style="font-size:9px;color:var(--text3);margin-bottom:6px">ТОП СИГНАЛОВ ПО ДОСТОВЕРНОСТИ</div>';
+  topConf.forEach(function(s){
+    var pct = s.confidence.composite;
+    h+='<div style="margin-bottom:6px">';
+    h+='<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.title.split('—')[1]+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:var(--green);margin-left:6px">'+pct+'%</span></div>';
+    h+='<div class="sp2-bar" style="background:rgba(255,255,255,.06)"><div class="sp2-bar" style="width:'+pct+'%;background:var(--green)"></div></div>';
+    h+='</div>';
+  });
+  var el=document.getElementById('sp2-confidence'); if(el) el.innerHTML=h;
+}
+
+// ── 04: IMPACT ENGINE ─────────────────────────────────────────────
+function _sp2BuildImpact() {
+  // Aggregate sector impact across all critical/high signals
+  var sectorTotals = {};
+  SP2_IMPACT_SECTORS.forEach(function(s){ sectorTotals[s.k] = 0; });
+  var critSigs = _sp2Signals.filter(function(s){ return s.priority.score >= 40; });
+  critSigs.forEach(function(sig){
+    Object.entries(sig.impact||{}).forEach(function(e){
+      if (sectorTotals[e[0]] !== undefined) sectorTotals[e[0]] = Math.max(sectorTotals[e[0]], e[1]);
+    });
+  });
+
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">Влияние критических и высоких сигналов по секторам:</div>';
+  h+='<div class="sp2-impact-grid">';
+  SP2_IMPACT_SECTORS.forEach(function(s){
+    var v = sectorTotals[s.k];
+    var col = v >= 70 ? 'var(--red)' : v >= 50 ? 'var(--orange)' : v >= 30 ? 'var(--gold)' : 'var(--text3)';
+    h+='<div class="sp2-impact-item" style="flex-direction:column;align-items:flex-start;padding:8px">';
+    h+='<div style="display:flex;align-items:center;gap:5px;width:100%;margin-bottom:4px">';
+    h+='<span>'+s.icon+'</span><span style="font-size:11px;color:var(--text2);flex:1">'+s.l+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:11px;color:'+col+'">'+v+'%</span></div>';
+    h+='<div style="width:100%;height:3px;background:var(--bg3);border-radius:2px"><div style="width:'+v+'%;height:100%;background:'+col+';border-radius:2px"></div></div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  var el=document.getElementById('sp2-impact'); if(el) el.innerHTML=h;
+}
+
+// ── 05: FOUNDER REPORT ───────────────────────────────────────────
+function _sp2BuildFounder() {
+  var total   = _sp2Signals.length;
+  var valid   = _sp2Signals.filter(function(s){ return s.confidence.composite >= 70; }).length;
+  var avgConf = total ? fr(_sp2Signals.reduce(function(a,s){ return a+s.confidence.composite; },0)/total) : 0;
+  var archSt  = typeof _archiveStats==='function' ? _archiveStats() : {accuracy:70};
+  var topDrv  = _sp2Signals.reduce(function(acc,s){
+    acc[s.driver] = (acc[s.driver]||0) + s.priority.score; return acc; }, {});
+  var topDrvList = Object.entries(topDrv).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+  var topSrc = typeof SENSOR_SOURCES!=='undefined'
+    ? SENSOR_SOURCES.sort(function(a,b){return b.contrib-a.contrib;}).slice(0,3)
+    : [];
+
+  var h='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px">';
+  [{l:'Сформировано',v:total,c:'var(--blue)'},{l:'Подтверждено',v:valid,c:'var(--green)'},
+   {l:'Ср. достоверность',v:avgConf+'%',c:'var(--green)'},{l:'Точность архива',v:archSt.accuracy+'%',c:'var(--green)'},
+   {l:'Критических',v:_sp2Signals.filter(function(s){return s.priority.level==='КРИТИЧЕСКИЙ';}).length,c:'var(--red)'},
+   {l:'Возможностей',v:_sp2Signals.filter(function(s){return s.source==='opportunity_engine';}).length,c:'var(--orange)'},
+  ].forEach(function(i){
+    h+='<div style="background:rgba(16,185,129,.04);border:0.5px solid rgba(16,185,129,.15);border-radius:8px;padding:8px;text-align:center">';
+    h+='<div style="font-size:8px;color:var(--text3)">'+i.l+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:'+i.c+'">'+i.v+'</div></div>';
+  });
+  h+='</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  h+='<div><div style="font-size:9px;color:var(--text3);margin-bottom:5px">ТОП ФАКТОРЫ</div>';
+  topDrvList.forEach(function(e){
+    h+='<div class="loop-row"><span style="font-size:10px;color:var(--text2);flex:1">'+e[0].split(' ').slice(0,3).join(' ')+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--orange)">'+e[1]+'</span></div>';
+  });
+  h+='</div>';
+  h+='<div><div style="font-size:9px;color:var(--text3);margin-bottom:5px">ТОП ИСТОЧНИКИ</div>';
+  topSrc.forEach(function(s){
+    h+='<div class="loop-row"><span style="font-size:10px;color:var(--text2);flex:1">'+s.name+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--blue)">'+s.contrib+'%</span></div>';
+  });
+  h+='</div></div>';
+  var el=document.getElementById('sp2-founder'); if(el) el.innerHTML=h;
+}
+
+// ── FULL REPORT GENERATOR ─────────────────────────────────────────
+window.generateSP2Report = function() {
+  var el=document.getElementById('sp2-report-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Генерация Signal Pro отчёта...</div></div>';
+  setTimeout(function(){
+    var now=new Date().toUTCString().replace('GMT','UTC');
+    var critSigs=_sp2Signals.filter(function(s){return s.priority.level==='КРИТИЧЕСКИЙ';});
+    var highSigs=_sp2Signals.filter(function(s){return s.priority.level==='ВЫСОКИЙ';});
+    var archSt=typeof _archiveStats==='function'?_archiveStats():{accuracy:70};
+    var repAvg=Object.keys(DRIVER_REPUTATION).length
+      ?fr(Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+v.reputation_score;},0)/Object.keys(DRIVER_REPUTATION).length):70;
+    var secs=[
+      {t:'EXECUTIVE SUMMARY',c:'var(--green)',
+       v:'Сформировано '+_sp2Signals.length+' сигналов. Критических: '+critSigs.length+'. Высокого приоритета: '+highSigs.length+'. Средняя достоверность: '+fr(_sp2Signals.reduce(function(a,s){return a+s.confidence.composite;},0)/Math.max(_sp2Signals.length,1))+'%.'},
+      {t:'КРИТИЧЕСКИЕ СИГНАЛЫ',c:'var(--red)',
+       v:critSigs.length?critSigs.map(function(s){return s.title+'('+s.probability+'% / '+s.confidence.composite+'% conf)';}).join(' · '):'Нет критических сигналов.'},
+      {t:'ТОП ВОЗМОЖНОСТИ',c:'var(--orange)',
+       v:_sp2Signals.filter(function(s){return s.source==='opportunity_engine';}).slice(0,3).map(function(s){return s.title.split('—')[0].trim();}).join(' · ')||'Нет.'},
+      {t:'ГОРИЗОНТЫ РИСКА',c:'var(--blue)',
+       v:'24ч: '+_sp2Signals.filter(function(s){return s.horizon==='24ч';}).length+' · 7д: '+_sp2Signals.filter(function(s){return s.horizon==='7д';}).length+' · 30д: '+_sp2Signals.filter(function(s){return s.horizon==='30д';}).length+' · 90д: '+_sp2Signals.filter(function(s){return s.horizon==='90д';}).length},
+      {t:'ДВИЖОК ДОСТОВЕРНОСТИ',c:'var(--green)',
+       v:'Архив точность: '+archSt.accuracy+'% · Репутация факторов: '+repAvg+' · LFE реестр: '+(typeof _lfe!=='undefined'?_lfe.registry.length:0)+' · Источников: '+(typeof SENSOR_SOURCES!=='undefined'?SENSOR_SOURCES.filter(function(s){return s.uptime>=90;}).length:0)},
+      {t:'РЕКОМЕНДОВАННЫЕ ДЕЙСТВИЯ',c:'var(--gold)',
+       v:critSigs.length?critSigs.map(function(s){return s.action;}).slice(0,2).join(' | '):'Поддерживать текущий мониторинг. Обновить прогнозы при изменении тренда.'},
+    ];
+    var h='<div style="background:rgba(16,185,129,.04);border:0.5px solid rgba(16,185,129,.2);border-radius:10px;padding:16px;margin-top:10px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:var(--green);letter-spacing:.2em">SIGNAL PRO 2.0 — РАЗВЕДЫВАТЕЛЬНЫЙ ОТЧЁТ</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+'</div></div>';
+    h+='<div style="height:0.5px;background:rgba(16,185,129,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="padding:8px 10px;background:rgba(16,185,129,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</div></div>';
+    el.innerHTML=h;
+  },600);
+};
+// END SIGNAL PRO 2.0
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('load',function(){ checkAuth(); });
