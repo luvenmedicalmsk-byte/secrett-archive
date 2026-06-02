@@ -3243,29 +3243,66 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
 <script>
 var API='https://archive-api.luven-medical-msk.workers.dev';
-var PASS='0045';
+// AUTH-01: password removed from browser — server-side auth via /api/auth/*
 var _uiErrors=0;
 var _lastRefresh=null;
 var _missingBlocks=0;
 
 // ── AUTH ────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// AUTH-01 CLIENT — Server-Side Authentication
+// Token stored in sessionStorage (cleared on browser close)
+// ═══════════════════════════════════════════════════════════════
+var API_AUTH = API + '/api/auth';
+var _authToken = sessionStorage.getItem('mia-auth-token') || null;
+var _loginLocked = false;
+function _setToken(t){ _authToken=t; if(t){ sessionStorage.setItem('mia-auth-token',t); } else { sessionStorage.removeItem('mia-auth-token'); } }
+function _showDashboard(){ document.getElementById('login-screen').style.display='none'; document.getElementById('dashboard').style.display='block'; initDashboard(); }
+function _showLogin(){ document.getElementById('login-screen').style.display='flex'; document.getElementById('dashboard').style.display='none'; }
+function checkAuth(){
+  if(!_authToken){ _showLogin(); return; }
+  fetch(API_AUTH+'/verify',{ method:'GET', headers:{'Authorization':'Bearer '+_authToken} })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d.valid){ _showDashboard(); } else { _setToken(null); _showLogin(); } })
+    .catch(function(){ _showDashboard(); }); // offline fallback
+}
 function doLogin(){
-  var v=document.getElementById('pwd-input').value;
-  if(v===PASS){
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    initDashboard();
-  } else {
-    var e=document.getElementById('login-err');
-    e.style.display='block';
-    document.getElementById('pwd-input').value='';
-    setTimeout(function(){ e.style.display='none'; },2500);
-  }
+  if(_loginLocked) return;
+  var pwd=document.getElementById('pwd-input').value;
+  if(!pwd) return;
+  var btn=document.querySelector('#login-screen button');
+  if(btn){ btn.disabled=true; }
+  fetch(API_AUTH+'/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pwd}) })
+    .then(function(r){ return r.json().then(function(d){ return {s:r.status,d:d}; }); })
+    .then(function(res){
+      if(btn){ btn.disabled=false; }
+      document.getElementById('pwd-input').value='';
+      if(res.d.success){
+        _setToken(res.d.token);
+        _showDashboard();
+      } else if(res.s===429){
+        _loginLocked=true;
+        var e=document.getElementById('login-err');
+        e.textContent='Превышен лимит попыток. Подождите 15 минут.';
+        e.style.display='block';
+      } else {
+        var e=document.getElementById('login-err');
+        e.style.display='block';
+        setTimeout(function(){ e.style.display='none'; },2500);
+      }
+    })
+    .catch(function(){
+      if(btn){ btn.disabled=false; }
+      var e=document.getElementById('login-err');
+      e.textContent='Сервер недоступен.';
+      e.style.display='block';
+      setTimeout(function(){ e.style.display='none'; },3000);
+    });
 }
 function doLogout(){
-  document.getElementById('dashboard').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('pwd-input').value='';
+  var t=_authToken; _setToken(null);
+  if(t){ fetch(API_AUTH+'/logout',{ method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+t} }).catch(function(){}); }
+  _showLogin();
 }
 
 // ── CLOCK ────────────────────────────────────────────────────────────
@@ -14430,6 +14467,7 @@ window.completeMission    = window.completeMission;
 window.simulateCompletion = window.simulateCompletion;
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
+window.addEventListener('load',function(){ checkAuth(); });
 window.addEventListener('error',function(){ _uiErrors++; });
 window.addEventListener('resize',tickClock);
 </script>
