@@ -2,60 +2,60 @@
   "country": "US",
   "date": "2026-06-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-02T16:17:59.692486+00:00",
+  "generated_at": "2026-06-02T22:25:52.649617+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 65,
+      "score": 68,
       "props": {
-        "risk_score": 65
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "down"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-Зеленое_на",
+      "id": "SIGNAL-US-Зеленый_ур",
       "type": "Signal",
-      "label": "Зеленое наводнение в Соединенных Штатах",
+      "label": "Зеленый уровень угрозы наводнения в Соед",
       "severity": 78,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-US-Вакансии_в",
+      "id": "SIGNAL-US-Признание_",
       "type": "Signal",
-      "label": "Вакансии в США увеличились в апреле, нес",
-      "severity": 68,
-      "domain": "economic"
+      "label": "Признание Трампа Хезболлы «крайне унизит",
+      "severity": 64,
+      "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-US-Конгресс_н",
+      "id": "SIGNAL-US-Португалия",
       "type": "Signal",
-      "label": "Конгресс нацеливается на премьер-министр",
-      "severity": 65,
+      "label": "Португалия сообщает, что задержка с имми",
+      "severity": 64,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-US",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-US-Зеленое_на",
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Зеленый_ур",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.78
     },
     {
-      "from": "SIGNAL-US-Вакансии_в",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68
-    },
-    {
-      "from": "SIGNAL-US-Конгресс_н",
+      "from": "SIGNAL-US-Признание_",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-US-Португалия",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
     }
   ]
 }

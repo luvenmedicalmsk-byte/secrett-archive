@@ -2,67 +2,67 @@
   "country": "CN",
   "date": "2026-06-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-02T16:17:59.693077+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-02T22:25:52.650224+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 61,
+      "score": 60,
       "props": {
-        "risk_score": 61
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
+      "score": 60,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 26,
+      "score": 35,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 9,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
+      "score": 35,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
+      "score": 17,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
+      "score": 19,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,11 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-Может_ли_т",
+      "id": "SIGNAL-CN-Китай_испо",
       "type": "Signal",
-      "label": "Может ли технология Китая по извлечению ",
-      "severity": 61,
-      "domain": "geopolitical"
+      "label": "Китай использует двойной метод кибератак",
+      "severity": 63,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-CN-Can_China_",
+      "type": "Signal",
+      "label": "Can China fill funding and leadership ga",
+      "severity": 57,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-CN-Trump’s_AI",
+      "type": "Signal",
+      "label": "Trump’s AI order seeks security safeguar",
+      "severity": 57,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -92,43 +106,43 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-CN-Geopolitical",
@@ -149,10 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CN-Может_ли_т",
-      "to": "DOMAIN-CN-geopolitical",
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.61
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CN-Китай_испо",
+      "to": "DOMAIN-CN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.63
+    },
+    {
+      "from": "SIGNAL-CN-Can_China_",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.57
+    },
+    {
+      "from": "SIGNAL-CN-Trump’s_AI",
+      "to": "DOMAIN-CN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.57
     }
   ]
 }
