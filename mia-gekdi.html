@@ -1279,7 +1279,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
           <div class="swipe-card"><div class="sum-card" id="so-social"><div class="loading">Loading...</div></div></div>
           <div class="swipe-card"><div class="sum-card" id="so-geo"><div class="loading">Loading...</div></div></div>
           <div class="swipe-card"><div class="sum-card" id="so-econ"><div class="loading">Loading...</div></div></div>
-          <div class="swipe-card"><div class="sum-card" id="so-tech"><div class="loading">Loading...</div></div></div>
+          <div class="swipe-card"><div class="sum-card" id="so-tech"></div></div>
         </div>
         <div class="swipe-dots" id="strat-opts-dots">
           <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
@@ -4330,6 +4330,11 @@ function _sdcBuildActions(risks) {
 
 // 03 ── RISK RESPONSE MATRIX ─────────────────────────────────────
 function _sdcBuildMatrix(risks) {
+  if (!risks || !risks.length) {
+    var tb0 = document.getElementById('risk-matrix-body');
+    if (tb0) tb0.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:14px;font-size:11px">No risk data yet — loading drivers...</td></tr>';
+    return;
+  }
   var h = '';
   risks.slice(0,12).forEach(function(r) {
     var rc   = r.priority === 'CRITICAL' ? 'risk-crit' : r.priority === 'HIGH' ? 'risk-high' : r.priority === 'MEDIUM' ? 'risk-med' : 'risk-low';
@@ -4382,7 +4387,7 @@ function _getOptTemplate(col) {
   return OPT_TEMPLATES[col] || OPT_TEMPLATES['#3b82f6'];
 }
 function _sdcBuildOptions(risks) {
-  var ids = ['so-climate','so-social','so-geo','so-econ','so-tech'];
+  var ids = ['so-climate','so-social','so-geo','so-economic','so-tech'];
   var top5 = risks.slice(0,5);
   top5.forEach(function(r, i) {
     var el = document.getElementById(ids[i]);
