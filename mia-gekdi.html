@@ -3558,9 +3558,15 @@ tickClock();
 
 // ── NAV ──────────────────────────────────────────────────────────────
 function goSection(id){
-  var el=document.getElementById(id);
-  if(el){ el.scrollIntoView({behavior:'smooth',block:'start'}); }
   document.querySelectorAll('.sn-btn').forEach(function(b){ b.classList.toggle('active',b.dataset.s===id); });
+  // Delay scroll so hideMobileIndex finishes first
+  setTimeout(function(){
+    var el=document.getElementById(id);
+    if(!el) return;
+    // Use getBoundingClientRect for reliable mobile scroll
+    var top = el.getBoundingClientRect().top + window.pageYOffset - (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tb'))||54) - 8;
+    window.scrollTo({top: Math.max(0,top), behavior:'smooth'});
+  }, 50);
 }
 
 // ── SWIPE DOTS SYNC ─────────────────────────────────────────────────
@@ -14090,7 +14096,7 @@ function hideMobileIndex() {
   if (idx) idx.style.display = 'none';
   var btn = document.getElementById('mobile-menu-btn');
   if (btn) btn.textContent = '☰ МЕНЮ';
-  window.scrollTo(0,0);
+  // NOTE: scrollTo(0,0) removed — goSection handles scroll target
 }
 
 
