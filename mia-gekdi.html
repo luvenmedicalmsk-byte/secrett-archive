@@ -937,63 +937,6 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     </div><!-- /s14 -->
 
     <!-- ─ S14: RISK DRIVER INTELLIGENCE CENTER ─ -->
-    <div class="section" id="s14">
-      <div class="s-head">
-        <div class="s-tag">14</div>
-        <div class="s-title">Risk Driver Intelligence Center</div>
-        <div class="s-badge badge-orange">⚡ DRIVER ENGINE</div>
-      </div>
-      <div class="sum-card" style="margin-bottom:14px">
-        <div class="sum-title"><span>🔗</span>Intelligence Architecture</div>
-        <div id="arch-flow"></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🌍</span> 01 · Top Global Risk Drivers</div>
-        <div id="top-drivers-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>📊</span> 02 · Driver Impact Engine</div>
-        <div class="sum-card"><div class="sum-title"><span>📈</span>Global Risk Contribution</div><div id="driver-impact"></div></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🕸️</span> 03 · Driver Network Map</div>
-        <div class="sum-card"><canvas id="driver-network" style="width:100%;height:280px;background:var(--bg3);border-radius:8px;display:block"></canvas></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🌍</span> 04 · Country Driver Explainer</div>
-        <div style="margin-bottom:8px"><select id="drv-country-sel" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 12px;outline:none;width:100%" onchange="buildCountryDrivers(this.value)"><option value="">Select country...</option></select></div>
-        <div id="country-drivers-out"><div style="padding:18px;text-align:center;font-size:11px;color:var(--text3)">Select a country to see risk drivers</div></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>⚡</span> 05 · Driver Momentum</div>
-        <div style="display:flex;gap:6px;margin-bottom:10px">
-          <button class="drv-period-btn active" onclick="setMomentumPeriod('7d',this)">7d</button>
-          <button class="drv-period-btn" onclick="setMomentumPeriod('30d',this)">30d</button>
-          <button class="drv-period-btn" onclick="setMomentumPeriod('24h',this)">24h</button>
-        </div>
-        <div class="sum-card"><div id="driver-momentum"></div></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🧬</span> 06 · Meta Driver Center</div>
-        <div class="swipe-wrap" id="meta-drv-swipe">
-          <div class="swipe-card"><div class="sum-card"><div class="sum-title" style="color:#10b981"><span>🌡️</span> Climate Stress</div><div id="meta-climate"></div></div></div>
-          <div class="swipe-card"><div class="sum-card"><div class="sum-title" style="color:#3b82f6"><span>💹</span> Economic Stress</div><div id="meta-eco"></div></div></div>
-          <div class="swipe-card"><div class="sum-card"><div class="sum-title" style="color:#ef4444"><span>👥</span> Social Instability</div><div id="meta-social"></div></div></div>
-          <div class="swipe-card"><div class="sum-card"><div class="sum-title" style="color:#f97316"><span>⚔️</span> Geopolitical Escalation</div><div id="meta-geo"></div></div></div>
-          <div class="swipe-card"><div class="sum-card"><div class="sum-title" style="color:#a855f7"><span>💻</span> Technology Risk</div><div id="meta-tech"></div></div></div>
-        </div>
-        <div class="swipe-dots" id="meta-drv-dots"><span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🔮</span> 07 · Driver → Forecast Engine</div>
-        <div id="drv-forecast-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
-      </div>
-      <div style="margin-bottom:18px">
-        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>🔗</span> 08 · Risk Driver Pipeline</div>
-        <div class="sum-card"><div id="drv-pipeline"></div></div>
-      </div>
-    </div>
-
     <!-- ─ S15: DRIVER CAUSALITY ENGINE ─ -->
     <div class="section" id="s15">
       <div class="s-head">
@@ -3626,22 +3569,6 @@ var SDC_DECISIONS = [
   {id:'DEC-008',pri:'MEDIUM',  reason:'Cyber Risk signals increasing in Infrastructure domain',conf:58,col:'#eab308'},
 ];
 
-function loadDecisionCenter(countries) {
-  _sdcCountries = countries;
-  buildDecSummary(countries);
-  buildRecommendedActions();
-  buildRiskMatrix();
-  buildStrategicOptions();
-  // buildOpportunityScanner() replaced by _sdcBuildOpps(opps)
-  buildResilienceCenter();
-  buildDependencyChains();
-  buildDecisionQueue(countries);
-  buildExecutiveDashboard(countries);
-  initSwipeDots('rec-actions-swipe','rec-actions-dots');
-  initSwipeDots('strat-opts-swipe','strat-opts-dots');
-  initSwipeDots('dep-chains-swipe','dep-chains-dots');
-  initSwipeDots('exec-dash-swipe','exec-dash-dots');
-}
 
 function buildDecSummary(countries) {
   var critical = countries.filter(function(c){ return c.risk_score >= 80; }).length;
@@ -3695,64 +3622,6 @@ function buildRiskMatrix() {
   document.getElementById('risk-matrix-body').innerHTML = h;
 }
 
-function buildStrategicOptions() {
-  var opts = [
-    {
-      id:'so-climate', title:'Climate Stress', col:'#10b981',
-      options:[
-        {name:'Option A: Early Warning Expansion', benefit:82, risk_red:18, conf:78, complexity:'Medium'},
-        {name:'Option B: Regional Climate Data Hub', benefit:74, risk_red:24, conf:71, complexity:'High'},
-        {name:'Option C: AI Climate Prediction', benefit:88, risk_red:31, conf:65, complexity:'Very High'},
-      ]
-    },
-    {
-      id:'so-economic', title:'Economic Stress', col:'#3b82f6',
-      options:[
-        {name:'Option A: Real-time IMF/WB Integration', benefit:79, risk_red:22, conf:82, complexity:'Medium'},
-        {name:'Option B: Currency Risk Tracker', benefit:72, risk_red:18, conf:76, complexity:'Low'},
-        {name:'Option C: Supply Chain Intelligence', benefit:84, risk_red:28, conf:69, complexity:'High'},
-      ]
-    },
-    {
-      id:'so-social', title:'Social Instability', col:'#ef4444',
-      options:[
-        {name:'Option A: Migration Flow Monitoring', benefit:85, risk_red:26, conf:80, complexity:'Medium'},
-        {name:'Option B: Social Media Signal Feed', benefit:78, risk_red:20, conf:72, complexity:'High'},
-        {name:'Option C: Community Resilience Index', benefit:71, risk_red:15, conf:68, complexity:'Medium'},
-      ]
-    },
-    {
-      id:'so-geo', title:'Geopolitical Escalation', col:'#f97316',
-      options:[
-        {name:'Option A: Diplomatic Signal Tracker', benefit:83, risk_red:24, conf:77, complexity:'Medium'},
-        {name:'Option B: Military Movement Monitor', benefit:76, risk_red:30, conf:65, complexity:'High'},
-        {name:'Option C: Conflict Prediction Model', benefit:89, risk_red:35, conf:61, complexity:'Very High'},
-      ]
-    }
-  ];
-  opts.forEach(function(meta) {
-    var el = document.getElementById(meta.id);
-    if (!el) return;
-    var h = '<div class="sum-title" style="color:' + meta.col + '"><span>&#9881;</span> ' + meta.title + '</div>';
-    meta.options.forEach(function(opt) {
-      var cplxCol = opt.complexity === 'Low' ? 'var(--green)' : opt.complexity === 'Medium' ? 'var(--text3)' : opt.complexity === 'High' ? 'var(--orange)' : 'var(--red)';
-      h += '<div style="background:var(--bg3);border-radius:7px;padding:10px;margin-bottom:8px">';
-      h += '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:7px">' + opt.name + '</div>';
-      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
-      [
-        {label:'Expected Benefit',      val:opt.benefit + '%',   col:'var(--green)'},
-        {label:'Risk Reduction',        val:'-' + opt.risk_red + '%', col:'var(--green)'},
-        {label:'Confidence',            val:opt.conf + '%',      col:'var(--gold)'},
-        {label:'Complexity',            val:opt.complexity,      col:cplxCol},
-      ].forEach(function(f) {
-        h += '<div style="font-size:10px"><div style="color:var(--text3);margin-bottom:2px">' + f.label + '</div>';
-        h += '<div style="font-family:var(--mono);font-size:11px;color:' + f.col + '">' + f.val + '</div></div>';
-      });
-      h += '</div></div>';
-    });
-    el.innerHTML = h;
-  });
-}
 
 
 
