@@ -1,0 +1,23 @@
+[Unit]
+Description=MIA GEKDI Auth Server
+After=network.target
+
+[Service]
+Type=simple
+User=mia-auth
+Group=mia-auth
+WorkingDirectory=/opt/mia-auth
+EnvironmentFile=/opt/mia-auth/.env
+ExecStart=/usr/bin/node /opt/mia-auth/server.js
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mia-auth
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/mia-auth
+
+[Install]
+WantedBy=multi-user.target
