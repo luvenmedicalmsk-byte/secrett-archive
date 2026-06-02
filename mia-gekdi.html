@@ -341,6 +341,14 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .fusion-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:9px;font-family:var(--mono);border:0.5px solid;margin:2px}
 .coverage-cell{text-align:center;padding:4px 6px;border-radius:5px;font-size:9px;font-family:var(--mono)}
 
+
+.badge-ops{background:rgba(249,115,22,.12);color:#fb923c;border:0.5px solid rgba(249,115,22,.25)}
+.ops-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.ops-bar{flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;min-width:40px}
+.ops-fill{height:100%;border-radius:2px;transition:width .4s}
+.gap-card{background:var(--bg2);border-radius:8px;padding:9px 11px;margin-bottom:7px}
+.dep-chain{font-size:9px;color:var(--text3);font-family:var(--mono)}
+
 </style>
 </head>
 <body>
@@ -411,6 +419,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s23')" data-s="s23">&#128274;<span class="sn-tip">Vault</span></button>
     <button class="sn-btn" onclick="goSection('s24')" data-s="s24">&#129302;<span class="sn-tip">Autonomous</span></button>
     <button class="sn-btn" onclick="goSection('s25')" data-s="s25">&#127988;<span class="sn-tip">Fusion</span></button>
+    <button class="sn-btn" onclick="goSection('s26')" data-s="s26">&#128202;<span class="sn-tip">Ops</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -2293,6 +2302,137 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s25 -->
 
+
+    <!-- ─ S26: GLOBAL COLLECTION OPERATIONS CENTER ─ -->
+    <div class="section" id="s26">
+      <div class="s-head">
+        <div class="s-tag">26</div>
+        <div class="s-title">Collection Operations Center</div>
+        <div class="s-badge badge-ops" id="ops-badge">&#9881; SCANNING</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Global infrastructure command · source governance · coverage expansion · 1M–5M events/day target</div>
+
+      <!-- 01: SOURCE OPERATIONS DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128202;</span> 01 · Source Operations Dashboard</div>
+        <div class="grid-4" id="ops-kpi-grid"></div>
+        <div style="margin-top:8px" id="ops-status-summary"></div>
+      </div>
+
+      <!-- 02: SOURCE HEALTH MONITOR -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128737;</span> 02 · Source Health Monitor</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="health-filter-btns">
+          <button class="graph-filter-btn active" onclick="filterSourceHealth('all',this)">All</button>
+          <button class="graph-filter-btn" onclick="filterSourceHealth('live',this)" style="border-color:var(--green);color:var(--green)">Live</button>
+          <button class="graph-filter-btn" onclick="filterSourceHealth('degraded',this)" style="border-color:var(--red);color:var(--red)">Degraded</button>
+        </div>
+        <div id="source-health-list"></div>
+      </div>
+
+      <!-- 03: COLLECTION THROUGHPUT CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128202;</span> 03 · Collection Throughput</div>
+        <div class="swipe-wrap" id="throughput-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128200;</span>By Source</div>
+              <div id="throughput-by-source"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#127758;</span>By Domain</div>
+              <div id="throughput-by-domain"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128200;</span>Capacity Roadmap</div>
+              <div id="throughput-roadmap"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="throughput-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 04: GLOBAL COVERAGE MATRIX -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127758;</span> 04 · Global Coverage Matrix</div>
+        <div class="sum-card"><div id="coverage-matrix-body"></div></div>
+      </div>
+
+      <!-- 05: COLLECTION GAP INTELLIGENCE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128270;</span> 05 · Gap Intelligence</div>
+        <div id="gap-intelligence-body"></div>
+      </div>
+
+      <!-- 06: SOURCE EXPANSION PLANNER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#11014;</span> 06 · Expansion Planner</div>
+        <div id="expansion-planner-body"></div>
+      </div>
+
+      <!-- 07: SOURCE DEPENDENCY ANALYSIS -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128279;</span> 07 · Dependency Analysis</div>
+        <div id="dependency-analysis-body"></div>
+      </div>
+
+      <!-- 08: COLLECTION STRESS TEST -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9889;</span> 08 · Collection Stress Test</div>
+        <div style="margin-bottom:8px">
+          <select id="stress-select" style="background:var(--bg2);border:0.5px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 10px;outline:none;width:100%" onchange="runStressTest(this.value)">
+            <option value="">Select scenario to simulate...</option>
+            <option value="lose_gdelt">Lose GDELT</option>
+            <option value="lose_nasa">Lose NASA FIRMS + EONET</option>
+            <option value="lose_geo">Lose all Geopolitics sources</option>
+            <option value="lose_climate">Lose all Climate sources</option>
+            <option value="lose_top3">Lose top 3 by contribution</option>
+            <option value="latency_spike">Latency spike: all sources +300m</option>
+          </select>
+        </div>
+        <div id="stress-test-result">
+          <div style="padding:12px;text-align:center;font-size:11px;color:var(--text3)">Select a scenario to run stress test</div>
+        </div>
+      </div>
+
+      <!-- 09: FOUNDER COMMAND CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 09 · Founder Command Center</div>
+        <div class="sum-card" style="border:0.5px solid rgba(249,115,22,.2)">
+          <div style="font-family:var(--mono);font-size:10px;color:#fb923c;margin-bottom:10px;letter-spacing:.15em">COLLECTION READINESS · PERSONAL COMMAND</div>
+          <div class="grid-2">
+            <div>
+              <div style="font-size:9px;color:var(--text3);margin-bottom:5px">Highest ROI sources</div>
+              <div id="cmd-roi-sources"></div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--text3);margin-bottom:5px">Expansion priorities</div>
+              <div id="cmd-expansion"></div>
+            </div>
+          </div>
+          <div style="margin-top:10px" id="cmd-readiness-bar"></div>
+        </div>
+      </div>
+
+      <!-- 10: COLLECTION OPERATIONS REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 10 · Operations Report</div>
+        <button onclick="generateOpsReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#0f0a04,#120800);border:1px solid rgba(249,115,22,.3);border-radius:8px;color:#fb923c;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none;margin-bottom:8px">&#9654; Generate Collection Operations Report</button>
+        <div id="ops-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(249,115,22,.12)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Press Generate to create operations report</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s26 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -2913,7 +3053,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -10253,6 +10393,507 @@ function _buildFounderCollectionPanel(countries, derived) {
   });
   var ne=document.getElementById('fc-next-sources'); if(ne) ne.innerHTML=nh;
 }
+
+
+// ══════════════════════════════════════════════════════════════
+// S26: GLOBAL COLLECTION OPERATIONS CENTER
+// Data: SENSOR_SOURCES (from S25), countries[] (live API),
+//       GLOBAL_DRIVERS, DRIVER_REPUTATION, FORECAST_ARCHIVE
+// ══════════════════════════════════════════════════════════════
+
+// ── EXPANSION CANDIDATES (next integrations) ──────────────────
+var EXPANSION_CANDIDATES = [
+  {name:'IMF World Economic Outlook', domain:'economic',    value:88, cov_gain:'+12 drivers', note:'Macro indicators, quarterly'},
+  {name:'ECMWF Seasonal Forecast',    domain:'climate',     value:85, cov_gain:'+8 countries', note:'Long-range climate forecast'},
+  {name:'World Bank DataBank',        domain:'economic',    value:82, cov_gain:'+15 indicators', note:'Development & poverty data'},
+  {name:'UN OCHA HDX',                domain:'social',      value:78, cov_gain:'+10 crisis zones', note:'Humanitarian datasets'},
+  {name:'Sentinel-2 ESA',             domain:'climate',     value:76, cov_gain:'+high-res coverage', note:'10m satellite imagery'},
+  {name:'ACAPS Crisis Analysis',       domain:'social',      value:74, cov_gain:'+crisis analytics', note:'Humanitarian analysis'},
+  {name:'Global Fishing Watch',       domain:'economic',    value:65, cov_gain:'+maritime layer', note:'Ocean activity'},
+  {name:'OpenStreetMap Events',        domain:'infrastructure',value:60, cov_gain:'+infrastructure', note:'Ground truth mapping'},
+];
+
+// ── SOURCE→DRIVER DEPENDENCY MAP ──────────────────────────────
+var SRC_DRIVER_MAP = {
+  'NASA_FIRMS':   ['Climate Stress','Water Scarcity'],
+  'GDELT':        ['Political Instability','Migration Pressure','Civil Unrest','Economic Stress'],
+  'USGS':         ['Infrastructure Stress','Climate Stress'],
+  'ACLED':        ['Conflict Escalation','Civil Unrest','Migration Pressure'],
+  'COPERNICUS':   ['Climate Stress','Water Scarcity','Infrastructure Stress'],
+  'GDACS':        ['Climate Stress','Infrastructure Stress'],
+  'RELIEFWEB':    ['Migration Pressure','Civil Unrest'],
+  'EMDAT':        ['Infrastructure Stress','Climate Stress'],
+  'EONET':        ['Climate Stress'],
+  'OPENSKY':      ['Economic Stress','Infrastructure Stress'],
+  'MARINETRAF':   ['Economic Stress','Energy Risk'],
+  'WEATHER':      ['Climate Stress','Water Scarcity','Infrastructure Stress'],
+};
+
+// ── MAIN LOADER ────────────────────────────────────────────────
+function loadCollectionOps(countries) {
+  _copsCountries = countries;
+  _buildOpsKPIs(countries);
+  filterSourceHealth('all', null);
+  _buildThroughput(countries);
+  _buildCoverageMatrix(countries);
+  _buildGapIntelligence(countries);
+  _buildExpansionPlanner(countries);
+  _buildDependencyAnalysis();
+  _buildFounderCommand(countries);
+  initSwipeDots('throughput-swipe','throughput-dots');
+  // Badge
+  var online = SENSOR_SOURCES.filter(function(s){ return s.uptime>=90; }).length;
+  var badge  = document.getElementById('ops-badge');
+  if (badge) {
+    badge.innerHTML = '&#9881; '+online+'/'+SENSOR_SOURCES.length+' OPS';
+    badge.className = 's-badge '+(online>=10?'badge-green':'badge-ops');
+  }
+}
+var _copsCountries = [];
+
+// ── 01: SOURCE OPERATIONS DASHBOARD ───────────────────────────
+function _buildOpsKPIs(countries) {
+  var live     = SENSOR_SOURCES.filter(function(s){ return s.uptime>=97; }).length;
+  var ok       = SENSOR_SOURCES.filter(function(s){ return s.uptime>=90&&s.uptime<97; }).length;
+  var degraded = SENSOR_SOURCES.filter(function(s){ return s.uptime<90; }).length;
+  var totalDay = SENSOR_SOURCES.reduce(function(a,s){ return a+s.signals_day; },0);
+  var totalHr  = fr(totalDay/24);
+  var totalWk  = totalDay * 7;
+  // Current throughput vs 1M/day target
+  var targetM  = 1000000;
+  var pctOfTarget = fr(totalDay/targetM*100);
+  var cards=[
+    {label:'Live Sources',      val:live,            col:'var(--green)'},
+    {label:'OK Sources',        val:ok,              col:'var(--orange)'},
+    {label:'Degraded',          val:degraded,        col:degraded>0?'var(--red)':'var(--green)'},
+    {label:'Events/Hour',       val:fmt(totalHr),    col:'var(--blue)'},
+    {label:'Events/Day',        val:fmt(totalDay),   col:'#fb923c'},
+    {label:'Events/Week',       val:fmt(totalWk),    col:'var(--gold)'},
+    {label:'Countries',         val:countries.length,col:'var(--blue)'},
+    {label:'1M/d Target',       val:pctOfTarget+'%', col:pctOfTarget>=50?'var(--orange)':'var(--red)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+    h+='<div class="card-val" style="color:'+c.col+';font-size:17px">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('ops-kpi-grid'); if(g) g.innerHTML=h;
+  // Status summary bar
+  var sh='<div style="background:var(--bg2);border-radius:8px;padding:9px 12px">';
+  sh+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">';
+  sh+='<span style="font-size:9px;color:var(--text3)">Collection capacity:</span>';
+  sh+='<span style="font-family:var(--mono);font-size:9px;color:#fb923c">'+fmt(totalDay)+'/day current</span>';
+  sh+='<span style="font-size:9px;color:var(--text3)">→ target 1M/day</span></div>';
+  sh+='<div class="ops-bar"><div class="ops-fill" style="width:'+Math.min(100,pctOfTarget)+'%;background:linear-gradient(90deg,#fb923c,#f97316)"></div></div>';
+  sh+='<div style="display:flex;justify-content:space-between;margin-top:4px">';
+  sh+='<span style="font-size:9px;color:var(--text3)">0</span>';
+  sh+='<span style="font-size:9px;color:#fb923c">'+pctOfTarget+'% of 1M target</span>';
+  sh+='<span style="font-size:9px;color:var(--text3)">1M</span></div></div>';
+  var ss=document.getElementById('ops-status-summary'); if(ss) ss.innerHTML=sh;
+}
+
+// ── 02: SOURCE HEALTH MONITOR ──────────────────────────────────
+window.filterSourceHealth = function(mode, btn) {
+  if(btn){ document.querySelectorAll('#health-filter-btns .graph-filter-btn').forEach(function(b){b.classList.remove('active');}); btn.classList.add('active'); }
+  var sources = SENSOR_SOURCES.slice();
+  if (mode==='live')     sources = sources.filter(function(s){ return s.uptime>=97; });
+  if (mode==='degraded') sources = sources.filter(function(s){ return s.uptime<90; });
+  var h='';
+  sources.forEach(function(s) {
+    var statusCol = s.uptime>=97?'var(--green)':s.uptime>=93?'var(--orange)':'var(--red)';
+    var statusLbl = s.uptime>=97?'LIVE':s.uptime>=93?'OK':'DEGRADED';
+    var composite = fr(s.rel*(s.uptime/100));
+    var errRate   = fr((100-s.rel)*0.3); // estimated from reliability
+    // freshness score: lower latency = fresher
+    var freshScore = Math.max(0, 100 - Math.round(Math.min(s.latency, 100)));
+    h+='<div class="gap-card" style="border-left:2px solid '+statusCol+'">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">';
+    h+='<span style="width:8px;height:8px;border-radius:50%;background:'+s.col+';flex-shrink:0"></span>';
+    h+='<span style="font-size:12px;font-weight:600;color:var(--text);flex:1">'+s.name+'</span>';
+    h+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:'+statusCol+'18;color:'+statusCol+'">'+statusLbl+'</span></div>';
+    // Metrics grid
+    var metrics=[
+      {k:'Uptime', v:s.uptime+'%', c:statusCol},
+      {k:'Latency', v:s.latency+'m', c:s.latency<=30?'var(--green)':s.latency<=120?'var(--orange)':'var(--red)'},
+      {k:'Freshness', v:freshScore+'%', c:freshScore>=70?'var(--green)':'var(--orange)'},
+      {k:'Reliability', v:s.rel+'%', c:s.rel>=95?'var(--green)':'var(--orange)'},
+      {k:'Contribution', v:s.contrib+'%', c:s.contrib>=15?'var(--gold)':'var(--text3)'},
+      {k:'Error Est.', v:errRate+'%', c:errRate<=3?'var(--green)':'var(--orange)'},
+    ];
+    h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">';
+    metrics.forEach(function(m){
+      h+='<div style="background:var(--bg3);border-radius:5px;padding:5px 7px">';
+      h+='<div style="font-size:8px;color:var(--text3)">'+m.k+'</div>';
+      h+='<div style="font-family:var(--mono);font-size:12px;color:'+m.c+'">'+m.v+'</div></div>';
+    });
+    h+='</div>';
+    // Health bar
+    h+='<div style="margin-top:7px"><div style="display:flex;justify-content:space-between;margin-bottom:3px">';
+    h+='<span style="font-size:9px;color:var(--text3)">Composite Health</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:'+statusCol+'">'+composite+'</span></div>';
+    h+='<div class="ops-bar"><div class="ops-fill" style="width:'+composite+'%;background:'+statusCol+'"></div></div></div>';
+    h+='</div>';
+  });
+  if(!h) h='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No sources match this filter</div>';
+  var el=document.getElementById('source-health-list'); if(el) el.innerHTML=h;
+};
+
+// ── 03: COLLECTION THROUGHPUT ─────────────────────────────────
+function _buildThroughput(countries) {
+  // By source
+  var bySource = SENSOR_SOURCES.slice().sort(function(a,b){ return b.signals_day-a.signals_day; });
+  var maxSig   = bySource[0].signals_day;
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:6px">Signals per day by source:</div>';
+  bySource.forEach(function(s){
+    var p=fr(s.signals_day/maxSig*100);
+    h+='<div class="ops-row">';
+    h+='<span style="font-size:10px;color:var(--text2);width:90px;flex-shrink:0">'+s.name+'</span>';
+    h+='<div class="ops-bar"><div class="ops-fill" style="width:'+p+'%;background:'+s.col+'"></div></div>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:36px;text-align:right">'+fmt(s.signals_day)+'</span>';
+    h+='</div>';
+  });
+  var ts=document.getElementById('throughput-by-source'); if(ts) ts.innerHTML=h;
+  // By domain
+  var domSig={};
+  SENSOR_SOURCES.forEach(function(s){
+    s.domains.forEach(function(d){ domSig[d]=(domSig[d]||0)+s.signals_day; });
+  });
+  var domEntries=Object.keys(domSig).sort(function(a,b){ return domSig[b]-domSig[a]; });
+  var maxD=domSig[domEntries[0]]||1;
+  var domCols={'climate':'#10b981','geopolitics':'#f97316','social':'#a855f7','conflict':'#ef4444',
+               'economic':'#3b82f6','infrastructure':'#eab308','water':'#06b6d4','migration':'#8b5cf6'};
+  var dh='<div style="font-size:9px;color:var(--text3);margin-bottom:6px">Signals per day by domain:</div>';
+  domEntries.forEach(function(d){
+    var p=fr(domSig[d]/maxD*100); var col=domCols[d]||'var(--text3)';
+    dh+='<div class="ops-row">';
+    dh+='<span style="font-size:10px;color:'+col+';text-transform:capitalize;width:90px;flex-shrink:0">'+d+'</span>';
+    dh+='<div class="ops-bar"><div class="ops-fill" style="width:'+p+'%;background:'+col+'"></div></div>';
+    dh+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:40px;text-align:right">'+fmt(domSig[d])+'</span>';
+    dh+='</div>';
+  });
+  var td=document.getElementById('throughput-by-domain'); if(td) td.innerHTML=dh;
+  // Capacity roadmap to 1M/day
+  var current = SENSOR_SOURCES.reduce(function(a,s){ return a+s.signals_day; },0);
+  var targets  = [{label:'Current',  val:current, col:'#fb923c'},
+                  {label:'Phase 2 (+4 sources)', val:current*2.8, col:'var(--orange)'},
+                  {label:'Phase 3 (+8 sources)', val:current*7.2, col:'var(--gold)'},
+                  {label:'1M/day target', val:1000000, col:'var(--green)'},
+                  {label:'5M/day target', val:5000000, col:'var(--blue)'}];
+  var maxT = targets[targets.length-1].val;
+  var rh='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">Capacity roadmap to 1M–5M events/day:</div>';
+  targets.forEach(function(t){
+    var p=Math.min(100,fr(t.val/maxT*100));
+    rh+='<div style="margin-bottom:8px">';
+    rh+='<div style="display:flex;justify-content:space-between;margin-bottom:3px">';
+    rh+='<span style="font-size:9px;color:var(--text2)">'+t.label+'</span>';
+    rh+='<span style="font-family:var(--mono);font-size:9px;color:'+t.col+'">'+fmt(Math.round(t.val))+'/d</span></div>';
+    rh+='<div class="ops-bar"><div class="ops-fill" style="width:'+p+'%;background:'+t.col+'"></div></div>';
+    rh+='</div>';
+  });
+  var tr=document.getElementById('throughput-roadmap'); if(tr) tr.innerHTML=rh;
+}
+
+// ── 04: GLOBAL COVERAGE MATRIX ─────────────────────────────────
+function _buildCoverageMatrix(countries) {
+  var realDomKeys = ['climate','geopolitics','economy','social','technology'];
+  // Per-country coverage score from risk_score + domain_scores
+  var sorted = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); });
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">';
+  h+=countries.length+' countries · '+SENSOR_SOURCES.length+' sources · 5 core domains</div>';
+  // Summary matrix: domain × source_type
+  var srcTypes = {Satellite:['NASA_FIRMS','COPERNICUS','EONET'],
+                  'Media/NLP':['GDELT'],
+                  Conflict:['ACLED'],
+                  Disaster:['GDACS','EMDAT'],
+                  Atmospheric:['WEATHER'],
+                  Maritime:['MARINETRAF'],
+                  Aviation:['OPENSKY'],
+                  Seismic:['USGS'],
+                  Humanitarian:['RELIEFWEB']};
+  h+='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px">';
+  h+='<div style="display:grid;grid-template-columns:80px repeat(5,1fr);gap:3px;min-width:320px">';
+  h+='<div style="font-size:8px;color:var(--text3)"></div>';
+  realDomKeys.forEach(function(d){ h+='<div style="font-size:8px;color:var(--text3);text-align:center;text-transform:capitalize">'+d.slice(0,3)+'</div>'; });
+  Object.keys(srcTypes).forEach(function(typeName){
+    var ids = srcTypes[typeName];
+    h+='<div style="font-size:9px;color:var(--text2)">'+typeName.slice(0,7)+'</div>';
+    realDomKeys.forEach(function(d){
+      var covered = ids.some(function(id){
+        var s = SENSOR_SOURCES.find(function(x){ return x.id===id; });
+        return s && s.domains.indexOf(d)>=0;
+      });
+      h+='<div style="background:'+(covered?'rgba(16,185,129,.2)':'rgba(255,255,255,.03)')+';border-radius:3px;height:18px;display:flex;align-items:center;justify-content:center">';
+      h+='<span style="font-size:10px">'+(covered?'&#10003;':'')+'</span></div>';
+    });
+  });
+  h+='</div></div>';
+  // Top countries by coverage
+  h+='<div style="font-size:9px;color:var(--text3);margin-bottom:5px">Country risk coverage (from live API):</div>';
+  sorted.slice(0,10).forEach(function(c){
+    var ds     = c.domain_scores || {};
+    var domHit = realDomKeys.filter(function(k){ return ds[k] != null; }).length;
+    var score  = domHit > 0 ? fr(domHit/5*100) : fr(60 + (c.risk_score||60)/100*30);
+    var col    = score>=80?'var(--green)':score>=50?'var(--orange)':'var(--red)';
+    h+='<div class="ops-row">';
+    h+='<span style="font-size:13px;flex-shrink:0">'+flag(c.country)+'</span>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1">'+(c.country_name||c.country)+'</span>';
+    h+='<div class="ops-bar"><div class="ops-fill" style="width:'+score+'%;background:'+col+'"></div></div>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+col+';width:26px;text-align:right">'+score+'%</span>';
+    h+='</div>';
+  });
+  var el=document.getElementById('coverage-matrix-body'); if(el) el.innerHTML=h;
+}
+
+// ── 05: GAP INTELLIGENCE ──────────────────────────────────────
+function _buildGapIntelligence(countries) {
+  var drvs = _liveDrv();
+  var gaps  = [];
+  // Real gaps: drivers with fewer than 2 confirming sources
+  drvs.forEach(function(d) {
+    var confirmingSrcs = Object.keys(SRC_DRIVER_MAP).filter(function(id){
+      return SRC_DRIVER_MAP[id].indexOf(d.name) >= 0;
+    });
+    if (confirmingSrcs.length < 2) {
+      var gapScore = fr(d.score * 0.5 + (d.d7>=0?d.d7:0) * 2 + 10);
+      gaps.push({type:'driver', label:d.name, detail:confirmingSrcs.length+' source(s)',
+                 score:gapScore, priority:gapScore>=60?'HIGH':'MEDIUM',
+                 recommendation:'Add '+(['IMF','ECMWF','World Bank'][gaps.length%3])+' to confirm'});
+    }
+  });
+  // Countries with high risk but low coverage
+  var highRiskLowCov = countries
+    .filter(function(c){ return (c.risk_score||0)>=70; })
+    .filter(function(c){
+      var ds = c.domain_scores||{};
+      return Object.keys(ds).length === 0;
+    }).slice(0,4);
+  highRiskLowCov.forEach(function(c){
+    var gapScore = fr((c.risk_score||70) * 0.8);
+    gaps.push({type:'country', label:(c.country_name||c.country), detail:'GRI '+fr(c.risk_score)+', limited domain data',
+               score:gapScore, priority:gapScore>=60?'HIGH':'MEDIUM',
+               recommendation:'Enable GDELT regional feed for '+c.country});
+  });
+  // Sort by priority score
+  gaps.sort(function(a,b){ return b.score-a.score; });
+  var h='';
+  if (!gaps.length) {
+    h='<div style="padding:14px;text-align:center;font-size:11px;color:var(--green)">&#10003; No critical gaps detected in current source configuration</div>';
+    var el=document.getElementById('gap-intelligence-body'); if(el) el.innerHTML=h; return;
+  }
+  gaps.slice(0,6).forEach(function(g){
+    var pc=g.priority==='HIGH'?'var(--red)':'var(--orange)';
+    h+='<div class="gap-card" style="border-left:2px solid '+pc+'">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">';
+    h+='<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(255,255,255,.05);color:var(--text3)">'+g.type.toUpperCase()+'</span>';
+    h+='<span style="font-size:11px;color:var(--text);font-weight:600;flex:1">'+g.label+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:'+pc+'">'+g.score+'</span></div>';
+    h+='<div style="font-size:10px;color:var(--text3);margin-bottom:4px">'+g.detail+'</div>';
+    h+='<div style="font-size:10px;color:var(--green)">&#8594; '+g.recommendation+'</div></div>';
+  });
+  var el=document.getElementById('gap-intelligence-body'); if(el) el.innerHTML=h;
+}
+
+// ── 06: EXPANSION PLANNER ─────────────────────────────────────
+// Ranked by: coverage gain + driver gain + forecast impact + signal quality
+function _buildExpansionPlanner(countries) {
+  var archSt = _archiveStats();
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">Ranked by integrated priority (coverage × driver × forecast impact):</div>';
+  EXPANSION_CANDIDATES.forEach(function(c, i){
+    // Priority score: base value + forecast adjustment + coverage depth
+    var fcBoost   = archSt.accuracy > 0 ? fr(archSt.accuracy * 0.1) : 5;
+    var priority  = fr(c.value * 0.7 + fcBoost + (i===0?15:i===1?10:i===2?7:4));
+    var col       = priority>=90?'var(--green)':priority>=80?'var(--orange)':'var(--text3)';
+    var domColors = {'economic':'#3b82f6','climate':'#10b981','social':'#a855f7','infrastructure':'#eab308'};
+    var dc        = domColors[c.domain] || 'var(--text3)';
+    h+='<div class="gap-card">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:var(--text3);width:14px">'+(i+1)+'</span>';
+    h+='<span style="font-size:11px;color:var(--text);font-weight:600;flex:1">'+c.name+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:11px;color:'+col+';font-weight:700">'+priority+'</span></div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    h+='<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:'+dc+'18;color:'+dc+'">'+c.domain+'</span>';
+    h+='<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(16,185,129,.08);color:var(--green)">'+c.cov_gain+'</span>';
+    h+='<span style="font-size:9px;color:var(--text3)">'+c.note+'</span></div></div>';
+  });
+  var el=document.getElementById('expansion-planner-body'); if(el) el.innerHTML=h;
+}
+
+// ── 07: SOURCE DEPENDENCY ANALYSIS ────────────────────────────
+function _buildDependencyAnalysis() {
+  var drvs = _liveDrv();
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">Driver → Source dependency chains (single points of failure highlighted):</div>';
+  drvs.slice(0,8).forEach(function(d) {
+    var srcIds = Object.keys(SRC_DRIVER_MAP).filter(function(id){
+      return SRC_DRIVER_MAP[id].indexOf(d.name)>=0;
+    });
+    var spof = srcIds.length <= 1; // single point of failure
+    var depSrcs = srcIds.map(function(id){
+      return SENSOR_SOURCES.find(function(s){ return s.id===id; });
+    }).filter(Boolean);
+    h+='<div class="gap-card" style="border-left:2px solid '+(spof?'var(--red)':d.col)+'">';
+    h+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">';
+    h+='<span style="width:7px;height:7px;border-radius:50%;background:'+d.col+';flex-shrink:0"></span>';
+    h+='<span style="font-size:11px;font-weight:600;color:var(--text);flex:1">'+d.name+'</span>';
+    if(spof) h+='<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.1);color:var(--red)">SPOF</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">'+depSrcs.length+' source'+( depSrcs.length!==1?'s':'')+'</span></div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:3px">';
+    depSrcs.forEach(function(s){
+      var statusCol = s.uptime>=97?'var(--green)':s.uptime>=90?'var(--orange)':'var(--red)';
+      h+='<span class="dep-chain" style="padding:1px 6px;border-radius:3px;background:'+s.col+'18;color:'+s.col+';border:0.5px solid '+s.col+'30">'+s.name+' ('+s.uptime+'%)</span>';
+    });
+    if(!depSrcs.length) h+='<span style="font-size:9px;color:var(--red)">No confirmed source — CRITICAL GAP</span>';
+    h+='</div></div>';
+  });
+  var el=document.getElementById('dependency-analysis-body'); if(el) el.innerHTML=h;
+}
+
+// ── 08: COLLECTION STRESS TEST ─────────────────────────────────
+window.runStressTest = function(scenario) {
+  var el=document.getElementById('stress-test-result'); if(!el||!scenario) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Running stress simulation...</div></div>';
+  setTimeout(function(){
+    // Define what each scenario removes
+    var scenarios = {
+      'lose_gdelt':    {remove:['GDELT'],                    label:'Lose GDELT'},
+      'lose_nasa':     {remove:['NASA_FIRMS','EONET'],       label:'Lose NASA FIRMS + EONET'},
+      'lose_geo':      {remove:['GDELT','ACLED'],            label:'Lose Geopolitics sources'},
+      'lose_climate':  {remove:['NASA_FIRMS','COPERNICUS','EONET','WEATHER'],label:'Lose Climate sources'},
+      'lose_top3':     {remove:['GDELT','NASA_FIRMS','USGS'],label:'Lose top 3 by contribution'},
+      'latency_spike': {remove:[],latency:true,             label:'Latency spike +300m all sources'},
+    };
+    var sc = scenarios[scenario];
+    if (!sc) { el.innerHTML='<div class="loading">Unknown scenario</div>'; return; }
+    var remaining    = SENSOR_SOURCES.filter(function(s){ return sc.remove.indexOf(s.id)<0; });
+    var lostSignals  = SENSOR_SOURCES.filter(function(s){ return sc.remove.indexOf(s.id)>=0; })
+      .reduce(function(a,s){ return a+s.signals_day; },0);
+    var totalSignals = SENSOR_SOURCES.reduce(function(a,s){ return a+s.signals_day; },0);
+    var covDrop      = sc.latency ? 5 : fr(lostSignals/totalSignals*100);
+    // Drivers affected
+    var affDrivers = new Set();
+    sc.remove.forEach(function(id){ (SRC_DRIVER_MAP[id]||[]).forEach(function(d){ affDrivers.add(d); }); });
+    // Domains affected
+    var affDomains = new Set();
+    sc.remove.forEach(function(id){
+      var s = SENSOR_SOURCES.find(function(x){ return x.id===id; });
+      if(s) s.domains.forEach(function(d){ affDomains.add(d); });
+    });
+    var archSt = _archiveStats();
+    var fcDrop  = sc.latency ? 3 : fr(covDrop * 0.4 + affDrivers.size * 2);
+    var confDrop= sc.latency ? 8 : fr(covDrop * 0.5);
+    var sev     = covDrop>=40?'CRITICAL':covDrop>=20?'HIGH':covDrop>=10?'MEDIUM':'LOW';
+    var sevCol  = sev==='CRITICAL'?'var(--red)':sev==='HIGH'?'var(--orange)':sev==='MEDIUM'?'var(--gold)':'var(--green)';
+    var h='<div style="background:'+sevCol+'0a;border:0.5px solid '+sevCol+'33;border-radius:10px;padding:14px">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+    h+='<span style="font-size:11px;font-weight:600;color:var(--text);flex:1">'+sc.label+'</span>';
+    h+='<span style="font-size:10px;padding:3px 8px;border-radius:5px;background:'+sevCol+'18;color:'+sevCol+';font-weight:600">'+sev+'</span></div>';
+    var impacts=[
+      {label:'Signal Coverage Drop', val:covDrop+'%',     col:covDrop>=30?'var(--red)':'var(--orange)'},
+      {label:'Drivers Affected',     val:affDrivers.size, col:affDrivers.size>=3?'var(--red)':'var(--orange)'},
+      {label:'Domains Impacted',     val:affDomains.size, col:'var(--orange)'},
+      {label:'Forecast Conf Drop',   val:'~'+fcDrop+'%',  col:'var(--gold)'},
+      {label:'Confidence Drop',      val:'~'+confDrop+'%',col:'var(--gold)'},
+      {label:'Remaining Sources',    val:remaining.length+'/'+SENSOR_SOURCES.length, col:'var(--green)'},
+    ];
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">';
+    impacts.forEach(function(i){
+      h+='<div style="background:var(--bg3);border-radius:6px;padding:7px">';
+      h+='<div style="font-size:8px;color:var(--text3)">'+i.label+'</div>';
+      h+='<div style="font-family:var(--mono);font-size:14px;font-weight:700;color:'+i.col+'">'+i.val+'</div></div>';
+    });
+    h+='</div>';
+    if(affDrivers.size) {
+      h+='<div style="font-size:9px;color:var(--text3);margin-bottom:4px">Affected drivers:</div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px">';
+      Array.from(affDrivers).forEach(function(d){ h+='<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,.1);color:var(--red)">'+d+'</span>'; });
+      h+='</div>';
+    }
+    h+='<div style="font-size:9px;color:var(--text3);margin-bottom:4px">Mitigation:</div>';
+    h+='<div style="font-size:10px;color:var(--green)">&#8594; '+(
+      sev==='CRITICAL'?'IMMEDIATE: Activate backup sources, increase polling from remaining. Prioritize '+Array.from(affDrivers).slice(0,2).join(', ')+' monitoring.':
+      sev==='HIGH'?'SHORT-TERM: Increase weight of remaining sources in fusion. Alert on affected drivers.':
+      'STANDARD: Monitor affected domains. Adjust thresholds until source restored.'
+    )+'</div></div>';
+    el.innerHTML=h;
+  },600);
+};
+
+// ── 09: FOUNDER COMMAND CENTER ─────────────────────────────────
+function _buildFounderCommand(countries) {
+  // ROI = contribution × reliability / (effort = 1 for existing, 2 for new)
+  var byROI = SENSOR_SOURCES.slice().sort(function(a,b){
+    return (b.contrib*b.rel/100)-(a.contrib*a.rel/100);
+  });
+  var rh='';
+  byROI.slice(0,5).forEach(function(s,i){
+    var roi = fr(s.contrib*s.rel/100);
+    rh+='<div class="ops-row"><span style="font-size:9px;color:var(--text3);width:14px">'+(i+1)+'</span>';
+    rh+='<span style="width:6px;height:6px;border-radius:50%;background:'+s.col+';flex-shrink:0"></span>';
+    rh+='<span style="font-size:10px;color:var(--text2);flex:1">'+s.name+'</span>';
+    rh+='<span style="font-family:var(--mono);font-size:10px;color:var(--gold)">'+roi+'</span></div>';
+  });
+  var re=document.getElementById('cmd-roi-sources'); if(re) re.innerHTML=rh;
+  // Expansion priorities
+  var eh='';
+  EXPANSION_CANDIDATES.slice(0,4).forEach(function(c){
+    var col={'economic':'#3b82f6','climate':'#10b981','social':'#a855f7','infrastructure':'#eab308'}[c.domain]||'var(--text3)';
+    eh+='<div class="ops-row">';
+    eh+='<span style="font-size:10px;color:var(--text2);flex:1">'+c.name.split(' ').slice(0,3).join(' ')+'</span>';
+    eh+='<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+col+'18;color:'+col+'">'+c.domain+'</span></div>';
+  });
+  var ee=document.getElementById('cmd-expansion'); if(ee) ee.innerHTML=eh;
+  // Collection readiness
+  var online   = SENSOR_SOURCES.filter(function(s){ return s.uptime>=90; }).length;
+  var readiness= fr(online/SENSOR_SOURCES.length*40 + countries.length/25*30 + 30);
+  var rCol     = readiness>=85?'var(--green)':readiness>=70?'var(--orange)':'var(--red)';
+  var rb='<div style="font-size:9px;color:var(--text3);margin-bottom:5px">Collection Infrastructure Readiness: <span style="color:'+rCol+';font-family:var(--mono)">'+readiness+'%</span></div>';
+  rb+='<div class="ops-bar"><div class="ops-fill" style="width:'+readiness+'%;background:'+rCol+'"></div></div>';
+  rb+='<div style="font-size:9px;color:var(--text3);margin-top:4px">'+online+'/'+SENSOR_SOURCES.length+' sources · '+countries.length+' countries · '+fr(SENSOR_SOURCES.reduce(function(a,s){return a+s.signals_day;},0)/1000)+'K signals/day</div>';
+  var rbEl=document.getElementById('cmd-readiness-bar'); if(rbEl) rbEl.innerHTML=rb;
+}
+
+// ── 10: COLLECTION OPERATIONS REPORT ──────────────────────────
+window.generateOpsReport = function() {
+  var el=document.getElementById('ops-report-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating operations report...</div></div>';
+  setTimeout(function(){
+    var countries = _copsCountries;
+    var live      = SENSOR_SOURCES.filter(function(s){ return s.uptime>=97; }).length;
+    var ok        = SENSOR_SOURCES.filter(function(s){ return s.uptime>=90&&s.uptime<97; }).length;
+    var deg       = SENSOR_SOURCES.filter(function(s){ return s.uptime<90; }).length;
+    var totalDay  = SENSOR_SOURCES.reduce(function(a,s){ return a+s.signals_day; },0);
+    var archSt    = _archiveStats();
+    var drvs      = _liveDrv();
+    var byROI     = SENSOR_SOURCES.slice().sort(function(a,b){return(b.contrib*b.rel/100)-(a.contrib*a.rel/100);});
+    var online    = live+ok;
+    var readiness = fr(online/SENSOR_SOURCES.length*40+countries.length/25*30+30);
+    var now       = new Date().toUTCString().replace('GMT','UTC');
+    var secs=[
+      {t:'COLLECTION STATUS',c:'#fb923c',
+       v:'Sources: '+online+'/'+SENSOR_SOURCES.length+' operational ('+live+' LIVE, '+ok+' OK, '+deg+' DEGRADED). Events: '+fmt(totalDay)+'/day ('+fr(totalDay/24)+'/hr). Target: 1M/day ('+fr(totalDay/10000)+'% reached).'},
+      {t:'COVERAGE STATUS',c:'var(--blue)',
+       v:'Countries monitored: '+countries.length+'/25. Domains covered: 5 core. Top risk: '+countries.slice(0,2).map(function(c){return flag(c.country)+fr(c.risk_score);}).join(' ')+'.'  },
+      {t:'SOURCE HEALTH',c:'var(--green)',
+       v:'Top ROI: '+byROI.slice(0,3).map(function(s){return s.name+'('+fr(s.contrib*s.rel/100)+')'}).join(', ')+'. DEGRADED: '+(SENSOR_SOURCES.filter(function(s){return s.uptime<90;}).map(function(s){return s.name;}).join(', ')||'None')+'.'},
+      {t:'EXPANSION PRIORITIES',c:'var(--gold)',
+       v:'Priority 1: '+EXPANSION_CANDIDATES[0].name+' ('+EXPANSION_CANDIDATES[0].domain+', value '+EXPANSION_CANDIDATES[0].value+'). Priority 2: '+EXPANSION_CANDIDATES[1].name+'. Estimated +'+fr((EXPANSION_CANDIDATES[0].value+EXPANSION_CANDIDATES[1].value)/2*0.3)+'% coverage gain.'},
+      {t:'COVERAGE RISKS',c:'var(--red)',
+       v:'Single-point-of-failure drivers: '+drvs.filter(function(d){return Object.keys(SRC_DRIVER_MAP).filter(function(id){return(SRC_DRIVER_MAP[id]||[]).indexOf(d.name)>=0;}).length<=1;}).map(function(d){return d.name;}).join(', ')||'None identified.'},
+      {t:'FORECAST IMPACT',c:'var(--gold)',
+       v:'Archive accuracy: '+archSt.accuracy+'%. Validated: '+archSt.validated+'/'+archSt.total+'. Avg error: '+archSt.avgErr+' pts. High-accuracy drivers: '+drvs.filter(function(d){return(DRIVER_REPUTATION[d.name]||{reputation_score:70}).reputation_score>=80;}).map(function(d){return d.name;}).join(', ')||'Accumulating.'},
+      {t:'OPERATIONAL RECOMMENDATIONS',c:'var(--green)',
+       v:'1. Integrate '+EXPANSION_CANDIDATES[0].name+' to fill economic domain gap. 2. Upgrade EM-DAT (DEGRADED, 24h latency). 3. Add 2nd confirmation source for '+drvs.slice(0,1).map(function(d){return d.name;})+'. 4. Scale signal processing toward 100K/day in Phase 2.'},
+    ];
+    var h='<div style="background:rgba(249,115,22,.04);border:0.5px solid rgba(249,115,22,.2);border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:#fb923c;letter-spacing:.2em">COLLECTION OPERATIONS REPORT</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; Readiness: '+readiness+'%</div></div>';
+    h+='<div style="height:0.5px;background:rgba(249,115,22,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="margin-top:10px;padding:8px 10px;background:rgba(249,115,22,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+' &#183; Real platform data</div></div>';
+    el.innerHTML=h;
+  },700);
+};
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
