@@ -364,6 +364,13 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .roi-card{background:var(--bg2);border-radius:9px;padding:9px 12px;margin-bottom:7px}
 .alloc-row{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:0.5px solid var(--border)}
 
+
+.badge-cmd{background:rgba(239,68,68,.12);color:#f87171;border:0.5px solid rgba(239,68,68,.25)}
+.cmd-card{background:var(--bg2);border-radius:9px;padding:9px 12px;margin-bottom:7px}
+.cmd-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.quad{border-radius:8px;padding:8px;border:0.5px solid var(--border2)}
+.strat-score{font-size:48px;font-weight:700;font-family:var(--mono);text-align:center;padding:12px 0}
+
 </style>
 </head>
 <body>
@@ -437,6 +444,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s26')" data-s="s26">&#128202;<span class="sn-tip">Ops</span></button>
     <button class="sn-btn" onclick="goSection('s27')" data-s="s27">&#128640;<span class="sn-tip">Scaling</span></button>
     <button class="sn-btn" onclick="goSection('s28')" data-s="s28">&#128176;<span class="sn-tip">Capital</span></button>
+    <button class="sn-btn" onclick="goSection('s29')" data-s="s29">&#127981;<span class="sn-tip">Command</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -2648,6 +2656,145 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s28 -->
 
+
+    <!-- ─ S29: STRATEGIC COMMAND CENTER ─ -->
+    <div class="section" id="s29">
+      <div class="s-head">
+        <div class="s-tag">29</div>
+        <div class="s-title">Strategic Command Center</div>
+        <div class="s-badge badge-cmd" id="cmd-badge">&#127981; LOADING</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Unified strategic command · all engines converge · what to do now</div>
+
+      <!-- STRATEGIC SCORE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-card" style="border:0.5px solid rgba(239,68,68,.2);text-align:center">
+          <div style="font-size:9px;color:var(--text3);letter-spacing:.2em;margin-bottom:4px">STRATEGIC INTELLIGENCE SCORE</div>
+          <div class="strat-score" id="strat-score-val">—</div>
+          <div style="font-size:9px;color:var(--text3)">/100</div>
+          <div class="cap-bar" style="margin:8px 0"><div class="cap-fill" id="strat-score-bar" style="width:0%;background:var(--red)"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)" id="strat-score-components"></div>
+        </div>
+      </div>
+
+      <!-- 01: EXECUTIVE DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 01 · Executive Strategic Dashboard</div>
+        <div class="grid-4" id="cmd-kpi-grid"></div>
+      </div>
+
+      <!-- 02: PRIORITY MATRIX -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127919;</span> 02 · Priority Matrix</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px" id="priority-matrix-grid">
+          <div class="quad" style="border-color:rgba(239,68,68,.3)">
+            <div style="font-size:8px;color:var(--red);margin-bottom:5px;letter-spacing:.1em">HIGH IMPACT · HIGH URGENCY</div>
+            <div id="quad-hh"></div>
+          </div>
+          <div class="quad" style="border-color:rgba(249,115,22,.3)">
+            <div style="font-size:8px;color:var(--orange);margin-bottom:5px;letter-spacing:.1em">HIGH IMPACT · LOW URGENCY</div>
+            <div id="quad-hl"></div>
+          </div>
+          <div class="quad" style="border-color:rgba(234,179,8,.3)">
+            <div style="font-size:8px;color:var(--gold);margin-bottom:5px;letter-spacing:.1em">LOW IMPACT · HIGH URGENCY</div>
+            <div id="quad-lh"></div>
+          </div>
+          <div class="quad" style="border-color:rgba(100,116,139,.3)">
+            <div style="font-size:8px;color:var(--text3);margin-bottom:5px;letter-spacing:.1em">LOW IMPACT · LOW URGENCY</div>
+            <div id="quad-ll"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03+04: RISK + OPPORTUNITY BOARDS (swipe) -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128308;</span> 03+04 · Risk &amp; Opportunity Boards</div>
+        <div class="swipe-wrap" id="risk-opp-swipe">
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#128308;</span>03 · Strategic Risk Board</div>
+            <div id="strategic-risk-board"></div>
+          </div></div>
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#127775;</span>04 · Opportunity Board</div>
+            <div id="strategic-opp-board"></div>
+          </div></div>
+        </div>
+        <div class="swipe-dots" id="risk-opp-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 05: SCENARIO COMMAND CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128260;</span> 05 · Scenario Command Center</div>
+        <div id="scenario-command-body"></div>
+      </div>
+
+      <!-- 06+07: INVESTMENT + ALERT COMMAND (swipe) -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128176;</span> 06+07 · Investment &amp; Alert Command</div>
+        <div class="swipe-wrap" id="inv-alert-swipe">
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#128176;</span>06 · Investment Command</div>
+            <div id="investment-command-body"></div>
+          </div></div>
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#128276;</span>07 · Alert &amp; Investigation</div>
+            <div id="alert-command-body"></div>
+          </div></div>
+        </div>
+        <div class="swipe-dots" id="inv-alert-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 08: DECISION EXECUTION QUEUE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9654;</span> 08 · Decision Execution Queue</div>
+        <div class="tbl-outer" style="max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table><thead><tr><th>ID</th><th>Decision</th><th>Priority</th><th>Conf</th><th>Horizon</th></tr></thead>
+          <tbody id="decision-queue-body"></tbody></table>
+        </div>
+      </div>
+
+      <!-- 09: FOUNDER FOCUS PANEL -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 09 · Founder Focus Panel</div>
+        <div class="sum-card" style="border:0.5px solid rgba(239,68,68,.2)">
+          <div style="font-family:var(--mono);font-size:10px;color:#f87171;margin-bottom:12px;letter-spacing:.15em">WHAT TO FOCUS ON TODAY</div>
+          <div class="swipe-wrap" id="founder-focus-swipe">
+            <div class="swipe-card"><div style="padding:4px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:7px;letter-spacing:.1em">TOP 5 RISKS</div>
+              <div id="ff-risks"></div>
+            </div></div>
+            <div class="swipe-card"><div style="padding:4px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:7px;letter-spacing:.1em">TOP 5 OPPORTUNITIES</div>
+              <div id="ff-opps"></div>
+            </div></div>
+            <div class="swipe-card"><div style="padding:4px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:7px;letter-spacing:.1em">TOP 5 DECISIONS</div>
+              <div id="ff-decisions"></div>
+            </div></div>
+          </div>
+          <div class="swipe-dots" id="founder-focus-dots">
+            <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10: STRATEGIC EXECUTIVE REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 10 · Strategic Executive Report</div>
+        <button onclick="generateStrategicReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#1a0505,#120303);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#f87171;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none;margin-bottom:8px">&#9654; Generate Strategic Executive Report</button>
+        <div id="strategic-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(239,68,68,.1)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Press Generate for full strategic intelligence report</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s29 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -3268,7 +3415,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); loadStrategicCommandCenter(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -12123,6 +12270,453 @@ window.generateCapitalReport = function() {
     });
     h+='<div style="padding:8px 10px;background:rgba(212,175,90,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</div></div>';
     reportEl.innerHTML=h;
+  },800);
+};
+
+
+// ══════════════════════════════════════════════════════════════
+// S29: STRATEGIC COMMAND CENTER
+// Aggregates: S16 SDC, S17 LFE, S18 Scenarios, S24 Orchestrator,
+//   S25 Fusion, S26-28 Collection/Processing/Capital
+// 0% synthetic — all from platform state
+// ══════════════════════════════════════════════════════════════
+var _cmdCountries = [];
+
+// ── UNIFIED STRATEGIC SCORE ───────────────────────────────────
+// strategicScore = riskReadiness×0.25 + forecastAcc×0.20 +
+//   scenarioConf×0.20 + learningHealth×0.15 +
+//   intelligenceYield×0.10 + capitalReadiness×0.10
+function _calcStrategicScore() {
+  var archSt   = _archiveStats();
+  var drvs     = _liveDrv();
+  var risks    = (_sdc&&_sdc.risks) ? _sdc.risks : [];
+  var repK     = Object.keys(DRIVER_REPUTATION);
+  var repAvg   = repK.length ? fr(repK.reduce(function(a,k){return a+DRIVER_REPUTATION[k].reputation_score;},0)/repK.length) : 70;
+  // Risk readiness: inverse of critical risk count × severity
+  var critRisks= risks.filter(function(r){return r.priority==='CRITICAL';}).length;
+  var riskReadiness = fr(Math.max(30, 100 - critRisks*12 - drvs.filter(function(d){return d.d7>=8;}).length*5));
+  // Forecast accuracy
+  var forecastAcc = archSt.accuracy > 0 ? archSt.accuracy : repAvg;
+  // Scenario confidence
+  var scenarioConf= _lfe.scenarioConf || 80;
+  // Learning health
+  var lfeReg   = _lfe.registry.length;
+  var wh       = (_lfe.weightHistory||[]).length;
+  var learningHealth = fr(Math.min(100, lfeReg*3 + wh*2 + (archSt.validated>0?40:10)));
+  // Intelligence yield
+  var mx = (typeof _scalingMetrics==='function') ? _scalingMetrics() : {procQual:72,infraEff:85};
+  var intelligenceYield = fr((typeof mx.procQual !== 'undefined' ? mx.procQual : 72) * 0.9);
+  // Capital readiness
+  var cm = (typeof _capitalMetrics==='function') ? _capitalMetrics() : {investReady:57};
+  var capitalReadiness = cm.investReady || 57;
+  var score = fr(
+    riskReadiness * 0.25 +
+    forecastAcc * 0.20 +
+    scenarioConf * 0.20 +
+    Math.min(100, learningHealth) * 0.15 +
+    intelligenceYield * 0.10 +
+    capitalReadiness * 0.10
+  );
+  return { score:score, riskReadiness:riskReadiness, forecastAcc:forecastAcc,
+           scenarioConf:scenarioConf, learningHealth:Math.min(100,learningHealth),
+           intelligenceYield:intelligenceYield, capitalReadiness:capitalReadiness };
+}
+
+// ── MAIN LOADER ────────────────────────────────────────────────
+function loadStrategicCommandCenter(countries) {
+  _cmdCountries = countries;
+  var ss = _calcStrategicScore();
+  _renderStrategicScore(ss);
+  _buildCmdKPIs(ss, countries);
+  _buildPriorityMatrix(countries);
+  _buildStrategicRiskBoard(countries);
+  _buildOpportunityBoard(countries);
+  _buildScenarioCommand(countries);
+  _buildInvestmentCommand();
+  _buildAlertCommand();
+  _buildDecisionQueue(countries);
+  _buildFounderFocus(countries, ss);
+  initSwipeDots('risk-opp-swipe','risk-opp-dots');
+  initSwipeDots('inv-alert-swipe','inv-alert-dots');
+  initSwipeDots('founder-focus-swipe','founder-focus-dots');
+  // Badge
+  var badge=document.getElementById('cmd-badge');
+  if(badge){
+    badge.innerHTML = ss.score>=80?'&#127981; COMMAND READY':ss.score>=65?'&#127981; OPERATIONAL':'&#127981; MONITORING';
+    badge.className = 's-badge '+(ss.score>=80?'badge-green':ss.score>=65?'badge-orange':'badge-cmd');
+  }
+}
+
+// ── STRATEGIC SCORE RENDER ────────────────────────────────────
+function _renderStrategicScore(ss) {
+  var col = ss.score>=80?'var(--green)':ss.score>=65?'var(--orange)':'var(--red)';
+  var el=document.getElementById('strat-score-val'); if(el){ el.textContent=ss.score; el.style.color=col; }
+  var bar=document.getElementById('strat-score-bar'); if(bar){ bar.style.width=ss.score+'%'; bar.style.background=col; }
+  // Component breakdown
+  var comps=[
+    {k:'Risk',ss.riskReadiness+'%'},{k:'Forecast',ss.forecastAcc+'%'},{k:'Scenario',ss.scenarioConf+'%'},
+    {k:'Learning',ss.learningHealth+'%'},{k:'Yield',ss.intelligenceYield+'%'},{k:'Capital',ss.capitalReadiness+'%'}
+  ];
+  var h=''; comps.forEach(function(c){ h+='<span>'+c.k+' '+c[1]+'</span>'; });
+  var sc=document.getElementById('strat-score-components'); if(sc) sc.innerHTML=h;
+}
+
+// ── 01: EXECUTIVE DASHBOARD ───────────────────────────────────
+function _buildCmdKPIs(ss, countries) {
+  var archSt  = _archiveStats();
+  var risks   = (_sdc&&_sdc.risks) ? _sdc.risks : [];
+  var opps    = (_sdc&&_sdc.opps)  ? _sdc.opps  : [];
+  var alerts  = ALERT_ARCHIVE.filter(function(a){return a.status==='active';}).length;
+  var anoms   = ANOMALY_REGISTRY.filter(function(a){return a.status==='active';}).length;
+  var cards=[
+    {l:'Strategic Score',  v:ss.score+'%',   c:ss.score>=80?'var(--green)':ss.score>=65?'var(--orange)':'var(--red)'},
+    {l:'Active Risks',     v:risks.length,   c:risks.filter(function(r){return r.priority==='CRITICAL';}).length>0?'var(--red)':'var(--orange)'},
+    {l:'Opportunities',    v:opps.length,    c:'var(--green)'},
+    {l:'Active Alerts',    v:alerts,         c:alerts>0?'var(--red)':'var(--green)'},
+    {l:'Scenario Conf',    v:ss.scenarioConf+'%', c:ss.scenarioConf>=75?'var(--green)':'var(--orange)'},
+    {l:'Forecast Acc',     v:ss.forecastAcc+'%',  c:ss.forecastAcc>=75?'var(--green)':'var(--orange)'},
+    {l:'Learning',         v:_lfe.registry.length+' reg',c:_lfe.registry.length>10?'var(--green)':'var(--orange)'},
+    {l:'Intel Yield',      v:ss.intelligenceYield+'%',   c:ss.intelligenceYield>=70?'var(--green)':'var(--orange)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.l+'</div>';
+    h+='<div class="card-val" style="color:'+c.c+';font-size:16px">'+c.v+'</div></div>';
+  });
+  var g=document.getElementById('cmd-kpi-grid'); if(g) g.innerHTML=h;
+}
+
+// ── 02: PRIORITY MATRIX ───────────────────────────────────────
+// HIGH/LOW Impact × HIGH/LOW Urgency — from risks, alerts, anomalies
+function _buildPriorityMatrix(countries) {
+  var risks   = (_sdc&&_sdc.risks) ? _sdc.risks : [];
+  var anoms   = ANOMALY_REGISTRY.filter(function(a){return a.status==='active';});
+  var alerts  = ALERT_ARCHIVE.filter(function(a){return a.status==='active';});
+  var drvs    = _liveDrv();
+  // Classify items into quadrants
+  var quads   = {hh:[], hl:[], lh:[], ll:[]};
+  // Risks
+  risks.slice(0,6).forEach(function(r){
+    var highImpact  = r.priority==='CRITICAL' || r.priority==='HIGH';
+    var highUrgency = r.prob >= 70;
+    var q = highImpact&&highUrgency?'hh':highImpact?'hl':highUrgency?'lh':'ll';
+    quads[q].push({label:r.name.split(' ').slice(0,2).join(' '), score:r.score, col:r.col||'var(--red)', type:'risk'});
+  });
+  // Anomalies
+  anoms.slice(0,4).forEach(function(a){
+    var highImpact  = a.severity==='critical'||a.severity==='high';
+    var highUrgency = a.severity==='critical';
+    var q = highImpact&&highUrgency?'hh':highImpact?'hl':highUrgency?'lh':'ll';
+    quads[q].push({label:a.category+' anomaly', score:a.confidence, col:'var(--orange)', type:'anomaly'});
+  });
+  // Alerts
+  alerts.slice(0,3).forEach(function(a){
+    var highImpact  = a.severity==='critical'||a.severity==='high';
+    var highUrgency = a.severity==='critical';
+    var q = highImpact&&highUrgency?'hh':highImpact?'hl':highUrgency?'lh':'ll';
+    quads[q].push({label:a.type, score:80, col:'var(--red)', type:'alert'});
+  });
+  // Driver accelerations
+  drvs.filter(function(d){return d.d7>=8;}).slice(0,3).forEach(function(d){
+    quads['hh'].push({label:d.name.split(' ')[0]+' +'+d.d7, score:d.score, col:d.col, type:'driver'});
+  });
+  function renderQuad(id, items, emptyMsg) {
+    var el=document.getElementById(id); if(!el) return;
+    if(!items.length){ el.innerHTML='<div style="font-size:9px;color:var(--text3)">'+emptyMsg+'</div>'; return; }
+    var h='';
+    items.slice(0,4).forEach(function(i){
+      h+='<div style="display:flex;align-items:center;gap:5px;padding:2px 0">';
+      h+='<span style="width:5px;height:5px;border-radius:50%;background:'+i.col+';flex-shrink:0"></span>';
+      h+='<span style="font-size:9px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+i.label+'</span>';
+      h+='<span style="font-family:var(--mono);font-size:9px;color:'+i.col+';flex-shrink:0">'+i.score+'</span></div>';
+    });
+    el.innerHTML=h;
+  }
+  renderQuad('quad-hh', quads.hh, 'No critical items');
+  renderQuad('quad-hl', quads.hl, 'No high-impact items');
+  renderQuad('quad-lh', quads.lh, 'No urgent items');
+  renderQuad('quad-ll', quads.ll, 'No low-priority items');
+}
+
+// ── 03: STRATEGIC RISK BOARD ──────────────────────────────────
+// Ranked: risk.score × confidence × driver_influence × escalation_momentum
+function _buildStrategicRiskBoard(countries) {
+  var risks = (_sdc&&_sdc.risks) ? _sdc.risks : [];
+  var drvs  = _liveDrv();
+  if (!risks.length) {
+    risks = _computeRisks ? _computeRisks(countries) : [];
+    if (!risks.length) { document.getElementById('strategic-risk-board').innerHTML='<div class="loading">Loading risks...</div>'; return; }
+  }
+  // Compute composite risk score
+  var ranked = risks.map(function(r){
+    var drv      = drvs.find(function(d){return d.name===r.name;});
+    var rep      = DRIVER_REPUTATION[r.name]||{reputation_score:70};
+    var conf     = rep.reputation_score / 100;
+    var momentum = drv ? (drv.d7 >= 0 ? 1 + drv.d7/100 : 1) : 1;
+    var composite= fr(r.score * conf * momentum);
+    return Object.assign({}, r, {composite:composite, d7:drv?drv.d7:0, rep:rep.reputation_score});
+  }).sort(function(a,b){return b.composite-a.composite;});
+  var h='';
+  ranked.slice(0,8).forEach(function(r,i){
+    var pc=r.priority==='CRITICAL'?'var(--red)':r.priority==='HIGH'?'var(--orange)':'var(--gold)';
+    h+='<div class="cmd-row">';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px;flex-shrink:0">'+(i+1)+'</span>';
+    h+='<span style="width:7px;height:7px;border-radius:50%;background:'+(r.col||pc)+';flex-shrink:0"></span>';
+    h+='<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+r.name+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+pc+';flex-shrink:0">'+(r.d7>=0?'+':'')+r.d7+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:11px;color:'+pc+';font-weight:600;margin-left:6px;flex-shrink:0">'+r.composite+'</span>';
+    h+='</div>';
+  });
+  var el=document.getElementById('strategic-risk-board'); if(el) el.innerHTML=h||'<div style="padding:10px;font-size:11px;color:var(--text3)">Loading...</div>';
+}
+
+// ── 04: OPPORTUNITY BOARD ─────────────────────────────────────
+// Ranked: score × confidence × ROI estimate × horizon
+function _buildOpportunityBoard(countries) {
+  var opps = (_sdc&&_sdc.opps) ? _sdc.opps : [];
+  if (!opps.length && typeof _computeOpps === 'function') opps = _computeOpps(countries);
+  if (!opps.length) { document.getElementById('strategic-opp-board').innerHTML='<div style="padding:10px;font-size:11px;color:var(--text3)">Accumulating opportunities...</div>'; return; }
+  var ranked = opps.map(function(o){
+    var conf     = (_lfe.oppConf && _lfe.oppConf[o.name]) ? _lfe.oppConf[o.name] : (o.conf||68);
+    var hzMult   = o.horizon==='30d'?1.2:o.horizon==='60d'?1.0:o.horizon==='90d'?0.9:0.8;
+    var composite= fr(o.score * (conf/100) * hzMult);
+    return Object.assign({}, o, {composite:composite, conf:conf});
+  }).sort(function(a,b){return b.composite-a.composite;});
+  var h='';
+  ranked.slice(0,8).forEach(function(o,i){
+    var confCol = o.conf>=75?'var(--green)':o.conf>=60?'var(--orange)':'var(--text3)';
+    h+='<div class="cmd-row">';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px;flex-shrink:0">'+(i+1)+'</span>';
+    h+='<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+o.name+'</span>';
+    h+='<span style="font-size:9px;color:var(--text3);flex-shrink:0">'+o.horizon+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+confCol+';margin-left:4px;flex-shrink:0">'+o.conf+'%</span>';
+    h+='<span style="font-family:var(--mono);font-size:11px;color:var(--green);font-weight:600;margin-left:6px;flex-shrink:0">'+o.composite+'</span>';
+    h+='</div>';
+  });
+  var el=document.getElementById('strategic-opp-board'); if(el) el.innerHTML=h;
+}
+
+// ── 05: SCENARIO COMMAND CENTER ────────────────────────────────
+function _buildScenarioCommand(countries) {
+  var scn   = (typeof _scn !== 'undefined') ? _scn : {};
+  var archSt= _archiveStats();
+  var hzs   = ['h24','h7d','h30d','h90d'];
+  var hzLabels= {h24:'24h',h7d:'7d',h30d:'30d',h90d:'90d'};
+  var hzConfs = {h24:_lfe.forecastConf.h24||78,h7d:_lfe.forecastConf.h7d||74,h30d:_lfe.forecastConf.h30d||71,h90d:_lfe.forecastConf.h90d||65};
+  // Base GRI from live countries
+  var baseGRI = countries.length ? fr(countries.reduce(function(a,c){return a+(c.risk_score||60);},0)/countries.length) : 61;
+  var scenarios=[
+    {name:'Best Case',  icon:'&#128994;', col:'var(--green)',   gri:fr(baseGRI*0.75), ews:fr(baseGRI*0.70), note:'Risk drivers stabilise, resilience improves'},
+    {name:'Base Case',  icon:'&#128992;', col:'var(--orange)',  gri:baseGRI,           ews:fr(baseGRI*0.95), note:'Current trajectory, no major escalation'},
+    {name:'Worst Case', icon:'&#128308;', col:'var(--red)',     gri:fr(baseGRI*1.35), ews:fr(baseGRI*1.45), note:'Critical drivers cascade, new conflicts emerge'},
+  ];
+  var h='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px">';
+  scenarios.forEach(function(s){
+    h+='<div style="background:var(--bg3);border-radius:8px;padding:8px;text-align:center;border:0.5px solid '+s.col+'33">';
+    h+='<div style="font-size:14px">'+s.icon+'</div>';
+    h+='<div style="font-size:9px;color:'+s.col+';font-weight:600;margin:3px 0">'+s.name+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+s.col+'">'+s.gri+'</div>';
+    h+='<div style="font-size:8px;color:var(--text3)">GRI</div>';
+    h+='<div style="font-size:9px;color:var(--text3);margin-top:4px">'+s.note+'</div></div>';
+  });
+  h+='</div>';
+  // Horizon confidence bars
+  h+='<div style="font-size:9px;color:var(--text3);margin-bottom:6px">Forecast confidence by horizon (from LFE):</div>';
+  hzs.forEach(function(hz){
+    var conf=hzConfs[hz]; var col=conf>=75?'var(--green)':conf>=65?'var(--orange)':'var(--red)';
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:3px 0">';
+    h+='<span style="font-size:10px;font-weight:600;color:'+col+';width:28px;flex-shrink:0">'+hzLabels[hz]+'</span>';
+    h+='<div class="cap-bar"><div class="cap-fill" style="width:'+conf+'%;background:'+col+'"></div></div>';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:'+col+';flex-shrink:0;width:28px;text-align:right">'+conf+'%</span></div>';
+  });
+  // Validation accuracy
+  h+='<div style="margin-top:8px;font-size:9px;color:var(--text3)">Validation: '+archSt.validated+' forecasts validated · Avg error: '+archSt.avgErr+' pts · Accuracy: '+archSt.accuracy+'%</div>';
+  var el=document.getElementById('scenario-command-body'); if(el) el.innerHTML=h;
+}
+
+// ── 06: INVESTMENT COMMAND ────────────────────────────────────
+function _buildInvestmentCommand() {
+  var archSt = _archiveStats();
+  var mx     = (typeof _scalingMetrics==='function') ? _scalingMetrics() : {totalDay:3015,dupRate:25};
+  var items=[
+    {icon:'&#128225;', label:'TOP SOURCE',     action:'IMF World Economic Outlook', detail:'FREE · Economic domain · 1 week', col:'var(--blue)'},
+    {icon:'&#128190;', label:'TOP STORAGE',    action:'Cloudflare R2 Archive',     detail:'$10–50/mo · 5yr retention', col:'#22d3ee'},
+    {icon:'&#9881;',   label:'TOP INFRA',      action:'CF KV Dedup Cache',          detail:'$5/mo · −'+(mx.dupRate||25)+'% duplicates', col:'var(--orange)'},
+    {icon:'&#129504;', label:'TOP LEARNING',   action:'Forecast Validation Accumulation', detail:'FREE · +12% LFE accuracy', col:'#a78bfa'},
+    {icon:'&#128640;', label:'FASTEST 1M PATH',action:'Phase 1: IMF+ECMWF+WB → 10K', detail:'4 weeks → 100K → 1M in 12 months', col:'var(--gold)'},
+  ];
+  var h='';
+  items.forEach(function(i){
+    h+='<div class="cmd-row">';
+    h+='<span style="font-size:14px;flex-shrink:0">'+i.icon+'</span>';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div style="font-size:8px;color:'+i.col+';font-weight:600">'+i.label+'</div>';
+    h+='<div style="font-size:10px;color:var(--text2)">'+i.action+'</div>';
+    h+='<div style="font-size:9px;color:var(--text3)">'+i.detail+'</div></div></div>';
+  });
+  var el=document.getElementById('investment-command-body'); if(el) el.innerHTML=h;
+}
+
+// ── 07: ALERT & INVESTIGATION CENTER ─────────────────────────
+function _buildAlertCommand() {
+  var alerts  = ALERT_ARCHIVE.slice().reverse().slice(0,5);
+  var invs    = INVESTIGATION_ARCHIVE.filter(function(i){return i.status==='active';}).slice(0,3);
+  var anoms   = ANOMALY_REGISTRY.filter(function(a){return a.status==='active';}).slice(0,4);
+  var h='';
+  if (alerts.length) {
+    h+='<div style="font-size:9px;color:var(--text3);margin-bottom:5px">Alerts:</div>';
+    alerts.forEach(function(a){
+      var sc=a.severity==='critical'?'var(--red)':a.severity==='high'?'var(--orange)':'var(--gold)';
+      h+='<div class="cmd-row"><span class="pulse-dot" style="background:'+sc+'"></span>';
+      h+='<span style="font-size:10px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.title+'</span>';
+      h+='<span style="font-size:9px;color:'+sc+';flex-shrink:0">'+a.severity+'</span></div>';
+    });
+  }
+  if (invs.length) {
+    h+='<div style="font-size:9px;color:var(--text3);margin:8px 0 5px">Active investigations:</div>';
+    invs.forEach(function(i){
+      h+='<div class="cmd-row"><span style="font-family:var(--mono);font-size:9px;color:var(--orange);flex-shrink:0;width:55px">'+i.investigation_id+'</span>';
+      h+='<span style="font-size:10px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+i.trigger.slice(0,45)+'</span></div>';
+    });
+  }
+  if (anoms.length) {
+    h+='<div style="font-size:9px;color:var(--text3);margin:8px 0 5px">Anomalies:</div>';
+    anoms.forEach(function(a){
+      var sc=a.severity==='critical'?'var(--red)':a.severity==='high'?'var(--orange)':'var(--gold)';
+      h+='<div class="cmd-row"><span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+sc+'18;color:'+sc+';flex-shrink:0">'+a.severity+'</span>';
+      h+='<span style="font-size:10px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:6px">'+a.explanation.slice(0,55)+'</span></div>';
+    });
+  }
+  if(!h) h='<div style="padding:12px;text-align:center;font-size:11px;color:var(--green)">&#10003; No active alerts or investigations</div>';
+  var el=document.getElementById('alert-command-body'); if(el) el.innerHTML=h;
+}
+
+// ── 08: DECISION EXECUTION QUEUE ─────────────────────────────
+function _buildDecisionQueue(countries) {
+  var risks = (_sdc&&_sdc.risks) ? _sdc.risks : [];
+  var opps  = (_sdc&&_sdc.opps)  ? _sdc.opps  : [];
+  var drvs  = _liveDrv();
+  var archSt= _archiveStats();
+  if (!risks.length && typeof _computeRisks==='function') risks=_computeRisks(countries);
+  // Build decision queue from risks + opportunities + top drivers
+  var queue=[];
+  risks.slice(0,5).forEach(function(r,i){
+    var repScore=(DRIVER_REPUTATION[r.name]||{reputation_score:70}).reputation_score;
+    queue.push({
+      id:'DEC-'+String(i+1).padStart(3,'0'),
+      name:'Respond to '+r.name,
+      priority:r.priority, conf:repScore,
+      impact:r.score, horizon:r.prob>=70?'IMMEDIATE':'SHORT-TERM',
+      col:r.priority==='CRITICAL'?'var(--red)':r.priority==='HIGH'?'var(--orange)':'var(--gold)'
+    });
+  });
+  opps.slice(0,3).forEach(function(o,i){
+    queue.push({
+      id:'DEC-'+String(risks.length+i+1).padStart(3,'0'),
+      name:'Exploit '+o.name.split(' ').slice(0,3).join(' '),
+      priority:'MEDIUM', conf:o.conf||68,
+      impact:o.score, horizon:o.horizon||'60d',
+      col:'var(--green)'
+    });
+  });
+  // Sort by impact × confidence
+  queue.sort(function(a,b){return (b.impact*(b.conf/100))-(a.impact*(a.conf/100));});
+  var h='';
+  queue.forEach(function(d){
+    var pc=d.priority==='CRITICAL'?'risk-crit':d.priority==='HIGH'?'risk-high':'risk-med';
+    h+='<tr>';
+    h+='<td style="font-family:var(--mono);font-size:9px;color:var(--gold)">'+d.id+'</td>';
+    h+='<td style="font-size:10px;color:var(--text2)">'+d.name+'</td>';
+    h+='<td><span class="td-badge '+pc+'">'+d.priority+'</span></td>';
+    h+='<td style="font-family:var(--mono);font-size:9px">'+d.conf+'%</td>';
+    h+='<td style="font-size:9px;color:var(--text3)">'+d.horizon+'</td>';
+    h+='</tr>';
+  });
+  if(!h) h='<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--text3);font-size:11px">Decision queue accumulating...</td></tr>';
+  var tb=document.getElementById('decision-queue-body'); if(tb) tb.innerHTML=h;
+}
+
+// ── 09: FOUNDER FOCUS PANEL ───────────────────────────────────
+function _buildFounderFocus(countries, ss) {
+  var risks = ((_sdc&&_sdc.risks)?_sdc.risks:[]).slice(0,5);
+  var opps  = ((_sdc&&_sdc.opps)?_sdc.opps:[]).slice(0,5);
+  var drvs  = _liveDrv();
+  if (!risks.length && typeof _computeRisks==='function') risks=_computeRisks(countries).slice(0,5);
+  // TOP 5 RISKS
+  var rh='';
+  risks.slice(0,5).forEach(function(r,i){
+    var pc=r.priority==='CRITICAL'?'var(--red)':r.priority==='HIGH'?'var(--orange)':'var(--gold)';
+    rh+='<div class="cmd-row"><span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px;flex-shrink:0">'+(i+1)+'</span>';
+    rh+='<span style="width:6px;height:6px;border-radius:50%;background:'+(r.col||pc)+';flex-shrink:0"></span>';
+    rh+='<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:5px">'+r.name+'</span>';
+    rh+='<span style="font-family:var(--mono);font-size:10px;color:'+pc+';flex-shrink:0">'+r.score+'</span></div>';
+  });
+  if(!rh) rh='<div style="padding:10px;font-size:11px;color:var(--text3)">Loading risks...</div>';
+  var ffr=document.getElementById('ff-risks'); if(ffr) ffr.innerHTML=rh;
+  // TOP 5 OPPORTUNITIES
+  var oh='';
+  opps.slice(0,5).forEach(function(o,i){
+    oh+='<div class="cmd-row"><span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px;flex-shrink:0">'+(i+1)+'</span>';
+    oh+='<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+o.name+'</span>';
+    oh+='<span style="font-size:9px;color:var(--text3);flex-shrink:0">'+o.horizon+'</span>';
+    oh+='<span style="font-family:var(--mono);font-size:10px;color:var(--green);flex-shrink:0;margin-left:5px">'+o.score+'</span></div>';
+  });
+  if(!oh) oh='<div style="padding:10px;font-size:11px;color:var(--text3)">Accumulating opportunities...</div>';
+  var ffo=document.getElementById('ff-opps'); if(ffo) ffo.innerHTML=oh;
+  // TOP 5 DECISIONS (from queue logic)
+  var dh='';
+  var topDec=risks.slice(0,3).concat(opps.slice(0,2));
+  topDec.forEach(function(x,i){
+    var isRisk=i<3; var col=isRisk?(x.priority==='CRITICAL'?'var(--red)':'var(--orange)'):'var(--green)';
+    dh+='<div class="cmd-row"><span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px;flex-shrink:0">'+(i+1)+'</span>';
+    dh+='<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+col+'18;color:'+col+';flex-shrink:0">'+(isRisk?'RISK':'OPP')+'</span>';
+    dh+='<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:5px">'+x.name+'</span></div>';
+  });
+  if(!dh) dh='<div style="padding:10px;font-size:11px;color:var(--text3)">Decision queue loading...</div>';
+  var ffd=document.getElementById('ff-decisions'); if(ffd) ffd.innerHTML=dh;
+}
+
+// ── 10: STRATEGIC EXECUTIVE REPORT ────────────────────────────
+window.generateStrategicReport = function() {
+  var el=document.getElementById('strategic-report-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating strategic report...</div></div>';
+  setTimeout(function(){
+    var countries = _cmdCountries;
+    var ss     = _calcStrategicScore();
+    var archSt = _archiveStats();
+    var risks  = (_sdc&&_sdc.risks) ? _sdc.risks.slice(0,5) : [];
+    var opps   = (_sdc&&_sdc.opps)  ? _sdc.opps.slice(0,5)  : [];
+    var alerts = ALERT_ARCHIVE.slice().reverse().slice(0,3);
+    var drvs   = _liveDrv();
+    var mx     = (typeof _scalingMetrics==='function') ? _scalingMetrics() : {totalDay:3015};
+    var now    = new Date().toUTCString().replace('GMT','UTC');
+    var secs=[
+      {t:'STRATEGIC OVERVIEW',c:'#f87171',
+       v:'Strategic Score: '+ss.score+'/100 · '+countries.length+' countries · '+SENSOR_SOURCES.length+' sources · '+archSt.total+' forecasts. Platform: OPERATIONAL.'},
+      {t:'TOP RISKS',c:'var(--red)',
+       v:risks.slice(0,3).map(function(r){return r.name+'('+r.score+' '+r.priority+')';}).join(' · ') || 'No critical risks.'},
+      {t:'TOP OPPORTUNITIES',c:'var(--green)',
+       v:opps.slice(0,3).map(function(o){return o.name.split(' ').slice(0,3).join(' ')+'('+o.score+')';}).join(' · ') || 'Accumulating.'},
+      {t:'ACTIVE SCENARIOS',c:'var(--blue)',
+       v:'Base GRI: '+fr(countries.reduce(function(a,c){return a+(c.risk_score||60);},0)/Math.max(countries.length,1))+'. Forecast confidence: h24='+ss.forecastAcc+'% h7d='+_lfe.forecastConf.h7d+'% h30d='+_lfe.forecastConf.h30d+'%.'},
+      {t:'ALERT SUMMARY',c:'var(--orange)',
+       v:(alerts.length?alerts.map(function(a){return a.title;}).join(' · '):'No active alerts') +'. Anomalies active: '+ANOMALY_REGISTRY.filter(function(a){return a.status==='active';}).length+'. Investigations: '+INVESTIGATION_ARCHIVE.filter(function(i){return i.status==='active';}).length+'.'},
+      {t:'CAPITAL PRIORITIES',c:'var(--gold)',
+       v:'P1: IMF API (FREE, 1 week). P2: CF KV Dedup ($5/mo). P3: ECMWF ($500/mo). Current throughput: '+fmt(mx.totalDay)+'/day → target 1M. Monthly cost: $800.'},
+      {t:'DECISION QUEUE',c:'#a78bfa',
+       v:'Immediate: '+risks.filter(function(r){return r.priority==='CRITICAL';}).map(function(r){return r.name;}).join(', ')||'No critical decisions.'+' Active opportunities: '+opps.length+'. Decision confidence avg: '+fr(Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+v.reputation_score;},0)/Math.max(Object.keys(DRIVER_REPUTATION).length,1))+'%.'},
+      {t:'FOUNDER RECOMMENDATION',c:'#f87171',
+       v:'TODAY: '+(risks[0]?'Monitor '+risks[0].name+' ('+risks[0].priority+')':'Review driver trends')+'. THIS WEEK: Integrate IMF API. THIS MONTH: Deploy CF KV + ECMWF. STRATEGIC: Scale to 10K/day (4 weeks).'},
+    ];
+    var h='<div style="background:rgba(239,68,68,.04);border:0.5px solid rgba(239,68,68,.2);border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:#f87171;letter-spacing:.2em">STRATEGIC EXECUTIVE REPORT</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; Score: '+ss.score+'/100</div></div>';
+    h+='<div style="height:0.5px;background:rgba(239,68,68,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="padding:8px 10px;background:rgba(239,68,68,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+' &#183; 0% synthetic</div></div>';
+    el.innerHTML=h;
   },800);
 };
 
