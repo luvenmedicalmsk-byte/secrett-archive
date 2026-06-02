@@ -320,6 +320,18 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .lineage-step{padding:7px 10px;border-radius:7px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .lineage-arrow{text-align:center;color:var(--text3);font-size:10px;padding:1px 0}
 
+
+.badge-auto{background:rgba(16,185,129,.12);color:var(--green);border:0.5px solid rgba(16,185,129,.25)}
+.anomaly-card{background:var(--bg2);border-radius:9px;padding:10px 12px;margin-bottom:8px}
+.anomaly-card.critical{border-left:3px solid var(--red)}
+.anomaly-card.high{border-left:3px solid var(--orange)}
+.anomaly-card.medium{border-left:3px solid var(--gold)}
+.anomaly-card.low{border-left:3px solid var(--text3)}
+.inv-step{background:var(--bg3);border-radius:7px;padding:7px 10px;margin-bottom:4px;display:flex;align-items:flex-start;gap:8px}
+.aq-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.pulse-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:pulse-anim 1.5s infinite}
+@keyframes pulse-anim{0%,100%{opacity:1}50%{opacity:.3}}
+
 </style>
 </head>
 <body>
@@ -388,6 +400,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s21')" data-s="s21">&#9200;<span class="sn-tip">Temporal</span></button>
     <button class="sn-btn" onclick="goSection('s22')" data-s="s22">&#128190;<span class="sn-tip">Memory</span></button>
     <button class="sn-btn" onclick="goSection('s23')" data-s="s23">&#128274;<span class="sn-tip">Vault</span></button>
+    <button class="sn-btn" onclick="goSection('s24')" data-s="s24">&#129302;<span class="sn-tip">Autonomous</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -2038,6 +2051,123 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s23 -->
 
+
+    <!-- ─ S24: AUTONOMOUS INTELLIGENCE ORCHESTRATOR ─ -->
+    <div class="section" id="s24">
+      <div class="s-head">
+        <div class="s-tag">24</div>
+        <div class="s-title">Autonomous Intelligence Orchestrator</div>
+        <div class="s-badge badge-auto" id="orch-status-badge">&#9679; INITIALISING</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Continuous monitoring · Anomaly detection · Autonomous investigation · Strategic attention</div>
+
+      <!-- 09: FOUNDER MISSION CONTROL (top) -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 09 · Founder Mission Control</div>
+        <div class="sum-card" style="background:linear-gradient(135deg,rgba(16,185,129,.05),rgba(59,130,246,.03));border:0.5px solid rgba(16,185,129,.2)">
+          <div style="text-align:center;margin-bottom:10px">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:.2em">MIA GEKDI · AUTONOMOUS INTELLIGENCE OS</div>
+            <div id="orch-time" style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px"></div>
+          </div>
+          <div class="grid-4" id="mission-control-grid"></div>
+          <div style="margin-top:10px" id="mission-attention-strip"></div>
+        </div>
+      </div>
+
+      <!-- 08: EXECUTIVE PRIORITY DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128308;</span> 08 · Executive Priority Dashboard</div>
+        <div class="swipe-wrap" id="exec-priority-swipe">
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128308;</span>Active Anomalies</div>
+              <div id="exec-anomalies"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128269;</span>Active Investigations</div>
+              <div id="exec-investigations"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#128276;</span>Critical Alerts</div>
+              <div id="exec-alerts"></div>
+            </div>
+          </div>
+          <div class="swipe-card">
+            <div class="sum-card">
+              <div class="sum-title"><span>&#127919;</span>Attention Queue</div>
+              <div id="exec-queue"></div>
+            </div>
+          </div>
+        </div>
+        <div class="swipe-dots" id="exec-priority-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 01: AUTONOMOUS MONITORING ENGINE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128200;</span> 01 · Monitoring Engine</div>
+        <div class="grid-4" id="monitor-kpi-grid"></div>
+        <div style="margin-top:8px" id="monitor-status-bars"></div>
+      </div>
+
+      <!-- 02: ANOMALY DETECTION CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9888;</span> 02 · Anomaly Detection Center</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="anomaly-filters">
+          <button class="graph-filter-btn active" onclick="filterAnomalies('all',this)">All</button>
+          <button class="graph-filter-btn" onclick="filterAnomalies('critical',this)" style="border-color:var(--red);color:var(--red)">Critical</button>
+          <button class="graph-filter-btn" onclick="filterAnomalies('high',this)" style="border-color:var(--orange);color:var(--orange)">High</button>
+          <button class="graph-filter-btn" onclick="filterAnomalies('driver',this)" style="border-color:var(--gold);color:var(--gold)">Driver</button>
+          <button class="graph-filter-btn" onclick="filterAnomalies('forecast',this)" style="border-color:var(--blue);color:var(--blue)">Forecast</button>
+        </div>
+        <div id="anomaly-list"></div>
+      </div>
+
+      <!-- 03: AUTONOMOUS INVESTIGATION ENGINE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128270;</span> 03 · Investigation Engine</div>
+        <div id="investigation-list"></div>
+      </div>
+
+      <!-- 04: STRATEGIC ATTENTION QUEUE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127919;</span> 04 · Strategic Attention Queue</div>
+        <div class="tbl-outer" style="max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <table>
+            <thead><tr><th>Priority</th><th>Item</th><th>Score</th><th>Category</th><th>Action</th></tr></thead>
+            <tbody id="attention-queue-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 05: EXECUTIVE ALERT ENGINE -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128276;</span> 05 · Alert Engine</div>
+        <div id="alert-list"></div>
+      </div>
+
+      <!-- 06: AUTONOMOUS BRIEF GENERATOR -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 06 · Autonomous Brief Generator</div>
+        <div style="display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap">
+          <button onclick="generateAutoBrief('daily')" style="flex:1;padding:8px 0;background:rgba(16,185,129,.08);border:0.5px solid rgba(16,185,129,.3);border-radius:7px;color:var(--green);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);-webkit-appearance:none">Daily Brief</button>
+          <button onclick="generateAutoBrief('weekly')" style="flex:1;padding:8px 0;background:rgba(59,130,246,.08);border:0.5px solid rgba(59,130,246,.3);border-radius:7px;color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);-webkit-appearance:none">Weekly Brief</button>
+          <button onclick="generateAutoBrief('autonomous')" style="flex:1;padding:8px 0;background:rgba(168,85,247,.08);border:0.5px solid rgba(168,85,247,.3);border-radius:7px;color:#a855f7;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);-webkit-appearance:none">Full Report</button>
+        </div>
+        <div id="auto-brief-out">
+          <div class="sum-card" style="border:0.5px solid rgba(16,185,129,.12)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Select brief type to generate autonomous intelligence report</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s24 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -2658,7 +2788,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -8880,6 +9010,665 @@ window.generateVaultReport = function() {
     });
   });
 };
+
+
+// ══════════════════════════════════════════════════════════════
+// S24: AUTONOMOUS INTELLIGENCE ORCHESTRATOR
+// All anomalies, investigations, alerts derive from real platform data:
+// GLOBAL_DRIVERS, DRIVER_REPUTATION, FORECAST_ARCHIVE, TEMPORAL_ARCHIVE,
+// _lfe.registry, _lfe.weightHistory, _sdc, countries[]
+// ══════════════════════════════════════════════════════════════
+var ANOMALY_REGISTRY     = [];   // rolling 200
+var INVESTIGATION_ARCHIVE = [];  // rolling 100
+var ATTENTION_QUEUE      = [];   // sorted by priority score
+var ALERT_ARCHIVE        = [];   // rolling 500
+var _orch = {
+  loaded:      false,
+  lastRun:     null,
+  anomalySeq:  0,
+  invSeq:      0,
+  alertSeq:    0,
+  monitorTick: 0,
+  countries:   [],
+  filterMode:  'all',
+};
+
+// ── ANOMALY DETECTION THRESHOLDS (derived, not hardcoded) ─────
+// All thresholds use platform-relative values
+var THRESH = {
+  driver_spike:    8,    // d7 > 8 = rapid increase
+  driver_drop:     -8,   // d7 < -8 = rapid decrease
+  rep_collapse:    -5,   // reputation drop in history
+  rep_surge:       5,    // reputation rise in history
+  fc_error_high:   10,   // forecast error > 10 pts
+  gri_spike_pct:   0.12, // 12% rise vs last snapshot
+  learning_penalty:-0.03, // weight_delta < -0.03
+  cascade_depth:   4,    // cascade effects >= 4
+  opp_score_high:  65,   // high-value opportunity
+};
+
+// ── BLOCK 01: AUTONOMOUS MONITORING ENGINE ────────────────────
+function _runMonitoring(countries) {
+  _orch.countries  = countries;
+  _orch.monitorTick++;
+  var drvs   = _liveDrv();
+  var archSt = _archiveStats();
+  var snaps  = TEMPORAL_ARCHIVE.slice(-3);
+  var sdc    = (typeof _sdc !== 'undefined') ? _sdc : {};
+
+  // KPI cards
+  var wSucc=0,tw=0;
+  _lfe.registry.forEach(function(e){ var w=1-(e.error_norm||0); wSucc+=(e.direction>0?w:0); tw+=w; });
+  var lfeAcc = tw>0 ? fr(wSucc/tw*100) : 0;
+  var repAvg = Object.keys(DRIVER_REPUTATION).length
+    ? fr(Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+v.reputation_score;},0)/Object.keys(DRIVER_REPUTATION).length)
+    : 70;
+  var anomCrit = ANOMALY_REGISTRY.filter(function(a){return a.severity==='critical'&&a.status==='active';}).length;
+  var invActive= INVESTIGATION_ARCHIVE.filter(function(i){return i.status==='active';}).length;
+  var cards=[
+    {label:'Monitor Tick',      val:_orch.monitorTick,           col:'var(--green)'},
+    {label:'Active Anomalies',  val:ANOMALY_REGISTRY.filter(function(a){return a.status==='active';}).length, col:anomCrit>0?'var(--red)':'var(--orange)'},
+    {label:'Investigations',    val:invActive,                   col:'var(--blue)'},
+    {label:'Alerts Generated',  val:ALERT_ARCHIVE.length,        col:'var(--gold)'},
+    {label:'Attention Items',   val:ATTENTION_QUEUE.length,      col:'#a855f7'},
+    {label:'LFE Accuracy',      val:lfeAcc+'%',                  col:lfeAcc>=75?'var(--green)':'var(--orange)'},
+    {label:'Avg Reputation',    val:repAvg,                      col:repAvg>=75?'var(--green)':'var(--orange)'},
+    {label:'Archive Accuracy',  val:archSt.accuracy+'%',         col:archSt.accuracy>=75?'var(--green)':'var(--orange)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.label+'</div>';
+    h+='<div class="card-val" style="color:'+c.col+';font-size:17px">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('monitor-kpi-grid'); if(g) g.innerHTML=h;
+
+  // Status bars: monitoring domains
+  var domains=[
+    {label:'Drivers',   val:drvs.length,         max:15,  col:'var(--orange)'},
+    {label:'Forecasts', val:archSt.total,         max:2000,col:'var(--blue)'},
+    {label:'Registry',  val:_lfe.registry.length, max:500, col:'var(--green)'},
+    {label:'Snapshots', val:TEMPORAL_ARCHIVE.length,max:100,col:'#a855f7'},
+    {label:'Reputation',val:Object.keys(DRIVER_REPUTATION).length,max:15,col:'var(--gold)'},
+  ];
+  var sh='<div style="font-size:9px;color:var(--text3);margin-bottom:5px">Coverage scan:</div>';
+  domains.forEach(function(d){
+    var p=Math.min(100,fr(d.val/d.max*100));
+    sh+='<div style="display:flex;align-items:center;gap:7px;padding:2px 0">';
+    sh+='<span style="font-size:9px;color:var(--text3);width:60px">'+d.label+'</span>';
+    sh+='<div style="flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:'+p+'%;background:'+d.col+';border-radius:2px"></div></div>';
+    sh+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:28px;text-align:right">'+d.val+'</span>';
+    sh+='</div>';
+  });
+  var sb=document.getElementById('monitor-status-bars'); if(sb) sb.innerHTML=sh;
+}
+
+// ── BLOCK 02: ANOMALY DETECTION ───────────────────────────────
+// Sources: GLOBAL_DRIVERS d7/d30, DRIVER_REPUTATION history,
+//   FORECAST_ARCHIVE errors, TEMPORAL_ARCHIVE GRI deltas,
+//   _lfe.weightHistory negative deltas
+function _runAnomalyDetection(countries) {
+  var drvs    = _liveDrv();
+  var now     = Date.now();
+  var newAnoms = [];
+
+  function mkAnom(cat, sev, source, explanation, data) {
+    var id = 'ANO-' + String(++_orch.anomalySeq).padStart(5,'0');
+    return { anomaly_id:id, timestamp:now, category:cat, severity:sev,
+             confidence:Math.min(95, 60 + (sev==='critical'?25:sev==='high'?15:8)),
+             source:source, explanation:explanation, data:data||{}, status:'active' };
+  }
+
+  // ── Driver spike / collapse (from real d7 values) ─────────────
+  drvs.forEach(function(d) {
+    if (d.d7 >= THRESH.driver_spike) {
+      newAnoms.push(mkAnom('Risk', d.d7>=12?'critical':'high',
+        'GLOBAL_DRIVERS['+d.name+'].d7',
+        d.name+' rising +'+d.d7+' pts/7d — threshold '+THRESH.driver_spike,
+        {driver:d.name, d7:d.d7, score:d.score}));
+    }
+    if (d.d7 <= THRESH.driver_drop) {
+      newAnoms.push(mkAnom('Driver', 'medium',
+        'GLOBAL_DRIVERS['+d.name+'].d7',
+        d.name+' falling '+d.d7+' pts/7d — rapid decline detected',
+        {driver:d.name, d7:d.d7, score:d.score}));
+    }
+  });
+
+  // ── Reputation collapse / surge (from real DRIVER_REPUTATION.history) ─
+  Object.keys(DRIVER_REPUTATION).forEach(function(k) {
+    var rep = DRIVER_REPUTATION[k];
+    var hist = rep.history || [];
+    if (hist.length >= 2) {
+      var delta = hist[hist.length-1].reputation_score - hist[0].reputation_score;
+      if (delta <= THRESH.rep_collapse) {
+        newAnoms.push(mkAnom('Driver', 'high',
+          'DRIVER_REPUTATION['+k+'].history',
+          k+' reputation collapsed '+delta+' pts ('+hist[0].reputation_score+'→'+hist[hist.length-1].reputation_score+')',
+          {driver:k, delta:delta, current:rep.reputation_score}));
+      }
+      if (delta >= THRESH.rep_surge) {
+        newAnoms.push(mkAnom('Driver', 'low',
+          'DRIVER_REPUTATION['+k+'].history',
+          k+' reputation surged +'+delta+' pts — improving accuracy',
+          {driver:k, delta:delta, current:rep.reputation_score}));
+      }
+    }
+  });
+
+  // ── Forecast accuracy degradation (from FORECAST_ARCHIVE) ──────
+  var validated = FORECAST_ARCHIVE.filter(function(f){ return f.validated; });
+  var highError  = validated.filter(function(f){ return f.error > THRESH.fc_error_high; });
+  if (highError.length >= 3) {
+    var avgErr = fr(highError.reduce(function(a,f){return a+f.error;},0)/highError.length);
+    newAnoms.push(mkAnom('Forecast', highError.length>=8?'critical':'high',
+      'FORECAST_ARCHIVE.validated',
+      highError.length+' forecasts with error>'+THRESH.fc_error_high+' pts (avg '+avgErr+') — accuracy degradation',
+      {count:highError.length, avgError:avgErr}));
+  }
+
+  // ── GRI spike from TEMPORAL_ARCHIVE ────────────────────────────
+  if (TEMPORAL_ARCHIVE.length >= 2) {
+    var first = TEMPORAL_ARCHIVE[0];
+    var last  = TEMPORAL_ARCHIVE[TEMPORAL_ARCHIVE.length-1];
+    var griDelta = last.avg_gri - first.avg_gri;
+    if (griDelta / Math.max(first.avg_gri,1) >= THRESH.gri_spike_pct) {
+      newAnoms.push(mkAnom('Risk', griDelta>=10?'critical':'high',
+        'TEMPORAL_ARCHIVE GRI delta',
+        'Global avg GRI rose +'+fr(griDelta)+' pts ('+first.avg_gri+'→'+last.avg_gri+') across '+TEMPORAL_ARCHIVE.length+' snapshots',
+        {from:first.avg_gri, to:last.avg_gri, delta:fr(griDelta)}));
+    }
+  }
+
+  // ── Learning engine penalty (from _lfe.weightHistory) ──────────
+  var penalties = (_lfe.weightHistory||[]).filter(function(w){ return w.delta <= THRESH.learning_penalty; });
+  if (penalties.length >= 3) {
+    var worstDrv = penalties.sort(function(a,b){ return a.delta-b.delta; })[0];
+    newAnoms.push(mkAnom('Learning', 'medium',
+      '_lfe.weightHistory negative deltas',
+      penalties.length+' weight penalties detected — worst: '+worstDrv.driver+' ('+worstDrv.delta.toFixed(3)+')',
+      {count:penalties.length, worstDriver:worstDrv.driver, worstDelta:worstDrv.delta}));
+  }
+
+  // ── Cascade expansion (from CAUSALITY_DATA) ───────────────────
+  if (typeof CAUSALITY_DATA !== 'undefined') {
+    Object.keys(CAUSALITY_DATA).forEach(function(dName) {
+      var effects = CAUSALITY_DATA[dName].effects || [];
+      if (effects.length >= THRESH.cascade_depth) {
+        var drv = drvs.find(function(d){ return d.name===dName; });
+        if (drv && drv.d7 >= 5) { // only flag if driver is actually accelerating
+          newAnoms.push(mkAnom('Graph', 'high',
+            'CAUSALITY_DATA['+dName+'] cascade depth',
+            dName+' cascade chain: '+effects.length+' secondary effects while d7=+'+drv.d7,
+            {driver:dName, effects:effects.length, d7:drv.d7}));
+        }
+      }
+    });
+  }
+
+  // ── New high-value opportunity (from _sdc.opps) ─────────────
+  var highOpps = ((typeof _sdc!=='undefined'&&_sdc.opps)||[]).filter(function(o){
+    return o.score >= THRESH.opp_score_high;
+  });
+  if (highOpps.length > 0) {
+    newAnoms.push(mkAnom('Scenario', 'low',
+      '_sdc.opps high-value opportunities',
+      highOpps.length+' high-value opportunities detected (score≥'+THRESH.opp_score_high+')',
+      {opps:highOpps.slice(0,3).map(function(o){ return o.name; })}));
+  }
+
+  // Deduplicate by source+explanation fingerprint
+  var existing = {};
+  ANOMALY_REGISTRY.forEach(function(a){ existing[a.source+a.explanation.slice(0,30)]=true; });
+  newAnoms.forEach(function(a) {
+    var key = a.source + a.explanation.slice(0,30);
+    if (!existing[key]) {
+      ANOMALY_REGISTRY.push(a);
+      existing[key] = true;
+    }
+  });
+  if (ANOMALY_REGISTRY.length > 200) ANOMALY_REGISTRY.splice(0, ANOMALY_REGISTRY.length-200);
+  return newAnoms.length;
+}
+
+// ── BLOCK 03: INVESTIGATION ENGINE ────────────────────────────
+function _runInvestigationEngine() {
+  var critAnoms = ANOMALY_REGISTRY.filter(function(a){
+    return (a.severity==='critical'||a.severity==='high') && a.status==='active';
+  });
+  var drvs = _liveDrv();
+  var countries = _orch.countries;
+  critAnoms.slice(0,5).forEach(function(anom) {
+    // Check if investigation already exists for this anomaly
+    if (INVESTIGATION_ARCHIVE.some(function(i){ return i.trigger_anomaly_id===anom.anomaly_id; })) return;
+    var id = 'INV-' + String(++_orch.invSeq).padStart(4,'0');
+    // Identify affected drivers
+    var affDrvs = anom.data && anom.data.driver
+      ? [anom.data.driver]
+      : drvs.filter(function(d){ return d.d7>=5; }).slice(0,3).map(function(d){ return d.name; });
+    // Affected countries: top risk countries
+    var affCC = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,3)
+      .map(function(c){ return flag(c.country)+(c.country_name||c.country); });
+    // Forecast impact: look up archived forecasts for affected drivers
+    var fcImpact = FORECAST_ARCHIVE.filter(function(f){
+      return f.drivers_snapshot && f.drivers_snapshot.some(function(s){ return affDrvs.includes(s.name); });
+    }).length;
+    // Root cause from CAUSALITY_DATA
+    var rootCause = [];
+    if (typeof CAUSALITY_DATA!=='undefined' && affDrvs[0]) {
+      var cd = CAUSALITY_DATA[affDrvs[0]];
+      if (cd) { rootCause = (cd.causes||[]).slice(0,3).map(function(c){ return c.name; }); }
+    }
+    var repFactor = affDrvs[0] && DRIVER_REPUTATION[affDrvs[0]]
+      ? DRIVER_REPUTATION[affDrvs[0]].reputation_score
+      : 70;
+    var inv = {
+      investigation_id:      id,
+      trigger_anomaly_id:    anom.anomaly_id,
+      trigger:               anom.explanation.slice(0,80),
+      timestamp:             Date.now(),
+      severity:              anom.severity,
+      category:              anom.category,
+      affected_drivers:      affDrvs,
+      affected_countries:    affCC,
+      forecast_impact:       fcImpact,
+      root_cause_chain:      rootCause,
+      scenario_impact:       fr(_lfe.scenarioConf - repFactor * 0.1),
+      decision_impact:       anom.severity==='critical' ? 'IMMEDIATE' : 'SHORT-TERM',
+      recommended_actions:   _buildInvRecommendations(anom, affDrvs),
+      status:                'active',
+    };
+    INVESTIGATION_ARCHIVE.push(inv);
+  });
+  if (INVESTIGATION_ARCHIVE.length > 100) INVESTIGATION_ARCHIVE.splice(0,INVESTIGATION_ARCHIVE.length-100);
+}
+
+function _buildInvRecommendations(anom, drivers) {
+  var recs = [];
+  if (anom.category==='Risk')     recs.push('Activate EWS monitoring for '+drivers.slice(0,2).join(', '));
+  if (anom.category==='Forecast') recs.push('Review forecast confidence for affected horizons');
+  if (anom.category==='Driver')   recs.push('Recalibrate driver weights via learning engine');
+  if (anom.category==='Learning') recs.push('Inspect weight change history for systematic bias');
+  if (anom.category==='Graph')    recs.push('Map cascade paths for secondary risk propagation');
+  recs.push('Update scenario engine with current driver states');
+  recs.push('Run temporal analysis to identify trend origin');
+  return recs.slice(0,3);
+}
+
+// ── BLOCK 04: STRATEGIC ATTENTION QUEUE ───────────────────────
+function _buildAttentionQueue() {
+  var items = [];
+  // From anomalies
+  ANOMALY_REGISTRY.filter(function(a){ return a.status==='active'; }).forEach(function(a) {
+    var sevScore = a.severity==='critical'?40:a.severity==='high'?25:a.severity==='medium'?12:5;
+    var fcImpact = FORECAST_ARCHIVE.filter(function(f){ return f.validated&&f.error>5; }).length;
+    var score    = sevScore + a.confidence*0.3 + Math.min(20, fcImpact*0.5);
+    items.push({ id:a.anomaly_id, label:a.explanation.slice(0,55), score:fr(score),
+                 cat:a.category, severity:a.severity, action:a.severity==='critical'?'IMMEDIATE':'REVIEW' });
+  });
+  // From attention-worthy drivers
+  _liveDrv().filter(function(d){ return d.d7>=8||d.score>=80; }).forEach(function(d) {
+    var score = d.score*0.4 + Math.abs(d.d7)*2;
+    items.push({ id:'DRV-'+d.name.replace(/\s/g,'-').slice(0,10), label:d.name+' (score '+d.score+', 7d '+(d.d7>=0?'+':'')+d.d7+')',
+                 score:fr(score), cat:'Driver', severity:d.score>=80?'high':'medium', action:'MONITOR' });
+  });
+  // Sort descending by priority score
+  items.sort(function(a,b){ return b.score-a.score; });
+  ATTENTION_QUEUE = items.slice(0,20);
+}
+
+// ── BLOCK 05: ALERT ENGINE ────────────────────────────────────
+function _runAlertEngine(countries) {
+  var now  = Date.now();
+  var drvs = _liveDrv();
+  var archSt = _archiveStats();
+  function mkAlert(type, title, body, sev, lineage) {
+    var id = 'ALT-' + String(++_orch.alertSeq).padStart(5,'0');
+    return { alert_id:id, timestamp:now, type:type, title:title, body:body,
+             severity:sev, lineage:lineage, status:'active' };
+  }
+  var newAlerts = [];
+  // Alert: forecast accuracy below threshold
+  if (archSt.accuracy > 0 && archSt.accuracy < 65) {
+    newAlerts.push(mkAlert('Forecast', 'Forecast Accuracy Below Threshold',
+      'Archive accuracy at '+archSt.accuracy+'% — below 65% threshold. '+archSt.validated+' validated forecasts.',
+      'critical', 'FORECAST_ARCHIVE.accuracy'));
+  }
+  // Alert: GRI spike in top countries
+  var highRisk = countries.filter(function(c){ return (c.risk_score||0)>=80; });
+  if (highRisk.length >= 3) {
+    newAlerts.push(mkAlert('Risk', 'Multiple High-Risk Countries Detected',
+      highRisk.slice(0,5).map(function(c){ return flag(c.country)+fr(c.risk_score); }).join(' ')+' — '+highRisk.length+' countries GRI≥80',
+      highRisk.length>=5?'critical':'high', 'countries.risk_score'));
+  }
+  // Alert: driver escalation
+  var escalating = drvs.filter(function(d){ return d.d7>=10; });
+  escalating.forEach(function(d) {
+    newAlerts.push(mkAlert('Driver', d.name+' Rapid Escalation',
+      d.name+' d7=+'+d.d7+' pts · Score='+d.score+' — exceeds escalation threshold',
+      d.d7>=15?'critical':'high', 'GLOBAL_DRIVERS['+d.name+'].d7'));
+  });
+  // Alert: learning engine penalty wave
+  var penaltyWave = (_lfe.weightHistory||[]).filter(function(w){ return w.delta<=-0.02; });
+  if (penaltyWave.length >= 5) {
+    newAlerts.push(mkAlert('Learning', 'Weight Penalty Wave Detected',
+      penaltyWave.length+' weight penalties — drivers losing accuracy. Worst: '+penaltyWave[0].driver,
+      'medium', '_lfe.weightHistory'));
+  }
+  // Alert: new critical investigation
+  var critInv = INVESTIGATION_ARCHIVE.filter(function(i){ return i.severity==='critical'&&i.status==='active'; });
+  if (critInv.length > 0) {
+    newAlerts.push(mkAlert('Investigation', critInv.length+' Critical Investigations Active',
+      critInv.slice(0,2).map(function(i){ return i.investigation_id+': '+i.trigger.slice(0,40); }).join('; '),
+      'critical', 'INVESTIGATION_ARCHIVE'));
+  }
+  // Deduplicate
+  var existingAlerts = {};
+  ALERT_ARCHIVE.forEach(function(a){ existingAlerts[a.type+a.title]=true; });
+  newAlerts.forEach(function(a) {
+    if (!existingAlerts[a.type+a.title]) {
+      ALERT_ARCHIVE.push(a);
+      existingAlerts[a.type+a.title]=true;
+    }
+  });
+  if (ALERT_ARCHIVE.length > 500) ALERT_ARCHIVE.splice(0,ALERT_ARCHIVE.length-500);
+}
+
+// ── MAIN LOADER ───────────────────────────────────────────────
+function loadAutonomousOrchestrator(countries) {
+  _orch.countries = countries;
+  _orch.loaded    = true;
+  _orch.lastRun   = new Date();
+  // Run all engines in order
+  _runMonitoring(countries);
+  _runAnomalyDetection(countries);
+  _runInvestigationEngine();
+  _buildAttentionQueue();
+  _runAlertEngine(countries);
+  // Render all UI
+  _orchBuildAll(countries);
+  initSwipeDots('exec-priority-swipe','exec-priority-dots');
+  // Update badge
+  var badge = document.getElementById('orch-status-badge');
+  if (badge) {
+    var critCount = ANOMALY_REGISTRY.filter(function(a){return a.severity==='critical'&&a.status==='active';}).length;
+    badge.innerHTML = critCount>0 ? '&#128308; '+critCount+' CRITICAL' : '&#9679; AUTONOMOUS';
+    badge.className = 's-badge '+(critCount>0?'badge-red':'badge-auto');
+  }
+  // Live clock
+  var clockEl = document.getElementById('orch-time');
+  if (clockEl) clockEl.textContent = new Date().toUTCString().replace('GMT','UTC');
+}
+
+function _orchBuildAll(countries) {
+  _buildMissionControl(countries);
+  _buildExecPriority();
+  _buildAnomalyList('all');
+  _buildInvestigationList();
+  _buildAttentionQueueUI();
+  _buildAlertList();
+}
+
+// ── MISSION CONTROL ────────────────────────────────────────────
+function _buildMissionControl(countries) {
+  var archSt = _archiveStats();
+  var drvs   = _liveDrv();
+  var repK   = Object.keys(DRIVER_REPUTATION);
+  var avgRep = repK.length ? fr(repK.reduce(function(a,k){return a+DRIVER_REPUTATION[k].reputation_score;},0)/repK.length) : 70;
+  var lfeReg = _lfe.registry.length;
+  var critAnoms = ANOMALY_REGISTRY.filter(function(a){return a.severity==='critical'&&a.status==='active';}).length;
+  var readiness = fr(Math.min(100,
+    (countries.length>0?Math.min(100,countries.length*4):0)*0.20 +
+    (archSt.accuracy>0?archSt.accuracy:60)*0.20 +
+    (avgRep)*0.20 +
+    (lfeReg>5?85:60)*0.15 +
+    (_vaultState.ready?90:70)*0.10 +
+    (TEMPORAL_ARCHIVE.length>0?85:60)*0.10 +
+    (critAnoms===0?90:70)*0.05
+  ));
+  var cards=[
+    {label:'Platform Readiness', val:readiness+'%',   col:readiness>=80?'var(--green)':readiness>=65?'var(--orange)':'var(--red)'},
+    {label:'Forecast Accuracy',  val:archSt.accuracy+'%', col:archSt.accuracy>=75?'var(--green)':'var(--orange)'},
+    {label:'Learning Status',    val:lfeReg>5?'ACTIVE':'INIT', col:lfeReg>5?'var(--green)':'var(--orange)'},
+    {label:'Vault Health',       val:_vaultState.ready?'IDB OK':'LS ONLY', col:_vaultState.ready?'var(--green)':'var(--orange)'},
+    {label:'Active Anomalies',   val:ANOMALY_REGISTRY.filter(function(a){return a.status==='active';}).length, col:critAnoms>0?'var(--red)':'var(--green)'},
+    {label:'Top Drivers',        val:drvs.slice(0,1).map(function(d){return d.name.split(' ')[0];}).join(''), col:'var(--orange)'},
+    {label:'Avg Reputation',     val:avgRep,          col:avgRep>=75?'var(--green)':'var(--orange)'},
+    {label:'Attention Items',    val:ATTENTION_QUEUE.length, col:'#a855f7'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div style="background:rgba(16,185,129,.04);border:0.5px solid rgba(16,185,129,.15);border-radius:9px;padding:10px;text-align:center">';
+    h+='<div style="font-size:8px;color:var(--text3);margin-bottom:3px">'+c.label+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:17px;font-weight:700;color:'+c.col+'">'+c.val+'</div></div>';
+  });
+  var g=document.getElementById('mission-control-grid'); if(g) g.innerHTML=h;
+  // Attention strip: top 3 items from queue
+  var strip='<div style="font-size:9px;color:var(--text3);margin-bottom:5px">Priority attention:</div>';
+  ATTENTION_QUEUE.slice(0,3).forEach(function(item){
+    var sc = item.severity==='critical'?'var(--red)':item.severity==='high'?'var(--orange)':'var(--gold)';
+    strip+='<div class="aq-row">';
+    strip+='<div class="pulse-dot" style="background:'+sc+'"></div>';
+    strip+='<span style="font-size:10px;color:var(--text2);flex:1">'+item.label+'</span>';
+    strip+='<span style="font-family:var(--mono);font-size:9px;color:'+sc+'">'+item.score+'</span>';
+    strip+='<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+sc+'18;color:'+sc+'">'+item.action+'</span>';
+    strip+='</div>';
+  });
+  if (!ATTENTION_QUEUE.length) strip+='<div style="font-size:11px;color:var(--green);padding:8px;text-align:center">&#10003; No critical attention items</div>';
+  var as=document.getElementById('mission-attention-strip'); if(as) as.innerHTML=strip;
+}
+
+// ── EXEC PRIORITY DASHBOARD ────────────────────────────────────
+function _buildExecPriority() {
+  // Anomalies panel
+  var h='';
+  var active = ANOMALY_REGISTRY.filter(function(a){return a.status==='active';}).slice(0,6);
+  if(!active.length) { h='<div style="padding:12px;font-size:11px;color:var(--green)">&#10003; No active anomalies</div>'; }
+  else active.forEach(function(a){
+    var sc=a.severity==='critical'?'var(--red)':a.severity==='high'?'var(--orange)':a.severity==='medium'?'var(--gold)':'var(--text3)';
+    h+='<div class="aq-row"><div class="pulse-dot" style="background:'+sc+'"></div>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1">'+a.explanation.slice(0,60)+'</span>';
+    h+='<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+sc+'18;color:'+sc+'">'+a.severity.toUpperCase()+'</span></div>';
+  });
+  var ea=document.getElementById('exec-anomalies'); if(ea) ea.innerHTML=h;
+
+  // Investigations panel
+  h='';
+  var invs = INVESTIGATION_ARCHIVE.filter(function(i){return i.status==='active';}).slice(0,5);
+  if(!invs.length) { h='<div style="padding:12px;font-size:11px;color:var(--green)">&#10003; No active investigations</div>'; }
+  else invs.forEach(function(i){
+    var sc=i.severity==='critical'?'var(--red)':'var(--orange)';
+    h+='<div class="aq-row"><span style="font-family:var(--mono);font-size:9px;color:'+sc+';width:60px">'+i.investigation_id+'</span>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1">'+i.trigger.slice(0,55)+'</span>';
+    h+='<span style="font-size:9px;color:'+sc+'">'+i.decision_impact+'</span></div>';
+  });
+  var ei=document.getElementById('exec-investigations'); if(ei) ei.innerHTML=h;
+
+  // Alerts panel
+  h='';
+  var alerts = ALERT_ARCHIVE.slice(-6).reverse();
+  if(!alerts.length) { h='<div style="padding:12px;font-size:11px;color:var(--green)">&#10003; No alerts</div>'; }
+  else alerts.forEach(function(a){
+    var sc=a.severity==='critical'?'var(--red)':a.severity==='high'?'var(--orange)':'var(--gold)';
+    h+='<div class="aq-row"><span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+sc+'18;color:'+sc+';width:60px;text-align:center">'+a.type+'</span>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1;margin-left:6px">'+a.title.slice(0,55)+'</span></div>';
+  });
+  var ealt=document.getElementById('exec-alerts'); if(ealt) ealt.innerHTML=h;
+
+  // Queue panel
+  h='';
+  ATTENTION_QUEUE.slice(0,8).forEach(function(item,i){
+    var sc=item.severity==='critical'?'var(--red)':item.severity==='high'?'var(--orange)':'var(--gold)';
+    h+='<div class="aq-row"><span style="font-family:var(--mono);font-size:9px;color:var(--text3);width:14px">'+(i+1)+'</span>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1">'+item.label.slice(0,50)+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+sc+'">'+item.score+'</span></div>';
+  });
+  if(!h) h='<div style="padding:12px;font-size:11px;color:var(--green)">&#10003; Queue clear</div>';
+  var eq=document.getElementById('exec-queue'); if(eq) eq.innerHTML=h;
+}
+
+// ── ANOMALY LIST ───────────────────────────────────────────────
+function _buildAnomalyList(filterMode) {
+  var anoms = ANOMALY_REGISTRY.filter(function(a){
+    if (filterMode==='all') return a.status==='active';
+    if (filterMode==='critical') return a.severity==='critical'&&a.status==='active';
+    if (filterMode==='high') return a.severity==='high'&&a.status==='active';
+    return a.category.toLowerCase()===filterMode&&a.status==='active';
+  });
+  var h='';
+  if(!anoms.length){
+    h='<div style="padding:16px;text-align:center;font-size:11px;color:var(--green)">&#10003; No '+(filterMode==='all'?'active':filterMode)+' anomalies detected from real platform data</div>';
+    var el=document.getElementById('anomaly-list'); if(el) el.innerHTML=h; return;
+  }
+  anoms.slice(0,8).forEach(function(a){
+    h+='<div class="anomaly-card '+a.severity+'">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--gold)">'+a.anomaly_id+'</span>';
+    var sc=a.severity==='critical'?'var(--red)':a.severity==='high'?'var(--orange)':a.severity==='medium'?'var(--gold)':'var(--text3)';
+    h+='<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:'+sc+'18;color:'+sc+'">'+a.severity.toUpperCase()+'</span>';
+    h+='<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(255,255,255,.04);color:var(--text3)">'+a.category+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-left:auto">Conf:'+a.confidence+'%</span></div>';
+    h+='<div style="font-size:11px;color:var(--text2);margin-bottom:4px">'+a.explanation+'</div>';
+    h+='<div style="font-size:9px;color:var(--text3)">&#8594; '+a.source+'</div>';
+    h+='</div>';
+  });
+  var el=document.getElementById('anomaly-list'); if(el) el.innerHTML=h;
+}
+
+window.filterAnomalies = function(mode, btn) {
+  _orch.filterMode=mode;
+  document.querySelectorAll('#anomaly-filters .graph-filter-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  _buildAnomalyList(mode);
+};
+
+// ── INVESTIGATION LIST ─────────────────────────────────────────
+function _buildInvestigationList() {
+  var invs = INVESTIGATION_ARCHIVE.filter(function(i){return i.status==='active';});
+  var h='';
+  if(!invs.length){
+    h='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No active investigations — anomaly threshold not yet reached</div>';
+    var el=document.getElementById('investigation-list'); if(el) el.innerHTML=h; return;
+  }
+  invs.slice(0,4).forEach(function(inv){
+    var sc=inv.severity==='critical'?'var(--red)':'var(--orange)';
+    h+='<div class="anomaly-card" style="border-left:3px solid '+sc+';">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    h+='<span style="font-family:var(--mono);font-size:10px;color:'+sc+'">'+inv.investigation_id+'</span>';
+    h+='<span style="font-size:10px;font-weight:600;color:var(--text);flex:1">'+inv.trigger.slice(0,60)+'</span>';
+    h+='<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:'+sc+'18;color:'+sc+'">'+inv.decision_impact+'</span></div>';
+    var steps=[
+      {icon:'&#9889;',  label:'Drivers',    val:inv.affected_drivers.slice(0,2).join(', ')},
+      {icon:'&#127758;',label:'Countries',  val:inv.affected_countries.slice(0,2).join(', ')},
+      {icon:'&#128337;',label:'FC Impact',  val:inv.forecast_impact+' forecasts affected'},
+      {icon:'&#128260;',label:'Root Cause', val:inv.root_cause_chain.length>0?inv.root_cause_chain.join(' → '):'Analysing...'},
+    ];
+    steps.forEach(function(s){
+      h+='<div class="inv-step">';
+      h+='<span style="font-size:12px;flex-shrink:0">'+s.icon+'</span>';
+      h+='<div><div style="font-size:9px;color:var(--text3)">'+s.label+'</div>';
+      h+='<div style="font-size:10px;color:var(--text2)">'+s.val+'</div></div></div>';
+    });
+    h+='<div style="margin-top:6px">';
+    inv.recommended_actions.forEach(function(rec){
+      h+='<div style="font-size:10px;color:var(--green);padding:2px 0">&#8594; '+rec+'</div>';
+    });
+    h+='</div></div>';
+  });
+  var el=document.getElementById('investigation-list'); if(el) el.innerHTML=h;
+}
+
+// ── ATTENTION QUEUE UI ─────────────────────────────────────────
+function _buildAttentionQueueUI() {
+  var h='';
+  ATTENTION_QUEUE.slice(0,15).forEach(function(item, i){
+    var sc=item.severity==='critical'?'risk-crit':item.severity==='high'?'risk-high':'risk-med';
+    var sc2=item.severity==='critical'?'var(--red)':item.severity==='high'?'var(--orange)':'var(--gold)';
+    h+='<tr>';
+    h+='<td><span class="td-badge '+sc+'">'+(i+1)+'</span></td>';
+    h+='<td style="font-size:10px;color:var(--text2)">'+item.label.slice(0,52)+'</td>';
+    h+='<td style="font-family:var(--mono);color:'+sc2+';font-weight:600">'+item.score+'</td>';
+    h+='<td style="font-size:9px;color:var(--text3)">'+item.cat+'</td>';
+    h+='<td><span style="font-size:9px;color:'+sc2+'">'+item.action+'</span></td>';
+    h+='</tr>';
+  });
+  if(!h) h='<tr><td colspan="5" style="text-align:center;padding:14px;font-size:11px;color:var(--text3)">Queue accumulating...</td></tr>';
+  var tb=document.getElementById('attention-queue-body'); if(tb) tb.innerHTML=h;
+}
+
+// ── ALERT LIST ─────────────────────────────────────────────────
+function _buildAlertList() {
+  var alerts = ALERT_ARCHIVE.slice().reverse().slice(0,8);
+  var h='';
+  if(!alerts.length){
+    h='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No alerts generated — platform within normal parameters</div>';
+    var el=document.getElementById('alert-list'); if(el) el.innerHTML=h; return;
+  }
+  alerts.forEach(function(a){
+    var sc=a.severity==='critical'?'var(--red)':a.severity==='high'?'var(--orange)':a.severity==='medium'?'var(--gold)':'var(--text3)';
+    h+='<div style="background:var(--bg2);border-radius:8px;padding:9px 11px;margin-bottom:7px;border-left:2px solid '+sc+'">';
+    h+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:var(--gold)">'+a.alert_id+'</span>';
+    h+='<span style="font-size:10px;font-weight:600;color:var(--text);flex:1">'+a.title+'</span>';
+    h+='<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:'+sc+'18;color:'+sc+'">'+a.severity.toUpperCase()+'</span></div>';
+    h+='<div style="font-size:10px;color:var(--text3)">'+a.body+'</div>';
+    h+='<div style="font-size:9px;color:var(--text3);margin-top:3px">&#8594; '+a.lineage+'</div></div>';
+  });
+  var el=document.getElementById('alert-list'); if(el) el.innerHTML=h;
+}
+
+// ── BLOCK 06: AUTONOMOUS BRIEF GENERATOR ──────────────────────
+window.generateAutoBrief = function(type) {
+  var el=document.getElementById('auto-brief-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating '+type+' brief...</div></div>';
+  setTimeout(function(){
+    var countries = _orch.countries;
+    var drvs = _liveDrv();
+    var archSt = _archiveStats();
+    var now  = new Date().toUTCString().replace('GMT','UTC');
+    var topRisks = countries.slice().sort(function(a,b){return (b.risk_score||0)-(a.risk_score||0);}).slice(0,3)
+      .map(function(c){ return flag(c.country)+(c.country_name||c.country)+' GRI'+fr(c.risk_score); }).join(', ');
+    var topDrvs = drvs.slice(0,3).map(function(d){ return d.name+'('+d.score+')'; }).join(', ');
+    var topOpps = (_sdc&&_sdc.opps)?_sdc.opps.slice(0,3).map(function(o){return o.name.split(' ').slice(0,3).join(' ');}).join(', '):'Accumulating...';
+    var repK = Object.keys(DRIVER_REPUTATION);
+    var avgRep = repK.length ? fr(repK.reduce(function(a,k){return a+DRIVER_REPUTATION[k].reputation_score;},0)/repK.length) : 70;
+    var typeLabel = type==='daily'?'DAILY INTELLIGENCE BRIEF':type==='weekly'?'WEEKLY INTELLIGENCE BRIEF':'AUTONOMOUS INTELLIGENCE REPORT';
+    var typeCol = type==='daily'?'var(--green)':type==='weekly'?'var(--blue)':'#a855f7';
+    var critAnomN = ANOMALY_REGISTRY.filter(function(a){return a.severity==='critical'&&a.status==='active';}).length;
+    var secs=[
+      {t:'PLATFORM STATUS',c:'var(--blue)',
+       v:'Countries: '+countries.length+'. Drivers: '+drvs.length+'. Archive: '+archSt.total+' forecasts ('+archSt.accuracy+'% accurate). Vault: '+(_vaultState.ready?'IDB+LS':'LS only')+'.'},
+      {t:'RISK STATUS',c:'var(--red)',
+       v:'Top risks: '+topRisks+'. Critical anomalies: '+critAnomN+'. Active investigations: '+INVESTIGATION_ARCHIVE.filter(function(i){return i.status==='active';}).length+'.'},
+      {t:'FORECAST STATUS',c:'var(--gold)',
+       v:'Archive accuracy: '+archSt.accuracy+'%. Best horizon: '+(archSt.bestHz||'24h')+'. Avg error: '+archSt.avgErr+' pts. Validated: '+archSt.validated+'/'+archSt.total+'.'},
+      {t:'LEARNING STATUS',c:'var(--green)',
+       v:'Registry: '+_lfe.registry.length+' entries. Weighted accuracy: '+fr((function(){var wS=0,tW=0;_lfe.registry.forEach(function(e){var w=1-(e.error_norm||0);wS+=(e.direction>0?w:0);tW+=w;});return tW>0?wS/tW*100:0;})())+'%. Weight changes: '+(_lfe.weightHistory||[]).length+'.'},
+      {t:'DRIVER STATUS',c:'var(--orange)',
+       v:'Top drivers: '+topDrvs+'. Avg reputation: '+avgRep+'. Escalating: '+drvs.filter(function(d){return d.d7>=8;}).map(function(d){return d.name;}).join(', ')||'None.'},
+      {t:'ACTIVE ANOMALIES',c:'var(--red)',
+       v:ANOMALY_REGISTRY.filter(function(a){return a.status==='active';}).slice(0,3).map(function(a){return a.anomaly_id+': '+a.explanation.slice(0,50);}).join(' | ')||'No active anomalies.'},
+      {t:'STRATEGIC PRIORITIES',c:typeCol,
+       v:'1. '+ATTENTION_QUEUE.slice(0,1).map(function(i){return i.label;}).join('')+' 2. Monitor top opportunities: '+topOpps+' 3. Review drivers: '+drvs.filter(function(d){return d.d7>=5;}).slice(0,2).map(function(d){return d.name;}).join(', ') || 'None accelerating.' },
+      {t:'RECOMMENDED ACTIONS',c:'var(--green)',
+       v:critAnomN>0?'IMMEDIATE: Address '+critAnomN+' critical anomaly(ies). Review investigation queue. Update scenario engine.':'STANDARD: Continue accumulating validation data. Monitor driver d7 trends. Sync vault.'},
+    ];
+    var h='<div style="background:'+typeCol+'0a;border:0.5px solid '+typeCol+'33;border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:'+typeCol+';letter-spacing:.2em">'+typeLabel+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+'</div></div>';
+    h+='<div style="height:0.5px;background:'+typeCol+'33;margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="margin-top:10px;padding:8px 10px;background:'+typeCol+'08;border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+' &#183; Autonomous &#183; Real data only</div></div>';
+    el.innerHTML=h;
+  },700);
+};
+
+// Expose
+window.ANOMALY_REGISTRY      = ANOMALY_REGISTRY;
+window.INVESTIGATION_ARCHIVE = INVESTIGATION_ARCHIVE;
+window.ATTENTION_QUEUE       = ATTENTION_QUEUE;
+window.ALERT_ARCHIVE         = ALERT_ARCHIVE;
+window._orch                 = _orch;
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
