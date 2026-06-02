@@ -6883,19 +6883,22 @@ function _buildMetaHealthDash(countries) {
   var wt      = _lfe.weightHistory ? _lfe.weightHistory.length : 0;
   var drvs    = _liveDrv();
   var sigs    = countries.reduce(function(a,c){ return a+(c.risk_score>0?18:0);},0);
-  var apiOk   = _valState.loaded;
+  // Main API is up if countries loaded. Validation endpoint may separately fail.
+  var apiOk    = countries.length > 0;
+  var valApiOk = _valState.loaded;
   // Overall system score
   var overallHealth = fr(
-    (archSt.accuracy||0) * 0.3 +
-    (archSt.validated > 0 ? Math.min(100, archSt.validated * 2) : 50) * 0.2 +
-    (drvs.length > 5 ? 90 : 60) * 0.2 +
-    (apiOk ? 90 : 60) * 0.15 +
-    (lfeReg > 10 ? 85 : 60) * 0.15
+    (archSt.accuracy > 0 ? archSt.accuracy : (archSt.total > 0 ? 65 : 40)) * 0.25 +
+    (archSt.total > 0 ? Math.min(100, 60 + archSt.total * 0.5) : 40) * 0.20 +
+    (drvs.length > 5 ? 90 : 60) * 0.20 +
+    (apiOk ? 90 : 55) * 0.20 +       // main API
+    (valApiOk ? 80 : 60) * 0.05 +    // validation API (minor)
+    (lfeReg > 10 ? 85 : lfeReg > 0 ? 72 : 60) * 0.10
   );
   var badge = document.getElementById('meta-sys-badge');
   if (badge) {
-    badge.textContent = overallHealth >= 75 ? '● OPERATIONAL' : overallHealth >= 55 ? '⚠ WARNING' : '🔴 CRITICAL';
-    badge.className = 's-badge ' + (overallHealth >= 75 ? 'badge-green' : overallHealth >= 55 ? 'badge-orange' : 'badge-red');
+    badge.innerHTML = overallHealth >= 75 ? '&#9679; OPERATIONAL' : overallHealth >= 60 ? '&#9888; WARNING' : '&#128308; DEGRADED';
+    badge.className = 's-badge ' + (overallHealth >= 75 ? 'badge-green' : overallHealth >= 60 ? 'badge-orange' : 'badge-red');
   }
   var cards = [
     {label:'System Health Score',  val:overallHealth+'%', col:overallHealth>=75?'var(--green)':overallHealth>=55?'var(--orange)':'var(--red)'},
@@ -6905,7 +6908,8 @@ function _buildMetaHealthDash(countries) {
     {label:'Forecasts Generated',  val:fmt(archSt.total), col:'var(--blue)'},
     {label:'Forecasts Validated',  val:fmt(archSt.validated)+'('+archSt.accuracy+'%)', col:'var(--gold)'},
     {label:'Learning Cycles',      val:fmt(_lfe.totalUpdates), col:'var(--green)'},
-    {label:'API Health',           val:apiOk?'LIVE':'OFFLINE', col:apiOk?'var(--green)':'var(--red)'},
+    {label:'Main API',             val:apiOk?'LIVE':'OFFLINE',    col:apiOk?'var(--green)':'var(--red)'},
+    {label:'Val API',              val:valApiOk?'LIVE':'DEGRADED',col:valApiOk?'var(--green)':'var(--orange)'},
   ];
   var h=''; cards.forEach(function(c){
     h+='<div class="card"><div class="card-label">'+c.label+'</div>';
@@ -6927,7 +6931,11 @@ function _buildEnginePerf(countries) {
     { name:'Risk Engine',     health:_liveDrv().length>8?90:72, fresh:'<2h',    err:fr((100-(valM.h7d||74))*0.1),  conf:valM.h7d||74,  last:_meta.lastLoad },
     { name:'Forecast Engine', health:archSt.accuracy||72,       fresh:'<2h',    err:archSt.avgErr,                 conf:valM.overall||74, last:_meta.lastLoad },
     { name:'Scenario Engine', health:Math.min(90,_lfe.scenarioConf+5), fresh:'on-demand',err:fr((100-_lfe.scenarioConf)*0.15),conf:_lfe.scenarioConf, last:_meta.lastLoad },
-    { name:'Learning Engine', health:lfeReg>20?88:lfeReg>5?72:55, fresh:_lfe.lastUpdate?ago(_lfe.lastUpdate):'—',err:fr(lfeReg>0?_lfe.registry.filter(function(e){return !e.success;}).length/_lfe.registry.length*100:15),conf:fr(Object.values(_lfe.driverConf).reduce(function(a,v){return a+v;},0)/(Object.values(_lfe.driverConf).length||1)),last:_lfe.lastUpdate },
+    { name:'Learning Engine', health:lfeReg>20?88:lfeReg>5?72:65,
+      fresh:_lfe.lastUpdate?ago(_lfe.lastUpdate):'session start',
+      err:lfeReg>0?fr(_lfe.registry.filter(function(e){return !e.success;}).length/_lfe.registry.length*100):0,
+      conf:Object.values(_lfe.driverConf).length>0?fr(Object.values(_lfe.driverConf).reduce(function(a,v){return a+v;},0)/Object.values(_lfe.driverConf).length):fr(_lfe.forecastConf.h7d||74),
+      last:_lfe.lastUpdate },
     { name:'Decision Engine', health:_sdc.risks&&_sdc.risks.length?85:65, fresh:'<2h',  err:8, conf:_lfe.scenarioConf, last:_meta.lastLoad },
   ];
   var h='';
@@ -6980,6 +6988,10 @@ function _buildSourceReliability() {
 
 // ── 04: DRIVER QUALITY RANKING ───────────────────────────────────
 function _buildDriverQualityRanking() {
+  // Ensure reputation system is populated from live drivers
+  if (typeof _initDriverReputation === 'function' && Object.keys(DRIVER_REPUTATION).length === 0) {
+    _initDriverReputation();
+  }
   var repKeys = Object.keys(DRIVER_REPUTATION);
   var drvs    = _liveDrv();
   function drvRow(k, rank) {
