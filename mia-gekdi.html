@@ -15618,7 +15618,9 @@ var _crmLastSync      = null;
 var _crmDashboard     = {};
 var VPS_CLIENTS_BASE  = 'https://auth.secrett-archive.com';
 
-var PLAN_PRICES = { FREE:0, SIGNAL_PRO:49, STRATEGIC_PRO:149, ELITE:499 };
+var PLAN_PRICES = { FREE:0, SIGNAL_PRO:4900, STRATEGIC_PRO:29900, ELITE:150000 };
+var PLAN_CURRENCY = "₽";
+function _formatRub(n) { return (n||0).toLocaleString("ru-RU") + "₽"; }
 var PLAN_LABELS = { FREE:'FREE', SIGNAL_PRO:'SIGNAL PRO', STRATEGIC_PRO:'STRATEGIC PRO', ELITE:'ELITE' };
 var PLAN_CLS    = { FREE:'plan-free', SIGNAL_PRO:'plan-signal', STRATEGIC_PRO:'plan-strategic', ELITE:'plan-elite' };
 
@@ -15720,13 +15722,13 @@ function _crmBuildFounderKPI() {
   var now = new Date().toLocaleDateString('ru-RU');
   var cards = [
     {l:'Новых сегодня',    v:m.newToday,       c:m.newToday>0?'var(--green)':'var(--text3)'},
-    {l:'MRR',              v:'$'+m.mrr,         c:'var(--gold)'},
+    {l:'MRR',              v:_formatRub(m.mrr), c:'var(--gold)'},
     {l:'Всего клиентов',  v:m.total,            c:'var(--blue)'},
     {l:'Активных',         v:m.active,          c:'var(--green)'},
     {l:'Риск оттока 7д',  v:m.churn7,           c:m.churn7>0?'var(--red)':'var(--green)'},
     {l:'К апгрейду',       v:m.upgradeReady,    c:m.upgradeReady>0?'var(--orange)':'var(--text3)'},
-    {l:'ARR',              v:'$'+m.arr,          c:'var(--gold)'},
-    {l:'ARPU',             v:'$'+m.arpu,         c:'var(--blue)'},
+    {l:'ARR',              v:_formatRub(m.arr),  c:'var(--gold)'},
+    {l:'ARPU',             v:_formatRub(m.arpu), c:'var(--blue)'},
   ];
   var h=''; cards.forEach(function(c){
     h+='<div class="card"><div class="card-label">'+c.l+'</div><div class="card-val" style="color:'+c.c+';font-size:17px">'+c.v+'</div></div>';
@@ -15750,7 +15752,7 @@ function _crmBuildMetrics() {
     h+='<div class="crm-metric-card">';
     h+='<div class="crm-metric-lbl"><span class="crm-plan-badge '+PLAN_CLS[p.k]+'">'+p.l+'</span></div>';
     h+='<div class="crm-metric-val" style="color:'+p.c+'">'+cnt+'</div>';
-    h+='<div style="font-size:9px;color:var(--text3)">$'+rev+'/мес</div>';
+    h+='<div style="font-size:9px;color:var(--text3)">'+_formatRub(rev)+'/мес</div>';
     h+='</div>';
   });
   var g=document.getElementById('crm-metrics-grid'); if(g) g.innerHTML=h;
@@ -15762,10 +15764,10 @@ function _crmBuildFunnel() {
   var bp = m.byPlan || {FREE:0,SIGNAL_PRO:0,STRATEGIC_PRO:0,ELITE:0};
   var total = m.total || 1;
   var steps = [
-    {k:'FREE',          l:'FREE',           n:bp.FREE||0,          c:'#64748b'},
-    {k:'SIGNAL_PRO',    l:'SIGNAL PRO $49', n:bp.SIGNAL_PRO||0,    c:'#3b82f6'},
-    {k:'STRATEGIC_PRO', l:'STRATEGIC $149', n:bp.STRATEGIC_PRO||0, c:'#a855f7'},
-    {k:'ELITE',         l:'ELITE $499',     n:bp.ELITE||0,         c:'#eab308'},
+    {k:'FREE',          l:'FREE (0₽)',       n:bp.FREE||0,          c:'#64748b'},
+    {k:'SIGNAL_PRO',    l:'SIGNAL PRO 4 900₽', n:bp.SIGNAL_PRO||0,    c:'#3b82f6'},
+    {k:'STRATEGIC_PRO', l:'STRATEGIC 29 900₽', n:bp.STRATEGIC_PRO||0, c:'#a855f7'},
+    {k:'ELITE',         l:'ELITE 150 000₽', n:bp.ELITE||0,         c:'#eab308'},
   ];
   var h='<div style="padding:8px 0">';
   var prevN = total;
@@ -15797,10 +15799,10 @@ function _crmBuildFunnel() {
 function _crmBuildRevenue() {
   var m = _crmCalcMetrics();
   var metrics = [
-    {l:'MRR',           v:'$'+m.mrr,          sub:'ежемесячный доход'},
-    {l:'ARR',           v:'$'+m.arr,           sub:'годовой прогноз'},
-    {l:'ARPU',          v:'$'+m.arpu,          sub:'доход на клиента'},
-    {l:'LTV (∑)',       v:'$'+(m.ltv_total||0),sub:'суммарный LTV'},
+    {l:'MRR',           v:_formatRub(m.mrr),          sub:'ежемесячный доход'},
+    {l:'ARR',           v:_formatRub(m.arr),           sub:'годовой прогноз'},
+    {l:'ARPU',          v:_formatRub(m.arpu),          sub:'доход на клиента'},
+    {l:'LTV (∑)',       v:_formatRub(m.ltv_total||0),  sub:'суммарный LTV'},
   ];
   var h='';
   metrics.forEach(function(i){
@@ -15847,7 +15849,7 @@ function _crmBuildAddForm() {
     if (isSelect) {
       h += '<select id="crm-new-'+f+'">';
       Object.keys(PLAN_PRICES).forEach(function(k){
-        h += '<option value="'+k+'">'+PLAN_LABELS[k]+' ($'+PLAN_PRICES[k]+'/мес)</option>';
+        h += '<option value="'+k+'">'+PLAN_LABELS[k]+' ('+(_formatRub(PLAN_PRICES[k]))+'/мес)</option>';
       });
       h += '</select>';
     } else {
@@ -16019,7 +16021,7 @@ function _crmBuildUpgrade() {
     h+='<span class="crm-plan-badge '+PLAN_CLS[c.plan||'FREE']+'">'+PLAN_LABELS[c.plan||'FREE']+'</span>';
     h+='<span style="font-size:10px;color:var(--text3);margin:0 5px">→</span>';
     h+='<span class="crm-plan-badge '+PLAN_CLS[next]+'">'+PLAN_LABELS[next]+'</span>';
-    h+='<span style="font-size:9px;color:var(--green);margin-left:6px">+$'+gain+'/мес</span>';
+    h+='<span style="font-size:9px;color:var(--green);margin-left:6px">+'+_formatRub(gain)+'/мес</span>';
     h+='</div>';
   });
   var el=document.getElementById('crm-upgrade'); if(el) el.innerHTML=h;
@@ -16055,14 +16057,14 @@ window.generateCRMReport = function() {
       {t:'КЛИЕНТСКАЯ БАЗА',c:'var(--blue)',
        v:'Всего: '+m.total+' · Активных: '+m.active+' · FREE: '+bp.FREE+' · SIGNAL PRO: '+bp.SIGNAL_PRO+' · STRATEGIC: '+bp.STRATEGIC_PRO+' · ELITE: '+bp.ELITE},
       {t:'ВЫРУЧКА',c:'var(--gold)',
-       v:'MRR: $'+m.mrr+' · ARR: $'+m.arr+' · ARPU: $'+m.arpu+' · LTV ∑: $'+(m.ltv_total||0)},
+       v:'MRR: '+_formatRub(m.mrr)+' · ARR: '+_formatRub(m.arr)+' · ARPU: '+_formatRub(m.arpu)+' · LTV ∑: '+_formatRub(m.ltv_total||0)},
       {t:'КОНВЕРСИЯ',c:'var(--green)',
-       v:'Платящих: '+convRate+'% · К апгрейду: '+m.upgradeReady+' клиентов · Потенциальный MRR от апгрейдов: $'+(m.upgradeReady*49)},
+       v:'Платящих: '+convRate+'% · К апгрейду: '+m.upgradeReady+' клиентов · Потенциальный MRR от апгрейдов: '+_formatRub(m.upgradeReady*4900)},
       {t:'РИСКИ',c:'var(--red)',
-       v:'Риск оттока (7д): '+m.churn7+' · Риск оттока (30д): '+m.churn30+' · Потенциальные потери MRR: $'+(m.churn7*m.arpu)},
+       v:'Риск оттока (7д): '+m.churn7+' · Риск оттока (30д): '+m.churn30+' · Потенциальные потери MRR: '+_formatRub(m.churn7*m.arpu)},
       {t:'РЕКОМЕНДАЦИИ',c:'var(--orange)',
        v:(m.upgradeReady>0?'Провести апгрейд кампанию для '+m.upgradeReady+' клиентов (+$'+(m.upgradeReady*49)+'/мес). ':'')+
-         (m.churn7>0?'Реактивация '+m.churn7+' клиентов под риском оттока. ':'')+
+         (m.churn7>0?'Реактивация '+m.churn7+' клиентов под риском оттока. Потери: '+_formatRub(m.churn7*m.arpu)+'/мес. ':'')+
          (m.total===0?'Начать привлечение клиентов. Первый тариф: FREE → конверсия в SIGNAL PRO.':'Продолжать рост.')},
     ];
     var h='<div style="background:rgba(59,130,246,.04);border:.5px solid rgba(59,130,246,.2);border-radius:10px;padding:16px;margin-top:10px">';
