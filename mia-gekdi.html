@@ -13121,10 +13121,13 @@ function _buildDecisionQueue(countries) {
   var queue=[];
   risks.slice(0,5).forEach(function(r,i){
     var repScore=(DRIVER_REPUTATION[r.name]||{reputation_score:70}).reputation_score;
-    // DECISION WRITE-BACK: conf = repScore × missionSuccessRate
+    // DECISION CONFIDENCE — Model B (Bayesian, stable)
+    // _decConf = repScore × (0.50 + msnRate×0.50)
+    // Floor: repScore×0.50 — reputation always contributes, never zero
+    // Range: [repScore×0.50, repScore×1.0] — 2× spread between worst/best executor
     var _msnH = (typeof MISSION_HISTORY!=="undefined") ? MISSION_HISTORY.filter(function(m){return m.source_driver===r.name;}) : [];
     var _msnRate = _msnH.length>0 ? fr(_msnH.filter(function(m){return m.validated;}).length/_msnH.length*100) : 75;
-    var _decConf = fr(repScore * (_msnRate/100));
+    var _decConf = fr(repScore * (0.50 + (_msnRate/100) * 0.50));
     queue.push({
       id:'DEC-'+String(i+1).padStart(3,'0'),
       name:'Respond to '+r.name,
@@ -14244,7 +14247,8 @@ function _buildDecisionFeedbackLoop() {
     var msnRate = _getMissionSuccessRate(r.name);
     var baseConf = r.prob || 70;
     // Decision confidence now uses mission success rate
-    var decConf = fr(baseConf * (msnRate/100) * (rep.reputation_score/100));
+    // Model B: conf = repScore × (0.50 + msnRate/100 × 0.50)
+    var decConf = fr(rep.reputation_score * (0.50 + (msnRate/100) * 0.50));
     var fb = DECISION_FEEDBACK.find(function(f){return f.driver===r.name;});
     var col = decConf>=60?'var(--green)':decConf>=40?'var(--orange)':'var(--red)';
     h+='<div class="loop-row">';
@@ -14312,7 +14316,8 @@ function _buildMissionImpactAnalytics() {
   if (DECISION_FEEDBACK.length > 0) {
     h+='<div style="margin-top:10px;font-size:9px;color:var(--text3);margin-bottom:5px">Влияние на будущие решения (формула):</div>';
     h+='<div style="background:var(--bg3);border-radius:7px;padding:8px;font-size:9px;color:var(--text2);font-family:var(--mono);line-height:1.6">';
-    h+='decisionConf = baseConf × missionSuccessRate × driverReputation<br>';
+    h+='Формула (Model B): decConf = repScore × (0.50 + msnRate/100 × 0.50)<br>';
+    h+='Floor: repScore×0.50 (никогда 0) · Range: [rep×0.5, rep×1.0]<br>';
     h+='Пример: 70 × '+fr(successRate/100)+' × '+fr(Object.values(DRIVER_REPUTATION)[0]?Object.values(DRIVER_REPUTATION)[0].reputation_score/100:0.70)+' = ';
     h+=fr(70 * (successRate/100) * (Object.values(DRIVER_REPUTATION)[0]?Object.values(DRIVER_REPUTATION)[0].reputation_score/100:0.70))+'%</div>';
   }
@@ -14392,7 +14397,7 @@ window.generateLoopReport = function() {
          ' · Ср. репутация: '+fr(Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+v.reputation_score;},0)/Math.max(Object.keys(DRIVER_REPUTATION).length,1))+
          ' · _updateDriverReputation() вызывается при completeMission()'},
       {t:'ОБРАТНАЯ СВЯЗЬ С РЕШЕНИЯМИ',c:'var(--gold)',
-       v:'decisionConf = baseConf × missionSuccessRate × driverReputation · '+
+       v:'Model B: _decConf = repScore×(0.50+msnRate×0.50) · Floor=rep×0.50 · '+
          DECISION_FEEDBACK.length+' записей в DECISION_FEEDBACK · '+
          'Успешность миссий: '+fr(MISSION_HISTORY.filter(function(m){return m.validated;}).length/Math.max(MISSION_HISTORY.length,1)*100)+'%'},
       {t:'АРХИВ ПРОГНОЗОВ',c:'var(--blue)',
