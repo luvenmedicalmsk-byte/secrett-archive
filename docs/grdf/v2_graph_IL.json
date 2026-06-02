@@ -2,67 +2,67 @@
   "country": "IL",
   "date": "2026-06-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-02T03:36:01.336966+00:00",
+  "generated_at": "2026-06-02T08:34:23.819229+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 64,
+      "score": 68,
       "props": {
-        "risk_score": 64
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "down"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Последние_",
+      "id": "SIGNAL-IL-Россия_нан",
       "type": "Signal",
-      "label": "Последние новости о войне Ирана и США: Т",
+      "label": "Россия наносит удары по Украине с помощь",
+      "severity": 77,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Война_на_Б",
+      "type": "Signal",
+      "label": "Война на Ближнем Востоке в прямом эфире:",
       "severity": 68,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Трамп_гово",
+      "id": "SIGNAL-IL-Последние_",
       "type": "Signal",
-      "label": "Трамп говорит, что сделка с Ираном может",
-      "severity": 63,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-«Теперь_вс",
-      "type": "Signal",
-      "label": "«Теперь все вас ненавидят»: Трамп спорит",
-      "severity": 60,
+      "label": "Последние новости о войне Иран-США: Трам",
+      "severity": 68,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-IL",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IL",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-Последние_",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Россия_нан",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.77
+    },
+    {
+      "from": "SIGNAL-IL-Война_на_Б",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.68
     },
     {
-      "from": "SIGNAL-IL-Трамп_гово",
+      "from": "SIGNAL-IL-Последние_",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-IL-«Теперь_вс",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.68
     }
   ]
 }

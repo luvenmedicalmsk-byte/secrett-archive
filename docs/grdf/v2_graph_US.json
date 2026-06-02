@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-06-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-02T03:36:01.328558+00:00",
+  "generated_at": "2026-06-02T08:34:23.810189+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 65,
+      "score": 66,
       "props": {
-        "risk_score": 65
+        "risk_score": 66
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 8,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 8,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 15,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-US-Хакеры_зах",
+      "id": "SIGNAL-US-Значит_ли_",
       "type": "Signal",
-      "label": "Хакеры захватили тысячи сайтов для атак ",
-      "severity": 63,
-      "domain": "technology"
+      "label": "Значит ли так называемая родина больше, ",
+      "severity": 65,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Зеленое_пр",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.76
     },
     {
-      "from": "SIGNAL-US-Хакеры_зах",
-      "to": "DOMAIN-US-technology",
+      "from": "SIGNAL-US-Значит_ли_",
+      "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.63
+      "weight": 0.65
     }
   ]
 }

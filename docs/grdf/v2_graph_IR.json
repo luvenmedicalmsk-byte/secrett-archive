@@ -2,67 +2,67 @@
   "country": "IR",
   "date": "2026-06-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-02T03:36:01.337507+00:00",
+  "generated_at": "2026-06-02T08:34:23.819869+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 64,
+      "score": 68,
       "props": {
-        "risk_score": 64
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Бывший_сов",
+      "type": "Signal",
+      "label": "Бывший советник Трампа: Кризис в Иране п",
+      "severity": 74,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IR-Последние_",
       "type": "Signal",
-      "label": "Последние новости о войне Ирана и США: Т",
+      "label": "Последние новости о войне Иран-США: Трам",
       "severity": 68,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Энергетиче",
+      "id": "SIGNAL-IR-Значит_ли_",
       "type": "Signal",
-      "label": "Энергетический кризис будет длиться гора",
-      "severity": 63,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Трамп_гово",
-      "type": "Signal",
-      "label": "Трамп говорит, что сделка с Ираном может",
-      "severity": 63,
+      "label": "Значит ли так называемая родина больше, ",
+      "severity": 65,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-IR",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Бывший_сов",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-IR-Последние_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.68
     },
     {
-      "from": "SIGNAL-IR-Энергетиче",
+      "from": "SIGNAL-IR-Значит_ли_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-IR-Трамп_гово",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.63
+      "weight": 0.65
     }
   ]
 }
