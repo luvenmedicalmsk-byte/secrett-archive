@@ -425,6 +425,23 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .cat-tech{background:rgba(168,85,247,.12);color:#a855f7}
 .cat-social{background:rgba(234,179,8,.12);color:#eab308}
 
+
+.crm-table th,.crm-table td{padding:7px 9px;font-size:11px;text-align:left;border-bottom:.5px solid var(--border)}
+.crm-table th{font-weight:600;color:var(--text3);font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.crm-funnel-bar{height:32px;border-radius:5px;display:flex;align-items:center;padding:0 10px;font-size:10px;font-weight:600;color:#fff;margin-bottom:5px;transition:width .5s ease}
+.crm-plan-badge{display:inline-block;font-size:9px;padding:1px 7px;border-radius:3px;font-weight:700}
+.plan-free{background:rgba(100,116,139,.15);color:#94a3b8}
+.plan-signal{background:rgba(59,130,246,.12);color:#3b82f6}
+.plan-strategic{background:rgba(168,85,247,.12);color:#a855f7}
+.plan-elite{background:rgba(234,179,8,.12);color:#eab308}
+.crm-metric-card{background:var(--bg2);border:.5px solid var(--border);border-radius:10px;padding:12px 14px}
+.crm-metric-val{font-family:var(--mono);font-size:24px;font-weight:700;margin:4px 0}
+.crm-metric-lbl{font-size:9px;color:var(--text3);letter-spacing:.08em}
+.crm-churn-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid var(--border);font-size:11px}
+.crm-form-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.crm-form-row label{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.crm-form-row input,.crm-form-row select{background:var(--bg3);border:.5px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--font);font-size:12px;outline:none}
+
 </style>
 </head>
 <body>
@@ -502,7 +519,9 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s30')" data-s="s30">&#9654;<span class="sn-tip">Исполнение</span></button>
     <button class="sn-btn" onclick="goSection('s31')" data-s="s31">&#9854;<span class="sn-tip">Контур обучения</span></button>
           <button class="sn-btn" onclick="goSection('s32')" data-s="s32">&#9854;<span class="sn-tip">Signal Pro 2.0</span></button>
+          <button class="sn-btn" onclick="goSection('s33')" data-s="s33">&#9854;<span class="sn-tip">Signal Pro 2.0</span></button>
     <button class="sn-btn" onclick="goSection('s32')" data-s="s32">&#9889;<span class="sn-tip">Signal Pro</span></button>
+    <button class="sn-btn" onclick="goSection('s33')" data-s="s33">&#128202;<span class="sn-tip">CRM</span></button>
       </div>
 
   <div id="main">
@@ -3358,6 +3377,95 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
       <div id="sp2-report-out"></div>
     </div><!-- /s32 -->
 
+
+    <!-- ─── S33: CLIENT INTELLIGENCE & REVENUE COMMAND CENTER ─── -->
+    <div class="section" id="s33">
+      <div class="s-head">
+        <div class="s-tag">33</div>
+        <div class="s-title">Центр управления клиентами</div>
+        <div class="s-badge badge-blue" id="crm-badge">&#128202; REVENUE</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Клиенты → Подписки → Доход → Рост · Данные из VPS + Platform PM</div>
+
+      <!-- VPS Status -->
+      <div id="crm-vps-status" style="margin-bottom:12px"></div>
+
+      <!-- 09: FOUNDER COMMAND (ПЕРВЫЙ — главное для основателя) -->
+      <div class="sum-title" style="margin-bottom:8px"><span>&#127981;</span> 09 · Личная панель основателя</div>
+      <div class="grid-4" id="crm-founder-kpi" style="margin-bottom:14px"></div>
+
+      <!-- 01: EXECUTIVE BUSINESS DASHBOARD -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#128202;</span> 01 · Бизнес-дашборд</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px" id="crm-metrics-grid"></div>
+
+      <!-- 03: CONVERSION FUNNEL -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#11015;</span> 03 · Воронка конверсии</div>
+      <div id="crm-funnel" style="margin-bottom:14px"></div>
+
+      <!-- 04: REVENUE CENTER -->
+      <div class="sum-title" style="margin-bottom:8px"><span>&#128178;</span> 04 · Центр доходов</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px" id="crm-revenue-grid"></div>
+
+      <!-- 02: CLIENT REGISTRY (swipe: table + add form) -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#128101;</span> 02 · Реестр клиентов</div>
+      <div class="swipe-wrap" id="crm-reg-swipe">
+        <div class="swipe-card"><div class="sum-card" style="padding:0">
+          <div style="padding:10px 12px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:11px;font-weight:600">Все клиенты</span>
+            <div style="display:flex;gap:6px">
+              <button onclick="crmExportCSV()" class="filter-btn">&#8681; CSV</button>
+              <button onclick="crmRefresh()"    class="filter-btn">&#8635; Обновить</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+            <table class="crm-table" style="width:100%;border-collapse:collapse">
+              <thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Тариф</th><th>Страна</th><th>Регистрация</th><th>Последний вход</th><th>Статус</th><th>LTV $</th><th></th></tr></thead>
+              <tbody id="crm-clients-tbody"></tbody>
+            </table>
+          </div>
+        </div></div>
+        <div class="swipe-card"><div class="sum-card">
+          <div style="font-size:11px;font-weight:600;margin-bottom:12px">&#10133; Добавить клиента</div>
+          <div id="crm-add-form"></div>
+        </div></div>
+      </div>
+      <div class="swipe-dots" id="crm-reg-dots"><span class="swipe-dot active"></span><span class="swipe-dot"></span></div>
+
+      <!-- 05+06: ACTIVITY + FEATURE USAGE -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;margin-bottom:14px">
+        <div class="sum-card">
+          <div class="sum-title" style="margin-bottom:8px"><span>&#128336;</span> 05 · Активность пользователей</div>
+          <div id="crm-activity"></div>
+        </div>
+        <div class="sum-card">
+          <div class="sum-title" style="margin-bottom:8px"><span>&#128293;</span> 06 · Использование разделов</div>
+          <div id="crm-feature-usage"></div>
+        </div>
+      </div>
+
+      <!-- 07: CHURN DETECTOR -->
+      <div class="sum-title" style="margin-bottom:8px"><span>&#9888;</span> 07 · Детектор оттока</div>
+      <div class="sum-card" style="margin-bottom:14px;border:.5px solid rgba(239,68,68,.2)">
+        <div id="crm-churn"></div>
+      </div>
+
+      <!-- 08: UPGRADE ENGINE -->
+      <div class="sum-title" style="margin-bottom:8px"><span>&#8679;</span> 08 · Движок апгрейдов</div>
+      <div class="sum-card" style="margin-bottom:14px;border:.5px solid rgba(16,185,129,.2)">
+        <div id="crm-upgrade"></div>
+      </div>
+
+      <!-- 10: BUSINESS REPORT -->
+      <div class="sum-title" style="margin-bottom:8px"><span>&#128203;</span> 10 · Бизнес-отчёт</div>
+      <div class="sum-card" style="border:.5px solid rgba(59,130,246,.2)">
+        <div id="crm-report-founder"></div>
+        <div style="margin-top:10px">
+          <button onclick="generateCRMReport()" style="width:100%;padding:11px 0;background:linear-gradient(135deg,#010d1a,#020e16);border:1px solid rgba(59,130,246,.35);border-radius:8px;color:var(--blue);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none">&#9654; Создать бизнес-отчёт</button>
+        </div>
+      </div>
+      <div id="crm-report-out"></div>
+    </div><!-- /s33 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -4029,7 +4137,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); loadStrategicCommandCenter(cc); loadExecutionCenter(cc); loadMissionLearningCenter(cc); loadSignalPro2(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); loadStrategicCommandCenter(cc); loadExecutionCenter(cc); loadMissionLearningCenter(cc); loadSignalPro2(cc); loadClientIntelligence(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -15493,6 +15601,497 @@ window.generateSP2Report = function() {
   },600);
 };
 // END SIGNAL PRO 2.0
+
+
+// ══════════════════════════════════════════════════════════════════
+// S33: CLIENT INTELLIGENCE & REVENUE COMMAND CENTER
+// Data layer:
+//   CLIENT_REGISTRY → PM (localStorage + IDB) — main store
+//   VPS /api/clients/* — sync when available
+//   VPS /api/activity/recent — real auth.log data
+//   PM_KEYS.clients → persistence
+// ══════════════════════════════════════════════════════════════════
+
+var CLIENT_REGISTRY   = [];  // master client list
+var _crmVpsAvailable  = false;
+var _crmLastSync      = null;
+var _crmDashboard     = {};
+var VPS_CLIENTS_BASE  = 'https://auth.secrett-archive.com';
+
+var PLAN_PRICES = { FREE:0, SIGNAL_PRO:49, STRATEGIC_PRO:149, ELITE:499 };
+var PLAN_LABELS = { FREE:'FREE', SIGNAL_PRO:'SIGNAL PRO', STRATEGIC_PRO:'STRATEGIC PRO', ELITE:'ELITE' };
+var PLAN_CLS    = { FREE:'plan-free', SIGNAL_PRO:'plan-signal', STRATEGIC_PRO:'plan-strategic', ELITE:'plan-elite' };
+
+// ── VPS API helpers ────────────────────────────────────────────────
+function _crmFetch(path, method, body) {
+  var tok = typeof _authToken !== 'undefined' ? _authToken : sessionStorage.getItem('mia-auth-token');
+  var opts = { method: method || 'GET', headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(tok||'') } };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(VPS_CLIENTS_BASE + path, opts)
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .catch(function(e){ _crmVpsAvailable = false; return null; });
+}
+
+// ── PM persistence ─────────────────────────────────────────────────
+function _crmSaveLocal() {
+  try { localStorage.setItem('mia-pm-clients', JSON.stringify(CLIENT_REGISTRY)); } catch(_) {}
+}
+function _crmLoadLocal() {
+  try {
+    var d = localStorage.getItem('mia-pm-clients');
+    if (d) CLIENT_REGISTRY = JSON.parse(d);
+  } catch(_) {}
+}
+_crmLoadLocal();
+
+// ── MAIN LOADER ────────────────────────────────────────────────────
+function loadClientIntelligence(countries) {
+  // Try VPS first, fall back to local
+  _crmFetch('/api/clients/dashboard').then(function(d) {
+    if (d && d.total !== undefined) {
+      _crmVpsAvailable = true;
+      _crmDashboard = d;
+    }
+    _crmFetch('/api/clients/list').then(function(r) {
+      if (r && r.clients) {
+        CLIENT_REGISTRY = r.clients;
+        _crmSaveLocal();
+      }
+      _crmRender();
+    });
+  });
+  // Load activity from VPS
+  _crmFetch('/api/activity/recent').then(function(r) {
+    _crmBuildActivity(r ? r.activity : []);
+  });
+}
+
+function _crmRender() {
+  _crmBuildVpsStatus();
+  _crmBuildFounderKPI();
+  _crmBuildMetrics();
+  _crmBuildFunnel();
+  _crmBuildRevenue();
+  _crmBuildClientsTable();
+  _crmBuildAddForm();
+  _crmBuildFeatureUsage();
+  _crmBuildChurn();
+  _crmBuildUpgrade();
+  _crmBuildReportFounder();
+  initSwipeDots('crm-reg-swipe','crm-reg-dots');
+}
+
+// ── VPS Status ─────────────────────────────────────────────────────
+function _crmBuildVpsStatus() {
+  var col  = _crmVpsAvailable ? 'var(--green)' : 'var(--orange)';
+  var text = _crmVpsAvailable ? 'VPS синхронизирован · auth.secrett-archive.com' : 'VPS офлайн · данные из локального хранилища';
+  var el=document.getElementById('crm-vps-status');
+  if(el) el.innerHTML='<div style="display:flex;align-items:center;gap:6px;font-size:9px;color:'+col+'">'
+    +'<span style="width:6px;height:6px;border-radius:50%;background:'+col+'"></span>'+text+'</div>';
+}
+
+// ── Metrics helpers ────────────────────────────────────────────────
+function _crmCalcMetrics() {
+  if (_crmVpsAvailable && _crmDashboard.total !== undefined) return _crmDashboard;
+  // Fallback: calculate from local CLIENT_REGISTRY
+  var active  = CLIENT_REGISTRY.filter(function(c){return c.status==='active';});
+  var byPlan  = {FREE:0,SIGNAL_PRO:0,STRATEGIC_PRO:0,ELITE:0};
+  var mrr     = 0;
+  active.forEach(function(c){
+    byPlan[c.plan||'FREE'] = (byPlan[c.plan||'FREE']||0)+1;
+    mrr += PLAN_PRICES[c.plan||'FREE']||0;
+  });
+  var now    = Date.now();
+  var msDay  = 86400000;
+  return {
+    total: CLIENT_REGISTRY.length, active: active.length, byPlan, mrr, arr: mrr*12,
+    arpu: active.length ? Math.round(mrr/active.length) : 0,
+    newToday: CLIENT_REGISTRY.filter(function(c){return (now-new Date(c.registered_at).getTime())<msDay;}).length,
+    churn7:  active.filter(function(c){return c.last_login&&(now-new Date(c.last_login).getTime())>7*msDay;}).length,
+    churn30: active.filter(function(c){return c.last_login&&(now-new Date(c.last_login).getTime())>30*msDay;}).length,
+    upgradeReady: active.filter(function(c){return (c.plan==='FREE'||c.plan==='SIGNAL_PRO')&&(c.logins_count||0)>=5;}).length,
+    ltv_total: active.reduce(function(a,c){return a+(c.ltv||0);},0),
+  };
+}
+
+// ── 09: FOUNDER KPI (first on page) ───────────────────────────────
+function _crmBuildFounderKPI() {
+  var m = _crmCalcMetrics();
+  var now = new Date().toLocaleDateString('ru-RU');
+  var cards = [
+    {l:'Новых сегодня',    v:m.newToday,       c:m.newToday>0?'var(--green)':'var(--text3)'},
+    {l:'MRR',              v:'$'+m.mrr,         c:'var(--gold)'},
+    {l:'Всего клиентов',  v:m.total,            c:'var(--blue)'},
+    {l:'Активных',         v:m.active,          c:'var(--green)'},
+    {l:'Риск оттока 7д',  v:m.churn7,           c:m.churn7>0?'var(--red)':'var(--green)'},
+    {l:'К апгрейду',       v:m.upgradeReady,    c:m.upgradeReady>0?'var(--orange)':'var(--text3)'},
+    {l:'ARR',              v:'$'+m.arr,          c:'var(--gold)'},
+    {l:'ARPU',             v:'$'+m.arpu,         c:'var(--blue)'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.l+'</div><div class="card-val" style="color:'+c.c+';font-size:17px">'+c.v+'</div></div>';
+  });
+  var g=document.getElementById('crm-founder-kpi'); if(g) g.innerHTML=h;
+}
+
+// ── 01: METRICS GRID ──────────────────────────────────────────────
+function _crmBuildMetrics() {
+  var m = _crmCalcMetrics();
+  var plans = [
+    {k:'FREE',           l:'FREE',            c:'#64748b'},
+    {k:'SIGNAL_PRO',     l:'SIGNAL PRO',      c:'#3b82f6'},
+    {k:'STRATEGIC_PRO',  l:'STRATEGIC PRO',   c:'#a855f7'},
+    {k:'ELITE',          l:'ELITE',           c:'#eab308'},
+  ];
+  var h='';
+  plans.forEach(function(p){
+    var cnt = m.byPlan ? (m.byPlan[p.k]||0) : 0;
+    var rev = cnt * PLAN_PRICES[p.k];
+    h+='<div class="crm-metric-card">';
+    h+='<div class="crm-metric-lbl"><span class="crm-plan-badge '+PLAN_CLS[p.k]+'">'+p.l+'</span></div>';
+    h+='<div class="crm-metric-val" style="color:'+p.c+'">'+cnt+'</div>';
+    h+='<div style="font-size:9px;color:var(--text3)">$'+rev+'/мес</div>';
+    h+='</div>';
+  });
+  var g=document.getElementById('crm-metrics-grid'); if(g) g.innerHTML=h;
+}
+
+// ── 03: CONVERSION FUNNEL ─────────────────────────────────────────
+function _crmBuildFunnel() {
+  var m = _crmCalcMetrics();
+  var bp = m.byPlan || {FREE:0,SIGNAL_PRO:0,STRATEGIC_PRO:0,ELITE:0};
+  var total = m.total || 1;
+  var steps = [
+    {k:'FREE',          l:'FREE',           n:bp.FREE||0,          c:'#64748b'},
+    {k:'SIGNAL_PRO',    l:'SIGNAL PRO $49', n:bp.SIGNAL_PRO||0,    c:'#3b82f6'},
+    {k:'STRATEGIC_PRO', l:'STRATEGIC $149', n:bp.STRATEGIC_PRO||0, c:'#a855f7'},
+    {k:'ELITE',         l:'ELITE $499',     n:bp.ELITE||0,         c:'#eab308'},
+  ];
+  var h='<div style="padding:8px 0">';
+  var prevN = total;
+  steps.forEach(function(s, i) {
+    var pct  = total > 0 ? Math.round(s.n/total*100) : 0;
+    var conv = i > 0 && prevN > 0 ? Math.round(s.n/prevN*100) : 100;
+    var lost = i > 0 ? prevN - s.n : 0;
+    var barW = Math.max(10, pct);
+    h += '<div style="margin-bottom:6px">';
+    h += '<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:9px;color:var(--text3)">';
+    h += '<span><span class="crm-plan-badge '+PLAN_CLS[s.k]+'">'+s.l+'</span></span>';
+    h += '<span>'+s.n+' клиентов · '+pct+'%'+(i>0?' · конверсия '+conv+'%':'')+'</span>';
+    h += '</div>';
+    h += '<div style="background:var(--bg3);border-radius:5px;height:28px;position:relative">';
+    h += '<div style="width:'+barW+'%;height:100%;background:'+s.c+'22;border-radius:5px;border:1px solid '+s.c+'44;display:flex;align-items:center;padding:0 8px">';
+    h += '<span style="font-size:10px;font-weight:600;color:'+s.c+'">'+s.n+'</span>';
+    h += '</div></div>';
+    if (i > 0 && lost > 0) {
+      h += '<div style="font-size:9px;color:var(--red);margin-top:2px;padding-left:4px">↳ потеряно '+lost+' ('+Math.round(lost/prevN*100)+'%)</div>';
+    }
+    h += '</div>';
+    prevN = s.n;
+  });
+  h += '</div>';
+  var el=document.getElementById('crm-funnel'); if(el) el.innerHTML=h;
+}
+
+// ── 04: REVENUE CENTER ────────────────────────────────────────────
+function _crmBuildRevenue() {
+  var m = _crmCalcMetrics();
+  var metrics = [
+    {l:'MRR',           v:'$'+m.mrr,          sub:'ежемесячный доход'},
+    {l:'ARR',           v:'$'+m.arr,           sub:'годовой прогноз'},
+    {l:'ARPU',          v:'$'+m.arpu,          sub:'доход на клиента'},
+    {l:'LTV (∑)',       v:'$'+(m.ltv_total||0),sub:'суммарный LTV'},
+  ];
+  var h='';
+  metrics.forEach(function(i){
+    h+='<div class="crm-metric-card"><div class="crm-metric-lbl">'+i.l+'</div>';
+    h+='<div class="crm-metric-val" style="color:var(--gold)">'+i.v+'</div>';
+    h+='<div style="font-size:9px;color:var(--text3)">'+i.sub+'</div></div>';
+  });
+  var g=document.getElementById('crm-revenue-grid'); if(g) g.innerHTML=h;
+}
+
+// ── 02: CLIENT REGISTRY TABLE ─────────────────────────────────────
+function _crmBuildClientsTable() {
+  var h = '';
+  if (!CLIENT_REGISTRY.length) {
+    h = '<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text3);font-size:12px">Клиентов нет · добавьте первого клиента →</td></tr>';
+    var tb=document.getElementById('crm-clients-tbody'); if(tb) tb.innerHTML=h; return;
+  }
+  CLIENT_REGISTRY.slice().reverse().forEach(function(c) {
+    var st  = c.status === 'active' ? '#10b981' : '#ef4444';
+    var reg = c.registered_at ? new Date(c.registered_at).toLocaleDateString('ru-RU') : '—';
+    var ll  = c.last_login    ? new Date(c.last_login).toLocaleDateString('ru-RU')    : '—';
+    h += '<tr>';
+    h += '<td style="font-family:var(--mono);font-size:9px;color:var(--text3)">'+c.id+'</td>';
+    h += '<td style="font-size:11px;color:var(--text)">'+c.name+'</td>';
+    h += '<td style="font-size:10px;color:var(--blue)">'+c.email+'</td>';
+    h += '<td><span class="crm-plan-badge '+PLAN_CLS[c.plan||'FREE']+'">'+PLAN_LABELS[c.plan||'FREE']+'</span></td>';
+    h += '<td style="font-size:10px">'+c.country+'</td>';
+    h += '<td style="font-size:10px;color:var(--text3)">'+reg+'</td>';
+    h += '<td style="font-size:10px;color:var(--text3)">'+ll+'</td>';
+    h += '<td><span style="font-size:9px;color:'+st+'">●</span> '+c.status+'</td>';
+    h += '<td style="font-family:var(--mono);font-size:10px;color:var(--gold)">$'+(c.ltv||0)+'</td>';
+    h += '<td><button onclick="crmDeleteClient(\''+c.id+'\')" style="font-size:9px;padding:2px 6px;background:transparent;border:.5px solid var(--red);border-radius:3px;color:var(--red);cursor:pointer;-webkit-appearance:none">✕</button></td>';
+    h += '</tr>';
+  });
+  var tb=document.getElementById('crm-clients-tbody'); if(tb) tb.innerHTML=h;
+}
+
+// ── ADD FORM ──────────────────────────────────────────────────────
+function _crmBuildAddForm() {
+  var h = '';
+  ['name','email','plan','country'].forEach(function(f){
+    var isSelect = f === 'plan';
+    h += '<div class="crm-form-row"><label>'+{name:'Имя',email:'Email *',plan:'Тариф',country:'Страна'}[f]+'</label>';
+    if (isSelect) {
+      h += '<select id="crm-new-'+f+'">';
+      Object.keys(PLAN_PRICES).forEach(function(k){
+        h += '<option value="'+k+'">'+PLAN_LABELS[k]+' ($'+PLAN_PRICES[k]+'/мес)</option>';
+      });
+      h += '</select>';
+    } else {
+      h += '<input id="crm-new-'+f+'" type="'+(f==='email'?'email':'text')+'" placeholder="'+{name:'Иван Иванов',email:'email@domain.com',country:'RU'}[f]+'">';
+    }
+    h += '</div>';
+  });
+  h += '<button onclick="crmAddClient()" style="width:100%;padding:10px;background:rgba(16,185,129,.08);border:.5px solid rgba(16,185,129,.3);border-radius:7px;color:var(--green);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;margin-top:6px;-webkit-appearance:none">+ Добавить клиента</button>';
+  h += '<div id="crm-add-msg" style="margin-top:6px;font-size:10px"></div>';
+  var el=document.getElementById('crm-add-form'); if(el) el.innerHTML=h;
+}
+
+// ADD CLIENT
+window.crmAddClient = function() {
+  var name    = (document.getElementById('crm-new-name')||{}).value||'';
+  var email   = (document.getElementById('crm-new-email')||{}).value||'';
+  var plan    = (document.getElementById('crm-new-plan')||{}).value||'FREE';
+  var country = (document.getElementById('crm-new-country')||{}).value||'—';
+  if (!email) { var m=document.getElementById('crm-add-msg'); if(m){ m.style.color='var(--red)'; m.textContent='Email обязателен'; } return; }
+  var id = 'CLT-'+String(CLIENT_REGISTRY.length+1).padStart(3,'0');
+  var client = { id:id, name:name||email.split('@')[0], email:email, plan:plan, country:country||'—',
+    registered_at: new Date().toISOString(), last_login:null, status:'active',
+    logins_count:0, ltv:0, monthly_value:PLAN_PRICES[plan]||0, notes:'' };
+  CLIENT_REGISTRY.push(client);
+  _crmSaveLocal();
+  // Try VPS
+  if (_crmVpsAvailable) {
+    _crmFetch('/api/clients/add','POST',{name:client.name,email:client.email,plan:client.plan,country:client.country})
+      .then(function(r){ if(r&&r.success){ CLIENT_REGISTRY[CLIENT_REGISTRY.length-1].id=r.client.id; _crmSaveLocal(); } });
+  }
+  var m=document.getElementById('crm-add-msg');
+  if(m){ m.style.color='var(--green)'; m.textContent='✅ Клиент добавлен: '+email; }
+  _crmRender();
+};
+
+// DELETE CLIENT
+window.crmDeleteClient = function(id) {
+  if (!confirm('Удалить клиента '+id+'?')) return;
+  CLIENT_REGISTRY = CLIENT_REGISTRY.filter(function(c){ return c.id !== id; });
+  _crmSaveLocal();
+  if (_crmVpsAvailable) _crmFetch('/api/clients/'+id,'DELETE');
+  _crmRender();
+};
+
+// EXPORT CSV
+window.crmExportCSV = function() {
+  var h = 'ID,Имя,Email,Тариф,Страна,Регистрация,Последний вход,Статус,LTV\n';
+  CLIENT_REGISTRY.forEach(function(c){
+    h += [c.id,c.name,c.email,c.plan,c.country,
+      c.registered_at?c.registered_at.slice(0,10):'',
+      c.last_login?c.last_login.slice(0,10):'',
+      c.status, c.ltv||0].join(',') + '\n';
+  });
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(h);
+  a.download = 'clients-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+};
+
+// REFRESH
+window.crmRefresh = function() { loadClientIntelligence([]); };
+
+// ── 05: ACTIVITY ──────────────────────────────────────────────────
+function _crmBuildActivity(logs) {
+  var h = '';
+  if (!logs || !logs.length) {
+    // Fallback: show CLIENT_REGISTRY last logins
+    var recent = CLIENT_REGISTRY.filter(function(c){ return c.last_login; })
+      .sort(function(a,b){ return new Date(b.last_login)-new Date(a.last_login); }).slice(0,8);
+    if (!recent.length) { h='<div style="font-size:10px;color:var(--text3)">Нет данных об активности</div>'; }
+    else {
+      recent.forEach(function(c){
+        h+='<div class="crm-churn-row"><span style="font-size:10px;color:var(--text2);flex:1">'+c.name+'</span>';
+        h+='<span class="crm-plan-badge '+PLAN_CLS[c.plan||'FREE']+'">'+PLAN_LABELS[c.plan||'FREE']+'</span>';
+        h+='<span style="font-size:9px;color:var(--text3)">'+new Date(c.last_login).toLocaleDateString('ru-RU')+'</span></div>';
+      });
+    }
+    var el=document.getElementById('crm-activity'); if(el) el.innerHTML=h; return;
+  }
+  logs.slice(0,10).forEach(function(l){
+    var col = l.success ? 'var(--green)' : 'var(--red)';
+    var time = new Date(l.ts).toLocaleString('ru-RU').slice(0,16);
+    h+='<div class="crm-churn-row">';
+    h+='<span style="font-size:9px;color:'+col+'">'+{login_ok:'&#9989;',logout:'&#128682;',wrong_password:'&#10060;',rate_limited:'&#9888;'}[l.note]||'&#9679;'+'</span>';
+    h+='<span style="font-size:9px;color:var(--text2);flex:1">'+l.ip+'</span>';
+    h+='<span style="font-size:9px;color:var(--text3)">'+time+'</span>';
+    h+='</div>';
+  });
+  var el=document.getElementById('crm-activity'); if(el) el.innerHTML=h;
+}
+
+// ── 06: FEATURE USAGE ─────────────────────────────────────────────
+function _crmBuildFeatureUsage() {
+  // Track visits from navigation clicks
+  var usage = {};
+  try { usage = JSON.parse(localStorage.getItem('mia-section-visits')||'{}'); } catch(_) {}
+  var sections = [
+    {k:'s32',l:'Signal Pro 2.2'}, {k:'s17',l:'Валидация прогнозов'},
+    {k:'s18',l:'Сценарии'},       {k:'s16',l:'Решения'},
+    {k:'s29',l:'Командование'},   {k:'s14',l:'Факторы риска'},
+    {k:'s20',l:'Граф аналитики'}, {k:'s21',l:'Временной слой'},
+  ];
+  var total = Object.values(usage).reduce(function(a,v){return a+v;},0)||1;
+  var h='';
+  sections.sort(function(a,b){ return (usage[b.k]||0)-(usage[a.k]||0); }).forEach(function(s){
+    var cnt = usage[s.k]||0;
+    var pct = Math.round(cnt/total*100);
+    h+='<div style="margin-bottom:5px">';
+    h+='<div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:2px">';
+    h+='<span style="color:var(--text2)">'+s.l+'</span><span style="color:var(--text3)">'+cnt+' визитов</span></div>';
+    h+='<div style="height:3px;background:var(--bg3);border-radius:2px"><div style="width:'+Math.max(2,pct)+'%;height:100%;background:var(--blue);border-radius:2px"></div></div>';
+    h+='</div>';
+  });
+  var el=document.getElementById('crm-feature-usage'); if(el) el.innerHTML=h||'<div style="font-size:10px;color:var(--text3)">Данные накапливаются...</div>';
+}
+
+// ── 07: CHURN DETECTOR ────────────────────────────────────────────
+function _crmBuildChurn() {
+  var now    = Date.now();
+  var msDay  = 86400000;
+  var at7    = CLIENT_REGISTRY.filter(function(c){ return c.last_login&&(now-new Date(c.last_login).getTime())>7*msDay&&c.status==='active'; });
+  var at30   = CLIENT_REGISTRY.filter(function(c){ return c.last_login&&(now-new Date(c.last_login).getTime())>30*msDay&&c.status==='active'; });
+  var never  = CLIENT_REGISTRY.filter(function(c){ return !c.last_login&&c.status==='active'; });
+  var h = '';
+  if (!at7.length && !at30.length && !never.length) {
+    h = '<div style="padding:10px;font-size:11px;color:var(--green)">&#9989; Признаков оттока не обнаружено</div>';
+    var el=document.getElementById('crm-churn'); if(el) el.innerHTML=h; return;
+  }
+  if (at30.length) {
+    h += '<div style="font-size:9px;color:var(--red);margin-bottom:6px">&#128308; Не заходили 30+ дней ('+at30.length+')</div>';
+    at30.forEach(function(c){
+      h+='<div class="crm-churn-row"><span style="font-size:10px;flex:1">'+c.name+'</span>';
+      h+='<span class="crm-plan-badge '+PLAN_CLS[c.plan||'FREE']+'">'+PLAN_LABELS[c.plan||'FREE']+'</span>';
+      h+='<span style="font-size:9px;color:var(--red)">&#9888; Отток</span></div>';
+    });
+  }
+  if (at7.length) {
+    h += '<div style="font-size:9px;color:var(--orange);margin-top:8px;margin-bottom:6px">&#128992; Не заходили 7+ дней ('+at7.length+')</div>';
+    at7.forEach(function(c){
+      h+='<div class="crm-churn-row"><span style="font-size:10px;flex:1">'+c.name+'</span>';
+      h+='<span class="crm-plan-badge '+PLAN_CLS[c.plan||'FREE']+'">'+PLAN_LABELS[c.plan||'FREE']+'</span>';
+      h+='<span style="font-size:9px;color:var(--orange)">Риск</span></div>';
+    });
+  }
+  var el=document.getElementById('crm-churn'); if(el) el.innerHTML=h;
+}
+
+// ── 08: UPGRADE ENGINE ────────────────────────────────────────────
+function _crmBuildUpgrade() {
+  var candidates = CLIENT_REGISTRY.filter(function(c){
+    return c.status === 'active' && (
+      (c.plan==='FREE' && (c.logins_count||0) >= 3) ||
+      (c.plan==='SIGNAL_PRO' && (c.logins_count||0) >= 10) ||
+      (c.plan==='STRATEGIC_PRO' && (c.logins_count||0) >= 20)
+    );
+  });
+  var upgradePaths = {FREE:'SIGNAL_PRO', SIGNAL_PRO:'STRATEGIC_PRO', STRATEGIC_PRO:'ELITE'};
+  var h = '';
+  if (!candidates.length) {
+    h = '<div style="padding:10px;font-size:11px;color:var(--text3)">Кандидатов для апгрейда нет · добавьте клиентов и отслеживайте активность</div>';
+    var el=document.getElementById('crm-upgrade'); if(el) el.innerHTML=h; return;
+  }
+  candidates.forEach(function(c){
+    var next = upgradePaths[c.plan];
+    if (!next) return;
+    var gain = PLAN_PRICES[next] - (PLAN_PRICES[c.plan]||0);
+    h+='<div class="crm-churn-row">';
+    h+='<span style="font-size:10px;flex:1">'+c.name+'</span>';
+    h+='<span class="crm-plan-badge '+PLAN_CLS[c.plan||'FREE']+'">'+PLAN_LABELS[c.plan||'FREE']+'</span>';
+    h+='<span style="font-size:10px;color:var(--text3);margin:0 5px">→</span>';
+    h+='<span class="crm-plan-badge '+PLAN_CLS[next]+'">'+PLAN_LABELS[next]+'</span>';
+    h+='<span style="font-size:9px;color:var(--green);margin-left:6px">+$'+gain+'/мес</span>';
+    h+='</div>';
+  });
+  var el=document.getElementById('crm-upgrade'); if(el) el.innerHTML=h;
+}
+
+// ── FOUNDER REPORT summary ────────────────────────────────────────
+function _crmBuildReportFounder() {
+  var m = _crmCalcMetrics();
+  var h='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
+  [{l:'Клиентов',v:m.total,c:'var(--blue)'},{l:'MRR',v:'$'+m.mrr,c:'var(--gold)'},
+   {l:'ARR',v:'$'+m.arr,c:'var(--gold)'},{l:'ARPU',v:'$'+m.arpu,c:'var(--green)'},
+   {l:'Отток риск',v:m.churn7,c:m.churn7>0?'var(--red)':'var(--green)'},
+   {l:'К апгрейду',v:m.upgradeReady,c:'var(--orange)'},
+  ].forEach(function(i){
+    h+='<div style="text-align:center;padding:8px;background:var(--bg3);border-radius:7px">';
+    h+='<div style="font-size:8px;color:var(--text3)">'+i.l+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:'+i.c+'">'+i.v+'</div></div>';
+  });
+  h+='</div>';
+  var el=document.getElementById('crm-report-founder'); if(el) el.innerHTML=h;
+}
+
+// ── 10: BUSINESS REPORT ───────────────────────────────────────────
+window.generateCRMReport = function() {
+  var el=document.getElementById('crm-report-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Генерация бизнес-отчёта...</div></div>';
+  setTimeout(function(){
+    var m   = _crmCalcMetrics();
+    var now = new Date().toUTCString().replace('GMT','UTC');
+    var bp  = m.byPlan||{FREE:0,SIGNAL_PRO:0,STRATEGIC_PRO:0,ELITE:0};
+    var convRate = m.total>0 ? Math.round((m.total-bp.FREE)/m.total*100) : 0;
+    var secs=[
+      {t:'КЛИЕНТСКАЯ БАЗА',c:'var(--blue)',
+       v:'Всего: '+m.total+' · Активных: '+m.active+' · FREE: '+bp.FREE+' · SIGNAL PRO: '+bp.SIGNAL_PRO+' · STRATEGIC: '+bp.STRATEGIC_PRO+' · ELITE: '+bp.ELITE},
+      {t:'ВЫРУЧКА',c:'var(--gold)',
+       v:'MRR: $'+m.mrr+' · ARR: $'+m.arr+' · ARPU: $'+m.arpu+' · LTV ∑: $'+(m.ltv_total||0)},
+      {t:'КОНВЕРСИЯ',c:'var(--green)',
+       v:'Платящих: '+convRate+'% · К апгрейду: '+m.upgradeReady+' клиентов · Потенциальный MRR от апгрейдов: $'+(m.upgradeReady*49)},
+      {t:'РИСКИ',c:'var(--red)',
+       v:'Риск оттока (7д): '+m.churn7+' · Риск оттока (30д): '+m.churn30+' · Потенциальные потери MRR: $'+(m.churn7*m.arpu)},
+      {t:'РЕКОМЕНДАЦИИ',c:'var(--orange)',
+       v:(m.upgradeReady>0?'Провести апгрейд кампанию для '+m.upgradeReady+' клиентов (+$'+(m.upgradeReady*49)+'/мес). ':'')+
+         (m.churn7>0?'Реактивация '+m.churn7+' клиентов под риском оттока. ':'')+
+         (m.total===0?'Начать привлечение клиентов. Первый тариф: FREE → конверсия в SIGNAL PRO.':'Продолжать рост.')},
+    ];
+    var h='<div style="background:rgba(59,130,246,.04);border:.5px solid rgba(59,130,246,.2);border-radius:10px;padding:16px;margin-top:10px">';
+    h+='<div style="text-align:center;margin-bottom:14px">';
+    h+='<div style="font-family:var(--mono);font-size:11px;color:var(--blue);letter-spacing:.2em">БИЗНЕС-ОТЧЁТ · CLIENT INTELLIGENCE</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+'</div></div>';
+    h+='<div style="height:.5px;background:rgba(59,130,246,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="padding:8px 10px;background:rgba(59,130,246,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+'</div></div>';
+    el.innerHTML=h;
+  },600);
+};
+
+// ── Section visit tracker ──────────────────────────────────────────
+(function() {
+  var orig = window.goSection;
+  window.goSection = function(id) {
+    try {
+      var v = JSON.parse(localStorage.getItem('mia-section-visits')||'{}');
+      v[id] = (v[id]||0) + 1;
+      localStorage.setItem('mia-section-visits', JSON.stringify(v));
+    } catch(_) {}
+    if (orig) orig(id);
+  };
+})();
+// END CLIENT INTELLIGENCE
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('load',function(){ checkAuth(); });
