@@ -29,6 +29,126 @@ function checkRateLimit(ip) {
   return hits <= RATE_LIMIT;
 }
 
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  AUTH-01 — Server-Side Authentication Module                   ║
+// ║  POST /api/auth/login   POST /api/auth/logout                  ║
+// ║  GET  /api/auth/verify                                         ║
+// ║                                                                ║
+// ║  Secrets (set via wrangler secret put):                        ║
+// ║    AUTH_PASSWORD  — the access password                        ║
+// ║    AUTH_SECRET    — HMAC signing key (32+ random chars)        ║
+// ║                                                                ║
+// ║  KV keys (env.EVENTS_KV):                                     ║
+// ║    auth:sess:{jti}    TTL=86400   session store               ║
+// ║    auth:rl:{ip}:{win} TTL=900     rate limit (5/15min)        ║
+// ║    auth:log:{ts}      TTL=30d     audit log                   ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const AUTH_TOKEN_TTL = 86400;
+const AUTH_RL_LIMIT  = 5;
+const AUTH_RL_WINDOW = 900;
+const AUTH_LOG_TTL   = 2592000;
+
+function _b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+async function _hmacSign(secret, msg) {
+  const key = await crypto.subtle.importKey('raw',
+    new TextEncoder().encode(secret),
+    { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
+  return _b64url(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(msg)));
+}
+async function _hmacVerify(secret, msg, sig) {
+  const expected = await _hmacSign(secret, msg);
+  if (expected.length !== sig.length) return false;
+  let diff = 0;
+  for (let i=0; i<expected.length; i++) diff |= expected.charCodeAt(i)^sig.charCodeAt(i);
+  return diff === 0;
+}
+function _authJson(data, status=200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*',
+             'Access-Control-Allow-Headers':'Content-Type,Authorization'}
+  });
+}
+function _getIP(req) {
+  return req.headers.get('CF-Connecting-IP') || req.headers.get('X-Forwarded-For') || 'unknown';
+}
+async function _checkAuthRL(ip, kv) {
+  if (!kv) return true;
+  const win = Math.floor(Date.now()/(AUTH_RL_WINDOW*1000));
+  const key = `auth:rl:${ip}:${win}`;
+  let hits = 0;
+  try { const v = await kv.get(key); hits = v ? parseInt(v,10) : 0; } catch(_) {}
+  if (hits >= AUTH_RL_LIMIT) return false;
+  try { await kv.put(key, String(hits+1), {expirationTtl:AUTH_RL_WINDOW}); } catch(_) {}
+  return true;
+}
+async function _authLog(kv, ip, success, note) {
+  if (!kv) return;
+  const ts = Date.now();
+  try { await kv.put(`auth:log:${ts}`, JSON.stringify({ts,ip,success,note,iso:new Date(ts).toISOString()}), {expirationTtl:AUTH_LOG_TTL}); } catch(_) {}
+}
+async function _createSession(kv, secret, ip) {
+  const jti = crypto.randomUUID().replace(/-/g,'');
+  const iat = Math.floor(Date.now()/1000);
+  const exp = iat + AUTH_TOKEN_TTL;
+  const payload = `${jti}.${iat}.${exp}`;
+  const sig = await _hmacSign(secret || 'dev-fallback-secret-change-me', payload);
+  const token = `${payload}.${sig}`;
+  if (kv) { try { await kv.put(`auth:sess:${jti}`, JSON.stringify({iat,exp,ip,jti}), {expirationTtl:AUTH_TOKEN_TTL}); } catch(_) {} }
+  return {token, exp};
+}
+async function _verifySession(kv, secret, token) {
+  if (!token || typeof token !== 'string') return {ok:false, reason:'no_token'};
+  const parts = token.split('.');
+  if (parts.length !== 4) return {ok:false, reason:'malformed'};
+  const [jti, iatStr, expStr, sig] = parts;
+  const payload = `${jti}.${iatStr}.${expStr}`;
+  const valid = await _hmacVerify(secret || 'dev-fallback-secret-change-me', payload, sig);
+  if (!valid) return {ok:false, reason:'invalid_sig'};
+  if (Math.floor(Date.now()/1000) > parseInt(expStr,10)) return {ok:false, reason:'expired'};
+  if (kv) { try { const stored = await kv.get(`auth:sess:${jti}`); if (!stored) return {ok:false,reason:'revoked'}; } catch(_) {} }
+  return {ok:true, jti, exp:parseInt(expStr,10)};
+}
+function _extractToken(req) {
+  const h = req.headers.get('Authorization') || '';
+  return h.startsWith('Bearer ') ? h.slice(7).trim() : null;
+}
+async function handleAuthLogin(request, env) {
+  const ip = _getIP(request);
+  const kv = env.EVENTS_KV || null;
+  const allowed = await _checkAuthRL(ip, kv);
+  if (!allowed) { await _authLog(kv,ip,false,'rate_limited'); return _authJson({success:false,error:'Too many attempts. Try in 15 minutes.'},429); }
+  let body; try { body = await request.json(); } catch(_) { return _authJson({success:false,error:'Invalid JSON.'},400); }
+  const password = body.password || '';
+  const correct  = env.AUTH_PASSWORD || '';
+  if (!correct) { await _authLog(kv,ip,false,'not_configured'); return _authJson({success:false,error:'Auth not configured.'},503); }
+  let diff=0, match=(password.length===correct.length);
+  const ml = Math.min(password.length, correct.length);
+  for (let i=0;i<ml;i++) diff |= password.charCodeAt(i)^correct.charCodeAt(i);
+  match = match && (diff===0);
+  if (!match) { await _authLog(kv,ip,false,'wrong_password'); return _authJson({success:false,error:'Invalid password.'},401); }
+  const {token,exp} = await _createSession(kv, env.AUTH_SECRET, ip);
+  await _authLog(kv,ip,true,'login_ok');
+  return _authJson({success:true,token,expires_at:exp});
+}
+async function handleAuthVerify(request, env) {
+  const kv = env.EVENTS_KV || null;
+  const result = await _verifySession(kv, env.AUTH_SECRET, _extractToken(request));
+  if (!result.ok) return _authJson({valid:false,reason:result.reason},401);
+  return _authJson({valid:true,expires_at:result.exp});
+}
+async function handleAuthLogout(request, env) {
+  const kv = env.EVENTS_KV || null;
+  const token = _extractToken(request);
+  if (token && kv) { const parts=token.split('.'); if(parts.length===4){try{await kv.delete(`auth:sess:${parts[0]}`);}catch(_){}} }
+  await _authLog(kv, _getIP(request), true, 'logout');
+  return _authJson({success:true});
+}
+// END AUTH-01 MODULE
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
@@ -46,7 +166,12 @@ export default {
     }
 
     try {
-      if (path === '/api/health')                               return handleHealth(env);
+      if (path === '/api/auth/login'  && request.method === 'POST')    return handleAuthLogin(request, env);
+    if (path === '/api/auth/verify' && request.method === 'GET')     return handleAuthVerify(request, env);
+    if (path === '/api/auth/logout' && request.method === 'POST')    return handleAuthLogout(request, env);
+    if (path.startsWith('/api/auth/') && request.method === 'OPTIONS')
+      return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,OPTIONS','Access-Control-Allow-Headers':'Content-Type,Authorization'}});
+    if (path === '/api/health')                               return handleHealth(env);
       if (path === '/api/stream')                               return handleStream(request, env, ctx);
       if (path === '/api/events' && request.method === 'GET')   return handleGetEvents(url, env);
       if (path === '/api/stats'  && request.method === 'GET')   return handleStats(url, env);
