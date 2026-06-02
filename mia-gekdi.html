@@ -8774,6 +8774,12 @@ function loadSovereignVault(countries) {
     buildS23();
     _populateLineageSel();
     initSwipeDots('vault-stores-swipe','vault-stores-dots');
+    // Auto-sync after data has loaded (1200ms gives other engines time to populate)
+    if (ok) {
+      setTimeout(function() {
+        syncVault().then(function() { buildS23(); });
+      }, 1200);
+    }
   });
 }
 
@@ -8787,10 +8793,10 @@ function buildS23() {
 // SYNC ACTIONS
 window.vaultSync = function() {
   var el=document.getElementById('vault-badge');
-  if(el){ el.textContent='&#8593; SYNCING...'; el.className='s-badge badge-orange'; }
+  if(el){ el.innerHTML='&#8593; SYNCING...'; el.className='s-badge badge-orange'; }
   syncVault().then(function(res){
     buildS23();
-    if(el){ el.textContent=res.ok?('&#128274; VAULT LIVE'):('&#128274; LS ONLY'); el.className='s-badge badge-vault'; }
+    if(el){ el.innerHTML=res.ok?'&#128274; VAULT LIVE':'&#128274; LS ONLY'; el.className='s-badge '+(res.ok?'badge-green':'badge-vault'); }
   });
 };
 window.vaultExport = function() {
@@ -8837,7 +8843,7 @@ function _buildVaultHealth() {
     var badge=document.getElementById('vault-badge');
     if(badge){
       var hasIDB = _vaultState.ready && vc.forecasts>0;
-      badge.textContent = hasIDB?'&#128274; VAULT LIVE':(_vaultState.ready?'&#128274; VAULT READY':'&#128274; LS ONLY');
+      badge.innerHTML   = hasIDB?'&#128274; VAULT LIVE':(_vaultState.ready?'&#128274; VAULT READY':'&#128274; LS ONLY');
       badge.className   = 's-badge '+(hasIDB?'badge-green':'badge-vault');
     }
   });
@@ -8874,7 +8880,8 @@ function _buildVaultStores() {
       h += '<span style="font-size:9px;color:#a855f7;font-family:var(--mono);width:56px">'+_timeAgo(s.timestamp||r.created_at)+'</span>';
       h += '<span style="font-size:10px;color:var(--text2);flex:1">'+s.countries_count+' cc · GRI '+s.avg_gri+'</span>';
       h += '<span style="font-size:9px;color:var(--text3)">arch:'+s.archive_count+'</span>';
-      h += '<span style="font-family:var(--mono);font-size:9px;color:var(--green);margin-left:4px">'+(r.checksum||'live').slice(0,6)+'</span>';
+      var ck = r.checksum && r.checksum !== 'live' ? r.checksum.slice(0,6) : '';
+      if(ck) h += '<span style="font-family:var(--mono);font-size:9px;color:var(--green);margin-left:4px">'+ck+'</span>';
       h += '</div>';
     });
     var el=document.getElementById('vault-temporal-body'); if(el) el.innerHTML=h;
@@ -8905,8 +8912,12 @@ function _buildVaultStores() {
     var el=document.getElementById('vault-learning-body'); if(el) el.innerHTML=h;
   });
 
-  // 05: Reputation Vault
+  // 05: Reputation Vault — uses live DRIVER_REPUTATION (populated by _initDriverReputation)
   _idbGetAll('reputation').then(function(vaultRep) {
+    // Ensure reputation is initialised from live drivers
+    if (typeof _initDriverReputation === 'function' && Object.keys(DRIVER_REPUTATION).length === 0) {
+      _initDriverReputation();
+    }
     var repK = Object.keys(DRIVER_REPUTATION).sort(function(a,b){ return DRIVER_REPUTATION[b].reputation_score-DRIVER_REPUTATION[a].reputation_score; });
     var h = '<div style="font-size:9px;color:var(--text3);margin-bottom:7px">'+repK.length+' drivers · '+(vaultRep.length)+' vault entries</div>';
     repK.slice(0,8).forEach(function(k){
