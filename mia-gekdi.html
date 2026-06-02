@@ -3274,10 +3274,28 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <div class="section" id="s32">
       <div class="s-head">
         <div class="s-tag">32</div>
-        <div class="s-title">Signal Pro 2.0</div>
+        <div class="s-title">Signal Pro 2.2</div>
         <div class="s-badge badge-green" id="sp2-badge">&#9889; АКТИВЕН</div>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Событие → Причина → Прогноз → Вероятность → Последствия → Рекомендованное действие</div>
+
+
+      <!-- ══ EXECUTIVE SUMMARY ══════════════════════════════════════ -->
+      <div id="sp2-exec-summary" style="margin-bottom:16px">
+        <!-- Заполняется _sp2BuildExec() -->
+      </div>
+
+      <!-- ══ ЧТО ИЗМЕНИЛОСЬ ЗА 24Ч + ТРЕБУЕТ ВНИМАНИЯ ═══════════ -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div class="sum-card" style="border:0.5px solid rgba(239,68,68,.2)">
+          <div style="font-size:9px;color:var(--red);letter-spacing:.15em;margin-bottom:8px">&#9650; ЧТО ИЗМЕНИЛОСЬ ЗА 24Ч</div>
+          <div id="sp2-24h"></div>
+        </div>
+        <div class="sum-card" style="border:0.5px solid rgba(249,115,22,.2)">
+          <div style="font-size:9px;color:var(--orange);letter-spacing:.15em;margin-bottom:8px">&#9888; ТРЕБУЕТ ВНИМАНИЯ</div>
+          <div id="sp2-attention"></div>
+        </div>
+      </div>
 
       <!-- SIGNAL PRIORITY SCORE header -->
       <div class="grid-4" id="sp2-kpi" style="margin-bottom:14px"></div>
@@ -14920,6 +14938,9 @@ function _sp2AffectedCountries(r, countries) {
 function loadSignalPro2(countries) {
   _sp2Countries = countries;
   _sp2Signals = _sp2GenerateSignals(countries);
+  _sp2BuildExec();
+  _sp2Build24h();
+  _sp2BuildAttention();
   _sp2BuildKPI();
   _sp2BuildFeed(_sp2Filter);
   _sp2BuildRankingBoard();
@@ -14928,6 +14949,221 @@ function loadSignalPro2(countries) {
   _sp2BuildImpact();
   _sp2BuildFounder();
 }
+
+
+// ══════════════════════════════════════════════════════════════════
+// S32 SIGNAL PRO 2.2 — EXECUTIVE SUMMARY ENGINE
+// Отвечает на 3 вопроса за 30 секунд:
+//   1. Что происходит?  2. Что важно?  3. Что делать?
+// ══════════════════════════════════════════════════════════════════
+
+function _sp2BuildExec() {
+  var sigs    = _sp2Signals;
+  var drvs    = typeof _liveDrv === 'function' ? _liveDrv() : [];
+  var archSt  = typeof _archiveStats === 'function' ? _archiveStats() : {accuracy:70, hzAcc:{}};
+  var now     = new Date();
+  var nowStr  = now.toUTCString().replace(' GMT','').replace('  ',' ');
+
+  // ── 5 hero items ──────────────────────────────────────────────
+  var topRisk  = sigs.filter(function(s){return s.source==='risk_engine';}).slice(0,1)[0];
+  var topOpp   = sigs.filter(function(s){return s.source==='opportunity_engine';}).slice(0,1)[0];
+  var topSig   = sigs[0];
+  var topFact  = drvs.slice().sort(function(a,b){return (b.d7||0)-(a.d7||0);})[0];
+  var bestHz   = archSt.bestHz || 'h24';
+  var hzLabels = {h24:'24ч', h7d:'7 дней', h30d:'30 дней', h90d:'90 дней'};
+  var bestAcc  = archSt.hzAcc ? (archSt.hzAcc[bestHz]||archSt.accuracy) : archSt.accuracy;
+
+  // Forecast of the week: horizon with highest accuracy × volume
+  var fcWeekLabel = 'Горизонт ' + (hzLabels[bestHz]||bestHz) + ' · точность ' + bestAcc + '%';
+
+  var items = [
+    topRisk ? {
+      icon:'🔴', label:'ГЛАВНЫЙ РИСК', emoji:'&#128308;',
+      name: topRisk.driver || topRisk.title,
+      value: topRisk.probability + '% вероятность',
+      score: topRisk.priority.score + '/100',
+      col: 'var(--red)',
+      border: 'rgba(239,68,68,.2)',
+      bg: 'rgba(239,68,68,.04)',
+      action: topRisk.action,
+      horizon: topRisk.horizon,
+    } : null,
+    topOpp ? {
+      icon:'🟢', label:'ГЛАВНАЯ ВОЗМОЖНОСТЬ', emoji:'&#128994;',
+      name: topOpp.title.split('—')[0].trim().slice(0,35),
+      value: topOpp.probability + '% потенциал',
+      score: topOpp.priority.score + '/100',
+      col: 'var(--green)',
+      border: 'rgba(16,185,129,.2)',
+      bg: 'rgba(16,185,129,.04)',
+      action: topOpp.action,
+      horizon: topOpp.horizon,
+    } : null,
+    topSig && topSig !== topRisk ? {
+      icon:'⚡', label:'СИЛЬНЕЙШИЙ СИГНАЛ', emoji:'&#9889;',
+      name: topSig.title.split('—').pop().trim().slice(0,35),
+      value: 'Score ' + topSig.priority.score + '/100',
+      score: topSig.confidence.composite + '% conf',
+      col: 'var(--gold)',
+      border: 'rgba(234,179,8,.2)',
+      bg: 'rgba(234,179,8,.04)',
+      action: topSig.action,
+      horizon: topSig.horizon,
+    } : null,
+    topFact ? {
+      icon:'📈', label:'БЫСТРОРАСТУЩИЙ ФАКТОР', emoji:'&#128200;',
+      name: topFact.name,
+      value: (topFact.d7 >= 0 ? '+' : '') + topFact.d7 + ' за 7д',
+      score: 'GRI ' + topFact.score,
+      col: 'var(--orange)',
+      border: 'rgba(249,115,22,.2)',
+      bg: 'rgba(249,115,22,.04)',
+      action: topFact.d7 >= 6 ? 'Ускоряющаяся динамика. Немедленный мониторинг.' : 'Отслеживать тренд в горизонте 30д.',
+      horizon: topFact.d7 >= 6 ? '24ч' : '7д',
+    } : null,
+    {
+      icon:'📊', label:'ПРОГНОЗ НЕДЕЛИ', emoji:'&#128202;',
+      name: 'Наилучший горизонт: ' + (hzLabels[bestHz]||bestHz),
+      value: fcWeekLabel,
+      score: archSt.accuracy + '% архив',
+      col: 'var(--blue)',
+      border: 'rgba(59,130,246,.2)',
+      bg: 'rgba(59,130,246,.04)',
+      action: 'Точность прогнозов выше среднего. Доверять рекомендациям горизонта ' + (hzLabels[bestHz]||bestHz) + '.',
+      horizon: hzLabels[bestHz]||'—',
+    },
+  ].filter(Boolean);
+
+  // ── Критический счётчик ────────────────────────────────────────
+  var critN = sigs.filter(function(s){return s.priority.level==='КРИТИЧЕСКИЙ';}).length;
+  var highN = sigs.filter(function(s){return s.priority.level==='ВЫСОКИЙ';}).length;
+  var statusCol  = critN > 0 ? 'var(--red)' : highN > 2 ? 'var(--orange)' : 'var(--green)';
+  var statusText = critN > 0
+    ? critN + ' КРИТИЧЕСКИХ · Требует немедленных решений'
+    : highN > 2 ? highN + ' сигналов высокого приоритета · Повышенное внимание'
+    : 'Ситуация под контролем · Плановый мониторинг';
+
+  var h = '';
+  // Header strip
+  h += '<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;overflow:hidden">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:0.5px solid var(--border)">';
+  h += '<div>';
+  h += '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.15em">EXECUTIVE SUMMARY</div>';
+  h += '<div style="font-size:9px;color:var(--text3);margin-top:2px">' + nowStr + '</div>';
+  h += '</div>';
+  h += '<div style="display:flex;align-items:center;gap:6px">';
+  h += '<span style="width:8px;height:8px;border-radius:50%;background:' + statusCol + ';flex-shrink:0"></span>';
+  h += '<span style="font-size:10px;color:' + statusCol + ';font-weight:600">' + statusText + '</span>';
+  h += '</div></div>';
+
+  // 5 hero cards
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0">';
+  items.forEach(function(item, i) {
+    h += '<div style="padding:12px 14px;background:' + item.bg + ';border-right:' + (i<items.length-1?'0.5px solid var(--border)':'none') + '">';
+    h += '<div style="font-size:8px;color:' + item.col + ';letter-spacing:.12em;font-weight:600;margin-bottom:6px">' + item.label + '</div>';
+    h += '<div style="font-size:12px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:4px;min-height:32px">' + item.name + '</div>';
+    h += '<div style="font-family:var(--mono);font-size:10px;color:' + item.col + ';margin-bottom:2px">' + item.value + '</div>';
+    h += '<div style="font-size:9px;color:var(--text3);margin-bottom:6px">' + item.score + ' · ' + item.horizon + '</div>';
+    h += '<div style="font-size:9px;color:var(--text2);line-height:1.5;border-left:2px solid ' + item.col + '44;padding-left:6px">' + item.action.slice(0,80) + (item.action.length>80?'…':'') + '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+
+  // Bottom: "Что происходит — Что важно — Что делать"
+  var mainRisk  = topRisk  ? topRisk.driver  : '—';
+  var mainOpp   = topOpp   ? topOpp.title.split('—')[0].trim() : '—';
+  var mainAction= topRisk  ? topRisk.action  : 'Мониторинг в штатном режиме.';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:0.5px solid var(--border)">';
+  [
+    {q:'Что происходит?', a:mainRisk + ' — уровень ' + (topRisk?topRisk.priority.level:'СРЕДНИЙ'), c:'var(--red)'},
+    {q:'Что важно?',      a:sigs.length + ' сигналов · ' + critN + ' критических · ' + highN + ' высоких', c:'var(--orange)'},
+    {q:'Что делать?',     a:mainAction.slice(0,70), c:'var(--green)'},
+  ].forEach(function(item) {
+    h += '<div style="padding:10px 12px;border-right:0.5px solid var(--border)">';
+    h += '<div style="font-size:8px;color:var(--text3);letter-spacing:.1em;margin-bottom:4px">' + item.q + '</div>';
+    h += '<div style="font-size:10px;color:var(--text2);line-height:1.5;border-left:2px solid ' + item.c + '55;padding-left:6px">' + item.a + '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+  h += '</div>';
+
+  var el = document.getElementById('sp2-exec-summary');
+  if (el) el.innerHTML = h;
+}
+
+// ── Что изменилось за 24ч ─────────────────────────────────────────
+function _sp2Build24h() {
+  // Signals with 24h horizon OR fast-rising (d7 >= 5)
+  var changed = _sp2Signals.filter(function(s){
+    return s.horizon === '24ч' || (s.d7||0) >= 5;
+  }).slice(0,6);
+
+  // Also check ALERT_ARCHIVE for recent alerts (last 5)
+  var recentAlerts = (typeof ALERT_ARCHIVE !== 'undefined')
+    ? ALERT_ARCHIVE.slice(-3).reverse()
+    : [];
+
+  var h = '';
+  if (!changed.length && !recentAlerts.length) {
+    h = '<div style="font-size:10px;color:var(--text3);padding:4px 0">Нет резких изменений за 24 часа</div>';
+    var el=document.getElementById('sp2-24h'); if(el) el.innerHTML=h; return;
+  }
+  changed.forEach(function(s) {
+    var d7str = (s.d7||0) >= 0 ? '+' + (s.d7||0) : String(s.d7||0);
+    var col   = (s.d7||0) >= 8 ? 'var(--red)' : (s.d7||0) >= 5 ? 'var(--orange)' : 'var(--text3)';
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="font-size:10px;color:' + col + ';font-weight:600;flex-shrink:0">' + d7str + '</span>';
+    h += '<span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + s.driver + '</span>';
+    h += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:' + col + '18;color:' + col + ';flex-shrink:0">' + s.horizon + '</span>';
+    h += '</div>';
+  });
+  recentAlerts.forEach(function(a) {
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="font-size:9px;color:var(--red);flex-shrink:0">&#9888;</span>';
+    h += '<span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (a.label||a.driver||'Тревога') + '</span>';
+    h += '<span style="font-size:9px;color:var(--red);flex-shrink:0">' + (a.level||'HIGH') + '</span>';
+    h += '</div>';
+  });
+  var el=document.getElementById('sp2-24h'); if(el) el.innerHTML=h;
+}
+
+// ── Что требует внимания прямо сейчас ────────────────────────────
+function _sp2BuildAttention() {
+  var urgent = _sp2Signals.filter(function(s){
+    return s.priority.level==='КРИТИЧЕСКИЙ' || (s.priority.level==='ВЫСОКИЙ' && (s.d7||0) >= 4);
+  }).slice(0,6);
+
+  // Also pull from ATTENTION_QUEUE (S24 Orchestrator)
+  var orchItems = (typeof ATTENTION_QUEUE !== 'undefined')
+    ? ATTENTION_QUEUE.slice(0,3)
+    : [];
+
+  var h = '';
+  if (!urgent.length && !orchItems.length) {
+    h = '<div style="font-size:10px;color:var(--text3);padding:4px 0">&#9989; Критических событий нет</div>';
+    var el=document.getElementById('sp2-attention'); if(el) el.innerHTML=h; return;
+  }
+  urgent.forEach(function(s) {
+    var col = s.priority.level === 'КРИТИЧЕСКИЙ' ? 'var(--red)' : 'var(--orange)';
+    h += '<div style="padding:6px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+    h += '<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:' + col + '18;color:' + col + ';font-weight:700;flex-shrink:0">' + s.priority.level + '</span>';
+    h += '<span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + s.driver + '</span>';
+    h += '<span style="font-family:var(--mono);font-size:9px;color:' + col + ';flex-shrink:0">' + s.priority.score + '</span>';
+    h += '</div>';
+    h += '<div style="font-size:9px;color:var(--text3);padding-left:4px;line-height:1.4">' + s.action.slice(0,70) + '</div>';
+    h += '</div>';
+  });
+  orchItems.forEach(function(item) {
+    if (urgent.length >= 4) return;
+    h += '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span style="font-size:9px;color:var(--orange)">&#127919;</span>';
+    h += '<span style="font-size:10px;color:var(--text2);flex:1">' + (item.label||'Внимание') + '</span>';
+    h += '</div>';
+  });
+  var el=document.getElementById('sp2-attention'); if(el) el.innerHTML=h;
+}
+// END EXEC SUMMARY ENGINE
 
 // ── SIGNAL RANKING BOARD (TOP-10 × 3) ───────────────────────────────
 function _sp2BuildRankingBoard() {
