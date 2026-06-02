@@ -3406,30 +3406,31 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
       <div class="sum-title" style="margin-bottom:8px"><span>&#128178;</span> 04 · Центр доходов</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px" id="crm-revenue-grid"></div>
 
-      <!-- 02: CLIENT REGISTRY (swipe: table + add form) -->
+      <!-- 02: CLIENT REGISTRY -->
       <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#128101;</span> 02 · Реестр клиентов</div>
-      <div class="swipe-wrap" id="crm-reg-swipe">
-        <div class="swipe-card"><div class="sum-card" style="padding:0">
-          <div style="padding:10px 12px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:11px;font-weight:600">Все клиенты</span>
-            <div style="display:flex;gap:6px">
-              <button onclick="crmExportCSV()" class="filter-btn">&#8681; CSV</button>
-              <button onclick="crmRefresh()"    class="filter-btn">&#8635; Обновить</button>
-            </div>
-          </div>
-          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-            <table class="crm-table" style="width:100%;border-collapse:collapse">
-              <thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Тариф</th><th>Страна</th><th>Регистрация</th><th>Последний вход</th><th>Статус</th><th>LTV $</th><th></th></tr></thead>
-              <tbody id="crm-clients-tbody"></tbody>
-            </table>
-          </div>
-        </div></div>
-        <div class="swipe-card"><div class="sum-card">
-          <div style="font-size:11px;font-weight:600;margin-bottom:12px">&#10133; Добавить клиента</div>
-          <div id="crm-add-form"></div>
-        </div></div>
+
+      <!-- Add form — always visible -->
+      <div class="sum-card" style="margin-bottom:10px;border:.5px solid rgba(16,185,129,.2)">
+        <div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:10px">&#10133; Добавить клиента</div>
+        <div id="crm-add-form"></div>
       </div>
-      <div class="swipe-dots" id="crm-reg-dots"><span class="swipe-dot active"></span><span class="swipe-dot"></span></div>
+
+      <!-- Table -->
+      <div class="sum-card" style="padding:0;margin-bottom:14px">
+        <div style="padding:10px 12px;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:600">Все клиенты</span>
+          <div style="display:flex;gap:6px">
+            <button onclick="crmExportCSV()" class="filter-btn">&#8681; CSV</button>
+            <button onclick="crmRefresh()"   class="filter-btn">&#8635; Обновить</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x">
+          <table class="crm-table" style="width:100%;border-collapse:collapse">
+            <thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Тариф</th><th>Страна</th><th>Регистрация</th><th>Последний вход</th><th>Статус</th><th>LTV</th><th></th></tr></thead>
+            <tbody id="crm-clients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
 
       <!-- 05+06: ACTIVITY + FEATURE USAGE -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;margin-bottom:14px">
@@ -15680,7 +15681,7 @@ function _crmRender() {
   _crmBuildChurn();
   _crmBuildUpgrade();
   _crmBuildReportFounder();
-  initSwipeDots('crm-reg-swipe','crm-reg-dots');
+  // crm-reg swipe removed in 2.1 (inline layout)
 }
 
 // ── VPS Status ─────────────────────────────────────────────────────
@@ -15833,7 +15834,7 @@ function _crmBuildClientsTable() {
     h += '<td style="font-size:10px;color:var(--text3)">'+reg+'</td>';
     h += '<td style="font-size:10px;color:var(--text3)">'+ll+'</td>';
     h += '<td><span style="font-size:9px;color:'+st+'">●</span> '+c.status+'</td>';
-    h += '<td style="font-family:var(--mono);font-size:10px;color:var(--gold)">$'+(c.ltv||0)+'</td>';
+    h += '<td style="font-family:var(--mono);font-size:10px;color:var(--gold)">'+_formatRub(c.ltv||0)+'</td>';
     h += '<td><button onclick="crmDeleteClient(\''+c.id+'\')" style="font-size:9px;padding:2px 6px;background:transparent;border:.5px solid var(--red);border-radius:3px;color:var(--red);cursor:pointer;-webkit-appearance:none">✕</button></td>';
     h += '</tr>';
   });
@@ -16099,6 +16100,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.ge
 window.addEventListener('load',function(){ checkAuth(); });
 window.addEventListener('error',function(){ _uiErrors++; });
 window.addEventListener('resize',tickClock);
+document.addEventListener('visibilitychange',function(){ if(!document.hidden&&typeof CLIENT_REGISTRY!=='undefined') crmRefresh(); });
 </script>
 </body>
 </html>
