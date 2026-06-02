@@ -2197,11 +2197,8 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
       <!-- 01: SOURCE REGISTRY -->
       <div style="margin-bottom:16px">
         <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128203;</span> 01 · Source Registry</div>
-        <div class="tbl-outer" style="max-height:340px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
-          <table>
-            <thead><tr><th>Source</th><th>Domain</th><th>Status</th><th>Update</th><th>Contrib</th><th>Rel.</th></tr></thead>
-            <tbody id="source-registry-body"></tbody>
-          </table>
+        <div style="max-height:340px;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y">
+          <div id="source-registry-body"></div>
         </div>
       </div>
 
@@ -9891,8 +9888,8 @@ function loadSensorFusion(countries) {
 function _buildCollectionDash(derived, countries) {
   // Live signal count — countries × avg signals per source × online sources fraction
   var liveSignals = countries.length > 0
-    ? fr(countries.length * (derived.onlineCount / SENSOR_SOURCES.length) * 45)
-    : 0;
+    ? fr(countries.length * (derived.onlineCount / Math.max(SENSOR_SOURCES.length, 1)) * 45)
+    : fr(SENSOR_SOURCES.reduce(function(a,s){ return a+s.signals_day; },0)/24); // fallback: signals per hour
   var fusionRate = derived.totalSig > 0 ? fr(derived.fusedSig/derived.totalSig*100) : 0;
   var cards=[
     {label:'Sources Online',    val:derived.onlineCount+'/'+SENSOR_SOURCES.length, col:'var(--green)'},
@@ -9917,14 +9914,16 @@ function _buildSourceRegistry(countries, derived) {
   SENSOR_SOURCES.forEach(function(s) {
     var statusCol = s.uptime>=97?'var(--green)':s.uptime>=93?'var(--orange)':'var(--red)';
     var statusLbl = s.uptime>=97?'LIVE':s.uptime>=93?'OK':'DEGRADED';
-    h+='<tr>';
-    h+='<td><div style="display:flex;align-items:center;gap:6px"><span class="src-dot" style="background:'+s.col+'"></span>'+s.name+'</div></td>';
-    h+='<td style="font-size:9px;color:var(--text3)">'+s.domain+'</td>';
-    h+='<td><span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+statusCol+'18;color:'+statusCol+'">'+statusLbl+'</span></td>';
-    h+='<td style="font-size:9px;color:var(--text3);font-family:var(--mono)">'+s.freq+'</td>';
-    h+='<td style="font-family:var(--mono);font-size:10px;color:'+s.col+'">'+s.contrib+'%</td>';
-    h+='<td><div style="display:flex;align-items:center;gap:4px"><div style="width:30px;height:3px;background:rgba(255,255,255,.06);border-radius:2px"><div style="height:100%;width:'+s.rel+'%;background:'+statusCol+';border-radius:2px"></div></div><span style="font-size:9px;color:var(--text3)">'+s.rel+'</span></div></td>';
-    h+='</tr>';
+    var composite = fr(s.rel * (s.uptime/100));
+    // Compact card row: name + status badge + uptime bar + score + freq
+    h += '<div style="display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:0.5px solid var(--border)">';
+    h += '<span class="src-dot" style="background:'+s.col+';width:7px;height:7px;border-radius:50%;flex-shrink:0"></span>';
+    h += '<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>';
+    h += '<span style="font-size:9px;color:var(--text3);font-family:var(--mono);width:22px;text-align:center;flex-shrink:0">'+s.freq+'</span>';
+    h += '<div style="width:36px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;flex-shrink:0"><div style="height:100%;width:'+s.uptime+'%;background:'+statusCol+';border-radius:2px"></div></div>';
+    h += '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+statusCol+'18;color:'+statusCol+';font-family:var(--mono);flex-shrink:0;width:52px;text-align:center">'+statusLbl+'</span>';
+    h += '<span style="font-family:var(--mono);font-size:10px;color:'+statusCol+';font-weight:600;width:20px;text-align:right;flex-shrink:0">'+composite+'</span>';
+    h += '</div>';
   });
   var tb=document.getElementById('source-registry-body'); if(tb) tb.innerHTML=h;
 }
