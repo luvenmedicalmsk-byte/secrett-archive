@@ -2,32 +2,32 @@
   "country": "DE",
   "date": "2026-06-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-02T08:34:23.811470+00:00",
+  "generated_at": "2026-06-02T16:17:59.693631+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 65,
+      "score": 66,
       "props": {
-        "risk_score": 65
+        "risk_score": 66
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-Зеленое_пр",
+      "id": "SIGNAL-DE-Зеленое_на",
       "type": "Signal",
-      "label": "Зеленое предупреждение о наводнении в Ге",
+      "label": "Зеленое наводнение в Германии",
       "severity": 78,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-DE-Шармуцельз",
+      "id": "SIGNAL-DE-Rheinmetal",
       "type": "Signal",
-      "label": "Шармуцельзе вместо Давоса – восточный те",
-      "severity": 65,
+      "label": "Rheinmetall выиграла контракты на оборон",
+      "severity": 66,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-DE-Грузинский",
+      "id": "SIGNAL-DE-Главный_ге",
       "type": "Signal",
-      "label": "Грузинский посол еще не представил свои ",
-      "severity": 58,
+      "label": "Главный генерал Франции предупреждает о ",
+      "severity": 65,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-DE",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-DE-Зеленое_пр",
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-DE-Зеленое_на",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.78
     },
     {
-      "from": "SIGNAL-DE-Шармуцельз",
+      "from": "SIGNAL-DE-Rheinmetal",
+      "to": "DOMAIN-DE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
+      "from": "SIGNAL-DE-Главный_ге",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-DE-Грузинский",
-      "to": "DOMAIN-DE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }
