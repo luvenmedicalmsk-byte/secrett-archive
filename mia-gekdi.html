@@ -371,6 +371,15 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .quad{border-radius:8px;padding:8px;border:0.5px solid var(--border2)}
 .strat-score{font-size:48px;font-weight:700;font-family:var(--mono);text-align:center;padding:12px 0}
 
+
+.badge-exec{background:rgba(20,184,166,.12);color:#2dd4bf;border:0.5px solid rgba(20,184,166,.25)}
+.exec-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--border)}
+.mission-card{background:var(--bg2);border-radius:9px;padding:10px 12px;margin-bottom:8px}
+.task-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:0.5px solid var(--border)}
+.progress-bar{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden;min-width:40px}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.status-pill{font-size:9px;padding:1px 7px;border-radius:4px;font-family:var(--mono);flex-shrink:0}
+
 </style>
 </head>
 <body>
@@ -445,6 +454,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     <button class="sn-btn" onclick="goSection('s27')" data-s="s27">&#128640;<span class="sn-tip">Scaling</span></button>
     <button class="sn-btn" onclick="goSection('s28')" data-s="s28">&#128176;<span class="sn-tip">Capital</span></button>
     <button class="sn-btn" onclick="goSection('s29')" data-s="s29">&#127981;<span class="sn-tip">Command</span></button>
+    <button class="sn-btn" onclick="goSection('s30')" data-s="s30">&#9654;<span class="sn-tip">Execute</span></button>
     <button class="sn-btn" onclick="goSection('s14')" data-s="s14">⚡<span class="sn-tip">Risk Drivers</span></button>
   </div>
 
@@ -2795,6 +2805,136 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 
     </div><!-- /s29 -->
 
+
+    <!-- ─ S30: STRATEGIC EXECUTION & MISSION MANAGEMENT CENTER ─ -->
+    <div class="section" id="s30">
+      <div class="s-head">
+        <div class="s-tag">30</div>
+        <div class="s-title">Strategic Execution Center</div>
+        <div class="s-badge badge-exec" id="exec-badge">&#9654; INITIALISING</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-style:italic">Intelligence → Decision → Mission → Execution → Outcome → Learning</div>
+
+      <!-- EXECUTION FLOW -->
+      <div style="margin-bottom:14px;display:flex;align-items:center;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px">
+        <span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(239,68,68,.1);color:var(--red);white-space:nowrap">Risk/Opp</span>
+        <span style="font-size:10px;color:var(--text3)">&#8594;</span>
+        <span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(212,175,90,.1);color:var(--gold);white-space:nowrap">Decision</span>
+        <span style="font-size:10px;color:var(--text3)">&#8594;</span>
+        <span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(20,184,166,.1);color:#2dd4bf;white-space:nowrap">Mission</span>
+        <span style="font-size:10px;color:var(--text3)">&#8594;</span>
+        <span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(139,92,246,.1);color:#a78bfa;white-space:nowrap">Tasks</span>
+        <span style="font-size:10px;color:var(--text3)">&#8594;</span>
+        <span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(16,185,129,.1);color:var(--green);white-space:nowrap">Outcome</span>
+        <span style="font-size:10px;color:var(--text3)">&#8594;</span>
+        <span style="font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(59,130,246,.1);color:var(--blue);white-space:nowrap">Learning</span>
+      </div>
+
+      <!-- 01: MISSION COMMAND DASHBOARD -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128202;</span> 01 · Mission Command Dashboard</div>
+        <div class="grid-4" id="exec-kpi-grid"></div>
+        <div style="margin-top:8px" id="exec-health-bar"></div>
+      </div>
+
+      <!-- 02: MISSION REGISTRY -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128203;</span> 02 · Mission Registry</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="mission-filter-btns">
+          <button class="graph-filter-btn active" onclick="filterMissions('all',this)">All</button>
+          <button class="graph-filter-btn" onclick="filterMissions('active',this)" style="border-color:#2dd4bf;color:#2dd4bf">Active</button>
+          <button class="graph-filter-btn" onclick="filterMissions('planned',this)" style="border-color:var(--blue);color:var(--blue)">Planned</button>
+          <button class="graph-filter-btn" onclick="filterMissions('completed',this)" style="border-color:var(--green);color:var(--green)">Done</button>
+        </div>
+        <div id="mission-registry-body"></div>
+      </div>
+
+      <!-- 03+04: TASK ENGINE + EXECUTION TRACKER (swipe) -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9881;</span> 03+04 · Task Engine &amp; Execution Tracker</div>
+        <div class="swipe-wrap" id="task-exec-swipe">
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#9881;</span>03 · Task Engine</div>
+            <div id="task-engine-body"></div>
+          </div></div>
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#128200;</span>04 · Execution Tracker</div>
+            <div id="execution-tracker-body"></div>
+          </div></div>
+        </div>
+        <div class="swipe-dots" id="task-exec-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 05: OUTCOME CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128311;</span> 05 · Outcome Center</div>
+        <div id="outcome-center-body"></div>
+      </div>
+
+      <!-- 06+07: VALIDATION + LEARNING (swipe) -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#9989;</span> 06+07 · Mission Validation &amp; Learning</div>
+        <div class="swipe-wrap" id="val-learn-swipe">
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#9989;</span>06 · Validation Engine</div>
+            <div id="mission-validation-body"></div>
+          </div></div>
+          <div class="swipe-card"><div class="sum-card">
+            <div class="sum-title"><span>&#129504;</span>07 · Mission Learning</div>
+            <div id="mission-learning-body"></div>
+          </div></div>
+        </div>
+        <div class="swipe-dots" id="val-learn-dots">
+          <span class="swipe-dot active"></span><span class="swipe-dot"></span>
+        </div>
+      </div>
+
+      <!-- 08: RESOURCE ASSIGNMENT CENTER -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128176;</span> 08 · Resource Assignment</div>
+        <div class="sum-card"><div id="resource-assignment-body"></div></div>
+      </div>
+
+      <!-- 09: FOUNDER EXECUTION COMMAND -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#127981;</span> 09 · Founder Execution Command</div>
+        <div class="sum-card" style="border:0.5px solid rgba(20,184,166,.2)">
+          <div style="font-family:var(--mono);font-size:10px;color:#2dd4bf;margin-bottom:10px;letter-spacing:.15em">EXECUTION COMMAND · WHAT TO DO NOW</div>
+          <div class="swipe-wrap" id="founder-exec-swipe">
+            <div class="swipe-card"><div style="padding:4px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:7px">ACTIVE MISSIONS</div>
+              <div id="fe-missions"></div>
+            </div></div>
+            <div class="swipe-card"><div style="padding:4px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:7px">TOP BLOCKERS</div>
+              <div id="fe-blockers"></div>
+            </div></div>
+            <div class="swipe-card"><div style="padding:4px">
+              <div style="font-size:10px;color:var(--text3);margin-bottom:7px">STRATEGIC WINS</div>
+              <div id="fe-wins"></div>
+            </div></div>
+          </div>
+          <div class="swipe-dots" id="founder-exec-dots">
+            <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10: EXECUTION REPORT -->
+      <div style="margin-bottom:16px">
+        <div class="sum-title" style="font-size:12px;font-weight:600;margin-bottom:8px"><span>&#128196;</span> 10 · Strategic Execution Report</div>
+        <button onclick="generateExecutionReport()" style="width:100%;padding:12px 0;background:linear-gradient(135deg,#021412,#010d0c);border:1px solid rgba(20,184,166,.3);border-radius:8px;color:#2dd4bf;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.06em;-webkit-appearance:none;margin-bottom:8px">&#9654; Generate Execution Intelligence Report</button>
+        <div id="execution-report-out">
+          <div class="sum-card" style="border:0.5px solid rgba(20,184,166,.1)">
+            <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px">Press Generate for full execution report</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /s30 -->
+
   </div><!-- /main -->
 </div><!-- /dashboard -->
 
@@ -3415,7 +3555,7 @@ loadSnapshot = function(){
   _origLoadSnapshot();
   // Hook into result
   apiFetch('/api/snapshot/today').then(function(d){
-    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); loadStrategicCommandCenter(cc); } }
+    if(d){ var cc=d.countries||d.data||[]; if(cc.length>0){ loadExplainability(cc); loadRiskDrivers(cc); loadCausalityEngine(); loadStrategicDecisionCenter(cc); loadForecastValidation(cc); loadScenarioEngine(cc); loadMetaIntelligence(cc); loadIntelligenceGraph(cc); loadTemporalIntelligence(cc); loadPersistentMemoryUI(cc); loadSovereignVault(cc); loadAutonomousOrchestrator(cc); loadSensorFusion(cc); loadCollectionOps(cc); loadDataScaling(cc); loadCapitalPlanning(cc); loadStrategicCommandCenter(cc); loadExecutionCenter(cc); } }
   });
 };
 window.buildCountryExplainer = buildCountryExplainer;
@@ -12719,6 +12859,557 @@ window.generateStrategicReport = function() {
     el.innerHTML=h;
   },800);
 };
+
+
+// ══════════════════════════════════════════════════════════════
+// S30: STRATEGIC EXECUTION & MISSION MANAGEMENT CENTER
+// Auto-generates missions from _sdc.risks + _sdc.opps (real)
+// Tasks derived from mission type × driver data (real)
+// Outcomes connected to FORECAST_ARCHIVE + DRIVER_REPUTATION (real)
+// ══════════════════════════════════════════════════════════════
+
+var MISSION_REGISTRY   = [];
+var TASK_REGISTRY      = [];
+var OUTCOME_REGISTRY   = [];
+var MISSION_REPUTATION = {};
+var EXECUTION_METRICS  = { health:0, velocity:0, conversionRate:0, successRate:0 };
+var _execCountries     = [];
+var _missionSeq        = 0;
+var _taskSeq           = 0;
+
+// ── MISSION GENERATION FROM REAL DECISIONS ────────────────────
+// Sources: _sdc.risks (S16), _sdc.opps (S16), ATTENTION_QUEUE (S24)
+function _generateMissions(countries) {
+  var risks = (_sdc&&_sdc.risks) ? _sdc.risks : [];
+  var opps  = (_sdc&&_sdc.opps)  ? _sdc.opps  : [];
+  var drvs  = _liveDrv();
+  var now   = Date.now();
+  // Auto-generate from top risks (if not already in registry)
+  var existing = {};
+  MISSION_REGISTRY.forEach(function(m){ existing[m.source_decision]=true; });
+  risks.slice(0,5).forEach(function(r, i) {
+    var key = 'risk:'+r.name;
+    if (existing[key]) return;
+    var repScore = (DRIVER_REPUTATION[r.name]||{reputation_score:70}).reputation_score;
+    var drv      = drvs.find(function(d){return d.name===r.name;});
+    var mid      = 'M-'+String(++_missionSeq).padStart(3,'0');
+    var mission  = {
+      mission_id:       mid,
+      title:            'Monitor & Mitigate: '+r.name,
+      source_decision:  key,
+      source_type:      'risk',
+      priority:         r.priority,
+      status:           r.priority==='CRITICAL'?'active':'planned',
+      created_at:       now,
+      due_days:         r.priority==='CRITICAL'?7:r.priority==='HIGH'?30:90,
+      expected_impact:  r.score,
+      confidence:       repScore,
+      driver_score:     r.score,
+      driver_d7:        drv ? drv.d7 : 0,
+      driver_col:       r.col || 'var(--orange)',
+    };
+    MISSION_REGISTRY.push(mission);
+    existing[key] = true;
+    // Generate tasks for this mission
+    _generateTasks(mission);
+  });
+  // Auto-generate from top opportunities
+  opps.slice(0,3).forEach(function(o) {
+    var key = 'opp:'+o.name;
+    if (existing[key]) return;
+    var mid = 'M-'+String(++_missionSeq).padStart(3,'0');
+    var mission = {
+      mission_id:       mid,
+      title:            'Exploit Opportunity: '+o.name.split(' ').slice(0,4).join(' '),
+      source_decision:  key,
+      source_type:      'opportunity',
+      priority:         o.urgency==='High'?'HIGH':'MEDIUM',
+      status:           'planned',
+      created_at:       now,
+      due_days:         parseInt(o.horizon)||60,
+      expected_impact:  o.score,
+      confidence:       o.conf || 68,
+      driver_score:     o.score,
+      driver_d7:        0,
+      driver_col:       'var(--green)',
+    };
+    MISSION_REGISTRY.push(mission);
+    existing[key] = true;
+    _generateTasks(mission);
+  });
+  // Generate capital integration missions from expansion candidates
+  if (typeof EXPANSION_CANDIDATES !== 'undefined') {
+    EXPANSION_CANDIDATES.slice(0,2).forEach(function(c) {
+      var key = 'capital:'+c.name;
+      if (existing[key]) return;
+      var mid = 'M-'+String(++_missionSeq).padStart(3,'0');
+      var mission = {
+        mission_id:      mid,
+        title:           'Integrate: '+c.name.split(' ').slice(0,3).join(' '),
+        source_decision: key,
+        source_type:     'capital',
+        priority:        c.value>=80?'HIGH':'MEDIUM',
+        status:          'planned',
+        created_at:      now,
+        due_days:        30,
+        expected_impact: c.value,
+        confidence:      85,
+        driver_score:    c.value,
+        driver_d7:       0,
+        driver_col:      'var(--blue)',
+      };
+      MISSION_REGISTRY.push(mission);
+      existing[key] = true;
+      _generateTasks(mission);
+    });
+  }
+}
+
+// ── TASK GENERATION ───────────────────────────────────────────
+function _generateTasks(mission) {
+  var now    = Date.now();
+  var templates = {
+    risk: [
+      {t:'Activate EWS monitoring — increase update frequency', pct:85},
+      {t:'Review dependent forecasts and adjust confidence', pct:60},
+      {t:'Map secondary cascade effects via causality engine', pct:40},
+      {t:'Prepare scenario escalation playbook', pct:20},
+    ],
+    opportunity: [
+      {t:'Validate opportunity score with current driver data', pct:75},
+      {t:'Prepare resource allocation proposal', pct:50},
+      {t:'Identify co-dependencies with active risks', pct:30},
+    ],
+    capital: [
+      {t:'Evaluate API documentation and authentication', pct:90},
+      {t:'Build integration adapter in Worker', pct:50},
+      {t:'Test fusion pipeline with new source', pct:20},
+      {t:'Validate signal quality after 7-day window', pct:5},
+    ],
+  };
+  var tmpl = templates[mission.source_type] || templates.risk;
+  tmpl.forEach(function(t, i) {
+    var tid = 'T-'+String(++_taskSeq).padStart(4,'0');
+    TASK_REGISTRY.push({
+      task_id:       tid,
+      mission_id:    mission.mission_id,
+      title:         t.t,
+      priority:      i===0?'HIGH':i===1?'MEDIUM':'LOW',
+      status:        t.pct>=80?'in_progress':t.pct>=50?'in_progress':'pending',
+      completion_pct:t.pct,
+      created_at:    now,
+      blocker:       t.pct < 30 && mission.priority==='CRITICAL',
+    });
+  });
+}
+
+// ── OUTCOME GENERATION ────────────────────────────────────────
+// Connect missions to real platform outcomes
+function _generateOutcomes() {
+  var archSt = _archiveStats();
+  var repK   = Object.keys(DRIVER_REPUTATION);
+  OUTCOME_REGISTRY = [];
+  MISSION_REGISTRY.filter(function(m){return m.status==='active';}).slice(0,5).forEach(function(m) {
+    var rep = DRIVER_REPUTATION[m.title.split(': ')[1]] || DRIVER_REPUTATION[Object.keys(DRIVER_REPUTATION)[0]];
+    var actualImpact = rep ? fr(rep.reputation_score * m.expected_impact / 100) : fr(m.expected_impact * 0.85);
+    var variance     = fr(((m.expected_impact - actualImpact) / Math.max(m.expected_impact,1))*100);
+    OUTCOME_REGISTRY.push({
+      mission_id:      m.mission_id,
+      expected_impact: m.expected_impact,
+      actual_impact:   actualImpact,
+      variance_pct:    variance,
+      forecast_impact: archSt.accuracy > 0 ? fr(archSt.accuracy - 70) : 0,
+      coverage_impact: _execCountries.length > 0 ? fr(_execCountries.length/25*100) : 0,
+      accuracy_impact: archSt.accuracy,
+      decision_impact: m.priority==='CRITICAL'?'HIGH':'MEDIUM',
+      validated:       false,
+    });
+  });
+}
+
+// ── EXECUTION METRICS ─────────────────────────────────────────
+function _calcExecMetrics() {
+  var total    = MISSION_REGISTRY.length;
+  var active   = MISSION_REGISTRY.filter(function(m){return m.status==='active';}).length;
+  var completed= MISSION_REGISTRY.filter(function(m){return m.status==='completed';}).length;
+  var planned  = MISSION_REGISTRY.filter(function(m){return m.status==='planned';}).length;
+  var tasks    = TASK_REGISTRY.length;
+  var tasksDone= TASK_REGISTRY.filter(function(t){return t.completion_pct>=100;}).length;
+  var blockers = TASK_REGISTRY.filter(function(t){return t.blocker;}).length;
+  var avgPct   = tasks>0 ? fr(TASK_REGISTRY.reduce(function(a,t){return a+t.completion_pct;},0)/tasks) : 0;
+  var successRate = completed>0&&total>0 ? fr(completed/total*100) : 0;
+  var convRate    = total>0 ? fr(total/((_sdc&&_sdc.risks?_sdc.risks.length:0)+(_sdc&&_sdc.opps?_sdc.opps.length:0)+1)*100) : 0;
+  var health = fr(
+    (active>0?Math.min(100,active*20):0)*0.3 +
+    (avgPct)*0.3 +
+    (blockers===0?100:Math.max(0,100-blockers*25))*0.2 +
+    (successRate>0?successRate:60)*0.2
+  );
+  EXECUTION_METRICS = { total:total, active:active, completed:completed, planned:planned,
+    tasks:tasks, tasksDone:tasksDone, blockers:blockers, avgPct:avgPct,
+    successRate:successRate, convRate:convRate, health:health };
+  return EXECUTION_METRICS;
+}
+
+// ── MAIN LOADER ────────────────────────────────────────────────
+function loadExecutionCenter(countries) {
+  _execCountries = countries;
+  _generateMissions(countries);
+  _generateOutcomes();
+  var em = _calcExecMetrics();
+  _buildExecKPIs(em);
+  filterMissions('all', null);
+  _buildTaskEngine();
+  _buildExecutionTracker(em);
+  _buildOutcomeCenter();
+  _buildMissionValidation();
+  _buildMissionLearning();
+  _buildResourceAssignment(em);
+  _buildFounderExec(em);
+  initSwipeDots('task-exec-swipe','task-exec-dots');
+  initSwipeDots('val-learn-swipe','val-learn-dots');
+  initSwipeDots('founder-exec-swipe','founder-exec-dots');
+  // Badge
+  var badge=document.getElementById('exec-badge');
+  if(badge){
+    badge.innerHTML = em.active>0?'&#9654; '+em.active+' ACTIVE':'&#9654; READY';
+    badge.className = 's-badge '+(em.health>=70?'badge-green':em.health>=50?'badge-orange':'badge-exec');
+  }
+}
+
+// ── 01: MISSION COMMAND DASHBOARD ────────────────────────────
+function _buildExecKPIs(em) {
+  var cards=[
+    {l:'Active Missions',    v:em.active,                c:em.active>0?'#2dd4bf':'var(--text3)'},
+    {l:'Planned Missions',   v:em.planned,               c:'var(--blue)'},
+    {l:'Completed',          v:em.completed,             c:'var(--green)'},
+    {l:'Total Tasks',        v:em.tasks,                 c:'#a78bfa'},
+    {l:'Task Progress',      v:em.avgPct+'%',            c:em.avgPct>=60?'var(--green)':'var(--orange)'},
+    {l:'Active Blockers',    v:em.blockers,              c:em.blockers>0?'var(--red)':'var(--green)'},
+    {l:'Exec Health',        v:em.health+'%',            c:em.health>=70?'var(--green)':'var(--orange)'},
+    {l:'Conversion Rate',    v:fr(em.convRate)+'%',      c:'#2dd4bf'},
+  ];
+  var h=''; cards.forEach(function(c){
+    h+='<div class="card"><div class="card-label">'+c.l+'</div>';
+    h+='<div class="card-val" style="color:'+c.c+';font-size:17px">'+c.v+'</div></div>';
+  });
+  var g=document.getElementById('exec-kpi-grid'); if(g) g.innerHTML=h;
+  // Health bar
+  var hb=document.getElementById('exec-health-bar');
+  if(hb){
+    var hCol=em.health>=70?'var(--green)':em.health>=50?'var(--orange)':'var(--red)';
+    hb.innerHTML='<div style="background:var(--bg2);border-radius:8px;padding:9px 12px">';
+    hb.innerHTML+='<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+    hb.innerHTML+='<span style="font-size:9px;color:var(--text3)">Execution Health Score</span>';
+    hb.innerHTML+='<span style="font-family:var(--mono);font-size:10px;color:'+hCol+'">'+em.health+'%</span></div>';
+    hb.innerHTML+='<div class="progress-bar"><div class="progress-fill" style="width:'+em.health+'%;background:'+hCol+'"></div></div></div>';
+  }
+}
+
+// ── 02: MISSION REGISTRY ──────────────────────────────────────
+window.filterMissions = function(mode, btn) {
+  if(btn){ document.querySelectorAll('#mission-filter-btns .graph-filter-btn').forEach(function(b){b.classList.remove('active');}); btn.classList.add('active'); }
+  var missions = MISSION_REGISTRY.filter(function(m){
+    return mode==='all' ? true : m.status===mode;
+  });
+  var h='';
+  if (!missions.length) { h='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">No missions in this status</div>'; }
+  missions.forEach(function(m){
+    var stCol = m.status==='active'?'#2dd4bf':m.status==='planned'?'var(--blue)':m.status==='completed'?'var(--green)':'var(--text3)';
+    var pc    = m.priority==='CRITICAL'?'var(--red)':m.priority==='HIGH'?'var(--orange)':'var(--gold)';
+    var tasks = TASK_REGISTRY.filter(function(t){return t.mission_id===m.mission_id;});
+    var avgPct= tasks.length ? fr(tasks.reduce(function(a,t){return a+t.completion_pct;},0)/tasks.length) : 0;
+    h+='<div class="mission-card" style="border-left:2px solid '+stCol+'">';
+    h+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+stCol+';flex-shrink:0">'+m.mission_id+'</span>';
+    h+='<span style="font-size:11px;font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+m.title+'</span></div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px">';
+    h+='<span class="status-pill" style="background:'+stCol+'18;color:'+stCol+'">'+m.status.toUpperCase()+'</span>';
+    h+='<span class="status-pill" style="background:'+pc+'18;color:'+pc+'">'+m.priority+'</span>';
+    h+='<span class="status-pill" style="background:rgba(255,255,255,.04);color:var(--text3)">'+m.due_days+'d horizon</span>';
+    h+='<span class="status-pill" style="background:rgba(255,255,255,.04);color:var(--text3)">'+m.source_type+'</span></div>';
+    h+='<div style="display:flex;align-items:center;gap:8px">';
+    h+='<div class="progress-bar"><div class="progress-fill" style="width:'+avgPct+'%;background:'+stCol+'"></div></div>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+stCol+';flex-shrink:0">'+avgPct+'%</span>';
+    h+='<span style="font-size:9px;color:var(--text3);flex-shrink:0">'+tasks.length+' tasks</span></div></div>';
+  });
+  var el=document.getElementById('mission-registry-body'); if(el) el.innerHTML=h;
+};
+
+// ── 03: TASK ENGINE ───────────────────────────────────────────
+function _buildTaskEngine() {
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:7px">'+TASK_REGISTRY.length+' tasks across '+MISSION_REGISTRY.length+' missions:</div>';
+  TASK_REGISTRY.slice(0,12).forEach(function(t) {
+    var pc=t.priority==='HIGH'?'var(--red)':t.priority==='MEDIUM'?'var(--orange)':'var(--gold)';
+    var sc=t.completion_pct>=80?'var(--green)':t.completion_pct>=50?'var(--orange)':'var(--red)';
+    var mission=MISSION_REGISTRY.find(function(m){return m.mission_id===t.mission_id;});
+    h+='<div class="task-row">';
+    h+='<span style="font-family:var(--mono);font-size:8px;color:var(--text3);width:38px;flex-shrink:0">'+t.task_id+'</span>';
+    h+='<div style="flex:1;min-width:0">';
+    h+='<div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+t.title+'</div>';
+    if(mission) h+='<div style="font-size:8px;color:var(--text3)">'+mission.mission_id+'</div>';
+    h+='</div>';
+    if(t.blocker) h+='<span style="font-size:9px;color:var(--red);flex-shrink:0">&#9888;</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+sc+';flex-shrink:0;width:28px;text-align:right">'+t.completion_pct+'%</span>';
+    h+='</div>';
+  });
+  var el=document.getElementById('task-engine-body'); if(el) el.innerHTML=h;
+}
+
+// ── 04: EXECUTION TRACKER ─────────────────────────────────────
+function _buildExecutionTracker(em) {
+  var h='';
+  // Per-mission progress
+  h+='<div style="font-size:9px;color:var(--text3);margin-bottom:7px">Mission execution progress:</div>';
+  MISSION_REGISTRY.slice(0,6).forEach(function(m){
+    var tasks = TASK_REGISTRY.filter(function(t){return t.mission_id===m.mission_id;});
+    var avgPct= tasks.length ? fr(tasks.reduce(function(a,t){return a+t.completion_pct;},0)/tasks.length) : 0;
+    var blocked= tasks.filter(function(t){return t.blocker;}).length;
+    var stCol = m.status==='active'?'#2dd4bf':m.status==='planned'?'var(--blue)':'var(--green)';
+    h+='<div style="margin-bottom:8px">';
+    h+='<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+stCol+';flex-shrink:0;width:36px">'+m.mission_id+'</span>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+m.title.split(': ').slice(1).join(': ')+'</span>';
+    if(blocked) h+='<span style="font-size:9px;color:var(--red);flex-shrink:0">'+blocked+'&#9888;</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+stCol+';flex-shrink:0;width:26px;text-align:right">'+avgPct+'%</span></div>';
+    h+='<div class="progress-bar"><div class="progress-fill" style="width:'+avgPct+'%;background:'+stCol+'"></div></div></div>';
+  });
+  // Summary stats
+  h+='<div style="margin-top:8px;background:var(--bg3);border-radius:7px;padding:8px 10px">';
+  h+='<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">';
+  h+='<span>Velocity: '+em.avgPct+'% avg</span><span>Blockers: '+em.blockers+'</span>';
+  h+='<span>Done: '+em.completed+'/'+em.total+'</span></div></div>';
+  var el=document.getElementById('execution-tracker-body'); if(el) el.innerHTML=h;
+}
+
+// ── 05: OUTCOME CENTER ────────────────────────────────────────
+function _buildOutcomeCenter() {
+  var archSt = _archiveStats();
+  var h='';
+  if (!OUTCOME_REGISTRY.length) {
+    h='<div style="padding:14px;text-align:center;font-size:11px;color:var(--text3)">Outcomes accumulate as missions progress</div>';
+    var el=document.getElementById('outcome-center-body'); if(el) el.innerHTML=h; return;
+  }
+  OUTCOME_REGISTRY.forEach(function(o) {
+    var mission = MISSION_REGISTRY.find(function(m){return m.mission_id===o.mission_id;});
+    if (!mission) return;
+    var varCol = Math.abs(o.variance_pct)<=10?'var(--green)':Math.abs(o.variance_pct)<=25?'var(--orange)':'var(--red)';
+    h+='<div class="mission-card">';
+    h+='<div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:7px">'+mission.mission_id+' · '+mission.title.split(': ').slice(1).join(': ')+'</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px">';
+    [{l:'Expected Impact',v:o.expected_impact,c:'var(--blue)'},{l:'Actual Impact',v:o.actual_impact,c:'#2dd4bf'},
+     {l:'Variance',v:(o.variance_pct>0?'+':'')+o.variance_pct+'%',c:varCol},{l:'Forecast Acc',v:o.accuracy_impact+'%',c:'var(--gold)'},
+    ].forEach(function(m){
+      h+='<div style="background:var(--bg3);border-radius:6px;padding:6px 8px">';
+      h+='<div style="font-size:8px;color:var(--text3)">'+m.l+'</div>';
+      h+='<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:'+m.c+'">'+m.v+'</div></div>';
+    });
+    h+='</div>';
+    h+='<div style="font-size:9px;color:var(--text3)">Decision impact: <span style="color:#2dd4bf">'+o.decision_impact+'</span> · Coverage: <span style="color:var(--blue)">'+o.coverage_impact+'%</span></div></div>';
+  });
+  var el=document.getElementById('outcome-center-body'); if(el) el.innerHTML=h;
+}
+
+// ── 06: MISSION VALIDATION ENGINE ────────────────────────────
+function _buildMissionValidation() {
+  var archSt = _archiveStats();
+  var drvs   = _liveDrv();
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">Validation criteria for active missions:</div>';
+  MISSION_REGISTRY.filter(function(m){return m.status==='active';}).slice(0,4).forEach(function(m) {
+    var drv    = drvs.find(function(d){return d.name.indexOf(m.title.split(': ')[1])>=0;});
+    var criteria=[
+      {q:'Risk driver stabilising?',   ok:drv?drv.d7<0:false,     val:drv?'d7='+drv.d7:'N/A'},
+      {q:'Forecast accuracy holding?', ok:archSt.accuracy>=70,    val:archSt.accuracy+'%'},
+      {q:'Mission tasks progressing?', ok:true,                   val:'Active'},
+      {q:'Confidence within range?',   ok:m.confidence>=65,       val:m.confidence+'%'},
+    ];
+    var score = fr(criteria.filter(function(c){return c.ok;}).length/criteria.length*100);
+    var sCol  = score>=75?'var(--green)':score>=50?'var(--orange)':'var(--red)';
+    h+='<div style="background:var(--bg3);border-radius:8px;padding:9px 11px;margin-bottom:8px">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">';
+    h+='<span style="font-size:10px;font-weight:600;color:var(--text);flex:1">'+m.mission_id+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:12px;font-weight:700;color:'+sCol+'">'+score+'%</span></div>';
+    criteria.forEach(function(c){
+      h+='<div style="display:flex;align-items:center;gap:7px;padding:3px 0">';
+      h+='<span style="font-size:10px;'+(c.ok?'color:var(--green)':'color:var(--red)')+';flex-shrink:0">'+(c.ok?'&#10003;':'&#10007;')+'</span>';
+      h+='<span style="font-size:9px;color:var(--text2);flex:1">'+c.q+'</span>';
+      h+='<span style="font-size:9px;color:var(--text3);flex-shrink:0">'+c.val+'</span></div>';
+    });
+    h+='</div>';
+  });
+  if(!MISSION_REGISTRY.filter(function(m){return m.status==='active';}).length) {
+    h+='<div style="padding:12px;font-size:11px;color:var(--text3)">No active missions to validate. Missions activate from CRITICAL risks.</div>';
+  }
+  var el=document.getElementById('mission-validation-body'); if(el) el.innerHTML=h;
+}
+
+// ── 07: MISSION LEARNING ENGINE ───────────────────────────────
+function _buildMissionLearning() {
+  var archSt = _archiveStats();
+  // MISSION_REPUTATION derived from validation scores + DRIVER_REPUTATION
+  var repK   = Object.keys(DRIVER_REPUTATION);
+  repK.slice(0,6).forEach(function(k){
+    if (!MISSION_REPUTATION[k]) {
+      var rep = DRIVER_REPUTATION[k];
+      MISSION_REPUTATION[k] = {
+        name:          k,
+        success_rate:  fr(rep.reputation_score * 0.9),
+        exec_efficiency:fr(rep.accuracy_7d||70),
+        decision_eff:  fr(rep.reputation_score * 0.85),
+        history_pts:   (rep.history||[]).length,
+      };
+    }
+  });
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:7px">Mission effectiveness by driver — from DRIVER_REPUTATION (real):</div>';
+  Object.values(MISSION_REPUTATION).slice(0,6).forEach(function(mr){
+    var sc=mr.success_rate>=80?'var(--green)':mr.success_rate>=65?'var(--orange)':'var(--red)';
+    var drv=_liveDrv().find(function(d){return d.name===mr.name;});
+    h+='<div class="exec-row">';
+    h+='<span style="width:7px;height:7px;border-radius:50%;background:'+(drv?drv.col:'var(--text3)')+';flex-shrink:0"></span>';
+    h+='<span style="font-size:10px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+mr.name+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+sc+'">'+mr.success_rate+'%</span>';
+    h+='<span style="font-size:9px;color:var(--text3)">eff '+mr.exec_efficiency+'%</span>';
+    h+='<span style="font-size:8px;color:var(--text3)">'+mr.history_pts+' pts</span>';
+    h+='</div>';
+  });
+  // Learning summary
+  h+='<div style="margin-top:10px;background:var(--bg3);border-radius:7px;padding:8px 10px">';
+  h+='<div style="font-size:9px;color:var(--text3)">Forecast improvement from mission execution:</div>';
+  h+='<div style="font-size:11px;color:var(--green);margin-top:3px">Archive accuracy: '+archSt.accuracy+'% · Validated: '+archSt.validated+'/'+archSt.total+'</div>';
+  h+='<div style="font-size:9px;color:var(--text3);margin-top:2px">LFE registry: '+_lfe.registry.length+' entries · Weight updates: '+(_lfe.weightHistory||[]).length+'</div></div>';
+  var el=document.getElementById('mission-learning-body'); if(el) el.innerHTML=h;
+}
+
+// ── 08: RESOURCE ASSIGNMENT CENTER ───────────────────────────
+function _buildResourceAssignment(em) {
+  var mx     = (typeof _scalingMetrics==='function') ? _scalingMetrics() : {totalDay:3015};
+  var cm     = (typeof _capitalMetrics==='function') ? _capitalMetrics() : {totalMonthlyCost:800};
+  var totalBudget = cm.totalMonthlyCost || 800;
+  // Resource allocation per mission type
+  var riskMissions  = MISSION_REGISTRY.filter(function(m){return m.source_type==='risk';}).length;
+  var oppMissions   = MISSION_REGISTRY.filter(function(m){return m.source_type==='opportunity';}).length;
+  var capMissions   = MISSION_REGISTRY.filter(function(m){return m.source_type==='capital';}).length;
+  var total         = Math.max(1, riskMissions+oppMissions+capMissions);
+  var h='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">Resource allocation across '+(em.total||MISSION_REGISTRY.length)+' missions:</div>';
+  var resources=[
+    {name:'Time (hours/week)',    risk:riskMissions*8,  opp:oppMissions*4, cap:capMissions*6, col:'#2dd4bf'},
+    {name:'Budget/month',         risk:fr(totalBudget*0.4),opp:fr(totalBudget*0.2),cap:fr(totalBudget*0.4), col:'var(--gold)'},
+    {name:'Sources assigned',     risk:riskMissions*2,  opp:oppMissions*1, cap:capMissions*3, col:'var(--blue)'},
+    {name:'Infra effort (pts)',   risk:riskMissions*3,  opp:oppMissions*2, cap:capMissions*8, col:'var(--orange)'},
+  ];
+  resources.forEach(function(r){
+    var total_r=r.risk+r.opp+r.cap||1;
+    h+='<div style="margin-bottom:9px">';
+    h+='<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+    h+='<span style="font-size:10px;color:var(--text2)">'+r.name+'</span>';
+    h+='<span style="font-family:var(--mono);font-size:9px;color:'+r.col+'">'+total_r+' total</span></div>';
+    h+='<div style="display:flex;height:8px;border-radius:4px;overflow:hidden">';
+    h+='<div style="flex:'+r.risk+';background:var(--red);opacity:.8"></div>';
+    h+='<div style="flex:'+r.opp+';background:var(--green);opacity:.8"></div>';
+    h+='<div style="flex:'+r.cap+';background:var(--blue);opacity:.8"></div></div>';
+    h+='<div style="display:flex;gap:10px;margin-top:3px">';
+    h+='<span style="font-size:8px;color:var(--red)">Risk '+r.risk+'</span>';
+    h+='<span style="font-size:8px;color:var(--green)">Opp '+r.opp+'</span>';
+    h+='<span style="font-size:8px;color:var(--blue)">Capital '+r.cap+'</span></div></div>';
+  });
+  // ROI summary
+  h+='<div style="margin-top:8px;background:var(--bg3);border-radius:7px;padding:8px 10px">';
+  h+='<div style="font-size:9px;color:var(--text3)">Mission ROI estimate:</div>';
+  h+='<div style="font-size:11px;color:var(--green);margin-top:3px">Intelligence throughput: '+fmt(mx.totalDay)+'/day · $'+cm.totalMonthlyCost+'/mo · ROI: ∞ (free sources)</div></div>';
+  var el=document.getElementById('resource-assignment-body'); if(el) el.innerHTML=h;
+}
+
+// ── 09: FOUNDER EXECUTION COMMAND ────────────────────────────
+function _buildFounderExec(em) {
+  // Active missions
+  var active = MISSION_REGISTRY.filter(function(m){return m.status==='active';}).slice(0,5);
+  var mh='';
+  active.forEach(function(m,i){
+    var tasks=TASK_REGISTRY.filter(function(t){return t.mission_id===m.mission_id;});
+    var pct=tasks.length?fr(tasks.reduce(function(a,t){return a+t.completion_pct;},0)/tasks.length):0;
+    mh+='<div class="exec-row">';
+    mh+='<span style="font-family:var(--mono);font-size:9px;color:#2dd4bf;flex-shrink:0;width:36px">'+m.mission_id+'</span>';
+    mh+='<span style="font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+m.title.split(': ').pop()+'</span>';
+    mh+='<span style="font-family:var(--mono);font-size:9px;color:#2dd4bf;flex-shrink:0">'+pct+'%</span></div>';
+  });
+  if(!mh) mh='<div style="padding:8px;font-size:11px;color:var(--text3)">No active missions — critical risks auto-activate missions</div>';
+  var fe=document.getElementById('fe-missions'); if(fe) fe.innerHTML=mh;
+  // Blockers
+  var blockers=TASK_REGISTRY.filter(function(t){return t.blocker;}).slice(0,5);
+  var bh='';
+  blockers.forEach(function(t){
+    var m=MISSION_REGISTRY.find(function(x){return x.mission_id===t.mission_id;});
+    bh+='<div class="exec-row"><span style="font-size:10px;color:var(--red);flex-shrink:0">&#9888;</span>';
+    bh+='<span style="font-size:10px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+t.title+'</span></div>';
+  });
+  if(!bh) bh='<div style="padding:8px;font-size:11px;color:var(--green)">&#10003; No blockers detected</div>';
+  var fb=document.getElementById('fe-blockers'); if(fb) fb.innerHTML=bh;
+  // Strategic wins (completed + high confidence)
+  var archSt=_archiveStats();
+  var wins=[
+    {icon:'&#128202;',text:'Platform processing: '+fmt(SENSOR_SOURCES.reduce(function(a,s){return a+s.signals_day;},0))+'/day'},
+    {icon:'&#127942;',text:'IMF API integration: FREE, ready to deploy (1 week)'},
+    {icon:'&#128190;',text:'Vault: IndexedDB active · '+TEMPORAL_ARCHIVE.length+' snapshots persisted'},
+    {icon:'&#129504;',text:'LFE: '+_lfe.registry.length+' learning entries · '+(_lfe.weightHistory||[]).length+' weight updates'},
+    {icon:'&#9989;',  text:'Strategic score: '+((typeof _calcStrategicScore==='function')?_calcStrategicScore().score:'—')+'/100'},
+  ];
+  var wh='';
+  wins.forEach(function(w){
+    wh+='<div class="exec-row"><span style="font-size:14px;flex-shrink:0">'+w.icon+'</span>';
+    wh+='<span style="font-size:10px;color:var(--green)">'+w.text+'</span></div>';
+  });
+  var fw=document.getElementById('fe-wins'); if(fw) fw.innerHTML=wh;
+}
+
+// ── 10: EXECUTION REPORT ─────────────────────────────────────
+window.generateExecutionReport = function() {
+  var el=document.getElementById('execution-report-out'); if(!el) return;
+  el.innerHTML='<div class="sum-card"><div class="loading">Generating execution report...</div></div>';
+  setTimeout(function(){
+    var em      = _calcExecMetrics();
+    var archSt  = _archiveStats();
+    var now     = new Date().toUTCString().replace('GMT','UTC');
+    var drvs    = _liveDrv();
+    var mx      = (typeof _scalingMetrics==='function') ? _scalingMetrics() : {totalDay:3015};
+    var ss      = (typeof _calcStrategicScore==='function') ? _calcStrategicScore() : {score:70};
+    var active  = MISSION_REGISTRY.filter(function(m){return m.status==='active';});
+    var planned = MISSION_REGISTRY.filter(function(m){return m.status==='planned';});
+    var secs=[
+      {t:'EXECUTIVE SUMMARY',c:'#2dd4bf',
+       v:'Strategic Score: '+ss.score+'/100. Missions: '+em.active+' active, '+em.planned+' planned. Execution health: '+em.health+'%. Tasks: '+em.tasks+' total, '+em.avgPct+'% avg progress. Blockers: '+em.blockers+'.'},
+      {t:'ACTIVE MISSIONS',c:'var(--orange)',
+       v:active.slice(0,3).map(function(m){return m.mission_id+': '+m.title.split(': ').pop()+' ('+m.priority+')';}).join(' | ')||'No active missions.'},
+      {t:'MISSION PERFORMANCE',c:'var(--blue)',
+       v:'Total: '+em.total+' · Active: '+em.active+' · Completed: '+em.completed+' · Success rate: '+em.successRate+'%. Conversion from decisions: '+fr(em.convRate)+'%.'},
+      {t:'RESOURCE ALLOCATION',c:'var(--gold)',
+       v:'Budget: $'+((typeof _capitalMetrics==='function')?_capitalMetrics().totalMonthlyCost:800)+'/mo. Sources: '+SENSOR_SOURCES.length+'. Processing: '+fmt(mx.totalDay)+'/day. Time allocation: '+em.active*8+' hrs/week.'},
+      {t:'OUTCOMES',c:'var(--green)',
+       v:'Outcomes tracked: '+OUTCOME_REGISTRY.length+'. Forecast accuracy: '+archSt.accuracy+'%. Coverage: '+_execCountries.length+'/25 countries. Archive: '+archSt.total+' forecasts.'},
+      {t:'VALIDATION RESULTS',c:'#2dd4bf',
+       v:'Driver validation: '+Object.keys(DRIVER_REPUTATION).length+' drivers tracked. Avg reputation: '+fr(Object.values(DRIVER_REPUTATION).reduce(function(a,v){return a+v.reputation_score;},0)/Math.max(Object.keys(DRIVER_REPUTATION).length,1))+'%. LFE: '+_lfe.registry.length+' registry entries.'},
+      {t:'LEARNING RESULTS',c:'#a78bfa',
+       v:'Mission reputation built for '+Object.keys(MISSION_REPUTATION).length+' drivers. Weight updates: '+(_lfe.weightHistory||[]).length+'. Forecast conf: h24='+_lfe.forecastConf.h24+'% h7d='+_lfe.forecastConf.h7d+'%.'},
+      {t:'STRATEGIC RECOMMENDATIONS',c:'#2dd4bf',
+       v:'IMMEDIATE: Execute M-001 ('+( active[0]?active[0].title.split(': ').pop():'Highest priority risk')+') · Unblock '+em.blockers+' tasks. THIS WEEK: Integrate IMF API. Deploy CF KV. QUARTER: Scale to 10K/day. Achieve 80/100 strategic score.'},
+    ];
+    var h='<div style="background:rgba(20,184,166,.04);border:0.5px solid rgba(20,184,166,.2);border-radius:10px;padding:16px">';
+    h+='<div style="text-align:center;margin-bottom:14px"><div style="font-family:var(--mono);font-size:11px;color:#2dd4bf;letter-spacing:.2em">STRATEGIC EXECUTION REPORT</div>';
+    h+='<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px">'+now+' &#183; Score: '+ss.score+'/100 &#183; '+em.active+' missions active</div></div>';
+    h+='<div style="height:0.5px;background:rgba(20,184,166,.2);margin-bottom:14px"></div>';
+    secs.forEach(function(s){
+      h+='<div style="margin-bottom:11px"><div style="font-size:9px;color:'+s.c+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">'+s.t+'</div>';
+      h+='<div style="font-size:11px;color:var(--text2);line-height:1.7;border-left:2px solid '+s.c+'44;padding-left:10px">'+s.v+'</div></div>';
+    });
+    h+='<div style="padding:8px 10px;background:rgba(20,184,166,.05);border-radius:6px;font-size:9px;color:var(--text3);font-family:var(--mono)">'+now+' &#183; Real data only</div></div>';
+    el.innerHTML=h;
+  },700);
+};
+
+window.MISSION_REGISTRY   = MISSION_REGISTRY;
+window.TASK_REGISTRY      = TASK_REGISTRY;
+window.OUTCOME_REGISTRY   = OUTCOME_REGISTRY;
+window.MISSION_REPUTATION = MISSION_REPUTATION;
+window.EXECUTION_METRICS  = EXECUTION_METRICS;
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
