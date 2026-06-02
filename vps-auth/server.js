@@ -188,6 +188,144 @@ app.post('/api/auth/logout', (req, res) => {
   return res.json({ success: true });
 });
 
+
+// ══════════════════════════════════════════════════════════════════
+// S33 CLIENT INTELLIGENCE MODULE
+// Endpoints:
+//   GET  /api/clients/dashboard   — aggregate metrics
+//   GET  /api/clients/list        — full registry
+//   POST /api/clients/add         — register client
+//   PUT  /api/clients/:id         — update client
+//   DELETE /api/clients/:id       — remove client
+//   GET  /api/activity/recent     — last N logins from auth.log
+// Auth: Bearer token (same session from /api/auth/login)
+// Storage: /opt/mia-auth/clients.json
+// ══════════════════════════════════════════════════════════════════
+
+const CLIENTS_FILE = path.join(__dirname, 'clients.json');
+const PLAN_PRICES = { FREE: 0, SIGNAL_PRO: 49, STRATEGIC_PRO: 149, ELITE: 499 };
+
+function loadClients() {
+  try {
+    if (!fs.existsSync(CLIENTS_FILE)) return [];
+    return JSON.parse(fs.readFileSync(CLIENTS_FILE, 'utf8'));
+  } catch(_) { return []; }
+}
+function saveClients(clients) {
+  try { fs.writeFileSync(CLIENTS_FILE, JSON.stringify(clients, null, 2)); } catch(_) {}
+}
+
+// Verify Bearer token — returns true/false
+function verifyBearer(req) {
+  const h = req.headers['authorization'] || '';
+  const token = h.startsWith('Bearer ') ? h.slice(7).trim() : null;
+  if (!token) return false;
+  try {
+    const p = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'], issuer: 'mia-auth' });
+    return SESSIONS.has(p.jti);
+  } catch(_) { return false; }
+}
+
+// GET /api/clients/dashboard
+app.get('/api/clients/dashboard', (req, res) => {
+  if (!verifyBearer(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const clients = loadClients();
+  const now = Date.now();
+  const msDay = 86400000;
+  const active = clients.filter(c => c.status === 'active');
+  const byPlan = { FREE: 0, SIGNAL_PRO: 0, STRATEGIC_PRO: 0, ELITE: 0 };
+  let mrr = 0;
+  active.forEach(c => {
+    const plan = c.plan || 'FREE';
+    byPlan[plan] = (byPlan[plan] || 0) + 1;
+    mrr += (PLAN_PRICES[plan] || 0);
+  });
+  const newToday = clients.filter(c => (now - new Date(c.registered_at).getTime()) < msDay).length;
+  const churn7  = active.filter(c => c.last_login && (now - new Date(c.last_login).getTime()) > 7*msDay).length;
+  const churn30 = active.filter(c => c.last_login && (now - new Date(c.last_login).getTime()) > 30*msDay).length;
+  const upgradeReady = active.filter(c => (c.plan === 'FREE' || c.plan === 'SIGNAL_PRO') && (c.logins_count || 0) >= 5).length;
+  res.json({
+    total: clients.length, active: active.length,
+    byPlan, mrr, arr: mrr * 12,
+    arpu: active.length ? Math.round(mrr / active.length) : 0,
+    newToday, churn7, churn30, upgradeReady,
+    ltv_total: active.reduce((a, c) => a + (c.ltv || 0), 0),
+    ts: new Date().toISOString(),
+  });
+});
+
+// GET /api/clients/list
+app.get('/api/clients/list', (req, res) => {
+  if (!verifyBearer(req)) return res.status(401).json({ error: 'Unauthorized' });
+  res.json({ clients: loadClients(), ts: new Date().toISOString() });
+});
+
+// POST /api/clients/add
+app.post('/api/clients/add', (req, res) => {
+  if (!verifyBearer(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const clients = loadClients();
+  const { name, email, plan, country, notes } = req.body || {};
+  if (!email) return res.status(400).json({ error: 'Email required' });
+  if (clients.find(c => c.email === email)) return res.status(409).json({ error: 'Client already exists' });
+  const id = 'CLT-' + String(clients.length + 1).padStart(3, '0') + '-' + Date.now().toString(36).slice(-4).toUpperCase();
+  const client = {
+    id, name: name || email.split('@')[0], email,
+    plan: plan || 'FREE', country: country || '—',
+    registered_at: new Date().toISOString(),
+    last_login: null, status: 'active',
+    logins_count: 0, ltv: 0,
+    monthly_value: PLAN_PRICES[plan || 'FREE'] || 0,
+    notes: notes || '',
+  };
+  clients.push(client);
+  saveClients(clients);
+  authLog(req.headers['x-forwarded-for'] || req.ip, true, 'client_added:' + email);
+  res.json({ success: true, client });
+});
+
+// PUT /api/clients/:id
+app.put('/api/clients/:id', (req, res) => {
+  if (!verifyBearer(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const clients = loadClients();
+  const idx = clients.findIndex(c => c.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Not found' });
+  const updates = req.body || {};
+  // Allow updating plan, status, notes, country
+  ['plan','status','notes','country','name','last_login','logins_count','ltv'].forEach(k => {
+    if (updates[k] !== undefined) clients[idx][k] = updates[k];
+  });
+  if (updates.plan) clients[idx].monthly_value = PLAN_PRICES[updates.plan] || 0;
+  saveClients(clients);
+  res.json({ success: true, client: clients[idx] });
+});
+
+// DELETE /api/clients/:id
+app.delete('/api/clients/:id', (req, res) => {
+  if (!verifyBearer(req)) return res.status(401).json({ error: 'Unauthorized' });
+  let clients = loadClients();
+  const idx = clients.findIndex(c => c.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Not found' });
+  clients.splice(idx, 1);
+  saveClients(clients);
+  res.json({ success: true });
+});
+
+// GET /api/activity/recent — parse auth.log (last 50 entries)
+app.get('/api/activity/recent', (req, res) => {
+  if (!verifyBearer(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    if (!fs.existsSync(LOG_FILE)) return res.json({ activity: [] });
+    const lines = fs.readFileSync(LOG_FILE, 'utf8')
+      .split('\n').filter(Boolean).slice(-100);
+    const activity = lines.map(l => {
+      try { return JSON.parse(l); } catch(_) { return null; }
+    }).filter(Boolean).reverse().slice(0, 50);
+    res.json({ activity, ts: new Date().toISOString() });
+  } catch(e) { res.status(500).json({ error: String(e) }); }
+});
+
+// END CLIENT INTELLIGENCE MODULE
+
 // ── 404 ──────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({
