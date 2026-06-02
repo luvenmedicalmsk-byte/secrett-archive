@@ -1,68 +1,68 @@
 {
   "country": "MX",
-  "date": "2026-06-01",
+  "date": "2026-06-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-01T22:36:44.926443+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-02T03:36:01.340725+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 64,
+      "score": 78,
       "props": {
-        "risk_score": 64
+        "risk_score": 78
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 12,
-      "trend": "down"
+      "score": 78,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "down"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 20,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -85,20 +85,6 @@
       "label": "Зеленое предупреждение о наводнении в Ме",
       "severity": 78,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-Мексика_и_",
-      "type": "Signal",
-      "label": "Мексика и США завершили первый официальн",
-      "severity": 64,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-MX-Полиция_Ме",
-      "type": "Signal",
-      "label": "Полиция Мехико применяет слезоточивый га",
-      "severity": 61,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,43 +92,43 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.78
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-MX-Geopolitical",
@@ -163,22 +149,73 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-MX-Зеленое_пр",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.78
-    },
-    {
-      "from": "SIGNAL-MX-Мексика_и_",
-      "to": "DOMAIN-MX-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-MX-Полиция_Ме",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.61
     }
   ]
 }
