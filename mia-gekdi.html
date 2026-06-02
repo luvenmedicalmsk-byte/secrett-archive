@@ -3437,12 +3437,26 @@ function buildForecastTable(cc){
     var gri=fr(c.risk_score),ews=fr(c.ews_score||gri*.95),cri=fr(gri*.85);
     var d=parseFloat(c.delta||0),f24=fr(gri+d*.15),f7=fr(gri+d),f30=fr(gri+d*2.5),f90=fr(gri+d*4);
     // Archive multidimensional forecasts (real, not reconstructed)
-    var conf=Math.max(60,fr(85-Math.abs(d)*1.5));
+    // ── LFE WRITE-BACK: blend accumulated learning into forecast confidence ──
+    var _lfeFC    = (typeof _lfe!=="undefined"&&_lfe.forecastConf) ? _lfe.forecastConf : {};
+    var _repK     = (typeof DRIVER_REPUTATION!=="undefined") ? Object.keys(DRIVER_REPUTATION) : [];
+    var _repAvg   = _repK.length ? fr(_repK.reduce(function(a,k){return a+DRIVER_REPUTATION[k].reputation_score;},0)/_repK.length)/100 : 0.70;
+    var _msnSucc  = (typeof MISSION_HISTORY!=="undefined"&&MISSION_HISTORY.length>0)
+      ? MISSION_HISTORY.filter(function(m){return m.validated;}).length / MISSION_HISTORY.length
+      : 0.75;
+    // base conf × reputation factor × mission success rate factor (0.80–1.20)
+    var _lfeFactor = Math.max(0.80, Math.min(1.20, _repAvg * _msnSucc * 2));
+    var conf=Math.max(60,fr((85-Math.abs(d)*1.5) * _lfeFactor));
+    // LFE horizon confidence adjustment (use accumulated registry accuracy)
+    var _conf24  = Math.max(55, fr(conf   * ((_lfeFC.h24||78)/78)));
+    var _conf7d  = Math.max(50, fr((conf-4) * ((_lfeFC.h7d||74)/74)));
+    var _conf30d = Math.max(45, fr((conf-8) * ((_lfeFC.h30d||71)/71)));
+    var _conf90d = Math.max(42, fr((conf-12)* ((_lfeFC.h90d||68)/68)));
     function _mkPred(g){ return {gri:g, ews:fr(g*.95), cri:fr(g*.87), resilience:fr(100-g*.7)}; }
-    _archiveForecast(c.country,c.country_name||c.country,'h24', _mkPred(f24), conf,          drvSnap);
-    _archiveForecast(c.country,c.country_name||c.country,'h7d', _mkPred(f7),  Math.max(55,conf-4), drvSnap);
-    _archiveForecast(c.country,c.country_name||c.country,'h30d',_mkPred(f30), Math.max(50,conf-8), drvSnap);
-    _archiveForecast(c.country,c.country_name||c.country,'h90d',_mkPred(f90), Math.max(45,conf-12),drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h24', _mkPred(f24), _conf24,  drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h7d', _mkPred(f7),  _conf7d,  drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h30d',_mkPred(f30), _conf30d, drvSnap);
+    _archiveForecast(c.country,c.country_name||c.country,'h90d',_mkPred(f90), _conf90d, drvSnap);
     var ds=d>0?'+':''; var dc=d>0?'#ef4444':d<0?'#10b981':'var(--text3)';
     html+='<tr><td><div class="td-country"><span class="td-flag">'+flag(c.country)+'</span>'+esc(c.country_name||c.country)+'</div></td>';
     html+='<td style="color:'+riskCol(gri)+'">'+gri+'</td><td style="color:'+riskCol(ews)+'">'+ews+'</td><td>'+cri+'</td>';
@@ -6197,6 +6211,11 @@ var PM_KEYS = {
   graphHist:   'mia-pm-graph-hist',
   index:       'mia-pm-index',
   integrity:   'mia-pm-integrity',
+  // ── S31 Mission Persistence (closes MISSION_HISTORY gap) ──
+  msnHistory:  'mia-pm-msn-history',
+  outcomeHist: 'mia-pm-outcome-hist',
+  msnLearning: 'mia-pm-msn-learning',
+  decFeedback: 'mia-pm-dec-feedback',
 };
 
 // Memory state
@@ -6322,6 +6341,46 @@ function persistGraphHistory() {
 }
 
 // ── MASTER PERSIST ────────────────────────────────────────────
+function persistMissionHistory() {
+  if(typeof MISSION_HISTORY==="undefined") return;
+  var s=MISSION_HISTORY.slice(-100);
+  _pmSet(PM_KEYS.msnHistory, {entries:s, checksum:_pmChecksum(s), ts:Date.now()});
+}
+function persistOutcomeHistory() {
+  if(typeof OUTCOME_HISTORY==="undefined") return;
+  var s=OUTCOME_HISTORY.slice(-100);
+  _pmSet(PM_KEYS.outcomeHist, {entries:s, checksum:_pmChecksum(s), ts:Date.now()});
+}
+function persistMissionLearning() {
+  if(typeof MISSION_LEARNING==="undefined") return;
+  var s=MISSION_LEARNING.slice(-100);
+  _pmSet(PM_KEYS.msnLearning, {entries:s, checksum:_pmChecksum(s), ts:Date.now()});
+}
+function persistDecisionFeedback() {
+  if(typeof DECISION_FEEDBACK==="undefined") return;
+  var s=DECISION_FEEDBACK.slice(-100);
+  _pmSet(PM_KEYS.decFeedback, {entries:s, checksum:_pmChecksum(s), ts:Date.now()});
+}
+function restoreMissionHistory() {
+  var d=_pmGet(PM_KEYS.msnHistory); if(!d||!d.entries) return 0;
+  d.entries.forEach(function(e){ if(!MISSION_HISTORY.some(function(x){return x.mission_id===e.mission_id;})) MISSION_HISTORY.push(e); });
+  return d.entries.length;
+}
+function restoreOutcomeHistory() {
+  var d=_pmGet(PM_KEYS.outcomeHist); if(!d||!d.entries) return 0;
+  d.entries.forEach(function(e){ if(!OUTCOME_HISTORY.some(function(x){return x.outcome_id===e.outcome_id;})) OUTCOME_HISTORY.push(e); });
+  return d.entries.length;
+}
+function restoreMissionLearning() {
+  var d=_pmGet(PM_KEYS.msnLearning); if(!d||!d.entries) return 0;
+  d.entries.forEach(function(e){ if(!MISSION_LEARNING.some(function(x){return x.mission_id===e.mission_id&&x.ts===e.ts;})) MISSION_LEARNING.push(e); });
+  return d.entries.length;
+}
+function restoreDecisionFeedback() {
+  var d=_pmGet(PM_KEYS.decFeedback); if(!d||!d.entries) return 0;
+  d.entries.forEach(function(e){ if(!DECISION_FEEDBACK.some(function(x){return x.mission_id===e.mission_id&&x.ts===e.ts;})) DECISION_FEEDBACK.push(e); });
+  return d.entries.length;
+}
 function persistMemory() {
   persistForecastArchive();
   persistTemporalArchive();
@@ -6332,6 +6391,11 @@ function persistMemory() {
   persistForecastHistory();
   persistScenarioArchive();
   persistGraphHistory();
+  // ── S31 MISSION PERSISTENCE ──
+  persistMissionHistory();
+  persistOutcomeHistory();
+  persistMissionLearning();
+  persistDecisionFeedback();
   // Update index
   var archSt = typeof _archiveStats === 'function' ? _archiveStats() : {total:0,validated:0};
   MEMORY_INDEX.total_forecasts       = archSt.total;
@@ -6515,6 +6579,11 @@ function loadPersistentMemory() {
   _pmRestoreStats.fcHist     = restoreForecastHistory();
   _pmRestoreStats.scenarios  = restoreScenarioArchive();
   _pmRestoreStats.graph      = restoreGraphHistory();
+  // ── S31 MISSION RESTORE ──
+  _pmRestoreStats.msnHistory  = restoreMissionHistory();
+  _pmRestoreStats.outcomeHist = restoreOutcomeHistory();
+  _pmRestoreStats.msnLearning = restoreMissionLearning();
+  _pmRestoreStats.decFeedback = restoreDecisionFeedback();
   // Restore index
   var savedIndex = _pmGet(PM_KEYS.index);
   if (savedIndex) {
@@ -6560,6 +6629,11 @@ window.persistMemory          = persistMemory;
 window.loadPersistentMemory   = loadPersistentMemory;
 window._pmCheckIntegrity      = _pmCheckIntegrity;
 window._pmRestoreStats        = _pmRestoreStats;
+// S31 mission persistence
+window.persistMissionHistory   = persistMissionHistory;
+window.restoreMissionHistory   = restoreMissionHistory;
+window.persistDecisionFeedback = persistDecisionFeedback;
+window.restoreDecisionFeedback = restoreDecisionFeedback;
 // END PERSISTENT MEMORY ENGINE
 
 // LEARNING FEEDBACK ENGINE — closed-loop, error-weighted, real data
@@ -12742,10 +12816,13 @@ function _calcStrategicScore() {
   var forecastAcc = archSt.accuracy > 0 ? archSt.accuracy : repAvg;
   // Scenario confidence
   var scenarioConf= _lfe.scenarioConf || 80;
-  // Learning health
+  // Learning health — includes mission feedback
   var lfeReg   = _lfe.registry.length;
   var wh       = (_lfe.weightHistory||[]).length;
-  var learningHealth = fr(Math.min(100, lfeReg*3 + wh*2 + (archSt.validated>0?40:10)));
+  var msnTotal = (typeof MISSION_HISTORY!=="undefined") ? MISSION_HISTORY.length : 0;
+  var msnSucc  = msnTotal>0 ? MISSION_HISTORY.filter(function(m){return m.validated;}).length/msnTotal : 0;
+  var msnBonus = fr(Math.min(20, msnTotal*2 + msnSucc*15)); // 0–20 bonus from missions
+  var learningHealth = fr(Math.min(100, lfeReg*3 + wh*2 + (archSt.validated>0?40:10) + msnBonus));
   // Intelligence yield
   var mx = (typeof _scalingMetrics==='function') ? _scalingMetrics() : {procQual:72,infraEff:85};
   var intelligenceYield = fr((typeof mx.procQual !== 'undefined' ? mx.procQual : 72) * 0.9);
@@ -13044,10 +13121,14 @@ function _buildDecisionQueue(countries) {
   var queue=[];
   risks.slice(0,5).forEach(function(r,i){
     var repScore=(DRIVER_REPUTATION[r.name]||{reputation_score:70}).reputation_score;
+    // DECISION WRITE-BACK: conf = repScore × missionSuccessRate
+    var _msnH = (typeof MISSION_HISTORY!=="undefined") ? MISSION_HISTORY.filter(function(m){return m.source_driver===r.name;}) : [];
+    var _msnRate = _msnH.length>0 ? fr(_msnH.filter(function(m){return m.validated;}).length/_msnH.length*100) : 75;
+    var _decConf = fr(repScore * (_msnRate/100));
     queue.push({
       id:'DEC-'+String(i+1).padStart(3,'0'),
       name:'Respond to '+r.name,
-      priority:r.priority, conf:repScore,
+      priority:r.priority, conf:_decConf,
       impact:r.score, horizon:r.prob>=70?'IMMEDIATE':'SHORT-TERM',
       col:r.priority==='CRITICAL'?'var(--red)':r.priority==='HIGH'?'var(--orange)':'var(--gold)'
     });
