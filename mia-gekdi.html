@@ -3301,6 +3301,26 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
       <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#128203;</span> 02 · Недельный разведывательный брифинг</div>
       <div id="sp2-weekly"></div>
 
+      <!-- SIGNAL RANKING BOARD (TOP-10 × 3) -->
+      <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#127942;</span> 02b · Signal Ranking Board</div>
+      <div class="swipe-wrap" id="sp2-ranking-swipe">
+        <div class="swipe-card"><div class="sum-card">
+          <div class="sum-title"><span>&#128311;</span>ТОП-10 РИСКОВ НЕДЕЛИ</div>
+          <div id="sp2-top-risks"></div>
+        </div></div>
+        <div class="swipe-card"><div class="sum-card">
+          <div class="sum-title"><span>&#127775;</span>ТОП-10 ВОЗМОЖНОСТЕЙ НЕДЕЛИ</div>
+          <div id="sp2-top-opps"></div>
+        </div></div>
+        <div class="swipe-card"><div class="sum-card">
+          <div class="sum-title"><span>&#9889;</span>ТОП-10 СИГНАЛОВ НЕДЕЛИ</div>
+          <div id="sp2-top-signals"></div>
+        </div></div>
+      </div>
+      <div class="swipe-dots" id="sp2-ranking-dots">
+        <span class="swipe-dot active"></span><span class="swipe-dot"></span><span class="swipe-dot"></span>
+      </div>
+
       <!-- 03: SIGNAL CONFIDENCE ENGINE -->
       <div class="sum-title" style="margin-top:14px;margin-bottom:8px"><span>&#128200;</span> 03 · Движок достоверности сигналов</div>
       <div id="sp2-confidence"></div>
@@ -14653,18 +14673,41 @@ function _sp2Impact(risk) {
       });
     }
   }
+  // FIX2: fallback — if all sectors zero, apply domain-based defaults
+  var totalImpact = Object.values(sectors).reduce(function(a,v){ return a+v; }, 0);
+  if (totalImpact < 10) {
+    var baseScale = (risk.impact || risk.score || 60) / 100;
+    var dn = _sp2DomainFromDriver(risk.name || '');
+    var defaults = {
+      climate: {agro:80, water:70, logistics:55, energy:45, infra:40},
+      geo:     {energy:65, markets:60, logistics:65, invest:55, realty:40},
+      eco:     {markets:80, invest:75, realty:55, logistics:40, energy:35},
+      tech:    {infra:75, energy:55, markets:50, logistics:45},
+      social:  {realty:50, invest:45, markets:40},
+    };
+    var def = defaults[dn] || defaults.geo;
+    Object.entries(def).forEach(function(e){ sectors[e[0]] = fr(e[1] * baseScale); });
+  }
   return sectors;
 }
 
 // ── SIGNAL PRIORITY SCORE ─────────────────────────────────────────
 // Priority = Impact × Confidence × Urgency × DriverReputation / 10^6
 function _sp2Priority(risk, conf) {
-  var impact   = risk.impact || risk.score || 60;
-  var urgency  = risk.d7 >= 8 ? 1.0 : risk.d7 >= 4 ? 0.75 : risk.d7 >= 1 ? 0.55 : 0.40;
-  var score    = fr(impact * (conf.composite/100) * urgency * (conf.repScore/100));
-  var level    = score >= 60 ? 'КРИТИЧЕСКИЙ' : score >= 40 ? 'ВЫСОКИЙ' : score >= 25 ? 'СРЕДНИЙ' : 'НИЗКИЙ';
-  var cls      = score >= 60 ? 'pri-crit' : score >= 40 ? 'pri-high' : score >= 25 ? 'pri-med' : 'pri-low';
-  return { score: score, level: level, cls: cls, urgency: urgency };
+  var impact  = risk.impact || risk.score || 60;
+  // urgency: d7 momentum + probability
+  var d7      = risk.d7 || 0;
+  var prob    = risk.prob || 60;
+  var urgency = d7 >= 8 ? 1.0 : d7 >= 4 ? 0.80 : d7 >= 1 ? 0.60 : prob >= 75 ? 0.55 : 0.40;
+  // Signal Ranking Score 0-100 (product formula, normalized)
+  // = Impact × Confidence × Urgency × DriverReputation / MAX_POSSIBLE
+  var raw      = impact * (conf.composite/100) * urgency * (conf.repScore/100);
+  var maxPoss  = 100 * 0.98 * 1.0 * 1.00; // ~98
+  var signalScore = Math.min(100, fr(raw / maxPoss * 100));
+  // Decision thresholds (calibrated to 0-100 scale)
+  var level = signalScore >= 62 ? 'КРИТИЧЕСКИЙ' : signalScore >= 42 ? 'ВЫСОКИЙ' : signalScore >= 24 ? 'СРЕДНИЙ' : 'НИЗКИЙ';
+  var cls   = signalScore >= 62 ? 'pri-crit' : signalScore >= 42 ? 'pri-high' : signalScore >= 24 ? 'pri-med' : 'pri-low';
+  return { score: signalScore, raw: fr(raw), level: level, cls: cls, urgency: urgency };
 }
 
 // ── SIGNAL GENERATOR ─────────────────────────────────────────────
@@ -14716,21 +14759,43 @@ function _sp2GenerateSignals(countries) {
     if (o.cat === 'Regional') domKey = _sp2DomainFromDriver(o.drivers[0] || '');
     var cat  = SP2_CAT_MAP[domKey] || SP2_CAT_MAP.eco;
     var conf = _sp2Confidence(o.drivers[0] || 'Resilience', o.horizon);
-    var pri  = { score: fr(o.score * 0.8), level: 'ВОЗМОЖНОСТЬ', cls: 'pri-low' };
+    var priScore = fr(o.score * 0.8 * (conf.composite/100));
+    var pri  = { score: priScore, raw: priScore, level: 'ВОЗМОЖНОСТЬ', cls: 'pri-low', urgency: o.urgency==='High'?0.80:0.55 };
+    // FIX3a: OPP countries from improving country list
+    var oppCountries = [];
+    if (o.src === 'country_vector') {
+      oppCountries = countries
+        .filter(function(c){ return parseFloat(c.delta||0) < -2; })
+        .sort(function(a,b){ return parseFloat(a.delta||0)-parseFloat(b.delta||0); })
+        .slice(0,5).map(function(c){ return c.country_name||c.country; });
+    } else {
+      oppCountries = countries
+        .filter(function(c){ return (c.risk_score||0) < 55; })
+        .sort(function(a,b){ return (a.risk_score||0)-(b.risk_score||0); })
+        .slice(0,4).map(function(c){ return c.country_name||c.country; });
+    }
+    // FIX3b: specific action by opportunity type
+    var oppAction = o.src === 'country_vector'
+      ? 'Рассмотреть позиционирование в стабилизирующихся рынках ' + (oppCountries.slice(0,2).join(', ')||'региона') + '. Горизонт: ' + o.horizon + '.'
+      : o.src === 'driver_gap'
+      ? 'Инвестировать в сектора с недостаточным покрытием: ' + (o.drivers[0]||'') + '. Конкурентное окно до ' + o.horizon + '.'
+      : o.src === 'causality_chain'
+      ? 'Де-эскалационный сигнал. Снижение ' + (o.drivers ? o.drivers[0] : '') + ' открывает смежные возможности.'
+      : 'Рассмотреть вхождение. Горизонт: ' + o.horizon + '. Мониторинг ' + (o.drivers[0]||'показателей') + '.';
     signals.push({
       id:           'OPP-' + String(i+1).padStart(3,'0'),
       title:        o.name,
       category:     domKey,
       cat:          cat,
-      what:         'Формируется окно возможностей: ' + (o.drivers[0] || ''),
-      why:          'Снижение риска создаёт благоприятные условия в горизонте ' + o.horizon,
-      countries:    [],
+      what:         'Формируется окно возможностей: ' + (o.drivers[0] || '') + '. Urgency: ' + (o.urgency||'Medium') + '.',
+      why:          'Снижение риска создаёт благоприятные условия в горизонте ' + o.horizon + '. Оценка возможности: ' + o.score + '.',
+      countries:    oppCountries,
       horizon:      o.horizon,
       probability:  fr(o.score),
       confidence:   conf,
       priority:     pri,
-      impact:       _sp2Impact({name: o.drivers[0] || '', score: o.score, impact: o.impact}),
-      action:       'Рассмотреть вхождение в позицию. Мониторинг показателей стабилизации.',
+      impact:       _sp2Impact({name: o.drivers[0]||'', score:o.score, impact:o.impact, src:o.src}),
+      action:       oppAction,
       driver:       o.drivers[0] || '—',
       score:        o.score,
       d7:           0,
@@ -14768,9 +14833,19 @@ function _sp2GenerateSignals(countries) {
     });
   }
 
-  // Sort by priority score desc
-  signals.sort(function(a,b){ return b.priority.score - a.priority.score; });
-  return signals;
+  // FIX4: Deduplicate by driver name (keep highest score)
+  var seen = {};
+  var deduped = [];
+  signals.forEach(function(s) {
+    var key = (s.driver||s.title||s.id).slice(0,30);
+    if (!seen[key] || seen[key].priority.score < s.priority.score) {
+      seen[key] = s;
+    }
+  });
+  Object.values(seen).forEach(function(s){ deduped.push(s); });
+  // Sort by signal score desc
+  deduped.sort(function(a,b){ return b.priority.score - a.priority.score; });
+  return deduped;
 }
 
 // ── HELPER: Domain from driver name ──────────────────────────────
@@ -14847,10 +14922,41 @@ function loadSignalPro2(countries) {
   _sp2Signals = _sp2GenerateSignals(countries);
   _sp2BuildKPI();
   _sp2BuildFeed(_sp2Filter);
+  _sp2BuildRankingBoard();
   _sp2BuildWeekly(countries);
   _sp2BuildConfidence();
   _sp2BuildImpact();
   _sp2BuildFounder();
+}
+
+// ── SIGNAL RANKING BOARD (TOP-10 × 3) ───────────────────────────────
+function _sp2BuildRankingBoard() {
+  var topRisks   = _sp2Signals.filter(function(s){return s.source==='risk_engine';})
+    .sort(function(a,b){return b.priority.score-a.priority.score;}).slice(0,10);
+  var topOpps    = _sp2Signals.filter(function(s){return s.source==='opportunity_engine';})
+    .sort(function(a,b){return b.priority.score-a.priority.score;}).slice(0,10);
+  var topSignals = _sp2Signals.slice(0,10);
+
+  function _rankTable(list, scoreCol) {
+    if (!list.length) return '<div style="padding:10px;font-size:11px;color:var(--text3)">Данных нет — накапливается...</div>';
+    var h='<div style="font-family:var(--mono);font-size:8px;color:var(--text3);display:grid;grid-template-columns:22px 1fr auto;gap:4px;padding:0 0 5px;border-bottom:0.5px solid var(--border);margin-bottom:4px"><span>#</span><span>Сигнал</span><span>Score</span></div>';
+    list.forEach(function(s,i){
+      var col = s.priority.score>=62?'var(--red)':s.priority.score>=42?'var(--orange)':s.priority.score>=24?'var(--gold)':'var(--text3)';
+      var pct = s.priority.score;
+      h+='<div style="display:grid;grid-template-columns:22px 1fr auto;gap:4px;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border)">';
+      h+='<span style="font-size:10px;color:var(--text3)">'+(i+1)+'</span>';
+      h+='<div style="min-width:0"><div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.title.split('—').pop().trim()+'</div>';
+      h+='<div style="height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:3px"><div style="width:'+pct+'%;height:100%;background:'+col+';border-radius:1px"></div></div></div>';
+      h+='<span style="font-family:var(--mono);font-size:11px;font-weight:600;color:'+col+';flex-shrink:0;margin-left:6px">'+pct+'</span>';
+      h+='</div>';
+    });
+    return h;
+  }
+
+  var elR=document.getElementById('sp2-top-risks');   if(elR) elR.innerHTML=_rankTable(topRisks);
+  var elO=document.getElementById('sp2-top-opps');    if(elO) elO.innerHTML=_rankTable(topOpps);
+  var elS=document.getElementById('sp2-top-signals'); if(elS) elS.innerHTML=_rankTable(topSignals);
+  initSwipeDots('sp2-ranking-swipe','sp2-ranking-dots');
 }
 
 // ── 01: KPI STRIP ─────────────────────────────────────────────────
@@ -14917,7 +15023,7 @@ function _sp2BuildFeed(filter) {
     h+='<div class="sp2-m"><div class="lbl">Горизонт</div><div class="val" style="color:var(--blue)">'+s.horizon+'</div></div>';
     h+='<div class="sp2-m"><div class="lbl">Репутация</div><div class="val">'+s.confidence.repScore+'</div></div>';
     h+='<div class="sp2-m"><div class="lbl">LFE conf</div><div class="val">'+s.confidence.lfeConf+'%</div></div>';
-    h+='<div class="sp2-m"><div class="lbl">Приоритет</div><div class="val" style="color:var(--gold)">'+s.priority.score+'</div></div>';
+    h+='<div class="sp2-m"><div class="lbl">Signal Score</div><div class="val" style="color:var(--gold);font-weight:700">'+s.priority.score+'/100</div></div>';
     h+='</div>';
     // Affected countries
     if (s.countries && s.countries.length) {
@@ -14946,8 +15052,9 @@ function _sp2BuildFeed(filter) {
 function _sp2BuildWeekly(countries) {
   var top10  = _sp2Signals.slice(0,10);
   var topRisks = _sp2Signals.filter(function(s){return s.source==='risk_engine';})
-    .sort(function(a,b){return b.d7-a.d7;}).slice(0,5);
-  var topOpps = _sp2Signals.filter(function(s){return s.source==='opportunity_engine';}).slice(0,5);
+    .sort(function(a,b){return b.priority.score - a.priority.score;}).slice(0,10);
+  var topOpps = _sp2Signals.filter(function(s){return s.source==='opportunity_engine';})
+    .sort(function(a,b){return b.priority.score - a.priority.score;}).slice(0,10);
   var topDrvs = typeof _liveDrv==='function' ? _liveDrv().slice(0,5) : [];
   var topRegions = countries.slice().sort(function(a,b){return (b.risk_score||0)-(a.risk_score||0);}).slice(0,5);
 
