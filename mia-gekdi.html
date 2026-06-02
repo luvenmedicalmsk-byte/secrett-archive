@@ -76,13 +76,9 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 /* Mobile: bottom nav instead of sidebar */
 @media(max-width:600px){
   #sidebar{
-    top:auto;bottom:0;left:0;right:0;width:100%;height:52px;
-    flex-direction:row;justify-content:space-around;padding:0;
-    border-right:none;border-top:0.5px solid var(--border);
-    overflow-x:auto;overflow-y:hidden;
-    -webkit-overflow-scrolling:touch;
+    display:none!important;
   }
-  #main{margin-left:0!important;padding-bottom:calc(52px + env(safe-area-inset-bottom,0px))!important}
+  #main{margin-left:0!important;padding-bottom:env(safe-area-inset-bottom,0px)!important}
 }
 .sn-btn{
   width:40px;height:40px;border-radius:7px;cursor:pointer;
@@ -380,6 +376,17 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
 .progress-fill{height:100%;border-radius:3px;transition:width .4s}
 .status-pill{font-size:9px;padding:1px 7px;border-radius:4px;font-family:var(--mono);flex-shrink:0}
 
+
+/* ── MOBILE INDEX ──────────────────────────────────── */
+#mobile-index{
+  background:var(--bg1);
+  min-height:100vh;
+  padding-bottom:env(safe-area-inset-bottom,16px);
+}
+@media(max-width:600px){
+  #mobile-menu-btn{ display:inline-flex!important; }
+}
+
 </style>
 </head>
 <body>
@@ -419,6 +426,7 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
     </div>
     <div class="tb-clock" id="tb-clock">—</div>
     <button class="tb-logout" onclick="doLogout()">EXIT</button>
+    <button id="mobile-menu-btn" onclick="toggleMobileIndex()" style="display:none;background:transparent;border:0.5px solid var(--border2);border-radius:5px;color:var(--text2);font-size:11px;padding:4px 8px;cursor:pointer;font-family:var(--mono);-webkit-appearance:none;margin-left:6px">&#9776; МЕНЮ</button>
   </div>
 
   <!-- SIDEBAR (desktop) / BOTTOM NAV (mobile) -->
@@ -459,6 +467,184 @@ input[type=range].scn-range::-moz-range-thumb{width:18px;height:18px;border-radi
   </div>
 
   <div id="main">
+
+    <!-- ─ MOBILE SECTION INDEX ─ -->
+    <div id="mobile-index" style="display:none">
+      <div style="padding:14px 16px 8px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.2em;margin-bottom:12px">MIA GEKDI · SECTION INDEX</div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;padding-left:2px">Core Platform</div>
+          <button onclick="goSection('s0');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">00</span>
+            <span style="font-size:12px;color:var(--text2)">Mission Control</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s1');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">01</span>
+            <span style="font-size:12px;color:var(--text2)">System Status</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s2');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">02</span>
+            <span style="font-size:12px;color:var(--text2)">Data Flow</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s3');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">03</span>
+            <span style="font-size:12px;color:var(--text2)">Forecast</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s4');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">04</span>
+            <span style="font-size:12px;color:var(--text2)">Early Warning</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s5');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">05</span>
+            <span style="font-size:12px;color:var(--text2)">Signal Intel</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s6');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">06</span>
+            <span style="font-size:12px;color:var(--text2)">Sources</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s7');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">07</span>
+            <span style="font-size:12px;color:var(--text2)">Validation</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s8');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">08</span>
+            <span style="font-size:12px;color:var(--text2)">Heatmap</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s9');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">09</span>
+            <span style="font-size:12px;color:var(--text2)">Database</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s10');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">10</span>
+            <span style="font-size:12px;color:var(--text2)">Briefing</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s11');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">11</span>
+            <span style="font-size:12px;color:var(--text2)">Infrastructure</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s12');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">12</span>
+            <span style="font-size:12px;color:var(--text2)">Health Check</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;padding-left:2px">Intelligence Layer</div>
+          <button onclick="goSection('s13');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">13</span>
+            <span style="font-size:12px;color:var(--text2)">Explainability</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s14');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">14</span>
+            <span style="font-size:12px;color:var(--text2)">Risk Drivers</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s15');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">15</span>
+            <span style="font-size:12px;color:var(--text2)">Causality Engine</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s16');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">16</span>
+            <span style="font-size:12px;color:var(--text2)">Strategic Decision Center</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s17');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">17</span>
+            <span style="font-size:12px;color:var(--text2)">Forecast Validation</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s18');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">18</span>
+            <span style="font-size:12px;color:var(--text2)">Scenario Intelligence</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s19');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">19</span>
+            <span style="font-size:12px;color:var(--text2)">Meta Intelligence</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s20');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">20</span>
+            <span style="font-size:12px;color:var(--text2)">Intelligence Graph</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;padding-left:2px">Memory & Persistence</div>
+          <button onclick="goSection('s21');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">21</span>
+            <span style="font-size:12px;color:var(--text2)">Temporal Intelligence</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s22');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">22</span>
+            <span style="font-size:12px;color:var(--text2)">Persistent Memory</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s23');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">23</span>
+            <span style="font-size:12px;color:var(--text2)">Sovereign Vault</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;padding-left:2px">Autonomous & Fusion</div>
+          <button onclick="goSection('s24');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">24</span>
+            <span style="font-size:12px;color:var(--text2)">Autonomous Orchestrator</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s25');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">25</span>
+            <span style="font-size:12px;color:var(--text2)">Sensor Fusion</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s26');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">26</span>
+            <span style="font-size:12px;color:var(--text2)">Collection Operations</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;padding-left:2px">Operations & Capital</div>
+          <button onclick="goSection('s27');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">27</span>
+            <span style="font-size:12px;color:var(--text2)">Data Scaling</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s28');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">28</span>
+            <span style="font-size:12px;color:var(--text2)">Capital Planning</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s29');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">29</span>
+            <span style="font-size:12px;color:var(--text2)">Strategic Command</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+          <button onclick="goSection('s30');hideMobileIndex()" style="display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;background:transparent;border:none;border-bottom:0.5px solid var(--border);text-align:left;cursor:pointer;-webkit-appearance:none">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--gold);width:22px;flex-shrink:0">30</span>
+            <span style="font-size:12px;color:var(--text2)">Execution Center</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">&#8594;</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- /MOBILE SECTION INDEX -->
 
     <!-- ─ S0: OVERVIEW ─ -->
     <div class="section" id="s0">
@@ -13410,6 +13596,27 @@ window.TASK_REGISTRY      = TASK_REGISTRY;
 window.OUTCOME_REGISTRY   = OUTCOME_REGISTRY;
 window.MISSION_REPUTATION = MISSION_REPUTATION;
 window.EXECUTION_METRICS  = EXECUTION_METRICS;
+
+
+// ── MOBILE SECTION INDEX ────────────────────────────
+function toggleMobileIndex() {
+  var idx = document.getElementById('mobile-index');
+  var main_content = document.querySelectorAll('#main > .section, #main > div:not(#mobile-index)');
+  if (!idx) return;
+  var showing = idx.style.display === 'block';
+  idx.style.display = showing ? 'none' : 'block';
+  var btn = document.getElementById('mobile-menu-btn');
+  if (btn) btn.textContent = showing ? '☰ МЕНЮ' : '✕ ЗАКРЫТЬ';
+  // Scroll to top when opening
+  if (!showing) window.scrollTo(0,0);
+}
+function hideMobileIndex() {
+  var idx = document.getElementById('mobile-index');
+  if (idx) idx.style.display = 'none';
+  var btn = document.getElementById('mobile-menu-btn');
+  if (btn) btn.textContent = '☰ МЕНЮ';
+  window.scrollTo(0,0);
+}
 
 document.addEventListener('keydown',function(e){ if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none') doLogin(); });
 window.addEventListener('error',function(){ _uiErrors++; });
