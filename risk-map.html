@@ -903,8 +903,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   body:has(#detail.open) #grdf-filter-fab,
   body:has(#detail.open) #access-btn{display:none!important}
   /* mobile close-button visibility */
-  #sb-x{top:8px;right:11px;left:auto;width:40px;height:40px;font-size:17px;color:#D4AF5A;border-color:rgba(184,151,58,0.5);background:rgba(6,5,10,0.92);z-index:5}
-  #ev-list{padding-top:58px}
+  #sb-x{top:46px;right:11px;left:auto;width:38px;height:38px;font-size:16px;color:#D4AF5A;border-color:rgba(184,151,58,0.55);background:rgba(6,5,10,0.95);z-index:5}
+  #ev-list{padding-top:88px}
 }
 
 /* ── Sprint 1: Compact status bar on mobile ── */
@@ -1902,6 +1902,14 @@ const RISK_COLORS = {
 };
 
 map.on('click', async (e) => {
+  // Тап по карте закрывает открытую панель списка/детали
+  const _sb = document.getElementById('sidebar');
+  const _dt = document.getElementById('detail');
+  if ((_sb && _sb.classList.contains('open')) || (_dt && _dt.classList.contains('open'))) {
+    if(_sb) _sb.classList.remove('open');
+    if(_dt) _dt.classList.remove('open');
+    return;
+  }
   const { lat, lng } = e.latlng;
   let locationName = '';
   let isoCode = null;
