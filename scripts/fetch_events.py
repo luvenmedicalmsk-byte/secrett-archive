@@ -498,6 +498,27 @@ def normalize_severity(source_type, m):
         # green -- узкий фоновый диапазон 20-25
         return min(25, 22 + min(3, int(pop / 500000)))
 
+    # --- S34A-2: землетрясения (USGS/EMSC) -- по магнитуде ---
+    if st == 'earthquake':
+        M = m.get('magnitude') or 0
+        if not M or M <= 0:
+            return None
+        pts = [(3, 25), (4, 35), (5, 50), (6, 65), (7, 80), (8, 92)]
+        if M <= 3:
+            sev = max(15, 25 * M / 3)
+        elif M >= 8:
+            sev = min(100, 92 + (M - 8) * 4)
+        else:
+            sev = 25
+            for (m0, s0), (m1, s1) in zip(pts, pts[1:]):
+                if m0 <= M <= m1:
+                    sev = s0 + (s1 - s0) * (M - m0) / (m1 - m0)
+                    break
+        depth = m.get('depth')
+        if depth is not None and depth < 30:
+            sev += 3  # мелкий очаг -> сильнее воздействие на поверхности
+        return int(max(15, min(100, round(sev))))
+
     return None
 
 def make_id(title, date):
@@ -1035,7 +1056,7 @@ def fetch_usgs_earthquakes():
                     'desc': f"Магнитуда {mag}. {place}",
                     'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                     'source': 'USGS',
-                    'source_bias': max(0, int((mag - 5) * 10)),
+                    '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': (coords[2] if len(coords) > 2 else None)}),
                     '_lat': lat, '_lng': lng,
                     '_region': detect_region_by_coords(lat, lng),
                     '_domain': 'climate'
@@ -2591,7 +2612,7 @@ def fetch_russia_signals():
                 '_lat': coords[1], '_lng': coords[0],
                 '_region': place,
                 '_domain': 'climate',
-                '_severity_hint': min(90, int(mag * 12)),
+                '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': (coords[2] if len(coords) > 2 else None)}),
             })
     except Exception as e:
         print(f'  [WARN] EMSC землетрясения Россия: {e}', file=sys.stderr)
