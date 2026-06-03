@@ -858,12 +858,24 @@ def detect_region_by_coords(lat, lng):
     if 15 < lat < 45 and 35 < lng < 65: return "Ближний Восток"
     return "Глобально"
 
+def _global_marker(seed):
+    """Глобальная привязка для событий без геопозиции (Экономика/Социум).
+    Размещает в нейтральной зоне Сев. Атлантики со сдвигом по стабильному хэшу,
+    чтобы маркеры не накладывались и не приписывались чужим странам."""
+    s = str(seed); h = 0
+    for c in s: h = (h * 31 + ord(c)) & 0xffffffff
+    lat = 8 + (h % 38)               # 8..45
+    lng = -45 + ((h // 38) % 30)     # -45..-16 (Атлантика, вне стран)
+    return float(lat), float(lng), "Глобально"
+
 # ══════════════════════════════════════════════════════════════════════════════
 # ОБРАБОТКА И СОХРАНЕНИЕ
 # ══════════════════════════════════════════════════════════════════════════════
 def process_events(raw_items):
     events = []
     seen_ids = set()
+    _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
+             'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0}
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
     # Фильтр провокационных и ангажированных новостей
@@ -879,18 +891,18 @@ def process_events(raw_items):
     ]
 
     for item in raw_items:
-        if item.get('date','') < cutoff: continue
+        if item.get('date','') < cutoff: _LOSS['old']+=1; continue
 
         title_low = (item.get('title','') or '').lower()
         desc_low = (item.get('desc','') or '').lower()
         text_low = title_low + ' ' + desc_low
         if any(phrase in text_low for phrase in RUSSIA_FILTER):
-            continue
+            _LOSS['filter']+=1; continue
 
         # S34B governance: REMOVE-источники отбрасываем до обработки
         _gov = SOURCE_GOVERNANCE.get(item.get('source',''), {})
         if _gov.get('action') == 'REMOVE':
-            continue
+            _LOSS['gov']+=1; continue
 
         # NASA EONET уже имеет координаты
         if '_lat' in item:
@@ -899,21 +911,29 @@ def process_events(raw_items):
             domain = item['_domain']
             severity = _severity_for(item, _gov.get('weight', 1.0))
         else:
-            domain = detect_domain(item['title'], item.get('desc',''))
-            if not domain: continue
+            # S36.4: домен ленты в приоритете, иначе по ключевым словам
+            domain = item.get('_domain') or detect_domain(item['title'], item.get('desc',''))
+            if not domain:
+                _LOSS['no_domain']+=1; continue
             # Сначала пробуем российские координаты
             geo = detect_russia_coords(item['title'], item.get('desc',''))
             if not geo:
                 geo = detect_coords(item['title'], item.get('desc',''))
-            if not geo: continue
-            lat, lng, region = geo
+            if not geo:
+                # S36.4: эконом/социальные события не выбрасываем без гео -- глобальный маркер
+                if domain in ('economy', 'social'):
+                    lat, lng, region = _global_marker(item['title']); _LOSS['global_marker']+=1
+                else:
+                    _LOSS['no_geo']+=1; continue
+            else:
+                lat, lng, region = geo
             severity = _severity_for(item, _gov.get('weight', 1.0))
 
         # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
-        if item.get('_force_severity') is None and severity < SEVERITY_THRESHOLD: continue
+        if item.get('_force_severity') is None and severity < SEVERITY_THRESHOLD: _LOSS['sev']+=1; continue
 
         ev_id = make_id(item['title'], item['date'])
-        if ev_id in seen_ids: continue
+        if ev_id in seen_ids: _LOSS['dup']+=1; continue
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
@@ -977,10 +997,11 @@ def process_events(raw_items):
             ev_date = _date.fromisoformat(ev_date_str)
             days_old = (today - ev_date).days
             source = ev.get('source', '')
-            # Аналитика -- до 3 дней, новости -- только сегодня
-            max_days = 3 if source in ANALYTICS_SOURCES else 0
+            _evd = ev.get('domain','')
+            # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
+            max_days = 7 if _evd in ('economy','social') else (3 if source in ANALYTICS_SOURCES else 0)
             if days_old > max_days:
-                continue
+                _LOSS['fresh']+=1; continue
         except:
             continue
         d = ev['domain']
@@ -998,6 +1019,15 @@ def process_events(raw_items):
     
     top_events = balanced[:MAX_EVENTS]
     
+    # S36.4: статистика потерь по этапам
+    try:
+        import collections as _c
+        _fd = _c.Counter(e['domain'] for e in top_events)
+        print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} exported={len(top_events)}", file=sys.stderr)
+        print("  [DOMAINS] " + ' '.join(f"{k}={_fd.get(k,0)}" for k in ('climate','geopolitics','economy','technology','social')), file=sys.stderr)
+    except Exception as _e:
+        print("  [LOSS] err", _e, file=sys.stderr)
+
     # Пакетный перевод заголовков -- один запрос вместо 150
     print(f"  Переводим заголовки...", file=sys.stderr)
     titles = [e['title'] for e in top_events]
@@ -1913,7 +1943,8 @@ def fetch_global_rss():
                     'title': title, 'desc': desc,
                     'date': parse_date(pub_date),
                     'source': feed['source'],
-                    'source_bias': feed['bias']
+                    'source_bias': feed['bias'],
+                    '_domain': feed.get('domain')
                 })
                 count += 1
         except: pass
