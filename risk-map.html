@@ -221,6 +221,28 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #alerts-btn.has-alerts{border-color:rgba(220,38,38,0.5);color:#ef4444}
 #alerts-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:22;pointer-events:none;background:rgba(6,5,10,0.97);border-left:1px solid rgba(220,38,38,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
 #alerts-panel.open{transform:translateX(0);pointer-events:all}
+/* S36 C/D: Climate Risk Layer panel */
+#climate-panel{position:fixed;right:0;top:0;bottom:0;width:300px;z-index:22;pointer-events:none;background:rgba(6,5,10,0.97);border-left:1px solid rgba(184,151,58,0.15);backdrop-filter:blur(20px);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden}
+#climate-panel.open{transform:translateX(0);pointer-events:all}
+#cl-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(184,151,58,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#B8973A;flex-shrink:0}
+#cl-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
+#cl-close:hover{color:rgba(255,255,255,0.7)}
+#cl-hero{padding:16px 16px 12px;border-bottom:1px solid rgba(184,151,58,0.1);flex-shrink:0}
+#cl-cri{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;color:#D4AF5A;line-height:1}
+#cl-cri-sub{font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(168,160,144,0.6);margin-top:4px}
+#cl-cri-lvl{color:#D4AF5A}
+#cl-meta{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,0.25);padding:7px 16px 2px;letter-spacing:0.04em;flex-shrink:0}
+#cl-trends{display:flex;gap:14px;padding:4px 16px 10px;font-size:8px;letter-spacing:0.1em;color:rgba(168,160,144,0.55);flex-shrink:0}
+#cl-body{flex:1;overflow-y:auto;padding:12px 16px 18px}
+#cl-body::-webkit-scrollbar{width:2px}
+#cl-body::-webkit-scrollbar-thumb{background:rgba(184,151,58,0.3)}
+.cl-row{margin-bottom:13px}
+.cl-row-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.cl-name{font-size:10px;letter-spacing:0.08em;color:#E8E0D0}
+.cl-val{font-family:'Cormorant Garamond',serif;font-size:17px;color:#D4AF5A;line-height:1}
+.cl-bar{height:3px;background:rgba(184,151,58,0.1);border-radius:2px;overflow:hidden}
+.cl-fill{height:100%;background:linear-gradient(90deg,rgba(184,151,58,0.5),#D4AF5A);border-radius:2px}
+.cl-contr{font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(168,160,144,0.45);margin-top:3px}
 #ap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(220,38,38,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;flex-shrink:0}
 #ap-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
 #ap-close:hover{color:rgba(255,255,255,0.7)}
@@ -1425,11 +1447,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     <div><span class="sv" id="s-t">0</span><span class="sl">Событий / Сигналов</span></div>
     <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
     <div><span class="sv" id="s-a">0</span><span class="sl">Ср. индекс</span></div>
+    <div><span class="sv" id="s-cri">—</span><span class="sl">CRI · Климат</span></div>
   </div>
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
   <button class="lb" id="intel-btn" onclick="window._toggleIntelPanel()">◆ Раннее предупреждение</button>
   <button class="lb" id="alerts-btn" onclick="window._toggleAlertsPanel()">⚠ Критические события</button>
+  <button class="lb" id="climate-btn" onclick="window._toggleClimatePanel()">◆ Климатические риски</button>
   <!-- all layer buttons hidden from UI, code preserved -->
   <button class="lb" id="lb-planes" style="display:none">✈ Самолёты</button>
   <button class="lb" id="lb-ships" style="display:none">🚢 Суда</button>
@@ -1486,6 +1510,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <div id="ap-header"><span>⚠ Критические события</span><span id="ap-close">✕</span></div>
   <div id="ap-meta"></div>
   <div id="ap-body"><div class="ap-loading">Загрузка…</div></div>
+</div>
+
+<!-- S36 C/D: Climate Risk Layer (UI «Климатические риски») -->
+<div id="climate-panel">
+  <div id="cl-header"><span>◆ Климатические риски</span><span id="cl-close">✕</span></div>
+  <div id="cl-hero">
+    <span id="cl-cri">—</span>
+    <div id="cl-cri-sub">Climate Risk Index · уровень <span id="cl-cri-lvl">—</span></div>
+  </div>
+  <div id="cl-meta"></div>
+  <div id="cl-trends"></div>
+  <div id="cl-body"><div class="ip-loading">Загрузка климатических данных…</div></div>
 </div>
 </div>
 <div id="detail">
@@ -2544,6 +2580,82 @@ async function loadExternalFeed() {
     console.warn('[ExtFeed] Ошибка загрузки:', e.message);
   }
 }
+
+// ── S36 C/D: Climate Risk Layer UI (3 источника с фоллбэками) ───────────────
+var _climateState = null;
+async function loadClimateState(){
+  var urls = [
+    API_BASE + '/api/climate',
+    'https://raw.githubusercontent.com/luvenmedicalmsk-byte/secrett-archive/main/docs/climate/state.json?v=' + Date.now(),
+    'docs/climate/state.json?v=' + Date.now()
+  ];
+  for (var i=0;i<urls.length;i++){
+    try{
+      var r = await fetch(urls[i], { signal: AbortSignal.timeout(5000) });
+      if(!r.ok) continue;
+      var d = await r.json();
+      if(d && typeof d.climate_risk_index !== 'undefined'){ _climateState = d; renderClimate(d); return d; }
+    }catch(e){}
+  }
+  return null;
+}
+function _criLevel(v){
+  if(v>=85) return 'критический'; if(v>=70) return 'высокий';
+  if(v>=50) return 'повышенный'; if(v>=30) return 'умеренный'; return 'низкий';
+}
+function renderClimate(s){
+  if(!s) return;
+  var cri = s.climate_risk_index || 0;
+  var st = document.getElementById('s-cri'); if(st) st.textContent = cri;
+  var head = document.getElementById('cl-cri'); if(head) head.textContent = cri;
+  var lvl = document.getElementById('cl-cri-lvl'); if(lvl) lvl.textContent = _criLevel(cri);
+  var ha = s.heat_activity||{}, ca = s.cyclone_activity||{};
+  var meta = document.getElementById('cl-meta');
+  if(meta){
+    meta.textContent = 'обновлено ' + String(s.generated_at||'').replace('T',' ').replace('Z',' UTC')
+      + (ca.active_storms ? ' · циклонов: '+ca.active_storms : '')
+      + (ha.max_anomaly_c!=null ? ' · жара +'+ha.max_anomaly_c+'°C' : '');
+  }
+  function val(o,sc){ return (o&&o.value!=null)?o.value:(sc!=null?sc:0); }
+  var rows = [
+    ['fire','Пожары',     val(s.fire_activity)],
+    ['flood','Наводнения',val(s.flood_activity)],
+    ['heat','Жара',       val(s.heat_activity, s.heat_index)],
+    ['cyclone','Циклоны', val(s.cyclone_activity, s.cyclone_index)],
+    ['weather','Погода',  val(s.extreme_weather)],
+    ['seismic','Сейсмика',val(s.seismic_activity)]
+  ];
+  var c = s.contributions||{}, html='';
+  rows.forEach(function(row){
+    var k=row[0], v=row[2]||0, contr=(c[k]!=null?c[k]:0);
+    html += '<div class="cl-row"><div class="cl-row-top"><span class="cl-name">'+row[1]+'</span>'
+         +  '<span class="cl-val">'+v+'</span></div>'
+         +  '<div class="cl-bar"><div class="cl-fill" style="width:'+Math.min(100,v)+'%"></div></div>'
+         +  '<div class="cl-contr">вклад в CRI · '+contr+'%</div></div>';
+  });
+  var body = document.getElementById('cl-body'); if(body) body.innerHTML = html;
+  var tr = document.getElementById('cl-trends');
+  if(tr){
+    function fmt(x){ return (x==null)?'—':((x>0?'▲ +':(x<0?'▼ ':''))+x); }
+    tr.innerHTML = '<span>24ч '+fmt(s.trend_24h)+'</span><span>7д '+fmt(s.trend_7d)+'</span><span>30д '+fmt(s.trend_30d)+'</span>';
+  }
+}
+window._toggleClimatePanel = function(){
+  var p = document.getElementById('climate-panel');
+  var cb = document.getElementById('climate-btn');
+  if(!p) return;
+  if(p.classList.contains('open')){ p.classList.remove('open'); if(cb) cb.classList.remove('active'); }
+  else {
+    ['intel-panel','alerts-panel','countries-panel'].forEach(function(id){var x=document.getElementById(id); if(x) x.classList.remove('open');});
+    p.classList.add('open'); if(cb) cb.classList.add('active');
+    if(!_climateState) loadClimateState();
+  }
+};
+(function(){ var x=document.getElementById('cl-close'); if(x) x.addEventListener('click', function(){
+  document.getElementById('climate-panel').classList.remove('open');
+  var cb=document.getElementById('climate-btn'); if(cb) cb.classList.remove('active');
+}); })();
+loadClimateState();
 
 // Initial load (non-blocking — runs in parallel with tryLoadFresh)
 loadExternalFeed();
