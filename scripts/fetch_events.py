@@ -1026,7 +1026,7 @@ def save(events):
 CLIMATE_STATE_PATH   = Path(__file__).parent.parent / "docs" / "climate" / "state.json"
 CLIMATE_HISTORY_PATH = Path(__file__).parent.parent / "docs" / "climate" / "history.json"
 _CLIMATE_REGION_NORM = 8          # макрорегионов ≈ глобальное покрытие
-_CLIMATE_VOL_NORM    = {'fire': 10, 'flood': 8, 'seismic': 15, 'weather': 8}
+_CLIMATE_VOL_NORM    = {'fire': 20, 'flood': 14, 'seismic': 32, 'weather': 11}  # S35.1A (D3): выше -> нет ранней сатурации
 _CLIMATE_CRI_W       = {'fire': 0.30, 'flood': 0.25, 'weather': 0.25, 'seismic': 0.20}
 
 def _classify_climate(ev):
@@ -1057,7 +1057,7 @@ def _climate_index(evs, vol_norm):
     regions = len(set(e.get('region', '') for e in evs))
     breadth = min(100.0, 100.0 * regions / _CLIMATE_REGION_NORM)
     volume = min(100.0, 100.0 * len(evs) / vol_norm)
-    idx = round(0.50 * peak + 0.30 * breadth + 0.20 * volume)
+    idx = round(0.62 * peak + 0.13 * breadth + 0.25 * volume)  # S35.1A (D3): peak-доминантно, полный диапазон
     return idx, {'peak': peak, 'avg': round(sum(sev) / len(sev)),
                  'breadth': round(breadth), 'volume': round(volume),
                  'count': len(evs), 'regions': regions}
