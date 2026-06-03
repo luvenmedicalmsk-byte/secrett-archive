@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T16:46:04.818682+00:00",
+  "generated_at": "2026-06-03T17:01:36.988788+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -47,21 +47,21 @@
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,9 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-Проездные_",
+      "id": "SIGNAL-US-Пропуска_в",
       "type": "Signal",
-      "label": "Проездные для национальных парков США оп",
+      "label": "Пропуска в национальные парки США оплатя",
       "severity": 54,
       "domain": "geopolitical"
     },
@@ -97,7 +97,7 @@
       "id": "SIGNAL-US-DriveSurge",
       "type": "Signal",
       "label": "DriveSurge захватывает тысячи сайтов для",
-      "severity": 51,
+      "severity": 50,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-US",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-US",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,7 +163,28 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-US-Проездные_",
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Пропуска_в",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
@@ -178,7 +199,7 @@
       "from": "SIGNAL-US-DriveSurge",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.51
+      "weight": 0.5
     }
   ]
 }
