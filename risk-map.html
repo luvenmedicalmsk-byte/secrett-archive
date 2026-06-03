@@ -243,6 +243,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cl-bar{height:3px;background:rgba(184,151,58,0.1);border-radius:2px;overflow:hidden}
 .cl-fill{height:100%;background:linear-gradient(90deg,rgba(184,151,58,0.5),#D4AF5A);border-radius:2px}
 .cl-contr{font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(168,160,144,0.45);margin-top:3px}
+@media(max-width:768px){#climate-panel{width:100%;z-index:99}}
 #ap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(220,38,38,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;flex-shrink:0}
 #ap-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
 #ap-close:hover{color:rgba(255,255,255,0.7)}
@@ -1444,7 +1445,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   </div>
   <div id="updated">26 мая 2026</div>
   <div id="stats">
-    <div><span class="sv" id="s-t">0</span><span class="sl">Событий / Сигналов</span></div>
+    <div><span class="sv" id="s-t">0</span><span class="sl">Сигналов</span></div>
     <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
     <div><span class="sv" id="s-cri">—</span><span class="sl">CRI · Климат</span></div>
   </div>
@@ -1893,7 +1894,7 @@ async function fetchStats() {
     // CANONICAL: /api/stats.total — архивный счётчик событий/сигналов (не перетирать другими)
     document.getElementById('s-t').textContent = s.total;
     var lb = document.getElementById('list-btn');
-    if(lb) lb.textContent = '◆ Список сигналов · ' + s.total;
+    if(lb) lb.textContent = '◆ Список сигналов';
     document.getElementById('s-c').textContent = s.critical;
     var _sa2=document.getElementById('s-a'); if(_sa2) _sa2.textContent = s.avg_severity;  // s-a заменён на CRI
   } catch(_) {}
@@ -6729,6 +6730,9 @@ function _evM(val, lbl, col) {
     <button class="grdf-nav-btn" id="grdf-nav-analytics" onclick="grdfNavTo('analytics')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Аналитика</span>
     </button>
+    <button class="grdf-nav-btn" id="grdf-nav-climate" onclick="grdfNavTo('climate')">
+      <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span><span>Климат</span>
+    </button>
   </div>
 </div>
 
@@ -7432,9 +7436,15 @@ window.grdfNavTo = function(tab) {
 
   [warnScreen, ctryScreen, analScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
   if(drawer) drawer.style.display = 'flex';
+  var clPanel0 = document.getElementById('climate-panel');
+  if(clPanel0 && tab!=='climate') clPanel0.classList.remove('open');
 
   if(tab==='map'){
     // map is always visible underneath
+  } else if(tab==='climate'){
+    if(clPanel0) clPanel0.classList.add('open');
+    if(drawer) drawer.style.display='none';
+    if(typeof loadClimateState==='function' && !_climateState) loadClimateState();
   } else if(tab==='warnings'){
     if(warnScreen) warnScreen.classList.add('visible');
     if(drawer) drawer.style.display='none';
