@@ -1021,6 +1021,146 @@ def save(events):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# S35.1: CLIMATE RISK LAYER -- агрегация поверх Event Layer (только данные, не UI)
+# ══════════════════════════════════════════════════════════════════════════════
+CLIMATE_STATE_PATH   = Path(__file__).parent.parent / "docs" / "climate" / "state.json"
+CLIMATE_HISTORY_PATH = Path(__file__).parent.parent / "docs" / "climate" / "history.json"
+_CLIMATE_REGION_NORM = 8          # макрорегионов ≈ глобальное покрытие
+_CLIMATE_VOL_NORM    = {'fire': 10, 'flood': 8, 'seismic': 15, 'weather': 8}
+_CLIMATE_CRI_W       = {'fire': 0.30, 'flood': 0.25, 'weather': 0.25, 'seismic': 0.20}
+
+def _classify_climate(ev):
+    """Относит событие к климатической категории по source + ключевым словам."""
+    s = ev.get('source', '')
+    t = (ev.get('title', '') + ' ' + ev.get('summary', '')).lower()
+    if s in ('USGS', 'EMSC'): return 'seismic'
+    if s in ('NASA FIRMS', 'Global Forest Watch', 'GLAD/UMD Forest Watch'): return 'fire'
+    if 'Dartmouth' in s or s == 'Floodlist': return 'flood'
+    if s == 'Open-Meteo': return 'weather'
+    flood_kw = ['наводн', 'паводок', 'flood', 'разлив рек', 'затопл']
+    storm_kw = ['шторм', 'циклон', 'ураган', 'тайфун', 'буря', 'storm', 'cyclone',
+                'hurricane', 'typhoon', 'ливн', 'осадк', 'торнадо']
+    fire_kw  = ['пожар', 'wildfire', 'очаг', 'возгоран']
+    if any(k in t for k in flood_kw): return 'flood'
+    if any(k in t for k in storm_kw): return 'weather'
+    if any(k in t for k in fire_kw):  return 'fire'
+    if s == 'GDACS/Copernicus': return 'flood'   # fetch_copernicus_floods -- паводки
+    if s == 'NASA EONET':       return 'weather' # прочие природные события EONET
+    return None
+
+def _climate_index(evs, vol_norm):
+    """Индекс 0-100 = 0.50*пик_интенсивности + 0.30*охват_регионов + 0.20*объём."""
+    if not evs:
+        return 0, {'peak': 0, 'avg': 0, 'breadth': 0, 'volume': 0, 'count': 0, 'regions': 0}
+    sev = [e['severity'] for e in evs]
+    peak = max(sev)
+    regions = len(set(e.get('region', '') for e in evs))
+    breadth = min(100.0, 100.0 * regions / _CLIMATE_REGION_NORM)
+    volume = min(100.0, 100.0 * len(evs) / vol_norm)
+    idx = round(0.50 * peak + 0.30 * breadth + 0.20 * volume)
+    return idx, {'peak': peak, 'avg': round(sum(sev) / len(sev)),
+                 'breadth': round(breadth), 'volume': round(volume),
+                 'count': len(evs), 'regions': regions}
+
+def _climate_trend(history, cri_now, days):
+    """CRI сейчас минус CRI ~days назад из истории; None если истории недостаточно."""
+    if not history: return None
+    from datetime import date as _d
+    today = datetime.now(timezone.utc).date()
+    target = today - timedelta(days=days)
+    best = None
+    for p in history:
+        try: pd = _d.fromisoformat(p['date'])
+        except Exception: continue
+        if pd <= target:
+            if best is None or pd > _d.fromisoformat(best['date']): best = p
+    if best is None: return None
+    return round(cri_now - best.get('cri', cri_now))
+
+def build_climate_state(events):
+    """S35.1 -- строит docs/climate/state.json из опубликованных событий карты."""
+    from collections import defaultdict
+    cats = {'fire': [], 'flood': [], 'seismic': [], 'weather': []}
+    for e in events:
+        if e.get('domain') not in ('climate', None) and e.get('source') not in ('USGS', 'EMSC'):
+            # сейсмика иногда вне climate-домена -- пускаем по source; остальное только climate
+            pass
+        c = _classify_climate(e)
+        if c: cats[c].append(e)
+
+    fire, fmeta   = _climate_index(cats['fire'],    _CLIMATE_VOL_NORM['fire'])
+    flood, flmeta = _climate_index(cats['flood'],   _CLIMATE_VOL_NORM['flood'])
+    seis, smeta   = _climate_index(cats['seismic'], _CLIMATE_VOL_NORM['seismic'])
+    wx, wmeta     = _climate_index(cats['weather'], _CLIMATE_VOL_NORM['weather'])
+
+    W = _CLIMATE_CRI_W
+    cri = round(W['fire'] * fire + W['flood'] * flood + W['weather'] * wx + W['seismic'] * seis)
+
+    # вклад каждой категории в CRI (%)
+    wsum = (W['fire'] * fire + W['flood'] * flood + W['weather'] * wx + W['seismic'] * seis) or 1
+    contributions = {
+        'fire':    round(100 * W['fire'] * fire / wsum),
+        'flood':   round(100 * W['flood'] * flood / wsum),
+        'weather': round(100 * W['weather'] * wx / wsum),
+        'seismic': round(100 * W['seismic'] * seis / wsum),
+    }
+
+    # фактические магнитуды для сейсмики
+    mags = []
+    for e in cats['seismic']:
+        m = re.search(r'M([\d.]+)', e.get('title', ''))
+        if m:
+            try: mags.append(float(m.group(1)))
+            except Exception: pass
+    max_mag = max(mags) if mags else None
+    avg_mag = round(sum(mags) / len(mags), 1) if mags else None
+
+    # топ-регионы по совокупной климатической активности
+    reg_score = defaultdict(float); reg_cat = defaultdict(lambda: defaultdict(float))
+    for c, evs in cats.items():
+        for e in evs:
+            r = e.get('region', 'Глобально')
+            reg_score[r] += e['severity']; reg_cat[r][c] += e['severity']
+    top_regions = []
+    for r in sorted(reg_score, key=reg_score.get, reverse=True)[:5]:
+        dom = max(reg_cat[r], key=reg_cat[r].get)
+        top_regions.append({'region': r, 'score': round(reg_score[r]), 'dominant_category': dom})
+
+    # история и тренды
+    today_str = datetime.now(timezone.utc).date().isoformat()
+    history = []
+    if CLIMATE_HISTORY_PATH.exists():
+        try: history = json.loads(CLIMATE_HISTORY_PATH.read_text(encoding='utf-8'))
+        except Exception: history = []
+    history = [p for p in history if p.get('date') != today_str]
+    history.append({'date': today_str, 'cri': cri, 'fire': fire, 'flood': flood,
+                    'seismic': seis, 'weather': wx})
+    history = sorted(history, key=lambda p: p.get('date', ''))[-95:]
+
+    trend_24h = _climate_trend(history[:-1], cri, 1)
+    trend_7d  = _climate_trend(history[:-1], cri, 7)
+    trend_30d = _climate_trend(history[:-1], cri, 30)
+
+    state = {
+        'climate_risk_index': cri,
+        'fire_activity':    {'value': fire,  **fmeta,  'sources': ['NASA FIRMS', 'Global Forest Watch', 'Copernicus']},
+        'flood_activity':   {'value': flood, **flmeta, 'sources': ['GDACS', 'Copernicus EMS', 'Dartmouth Flood Observatory']},
+        'seismic_activity': {'value': seis,  **smeta,  'max_magnitude': max_mag, 'avg_magnitude': avg_mag, 'sources': ['USGS', 'EMSC']},
+        'extreme_weather':  {'value': wx,    **wmeta,  'sources': ['Open-Meteo', 'GDACS', 'NASA EONET']},
+        'trend_24h': trend_24h, 'trend_7d': trend_7d, 'trend_30d': trend_30d,
+        'top_regions': top_regions,
+        'contributions': contributions,
+        'generated_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'data_quality': {k: ('ok' if cats[k] else 'no_data') for k in cats},
+    }
+    CLIMATE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CLIMATE_STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding='utf-8')
+    CLIMATE_HISTORY_PATH.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding='utf-8')
+    print(f"  ✓ Climate Risk Layer: CRI={cri} fire={fire} flood={flood} seis={seis} wx={wx} → {CLIMATE_STATE_PATH}", file=sys.stderr)
+    return state
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # ИСТОЧНИК 5: GDACS (Global Disaster Alert and Coordination System -- ООН)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_gdacs():
@@ -3879,6 +4019,12 @@ if __name__ == '__main__':
         save_enriched(events, _prev_snapshot)         # enriched save
         # inject_into_html(events)  # FIX5: DISABLED
         _push_snapshot_to_worker(events)              # push compact snapshot → KV
+
+        # S35.1: Climate Risk Layer -- агрегация поверх Event Layer (не блокирует пайплайн)
+        try:
+            build_climate_state(events)
+        except Exception as _ce:
+            print(f"  [WARN] Climate Risk Layer failed: {_ce}", file=sys.stderr)
 
         by_domain = {}
         for e in events:
