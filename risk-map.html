@@ -1685,6 +1685,10 @@ function updateStats() {
 function renderList() {
   const list = document.getElementById('ev-list');
   list.innerHTML = '';
+  if (!filtered || !filtered.length) {
+    list.innerHTML = '<div style="padding:20px 14px;font-size:11px;color:#4a6380;font-family:Montserrat,sans-serif">Загрузка сигналов...</div>';
+    return;
+  }
   [...filtered].sort((a,b)=>{ const dd=b.date.localeCompare(a.date); return dd!==0?dd:b.severity-a.severity; }).forEach(ev => {
     const col = DC[ev.domain];
     const d = document.createElement('div');
@@ -1757,8 +1761,14 @@ document.getElementById('sb-x').onclick  = () => document.getElementById('sideba
 
 
 document.getElementById('list-btn').onclick = () => {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const isOpening = !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open');
   document.getElementById('detail').classList.remove('open');
+  // Render list every time sidebar opens — ensures fresh data
+  if (isOpening) {
+    renderList();
+  }
 };
 
 document.querySelectorAll('.fb').forEach(btn => {
