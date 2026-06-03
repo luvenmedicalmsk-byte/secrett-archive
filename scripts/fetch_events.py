@@ -536,9 +536,9 @@ def normalize_severity(source_type, m):
         elif cn >= 4: sev += 3
         return int(max(40, min(78, sev)))  # потолок 78 -- FIRMS не подтверждённое событие
 
-    # --- S34A-4: News -- база 30, потолки аналитика 65 / подтверждённый ущерб 75, source_weight ---
+    # --- S34A-4: News -- база 40, потолки аналитика 65 / подтверждённый ущерб 75, source_weight ---
     if st == 'news':
-        score = 30
+        score = 40
         score += 7 * (m.get('kw_high') or 0)
         score += 4 * (m.get('kw_med') or 0)
         cas = m.get('casualties') or 0
@@ -550,9 +550,9 @@ def normalize_severity(source_type, m):
         score += min(8, (m.get('bias') or 0) // 2)   # влияние source_bias уменьшено вдвое, потолок +8
         cap = 75 if confirmed else 65                # подтверждённый ущерб ≤75, аналитика/мнение ≤65
         score = min(cap, score)
-        w = m.get('weight', 1.0) or 1.0              # source_weight: даунвейт медиа к полу 30
-        score = 30 + (score - 30) * w
-        return int(max(25, min(cap, round(score))))
+        w = m.get('weight', 1.0) or 1.0              # source_weight: даунвейт медиа к полу 40
+        score = 40 + (score - 40) * w
+        return int(max(30, min(cap, round(score))))
 
     # --- S34A-4: Open-Meteo -- по уровню погодной опасности ---
     if st == 'weather':
