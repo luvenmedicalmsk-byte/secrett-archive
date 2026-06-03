@@ -1026,8 +1026,15 @@ def save(events):
 CLIMATE_STATE_PATH   = Path(__file__).parent.parent / "docs" / "climate" / "state.json"
 CLIMATE_HISTORY_PATH = Path(__file__).parent.parent / "docs" / "climate" / "history.json"
 _CLIMATE_REGION_NORM = 8          # макрорегионов ≈ глобальное покрытие
-_CLIMATE_VOL_NORM    = {'fire': 20, 'flood': 14, 'seismic': 32, 'weather': 11}  # S35.1A (D3): выше -> нет ранней сатурации
-_CLIMATE_CRI_W       = {'fire': 0.30, 'flood': 0.25, 'weather': 0.25, 'seismic': 0.20}
+_CLIMATE_VOL_NORM    = {'fire': 20, 'flood': 14, 'seismic': 32, 'weather': 11, 'heat': 8, 'cyclone': 5}  # S35.1A (D3) + S35.2
+_CLIMATE_CRI_W       = {'fire': 0.22, 'flood': 0.19, 'heat': 0.18, 'weather': 0.16, 'cyclone': 0.13, 'seismic': 0.12}  # CRI 2.0 (S35.2D), сумма 1.00
+# 12 опорных точек для аномалии жары (регион, lat, lng)
+_HEAT_POINTS = [
+    ("Европа", 50.0, 10.0), ("Северная Америка", 39.0, -98.0), ("Южная Америка", -15.0, -60.0),
+    ("Африка", 2.0, 22.0), ("Северная Африка / Сахара", 25.0, 15.0), ("Ближний Восток", 28.0, 45.0),
+    ("Южная Азия", 22.0, 78.0), ("Юго-Восточная Азия", 5.0, 110.0), ("Восточная Азия", 35.0, 110.0),
+    ("Австралия", -25.0, 135.0), ("Сибирь", 62.0, 100.0), ("Центральная Азия", 45.0, 65.0),
+]
 
 def _classify_climate(ev):
     """Относит событие к климатической категории по source + ключевым словам."""
@@ -1038,12 +1045,14 @@ def _classify_climate(ev):
     if 'Dartmouth' in s or s == 'Floodlist': return 'flood'
     if s == 'Open-Meteo': return 'weather'
     flood_kw = ['наводн', 'паводок', 'flood', 'разлив рек', 'затопл']
-    storm_kw = ['шторм', 'циклон', 'ураган', 'тайфун', 'буря', 'storm', 'cyclone',
-                'hurricane', 'typhoon', 'ливн', 'осадк', 'торнадо']
+    cyclone_kw = ['циклон', 'тайфун', 'ураган', 'typhoon', 'hurricane', 'cyclone',
+                  'тропическ', 'tropical storm', 'тропический шторм']
+    storm_kw = ['шторм', 'буря', 'storm', 'ливн', 'осадк', 'торнадо', 'град', 'шквал']
     fire_kw  = ['пожар', 'wildfire', 'очаг', 'возгоран']
-    if any(k in t for k in flood_kw): return 'flood'
-    if any(k in t for k in storm_kw): return 'weather'
-    if any(k in t for k in fire_kw):  return 'fire'
+    if any(k in t for k in flood_kw):   return 'flood'
+    if any(k in t for k in cyclone_kw): return 'cyclone'
+    if any(k in t for k in storm_kw):   return 'weather'
+    if any(k in t for k in fire_kw):    return 'fire'
     if s == 'GDACS/Copernicus': return 'flood'   # fetch_copernicus_floods -- паводки
     if s == 'NASA EONET':       return 'weather' # прочие природные события EONET
     return None
@@ -1077,35 +1086,122 @@ def _climate_trend(history, cri_now, days):
     if best is None: return None
     return round(cri_now - best.get('cri', cri_now))
 
+def _heat_sev(anom):
+    if anom is None: return None
+    if anom <= -1: return 20
+    if anom < 1:   return 35
+    if anom < 3:   return 50
+    if anom < 5:   return 62
+    if anom < 7:   return 74
+    if anom < 9:   return 84
+    if anom < 12:  return 92
+    return 96
+
+def fetch_heat_anomaly():
+    """S35.2A -- аномалия жары через Open-Meteo ERA5 archive (keyless)."""
+    from datetime import date as _date
+    readings = []
+    today = datetime.now(timezone.utc).date()
+    doy = today.timetuple().tm_yday
+    try:    start = today.replace(year=today.year - 8).isoformat()
+    except Exception: start = today.replace(year=today.year - 8, day=28).isoformat()
+    end = (today - timedelta(days=2)).isoformat()  # учёт лага ERA5
+    for region, lat, lng in _HEAT_POINTS:
+        try:
+            url = (f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lng}"
+                   f"&start_date={start}&end_date={end}&daily=temperature_2m_max&timezone=UTC")
+            req = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0'})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                d = json.load(r)
+            times = d.get('daily', {}).get('time', [])
+            tmax  = d.get('daily', {}).get('temperature_2m_max', [])
+            if not times or not tmax: continue
+            norm_vals = []
+            for ts, tv in zip(times, tmax):
+                if tv is None: continue
+                try: pd = _date.fromisoformat(ts)
+                except Exception: continue
+                dd = abs(pd.timetuple().tm_yday - doy); dd = min(dd, 365 - dd)
+                if dd <= 7: norm_vals.append(tv)
+            recent = [tv for tv in tmax[-5:] if tv is not None]
+            if not norm_vals or not recent: continue
+            normal  = sum(norm_vals) / len(norm_vals)
+            current = sum(recent) / len(recent)
+            anom = round(current - normal, 1)
+            readings.append({'region': region, 'severity': _heat_sev(anom), 'anomaly': anom,
+                             'current': round(current, 1), 'normal': round(normal, 1),
+                             'heatwave': anom >= 5})
+        except Exception as e:
+            print(f"  [WARN] heat {region}: {e}", file=sys.stderr)
+    print(f"  Heat anomaly: {len(readings)}/{len(_HEAT_POINTS)} точек", file=sys.stderr)
+    return readings
+
+def _cyclone_sev(wind_kt):
+    if wind_kt is None: return 45
+    if wind_kt < 34:  return 35
+    if wind_kt < 64:  return 48
+    if wind_kt < 83:  return 60
+    if wind_kt < 96:  return 68
+    if wind_kt < 113: return 78
+    if wind_kt < 137: return 88
+    return 95
+
+def fetch_nhc_cyclones():
+    """S35.2C -- активные тропические циклоны NHC (keyless JSON, только в индекс)."""
+    storms = []
+    try:
+        req = urllib.request.Request("https://www.nhc.noaa.gov/CurrentStorms.json",
+                                     headers={'User-Agent': 'ArchiveBot/2.0'})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            d = json.load(r)
+        active = d.get('activeStorms', []) if isinstance(d, dict) else (d or [])
+        for s in active:
+            try: wind = int(float(s.get('intensity', 0) or 0))
+            except Exception: wind = 0
+            sid = (s.get('id', '') or s.get('binNumber', ''))[:2].upper()
+            basin = {'AL': 'Атлантика', 'EP': 'Восточный Тихий',
+                     'CP': 'Центральный Тихий'}.get(sid, 'Тихий/Атлантика')
+            storms.append({'region': basin, 'severity': _cyclone_sev(wind),
+                           'name': s.get('name', '?'), 'wind_kt': wind,
+                           'classification': s.get('classification', '')})
+    except Exception as e:
+        print(f"  [WARN] NHC cyclones: {e}", file=sys.stderr)
+    print(f"  NHC cyclones: {len(storms)} активных", file=sys.stderr)
+    return storms
+
 def build_climate_state(events):
-    """S35.1 -- строит docs/climate/state.json из опубликованных событий карты."""
+    """S35.1/S35.2 -- строит docs/climate/state.json (6 индексов + CRI 2.0)."""
     from collections import defaultdict
-    cats = {'fire': [], 'flood': [], 'seismic': [], 'weather': []}
+    cats = {'fire': [], 'flood': [], 'seismic': [], 'weather': [], 'cyclone': []}
     for e in events:
-        if e.get('domain') not in ('climate', None) and e.get('source') not in ('USGS', 'EMSC'):
-            # сейсмика иногда вне climate-домена -- пускаем по source; остальное только climate
-            pass
         c = _classify_climate(e)
-        if c: cats[c].append(e)
+        if c and c in cats: cats[c].append(e)
+
+    # S35.2A: аномалия жары (внешний источник)
+    try: heat_readings = fetch_heat_anomaly()
+    except Exception as _e:
+        print(f"  [WARN] heat fetch: {_e}", file=sys.stderr); heat_readings = []
+    heat_hot = [r for r in heat_readings if r.get('severity') and r['severity'] >= 50]
+
+    # S35.2C: циклоны (NHC внешний + GDACS TC из events)
+    try: nhc = fetch_nhc_cyclones()
+    except Exception as _e:
+        print(f"  [WARN] nhc fetch: {_e}", file=sys.stderr); nhc = []
+    cyclone_evs = list(cats['cyclone']) + nhc
 
     fire, fmeta   = _climate_index(cats['fire'],    _CLIMATE_VOL_NORM['fire'])
     flood, flmeta = _climate_index(cats['flood'],   _CLIMATE_VOL_NORM['flood'])
     seis, smeta   = _climate_index(cats['seismic'], _CLIMATE_VOL_NORM['seismic'])
     wx, wmeta     = _climate_index(cats['weather'], _CLIMATE_VOL_NORM['weather'])
+    heat, hmeta   = _climate_index(heat_hot,        _CLIMATE_VOL_NORM['heat'])
+    cyc, cmeta    = _climate_index(cyclone_evs,     _CLIMATE_VOL_NORM['cyclone'])
 
     W = _CLIMATE_CRI_W
-    cri = round(W['fire'] * fire + W['flood'] * flood + W['weather'] * wx + W['seismic'] * seis)
+    parts = {'fire': fire, 'flood': flood, 'heat': heat, 'weather': wx, 'cyclone': cyc, 'seismic': seis}
+    cri = round(sum(W[k] * parts[k] for k in W))
+    wsum = sum(W[k] * parts[k] for k in W) or 1
+    contributions = {k: round(100 * W[k] * parts[k] / wsum) for k in W}
 
-    # вклад каждой категории в CRI (%)
-    wsum = (W['fire'] * fire + W['flood'] * flood + W['weather'] * wx + W['seismic'] * seis) or 1
-    contributions = {
-        'fire':    round(100 * W['fire'] * fire / wsum),
-        'flood':   round(100 * W['flood'] * flood / wsum),
-        'weather': round(100 * W['weather'] * wx / wsum),
-        'seismic': round(100 * W['seismic'] * seis / wsum),
-    }
-
-    # фактические магнитуды для сейсмики
     mags = []
     for e in cats['seismic']:
         m = re.search(r'M([\d.]+)', e.get('title', ''))
@@ -1115,18 +1211,28 @@ def build_climate_state(events):
     max_mag = max(mags) if mags else None
     avg_mag = round(sum(mags) / len(mags), 1) if mags else None
 
-    # топ-регионы по совокупной климатической активности
+    # heat-метаданные
+    max_anom = max((r['anomaly'] for r in heat_readings), default=None)
+    hottest = max(heat_readings, key=lambda r: r['anomaly'], default=None) if heat_readings else None
+    heatwave_n = sum(1 for r in heat_readings if r.get('heatwave'))
+    # cyclone-метаданные
+    max_wind = max((s.get('wind_kt', 0) for s in nhc), default=0)
+
+    # топ-регионы (включая heat и cyclone)
     reg_score = defaultdict(float); reg_cat = defaultdict(lambda: defaultdict(float))
     for c, evs in cats.items():
         for e in evs:
             r = e.get('region', 'Глобально')
             reg_score[r] += e['severity']; reg_cat[r][c] += e['severity']
+    for r in heat_hot:
+        reg_score[r['region']] += r['severity']; reg_cat[r['region']]['heat'] += r['severity']
+    for s in nhc:
+        reg_score[s['region']] += s['severity']; reg_cat[s['region']]['cyclone'] += s['severity']
     top_regions = []
     for r in sorted(reg_score, key=reg_score.get, reverse=True)[:5]:
         dom = max(reg_cat[r], key=reg_cat[r].get)
         top_regions.append({'region': r, 'score': round(reg_score[r]), 'dominant_category': dom})
 
-    # история и тренды
     today_str = datetime.now(timezone.utc).date().isoformat()
     history = []
     if CLIMATE_HISTORY_PATH.exists():
@@ -1134,9 +1240,8 @@ def build_climate_state(events):
         except Exception: history = []
     history = [p for p in history if p.get('date') != today_str]
     history.append({'date': today_str, 'cri': cri, 'fire': fire, 'flood': flood,
-                    'seismic': seis, 'weather': wx})
+                    'seismic': seis, 'weather': wx, 'heat': heat, 'cyclone': cyc})
     history = sorted(history, key=lambda p: p.get('date', ''))[-95:]
-
     trend_24h = _climate_trend(history[:-1], cri, 1)
     trend_7d  = _climate_trend(history[:-1], cri, 7)
     trend_30d = _climate_trend(history[:-1], cri, 30)
@@ -1147,16 +1252,31 @@ def build_climate_state(events):
         'flood_activity':   {'value': flood, **flmeta, 'sources': ['GDACS', 'Copernicus EMS', 'Dartmouth Flood Observatory']},
         'seismic_activity': {'value': seis,  **smeta,  'max_magnitude': max_mag, 'avg_magnitude': avg_mag, 'sources': ['USGS', 'EMSC']},
         'extreme_weather':  {'value': wx,    **wmeta,  'sources': ['Open-Meteo', 'GDACS', 'NASA EONET']},
+        'heat_index': heat,
+        'heat_activity':    {'value': heat,  **hmeta,  'max_anomaly_c': max_anom,
+                             'hottest_region': (hottest['region'] if hottest else None),
+                             'heatwave_regions': heatwave_n, 'points_sampled': len(heat_readings),
+                             'sources': ['Open-Meteo ERA5 archive']},
+        'cyclone_index': cyc,
+        'cyclone_activity': {'value': cyc,   **cmeta,  'active_storms': len(cyclone_evs),
+                             'nhc_storms': len(nhc), 'max_wind_kt': max_wind,
+                             'sources': ['NOAA NHC', 'GDACS TC']},
         'trend_24h': trend_24h, 'trend_7d': trend_7d, 'trend_30d': trend_30d,
         'top_regions': top_regions,
         'contributions': contributions,
         'generated_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-        'data_quality': {k: ('ok' if cats[k] else 'no_data') for k in cats},
+        'data_quality': {'fire': 'ok' if cats['fire'] else 'no_data',
+                         'flood': 'ok' if cats['flood'] else 'no_data',
+                         'seismic': 'ok' if cats['seismic'] else 'no_data',
+                         'weather': 'ok' if cats['weather'] else 'no_data',
+                         'heat': 'ok' if heat_readings else 'no_data',
+                         'cyclone': 'ok' if cyclone_evs else 'no_active_cyclones'},
     }
     CLIMATE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     CLIMATE_STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding='utf-8')
     CLIMATE_HISTORY_PATH.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(f"  ✓ Climate Risk Layer: CRI={cri} fire={fire} flood={flood} seis={seis} wx={wx} → {CLIMATE_STATE_PATH}", file=sys.stderr)
+    print(f"  ✓ Climate Risk Layer 2.0: CRI={cri} fire={fire} flood={flood} seis={seis} wx={wx} heat={heat} cyc={cyc} → {CLIMATE_STATE_PATH}", file=sys.stderr)
+    return state
     return state
 
 
