@@ -7186,17 +7186,27 @@ function grdfPopulateDrawer(countries) {
     return;
   }
   var topCountries = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); }).slice(0,5);
+  var FREE_LIMIT = 2; // первые 2 видны, остальные размыты
   var html = '<div class="grdf-section-head" style="padding-top:4px">Горячие точки</div>';
-  topCountries.forEach(function(c){
+  // Wrapper — relative для позиционирования lock-overlay
+  html += '<div style="position:relative">';
+  topCountries.forEach(function(c, idx){
     var gri = fr(c.risk_score);
     var sc = STATUS_COLORS[getStatus(gri)]||'#888';
-    html += '<div class="grdf-sig-row" data-grdf-cc="'+esc(c.country)+'" data-grdf-nav="map" onclick="grdfOpenCountrySheet(this.dataset.grdfCc)" style="cursor:pointer">';
+    var blurStyle = idx >= FREE_LIMIT ? 'filter:blur(3px);opacity:0.45;pointer-events:none;user-select:none;' : '';
+    html += '<div class="grdf-sig-row" style="'+blurStyle+'" '+(idx < FREE_LIMIT ? 'data-grdf-cc="'+esc(c.country)+'" data-grdf-nav="map" onclick="grdfOpenCountryNav(this)"' : '')+' >';
     html += '<span class="grdf-sig-dot" style="background:'+sc+'"></span>';
     html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+_flag(c.country)+' '+esc(c.country_name||c.country)+'</div>';
     html += '<div style="font-size:9px;color:#4a6380;margin-top:1px">GRI '+gri+' · '+(c.dominant_domain||'')+'</div></div>';
     html += '<span style="font-size:10px;color:'+sc+';font-weight:500">'+STATUS_RU[getStatus(gri)]+'</span>';
     html += '</div>';
   });
+  // Lock overlay over blurred rows
+  html += '<div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px;background:linear-gradient(to bottom,rgba(9,19,30,0) 0%,rgba(9,19,30,0.97) 30%);display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:auto">';
+  html += '<div style="font-size:9px;color:#B8973A;letter-spacing:.1em;text-transform:uppercase">🔒 Архив + Signal Pro</div>';
+  html += '<a href="javascript:openAccess()" style="width:100%;padding:8px;background:#B8973A;border:none;color:#06050A;font-family:Montserrat,sans-serif;font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;text-align:center;text-decoration:none;display:block;cursor:pointer">ПОЛУЧИТЬ ДОСТУП →</a>';
+  html += '</div>';
+  html += '</div>';
   body.innerHTML = html;
 }
 
