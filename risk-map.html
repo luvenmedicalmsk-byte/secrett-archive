@@ -1151,6 +1151,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 }
 .grdf-screen-head{padding:12px 14px 8px;display:flex;justify-content:space-between;align-items:center}
 .grdf-screen-title{font-size:15px;font-weight:600;color:#f1f5f9;font-family:'Montserrat',sans-serif}
+.grdf-screen-x{position:absolute;top:46px;right:16px;z-index:6;cursor:pointer;color:rgba(255,255,255,0.4);font-size:18px;line-height:1;padding:6px}
+.grdf-screen-x:hover{color:#D4AF5A}
+@media(max-width:768px){
+  #grdf-warnings-screen,#grdf-countries-screen,#grdf-analytics-screen{display:block;transform:translateX(100%);transition:transform .3s ease;pointer-events:none}
+  #grdf-warnings-screen.visible,#grdf-countries-screen.visible,#grdf-analytics-screen.visible{transform:translateX(0);pointer-events:all}
+}
 .grdf-warn-row{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;border-bottom:0.5px solid #101e30}
 .grdf-country-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid #101e30;cursor:pointer}
 .grdf-country-avatar{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
@@ -6739,6 +6745,7 @@ function _evM(val, lbl, col) {
 
 <!-- Sprint 7: Warnings screen -->
 <div id="grdf-warnings-screen">
+  <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
   <div class="grdf-screen-head">
     <div class="grdf-screen-title">Предупреждения</div>
     <span style="font-size:10px;color:#4a6380" id="grdf-ws-count"></span>
@@ -6749,6 +6756,7 @@ function _evM(val, lbl, col) {
 
 <!-- Sprint 7: Countries screen -->
 <div id="grdf-countries-screen">
+  <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
   <div class="grdf-screen-head">
     <div class="grdf-screen-title">Страны</div>
     <span style="font-size:10px;color:#4a6380">по GRI ↓</span>
@@ -6758,6 +6766,7 @@ function _evM(val, lbl, col) {
 
 <!-- Sprint 7: Analytics screen — Lock for FREE users -->
 <div id="grdf-analytics-screen">
+  <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
   <!-- Lock block: Signal Pro -->
   <div class="free-lock-block" style="margin-top:12px">
     <div class="free-lock-header">
