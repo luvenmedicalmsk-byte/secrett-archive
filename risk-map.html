@@ -1386,17 +1386,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 }
 
 
-#map-legend{
-  position:fixed;bottom:70px;left:12px;z-index:101;
-  background:rgba(6,5,10,0.88);
-  border:0.5px solid rgba(184,151,58,0.2);
-  padding:8px 10px;
-  font-family:'Montserrat',sans-serif;
-  pointer-events:none;
-}
-.leg-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:9px;color:rgba(232,224,208,0.7);letter-spacing:0.06em;}
-.leg-row:last-child{margin-bottom:0}
-.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 
 </style>
 </head>
@@ -1416,7 +1405,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 <div id="ui">
   <div id="header">
     <div id="logo-title">АРХИВ · КАРТА СИГНАЛОВ</div>
-    <div id="map-anchor" style="font-family:'Montserrat',sans-serif;font-size:9px;font-weight:300;color:rgba(232,224,208,0.5);letter-spacing:0.12em;margin-top:3px;text-transform:uppercase">Глобальные системные риски · нажмите на точку</div>
     <div id="live-status">
       <span id="live-status-icon">⬛️</span>
       <span id="live-status-text">Соединение прервано</span>
@@ -1428,7 +1416,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
     <div><span class="sv" id="s-a">0</span><span class="sl">Ср. индекс</span></div>
   </div>
-  <div id="chain-hint" style="position:absolute;top:100px;left:16px;font-family:'Montserrat',sans-serif;font-size:8px;font-weight:300;color:rgba(184,151,58,0.5);letter-spacing:0.1em;pointer-events:none">СОБЫТИЕ · СИГНАЛ · РИСК · СТРАНА</div>
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
   <button class="lb" id="intel-btn" onclick="window._toggleIntelPanel()">◆ Раннее предупреждение</button>
@@ -1452,7 +1439,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     <button class="zb" id="z-reset" style="font-size:11px;letter-spacing:0">⌂</button>
   </div>
 
-  <button id="list-btn">◆ Список событий <span id="list-btn-count" style="font-size:9px;opacity:.7"></span></button>
+  <button id="list-btn">◆ Список событий</button>
   <div id="ai-panel">
     <div id="ai-panel-header">
       <span>◆ AI · Анализ доменов</span>
@@ -7501,14 +7488,6 @@ window.addEventListener('resize', function(){
 
 
 
-<!-- Легенда цветов -->
-<div id="map-legend">
-  <div class="leg-row"><span class="leg-dot" style="background:#27AE60"></span>Климат</div>
-  <div class="leg-row"><span class="leg-dot" style="background:#2980B9"></span>Экономика</div>
-  <div class="leg-row"><span class="leg-dot" style="background:#D35400"></span>Геополитика</div>
-  <div class="leg-row"><span class="leg-dot" style="background:#8E44AD"></span>Технологии</div>
-  <div class="leg-row"><span class="leg-dot" style="background:#C0392B"></span>Социум</div>
-</div>
 
 <!-- ACCESS BUTTON -->
 <button id="access-btn" onclick="openAccess()">ПОЛУЧИТЬ ДОСТУП</button>
@@ -7571,21 +7550,6 @@ function closeAccess(){
   if(sb) sb.style.removeProperty('display');
 }
 
-// ── FIX: обновить счётчики в фильтрах и кнопке ──────────────────
-function updateFilterCounts(events){
-  if(!events||!events.length) return;
-  var counts = {all:events.length, climate:0, economy:0, geopolitics:0, technology:0, social:0};
-  events.forEach(function(e){ if(counts[e.domain]!==undefined) counts[e.domain]++; });
-  Object.keys(counts).forEach(function(d){
-    var btn = document.querySelector('.fb[data-d="'+d+'"]');
-    if(btn){
-      var base = {all:'Все',climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'}[d]||d;
-      btn.textContent = base + ' ' + counts[d];
-    }
-  });
-  var lbc = document.getElementById('list-btn-count');
-  if(lbc) lbc.textContent = '(' + counts.all + ')';
-}
 
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess();});
 </script>
