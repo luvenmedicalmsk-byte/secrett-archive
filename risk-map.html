@@ -264,13 +264,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .grdf-sig-title{font-size:12px;color:#E8E0D0;line-height:1.3;margin-bottom:3px}
 .grdf-sig-meta{font-size:9px;color:rgba(168,160,144,0.5);display:flex;gap:8px}
 .grdf-sig-card .sig-sev,.grdf-sig-sev{font-family:'Cormorant Garamond',serif;font-size:18px;line-height:1;flex-shrink:0;align-self:center}
-/* S36.2: climate situation block (real counts) */
-.grdf-clim-sit{padding:4px 14px 12px;border-bottom:0.5px solid rgba(184,151,58,0.12)}
-.grdf-clim-sit-head{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#B8973A;margin-bottom:11px}
-.grdf-clim-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 8px}
-.grdf-clim-cell{display:flex;flex-direction:column;align-items:flex-start}
-.gc-num{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:300;color:#D4AF5A;line-height:1}
-.gc-lbl{font-size:8px;letter-spacing:0.05em;color:rgba(168,160,144,0.6);margin-top:3px;text-transform:uppercase}
 #ap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(220,38,38,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;flex-shrink:0}
 #ap-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
 #ap-close:hover{color:rgba(255,255,255,0.7)}
@@ -2671,14 +2664,6 @@ function renderClimate(s){
   setH('cl-body', html); setH('cl-trends', trHtml);
   setT('acl-cri', cri); setT('acl-lvl', lvlTxt); setT('acl-meta', metaTxt);
   setH('acl-body', html); setH('acl-trends', trHtml);
-  // S36.2: climate situation — real counts in События
-  var fa=s.fire_activity||{}, fl=s.flood_activity||{}, ew=s.extreme_weather||{}, hq=s.seismic_activity||{};
-  setT('evcl-fire',    fa.count!=null?fa.count:0);
-  setT('evcl-flood',   fl.count!=null?fl.count:0);
-  setT('evcl-weather', ew.count!=null?ew.count:0);
-  setT('evcl-heat',    ha.count!=null?ha.count:(ha.heatwave_regions!=null?ha.heatwave_regions:0));
-  setT('evcl-cyclone', ca.active_storms!=null?ca.active_storms:(ca.count!=null?ca.count:0));
-  setT('evcl-quake',   hq.count!=null?hq.count:0);
 }
 window._toggleClimatePanel = function(){
   var p = document.getElementById('climate-panel');
@@ -6777,17 +6762,6 @@ function _evM(val, lbl, col) {
 <div id="grdf-signals-screen">
   <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
   <div class="grdf-screen-head"><div class="grdf-screen-title">События</div><span style="font-size:10px;color:rgba(168,160,144,0.5)" id="grdf-sig-count"></span></div>
-  <div class="grdf-clim-sit">
-    <div class="grdf-clim-sit-head">Отслеживаемые климатические события</div>
-    <div class="grdf-clim-grid">
-      <div class="grdf-clim-cell"><span class="gc-num" id="evcl-fire">—</span><span class="gc-lbl">Пожары</span></div>
-      <div class="grdf-clim-cell"><span class="gc-num" id="evcl-flood">—</span><span class="gc-lbl">Наводнения</span></div>
-      <div class="grdf-clim-cell"><span class="gc-num" id="evcl-weather">—</span><span class="gc-lbl">Погода</span></div>
-      <div class="grdf-clim-cell"><span class="gc-num" id="evcl-heat">—</span><span class="gc-lbl">Жара</span></div>
-      <div class="grdf-clim-cell"><span class="gc-num" id="evcl-cyclone">—</span><span class="gc-lbl">Циклоны</span></div>
-      <div class="grdf-clim-cell"><span class="gc-num" id="evcl-quake">—</span><span class="gc-lbl">Сейсмика</span></div>
-    </div>
-  </div>
   <div id="grdf-sig-filters" class="grdf-sig-filters">
     <button class="grdf-sig-pill active" data-d="all">Все</button>
     <button class="grdf-sig-pill" data-d="climate">Климат</button>
