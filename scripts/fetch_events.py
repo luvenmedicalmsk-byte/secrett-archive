@@ -479,6 +479,27 @@ def estimate_severity(title, desc, bias=0):
         elif n >= 1000: score += 8
     return max(40, min(98, score))
 
+
+def normalize_severity(source_type, m):
+    """S34A -- единая точка формирования severity из натуральных метрик источника.
+    Семантика шкалы: 0-29 фон · 30-49 наблюдение · 50-69 значимое · 70-84 высокое · 85-100 критическое.
+    m = dict натуральных метрик. Возвращает int[0..100] либо None, если источник ещё не мигрирован
+    (тогда вызывающий код использует прежний путь estimate_severity)."""
+    st = (source_type or '').lower()
+
+    # --- S34A-1: GDACS -- по уровню алерта + население в зоне воздействия ---
+    if st == 'gdacs':
+        alert = (m.get('alert') or 'green').lower()
+        pop = m.get('pop_exposed') or 0
+        if alert == 'red':
+            return min(95, 85 + min(10, int(pop / 1000000)))
+        if alert == 'orange':
+            return min(75, 60 + min(15, int(pop / 200000)))
+        # green -- узкий фоновый диапазон 20-25
+        return min(25, 22 + min(3, int(pop / 500000)))
+
+    return None
+
 def make_id(title, date):
     return 'e' + hashlib.md5(f"{title}{date}".encode()).hexdigest()[:8]
 
@@ -1700,11 +1721,20 @@ def fetch_copernicus_floods():
                 # severity строго по уровню алерта GDACS (green/orange/red),
                 # иначе зелёный (0 жертв) раздувался до ~78 по ключевым словам
                 sev_str = (flood.get('severity') or 'low').lower()
-                force_sev = {'high': 88, 'medium': 75, 'low': 22}.get(sev_str, 22)
+                _alert = {'high': 'red', 'medium': 'orange', 'low': 'green'}.get(sev_str, 'green')
                 _tl = (title or '').lower() + ' ' + (desc or '').lower()
-                if 'красн' in _tl or 'red alert' in _tl or 'red flood' in _tl: force_sev = 88
-                elif 'оранжев' in _tl or 'orange alert' in _tl or 'orange flood' in _tl: force_sev = 75
-                elif 'зелен' in _tl or 'зелён' in _tl or 'green alert' in _tl or 'green flood' in _tl: force_sev = 22
+                if 'красн' in _tl or 'red alert' in _tl or 'red flood' in _tl: _alert = 'red'
+                elif 'оранжев' in _tl or 'orange alert' in _tl or 'orange flood' in _tl: _alert = 'orange'
+                elif 'зелен' in _tl or 'зелён' in _tl or 'green alert' in _tl or 'green flood' in _tl: _alert = 'green'
+                _pop = 0
+                _pm = re.search(r'(\d[\d,\.]*)\s*(million|млн|people|человек|населе)', _tl)
+                if _pm:
+                    try:
+                        _mult = 1000000 if ('million' in _pm.group(2) or 'млн' in _pm.group(2)) else 1
+                        _pop = int(float(_pm.group(1).replace(',', '')) * _mult)
+                    except Exception:
+                        _pop = 0
+                force_sev = normalize_severity('gdacs', {'alert': _alert, 'pop_exposed': _pop})
                 
                 # Если нет координат -- определяем по названию страны
                 if not lat or not lng:
