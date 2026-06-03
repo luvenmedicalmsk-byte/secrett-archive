@@ -728,7 +728,7 @@ def process_events(raw_items):
             lat, lng = item['_lat'], item['_lng']
             region = item['_region']
             domain = item['_domain']
-            severity = estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0))
+            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0))
         else:
             domain = detect_domain(item['title'], item.get('desc',''))
             if not domain: continue
@@ -738,9 +738,10 @@ def process_events(raw_items):
                 geo = detect_coords(item['title'], item.get('desc',''))
             if not geo: continue
             lat, lng, region = geo
-            severity = estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0))
+            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0))
 
-        if severity < SEVERITY_THRESHOLD: continue
+        # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
+        if item.get('_force_severity') is None and severity < SEVERITY_THRESHOLD: continue
 
         ev_id = make_id(item['title'], item['date'])
         if ev_id in seen_ids: continue
@@ -1669,8 +1670,14 @@ def fetch_copernicus_floods():
                 desc = flood.get('desc', '')
                 lat = flood.get('lat')
                 lng = flood.get('lng')
-                severity_map = {'high': 88, 'medium': 75, 'low': 60}
-                sev_str = flood.get('severity', 'low')
+                # severity строго по уровню алерта GDACS (green/orange/red),
+                # иначе зелёный (0 жертв) раздувался до ~78 по ключевым словам
+                sev_str = (flood.get('severity') or 'low').lower()
+                force_sev = {'high': 88, 'medium': 75, 'low': 22}.get(sev_str, 22)
+                _tl = (title or '').lower() + ' ' + (desc or '').lower()
+                if 'красн' in _tl or 'red alert' in _tl or 'red flood' in _tl: force_sev = 88
+                elif 'оранжев' in _tl or 'orange alert' in _tl or 'orange flood' in _tl: force_sev = 75
+                elif 'зелен' in _tl or 'зелён' in _tl or 'green alert' in _tl or 'green flood' in _tl: force_sev = 22
                 
                 # Если нет координат -- определяем по названию страны
                 if not lat or not lng:
@@ -1690,6 +1697,7 @@ def fetch_copernicus_floods():
                     'date': flood.get('date', datetime.now(timezone.utc).strftime('%Y-%m-%d')),
                     'source': 'GDACS/Copernicus',
                     'source_bias': 20,
+                    '_force_severity': force_sev,
                     '_lat': float(lat), '_lng': float(lng),
                     '_region': detect_region_by_coords(float(lat), float(lng)),
                     '_domain': 'climate'
