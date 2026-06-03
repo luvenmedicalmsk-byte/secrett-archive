@@ -252,6 +252,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .grdf-acl-sub{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(168,160,144,0.6)}
 .grdf-acl-meta{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,0.28);margin-bottom:4px}
 .grdf-acl-trends{display:flex;gap:14px;font-size:8px;letter-spacing:0.1em;color:rgba(168,160,144,0.55);margin-bottom:12px}
+/* S36.1: Signals feed */
+.grdf-sig-filters{display:flex;gap:6px;overflow-x:auto;padding:2px 14px 10px;-webkit-overflow-scrolling:touch}
+.grdf-sig-filters::-webkit-scrollbar{display:none}
+.grdf-sig-pill{flex:0 0 auto;background:transparent;border:0.5px solid rgba(184,151,58,0.25);color:rgba(168,160,144,0.7);font-family:'Montserrat',sans-serif;font-size:9px;font-weight:300;letter-spacing:0.08em;text-transform:uppercase;padding:5px 11px;border-radius:20px;cursor:pointer;white-space:nowrap}
+.grdf-sig-pill.active{background:rgba(184,151,58,0.15);border-color:#B8973A;color:#D4AF5A}
+.grdf-sig-card{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1)}
+.grdf-sig-card .sig-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.grdf-sig-card .sig-main{flex:1;min-width:0}
+.grdf-sig-dom{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:2px}
+.grdf-sig-title{font-size:12px;color:#E8E0D0;line-height:1.3;margin-bottom:3px}
+.grdf-sig-meta{font-size:9px;color:rgba(168,160,144,0.5);display:flex;gap:8px}
+.grdf-sig-sev{font-family:'Cormorant Garamond',serif;font-size:18px;line-height:1;flex-shrink:0;align-self:center}
 #ap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(220,38,38,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;flex-shrink:0}
 #ap-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
 #ap-close:hover{color:rgba(255,255,255,0.7)}
@@ -1149,12 +1161,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .grdf-acc-val{font-size:19px;font-weight:500;color:#D4AF5A;font-family:'Cormorant Garamond',serif}
 
 /* ── Warnings/Countries screens ── */
-#grdf-warnings-screen,#grdf-countries-screen{
+#grdf-warnings-screen,#grdf-countries-screen,#grdf-signals-screen{
   display:none;position:fixed;top:0;left:0;right:0;bottom:56px;z-index:120;
   background:rgba(6,5,10,0.97);backdrop-filter:blur(20px);overflow-y:auto;padding-top:42px;
 }
 @media(max-width:768px){
   #grdf-warnings-screen.visible{display:block}
+  #grdf-signals-screen.visible{display:block}
   #grdf-countries-screen.visible{display:block}
 }
 .grdf-screen-head{padding:12px 48px 8px 14px;display:flex;justify-content:space-between;align-items:center}
@@ -1162,8 +1175,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .grdf-screen-x{position:absolute;top:44px;right:12px;z-index:6;cursor:pointer;color:rgba(255,255,255,0.32);font-size:15px;line-height:1;padding:8px}
 .grdf-screen-x:hover{color:#D4AF5A}
 @media(max-width:768px){
-  #grdf-warnings-screen,#grdf-countries-screen,#grdf-analytics-screen{display:block;transform:translateX(100%);transition:transform .3s ease;pointer-events:none}
-  #grdf-warnings-screen.visible,#grdf-countries-screen.visible,#grdf-analytics-screen.visible{transform:translateX(0);pointer-events:all}
+  #grdf-warnings-screen,#grdf-countries-screen,#grdf-analytics-screen,#grdf-signals-screen{display:block;transform:translateX(100%);transition:transform .3s ease;pointer-events:none}
+  #grdf-warnings-screen.visible,#grdf-countries-screen.visible,#grdf-analytics-screen.visible,#grdf-signals-screen.visible{transform:translateX(0);pointer-events:all}
 }
 .grdf-warn-row{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1)}
 .grdf-country-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}
@@ -6733,9 +6746,8 @@ function _evM(val, lbl, col) {
     <button class="grdf-nav-btn active" id="grdf-nav-map" onclick="grdfNavTo('map')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21"/><line x1="8" y1="3" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="21"/></svg></span><span>Карта</span>
     </button>
-    <button class="grdf-nav-btn" id="grdf-nav-warnings" onclick="grdfNavTo('warnings')">
-      <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span>Алерты</span>
-      <span class="grdf-nav-badge" id="grdf-warn-badge" style="display:none">!</span>
+    <button class="grdf-nav-btn" id="grdf-nav-signals" onclick="grdfNavTo('signals')">
+      <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Сигналы</span>
     </button>
     <button class="grdf-nav-btn" id="grdf-nav-countries" onclick="grdfNavTo('countries')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span>Страны</span>
@@ -6744,6 +6756,21 @@ function _evM(val, lbl, col) {
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Аналитика</span>
     </button>
   </div>
+</div>
+
+<!-- S36.1: Signals feed screen (same source as map: ALL_EVENTS) -->
+<div id="grdf-signals-screen">
+  <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
+  <div class="grdf-screen-head"><div class="grdf-screen-title">Сигналы</div><span style="font-size:10px;color:rgba(168,160,144,0.5)" id="grdf-sig-count"></span></div>
+  <div id="grdf-sig-filters" class="grdf-sig-filters">
+    <button class="grdf-sig-pill active" data-d="all">Все</button>
+    <button class="grdf-sig-pill" data-d="climate">Климат</button>
+    <button class="grdf-sig-pill" data-d="geopolitics">Геополитика</button>
+    <button class="grdf-sig-pill" data-d="economy">Экономика</button>
+    <button class="grdf-sig-pill" data-d="technology">Технологии</button>
+    <button class="grdf-sig-pill" data-d="social">Социум</button>
+  </div>
+  <div id="grdf-sig-feed"></div>
 </div>
 
 <!-- Sprint 7: Warnings screen -->
@@ -7451,16 +7478,22 @@ window.grdfNavTo = function(tab) {
   var warnScreen = document.getElementById('grdf-warnings-screen');
   var ctryScreen = document.getElementById('grdf-countries-screen');
   var analScreen = document.getElementById('grdf-analytics-screen');
+  var sigScreen  = document.getElementById('grdf-signals-screen');
   var drawer     = document.getElementById('grdf-intel-drawer');
   var sheet      = document.getElementById('grdf-country-sheet');
 
-  [warnScreen, ctryScreen, analScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
+  [warnScreen, ctryScreen, analScreen, sigScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
   if(drawer) drawer.style.display = 'flex';
   var clPanel0 = document.getElementById('climate-panel');
   if(clPanel0 && tab!=='climate') clPanel0.classList.remove('open');
 
   if(tab==='map'){
     // map is always visible underneath
+  } else if(tab==='signals'){
+    if(sigScreen) sigScreen.classList.add('visible');
+    if(drawer) drawer.style.display='none';
+    if(sheet) { sheet.className=''; _grdfSheetSnap=0; }
+    grdfRenderSignals(_grdfSigFilter||'all');
   } else if(tab==='climate'){
     if(clPanel0) clPanel0.classList.add('open');
     if(drawer) drawer.style.display='none';
@@ -7506,6 +7539,50 @@ function grdfPopulateWarnings(countries) {
   });
   body.innerHTML = html;
 }
+
+// ── S36.1: Signals feed (same source as map: ALL_EVENTS) ───────────
+var _grdfSigFilter = 'all';
+function grdfRenderSignals(dom){
+  dom = dom || 'all';
+  _grdfSigFilter = dom;
+  var feed = document.getElementById('grdf-sig-feed');
+  var cnt  = document.getElementById('grdf-sig-count');
+  if(!feed) return;
+  var src = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS) ? ALL_EVENTS : [];
+  var items = (dom==='all') ? src.slice() : src.filter(function(e){ return e.domain===dom; });
+  items.sort(function(a,b){ var dd=String(b.date||'').localeCompare(String(a.date||'')); return dd!==0?dd:((b.severity||0)-(a.severity||0)); });
+  if(cnt) cnt.textContent = items.length + ' ' + (items.length%10===1&&items.length%100!==11 ? 'сигнал' : 'сигналов');
+  if(!items.length){ feed.innerHTML='<div style="padding:24px 14px;font-size:11px;color:rgba(168,160,144,0.5);text-align:center">Нет активных сигналов в этом домене</div>'; return; }
+  var DLx=(typeof DL!=='undefined')?DL:{}, DCx=(typeof DC!=='undefined')?DC:{};
+  function scx(s){ try{ return (typeof sc==='function')?sc(s):'#D4AF5A'; }catch(e){ return '#D4AF5A'; } }
+  function fdx(d){ try{ return (typeof fd==='function')?fd(d):''; }catch(e){ return ''; } }
+  function escx(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var html='';
+  items.slice(0,200).forEach(function(ev){
+    var col = DCx[ev.domain]||'#B8973A';
+    var sev = ev.severity||0;
+    html += '<div class="grdf-sig-card">'
+      + '<span class="sig-dot" style="background:'+col+'"></span>'
+      + '<div class="sig-main">'
+      +   '<div class="grdf-sig-dom" style="color:'+col+'">'+escx(DLx[ev.domain]||ev.domain||'')+'</div>'
+      +   '<div class="grdf-sig-title">'+escx(ev.title)+'</div>'
+      +   '<div class="grdf-sig-meta"><span>'+escx(ev.region)+'</span><span>'+fdx(ev.date)+'</span></div>'
+      + '</div>'
+      + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'</div>'
+      + '</div>';
+  });
+  feed.innerHTML = html;
+}
+(function(){
+  var fl=document.getElementById('grdf-sig-filters');
+  if(fl) fl.addEventListener('click', function(e){
+    var b=e.target.closest ? e.target.closest('.grdf-sig-pill') : null; if(!b) return;
+    var pills=fl.querySelectorAll('.grdf-sig-pill');
+    for(var i=0;i<pills.length;i++) pills[i].classList.remove('active');
+    b.classList.add('active');
+    grdfRenderSignals(b.getAttribute('data-d'));
+  });
+})();
 
 function grdfPopulateCountriesList(countries) {
   var list = document.getElementById('grdf-cs-list');
