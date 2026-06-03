@@ -1140,7 +1140,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 @media(max-width:768px){#access-btn{display:flex;align-items:center;gap:4px;}}
 
 #access-modal{
-  display:none;position:fixed;inset:0;z-index:100;
+  display:none;position:fixed;inset:0;z-index:200;
   background:rgba(6,5,10,0.92);
   overflow-y:auto;-webkit-overflow-scrolling:touch;
   padding:20px 16px 40px;
@@ -1199,15 +1199,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .am-btn-sec:hover{border-color:#B8973A;color:#D4AF5A;}
 .am-btn-usdt{
   width:100%;padding:11px;
-  background:rgba(10,20,48,.92);
-  border:0.5px solid rgba(59,130,246,.4);
-  color:#93c5fd;font-family:'Montserrat',sans-serif;
-  font-size:10px;font-weight:500;letter-spacing:.1em;
+  background:rgba(31,170,204,.08);
+  border:0.5px solid rgba(31,170,204,.4);
+  color:#1FAACC;font-family:'Montserrat',sans-serif;
+  font-size:10px;font-weight:600;letter-spacing:.1em;
   text-transform:uppercase;cursor:pointer;
   display:flex;align-items:center;justify-content:center;gap:7px;
   text-decoration:none;border-radius:5px;
 }
-.am-btn-usdt:hover{border-color:#60a5fa;background:rgba(59,130,246,.12);color:#bfdbfe;}
+.am-btn-usdt:hover{border-color:#1FAACC;background:rgba(31,170,204,.15);color:#5dd0e8;}
 
 /* How it works */
 .am-divider{height:1px;background:rgba(184,151,58,.08);margin:16px 0;}
@@ -7320,8 +7320,22 @@ window.addEventListener('resize', function(){
 </div>
 
 <script>
-function openAccess(){document.getElementById('access-modal').classList.add('open');document.body.style.overflow='hidden';}
-function closeAccess(){document.getElementById('access-modal').classList.remove('open');document.body.style.overflow='';}
+function openAccess(){
+  document.getElementById('access-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+  var bn=document.getElementById('grdf-bottom-nav');
+  if(bn) bn.style.display='none';
+  var sb=document.getElementById('grdf-signals-bar');
+  if(sb) sb.style.display='none';
+}
+function closeAccess(){
+  document.getElementById('access-modal').classList.remove('open');
+  document.body.style.overflow='';
+  var bn=document.getElementById('grdf-bottom-nav');
+  if(bn) bn.style.removeProperty('display');
+  var sb=document.getElementById('grdf-signals-bar');
+  if(sb) sb.style.removeProperty('display');
+}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess();});
 </script>
 
