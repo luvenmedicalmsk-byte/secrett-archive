@@ -2,45 +2,45 @@
   "country": "CN",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T14:23:55.790463+00:00",
+  "generated_at": "2026-06-03T15:32:33.111027+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 65,
+      "score": 66,
       "props": {
-        "risk_score": 65
+        "risk_score": 66
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 34,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
+      "score": 9,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
+      "score": 9,
       "trend": "stable"
     },
     {
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CN-Китай_испо",
+      "id": "SIGNAL-CN-Швеция_оче",
       "type": "Signal",
-      "label": "Китай использует двойной метод кибератак",
-      "severity": 63,
-      "domain": "technology"
+      "label": "Швеция очерчивает политику по уходу за д",
+      "severity": 65,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-CN",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Китай:_«Бе",
       "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.69
     },
     {
-      "from": "SIGNAL-CN-Китай_испо",
-      "to": "DOMAIN-CN-technology",
+      "from": "SIGNAL-CN-Швеция_оче",
+      "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.63
+      "weight": 0.65
     }
   ]
 }
