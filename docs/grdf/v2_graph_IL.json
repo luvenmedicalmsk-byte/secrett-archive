@@ -2,67 +2,67 @@
   "country": "IL",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T03:43:45.783099+00:00",
+  "generated_at": "2026-06-03T08:57:03.470729+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 65,
+      "score": 68,
       "props": {
-        "risk_score": 65
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 27,
-      "trend": "down"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 26,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Иран_нацел",
+      "id": "SIGNAL-IL-Ливан_запу",
       "type": "Signal",
-      "label": "Иран нацеливается на Кувейт и Бахрейн, п",
-      "severity": 69,
+      "label": "Ливан запускает проверку безопасности Mi",
+      "severity": 77,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Премьер-ми",
+      "id": "SIGNAL-IL-Пожар_в_Ку",
       "type": "Signal",
-      "label": "Премьер-министр объявляет о выделении 4,",
+      "label": "Пожар в Кувейте после атаки Ирана с испо",
+      "severity": 76,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Подарив_па",
+      "type": "Signal",
+      "label": "Подарив папе Лео кипу White Sox, раввин ",
       "severity": 65,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-В_Израиле_",
-      "type": "Signal",
-      "label": "В Израиле растет проблема антихристианст",
-      "severity": 63,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-IL-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-Иран_нацел",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.69
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IL-Премьер-ми",
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Ливан_запу",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.77
+    },
+    {
+      "from": "SIGNAL-IL-Пожар_в_Ку",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
+      "from": "SIGNAL-IL-Подарив_па",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-IL-В_Израиле_",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.63
     }
   ]
 }
