@@ -1844,7 +1844,6 @@ function applyEvents(events, updatedIso) {
   ALL_EVENTS = events;
   filtered = filter === 'all' ? [...ALL_EVENTS] : ALL_EVENTS.filter(e => e.domain === filter);
   updateStats(); renderList(); renderMarkers();
-  if(typeof updateFilterCounts==="function") updateFilterCounts(ALL_EVENTS);
   if (updatedIso) {
     const d = new Date(updatedIso);
     document.getElementById('updated').textContent = formatMSK(updatedIso);
@@ -1855,7 +1854,6 @@ function loadFallback() {
   ALL_EVENTS = FALLBACK;
   filtered = [...ALL_EVENTS];
   updateStats(); renderList(); renderMarkers();
-  if(typeof updateFilterCounts==="function") updateFilterCounts(ALL_EVENTS);
 }
 
 tryLoadFresh().then(() => { fetchStats(); startSSE(); });
