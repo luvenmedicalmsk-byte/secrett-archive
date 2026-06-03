@@ -2,60 +2,60 @@
   "country": "CA",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T17:01:36.995946+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-03T18:07:25.868013+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 44,
+      "score": 47,
       "props": {
-        "risk_score": 44
+        "risk_score": 47
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "stable"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
@@ -78,6 +78,13 @@
       "id": "DRIVER-CA-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-CA-Ожидается,",
+      "type": "Signal",
+      "label": "Ожидается, что экономика Канады «укрепит",
+      "severity": 47,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -85,37 +92,37 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-CA",
@@ -140,6 +147,33 @@
       "to": "COUNTRY-CA",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-Ожидается,",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }
