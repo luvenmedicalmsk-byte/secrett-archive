@@ -2074,68 +2074,71 @@ def fetch_nasa_firms(api_key=None):
         ("ЮВА", "95,-5,115,15"),
     ]
     
+    # Оба сенсора VIIRS: NOAA-20 (основное покрытие) + S-NPP (для полноты).
+    # Кластеризация по сетке 2° объединяет пересечения сенсоров автоматически.
+    SENSORS = ['VIIRS_NOAA20_NRT', 'VIIRS_SNPP_NRT']
     for region_name, bbox in regions:
-        url = (f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
-               f"{key}/VIIRS_SNPP_NRT/{bbox}/1/")
-        data = fetch_url(url, timeout=20)
-        if not data or 'latitude' not in data:
-            continue
-        try:
-            lines = data.strip().split('\n')
-            if len(lines) < 2: continue
-            headers = lines[0].split(',')
-            
-            lat_idx = headers.index('latitude') if 'latitude' in headers else -1
-            lon_idx = headers.index('longitude') if 'longitude' in headers else -1
-            bright_idx = headers.index('bright_ti4') if 'bright_ti4' in headers else -1
-            date_idx = headers.index('acq_date') if 'acq_date' in headers else -1
-            conf_idx = headers.index('confidence') if 'confidence' in headers else -1
-            
-            if lat_idx < 0 or lon_idx < 0: continue
-            
-            # Кластеризуем по сетке 2x2 градуса
-            clusters = {}
-            for line in lines[1:]:
-                parts = line.split(',')
-                if len(parts) <= max(lat_idx, lon_idx): continue
-                try:
-                    lat = float(parts[lat_idx])
-                    lng = float(parts[lon_idx])
-                    bright = float(parts[bright_idx]) if bright_idx >= 0 and parts[bright_idx] else 300
-                    conf = parts[conf_idx] if conf_idx >= 0 else 'nominal'
-                    
-                    # Только высокодостоверные
-                    if conf not in ['high','nominal','n']: continue
-                    
-                    # Ключ кластера -- сетка 2 градуса
-                    grid_key = (round(lat/2)*2, round(lng/2)*2)
-                    if grid_key not in clusters or bright > clusters[grid_key]['bright']:
-                        clusters[grid_key] = {
-                            'lat': lat, 'lng': lng, 'bright': bright,
-                            'date': parts[date_idx] if date_idx >= 0 else datetime.now(timezone.utc).strftime('%Y-%m-%d'),
-                            'region': region_name
-                        }
-                except: continue
-            
-            # Берём топ-10 очагов по яркости
-            top = sorted(clusters.values(), key=lambda x: x['bright'], reverse=True)[:10]
-            for fire in top:
-                intensity = 'критическая' if fire['bright'] > 370 else 'высокая' if fire['bright'] > 340 else 'средняя'
-                reg = detect_region_by_coords(fire['lat'], fire['lng'])
-                items.append({
-                    'title': f"Лесной пожар -- {reg} (интенсивность: {intensity})",
-                    'desc': f"Спутниковая детекция NASA VIIRS. Яркость: {fire['bright']:.0f}K. Регион: {reg}",
-                    'date': fire['date'],
-                    'source': 'NASA FIRMS',
-                    'source_bias': 18,
-                    '_lat': fire['lat'], '_lng': fire['lng'],
-                    '_region': reg, '_domain': 'climate'
-                })
-            
-            if top:
-                print(f"  NASA FIRMS {region_name}: {len(top)} очагов", file=sys.stderr)
-        except Exception as e:
-            print(f"  [WARN] FIRMS {region_name}: {e}", file=sys.stderr)
+        clusters = {}
+        for sensor in SENSORS:
+            url = (f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/"
+                   f"{key}/{sensor}/{bbox}/1/")
+            data = fetch_url(url, timeout=20)
+            if not data or 'latitude' not in data:
+                continue
+            try:
+                lines = data.strip().split('\n')
+                if len(lines) < 2: continue
+                headers = lines[0].split(',')
+
+                lat_idx = headers.index('latitude') if 'latitude' in headers else -1
+                lon_idx = headers.index('longitude') if 'longitude' in headers else -1
+                bright_idx = headers.index('bright_ti4') if 'bright_ti4' in headers else -1
+                date_idx = headers.index('acq_date') if 'acq_date' in headers else -1
+                conf_idx = headers.index('confidence') if 'confidence' in headers else -1
+
+                if lat_idx < 0 or lon_idx < 0: continue
+
+                for line in lines[1:]:
+                    parts = line.split(',')
+                    if len(parts) <= max(lat_idx, lon_idx): continue
+                    try:
+                        lat = float(parts[lat_idx])
+                        lng = float(parts[lon_idx])
+                        bright = float(parts[bright_idx]) if bright_idx >= 0 and parts[bright_idx] else 300
+                        conf = (parts[conf_idx] if conf_idx >= 0 else 'n').strip().lower()
+
+                        # VIIRS confidence: принимаем high('h')/nominal('n'), отбрасываем low('l')
+                        if conf not in ['n', 'h', 'nominal', 'high']: continue
+
+                        # Ключ кластера -- сетка 2 градуса (схлопывает дубли обоих сенсоров)
+                        grid_key = (round(lat/2)*2, round(lng/2)*2)
+                        if grid_key not in clusters or bright > clusters[grid_key]['bright']:
+                            clusters[grid_key] = {
+                                'lat': lat, 'lng': lng, 'bright': bright,
+                                'date': parts[date_idx] if date_idx >= 0 else datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                                'region': region_name
+                            }
+                    except: continue
+            except Exception as e:
+                print(f"  [WARN] FIRMS {region_name}/{sensor}: {e}", file=sys.stderr)
+
+        # Берём топ-10 очагов по яркости (объединённые оба сенсора)
+        top = sorted(clusters.values(), key=lambda x: x['bright'], reverse=True)[:10]
+        for fire in top:
+            intensity = 'критическая' if fire['bright'] > 370 else 'высокая' if fire['bright'] > 340 else 'средняя'
+            reg = detect_region_by_coords(fire['lat'], fire['lng'])
+            items.append({
+                'title': f"Лесной пожар -- {reg} (интенсивность: {intensity})",
+                'desc': f"Спутниковая детекция NASA VIIRS. Яркость: {fire['bright']:.0f}K. Регион: {reg}",
+                'date': fire['date'],
+                'source': 'NASA FIRMS',
+                'source_bias': 18,
+                '_lat': fire['lat'], '_lng': fire['lng'],
+                '_region': reg, '_domain': 'climate'
+            })
+
+        if top:
+            print(f"  NASA FIRMS {region_name}: {len(top)} очагов", file=sys.stderr)
     
     print(f"  NASA FIRMS всего: {len(items)} очагов пожаров", file=sys.stderr)
     return items
