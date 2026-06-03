@@ -462,22 +462,22 @@ def detect_coords(title, desc):
 
     return None
 
-def estimate_severity(title, desc, bias=0):
+def estimate_severity(title, desc, bias=0, weight=1.0):
+    """News/текст -> делегирует в normalize_severity('news', …). База 30 (не 50),
+    потолки: аналитика ≤65, подтверждённый ущерб ≤75, с учётом source_weight."""
     text = (title + ' ' + desc).lower()
-    score = 50
     high = ['war','killed','invasion','collapse','nuclear','explosion','coup',
             'catastrophe','earthquake','tsunami','genocide','airstrike','famine']
     med = ['crisis','conflict','protest','sanctions','strike','flood','drought',
            'recession','attack','missile','tension','displaced','emergency']
-    score += sum(8 for s in high if s in text)
-    score += sum(4 for s in med if s in text)
-    score += bias  # source_credibility уже учтён в source_bias каждого источника
+    kw_high = sum(1 for s in high if s in text)
+    kw_med  = sum(1 for s in med if s in text)
+    casualties = 0
     for num_str, _ in re.findall(r'\b(\d[\d,]*)\s*(killed|dead|displaced|million|billion)', text):
-        n = int(num_str.replace(',',''))
-        if n >= 1000000: score += 20
-        elif n >= 100000: score += 15
-        elif n >= 1000: score += 8
-    return max(40, min(98, score))
+        try: casualties = max(casualties, int(num_str.replace(',', '')))
+        except Exception: pass
+    return normalize_severity('news', {'kw_high': kw_high, 'kw_med': kw_med,
+                                       'casualties': casualties, 'bias': bias, 'weight': weight})
 
 
 def normalize_severity(source_type, m):
@@ -535,6 +535,32 @@ def normalize_severity(source_type, m):
         if cn >= 8:   sev += 5
         elif cn >= 4: sev += 3
         return int(max(40, min(78, sev)))  # потолок 78 -- FIRMS не подтверждённое событие
+
+    # --- S34A-4: News -- база 30, потолки аналитика 65 / подтверждённый ущерб 75, source_weight ---
+    if st == 'news':
+        score = 30
+        score += 7 * (m.get('kw_high') or 0)
+        score += 4 * (m.get('kw_med') or 0)
+        cas = m.get('casualties') or 0
+        confirmed = cas > 0
+        if cas >= 1000000:  score += 18
+        elif cas >= 100000: score += 13
+        elif cas >= 1000:   score += 8
+        elif cas > 0:       score += 4
+        score += min(8, (m.get('bias') or 0) // 2)   # влияние source_bias уменьшено вдвое, потолок +8
+        cap = 75 if confirmed else 65                # подтверждённый ущерб ≤75, аналитика/мнение ≤65
+        score = min(cap, score)
+        w = m.get('weight', 1.0) or 1.0              # source_weight: даунвейт медиа к полу 30
+        score = 30 + (score - 30) * w
+        return int(max(25, min(cap, round(score))))
+
+    # --- S34A-4: Open-Meteo -- по уровню погодной опасности ---
+    if st == 'weather':
+        add = m.get('severity_add') or 0
+        if add >= 30:  return 72   # severe
+        if add >= 15:  return 55   # warning
+        if add > 0:    return 38   # advisory
+        return None
 
     return None
 
@@ -813,7 +839,7 @@ def process_events(raw_items):
             lat, lng = item['_lat'], item['_lng']
             region = item['_region']
             domain = item['_domain']
-            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0))
+            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0), _gov.get('weight', 1.0))
         else:
             domain = detect_domain(item['title'], item.get('desc',''))
             if not domain: continue
@@ -823,7 +849,7 @@ def process_events(raw_items):
                 geo = detect_coords(item['title'], item.get('desc',''))
             if not geo: continue
             lat, lng, region = geo
-            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0))
+            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0), _gov.get('weight', 1.0))
 
         # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
         if item.get('_force_severity') is None and severity < SEVERITY_THRESHOLD: continue
@@ -2603,7 +2629,7 @@ def fetch_russia_signals():
                     '_lat': lat, '_lng': lng,
                     '_region': f'Россия · {city_name}',
                     '_domain': 'climate',
-                    '_severity_hint': min(90, 50 + severity_add),
+                    '_force_severity': normalize_severity('weather', {'severity_add': severity_add}),
                 })
     except Exception as e:
         print(f'  [WARN] Open-Meteo Россия: {e}', file=sys.stderr)
