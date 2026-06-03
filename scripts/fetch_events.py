@@ -57,6 +57,27 @@ OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
 MAX_EVENTS = 200
 SEVERITY_THRESHOLD = 45
 
+# ── S34B SOURCE GOVERNANCE ──────────────────────────────────────────────────
+# action: REMOVE = выкинуть из ingestion; DOWNWEIGHT = оставить, пометить весом.
+# ВНИМАНИЕ: source_weight НЕ влияет на severity (требование S34B) — это метаданные
+# для последующего применения в ранжировании/отборе. Сейчас просто пишется в событие.
+SOURCE_GOVERNANCE = {
+    # PHASE 1 — REMOVE (продублировано удалением RSS-строк; гейт — страховка)
+    'Kyiv Post':        {'action': 'REMOVE'},
+    'Rio Times Online': {'action': 'REMOVE'},
+    'CBC Canada':       {'action': 'REMOVE'},
+    'The Independent':  {'action': 'REMOVE'},
+    # PHASE 2 — DOWNWEIGHT (Media)
+    'Times of Israel':  {'action': 'DOWNWEIGHT', 'weight': 0.4},
+    'CNA Asia':         {'action': 'DOWNWEIGHT', 'weight': 0.4},
+    'SCMP China':       {'action': 'DOWNWEIGHT', 'weight': 0.4},
+    'Hurriyet Daily':   {'action': 'DOWNWEIGHT', 'weight': 0.4},
+    'Bangkok Post':     {'action': 'DOWNWEIGHT', 'weight': 0.4},
+    'Al-Monitor':       {'action': 'DOWNWEIGHT', 'weight': 0.4},
+    'France24':         {'action': 'DOWNWEIGHT', 'weight': 0.4},
+    'Politico EU':      {'action': 'DOWNWEIGHT', 'weight': 0.4},
+}
+
 # Координаты регионов для геолокации событий
 REGION_COORDS = {
     "russia": (61.0, 60.0),
@@ -723,6 +744,11 @@ def process_events(raw_items):
         if any(phrase in text_low for phrase in RUSSIA_FILTER):
             continue
 
+        # S34B governance: REMOVE-источники отбрасываем до обработки
+        _gov = SOURCE_GOVERNANCE.get(item.get('source',''), {})
+        if _gov.get('action') == 'REMOVE':
+            continue
+
         # NASA EONET уже имеет координаты
         if '_lat' in item:
             lat, lng = item['_lat'], item['_lng']
@@ -761,6 +787,7 @@ def process_events(raw_items):
             "region": region,
             "summary": summary or item['title'],
             "source": item['source'],
+            "source_weight": _gov.get('weight', 1.0),
             "date": item['date']
         })
 
@@ -3010,7 +3037,6 @@ def fetch_regional():
     items = []
     feeds = [
         # Украина
-        {"url": "https://kyivpost.com/feed", "source": "Kyiv Post", "bias": 8},
         {"url": "https://suspilne.media/rss/all.rss", "source": "Суспільне", "bias": 7},
         # Турция
         {"url": "https://www.dailysabah.com/rss", "source": "Daily Sabah", "bias": 6},
@@ -3119,9 +3145,7 @@ def fetch_uk_canada_nordic():
         # Великобритания
         {"url": "https://feeds.theguardian.com/theguardian/world/rss", "source": "The Guardian", "bias": 7},
         {"url": "https://feeds.skynews.com/feeds/rss/world.xml", "source": "Sky News", "bias": 6},
-        {"url": "https://www.independent.co.uk/news/world/rss", "source": "The Independent", "bias": 6},
         # Канада
-        {"url": "https://www.cbc.ca/cmlink/rss-world", "source": "CBC Canada", "bias": 7},
         {"url": "https://globalnews.ca/feed/", "source": "Global News Canada", "bias": 6},
         {"url": "https://nationalpost.com/feed/", "source": "National Post", "bias": 6},
         # Норвегия
@@ -3189,7 +3213,6 @@ def fetch_europe_latam():
         # Бразилия
         {"url": "https://agenciabrasil.ebc.com.br/en/rss/ultimasnoticias/feed.xml", "source": "Agencia Brasil", "bias": 7},
         {"url": "https://www.brasildefato.com.br/rss", "source": "Brasil de Fato", "bias": 6},
-        {"url": "https://www.riotimesonline.com/feed/", "source": "Rio Times Online", "bias": 6},
         # Перу
         {"url": "https://andina.pe/rss/ultimas_noticias.xml", "source": "Andina Peru", "bias": 7},
         {"url": "https://www.rpp.pe/rss/", "source": "RPP Peru", "bias": 6},
