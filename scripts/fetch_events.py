@@ -519,6 +519,23 @@ def normalize_severity(source_type, m):
             sev += 3  # мелкий очаг -> сильнее воздействие на поверхности
         return int(max(15, min(100, round(sev))))
 
+    # --- S34A-3: NASA FIRMS -- по яркости/FRP/confidence/размеру кластера; ПОТОЛОК 78 (Signal Layer) ---
+    if st == 'firms':
+        bright = m.get('bright') or 0
+        frp = m.get('frp') or 0
+        conf = (m.get('confidence') or 'n').lower()
+        cn = m.get('cluster_n') or 1
+        if bright >= 375:   sev = 70
+        elif bright >= 360: sev = 63
+        elif bright >= 340: sev = 55
+        else:               sev = 47
+        if frp >= 100:  sev += 5
+        elif frp >= 50: sev += 3
+        if conf in ('h', 'high'): sev += 3
+        if cn >= 8:   sev += 5
+        elif cn >= 4: sev += 3
+        return int(max(40, min(78, sev)))  # потолок 78 -- FIRMS не подтверждённое событие
+
     return None
 
 def make_id(title, date):
@@ -2146,6 +2163,7 @@ def fetch_nasa_firms(api_key=None):
                 bright_idx = headers.index('bright_ti4') if 'bright_ti4' in headers else -1
                 date_idx = headers.index('acq_date') if 'acq_date' in headers else -1
                 conf_idx = headers.index('confidence') if 'confidence' in headers else -1
+                frp_idx = headers.index('frp') if 'frp' in headers else -1
 
                 if lat_idx < 0 or lon_idx < 0: continue
 
@@ -2156,6 +2174,7 @@ def fetch_nasa_firms(api_key=None):
                         lat = float(parts[lat_idx])
                         lng = float(parts[lon_idx])
                         bright = float(parts[bright_idx]) if bright_idx >= 0 and parts[bright_idx] else 300
+                        frp = float(parts[frp_idx]) if frp_idx >= 0 and len(parts) > frp_idx and parts[frp_idx] else 0.0
                         conf = (parts[conf_idx] if conf_idx >= 0 else 'n').strip().lower()
 
                         # VIIRS confidence: принимаем high('h')/nominal('n'), отбрасываем low('l')
@@ -2163,12 +2182,17 @@ def fetch_nasa_firms(api_key=None):
 
                         # Ключ кластера -- сетка 2 градуса (схлопывает дубли обоих сенсоров)
                         grid_key = (round(lat/2)*2, round(lng/2)*2)
-                        if grid_key not in clusters or bright > clusters[grid_key]['bright']:
+                        c = clusters.get(grid_key)
+                        if c is None:
                             clusters[grid_key] = {
-                                'lat': lat, 'lng': lng, 'bright': bright,
+                                'lat': lat, 'lng': lng, 'bright': bright, 'frp': frp, 'conf': conf, 'n': 1,
                                 'date': parts[date_idx] if date_idx >= 0 else datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                                 'region': region_name
                             }
+                        else:
+                            c['n'] += 1
+                            if bright > c['bright']:
+                                c['lat'], c['lng'], c['bright'], c['frp'], c['conf'] = lat, lng, bright, frp, conf
                     except: continue
             except Exception as e:
                 print(f"  [WARN] FIRMS {region_name}/{sensor}: {e}", file=sys.stderr)
@@ -2183,7 +2207,7 @@ def fetch_nasa_firms(api_key=None):
                 'desc': f"Спутниковая детекция NASA VIIRS. Яркость: {fire['bright']:.0f}K. Регион: {reg}",
                 'date': fire['date'],
                 'source': 'NASA FIRMS',
-                'source_bias': 18,
+                '_force_severity': normalize_severity('firms', {'bright': fire['bright'], 'frp': fire.get('frp', 0), 'confidence': fire.get('conf', 'n'), 'cluster_n': fire.get('n', 1)}),
                 '_lat': fire['lat'], '_lng': fire['lng'],
                 '_region': reg, '_domain': 'climate'
             })
