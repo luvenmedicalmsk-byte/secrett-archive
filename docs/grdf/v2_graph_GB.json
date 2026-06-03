@@ -2,60 +2,60 @@
   "country": "GB",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T11:55:36.950789+00:00",
+  "generated_at": "2026-06-03T12:33:19.551229+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 58,
+      "score": 60,
       "props": {
-        "risk_score": 58
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 58,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-GB-\"Я_не_могу",
+      "id": "SIGNAL-GB-Эксклюзив:",
       "type": "Signal",
-      "label": "\"Я не могу дышать\": протестующие сталкив",
+      "label": "Эксклюзив: Как Британия движется к запре",
+      "severity": 65,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GB-«Я_не_могу",
+      "type": "Signal",
+      "label": "«Я не могу дышать»: протестующие сталкив",
       "severity": 60,
       "domain": "social"
     },
     {
       "id": "SIGNAL-GB-BAS_подтве",
       "type": "Signal",
-      "label": "BAS подтвержден как ведущий мировой цент",
+      "label": "BAS подтвержден как ведущий центр исслед",
       "severity": 57,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GB-США_предла",
-      "type": "Signal",
-      "label": "США предлагают тарифы на Канаду и других",
-      "severity": 56,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-GB",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-GB",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-GB-geopolitical",
       "to": "DOMAIN-GB-infrastructure",
       "type": "ESCALATES",
@@ -184,7 +205,34 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-GB-\"Я_не_могу",
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-GB-Эксклюзив:",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-GB-«Я_не_могу",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
       "weight": 0.6
@@ -194,12 +242,6 @@
       "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
       "weight": 0.57
-    },
-    {
-      "from": "SIGNAL-GB-США_предла",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }

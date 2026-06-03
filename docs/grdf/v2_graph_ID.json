@@ -2,60 +2,60 @@
   "country": "ID",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T11:55:36.958424+00:00",
+  "generated_at": "2026-06-03T12:33:19.562048+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 54,
+      "score": 56,
       "props": {
-        "risk_score": 54
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 54,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 37,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Выжившие_п",
+      "id": "SIGNAL-ID-Индонезия_",
       "type": "Signal",
-      "label": "Выжившие подают в суд на индонезийское п",
+      "label": "Индонезия арестовала уволенного главу пр",
+      "severity": 57,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-ID-Survivors_",
+      "type": "Signal",
+      "label": "Survivors sue Indonesian government over",
       "severity": 55,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Землетрясение M5.4 -- 207 km WNW of Abep",
       "severity": 54,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Solar_powe",
-      "type": "Signal",
-      "label": "Solar power brings energy to rural Indon",
-      "severity": 51,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-ID",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-ID",
@@ -184,7 +184,55 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-ID-Выжившие_п",
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-ID-Индонезия_",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.57
+    },
+    {
+      "from": "SIGNAL-ID-Survivors_",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.55
@@ -194,12 +242,6 @@
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-ID-Solar_powe",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }

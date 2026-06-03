@@ -2,39 +2,39 @@
   "country": "IT",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T11:55:36.956719+00:00",
-  "node_count": 14,
-  "edge_count": 16,
+  "generated_at": "2026-06-03T12:33:19.559773+00:00",
+  "node_count": 13,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 62,
+      "score": 63,
       "props": {
-        "risk_score": 62
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "down"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
@@ -92,13 +92,6 @@
       "label": "Землетрясение M6.2 -- 22 km WSW of Scarc",
       "severity": 62,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Удар_по_ЖК",
-      "type": "Signal",
-      "label": "Удар по ЖК \"Тірас\" в Одесі: двом команди",
-      "severity": 57,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +99,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-IT",
@@ -118,7 +111,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IT",
@@ -184,6 +177,48 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-IT-Зеленое_пр",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
@@ -194,12 +229,6 @@
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-IT-Удар_по_ЖК",
-      "to": "DOMAIN-IT-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.57
     }
   ]
 }

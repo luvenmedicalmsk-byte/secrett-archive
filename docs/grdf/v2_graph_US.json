@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T11:55:36.949388+00:00",
+  "generated_at": "2026-06-03T12:33:19.549335+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,50 +19,50 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-US-Трамп_заяв",
+      "id": "SIGNAL-US-Главный_эк",
       "type": "Signal",
-      "label": "Трамп заявляет, что Иран согласился не и",
-      "severity": 66,
-      "domain": "geopolitical"
+      "label": "Главный экономист Moody's Марк Занди гов",
+      "severity": 76,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-US-4_способа,",
+      "id": "SIGNAL-US-Трамп_гово",
       "type": "Signal",
-      "label": "4 способа, которыми Европа хочет избавит",
-      "severity": 65,
+      "label": "Трамп говорит, что Иран согласился не им",
+      "severity": 66,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Война_в_Ир",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.78
     },
     {
-      "from": "SIGNAL-US-Трамп_заяв",
+      "from": "SIGNAL-US-Главный_эк",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
+      "from": "SIGNAL-US-Трамп_гово",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.66
-    },
-    {
-      "from": "SIGNAL-US-4_способа,",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.65
     }
   ]
 }
