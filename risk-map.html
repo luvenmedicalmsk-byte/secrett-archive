@@ -1412,7 +1412,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   </div>
   <div id="updated">26 мая 2026</div>
   <div id="stats">
-    <div><span class="sv" id="s-t">0</span><span class="sl">Событий</span></div>
+    <div><span class="sv" id="s-t">0</span><span class="sl">Событий / Сигналов</span></div>
     <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
     <div><span class="sv" id="s-a">0</span><span class="sl">Ср. индекс</span></div>
   </div>
@@ -1675,6 +1675,7 @@ function sc(s){ return s>=85?'#C0392B':s>=70?'#D35400':'#2980B9' }
 function fd(iso){ return new Date(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) }
 
 function updateStats() {
+  // NOTE: filtered.length — live-число (до fetchStats). Перезапишется /api/stats.total
   document.getElementById('s-t').textContent = filtered.length;
   document.getElementById('s-c').textContent = filtered.filter(e=>e.severity>=80).length;
   const avg = filtered.length ? Math.round(filtered.reduce((s,e)=>s+e.severity,0)/filtered.length) : 0;
@@ -1833,7 +1834,7 @@ async function fetchStats() {
     const r = await fetch(API_BASE + '/api/stats', { signal: AbortSignal.timeout(3000) });
     if (!r.ok) return;
     const s = await r.json();
-    // Обновляем статистику из API (точнее чем из событий)
+    // CANONICAL: /api/stats.total — архивный счётчик событий/сигналов (не перетирать другими)
     document.getElementById('s-t').textContent = s.total;
     document.getElementById('s-c').textContent = s.critical;
     document.getElementById('s-a').textContent = s.avg_severity;
@@ -6779,7 +6780,7 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 function grdfUpdateStatusBar(totalEvents, criticalN) {
   var sb = document.getElementById('grdf-sb-events');
   var ut = document.getElementById('grdf-sb-utc');
-  if(sb) sb.innerHTML = (totalEvents||'—') + ' событий · <span class="sb-crit">'+(criticalN||'—')+'</span> крит.';
+  if(sb) sb.innerHTML = (totalEvents||'—') + ' стран · <span class="sb-crit">'+(criticalN||'—')+'</span> крит.';
   if(ut){ var now=new Date(); ut.textContent=String(now.getUTCHours()).padStart(2,'0')+':'+String(now.getUTCMinutes()).padStart(2,'0')+' UTC'; }
 }
 setInterval(function(){ grdfUpdateStatusBar(); }, 60000);
@@ -6788,10 +6789,10 @@ setInterval(function(){ grdfUpdateStatusBar(); }, 60000);
 window.grdfOnDataLoad = function(data) {
   _grdfData = data;
   var countries = (data&&data.countries)||[];
-  var totalEvents = countries.length;
+  var activeCountries = countries.length; // FIX: это страны, не события
   var critN = countries.filter(function(c){ return c.risk_score>=75; }).length;
   var warnN = countries.filter(function(c){ return c.risk_score>=60; }).length;
-  grdfUpdateStatusBar(totalEvents, critN);
+  grdfUpdateStatusBar(activeCountries, critN);
 
   // Sprint 4: Drawer counts
   var drSigs = document.getElementById('grdf-dr-sigs');
