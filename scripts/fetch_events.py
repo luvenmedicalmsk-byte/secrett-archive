@@ -2128,7 +2128,7 @@ def fetch_nasa_firms(api_key=None):
             intensity = 'критическая' if fire['bright'] > 370 else 'высокая' if fire['bright'] > 340 else 'средняя'
             reg = detect_region_by_coords(fire['lat'], fire['lng'])
             items.append({
-                'title': f"Лесной пожар -- {reg} (интенсивность: {intensity})",
+                'title': f"Пожарный сигнал — {reg} · {intensity.capitalize()} интенсивность",
                 'desc': f"Спутниковая детекция NASA VIIRS. Яркость: {fire['bright']:.0f}K. Регион: {reg}",
                 'date': fire['date'],
                 'source': 'NASA FIRMS',
