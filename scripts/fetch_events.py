@@ -557,12 +557,70 @@ def normalize_severity(source_type, m):
     # --- S34A-4: Open-Meteo -- по уровню погодной опасности ---
     if st == 'weather':
         add = m.get('severity_add') or 0
-        if add >= 30:  return 72   # severe
-        if add >= 15:  return 55   # warning
+        if add >= 30:  return 72   # severe        if add >= 15:  return 55   # warning
         if add > 0:    return 38   # advisory
         return None
 
+    # --- S34A-4b: Cyber -- по CVSS + active-exploit/KEV/critical-infra/ransomware; потолок 95 ---
+    if st == 'cyber':
+        cvss = m.get('cvss')
+        if cvss is None:
+            cvss = 6.5  # дефолтный proxy для кибер-новости без явного CVSS
+        if cvss < 6:    sev = 30 + (cvss / 6.0) * 15          # 30-45
+        elif cvss < 8:  sev = 45 + ((cvss - 6) / 2.0) * 20    # 45-65
+        elif cvss < 9:  sev = 65 + (cvss - 8) * 15            # 65-80
+        else:           sev = 80 + min(15, (cvss - 9) * 15)   # 80-95
+        if m.get('active'):         sev += 10   # активная эксплуатация
+        if m.get('kev'):            sev += 10   # CISA KEV
+        if m.get('critical_infra'): sev += 10   # критическая инфраструктура
+        if m.get('ransomware'):     sev += 8    # вовлечён ransomware
+        return int(max(30, min(95, round(sev))))
+
     return None
+
+
+# Кибер-источники, выводимые из news-категории в шкалу CVSS (S34A-4b)
+CYBER_SOURCES = {
+    'CISA KEV', 'CISA Advisory', 'BleepingComputer', 'The Record', 'CyberScoop',
+    'Help Net Security', 'Dark Reading', 'Krebs Security', 'Krebs on Security',
+    'AlienVault OTX', 'Cyber Intel', 'Industrial Cyber',
+}
+
+
+def cyber_metrics(source, title, desc):
+    """Извлекает CVSS/флаги из текста кибер-события (для structured-блока и RSS)."""
+    t = (title + ' ' + desc).lower()
+    src = source or ''
+    m = {}
+    idx = t.find('cvss')
+    if idx >= 0:
+        nums = [float(x) for x in re.findall(r'\d{1,2}(?:\.\d)?', t[idx:idx + 30]) if 0 <= float(x) <= 10]
+        scores = [v for v in nums if v >= 4.0]  # баллы CVSS обычно >=4; версии 2.0/3.0/3.1 отсекаем
+        if scores:   m['cvss'] = max(scores)
+        elif nums:   m['cvss'] = max(nums)
+    if 'cvss' not in m:
+        if 'critical' in t or 'критическ' in t: m['cvss'] = 9.2
+        elif 'high severity' in t or 'высок' in t: m['cvss'] = 8.0
+        else: m['cvss'] = 6.5
+    m['kev'] = (src == 'CISA KEV') or 'known exploited' in t or ' kev' in t
+    m['active'] = m['kev'] or any(k in t for k in
+        ['actively exploited', 'exploited in the wild', 'in the wild', 'zero-day',
+         'zero day', '0-day', 'эксплуатируем', 'active exploit'])
+    m['critical_infra'] = (src == 'CISA Advisory') or any(k in t for k in
+        ['critical infrastructure', 'scada', ' ics ', 'power grid', 'energy grid',
+         'hospital', 'критическ инфраструктур', 'энергосист', 'водоснаб'])
+    m['ransomware'] = any(k in t for k in ['ransomware', 'ransom', 'вымогател'])
+    return m
+
+
+def _severity_for(item, weight):
+    """Единая маршрутизация severity: force -> cyber -> news (S34A)."""
+    if item.get('_force_severity') is not None:
+        return item['_force_severity']
+    src = item.get('source', '')
+    if src in CYBER_SOURCES:
+        return normalize_severity('cyber', cyber_metrics(src, item.get('title', ''), item.get('desc', '')))
+    return estimate_severity(item.get('title', ''), item.get('desc', ''), item.get('source_bias', 0), weight)
 
 def make_id(title, date):
     return 'e' + hashlib.md5(f"{title}{date}".encode()).hexdigest()[:8]
@@ -839,7 +897,7 @@ def process_events(raw_items):
             lat, lng = item['_lat'], item['_lng']
             region = item['_region']
             domain = item['_domain']
-            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0), _gov.get('weight', 1.0))
+            severity = _severity_for(item, _gov.get('weight', 1.0))
         else:
             domain = detect_domain(item['title'], item.get('desc',''))
             if not domain: continue
@@ -849,7 +907,7 @@ def process_events(raw_items):
                 geo = detect_coords(item['title'], item.get('desc',''))
             if not geo: continue
             lat, lng, region = geo
-            severity = item.get('_force_severity') or estimate_severity(item['title'], item.get('desc',''), item.get('source_bias', 0), _gov.get('weight', 1.0))
+            severity = _severity_for(item, _gov.get('weight', 1.0))
 
         # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
         if item.get('_force_severity') is None and severity < SEVERITY_THRESHOLD: continue
