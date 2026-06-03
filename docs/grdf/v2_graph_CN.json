@@ -2,32 +2,32 @@
   "country": "CN",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T18:51:45.093240+00:00",
+  "generated_at": "2026-06-03T22:32:09.939699+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
@@ -48,20 +48,20 @@
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,9 +94,9 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CN-Китай_испо",
+      "id": "SIGNAL-CN-Китайские_",
       "type": "Signal",
-      "label": "Китай использует двойной метод кибератак",
+      "label": "Китайские хакеры используют новое вредон",
       "severity": 50,
       "domain": "technology"
     }
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-CN",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-CN-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Китай:_«Бе",
       "to": "DOMAIN-CN-social",
       "type": "AMPLIFIES",
@@ -175,7 +196,7 @@
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-CN-Китай_испо",
+      "from": "SIGNAL-CN-Китайские_",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.5

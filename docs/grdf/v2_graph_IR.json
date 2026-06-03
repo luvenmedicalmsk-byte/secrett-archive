@@ -2,66 +2,66 @@
   "country": "IR",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T18:51:45.099004+00:00",
+  "generated_at": "2026-06-03T22:32:09.947361+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 53,
+      "score": 56,
       "props": {
-        "risk_score": 53
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Иран_атаку",
+      "id": "SIGNAL-IR-США_вводят",
       "type": "Signal",
-      "label": "Иран атакует главный аэропорт Кувейта, у",
+      "label": "США вводят санкции против криптобиржи No",
+      "severity": 58,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-IR-Иран_нанос",
+      "type": "Signal",
+      "label": "Иран наносит смертоносный удар по главно",
+      "severity": 55,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Министр_ин",
+      "type": "Signal",
+      "label": "Министр иностранных дел Ирана предупрежд",
       "severity": 54,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Государств",
-      "type": "Signal",
-      "label": "Государственный секретарь Рубио заявляет",
-      "severity": 49,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Спустя_мес",
-      "type": "Signal",
-      "label": "Спустя месяцы после подавления режима ир",
-      "severity": 48,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IR",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-IR-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Иран_атаку",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-США_вводят",
+      "to": "DOMAIN-IR-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-IR-Иран_нанос",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.55
+    },
+    {
+      "from": "SIGNAL-IR-Министр_ин",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-IR-Государств",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.49
-    },
-    {
-      "from": "SIGNAL-IR-Спустя_мес",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }

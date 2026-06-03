@@ -2,60 +2,60 @@
   "country": "US",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T18:51:45.092805+00:00",
+  "generated_at": "2026-06-03T22:32:09.939136+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 52,
+      "score": 55,
       "props": {
-        "risk_score": 52
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 37,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "down"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "down"
+      "score": 22,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -80,17 +80,17 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-У_Израиля_",
-      "type": "Signal",
-      "label": "У Израиля растет проблема с антихристиан",
-      "severity": 51,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-US-Будут_ли_К",
       "type": "Signal",
       "label": "Будут ли Китай и Соединенные Штаты стрем",
       "severity": 51,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-US-Тропически",
+      "type": "Signal",
+      "label": "Тропический микс: кибернетика и политика",
+      "severity": 50,
       "domain": "geopolitical"
     },
     {
@@ -106,37 +106,37 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-US",
@@ -163,16 +163,37 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-US-У_Израиля_",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
-      "weight": 0.51
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-US-Будут_ли_К",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-US-Тропически",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-US-DriveSurge",
