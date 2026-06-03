@@ -1439,7 +1439,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     <button class="zb" id="z-reset" style="font-size:11px;letter-spacing:0">⌂</button>
   </div>
 
-  <button id="list-btn">◆ Список событий</button>
+  <button id="list-btn">◆ Список сигналов</button>
   <div id="ai-panel">
     <div id="ai-panel-header">
       <span>◆ AI · Анализ доменов</span>
@@ -1836,6 +1836,8 @@ async function fetchStats() {
     const s = await r.json();
     // CANONICAL: /api/stats.total — архивный счётчик событий/сигналов (не перетирать другими)
     document.getElementById('s-t').textContent = s.total;
+    var lb = document.getElementById('list-btn');
+    if(lb) lb.textContent = '◆ Список сигналов · ' + s.total;
     document.getElementById('s-c').textContent = s.critical;
     document.getElementById('s-a').textContent = s.avg_severity;
   } catch(_) {}
