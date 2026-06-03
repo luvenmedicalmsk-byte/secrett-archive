@@ -244,6 +244,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .cl-fill{height:100%;background:linear-gradient(90deg,rgba(184,151,58,0.5),#D4AF5A);border-radius:2px}
 .cl-contr{font-size:7px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(168,160,144,0.45);margin-top:3px}
 @media(max-width:768px){#climate-panel{width:100%;top:0;bottom:56px;z-index:120;padding-top:42px}}
+/* S36 3.0: climate section inside Analytics screen */
+.grdf-acl{margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid rgba(184,151,58,0.12)}
+.grdf-acl-head{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#B8973A;margin-bottom:8px}
+.grdf-acl-hero{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+#acl-cri{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;color:#D4AF5A;line-height:1}
+.grdf-acl-sub{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(168,160,144,0.6)}
+.grdf-acl-meta{font-size:8px;font-family:'Courier New',monospace;color:rgba(255,255,255,0.28);margin-bottom:4px}
+.grdf-acl-trends{display:flex;gap:14px;font-size:8px;letter-spacing:0.1em;color:rgba(168,160,144,0.55);margin-bottom:12px}
 #ap-header{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;border-bottom:1px solid rgba(220,38,38,0.12);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:#ef4444;flex-shrink:0}
 #ap-close{cursor:pointer;color:rgba(255,255,255,0.3);font-size:14px;line-height:1}
 #ap-close:hover{color:rgba(255,255,255,0.7)}
@@ -1453,7 +1461,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <div id="stats">
     <div><span class="sv" id="s-t">0</span><span class="sl">Сигналов</span></div>
     <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
-    <div><span class="sv" id="s-cri">—</span><span class="sl">CRI · Климат</span></div>
   </div>
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
@@ -2612,16 +2619,11 @@ function _criLevel(v){
 function renderClimate(s){
   if(!s) return;
   var cri = s.climate_risk_index || 0;
-  var st = document.getElementById('s-cri'); if(st) st.textContent = cri;
-  var head = document.getElementById('cl-cri'); if(head) head.textContent = cri;
-  var lvl = document.getElementById('cl-cri-lvl'); if(lvl) lvl.textContent = _criLevel(cri);
+  var lvlTxt = _criLevel(cri);
   var ha = s.heat_activity||{}, ca = s.cyclone_activity||{};
-  var meta = document.getElementById('cl-meta');
-  if(meta){
-    meta.textContent = 'обновлено ' + String(s.generated_at||'').replace('T',' ').replace('Z',' UTC')
+  var metaTxt = 'обновлено ' + String(s.generated_at||'').replace('T',' ').replace('Z',' UTC')
       + (ca.active_storms ? ' · циклонов: '+ca.active_storms : '')
       + (ha.max_anomaly_c!=null ? ' · жара +'+ha.max_anomaly_c+'°C' : '');
-  }
   function val(o,sc){ return (o&&o.value!=null)?o.value:(sc!=null?sc:0); }
   var rows = [
     ['fire','Пожары',     val(s.fire_activity)],
@@ -2639,12 +2641,16 @@ function renderClimate(s){
          +  '<div class="cl-bar"><div class="cl-fill" style="width:'+Math.min(100,v)+'%"></div></div>'
          +  '<div class="cl-contr">вклад в CRI · '+contr+'%</div></div>';
   });
-  var body = document.getElementById('cl-body'); if(body) body.innerHTML = html;
-  var tr = document.getElementById('cl-trends');
-  if(tr){
-    function fmt(x){ return (x==null)?'—':((x>0?'▲ +':(x<0?'▼ ':''))+x); }
-    tr.innerHTML = '<span>24ч '+fmt(s.trend_24h)+'</span><span>7д '+fmt(s.trend_7d)+'</span><span>30д '+fmt(s.trend_30d)+'</span>';
-  }
+  function fmt(x){ return (x==null)?'—':((x>0?'▲ +':(x<0?'▼ ':''))+x); }
+  var trHtml = '<span>24ч '+fmt(s.trend_24h)+'</span><span>7д '+fmt(s.trend_7d)+'</span><span>30д '+fmt(s.trend_30d)+'</span>';
+  function setT(id,t){ var e=document.getElementById(id); if(e) e.textContent=t; }
+  function setH(id,h){ var e=document.getElementById(id); if(e) e.innerHTML=h; }
+  // top bar (legacy) + desktop side panel + analytics screen (mobile)
+  setT('s-cri', cri);
+  setT('cl-cri', cri); setT('cl-cri-lvl', lvlTxt); setT('cl-meta', metaTxt);
+  setH('cl-body', html); setH('cl-trends', trHtml);
+  setT('acl-cri', cri); setT('acl-lvl', lvlTxt); setT('acl-meta', metaTxt);
+  setH('acl-body', html); setH('acl-trends', trHtml);
 }
 window._toggleClimatePanel = function(){
   var p = document.getElementById('climate-panel');
@@ -6737,9 +6743,6 @@ function _evM(val, lbl, col) {
     <button class="grdf-nav-btn" id="grdf-nav-analytics" onclick="grdfNavTo('analytics')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Аналитика</span>
     </button>
-    <button class="grdf-nav-btn" id="grdf-nav-climate" onclick="grdfNavTo('climate')">
-      <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg></span><span>Климат</span>
-    </button>
   </div>
 </div>
 
@@ -6767,6 +6770,13 @@ function _evM(val, lbl, col) {
 <!-- Sprint 7: Analytics screen — Lock for FREE users -->
 <div id="grdf-analytics-screen">
   <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
+  <div class="grdf-acl">
+    <div class="grdf-acl-head">◆ Климатические риски</div>
+    <div class="grdf-acl-hero"><span id="acl-cri">—</span><span class="grdf-acl-sub">Climate Risk Index · уровень <span id="acl-lvl">—</span></span></div>
+    <div id="acl-meta" class="grdf-acl-meta"></div>
+    <div id="acl-trends" class="grdf-acl-trends"></div>
+    <div id="acl-body"></div>
+  </div>
   <!-- Lock block: Signal Pro -->
   <div class="free-lock-block" style="margin-top:12px">
     <div class="free-lock-header">
