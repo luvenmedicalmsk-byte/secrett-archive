@@ -2,67 +2,67 @@
   "country": "IR",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T16:03:46.360930+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-03T16:13:28.216024+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 45,
+      "score": 52,
       "props": {
-        "risk_score": 45
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -20,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 23,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -80,10 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Цены_на_не",
+      "id": "SIGNAL-IR-Нефть_доро",
       "type": "Signal",
-      "label": "Цены на нефть растут на фоне столкновени",
-      "severity": 45,
+      "label": "Нефть дорожает на фоне столкновений США ",
+      "severity": 55,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Vitol_пред",
+      "type": "Signal",
+      "label": "Vitol предупреждает, что бензин может ст",
+      "severity": 51,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Госсекрета",
+      "type": "Signal",
+      "label": "Госсекретарь Рубио говорит, что война с ",
+      "severity": 49,
       "domain": "geopolitical"
     }
   ],
@@ -92,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.2
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-IR",
@@ -116,13 +130,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IR",
@@ -149,10 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Цены_на_не",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Нефть_доро",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.55
+    },
+    {
+      "from": "SIGNAL-IR-Vitol_пред",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-IR-Госсекрета",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.49
     }
   ]
 }

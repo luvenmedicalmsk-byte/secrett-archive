@@ -2,67 +2,67 @@
   "country": "UA",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T16:03:46.356885+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-03T16:13:28.211575+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 49,
+      "score": 53,
       "props": {
-        "risk_score": 49
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 1,
-      "trend": "down"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-UA-Geopolitical",
@@ -83,7 +83,21 @@
       "id": "SIGNAL-UA-Россия_нан",
       "type": "Signal",
       "label": "Россия наносит удары по Украине ракетами",
-      "severity": 49,
+      "severity": 59,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-UA-По_мере_то",
+      "type": "Signal",
+      "label": "По мере того как вторжение России в Укра",
+      "severity": 51,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-UA-Заборы,_а_",
+      "type": "Signal",
+      "label": "Заборы, а не F-35: Дроновые атаки и нело",
+      "severity": 51,
       "domain": "geopolitical"
     }
   ],
@@ -92,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.01
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-UA",
@@ -149,10 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-Россия_нан",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.49
+      "weight": 0.59
+    },
+    {
+      "from": "SIGNAL-UA-По_мере_то",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-UA-Заборы,_а_",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.51
     }
   ]
 }

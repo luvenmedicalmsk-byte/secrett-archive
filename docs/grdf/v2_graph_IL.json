@@ -2,67 +2,67 @@
   "country": "IL",
   "date": "2026-06-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-03T16:03:46.360438+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-03T16:13:28.215393+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 45,
+      "score": 51,
       "props": {
-        "risk_score": 45
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -12,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -80,10 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-В_Израиле_",
+      "id": "SIGNAL-IL-У_Израиля_",
       "type": "Signal",
-      "label": "В Израиле растет проблема антихристианст",
-      "severity": 45,
+      "label": "У Израиля растет проблема с антихристиан",
+      "severity": 51,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Гуманитарн",
+      "type": "Signal",
+      "label": "Гуманитарный кризис в Ливане требует дли",
+      "severity": 51,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Израильски",
+      "type": "Signal",
+      "label": "Израильские удары убивают троих человек ",
+      "severity": 48,
       "domain": "geopolitical"
     }
   ],
@@ -92,13 +106,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.12
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-IL",
@@ -149,10 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-В_Израиле_",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-У_Израиля_",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-IL-Гуманитарн",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-IL-Израильски",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.48
     }
   ]
 }
