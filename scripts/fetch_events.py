@@ -886,6 +886,13 @@ def _global_marker(seed):
     lng = -45 + ((h // 38) % 30)     # -45..-16 (Атлантика, вне стран)
     return float(lat), float(lng), "Глобально"
 
+def _is_flood(ev):
+    """Событие про наводнение (для приоритетного резерва в квоте, S36.5)."""
+    if ev.get('source') in ('GloFAS', 'FloodList'):
+        return True
+    t = (ev.get('title', '') + ' ' + ev.get('summary', '')).lower()
+    return any(w in t for w in ('flood', 'наводн', 'паводок', 'подтопл', 'затопл', 'inundat'))
+
 # ══════════════════════════════════════════════════════════════════════════════
 # ОБРАБОТКА И СОХРАНЕНИЕ
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1010,6 +1017,25 @@ def process_events(raw_items):
         'Help Net Security', 'Dark Reading', 'CyberScoop',
         'BleepingComputer', 'Industrial Cyber', 'Semafor',
     }
+
+    # S36.5: резерв слотов для наводнений (иначе тонут в квоте климата за пожарами/красными GDACS)
+    FLOOD_RESERVE = 25
+    _flood_reserved = set()
+    _flood_added = 0
+    from datetime import date as _date0
+    for ev in events:  # events отсортированы по severity desc
+        if _flood_added >= FLOOD_RESERVE: break
+        if not _is_flood(ev): continue
+        try:
+            _ed = _date0.fromisoformat(ev.get('date','')[:10])
+            _md = 7 if ev.get('domain') in ('economy','social') else 3
+            if (today - _ed).days > _md: continue
+        except: continue
+        balanced.append(ev)
+        _flood_reserved.add(ev['id'])
+        domain_counts[ev['domain']] = domain_counts.get(ev['domain'], 0) + 1
+        _flood_added += 1
+
     for ev in events:
         ev_date_str = ev.get('date', '')[:10]
         if not ev_date_str:
@@ -1026,6 +1052,7 @@ def process_events(raw_items):
                 _LOSS['fresh']+=1; continue
         except:
             continue
+        if ev['id'] in _flood_reserved: continue  # уже зарезервировано как наводнение
         d = ev['domain']
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
         if domain_counts.get(d, 0) < quota:
@@ -1891,6 +1918,92 @@ def fetch_floods_rss():
             seen.add(key); unique.append(it)
     print(f'  Наводнения RSS (Floodlist/EMS): {len(unique)} событий', file=sys.stderr)
     return unique
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GloFAS -- точки риска наводнений из прогноза речного стока (CEMS EWDS, S36.5)
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_glofas():
+    """GloFAS forecast (Copernicus EWDS) -> точки высокого речного стока.
+    Best-effort с жёстким таймаутом: при любой ошибке/таймауте -> [] (пайплайн не ломается)."""
+    key = os.environ.get('CDS_API_KEY', '')
+    url = os.environ.get('CDS_API_URL', '') or 'https://ewds.climate.copernicus.eu/api'
+    if not key:
+        print("  [SKIP] GloFAS: нет CDS_API_KEY", file=sys.stderr)
+        return []
+    out = {'items': []}
+    def _work():
+        try:
+            import tempfile
+            try:
+                import cdsapi
+            except Exception:
+                print("  [WARN] GloFAS: cdsapi не установлен", file=sys.stderr); return
+            tgt = os.path.join(tempfile.gettempdir(), 'glofas_fc.nc')
+            client = cdsapi.Client(url=url, key=key, quiet=True)
+            now = datetime.now(timezone.utc)
+            client.retrieve('cems-glofas-forecast', {
+                'system_version': 'operational',
+                'hydrological_model': 'lisflood',
+                'product_type': 'control_forecast',
+                'variable': 'river_discharge_in_the_last_24_hours',
+                'year': now.strftime('%Y'),
+                'month': now.strftime('%m'),
+                'day': now.strftime('%d'),
+                'leadtime_hour': '24',
+                'data_format': 'netcdf',
+            }, tgt)
+            import numpy as np
+            from netCDF4 import Dataset
+            ds = Dataset(tgt)
+            latv = lonv = None
+            for cand in ('latitude', 'lat'):
+                if cand in ds.variables: latv = np.array(ds.variables[cand][:]); break
+            for cand in ('longitude', 'lon'):
+                if cand in ds.variables: lonv = np.array(ds.variables[cand][:]); break
+            disv = None
+            for name, var in ds.variables.items():
+                if name in ('latitude','lat','longitude','lon','time','valid_time','step','surface'): continue
+                if getattr(var, 'ndim', 0) >= 2: disv = var; break
+            if disv is None or latv is None or lonv is None:
+                print("  [WARN] GloFAS: не найдены переменные сетки", file=sys.stderr); return
+            arr = np.array(disv[:]).squeeze()
+            if arr.ndim != 2:
+                arr = arr.reshape(arr.shape[-2], arr.shape[-1])
+            arr = np.where(np.isfinite(arr), arr, 0.0)
+            flat = arr[arr > 0]
+            if flat.size == 0:
+                print("  [WARN] GloFAS: пустая сетка", file=sys.stderr); return
+            thr = float(np.quantile(flat, 0.9995))
+            ys, xs = np.where(arr >= thr)
+            cand = sorted(((float(arr[y, x]), float(latv[y]), float(lonv[x])) for y, x in zip(ys, xs)), reverse=True)
+            seen = set(); pts = []
+            for disq, la, lo in cand:
+                lo2 = ((lo + 180) % 360) - 180
+                cell = (round(la / 2), round(lo2 / 2))
+                if cell in seen: continue
+                seen.add(cell); pts.append((disq, la, lo2))
+                if len(pts) >= 30: break
+            today_s = now.strftime('%Y-%m-%d')
+            mx = pts[0][0] if pts else 1.0
+            for disq, la, lo in pts:
+                sev = min(70, 55 + int(13 * (disq / mx)))
+                out['items'].append({
+                    'title': f"GloFAS: высокий речной сток, прогноз 24ч ({disq:.0f} м³/с)",
+                    'desc': "CEMS/GloFAS: прогнозируемый расход реки в верхнем перцентиле — риск разлива.",
+                    'date': today_s, 'source': 'GloFAS',
+                    '_lat': round(la, 3), '_lng': round(lo, 3),
+                    '_region': 'GloFAS · бассейн реки', '_domain': 'climate',
+                    '_force_severity': sev,
+                })
+        except Exception as e:
+            print(f"  [WARN] GloFAS: {e}", file=sys.stderr)
+    import threading
+    th = threading.Thread(target=_work, daemon=True); th.start(); th.join(timeout=180)
+    if th.is_alive():
+        print("  [WARN] GloFAS: таймаут 180с -> пропуск", file=sys.stderr)
+    print(f"  GloFAS: {len(out['items'])} точек", file=sys.stderr)
+    return out['items']
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -4346,6 +4459,7 @@ if __name__ == '__main__':
         raw += fetch_economy_rss()
         raw += fetch_telegram()
         raw += fetch_floods_rss()
+        raw += fetch_glofas()
         raw += fetch_tech_rss()
         raw += fetch_climate_rss()
         raw += fetch_global_rss()
