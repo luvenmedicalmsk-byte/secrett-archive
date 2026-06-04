@@ -2,60 +2,60 @@
   "country": "RU",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T11:06:47.365931+00:00",
+  "generated_at": "2026-06-04T11:23:55.575209+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 51,
+      "score": 53,
       "props": {
-        "risk_score": 51
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -87,16 +87,16 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-RU-Инерция_во",
+      "type": "Signal",
+      "label": "Инерция войны России",
+      "severity": 51,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-RU-По_мере_то",
       "type": "Signal",
       "label": "По мере того как вторжение России в Укра",
-      "severity": 51,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Заборы,_а_",
-      "type": "Signal",
-      "label": "Заборы, а не F-35: Дроновые атаки и нело",
       "severity": 51,
       "domain": "geopolitical"
     }
@@ -106,31 +106,31 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-RU",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-RU-Землетрясе",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
     {
-      "from": "SIGNAL-RU-По_мере_то",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "SIGNAL-RU-Инерция_во",
+      "to": "DOMAIN-RU-social",
       "type": "AMPLIFIES",
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-RU-Заборы,_а_",
+      "from": "SIGNAL-RU-По_мере_то",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.51
