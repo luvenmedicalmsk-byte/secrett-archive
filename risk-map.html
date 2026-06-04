@@ -1161,7 +1161,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 .grdf-acc-val{font-size:19px;font-weight:500;color:#D4AF5A;font-family:'Cormorant Garamond',serif}
 
 /* ── Warnings/Countries screens ── */
-#grdf-warnings-screen,#grdf-countries-screen,#grdf-signals-screen{
+#grdf-warnings-screen,#grdf-countries-screen,#grdf-signals-screen,#grdf-alerts-screen{
   display:none;position:fixed;top:0;left:0;right:0;bottom:56px;z-index:120;
   background:rgba(6,5,10,0.97);backdrop-filter:blur(20px);overflow-y:auto;padding-top:42px;
 }
@@ -1169,14 +1169,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   #grdf-warnings-screen.visible{display:block}
   #grdf-signals-screen.visible{display:block}
   #grdf-countries-screen.visible{display:block}
+  #grdf-alerts-screen.visible{display:block}
 }
 .grdf-screen-head{padding:12px 48px 8px 14px;display:flex;justify-content:space-between;align-items:center}
 .grdf-screen-title{font-size:15px;font-weight:600;color:#f1f5f9;font-family:'Montserrat',sans-serif}
 .grdf-screen-x{position:absolute;top:44px;right:12px;z-index:6;cursor:pointer;color:rgba(255,255,255,0.32);font-size:15px;line-height:1;padding:8px}
 .grdf-screen-x:hover{color:#D4AF5A}
 @media(max-width:768px){
-  #grdf-warnings-screen,#grdf-countries-screen,#grdf-analytics-screen,#grdf-signals-screen{display:block;transform:translateX(100%);transition:transform .3s ease;pointer-events:none}
-  #grdf-warnings-screen.visible,#grdf-countries-screen.visible,#grdf-analytics-screen.visible,#grdf-signals-screen.visible{transform:translateX(0);pointer-events:all}
+  #grdf-warnings-screen,#grdf-countries-screen,#grdf-analytics-screen,#grdf-signals-screen,#grdf-alerts-screen{display:block;transform:translateX(100%);transition:transform .3s ease;pointer-events:none}
+  #grdf-warnings-screen.visible,#grdf-countries-screen.visible,#grdf-analytics-screen.visible,#grdf-signals-screen.visible,#grdf-alerts-screen.visible{transform:translateX(0);pointer-events:all}
 }
 .grdf-warn-row{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1)}
 .grdf-country-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}
@@ -1460,19 +1461,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     📊 Точность прогнозов
   </button>
 <div id="map"></div>
-<button id="quake-top-btn" onclick="window._toggleQuakePanel()">⚠ Землетрясения</button>
-<div id="quake-panel">
-  <div id="quake-panel-head">
-    <span id="quake-panel-title">⚠ Землетрясения</span>
-    <button id="quake-panel-x" onclick="window._toggleQuakePanel(false)">✕</button>
-  </div>
-  <div id="quake-tiers">
-    <button class="qt active" data-mag="5">M5+</button>
-    <button class="qt" data-mag="6">M6+</button>
-    <button class="qt" data-mag="7">M7+</button>
-  </div>
-  <div id="quake-list"></div>
-</div>
 <div id="panel-overlay" onclick="closeAllPanels()" style="position:fixed;top:0;left:0;right:300px;bottom:0;z-index:20;display:none;cursor:pointer"></div>
 
 <div id="ui">
@@ -2478,13 +2466,13 @@ document.getElementById('lb-outages').addEventListener('click',async function(){
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// СЕЙСМО-АЛЕРТЫ (USGS GeoJSON, real-time) — список + карта, M5/6/7
+// СЕЙСМО-АЛЕРТЫ (USGS GeoJSON, real-time) — вкладка в экране «Алерты»
 // ═══════════════════════════════════════════════════════════════════
 const USGS_QUAKE_FEED='https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson';
 const GEOFON_TG={5:'https://t.me/geofonmag5',6:'https://t.me/geofonmag6',7:'https://t.me/geofonmag7'};
-let quakeMarkers=[], quakesActive=false, quakesInterval=null, quakeMinMag=5, quakeCache=[];
+let quakeMarkers=[], quakesInterval=null, quakeMinMag=5, quakeCache=[];
 
-(function(){var s=document.createElement('style');s.textContent='#quake-top-btn{position:fixed;top:44px;right:12px;z-index:101;padding:6px 11px;background:rgba(6,5,10,0.92);border:0.5px solid rgba(184,151,58,0.4);color:#D4AF5A;font-family:Montserrat,sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:0}#quake-top-btn.active{border-color:#D4AF5A;box-shadow:0 0 10px rgba(212,175,90,.3)}@media(max-width:768px){#grdf-filter-fab{display:none!important}#list-btn{display:none!important}}#quake-panel{position:fixed;top:0;right:0;bottom:0;width:min(440px,92vw);background:rgba(6,5,10,0.97);border-left:1px solid rgba(184,151,58,0.25);z-index:1500;transform:translateX(105%);transition:transform .28s ease;display:flex;flex-direction:column}#quake-panel.open{transform:translateX(0)}#quake-panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;border-bottom:0.5px solid rgba(184,151,58,0.18)}#quake-panel-title{color:#D4AF5A;font-family:Montserrat,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase}#quake-panel-x{background:none;border:0.5px solid rgba(184,151,58,.3);color:#D4AF5A;font-size:14px;width:30px;height:30px;cursor:pointer;border-radius:4px}#quake-tiers{display:flex;gap:6px;padding:12px 16px}#quake-tiers .qt{padding:5px 12px;background:rgba(6,5,10,0.9);border:0.5px solid rgba(184,151,58,0.25);color:rgba(168,160,144,0.85);font-family:Montserrat,sans-serif;font-size:12px;cursor:pointer;border-radius:4px}#quake-tiers .qt.active{border-color:#D4AF5A;color:#D4AF5A;background:rgba(184,151,58,0.12)}#quake-list{flex:1;overflow-y:auto;padding:0 12px 24px}.qk-card{padding:12px 4px;border-bottom:0.5px solid rgba(255,255,255,0.06);cursor:pointer}.qk-top{display:flex;align-items:baseline;gap:8px}.qk-mag{font-family:Montserrat,sans-serif;font-weight:700;font-size:15px;flex-shrink:0}.qk-place{color:#E8E0D0;font-size:13px;line-height:1.3}.qk-sub{color:#7d7563;font-size:11px;margin-top:4px}.qk-detail{margin-top:8px;font-size:12px;color:#A8A090;line-height:1.55;display:none}.qk-detail a{color:#1FAACC;text-decoration:none}.qk-detail a.tg{color:#D4AF5A}.qk-empty{color:#7d7563;font-size:12px;padding:28px 6px;text-align:center;line-height:1.6}@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}';document.head.appendChild(s);})();
+(function(){var s=document.createElement('style');s.textContent='#grdf-alerts-tabs{display:flex;padding:0 14px;border-bottom:0.5px solid rgba(184,151,58,0.15);margin-bottom:4px}#grdf-alerts-tabs .ga-tab{flex:1;padding:11px 6px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(168,160,144,0.6);font-family:Montserrat,sans-serif;font-size:12px;letter-spacing:.02em;cursor:pointer}#grdf-alerts-tabs .ga-tab.active{color:#D4AF5A;border-bottom-color:#D4AF5A}#quake-tiers{display:flex;gap:6px;padding:10px 14px}#quake-tiers .qt{padding:5px 12px;background:rgba(6,5,10,0.9);border:0.5px solid rgba(184,151,58,0.25);color:rgba(168,160,144,0.85);font-family:Montserrat,sans-serif;font-size:12px;cursor:pointer;border-radius:4px}#quake-tiers .qt.active{border-color:#D4AF5A;color:#D4AF5A;background:rgba(184,151,58,0.12)}#quake-list{padding:0 14px 24px}.qk-card{padding:12px 4px;border-bottom:0.5px solid rgba(255,255,255,0.06);cursor:pointer}.qk-top{display:flex;align-items:baseline;gap:8px}.qk-mag{font-family:Montserrat,sans-serif;font-weight:700;font-size:15px;flex-shrink:0}.qk-place{color:#E8E0D0;font-size:13px;line-height:1.3}.qk-sub{color:#7d7563;font-size:11px;margin-top:4px}.qk-detail{margin-top:8px;font-size:12px;color:#A8A090;line-height:1.55;display:none}.qk-detail a{color:#1FAACC;text-decoration:none}.qk-detail a.tg{color:#D4AF5A}.qk-empty{color:#7d7563;font-size:12px;padding:28px 14px;text-align:center;line-height:1.6}@media(max-width:768px){#grdf-filter-fab{display:none!important}#list-btn{display:none!important}}@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}';document.head.appendChild(s);})();
 
 function qkColor(m){ return m>=7?'#FF2D2D':(m>=6?'#FF7A1A':'#FFC83D'); }
 function qkRadius(m){ return Math.max(6,(m-3)*4); }
@@ -2528,8 +2516,8 @@ window._toggleQk=function(el){ const d=el.querySelector('.qk-detail'); if(d) d.s
 
 function refreshQuakeUI(){
   const n=renderQuakeList(); renderQuakeMarkers();
-  const b=document.getElementById('quake-top-btn'); if(b) b.textContent='⚠ Землетрясения'+(quakesActive?' ('+n+')':'');
-  const ti=document.getElementById('quake-panel-title'); if(ti) ti.textContent='⚠ Землетрясения · M'+quakeMinMag+'+ ('+n+')';
+  const tab=document.querySelector('#grdf-alerts-tabs .ga-tab[data-tab="quakes"]');
+  if(tab) tab.textContent='Землетрясения ('+n+')';
 }
 
 async function loadQuakes(){
@@ -2546,19 +2534,16 @@ async function loadQuakes(){
   }catch(e){console.warn('[Quakes]',e.message);}
 }
 
-window._toggleQuakePanel=async function(force){
-  const open=(force===false)?false:(typeof force==='boolean'?force:!quakesActive);
-  quakesActive=open;
-  const panel=document.getElementById('quake-panel'), btn=document.getElementById('quake-top-btn');
-  if(open){
-    if(panel) panel.classList.add('open'); if(btn) btn.classList.add('active');
-    await loadQuakes();
-    if(!quakesInterval) quakesInterval=setInterval(loadQuakes,25000);
-  }else{
-    if(panel) panel.classList.remove('open'); if(btn) btn.classList.remove('active');
-    clearLayer(quakeMarkers);
-    if(quakesInterval){clearInterval(quakesInterval);quakesInterval=null;}
-  }
+window._grdfQuakesEnsure=function(){
+  if(!quakesInterval){ loadQuakes(); quakesInterval=setInterval(loadQuakes,25000); }
+  else { refreshQuakeUI(); }
+};
+
+window.grdfAlertsTab=function(name){
+  document.querySelectorAll('#grdf-alerts-tabs .ga-tab').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-tab')===name); });
+  var q=document.getElementById('ga-quakes'), w=document.getElementById('ga-weather');
+  if(q) q.style.display=(name==='quakes'?'block':'none');
+  if(w) w.style.display=(name==='weather'?'block':'none');
 };
 
 document.querySelectorAll('#quake-tiers .qt').forEach(b=>{
@@ -6853,6 +6838,9 @@ function _evM(val, lbl, col) {
     <button class="grdf-nav-btn active" id="grdf-nav-map" onclick="grdfNavTo('map')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21"/><line x1="8" y1="3" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="21"/></svg></span><span>Карта</span>
     </button>
+    <button class="grdf-nav-btn" id="grdf-nav-alerts" onclick="grdfNavTo('alerts')">
+      <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span><span>Алерты</span>
+    </button>
     <button class="grdf-nav-btn" id="grdf-nav-signals" onclick="grdfNavTo('signals')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>События</span>
     </button>
@@ -6878,6 +6866,27 @@ function _evM(val, lbl, col) {
     <button class="grdf-sig-pill" data-d="social">Социум</button>
   </div>
   <div id="grdf-sig-feed"></div>
+</div>
+
+<!-- Алерты: землетрясения + экстремальная погода -->
+<div id="grdf-alerts-screen">
+  <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
+  <div class="grdf-screen-head"><div class="grdf-screen-title">⚠ Алерты</div></div>
+  <div id="grdf-alerts-tabs">
+    <button class="ga-tab active" data-tab="quakes" onclick="grdfAlertsTab('quakes')">Землетрясения</button>
+    <button class="ga-tab" data-tab="weather" onclick="grdfAlertsTab('weather')">Экстремальная погода</button>
+  </div>
+  <div id="ga-quakes">
+    <div id="quake-tiers">
+      <button class="qt active" data-mag="5">M5+</button>
+      <button class="qt" data-mag="6">M6+</button>
+      <button class="qt" data-mag="7">M7+</button>
+    </div>
+    <div id="quake-list"></div>
+  </div>
+  <div id="ga-weather" style="display:none">
+    <div class="qk-empty">Экстремальная погода — подключается.<br>Скоро здесь появятся штормы, аномальная жара, наводнения и другие экстремальные явления в реальном времени.</div>
+  </div>
 </div>
 
 <!-- Sprint 7: Warnings screen -->
@@ -7586,10 +7595,11 @@ window.grdfNavTo = function(tab) {
   var ctryScreen = document.getElementById('grdf-countries-screen');
   var analScreen = document.getElementById('grdf-analytics-screen');
   var sigScreen  = document.getElementById('grdf-signals-screen');
+  var alertScreen= document.getElementById('grdf-alerts-screen');
   var drawer     = document.getElementById('grdf-intel-drawer');
   var sheet      = document.getElementById('grdf-country-sheet');
 
-  [warnScreen, ctryScreen, analScreen, sigScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
+  [warnScreen, ctryScreen, analScreen, sigScreen, alertScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
   if(drawer) drawer.style.display = 'flex';
   var clPanel0 = document.getElementById('climate-panel');
   if(clPanel0 && tab!=='climate') clPanel0.classList.remove('open');
@@ -7617,6 +7627,12 @@ window.grdfNavTo = function(tab) {
     if(analScreen) analScreen.classList.add('visible');
     if(drawer) drawer.style.display='none';
     grdfLoadAccuracyData();
+  } else if(tab==='alerts'){
+    if(alertScreen) alertScreen.classList.add('visible');
+    if(drawer) drawer.style.display='none';
+    if(sheet) { sheet.className=''; _grdfSheetSnap=0; }
+    if(window.grdfAlertsTab) window.grdfAlertsTab('quakes');
+    if(window._grdfQuakesEnsure) window._grdfQuakesEnsure();
   }
 };
 
