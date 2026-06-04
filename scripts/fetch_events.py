@@ -951,6 +951,48 @@ SOURCE_HOME = {
     'Politico EU':        (50.85,   4.35, 'Брюссель'),
     'Eurasianet':         (43.24,  76.89, 'Алматы'),
     'RFE/RL Central Asia':(50.08,  14.44, 'Прага'),
+    # Международные издания -> город издателя (geoless fallback, S36.6)
+    'Bangkok Post':       (13.75, 100.50, 'Бангкок'),
+    'Middle East Eye':    (51.51,  -0.13, 'Лондон'),
+    'Iran International':  (51.51,  -0.13, 'Лондон'),
+    'Reuters Business':   (51.51,  -0.13, 'Лондон'),
+    'Reuters Finance':    (51.51,  -0.13, 'Лондон'),
+    'Financial Times':    (51.51,  -0.13, 'Лондон'),
+    'The Guardian':       (51.51,  -0.13, 'Лондон'),
+    'Sky News':           (51.51,  -0.13, 'Лондон'),
+    'Project Syndicate Economics': (50.08, 14.44, 'Прага'),
+    'Project Syndicate Economy':   (50.08, 14.44, 'Прага'),
+    'Al-Monitor':         (38.90, -77.04, 'Вашингтон'),
+    'Foreign Policy':     (38.90, -77.04, 'Вашингтон'),
+    'The Diplomat':       (38.90, -77.04, 'Вашингтон'),
+    'CFR':                (40.71, -74.01, 'Нью-Йорк'),
+    'CSIS':               (38.90, -77.04, 'Вашингтон'),
+    'Atlantic Council':   (38.90, -77.04, 'Вашингтон'),
+    'Carnegie Endowment': (38.90, -77.04, 'Вашингтон'),
+    'Chatham House':      (51.51,  -0.13, 'Лондон'),
+    'Crisis Group':       (50.85,   4.35, 'Брюссель'),
+    'Al Arabiya':         (25.20,  55.27, 'Дубай'),
+    'Gulf News':          (25.20,  55.27, 'Дубай'),
+    'The National UAE':   (24.45,  54.38, 'Абу-Даби'),
+    'Al-Ahram Egypt':     (30.04,  31.24, 'Каир'),
+    'SCMP China':         (22.32, 114.17, 'Гонконг'),
+    'Straits Times':      ( 1.35, 103.82, 'Сингапур'),
+    'CNA Asia':           ( 1.35, 103.82, 'Сингапур'),
+    'Times of India':     (28.61,  77.21, 'Дели'),
+    'The Hindu India':    (28.61,  77.21, 'Дели'),
+    'Times of Israel':    (31.78,  35.22, 'Иерусалим'),
+    'DW World':           (52.52,  13.40, 'Берлин'),
+    'France24':           (48.86,   2.35, 'Париж'),
+    'Meduza':             (56.95,  24.11, 'Рига'),
+    'Buenos Aires Times': (-34.60, -58.38, 'Буэнос-Айрес'),
+    'Infobae Argentina':  (-34.60, -58.38, 'Буэнос-Айрес'),
+    'MercoPress LatAm':   (-34.90, -56.16, 'Монтевидео'),
+    'Brasil de Fato':     (-23.55, -46.63, 'Сан-Паулу'),
+    'Mexico News Daily':  (19.43, -99.13, 'Мехико'),
+    'El Universal MX':    (19.43, -99.13, 'Мехико'),
+    'La Jornada MX':      (19.43, -99.13, 'Мехико'),
+    'Andina Peru':        (-12.05, -77.04, 'Лима'),
+    'RPP Peru':           (-12.05, -77.04, 'Лима'),
 }
 
 def _jitter(la, lo, seed, span=0.6):
@@ -1037,9 +1079,8 @@ def process_events(raw_items):
                     lat, lng, region = _ru_default(item['title']); _LOSS['global_marker']+=1
                 elif _home:
                     lat, lng, region = _home; _LOSS['global_marker']+=1
-                elif domain in ('economy', 'social'):
-                    lat, lng, region = _global_marker(item['title']); _LOSS['global_marker']+=1
                 else:
+                    # S36.6: больше НЕ кладём в океан -- неизвестная геопозиция => без точки (drop)
                     _LOSS['no_geo']+=1; continue
             else:
                 lat, lng, region = geo
