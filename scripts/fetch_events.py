@@ -3898,9 +3898,9 @@ RUSSIA_REGIONS = {
 def detect_russia_coords(title, desc):
     text = (title + ' ' + desc).lower()
     for region, coords in RUSSIA_REGIONS.items():
-        if region in text:
-            lat, lng = coords
-            return round(lat + random.uniform(-1,1), 2), round(lng + random.uniform(-2,2), 2), region.title()
+        if not _region_in(region, text): continue   # S36.6: границы слов (nat-ural !-> Урал)
+        lat, lng = coords
+        return round(lat + random.uniform(-1,1), 2), round(lng + random.uniform(-2,2), 2), region.title()
     # Если упоминается Россия -- центральная точка
     if 'россия' in text or 'russia' in text or 'russian' in text:
         return round(61.0 + random.uniform(-5,5), 2), round(60.0 + random.uniform(-10,10), 2), 'Россия'
