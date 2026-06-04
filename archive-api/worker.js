@@ -1707,6 +1707,8 @@ const NEWS_TG_CHANNELS = [
   { handle: 'forbesrussia',    name: 'Forbes Russia' },
   { handle: 'BusinessInsider', name: 'Business Insider' },
   { handle: 'bbbreaking',      name: 'Breaking' },
+  { handle: 'bloomberg',       name: 'Bloomberg' },
+  { handle: 'rbc_news',        name: 'РБК' },
 ];
 function _tgParseChannel(html, handle, name) {
   const items = [];
