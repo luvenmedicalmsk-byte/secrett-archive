@@ -886,6 +886,43 @@ def _global_marker(seed):
     lng = -45 + ((h // 38) % 30)     # -45..-16 (Атлантика, вне стран)
     return float(lat), float(lng), "Глобально"
 
+# S36.6: «дом» институциональных источников -- чтобы безгеоточечные события садились
+# на штаб-квартиру, а не в океан. Телеграм-каналы RU -> Россия.
+SOURCE_HOME = {
+    'ECB':               (50.11,   8.68, 'Франкфурт · ЕЦБ'),
+    'Federal Reserve':   (38.90, -77.04, 'Вашингтон · ФРС'),
+    'IMF':               (38.90, -77.04, 'Вашингтон · МВФ'),
+    'World Bank':        (38.90, -77.04, 'Вашингтон · ВБ'),
+    'OECD':              (48.86,   2.35, 'Париж · ОЭСР'),
+    'WHO':               (46.21,   6.14, 'Женева · ВОЗ'),
+    'Bloomberg Markets': (40.71, -74.01, 'Нью-Йорк'),
+    'Pew Research':      (38.90, -77.04, 'Вашингтон'),
+    'Brookings':         (38.90, -77.04, 'Вашингтон'),
+    'CBPP':              (38.90, -77.04, 'Вашингтон'),
+    'Foreign Affairs':   (40.71, -74.01, 'Нью-Йорк'),
+    'Amnesty International': (51.51, -0.13, 'Лондон'),
+    'ILO':               (46.21,   6.14, 'Женева · МОТ'),
+    'Migration Policy Institute': (38.90, -77.04, 'Вашингтон'),
+}
+
+def _jitter(la, lo, seed, span=0.6):
+    s = str(seed); h = 0
+    for c in s: h = (h * 31 + ord(c)) & 0xffffffff
+    la += ((h % 100) - 50) / 100.0 * span * 2
+    lo += (((h // 100) % 100) - 50) / 100.0 * span * 2
+    return round(la, 3), round(lo, 3)
+
+def _source_home(src, seed=''):
+    base = SOURCE_HOME.get(src)
+    if not base: return None
+    la, lo = _jitter(base[0], base[1], seed)
+    return la, lo, base[2]
+
+def _ru_default(seed=''):
+    """RU Telegram без явной страны -> европейская часть России (со сдвигом)."""
+    la, lo = _jitter(55.75, 37.62, seed, span=3.0)
+    return la, lo, "Россия"
+
 def _is_flood(ev):
     """Событие про наводнение (для приоритетного резерва в квоте, S36.5)."""
     if ev.get('source') in ('GloFAS', 'FloodList'):
@@ -945,8 +982,14 @@ def process_events(raw_items):
             if not geo:
                 geo = detect_coords(item['title'], item.get('desc',''))
             if not geo:
-                # S36.4: эконом/социальные и Telegram-посты не выбрасываем без гео -- глобальный маркер
-                if domain in ('economy', 'social') or str(item.get('source','')).startswith('Telegram'):
+                # S36.6: не в океан, а на страну-«дом» источника / Россию для Telegram
+                _src = item.get('source', '')
+                _home = _source_home(_src, item.get('title', ''))
+                if str(_src).startswith('Telegram'):
+                    lat, lng, region = _ru_default(item['title']); _LOSS['global_marker']+=1
+                elif _home:
+                    lat, lng, region = _home; _LOSS['global_marker']+=1
+                elif domain in ('economy', 'social'):
                     lat, lng, region = _global_marker(item['title']); _LOSS['global_marker']+=1
                 else:
                     _LOSS['no_geo']+=1; continue
