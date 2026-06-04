@@ -61,6 +61,7 @@ export default {
       if (path === '/api/proxy/outages') return handleProxyOutages(url);
       if (path === '/api/proxy/ships') return handleProxyShips(url);
       if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
+      if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews();
 
   // ── SNAPSHOT API ──────────────────────────────────────────────────────────
   // /api/snapshot/today        → all 25 countries, current scores (FREE: no summary)
@@ -1605,6 +1606,58 @@ async function handleProxyEventsFeed() {
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
+
+
+// ── Disaster_News (Telegram web-preview → JSON, real-time ЧС) ────────────────
+function _dnDecode(s){
+  return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+          .replace(/&quot;/g,'"').replace(/&#0?39;/g,"'").replace(/&apos;/g,"'")
+          .replace(/&nbsp;/g,' ').replace(/&hellip;/g,'\u2026').replace(/&mdash;/g,'\u2014')
+          .replace(/&#(\d+);/g,(m,n)=>String.fromCharCode(+n));
+}
+async function handleProxyDisasterNews() {
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 10000);
+    const r = await fetch('https://t.me/s/Disaster_News', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+      signal: ctrl.signal,
+      cf: { cacheTtl: 30, cacheEverything: true }
+    });
+    clearTimeout(tid);
+    if (!r.ok) return new Response(JSON.stringify({ error: 'upstream ' + r.status, items: [] }), {
+      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+    const html = await r.text();
+    const items = [];
+    const parts = html.split('data-post="Disaster_News/');
+    for (let k = 1; k < parts.length; k++) {
+      const seg = parts[k];
+      const idm = seg.match(/^(\d+)/); if (!idm) continue;
+      const id = parseInt(idm[1], 10);
+      const tm = seg.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+      let text = tm ? tm[1] : '';
+      text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+      text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+      if (text.length < 10) continue;
+      const dt = seg.match(/datetime="([^"]+)"/);
+      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id });
+    }
+    items.sort((a, b) => b.id - a.id);
+    const out = items.slice(0, 40);
+    return new Response(JSON.stringify({ channel: 'Disaster_News', count: out.length, items: out }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=30',
+      }
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: String(e && e.message || e), items: [] }), {
+      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
 }
