@@ -36,6 +36,26 @@ except ImportError as _e:
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+# ── S36.4 INGESTION PERFORMANCE: параллелизм + blacklist ─────────────────────
+try:
+    from fetch_runtime import run_parallel, is_blacklisted, load_blacklist
+    load_blacklist()
+    _PARALLEL_AVAILABLE = True
+except ImportError as _pe:
+    print(f"  [WARN] fetch_runtime недоступен ({_pe}) — последовательный режим", file=sys.stderr)
+    _PARALLEL_AVAILABLE = False
+    def is_blacklisted(url):  # no-op fallback
+        return False
+    def run_parallel(fetchers, max_workers=12):  # sequential fallback
+        out = []
+        for f in fetchers:
+            name, fn = f if isinstance(f, tuple) else (getattr(f, "__name__", "fn"), f)
+            try:
+                out += (fn() or [])
+            except Exception as _e:
+                print(f"  ✗ {name}: {_e}", file=sys.stderr)
+        return out
+
 def strip_html(text):
     """Удаляет HTML-теги и лишнее из текста"""
     if not text:
@@ -395,8 +415,13 @@ def detect_domain(title, desc):
 def get_env(key, default=""):
     return os.environ.get(key, default)
 
-def fetch_url(url, timeout=20, headers=None, retries=2):
-    """Загружает URL с retry при временных ошибках (429, 503, timeout)"""
+def fetch_url(url, timeout=20, headers=None, retries=1):
+    """Загружает URL с retry при временных ошибках (429, 503, timeout).
+    S36.4: retries=1 (а не 2), blacklist-гейт, timeout cap 12с —
+    мёртвый источник больше не висит 3×timeout."""
+    if is_blacklisted(url):
+        return None
+    timeout = min(timeout, 12)
     last_err = None
     for attempt in range(retries + 1):
         try:
@@ -431,13 +456,6 @@ def parse_date(s):
 
 
 
-def _region_in(region, text):
-    """S36.6: латинские топонимы -- по границам слов (чтобы 'lima' не ловился в 'climate',
-    'ural' в 'natural'); кириллические -- по подстроке (нужны склонения: 'Росси' в 'России')."""
-    if re.search(r'[a-z]', region):
-        return re.search(r'\b' + re.escape(region) + r'\b', text) is not None
-    return region in text
-
 def detect_coords(title, desc):
     """Определяет координаты -- заголовок имеет приоритет над описанием"""
     title_low = title.lower()
@@ -449,7 +467,7 @@ def detect_coords(title, desc):
 
     best_title, best_title_len, best_title_coords = None, 0, None
     for region, coords in REGION_COORDS.items():
-        if not _region_in(region, title_low): continue
+        if region not in title_low: continue
         if len(region) <= best_title_len: continue
         idx = title_low.find(region)
         after = title_low[idx+len(region):idx+len(region)+5]
@@ -466,7 +484,7 @@ def detect_coords(title, desc):
     CONTEXT_WORDS = ['since', 'after', 'amid', 'despite', 'vs', 'against', 'from', 'invasion of', 'war in']
     best_desc, best_desc_len, best_desc_coords = None, 0, None
     for region, coords in REGION_COORDS.items():
-        if not _region_in(region, desc_low): continue
+        if region not in desc_low: continue
         if len(region) <= best_desc_len: continue
         # Проверяем не является ли упоминание контекстным
         idx = desc_low.find(region)
@@ -4494,43 +4512,45 @@ if __name__ == '__main__':
     try:
         NEWS_API_KEY = get_env('NEWS_API_KEY')
 
-        raw = []
-        print("Загружаю источники:", file=sys.stderr)
-        raw += fetch_newsapi(NEWS_API_KEY)
-        # fetch_gdelt() -- ОТКЛЮЧЕНО: облачные IP заблокированы GDELT
-        raw += fetch_reliefweb()
-        raw += fetch_reliefweb_v2()
-        raw += fetch_nasa_eonet()
-        raw += fetch_gdacs()
-        raw += fetch_usgs_earthquakes()
-        raw += fetch_acled_rss()
-        raw += fetch_geopolitics_rss()
-        raw += fetch_social_rss()
-        raw += fetch_economy_rss()
-        raw += fetch_telegram()
-        raw += fetch_floods_rss()
-        # raw += fetch_glofas()   # S36.5 заморожен: синхронный CDS не укладывается в cron
-        raw += fetch_tech_rss()
-        raw += fetch_climate_rss()
-        raw += fetch_global_rss()
-        raw += fetch_wfp()
-        raw += fetch_russia_climate()
-        raw += fetch_russia_climate_v2()
-        raw += fetch_russia_signals()
-        raw += get_russia_static_risks()
-        raw += fetch_global_structural_risks()
-        # Спутниковые источники
-        raw += fetch_copernicus_floods()
-        raw += fetch_copernicus_cyber()
-        # fetch_copernicus() -- дубликат sentinel, убрано
-        raw += fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))
-        raw += fetch_nasa_firms(get_env('FIRMS_API_KEY'))
-        raw += fetch_global_forest_watch()
-        raw += fetch_flood_observatory()
-        raw += fetch_regional()
-        raw += fetch_mideast_asia()
-        raw += fetch_uk_canada_nordic()
-        raw += fetch_europe_latam()
+        print("Загружаю источники (параллельно, S36.4):", file=sys.stderr)
+        # ВАЖНО: межфетчерных зависимостей нет — каждый просто аппендит в raw.
+        # ThreadPoolExecutor запускает все 30 фетчеров конкурентно; падение
+        # одного не валит остальные. Отключённые источники (GDELT, glofas,
+        # дубликат copernicus) намеренно не включены.
+        raw = run_parallel([
+            ('newsapi',            lambda: fetch_newsapi(NEWS_API_KEY)),
+            ('reliefweb',          fetch_reliefweb),
+            ('reliefweb_v2',       fetch_reliefweb_v2),
+            ('nasa_eonet',         fetch_nasa_eonet),
+            ('gdacs',              fetch_gdacs),
+            ('usgs',               fetch_usgs_earthquakes),
+            ('acled',              fetch_acled_rss),
+            ('geopolitics',        fetch_geopolitics_rss),
+            ('social',             fetch_social_rss),
+            ('economy',            fetch_economy_rss),
+            ('telegram',           fetch_telegram),
+            ('floods',             fetch_floods_rss),
+            ('tech',               fetch_tech_rss),
+            ('climate',            fetch_climate_rss),
+            ('global',             fetch_global_rss),
+            ('wfp',                fetch_wfp),
+            ('russia_climate',     fetch_russia_climate),
+            ('russia_climate_v2',  fetch_russia_climate_v2),
+            ('russia_signals',     fetch_russia_signals),
+            ('russia_static',      get_russia_static_risks),
+            ('structural',         fetch_global_structural_risks),
+            ('copernicus_floods',  fetch_copernicus_floods),
+            ('copernicus_cyber',   fetch_copernicus_cyber),
+            ('copernicus_sentinel', lambda: fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))),
+            ('nasa_firms',         lambda: fetch_nasa_firms(get_env('FIRMS_API_KEY'))),
+            ('forest_watch',       fetch_global_forest_watch),
+            ('flood_observatory',  fetch_flood_observatory),
+            ('regional',           fetch_regional),
+            ('mideast_asia',       fetch_mideast_asia),
+            ('uk_canada_nordic',   fetch_uk_canada_nordic),
+            ('europe_latam',       fetch_europe_latam),
+        ], max_workers=12)
+
 
         print(f"\nВсего сырых записей: {len(raw)}", file=sys.stderr)
 
