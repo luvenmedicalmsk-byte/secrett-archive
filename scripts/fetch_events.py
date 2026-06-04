@@ -1830,6 +1830,70 @@ def _tg_classify(text):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# НАВОДНЕНИЯ -- Floodlist + Copernicus EMS (S36.5, без ключей)
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_floods_rss():
+    """Floodlist + Copernicus EMS Rapid Mapping -- наводнения по миру. Домен climate."""
+    sources = [
+        ('https://floodlist.com/feed', 'FloodList', 'climate'),
+        ('https://feeds.feedburner.com/Floodlist', 'FloodList', 'climate'),
+        ('https://emergency.copernicus.eu/mapping/list-of-activations-rapid/feed', 'Copernicus EMS', 'climate'),
+        ('https://emergency.copernicus.eu/mapping/activations-rapid/feed', 'Copernicus EMS', 'climate'),
+        ('https://emergency.copernicus.eu/mapping/ems/rss.xml', 'Copernicus EMS', 'climate'),
+    ]
+    items = []
+    seen_urls = set()
+    ua_list = [
+        {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
+        {'User-Agent': 'feedparser/6.0'},
+        {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+    ]
+    for url, src_name, domain in sources:
+        if url in seen_urls: continue
+        data = None
+        for hdrs in ua_list:
+            data = fetch_url(url, headers=hdrs, timeout=8)
+            if data: break
+        if not data: continue
+        seen_urls.add(url)
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(data)
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+            for item in root.findall('.//item')[:15]:
+                title = (item.findtext('title') or '').strip()
+                desc = (item.findtext('description') or '').strip()
+                link = (item.findtext('link') or '').strip()
+                pub = item.findtext('pubDate') or ''
+                if not title: continue
+                items.append({
+                    'title': title, 'desc': strip_html(desc)[:300], 'url': link,
+                    'date': parse_date(pub), 'source': src_name,
+                    'domain': domain, 'source_bias': 6,  # профильный источник -> +3 к severity
+                })
+            for entry in root.findall('atom:entry', ns)[:15]:
+                title = (entry.findtext('atom:title', namespaces=ns) or '').strip()
+                desc = (entry.findtext('atom:summary', namespaces=ns) or '').strip()
+                pub = entry.findtext('atom:published', namespaces=ns) or entry.findtext('atom:updated', namespaces=ns) or ''
+                if not title: continue
+                items.append({
+                    'title': title, 'desc': strip_html(desc)[:300],
+                    'date': parse_date(pub), 'source': src_name,
+                    'domain': domain, 'source_bias': 6,
+                })
+        except Exception as e:
+            print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
+
+    seen = set(); unique = []
+    for it in items:
+        key = it['title'][:50].lower()
+        if key not in seen:
+            seen.add(key); unique.append(it)
+    print(f'  Наводнения RSS (Floodlist/EMS): {len(unique)} событий', file=sys.stderr)
+    return unique
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # TELEGRAM -- RU-каналы через web-preview (S36.4)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_telegram():
@@ -4281,6 +4345,7 @@ if __name__ == '__main__':
         raw += fetch_social_rss()
         raw += fetch_economy_rss()
         raw += fetch_telegram()
+        raw += fetch_floods_rss()
         raw += fetch_tech_rss()
         raw += fetch_climate_rss()
         raw += fetch_global_rss()
