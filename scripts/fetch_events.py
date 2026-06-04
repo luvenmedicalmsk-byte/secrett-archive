@@ -1316,6 +1316,7 @@ def process_events(raw_items):
         if ev.get('summary'):
             ev['summary'] = translated_summaries[i]
 
+    _save_tr_disk()
     return top_events
 
 def save(events):
@@ -4317,20 +4318,33 @@ def is_english(text):
     return cyrillic < len(text) * 0.15 and latin > len(text) * 0.3
 
 def translate_batch(texts):
-    """Переводит список текстов одним запросом"""
+    """Переводит список текстов на русский (OpenAI JSON-контракт) с дисковым кэшем по хэшу."""
+    if not texts:
+        return texts
+    # предзаполнение in-memory кэша из дискового (по хэшу)
     for _t in texts:
         if _t and _t not in _translate_cache:
             _dk = _tr_key(_t)
-            if _dk in _TR_DISK: _translate_cache[_t] = _TR_DISK[_dk]
-    # Фильтруем только английские тексты которых нет в кэше
-    to_translate = [(i, t) for i, t in enumerate(texts) 
-                    if is_english(t) and t not in _translate_cache]
-    
+            if _dk in _TR_DISK:
+                _translate_cache[_t] = _TR_DISK[_dk]
+
+    results = list(texts)
+    for i, t in enumerate(texts):
+        if t in _translate_cache:
+            results[i] = _translate_cache[t]
+
+    # уникальные английские строки без перевода
+    to_translate, seen = [], set()
+    for t in texts:
+        if not t or not is_english(t) or t in _translate_cache or t in seen:
+            continue
+        seen.add(t)
+        to_translate.append(t)
     if not to_translate:
-        return [_translate_cache.get(t, t) for t in texts]
-    
-    # Переводим через LibreTranslate -- один запрос на всё
-    # Встроенный словарный переводчик -- работает без внешних запросов
+        return results
+    to_translate = to_translate[:150]  # бюджет на прогон (дисковый кэш гасит стоимость)
+
+    # словарный fallback (только в памяти, не в дисковый кэш)
     WORD_MAP = {
         'wildfire': 'лесной пожар', 'wildfires': 'лесные пожары',
         'flood': 'наводнение', 'floods': 'наводнения', 'flooding': 'затопление',
@@ -4361,123 +4375,73 @@ def translate_batch(texts):
         'arctic': 'арктика', 'ice': 'лёд', 'glacier': 'ледник',
         'deforestation': 'вырубка лесов', 'pollution': 'загрязнение',
     }
-    
-    # Компилируем паттерны один раз -- не в цикле
-    _COMPILED = {eng: re.compile(r'\b' + re.escape(eng) + r'\b', re.IGNORECASE)
-                 for eng in WORD_MAP}
-
+    _COMPILED = {eng: re.compile(r'\b' + re.escape(eng) + r'\b', re.IGNORECASE) for eng in WORD_MAP}
     def simple_translate(text):
-        """Простой словарный перевод ключевых слов"""
         if not text or not is_english(text):
             return text
-        result = text
-        text_lower = text.lower()
+        result = text; tl = text.lower()
         for eng, rus in WORD_MAP.items():
-            if eng in text_lower:
+            if eng in tl:
                 result = _COMPILED[eng].sub(rus, result, count=1)
         return result
-    
-    results = list(texts)  # копия
 
-    # Сначала пробуем OpenAI -- батчами по 50 заголовков
     import os as _os
     openai_key = _os.environ.get('OPENAI_API_KEY', '')
-    if openai_key and to_translate:
-        try:
-            to_translate = to_translate[:150]  # Этап 3: шире покрытие (дисковый кэш гасит стоимость)
-            BATCH = 20
-            all_translated = True
-            for batch_start in range(0, len(to_translate), BATCH):
-                batch = to_translate[batch_start:batch_start+BATCH]
-                lines_in = [str(j+1) + '. ' + t[:300] for j, (_, t) in enumerate(batch)]
-                numbered = '\n'.join(lines_in)
-                prompt = 'Переведи заголовки новостей на русский язык. Верни ТОЛЬКО пронумерованный список в том же порядке, без пояснений.\n\n' + numbered
-                payload = json.dumps({
-                    'model': 'gpt-4o-mini',
-                    'max_tokens': 3000,
-                    'temperature': 0.1,
-                    'messages': [{'role': 'user', 'content': prompt}]
+    if openai_key:
+        BATCH = 20
+        sys_p = ('Ты профессиональный переводчик новостей на русский язык. Переведи КАЖДЫЙ элемент входного массива на естественный русский. '
+                 'Сохраняй названия организаций, компаний, брендов, тикеры и имена собственные; географию давай по-русски, где есть устоявшийся перевод. '
+                 'Без комментариев. Верни СТРОГО валидный JSON-объект, где КЛЮЧ — значение поля "i" (строкой), значение — перевод поля "t". '
+                 'Пример: вход [{"i":0,"t":"Hello"}] -> {"0":"Привет"}.')
+        for start in range(0, len(to_translate), BATCH):
+            batch = to_translate[start:start+BATCH]
+            payload_items = [{'i': k, 't': (bt or '')[:300]} for k, bt in enumerate(batch)]
+            usr_p = 'Переведи на русский:\n' + json.dumps(payload_items, ensure_ascii=False)
+            try:
+                body = json.dumps({
+                    'model': 'gpt-4o-mini', 'max_tokens': 3500, 'temperature': 0.2,
+                    'response_format': {'type': 'json_object'},
+                    'messages': [{'role': 'system', 'content': sys_p}, {'role': 'user', 'content': usr_p}]
                 }).encode('utf-8')
                 req_ai = urllib.request.Request(
-                    'https://api.openai.com/v1/chat/completions',
-                    data=payload,
-                    headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openai_key},
-                    method='POST'
-                )
+                    'https://api.openai.com/v1/chat/completions', data=body,
+                    headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openai_key}, method='POST')
                 with urllib.request.urlopen(req_ai, timeout=45) as r_ai:
                     resp = json.loads(r_ai.read().decode('utf-8'))
-                    text_out = resp['choices'][0]['message']['content'].strip()
-                    out_lines = [l.strip() for l in text_out.split('\n') if l.strip()]
-                    translations = []
-                    for l in out_lines:
-                        m = re.match(r'^[0-9]+[.]\s*(.+)$', l)
-                        if m:
-                            translations.append(m.group(1).strip())
-                    if len(translations) == len(batch):
-                        for j, (orig_idx, orig_text) in enumerate(batch):
-                            tr = translations[j]
-                            if tr and len(tr) > 3:
-                                _translate_cache[orig_text] = tr
-                                _TR_DISK[_tr_key(orig_text)] = tr
-                                results[orig_idx] = tr
+                content = resp['choices'][0]['message']['content']
+                parsed = json.loads(content)
+                m = {}
+                if isinstance(parsed, dict):
+                    arr = parsed.get('r') or parsed.get('items') or parsed.get('translations')
+                    if isinstance(arr, list):
+                        for k, o in enumerate(arr):
+                            if isinstance(o, dict) and 't' in o: m[str(o.get('i', k))] = o['t']
+                            elif isinstance(o, str): m[str(k)] = o
                     else:
-                        all_translated = False
-            if all_translated:
-                print('  OpenAI перевёл ' + str(len(to_translate)) + ' заголовков', file=sys.stderr)
-                return results
-        except Exception as e:
-            print('  [WARN] OpenAI перевод: ' + str(e), file=sys.stderr)
+                        m = {str(kk): vv for kk, vv in parsed.items()}
+                elif isinstance(parsed, list):
+                    for k, o in enumerate(parsed):
+                        if isinstance(o, dict) and 't' in o: m[str(o.get('i', k))] = o['t']
+                        elif isinstance(o, str): m[str(k)] = o
+                for k, bt in enumerate(batch):
+                    tr = m.get(str(k))
+                    if isinstance(tr, str) and len(tr.strip()) > 2:
+                        tr = tr.strip()
+                        _translate_cache[bt] = tr
+                        _TR_DISK[_tr_key(bt)] = tr
+            except Exception as _e:
+                print('  [WARN] OpenAI batch: ' + str(_e), file=sys.stderr)
+                continue
+        _done = sum(1 for t in to_translate if t in _translate_cache)
+        print('  OpenAI перевёл ' + str(_done) + '/' + str(len(to_translate)), file=sys.stderr)
 
-        # Fallback -- внешние LibreTranslate серверы
-    servers = [
-        "https://translate.fedilab.app/translate",
-        "https://libretranslate.de/translate",
-        "https://translate.argosopentech.com/translate",
-    ]
-    
-    for server in servers:
-        try:
-            # Объединяем тексты через разделитель для одного запроса
-            sep = " ||| "
-            combined = sep.join(t[:150] for _, t in to_translate)
-            
-            payload = json.dumps({
-                "q": combined,
-                "source": "en", 
-                "target": "ru",
-                "format": "text"
-            }).encode('utf-8')
-            
-            req = urllib.request.Request(
-                server,
-                data=payload,
-                headers={'Content-Type': 'application/json', 'User-Agent': 'ArchiveBot/2.0'},
-                method='POST'
-            )
-            with urllib.request.urlopen(req, timeout=15) as r:
-                result = json.loads(r.read().decode('utf-8'))
-                translated_combined = result.get('translatedText', '')
-                
-                if translated_combined:
-                    parts = translated_combined.split('|||')
-                    for j, (orig_idx, orig_text) in enumerate(to_translate):
-                        if j < len(parts):
-                            tr = parts[j].strip()
-                            if tr and len(tr) > 3:
-                                _translate_cache[orig_text] = tr
-                                _TR_DISK[_tr_key(orig_text)] = tr
-                                results[orig_idx] = tr
-                    print(f"  ✓ Переведено {len(to_translate)} заголовков", file=sys.stderr)
-                    return results
-        except Exception as e:
-            print(f"  [WARN] Перевод {server[:30]}: {e}", file=sys.stderr)
-            time.sleep(1)
-            continue
-    
-    # Если внешние серверы недоступны -- используем словарный переводчик
-    print(f"  Словарный перевод {len(to_translate)} заголовков", file=sys.stderr)
-    for orig_idx, orig_text in to_translate:
-        results[orig_idx] = simple_translate(orig_text)
+    for t in to_translate:
+        if t not in _translate_cache:
+            _translate_cache[t] = simple_translate(t)
+
+    for i, t in enumerate(texts):
+        if t in _translate_cache:
+            results[i] = _translate_cache[t]
     return results
 
 def translate_to_russian(text, max_len=150):
