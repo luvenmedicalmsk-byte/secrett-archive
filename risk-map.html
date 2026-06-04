@@ -2609,6 +2609,54 @@ window._grdfDisasterEnsure=function(){
 (function(){ var _o=window.grdfAlertsTab; window.grdfAlertsTab=function(name){ if(_o) _o(name); if(name==='weather') window._grdfDisasterEnsure(); }; })();
 
 
+
+// ═══════════════════════════════════════════════════════════════════
+// НОВОСТИ — быстрая TG-лента в разделе «События» (источники: 4 СМИ)
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+  var newsCache=[], newsInterval=null, _newsFilter='all';
+  var SRCS={'Al Jazeera':1,'Forbes Russia':1,'The Economist':1,'Business Insider':1};
+  var NEWS_COL={'Al Jazeera':'#C8964B','Forbes Russia':'#4BA3C8','The Economist':'#C84B5A','Business Insider':'#5AC88B'};
+  function renderNews(){
+    var feed=document.getElementById('grdf-sig-feed'); if(!feed) return;
+    var cnt=document.getElementById('grdf-sig-count');
+    if(!newsCache.length){ feed.innerHTML='<div class="qk-empty">Загрузка новостей…</div>'; if(cnt)cnt.textContent=''; return; }
+    var items=(_newsFilter==='all')?newsCache:newsCache.filter(function(n){return n.source===_newsFilter;});
+    if(cnt) cnt.textContent=items.length+' сообщений';
+    if(!items.length){ feed.innerHTML='<div class="qk-empty">Нет сообщений по этому источнику.</div>'; return; }
+    feed.innerHTML=items.map(function(it){
+      var col=NEWS_COL[it.source]||'#B8973A';
+      var text=qkEsc(it.text||'').replace(/\n/g,'<br>');
+      return '<div class="dn-card" onclick="window._toggleDn(this)">'
+        +'<span class="qk-dot" style="background:'+col+';margin-top:6px"></span>'
+        +'<div class="qk-main">'
+        +'<div class="qk-dom" style="color:'+col+'">'+qkEsc(it.source)+'</div>'
+        +'<div class="dn-text">'+text+'</div>'
+        +'<div class="qk-meta"><span>'+dnTime(it.time)+'</span></div>'
+        +'</div></div>';
+    }).join('');
+  }
+  async function loadNews(){
+    try{
+      var r=await fetch(API_BASE+'/api/proxy/news-feed',{cache:'no-store'});
+      if(!r.ok) throw new Error('http '+r.status);
+      var j=await r.json(); newsCache=(j&&j.items)||[]; renderNews();
+    }catch(e){
+      var feed=document.getElementById('grdf-sig-feed');
+      if(feed&&!newsCache.length) feed.innerHTML='<div class="qk-empty">Лента новостей временно недоступна.</div>';
+    }
+  }
+  // переопределяем рендер «Событий» на TG-новости (после загрузки всех скриптов)
+  setTimeout(function(){
+    window.grdfRenderSignals=function(filter){
+      _newsFilter=(filter && SRCS[filter])?filter:'all';
+      renderNews();
+      if(!newsCache.length) loadNews();
+      if(!newsInterval) newsInterval=setInterval(loadNews,30000);
+    };
+  },0);
+})();
+
 // ═══════════════════════════════════════════════════════════════════
 // LIVE EXTERNAL FEED — http://62.238.37.129:8001/events.json
 // Schema: [{title, category:[], date, coordinates:[lon,lat]}]
@@ -6912,11 +6960,10 @@ function _evM(val, lbl, col) {
   <div class="grdf-screen-head"><div class="grdf-screen-title">События</div><span style="font-size:10px;color:rgba(168,160,144,0.5)" id="grdf-sig-count"></span></div>
   <div id="grdf-sig-filters" class="grdf-sig-filters">
     <button class="grdf-sig-pill active" data-d="all">Все</button>
-    <button class="grdf-sig-pill" data-d="climate">Климат</button>
-    <button class="grdf-sig-pill" data-d="geopolitics">Геополитика</button>
-    <button class="grdf-sig-pill" data-d="economy">Экономика</button>
-    <button class="grdf-sig-pill" data-d="technology">Технологии</button>
-    <button class="grdf-sig-pill" data-d="social">Социум</button>
+    <button class="grdf-sig-pill" data-d="Al Jazeera">Al Jazeera</button>
+    <button class="grdf-sig-pill" data-d="Forbes Russia">Forbes</button>
+    <button class="grdf-sig-pill" data-d="The Economist">Economist</button>
+    <button class="grdf-sig-pill" data-d="Business Insider">Business Insider</button>
   </div>
   <div id="grdf-sig-feed"></div>
 </div>
