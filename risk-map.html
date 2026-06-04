@@ -2616,12 +2616,12 @@ window._grdfDisasterEnsure=function(){
 // ═══════════════════════════════════════════════════════════════════
 (function(){
   window.NEWS_EVENTS = window.NEWS_EVENTS || [];
+  window._toggleSig = function(el){ el.classList.toggle('sig-open'); };
+  (function(){ var s=document.createElement('style'); s.textContent='.grdf-sig-card.sig-news{cursor:pointer}.grdf-sig-card.sig-news .sig-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.grdf-sig-card.sig-news.sig-open .sig-clamp{-webkit-line-clamp:unset;overflow:visible;display:block}'; document.head.appendChild(s); })();
   function _newsToEv(items){
     return items.map(function(it){
-      var fl=(it.text||'').split('\n')[0].trim();
-      if(fl.length>140) fl=fl.slice(0,140)+'…';
-      if(!fl) fl=(it.text||'').slice(0,140);
-      return { domain: it.domain||'geopolitics', title: fl, region: it.source||'', date: it.time||'', severity:'', _news:true };
+      var full=(it.text||'').replace(/\s*\n\s*/g,' ').trim();
+      return { domain: it.domain||'geopolitics', title: full, region: it.source||'', date: it.time||'', severity:'', _news:true };
     });
   }
   async function _loadNewsEv(){
@@ -7768,11 +7768,11 @@ function grdfRenderSignals(dom){
   items.slice(0,200).forEach(function(ev){
     var col = DCx[ev.domain]||'#B8973A';
     var sev = ev._news ? '' : (ev.severity||0);
-    html += '<div class="grdf-sig-card">'
+    html += '<div class="grdf-sig-card'+(ev._news?' sig-news':'')+'"'+(ev._news?' onclick="window._toggleSig(this)"':'')+'>'
       + '<span class="sig-dot" style="background:'+col+'"></span>'
       + '<div class="sig-main">'
       +   '<div class="grdf-sig-dom" style="color:'+col+'">'+escx(DLx[ev.domain]||ev.domain||'')+'</div>'
-      +   '<div class="grdf-sig-title">'+escx(ev.title)+'</div>'
+      +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(ev.title)+'</div>'
       +   '<div class="grdf-sig-meta"><span>'+escx(ev.region)+'</span><span>'+fdx(ev.date)+'</span></div>'
       + '</div>'
       + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'</div>'
