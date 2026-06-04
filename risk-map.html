@@ -1480,6 +1480,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <button class="lb" id="intel-btn" onclick="window._toggleIntelPanel()">◆ Раннее предупреждение</button>
   <button class="lb" id="alerts-btn" onclick="window._toggleAlertsPanel()">⚠ Критические события</button>
   <button class="lb" id="climate-btn" onclick="window._toggleClimatePanel()">◆ Климатические риски</button>
+  <button class="lb" id="lb-quakes">⚠ Землетрясения</button>
+  <span id="quake-tiers" style="display:none">
+    <button class="lb qt active" data-mag="5">M5+</button>
+    <button class="lb qt" data-mag="6">M6+</button>
+    <button class="lb qt" data-mag="7">M7+</button>
+  </span>
   <!-- all layer buttons hidden from UI, code preserved -->
   <button class="lb" id="lb-planes" style="display:none">✈ Самолёты</button>
   <button class="lb" id="lb-ships" style="display:none">🚢 Суда</button>
@@ -2463,6 +2469,89 @@ document.getElementById('lb-outages').addEventListener('click',async function(){
     if(outagesInterval){clearInterval(outagesInterval);outagesInterval=null;}
   }
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// СЕЙСМО-АЛЕРТЫ (USGS GeoJSON, real-time) — M5+/M6+/M7+
+// USGS M4.5+ за 24ч; фильтр по магнитуде на клиенте; опрос 25с.
+// Каждый алерт ссылается на TG-канал GEOFON соответствующего порога.
+// ═══════════════════════════════════════════════════════════════════
+const USGS_QUAKE_FEED='https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson';
+const GEOFON_TG={5:'https://t.me/geofonmag5',6:'https://t.me/geofonmag6',7:'https://t.me/geofonmag7'};
+let quakeMarkers=[], quakesActive=false, quakesInterval=null, quakeMinMag=5, quakeCache=[];
+
+(function(){const s=document.createElement('style');s.textContent='@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}#quake-tiers .qt{padding:2px 7px!important;font-size:11px!important;margin-left:2px}';document.head.appendChild(s);})();
+
+function quakeColor(m){ return m>=7?'#FF2D2D':m>=6?'#FF7A1A':'#FFC83D'; }
+function quakeRadius(m){ return Math.max(6,(m-3)*4); }
+
+function renderQuakes(){
+  clearLayer(quakeMarkers);
+  const now=Date.now();
+  const list=quakeCache.filter(q=>q.mag>=quakeMinMag).sort((a,b)=>b.time-a.time);
+  list.forEach(q=>{
+    const col=quakeColor(q.mag);
+    const fresh=(now-q.time)/60000<60;
+    const tier=q.mag>=7?7:(q.mag>=6?6:5);
+    const m=L.circleMarker([q.lat,q.lng],{
+      radius:quakeRadius(q.mag),color:col,weight:fresh?2:1,
+      fillColor:col,fillOpacity:0.55,className:fresh?'quake-pulse':''
+    }).bindPopup(
+      '<b style="color:'+col+'">⚠ M'+q.mag.toFixed(1)+' · землетрясение</b>'+
+      '<br><span style="font-size:11px;color:#A8A090">'+(q.place||'')+
+      '<br>Глубина: '+(q.depth!=null?Math.round(q.depth)+' км':'?')+
+      '<br>'+new Date(q.time).toISOString().replace('T',' ').slice(0,16)+' UTC</span>'+
+      '<br><a href="'+q.url+'" target="_blank" rel="noopener" style="color:#5AB4D4;font-size:11px">USGS детали ↗</a>'+
+      ' · <a href="'+GEOFON_TG[tier]+'" target="_blank" rel="noopener" style="color:#D4AF5A;font-size:11px">GEOFON M'+tier+'+ ↗</a>'
+    );
+    m.addTo(map); quakeMarkers.push(m);
+  });
+  return list.length;
+}
+
+async function loadQuakes(){
+  try{
+    const r=await fetch(USGS_QUAKE_FEED,{cache:'no-store',signal:AbortSignal.timeout(10000)});
+    if(!r.ok)return;
+    const data=await r.json();
+    quakeCache=(data.features||[]).map(f=>{
+      const c=(f.geometry&&f.geometry.coordinates)||[]; const p=f.properties||{};
+      return {mag:p.mag||0,lat:c[1],lng:c[0],depth:c[2],place:p.place||'',time:p.time||0,url:p.url||''};
+    }).filter(q=>typeof q.lat==='number'&&typeof q.lng==='number'&&q.mag>=5);
+    const n=renderQuakes();
+    const btn=document.getElementById('lb-quakes');
+    if(btn&&quakesActive) btn.textContent='⚠ Землетрясения ('+n+')';
+    console.info('[Quakes]',quakeCache.length,'M5+/24ч, показано',n);
+  }catch(e){console.warn('[Quakes]',e.message);}
+}
+
+document.getElementById('lb-quakes').addEventListener('click',async function(){
+  quakesActive=!quakesActive;
+  this.classList.toggle('active',quakesActive);
+  const tiers=document.getElementById('quake-tiers');
+  if(quakesActive){
+    tiers.style.display='inline';
+    this.textContent='⚠ Загрузка...';
+    await loadQuakes();
+    quakesInterval=setInterval(loadQuakes,25000);
+  }else{
+    tiers.style.display='none';
+    this.textContent='⚠ Землетрясения';
+    clearLayer(quakeMarkers);
+    if(quakesInterval){clearInterval(quakesInterval);quakesInterval=null;}
+  }
+});
+
+document.querySelectorAll('#quake-tiers .qt').forEach(b=>{
+  b.addEventListener('click',function(){
+    document.querySelectorAll('#quake-tiers .qt').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+    quakeMinMag=parseInt(this.getAttribute('data-mag'),10);
+    const n=renderQuakes();
+    const btn=document.getElementById('lb-quakes');
+    if(btn) btn.textContent='⚠ Землетрясения ('+n+')';
+  });
+});
+
 
 // ═══════════════════════════════════════════════════════════════════
 // LIVE EXTERNAL FEED — http://62.238.37.129:8001/events.json
