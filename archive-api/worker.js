@@ -132,7 +132,7 @@ export default {
   if (path.startsWith('/api/map/') && request.method === 'GET')
     return handleMap(request, env);
   if (path.startsWith('/api/alerts/') && request.method === 'GET')
-    return handleAlerts(request, env);
+    return handleAlertsSub(request, env);
   if (path.startsWith('/api/explainability/') && request.method === 'GET')
     return handleExplainability(request, env);
   if (path.startsWith('/api/extval/metrics') && request.method === 'GET')
@@ -4784,7 +4784,7 @@ function _filterAlert(data, access, tier) {
   return base;
 }
 
-async function handleAlerts(request, env) {
+async function handleAlertsSub(request, env) {
   const REPO   = env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
   const tier   = _resolveClientTier(request,env);
   const caps   = getTierCapabilities(tier);
@@ -6646,44 +6646,6 @@ async function handleGRDF(request, env) {
       {status:404,headers:CORS});
   }
 
-  return new Response(JSON.stringify({
-    error: 'Unknown GRDF route',
-    available: [
-      '/api/grdf/countries','/api/grdf/country/:cc','/api/grdf/rankings',
-      '/api/grdf/signals','/api/grdf/events','/api/grdf/event/:id',
-      '/api/grdf/timeline','/api/grdf/dashboard','/api/grdf/explain/:cc',
-      '/api/grdf/cascades','/api/grdf/correlations','/api/grdf/warnings',
-      '/api/grdf/drivers/:cc','/api/grdf/graph/:cc','/api/grdf/emerging',
-      '/api/grdf/global-feed','/api/grdf/v2/dashboard',
-      '/api/grdf/forecast/:cc','/api/grdf/forecast/global',
-      '/api/grdf/scenarios/:cc','/api/grdf/trends/:cc','/api/grdf/v3/dashboard',
-      '/api/grdf/simulate','/api/grdf/shock/:type',
-      '/api/grdf/stress-test/:cc','/api/grdf/resilience/:cc',
-      '/api/grdf/system-graph','/api/grdf/outcomes/:cc',
-      '/api/grdf/strategic-outlook','/api/grdf/v4/dashboard',
-      '/api/grdf/signals/:cc','/api/grdf/triggers/:cc',
-      '/api/grdf/transitions/:cc','/api/grdf/bifurcations/:cc',
-      '/api/grdf/intelligence/:cc','/api/grdf/global-outlook',
-      '/api/grdf/v5/dashboard',
-      '/api/grdf/digital-twin/:cc','/api/grdf/montecarlo/:cc',
-      '/api/grdf/cascade-map','/api/grdf/global-network',
-      '/api/grdf/bifurcations','/api/grdf/system-shocks',
-      '/api/grdf/global-risk-map','/api/grdf/v6/dashboard',
-      '/api/grdf/warnings/:cc','/api/grdf/time-to-event/:cc',
-      '/api/grdf/escalation/:cc','/api/grdf/alerts/:cc',
-      '/api/grdf/probability/:cc','/api/grdf/global-alert-network',
-      '/api/grdf/top-risks','/api/grdf/v7/dashboard',
-      '/api/grdf/decisions/:cc','/api/grdf/playbook/:cc',
-      '/api/grdf/counterfactual/:cc','/api/grdf/policy-impact/:cc',
-      '/api/grdf/mitigation/:cc','/api/grdf/decision-confidence/:cc',
-      '/api/grdf/top-decisions','/api/grdf/global-decision-atlas',
-      '/api/grdf/v8/dashboard',
-      '/api/grdf/autonomous-priorities/:cc','/api/grdf/resource-allocation/:cc',
-      '/api/grdf/multi-risk-plan/:cc','/api/grdf/dynamic-playbook/:cc',
-      '/api/grdf/active-scenario/:cc','/api/grdf/coordination/:cc',
-      '/api/grdf/autonomous-confidence/:cc','/api/grdf/global-action-atlas',
-      '/api/grdf/v9/dashboard',
-
   // =========================================================================
   // GRDF V11 -- Autonomous Sovereign Network API
   // All V11 routes under /api/grdf/v11/
@@ -6835,10 +6797,6 @@ async function handleGRDF(request, env) {
       {status:404,headers:CORS11});
   }
 
-      '/api/grdf/v10/dashboard','/api/grdf/v10/missions','/api/grdf/v10/alerts',
-      '/api/grdf/v10/agents','/api/grdf/v10/knowledge-graph','/api/grdf/v10/memory',
-      '/api/grdf/v10/coordination','/api/grdf/v10/action-atlas','/api/grdf/v10/operations',
-
   if (seg[0] === 'v12') {
     const v12seg = seg[1] || 'dashboard';
     const C12 = {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'};
@@ -6877,11 +6835,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:C12});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:C12});}
   }
-
-      '/api/grdf/v11/dashboard','/api/grdf/v11/network','/api/grdf/v11/dependencies',
-      '/api/grdf/v11/cascades','/api/grdf/v11/resources','/api/grdf/v11/missions',
-      '/api/grdf/v11/coordination','/api/grdf/v11/learning','/api/grdf/v11/governance',
-      '/api/grdf/v11/planetary-alerts',
 
   // =========================================================================
   // GRDF V13 -- Civilization Intelligence System API
@@ -6922,13 +6875,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:C13});}
   }
 
-      '/api/grdf/v12/dashboard','/api/grdf/v12/planetary-twin','/api/grdf/v12/earth-systems',
-      '/api/grdf/v12/global-flows','/api/grdf/v12/planetary-stress','/api/grdf/v12/resilience',
-      '/api/grdf/v12/scenarios','/api/grdf/v12/civilization-stability',
-      '/api/grdf/v12/coordination','/api/grdf/v12/planetary-alerts',
-      '/api/grdf/v13/dashboard','/api/grdf/v13/civilization-state','/api/grdf/v13/long-horizon',
-      '/api/grdf/v13/resource-limits','/api/grdf/v13/technology-transitions',
-
   // =========================================================================
   // GRDF PLATFORM HARDENING PROGRAM V1 API
   // All routes under /api/grdf/hardening/
@@ -6968,10 +6914,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:CH});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CH});}
   }
-
-      '/api/grdf/v13/demographics','/api/grdf/v13/resilience','/api/grdf/v13/pathways',
-      '/api/grdf/v13/transitions','/api/grdf/v13/scenarios',
-      '/api/grdf/hardening/certification','/api/grdf/hardening/formula-audit',
 
   // =========================================================================
   // GRDF PRODUCTION READINESS PROGRAM V1 API
@@ -7015,14 +6957,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CP});}
   }
 
-      '/api/grdf/hardening/dependency-graph','/api/grdf/hardening/explainability',
-      '/api/grdf/hardening/correlation-audit','/api/grdf/hardening/forecast-audit',
-      '/api/grdf/hardening/data-quality','/api/grdf/hardening/api-audit',
-      '/api/grdf/hardening/storage-audit','/api/grdf/hardening/performance',
-      '/api/grdf/production/certification','/api/grdf/production/connectors',
-      '/api/grdf/production/freshness','/api/grdf/production/latency',
-      '/api/grdf/production/backtesting','/api/grdf/production/alert-validation',
-
   // =========================================================================
   // GRDF FINAL SOVEREIGN CERTIFICATION AUDIT API
   // All routes under /api/grdf/final/
@@ -7065,10 +6999,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CF});}
   }
 
-      '/api/grdf/production/dashboard','/api/grdf/production/security',
-      '/api/grdf/production/reliability',
-      '/api/grdf/final/certification','/api/grdf/final/sovereign-grade',
-
   // =========================================================================
   // GRDF PLATFORM TECHNICAL BASELINE V1 API
   // All routes under /api/grdf/baseline/
@@ -7108,15 +7038,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:CB});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CB});}
   }
-
-      '/api/grdf/final/architecture-review','/api/grdf/final/formula-registry',
-      '/api/grdf/final/data-lineage','/api/grdf/final/layer-audit',
-      '/api/grdf/final/api-certification','/api/grdf/final/dashboard-certification',
-      '/api/grdf/final/production-verification','/api/grdf/final/gap-analysis',
-      '/api/grdf/baseline/v1-0','/api/grdf/baseline/architecture',
-      '/api/grdf/baseline/formulas','/api/grdf/baseline/storage',
-      '/api/grdf/baseline/api-registry','/api/grdf/baseline/dashboards',
-      '/api/grdf/baseline/dependency-graph','/api/grdf/baseline/data-sources',
 
   // =========================================================================
   // GRDF CHANGE CONTROL SYSTEM V1 API
@@ -7160,12 +7081,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CC});}
   }
 
-      '/api/grdf/baseline/certification','/api/grdf/baseline/platform-specification',
-      '/api/grdf/change-control/dashboard','/api/grdf/change-control/requests',
-      '/api/grdf/change-control/impact-analysis','/api/grdf/change-control/compatibility',
-      '/api/grdf/change-control/diff','/api/grdf/change-control/risk',
-      '/api/grdf/change-control/certification-requirements',
-
   // =========================================================================
   // GRDF HISTORICAL VALIDATION PROGRAM V2 API
   // All routes under /api/grdf/historical/
@@ -7207,13 +7122,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:CH});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CH});}
   }
-
-      '/api/grdf/change-control/version-registry','/api/grdf/change-control/release-registry',
-      '/api/grdf/change-control/council-report',
-      '/api/grdf/historical/certification','/api/grdf/historical/scorecard',
-      '/api/grdf/historical/events','/api/grdf/historical/replay',
-      '/api/grdf/historical/detection','/api/grdf/historical/lead-time',
-      '/api/grdf/historical/forecast-accuracy','/api/grdf/historical/alert-accuracy',
 
   // =========================================================================
   // GRDF LIVE OPERATIONS PROGRAM V1 API
@@ -7257,12 +7165,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:CL});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CL});}
   }
-
-      '/api/grdf/historical/scenario-validation','/api/grdf/historical/decision-validation',
-      '/api/grdf/live/dashboard','/api/grdf/live/operational-health',
-      '/api/grdf/live/signal-registry','/api/grdf/live/event-tracking',
-      '/api/grdf/live/warning-metrics','/api/grdf/live/forecast-metrics',
-      '/api/grdf/live/alert-metrics','/api/grdf/live/usage-metrics',
 
   // =========================================================================
   // GRDF REAL-WORLD ACCURACY PROGRAM V1 API
@@ -7311,11 +7213,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CA});}
   }
 
-      '/api/grdf/live/source-reliability','/api/grdf/live/weekly-review',
-      '/api/grdf/accuracy/dashboard','/api/grdf/accuracy/scorecard',
-      '/api/grdf/accuracy/metrics','/api/grdf/accuracy/predictions',
-      '/api/grdf/accuracy/outcomes','/api/grdf/accuracy/matching',
-
   // =========================================================================
   // GRDF MODEL IMPROVEMENT PROGRAM V1 API
   // All routes under /api/grdf/improvement/
@@ -7360,13 +7257,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CM});}
   }
 
-      '/api/grdf/accuracy/horizons','/api/grdf/accuracy/calibration',
-      '/api/grdf/accuracy/domains','/api/grdf/accuracy/countries',
-      '/api/grdf/improvement/dashboard','/api/grdf/improvement/feedback',
-      '/api/grdf/improvement/errors','/api/grdf/improvement/calibration',
-      '/api/grdf/improvement/thresholds','/api/grdf/improvement/domains',
-      '/api/grdf/improvement/countries','/api/grdf/improvement/opportunities',
-
   // =========================================================================
   // GRDF PLATFORM GOVERNANCE PROGRAM V1 API
   // All routes under /api/grdf/governance/
@@ -7409,11 +7299,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:CG});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CG});}
   }
-
-      '/api/grdf/improvement/learning-score','/api/grdf/improvement/roadmap',
-      '/api/grdf/governance/dashboard','/api/grdf/governance/kpis',
-      '/api/grdf/governance/score','/api/grdf/governance/roadmap',
-      '/api/grdf/governance/reports','/api/grdf/governance/risk-register',
 
   // =========================================================================
   // GRDF OPERATIONS EXCELLENCE PROGRAM V1 API
@@ -7458,12 +7343,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CO});}
   }
 
-      '/api/grdf/governance/technical-debt','/api/grdf/governance/certification',
-      '/api/grdf/governance/lifecycle','/api/grdf/governance/quarterly',
-      '/api/grdf/operations/dashboard','/api/grdf/operations/service-levels',
-      '/api/grdf/operations/reliability','/api/grdf/operations/incidents',
-      '/api/grdf/operations/metrics','/api/grdf/operations/capacity',
-
   // =========================================================================
   // GRDF IMPACT & ADOPTION PROGRAM V1 API
   // All routes under /api/grdf/impact/
@@ -7505,12 +7384,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:CI});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CI});}
   }
-
-      '/api/grdf/operations/score','/api/grdf/operations/certification',
-      '/api/grdf/operations/risks','/api/grdf/operations/optimization',
-      '/api/grdf/impact/dashboard','/api/grdf/impact/score',
-      '/api/grdf/impact/adoption','/api/grdf/impact/users',
-      '/api/grdf/impact/segments','/api/grdf/impact/forecast',
 
   // =========================================================================
   // GRDF SUSTAINABILITY & REVENUE PROGRAM V1 API
@@ -7554,13 +7427,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CS});}
   }
 
-      '/api/grdf/impact/certification','/api/grdf/impact/roadmap',
-      '/api/grdf/impact/consumption','/api/grdf/impact/value',
-      '/api/grdf/sustainability/dashboard','/api/grdf/sustainability/score',
-      '/api/grdf/sustainability/revenue','/api/grdf/sustainability/customers',
-      '/api/grdf/sustainability/subscriptions','/api/grdf/sustainability/unit-economics',
-      '/api/grdf/sustainability/growth','/api/grdf/sustainability/enterprise',
-
   // =========================================================================
   // GRDF STRATEGIC COMMAND CENTER V1 API
   // All routes under /api/grdf/command/
@@ -7603,11 +7469,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify(r),{headers:CC2});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CC2});}
   }
-
-      '/api/grdf/sustainability/certification','/api/grdf/sustainability/roadmap',
-      '/api/grdf/command/dashboard','/api/grdf/command/health',
-      '/api/grdf/command/kpis','/api/grdf/command/risks',
-      '/api/grdf/command/opportunities','/api/grdf/command/decisions',
 
   // =========================================================================
   // GRDF ALERT MAP V2 — REAL-TIME INTELLIGENCE WORKSPACE API
@@ -7653,12 +7514,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CAM});}
   }
 
-      '/api/grdf/command/roadmap','/api/grdf/command/certification',
-      '/api/grdf/command/status','/api/grdf/command/report',
-      '/api/grdf/alert-map/workspace','/api/grdf/alert-map/filters',
-      '/api/grdf/alert-map/clusters','/api/grdf/alert-map/timeline',
-      '/api/grdf/alert-map/events','/api/grdf/alert-map/layers',
-
   // =========================================================================
   // GRDF INTELLIGENCE FEED ENGINE V1 API
   // All routes under /api/grdf/feed/
@@ -7703,13 +7558,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CF});}
   }
 
-      '/api/grdf/alert-map/country-panel','/api/grdf/alert-map/mobile',
-      '/api/grdf/alert-map/activity','/api/grdf/alert-map/certification',
-      '/api/grdf/feed/dashboard','/api/grdf/feed/sources',
-      '/api/grdf/feed/quality','/api/grdf/feed/pipeline',
-      '/api/grdf/feed/alerts','/api/grdf/feed/analytics',
-      '/api/grdf/feed/health','/api/grdf/feed/certification',
-
   // =========================================================================
   // GRDF EARLY WARNING SYSTEM V1 API — PREDICTIVE RISK ESCALATION ENGINE
   // All routes under /api/grdf/ews/
@@ -7752,10 +7600,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CE});}
   }
 
-      '/api/grdf/feed/normalization','/api/grdf/feed/attribution',
-      '/api/grdf/ews/dashboard','/api/grdf/ews/score',
-      '/api/grdf/ews/forecast','/api/grdf/ews/warnings',
-
   // =========================================================================
   // GRDF COMMERCIAL ARCHITECTURE V1
   // FREE → SIGNAL PRO → STRATEGIC PRO → ELITE INTELLIGENCE
@@ -7780,10 +7624,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify({...d,tier}),{headers:CCOM});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CCOM});}
   }
-
-      '/api/grdf/ews/certification','/api/grdf/ews/countries',
-      '/api/grdf/ews/scenarios','/api/grdf/ews/momentum',
-      '/api/grdf/ews/history','/api/grdf/ews/cross-domain',
 
   // =========================================================================
   // GRDF MOBILE UX AUDIT V1 API
@@ -7815,13 +7655,6 @@ async function handleGRDF(request, env) {
       return new Response(JSON.stringify({...d,tier}),{headers:CMX});
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CMX});}
   }
-
-      '/api/grdf/commercial/architecture','/api/grdf/commercial/tiers',
-      '/api/grdf/commercial/archive','/api/grdf/commercial/audit',
-      '/api/grdf/mobile/audit','/api/grdf/mobile/layout',
-      '/api/grdf/mobile/status-bar','/api/grdf/mobile/filters',
-      '/api/grdf/mobile/navigation','/api/grdf/mobile/drawer',
-      '/api/grdf/mobile/country-panel','/api/grdf/mobile/tiers',
 
   if (seg[0] === 'country' && seg[1]) {
     const cc = seg[1].toUpperCase();
@@ -7868,12 +7701,6 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CCI});}
   }
 
-      '/api/grdf/mobile/accuracy','/api/grdf/mobile/conversion',
-      '/api/grdf/country/:cc/overview','/api/grdf/country/:cc/drivers',
-      '/api/grdf/country/:cc/forecasts','/api/grdf/country/:cc/signals',
-      '/api/grdf/country/:cc/warnings','/api/grdf/country/:cc/escalation',
-      '/api/grdf/country/:cc/matrix','/api/grdf/country/:cc/mobile',
-
   // =========================================================================
   // GRDF LAUNCH SPRINT V1 API — Launch Readiness & Sprint Tracking
   // Routes under /api/grdf/launch/
@@ -7906,10 +7733,114 @@ async function handleGRDF(request, env) {
     } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CLS});}
   }
 
-      '/api/grdf/country/:cc/commercial','/api/grdf/country/:cc/conversion',
-      '/api/grdf/launch/sprint','/api/grdf/launch/readiness',
-      '/api/grdf/launch/journey','/api/grdf/launch/api',
-      '/api/grdf/launch/commercial',
+
+  // Неизвестный GRDF-маршрут
+  return new Response(JSON.stringify({
+    error: 'Unknown GRDF route',
+    available: [
+      '/api/grdf/countries','/api/grdf/country/:cc','/api/grdf/rankings',
+      '/api/grdf/signals','/api/grdf/events','/api/grdf/event/:id',
+      '/api/grdf/timeline','/api/grdf/dashboard','/api/grdf/explain/:cc',
+      '/api/grdf/cascades','/api/grdf/correlations','/api/grdf/warnings',
+      '/api/grdf/drivers/:cc','/api/grdf/graph/:cc','/api/grdf/emerging',
+      '/api/grdf/global-feed','/api/grdf/v2/dashboard','/api/grdf/forecast/:cc',
+      '/api/grdf/forecast/global','/api/grdf/scenarios/:cc','/api/grdf/trends/:cc',
+      '/api/grdf/v3/dashboard','/api/grdf/simulate','/api/grdf/shock/:type',
+      '/api/grdf/stress-test/:cc','/api/grdf/resilience/:cc','/api/grdf/system-graph',
+      '/api/grdf/outcomes/:cc','/api/grdf/strategic-outlook','/api/grdf/v4/dashboard',
+      '/api/grdf/signals/:cc','/api/grdf/triggers/:cc','/api/grdf/transitions/:cc',
+      '/api/grdf/bifurcations/:cc','/api/grdf/intelligence/:cc','/api/grdf/global-outlook',
+      '/api/grdf/v5/dashboard','/api/grdf/digital-twin/:cc','/api/grdf/montecarlo/:cc',
+      '/api/grdf/cascade-map','/api/grdf/global-network','/api/grdf/bifurcations',
+      '/api/grdf/system-shocks','/api/grdf/global-risk-map','/api/grdf/v6/dashboard',
+      '/api/grdf/warnings/:cc','/api/grdf/time-to-event/:cc','/api/grdf/escalation/:cc',
+      '/api/grdf/alerts/:cc','/api/grdf/probability/:cc','/api/grdf/global-alert-network',
+      '/api/grdf/top-risks','/api/grdf/v7/dashboard','/api/grdf/decisions/:cc',
+      '/api/grdf/playbook/:cc','/api/grdf/counterfactual/:cc','/api/grdf/policy-impact/:cc',
+      '/api/grdf/mitigation/:cc','/api/grdf/decision-confidence/:cc','/api/grdf/top-decisions',
+      '/api/grdf/global-decision-atlas','/api/grdf/v8/dashboard','/api/grdf/autonomous-priorities/:cc',
+      '/api/grdf/resource-allocation/:cc','/api/grdf/multi-risk-plan/:cc','/api/grdf/dynamic-playbook/:cc',
+      '/api/grdf/active-scenario/:cc','/api/grdf/coordination/:cc','/api/grdf/autonomous-confidence/:cc',
+      '/api/grdf/global-action-atlas','/api/grdf/v9/dashboard','/api/grdf/v10/dashboard',
+      '/api/grdf/v10/missions','/api/grdf/v10/alerts','/api/grdf/v10/agents',
+      '/api/grdf/v10/knowledge-graph','/api/grdf/v10/memory','/api/grdf/v10/coordination',
+      '/api/grdf/v10/action-atlas','/api/grdf/v10/operations','/api/grdf/v11/dashboard',
+      '/api/grdf/v11/network','/api/grdf/v11/dependencies','/api/grdf/v11/cascades',
+      '/api/grdf/v11/resources','/api/grdf/v11/missions','/api/grdf/v11/coordination',
+      '/api/grdf/v11/learning','/api/grdf/v11/governance','/api/grdf/v11/planetary-alerts',
+      '/api/grdf/v12/dashboard','/api/grdf/v12/planetary-twin','/api/grdf/v12/earth-systems',
+      '/api/grdf/v12/global-flows','/api/grdf/v12/planetary-stress','/api/grdf/v12/resilience',
+      '/api/grdf/v12/scenarios','/api/grdf/v12/civilization-stability','/api/grdf/v12/coordination',
+      '/api/grdf/v12/planetary-alerts','/api/grdf/v13/dashboard','/api/grdf/v13/civilization-state',
+      '/api/grdf/v13/long-horizon','/api/grdf/v13/resource-limits','/api/grdf/v13/technology-transitions',
+      '/api/grdf/v13/demographics','/api/grdf/v13/resilience','/api/grdf/v13/pathways',
+      '/api/grdf/v13/transitions','/api/grdf/v13/scenarios','/api/grdf/hardening/certification',
+      '/api/grdf/hardening/formula-audit','/api/grdf/hardening/dependency-graph','/api/grdf/hardening/explainability',
+      '/api/grdf/hardening/correlation-audit','/api/grdf/hardening/forecast-audit','/api/grdf/hardening/data-quality',
+      '/api/grdf/hardening/api-audit','/api/grdf/hardening/storage-audit','/api/grdf/hardening/performance',
+      '/api/grdf/production/certification','/api/grdf/production/connectors','/api/grdf/production/freshness',
+      '/api/grdf/production/latency','/api/grdf/production/backtesting','/api/grdf/production/alert-validation',
+      '/api/grdf/production/dashboard','/api/grdf/production/security','/api/grdf/production/reliability',
+      '/api/grdf/final/certification','/api/grdf/final/sovereign-grade','/api/grdf/final/architecture-review',
+      '/api/grdf/final/formula-registry','/api/grdf/final/data-lineage','/api/grdf/final/layer-audit',
+      '/api/grdf/final/api-certification','/api/grdf/final/dashboard-certification','/api/grdf/final/production-verification',
+      '/api/grdf/final/gap-analysis','/api/grdf/baseline/v1-0','/api/grdf/baseline/architecture',
+      '/api/grdf/baseline/formulas','/api/grdf/baseline/storage','/api/grdf/baseline/api-registry',
+      '/api/grdf/baseline/dashboards','/api/grdf/baseline/dependency-graph','/api/grdf/baseline/data-sources',
+      '/api/grdf/baseline/certification','/api/grdf/baseline/platform-specification','/api/grdf/change-control/dashboard',
+      '/api/grdf/change-control/requests','/api/grdf/change-control/impact-analysis','/api/grdf/change-control/compatibility',
+      '/api/grdf/change-control/diff','/api/grdf/change-control/risk','/api/grdf/change-control/certification-requirements',
+      '/api/grdf/change-control/version-registry','/api/grdf/change-control/release-registry','/api/grdf/change-control/council-report',
+      '/api/grdf/historical/certification','/api/grdf/historical/scorecard','/api/grdf/historical/events',
+      '/api/grdf/historical/replay','/api/grdf/historical/detection','/api/grdf/historical/lead-time',
+      '/api/grdf/historical/forecast-accuracy','/api/grdf/historical/alert-accuracy','/api/grdf/historical/scenario-validation',
+      '/api/grdf/historical/decision-validation','/api/grdf/live/dashboard','/api/grdf/live/operational-health',
+      '/api/grdf/live/signal-registry','/api/grdf/live/event-tracking','/api/grdf/live/warning-metrics',
+      '/api/grdf/live/forecast-metrics','/api/grdf/live/alert-metrics','/api/grdf/live/usage-metrics',
+      '/api/grdf/live/source-reliability','/api/grdf/live/weekly-review','/api/grdf/accuracy/dashboard',
+      '/api/grdf/accuracy/scorecard','/api/grdf/accuracy/metrics','/api/grdf/accuracy/predictions',
+      '/api/grdf/accuracy/outcomes','/api/grdf/accuracy/matching','/api/grdf/accuracy/horizons',
+      '/api/grdf/accuracy/calibration','/api/grdf/accuracy/domains','/api/grdf/accuracy/countries',
+      '/api/grdf/improvement/dashboard','/api/grdf/improvement/feedback','/api/grdf/improvement/errors',
+      '/api/grdf/improvement/calibration','/api/grdf/improvement/thresholds','/api/grdf/improvement/domains',
+      '/api/grdf/improvement/countries','/api/grdf/improvement/opportunities','/api/grdf/improvement/learning-score',
+      '/api/grdf/improvement/roadmap','/api/grdf/governance/dashboard','/api/grdf/governance/kpis',
+      '/api/grdf/governance/score','/api/grdf/governance/roadmap','/api/grdf/governance/reports',
+      '/api/grdf/governance/risk-register','/api/grdf/governance/technical-debt','/api/grdf/governance/certification',
+      '/api/grdf/governance/lifecycle','/api/grdf/governance/quarterly','/api/grdf/operations/dashboard',
+      '/api/grdf/operations/service-levels','/api/grdf/operations/reliability','/api/grdf/operations/incidents',
+      '/api/grdf/operations/metrics','/api/grdf/operations/capacity','/api/grdf/operations/score',
+      '/api/grdf/operations/certification','/api/grdf/operations/risks','/api/grdf/operations/optimization',
+      '/api/grdf/impact/dashboard','/api/grdf/impact/score','/api/grdf/impact/adoption',
+      '/api/grdf/impact/users','/api/grdf/impact/segments','/api/grdf/impact/forecast',
+      '/api/grdf/impact/certification','/api/grdf/impact/roadmap','/api/grdf/impact/consumption',
+      '/api/grdf/impact/value','/api/grdf/sustainability/dashboard','/api/grdf/sustainability/score',
+      '/api/grdf/sustainability/revenue','/api/grdf/sustainability/customers','/api/grdf/sustainability/subscriptions',
+      '/api/grdf/sustainability/unit-economics','/api/grdf/sustainability/growth','/api/grdf/sustainability/enterprise',
+      '/api/grdf/sustainability/certification','/api/grdf/sustainability/roadmap','/api/grdf/command/dashboard',
+      '/api/grdf/command/health','/api/grdf/command/kpis','/api/grdf/command/risks',
+      '/api/grdf/command/opportunities','/api/grdf/command/decisions','/api/grdf/command/roadmap',
+      '/api/grdf/command/certification','/api/grdf/command/status','/api/grdf/command/report',
+      '/api/grdf/alert-map/workspace','/api/grdf/alert-map/filters','/api/grdf/alert-map/clusters',
+      '/api/grdf/alert-map/timeline','/api/grdf/alert-map/events','/api/grdf/alert-map/layers',
+      '/api/grdf/alert-map/country-panel','/api/grdf/alert-map/mobile','/api/grdf/alert-map/activity',
+      '/api/grdf/alert-map/certification','/api/grdf/feed/dashboard','/api/grdf/feed/sources',
+      '/api/grdf/feed/quality','/api/grdf/feed/pipeline','/api/grdf/feed/alerts',
+      '/api/grdf/feed/analytics','/api/grdf/feed/health','/api/grdf/feed/certification',
+      '/api/grdf/feed/normalization','/api/grdf/feed/attribution','/api/grdf/ews/dashboard',
+      '/api/grdf/ews/score','/api/grdf/ews/forecast','/api/grdf/ews/warnings',
+      '/api/grdf/ews/certification','/api/grdf/ews/countries','/api/grdf/ews/scenarios',
+      '/api/grdf/ews/momentum','/api/grdf/ews/history','/api/grdf/ews/cross-domain',
+      '/api/grdf/commercial/architecture','/api/grdf/commercial/tiers','/api/grdf/commercial/archive',
+      '/api/grdf/commercial/audit','/api/grdf/mobile/audit','/api/grdf/mobile/layout',
+      '/api/grdf/mobile/status-bar','/api/grdf/mobile/filters','/api/grdf/mobile/navigation',
+      '/api/grdf/mobile/drawer','/api/grdf/mobile/country-panel','/api/grdf/mobile/tiers',
+      '/api/grdf/mobile/accuracy','/api/grdf/mobile/conversion','/api/grdf/country/:cc/overview',
+      '/api/grdf/country/:cc/drivers','/api/grdf/country/:cc/forecasts','/api/grdf/country/:cc/signals',
+      '/api/grdf/country/:cc/warnings','/api/grdf/country/:cc/escalation','/api/grdf/country/:cc/matrix',
+      '/api/grdf/country/:cc/mobile','/api/grdf/country/:cc/commercial','/api/grdf/country/:cc/conversion',
+      '/api/grdf/launch/sprint','/api/grdf/launch/readiness','/api/grdf/launch/journey',
+      '/api/grdf/launch/api','/api/grdf/launch/commercial'
     ]
-  }),{status:404,headers:CORS});
+  }), {status:404, headers:CORS});
 }
