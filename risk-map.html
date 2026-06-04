@@ -2564,6 +2564,53 @@ document.addEventListener('click',function(e){
 
 
 // ═══════════════════════════════════════════════════════════════════
+// ЭКСТРЕМАЛЬНАЯ ПОГОДА / ЧС — Telegram Disaster_News через Worker-прокси
+// ═══════════════════════════════════════════════════════════════════
+(function(){var s=document.createElement('style');s.textContent='.dn-card{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}.dn-text{font-size:12px;color:#E8E0D0;line-height:1.42;margin:1px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.dn-card.dn-open .dn-text{-webkit-line-clamp:unset;overflow:visible;display:block}.dn-actions{margin-top:5px}.dn-actions a{color:rgba(168,160,144,0.85);text-decoration:none;font-size:10px}';document.head.appendChild(s);})();
+
+var dnInterval=null, dnCache=[];
+function dnTime(t){ try{ return new Date(t).toISOString().replace('T',' ').slice(0,16)+' UTC'; }catch(e){ return ''; } }
+
+function renderDisaster(){
+  var box=document.getElementById('weather-list'); if(!box) return;
+  if(!dnCache.length){ box.innerHTML='<div class="qk-empty">Лента пуста.<br>Источник: Telegram · Disaster_News.</div>'; return; }
+  box.innerHTML=dnCache.map(function(it){
+    var text=qkEsc(it.text||'').replace(/\n/g,'<br>');
+    return '<div class="dn-card" onclick="window._toggleDn(this)">'+
+      '<span class="qk-dot" style="background:#FF7A1A;margin-top:6px"></span>'+
+      '<div class="qk-main">'+
+        '<div class="qk-dom" style="color:#FF7A1A">ЧС · Disaster News</div>'+
+        '<div class="dn-text">'+text+'</div>'+
+        '<div class="qk-meta"><span>'+dnTime(it.time)+'</span></div>'+
+        '<div class="dn-actions"><a href="'+it.url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">Открыть в Telegram'+SVG_EXT+'</a></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+window._toggleDn=function(el){ el.classList.toggle('dn-open'); };
+
+async function loadDisaster(){
+  var box=document.getElementById('weather-list'); if(!box) return;
+  try{
+    var r=await fetch(API_BASE+'/api/proxy/disaster-news',{cache:'no-store'});
+    if(!r.ok) throw new Error('http '+r.status);
+    var j=await r.json(); dnCache=(j&&j.items)||[]; renderDisaster();
+    console.info('[Disaster]',dnCache.length,'постов');
+  }catch(e){
+    if(!dnCache.length) box.innerHTML='<div class="qk-empty">Лента ЧС временно недоступна.<br>Источник: Telegram · Disaster_News.</div>';
+    console.warn('[Disaster]',e.message);
+  }
+}
+window._grdfDisasterEnsure=function(){
+  if(!dnInterval){ loadDisaster(); dnInterval=setInterval(loadDisaster,40000); }
+  else { renderDisaster(); }
+};
+
+// расширяем переключатель вкладок: при выборе «Погода» — поднимаем ленту
+(function(){ var _o=window.grdfAlertsTab; window.grdfAlertsTab=function(name){ if(_o) _o(name); if(name==='weather') window._grdfDisasterEnsure(); }; })();
+
+
+// ═══════════════════════════════════════════════════════════════════
 // LIVE EXTERNAL FEED — http://62.238.37.129:8001/events.json
 // Schema: [{title, category:[], date, coordinates:[lon,lat]}]
 // Normalised to internal schema: {id,title,domain,lat,lng,severity,
@@ -6892,7 +6939,7 @@ function _evM(val, lbl, col) {
     <div id="quake-list"></div>
   </div>
   <div id="ga-weather" style="display:none">
-    <div class="qk-empty">Экстремальная погода — подключается.<br>Скоро здесь появятся штормы, аномальная жара, наводнения и другие экстремальные явления в реальном времени.</div>
+    <div id="weather-list"><div class="qk-empty">Загрузка ленты ЧС…</div></div>
   </div>
 </div>
 
