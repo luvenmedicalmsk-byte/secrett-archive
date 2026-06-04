@@ -2610,6 +2610,35 @@ window._grdfDisasterEnsure=function(){
 
 
 
+
+// ═══════════════════════════════════════════════════════════════════
+// НОВОСТИ → «События»: TG-лента, классифицированная по доменам (30с)
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+  window.NEWS_EVENTS = window.NEWS_EVENTS || [];
+  function _newsToEv(items){
+    return items.map(function(it){
+      var fl=(it.text||'').split('\n')[0].trim();
+      if(fl.length>140) fl=fl.slice(0,140)+'…';
+      if(!fl) fl=(it.text||'').slice(0,140);
+      return { domain: it.domain||'geopolitics', title: fl, region: it.source||'', date: it.time||'', severity:'', _news:true };
+    });
+  }
+  async function _loadNewsEv(){
+    try{
+      var r=await fetch(API_BASE+'/api/proxy/news-feed',{cache:'no-store'});
+      if(!r.ok) return;
+      var j=await r.json();
+      window.NEWS_EVENTS=_newsToEv((j&&j.items)||[]);
+      var sc=document.getElementById('grdf-signals-screen');
+      if(sc && sc.classList.contains('visible') && (sc.scrollTop||0)<200){
+        var p=document.querySelector('#grdf-sig-filters .grdf-sig-pill.active'); if(p) p.click();
+      }
+    }catch(e){}
+  }
+  setTimeout(function(){ _loadNewsEv(); setInterval(_loadNewsEv,30000); }, 1500);
+})();
+
 // ═══════════════════════════════════════════════════════════════════
 // LIVE EXTERNAL FEED — http://62.238.37.129:8001/events.json
 // Schema: [{title, category:[], date, coordinates:[lon,lat]}]
@@ -7725,7 +7754,8 @@ function grdfRenderSignals(dom){
   var feed = document.getElementById('grdf-sig-feed');
   var cnt  = document.getElementById('grdf-sig-count');
   if(!feed) return;
-  var src = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS) ? ALL_EVENTS : [];
+  var src = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS) ? ALL_EVENTS.slice() : [];
+  if(typeof NEWS_EVENTS!=='undefined' && NEWS_EVENTS && NEWS_EVENTS.length) src = src.concat(NEWS_EVENTS);
   var items = (dom==='all') ? src.slice() : src.filter(function(e){ return e.domain===dom; });
   items.sort(function(a,b){ var dd=String(b.date||'').localeCompare(String(a.date||'')); return dd!==0?dd:((b.severity||0)-(a.severity||0)); });
   if(cnt){ var n=items.length,m10=n%10,m100=n%100,w=(m10===1&&m100!==11)?'событие':((m10>=2&&m10<=4&&(m100<10||m100>=20))?'события':'событий'); cnt.textContent=n+' '+w; }
@@ -7737,7 +7767,7 @@ function grdfRenderSignals(dom){
   var html='';
   items.slice(0,200).forEach(function(ev){
     var col = DCx[ev.domain]||'#B8973A';
-    var sev = ev.severity||0;
+    var sev = ev._news ? '' : (ev.severity||0);
     html += '<div class="grdf-sig-card">'
       + '<span class="sig-dot" style="background:'+col+'"></span>'
       + '<div class="sig-main">'
