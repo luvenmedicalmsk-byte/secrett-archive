@@ -370,8 +370,12 @@ def detect_domain(title, desc):
     """Определяет домен по ключевым словам WEF-методологии с учётом исключений"""
     text = (title + ' ' + desc).lower()
     def _hit(kw):
-        # S36.4: сопоставление по границам слов (чтобы 'war' не ловился в 'warns'/'warming')
-        return re.search(r'\b' + re.escape(kw.lower()) + r'\b', text) is not None
+        # S36.4: латиница -- по границам слов ('war' не ловится в 'warns'/'warming');
+        # кириллица -- по подстроке (стемминг: 'удар' матчит 'удары'/'ударов')
+        kw = kw.lower()
+        if re.search(r'[a-z]', kw):
+            return re.search(r'\b' + re.escape(kw) + r'\b', text) is not None
+        return kw in text
     scores = {}
     for domain, rule in DOMAIN_RULES.items():
         # Считаем попадания по ключевым словам
@@ -475,9 +479,15 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
     потолки: аналитика ≤65, подтверждённый ущерб ≤75, с учётом source_weight."""
     text = (title + ' ' + desc).lower()
     high = ['war','killed','invasion','collapse','nuclear','explosion','coup',
-            'catastrophe','earthquake','tsunami','genocide','airstrike','famine']
+            'catastrophe','earthquake','tsunami','genocide','airstrike','famine',
+            # RU (S36.4 -- для Telegram и русскоязычных лент)
+            'война','погиб','убит','взрыв','удар','авиауд','ракетн','теракт',
+            'катастроф','землетрясен','наводнен','эвакуац','штурм']
     med = ['crisis','conflict','protest','sanctions','strike','flood','drought',
-           'recession','attack','missile','tension','displaced','emergency']
+           'recession','attack','missile','tension','displaced','emergency',
+           # RU
+           'кризис','конфликт','протест','санкци','обстрел','жертв','ранен',
+           'чрезвыч','пострадав','напряжен','столкновен','атак','боевик']
     kw_high = sum(1 for s in high if s in text)
     kw_med  = sum(1 for s in med if s in text)
     casualties = 0
