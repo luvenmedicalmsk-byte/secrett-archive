@@ -911,8 +911,8 @@ def process_events(raw_items):
             domain = item['_domain']
             severity = _severity_for(item, _gov.get('weight', 1.0))
         else:
-            # S36.4: домен ленты в приоритете, иначе по ключевым словам
-            domain = item.get('_domain') or detect_domain(item['title'], item.get('desc',''))
+            # S36.4: домен ленты в приоритете (оба ключа), иначе по ключевым словам
+            domain = item.get('_domain') or item.get('domain') or detect_domain(item['title'], item.get('desc',''))
             if not domain:
                 _LOSS['no_domain']+=1; continue
             # Сначала пробуем российские координаты
@@ -1683,6 +1683,92 @@ def fetch_social_rss():
             unique.append(it)
 
     print(f'  Социальные RSS: {len(unique)} событий', file=sys.stderr)
+    return unique
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ЭКОНОМИЧЕСКИЕ RSS -- институциональные + рынки + RU (S36.4)
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_economy_rss():
+    """IMF, World Bank, Federal Reserve, ECB, BIS, OECD, Bloomberg, WSJ + RU (РБК, Коммерсантъ)"""
+    sources = [
+        # Институциональные
+        ('https://www.imf.org/en/News/RSS?language=eng', 'IMF', 'economy'),
+        ('https://www.imf.org/en/news/rss', 'IMF', 'economy'),
+        ('https://blogs.worldbank.org/rss.xml', 'World Bank', 'economy'),
+        ('https://www.worldbank.org/en/news/all/rss', 'World Bank', 'economy'),
+        ('https://www.federalreserve.gov/feeds/press_all.xml', 'Federal Reserve', 'economy'),
+        ('https://www.ecb.europa.eu/rss/press.html', 'ECB', 'economy'),
+        ('https://www.bis.org/list/press_releases/index.rss', 'BIS', 'economy'),
+        ('https://www.oecd.org/newsroom/rss.xml', 'OECD', 'economy'),
+        # Рынки
+        ('https://feeds.bloomberg.com/markets/news.rss', 'Bloomberg Markets', 'economy'),
+        ('https://feeds.a.dj.com/rss/RSSMarketsMain.xml', 'WSJ Markets', 'economy'),
+        # RU экономика
+        ('https://www.kommersant.ru/RSS/section-economics.xml', 'Коммерсантъ', 'economy'),
+        ('https://rssexport.rbc.ru/rbcnews/economics/index.rss', 'РБК', 'economy'),
+    ]
+
+    items = []
+    seen_urls = set()
+    ua_list = [
+        {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
+        {'User-Agent': 'feedparser/6.0'},
+        {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+    ]
+
+    for url, src_name, domain in sources:
+        if url in seen_urls: continue
+        data = None
+        for hdrs in ua_list:
+            data = fetch_url(url, headers=hdrs, timeout=8)
+            if data: break
+        if not data: continue
+        seen_urls.add(url)
+        try:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(data)
+            ns = {'atom': 'http://www.w3.org/2005/Atom'}
+            for item in root.findall('.//item')[:12]:
+                title = (item.findtext('title') or '').strip()
+                desc = (item.findtext('description') or '').strip()
+                link = (item.findtext('link') or '').strip()
+                pub = item.findtext('pubDate') or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'url': link,
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+            for entry in root.findall('atom:entry', ns)[:12]:
+                title = (entry.findtext('atom:title', namespaces=ns) or '').strip()
+                desc = (entry.findtext('atom:summary', namespaces=ns) or '').strip()
+                pub = entry.findtext('atom:published', namespaces=ns) or entry.findtext('atom:updated', namespaces=ns) or ''
+                if not title: continue
+                items.append({
+                    'title': title,
+                    'desc': strip_html(desc)[:300],
+                    'date': parse_date(pub),
+                    'source': src_name,
+                    'domain': domain,
+                    'source_bias': 1,
+                })
+        except Exception as e:
+            print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
+
+    seen = set()
+    unique = []
+    for it in items:
+        key = it['title'][:50].lower()
+        if key not in seen:
+            seen.add(key)
+            unique.append(it)
+
+    print(f'  Экономические RSS: {len(unique)} событий', file=sys.stderr)
     return unique
 
 
@@ -4107,6 +4193,7 @@ if __name__ == '__main__':
         raw += fetch_acled_rss()
         raw += fetch_geopolitics_rss()
         raw += fetch_social_rss()
+        raw += fetch_economy_rss()
         raw += fetch_tech_rss()
         raw += fetch_climate_rss()
         raw += fetch_global_rss()
