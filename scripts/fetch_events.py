@@ -456,6 +456,13 @@ def parse_date(s):
 
 
 
+def _region_in(region, text):
+    """S36.6: латинские топонимы -- по границам слов ('lima' не ловится в 'climate',
+    'ural' в 'natural'); кириллические -- по подстроке (склонения: 'Росси' в 'России')."""
+    if re.search(r'[a-z]', region):
+        return re.search(r'\b' + re.escape(region) + r'\b', text) is not None
+    return region in text
+
 def detect_coords(title, desc):
     """Определяет координаты -- заголовок имеет приоритет над описанием"""
     title_low = title.lower()
@@ -467,7 +474,7 @@ def detect_coords(title, desc):
 
     best_title, best_title_len, best_title_coords = None, 0, None
     for region, coords in REGION_COORDS.items():
-        if region not in title_low: continue
+        if not _region_in(region, title_low): continue
         if len(region) <= best_title_len: continue
         idx = title_low.find(region)
         after = title_low[idx+len(region):idx+len(region)+5]
@@ -484,7 +491,7 @@ def detect_coords(title, desc):
     CONTEXT_WORDS = ['since', 'after', 'amid', 'despite', 'vs', 'against', 'from', 'invasion of', 'war in']
     best_desc, best_desc_len, best_desc_coords = None, 0, None
     for region, coords in REGION_COORDS.items():
-        if region not in desc_low: continue
+        if not _region_in(region, desc_low): continue
         if len(region) <= best_desc_len: continue
         # Проверяем не является ли упоминание контекстным
         idx = desc_low.find(region)
