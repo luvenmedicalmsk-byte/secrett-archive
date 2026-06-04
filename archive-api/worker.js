@@ -62,6 +62,7 @@ export default {
       if (path === '/api/proxy/ships') return handleProxyShips(url);
       if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
       if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews();
+      if (path === '/api/proxy/news-feed') return handleProxyNewsFeed();
 
   // ── SNAPSHOT API ──────────────────────────────────────────────────────────
   // /api/snapshot/today        → all 25 countries, current scores (FREE: no summary)
@@ -1660,6 +1661,56 @@ async function handleProxyDisasterNews() {
       status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
   }
+}
+
+
+// ── Быстрая новостная TG-лента (несколько каналов → один поток) ─────────────
+const NEWS_TG_CHANNELS = [
+  { handle: 'AJEnglishNews',   name: 'Al Jazeera' },
+  { handle: 'forbesrussia',    name: 'Forbes Russia' },
+  { handle: 'TheEconomisto',   name: 'The Economist' },
+  { handle: 'BusinessInsider', name: 'Business Insider' },
+];
+function _tgParseChannel(html, handle, name) {
+  const items = [];
+  const parts = html.split('data-post="' + handle + '/');
+  for (let k = 1; k < parts.length; k++) {
+    const seg = parts[k];
+    const idm = seg.match(/^(\d+)/); if (!idm) continue;
+    const id = parseInt(idm[1], 10);
+    const tm = seg.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    let text = tm ? tm[1] : '';
+    text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+    text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (text.length < 8) continue;
+    const dt = seg.match(/datetime="([^"]+)"/);
+    items.push({ source: name, handle, id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id });
+  }
+  return items;
+}
+async function _tgFetchChannel(handle, name) {
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 9000);
+    const r = await fetch('https://t.me/s/' + handle, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+      signal: ctrl.signal,
+      cf: { cacheTtl: 30, cacheEverything: true }
+    });
+    clearTimeout(tid);
+    if (!r.ok) return [];
+    return _tgParseChannel(await r.text(), handle, name);
+  } catch (e) { return []; }
+}
+async function handleProxyNewsFeed() {
+  const results = await Promise.all(NEWS_TG_CHANNELS.map(c => _tgFetchChannel(c.handle, c.name)));
+  let items = [].concat(...results);
+  items.forEach(it => { it._ts = it.time ? Date.parse(it.time) : 0; });
+  items.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
+  items = items.slice(0, 60).map(({ _ts, ...rest }) => rest);
+  return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), count: items.length, items }), {
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
