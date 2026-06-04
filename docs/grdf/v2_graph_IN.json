@@ -2,60 +2,60 @@
   "country": "IN",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T10:21:57.048778+00:00",
+  "generated_at": "2026-06-04T11:06:47.371152+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "down"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Rahul_Gand",
+      "type": "Signal",
+      "label": "Rahul Gandhi предупреждает о «институцио",
+      "severity": 65,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IN-BJP_отвеча",
       "type": "Signal",
-      "label": "BJP отвечает на предупреждение Рахула о ",
+      "label": "BJP отвечает на предупреждение Rahul о «",
       "severity": 57,
       "domain": "geopolitical"
     },
@@ -92,13 +99,6 @@
       "label": "По меньшей мере 21 человек погиб в пожар",
       "severity": 54,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IN-Официальны",
-      "type": "Signal",
-      "label": "Официальные лица Японии встретились с ме",
-      "severity": 47,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-IN",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-IN",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-Rahul_Gand",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
       "from": "SIGNAL-IN-BJP_отвеча",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-IN-Официальны",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
