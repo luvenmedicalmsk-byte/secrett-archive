@@ -1667,6 +1667,27 @@ async function handleProxyDisasterNews() {
 // ── Быстрая новостная TG-лента (несколько каналов → один поток) ─────────────
 // стоп-слова: посты-анонсы/реклама не попадают в ленту (легко расширять)
 const NEWS_STOPWORDS = ['обложка','#обложка','erid','промокод','розыгрыш','реклама:','#реклама','#promo'];
+// лёгкий расчёт риска новости (ключевые слова RU/EN), шкала ~35..92
+function _newsRisk(text) {
+  const t = (text || '').toLowerCase();
+  let s = 42;
+  const hit = (arr, pts) => { if (arr.some(x => t.includes(x))) s += pts; };
+  hit(['killed','погиб','убит','dead','death toll','жертв','casualt','расстрел'], 14);
+  hit(['nuclear','ядерн','radioactive','радиац','аэс','reactor'], 14);
+  hit(['war','война','войн','invasion','вторжен','offensive','наступлен'], 12);
+  hit(['attack','атак','airstrike','авиауд','missile','ракет','shelling','обстрел','bomb','взрыв','explosion'], 12);
+  hit(['default','дефолт','crash','обвал','collapse','крах','crisis','кризис','recession','рецесс'], 10);
+  hit(['sanction','санкц','embargo','эмбарго'], 8);
+  hit(['fraud','мошенн','hack','взлом','breach','утечк','cyberattack','кибератак'], 8);
+  hit(['protest','протест','riot','беспоряд','coup','перевор','unrest','волнен'], 8);
+  hit(['запрет','arrest','арест','sentenced','приговор','колони'], 6);
+  hit(['global','глобальн','worldwide','по всему миру','billion','миллиард','trillion','триллион'], 6);
+  hit(['record','рекорд','surge','скачок','plunge','spike','падени'], 4);
+  if (s > 92) s = 92;
+  if (s < 35) s = 35;
+  return Math.round(s);
+}
+
 // классификация новости по домену (ключевые слова RU/EN, затем источник-приор)
 function _newsDomain(text, source) {
   const t = (text || '').toLowerCase();
@@ -1702,7 +1723,7 @@ function _tgParseChannel(html, handle, name) {
     const _tl = text.toLowerCase();
     if (NEWS_STOPWORDS.some(s => _tl.includes(s))) continue;
     const dt = seg.match(/datetime="([^"]+)"/);
-    items.push({ source: name, handle, id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id, domain: _newsDomain(text, name) });
+    items.push({ source: name, handle, id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id, domain: _newsDomain(text, name), severity: _newsRisk(text) });
   }
   return items;
 }
