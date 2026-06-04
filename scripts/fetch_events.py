@@ -928,8 +928,8 @@ def process_events(raw_items):
             if not geo:
                 geo = detect_coords(item['title'], item.get('desc',''))
             if not geo:
-                # S36.4: эконом/социальные события не выбрасываем без гео -- глобальный маркер
-                if domain in ('economy', 'social'):
+                # S36.4: эконом/социальные и Telegram-посты не выбрасываем без гео -- глобальный маркер
+                if domain in ('economy', 'social') or str(item.get('source','')).startswith('Telegram'):
                     lat, lng, region = _global_marker(item['title']); _LOSS['global_marker']+=1
                 else:
                     _LOSS['no_geo']+=1; continue
