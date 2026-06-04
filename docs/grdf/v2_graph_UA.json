@@ -2,60 +2,60 @@
   "country": "UA",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T06:19:07.479082+00:00",
+  "generated_at": "2026-06-04T06:46:13.731908+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 51,
+      "score": 53,
       "props": {
-        "risk_score": 51
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -89,16 +89,16 @@
     {
       "id": "SIGNAL-UA-Заборы,_а_",
       "type": "Signal",
-      "label": "Заборы, а не F-35: Дроновые атаки и нело",
+      "label": "Заборы, а не F-35: атаки дронов и нелоги",
       "severity": 51,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-Украинский",
+      "id": "SIGNAL-UA-Россия:_шк",
       "type": "Signal",
-      "label": "Украинский удар убивает троих в Крыму по",
-      "severity": 48,
-      "domain": "geopolitical"
+      "label": "Россия: школы превратились в «фабрики со",
+      "severity": 51,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-UA",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-UA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-По_мере_то",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-UA-Украинский",
-      "to": "DOMAIN-UA-geopolitical",
+      "from": "SIGNAL-UA-Россия:_шк",
+      "to": "DOMAIN-UA-technology",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.51
     }
   ]
 }
