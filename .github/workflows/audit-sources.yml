@@ -1,0 +1,47 @@
+name: Аудит источников (blacklist/unstable)
+
+# Тяжёлый аудит всех фидов: опрашивает каждый источник ×PROBES, классифицирует
+# (stable / 403 / 404 / 410 / timeout / xml_error), копит историю в audit_state.json
+# и наполняет blacklist.json (DEAD min-fails прогонов подряд) + unstable.json.
+# Запускается отдельно от основного пайплайна (раз в неделю), чтобы не замедлять
+# 4-часовой ingestion -- тот лишь дёшево ЧИТАЕТ blacklist.json.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # каждый понедельник 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  audit-sources:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Клонирование репозитория
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Настройка Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Запуск аудита источников
+        working-directory: scripts
+        run: |
+          python audit_sources.py --src fetch_events.py --probes 2 --workers 24 --min-fails 3
+
+      - name: Коммит слоёв blacklist/unstable
+        run: |
+          git config user.name "audit-bot"
+          git config user.email "audit-bot@users.noreply.github.com"
+          git add scripts/blacklist.json scripts/unstable.json scripts/audit_state.json
+          if git diff --staged --quiet; then
+            echo "Изменений в слоях нет."
+          else
+            git commit -m "audit: обновление слоёв blacklist/unstable [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi
