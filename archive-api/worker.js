@@ -62,7 +62,7 @@ export default {
       if (path === '/api/proxy/ships') return handleProxyShips(url);
       if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
       if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews();
-      if (path === '/api/proxy/news-feed') return handleProxyNewsFeed();
+      if (path === '/api/proxy/news-feed') return handleProxyNewsFeed(env);
 
   // ── SNAPSHOT API ──────────────────────────────────────────────────────────
   // /api/snapshot/today        → all 25 countries, current scores (FREE: no summary)
@@ -1746,12 +1746,68 @@ async function _tgFetchChannel(handle, name) {
     return _tgParseChannel(await r.text(), handle, name);
   } catch (e) { return []; }
 }
-async function handleProxyNewsFeed() {
+// ── Русификация TG-ленты: перевод EN-постов в RU (OpenAI) + кэш по id поста ──
+const _newsTrCache = new Map();
+function _isEnglishText(t){
+  t = t || '';
+  const lat = (t.match(/[a-z]/gi) || []).length;
+  const cyr = (t.match(/[а-яё]/gi) || []).length;
+  return lat > 8 && lat > cyr * 2;
+}
+async function _translateNewsItems(items, env){
+  if (!env || !env.OPENAI_API_KEY) return;
+  const need = [];
+  for (const it of items){
+    if (!_isEnglishText(it.text)) continue;       // RU-каналы не трогаем
+    const key = 'nt:' + it.handle + '/' + it.id;
+    if (_newsTrCache.has(key)){ it.text_orig = it.text; it.text = _newsTrCache.get(key); it.translated = true; continue; }
+    it._trkey = key; need.push(it);
+  }
+  if (!need.length) return;
+  if (env.EVENTS_KV){
+    await Promise.all(need.map(async it => {
+      try { const v = await env.EVENTS_KV.get(it._trkey); if (v){ _newsTrCache.set(it._trkey, v); it.text_orig = it.text; it.text = v; it.translated = true; it._done = true; } } catch(_){}
+    }));
+  }
+  const todo = need.filter(it => !it._done).slice(0, 24);
+  if (!todo.length) return;
+  const payload = todo.map((it, i) => ({ i, t: (it.text || '').slice(0, 600) }));
+  const sys = 'Ты профессиональный переводчик новостей на русский язык. Переводи кратко, точно, естественно. Названия организаций, компаний, брендов, тикеры и имена собственные сохраняй корректно; географические названия давай по-русски, где есть устоявшийся перевод. Без комментариев. Верни СТРОГО валидный JSON: {"r":[{"i":0,"t":"перевод"},...]} в том же порядке.';
+  const usr = 'Переведи на русский:\n' + JSON.stringify(payload);
+  try {
+    const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 12000);
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + env.OPENAI_API_KEY },
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 3000, temperature: 0.2, response_format: { type: 'json_object' },
+        messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }] }),
+      signal: ctrl.signal
+    });
+    clearTimeout(tid);
+    if (!res.ok) return;
+    const data = await res.json();
+    const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (!content) return;
+    let parsed; try { parsed = JSON.parse(content); } catch(_) { return; }
+    const arr = (parsed && (parsed.r || parsed.items)) || [];
+    for (const o of arr){
+      if (!o || typeof o.i !== 'number') continue;
+      const it = todo[o.i]; if (!it || !o.t) continue;
+      it.text_orig = it.text; it.text = o.t; it.translated = true;
+      _newsTrCache.set(it._trkey, o.t);
+      if (env.EVENTS_KV){ try { await env.EVENTS_KV.put(it._trkey, o.t, { expirationTtl: 2592000 }); } catch(_){} }
+    }
+  } catch(_){}
+}
+
+async function handleProxyNewsFeed(env) {
   const results = await Promise.all(NEWS_TG_CHANNELS.map(c => _tgFetchChannel(c.handle, c.name)));
   let items = [].concat(...results);
   items.forEach(it => { it._ts = it.time ? Date.parse(it.time) : 0; });
   items.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
   items = items.slice(0, 60).map(({ _ts, ...rest }) => rest);
+  try { await _translateNewsItems(items, env); } catch(_){}
+  items = items.map(({ _trkey, _done, ...rest }) => rest);
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), count: items.length, items }), {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
   });
