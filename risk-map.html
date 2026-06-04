@@ -1736,7 +1736,7 @@ function renderMarkers() {
     const col = DC[ev.domain] || '#B8973A';
     const icon = createMarkerIcon(col, ev.severity);
     const m = L.marker([ev.lat, ev.lng], { icon });
-    m.on('click', () => showDetail(ev));
+    m.bindPopup(_evPopup(ev), {maxWidth:240});
     return m;
   });
   markers.forEach(m => markersLayer.addLayer(m));  // layerGroup uses addLayer() not addLayers()
@@ -1767,9 +1767,26 @@ function renderList() {
     const d = document.createElement('div');
     d.className = 'ei' + (selected?.id===ev.id ? ' sel' : '');
     d.innerHTML = `<div class="ei-tag" style="color:${col}"><div class="ei-dot" style="background:${col}"></div>${DL[ev.domain]||ev.domain}</div><div class="ei-title">${ev.title}</div><div class="ei-meta"><span>${ev.region}</span><span>${fd(ev.date)}</span></div><div class="ei-bar"><div class="ei-fill" style="width:${ev.severity}%;background:${sc(ev.severity)}"></div></div>`;
-    d.onclick = () => showDetail(ev);
+    d.onclick = () => { if(ev.lat&&ev.lng){ try{ map.setView([ev.lat,ev.lng], Math.max(map.getZoom()||3,4)); L.popup({maxWidth:240}).setLatLng([ev.lat,ev.lng]).setContent(_evPopup(ev)).openOn(map); }catch(_){} } };
     list.appendChild(d);
   });
+}
+
+function _evPopup(ev){
+  function e(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var col = (typeof DC!=='undefined' && DC[ev.domain]) || '#B8973A';
+  var lab = (typeof DL!=='undefined' && DL[ev.domain]) || ev.domain || '';
+  var sum = (ev.summary||'').split('|||')[0].split('|')[0].trim();
+  if(sum.length>160) sum=sum.slice(0,160)+'…';
+  var dd=''; try{ dd = ev.date ? fd(ev.date) : ''; }catch(_){}
+  var html = '<div style="min-width:190px;max-width:230px">'
+    + '<div style="font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:'+col+';margin-bottom:3px">'+e(lab)+'</div>'
+    + '<div style="font-size:12px;color:#E8E0D0;line-height:1.3;font-weight:600">'+e(ev.title)+'</div>'
+    + '<div style="font-size:9px;color:rgba(168,160,144,0.7);margin-top:4px">'+e(ev.region||'')+(dd?' · '+dd:'')+'</div>';
+  if(ev.severity!=null && ev.severity!==''){ var scl='#D4AF5A'; try{ scl=sc(ev.severity); }catch(_){}; html += '<div style="font-size:9px;color:'+scl+';margin-top:5px;letter-spacing:.06em">ИНДЕКС РИСКА '+ev.severity+'/100</div>'; }
+  if(sum) html += '<div style="font-size:10px;color:#A8A090;line-height:1.45;margin-top:5px">'+e(sum)+'</div>';
+  if(ev.source) html += '<div style="font-size:8px;color:rgba(168,160,144,0.55);margin-top:5px">Источник: '+e(ev.source)+'</div>';
+  return html + '</div>';
 }
 
 function showDetail(ev) {
