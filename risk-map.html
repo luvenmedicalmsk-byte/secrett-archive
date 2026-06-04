@@ -2466,13 +2466,13 @@ document.getElementById('lb-outages').addEventListener('click',async function(){
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// СЕЙСМО-АЛЕРТЫ (USGS GeoJSON, real-time) — вкладка в экране «Алерты»
+// СЕЙСМО-АЛЕРТЫ (USGS GeoJSON, real-time) — вкладка экрана «Алерты»
+// Окно: M4.5+ за 7 дней (чтобы M6/M7 имели данные); фильтр M5/6/7 на клиенте.
 // ═══════════════════════════════════════════════════════════════════
-const USGS_QUAKE_FEED='https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson';
-const GEOFON_TG={5:'https://t.me/geofonmag5',6:'https://t.me/geofonmag6',7:'https://t.me/geofonmag7'};
+const USGS_QUAKE_FEED='https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson';
 let quakeMarkers=[], quakesInterval=null, quakeMinMag=5, quakeCache=[];
 
-(function(){var s=document.createElement('style');s.textContent='#grdf-alerts-tabs{display:flex;padding:0 14px;border-bottom:0.5px solid rgba(184,151,58,0.15);margin-bottom:4px}#grdf-alerts-tabs .ga-tab{flex:1;padding:11px 6px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(168,160,144,0.6);font-family:Montserrat,sans-serif;font-size:12px;letter-spacing:.02em;cursor:pointer}#grdf-alerts-tabs .ga-tab.active{color:#D4AF5A;border-bottom-color:#D4AF5A}#quake-tiers{display:flex;gap:6px;padding:10px 14px}#quake-tiers .qt{padding:5px 12px;background:rgba(6,5,10,0.9);border:0.5px solid rgba(184,151,58,0.25);color:rgba(168,160,144,0.85);font-family:Montserrat,sans-serif;font-size:12px;cursor:pointer;border-radius:4px}#quake-tiers .qt.active{border-color:#D4AF5A;color:#D4AF5A;background:rgba(184,151,58,0.12)}#quake-list{padding:0 14px 24px}.qk-card{padding:12px 4px;border-bottom:0.5px solid rgba(255,255,255,0.06);cursor:pointer}.qk-top{display:flex;align-items:baseline;gap:8px}.qk-mag{font-family:Montserrat,sans-serif;font-weight:700;font-size:15px;flex-shrink:0}.qk-place{color:#E8E0D0;font-size:13px;line-height:1.3}.qk-sub{color:#7d7563;font-size:11px;margin-top:4px}.qk-detail{margin-top:8px;font-size:12px;color:#A8A090;line-height:1.55;display:none}.qk-detail a{color:#1FAACC;text-decoration:none}.qk-detail a.tg{color:#D4AF5A}.qk-empty{color:#7d7563;font-size:12px;padding:28px 14px;text-align:center;line-height:1.6}@media(max-width:768px){#grdf-filter-fab{display:none!important}#list-btn{display:none!important}}@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}';document.head.appendChild(s);})();
+(function(){var s=document.createElement('style');s.textContent='#grdf-alerts-tabs{display:flex;padding:0 14px;border-bottom:0.5px solid rgba(184,151,58,0.15);margin-bottom:4px}#grdf-alerts-tabs .ga-tab{flex:1;padding:11px 6px;background:none;border:none;border-bottom:2px solid transparent;color:rgba(168,160,144,0.6);font-family:Montserrat,sans-serif;font-size:12px;letter-spacing:.02em;cursor:pointer}#grdf-alerts-tabs .ga-tab.active{color:#D4AF5A;border-bottom-color:#D4AF5A}#quake-tiers{display:flex;gap:6px;padding:10px 14px}#quake-tiers .qt{padding:5px 12px;background:rgba(6,5,10,0.9);border:0.5px solid rgba(184,151,58,0.25);color:rgba(168,160,144,0.85);font-family:Montserrat,sans-serif;font-size:12px;cursor:pointer;border-radius:4px}#quake-tiers .qt.active{border-color:#D4AF5A;color:#D4AF5A;background:rgba(184,151,58,0.12)}#quake-list{padding:0 0 24px}.qk-card{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}.qk-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}.qk-main{flex:1;min-width:0}.qk-dom{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:2px}.qk-title{font-size:12px;color:#E8E0D0;line-height:1.3;margin-bottom:3px}.qk-meta{font-size:9px;color:rgba(168,160,144,0.5);display:flex;gap:8px;flex-wrap:wrap}.qk-sev{font-family:"Cormorant Garamond",serif;font-size:18px;line-height:1;flex-shrink:0;align-self:center}.qk-detail{margin-top:7px;font-size:10px;color:rgba(168,160,144,0.7);line-height:1.55;display:none}.qk-detail a{color:#1FAACC;text-decoration:none}.qk-empty{color:#7d7563;font-size:11px;padding:28px 14px;text-align:center;line-height:1.6}@media(max-width:768px){#grdf-filter-fab{display:none!important}#list-btn{display:none!important}}@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}';document.head.appendChild(s);})();
 
 function qkColor(m){ return m>=7?'#FF2D2D':(m>=6?'#FF7A1A':'#FFC83D'); }
 function qkRadius(m){ return Math.max(6,(m-3)*4); }
@@ -2483,9 +2483,9 @@ function renderQuakeMarkers(){
   clearLayer(quakeMarkers);
   const now=Date.now();
   quakeCache.filter(q=>q.mag>=quakeMinMag).forEach(q=>{
-    const col=qkColor(q.mag), fresh=(now-q.time)/60000<60, tier=q.mag>=7?7:(q.mag>=6?6:5);
+    const col=qkColor(q.mag), fresh=(now-q.time)/60000<60;
     const m=L.circleMarker([q.lat,q.lng],{radius:qkRadius(q.mag),color:col,weight:fresh?2:1,fillColor:col,fillOpacity:0.55,className:fresh?'quake-pulse':''})
-      .bindPopup('<b style="color:'+col+'">⚠ M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+qkTime(q.time)+'</span><br><a href="'+q.url+'" target="_blank" rel="noopener" style="color:#5AB4D4;font-size:11px">USGS ↗</a> · <a href="'+GEOFON_TG[tier]+'" target="_blank" rel="noopener" style="color:#D4AF5A;font-size:11px">GEOFON ↗</a>');
+      .bindPopup('<b style="color:'+col+'">⚠ M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+qkTime(q.time)+'</span><br><a href="'+q.url+'" target="_blank" rel="noopener" style="color:#5AB4D4;font-size:11px">Открыть на USGS ↗</a>');
     m.addTo(map); quakeMarkers.push(m);
   });
 }
@@ -2493,21 +2493,24 @@ function renderQuakeMarkers(){
 function renderQuakeList(){
   const box=document.getElementById('quake-list'); if(!box) return 0;
   const list=quakeCache.filter(q=>q.mag>=quakeMinMag).sort((a,b)=>b.time-a.time);
-  if(!list.length){ box.innerHTML='<div class="qk-empty">Нет событий M'+quakeMinMag+'+ за последние 24 часа.<br>Лента обновляется каждые 25 секунд.</div>'; return 0; }
+  if(!list.length){ box.innerHTML='<div class="qk-empty">Нет событий M'+quakeMinMag+'+ за последние 7 дней.<br>Лента обновляется каждые 25 секунд.</div>'; return 0; }
   box.innerHTML=list.map(q=>{
-    const col=qkColor(q.mag), tier=q.mag>=7?7:(q.mag>=6?6:5), t=qkTime(q.time);
+    const col=qkColor(q.mag), t=qkTime(q.time), dep=(q.depth!=null?Math.round(q.depth)+' км':'?');
     return '<div class="qk-card" onclick="window._toggleQk(this)">'+
-      '<div class="qk-top"><span class="qk-mag" style="color:'+col+'">M'+q.mag.toFixed(1)+'</span>'+
-      '<span class="qk-place">'+qkEsc(q.place||'—')+'</span></div>'+
-      '<div class="qk-sub">'+t+' · Глубина '+(q.depth!=null?Math.round(q.depth)+' км':'?')+(q.tsunami?' · ⚠ Цунами':'')+'</div>'+
-      '<div class="qk-detail">'+
-        '<b style="color:'+col+'">'+qkEsc(q.title||('M'+q.mag.toFixed(1)))+'</b><br>'+
-        'Координаты: '+q.lat.toFixed(2)+', '+q.lng.toFixed(2)+'<br>'+
-        'Глубина: '+(q.depth!=null?Math.round(q.depth)+' км':'?')+'<br>'+
-        'Время: '+t+(q.tsunami?'<br><span style="color:#FF7A1A">⚠ Предупреждение о цунами</span>':'')+
-        '<br><br><a href="'+q.url+'" target="_blank" rel="noopener">Открыть на USGS ↗</a>'+
-        ' &nbsp; <a class="tg" href="'+GEOFON_TG[tier]+'" target="_blank" rel="noopener">Сообщения · канал GEOFON M'+tier+'+ ↗</a>'+
-      '</div></div>';
+      '<span class="qk-dot" style="background:'+col+'"></span>'+
+      '<div class="qk-main">'+
+        '<div class="qk-dom" style="color:'+col+'">Землетрясение'+(q.tsunami?' · ⚠ Цунами':'')+'</div>'+
+        '<div class="qk-title">'+qkEsc(q.place||'—')+'</div>'+
+        '<div class="qk-meta"><span>'+t+'</span><span>Глубина '+dep+'</span></div>'+
+        '<div class="qk-detail">'+
+          '<b style="color:'+col+'">'+qkEsc(q.title||('M'+q.mag.toFixed(1)))+'</b><br>'+
+          'Координаты: '+q.lat.toFixed(2)+', '+q.lng.toFixed(2)+'<br>'+
+          'Глубина: '+dep+'<br>Время: '+t+(q.tsunami?'<br><span style="color:#FF7A1A">⚠ Предупреждение о цунами</span>':'')+
+          '<br><a href="'+q.url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">Открыть на USGS ↗</a>'+
+        '</div>'+
+      '</div>'+
+      '<div class="qk-sev" style="color:'+col+'">M'+q.mag.toFixed(1)+'</div>'+
+    '</div>';
   }).join('');
   return list.length;
 }
@@ -2530,7 +2533,7 @@ async function loadQuakes(){
       return {mag:p.mag||0,lat:c[1],lng:c[0],depth:c[2],place:p.place||'',title:p.title||'',time:p.time||0,url:p.url||'',tsunami:p.tsunami||0};
     }).filter(q=>typeof q.lat==='number'&&typeof q.lng==='number'&&q.mag>=5);
     refreshQuakeUI();
-    console.info('[Quakes]',quakeCache.length,'M5+/24ч');
+    console.info('[Quakes]',quakeCache.length,'M5+/7д');
   }catch(e){console.warn('[Quakes]',e.message);}
 }
 
@@ -2546,13 +2549,14 @@ window.grdfAlertsTab=function(name){
   if(w) w.style.display=(name==='weather'?'block':'none');
 };
 
-document.querySelectorAll('#quake-tiers .qt').forEach(b=>{
-  b.addEventListener('click',function(){
-    document.querySelectorAll('#quake-tiers .qt').forEach(x=>x.classList.remove('active'));
-    this.classList.add('active');
-    quakeMinMag=parseInt(this.getAttribute('data-mag'),10);
-    refreshQuakeUI();
-  });
+// делегирование: вкладки M5/6/7 работают независимо от момента вставки DOM
+document.addEventListener('click',function(e){
+  var b=e.target.closest?e.target.closest('#quake-tiers .qt'):null;
+  if(!b) return;
+  document.querySelectorAll('#quake-tiers .qt').forEach(function(x){ x.classList.remove('active'); });
+  b.classList.add('active');
+  quakeMinMag=parseInt(b.getAttribute('data-mag'),10);
+  refreshQuakeUI();
 });
 
 
