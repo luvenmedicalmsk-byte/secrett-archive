@@ -2,102 +2,102 @@
   "country": "IR",
   "country_name": "Иран",
   "date": "2026-06-04",
-  "generated_at": "2026-06-04T11:23:55.135398+00:00",
-  "strategy_score": 23,
+  "generated_at": "2026-06-04T11:42:05.746779+00:00",
+  "strategy_score": 37,
   "strategy_confidence": 50,
-  "urgency_level": "moderate",
-  "urgency_level_ru": "Умеренная",
-  "urgency_color": "#fbbf24",
-  "preparedness_level": "enhanced",
-  "preparedness_level_ru": "Повышенная готовность",
-  "monitoring_priority": 2,
-  "monitoring_ru": "Дважды в сутки",
+  "urgency_level": "high",
+  "urgency_level_ru": "Высокая",
+  "urgency_color": "#f59e0b",
+  "preparedness_level": "active",
+  "preparedness_level_ru": "Активная готовность",
+  "monitoring_priority": 3,
+  "monitoring_ru": "Каждые 6 часов",
   "actions": [
     {
-      "id": "C-01",
+      "id": "E-01",
       "priority": 1,
-      "action": "Ожидать деэскалации",
-      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
-      "trigger": "contained + best dominant",
-      "expiry": "state change or prob_best < 25%",
-      "confidence": 66,
+      "action": "Удержать деэскалационный потенциал",
+      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
+      "trigger": "escalating + best dominant",
+      "expiry": "state transition",
+      "confidence": 64,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "C-02",
+      "id": "E-02",
       "priority": 2,
-      "action": "Подготовить план выхода из контролируемой фазы",
-      "detail": "Определить индикаторы для перевода в мониторинговый режим",
-      "trigger": "contained > 5d",
-      "expiry": "stabilization transition",
-      "confidence": 66,
+      "action": "Инициировать дипломатические/превентивные контакты",
+      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
+      "trigger": "prob_best > 20%",
+      "expiry": "prob_best < 15%",
+      "confidence": 64,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "contained",
+  "state": "escalating",
   "dominant_scenario": "best",
-  "scenario_score": 20,
-  "instability": 8,
+  "scenario_score": 23,
+  "instability": 13,
   "calibration_grade": "unknown",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 65 (+8pt)",
-      "leads_to": "escalating",
-      "probability": 14
+      "condition": "risk_score ≥ 66 (+8pt)",
+      "leads_to": "critical",
+      "probability": 15
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "escalating",
-      "probability": 5
+      "leads_to": "critical",
+      "probability": 6
     },
     {
-      "condition": "Worst-case 30d ≥ 68",
-      "leads_to": "escalating",
-      "probability": 16
+      "condition": "Worst-case 30d ≥ 77",
+      "leads_to": "critical",
+      "probability": 18
     },
     {
       "condition": "Новый критический драйвер в geopolitics",
-      "leads_to": "escalating",
+      "leads_to": "critical",
       "probability": 17
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 51,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 60,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "90 дней",
-      "score": 46,
+      "score": 54,
       "state": "contained",
       "urgency": "moderate",
       "preparedness": "enhanced"
     },
     {
       "horizon": "180 дней",
-      "score": 41,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 48,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "365 дней",
-      "score": 37,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 43,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     }
   ],
   "probabilities": {
-    "worst": 16,
+    "worst": 18,
     "stress": 21,
-    "base": 28,
-    "best": 35
+    "base": 27,
+    "best": 34
   }
 }
