@@ -1307,13 +1307,22 @@ def process_events(raw_items):
     translated_titles = translate_batch(titles)
     for i, ev in enumerate(top_events):
         ev['title'] = translated_titles[i]
-    
+
+    # Этап 3: перевод описаний/summary (не только заголовков)
+    print(f"  Переводим описания...", file=sys.stderr)
+    summaries = [(e.get('summary') or '') for e in top_events]
+    translated_summaries = translate_batch(summaries)
+    for i, ev in enumerate(top_events):
+        if ev.get('summary'):
+            ev['summary'] = translated_summaries[i]
+
     return top_events
 
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
         except Exception: pass
+    _save_tr_disk()
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -4280,6 +4289,26 @@ def fetch_europe_latam():
 # Кэш переводов -- не переводим одно и то же дважды
 _translate_cache = {}
 
+# ── Этап 3: постоянный кэш переводов по хэшу текста (переживает прогоны) ──
+import hashlib as _hashlib
+_TR_DISK_PATH = Path('docs/intelligence/tr_cache.json')
+def _tr_key(t):
+    return _hashlib.sha1((t or '').strip().encode('utf-8')).hexdigest()[:16]
+def _load_tr_disk():
+    try: return json.loads(_TR_DISK_PATH.read_text(encoding='utf-8'))
+    except Exception: return {}
+_TR_DISK = _load_tr_disk()
+def _save_tr_disk():
+    try:
+        if len(_TR_DISK) > 8000:
+            _items = list(_TR_DISK.items())[-8000:]
+            _TR_DISK.clear(); _TR_DISK.update(_items)
+        _TR_DISK_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _TR_DISK_PATH.write_text(json.dumps(_TR_DISK, ensure_ascii=False), encoding='utf-8')
+        print('  [TR] disk cache: ' + str(len(_TR_DISK)) + ' записей', file=sys.stderr)
+    except Exception as _e:
+        print('  [TR] cache save err: ' + str(_e), file=sys.stderr)
+
 def is_english(text):
     """Проверяет что текст на английском (нужен перевод)"""
     if not text: return False
@@ -4289,6 +4318,10 @@ def is_english(text):
 
 def translate_batch(texts):
     """Переводит список текстов одним запросом"""
+    for _t in texts:
+        if _t and _t not in _translate_cache:
+            _dk = _tr_key(_t)
+            if _dk in _TR_DISK: _translate_cache[_t] = _TR_DISK[_dk]
     # Фильтруем только английские тексты которых нет в кэше
     to_translate = [(i, t) for i, t in enumerate(texts) 
                     if is_english(t) and t not in _translate_cache]
@@ -4351,12 +4384,12 @@ def translate_batch(texts):
     openai_key = _os.environ.get('OPENAI_API_KEY', '')
     if openai_key and to_translate:
         try:
-            to_translate = to_translate[:80]  # переводим топ-80
+            to_translate = to_translate[:150]  # Этап 3: шире покрытие (дисковый кэш гасит стоимость)
             BATCH = 20
             all_translated = True
             for batch_start in range(0, len(to_translate), BATCH):
                 batch = to_translate[batch_start:batch_start+BATCH]
-                lines_in = [str(j+1) + '. ' + t[:120] for j, (_, t) in enumerate(batch)]
+                lines_in = [str(j+1) + '. ' + t[:300] for j, (_, t) in enumerate(batch)]
                 numbered = '\n'.join(lines_in)
                 prompt = 'Переведи заголовки новостей на русский язык. Верни ТОЛЬКО пронумерованный список в том же порядке, без пояснений.\n\n' + numbered
                 payload = json.dumps({
@@ -4385,6 +4418,7 @@ def translate_batch(texts):
                             tr = translations[j]
                             if tr and len(tr) > 3:
                                 _translate_cache[orig_text] = tr
+                                _TR_DISK[_tr_key(orig_text)] = tr
                                 results[orig_idx] = tr
                     else:
                         all_translated = False
@@ -4431,6 +4465,7 @@ def translate_batch(texts):
                             tr = parts[j].strip()
                             if tr and len(tr) > 3:
                                 _translate_cache[orig_text] = tr
+                                _TR_DISK[_tr_key(orig_text)] = tr
                                 results[orig_idx] = tr
                     print(f"  ✓ Переведено {len(to_translate)} заголовков", file=sys.stderr)
                     return results
