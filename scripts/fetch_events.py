@@ -1999,9 +1999,9 @@ def fetch_glofas():
         except Exception as e:
             print(f"  [WARN] GloFAS: {e}", file=sys.stderr)
     import threading
-    th = threading.Thread(target=_work, daemon=True); th.start(); th.join(timeout=180)
+    th = threading.Thread(target=_work, daemon=True); th.start(); th.join(timeout=90)
     if th.is_alive():
-        print("  [WARN] GloFAS: таймаут 180с -> пропуск", file=sys.stderr)
+        print("  [WARN] GloFAS: таймаут 90с -> пропуск (CDS в очереди)", file=sys.stderr)
     print(f"  GloFAS: {len(out['items'])} точек", file=sys.stderr)
     return out['items']
 
@@ -4459,7 +4459,7 @@ if __name__ == '__main__':
         raw += fetch_economy_rss()
         raw += fetch_telegram()
         raw += fetch_floods_rss()
-        raw += fetch_glofas()
+        # raw += fetch_glofas()   # S36.5 заморожен: синхронный CDS не укладывается в cron
         raw += fetch_tech_rss()
         raw += fetch_climate_rss()
         raw += fetch_global_rss()
