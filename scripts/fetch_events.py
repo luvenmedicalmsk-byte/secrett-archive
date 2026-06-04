@@ -288,7 +288,8 @@ DOMAIN_RULES = {
             "финансовый кризис","цепочки поставок","стагфляция"
         ],
         "weight": 1.3,
-        "exclude": ["military","armed","weapon","flood","wildfire","earthquake","hack"]
+        "exclude": ["military","armed","weapon","flood","wildfire","earthquake","hack",
+                    "strike","airstrike","attack","killed","bombing","shelling","gaza","israeli","missile","war","troops","offensive","удары","ударов","жертв"]
     },
     "geopolitics": {
         # Вооружённые конфликты, внутригосударственное насилие, ядерное/биооружие, геоэкономика
@@ -307,7 +308,11 @@ DOMAIN_RULES = {
             "война","военный","конфликт","удар","атака","войска","ядерный",
             "геополитика","оккупация","санкции","переворот",
             "ликвидация","ракетный удар","обстрел","наступление","фронт",
-            "самолёт-заправщик","дальнобойный","блокада","Hamas","ХАМАС"
+            "самолёт-заправщик","дальнобойный","блокада","Hamas","ХАМАС",
+            "strike","strikes","airstrike","air strike","attack","attacks","killed",
+            "bombing","shelling","offensive","raid","militant","militants","gaza","israeli",
+            "drone strike","artillery","death toll","clashes","gunmen","shelled","besieged",
+            "удары","ударов","жертв","штурм","боевик","боевики","сектор газа","обстреляли"
         ],
         "weight": 1.5,
         "exclude": ["flood","wildfire","earthquake","inflation","recession","hack","cyber"]
@@ -364,15 +369,18 @@ DOMAIN_RULES = {
 def detect_domain(title, desc):
     """Определяет домен по ключевым словам WEF-методологии с учётом исключений"""
     text = (title + ' ' + desc).lower()
+    def _hit(kw):
+        # S36.4: сопоставление по границам слов (чтобы 'war' не ловился в 'warns'/'warming')
+        return re.search(r'\b' + re.escape(kw.lower()) + r'\b', text) is not None
     scores = {}
     for domain, rule in DOMAIN_RULES.items():
         # Считаем попадания по ключевым словам
-        hits = sum(1 for kw in rule['keywords'] if kw.lower() in text)
+        hits = sum(1 for kw in rule['keywords'] if _hit(kw))
         if hits == 0:
             scores[domain] = 0
             continue
         # Штрафуем за исключающие слова
-        excludes = sum(1 for ex in rule.get('exclude', []) if ex.lower() in text)
+        excludes = sum(1 for ex in rule.get('exclude', []) if _hit(ex))
         score = (hits - excludes * 0.5) * rule['weight']
         scores[domain] = max(0, score)
     
@@ -999,7 +1007,7 @@ def process_events(raw_items):
             source = ev.get('source', '')
             _evd = ev.get('domain','')
             # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
-            max_days = 7 if _evd in ('economy','social') else (3 if source in ANALYTICS_SOURCES else 0)
+            max_days = 7 if _evd in ('economy','social') else 3  # S36.4: 72ч окно для новостных доменов
             if days_old > max_days:
                 _LOSS['fresh']+=1; continue
         except:
@@ -1770,6 +1778,34 @@ def fetch_economy_rss():
 
     print(f'  Экономические RSS: {len(unique)} событий', file=sys.stderr)
     return unique
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TELEGRAM -- RU-каналы через web-preview (S36.4)
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_telegram():
+    """RU Telegram-каналы через web-preview t.me/s/<channel> (S36.4).
+    Домен не форсируем -- классификация по ключевым словам (RU)."""
+    import re as _re
+    channels = ['bbbreaking']
+    items = []
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    for ch in channels:
+        data = fetch_url(f"https://t.me/s/{ch}", headers={'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'}, timeout=10)
+        if not data: continue
+        msgs = _re.findall(r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>', data, _re.S)
+        for raw_html in msgs[-25:]:
+            text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
+            if len(text) < 20: continue
+            items.append({
+                'title': text[:160],
+                'desc': text[:300],
+                'date': today,
+                'source': f'Telegram/{ch}',
+                'source_bias': 5,
+            })
+    print(f"  Telegram: {len(items)} постов", file=sys.stderr)
+    return items
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -4194,6 +4230,7 @@ if __name__ == '__main__':
         raw += fetch_geopolitics_rss()
         raw += fetch_social_rss()
         raw += fetch_economy_rss()
+        raw += fetch_telegram()
         raw += fetch_tech_rss()
         raw += fetch_climate_rss()
         raw += fetch_global_rss()
