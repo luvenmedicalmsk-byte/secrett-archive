@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T12:33:24.795571+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-04T12:43:37.019373+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 49,
+      "score": 54,
       "props": {
-        "risk_score": 49
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "down"
+      "score": 22,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Rahul_Gand",
+      "type": "Signal",
+      "label": "Rahul Gandhi предупреждает о «институцио",
+      "severity": 65,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IN-По_меньшей",
       "type": "Signal",
       "label": "По меньшей мере 21 человек погиб в резул",
@@ -87,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IN-⚡️_Импортн",
+      "id": "SIGNAL-IN-«Вот_что_н",
       "type": "Signal",
-      "label": "⚡️ Импортные товары, которые поступают в",
-      "severity": 42,
-      "domain": "economic"
+      "label": "«Вот что необычно»: Кук делает новое зам",
+      "severity": 54,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -99,43 +106,43 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-IN-Geopolitical",
@@ -156,16 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-Rahul_Gand",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
       "from": "SIGNAL-IN-По_меньшей",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-IN-⚡️_Импортн",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-«Вот_что_н",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.54
     }
   ]
 }
