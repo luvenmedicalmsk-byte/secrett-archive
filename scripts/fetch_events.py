@@ -894,6 +894,98 @@ def fetch_nasa_eonet():
     print(f"  NASA EONET: {len(items)} событий", file=sys.stderr)
     return items
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ЭТАП 2: Словарная русификация географии (страны / штаты США / стороны света)
+# ══════════════════════════════════════════════════════════════════════════════
+COMPASS_RU = {
+    'N':'С','NNE':'ССВ','NE':'СВ','ENE':'ВСВ','E':'В','ESE':'ВЮВ','SE':'ЮВ','SSE':'ЮЮВ',
+    'S':'Ю','SSW':'ЮЮЗ','SW':'ЮЗ','WSW':'ЗЮЗ','W':'З','WNW':'ЗСЗ','NW':'СЗ','NNW':'ССЗ',
+}
+US_STATES_RU = {
+    'Alabama':'Алабама','Alaska':'Аляска','Arizona':'Аризона','Arkansas':'Арканзас',
+    'California':'Калифорния','Colorado':'Колорадо','Connecticut':'Коннектикут','Delaware':'Делавэр',
+    'Florida':'Флорида','Georgia':'Джорджия','Hawaii':'Гавайи','Idaho':'Айдахо','Illinois':'Иллинойс',
+    'Indiana':'Индиана','Iowa':'Айова','Kansas':'Канзас','Kentucky':'Кентукки','Louisiana':'Луизиана',
+    'Maine':'Мэн','Maryland':'Мэриленд','Massachusetts':'Массачусетс','Michigan':'Мичиган',
+    'Minnesota':'Миннесота','Mississippi':'Миссисипи','Missouri':'Миссури','Montana':'Монтана',
+    'Nebraska':'Небраска','Nevada':'Невада','New Hampshire':'Нью-Гэмпшир','New Jersey':'Нью-Джерси',
+    'New Mexico':'Нью-Мексико','New York':'Нью-Йорк','North Carolina':'Северная Каролина',
+    'North Dakota':'Северная Дакота','Ohio':'Огайо','Oklahoma':'Оклахома','Oregon':'Орегон',
+    'Pennsylvania':'Пенсильвания','Rhode Island':'Род-Айленд','South Carolina':'Южная Каролина',
+    'South Dakota':'Южная Дакота','Tennessee':'Теннесси','Texas':'Техас','Utah':'Юта','Vermont':'Вермонт',
+    'Virginia':'Виргиния','Washington':'Вашингтон','West Virginia':'Западная Виргиния','Wisconsin':'Висконсин',
+    'Wyoming':'Вайоминг','CA':'Калифорния','Puerto Rico':'Пуэрто-Рико',
+}
+COUNTRY_RU = {
+    'Afghanistan':'Афганистан','Albania':'Албания','Algeria':'Алжир','Argentina':'Аргентина',
+    'Armenia':'Армения','Australia':'Австралия','Austria':'Австрия','Azerbaijan':'Азербайджан',
+    'Bangladesh':'Бангладеш','Belarus':'Беларусь','Belgium':'Бельгия','Bolivia':'Боливия',
+    'Bosnia and Herzegovina':'Босния и Герцеговина','Brazil':'Бразилия','Bulgaria':'Болгария',
+    'Cambodia':'Камбоджа','Cameroon':'Камерун','Canada':'Канада','Cabo Verde':'Кабо-Верде',
+    'Cape Verde':'Кабо-Верде','Chile':'Чили','China':'Китай','Colombia':'Колумбия','Croatia':'Хорватия',
+    'Cuba':'Куба','Cyprus':'Кипр','Czechia':'Чехия','Czech Republic':'Чехия','Denmark':'Дания',
+    'Dominican Republic':'Доминиканская Республика','Ecuador':'Эквадор','Egypt':'Египет',
+    'El Salvador':'Сальвадор','Estonia':'Эстония','Ethiopia':'Эфиопия','Finland':'Финляндия',
+    'France':'Франция','Georgia':'Грузия','Germany':'Германия','Ghana':'Гана','Greece':'Греция',
+    'Guatemala':'Гватемала','Haiti':'Гаити','Honduras':'Гондурас','Hungary':'Венгрия','Iceland':'Исландия',
+    'India':'Индия','Indonesia':'Индонезия','Iran':'Иран','Iraq':'Ирак','Ireland':'Ирландия',
+    'Israel':'Израиль','Italy':'Италия','Ivory Coast':'Кот-д’Ивуар','Jamaica':'Ямайка','Japan':'Япония',
+    'Jordan':'Иордания','Kazakhstan':'Казахстан','Kenya':'Кения','Kyrgyzstan':'Киргизия',
+    'Kosovo':'Косово','Kuwait':'Кувейт','Laos':'Лаос','Latvia':'Латвия','Lebanon':'Ливан',
+    'Libya':'Ливия','Lithuania':'Литва','Luxembourg':'Люксембург','Madagascar':'Мадагаскар',
+    'Malaysia':'Малайзия','Mali':'Мали','Mexico':'Мексика','Moldova':'Молдавия','Mongolia':'Монголия',
+    'Montenegro':'Черногория','Morocco':'Марокко','Mozambique':'Мозамбик','Myanmar':'Мьянма',
+    'Nepal':'Непал','Netherlands':'Нидерланды','New Zealand':'Новая Зеландия','Nicaragua':'Никарагуа',
+    'Niger':'Нигер','Nigeria':'Нигерия','North Korea':'КНДР','North Macedonia':'Северная Македония',
+    'Norway':'Норвегия','Oman':'Оман','Pakistan':'Пакистан','Panama':'Панама','Papua New Guinea':'Папуа — Новая Гвинея',
+    'Paraguay':'Парагвай','Peru':'Перу','Philippines':'Филиппины','Poland':'Польша','Portugal':'Португалия',
+    'Qatar':'Катар','Romania':'Румыния','Russia':'Россия','Saudi Arabia':'Саудовская Аравия',
+    'Senegal':'Сенегал','Serbia':'Сербия','Singapore':'Сингапур','Slovakia':'Словакия','Slovenia':'Словения',
+    'Somalia':'Сомали','South Africa':'ЮАР','South Korea':'Южная Корея','South Sudan':'Южный Судан',
+    'Spain':'Испания','Sri Lanka':'Шри-Ланка','Sudan':'Судан','Sweden':'Швеция','Switzerland':'Швейцария',
+    'Syria':'Сирия','Taiwan':'Тайвань','Tajikistan':'Таджикистан','Tanzania':'Танзания','Thailand':'Таиланд',
+    'Tunisia':'Тунис','Turkey':'Турция','Turkiye':'Турция','Turkmenistan':'Туркмения','Uganda':'Уганда',
+    'Ukraine':'Украина','United Arab Emirates':'ОАЭ','United Kingdom':'Великобритания','UK':'Великобритания',
+    'United States':'США','USA':'США','Uruguay':'Уругвай','Uzbekistan':'Узбекистан','Venezuela':'Венесуэла',
+    'Vietnam':'Вьетнам','Yemen':'Йемен','Zambia':'Замбия','Zimbabwe':'Зимбабве',
+}
+# для нормализации region: страны имеют приоритет над штатами при коллизиях (Georgia → Грузия)
+_GEO_MERGED = dict(US_STATES_RU); _GEO_MERGED.update(COUNTRY_RU)
+_GEO_SORTED = sorted(_GEO_MERGED.items(), key=lambda kv: -len(kv[0]))
+
+def ru_geo(s):
+    """Замена известных стран/штатов на RU по словесной границе (RU-текст не трогает)."""
+    if not s or not isinstance(s, str): return s
+    out = s
+    for en, ru in _GEO_SORTED:
+        if en in out:
+            out = re.sub(r'\b' + re.escape(en) + r'\b', ru, out)
+    return out
+
+def _split_feature_region(rest):
+    rest = rest.strip()
+    if ',' in rest:
+        feature, region = rest.rsplit(',', 1)
+        feature, region = feature.strip(), region.strip()
+        if region in US_STATES_RU: return feature, US_STATES_RU[region] + ', США'
+        if region in COUNTRY_RU:   return feature, COUNTRY_RU[region]
+        return feature, region
+    return rest, ''
+
+def ru_usgs_place(place):
+    """'154 km WSW of Pistol River, Oregon' -> '154 км к ЗЮЗ от Pistol River (Орегон, США)'."""
+    if not place or not isinstance(place, str): return place
+    s = place.strip()
+    m = re.match(r'^(\d+(?:\.\d+)?)\s*km\s+([NSEW]{1,3})\s+of\s+(.+)$', s, re.I)
+    if m:
+        dist, direction, rest = m.group(1), m.group(2).upper(), m.group(3)
+        dir_ru = COMPASS_RU.get(direction, direction)
+        feature, region_ru = _split_feature_region(rest)
+        head = f"{dist} км к {dir_ru} от {feature}"
+        return head + (f" ({region_ru})" if region_ru else "")
+    return s  # локальный топоним без шаблона — оставляем оригинал
+
 def detect_region_by_coords(lat, lng):
     """Определяет название региона по координатам"""
     if lat > 60: return "Арктика / Северные широты"
@@ -1219,6 +1311,9 @@ def process_events(raw_items):
     return top_events
 
 def save(events):
+    for _e in events:
+        try: _e['region'] = ru_geo(_e.get('region','') or '')
+        except Exception: pass
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -1622,10 +1717,11 @@ def fetch_usgs_earthquakes():
                 lng, lat = float(coords[0]), float(coords[1])
                 mag = props.get('mag', 0)
                 place = props.get('place', '')
-                title = f"Землетрясение M{mag} -- {place}"
+                ru_place = ru_usgs_place(place)
+                title = f"Землетрясение M{mag} — {ru_place}"
                 items.append({
                     'title': title,
-                    'desc': f"Магнитуда {mag}. {place}",
+                    'desc': f"Магнитуда {mag}. {ru_place}",
                     'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                     'source': 'USGS',
                     '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': (coords[2] if len(coords) > 2 else None)}),
@@ -3487,7 +3583,7 @@ def fetch_russia_signals():
                 'date': time_str or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                 'source': 'EMSC',
                 'domain': 'climate',
-                'region': place,
+                'region': ru_usgs_place(place),
                 '_lat': coords[1], '_lng': coords[0],
                 '_region': place,
                 '_domain': 'climate',
