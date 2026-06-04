@@ -1705,7 +1705,6 @@ function _newsDomain(text, source) {
 const NEWS_TG_CHANNELS = [
   { handle: 'AJEnglishNews',   name: 'Al Jazeera' },
   { handle: 'forbesrussia',    name: 'Forbes Russia' },
-  { handle: 'TheEconomisto',   name: 'The Economist' },
   { handle: 'BusinessInsider', name: 'Business Insider' },
 ];
 function _tgParseChannel(html, handle, name) {
