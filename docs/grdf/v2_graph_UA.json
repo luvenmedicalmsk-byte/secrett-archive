@@ -2,32 +2,32 @@
   "country": "UA",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T14:58:47.736202+00:00",
+  "generated_at": "2026-06-04T18:15:00.109457+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 51,
+      "score": 52,
       "props": {
-        "risk_score": 51
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -89,14 +89,14 @@
     {
       "id": "SIGNAL-UA-Заборы,_а_",
       "type": "Signal",
-      "label": "Заборы, а не F-35: атаки дронов и нелоги",
+      "label": "Заборы, а не F-35: Дроновые атаки и нело",
       "severity": 51,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-Россия:_шк",
+      "id": "SIGNAL-UA-Russia:_Sc",
       "type": "Signal",
-      "label": "Россия: школы превратились в «фабрики со",
+      "label": "Russia: Schools have turned into “factor",
       "severity": 51,
       "domain": "technology"
     }
@@ -106,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-UA",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-UA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-По_мере_то",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -175,7 +196,7 @@
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-UA-Россия:_шк",
+      "from": "SIGNAL-UA-Russia:_Sc",
       "to": "DOMAIN-UA-technology",
       "type": "AMPLIFIES",
       "weight": 0.51
