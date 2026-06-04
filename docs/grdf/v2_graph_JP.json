@@ -2,67 +2,67 @@
   "country": "JP",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T18:15:00.111086+00:00",
+  "generated_at": "2026-06-04T19:32:40.110939+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 40,
+      "score": 43,
       "props": {
-        "risk_score": 40
+        "risk_score": 43
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 40,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 22,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-JP-Землетрясе",
+      "id": "SIGNAL-JP-Зеленое_зе",
       "type": "Signal",
-      "label": "Землетрясение M4.6 -- Izu Islands, Japan",
-      "severity": 47,
+      "label": "Зеленое землетрясение (магнитуда 5.7, гл",
+      "severity": 49,
       "domain": "climate"
     },
     {
       "id": "SIGNAL-JP-Землетрясе",
       "type": "Signal",
-      "label": "Землетрясение M4.7 -- 110 km SW of Kurio",
+      "label": "Землетрясение M4.7 — 144 км к В от Miyak",
+      "severity": 48,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-JP-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M4.7 — 110 км к ЮЗ от Kuri",
       "severity": 46,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-JP-Green_noti",
-      "type": "Signal",
-      "label": "Green notification for tropical cyclone ",
-      "severity": 24,
       "domain": "climate"
     }
   ],
@@ -106,19 +106,19 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-JP",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-JP",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-JP-social",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-JP-geopolitical",
       "to": "DOMAIN-JP-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-JP-Зеленое_зе",
+      "to": "DOMAIN-JP-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.49
+    },
+    {
       "from": "SIGNAL-JP-Землетрясе",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
-      "weight": 0.47
+      "weight": 0.48
     },
     {
       "from": "SIGNAL-JP-Землетрясе",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-JP-Green_noti",
-      "to": "DOMAIN-JP-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.24
     }
   ]
 }

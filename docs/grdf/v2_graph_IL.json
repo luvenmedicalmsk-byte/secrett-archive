@@ -2,66 +2,66 @@
   "country": "IL",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T18:15:00.113308+00:00",
+  "generated_at": "2026-06-04T19:32:40.113220+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 51,
+      "score": 54,
       "props": {
-        "risk_score": 51
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,11 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-ХАМАС_отве",
+      "id": "SIGNAL-IL-Золото_рас",
       "type": "Signal",
-      "label": "ХАМАС отвергает последнее соглашение о п",
-      "severity": 54,
-      "domain": "geopolitical"
+      "label": "Золото растет в цене, так как трейдеры о",
+      "severity": 51,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-IL-Бельгия:_A",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-UN_food_ag",
+      "id": "SIGNAL-IL-Законодате",
       "type": "Signal",
-      "label": "UN food agency discloses breach affectin",
+      "label": "Законодатели голосуют за ограничение вой",
       "severity": 50,
-      "domain": "technology"
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-IL-Geopolitical",
@@ -163,10 +163,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-ХАМАС_отве",
-      "to": "DOMAIN-IL-geopolitical",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Золото_рас",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.51
     },
     {
       "from": "SIGNAL-IL-Бельгия:_A",
@@ -175,8 +196,8 @@
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-IL-UN_food_ag",
-      "to": "DOMAIN-IL-technology",
+      "from": "SIGNAL-IL-Законодате",
+      "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
     }

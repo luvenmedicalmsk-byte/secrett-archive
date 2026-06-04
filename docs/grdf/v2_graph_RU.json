@@ -2,66 +2,66 @@
   "country": "RU",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T18:15:00.104551+00:00",
+  "generated_at": "2026-06-04T19:32:40.103993+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 52,
+      "score": 54,
       "props": {
-        "risk_score": 52
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Россия_стр",
+      "type": "Signal",
+      "label": "Россия стремится признать две антикремле",
+      "severity": 93,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-RU-Землетрясе",
       "type": "Signal",
-      "label": "Землетрясение M5.2 -- 202 km SSE of Vily",
+      "label": "Землетрясение M5.2 — 202 км к ЮЮВ от Vil",
       "severity": 56,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Инерция войны России",
       "severity": 51,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-RU-По_мере_то",
-      "type": "Signal",
-      "label": "По мере того как вторжение России в Укра",
-      "severity": 51,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-RU-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-RU-Россия_стр",
+      "to": "DOMAIN-RU-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.93
+    },
+    {
       "from": "SIGNAL-RU-Землетрясе",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
@@ -171,12 +198,6 @@
     {
       "from": "SIGNAL-RU-Инерция_во",
       "to": "DOMAIN-RU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.51
-    },
-    {
-      "from": "SIGNAL-RU-По_мере_то",
-      "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.51
     }
