@@ -984,7 +984,43 @@ def ru_usgs_place(place):
         feature, region_ru = _split_feature_region(rest)
         head = f"{dist} км к {dir_ru} от {feature}"
         return head + (f" ({region_ru})" if region_ru else "")
+    m2 = re.match(r'^(north|south|east|west|northeast|northwest|southeast|southwest)\s+of\s+(.+)$', s, re.I)
+    if m2:
+        dmap = {'north':'к северу','south':'к югу','east':'к востоку','west':'к западу',
+                'northeast':'к северо-востоку','northwest':'к северо-западу',
+                'southeast':'к юго-востоку','southwest':'к юго-западу'}
+        return dmap[m2.group(1).lower()] + ' от ' + _ru_toponym(m2.group(2).strip())
     return s  # локальный топоним без шаблона — оставляем оригинал
+
+_QUAKE_TOPONYMS = {
+    'Kamchatka':'Камчатка','Xinjiang':'Синьцзян','Svalbard':'Шпицберген','Crete':'Крит',
+    'Sumatra':'Суматра','Java':'Ява','Sulawesi':'Сулавеси','Hokkaido':'Хоккайдо','Honshu':'Хонсю',
+    'Kuril Islands':'Курильские острова','Kuril':'Курилы','Aleutian Islands':'Алеутские острова',
+    'Mid-Atlantic Ridge':'Срединно-Атлантический хребет','Fiji':'Фиджи','Tonga':'Тонга','Vanuatu':'Вануату',
+}
+_EMSC_PHRASES = [
+    ('Off East Coast Of','у вост. побережья'),('Off West Coast Of','у зап. побережья'),
+    ('Off South Coast Of','у юж. побережья'),('Off North Coast Of','у сев. побережья'),
+    ('Off Coast Of','у побережья'),('Near Coast Of','близ побережья'),('Near The Coast Of','близ побережья'),
+    ('Border Region','пригран. район'),('Border Reg.','пригран. район'),('Border Reg','пригран. район'),
+    ('Region','регион'),
+]
+def _ru_toponym(x):
+    out = ru_geo(x)
+    for en, ru in _QUAKE_TOPONYMS.items():
+        out = re.sub(r'\b'+re.escape(en)+r'\b', ru, out, flags=re.I)
+    return out
+_DIR_ADJ = {'central':'центр','northern':'север','southern':'юг','eastern':'восток','western':'запад'}
+def _emsc_place(s):
+    if not s or not isinstance(s, str): return s
+    out = s.title()
+    out = _ru_toponym(out)
+    for en, ru in _EMSC_PHRASES:
+        out = re.sub(r'\b'+re.escape(en)+r'\b', ru, out)
+    m = re.match(r'^(Central|Northern|Southern|Eastern|Western)\s+(.+)$', out, re.I)
+    if m:
+        out = m.group(2).strip() + ' (' + _DIR_ADJ[m.group(1).lower()] + ')'
+    return out
 
 def detect_region_by_coords(lat, lng):
     """Определяет название региона по координатам"""
@@ -3588,14 +3624,14 @@ def fetch_russia_signals():
             if mag < 3.5:
                 continue
             items.append({
-                'title': f'Землетрясение M{mag:.1f} -- {place}',
-                'desc': f'Землетрясение магнитудой {mag:.1f} в районе {place}.',
+                'title': f'Землетрясение M{mag:.1f} — {_emsc_place(place)}',
+                'desc': f'Землетрясение магнитудой {mag:.1f} в районе {_emsc_place(place)}.',
                 'date': time_str or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                 'source': 'EMSC',
                 'domain': 'climate',
-                'region': ru_usgs_place(place),
+                'region': detect_region_by_coords(coords[1], coords[0]),
                 '_lat': coords[1], '_lng': coords[0],
-                '_region': place,
+                '_region': _emsc_place(place),
                 '_domain': 'climate',
                 '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': (coords[2] if len(coords) > 2 else None)}),
             })
@@ -4166,7 +4202,8 @@ def fetch_mideast_asia():
                     'desc': desc,
                     'date': parse_date(pub_date),
                     'source': feed['source'],
-                    'source_bias': feed['bias']
+                    'source_bias': feed['bias'],
+                    '_domain': 'geopolitics'
                 })
                 count += 1
         except Exception as e:
