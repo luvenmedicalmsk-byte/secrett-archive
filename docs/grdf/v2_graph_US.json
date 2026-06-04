@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T03:50:40.850867+00:00",
+  "generated_at": "2026-06-04T06:19:07.476077+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
+      "score": 55,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 10,
+      "score": 37,
       "trend": "stable"
     },
     {
@@ -82,23 +82,23 @@
     {
       "id": "SIGNAL-US-Будут_ли_К",
       "type": "Signal",
-      "label": "Будут ли Китай и Соединенные Штаты стрем",
+      "label": "Будут ли Китай и США стремиться к страте",
       "severity": 51,
       "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-US-Тропически",
       "type": "Signal",
-      "label": "Тропический микс: кибернетика и политика",
+      "label": "Тропический микс: Кибернетика и политика",
       "severity": 50,
-      "domain": "geopolitical"
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-US-DriveSurge",
       "type": "Signal",
       "label": "DriveSurge захватывает тысячи сайтов для",
       "severity": 50,
-      "domain": "geopolitical"
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-US",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Будут_ли_К",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
@@ -170,13 +191,13 @@
     },
     {
       "from": "SIGNAL-US-Тропически",
-      "to": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
       "from": "SIGNAL-US-DriveSurge",
-      "to": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
     }

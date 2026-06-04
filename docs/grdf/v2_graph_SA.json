@@ -2,9 +2,9 @@
   "country": "SA",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T03:50:40.855453+00:00",
+  "generated_at": "2026-06-04T06:19:07.480829+00:00",
   "node_count": 12,
-  "edge_count": 11,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-SA",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
+      "score": 47,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -84,7 +84,7 @@
       "type": "Signal",
       "label": "Паломничество в Мекку становится более о",
       "severity": 47,
-      "domain": "geopolitical"
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -92,7 +92,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-SA",
@@ -104,7 +104,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-SA",
@@ -149,8 +149,29 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-SA-Паломничес",
-      "to": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-climate",
       "type": "AMPLIFIES",
       "weight": 0.47
     }

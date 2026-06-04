@@ -2,66 +2,66 @@
   "country": "IL",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T03:50:40.856764+00:00",
+  "generated_at": "2026-06-04T06:19:07.481931+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 53,
+      "score": 51,
       "props": {
-        "risk_score": 53
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 51,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "stable"
+      "score": 29,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "stable"
+      "score": 19,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "stable"
+      "score": 21,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,23 +80,23 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Государств",
+      "id": "SIGNAL-IL-Пожар_вспы",
       "type": "Signal",
-      "label": "Государственные служащие Газы систематич",
-      "severity": 60,
+      "label": "Пожар вспыхнул после того, как Израиль а",
+      "severity": 50,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-IL-Израиль_и_",
+      "type": "Signal",
+      "label": "Израиль и Ливан согласовали перемирие, е",
+      "severity": 50,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Спустя_мес",
+      "id": "SIGNAL-IL-Сообщения_",
       "type": "Signal",
-      "label": "Спустя месяцы после подавления режима ир",
-      "severity": 48,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-ХАМАС_заяв",
-      "type": "Signal",
-      "label": "ХАМАС заявляет, что атаковал израильские",
+      "label": "Сообщения о нескольких атаках Израиля в ",
       "severity": 47,
       "domain": "economic"
     }
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-IL-Geopolitical",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-Государств",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.6
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IL-Спустя_мес",
-      "to": "DOMAIN-IL-geopolitical",
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.72,
+      "lag_days": 14
     },
     {
-      "from": "SIGNAL-IL-ХАМАС_заяв",
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Пожар_вспы",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-IL-Израиль_и_",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-IL-Сообщения_",
       "to": "DOMAIN-IL-economic",
       "type": "AMPLIFIES",
       "weight": 0.47
