@@ -2,67 +2,67 @@
   "country": "PL",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T06:46:13.734552+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-04T07:14:43.727227+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 52,
+      "score": 50,
       "props": {
-        "risk_score": 52
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 38,
-      "trend": "stable"
+      "score": 36,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "stable"
+      "score": 28,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "stable"
+      "score": 18,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 21,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-PL-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-PL-Geopolitical",
@@ -78,6 +78,13 @@
       "id": "DRIVER-PL-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-PL-Зеленое_пр",
+      "type": "Signal",
+      "label": "Зеленое предупреждение о наводнении в По",
+      "severity": 50,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,19 +92,19 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-economic",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-PL",
@@ -109,7 +116,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-PL",
@@ -140,6 +147,33 @@
       "to": "COUNTRY-PL",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-PL-geopolitical",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PL-Зеленое_пр",
+      "to": "DOMAIN-PL-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
