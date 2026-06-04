@@ -1665,6 +1665,20 @@ async function handleProxyDisasterNews() {
 
 
 // ── Быстрая новостная TG-лента (несколько каналов → один поток) ─────────────
+// классификация новости по домену (ключевые слова RU/EN, затем источник-приор)
+function _newsDomain(text, source) {
+  const t = (text || '').toLowerCase();
+  const has = (arr) => arr.some(w => t.includes(w));
+  if (has(['flood','наводнен','storm','шторм','hurricane','ураган','typhoon','тайфун','wildfire','пожар','earthquake','землетряс','quake','drought','засух','heatwave','heat wave','жара','climate','климат','emission','выброс','volcan','вулкан','eruption','tsunami','цунами','landslide','оползень'])) return 'climate';
+  if (has(['cyber','кибер','hack','взлом','malware','ransomware','vulnerab','уязвим','software','semiconductor','полупровод','artificial intelligence','искусственн','algorithm','алгоритм','startup','стартап','data breach','утечк','google','apple','microsoft','openai','nvidia','cisco','technolog','технолог','quantum','робот','robot',' chip','чип'])) return 'technology';
+  if (has(['inflation','инфляц','gdp','ввп','recession','рецесс','interest rate','ставк','central bank','центробанк','stock','акци','bond','облигац','currency','валют','market','рынок','trade ','торгов','tariff','тариф','oil price','цена нефт','earnings','прибыл','ipo','billionaire','миллиард','economy','эконом','revenue','выручк','unemployment','безработиц','forbes','budget','бюджет','default','дефолт','оэср','oecd'])) return 'economy';
+  if (has(['war','война','войн','conflict','конфликт','sanction','санкц','military','военн','missile','ракет','troops','войск','airstrike','авиауд','border','границ','election','выбор','president','презид','coup','перевор','treaty','договор','nato','нато','diplomat','диплом','terror','террор','government','правительств','minister','министр','parliament','парламент','occupation','оккупац','ceasefire','перемир','genocide','геноцид'])) return 'geopolitics';
+  if (has(['health','здоров','disease','болезн','pandemic','пандем','virus','вирус','vaccine','вакцин','education','образован','crime','преступ','human rights','прав человек','poverty','бедност','famine','голод','religion','религ','culture','культур','protest','протест','strike','забастов','refugee','беженц','migrant','мигрант','death toll','killed','погиб','injured'])) return 'social';
+  const s = (source || '').toLowerCase();
+  if (s.includes('forbes') || s.includes('economist') || s.includes('business insider')) return 'economy';
+  return 'geopolitics';
+}
+
 const NEWS_TG_CHANNELS = [
   { handle: 'AJEnglishNews',   name: 'Al Jazeera' },
   { handle: 'forbesrussia',    name: 'Forbes Russia' },
@@ -1684,7 +1698,7 @@ function _tgParseChannel(html, handle, name) {
     text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
     if (text.length < 8) continue;
     const dt = seg.match(/datetime="([^"]+)"/);
-    items.push({ source: name, handle, id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id });
+    items.push({ source: name, handle, id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id, domain: _newsDomain(text, name) });
   }
   return items;
 }
