@@ -1830,7 +1830,6 @@ def fetch_economy_rss():
         ('https://feeds.a.dj.com/rss/RSSMarketsMain.xml', 'WSJ Markets', 'economy'),
         # RU экономика
         ('https://www.kommersant.ru/RSS/section-economics.xml', 'Коммерсантъ', 'economy'),
-        ('https://rssexport.rbc.ru/rbcnews/economics/30/full.rss', 'РБК', 'economy'),  # S36.4: рабочий /full.rss формат (index.rss мёртв); экономическая категория -> домен корректен
     ]
 
     items = []
