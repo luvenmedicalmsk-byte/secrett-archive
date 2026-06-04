@@ -1688,6 +1688,8 @@ function _newsRisk(text) {
   return Math.round(s);
 }
 
+// религиозные слова — стоп (по границе слова, чтобы не задеть 'богатый','богиня' и т.п.)
+const NEWS_RELIGION_RE = /(^|[^а-яё])(господь|господи|боже|бог|бога|богу|богом|боге)([^а-яё]|$)/;
 // классификация новости по домену (ключевые слова RU/EN, затем источник-приор)
 function _newsDomain(text, source) {
   const t = (text || '').toLowerCase();
@@ -1724,6 +1726,7 @@ function _tgParseChannel(html, handle, name) {
     if (text.length < 8) continue;
     const _tl = text.toLowerCase();
     if (NEWS_STOPWORDS.some(s => _tl.includes(s))) continue;
+    if (NEWS_RELIGION_RE.test(_tl)) continue;
     const dt = seg.match(/datetime="([^"]+)"/);
     items.push({ source: name, handle, id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id, domain: _newsDomain(text, name), severity: _newsRisk(text) });
   }
