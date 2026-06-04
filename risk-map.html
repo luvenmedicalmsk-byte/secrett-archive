@@ -2621,7 +2621,7 @@ window._grdfDisasterEnsure=function(){
   function _newsToEv(items){
     return items.map(function(it){
       var full=(it.text||'').replace(/\s*\n\s*/g,' ').trim();
-      return { domain: it.domain||'geopolitics', title: full, region: it.source||'', date: it.time||'', severity:'', _news:true };
+      return { domain: it.domain||'geopolitics', title: full, region: it.source||'', date: it.time||'', severity:(typeof it.severity==='number'?it.severity:50), _news:true };
     });
   }
   async function _loadNewsEv(){
@@ -7767,7 +7767,7 @@ function grdfRenderSignals(dom){
   var html='';
   items.slice(0,200).forEach(function(ev){
     var col = DCx[ev.domain]||'#B8973A';
-    var sev = ev._news ? '' : (ev.severity||0);
+    var sev = ev.severity||0;
     html += '<div class="grdf-sig-card'+(ev._news?' sig-news':'')+'"'+(ev._news?' onclick="window._toggleSig(this)"':'')+'>'
       + '<span class="sig-dot" style="background:'+col+'"></span>'
       + '<div class="sig-main">'
