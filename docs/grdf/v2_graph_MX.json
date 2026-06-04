@@ -2,67 +2,67 @@
   "country": "MX",
   "date": "2026-06-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-04T19:51:37.143467+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-04T20:05:04.218040+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 35,
+      "score": 60,
       "props": {
-        "risk_score": 35
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 30,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 27,
-      "trend": "stable"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
       "score": 14,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -78,20 +78,6 @@
       "id": "DRIVER-MX-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-MX-Мнение:_По",
-      "type": "Signal",
-      "label": "Мнение: Почему Гвадалахара предлагает на",
-      "severity": 47,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-MX-Зеленый_ур",
-      "type": "Signal",
-      "label": "Зеленый уровень угрозы наводнения в Мекс",
-      "severity": 22,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -99,13 +85,13 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-MX",
@@ -129,13 +115,13 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-MX-Geopolitical",
@@ -156,16 +142,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-MX-Мнение:_По",
-      "to": "DOMAIN-MX-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.47
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-MX-Зеленый_ур",
-      "to": "DOMAIN-MX-climate",
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
-      "weight": 0.22
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
