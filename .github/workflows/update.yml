@@ -22,6 +22,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Установка зависимостей
+        run: pip install --quiet cdsapi netCDF4
+
       - name: Запуск парсера
         id: parser
         continue-on-error: true
@@ -30,6 +33,8 @@ jobs:
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
           FIRMS_API_KEY: ${{ secrets.FIRMS_API_KEY }}
           COPERNICUS_KEY: ${{ secrets.COPERNICUS_KEY }}
+          CDS_API_KEY: ${{ secrets.CDS_API_KEY }}
+          CDS_API_URL: ${{ secrets.CDS_API_URL }}
           PROXY_TOKEN: ${{ secrets.PROXY_TOKEN }}
           PROXY_URL: https://copernicus-proxy.luven-medical-msk.workers.dev
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
