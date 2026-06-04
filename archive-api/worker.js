@@ -1772,14 +1772,14 @@ async function _translateNewsItems(items, env){
   const todo = need.filter(it => !it._done).slice(0, 24);
   if (!todo.length) return;
   const payload = todo.map((it, i) => ({ i, t: (it.text || '').slice(0, 600) }));
-  const sys = 'Ты профессиональный переводчик новостей на русский язык. Переводи кратко, точно, естественно. Названия организаций, компаний, брендов, тикеры и имена собственные сохраняй корректно; географические названия давай по-русски, где есть устоявшийся перевод. Без комментариев. Верни СТРОГО валидный JSON: {"r":[{"i":0,"t":"перевод"},...]} в том же порядке.';
+  const sys = 'Ты профессиональный переводчик новостей на русский язык. Переведи КАЖДЫЙ элемент входного массива на естественный русский. Сохраняй названия организаций, компаний, брендов, тикеры и имена собственные; географию давай по-русски, где есть устоявшийся перевод. Без комментариев. Верни СТРОГО валидный JSON-ОБЪЕКТ, где КЛЮЧ — это значение поля "i" (строкой), а значение — перевод поля "t". Пример: вход [{"i":0,"t":"Hello"}] -> {"0":"Привет"}.';
   const usr = 'Переведи на русский:\n' + JSON.stringify(payload);
   try {
     const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 12000);
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + env.OPENAI_API_KEY },
-      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 3000, temperature: 0.2, response_format: { type: 'json_object' },
+      body: JSON.stringify({ model: 'gpt-4o', max_tokens: 3000, temperature: 0.2, response_format: { type: 'json_object' },
         messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }] }),
       signal: ctrl.signal
     });
@@ -1789,13 +1789,20 @@ async function _translateNewsItems(items, env){
     const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     if (!content) return;
     let parsed; try { parsed = JSON.parse(content); } catch(_) { return; }
-    const arr = (parsed && (parsed.r || parsed.items)) || [];
-    for (const o of arr){
-      if (!o || typeof o.i !== 'number') continue;
-      const it = todo[o.i]; if (!it || !o.t) continue;
-      it.text_orig = it.text; it.text = o.t; it.translated = true;
-      _newsTrCache.set(it._trkey, o.t);
-      if (env.EVENTS_KV){ try { await env.EVENTS_KV.put(it._trkey, o.t, { expirationTtl: 2592000 }); } catch(_){} }
+    // устойчивый разбор: ключ-объект {"0":"..."} ИЛИ массивы r/items как fallback
+    let map = {};
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const arrLike = parsed.r || parsed.items || parsed.translations;
+      if (Array.isArray(arrLike)) { arrLike.forEach((o, k) => { if (o && typeof o.t === 'string') map[o.i != null ? o.i : k] = o.t; else if (typeof o === 'string') map[k] = o; }); }
+      else { map = parsed; }
+    } else if (Array.isArray(parsed)) { parsed.forEach((v, k) => { map[k] = (v && v.t) ? v.t : v; }); }
+    for (let k = 0; k < todo.length; k++) {
+      const it = todo[k];
+      const tr = map[String(k)] != null ? map[String(k)] : map[k];
+      if (typeof tr !== 'string' || !tr.trim()) continue;
+      it.text_orig = it.text; it.text = tr; it.translated = true;
+      _newsTrCache.set(it._trkey, tr);
+      if (env.EVENTS_KV){ try { await env.EVENTS_KV.put(it._trkey, tr, { expirationTtl: 2592000 }); } catch(_){} }
     }
   } catch(_){}
 }
