@@ -1460,13 +1460,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     📊 Точность прогнозов
   </button>
 <div id="map"></div>
-<div id="quake-ctl">
-  <button class="lb" id="lb-quakes">⚠ Землетрясения</button>
-  <span id="quake-tiers" style="display:none">
-    <button class="lb qt active" data-mag="5">M5+</button>
-    <button class="lb qt" data-mag="6">M6+</button>
-    <button class="lb qt" data-mag="7">M7+</button>
-  </span>
+<button id="quake-top-btn" onclick="window._toggleQuakePanel()">⚠ Землетрясения</button>
+<div id="quake-panel">
+  <div id="quake-panel-head">
+    <span id="quake-panel-title">⚠ Землетрясения</span>
+    <button id="quake-panel-x" onclick="window._toggleQuakePanel(false)">✕</button>
+  </div>
+  <div id="quake-tiers">
+    <button class="qt active" data-mag="5">M5+</button>
+    <button class="qt" data-mag="6">M6+</button>
+    <button class="qt" data-mag="7">M7+</button>
+  </div>
+  <div id="quake-list"></div>
 </div>
 <div id="panel-overlay" onclick="closeAllPanels()" style="position:fixed;top:0;left:0;right:300px;bottom:0;z-index:20;display:none;cursor:pointer"></div>
 
@@ -2473,84 +2478,95 @@ document.getElementById('lb-outages').addEventListener('click',async function(){
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// СЕЙСМО-АЛЕРТЫ (USGS GeoJSON, real-time) — M5+/M6+/M7+
-// USGS M4.5+ за 24ч; фильтр по магнитуде на клиенте; опрос 25с.
-// Каждый алерт ссылается на TG-канал GEOFON соответствующего порога.
+// СЕЙСМО-АЛЕРТЫ (USGS GeoJSON, real-time) — список + карта, M5/6/7
 // ═══════════════════════════════════════════════════════════════════
 const USGS_QUAKE_FEED='https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson';
 const GEOFON_TG={5:'https://t.me/geofonmag5',6:'https://t.me/geofonmag6',7:'https://t.me/geofonmag7'};
 let quakeMarkers=[], quakesActive=false, quakesInterval=null, quakeMinMag=5, quakeCache=[];
 
-(function(){const s=document.createElement('style');s.textContent='@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}#quake-ctl{position:fixed;left:12px;bottom:150px;z-index:600;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:auto}#quake-ctl #lb-quakes{box-shadow:0 2px 10px rgba(0,0,0,.5)}#quake-tiers{gap:4px}#quake-tiers .qt{padding:3px 9px!important;font-size:12px!important}';document.head.appendChild(s);})();
+(function(){var s=document.createElement('style');s.textContent='#quake-top-btn{position:fixed;top:44px;right:12px;z-index:101;padding:6px 11px;background:rgba(6,5,10,0.92);border:0.5px solid rgba(184,151,58,0.4);color:#D4AF5A;font-family:Montserrat,sans-serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:0}#quake-top-btn.active{border-color:#D4AF5A;box-shadow:0 0 10px rgba(212,175,90,.3)}@media(max-width:768px){#grdf-filter-fab{display:none!important}#list-btn{display:none!important}}#quake-panel{position:fixed;top:0;right:0;bottom:0;width:min(440px,92vw);background:rgba(6,5,10,0.97);border-left:1px solid rgba(184,151,58,0.25);z-index:1500;transform:translateX(105%);transition:transform .28s ease;display:flex;flex-direction:column}#quake-panel.open{transform:translateX(0)}#quake-panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;border-bottom:0.5px solid rgba(184,151,58,0.18)}#quake-panel-title{color:#D4AF5A;font-family:Montserrat,sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase}#quake-panel-x{background:none;border:0.5px solid rgba(184,151,58,.3);color:#D4AF5A;font-size:14px;width:30px;height:30px;cursor:pointer;border-radius:4px}#quake-tiers{display:flex;gap:6px;padding:12px 16px}#quake-tiers .qt{padding:5px 12px;background:rgba(6,5,10,0.9);border:0.5px solid rgba(184,151,58,0.25);color:rgba(168,160,144,0.85);font-family:Montserrat,sans-serif;font-size:12px;cursor:pointer;border-radius:4px}#quake-tiers .qt.active{border-color:#D4AF5A;color:#D4AF5A;background:rgba(184,151,58,0.12)}#quake-list{flex:1;overflow-y:auto;padding:0 12px 24px}.qk-card{padding:12px 4px;border-bottom:0.5px solid rgba(255,255,255,0.06);cursor:pointer}.qk-top{display:flex;align-items:baseline;gap:8px}.qk-mag{font-family:Montserrat,sans-serif;font-weight:700;font-size:15px;flex-shrink:0}.qk-place{color:#E8E0D0;font-size:13px;line-height:1.3}.qk-sub{color:#7d7563;font-size:11px;margin-top:4px}.qk-detail{margin-top:8px;font-size:12px;color:#A8A090;line-height:1.55;display:none}.qk-detail a{color:#1FAACC;text-decoration:none}.qk-detail a.tg{color:#D4AF5A}.qk-empty{color:#7d7563;font-size:12px;padding:28px 6px;text-align:center;line-height:1.6}@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}';document.head.appendChild(s);})();
 
-function quakeColor(m){ return m>=7?'#FF2D2D':m>=6?'#FF7A1A':'#FFC83D'; }
-function quakeRadius(m){ return Math.max(6,(m-3)*4); }
+function qkColor(m){ return m>=7?'#FF2D2D':(m>=6?'#FF7A1A':'#FFC83D'); }
+function qkRadius(m){ return Math.max(6,(m-3)*4); }
+function qkEsc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function qkTime(t){ return new Date(t).toISOString().replace('T',' ').slice(0,16)+' UTC'; }
 
-function renderQuakes(){
+function renderQuakeMarkers(){
   clearLayer(quakeMarkers);
   const now=Date.now();
-  const list=quakeCache.filter(q=>q.mag>=quakeMinMag).sort((a,b)=>b.time-a.time);
-  list.forEach(q=>{
-    const col=quakeColor(q.mag);
-    const fresh=(now-q.time)/60000<60;
-    const tier=q.mag>=7?7:(q.mag>=6?6:5);
-    const m=L.circleMarker([q.lat,q.lng],{
-      radius:quakeRadius(q.mag),color:col,weight:fresh?2:1,
-      fillColor:col,fillOpacity:0.55,className:fresh?'quake-pulse':''
-    }).bindPopup(
-      '<b style="color:'+col+'">⚠ M'+q.mag.toFixed(1)+' · землетрясение</b>'+
-      '<br><span style="font-size:11px;color:#A8A090">'+(q.place||'')+
-      '<br>Глубина: '+(q.depth!=null?Math.round(q.depth)+' км':'?')+
-      '<br>'+new Date(q.time).toISOString().replace('T',' ').slice(0,16)+' UTC</span>'+
-      '<br><a href="'+q.url+'" target="_blank" rel="noopener" style="color:#5AB4D4;font-size:11px">USGS детали ↗</a>'+
-      ' · <a href="'+GEOFON_TG[tier]+'" target="_blank" rel="noopener" style="color:#D4AF5A;font-size:11px">GEOFON M'+tier+'+ ↗</a>'
-    );
+  quakeCache.filter(q=>q.mag>=quakeMinMag).forEach(q=>{
+    const col=qkColor(q.mag), fresh=(now-q.time)/60000<60, tier=q.mag>=7?7:(q.mag>=6?6:5);
+    const m=L.circleMarker([q.lat,q.lng],{radius:qkRadius(q.mag),color:col,weight:fresh?2:1,fillColor:col,fillOpacity:0.55,className:fresh?'quake-pulse':''})
+      .bindPopup('<b style="color:'+col+'">⚠ M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+qkTime(q.time)+'</span><br><a href="'+q.url+'" target="_blank" rel="noopener" style="color:#5AB4D4;font-size:11px">USGS ↗</a> · <a href="'+GEOFON_TG[tier]+'" target="_blank" rel="noopener" style="color:#D4AF5A;font-size:11px">GEOFON ↗</a>');
     m.addTo(map); quakeMarkers.push(m);
   });
+}
+
+function renderQuakeList(){
+  const box=document.getElementById('quake-list'); if(!box) return 0;
+  const list=quakeCache.filter(q=>q.mag>=quakeMinMag).sort((a,b)=>b.time-a.time);
+  if(!list.length){ box.innerHTML='<div class="qk-empty">Нет событий M'+quakeMinMag+'+ за последние 24 часа.<br>Лента обновляется каждые 25 секунд.</div>'; return 0; }
+  box.innerHTML=list.map(q=>{
+    const col=qkColor(q.mag), tier=q.mag>=7?7:(q.mag>=6?6:5), t=qkTime(q.time);
+    return '<div class="qk-card" onclick="window._toggleQk(this)">'+
+      '<div class="qk-top"><span class="qk-mag" style="color:'+col+'">M'+q.mag.toFixed(1)+'</span>'+
+      '<span class="qk-place">'+qkEsc(q.place||'—')+'</span></div>'+
+      '<div class="qk-sub">'+t+' · Глубина '+(q.depth!=null?Math.round(q.depth)+' км':'?')+(q.tsunami?' · ⚠ Цунами':'')+'</div>'+
+      '<div class="qk-detail">'+
+        '<b style="color:'+col+'">'+qkEsc(q.title||('M'+q.mag.toFixed(1)))+'</b><br>'+
+        'Координаты: '+q.lat.toFixed(2)+', '+q.lng.toFixed(2)+'<br>'+
+        'Глубина: '+(q.depth!=null?Math.round(q.depth)+' км':'?')+'<br>'+
+        'Время: '+t+(q.tsunami?'<br><span style="color:#FF7A1A">⚠ Предупреждение о цунами</span>':'')+
+        '<br><br><a href="'+q.url+'" target="_blank" rel="noopener">Открыть на USGS ↗</a>'+
+        ' &nbsp; <a class="tg" href="'+GEOFON_TG[tier]+'" target="_blank" rel="noopener">Сообщения · канал GEOFON M'+tier+'+ ↗</a>'+
+      '</div></div>';
+  }).join('');
   return list.length;
+}
+
+window._toggleQk=function(el){ const d=el.querySelector('.qk-detail'); if(d) d.style.display=(d.style.display==='block'?'none':'block'); };
+
+function refreshQuakeUI(){
+  const n=renderQuakeList(); renderQuakeMarkers();
+  const b=document.getElementById('quake-top-btn'); if(b) b.textContent='⚠ Землетрясения'+(quakesActive?' ('+n+')':'');
+  const ti=document.getElementById('quake-panel-title'); if(ti) ti.textContent='⚠ Землетрясения · M'+quakeMinMag+'+ ('+n+')';
 }
 
 async function loadQuakes(){
   try{
     const r=await fetch(USGS_QUAKE_FEED,{cache:'no-store',signal:AbortSignal.timeout(10000)});
-    if(!r.ok)return;
+    if(!r.ok) return;
     const data=await r.json();
     quakeCache=(data.features||[]).map(f=>{
       const c=(f.geometry&&f.geometry.coordinates)||[]; const p=f.properties||{};
-      return {mag:p.mag||0,lat:c[1],lng:c[0],depth:c[2],place:p.place||'',time:p.time||0,url:p.url||''};
+      return {mag:p.mag||0,lat:c[1],lng:c[0],depth:c[2],place:p.place||'',title:p.title||'',time:p.time||0,url:p.url||'',tsunami:p.tsunami||0};
     }).filter(q=>typeof q.lat==='number'&&typeof q.lng==='number'&&q.mag>=5);
-    const n=renderQuakes();
-    const btn=document.getElementById('lb-quakes');
-    if(btn&&quakesActive) btn.textContent='⚠ Землетрясения ('+n+')';
-    console.info('[Quakes]',quakeCache.length,'M5+/24ч, показано',n);
+    refreshQuakeUI();
+    console.info('[Quakes]',quakeCache.length,'M5+/24ч');
   }catch(e){console.warn('[Quakes]',e.message);}
 }
 
-document.getElementById('lb-quakes').addEventListener('click',async function(){
-  quakesActive=!quakesActive;
-  this.classList.toggle('active',quakesActive);
-  const tiers=document.getElementById('quake-tiers');
-  if(quakesActive){
-    tiers.style.display='flex';
-    this.textContent='⚠ Загрузка...';
+window._toggleQuakePanel=async function(force){
+  const open=(force===false)?false:(typeof force==='boolean'?force:!quakesActive);
+  quakesActive=open;
+  const panel=document.getElementById('quake-panel'), btn=document.getElementById('quake-top-btn');
+  if(open){
+    if(panel) panel.classList.add('open'); if(btn) btn.classList.add('active');
     await loadQuakes();
-    quakesInterval=setInterval(loadQuakes,25000);
+    if(!quakesInterval) quakesInterval=setInterval(loadQuakes,25000);
   }else{
-    tiers.style.display='none';
-    this.textContent='⚠ Землетрясения';
+    if(panel) panel.classList.remove('open'); if(btn) btn.classList.remove('active');
     clearLayer(quakeMarkers);
     if(quakesInterval){clearInterval(quakesInterval);quakesInterval=null;}
   }
-});
+};
 
 document.querySelectorAll('#quake-tiers .qt').forEach(b=>{
   b.addEventListener('click',function(){
     document.querySelectorAll('#quake-tiers .qt').forEach(x=>x.classList.remove('active'));
     this.classList.add('active');
     quakeMinMag=parseInt(this.getAttribute('data-mag'),10);
-    const n=renderQuakes();
-    const btn=document.getElementById('lb-quakes');
-    if(btn) btn.textContent='⚠ Землетрясения ('+n+')';
+    refreshQuakeUI();
   });
 });
 
