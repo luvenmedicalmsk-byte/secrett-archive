@@ -1665,6 +1665,8 @@ async function handleProxyDisasterNews() {
 
 
 // ── Быстрая новостная TG-лента (несколько каналов → один поток) ─────────────
+// стоп-слова: посты-анонсы/реклама не попадают в ленту (легко расширять)
+const NEWS_STOPWORDS = ['обложка','#обложка','erid','промокод','розыгрыш','реклама:','#реклама','#promo'];
 // классификация новости по домену (ключевые слова RU/EN, затем источник-приор)
 function _newsDomain(text, source) {
   const t = (text || '').toLowerCase();
@@ -1697,6 +1699,8 @@ function _tgParseChannel(html, handle, name) {
     text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
     text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
     if (text.length < 8) continue;
+    const _tl = text.toLowerCase();
+    if (NEWS_STOPWORDS.some(s => _tl.includes(s))) continue;
     const dt = seg.match(/datetime="([^"]+)"/);
     items.push({ source: name, handle, id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id, domain: _newsDomain(text, name) });
   }
