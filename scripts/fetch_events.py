@@ -938,7 +938,9 @@ def process_events(raw_items):
             severity = _severity_for(item, _gov.get('weight', 1.0))
 
         # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
-        if item.get('_force_severity') is None and severity < SEVERITY_THRESHOLD: _LOSS['sev']+=1; continue
+        # S36.4: economy/social стартуют с базы 40 и редко набирают >45 -> отдельный порог 35
+        _thr = 35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD
+        if item.get('_force_severity') is None and severity < _thr: _LOSS['sev']+=1; continue
 
         ev_id = make_id(item['title'], item['date'])
         if ev_id in seen_ids: _LOSS['dup']+=1; continue
