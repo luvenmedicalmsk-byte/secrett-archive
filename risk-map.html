@@ -1460,6 +1460,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
     📊 Точность прогнозов
   </button>
 <div id="map"></div>
+<div id="quake-ctl">
+  <button class="lb" id="lb-quakes">⚠ Землетрясения</button>
+  <span id="quake-tiers" style="display:none">
+    <button class="lb qt active" data-mag="5">M5+</button>
+    <button class="lb qt" data-mag="6">M6+</button>
+    <button class="lb qt" data-mag="7">M7+</button>
+  </span>
+</div>
 <div id="panel-overlay" onclick="closeAllPanels()" style="position:fixed;top:0;left:0;right:300px;bottom:0;z-index:20;display:none;cursor:pointer"></div>
 
 <div id="ui">
@@ -1480,12 +1488,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
   <button class="lb" id="intel-btn" onclick="window._toggleIntelPanel()">◆ Раннее предупреждение</button>
   <button class="lb" id="alerts-btn" onclick="window._toggleAlertsPanel()">⚠ Критические события</button>
   <button class="lb" id="climate-btn" onclick="window._toggleClimatePanel()">◆ Климатические риски</button>
-  <button class="lb" id="lb-quakes">⚠ Землетрясения</button>
-  <span id="quake-tiers" style="display:none">
-    <button class="lb qt active" data-mag="5">M5+</button>
-    <button class="lb qt" data-mag="6">M6+</button>
-    <button class="lb qt" data-mag="7">M7+</button>
-  </span>
   <!-- all layer buttons hidden from UI, code preserved -->
   <button class="lb" id="lb-planes" style="display:none">✈ Самолёты</button>
   <button class="lb" id="lb-ships" style="display:none">🚢 Суда</button>
@@ -2479,7 +2481,7 @@ const USGS_QUAKE_FEED='https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary
 const GEOFON_TG={5:'https://t.me/geofonmag5',6:'https://t.me/geofonmag6',7:'https://t.me/geofonmag7'};
 let quakeMarkers=[], quakesActive=false, quakesInterval=null, quakeMinMag=5, quakeCache=[];
 
-(function(){const s=document.createElement('style');s.textContent='@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}#quake-tiers .qt{padding:2px 7px!important;font-size:11px!important;margin-left:2px}';document.head.appendChild(s);})();
+(function(){const s=document.createElement('style');s.textContent='@keyframes quakePulse{0%{stroke-opacity:1}50%{stroke-opacity:.2}100%{stroke-opacity:1}}.quake-pulse{animation:quakePulse 1.4s ease-in-out infinite}#quake-ctl{position:fixed;left:12px;bottom:150px;z-index:600;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:auto}#quake-ctl #lb-quakes{box-shadow:0 2px 10px rgba(0,0,0,.5)}#quake-tiers{gap:4px}#quake-tiers .qt{padding:3px 9px!important;font-size:12px!important}';document.head.appendChild(s);})();
 
 function quakeColor(m){ return m>=7?'#FF2D2D':m>=6?'#FF7A1A':'#FFC83D'; }
 function quakeRadius(m){ return Math.max(6,(m-3)*4); }
@@ -2529,7 +2531,7 @@ document.getElementById('lb-quakes').addEventListener('click',async function(){
   this.classList.toggle('active',quakesActive);
   const tiers=document.getElementById('quake-tiers');
   if(quakesActive){
-    tiers.style.display='inline';
+    tiers.style.display='flex';
     this.textContent='⚠ Загрузка...';
     await loadQuakes();
     quakesInterval=setInterval(loadQuakes,25000);
