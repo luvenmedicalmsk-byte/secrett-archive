@@ -1712,6 +1712,18 @@ const NEWS_TG_CHANNELS = [
   { handle: 'bloomberg',       name: 'Bloomberg' },
   { handle: 'rbc_news',        name: 'РБК' },
 ];
+function _stripNonFlagEmoji(s){
+  if(!s) return s;
+  const flags=[];
+  s = s.replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, m => { flags.push(m); return '\uE000'+(flags.length-1)+'\uE001'; });
+  s = s.replace(/\p{Extended_Pictographic}/gu, '');
+  s = s.replace(/[\u{FE0F}\u{FE0E}\u{20E3}\u{200D}]/gu, '');
+  s = s.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '');
+  s = s.replace(/[\u2190-\u21FF\u2300-\u27BF\u2B00-\u2BFF\u2500-\u259F\u25A0-\u25FF\uFFFC\uFFFD]/g, '');
+  s = s.replace(/\uE000(\d+)\uE001/g, (_,i)=>flags[+i]);
+  s = s.replace(/[ \t]{2,}/g,' ').replace(/ *\n */g,'\n').replace(/^\s+|\s+$/g,'');
+  return s;
+}
 function _tgParseChannel(html, handle, name) {
   const items = [];
   const parts = html.split('data-post="' + handle + '/');
@@ -1814,7 +1826,7 @@ async function handleProxyNewsFeed(env) {
   items.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
   items = items.slice(0, 60).map(({ _ts, ...rest }) => rest);
   try { await _translateNewsItems(items, env); } catch(_){}
-  items = items.map(({ _trkey, _done, ...rest }) => rest);
+  items = items.map(({ _trkey, _done, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), count: items.length, items }), {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
   });
