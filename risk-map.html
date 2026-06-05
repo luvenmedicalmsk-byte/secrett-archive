@@ -2526,7 +2526,7 @@ function renderQuakeMarkers(){
   quakeCache.filter(q=>qkInBand(q.mag)).forEach(q=>{
     const imp=qkImpact(q), fresh=(now-q.time)/60000<60;
     const m=L.circleMarker([q.lat,q.lng],{radius:qkRadius(q.mag),color:imp.col,weight:fresh?2:1,fillColor:imp.col,fillOpacity:0.55,className:fresh?'quake-pulse':''})
-      .bindPopup('<b style="color:'+imp.col+'">'+SVG_WARN+'M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+imp.label+'<br>'+qkTime(q.time)+'</span><br><span style="color:rgba(168,160,144,0.55);font-size:11px">Данные: USGS</span>');
+      .bindPopup('<b style="color:'+imp.col+'">'+SVG_WARN+'M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+imp.label+'<br>'+qkTime(q.time)+'</span>');
     m.addTo(map); quakeMarkers.push(m);
   });
 }
@@ -2549,8 +2549,8 @@ function renderQuakeList(){
           '<b style="color:'+imp.col+'">M'+q.mag.toFixed(1)+' — '+qkEsc(q.place||'')+'</b><br>'+
           'Координаты: '+q.lat.toFixed(2)+', '+q.lng.toFixed(2)+'<br>'+
           'Глубина: '+dep+'<br>Время: '+t+'<br>Воздействие: '+imp.label.replace(' воздействие','')+' — '+imp.basis+(q.felt?('<br>Подтвердили (DYFI): '+q.felt+' сообщ.'):'')+(q.mmi!=null?('<br>Макс. интенсивность: MMI '+q.mmi.toFixed(1)):'')+(q.tsunami?'<br><span style="color:#FF7A1A">'+SVG_WARN+'Предупреждение о цунами</span>':'')+
-          '<br><span class="qk-src">Данные: USGS</span>'+
-          '<div class="qk-exposure" data-detail="'+qkEsc(q.detail||'')+'"></div>'+'<div class="qk-cities" data-detail="'+qkEsc(q.detail||'')+'"></div>'+
+          
+          '<div class="qk-exposure" data-detail="'+qkEsc(q.detail||'')+'"></div>'+'<div class="qk-cities" data-detail="'+qkEsc(q.detail||'')+'" data-lat="'+q.lat+'" data-lng="'+q.lng+'"></div>'+
         '</div>'+
       '</div>'+
       '<div class="qk-sev" style="color:'+imp.col+'">M'+q.mag.toFixed(1)+'</div>'+
@@ -2604,20 +2604,19 @@ function _loadCities(container){
   var key=container.getAttribute('data-detail'); if(!key) return;
   if(_qkCityCache[key]!==undefined){ _renderCities(container); return; }
   if(container.getAttribute('data-busy')==='1') return;
+  var lat=container.getAttribute('data-lat'), lng=container.getAttribute('data-lng');
+  if(lat==null||lng==null||lat===''||lng===''){ _qkCityCache[key]=[]; _renderCities(container); return; }
   container.setAttribute('data-busy','1');
   container.innerHTML='<div class="qk-cities-h">Ближайшие города</div><div class="qk-city-empty">Загрузка…</div>';
-  fetch(key,{cache:'force-cache'}).then(function(r){ return r.ok?r.json():null; }).then(function(j){
-    var url=null, kind=null;
-    try{ var pr=(j&&j.properties&&j.properties.products)||{}; var nc=pr['nearby-cities']; if(nc&&nc[0]&&nc[0].contents){ var cc=nc[0].contents; var k=Object.keys(cc).find(function(x){ return /nearby-cities\.json$/.test(x); }); if(k){ url=cc[k].url; kind='nc'; } } }catch(_){}
-    if(!url){ try{ var gs=pr['geoserve']; if(gs&&gs[0]&&gs[0].contents){ var gc=gs[0].contents; var gk=Object.keys(gc).find(function(x){ return /geoserve\.json$/i.test(x); }); if(gk){ url=gc[gk].url; kind='gs'; } } }catch(_2){} }
-    if(!url){ _qkCityCache[key]=[]; container.removeAttribute('data-busy'); _renderCities(container); return; }
-    return fetch(url,{cache:'force-cache'}).then(function(r){ return r.ok?r.json():null; }).then(function(d){
-      var arr=[];
-      if(kind==='nc'&&Array.isArray(d)){ arr=d.map(function(c){ return {name:c.name,distance:c.distance,direction:c.direction,population:c.population}; }); }
-      else if(kind==='gs'&&d&&Array.isArray(d.cities)){ arr=d.cities.map(function(c){ return {name:(c.name||'')+(c.country_name?(', '+c.country_name):''),distance:c.distance,direction:_azToCompass(c.azimuth),population:c.population}; }); }
+  var u='https://earthquake.usgs.gov/ws/geoserve/places.json?type=geonames&limit=8&maxradiuskm=300&latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lng);
+  fetch(u,{cache:'force-cache'}).then(function(r){ return r.ok?r.json():null; }).then(function(j){
+    var arr=[];
+    try{
+      var fs=(j&&j.geonames&&j.geonames.features)||[];
+      arr=fs.map(function(f){ var p=f.properties||{}; return {name:(p.name||'')+(p.country_name?(', '+p.country_name):''),distance:p.distance,direction:_azToCompass(p.azimuth),population:p.population}; });
       arr.sort(function(a,b){ return (a.distance==null?1e9:a.distance)-(b.distance==null?1e9:b.distance); });
-      _qkCityCache[key]=arr; container.removeAttribute('data-busy'); _renderCities(container);
-    });
+    }catch(_){}
+    _qkCityCache[key]=arr; container.removeAttribute('data-busy'); _renderCities(container);
   }).catch(function(){ _qkCityCache[key]=[]; container.removeAttribute('data-busy'); _renderCities(container); });
 }
 
