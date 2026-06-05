@@ -8113,10 +8113,18 @@ function grdfRenderSignals(dom){
   items=_ded;
   // A — rank by significance (severity / escalation) first; recency only as tie-break
   var _now=Date.now();
+  var _todayStr=new Date(_now).toISOString().slice(0,10);
   function _ageDays(e){ var t=Date.parse(e.date||''); if(isNaN(t)) return 3; var d=(_now-t)/86400000; return d<0?0:d; }
   function _sigOf(e){ return Math.max(parseFloat(e.severity)||0, parseFloat(e.escalation_score)||0); }
-  function _rank(e){ return _sigOf(e) - Math.min(_ageDays(e),10)*4; } // significance, decayed by age (~4 pts/day, capped)
-  items.sort(function(a,b){ var s=_rank(b)-_rank(a); return s!==0?s:String(b.date||'').localeCompare(String(a.date||'')); });
+  function _rank(e){ return _sigOf(e) - Math.min(_ageDays(e),10)*4; } // significance, decayed by age
+  function _effDate(e){ var d=String(e.date||'').slice(0,10); if(!d) return '0'; return d>_todayStr?_todayStr:d; } // future capped to today
+  if(dom==='all'){
+    // ВСЕ — лента по времени: новейшая дата сверху; значимость — тай-брейк внутри дня
+    items.sort(function(a,b){ var c=_effDate(b).localeCompare(_effDate(a)); return c!==0?c:(_sigOf(b)-_sigOf(a)); });
+  } else {
+    // домен — по значимости (с лёгким затуханием по свежести)
+    items.sort(function(a,b){ var s=_rank(b)-_rank(a); return s!==0?s:String(b.date||'').localeCompare(String(a.date||'')); });
+  }
   if(cnt){ var n=items.length,m10=n%10,m100=n%100,w=(m10===1&&m100!==11)?'событие':((m10>=2&&m10<=4&&(m100<10||m100>=20))?'события':'событий'); cnt.textContent=n+' '+w; }
   if(!items.length){ feed.innerHTML='<div style="padding:24px 14px;font-size:11px;color:rgba(168,160,144,0.5);text-align:center">Нет событий в этом домене</div>'; return; }
   var DLx=(typeof DL!=='undefined')?DL:{}, DCx=(typeof DC!=='undefined')?DC:{};
