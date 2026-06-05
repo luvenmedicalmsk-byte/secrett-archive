@@ -1668,17 +1668,13 @@ async function handleProxyDisasterNews(env) {
       const dt = seg.match(/datetime="([^"]+)"/);
       const media = [];
       const reImg = /tgme_widget_message_(?:photo_wrap|video_thumb)[^>]*background-image:url\('([^']+)'\)/g;
-      const _ms = []; let mm;
-      while ((mm = reImg.exec(seg)) !== null) { _ms.push({ u: mm[1], pos: mm.index, end: reImg.lastIndex }); if (_ms.length >= 14) break; }
-      for (let i = 0; i < _ms.length; i++) {
-        if (media.some(x => x.u === _ms[i].u)) continue;
-        const start = _ms[i].end;
-        const stop = (i + 1 < _ms.length) ? _ms[i + 1].pos : Math.min(seg.length, start + 900);
-        const vm = seg.slice(start, stop).match(/<video[^>]+src="([^"]+)"/);
-        media.push({ t: vm ? 'v' : 'p', u: _ms[i].u, v: vm ? vm[1] : null });
-      }
-      const hasVideo = media.some(s => s.t === 'v');
-      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id, media, hasVideo });
+      let mm;
+      while ((mm = reImg.exec(seg)) !== null) { if (media.indexOf(mm[1]) < 0 && media.length < 12) media.push(mm[1]); }
+      const videos = [];
+      const reVid = /<video[^>]+src="([^"]+)"/g; let vv;
+      while ((vv = reVid.exec(seg)) !== null) { if (videos.indexOf(vv[1]) < 0 && videos.length < 6) videos.push(vv[1]); }
+      const hasVideo = /tgme_widget_message_video(?!_thumb)|message_video_player|message_roundvideo/.test(seg) || videos.length > 0;
+      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id, media, videos, hasVideo });
     }
     items.sort((a, b) => b.id - a.id);
     const _seen = {}, _dedup = [];
@@ -1686,7 +1682,8 @@ async function handleProxyDisasterNews(env) {
       const key = (it.text || '').toLowerCase().replace(/[^a-z\u0430-\u044f0-9]+/gi, '').slice(0, 80);
       if (key && _seen[key] != null) {
         const keep = _dedup[_seen[key]];
-        (it.media || []).forEach(s => { if (!keep.media.some(x => x.u === s.u) && keep.media.length < 16) keep.media.push(s); });
+        (it.media || []).forEach(u => { if (keep.media.indexOf(u) < 0 && keep.media.length < 12) keep.media.push(u); });
+        (it.videos || []).forEach(u => { if ((keep.videos = keep.videos || []).indexOf(u) < 0 && keep.videos.length < 6) keep.videos.push(u); });
         keep.hasVideo = keep.hasVideo || it.hasVideo;
         continue;
       }
