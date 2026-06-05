@@ -3470,6 +3470,93 @@ function _ccL10n(root){
   else document.addEventListener('DOMContentLoaded', _attach);
 })();
 
+// ── Emoji → inline SVG (Atlas Signals icon system). Country flags are excluded. ──
+// Central DOM replacer: swaps colourful emoji glyphs for monochrome/gold SVG icons
+// everywhere they render, without touching source strings.
+(function(){
+  var S = 'viewBox="0 0 24 24"';
+  var LN = '<svg '+S+' fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+  function fillCircle(c){ return '<svg '+S+'><circle cx="12" cy="12" r="8.5" fill="'+c+'"/></svg>'; }
+  function fillSquare(c){ return '<svg '+S+'><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="'+c+'"/></svg>'; }
+  var EMO = {
+    '\uD83D\uDD12': LN+'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',          // 🔒
+    '\uD83D\uDD13': LN+'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7.5A4 4 0 0 1 15 5"/></svg>',         // 🔓
+    '\u2B50':       '<svg '+S+' fill="currentColor"><path d="M12 2.5l2.9 6 6.6.6-5 4.4 1.5 6.5L12 16.9 6 20l1.5-6.5-5-4.4 6.6-.6z"/></svg>', // ⭐
+    '\u26A0':       LN+'<path d="M12 3.2l9.3 16.3H2.7z"/><line x1="12" y1="9.5" x2="12" y2="14"/><circle cx="12" cy="17.2" r=".7" fill="currentColor" stroke="none"/></svg>', // ⚠
+    '\u2708':       '<svg '+S+' fill="currentColor"><path d="M21 15.5v-1.7l-7.5-4.6V4a1.5 1.5 0 0 0-3 0v5.2L3 13.8v1.7l7.5-2.2V17l-2 1.4v1.3l3.5-1 3.5 1v-1.3L13.5 17v-3.7z"/></svg>', // ✈
+    '\u26A1':       '<svg '+S+' fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>',                            // ⚡
+    '\uD83C\uDF10': LN+'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg>', // 🌐
+    '\uD83C\uDF0D': LN+'<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg>', // 🌍
+    '\uD83D\uDDFA': LN+'<path d="M9 4L3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4z"/><line x1="9" y1="4" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="20"/></svg>', // 🗺
+    '\uD83D\uDEA2': LN+'<path d="M3 16l1.6 4h14.8L21 16"/><path d="M5 16V9.5h8l5 4V16"/><line x1="9" y1="9.5" x2="9" y2="5.5"/></svg>', // 🚢
+    '\uD83D\uDCE1': LN+'<path d="M4 20a8 8 0 0 1 8-8"/><circle cx="5.5" cy="18.5" r="2"/><path d="M11 4l9 9"/><path d="M13.5 6.5l-3 3M17 10l-3 3"/></svg>', // 📡
+    '\uD83D\uDCCA': LN+'<line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/></svg>', // 📊
+    '\uD83D\uDCC8': LN+'<polyline points="3 16 9 10 13 14 21 6"/><polyline points="15 6 21 6 21 12"/></svg>',               // 📈
+    '\uD83D\uDCCB': LN+'<rect x="5" y="4.5" width="14" height="16" rx="2"/><rect x="9" y="2.8" width="6" height="3.4" rx="1"/></svg>', // 📋
+    '\uD83D\uDCDA': LN+'<rect x="4" y="5" width="4.5" height="15" rx="1"/><rect x="9.5" y="5" width="4.5" height="15" rx="1"/><path d="M15.5 6.2l3.8.9-2.7 13.6-3.8-1z"/></svg>', // 📚
+    '\u2699':       LN+'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/></svg>', // ⚙
+    '\uD83D\uDD04': LN+'<path d="M3.5 12a8.5 8.5 0 0 1 14.2-6.3L21 8"/><polyline points="21 3 21 8 16 8"/><path d="M20.5 12a8.5 8.5 0 0 1-14.2 6.3L3 16"/><polyline points="3 21 3 16 8 16"/></svg>', // 🔄
+    '\uD83D\uDD0D': LN+'<circle cx="11" cy="11" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></svg>',                       // 🔍
+    '\uD83D\uDD14': LN+'<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.8 2H4.2z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',       // 🔔
+    '\uD83C\uDFAF': LN+'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>', // 🎯
+    '\u2696':       LN+'<line x1="12" y1="4" x2="12" y2="20"/><line x1="6" y1="20" x2="18" y2="20"/><line x1="5" y1="7.5" x2="19" y2="7.5"/><path d="M5 7.5L2.2 13.5h5.6z"/><path d="M19 7.5l-2.8 6h5.6z"/></svg>', // ⚖
+    '\uD83D\uDD3A': '<svg '+S+' fill="#ef4444"><path d="M12 4.5l8.5 15H3.5z"/></svg>',                                      // 🔺
+    '\u26D3':       LN+'<rect x="2.5" y="8.5" width="10" height="6" rx="3"/><rect x="11.5" y="9.5" width="10" height="6" rx="3"/></svg>', // ⛓
+    '\u2630':       LN+'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>', // ☰
+    '\uD83E\uDD1D': LN+'<path d="M3 12l3.5-3 4 3 1.5-1.5L14 12l4-3 3 3-4 5-3-2-2.5 1.5L9 15l-3 2z"/></svg>',                  // 🤝
+    '\uD83D\uDD36': '<svg '+S+' fill="#f59e0b"><path d="M12 3l9 9-9 9-9-9z"/></svg>',                                       // 🔶
+    '\uD83D\uDD34': fillCircle('#ef4444'),  // 🔴
+    '\uD83D\uDFE2': fillCircle('#22c55e'),  // 🟢
+    '\uD83D\uDFE1': fillCircle('#eab308'),  // 🟡
+    '\uD83D\uDFE0': fillCircle('#f97316'),  // 🟠
+    '\uD83D\uDD35': fillCircle('#3b82f6'),  // 🔵
+    '\uD83D\uDFE9': fillSquare('#22c55e'),  // 🟩
+    '\uD83D\uDFE8': fillSquare('#eab308')   // 🟨
+  };
+  var keys = Object.keys(EMO);
+  var RE = new RegExp('('+keys.join('|')+')\uFE0F?', 'gu');
+  var SKIP = {SCRIPT:1,STYLE:1,TEXTAREA:1,NOSCRIPT:1};
+  function process(root){
+    if(!root) return;
+    var texts=[];
+    if(root.nodeType===3){ texts.push(root); }
+    else if(root.nodeType===1){
+      var w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      var t; while(t=w.nextNode()) texts.push(t);
+    } else return;
+    for(var i=0;i<texts.length;i++){
+      var tn=texts[i], p=tn.parentNode;
+      if(!p || SKIP[p.nodeName]) continue;
+      var s=tn.nodeValue;
+      if(!/[\uD83C-\uD83E\u2696\u2699\u26A0\u26A1\u26D3\u2630\u2708\u2B50]/.test(s)) continue;
+      RE.lastIndex=0;
+      var frag=null, last=0, m, found=false;
+      while((m=RE.exec(s))){
+        found=true; if(!frag) frag=document.createDocumentFragment();
+        if(m.index>last) frag.appendChild(document.createTextNode(s.slice(last,m.index)));
+        var span=document.createElement('span'); span.className='emo'; span.innerHTML=EMO[m[1]];
+        frag.appendChild(span); last=m.index+m[0].length;
+      }
+      if(found){ if(last<s.length) frag.appendChild(document.createTextNode(s.slice(last))); p.replaceChild(frag,tn); }
+    }
+  }
+  function boot(){
+    var st=document.createElement('style');
+    st.textContent='.emo{display:inline-flex;width:1em;height:1em;vertical-align:-0.14em;flex-shrink:0;line-height:1}.emo svg{width:100%;height:100%;display:block}';
+    document.head.appendChild(st);
+    process(document.body);
+    var q=[], pend=false;
+    var obs=new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){ var an=muts[i].addedNodes; for(var j=0;j<an.length;j++) q.push(an[j]); }
+      if(pend) return; pend=true;
+      requestAnimationFrame(function(){ pend=false; var batch=q; q=[]; for(var k=0;k<batch.length;k++) process(batch[k]); });
+    });
+    obs.observe(document.body,{childList:true,subtree:true});
+  }
+  if(document.readyState!=='loading') boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+})();
+
 window.openCountryCard = async function(cc) {
   cc = cc.toUpperCase();
   const overlay = document.getElementById('cc-overlay');
