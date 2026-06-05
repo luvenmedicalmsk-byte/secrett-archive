@@ -7343,6 +7343,7 @@ var _grdfCurrentCountry = null;
 var _grdfDrawerOpen = false;
 var _grdfNav = 'map';
 var _grdfData = null;
+var _GRDF_SELL_FUTURE = false; // Strategic/Elite ещё не в продаже — держим в архитектуре, скрываем из карточки до запуска
 
 // Domain colors
 var DOM_COLORS = {
@@ -7707,7 +7708,7 @@ function grdfRenderCountryPanel(cc) {
 
   // Forecast
   html += '<div class="grdf-section-head">Прогноз</div>';
-  html += '<div class="grdf-forecast-grid">';
+  html += '<div class="grdf-forecast-grid"'+(_GRDF_SELL_FUTURE?'':' style="grid-template-columns:repeat(2,1fr)"')+'>';
   // 24h FREE
   html += '<div class="grdf-fc-box" style="padding:8px 4px">';
   html += '<div class="grdf-fc-hz">24 часа</div>';
@@ -7727,6 +7728,9 @@ function grdfRenderCountryPanel(cc) {
     html += '<div style="font-size:10px;color:#374151;margin:2px 0">🔒</div>';
     html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px">Архив</div></div>';
   }
+  // 30d / 90d — Strategic / Elite. Не в продаже на текущем этапе: скрыты за флагом,
+  // логика и данные сохранены в архитектуре (включить = _GRDF_SELL_FUTURE=true).
+  if(_GRDF_SELL_FUTURE){
   // 30d
   if(isSig){
     html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">30d</div>';
@@ -7741,6 +7745,7 @@ function grdfRenderCountryPanel(cc) {
   html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_90d" style="cursor:pointer">';
   html += '<div class="grdf-fc-hz">90d</div><div style="font-size:16px;color:#2d3f55">🔒</div>';
   html += '<div class="grdf-fc-tier" style="color:#854d0e">Elite</div></div>';
+  }
   html += '</div>';
 
   // Drivers
