@@ -3419,6 +3419,56 @@ async function fetchHistory(cc) {
 }
 
 // ── Open card for a given country code ────────────────────────────────────
+// ── Country-card empty-state localizer (Atlas Signals · maturity language) ──
+// API may return English status notes / "Нет данных" / "N/A". We never want the
+// card to read like an unfinished product: replace such states with the language
+// of model maturity. Central, render-agnostic — runs over the rendered card text.
+var _CC_L10N_RX = [
+  [/insufficient\s*history[^<\n]*?\(\s*need[^)]*\)/gi, 'Идёт накопление истории прогнозов'],
+  [/insufficient\s*history/gi, 'Идёт накопление истории прогнозов'],
+  [/awaiting\s*30?\s*d?\+?\s*of\s*outcome\s*data/gi, 'Формируется выборка для оценки качества модели'],
+  [/awaiting[^<\n]*?outcome\s*data/gi, 'Формируется выборка для оценки качества модели'],
+  [/insufficient\s*outcome\s*data[^<\n]*?\(\s*need[^)]*\)/gi, 'Требуется накопление статистики Signal Engine'],
+  [/insufficient\s*outcome\s*data/gi, 'Требуется накопление статистики Signal Engine'],
+  [/no\s*data\s*available/gi, 'Модель накапливает статистику']
+];
+var _CC_L10N_BADGE = {
+  'Нет данных':'Формируется','НЕТ ДАННЫХ':'Формируется','нет данных':'Формируется',
+  'N/A':'Формируется','n/a':'Формируется','N/А':'Формируется'
+};
+function _ccL10n(root){
+  if(!root) return;
+  try {
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+    var arr = [], t;
+    while(t = w.nextNode()) arr.push(t);
+    for(var i=0;i<arr.length;i++){
+      var node = arr[i], s = node.nodeValue, o = s;
+      for(var j=0;j<_CC_L10N_RX.length;j++) s = s.replace(_CC_L10N_RX[j][0], _CC_L10N_RX[j][1]);
+      var tr = s.trim();
+      if(Object.prototype.hasOwnProperty.call(_CC_L10N_BADGE, tr)) s = s.replace(tr, _CC_L10N_BADGE[tr]);
+      if(s !== o) node.nodeValue = s;
+    }
+  } catch(e){}
+}
+(function(){
+  function _attach(){
+    var ov = document.getElementById('cc-overlay');
+    if(!ov || ov._ccL10nBound) return;
+    ov._ccL10nBound = true;
+    var pending = false;
+    var obs = new MutationObserver(function(){
+      if(pending) return; pending = true;
+      requestAnimationFrame(function(){ pending = false; _ccL10n(ov); });
+    });
+    // childList/subtree only — our text edits are characterData, so no feedback loop
+    obs.observe(ov, { childList:true, subtree:true });
+    _ccL10n(ov);
+  }
+  if(document.readyState !== 'loading') _attach();
+  else document.addEventListener('DOMContentLoaded', _attach);
+})();
+
 window.openCountryCard = async function(cc) {
   cc = cc.toUpperCase();
   const overlay = document.getElementById('cc-overlay');
