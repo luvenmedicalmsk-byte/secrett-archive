@@ -2,67 +2,67 @@
   "country": "IR",
   "date": "2026-06-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-05T14:42:55.853791+00:00",
+  "generated_at": "2026-06-05T17:53:19.663262+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 52,
+      "score": 54,
       "props": {
-        "risk_score": 52
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -80,11 +80,18 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Иран_заявл",
+      "id": "SIGNAL-IR-От_продово",
       "type": "Signal",
-      "label": "Иран заявляет, что выпустил предупредите",
-      "severity": 54,
+      "label": "От продовольственных очередей в Сомали д",
+      "severity": 53,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M4.8 — 66 км к З от Fīrūzā",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-IR-Планы_роск",
@@ -92,13 +99,6 @@
       "label": "Планы роскошного курорта, связанных с Ку",
       "severity": 48,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Индийские_",
-      "type": "Signal",
-      "label": "Индийские домохозяйства ожидают резкого ",
-      "severity": 47,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-IR",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-IR-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Иран_заявл",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-От_продово",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-IR-Землетрясе",
+      "to": "DOMAIN-IR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-IR-Планы_роск",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-IR-Индийские_",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }

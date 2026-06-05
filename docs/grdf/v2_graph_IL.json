@@ -2,24 +2,24 @@
   "country": "IL",
   "date": "2026-06-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-05T14:42:55.853188+00:00",
+  "generated_at": "2026-06-05T17:53:19.662699+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 49,
+      "score": 52,
       "props": {
-        "risk_score": 49
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
+      "score": 48,
       "trend": "up"
     },
     {
@@ -34,14 +34,14 @@
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
@@ -54,7 +54,7 @@
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
+      "score": 20,
       "trend": "up"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Израиль_на",
+      "type": "Signal",
+      "label": "Израиль наносит удары по южному Ливану п",
+      "severity": 54,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Бельгия:_A",
       "type": "Signal",
       "label": "Бельгия: Amnesty International присоедин",
@@ -87,17 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Неправильн",
+      "id": "SIGNAL-IL-Кризис_в_Л",
       "type": "Signal",
-      "label": "Неправильная аудитория, неправильный зап",
-      "severity": 47,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Израиль_на",
-      "type": "Signal",
-      "label": "Израиль наносит удар по ливанской деревн",
-      "severity": 47,
+      "label": "Кризис в Ливане: Потребности растут, так",
+      "severity": 50,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IL",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IL",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Израиль_на",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.54
+    },
+    {
       "from": "SIGNAL-IL-Бельгия:_A",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-IL-Неправильн",
+      "from": "SIGNAL-IL-Кризис_в_Л",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-IL-Израиль_на",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.47
+      "weight": 0.5
     }
   ]
 }
