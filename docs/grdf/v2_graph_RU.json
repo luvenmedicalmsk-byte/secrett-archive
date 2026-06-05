@@ -2,32 +2,32 @@
   "country": "RU",
   "date": "2026-06-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-05T17:53:19.653195+00:00",
+  "generated_at": "2026-06-05T21:24:01.944791+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 21,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-RU-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
+      "score": 11,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-RU-В_Черном_м",
+      "type": "Signal",
+      "label": "В Черном море атаковано турецкое рыболов",
+      "severity": 57,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-Инерция_во",
       "type": "Signal",
       "label": "Инерция войны России",
       "severity": 51,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-RU-Украина_то",
-      "type": "Signal",
-      "label": "Украина только что показала всему миру, ",
-      "severity": 51,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-RU",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-RU",
@@ -163,20 +163,41 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-RU-Россия_стр",
       "to": "DOMAIN-RU-technology",
       "type": "AMPLIFIES",
       "weight": 0.93
     },
     {
-      "from": "SIGNAL-RU-Инерция_во",
-      "to": "DOMAIN-RU-social",
+      "from": "SIGNAL-RU-В_Черном_м",
+      "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.51
+      "weight": 0.57
     },
     {
-      "from": "SIGNAL-RU-Украина_то",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "SIGNAL-RU-Инерция_во",
+      "to": "DOMAIN-RU-social",
       "type": "AMPLIFIES",
       "weight": 0.51
     }

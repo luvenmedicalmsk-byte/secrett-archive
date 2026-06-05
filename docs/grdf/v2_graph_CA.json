@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-06-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-05T17:53:19.664861+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-05T21:24:01.955778+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 40,
+      "score": 46,
       "props": {
-        "risk_score": 40
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 18,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Economic",
@@ -83,7 +83,14 @@
       "id": "SIGNAL-CA-Акции_кана",
       "type": "Signal",
       "label": "Акции канадской компании TerraVest падаю",
-      "severity": 40,
+      "severity": 47,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CA-Покупатели",
+      "type": "Signal",
+      "label": "Покупатели в Саскатуне все чаще обращают",
+      "severity": 43,
       "domain": "economic"
     }
   ],
@@ -92,13 +99,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-CA",
@@ -116,13 +123,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-CA",
@@ -149,10 +156,37 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CA-Акции_кана",
       "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.4
+      "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-CA-Покупатели",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.43
     }
   ]
 }
