@@ -48,7 +48,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 
 #zoom-btns{position:absolute;right:14px;top:45%;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;pointer-events:all;z-index:15}
 .zb{width:30px;height:30px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:#D4AF5A;font-size:16px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);transition:all 0.15s;line-height:1}
-.zb:hover{border-color:#B8973A;background:rgba(184,151,58,0.12)}#base-menu{position:absolute;right:38px;bottom:0;display:none;flex-direction:column;gap:4px;background:rgba(6,5,10,0.92);border:1px solid rgba(184,151,58,0.22);border-radius:4px;padding:5px;backdrop-filter:blur(6px)}#base-menu.open{display:flex}.bb{white-space:nowrap;background:transparent;border:1px solid transparent;color:#D4AF5A;font-size:12px;cursor:pointer;border-radius:2px;padding:5px 11px;text-align:left;transition:all 0.15s}.bb:hover{background:rgba(184,151,58,0.12)}.bb.active{border-color:rgba(184,151,58,0.5);background:rgba(184,151,58,0.18)}
+.zb:hover{border-color:#B8973A;background:rgba(184,151,58,0.12)}#base-menu{position:absolute;right:38px;bottom:0;display:none;flex-direction:column;gap:4px;background:rgba(6,5,10,0.92);border:1px solid rgba(184,151,58,0.22);border-radius:4px;padding:5px;backdrop-filter:blur(6px)}#base-menu.open{display:flex}.bb{white-space:nowrap;background:transparent;border:1px solid transparent;color:#D4AF5A;font-size:12px;cursor:pointer;border-radius:2px;padding:5px 11px;text-align:left;transition:all 0.15s}.bb:hover{background:rgba(184,151,58,0.12)}.bb.active{border-color:rgba(184,151,58,0.5);background:rgba(184,151,58,0.18)}#map-attr{position:absolute;left:8px;bottom:60px;z-index:14;font-size:9px;color:rgba(255,255,255,0.45);background:rgba(0,0,0,0.4);padding:2px 7px;border-radius:3px;pointer-events:none;max-width:62vw;line-height:1.3}
 
 #stats{position:absolute;top:68px;left:16px;display:flex;gap:16px;pointer-events:all}
 .sv{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;color:#D4AF5A;line-height:1;display:block}
@@ -1508,6 +1508,7 @@ html,body{overscroll-behavior-y:contain}
     </div>
   </div>
 
+  <div id="map-attr"></div>
   <button id="list-btn">◆ Список сигналов</button>
   <div id="ai-panel">
     <div id="ai-panel-header">
@@ -1641,14 +1642,25 @@ map.getPane('labels').style.pointerEvents = 'none';
 // ── Переключаемые подложки: Тёмная / Рельеф / Спутник ──────────────────────
 const _baseDark    = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19 });
 const _labelsDark  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19, pane:'labels' });
-const _baseTerrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { subdomains:'abc', maxZoom:17, attribution:'© OpenTopoMap (CC-BY-SA), © OpenStreetMap' });
-const _baseSat     = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, attribution:'© Esri, Maxar, Earthstar Geographics' });
+// MapTiler-ключ (бесплатный). Вставь ключ ниже и ОБЯЗАТЕЛЬНО ограничь его доменом secrett-archive.com в кабинете MapTiler.
+// Пока пусто — автоматически используется бесплатный фолбэк (OpenTopoMap / Esri).
+const MAPTILER_KEY = '';
+const _mt = function(style){ return 'https://api.maptiler.com/maps/'+style+'/{z}/{x}/{y}.png?key='+MAPTILER_KEY; };
+const _baseTerrain = MAPTILER_KEY
+  ? L.tileLayer(_mt('outdoor-v2'), { maxZoom:20, attribution:'© MapTiler © OpenStreetMap' })
+  : L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { subdomains:'abc', maxZoom:17, attribution:'© OpenTopoMap (CC-BY-SA), © OpenStreetMap' });
+const _baseSat = MAPTILER_KEY
+  ? L.tileLayer(_mt('hybrid'), { maxZoom:20, attribution:'© MapTiler © OpenStreetMap, Maxar' })
+  : L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, attribution:'© Esri, Maxar, Earthstar Geographics' });
+const _satHasLabels = !!MAPTILER_KEY;
 const _labelsSat   = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, pane:'labels' });
 function setBaseMap(kind){
   [_baseDark,_labelsDark,_baseTerrain,_baseSat,_labelsSat].forEach(function(l){ if(map.hasLayer(l)) map.removeLayer(l); });
-  if(kind==='terrain'){ _baseTerrain.addTo(map); }
-  else if(kind==='sat'){ _baseSat.addTo(map); _labelsSat.addTo(map); }
+  var attr='© CARTO · © OpenStreetMap';
+  if(kind==='terrain'){ _baseTerrain.addTo(map); attr=MAPTILER_KEY?'© MapTiler · © OpenStreetMap':'© OpenTopoMap (CC-BY-SA) · © OpenStreetMap'; }
+  else if(kind==='sat'){ _baseSat.addTo(map); if(!_satHasLabels) _labelsSat.addTo(map); attr=MAPTILER_KEY?'© MapTiler · © OpenStreetMap, Maxar':'© Esri · Maxar'; }
   else { kind='dark'; _baseDark.addTo(map); _labelsDark.addTo(map); }
+  var at=document.getElementById('map-attr'); if(at) at.textContent=attr;
   try{ localStorage.setItem('grdf_base', kind); }catch(_){}
   document.querySelectorAll('#base-menu .bb').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-base')===kind); });
 }
