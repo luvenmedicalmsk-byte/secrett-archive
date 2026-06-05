@@ -62,6 +62,7 @@ export default {
       if (path === '/api/proxy/ships') return handleProxyShips(url);
       if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
       if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews(env);
+      if (path === '/api/proxy/img') return handleProxyImg(url, request);
       if (path === '/api/proxy/news-feed') return handleProxyNewsFeed(env);
 
   // ── SNAPSHOT API ──────────────────────────────────────────────────────────
@@ -1619,6 +1620,26 @@ function _dnDecode(s){
           .replace(/&nbsp;/g,' ').replace(/&hellip;/g,'\u2026').replace(/&mdash;/g,'\u2014')
           .replace(/&#(\d+);/g,(m,n)=>String.fromCharCode(+n));
 }
+async function handleProxyImg(url, request) {
+  try {
+    const raw = url.searchParams.get('u');
+    if (!raw) return new Response('no url', { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } });
+    const u = new URL(raw);
+    if (!/(?:^|\.)telegram-cdn\.org$|(?:^|\.)telesco\.pe$|(?:^|\.)cdn-telegram\.org$/.test(u.hostname))
+      return new Response('forbidden host', { status: 403, headers: { 'Access-Control-Allow-Origin': '*' } });
+    const fwd = { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://t.me/' };
+    const range = request && request.headers.get('Range'); if (range) fwd['Range'] = range;
+    const r = await fetch(u.toString(), { headers: fwd });
+    const h = new Headers();
+    h.set('Content-Type', r.headers.get('Content-Type') || 'application/octet-stream');
+    h.set('Access-Control-Allow-Origin', '*');
+    h.set('Cache-Control', 'public, max-age=86400');
+    ['Content-Range', 'Accept-Ranges', 'Content-Length'].forEach(k => { const v = r.headers.get(k); if (v) h.set(k, v); });
+    return new Response(r.body, { status: r.status, headers: h });
+  } catch (e) {
+    return new Response('err', { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
+  }
+}
 async function handleProxyDisasterNews(env) {
   try {
     const ctrl = new AbortController();
@@ -1649,8 +1670,11 @@ async function handleProxyDisasterNews(env) {
       const reImg = /tgme_widget_message_(?:photo_wrap|video_thumb)[^>]*background-image:url\('([^']+)'\)/g;
       let mm;
       while ((mm = reImg.exec(seg)) !== null) { if (media.indexOf(mm[1]) < 0 && media.length < 12) media.push(mm[1]); }
-      const hasVideo = /tgme_widget_message_video(?!_thumb)|message_video_player|message_roundvideo/.test(seg);
-      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id, media, hasVideo });
+      const videos = [];
+      const reVid = /<video[^>]+src="([^"]+)"/g; let vv;
+      while ((vv = reVid.exec(seg)) !== null) { if (videos.indexOf(vv[1]) < 0 && videos.length < 6) videos.push(vv[1]); }
+      const hasVideo = /tgme_widget_message_video(?!_thumb)|message_video_player|message_roundvideo/.test(seg) || videos.length > 0;
+      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id, media, videos, hasVideo });
     }
     items.sort((a, b) => b.id - a.id);
     const _seen = {}, _dedup = [];
@@ -1659,6 +1683,7 @@ async function handleProxyDisasterNews(env) {
       if (key && _seen[key] != null) {
         const keep = _dedup[_seen[key]];
         (it.media || []).forEach(u => { if (keep.media.indexOf(u) < 0 && keep.media.length < 12) keep.media.push(u); });
+        (it.videos || []).forEach(u => { if ((keep.videos = keep.videos || []).indexOf(u) < 0 && keep.videos.length < 6) keep.videos.push(u); });
         keep.hasVideo = keep.hasVideo || it.hasVideo;
         continue;
       }
