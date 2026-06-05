@@ -1505,7 +1505,6 @@ html,body{overscroll-behavior-y:contain}
       <button class="bb" data-base="dark">Тёмная</button>
       <button class="bb" data-base="terrain">Рельеф</button>
       <button class="bb" data-base="sat">Спутник</button>
-      <button class="bb" data-base="backdrop">Backdrop</button>
     </div>
   </div>
 
@@ -1655,15 +1654,11 @@ const _baseSat = MAPTILER_KEY
   : L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, attribution:'© Esri, Maxar, Earthstar Geographics' });
 const _satHasLabels = !!MAPTILER_KEY;
 const _labelsSat   = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, pane:'labels' });
-const _baseBackdrop = MAPTILER_KEY
-  ? L.tileLayer(_mt('backdrop-v4'), { maxZoom:20, attribution:'© MapTiler © OpenStreetMap' })
-  : L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19, attribution:'© CARTO © OpenStreetMap' });
 function setBaseMap(kind){
-  [_baseDark,_labelsDark,_baseTerrain,_baseSat,_labelsSat,_baseBackdrop].forEach(function(l){ if(map.hasLayer(l)) map.removeLayer(l); });
+  [_baseDark,_labelsDark,_baseTerrain,_baseSat,_labelsSat].forEach(function(l){ if(map.hasLayer(l)) map.removeLayer(l); });
   var attr='© CARTO · © OpenStreetMap';
   if(kind==='terrain'){ _baseTerrain.addTo(map); attr=MAPTILER_KEY?'© MapTiler · © OpenStreetMap':'© OpenTopoMap (CC-BY-SA) · © OpenStreetMap'; }
   else if(kind==='sat'){ _baseSat.addTo(map); if(!_satHasLabels) _labelsSat.addTo(map); attr=MAPTILER_KEY?'© MapTiler · © OpenStreetMap, Maxar':'© Esri · Maxar'; }
-  else if(kind==='backdrop'){ _baseBackdrop.addTo(map); attr=MAPTILER_KEY?'© MapTiler · © OpenStreetMap':'© CARTO · © OpenStreetMap'; }
   else { kind='dark'; _baseDark.addTo(map); _labelsDark.addTo(map); }
   var at=document.getElementById('map-attr'); if(at) at.textContent=attr;
   try{ localStorage.setItem('grdf_base', kind); }catch(_){}
