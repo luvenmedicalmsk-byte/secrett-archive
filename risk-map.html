@@ -2585,7 +2585,7 @@ document.addEventListener('click',function(e){
 // ═══════════════════════════════════════════════════════════════════
 // ЭКСТРЕМАЛЬНАЯ ПОГОДА / ЧС — Telegram Disaster_News через Worker-прокси
 // ═══════════════════════════════════════════════════════════════════
-(function(){var s=document.createElement('style');s.textContent='.dn-card{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}.dn-text{font-size:12px;color:#E8E0D0;line-height:1.42;margin:1px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.dn-card.dn-open .dn-text{-webkit-line-clamp:unset;overflow:visible;display:block}.dn-actions{margin-top:5px}.dn-actions a{color:rgba(168,160,144,0.85);text-decoration:none;font-size:10px}';document.head.appendChild(s);})();
+(function(){var s=document.createElement('style');s.textContent='.dn-card{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}.dn-text{font-size:12px;color:#E8E0D0;line-height:1.42;margin:1px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.dn-card.dn-open .dn-text{-webkit-line-clamp:unset;overflow:visible;display:block}.dn-actions{margin-top:5px}.dn-actions a{color:rgba(168,160,144,0.85);text-decoration:none;font-size:10px}.dn-media{display:flex;gap:4px;margin:6px 0 2px;flex-wrap:wrap}.dn-thumb{width:66px;height:50px;border-radius:6px;background-size:cover;background-position:center;background-color:#10161f;position:relative}.dn-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;text-shadow:0 1px 4px rgba(0,0,0,.8)}.dn-more{width:40px;height:50px;border-radius:6px;background:#10161f;color:#8a93a3;font-size:11px;display:flex;align-items:center;justify-content:center}.dn-media[data-url]{cursor:pointer}';document.head.appendChild(s);})();
 
 var dnInterval=null, dnCache=[];
 function dnTime(t){ try{ return new Date(t).toISOString().replace('T',' ').slice(0,16)+' UTC'; }catch(e){ return ''; } }
@@ -2595,15 +2595,26 @@ function renderDisaster(){
   if(!dnCache.length){ box.innerHTML='<div class="qk-empty">Лента пуста.<br>Источник: Telegram · Disaster_News.</div>'; return; }
   box.innerHTML=dnCache.map(function(it){
     var text=qkEsc(it.text||'').replace(/\n/g,'<br>');
+    var md=(it.media||[]); var mh='';
+    if(md.length){
+      mh='<div class="dn-media" data-url="'+(it.url||'')+'">'+md.slice(0,4).map(function(u,ix){
+        var pl=(ix===0&&it.hasVideo)?'<span class="dn-play">\u25B6</span>':'';
+        return '<div class="dn-thumb" style="background-image:url('+JSON.stringify(String(u))+')">'+pl+'</div>';
+      }).join('')+(md.length>4?'<div class="dn-more">+'+(md.length-4)+'</div>':'')+'</div>';
+    }
     return '<div class="dn-card" onclick="window._toggleDn(this)">'+
       '<span class="qk-dot" style="background:#FF7A1A;margin-top:6px"></span>'+
       '<div class="qk-main">'+
-        '<div class="qk-dom" style="color:#FF7A1A">ЧС · Disaster News</div>'+
+        '<div class="qk-dom" style="color:#FF7A1A">ЧС \u2022 Экстремальная погода</div>'+
         '<div class="dn-text">'+text+'</div>'+
+        mh+
         '<div class="qk-meta"><span>'+dnTime(it.time)+'</span></div>'+
       '</div>'+
     '</div>';
   }).join('');
+  box.querySelectorAll('.dn-media[data-url]').forEach(function(el){
+    el.addEventListener('click',function(ev){ ev.stopPropagation(); var u=el.getAttribute('data-url'); if(u) window.open(u,'_blank','noopener'); });
+  });
 }
 window._toggleDn=function(el){ el.classList.toggle('dn-open'); };
 
