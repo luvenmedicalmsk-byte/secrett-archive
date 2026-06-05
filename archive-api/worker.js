@@ -61,7 +61,7 @@ export default {
       if (path === '/api/proxy/outages') return handleProxyOutages(url);
       if (path === '/api/proxy/ships') return handleProxyShips(url);
       if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
-      if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews();
+      if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews(env);
       if (path === '/api/proxy/news-feed') return handleProxyNewsFeed(env);
 
   // ── SNAPSHOT API ──────────────────────────────────────────────────────────
@@ -1619,7 +1619,7 @@ function _dnDecode(s){
           .replace(/&nbsp;/g,' ').replace(/&hellip;/g,'\u2026').replace(/&mdash;/g,'\u2014')
           .replace(/&#(\d+);/g,(m,n)=>String.fromCharCode(+n));
 }
-async function handleProxyDisasterNews() {
+async function handleProxyDisasterNews(env) {
   try {
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), 10000);
@@ -1649,7 +1649,10 @@ async function handleProxyDisasterNews() {
     }
     items.sort((a, b) => b.id - a.id);
     const out = items.slice(0, 40);
-    return new Response(JSON.stringify({ channel: 'Disaster_News', count: out.length, items: out }), {
+    out.forEach(it => { it.handle = 'Disaster_News'; });
+    try { await _translateNewsItems(out, env); } catch (_) {}
+    const clean = out.map(({ _trkey, _done, handle, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
+    return new Response(JSON.stringify({ channel: 'Disaster_News', count: clean.length, items: clean }), {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
