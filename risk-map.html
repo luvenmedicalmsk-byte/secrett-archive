@@ -8089,6 +8089,8 @@ function grdfPopulateWarnings(countries) {
 
 // ── S36.1: Signals feed (same source as map: ALL_EVENTS) ───────────
 var _grdfSigFilter = 'all';
+// Лента «События»: скрытые источники (точное совпадение ярлыка источника). Редактируется здесь.
+var FEED_SRC_BLOCK = ['киев','київ','kyiv','kiev'];
 function grdfRenderSignals(dom){
   dom = dom || 'all';
   _grdfSigFilter = dom;
@@ -8098,6 +8100,8 @@ function grdfRenderSignals(dom){
   var src = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS) ? ALL_EVENTS.slice() : [];
   if(typeof NEWS_EVENTS!=='undefined' && NEWS_EVENTS && NEWS_EVENTS.length) src = src.concat(NEWS_EVENTS);
   var items = (dom==='all') ? src.slice() : src.filter(function(e){ return e.domain===dom; });
+  // Source curation — hide items whose source label is on the blocklist (exact match, география не трогается)
+  items = items.filter(function(e){ var r=String(e.region||'').trim().toLowerCase(); return FEED_SRC_BLOCK.indexOf(r)<0; });
   // C — collapse rolling multi-day duplicates of the same event (same domain|title|region)
   var _seen={}, _ded=[];
   items.forEach(function(e){
