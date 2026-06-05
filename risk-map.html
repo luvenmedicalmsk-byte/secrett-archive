@@ -1193,22 +1193,22 @@ html,body{overscroll-behavior-y:contain}
 }
 #access-btn{
   position:fixed;top:116px;right:12px;z-index:101;
-  padding:6px 12px;
-  background:rgba(6,5,10,0.92);
-  border:1px solid rgba(31,170,204,0.25);
-  color:#1FAACC;
+  padding:6px 11px;
+  background:rgba(6,5,10,0.85);
+  border:0.5px solid rgba(184,151,58,0.32);
+  color:#C9A961;
   font-family:'Montserrat',sans-serif;
-  font-size:11px;font-weight:300;
-  letter-spacing:0.15em;text-transform:uppercase;
-  cursor:pointer;transition:all .3s;
+  font-size:10.5px;font-weight:400;
+  letter-spacing:0.14em;text-transform:uppercase;
+  cursor:pointer;transition:all .25s;
   pointer-events:auto!important;touch-action:manipulation;
-  border-radius:0;
-  animation:accessBtnBlink 2.5s ease-in-out infinite;
+  border-radius:6px;
+  display:flex;align-items:center;gap:5px;
 }
+#access-btn svg{width:13px;height:13px}
 #access-btn:hover{
-  background:rgba(31,170,204,0.1);
-  border-color:#1FAACC;color:#1FAACC;
-  animation:none;box-shadow:0 0 14px rgba(31,170,204,0.35);
+  background:rgba(184,151,58,0.1);
+  border-color:rgba(184,151,58,0.6);color:#E8C766;
 }
 @media(max-width:100000px){#access-btn{display:flex;align-items:center;gap:4px;}}
 
@@ -8279,7 +8279,7 @@ window.addEventListener('resize', function(){
 
 
 <!-- ACCESS BUTTON -->
-<button id="access-btn" onclick="openAccess()">ПОЛУЧИТЬ ДОСТУП</button>
+<button id="access-btn" onclick="openCabinet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>Кабинет</button>
 
 <!-- ACCESS MODAL -->
 <div id="access-modal">
@@ -8341,6 +8341,169 @@ function closeAccess(){
 
 
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess();});
+</script>
+<!-- ── ЛИЧНЫЙ КАБИНЕТ ── -->
+<div id="cabinet-modal">
+  <button class="cab-close" onclick="closeCabinet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
+  <div class="cab-inner" id="cab-body"></div>
+</div>
+<style>
+#cabinet-modal{position:fixed;inset:0;z-index:200;background:rgba(6,5,10,0.97);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#cabinet-modal.open{display:block}
+.cab-close{position:fixed;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.04);border:0.5px solid rgba(184,151,58,.25);color:#C9A961;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2}
+.cab-close svg{width:15px;height:15px}
+.cab-inner{max-width:540px;margin:0 auto;padding:54px 20px 70px}
+.cab-eyebrow{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:rgba(184,151,58,.65);margin-bottom:6px}
+.cab-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:#E8E0D0;margin:0 0 22px;line-height:1}
+.cab-statuscard{background:linear-gradient(160deg,rgba(184,151,58,.1),rgba(184,151,58,.02));border:0.5px solid rgba(184,151,58,.32);border-radius:13px;padding:15px 16px;margin-bottom:6px}
+.cab-sc-tier{display:flex;align-items:center;gap:8px;font-family:'Cormorant Garamond',serif;font-size:21px;color:#E8C766;font-weight:600}
+.cab-sc-dot{width:7px;height:7px;border-radius:50%;background:#27AE60;box-shadow:0 0 7px #27AE60;flex-shrink:0}
+.cab-sc-sub{font-size:11px;color:rgba(232,224,208,.55);margin-top:4px;letter-spacing:.02em}
+.cab-seclabel{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:rgba(232,224,208,.3);margin:20px 0 8px}
+.cab-list{display:flex;flex-direction:column;border:0.5px solid rgba(184,151,58,.13);border-radius:11px;overflow:hidden}
+.cab-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:0.5px solid rgba(184,151,58,.08)}
+.cab-row:last-child{border-bottom:none}
+.cab-row[data-act]{cursor:pointer}
+.cab-row[data-act]:active{background:rgba(184,151,58,.06)}
+.cab-row-ic{width:17px;height:17px;color:rgba(201,169,97,.85);flex-shrink:0;display:inline-flex}
+.cab-row-ic svg{width:100%;height:100%}
+.cab-row-lbl{font-size:13px;color:#E8E0D0;flex:1}
+.cab-row-val{font-size:11px;color:rgba(232,224,208,.5);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.cab-row-val.ok{color:#27AE60}
+.cab-chev{width:13px;height:13px;color:rgba(232,224,208,.28);flex-shrink:0;display:inline-flex}
+.cab-chev svg{width:100%;height:100%}
+.cab-input{width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:0.5px solid rgba(184,151,58,.25);border-radius:8px;padding:12px 13px;color:#E8E0D0;font-family:'Montserrat',sans-serif;font-size:13px;letter-spacing:.04em;outline:none}
+.cab-input:focus{border-color:rgba(184,151,58,.6)}
+.cab-input::placeholder{color:rgba(232,224,208,.3)}
+.cab-btn{display:block;width:100%;box-sizing:border-box;padding:13px 0;border:none;border-radius:8px;background:#B8973A;color:#0b0a06;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-top:10px}
+.cab-btn:active{background:#a3852f}
+.cab-btn.ghost{background:transparent;border:0.5px solid rgba(184,151,58,.35);color:#C9A961}
+.cab-msg{font-size:11px;color:rgba(232,224,208,.5);margin-top:9px;min-height:14px;text-align:center}
+.cab-note{font-size:10.5px;color:rgba(232,224,208,.4);margin-top:9px;line-height:1.5;text-align:center}
+.cab-divider{height:0.5px;background:rgba(184,151,58,.14);margin:22px 0}
+.cab-tk{font-family:'Courier New',monospace;font-size:13px;color:rgba(232,224,208,.7);letter-spacing:.06em}
+.cab-value{display:flex;flex-direction:column;gap:10px;margin:12px 0 4px}
+.cab-value-item{display:flex;align-items:flex-start;gap:9px;font-size:12px;color:rgba(232,224,208,.72);line-height:1.4}
+.cab-value-item .cab-row-ic{margin-top:1px}
+.cab-logout{margin-top:26px}
+.cab-logout .cab-btn{background:transparent;border:0.5px solid rgba(239,68,68,.3);color:#e07a7a}
+</style>
+<script>
+(function(){
+  var W='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">';
+  var CAB_IC={
+    profile:W+'<circle cx="12" cy="8" r="3.6"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>',
+    sub:W+'<rect x="3" y="6" width="18" height="12" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    archive:W+'<rect x="4" y="6" width="16" height="14" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="10" y1="14" x2="14" y2="14"/></svg>',
+    signal:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>',
+    access:W+'<circle cx="8" cy="9" r="4"/><path d="M11.5 11.5L20 20"/><path d="M17 17l2-2"/></svg>',
+    history:W+'<circle cx="12" cy="12" r="8.2"/><path d="M12 7.5V12l3 1.8"/></svg>',
+    settings:W+'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8"/></svg>',
+    logout:W+'<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><polyline points="9 8 5 12 9 16"/><line x1="5" y1="12" x2="15" y2="12"/></svg>',
+    chev:W+'<polyline points="9 6 15 12 9 18"/></svg>'
+  };
+  // Tier map — covers free/signal/strategic/elite so Strategic Pro / Elite plug in with no rework
+  var CAB_TIER={
+    free:{label:'Free',full:'Бесплатный доступ',member:false},
+    signal:{label:'Signal Pro',full:'Архив + Signal Pro',member:true},
+    strategic:{label:'Strategic Pro',full:'Strategic Pro',member:true},
+    elite:{label:'Elite',full:'Elite',member:true}
+  };
+  function tierNow(){ try{ return (window.CC&&CC.tier&&CC.tier())||'free'; }catch(e){ return 'free'; } }
+  function row(ic,lbl,val,act){
+    var ok=/Активен/.test(val||'');
+    return '<div class="cab-row"'+(act?' data-act="1" onclick="'+act+'"':'')+'>'
+      +'<span class="cab-row-ic">'+(CAB_IC[ic]||'')+'</span>'
+      +'<span class="cab-row-lbl">'+lbl+'</span>'
+      +'<span class="cab-row-val'+(ok?' ok':'')+'">'+(val||'')+'</span>'
+      +(act?'<span class="cab-chev">'+CAB_IC.chev+'</span>':'')+'</div>';
+  }
+  function maskTok(){
+    var t=''; try{ t=localStorage.getItem('cc_token')||''; }catch(e){}
+    if(!t) return '—';
+    if(t.length<=8) return t;
+    return t.slice(0,4)+' •••• '+t.slice(-4);
+  }
+  function render(){
+    var body=document.getElementById('cab-body'); if(!body) return;
+    var tier=tierNow(), info=CAB_TIER[tier]||CAB_TIER.free, h='';
+    h+='<div class="cab-eyebrow">Atlas Signals</div><h2 class="cab-title">Личный кабинет</h2>';
+    if(info.member){
+      h+='<div class="cab-statuscard"><div class="cab-sc-tier"><span class="cab-sc-dot"></span>'+info.full+'</div><div class="cab-sc-sub">Активен · Тариф «Навсегда»</div></div>';
+      h+='<div class="cab-seclabel">Подписка</div><div class="cab-list">';
+      h+=row('archive','Архив','Активен');
+      h+=row('signal','Signal Pro', tier==='free'?'—':'Активен');
+      h+='</div>';
+      h+='<div class="cab-seclabel">Аккаунт</div><div class="cab-list">';
+      h+=row('profile','Профиль', info.label);
+      h+=row('access','Управление доступом','', "cabAccess()");
+      h+=row('history','История платежей','Появится здесь');
+      h+=row('settings','Настройки аккаунта','Скоро');
+      h+='</div>';
+      h+='<div id="cab-access-blk" style="display:none;margin-top:10px;padding:14px;border:0.5px solid rgba(184,151,58,.13);border-radius:11px">'
+        +'<div style="font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(232,224,208,.4);margin-bottom:7px">Код доступа</div>'
+        +'<div class="cab-tk">'+maskTok()+'</div>'
+        +'<div style="font-size:10.5px;color:rgba(232,224,208,.4);margin:14px 0 7px">Заменить код доступа</div>'
+        +'<input id="cab-code2" class="cab-input" placeholder="Новый код" autocapitalize="off" autocomplete="off">'
+        +'<button class="cab-btn ghost" onclick="cabLogin(\'cab-code2\')">Применить</button>'
+        +'<div id="cab-login-msg" class="cab-msg"></div>'
+        +'</div>';
+      h+='<div class="cab-logout"><button class="cab-btn" onclick="cabLogout()">Выйти</button></div>';
+    } else {
+      h+='<div class="cab-statuscard"><div class="cab-sc-tier"><span class="cab-sc-dot" style="background:#6b7280;box-shadow:none"></span>Бесплатный доступ</div><div class="cab-sc-sub">Базовые сигналы и профили стран</div></div>';
+      h+='<div class="cab-seclabel">Вход в систему</div>';
+      h+='<input id="cab-code" class="cab-input" placeholder="Код доступа" autocapitalize="off" autocomplete="off">';
+      h+='<button class="cab-btn" onclick="cabLogin()">Войти</button>';
+      h+='<div id="cab-login-msg" class="cab-msg"></div>';
+      h+='<div class="cab-note">Код доступа приходит на email после оформления.</div>';
+      h+='<div class="cab-divider"></div>';
+      h+='<div class="cab-seclabel">Расширенный доступ</div>';
+      h+='<div class="cab-value">'
+        +'<div class="cab-value-item"><span class="cab-row-ic">'+CAB_IC.signal+'</span>Signal Pro — прогноз 7 дней и риск-драйверы</div>'
+        +'<div class="cab-value-item"><span class="cab-row-ic">'+CAB_IC.archive+'</span>Архив системных рисков и Country Intelligence</div>'
+        +'<div class="cab-value-item"><span class="cab-row-ic">'+CAB_IC.sub+'</span>Risk Matrix и уверенность модели</div>'
+        +'</div>';
+      h+='<button class="cab-btn" onclick="closeCabinet();openAccess();">Получить доступ →</button>';
+    }
+    body.innerHTML=h;
+  }
+  window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if(b) b.style.display = b.style.display==='none'?'block':'none'; };
+  window.cabLogin=async function(inpId){
+    inpId=inpId||'cab-code';
+    var inp=document.getElementById(inpId); if(!inp) return;
+    var code=(inp.value||'').trim(); if(!code) return;
+    var msg=document.getElementById('cab-login-msg'); if(msg) msg.textContent='Проверяем код…';
+    try{
+      if(window.CC&&CC.setToken) CC.setToken(code);
+      var d= (typeof fetchToday==='function') ? await fetchToday() : null;
+      if(d && d.tier && d.tier!=='free'){
+        if(msg){ msg.style.color='#27AE60'; msg.textContent='Доступ активирован'; }
+        setTimeout(function(){ location.reload(); }, 750);
+      } else {
+        if(window.CC&&CC.clearToken) CC.clearToken();
+        if(msg){ msg.style.color=''; msg.textContent='Код не распознан. Проверьте и попробуйте снова.'; }
+      }
+    }catch(e){
+      try{ if(window.CC&&CC.clearToken) CC.clearToken(); }catch(_){}
+      if(msg){ msg.style.color=''; msg.textContent='Не удалось проверить код. Попробуйте позже.'; }
+    }
+  };
+  window.cabLogout=function(){ try{ if(window.CC&&CC.clearToken) CC.clearToken(); }catch(e){} location.reload(); };
+  window.openCabinet=function(){
+    render();
+    var m=document.getElementById('cabinet-modal'); if(m) m.classList.add('open');
+    document.body.style.overflow='hidden';
+    var bn=document.getElementById('grdf-bottom-nav'); if(bn) bn.style.display='none';
+    var sb=document.getElementById('grdf-signals-bar'); if(sb) sb.style.display='none';
+  };
+  window.closeCabinet=function(){
+    var m=document.getElementById('cabinet-modal'); if(m) m.classList.remove('open');
+    document.body.style.overflow='';
+    var bn=document.getElementById('grdf-bottom-nav'); if(bn) bn.style.removeProperty('display');
+    var sb=document.getElementById('grdf-signals-bar'); if(sb) sb.style.removeProperty('display');
+  };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ var m=document.getElementById('cabinet-modal'); if(m&&m.classList.contains('open')) closeCabinet(); } });
+})();
 </script>
 
 
