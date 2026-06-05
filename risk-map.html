@@ -48,7 +48,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 
 #zoom-btns{position:absolute;right:14px;top:45%;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;pointer-events:all;z-index:15}
 .zb{width:30px;height:30px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:#D4AF5A;font-size:16px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);transition:all 0.15s;line-height:1}
-.zb:hover{border-color:#B8973A;background:rgba(184,151,58,0.12)}#base-menu{position:absolute;right:38px;bottom:0;display:none;flex-direction:column;gap:4px;background:rgba(6,5,10,0.92);border:1px solid rgba(184,151,58,0.22);border-radius:4px;padding:5px;backdrop-filter:blur(6px)}#base-menu.open{display:flex}.bb{white-space:nowrap;background:transparent;border:1px solid transparent;color:#D4AF5A;font-size:12px;cursor:pointer;border-radius:2px;padding:5px 11px;text-align:left;transition:all 0.15s}.bb:hover{background:rgba(184,151,58,0.12)}.bb.active{border-color:rgba(184,151,58,0.5);background:rgba(184,151,58,0.18)}#map-attr{position:absolute;left:8px;bottom:60px;z-index:14;font-size:9px;color:rgba(255,255,255,0.45);background:rgba(0,0,0,0.4);padding:2px 7px;border-radius:3px;pointer-events:none;max-width:62vw;line-height:1.3}
+.zb:hover{border-color:#B8973A;background:rgba(184,151,58,0.12)}#base-menu{position:absolute;right:38px;bottom:0;display:none;flex-direction:column;gap:4px;background:rgba(6,5,10,0.92);border:1px solid rgba(184,151,58,0.22);border-radius:4px;padding:5px;backdrop-filter:blur(6px)}#base-menu.open{display:flex}.bb{white-space:nowrap;background:transparent;border:1px solid transparent;color:#D4AF5A;font-size:12px;cursor:pointer;border-radius:2px;padding:5px 11px;text-align:left;transition:all 0.15s}.bb:hover{background:rgba(184,151,58,0.12)}.bb.active{border-color:rgba(184,151,58,0.5);background:rgba(184,151,58,0.18)}#map-attr{position:absolute;left:8px;bottom:60px;z-index:14;font-size:9px;color:rgba(255,255,255,0.45);background:rgba(0,0,0,0.4);padding:2px 7px;border-radius:3px;pointer-events:none;max-width:62vw;line-height:1.3}#map.sat-active .sig-dot-el{opacity:1!important;box-shadow:0 0 0 1px rgba(0,0,0,0.7),0 0 0 2.5px rgba(255,255,255,0.82),0 0 8px var(--c),0 0 16px var(--c)!important}
 
 #stats{position:absolute;top:68px;left:16px;display:flex;gap:16px;pointer-events:all}
 .sv{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;color:#D4AF5A;line-height:1;display:block}
@@ -1656,6 +1656,7 @@ function setBaseMap(kind){
   if(kind==='sat'){ _baseSat.addTo(map); if(!_satHasLabels) _labelsSat.addTo(map); attr=MAPTILER_KEY?'© MapTiler · © OpenStreetMap, Maxar':'© Esri · Maxar'; }
   else { kind='dark'; _baseDark.addTo(map); _labelsDark.addTo(map); }
   var at=document.getElementById('map-attr'); if(at) at.textContent=attr;
+  var _mc=document.getElementById('map'); if(_mc) _mc.classList.toggle('sat-active', kind==='sat');
   try{ localStorage.setItem('grdf_base', kind); }catch(_){}
   document.querySelectorAll('#base-menu .bb').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-base')===kind); });
 }
@@ -1720,9 +1721,9 @@ function createMarkerIcon(color, severity) {
   const html = pulse
     ? `<div style="position:relative;width:${r*2+12}px;height:${r*2+12}px">
         <div class="risk-pulse" style="position:absolute;top:0;left:0;width:${r*2+12}px;height:${r*2+12}px;background:${color};opacity:0.25;border-radius:50%"></div>
-        <div style="position:absolute;top:6px;left:6px;width:${r*2}px;height:${r*2}px;background:${color};border-radius:50%;opacity:0.92;box-shadow:0 0 8px ${color}66"></div>
+        <div class="sig-dot-el" style="position:absolute;top:6px;left:6px;width:${r*2}px;height:${r*2}px;background:${color};border-radius:50%;opacity:0.92;box-shadow:0 0 8px ${color}66;--c:${color}"></div>
        </div>`
-    : `<div style="width:${r*2}px;height:${r*2}px;background:${color};border-radius:50%;opacity:0.85;box-shadow:0 0 6px ${color}44"></div>`;
+    : `<div class="sig-dot-el" style="width:${r*2}px;height:${r*2}px;background:${color};border-radius:50%;opacity:0.85;box-shadow:0 0 6px ${color}44;--c:${color}"></div>`;
 
   return L.divIcon({
     html,
