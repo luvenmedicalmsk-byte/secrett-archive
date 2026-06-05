@@ -2553,7 +2553,7 @@ async function loadQuakes(){
     const data=await r.json();
     quakeCache=(data.features||[]).map(f=>{
       const c=(f.geometry&&f.geometry.coordinates)||[]; const p=f.properties||{};
-      return {mag:p.mag||0,lat:c[1],lng:c[0],depth:c[2],place:p.place||'',title:p.title||'',time:p.time||0,url:p.url||'',tsunami:p.tsunami||0};
+      return {mag:p.mag||0,lat:c[1],lng:c[0],depth:c[2],place:(window.ruQuake?window.ruQuake(p.place||''):(p.place||'')),title:p.title||'',time:p.time||0,url:p.url||'',tsunami:p.tsunami||0};
     }).filter(q=>typeof q.lat==='number'&&typeof q.lng==='number'&&q.mag>=5);
     refreshQuakeUI();
     console.info('[Quakes]',quakeCache.length,'M5+/7д');
@@ -8061,6 +8061,35 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess(
     },{passive:true});
   }
   if(document.readyState!=='loading') init(); else document.addEventListener('DOMContentLoaded',init);
+})();
+</script>
+
+<script>
+/* Русификация мест землетрясений USGS в «Алертах» (словарь: страны/штаты/румбы) */
+(function(){
+  var D={N:'С',NNE:'ССВ',NE:'СВ',ENE:'ВСВ',E:'В',ESE:'ВЮВ',SE:'ЮВ',SSE:'ЮЮВ',S:'Ю',SSW:'ЮЮЗ',SW:'ЮЗ',WSW:'ЗЮЗ',W:'З',WNW:'ЗСЗ',NW:'СЗ',NNW:'ССЗ'};
+  var ST={Alabama:'Алабама',Alaska:'Аляска',Arizona:'Аризона',Arkansas:'Арканзас',California:'Калифорния',Colorado:'Колорадо',Connecticut:'Коннектикут',Delaware:'Делавэр',Florida:'Флорида',Georgia:'Джорджия',Hawaii:'Гавайи',Idaho:'Айдахо',Illinois:'Иллинойс',Indiana:'Индиана',Iowa:'Айова',Kansas:'Канзас',Kentucky:'Кентукки',Louisiana:'Луизиана',Maine:'Мэн',Maryland:'Мэриленд',Massachusetts:'Массачусетс',Michigan:'Мичиган',Minnesota:'Миннесота',Mississippi:'Миссисипи',Missouri:'Миссури',Montana:'Монтана',Nebraska:'Небраска',Nevada:'Невада',Ohio:'Огайо',Oklahoma:'Оклахома',Oregon:'Орегон',Pennsylvania:'Пенсильвания',Tennessee:'Теннесси',Texas:'Техас',Utah:'Юта',Vermont:'Вермонт',Virginia:'Виргиния',Washington:'Вашингтон',Wisconsin:'Висконсин',Wyoming:'Вайоминг',CA:'Калифорния',AK:'Аляска',HI:'Гавайи',NV:'Невада',OR:'Орегон',WA:'Вашингтон',OK:'Оклахома',MT:'Монтана',ID:'Айдахо',TX:'Техас',UT:'Юта',NM:'Нью-Мексико'};
+  var C={Afghanistan:'Афганистан',Albania:'Албания',Algeria:'Алжир',Argentina:'Аргентина',Armenia:'Армения',Australia:'Австралия',Azerbaijan:'Азербайджан',Bangladesh:'Бангладеш',Bolivia:'Боливия',Brazil:'Бразилия',Bulgaria:'Болгария',Canada:'Канада',Chile:'Чили',China:'Китай',Colombia:'Колумбия',Croatia:'Хорватия',Cuba:'Куба',Cyprus:'Кипр',Ecuador:'Эквадор',Egypt:'Египет',Ethiopia:'Эфиопия',Fiji:'Фиджи',France:'Франция',Georgia:'Грузия',Germany:'Германия',Greece:'Греция',Guatemala:'Гватемала',Haiti:'Гаити',Honduras:'Гондурас',Iceland:'Исландия',India:'Индия',Indonesia:'Индонезия',Iran:'Иран',Iraq:'Ирак',Italy:'Италия',Japan:'Япония',Jordan:'Иордания',Kazakhstan:'Казахстан',Kyrgyzstan:'Киргизия',Mexico:'Мексика',Mongolia:'Монголия',Morocco:'Марокко',Myanmar:'Мьянма',Nepal:'Непал',Nicaragua:'Никарагуа',Pakistan:'Пакистан',Panama:'Панама',Paraguay:'Парагвай',Peru:'Перу',Philippines:'Филиппины',Portugal:'Португалия',Romania:'Румыния',Russia:'Россия',Serbia:'Сербия',Slovenia:'Словения',Spain:'Испания',Syria:'Сирия',Taiwan:'Тайвань',Tajikistan:'Таджикистан',Tanzania:'Танзания',Thailand:'Таиланд',Tonga:'Тонга',Turkey:'Турция',Turkiye:'Турция',Turkmenistan:'Туркмения',Ukraine:'Украина',Uzbekistan:'Узбекистан',Vanuatu:'Вануату',Venezuela:'Венесуэла',Vietnam:'Вьетнам'};
+  var TOP={Kamchatka:'Камчатка',Svalbard:'Шпицберген','Mid-Atlantic Ridge':'Срединно-Атлантический хребет','Kuril Islands':'Курильские острова','Aleutian Islands':'Алеутские острова',Sumatra:'Суматра',Java:'Ява',Sulawesi:'Сулавеси',Crete:'Крит','New Zealand':'Новая Зеландия','Papua New Guinea':'Папуа — Новая Гвинея','El Salvador':'Сальвадор','Saudi Arabia':'Саудовская Аравия','United States':'США'};
+  function reg(r){ r=(r||'').trim(); if(ST[r]) return ST[r]+', США'; if(C[r]) return C[r]; if(TOP[r]) return TOP[r]; return r; }
+  function top(x){ x=(x||'').trim(); for(var k in TOP){ x=x.split(k).join(TOP[k]); } return x; }
+  window.ruQuake=function(place){
+    if(!place||typeof place!=='string') return place;
+    var s=place.trim(), m;
+    m=s.match(/^(\d+(?:\.\d+)?)\s*km\s+([NSEW]{1,3})\s+of\s+(.+)$/i);
+    if(m){
+      var d=D[m[2].toUpperCase()]||m[2], rest=m[3], feat=rest, r='';
+      var ci=rest.lastIndexOf(',');
+      if(ci>=0){ feat=rest.slice(0,ci).trim(); r=reg(rest.slice(ci+1)); }
+      return m[1]+' км к '+d+' от '+top(feat)+(r?' ('+r+')':'');
+    }
+    m=s.match(/^(north|south|east|west|northeast|northwest|southeast|southwest)\s+of\s+(.+)$/i);
+    if(m){ var dm={north:'к северу',south:'к югу',east:'к востоку',west:'к западу',northeast:'к северо-востоку',northwest:'к северо-западу',southeast:'к юго-востоку',southwest:'к юго-западу'}; return dm[m[1].toLowerCase()]+' от '+top(reg(m[2])); }
+    m=s.match(/^(.+?)\s+region$/i);
+    if(m){ return top(reg(m[1]))+' (регион)'; }
+    var only=reg(s); if(only!==s) return only;
+    return top(s);
+  };
 })();
 </script>
 </body>
