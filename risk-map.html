@@ -48,7 +48,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 
 #zoom-btns{position:absolute;right:14px;top:45%;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;pointer-events:all;z-index:15}
 .zb{width:30px;height:30px;background:rgba(6,5,10,0.85);border:1px solid rgba(184,151,58,0.22);color:#D4AF5A;font-size:16px;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);transition:all 0.15s;line-height:1}
-.zb:hover{border-color:#B8973A;background:rgba(184,151,58,0.12)}#base-menu{position:absolute;right:38px;bottom:0;display:none;flex-direction:column;gap:4px;background:rgba(6,5,10,0.92);border:1px solid rgba(184,151,58,0.22);border-radius:4px;padding:5px;backdrop-filter:blur(6px)}#base-menu.open{display:flex}.bb{white-space:nowrap;background:transparent;border:1px solid transparent;color:#D4AF5A;font-size:12px;cursor:pointer;border-radius:2px;padding:5px 11px;text-align:left;transition:all 0.15s}.bb:hover{background:rgba(184,151,58,0.12)}.bb.active{border-color:rgba(184,151,58,0.5);background:rgba(184,151,58,0.18)}#map-attr{position:absolute;right:10px;bottom:58px;z-index:14;display:flex;align-items:center;gap:6px;pointer-events:auto}#map-attr-text{display:none;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.55);padding:3px 8px;border-radius:4px;line-height:1.3;white-space:nowrap;max-width:70vw;overflow:hidden;text-overflow:ellipsis}#map-attr.open #map-attr-text{display:block}#map-attr-i{width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.45);border:1px solid rgba(184,151,58,0.3);color:rgba(212,175,90,0.85);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;font-style:italic;font-family:Georgia,serif}#map.sat-active .sig-dot-el{opacity:1!important;box-shadow:0 0 6px var(--c),0 0 12px var(--c),0 0 20px var(--c),0 0 2px 1px rgba(0,0,0,0.45)!important}#map.sat-active path.qk-sig{stroke-width:0!important;fill-opacity:1!important;filter:drop-shadow(0 0 1px rgba(0,0,0,0.5)) drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 6px var(--c))}
+.zb:hover{border-color:#B8973A;background:rgba(184,151,58,0.12)}#base-menu{position:absolute;right:38px;bottom:0;display:none;flex-direction:column;gap:4px;background:rgba(6,5,10,0.92);border:1px solid rgba(184,151,58,0.22);border-radius:4px;padding:5px;backdrop-filter:blur(6px)}#base-menu.open{display:flex}.bb{white-space:nowrap;background:transparent;border:1px solid transparent;color:#D4AF5A;font-size:12px;cursor:pointer;border-radius:2px;padding:5px 11px;text-align:left;transition:all 0.15s}.bb:hover{background:rgba(184,151,58,0.12)}.bb.active{border-color:rgba(184,151,58,0.5);background:rgba(184,151,58,0.18)}#map-attr-i{width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(184,151,58,0.28);color:rgba(212,175,90,0.8);font-size:10px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;font-style:italic;font-family:Georgia,serif;align-self:center}#map-attr-text{position:absolute;right:38px;bottom:0;display:none;font-size:9px;color:rgba(255,255,255,0.6);background:rgba(0,0,0,0.55);padding:3px 8px;border-radius:4px;line-height:1.3;white-space:nowrap;max-width:62vw}#map-attr-text.open{display:block}#map.sat-active .sig-dot-el{opacity:1!important;box-shadow:0 0 6px var(--c),0 0 12px var(--c),0 0 20px var(--c),0 0 2px 1px rgba(0,0,0,0.45)!important}#map.sat-active path.qk-sig{stroke-width:0!important;fill-opacity:1!important;filter:drop-shadow(0 0 1px rgba(0,0,0,0.5)) drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 6px var(--c))}
 
 #stats{position:absolute;top:68px;left:16px;display:flex;gap:16px;pointer-events:all}
 .sv{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:300;color:#D4AF5A;line-height:1;display:block}
@@ -1505,9 +1505,10 @@ html,body{overscroll-behavior-y:contain}
       <button class="bb" data-base="dark">Тёмная</button>
       <button class="bb" data-base="sat">Спутник</button>
     </div>
+    <button id="map-attr-i" aria-label="Источники карты">i</button>
+    <div id="map-attr-text"></div>
   </div>
 
-  <div id="map-attr"><span id="map-attr-text"></span><button id="map-attr-i" aria-label="Источники карты">i</button></div>
   <button id="list-btn">◆ Список сигналов</button>
   <div id="ai-panel">
     <div id="ai-panel-header">
@@ -1865,8 +1866,8 @@ document.getElementById('z-reset').onclick = () => map.flyTo([20, 10], 2, {durat
   if(bt&&bm){ bt.onclick=function(e){ e.stopPropagation(); bm.classList.toggle('open'); };
     bm.querySelectorAll('.bb').forEach(function(b){ b.onclick=function(e){ e.stopPropagation(); setBaseMap(b.getAttribute('data-base')); bm.classList.remove('open'); }; });
     document.addEventListener('click', function(){ bm.classList.remove('open'); }); } })();
-(function(){ var ai=document.getElementById('map-attr-i'), aw=document.getElementById('map-attr');
-  if(ai&&aw){ ai.onclick=function(e){ e.stopPropagation(); aw.classList.toggle('open'); };
+(function(){ var ai=document.getElementById('map-attr-i'), aw=document.getElementById('map-attr-text');
+  if(ai&&aw){ ai.onclick=function(e){ e.stopPropagation(); var bm=document.getElementById('base-menu'); if(bm) bm.classList.remove('open'); aw.classList.toggle('open'); };
     document.addEventListener('click', function(){ aw.classList.remove('open'); }); } })();
 
 document.getElementById('dt-x').onclick = () => {
