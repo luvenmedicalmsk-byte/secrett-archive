@@ -963,6 +963,23 @@ def ru_geo(s):
             out = re.sub(r'\b' + re.escape(en) + r'\b', ru, out)
     return out
 
+_FLAG_RE = re.compile('[\U0001F1E6-\U0001F1FF]{2}')
+_LONE_RI_RE = re.compile('[\U0001F1E6-\U0001F1FF]')
+_EMOJI_RE = re.compile('[\U0001F300-\U0001FAFF\U0001F000-\U0001F0FF\u2600-\u27BF\u2190-\u21FF\u2B00-\u2BFF\u2300-\u23FF\u2500-\u259F\u25A0-\u25FF\u2049\u203C\u2122\u2139\u20E3\u200D\uFE0E\uFE0F\uFFFC\uFFFD]')
+def strip_non_flag_emoji(s):
+    """Убирает эмодзи/символы/квадраты, СОХРАНЯЯ флаги стран (пары региональных индикаторов)."""
+    if not s or not isinstance(s, str): return s
+    flags = []
+    def keep(m):
+        flags.append(m.group(0)); return '\ue000%d\ue001' % (len(flags)-1)
+    s = _FLAG_RE.sub(keep, s)
+    s = _EMOJI_RE.sub('', s)
+    s = _LONE_RI_RE.sub('', s)
+    s = re.sub('\ue000(\\d+)\ue001', lambda m: flags[int(m.group(1))], s)
+    s = re.sub(r'[ \t]{2,}', ' ', s)
+    s = re.sub(r' *\n *', '\n', s)
+    return s.strip()
+
 def _split_feature_region(rest):
     rest = rest.strip()
     if ',' in rest:
@@ -1352,6 +1369,12 @@ def process_events(raw_items):
         if ev.get('summary'):
             ev['summary'] = translated_summaries[i]
 
+    for _e in top_events:
+        try:
+            _e['title'] = strip_non_flag_emoji(_e.get('title','') or '')
+            if _e.get('summary'): _e['summary'] = strip_non_flag_emoji(_e['summary'])
+            _e['region'] = ru_geo(_e.get('region','') or '')
+        except Exception: pass
     _save_tr_disk()
     return top_events
 
