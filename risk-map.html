@@ -2593,14 +2593,20 @@ function dnTime(t){ try{ return new Date(t).toISOString().replace('T',' ').slice
 function renderDisaster(){
   var box=document.getElementById('weather-list'); if(!box) return;
   if(!dnCache.length){ box.innerHTML='<div class="qk-empty">Лента пуста.<br>Источник: Telegram · Disaster_News.</div>'; return; }
+  var PROXY=API_BASE+'/api/proxy/img?u=';
   box.innerHTML=dnCache.map(function(it){
     var text=qkEsc(it.text||'').replace(/\n/g,'<br>');
-    var md=(it.media||[]); var mh='';
+    var md=(it.media||[]); var vids=(it.videos||[]); var mh='';
     if(md.length){
-      mh='<div class="dn-media" data-url="'+(it.url||'')+'">'+md.slice(0,4).map(function(u,ix){
+      mh='<div class="dn-media">'+md.slice(0,4).map(function(u,ix){
+        var isVid=(ix===0&&it.hasVideo&&vids.length);
+        var bg=JSON.stringify(PROXY+encodeURIComponent(String(u)));
         var pl=(ix===0&&it.hasVideo)?'<span class="dn-play">\u25B6</span>':'';
-        return '<div class="dn-thumb" style="background-image:url('+JSON.stringify(String(u))+')">'+pl+'</div>';
+        var va=isVid?(' data-vid='+JSON.stringify(PROXY+encodeURIComponent(String(vids[0])))):'';
+        return '<div class="dn-thumb" style="background-image:url('+bg+')"'+va+'>'+pl+'</div>';
       }).join('')+(md.length>4?'<div class="dn-more">+'+(md.length-4)+'</div>':'')+'</div>';
+    } else if(vids.length){
+      mh='<div class="dn-media"><div class="dn-thumb" data-vid='+JSON.stringify(PROXY+encodeURIComponent(String(vids[0])))+'><span class="dn-play">\u25B6</span></div></div>';
     }
     return '<div class="dn-card" onclick="window._toggleDn(this)">'+
       '<span class="qk-dot" style="background:#FF7A1A;margin-top:6px"></span>'+
@@ -2612,8 +2618,15 @@ function renderDisaster(){
       '</div>'+
     '</div>';
   }).join('');
-  box.querySelectorAll('.dn-media[data-url]').forEach(function(el){
-    el.addEventListener('click',function(ev){ ev.stopPropagation(); var u=el.getAttribute('data-url'); if(u) window.open(u,'_blank','noopener'); });
+  box.querySelectorAll('.dn-thumb[data-vid]').forEach(function(el){
+    el.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      var src=el.getAttribute('data-vid'); if(!src) return;
+      var v=document.createElement('video');
+      v.src=src; v.controls=true; v.autoplay=true; v.setAttribute('playsinline','');
+      v.style.cssText='width:100%;max-width:340px;border-radius:8px;margin:6px 0 2px;background:#000';
+      var m=el.closest('.dn-media'); if(m){ m.replaceWith(v); }
+    });
   });
 }
 window._toggleDn=function(el){ el.classList.toggle('dn-open'); };
