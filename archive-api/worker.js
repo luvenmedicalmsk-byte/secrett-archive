@@ -63,7 +63,6 @@ export default {
       if (path === '/api/proxy/events-feed') return handleProxyEventsFeed();
       if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews(env);
       if (path === '/api/proxy/img') return handleProxyImg(url, request);
-      if (path === '/api/proxy/geo-photo') return handleGeoPhoto(url);
       if (path === '/api/proxy/news-feed') return handleProxyNewsFeed(env);
 
   // ── SNAPSHOT API ──────────────────────────────────────────────────────────
@@ -1626,12 +1625,9 @@ async function handleProxyImg(url, request) {
     const raw = url.searchParams.get('u');
     if (!raw) return new Response('no url', { status: 400, headers: { 'Access-Control-Allow-Origin': '*' } });
     const u = new URL(raw);
-    const _isTg = /(?:^|\.)telegram-cdn\.org$|(?:^|\.)telesco\.pe$|(?:^|\.)cdn-telegram\.org$/.test(u.hostname);
-    const _isWiki = /(?:^|\.)wikimedia\.org$|(?:^|\.)wikipedia\.org$/.test(u.hostname);
-    if (!_isTg && !_isWiki)
+    if (!/(?:^|\.)telegram-cdn\.org$|(?:^|\.)telesco\.pe$|(?:^|\.)cdn-telegram\.org$/.test(u.hostname))
       return new Response('forbidden host', { status: 403, headers: { 'Access-Control-Allow-Origin': '*' } });
-    const fwd = { 'User-Agent': 'Mozilla/5.0 (compatible; ArchiveRiskMap/1.0; +https://secrett-archive.com)' };
-    if (_isTg) fwd['Referer'] = 'https://t.me/';
+    const fwd = { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://t.me/' };
     const range = request && request.headers.get('Range'); if (range) fwd['Range'] = range;
     const r = await fetch(u.toString(), { headers: fwd });
     const h = new Headers();
@@ -1642,52 +1638,6 @@ async function handleProxyImg(url, request) {
     return new Response(r.body, { status: r.status, headers: h });
   } catch (e) {
     return new Response('err', { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
-  }
-}
-async function handleGeoPhoto(url) {
-  const cors = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=86400' };
-  try {
-    const lat = parseFloat(url.searchParams.get('lat'));
-    const lng = parseFloat(url.searchParams.get('lng'));
-    if (!isFinite(lat) || !isFinite(lng)) return new Response(JSON.stringify({ photos: [] }), { headers: cors });
-    const UA = 'ArchiveRiskMap/1.0 (https://secrett-archive.com; signals platform)';
-    async function geo(radius) {
-      const api = 'https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query&generator=geosearch'
-        + '&ggscoord=' + lat + '%7C' + lng + '&ggsradius=' + radius + '&ggslimit=24&ggsnamespace=6'
-        + '&prop=imageinfo&iiprop=url%7Cmime%7Cextmetadata&iiurlwidth=360';
-      const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 9000);
-      try {
-        const r = await fetch(api, { headers: { 'User-Agent': UA, 'Accept': 'application/json' }, signal: ctrl.signal });
-        clearTimeout(tid);
-        if (!r.ok) return [];
-        const j = await r.json();
-        return (j && j.query && j.query.pages) ? Object.values(j.query.pages) : [];
-      } catch (_) { clearTimeout(tid); return []; }
-    }
-    let pages = await geo(10000);
-    if (!pages.length) pages = await geo(50000);
-    const BAD = /(\.svg|\.gif|\.pdf|\.tif|map|карт|flag|флаг|logo|логотип|icon|иконк|coat|герб|locator|diagram|chart|graph|seal|emblem|panorama%20map|topograph|scheme|схема)/i;
-    const seen = new Set(); const photos = [];
-    for (const p of pages) {
-      const ii = (p.imageinfo && p.imageinfo[0]); if (!ii) continue;
-      if (!/^image\/(jpeg|png|webp)$/.test(ii.mime || '')) continue;
-      const title = p.title || ''; if (BAD.test(title)) continue;
-      const thumb = ii.thumburl || ii.url; const full = ii.url; if (!thumb || !full) continue;
-      if (seen.has(full)) continue; seen.add(full);
-      const em = ii.extmetadata || {};
-      const strip = (s) => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-      photos.push({
-        thumb, full,
-        title: title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, ''),
-        author: strip(em.Artist && em.Artist.value).slice(0, 80),
-        license: strip(em.LicenseShortName && em.LicenseShortName.value).slice(0, 40),
-        page: ii.descriptionurl || ''
-      });
-      if (photos.length >= 8) break;
-    }
-    return new Response(JSON.stringify({ photos }), { headers: cors });
-  } catch (e) {
-    return new Response(JSON.stringify({ photos: [] }), { headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' } });
   }
 }
 async function handleProxyDisasterNews(env) {
