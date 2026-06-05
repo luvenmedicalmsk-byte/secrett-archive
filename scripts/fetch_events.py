@@ -949,6 +949,9 @@ COUNTRY_RU = {
     'Ukraine':'Украина','United Arab Emirates':'ОАЭ','United Kingdom':'Великобритания','UK':'Великобритания',
     'United States':'США','USA':'США','Uruguay':'Уругвай','Uzbekistan':'Узбекистан','Venezuela':'Венесуэла',
     'Vietnam':'Вьетнам','Yemen':'Йемен','Zambia':'Замбия','Zimbabwe':'Зимбабве',
+    'Africa':'Африка','America':'Америка','Asia':'Азия','Europe':'Европа','Oceania':'Океания',
+    'Korea':'Корея','Gaza':'Газа','Beijing':'Пекин','New Delhi':'Нью-Дели','Moscow':'Москва',
+    'Hong Kong':'Гонконг','Türkiye':'Турция','UAE':'ОАЭ','Uae':'ОАЭ','Tibet':'Тибет',
 }
 # для нормализации region: страны имеют приоритет над штатами при коллизиях (Georgia → Грузия)
 _GEO_MERGED = dict(US_STATES_RU); _GEO_MERGED.update(COUNTRY_RU)
