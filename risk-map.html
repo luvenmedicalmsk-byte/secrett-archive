@@ -8108,14 +8108,18 @@ function grdfRenderSignals(dom){
   });
   items=_ded;
   // A — rank by significance (severity / escalation) first; recency only as tie-break
+  var _now=Date.now();
+  function _ageDays(e){ var t=Date.parse(e.date||''); if(isNaN(t)) return 3; var d=(_now-t)/86400000; return d<0?0:d; }
   function _sigOf(e){ return Math.max(parseFloat(e.severity)||0, parseFloat(e.escalation_score)||0); }
-  items.sort(function(a,b){ var s=_sigOf(b)-_sigOf(a); return s!==0?s:String(b.date||'').localeCompare(String(a.date||'')); });
+  function _rank(e){ return _sigOf(e) - Math.min(_ageDays(e),10)*4; } // significance, decayed by age (~4 pts/day, capped)
+  items.sort(function(a,b){ var s=_rank(b)-_rank(a); return s!==0?s:String(b.date||'').localeCompare(String(a.date||'')); });
   if(cnt){ var n=items.length,m10=n%10,m100=n%100,w=(m10===1&&m100!==11)?'событие':((m10>=2&&m10<=4&&(m100<10||m100>=20))?'события':'событий'); cnt.textContent=n+' '+w; }
   if(!items.length){ feed.innerHTML='<div style="padding:24px 14px;font-size:11px;color:rgba(168,160,144,0.5);text-align:center">Нет событий в этом домене</div>'; return; }
   var DLx=(typeof DL!=='undefined')?DL:{}, DCx=(typeof DC!=='undefined')?DC:{};
   function scx(s){ try{ return (typeof sc==='function')?sc(s):'#D4AF5A'; }catch(e){ return '#D4AF5A'; } }
   function fdx(d){ try{ return (typeof fd==='function')?fd(d):''; }catch(e){ return ''; } }
   function escx(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function _deEnt(t){ return String(t==null?'':t).replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#0?39;/g,"'"); }
   var html='';
   items.slice(0,200).forEach(function(ev){
     var col = DCx[ev.domain]||'#B8973A';
@@ -8124,8 +8128,8 @@ function grdfRenderSignals(dom){
       + '<span class="sig-dot" style="background:'+col+'"></span>'
       + '<div class="sig-main">'
       +   '<div class="grdf-sig-dom" style="color:'+col+'">'+escx(DLx[ev.domain]||ev.domain||'')+'</div>'
-      +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(ev.title)+'</div>'
-      +   '<div class="grdf-sig-meta"><span>'+escx(ev.region)+'</span><span>'+fdx(ev.date)+'</span></div>'
+      +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(_deEnt(ev.title))+'</div>'
+      +   '<div class="grdf-sig-meta"><span>'+escx(_deEnt(ev.region))+'</span><span>'+fdx(ev.date)+'</span></div>'
       + '</div>'
       + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'</div>'
       + '</div>';
