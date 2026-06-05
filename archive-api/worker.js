@@ -1645,10 +1645,27 @@ async function handleProxyDisasterNews(env) {
       text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
       if (text.length < 10) continue;
       const dt = seg.match(/datetime="([^"]+)"/);
-      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id });
+      const media = [];
+      const reImg = /tgme_widget_message_(?:photo_wrap|video_thumb)[^>]*background-image:url\('([^']+)'\)/g;
+      let mm;
+      while ((mm = reImg.exec(seg)) !== null) { if (media.indexOf(mm[1]) < 0 && media.length < 12) media.push(mm[1]); }
+      const hasVideo = /tgme_widget_message_video(?!_thumb)|message_video_player|message_roundvideo/.test(seg);
+      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id, media, hasVideo });
     }
     items.sort((a, b) => b.id - a.id);
-    const out = items.slice(0, 40);
+    const _seen = {}, _dedup = [];
+    for (const it of items) {
+      const key = (it.text || '').toLowerCase().replace(/[^a-z\u0430-\u044f0-9]+/gi, '').slice(0, 80);
+      if (key && _seen[key] != null) {
+        const keep = _dedup[_seen[key]];
+        (it.media || []).forEach(u => { if (keep.media.indexOf(u) < 0 && keep.media.length < 12) keep.media.push(u); });
+        keep.hasVideo = keep.hasVideo || it.hasVideo;
+        continue;
+      }
+      if (key) _seen[key] = _dedup.length;
+      _dedup.push(it);
+    }
+    const out = _dedup.slice(0, 40);
     out.forEach(it => { it.handle = 'Disaster_News'; });
     try { await _translateNewsItems(out, env); } catch (_) {}
     const clean = out.map(({ _trkey, _done, handle, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
