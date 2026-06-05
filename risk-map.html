@@ -7456,7 +7456,7 @@ window.grdfCycleSheet = function() {
 // ── GRDF Actionable Intelligence Layer V1 ───────────────────────
 // Builds analytical text from existing data — no fabrication.
 // Sources: GRI/EWS/CRI, delta, dominant_domain, domain_scores.
-function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig) {
+function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
   var out = '';
   var absDelta = Math.abs(delta);
   var domName  = DOM_LABELS[dom] || dom;
@@ -7498,6 +7498,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig) {
   var domInsights = DOMAIN_INSIGHTS[dom] || DOMAIN_INSIGHTS['economy'];
   var keyInsight  = domInsights[status];
 
+  if(part!=='rest'){
   // ── Section: Ключевой вывод ─────────────────────────────────────
   var statusRuMap = {CRITICAL:'🔴 Критично',ESCALATING:'🟠 Высокий риск',ELEVATED:'🟡 Повышенный риск',STABLE:'🟢 Умеренный риск'};
   var statusColMap = {CRITICAL:'#ef4444',ESCALATING:'#f97316',ELEVATED:'#eab308',STABLE:'#10b981'};
@@ -7538,6 +7539,9 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig) {
   });
   out += '</div>';
 
+  }
+
+  if(part!=='top'){
   // ── Section: Изменения за 7 дней ───────────────────────────────
   if(absDelta >= 1) {
     out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
@@ -7600,6 +7604,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig) {
     out += '</div>';
   }
 
+  }
   return out;
 }
 // ── END Intelligence Layer ──────────────────────────────────────
@@ -7697,6 +7702,9 @@ function grdfRenderCountryPanel(cc) {
     html += '<div class="grdf-gri-empty">Разбивка по доменам появится по мере накопления сигналов по стране. Сейчас система отслеживает базовый профиль риска.</div>';
   }
 
+  // Key conclusion + reasoning raised above the forecast (Variant B order)
+  html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, 'top');
+
   // Forecast
   html += '<div class="grdf-section-head">Прогноз</div>';
   html += '<div class="grdf-forecast-grid">';
@@ -7779,7 +7787,7 @@ function grdfRenderCountryPanel(cc) {
   }
 
   // ── Actionable Intelligence Layer ─────────────────────────────
-  html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig);
+  html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, 'rest');
   // Bottom padding: 56px nav + 24px safe area + 20px buffer = 100px
   html += '<div style="height:100px"></div>';
   var _csEl = document.getElementById('grdf-cs-content');
