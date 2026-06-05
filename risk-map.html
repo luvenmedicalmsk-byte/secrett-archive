@@ -1644,13 +1644,13 @@ const _baseDark    = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabel
 const _labelsDark  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19, pane:'labels' });
 // MapTiler-ключ (бесплатный). Вставь ключ ниже и ОБЯЗАТЕЛЬНО ограничь его доменом secrett-archive.com в кабинете MapTiler.
 // Пока пусто — автоматически используется бесплатный фолбэк (OpenTopoMap / Esri).
-const MAPTILER_KEY = '';
+const MAPTILER_KEY = 'f28lYOjwuWqhkNv6LQ2Y';
 const _mt = function(style){ return 'https://api.maptiler.com/maps/'+style+'/{z}/{x}/{y}.png?key='+MAPTILER_KEY; };
 const _baseTerrain = MAPTILER_KEY
   ? L.tileLayer(_mt('outdoor-v2'), { maxZoom:20, attribution:'© MapTiler © OpenStreetMap' })
   : L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { subdomains:'abc', maxZoom:17, attribution:'© OpenTopoMap (CC-BY-SA), © OpenStreetMap' });
 const _baseSat = MAPTILER_KEY
-  ? L.tileLayer(_mt('hybrid'), { maxZoom:20, attribution:'© MapTiler © OpenStreetMap, Maxar' })
+  ? L.tileLayer('https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key='+MAPTILER_KEY, { maxZoom:20, attribution:'© MapTiler © OpenStreetMap' })
   : L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, attribution:'© Esri, Maxar, Earthstar Geographics' });
 const _satHasLabels = !!MAPTILER_KEY;
 const _labelsSat   = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, pane:'labels' });
