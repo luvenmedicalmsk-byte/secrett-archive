@@ -2526,7 +2526,7 @@ function renderQuakeMarkers(){
   quakeCache.filter(q=>qkInBand(q.mag)).forEach(q=>{
     const imp=qkImpact(q), fresh=(now-q.time)/60000<60;
     const m=L.circleMarker([q.lat,q.lng],{radius:qkRadius(q.mag),color:imp.col,weight:fresh?2:1,fillColor:imp.col,fillOpacity:0.55,className:fresh?'quake-pulse':''})
-      .bindPopup('<b style="color:'+imp.col+'">'+SVG_WARN+'M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+imp.label+'<br>'+qkTime(q.time)+'</span>');
+      .bindPopup('<b style="color:'+imp.col+'">'+SVG_WARN+'M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+imp.label+'<br>'+qkTime(q.time)+'</span><br><span style="color:rgba(168,160,144,0.5);font-size:11px">Источник: USGS</span>');
     m.addTo(map); quakeMarkers.push(m);
   });
 }
@@ -2550,7 +2550,7 @@ function renderQuakeList(){
           'Координаты: '+q.lat.toFixed(2)+', '+q.lng.toFixed(2)+'<br>'+
           'Глубина: '+dep+'<br>Время: '+t+'<br>Воздействие: '+imp.label.replace(' воздействие','')+' — '+imp.basis+(q.felt?('<br>Подтвердили (DYFI): '+q.felt+' сообщ.'):'')+(q.mmi!=null?('<br>Макс. интенсивность: MMI '+q.mmi.toFixed(1)):'')+(q.tsunami?'<br><span style="color:#FF7A1A">'+SVG_WARN+'Предупреждение о цунами</span>':'')+
           
-          '<div class="qk-exposure" data-detail="'+qkEsc(q.detail||'')+'"></div>'+'<div class="qk-cities" data-detail="'+qkEsc(q.detail||'')+'" data-lat="'+q.lat+'" data-lng="'+q.lng+'"></div>'+'<div class="qk-src">Источник: USGS</div>'+
+          '<div class="qk-exposure" data-detail="'+qkEsc(q.detail||'')+'"></div>'+'<div class="qk-cities" data-detail="'+qkEsc(q.detail||'')+'" data-lat="'+q.lat+'" data-lng="'+q.lng+'"></div>'+
         '</div>'+
       '</div>'+
       '<div class="qk-sev" style="color:'+imp.col+'">M'+q.mag.toFixed(1)+'</div>'+
