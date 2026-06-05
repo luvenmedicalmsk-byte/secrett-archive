@@ -1164,8 +1164,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 /* ── Warnings/Countries screens ── */
 #grdf-warnings-screen,#grdf-countries-screen,#grdf-signals-screen,#grdf-alerts-screen{
   display:none;position:fixed;top:0;left:0;right:0;bottom:56px;z-index:120;
-  background:rgba(6,5,10,0.97);backdrop-filter:blur(20px);overflow-y:auto;padding-top:42px;
+  background:rgba(6,5,10,0.97);backdrop-filter:blur(20px);overflow-y:auto;overscroll-behavior-y:contain;padding-top:42px;
 }
+html,body{overscroll-behavior-y:contain}
 @media(max-width:100000px){
   #grdf-warnings-screen.visible{display:block}
   #grdf-signals-screen.visible{display:block}
@@ -2654,6 +2655,7 @@ window._grdfDisasterEnsure=function(){
       }
     }catch(e){}
   }
+  try{window.grdfRefreshNews=_loadNewsEv;}catch(e){}
   setTimeout(function(){ _loadNewsEv(); setInterval(_loadNewsEv,30000); }, 1500);
 })();
 
@@ -8020,5 +8022,46 @@ function closeAccess(){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess();});
 </script>
 
+
+<script>
+/* Pull-to-refresh для «Событий»: тянешь вниз вверху → обновляются новости, экран не закрывается */
+(function(){
+  var st=document.createElement('style');
+  st.textContent='@keyframes grdfspin{to{transform:rotate(360deg)}}#grdf-sig-ptr{position:absolute;top:40px;left:0;right:0;display:flex;justify-content:center;align-items:center;height:0;overflow:hidden;transition:height .2s ease;z-index:6;pointer-events:none}#grdf-sig-ptr .sp{width:18px;height:18px;border:2px solid #2d3f55;border-top-color:#caa45a;border-radius:50%}';
+  document.head.appendChild(st);
+  function init(){
+    var scr=document.getElementById('grdf-signals-screen');
+    if(!scr||scr._ptrInit) return; scr._ptrInit=true;
+    var ind=document.createElement('div'); ind.id='grdf-sig-ptr';
+    ind.innerHTML='<span class="sp"></span>';
+    scr.insertBefore(ind, scr.firstChild);
+    var sp=ind.querySelector('.sp');
+    var startY=0, pulling=false, dist=0, busy=false;
+    scr.addEventListener('touchstart',function(e){
+      if(busy) return;
+      if(scr.scrollTop<=0){ startY=e.touches[0].clientY; pulling=true; dist=0; } else { pulling=false; }
+    },{passive:true});
+    scr.addEventListener('touchmove',function(e){
+      if(!pulling||busy) return;
+      dist=e.touches[0].clientY-startY;
+      if(scr.scrollTop>0){ pulling=false; ind.style.transition='height .2s ease'; ind.style.height='0'; return; }
+      if(dist>0){ ind.style.transition='none'; ind.style.height=Math.min(dist*0.5,56)+'px'; }
+    },{passive:true});
+    scr.addEventListener('touchend',function(){
+      if(!pulling||busy) return; pulling=false;
+      ind.style.transition='height .2s ease';
+      if(dist>70){
+        busy=true; ind.style.height='44px'; sp.style.animation='grdfspin .7s linear infinite';
+        Promise.resolve().then(function(){ return window.grdfRefreshNews&&window.grdfRefreshNews(); })
+          .catch(function(){})
+          .then(function(){
+            setTimeout(function(){ ind.style.height='0'; sp.style.animation=''; busy=false; }, 600);
+          });
+      } else { ind.style.height='0'; }
+    },{passive:true});
+  }
+  if(document.readyState!=='loading') init(); else document.addEventListener('DOMContentLoaded',init);
+})();
+</script>
 </body>
 </html>
