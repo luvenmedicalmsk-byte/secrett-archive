@@ -8091,6 +8091,21 @@ function grdfPopulateWarnings(countries) {
 var _grdfSigFilter = 'all';
 // Лента «События»: скрытые источники (точное совпадение ярлыка источника). Редактируется здесь.
 var FEED_SRC_BLOCK = ['киев','київ','kyiv','kiev'];
+// Лента «События»: стоп-слова промо-хвостов (телеграм-приписки). Редактируется здесь.
+var FEED_PROMO_WORDS = ['подпи','subscribe','follow us','follow','наш канал','читайте в','t\\.me/'];
+function _stripPromo(t){
+  var o=String(t==null?'':t), r=o;
+  // 1) вырезать хвост: [@Название канала |] (подпис.../subscribe/...) до конца строки
+  var re=new RegExp('[\\s|·•—-]*(?:@[^|@]{0,80}\\|?\\s*)?(?:'+FEED_PROMO_WORDS.join('|')+')[\\s\\S]*$','i');
+  r=r.replace(re,'');
+  // 2) хвост вида "@Al Jazeera English" в самом конце (источник-приписка)
+  r=r.replace(/[\s|·•—-]*@[A-Za-zА-Яа-яЁё0-9_][A-Za-zА-Яа-яЁё0-9_ .'’-]{0,60}$/,'');
+  // 3) одиночные @handle где угодно
+  r=r.replace(/\s*@[A-Za-z0-9_.]{2,}/g,'');
+  // 4) хвостовые разделители
+  r=r.replace(/[\s|·•—-]+$/,'').trim();
+  return r.length>=3 ? r : o.trim();
+}
 function grdfRenderSignals(dom){
   dom = dom || 'all';
   _grdfSigFilter = dom;
@@ -8140,7 +8155,7 @@ function grdfRenderSignals(dom){
       + '<span class="sig-dot" style="background:'+col+'"></span>'
       + '<div class="sig-main">'
       +   '<div class="grdf-sig-dom" style="color:'+col+'">'+escx(DLx[ev.domain]||ev.domain||'')+'</div>'
-      +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(_deEnt(ev.title))+'</div>'
+      +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(_stripPromo(_deEnt(ev.title)))+'</div>'
       +   '<div class="grdf-sig-meta"><span>'+escx(_deEnt(ev.region))+'</span><span>'+fdx(ev.date)+'</span></div>'
       + '</div>'
       + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'</div>'
