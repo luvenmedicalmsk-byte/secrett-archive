@@ -2,67 +2,72 @@
   "country": "IT",
   "date": "2026-06-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-06T02:53:29.322649+00:00",
+  "generated_at": "2026-06-06T07:00:02.779990+00:00",
   "node_count": 12,
-  "edge_count": 14,
+  "edge_count": 11,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 42,
       "props": {
-        "risk_score": 50
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 50,
-      "trend": "stable"
+      "score": 33,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 16,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 7,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "stable"
+      "score": 7,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 14,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 16,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
-      "trend": "stable"
+      "score": 3,
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-IT-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -75,16 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-IT-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-IT-Зеленое_пр",
+      "id": "SIGNAL-IT-Еврокомисс",
       "type": "Signal",
-      "label": "Зеленое предупреждение о наводнении в Ит",
-      "severity": 50,
-      "domain": "climate"
+      "label": "Еврокомиссия пообещала ужесточить выдачу",
+      "severity": 42,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -92,43 +92,49 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.03
+    },
+    {
+      "from": "DRIVER-IT-Economic",
+      "to": "COUNTRY-IT",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-IT-Geopolitical",
@@ -143,37 +149,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-IT-Economic",
-      "to": "COUNTRY-IT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-IT-geopolitical",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
+      "from": "SIGNAL-IT-Еврокомисс",
       "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-IT-Зеленое_пр",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.42
     }
   ]
 }
