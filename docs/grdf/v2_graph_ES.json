@@ -2,60 +2,60 @@
   "country": "ES",
   "date": "2026-06-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-06T10:03:13.766519+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-06-06T13:31:59.870206+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 45,
+      "score": 47,
       "props": {
-        "risk_score": 45
+        "risk_score": 47
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
@@ -85,13 +85,6 @@
       "label": "Испания зафиксировала самый смертоносный",
       "severity": 47,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Еврокомисс",
-      "type": "Signal",
-      "label": "Еврокомиссия пообещала ужесточить выдачу",
-      "severity": 42,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -99,19 +92,19 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-ES",
@@ -123,13 +116,13 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-ES",
@@ -154,6 +147,48 @@
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -181,12 +216,6 @@
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-ES-Еврокомисс",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.42
     }
   ]
 }
