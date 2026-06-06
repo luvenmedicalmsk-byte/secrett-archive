@@ -2,60 +2,60 @@
   "country": "IL",
   "date": "2026-06-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-06T13:31:59.867203+00:00",
+  "generated_at": "2026-06-06T17:09:24.965649+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 51,
+      "score": 54,
       "props": {
-        "risk_score": 51
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
       "score": 37,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 21,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-‘У_океана_",
+      "type": "Signal",
+      "label": "‘У океана нет границ’: красота и жизнь в",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Стритинг_н",
+      "type": "Signal",
+      "label": "Стритинг назван лицемером после обвинени",
+      "severity": 50,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Палестинск",
       "type": "Signal",
       "label": "Палестинский младенец убит огнем израиль",
       "severity": 50,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Кризис_в_Л",
-      "type": "Signal",
-      "label": "Кризис в Ливане: Потребности растут, так",
-      "severity": 50,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Продовольс",
-      "type": "Signal",
-      "label": "Продовольственное агентство ООН раскрыва",
-      "severity": 50,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IL",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IL",
@@ -163,20 +163,41 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-‘У_океана_",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-IL-Стритинг_н",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
+    },
+    {
       "from": "SIGNAL-IL-Палестинск",
       "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-IL-Кризис_в_Л",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-IL-Продовольс",
-      "to": "DOMAIN-IL-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
     }
