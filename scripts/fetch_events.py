@@ -2975,9 +2975,13 @@ def fetch_copernicus_cyber():
                 product = event.get('product', '')
                 full_desc = f"Активно эксплуатируемая уязвимость. Вендор: {vendor}. Продукт: {product}. {desc[:150]}"
                 base_severity = max(base_severity, 78)
+                title = f"Активно эксплуатируемая уязвимость: {title}"
             elif etype == 'cisa_advisory':
-                full_desc = f"Официальное предупреждение CISA по критической инфраструктуре. {desc[:150]}"
-                base_severity = max(base_severity, 75)
+                # без слова «критическ» в шаблоне: иначе CVSS-эвристика штампует 9.2 каждому бюллетеню.
+                # Реальную критичность определяет текст самого бюллетеня (desc), а не наша обвязка.
+                full_desc = f"Бюллетень CISA об уязвимости промышленного оборудования. {desc[:150]}"
+                base_severity = max(base_severity, 60)
+                title = f"Уязвимость промышленной системы: {title}"
             elif etype == 'cloudflare_outage':
                 country_name = event.get('country', '')
                 full_desc = f"Интернет-отключение зафиксировано Cloudflare Radar. {country_name}. {desc[:150]}"
