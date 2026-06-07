@@ -8165,6 +8165,8 @@ function grdfRenderSignals(dom){
   function escx(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function _deEnt(t){ return String(t==null?'':t).replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#0?39;/g,"'"); }
   var html='';
+  var _RDOT={NATIONWIDE:'страновое отключение',REGIONAL:'региональное отключение',NETWORK:'сетевой сбой',PLATFORM:'сбой платформы'};
+  var _RDC={CABLE_CUT:'обрыв кабеля',POWER_OUTAGE:'электроснабжение',GOVERNMENT_DIRECTED:'по решению властей',SHUTDOWN:'намеренное',NATURAL_DISASTER:'стихия',WEATHER:'погода',TECHNICAL_PROBLEM:'тех. сбой',TECHNICAL:'тех. сбой',MILITARY_ACTION:'военные действия',WAR:'военные действия',CYBER_ATTACK:'кибератака',ATTACK:'кибератака',MAINTENANCE:'плановые работы',SCHEDULED_MAINTENANCE:'плановые работы',UNKNOWN:'причина неизвестна'};
   items.slice(0,200).forEach(function(ev){
     var col = DCx[ev.domain]||'#B8973A';
     var sev = ev.severity||0;
@@ -8175,6 +8177,7 @@ function grdfRenderSignals(dom){
       +   '<div class="grdf-sig-dom" style="color:'+col+'">'+escx(DLx[ev.domain]||ev.domain||'')+'</div>'
       +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(_stripPromo(_deEnt(ev.title)))+'</div>'
       +   ((_m && _m.kind==='firms') ? '<div class="grdf-sig-flag">Сигнал · не подтверждён · '+(((_m.confidence==='h'||_m.confidence==='high'))?'выс. достоверность':'ном. достоверность')+(_m.frp?(' · FRP '+Math.round(_m.frp)):'')+(_m.persist_days>=2?(' · '+_m.persist_days+'д подряд'):'')+'</div>' : '')
+      +   ((_m && _m.kind==='radar_outage') ? '<div class="grdf-sig-flag">Cloudflare Radar · '+(_RDOT[_m.outage_type]||'отключение')+(_RDC[_m.cause]?(' · '+_RDC[_m.cause]):'')+'</div>' : '')
       +   '<div class="grdf-sig-meta"><span>'+escx(_deEnt(ev.region))+'</span><span>'+fdx(ev.date)+'</span></div>'
       + '</div>'
       + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'</div>'
