@@ -1742,7 +1742,7 @@ function _newsDomain(text, source) {
   if (has(['flood','наводнен','storm','шторм','hurricane','ураган','typhoon','тайфун','wildfire','пожар','earthquake','землетряс','quake','drought','засух','heatwave','heat wave','жара','climate','климат','emission','выброс','volcan','вулкан','eruption','tsunami','цунами','landslide','оползень'])) return 'climate';
   if (has(['cyber','кибер','hack','взлом','malware','ransomware','vulnerab','уязвим','software','semiconductor','полупровод','artificial intelligence','искусственн','algorithm','алгоритм','startup','стартап','data breach','утечк','google','apple','microsoft','openai','nvidia','cisco','technolog','технолог','quantum','робот','robot',' chip','чип'])) return 'technology';
   if (has(['inflation','инфляц','gdp','ввп','recession','рецесс','interest rate','ставк','central bank','центробанк','stock','акци','bond','облигац','currency','валют','market','рынок','trade ','торгов','tariff','тариф','oil price','цена нефт','earnings','прибыл','ipo','billionaire','миллиард','economy','эконом','revenue','выручк','unemployment','безработиц','forbes','budget','бюджет','default','дефолт','оэср','oecd'])) return 'economy';
-  if (has(['war','война','войн','conflict','конфликт','sanction','санкц','military','военн','missile','ракет','troops','войск','airstrike','авиауд','border','границ','election','выбор','president','презид','coup','перевор','treaty','договор','nato','нато','diplomat','диплом','terror','террор','government','правительств','minister','министр','parliament','парламент','occupation','оккупац','ceasefire','перемир','genocide','геноцид'])) return 'geopolitics';
+  if (has(['war','война','войн','conflict','конфликт','sanction','санкц','military','военн','missile','ракет','troops','войск','airstrike','авиауд','border','границ','election','выбор','president','презид','coup','перевор','treaty','договор','nato','нато','diplomat','диплом','terror','террор','government','правительств','minister','министр','parliament','парламент','occupation','оккупац','ceasefire','перемир','genocide','геноцид','дрон','беспилотн','бпла','обстрел','пво','шахед','герань','мобилизац','саммит','переговор','кремл','госдеп','пентаг'])) return 'geopolitics';
   if (has(['health','здоров','disease','болезн','pandemic','пандем','virus','вирус','vaccine','вакцин','education','образован','crime','преступ','human rights','прав человек','poverty','бедност','famine','голод','religion','религ','culture','культур','protest','протест','strike','забастов','refugee','беженц','migrant','мигрант','death toll','killed','погиб','injured'])) return 'social';
   const s = (source || '').toLowerCase();
   if (s.includes('forbes') || s.includes('economist') || s.includes('business insider')) return 'economy';
@@ -1802,6 +1802,28 @@ async function _tgFetchChannel(handle, name) {
     if (!r.ok) return [];
     return _tgParseChannel(await r.text(), handle, name);
   } catch (e) { return []; }
+}
+// Глубокая подгрузка канала: листаем публичное превью t.me/s/<handle>?before=<id> на несколько страниц
+async function _tgFetchDeep(handle, name, maxPages) {
+  const out = []; const seen = new Set(); let before = null;
+  for (let p = 0; p < maxPages; p++) {
+    const url = 'https://t.me/s/' + handle + (before ? ('?before=' + before) : '');
+    let html;
+    try {
+      const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 9000);
+      const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }, signal: ctrl.signal, cf: { cacheTtl: 30, cacheEverything: true } });
+      clearTimeout(tid);
+      if (!r.ok) break;
+      html = await r.text();
+    } catch (e) { break; }
+    const page = _tgParseChannel(html, handle, name);
+    if (!page.length) break;
+    let minId = Infinity, added = 0;
+    for (const it of page) { if (it.id < minId) minId = it.id; if (!seen.has(it.id)) { seen.add(it.id); out.push(it); added++; } }
+    if (!isFinite(minId) || minId === before || added === 0) break;
+    before = minId;
+  }
+  return out;
 }
 // ── Русификация TG-ленты: перевод EN-постов в RU (OpenAI) + кэш по id поста ──
 const _newsTrCache = new Map();
@@ -1865,11 +1887,22 @@ async function _translateNewsItems(items, env){
 }
 
 async function handleProxyNewsFeed(env) {
-  const results = await Promise.all(NEWS_TG_CHANNELS.map(c => _tgFetchChannel(c.handle, c.name)));
-  let items = [].concat(...results);
+  const BREAKING = 'bbbreaking';
+  const brkMeta = NEWS_TG_CHANNELS.find(c => c.handle === BREAKING);
+  const others = NEWS_TG_CHANNELS.filter(c => c.handle !== BREAKING);
+  const [brkItems, ...rest] = await Promise.all([
+    brkMeta ? _tgFetchDeep(BREAKING, brkMeta.name, 4) : Promise.resolve([]),
+    ...others.map(c => _tgFetchChannel(c.handle, c.name))
+  ]);
+  // Breaking: берём ВСЕ посты (стоп-слова уже отфильтрованы в _tgParseChannel); остальные каналы — топ-40 по свежести
+  let otherItems = [].concat(...rest);
+  otherItems.forEach(it => { it._ts = it.time ? Date.parse(it.time) : 0; });
+  otherItems.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
+  otherItems = otherItems.slice(0, 40);
+  let items = [...brkItems, ...otherItems];
   items.forEach(it => { it._ts = it.time ? Date.parse(it.time) : 0; });
   items.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
-  items = items.slice(0, 60).map(({ _ts, ...rest }) => rest);
+  items = items.map(({ _ts, ...rest }) => rest);
   try { await _translateNewsItems(items, env); } catch(_){}
   items = items.map(({ _trkey, _done, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), count: items.length, items }), {
