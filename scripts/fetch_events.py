@@ -1196,6 +1196,37 @@ def _is_noise(title):
     return any(w in t for w in _NOISE_WORDS)
 
 
+def _systemic_class(title, desc=''):
+    """S38: редкие СИСТЕМНЫЕ сигналы с высоким приоритетом -- ядерные аварии,
+    эпидемии с пандемическим потенциалом, отказ инфраструктуры странового масштаба.
+    Возвращает (domain, severity_floor, kind) или None. Термины узкие, события редкие."""
+    t = ((title or '') + ' ' + (desc or '')).lower()
+    def hit(ws):
+        return any(w in t for w in ws)
+    # --- ядерные / радиационные аварии ---
+    nuc_obj = ['аэс','атомной электрост','атомная электрост','атомной станц','ядерн реактор',
+               'ядерн объект','реактор','nuclear plant','nuclear reactor','radioactiv']
+    nuc_evt = ['авари','инцидент','утечк','расплав','выброс радиа','радиац','meltdown',
+               'radiation leak','radiation release','ines']
+    if (hit(['чернобыл','фукусим','радиоактивн заражен','ядерная авария','ядерная катастроф',
+             'nuclear accident','nuclear disaster','radiation leak'])
+        or (hit(nuc_obj) and hit(nuc_evt))):
+        return ('technology', 64, 'nuclear')
+    # --- эпидемии с потенциалом пандемии ---
+    if (hit(['пандеми','pandemic','высокопатогенн','h5n1','h5n5','h5n8','h7n9','эбол','марбург',
+             'ebola','marburg','оспа обезьян','mpox','нипах','nipah','геморрагическ лихорад'])
+        or (hit(['вспышк','эпидеми','outbreak']) and
+            hit(['вирус','штамм','лихорад','холер','чум','disease','strain','cholera','plague','virus']))):
+        return ('social', 58, 'epidemic')
+    # --- критическая инфраструктура странового масштаба ---
+    if hit(['блэкаут','прорыв плотины','прорыв дамбы','обрушение плотины','прорвало плотину',
+            'прорвало дамбу','dam breach','dam collapse','dam burst','grid collapse',
+            'power grid collapse','power grid failure','веерные отключени','коллапс энергосистем',
+            'энергосистема рухнул','nationwide power outage','nationwide blackout']):
+        return ('technology', 60, 'infra')
+    return None
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -1262,11 +1293,15 @@ def process_events(raw_items):
         # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
         # S36.4: economy/social стартуют с базы 40 и редко набирают >45 -> отдельный порог 35;
         # Telegram -- без порога (раскладываем по словам, не режем severity)
+        # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
+        _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
+        if _sys:
+            domain = _sys[0]; severity = max(severity, _sys[1])
         _is_tg = str(item.get('source','')).startswith('Telegram')
         _thr = 0 if _is_tg else (35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD)
-        if item.get('_force_severity') is None and severity < _thr: _LOSS['sev']+=1; continue
+        if item.get('_force_severity') is None and not _sys and severity < _thr: _LOSS['sev']+=1; continue
         # S37: контент-фильтр низкосигнального шума (порог severity <46, реальные события не трогаем)
-        if item.get('_force_severity') is None and severity < 46 and _is_noise(item.get('title','')):
+        if item.get('_force_severity') is None and not _sys and severity < 46 and _is_noise(item.get('title','')):
             _LOSS['sev']+=1; continue
 
         ev_id = make_id(item['title'], item['date'])
@@ -1980,6 +2015,7 @@ def fetch_social_rss():
         # Здоровье и эпидемии
         ('https://www.who.int/rss-feeds/news-english.xml', 'WHO', 'social'),
         ('https://www.who.int/feeds/entity/mediacentre/news/en/rss.xml', 'WHO', 'social'),
+        ('https://www.who.int/feeds/entity/csr/don/en/rss.xml', 'WHO DON', 'social'),
         # Миграция и беженцы
         ('https://www.unhcr.org/rss/news.xml', 'UNHCR', 'social'),
         ('https://www.unhcr.org/feeds/rss.xml', 'UNHCR', 'social'),
