@@ -3164,9 +3164,14 @@ def _firms_load_persist():
         return {}
 def _firms_persist_days(cache, gks, today):
     return len(set((cache.get(gks) or []) + [today]))
-def _firms_prune_and_save(cache, today, window=_FIRMS_WINDOW):
+def _firms_prune_and_save(cache, today, active_gks=None, window=_FIRMS_WINDOW):
     try:
         from datetime import date as _date, timedelta as _td
+        # сначала отмечаем сегодняшние активные ячейки (иначе кэш никогда не растёт)
+        for gk in (active_gks or ()):
+            lst = cache.get(gk) or []
+            if today not in lst: lst.append(today)
+            cache[gk] = lst
         cutoff = (_date.fromisoformat(today) - _td(days=window)).isoformat()
         for gk in list(cache.keys()):
             keep = sorted(set(d for d in (cache[gk] or []) if d >= cutoff))
@@ -3338,7 +3343,7 @@ def fetch_nasa_firms(api_key=None):
         if top:
             print(f"  NASA FIRMS {region_name}: {len(top)} очагов", file=sys.stderr)
     
-    _firms_prune_and_save(_persist, _today)
+    _firms_prune_and_save(_persist, _today, _active_gks)
     print(f"  NASA FIRMS всего: {len(items)} очагов пожаров", file=sys.stderr)
     return items
 
