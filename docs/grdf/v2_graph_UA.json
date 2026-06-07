@@ -1,68 +1,68 @@
 {
   "country": "UA",
-  "date": "2026-06-06",
+  "date": "2026-06-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-06T21:09:12.093004+00:00",
+  "generated_at": "2026-06-07T03:30:07.925958+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 46,
+      "score": 50,
       "props": {
-        "risk_score": 46
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
-      "trend": "down"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-UA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-Справка_по",
+      "type": "Signal",
+      "label": "Справка по Украине от Всемирной продовол",
+      "severity": 55,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-UA-Украина_то",
       "type": "Signal",
       "label": "Украина только что показала всему миру, ",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-Украина_на",
+      "id": "SIGNAL-UA-Насильства",
       "type": "Signal",
-      "label": "Украина нацеливается на Санкт-Петербург ",
-      "severity": 47,
+      "label": "Насильства чи погроз стосуються 3% скарг",
+      "severity": 50,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-Украина_и_",
-      "type": "Signal",
-      "label": "Украина и Россия договорились о механизм",
-      "severity": 42,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-UA",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-UA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-UA-Справка_по",
+      "to": "DOMAIN-UA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.55
+    },
+    {
       "from": "SIGNAL-UA-Украина_то",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-UA-Украина_на",
+      "from": "SIGNAL-UA-Насильства",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-UA-Украина_и_",
-      "to": "DOMAIN-UA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.5
     }
   ]
 }
