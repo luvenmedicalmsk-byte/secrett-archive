@@ -591,7 +591,9 @@ def normalize_severity(source_type, m):
         if persist >= 3:   cf += 0.14
         elif persist >= 2: cf += 0.08
         cf = min(1.0, cf)
-        return int(max(34, min(78, round(inten * cf))))  # пол 34, потолок 78 -- не подтверждено
+        expo = m.get('exposure')
+        if expo is None: expo = 1.0
+        return int(max(34, min(78, round(inten * cf * expo))))  # пол 34, потолок 78 -- не подтверждено
 
     # --- S34A-4: News -- база 40, потолки аналитика 65 / подтверждённый ущерб 75, source_weight ---
     if st == 'news':
@@ -3151,9 +3153,81 @@ def fetch_copernicus_sentinel(api_key=None):
     print(f"  Copernicus всего: {len(items)} событий", file=sys.stderr)
     return items
 
+# ── S37 Шаг2/3: персистентность очагов (день-к-дню) + экспозиция к населению ──
+FIRMS_PERSIST_PATH = Path(__file__).parent / "firms_persist.json"
+_FIRMS_WINDOW = 6
+def _firms_load_persist():
+    try:
+        d = json.loads(FIRMS_PERSIST_PATH.read_text(encoding='utf-8'))
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+def _firms_persist_days(cache, gks, today):
+    return len(set((cache.get(gks) or []) + [today]))
+def _firms_prune_and_save(cache, today, window=_FIRMS_WINDOW):
+    try:
+        from datetime import date as _date, timedelta as _td
+        cutoff = (_date.fromisoformat(today) - _td(days=window)).isoformat()
+        for gk in list(cache.keys()):
+            keep = sorted(set(d for d in (cache[gk] or []) if d >= cutoff))
+            if keep: cache[gk] = keep
+            else: del cache[gk]
+        FIRMS_PERSIST_PATH.write_text(json.dumps(cache, separators=(',', ':')), encoding='utf-8')
+    except Exception as e:
+        print(f"  [WARN] FIRMS persist save: {e}", file=sys.stderr)
+
+def _haversine_km(lat1, lon1, lat2, lon2):
+    R = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1); dl = math.radians(lon2 - lon1)
+    a = math.sin(dp/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dl/2)**2
+    return 2 * R * math.asin(math.sqrt(a))
+# Опорные крупные города/центры для оценки экспозиции пожара к населению
+_EXPO_CITIES = [
+    ("Москва",55.75,37.62),("Санкт-Петербург",59.94,30.31),("Новосибирск",55.03,82.92),
+    ("Екатеринбург",56.84,60.61),("Казань",55.79,49.12),("Нижний Новгород",56.33,44.00),
+    ("Челябинск",55.16,61.40),("Самара",53.20,50.15),("Омск",54.99,73.37),
+    ("Ростов-на-Дону",47.23,39.70),("Уфа",54.74,55.97),("Красноярск",56.01,92.85),
+    ("Воронеж",51.66,39.20),("Волгоград",48.72,44.50),("Краснодар",45.04,38.98),
+    ("Иркутск",52.29,104.30),("Хабаровск",48.48,135.08),("Владивосток",43.12,131.89),
+    ("Якутск",62.03,129.73),("Чита",52.03,113.50),("Улан-Удэ",51.83,107.58),
+    ("Тюмень",57.15,65.53),("Барнаул",53.35,83.78),("Томск",56.49,84.95),
+    ("Мурманск",68.97,33.07),("Архангельск",64.54,40.52),("Норильск",69.35,88.20),
+    ("Сочи",43.60,39.73),("Калининград",54.71,20.51),("Астрахань",46.35,48.04),
+    ("Киев",50.45,30.52),("Минск",53.90,27.57),("Варшава",52.23,21.01),
+    ("Берлин",52.52,13.41),("Париж",48.86,2.35),("Лондон",51.51,-0.13),
+    ("Мадрид",40.42,-3.70),("Рим",41.90,12.50),("Стамбул",41.01,28.98),
+    ("Афины",37.98,23.73),("Анкара",39.93,32.86),("Тегеран",35.69,51.39),
+    ("Багдад",33.31,44.36),("Эр-Рияд",24.71,46.68),("Каир",30.04,31.24),
+    ("Лагос",6.52,3.38),("Найроби",-1.29,36.82),("Йоханнесбург",-26.20,28.05),
+    ("Дели",28.61,77.21),("Мумбаи",19.08,72.88),("Карачи",24.86,67.01),
+    ("Пекин",39.90,116.40),("Шанхай",31.23,121.47),("Гонконг",22.32,114.17),
+    ("Токио",35.68,139.69),("Сеул",37.57,126.98),("Бангкок",13.76,100.50),
+    ("Джакарта",-6.21,106.85),("Сидней",-33.87,151.21),("Мельбурн",-37.81,144.96),
+    ("Перт",-31.95,115.86),("Лос-Анджелес",34.05,-118.24),("Сан-Франциско",37.77,-122.42),
+    ("Нью-Йорк",40.71,-74.01),("Чикаго",41.88,-87.63),("Хьюстон",29.76,-95.37),
+    ("Торонто",43.65,-79.38),("Ванкувер",49.28,-123.12),("Мехико",19.43,-99.13),
+    ("Богота",4.71,-74.07),("Лима",-12.05,-77.04),("Сантьяго",-33.45,-70.67),
+    ("Сан-Паулу",-23.55,-46.63),("Буэнос-Айрес",-34.60,-58.38),("Рио-де-Жанейро",-22.91,-43.17),
+]
+def _nearest_city(lat, lng):
+    best, bestd = None, 1e9
+    for nm, clat, clng in _EXPO_CITIES:
+        d = _haversine_km(lat, lng, clat, clng)
+        if d < bestd: bestd, best = d, nm
+    return best, int(round(bestd))
+def _exposure_factor(km):
+    if km < 60:  return 1.0
+    if km < 200: return 0.92
+    if km < 500: return 0.82
+    return 0.72
+
 def fetch_nasa_firms(api_key=None):
     """NASA FIRMS -- спутниковые пожары каждые 3 часа"""
     items = []
+    _persist = _firms_load_persist()
+    _today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    _active_gks = set()
     
     key = api_key or os.environ.get('FIRMS_API_KEY','')
     if not key:
@@ -3218,6 +3292,7 @@ def fetch_nasa_firms(api_key=None):
                         if c is None:
                             clusters[grid_key] = {
                                 'lat': lat, 'lng': lng, 'bright': bright, 'frp': frp, 'conf': conf, 'n': 1,
+                                'gk': grid_key,
                                 'date': parts[date_idx] if date_idx >= 0 else datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                                 'region': region_name
                             }
@@ -3237,23 +3312,33 @@ def fetch_nasa_firms(api_key=None):
             _conf_ru = 'высокая' if _conf in ('h', 'high') else 'номинальная'
             _frp = round(fire.get('frp', 0) or 0, 1)
             _cn = fire.get('n', 1)
+            _gk = fire.get('gk') or (round(fire['lat']/2)*2, round(fire['lng']/2)*2)
+            _gks = f"{_gk[0]},{_gk[1]}"; _active_gks.add(_gks)
+            _pdays = _firms_persist_days(_persist, _gks, _today)
+            _city, _ckm = _nearest_city(fire['lat'], fire['lng'])
+            _expo = _exposure_factor(_ckm)
+            _expo_ru = (f"вблизи: {_city} (~{_ckm} км)" if _ckm < 200
+                        else f"удалённо, ближайший центр: {_city} (~{_ckm} км)")
             items.append({
                 'title': f"Пожарный сигнал — {reg}",
                 'desc': (f"Спутниковая детекция NASA VIIRS — не подтверждённый сигнал. "
-                         f"Яркость {fire['bright']:.0f}K · FRP {_frp:.0f} · достоверность {_conf_ru} · пикселей в кластере {_cn}. "
+                         f"Яркость {fire['bright']:.0f}K · FRP {_frp:.0f} · достоверность {_conf_ru} · пикселей в кластере {_cn} · "
+                         f"дней подряд {_pdays} · {_expo_ru}. "
                          f"Статус повышается до подтверждённого события при совпадении с другим источником (GDACS / EONET / новости)."),
                 'date': fire['date'],
                 'source': 'NASA FIRMS',
-                '_force_severity': normalize_severity('firms', {'bright': fire['bright'], 'frp': _frp, 'confidence': _conf, 'cluster_n': _cn}),
+                '_force_severity': normalize_severity('firms', {'bright': fire['bright'], 'frp': _frp, 'confidence': _conf, 'cluster_n': _cn, 'persist_days': _pdays, 'exposure': _expo}),
                 '_lat': fire['lat'], '_lng': fire['lng'],
                 '_region': reg, '_domain': 'climate',
                 '_meta': {'kind': 'firms', 'unconfirmed': True, 'confidence': _conf,
-                          'frp': _frp, 'cluster_n': _cn, 'bright': round(fire['bright'])}
+                          'frp': _frp, 'cluster_n': _cn, 'bright': round(fire['bright']),
+                          'persist_days': _pdays, 'nearest_city': _city, 'nearest_km': _ckm, 'exposure': round(_expo, 2)}
             })
 
         if top:
             print(f"  NASA FIRMS {region_name}: {len(top)} очагов", file=sys.stderr)
     
+    _firms_prune_and_save(_persist, _today)
     print(f"  NASA FIRMS всего: {len(items)} очагов пожаров", file=sys.stderr)
     return items
 
