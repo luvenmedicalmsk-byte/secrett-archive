@@ -2810,6 +2810,8 @@ window._grdfDisasterEnsure=function(){
 
 const EXT_FEED_URL = 'https://archive-api.luven-medical-msk.workers.dev/api/proxy/events-feed'; // HTTP proxied via Worker (mixed-content fix)
 const EXT_FEED_INTERVAL_MS = 60000;
+// S37: вторичный живой фид с VPS :8001 отключён — основная лента целиком на GitHub (docs/events.json через воркер /api/events и фолбэки)
+const USE_EXT_FEED = false;
 
 // Category → internal domain (for colour/filter compatibility)
 const CAT_TO_DOMAIN = {
@@ -3022,10 +3024,10 @@ window._toggleClimatePanel = function(){
 loadClimateState();
 
 // Initial load (non-blocking — runs in parallel with tryLoadFresh)
-loadExternalFeed();
+if (USE_EXT_FEED) loadExternalFeed();
 
 // 60-second auto-refresh
-setInterval(loadExternalFeed, EXT_FEED_INTERVAL_MS);
+if (USE_EXT_FEED) setInterval(loadExternalFeed, EXT_FEED_INTERVAL_MS);
 // FIX10: prune _extSeenIds every 30 min — only keep IDs still in ALL_EVENTS
 setInterval(() => {
   const live = new Set(ALL_EVENTS.map(e => e.id));
@@ -8166,12 +8168,13 @@ function grdfRenderSignals(dom){
   items.slice(0,200).forEach(function(ev){
     var col = DCx[ev.domain]||'#B8973A';
     var sev = ev.severity||0;
+    var _m = ev._meta||ev.meta;
     html += '<div class="grdf-sig-card'+(ev._news?' sig-news':'')+'"'+(ev._news?' onclick="window._toggleSig(this)"':'')+'>'
       + '<span class="sig-dot" style="background:'+col+'"></span>'
       + '<div class="sig-main">'
       +   '<div class="grdf-sig-dom" style="color:'+col+'">'+escx(DLx[ev.domain]||ev.domain||'')+'</div>'
       +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(_stripPromo(_deEnt(ev.title)))+'</div>'
-      +   ((ev._meta && ev._meta.kind==='firms') ? '<div class="grdf-sig-flag">Сигнал · не подтверждён · '+(((ev._meta.confidence==='h'||ev._meta.confidence==='high'))?'выс. достоверность':'ном. достоверность')+(ev._meta.frp?(' · FRP '+Math.round(ev._meta.frp)):'')+(ev._meta.persist_days>=2?(' · '+ev._meta.persist_days+'д подряд'):'')+'</div>' : '')
+      +   ((_m && _m.kind==='firms') ? '<div class="grdf-sig-flag">Сигнал · не подтверждён · '+(((_m.confidence==='h'||_m.confidence==='high'))?'выс. достоверность':'ном. достоверность')+(_m.frp?(' · FRP '+Math.round(_m.frp)):'')+(_m.persist_days>=2?(' · '+_m.persist_days+'д подряд'):'')+'</div>' : '')
       +   '<div class="grdf-sig-meta"><span>'+escx(_deEnt(ev.region))+'</span><span>'+fdx(ev.date)+'</span></div>'
       + '</div>'
       + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'</div>'
