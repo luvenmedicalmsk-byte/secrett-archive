@@ -2,66 +2,66 @@
   "country": "CN",
   "date": "2026-06-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-07T10:27:28.817499+00:00",
+  "generated_at": "2026-06-07T13:45:52.142803+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 51,
+      "score": 53,
       "props": {
-        "risk_score": 51
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,16 +87,16 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-CN-Соперничес",
+      "type": "Signal",
+      "label": "Соперничество США и Китая обнажено контр",
+      "severity": 51,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-CN-Китайская_",
       "type": "Signal",
       "label": "Китайская APT развертывает новое вредоно",
-      "severity": 50,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CN-Киберпрест",
-      "type": "Signal",
-      "label": "Киберпреступные атаки TA4922 из Китая ра",
       "severity": 50,
       "domain": "technology"
     }
@@ -106,43 +106,43 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-CN-Geopolitical",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Взрыв_в_ма",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-CN-Китайская_",
-      "to": "DOMAIN-CN-technology",
+      "from": "SIGNAL-CN-Соперничес",
+      "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.51
     },
     {
-      "from": "SIGNAL-CN-Киберпрест",
+      "from": "SIGNAL-CN-Китайская_",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.5

@@ -2,60 +2,60 @@
   "country": "IL",
   "date": "2026-06-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-07T10:27:28.824573+00:00",
+  "generated_at": "2026-06-07T13:45:52.150495+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 53,
+      "score": 56,
       "props": {
-        "risk_score": 53
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Один_убит,",
+      "id": "SIGNAL-IL-Один_челов",
       "type": "Signal",
-      "label": "Один убит, пятеро ранены в результате ст",
+      "label": "Один человек погиб и пятеро ранены в рез",
+      "severity": 54,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Израиль_на",
+      "type": "Signal",
+      "label": "Израиль наносит удары по пригородам Бейр",
       "severity": 54,
       "domain": "geopolitical"
     },
@@ -92,13 +99,6 @@
       "label": "‘У океана нет границ’: красота и жизнь в",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Ливан:_Вос",
-      "type": "Signal",
-      "label": "Ливан: Восстановление критически важных ",
-      "severity": 51,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-IL",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-IL",
@@ -163,7 +163,34 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-Один_убит,",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Один_челов",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.54
+    },
+    {
+      "from": "SIGNAL-IL-Израиль_на",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
@@ -173,12 +200,6 @@
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-IL-Ливан:_Вос",
-      "to": "DOMAIN-IL-social",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }

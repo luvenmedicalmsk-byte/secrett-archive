@@ -2,66 +2,66 @@
   "country": "UA",
   "date": "2026-06-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-07T10:27:28.820970+00:00",
+  "generated_at": "2026-06-07T13:45:52.146546+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 50,
+      "score": 53,
       "props": {
-        "risk_score": 50
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,10 +80,10 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-UA-На_Дніпроп",
+      "id": "SIGNAL-UA-\"Коли_росі",
       "type": "Signal",
-      "label": "На Дніпропетровщині армія РФ двічі атаку",
-      "severity": 58,
+      "label": "\"Коли росіянам вже набридне це знущання ",
+      "severity": 54,
       "domain": "geopolitical"
     },
     {
@@ -96,8 +96,8 @@
     {
       "id": "SIGNAL-UA-Украина_на",
       "type": "Signal",
-      "label": "Украина нацеливается на Санкт-Петербург ",
-      "severity": 47,
+      "label": "Украина на грани: Резкое предупреждение ",
+      "severity": 50,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-UA-Geopolitical",
@@ -163,10 +163,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-UA-На_Дніпроп",
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-UA-\"Коли_росі",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.54
     },
     {
       "from": "SIGNAL-UA-Украина_то",
@@ -178,7 +199,7 @@
       "from": "SIGNAL-UA-Украина_на",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.47
+      "weight": 0.5
     }
   ]
 }

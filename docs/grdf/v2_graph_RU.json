@@ -2,32 +2,32 @@
   "country": "RU",
   "date": "2026-06-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-07T10:27:28.816382+00:00",
+  "generated_at": "2026-06-07T13:45:52.141502+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 54,
+      "score": 56,
       "props": {
-        "risk_score": 54
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 21,
-      "trend": "stable"
+      "score": 22,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 12,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-RU-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M6.1 — 124 км к ЮВ от Seve",
+      "severity": 66,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-Движение_ч",
       "type": "Signal",
       "label": "Движение через пункт пропуска «Джанкой» ",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Инерция_во",
-      "type": "Signal",
-      "label": "Инерция войны России",
-      "severity": 51,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-RU",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-RU-Россия_стр",
       "to": "DOMAIN-RU-technology",
       "type": "AMPLIFIES",
       "weight": 0.93
     },
     {
+      "from": "SIGNAL-RU-Землетрясе",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
       "from": "SIGNAL-RU-Движение_ч",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-RU-Инерция_во",
-      "to": "DOMAIN-RU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }
