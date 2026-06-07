@@ -3339,45 +3339,6 @@ def fetch_cloudflare_radar(token=None):
     except Exception as e:
         print(f"  [WARN] Radar outages: {e}", file=sys.stderr)
 
-    # --- 2. Перехваты BGP-маршрутов (фильтр по достоверности) ---
-    try:
-        d = _q("bgp/hijacks/events?dateRange=2d&format=json&per_page=50&minConfidence=8")
-        ev = (d.get('result') or {}).get('events') or []
-        ev = sorted(ev, key=lambda x: (x.get('confidence_score') or 0), reverse=True)[:12]
-        _n = 0
-        for e in ev:
-            geo = _cc(e.get('hijacker_country'))
-            if not geo:
-                continue
-            lat, lng, cname = geo
-            conf = e.get('confidence_score') or 0
-            hijacker = e.get('hijacker_asn')
-            victims = e.get('victim_asns') or []
-            prefixes = e.get('prefixes') or []
-            msgs = e.get('hijack_msgs_count') or 0
-            sev = 50 + min(16, max(0, (int(conf) - 8)) * 2)
-            if len(prefixes) >= 5:
-                sev += 3
-            sev = min(74, sev)
-            ts = str(e.get('max_hijack_ts') or e.get('min_hijack_ts') or '')[:10]
-            title = f"BGP-перехват маршрутов: AS{hijacker} ({cname})"
-            desc = (f"Cloudflare Radar: вероятный перехват BGP-маршрутов. "
-                    f"Источник — AS{hijacker} ({cname}); пострадавших систем: {len(victims)}, "
-                    f"затронуто префиксов: {len(prefixes)}; BGP-сообщений: {msgs}. "
-                    f"Уровень достоверности: {conf}.")
-            items.append({
-                'title': title, 'desc': desc, 'date': (ts or datetime.now(timezone.utc).strftime('%Y-%m-%d')),
-                'source': 'Cloudflare Radar',
-                '_force_severity': sev, '_lat': lat, '_lng': lng,
-                '_region': cname, '_domain': 'technology',
-                '_meta': {'kind': 'radar_bgp', 'confidence': conf, 'victims': len(victims),
-                          'prefixes': len(prefixes), 'hijacker_asn': hijacker}
-            })
-            _n += 1
-        print(f"  Cloudflare Radar: {_n} BGP-перехватов", file=sys.stderr)
-    except Exception as e:
-        print(f"  [WARN] Radar BGP: {e}", file=sys.stderr)
-
     print(f"  Cloudflare Radar всего: {len(items)} сигналов", file=sys.stderr)
     return items
 
