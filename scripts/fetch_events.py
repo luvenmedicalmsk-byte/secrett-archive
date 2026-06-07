@@ -571,20 +571,27 @@ def normalize_severity(source_type, m):
 
     # --- S34A-3: NASA FIRMS -- по яркости/FRP/confidence/размеру кластера; ПОТОЛОК 78 (Signal Layer) ---
     if st == 'firms':
+        # S37: сигнал, не событие. Две оси: интенсивность теплового сигнала * достоверность.
+        # Достоверность = confidence + размер кластера + персистентность (persist_days; hook для Шага 2).
         bright = m.get('bright') or 0
         frp = m.get('frp') or 0
         conf = (m.get('confidence') or 'n').lower()
         cn = m.get('cluster_n') or 1
-        if bright >= 375:   sev = 70
-        elif bright >= 360: sev = 63
-        elif bright >= 340: sev = 55
-        else:               sev = 47
-        if frp >= 100:  sev += 5
-        elif frp >= 50: sev += 3
-        if conf in ('h', 'high'): sev += 3
-        if cn >= 8:   sev += 5
-        elif cn >= 4: sev += 3
-        return int(max(40, min(78, sev)))  # потолок 78 -- FIRMS не подтверждённое событие
+        persist = m.get('persist_days') or 1
+        if bright >= 375:   inten = 64
+        elif bright >= 360: inten = 56
+        elif bright >= 340: inten = 48
+        else:               inten = 40
+        if frp >= 200:   inten += 12
+        elif frp >= 100: inten += 8
+        elif frp >= 50:  inten += 4
+        cf = 0.78 if conf in ('h', 'high') else 0.62   # nominal даунвейт; low отброшен на загрузке
+        if cn >= 8:   cf += 0.12
+        elif cn >= 4: cf += 0.07
+        if persist >= 3:   cf += 0.14
+        elif persist >= 2: cf += 0.08
+        cf = min(1.0, cf)
+        return int(max(34, min(78, round(inten * cf))))  # пол 34, потолок 78 -- не подтверждено
 
     # --- S34A-4: News -- база 40, потолки аналитика 65 / подтверждённый ущерб 75, source_weight ---
     if st == 'news':
@@ -1249,7 +1256,7 @@ def process_events(raw_items):
         summary = strip_html(item.get('desc',''))[:250].strip()
         if summary and not summary.endswith('.'): summary += '...'
 
-        events.append({
+        _ev = {
             "id": ev_id,
             "title": item['title'][:130],
             "domain": domain,
@@ -1261,7 +1268,9 @@ def process_events(raw_items):
             "source": item['source'],
             "source_weight": _gov.get('weight', 1.0),
             "date": item['date']
-        })
+        }
+        if item.get('_meta'): _ev["meta"] = item['_meta']
+        events.append(_ev)
 
     events.sort(key=lambda e: e['severity'], reverse=True)
     
@@ -3223,16 +3232,23 @@ def fetch_nasa_firms(api_key=None):
         # Берём топ-10 очагов по яркости (объединённые оба сенсора)
         top = sorted(clusters.values(), key=lambda x: x['bright'], reverse=True)[:10]
         for fire in top:
-            intensity = 'критическая' if fire['bright'] > 370 else 'высокая' if fire['bright'] > 340 else 'средняя'
             reg = detect_region_by_coords(fire['lat'], fire['lng'])
+            _conf = (fire.get('conf') or 'n').lower()
+            _conf_ru = 'высокая' if _conf in ('h', 'high') else 'номинальная'
+            _frp = round(fire.get('frp', 0) or 0, 1)
+            _cn = fire.get('n', 1)
             items.append({
-                'title': f"Пожарный сигнал — {reg} · {intensity.capitalize()} интенсивность",
-                'desc': f"Спутниковая детекция NASA VIIRS. Яркость: {fire['bright']:.0f}K. Регион: {reg}",
+                'title': f"Пожарный сигнал — {reg}",
+                'desc': (f"Спутниковая детекция NASA VIIRS — не подтверждённый сигнал. "
+                         f"Яркость {fire['bright']:.0f}K · FRP {_frp:.0f} · достоверность {_conf_ru} · пикселей в кластере {_cn}. "
+                         f"Статус повышается до подтверждённого события при совпадении с другим источником (GDACS / EONET / новости)."),
                 'date': fire['date'],
                 'source': 'NASA FIRMS',
-                '_force_severity': normalize_severity('firms', {'bright': fire['bright'], 'frp': fire.get('frp', 0), 'confidence': fire.get('conf', 'n'), 'cluster_n': fire.get('n', 1)}),
+                '_force_severity': normalize_severity('firms', {'bright': fire['bright'], 'frp': _frp, 'confidence': _conf, 'cluster_n': _cn}),
                 '_lat': fire['lat'], '_lng': fire['lng'],
-                '_region': reg, '_domain': 'climate'
+                '_region': reg, '_domain': 'climate',
+                '_meta': {'kind': 'firms', 'unconfirmed': True, 'confidence': _conf,
+                          'frp': _frp, 'cluster_n': _cn, 'bright': round(fire['bright'])}
             })
 
         if top:
