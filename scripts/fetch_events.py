@@ -1180,6 +1180,22 @@ def _is_flood(ev):
 # ══════════════════════════════════════════════════════════════════════════════
 # ОБРАБОТКА И СОХРАНЕНИЕ
 # ══════════════════════════════════════════════════════════════════════════════
+_NOISE_WORDS = [
+    # речи / интервью / PR институтов и компаний
+    'интервью','выступает за','выступлени','keynote','remarks by',
+    'women in leadership','женщины и лидерство','о ценах на','генеральный директор','гендиректор',
+    # соцопросы / мета-уведомления
+    'опрос потреб','результаты опроса','типологии','быть в курсе ключевых','уведомление для','notice for',
+    # лайфстайл / фичи / животные
+    'этикет','гороскоп','католиц','60 minutes','знаменитост',
+    'домашних животн','к собакам','собакам, кошк','питомц','живущим рядом с человеком',
+]
+def _is_noise(title):
+    """S37: низкосигнальный шум (речи/PR/интервью/опросы/лайфстайл) -- по заголовку."""
+    t = (title or '').lower()
+    return any(w in t for w in _NOISE_WORDS)
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -1249,6 +1265,9 @@ def process_events(raw_items):
         _is_tg = str(item.get('source','')).startswith('Telegram')
         _thr = 0 if _is_tg else (35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD)
         if item.get('_force_severity') is None and severity < _thr: _LOSS['sev']+=1; continue
+        # S37: контент-фильтр низкосигнального шума (порог severity <46, реальные события не трогаем)
+        if item.get('_force_severity') is None and severity < 46 and _is_noise(item.get('title','')):
+            _LOSS['sev']+=1; continue
 
         ev_id = make_id(item['title'], item['date'])
         if ev_id in seen_ids: _LOSS['dup']+=1; continue
@@ -1971,7 +1990,7 @@ def fetch_social_rss():
         ('https://reliefweb.int/updates/rss.xml', 'ReliefWeb', 'social'),
         # Think-tanks
         ('https://www.brookings.edu/feed/', 'Brookings', 'social'),
-        ('https://www.pewresearch.org/feed/', 'Pew Research', 'social'),
+        # [S37 шум] отключён: ('https://www.pewresearch.org/feed/', 'Pew Research', 'social'),
         ('https://www.cgdev.org/rss.xml', 'Center for Global Development', 'social'),
         ('https://www.cbpp.org/feed', 'CBPP', 'social'),
         # Труд и занятость
@@ -2057,8 +2076,8 @@ def fetch_economy_rss():
         ('https://www.imf.org/en/news/rss', 'IMF', 'economy'),
         ('https://blogs.worldbank.org/rss.xml', 'World Bank', 'economy'),
         ('https://www.worldbank.org/en/news/all/rss', 'World Bank', 'economy'),
-        ('https://www.federalreserve.gov/feeds/press_all.xml', 'Federal Reserve', 'economy'),
-        ('https://www.ecb.europa.eu/rss/press.html', 'ECB', 'economy'),
+        # [S37 шум] отключён: ('https://www.federalreserve.gov/feeds/press_all.xml', 'Federal Reserve', 'economy'),
+        # [S37 шум] отключён: ('https://www.ecb.europa.eu/rss/press.html', 'ECB', 'economy'),
         ('https://www.bis.org/list/press_releases/index.rss', 'BIS', 'economy'),
         ('https://www.oecd.org/newsroom/rss.xml', 'OECD', 'economy'),
         # Рынки
