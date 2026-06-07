@@ -2,60 +2,60 @@
   "country": "JP",
   "date": "2026-06-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-07T13:45:52.148199+00:00",
+  "generated_at": "2026-06-07T16:23:55.201760+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 42,
+      "score": 44,
       "props": {
-        "risk_score": 42
+        "risk_score": 44
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 42,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "stable"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-JP-Землетрясе",
+      "id": "SIGNAL-JP-Китаю_пред",
       "type": "Signal",
-      "label": "Землетрясение M4.6 — 200 км к ЮЮВ от Tat",
-      "severity": 44,
-      "domain": "climate"
+      "label": "Китаю предложено ускорить модернизацию а",
+      "severity": 46,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-JP",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-JP",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-JP",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-JP-social",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-JP-geopolitical",
@@ -196,10 +238,10 @@
       "weight": 0.46
     },
     {
-      "from": "SIGNAL-JP-Землетрясе",
-      "to": "DOMAIN-JP-climate",
+      "from": "SIGNAL-JP-Китаю_пред",
+      "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.46
     }
   ]
 }
