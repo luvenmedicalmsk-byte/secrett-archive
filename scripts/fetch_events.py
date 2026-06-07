@@ -3231,6 +3231,157 @@ def _exposure_factor(km):
     if km < 500: return 0.82
     return 0.72
 
+def fetch_cloudflare_radar(token=None):
+    """Cloudflare Radar -- подтверждённые отключения интернета + перехваты BGP-маршрутов (системные сигналы)"""
+    items = []
+    tok = token or os.environ.get('CF_RADAR_TOKEN', '')
+    if not tok:
+        print("  [SKIP] Cloudflare Radar: нет CF_RADAR_TOKEN", file=sys.stderr)
+        return []
+
+    # alpha-2 код страны -> (широта, долгота, русское название)
+    CC = {
+        'US': (38.9,-77.0,'США'),'CA': (45.4,-75.7,'Канада'),'MX': (19.4,-99.1,'Мексика'),
+        'BR': (-15.8,-47.9,'Бразилия'),'AR': (-34.6,-58.4,'Аргентина'),'CL': (-33.4,-70.7,'Чили'),
+        'CO': (4.7,-74.1,'Колумбия'),'VE': (10.5,-66.9,'Венесуэла'),'PE': (-12.0,-77.0,'Перу'),
+        'EC': (-0.2,-78.5,'Эквадор'),'BO': (-16.5,-68.1,'Боливия'),'CU': (23.1,-82.4,'Куба'),
+        'HT': (18.5,-72.3,'Гаити'),'DO': (18.5,-69.9,'Доминикана'),'GT': (14.6,-90.5,'Гватемала'),
+        'GB': (51.5,-0.1,'Великобритания'),'IE': (53.3,-6.3,'Ирландия'),'FR': (48.9,2.3,'Франция'),
+        'DE': (52.5,13.4,'Германия'),'ES': (40.4,-3.7,'Испания'),'PT': (38.7,-9.1,'Португалия'),
+        'IT': (41.9,12.5,'Италия'),'NL': (52.4,4.9,'Нидерланды'),'BE': (50.8,4.4,'Бельгия'),
+        'CH': (46.9,7.4,'Швейцария'),'AT': (48.2,16.4,'Австрия'),'SE': (59.3,18.1,'Швеция'),
+        'NO': (59.9,10.7,'Норвегия'),'FI': (60.2,24.9,'Финляндия'),'DK': (55.7,12.6,'Дания'),
+        'PL': (52.2,21.0,'Польша'),'CZ': (50.1,14.4,'Чехия'),'SK': (48.1,17.1,'Словакия'),
+        'HU': (47.5,19.0,'Венгрия'),'RO': (44.4,26.1,'Румыния'),'BG': (42.7,23.3,'Болгария'),
+        'GR': (38.0,23.7,'Греция'),'RS': (44.8,20.5,'Сербия'),'HR': (45.8,16.0,'Хорватия'),
+        'UA': (50.4,30.5,'Украина'),'BY': (53.9,27.6,'Беларусь'),'MD': (47.0,28.9,'Молдова'),
+        'RU': (55.75,37.6,'Россия'),'TR': (39.9,32.9,'Турция'),'GE': (41.7,44.8,'Грузия'),
+        'AM': (40.2,44.5,'Армения'),'AZ': (40.4,49.9,'Азербайджан'),'IL': (31.8,35.2,'Израиль'),
+        'PS': (31.9,35.2,'Палестина'),'LB': (33.9,35.5,'Ливан'),'SY': (33.5,36.3,'Сирия'),
+        'IQ': (33.3,44.4,'Ирак'),'IR': (35.7,51.4,'Иран'),'SA': (24.7,46.7,'Саудовская Аравия'),
+        'AE': (24.5,54.4,'ОАЭ'),'QA': (25.3,51.5,'Катар'),'KW': (29.4,47.9,'Кувейт'),
+        'YE': (15.4,44.2,'Йемен'),'JO': (31.9,35.9,'Иордания'),'OM': (23.6,58.5,'Оман'),
+        'EG': (30.0,31.2,'Египет'),'LY': (32.9,13.2,'Ливия'),'TN': (36.8,10.2,'Тунис'),
+        'DZ': (36.8,3.1,'Алжир'),'MA': (34.0,-6.8,'Марокко'),'SD': (15.5,32.5,'Судан'),
+        'SS': (4.85,31.6,'Южный Судан'),'ET': (9.0,38.7,'Эфиопия'),'KE': (-1.3,36.8,'Кения'),
+        'NG': (9.1,7.5,'Нигерия'),'GH': (5.6,-0.2,'Гана'),'ZA': (-25.7,28.2,'ЮАР'),
+        'TZ': (-6.2,35.7,'Танзания'),'UG': (0.3,32.6,'Уганда'),'CD': (-4.3,15.3,'ДР Конго'),
+        'CM': (3.9,11.5,'Камерун'),'SN': (14.7,-17.5,'Сенегал'),'CI': (5.3,-4.0,'Кот-д’Ивуар'),
+        'ZM': (-15.4,28.3,'Замбия'),'ZW': (-17.8,31.0,'Зимбабве'),'MZ': (-25.9,32.6,'Мозамбик'),
+        'AO': (-8.8,13.2,'Ангола'),'ML': (12.6,-8.0,'Мали'),'BF': (12.4,-1.5,'Буркина-Фасо'),
+        'NE': (13.5,2.1,'Нигер'),'IN': (28.6,77.2,'Индия'),'PK': (33.7,73.1,'Пакистан'),
+        'BD': (23.8,90.4,'Бангладеш'),'LK': (6.9,79.9,'Шри-Ланка'),'NP': (27.7,85.3,'Непал'),
+        'AF': (34.5,69.2,'Афганистан'),'CN': (39.9,116.4,'Китай'),'HK': (22.3,114.2,'Гонконг'),
+        'TW': (25.0,121.5,'Тайвань'),'JP': (35.7,139.7,'Япония'),'KR': (37.6,126.9,'Южная Корея'),
+        'KP': (39.0,125.8,'КНДР'),'MN': (47.9,106.9,'Монголия'),'TH': (13.8,100.5,'Таиланд'),
+        'VN': (21.0,105.8,'Вьетнам'),'MM': (16.8,96.2,'Мьянма'),'KH': (11.6,104.9,'Камбоджа'),
+        'LA': (17.97,102.6,'Лаос'),'MY': (3.1,101.7,'Малайзия'),'SG': (1.3,103.8,'Сингапур'),
+        'ID': (-6.2,106.8,'Индонезия'),'PH': (14.6,121.0,'Филиппины'),'KZ': (51.2,71.4,'Казахстан'),
+        'UZ': (41.3,69.2,'Узбекистан'),'TM': (37.95,58.4,'Туркменистан'),'KG': (42.9,74.6,'Киргизия'),
+        'TJ': (38.6,68.8,'Таджикистан'),'AU': (-35.3,149.1,'Австралия'),'NZ': (-41.3,174.8,'Новая Зеландия'),
+    }
+
+    def _q(path):
+        url = "https://api.cloudflare.com/client/v4/radar/" + path
+        req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + tok, 'User-Agent': 'ArchiveBot/2.0'})
+        with urllib.request.urlopen(req, timeout=25) as r:
+            return json.loads(r.read())
+
+    def _cc(code):
+        return CC.get(str(code or '').strip().upper())
+
+    # --- 1. Подтверждённые отключения интернета (с причиной и масштабом) ---
+    OUT_TYPE = {'NATIONWIDE': ('страновое', 66), 'REGIONAL': ('региональное', 58),
+                'NETWORK': ('сетевое', 50), 'PLATFORM': ('платформенное', 50)}
+    CAUSE = {'CABLE_CUT': 'обрыв кабеля', 'POWER_OUTAGE': 'отключение электричества',
+             'GOVERNMENT_DIRECTED': 'отключение по решению властей', 'SHUTDOWN': 'намеренное отключение',
+             'NATURAL_DISASTER': 'стихийное бедствие', 'WEATHER': 'погодные условия',
+             'TECHNICAL_PROBLEM': 'технический сбой', 'TECHNICAL': 'технический сбой',
+             'MILITARY_ACTION': 'военные действия', 'WAR': 'военные действия',
+             'CYBER_ATTACK': 'кибератака', 'ATTACK': 'кибератака',
+             'MAINTENANCE': 'плановые работы', 'SCHEDULED_MAINTENANCE': 'плановые работы',
+             'UNKNOWN': 'причина неизвестна'}
+    CHARGED = ('GOVERNMENT_DIRECTED', 'SHUTDOWN', 'MILITARY_ACTION', 'WAR', 'CYBER_ATTACK', 'ATTACK')
+    try:
+        d = _q("annotations/outages?dateRange=7d&limit=50&format=json")
+        ann = (d.get('result') or {}).get('annotations') or []
+        _n = 0
+        for a in ann[:20]:
+            locs = a.get('locationsDetails') or []
+            code = (locs[0].get('code') if locs else ((a.get('locations') or [None])[0]))
+            geo = _cc(code)
+            if not geo:
+                continue
+            lat, lng, cname = geo
+            out = a.get('outage') or {}
+            ot = str(out.get('outageType') or '').upper()
+            ot_ru, base = OUT_TYPE.get(ot, ('сбой', 52))
+            cause = str(out.get('outageCause') or '').upper()
+            cause_ru = CAUSE.get(cause, 'причина уточняется')
+            sev = base + (5 if cause in CHARGED else 0)
+            sev = min(74, sev)
+            sd = str(a.get('startDate') or '')[:10]
+            scope = (a.get('scope') or '').strip()
+            title = (f"Отключение интернета ({ot_ru}): {cname}"
+                     if ot in ('NATIONWIDE', 'REGIONAL') else f"Сбой сети: {cname}")
+            desc = (f"Cloudflare Radar: подтверждённое {ot_ru} отключение. Причина: {cause_ru}."
+                    + (f" Зона: {scope}." if scope else "")
+                    + (f" Начало: {sd}." if sd else ""))
+            items.append({
+                'title': title, 'desc': desc, 'date': (sd or datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                'source': 'Cloudflare Radar',
+                '_force_severity': sev, '_lat': lat, '_lng': lng,
+                '_region': cname, '_domain': 'technology',
+                '_meta': {'kind': 'radar_outage', 'outage_type': ot, 'cause': cause, 'verified': True}
+            })
+            _n += 1
+        print(f"  Cloudflare Radar: {_n} отключений интернета", file=sys.stderr)
+    except Exception as e:
+        print(f"  [WARN] Radar outages: {e}", file=sys.stderr)
+
+    # --- 2. Перехваты BGP-маршрутов (фильтр по достоверности) ---
+    try:
+        d = _q("bgp/hijacks/events?dateRange=2d&format=json&per_page=50&minConfidence=8")
+        ev = (d.get('result') or {}).get('events') or []
+        ev = sorted(ev, key=lambda x: (x.get('confidence_score') or 0), reverse=True)[:12]
+        _n = 0
+        for e in ev:
+            geo = _cc(e.get('hijacker_country'))
+            if not geo:
+                continue
+            lat, lng, cname = geo
+            conf = e.get('confidence_score') or 0
+            hijacker = e.get('hijacker_asn')
+            victims = e.get('victim_asns') or []
+            prefixes = e.get('prefixes') or []
+            msgs = e.get('hijack_msgs_count') or 0
+            sev = 50 + min(16, max(0, (int(conf) - 8)) * 2)
+            if len(prefixes) >= 5:
+                sev += 3
+            sev = min(74, sev)
+            ts = str(e.get('max_hijack_ts') or e.get('min_hijack_ts') or '')[:10]
+            title = f"BGP-перехват маршрутов: AS{hijacker} ({cname})"
+            desc = (f"Cloudflare Radar: вероятный перехват BGP-маршрутов. "
+                    f"Источник — AS{hijacker} ({cname}); пострадавших систем: {len(victims)}, "
+                    f"затронуто префиксов: {len(prefixes)}; BGP-сообщений: {msgs}. "
+                    f"Уровень достоверности: {conf}.")
+            items.append({
+                'title': title, 'desc': desc, 'date': (ts or datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                'source': 'Cloudflare Radar',
+                '_force_severity': sev, '_lat': lat, '_lng': lng,
+                '_region': cname, '_domain': 'technology',
+                '_meta': {'kind': 'radar_bgp', 'confidence': conf, 'victims': len(victims),
+                          'prefixes': len(prefixes), 'hijacker_asn': hijacker}
+            })
+            _n += 1
+        print(f"  Cloudflare Radar: {_n} BGP-перехватов", file=sys.stderr)
+    except Exception as e:
+        print(f"  [WARN] Radar BGP: {e}", file=sys.stderr)
+
+    print(f"  Cloudflare Radar всего: {len(items)} сигналов", file=sys.stderr)
+    return items
+
+
 def fetch_nasa_firms(api_key=None):
     """NASA FIRMS -- спутниковые пожары каждые 3 часа"""
     items = []
@@ -4874,6 +5025,7 @@ if __name__ == '__main__':
             ('copernicus_cyber',   fetch_copernicus_cyber),
             ('copernicus_sentinel', lambda: fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))),
             ('nasa_firms',         lambda: fetch_nasa_firms(get_env('FIRMS_API_KEY'))),
+            ('cloudflare_radar',   lambda: fetch_cloudflare_radar(get_env('CF_RADAR_TOKEN'))),
             ('forest_watch',       fetch_global_forest_watch),
             ('flood_observatory',  fetch_flood_observatory),
             ('regional',           fetch_regional),
