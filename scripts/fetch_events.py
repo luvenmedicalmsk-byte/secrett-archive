@@ -1977,8 +1977,8 @@ def fetch_social_rss():
         # Труд и занятость
         ('https://www.ilo.org/global/about-the-ilo/newsroom/news/WCMS_RSS/lang--en/index.xml', 'ILO', 'social'),
         # Аналитика
-        ('https://www.foreignaffairs.com/rss.xml', 'Foreign Affairs', 'social'),
-        ('https://www.foreignaffairs.com/feeds/rss', 'Foreign Affairs', 'social'),
+        ('https://www.foreignaffairs.com/rss.xml', 'Foreign Affairs', 'geopolitics'),
+        ('https://www.foreignaffairs.com/feeds/rss', 'Foreign Affairs', 'geopolitics'),
         # WEF социальные риски
         ('https://www.weforum.org/agenda/feed/', 'WEF', 'social'),
     ]
@@ -2145,7 +2145,10 @@ def _tg_classify(text):
         'geopolitics': ['удар','обстрел','атак','войск','фронт','наступлен','ракет','дрон',
                         'всу','граница','нато','переговор','саммит','конфликт','боевик',
                         'теракт','мобилизац','военн','оборон','захват','контрнаступ','пво',
-                        'дипломат','посол','спецоперац','беспилотник','взрыв','ликвидир'],
+                        'дипломат','посол','спецоперац','беспилотник','взрыв','ликвидир',
+                        'выбор','явк','парламент','голосован','депутат','зеленск','киев',
+                        'кремл','президент','визит','санкци','госдеп','пентагон','оон',
+                        'подлодк','подводн','флот','оккупац','аннекс'],
         'technology': ['кибер','хакер','взлом','утечк','искусственн интеллект','нейросет',
                        'технолог','интернет','сервер','сбой','приложени','смартфон',
                        'роскомнадзор','блокировк','vpn','спутник','чип','процессор','софт',
@@ -2339,7 +2342,7 @@ def fetch_telegram():
                 'date': today,
                 'source': f'Telegram/{ch}',
                 'source_bias': 5,
-                '_domain': _tg_classify(text) or 'social',  # S36.4: по словам, fallback -- социум
+                '_domain': _tg_classify(text) or 'geopolitics',  # S36.4: по словам, fallback -- социум
             })
     print(f"  Telegram: {len(items)} постов", file=sys.stderr)
     return items
