@@ -2,66 +2,66 @@
   "country": "EG",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T18:25:53.451618+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-08T19:12:53.799653+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-EG",
       "type": "Country",
       "label": "EG",
-      "score": 44,
+      "score": 46,
       "props": {
-        "risk_score": 44
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-EG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 37,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-EG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-EG-Силы_оборо",
+      "type": "Signal",
+      "label": "Силы обороны Израиля наносят удары, в ре",
+      "severity": 46,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-EG-Египет:_Сн",
       "type": "Signal",
       "label": "Египет: Снять обвинения с активистов, ар",
@@ -92,13 +99,13 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-economic",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-EG",
@@ -122,13 +129,13 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-EG-Geopolitical",
@@ -147,6 +154,33 @@
       "to": "COUNTRY-EG",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-EG-geopolitical",
+      "to": "DOMAIN-EG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-EG-infrastructure",
+      "to": "DOMAIN-EG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EG-economic",
+      "to": "DOMAIN-EG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-EG-Силы_оборо",
+      "to": "DOMAIN-EG-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     },
     {
       "from": "SIGNAL-EG-Египет:_Сн",
