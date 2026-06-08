@@ -2,67 +2,67 @@
   "country": "RU",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T03:35:19.278567+00:00",
+  "generated_at": "2026-06-08T07:30:08.561687+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-RU-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Беспилотни",
+      "type": "Signal",
+      "label": "Беспилотник ударил по пассажирскому поез",
+      "severity": 60,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-Стармер_пр",
       "type": "Signal",
       "label": "Стармер принимает Зеленского, Мерца и Ма",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-RU-Президент_",
+      "id": "SIGNAL-RU-Современна",
       "type": "Signal",
-      "label": "Президент Румынии Никушор Дан подтвердил",
-      "severity": 49,
+      "label": "Современная Брахмастра? Как гиперзвуковы",
+      "severity": 54,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Зампредсед",
-      "type": "Signal",
-      "label": "Зампредседателя Сейма Польши призвал нал",
-      "severity": 49,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-RU",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-RU-Беспилотни",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-RU-Стармер_пр",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-RU-Президент_",
+      "from": "SIGNAL-RU-Современна",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.49
-    },
-    {
-      "from": "SIGNAL-RU-Зампредсед",
-      "to": "DOMAIN-RU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.49
+      "weight": 0.54
     }
   ]
 }

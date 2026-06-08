@@ -2,9 +2,9 @@
   "country": "ID",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T03:35:19.291577+00:00",
+  "generated_at": "2026-06-08T07:30:08.573225+00:00",
   "node_count": 13,
-  "edge_count": 12,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-ID",
@@ -19,55 +19,50 @@
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 30,
-      "trend": "down"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "down"
+      "score": 32,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "down"
+      "score": 9,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "down"
+      "score": 9,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "down"
+      "score": 19,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "down"
+      "score": 21,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-ID-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,16 +75,21 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Золотые_ре",
+      "id": "DRIVER-ID-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-ID-Рынок_Индо",
       "type": "Signal",
-      "label": "Золотые резервы Индонезии испытывают сам",
+      "label": "Рынок Индонезии углубляет падение, так к",
       "severity": 40,
       "domain": "economic"
     },
     {
       "id": "SIGNAL-ID-Цены_на_уг",
       "type": "Signal",
-      "label": "Цены на уголь в Азии достигают максимума",
+      "label": "Цены на уголь в Азии достигают двухлетне",
       "severity": 40,
       "domain": "economic"
     }
@@ -99,49 +99,43 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
-    },
-    {
-      "from": "DRIVER-ID-Economic",
-      "to": "COUNTRY-ID",
-      "type": "CAUSES",
-      "weight": 0.8
+      "weight": 0.05
     },
     {
       "from": "DRIVER-ID-Geopolitical",
@@ -156,7 +150,34 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-ID-Золотые_ре",
+      "from": "DRIVER-ID-Economic",
+      "to": "COUNTRY-ID",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ID-Рынок_Индо",
       "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
       "weight": 0.4

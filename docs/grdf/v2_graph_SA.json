@@ -2,67 +2,67 @@
   "country": "SA",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T03:35:19.286434+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-08T07:30:08.568536+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 49,
+      "score": 58,
       "props": {
-        "risk_score": 49
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 17,
-      "trend": "down"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 28,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-SA-Geopolitical",
@@ -78,20 +78,6 @@
       "id": "DRIVER-SA-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-SA-Иран_закры",
-      "type": "Signal",
-      "label": "Иран закрывает воздушное пространство аэ",
-      "severity": 50,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Тегеран_от",
-      "type": "Signal",
-      "label": "Тегеран отверг утверждения о нападении н",
-      "severity": 47,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -99,37 +85,37 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-SA",
@@ -156,16 +142,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-SA-Иран_закры",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-SA-Тегеран_от",
-      "to": "DOMAIN-SA-geopolitical",
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.47
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
