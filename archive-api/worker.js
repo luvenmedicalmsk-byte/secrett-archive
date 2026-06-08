@@ -1899,6 +1899,76 @@ async function _translateNewsItems(items, env){
   } catch(_){}
 }
 
+// ── LLM-гейт риск/шум: для каждой новости решаем сигнал это или мусор ──────────
+// Кэш вердикта по url поста (KV, 7 дней). Фолбэк: при сбое/без ключа -- keyword.
+const _newsRiskCache = new Map();
+async function _classifyNewsItems(items, env){
+  if (!items || !items.length) return items;
+  for (const it of items){ it._rkey = 'risk:' + (it.url || ('x/' + it.id)); }
+  for (const it of items){ if (_newsRiskCache.has(it._rkey)) it._llm = _newsRiskCache.get(it._rkey); }
+  if (env.EVENTS_KV){
+    await Promise.all(items.filter(it => !it._llm).map(async it => {
+      try { const v = await env.EVENTS_KV.get(it._rkey, { type: 'json' }); if (v){ _newsRiskCache.set(it._rkey, v); it._llm = v; } } catch(_){}
+    }));
+  }
+  const todo = items.filter(it => !it._llm).slice(0, 40);   // лимит на запрос, остальное -- к следующему обновлению
+  if (todo.length && env.OPENAI_API_KEY){
+    const sys = 'Ты — фильтр ленты платформы мониторинга СИСТЕМНЫХ РИСКОВ. Для каждого элемента входного массива реши, это СИГНАЛ системного риска или ШУМ. СИГНАЛ: война, удары, обстрелы, санкции, протесты, перевороты, теракты, стихийные бедствия, аварии инфраструктуры, кибератаки, утечки данных, обвалы рынков, дефолты, эпидемии, гуманитарные кризисы, крупные политические/экономические события. ШУМ: реклама, промо, самопиар канала, подкасты, культура/искусство/кино, лайфстайл, знаменитости, спорт, гороскопы, опросы, рецепты, анонсы развлекательных мероприятий, новости без угрозы/последствий. Верни СТРОГО валидный JSON-объект: ключ = значение поля i (строкой), значение = объект {"r":1 если сигнал риска иначе 0,"d":домен из [climate,economy,geopolitics,technology,social],"s":индекс риска целое 0-100 (0 для шума)}. Без markdown и пояснений.';
+    for (let start = 0; start < todo.length; start += 20){
+      const batch = todo.slice(start, start + 20);
+      const payload = batch.map((it, i) => ({ i, t: (it.text || '').slice(0, 400) }));
+      try {
+        const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 12000);
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + env.OPENAI_API_KEY },
+          body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1500, temperature: 0,
+            response_format: { type: 'json_object' },
+            messages: [{ role: 'system', content: sys }, { role: 'user', content: 'Классифицируй:\n' + JSON.stringify(payload) }] }),
+          signal: ctrl.signal
+        });
+        clearTimeout(tid);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        if (!content) continue;
+        let parsed; try { parsed = JSON.parse(content); } catch(_) { continue; }
+        let map = {};
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)){
+          const arrLike = parsed.r || parsed.results || parsed.items;
+          if (Array.isArray(arrLike)) arrLike.forEach((o, k) => { map[(o && o.i != null) ? o.i : k] = o; });
+          else map = parsed;
+        } else if (Array.isArray(parsed)) parsed.forEach((o, k) => { map[k] = o; });
+        const DOMS = { climate:1, economy:1, geopolitics:1, technology:1, social:1 };
+        for (let k = 0; k < batch.length; k++){
+          const o = (map[String(k)] != null) ? map[String(k)] : map[k];
+          if (!o || typeof o !== 'object') continue;
+          const verdict = {
+            risk: (o.r === 1 || o.r === true || o.r === '1'),
+            domain: (o.d && DOMS[o.d]) ? o.d : null,
+            severity: (typeof o.s === 'number') ? o.s : (parseInt(o.s) || null)
+          };
+          batch[k]._llm = verdict;
+          _newsRiskCache.set(batch[k]._rkey, verdict);
+          if (env.EVENTS_KV){ try { await env.EVENTS_KV.put(batch[k]._rkey, JSON.stringify(verdict), { expirationTtl: 604800 }); } catch(_){} }
+        }
+      } catch(_){ continue; }
+    }
+  }
+  // применяем: шум -> выброс; риск -> домен/индекс от модели; без вердикта -> keyword
+  const out = [];
+  for (const it of items){
+    const v = it._llm;
+    if (v){
+      if (!v.risk) continue;
+      if (v.domain) it.domain = v.domain;
+      if (typeof v.severity === 'number' && v.severity > 0) it.severity = Math.max(1, Math.min(100, Math.round(v.severity)));
+    }
+    out.push(it);
+  }
+  return out;
+}
+
 async function handleProxyNewsFeed(env) {
   const BREAKING = 'bbbreaking';
   const brkMeta = NEWS_TG_CHANNELS.find(c => c.handle === BREAKING);
@@ -1916,8 +1986,10 @@ async function handleProxyNewsFeed(env) {
   items.forEach(it => { it._ts = it.time ? Date.parse(it.time) : 0; });
   items.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
   items = items.map(({ _ts, ...rest }) => rest);
+  // LLM-гейт риск/шум (с кэшем, фолбэк на keyword); шум отсеивается до перевода
+  try { items = await _classifyNewsItems(items, env); } catch(_){}
   try { await _translateNewsItems(items, env); } catch(_){}
-  items = items.map(({ _trkey, _done, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
+  items = items.map(({ _trkey, _done, _rkey, _llm, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
   // дроп мусорных одно-словных/слишком коротких постов (напр. «Иран» после очистки эмодзи)
   items = items.filter(it => { const w = (it.text||'').trim().split(/\s+/).filter(Boolean); return w.length >= 2 && (it.text||'').trim().length >= 10; });
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), count: items.length, items }), {
