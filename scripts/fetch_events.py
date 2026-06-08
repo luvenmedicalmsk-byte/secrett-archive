@@ -1196,6 +1196,21 @@ def _is_noise(title):
     return any(w in t for w in _NOISE_WORDS)
 
 
+# S41: нативная реклама/промо-материалы -- не сигнал риска (RU-маркеры раскрытия).
+_AD_MARKERS = ['*реклама', 'на правах рекламы', 'рекламодател', 'промокод',
+               'реклама. ооо', 'реклама, ооо', 'на сайте девелопера', 'partner content']
+def _is_ad(text):
+    t = (text or '').lower()
+    if any(m in t for m in _AD_MARKERS):
+        return True
+    if re.search(r'\berid\b', t):           # токен раскрытия рекламы в РФ (не ловит "period")
+        return True
+    # 'реклама' рядом с юрлицом/застройщиком -> рекламный пост
+    if 'реклама' in t and ('ооо' in t or 'девелоп' in t or 'застройщик' in t or ' ип ' in t):
+        return True
+    return False
+
+
 def _systemic_class(title, desc=''):
     """S38: редкие СИСТЕМНЫЕ сигналы с высоким приоритетом -- ядерные аварии,
     эпидемии с пандемическим потенциалом, отказ инфраструктуры странового масштаба.
@@ -1241,7 +1256,7 @@ def process_events(raw_items):
     events = []
     seen_ids = set()
     _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
-             'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0}
+             'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0}
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
     # Фильтр провокационных и ангажированных новостей
@@ -1264,6 +1279,11 @@ def process_events(raw_items):
         text_low = title_low + ' ' + desc_low
         if any(phrase in text_low for phrase in RUSSIA_FILTER):
             _LOSS['filter']+=1; continue
+
+        # S41: нативная реклама/промо -- не сигнал риска, убираем безусловно
+        # (независимо от severity/источника/домена)
+        if _is_ad(text_low):
+            _LOSS['ad']+=1; continue
 
         # S34B governance: REMOVE-источники отбрасываем до обработки
         _gov = SOURCE_GOVERNANCE.get(item.get('source',''), {})
@@ -1437,7 +1457,7 @@ def process_events(raw_items):
     try:
         import collections as _c
         _fd = _c.Counter(e['domain'] for e in top_events)
-        print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} exported={len(top_events)}", file=sys.stderr)
+        print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} ad={_LOSS['ad']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} exported={len(top_events)}", file=sys.stderr)
         print("  [DOMAINS] " + ' '.join(f"{k}={_fd.get(k,0)}" for k in ('climate','geopolitics','economy','technology','social')), file=sys.stderr)
     except Exception as _e:
         print("  [LOSS] err", _e, file=sys.stderr)
