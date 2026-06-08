@@ -2,32 +2,32 @@
   "country": "AR",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T07:30:08.571756+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-08T07:50:43.862462+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-AR",
       "type": "Country",
       "label": "AR",
-      "score": 50,
+      "score": 51,
       "props": {
-        "risk_score": 50
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-AR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AR-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AR-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AR-Филиппины_",
+      "type": "Signal",
+      "label": "Филиппины предупреждают о валютных риска",
+      "severity": 51,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-AR-Первые_пре",
       "type": "Signal",
       "label": "Первые предупреждения и миф о неведении",
@@ -92,13 +99,13 @@
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-AR",
@@ -122,7 +129,7 @@
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-AR",
@@ -147,6 +154,33 @@
       "to": "COUNTRY-AR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-AR-geopolitical",
+      "to": "DOMAIN-AR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AR-infrastructure",
+      "to": "DOMAIN-AR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AR-economic",
+      "to": "DOMAIN-AR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AR-Филиппины_",
+      "to": "DOMAIN-AR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.51
     },
     {
       "from": "SIGNAL-AR-Первые_пре",
