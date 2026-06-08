@@ -2555,7 +2555,7 @@ function qkImpact(q){
 }
 function qkRadius(m){ return Math.max(6,(m-3)*4); }
 function qkEsc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function qkTime(t){ return new Date(t).toISOString().replace('T',' ').slice(0,16)+' UTC'; }
+function _qkFmt(t,off,wd){var d=new Date(t+off*60000),h=('0'+d.getUTCHours()).slice(-2),m=('0'+d.getUTCMinutes()).slice(-2);if(!wd)return h+':'+m;var M=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][d.getUTCMonth()];return d.getUTCDate()+' '+M+', '+h+':'+m;}function _qkLocOff(lng){return Math.round((lng||0)/15)*60;}function qkTimeMeta(t,lng){return _qkFmt(t,180,false)+' МСК · '+_qkFmt(t,_qkLocOff(lng),false)+' мест.';}function qkTimeFull(t,lng){return _qkFmt(t,180,true)+' · МСК<br>'+_qkFmt(t,_qkLocOff(lng),true)+' · ≈ местное';}
 function qkInBand(m){ return quakeMinMag>=7 ? m>=7 : (m>=quakeMinMag && m<quakeMinMag+1); }
 
 function renderQuakeMarkers(){
@@ -2564,7 +2564,7 @@ function renderQuakeMarkers(){
   quakeCache.filter(q=>qkInBand(q.mag)).forEach(q=>{
     const imp=qkImpact(q), fresh=(now-q.time)/60000<60;
     const m=L.circleMarker([q.lat,q.lng],{radius:qkRadius(q.mag),color:imp.col,weight:fresh?2:1,fillColor:imp.col,fillOpacity:0.55,className:'qk-sig'+(fresh?' quake-pulse':'')})
-      .bindPopup('<b style="color:'+imp.col+'">'+SVG_WARN+'M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+imp.label+'<br>'+qkTime(q.time)+'</span><br><span style="color:rgba(168,160,144,0.5);font-size:11px">Источник: USGS</span>');
+      .bindPopup('<b style="color:'+imp.col+'">'+SVG_WARN+'M'+q.mag.toFixed(1)+'</b><br><span style="font-size:11px;color:#A8A090">'+qkEsc(q.place||'')+'<br>'+imp.label+'<br>'+qkTimeFull(q.time,q.lng)+'</span><br><span style="color:rgba(168,160,144,0.5);font-size:11px">Источник: USGS</span>');
     m.addTo(map); try{ if(m._path) m._path.style.setProperty('--c', imp.col); }catch(_){} quakeMarkers.push(m);
   });
 }
@@ -2576,17 +2576,17 @@ function renderQuakeList(){
   if(!list.length){ box.innerHTML='<div class="qk-empty">Нет событий '+lbl+' за последние 7 дней.<br>Лента обновляется каждые 25 секунд.</div>'; _qkSigN=0; return 0; }
   const sigN=list.filter(function(q){return qkImpact(q).lvl>=2;}).length; _qkSigN=sigN;
   box.innerHTML='<div class="qk-summary">Событий: '+list.length+' · значимого воздействия: <b style="color:'+(sigN?'#FF7A1A':'#3FB37F')+'">'+sigN+'</b></div>'+list.map(q=>{
-    const col=qkColor(q.mag), imp=qkImpact(q), t=qkTime(q.time), dep=(q.depth!=null?Math.round(q.depth)+' км':'?');
+    const col=qkColor(q.mag), imp=qkImpact(q), tm=qkTimeMeta(q.time,q.lng), tf=qkTimeFull(q.time,q.lng), dep=(q.depth!=null?Math.round(q.depth)+' км':'?');
     return '<div class="qk-card" onclick="window._toggleQk(this)">'+
       '<span class="qk-dot" style="background:'+imp.col+'"></span>'+
       '<div class="qk-main">'+
         '<div class="qk-dom" style="color:'+imp.col+'">'+(q.tsunami?SVG_WARN+'Цунами · ':'')+'Землетрясение</div>'+
         '<div class="qk-title">'+qkEsc(q.place||'—')+'</div>'+'<div class="qk-imp" style="color:'+imp.col+';border-color:'+imp.col+'"><span class="qk-imp-dot" style="background:'+imp.col+'"></span>'+imp.label+'</div>'+
-        '<div class="qk-meta"><span>'+t+'</span><span>Глубина '+dep+'</span></div>'+
+        '<div class="qk-meta"><span>'+tm+'</span><span>Глубина '+dep+'</span></div>'+
         '<div class="qk-detail">'+
           '<b style="color:'+imp.col+'">M'+q.mag.toFixed(1)+' — '+qkEsc(q.place||'')+'</b><br>'+
           'Координаты: '+q.lat.toFixed(2)+', '+q.lng.toFixed(2)+'<br>'+
-          'Глубина: '+dep+'<br>Время: '+t+'<br>Воздействие: '+imp.label.replace(' воздействие','')+' — '+imp.basis+(q.felt?('<br>Подтвердили (DYFI): '+q.felt+' сообщ.'):'')+(q.mmi!=null?('<br>Макс. интенсивность: MMI '+q.mmi.toFixed(1)):'')+(q.tsunami?'<br><span style="color:#FF7A1A">'+SVG_WARN+'Предупреждение о цунами</span>':'')+
+          'Глубина: '+dep+'<br>Время: '+tf+'<br>Воздействие: '+imp.label.replace(' воздействие','')+' — '+imp.basis+(q.felt?('<br>Подтвердили (DYFI): '+q.felt+' сообщ.'):'')+(q.mmi!=null?('<br>Макс. интенсивность: MMI '+q.mmi.toFixed(1)):'')+(q.tsunami?'<br><span style="color:#FF7A1A">'+SVG_WARN+'Предупреждение о цунами</span>':'')+
           
           '<div class="qk-exposure" data-detail="'+qkEsc(q.detail||'')+'"></div>'+'<div class="qk-cities" data-detail="'+qkEsc(q.detail||'')+'" data-lat="'+q.lat+'" data-lng="'+q.lng+'"></div>'+
         '</div>'+
