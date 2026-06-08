@@ -1483,8 +1483,8 @@ html,body{overscroll-behavior-y:contain}
   </div>
   <div id="updated">Обновлено · —</div>
   <div id="stats">
-    <div><span class="sv" id="s-t">0</span><span class="sl">Сигналов</span></div>
-    <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
+    <div><span class="sv" id="s-t">—</span><span class="sl">Сигналов</span></div>
+    <div><span class="sv" id="s-c">—</span><span class="sl">Критичных</span></div>
     <div><span class="sv" id="s-gri">—</span><span class="sl" id="s-gri-l" style="max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">GRI</span></div>
   </div>
   <div id="layers">
@@ -1777,14 +1777,9 @@ function renderMarkers() {
 function sc(s){ return s>=85?'#C0392B':s>=70?'#D35400':'#2980B9' }
 function fd(iso){ return new Date(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) }
 
-var _statsLoaded = false;  // true после успешного /api/stats — канон не перетирать live-числом
-
 function updateStats() {
-  // NOTE: filtered.length — live-число (до fetchStats). Перезапишется /api/stats.total
-  if (!_statsLoaded) {
-    document.getElementById('s-t').textContent = filtered.length;
-    document.getElementById('s-c').textContent = filtered.filter(e=>e.severity>=80).length;
-  }
+  // Шапка «Сигналов/Критичных» питается ТОЛЬКО из /api/stats (канон) — см. fetchStats().
+  // filtered.length сюда НЕ пишем: это локальный набор карты, он давал «скачки» 167/10.
   const avg = filtered.length ? Math.round(filtered.reduce((s,e)=>s+e.severity,0)/filtered.length) : 0;
   var _sa=document.getElementById('s-a'); if(_sa) _sa.textContent = avg;  // s-a заменён на CRI
 }
@@ -1985,7 +1980,6 @@ async function fetchStats() {
     var lb = document.getElementById('list-btn');
     if(lb) lb.textContent = '◆ Список сигналов';
     document.getElementById('s-c').textContent = s.critical;
-    _statsLoaded = true;  // канон пришёл — updateStats() больше не перетирает live-числом
     var _sa2=document.getElementById('s-a'); if(_sa2) _sa2.textContent = s.avg_severity;  // s-a заменён на CRI
   } catch(_) {}
 }
@@ -2008,6 +2002,7 @@ function loadFallback() {
 }
 
 tryLoadFresh().then(() => { fetchStats(); startSSE(); });
+setInterval(fetchStats, 60000);  // канон /api/stats обновляется каждые 60с — точное обновление счётчика
 _clockTick(); setInterval(_clockTick, 30000);
 
 // FIX4: Fallback poll every 5 min — keeps data fresh if SSE dies
