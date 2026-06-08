@@ -1293,6 +1293,11 @@ def process_events(raw_items):
         # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
         # S36.4: economy/social стартуют с базы 40 и редко набирают >45 -> отдельный порог 35;
         # Telegram -- без порога (раскладываем по словам, не режем severity)
+        # S39: видео-тизеры (Смотрите:/Видео:/Watch:) -- кликбейт, убираем безусловно;
+        # само событие приходит нормальным сигналом из профильных источников
+        _ttl0 = str(item.get('title','')).strip().lower()
+        if _ttl0.startswith(('смотрите','смотри:','видео:','watch:','смотреть','фото:')):
+            _LOSS['sev']+=1; continue
         # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
         _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
         if _sys:
