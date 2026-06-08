@@ -48,11 +48,21 @@ jobs:
             exit 1
           fi
           COUNT=$(python3 -c "import json; d=json.load(open('docs/events.json')); print(d.get('count', len(d.get('events',[]))))")
+          PREV=$(git show HEAD:docs/events.json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('count', len(d.get('events',[]))))" 2>/dev/null || echo 0)
           echo "events_count=$COUNT" >> $GITHUB_OUTPUT
-          echo "Событий: $COUNT"
-          if [ "$COUNT" -lt "10" ]; then
-            echo "::error::Слишком мало событий: $COUNT"
+          echo "Событий: $COUNT (прошлый коммит: $PREV)"
+          # Абсолютный пол: ниже 30 — почти наверняка массовый сбой источников
+          if [ "$COUNT" -lt "30" ]; then
+            echo "::error::Слишком мало событий: $COUNT (мин. 30). Прогон отклонён — здоровый архив НЕ перезаписан."
             exit 1
+          fi
+          # Относительный пол: обвал >60% относительно прошлого здорового файла = плохой прогон
+          if [ "$PREV" -gt "0" ]; then
+            THRESH=$((PREV * 4 / 10))
+            if [ "$COUNT" -lt "$THRESH" ]; then
+              echo "::error::Обвал событий: $COUNT < 40% от прошлых $PREV — вероятен плохой прогон. Архив НЕ перезаписан."
+              exit 1
+            fi
           fi
 
       - name: Запуск Country Snapshot Engine
