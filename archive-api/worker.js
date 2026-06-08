@@ -358,7 +358,7 @@ async function handleGetEvents(url, env) {
   const sort        = url.searchParams.get('sort') || 'severity';
   const order       = url.searchParams.get('order') || 'desc';
   const page        = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-  const limit       = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
+  const limit       = Math.min(1000, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
   // Signal schema filters (v2) — backward-compatible, ignored if field absent
   const signalType  = url.searchParams.get('signal_type');
   const phase       = url.searchParams.get('phase');
