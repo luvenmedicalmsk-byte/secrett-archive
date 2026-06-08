@@ -2360,6 +2360,9 @@ def fetch_copernicus_ems():
         t = ((cat or '') + ' ' + (name or '')).lower()
         if any(w in t for w in ('earthquake', 'seismic', 'землетряс')):
             return None  # уже подключено через USGS
+        if any(w in t for w in ('public event', 'planned event', 'mass gathering',
+                                'exercise', 'asset mapping', 'pre-disaster')):
+            return None  # плановые мероприятия/учения/картирование активов -- не сигнал риска
         if any(w in t for w in ('flood', 'flooding', 'inundation', 'storm surge', 'наводн')):
             return ('Наводнение', 'climate')
         if any(w in t for w in ('wildfire', 'forest fire', 'fire', 'пожар')):
