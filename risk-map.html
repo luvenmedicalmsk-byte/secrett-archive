@@ -1778,9 +1778,11 @@ function sc(s){ return s>=85?'#C0392B':s>=70?'#D35400':'#2980B9' }
 function fd(iso){ return new Date(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) }
 
 function updateStats() {
-  // Шапка «Сигналов/Критичных» питается ТОЛЬКО из /api/stats (канон) — см. fetchStats().
-  // filtered.length сюда НЕ пишем: это локальный набор карты, он давал «скачки» 167/10.
-  const avg = filtered.length ? Math.round(filtered.reduce((s,e)=>s+e.severity,0)/filtered.length) : 0;
+  // Счётчик шапки = реально загруженные сигналы; критичные — severity > 80 (локальный расчёт, без /api/stats)
+  var ev = (typeof ALL_EVENTS !== 'undefined' && ALL_EVENTS) ? ALL_EVENTS : [];
+  var _st = document.getElementById('s-t'); if(_st) _st.textContent = ev.length;
+  var _sc = document.getElementById('s-c'); if(_sc) _sc.textContent = ev.filter(function(e){ return e.severity > 80; }).length;
+  const avg = ev.length ? Math.round(ev.reduce((s,e)=>s+e.severity,0)/ev.length) : 0;
   var _sa=document.getElementById('s-a'); if(_sa) _sa.textContent = avg;  // s-a заменён на CRI
 }
 
@@ -1975,12 +1977,9 @@ async function fetchStats() {
     const r = await fetch(API_BASE + '/api/stats', { signal: AbortSignal.timeout(3000) });
     if (!r.ok) return;
     const s = await r.json();
-    // CANONICAL: /api/stats.total — архивный счётчик событий/сигналов (не перетирать другими)
-    document.getElementById('s-t').textContent = s.total;
+    // Счётчиком шапки теперь владеет updateStats() (загруженные сигналы + severity>80). Здесь только метка кнопки.
     var lb = document.getElementById('list-btn');
     if(lb) lb.textContent = '◆ Список сигналов';
-    document.getElementById('s-c').textContent = s.critical;
-    var _sa2=document.getElementById('s-a'); if(_sa2) _sa2.textContent = s.avg_severity;  // s-a заменён на CRI
   } catch(_) {}
 }
 
@@ -2002,7 +2001,6 @@ function loadFallback() {
 }
 
 tryLoadFresh().then(() => { fetchStats(); startSSE(); });
-setInterval(fetchStats, 60000);  // канон /api/stats обновляется каждые 60с — точное обновление счётчика
 _clockTick(); setInterval(_clockTick, 30000);
 
 // FIX4: Fallback poll every 5 min — keeps data fresh if SSE dies
