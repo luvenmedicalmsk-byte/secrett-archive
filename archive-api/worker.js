@@ -1719,7 +1719,10 @@ const NEWS_STOPWORDS = ['обложка','#обложка','erid','промок�
   'в наших соцсетях','подписывайтесь на наш',
   // культура / кино / развлечения -- не сигнал риска
   'документальный сериал','документальный фильм','документального фильма','документального киноцикл',
-  'киноцикл','режиссёр','режиссер','кинофестивал','премьера фильма','forbes talk'];
+  'киноцикл','режиссёр','режиссер','кинофестивал','премьера фильма','forbes talk',
+  // подкасты / стриминги / арт-промо -- не сигнал риска
+  'подкаст','forbes young','apple podcasts','яндекс музык','на других стримингах',
+  'слушай прямо сейчас','#young_art','#кудасходить','#кетмб','выставк','музеях'];
 // лёгкий расчёт риска новости (ключевые слова RU/EN), шкала ~35..92
 function _newsRisk(text) {
   const t = (text || '').toLowerCase();
@@ -1748,6 +1751,8 @@ function _newsDomain(text, source) {
   const t = (text || '').toLowerCase();
   const has = (arr) => arr.some(w => t.includes(w));
   if (has(['flood','наводнен','storm','шторм','hurricane','ураган','typhoon','тайфун','wildfire','пожар','earthquake','землетряс','quake','drought','засух','heatwave','heat wave','жара','climate','климат','emission','выброс','volcan','вулкан','eruption','tsunami','цунами','landslide','оползень'])) return 'climate';
+  // фискальное/бюджетное -> экономика (раньше technology, чтобы не утекало из-за случайного слова)
+  if (has(['бюджетн','госдолг','погашение долга','долга регионов','дефицит бюджета','налог','казначейств','минфин'])) return 'economy';
   if (has(['cyber','кибер','hack','взлом','malware','ransomware','vulnerab','уязвим','software','semiconductor','полупровод','artificial intelligence','искусственн','algorithm','алгоритм','startup','стартап','data breach','утечк','google','apple','microsoft','openai','nvidia','cisco','technolog','технолог','quantum','робот','robot',' chip','чип'])) return 'technology';
   if (has(['inflation','инфляц','gdp','ввп','recession','рецесс','interest rate','ставк','central bank','центробанк','stock','акци','bond','облигац','currency','валют','market','рынок','trade ','торгов','tariff','тариф','oil price','цена нефт','earnings','прибыл','ipo','billionaire','миллиард','economy','эконом','revenue','выручк','unemployment','безработиц','forbes','budget','бюджет','default','дефолт','оэср','oecd','нефт','нефтегаз','газопровод','природн газ','сжиженн газ','баррель','brent','urals',' wti','металл','металлург','медь','золот','никел','алюмини','литий','кобальт','палладий','платин','уголь','угольн','энергоресурс','энергоноситель','сырьев','котировк','опек+','биржев','crude','copper','nickel','lithium','palladium','commodit','barrel'])) return 'economy';
   if (has(['war','война','войн','conflict','конфликт','sanction','санкц','military','военн','missile','ракет','troops','войск','airstrike','авиауд','border','границ','election','выбор','president','презид','coup','перевор','treaty','договор','nato','нато','diplomat','диплом','terror','террор','government','правительств','minister','министр','parliament','парламент','occupation','оккупац','ceasefire','перемир','genocide','геноцид','дрон','беспилотн','бпла','обстрел','пво','шахед','герань','мобилизац','саммит','переговор','кремл','госдеп','пентаг','атак','удар','взрыв','захват','эскалац','зеленск','киев','подлодк','подводн','флот','спецоперац','контрнаступ','боевик','визит','attack','blast','clash','warship','submarine','navy'])) return 'geopolitics';
@@ -1913,6 +1918,8 @@ async function handleProxyNewsFeed(env) {
   items = items.map(({ _ts, ...rest }) => rest);
   try { await _translateNewsItems(items, env); } catch(_){}
   items = items.map(({ _trkey, _done, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
+  // дроп мусорных одно-словных/слишком коротких постов (напр. «Иран» после очистки эмодзи)
+  items = items.filter(it => { const w = (it.text||'').trim().split(/\s+/).filter(Boolean); return w.length >= 2 && (it.text||'').trim().length >= 10; });
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), count: items.length, items }), {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
   });
