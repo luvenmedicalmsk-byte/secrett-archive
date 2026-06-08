@@ -25,6 +25,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #ui{position:fixed;inset:0;z-index:10;pointer-events:none}
 #header{position:absolute;top:14px;left:16px;pointer-events:all}
 #logo-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:400;color:#D4AF5A;letter-spacing:0.1em}
+#logo-sub{font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;color:rgba(184,151,58,.7);letter-spacing:.03em;margin-top:2px;text-align:right;max-width:230px;line-height:1.3}
+#sev-legend{position:fixed;left:10px;bottom:72px;z-index:15;display:flex;flex-direction:column;gap:3px;background:rgba(6,5,10,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border:1px solid rgba(184,151,58,.18);border-radius:8px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:9px;letter-spacing:.04em;color:rgba(232,224,208,.82)}
+#sev-legend span{display:flex;align-items:center;gap:6px}
+#sev-legend i{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
 #live-status{margin-top:6px;display:flex;align-items:center;gap:8px}
 #live-status-icon{font-size:13px;line-height:1}
 #live-status-text{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:400;color:#E8E0D0;letter-spacing:0.06em}
@@ -1465,17 +1469,19 @@ html,body{overscroll-behavior-y:contain}
     📊 Точность прогнозов
   </button>
 <div id="map"></div>
+<div id="sev-legend"><span><i style="background:#C0392B"></i>Критический</span><span><i style="background:#D35400"></i>Высокий</span><span><i style="background:#2980B9"></i>Базовый</span></div>
 <div id="panel-overlay" onclick="closeAllPanels()" style="position:fixed;top:0;left:0;right:300px;bottom:0;z-index:20;display:none;cursor:pointer"></div>
 
 <div id="ui">
   <div id="header">
     <div id="logo-title">АРХИВ • АТЛАС СИГНАЛОВ</div>
+    <div id="logo-sub">Разведка системных рисков · сигналы до эскалации</div>
     <div id="live-status">
-      <span id="live-status-icon">⬛️</span>
-      <span id="live-status-text">Соединение прервано</span>
+      <span id="live-status-icon">🟡</span>
+      <span id="live-status-text">Подключение…</span>
     </div>
   </div>
-  <div id="updated">26 мая 2026</div>
+  <div id="updated">Обновлено · —</div>
   <div id="stats">
     <div><span class="sv" id="s-t">0</span><span class="sl">Сигналов</span></div>
     <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
@@ -1908,6 +1914,8 @@ document.querySelectorAll('.fb').forEach(btn => {
 const API_BASE = 'https://archive-api.luven-medical-msk.workers.dev';
 
 
+function _fmtNow(){ var d=new Date(); var m=new Date(d.getTime()+(3*60+d.getTimezoneOffset())*60000); return m.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+' (GMT+3)'; }
+function _clockTick(){ var el=document.getElementById('updated'); if(el) el.textContent='Обновлено · '+_fmtNow(); }
 function formatMSK(isoStr) {
   const dt = new Date(isoStr);
   const mskDate = new Date(dt.getTime() + (3 * 60 + dt.getTimezoneOffset()) * 60000);
@@ -1980,7 +1988,7 @@ function applyEvents(events, updatedIso) {
   updateStats(); renderList(); renderMarkers();
   if (updatedIso) {
     const d = new Date(updatedIso);
-    document.getElementById('updated').textContent = formatMSK(updatedIso);
+    _clockTick();
   }
 }
 
@@ -1991,6 +1999,7 @@ function loadFallback() {
 }
 
 tryLoadFresh().then(() => { fetchStats(); startSSE(); });
+_clockTick(); setInterval(_clockTick, 30000);
 
 // FIX4: Fallback poll every 5 min — keeps data fresh if SSE dies
 // tryLoadFresh() does a full replace (applyEvents), so data stays current
@@ -2312,7 +2321,7 @@ function startSSE() {
       const d = JSON.parse(e.data);
       if (d.updated) {
         const dt = new Date(d.updated);
-        document.getElementById('updated').textContent = formatMSK(d.updated);
+        _clockTick();
       }
     } catch(_) {}
   });
@@ -2932,12 +2941,7 @@ async function loadExternalFeed() {
       renderList();
       renderMarkers();
 
-      const now = new Date();
-      document.getElementById('updated').textContent =
-        now.toLocaleString('ru-RU', {
-          day:'numeric', month:'long',
-          hour:'2-digit', minute:'2-digit'
-        }) + ' (обновлено)';
+      _clockTick();
 
       console.info('[ExtFeed] Добавлено новых событий:', added);
     }
@@ -8145,6 +8149,21 @@ function grdfRenderSignals(dom){
       if(es>ps || (es===ps && String(e.date||'')<String(p.date||''))) _ded[_seen[k]]=e; }
   });
   items=_ded;
+  // C2 — collapse reworded reposts across sources (prefix-stem overlap, same domain, near date)
+  function _stems(t){ var out=[],seen={}; String(t||'').toLowerCase().replace(/[^0-9a-zа-яё ]/gi,' ').split(/\s+/).forEach(function(w){ if(w.length>=4){ var p=w.slice(0,4); if(!seen[p]){seen[p]=1;out.push(p);} } }); return out; }
+  function _ovl(a,b){ if(!a.length||!b.length) return [0,0]; var sa={}; a.forEach(function(p){sa[p]=1;}); var inter=0; b.forEach(function(p){ if(sa[p]) inter++; }); return [inter, inter/Math.min(a.length,b.length)]; }
+  var _kept=[], _ded2=[];
+  items.forEach(function(e){
+    var ew=_stems(e.title), et=(Date.parse(String(e.date||'').slice(0,10))||0), dup=-1;
+    for(var i=0;i<_kept.length;i++){ var k=_kept[i];
+      if(k.dom!==(e.domain||'')) continue;
+      if(et&&k.t&&Math.abs(et-k.t)>2592000000/10) continue;
+      var ov=_ovl(ew,k.words); if(ov[0]>=4 && ov[1]>=0.6){ dup=i; break; }
+    }
+    if(dup<0){ _kept.push({dom:(e.domain||''),t:et,words:ew,idx:_ded2.length}); _ded2.push(e); }
+    else { var pi=_kept[dup].idx; if((e.severity||0)>(_ded2[pi].severity||0)){ _ded2[pi]=e; _kept[dup].words=ew; } }
+  });
+  items=_ded2;
   // A — rank by significance (severity / escalation) first; recency only as tie-break
   var _now=Date.now();
   var _todayStr=new Date(_now).toISOString().slice(0,10);
@@ -8182,7 +8201,7 @@ function grdfRenderSignals(dom){
       +   ((_m && _m.kind==='radar_outage') ? '<div class="grdf-sig-flag">Cloudflare Radar · '+(_RDOT[_m.outage_type]||'отключение')+(_RDC[_m.cause]?(' · '+_RDC[_m.cause]):'')+'</div>' : '')
       +   '<div class="grdf-sig-meta"><span>'+escx(_deEnt(ev.region))+'</span><span>'+fdx(ev.date)+'</span></div>'
       + '</div>'
-      + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'</div>'
+      + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'<span style="font-size:9px;opacity:.45;font-family:Montserrat,sans-serif;letter-spacing:.04em"> /100</span></div>'
       + '</div>';
   });
   feed.innerHTML = html;
