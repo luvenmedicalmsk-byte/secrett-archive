@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T15:44:31.752005+00:00",
+  "generated_at": "2026-06-08T18:25:53.447149+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 47,
+      "score": 49,
       "props": {
-        "risk_score": 47
+        "risk_score": 49
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 21,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Два_пилота",
+      "type": "Signal",
+      "label": "Два пилота США погибли после крушения са",
+      "severity": 54,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-Трое_брита",
       "type": "Signal",
       "label": "Трое британцев признали себя виновными п",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-GB-Гаити:_Нов",
+      "id": "SIGNAL-GB-Покупатель",
       "type": "Signal",
-      "label": "Гаити: Новые судебные органы должны обес",
+      "label": "Покупатель перепродал лондонский мегадом",
       "severity": 44,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-GB-Мы_не_буде",
-      "type": "Signal",
-      "label": "Мы не будем поражены до молчания",
-      "severity": 44,
-      "domain": "social"
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-GB",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-GB",
@@ -163,20 +163,41 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-Два_пилота",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.54
+    },
+    {
       "from": "SIGNAL-GB-Трое_брита",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-GB-Гаити:_Нов",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-GB-Мы_не_буде",
-      "to": "DOMAIN-GB-social",
+      "from": "SIGNAL-GB-Покупатель",
+      "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.44
     }
