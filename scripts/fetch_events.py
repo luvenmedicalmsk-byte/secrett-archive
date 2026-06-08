@@ -2384,8 +2384,8 @@ def fetch_copernicus_ems():
             return ('Эпидемия', 'social')
         return ('ЧС', 'climate')  # прочие/неклассифицированные природные -> климат
 
-    items = []
-    n_take = 0
+    # --- фаза 1: разбор активаций (без землетрясений) ---
+    parsed = []
     for a in results:
         try:
             cat = (a.get('category') or '').strip()
@@ -2414,9 +2414,7 @@ def fetch_copernicus_ems():
             status = 'закрыта' if closed else 'активна'
             n_aois = int(a.get('n_aois') or 0)
             n_products = int(a.get('n_products') or 0)
-
-            # Дата -- самая свежая из доступных, чтобы продолжающиеся активации
-            # не выпадали из окна свежести (14 дней).
+            # Дата -- самая свежая из доступных (продолжающиеся активации не выпадают из окна 14 дней)
             d = parse_date(a.get('lastUpdate') or a.get('activationTime') or a.get('eventTime') or '')
 
             # Severity: официальная активация = подтверждённое крупное бедствие.
@@ -2426,35 +2424,58 @@ def fetch_copernicus_ems():
             sev += min(16, n_aois * 2 + n_products)  # масштаб картирования
             sev = max(55, min(95, sev))
 
-            portal = f"https://mapping.emergency.copernicus.eu/activations/{code}/"
-            title = (f"{label} · {cstr}" if cstr
-                     else (f"{label} · {name}" if name else f"{label} (Copernicus EMS)"))
-            desc = (f"Официальная активация Copernicus EMS {code} ({status}). {name}. "
-                    f"Картировано районов (AOI): {n_aois}, продуктов "
-                    f"(делинеация / оценка ущерба инфраструктуре): {n_products}. "
-                    f"Кризисные карты: {portal}")
-
-            items.append({
-                'title': title[:130],
-                'desc': desc,
-                'date': d,
-                'source': 'Copernicus EMS',
-                '_lat': lat, '_lng': lng,
-                '_region': detect_region_by_coords(lat, lng),
-                '_domain': ev_domain,
-                '_force_severity': sev,
-                '_meta': {
-                    'kind': 'cems', 'verified': True, 'code': code, 'event': label,
-                    'status': status, 'closed': closed, 'category': cat,
-                    'n_aois': n_aois, 'n_products': n_products,
-                    'gdacs_id': a.get('gdacsId'), 'url': portal,
-                },
+            parsed.append({
+                'cat': cat, 'name': name, 'label': label, 'ev_domain': ev_domain,
+                'lat': lat, 'lng': lng, 'code': code, 'cstr': cstr,
+                'closed': closed, 'status': status, 'n_aois': n_aois,
+                'n_products': n_products, 'date': d, 'sev': sev, 'gdacsId': a.get('gdacsId'),
             })
-            n_take += 1
         except Exception:
             continue
 
-    print(f"  Copernicus EMS: {n_take} активаций (без землетрясений) из {len(results)}", file=sys.stderr)
+    # --- фаза 2: батч-перевод названий-мест на русский (это и есть локация) ---
+    # name вида "Flood in Evros River basin, Greece" -> "Наводнение в бассейне реки Эврос, Греция".
+    # translate_batch: OpenAI + дисковый кэш по хэшу, повторные прогоны бесплатны.
+    ru_names = translate_batch([p['name'] for p in parsed])
+
+    # --- фаза 3: сборка событий ---
+    items = []
+    for p, ru in zip(parsed, ru_names):
+        ru = (ru or '').strip()
+        place_ok = bool(ru) and not is_english(ru)   # перевод удался -> кириллица
+        if place_ok:
+            title = ru
+            place = ru
+        else:
+            # фолбэк (нет ключа OpenAI) -- чистый формат «тип · страна»
+            title = (f"{p['label']} · {p['cstr']}" if p['cstr'] else f"{p['label']} (Copernicus EMS)")
+            place = p['name'] or p['cstr']
+
+        portal = f"https://mapping.emergency.copernicus.eu/activations/{p['code']}/"
+        # Служебную фразу «Официальная активация ... (закрыта)» не выводим (запрос Мии);
+        # код/статус остаются в _meta. Описание начинается с места.
+        desc = (f"{place}. Картировано районов (AOI): {p['n_aois']}, продуктов "
+                f"(делинеация / оценка ущерба инфраструктуре): {p['n_products']}. "
+                f"Кризисные карты: {portal}")
+
+        items.append({
+            'title': title[:130],
+            'desc': desc,
+            'date': p['date'],
+            'source': 'Copernicus EMS',
+            '_lat': p['lat'], '_lng': p['lng'],
+            '_region': detect_region_by_coords(p['lat'], p['lng']),
+            '_domain': p['ev_domain'],
+            '_force_severity': p['sev'],
+            '_meta': {
+                'kind': 'cems', 'verified': True, 'code': p['code'], 'event': p['label'],
+                'status': p['status'], 'closed': p['closed'], 'category': p['cat'],
+                'n_aois': p['n_aois'], 'n_products': p['n_products'],
+                'gdacs_id': p['gdacsId'], 'url': portal,
+            },
+        })
+
+    print(f"  Copernicus EMS: {len(items)} активаций (без землетрясений) из {len(results)}", file=sys.stderr)
     return items
 
 
