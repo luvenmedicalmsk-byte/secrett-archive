@@ -1484,6 +1484,7 @@ html,body{overscroll-behavior-y:contain}
   <div id="stats">
     <div><span class="sv" id="s-t">0</span><span class="sl">Сигналов</span></div>
     <div><span class="sv" id="s-c">0</span><span class="sl">Критичных</span></div>
+    <div><span class="sv" id="s-gri">—</span><span class="sl" id="s-gri-l" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">GRI</span></div>
   </div>
   <div id="layers">
   <button class="lb" id="countries-btn">◆ Страны</button>
@@ -7460,7 +7461,7 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 function grdfUpdateStatusBar(totalEvents, criticalN) {
   var sb = document.getElementById('grdf-sb-events');
   var ut = document.getElementById('grdf-sb-utc');
-  if(sb) sb.innerHTML = (totalEvents||'—') + ' стран · <span class="sb-crit">'+(criticalN||'—')+'</span> крит.';
+  if(sb) sb.style.display = 'none';  // убрано по запросу: дублирует счётчики
   if(ut){ var now=new Date(); ut.textContent=String(now.getUTCHours()).padStart(2,'0')+':'+String(now.getUTCMinutes()).padStart(2,'0')+' UTC'; }
 }
 setInterval(function(){ grdfUpdateStatusBar(); }, 60000);
@@ -7473,6 +7474,11 @@ window.grdfOnDataLoad = function(data) {
   var critN = countries.filter(function(c){ return c.risk_score>=75; }).length;
   var warnN = countries.filter(function(c){ return c.risk_score>=60; }).length;
   grdfUpdateStatusBar(activeCountries, critN);
+  // 3-й счётчик — GRI первой страны (топ по risk_score = первая во вкладке «Страны»), обновляется при каждой загрузке
+  (function(){ var top=countries.slice().sort(function(a,b){return (b.risk_score||0)-(a.risk_score||0);})[0];
+    var gv=document.getElementById('s-gri'), gl=document.getElementById('s-gri-l');
+    if(top&&gv) gv.textContent=Math.round(top.risk_score||0);
+    if(top&&gl) gl.textContent='GRI · '+(top.country_name||top.country||''); })();
 
   // Sprint 4: Drawer counts
   var drSigs = document.getElementById('grdf-dr-sigs');
