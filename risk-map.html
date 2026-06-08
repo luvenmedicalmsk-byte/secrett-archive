@@ -1796,7 +1796,7 @@ function renderList() {
     const col = DC[ev.domain];
     const d = document.createElement('div');
     d.className = 'ei' + (selected?.id===ev.id ? ' sel' : '');
-    d.innerHTML = `<div class="ei-tag" style="color:${col}"><div class="ei-dot" style="background:${col}"></div>${DL[ev.domain]||ev.domain}</div><div class="ei-title">${ev.title}</div><div class="ei-meta"><span>${ev.region}</span><span>${fd(ev.date)}</span></div><div class="ei-bar"><div class="ei-fill" style="width:${ev.severity}%;background:${sc(ev.severity)}"></div></div>`;
+    d.innerHTML = `<div class="ei-tag" style="color:${col}"><div class="ei-dot" style="background:${col}"></div>${DL[ev.domain]||ev.domain}</div><div class="ei-title">${esc(ev.title)}</div><div class="ei-meta"><span>${esc(ev.region)}</span><span>${fd(ev.date)}</span></div><div class="ei-bar"><div class="ei-fill" style="width:${ev.severity}%;background:${sc(ev.severity)}"></div></div>`;
     d.onclick = () => { if(ev.lat&&ev.lng){ try{ map.setView([ev.lat,ev.lng], Math.max(map.getZoom()||3,4)); L.popup({maxWidth:240}).setLatLng([ev.lat,ev.lng]).setContent(_evPopup(ev)).openOn(map); }catch(_){} } };
     list.appendChild(d);
   });
