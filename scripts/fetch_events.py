@@ -2314,6 +2314,30 @@ def fetch_floods_rss():
 # Публичный JSON-API без авторизации. По умолчанию -- наводнения (масштабы
 # затопления, ущерб инфраструктуре, официальные кризисные карты). Домен climate.
 # ══════════════════════════════════════════════════════════════════════════════
+# Дополнение к COUNTRY_RU: островные/реже встречающиеся государства, которые
+# активирует EMS, но которых нет в основном словаре. Фолбэк -- английское имя.
+_EMS_EXTRA_RU = {
+    'Micronesia': 'Микронезия', 'Fiji': 'Фиджи', 'Vanuatu': 'Вануату', 'Tonga': 'Тонга',
+    'Samoa': 'Самоа', 'Solomon Islands': 'Соломоновы Острова', 'Palau': 'Палау',
+    'Kiribati': 'Кирибати', 'Marshall Islands': 'Маршалловы Острова', 'Nauru': 'Науру',
+    'Tuvalu': 'Тувалу', 'Mauritius': 'Маврикий', 'Seychelles': 'Сейшелы', 'Comoros': 'Коморы',
+    'Malawi': 'Малави', 'Angola': 'Ангола', 'Chad': 'Чад', 'Congo': 'Конго',
+    'Democratic Republic of the Congo': 'ДР Конго', 'DR Congo': 'ДР Конго',
+    'Bahamas': 'Багамы', 'Barbados': 'Барбадос', 'Dominica': 'Доминика', 'Belize': 'Белиз',
+    'Costa Rica': 'Коста-Рика', 'Timor-Leste': 'Восточный Тимор', 'East Timor': 'Восточный Тимор',
+    'Bhutan': 'Бутан', 'Maldives': 'Мальдивы', 'Eswatini': 'Эсватини', 'Lesotho': 'Лесото',
+    'Botswana': 'Ботсвана', 'Namibia': 'Намибия', 'Rwanda': 'Руанда', 'Burundi': 'Бурунди',
+    'Benin': 'Бенин', 'Togo': 'Того', 'Sierra Leone': 'Сьерра-Леоне', 'Liberia': 'Либерия',
+    'Guinea': 'Гвинея', 'Guinea-Bissau': 'Гвинея-Бисау', 'Gambia': 'Гамбия',
+    'Mauritania': 'Мавритания', 'Burkina Faso': 'Буркина-Фасо', 'Eritrea': 'Эритрея',
+    'Djibouti': 'Джибути', 'Gabon': 'Габон', 'Equatorial Guinea': 'Экваториальная Гвинея',
+    'Central African Republic': 'ЦАР', 'Zimbabwe': 'Зимбабве',
+}
+def _ems_country_ru(name):
+    name = (name or '').strip()
+    return COUNTRY_RU.get(name) or _EMS_EXTRA_RU.get(name) or name
+
+
 def fetch_copernicus_ems():
     api = "https://rapidmapping.emergency.copernicus.eu/backend/dashboard-api/public-activations-info/"
     data = fetch_url(api, timeout=12, retries=2, headers={
@@ -2382,7 +2406,7 @@ def fetch_copernicus_ems():
             code = (a.get('code') or '').strip()
             # countries: в list-эндпоинте -- массив строк; в details -- массив {name}
             raw_c = a.get('countries') or []
-            countries = [(c.get('name') if isinstance(c, dict) else str(c)) for c in raw_c]
+            countries = [_ems_country_ru(c.get('name') if isinstance(c, dict) else str(c)) for c in raw_c]
             countries = [c for c in countries if c]
             cstr = ', '.join(countries[:3]) + ('…' if len(countries) > 3 else '')
 
