@@ -1,10 +1,10 @@
 {
   "country": "MX",
-  "date": "2026-06-07",
+  "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-07T21:10:02.413131+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-08T03:35:19.292159+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-MX",
@@ -19,50 +19,50 @@
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 16,
-      "trend": "down"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
       "score": 29,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "down"
+      "score": 32,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "down"
+      "score": 15,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -87,18 +87,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-MX-Гаити:_Еже",
+      "id": "SIGNAL-MX-Зеленое_ув",
       "type": "Signal",
-      "label": "Гаити: Еженедельный отчет о ситуации в Л",
-      "severity": 44,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-MX-Гаити:_Лат",
-      "type": "Signal",
-      "label": "Гаити: Латинская Америка и Карибы. Ежене",
-      "severity": 40,
-      "domain": "social"
+      "label": "Зеленое уведомление о тропическом циклон",
+      "severity": 46,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +99,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-MX",
@@ -118,7 +111,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-MX",
@@ -130,7 +123,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-MX",
@@ -163,22 +156,37 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-MX-NHC_предуп",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.51
     },
     {
-      "from": "SIGNAL-MX-Гаити:_Еже",
-      "to": "DOMAIN-MX-social",
+      "from": "SIGNAL-MX-Зеленое_ув",
+      "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
-      "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-MX-Гаити:_Лат",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.4
+      "weight": 0.46
     }
   ]
 }

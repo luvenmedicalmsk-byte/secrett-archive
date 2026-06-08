@@ -1,61 +1,61 @@
 {
   "country": "IR",
-  "date": "2026-06-07",
+  "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-07T21:10:02.409628+00:00",
+  "generated_at": "2026-06-08T03:35:19.288742+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 57,
+      "score": 58,
       "props": {
-        "risk_score": 57
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-'Иранцы_су",
+      "id": "SIGNAL-IR-Смотрите:_",
       "type": "Signal",
-      "label": "'Иранцы сумасшедшие, ненормальные, но он",
-      "severity": 64,
+      "label": "Смотрите: Ракеты сыплются по ночному неб",
+      "severity": 65,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Война_в_За",
+      "id": "SIGNAL-IR-100_дней_к",
       "type": "Signal",
-      "label": "Война в Западной Азии В ЖИВОМ: Армия Изр",
+      "label": "100 дней кризиса на Ближнем Востоке: Цен",
       "severity": 62,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Руководите",
+      "id": "SIGNAL-IR-Израиль_за",
       "type": "Signal",
-      "label": "Руководители авиакомпаний борются с шоко",
+      "label": "Израиль заявляет, что Иран запустил раке",
       "severity": 58,
-      "domain": "social"
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-IR",
@@ -163,20 +163,41 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-'Иранцы_су",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IR-Война_в_За",
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Смотрите:_",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-IR-100_дней_к",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-IR-Руководите",
-      "to": "DOMAIN-IR-social",
+      "from": "SIGNAL-IR-Израиль_за",
+      "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.58
     }
