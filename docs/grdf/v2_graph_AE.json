@@ -2,60 +2,60 @@
   "country": "AE",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T19:52:28.420382+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-08T20:04:48.935497+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-AE",
       "type": "Country",
       "label": "AE",
-      "score": 45,
+      "score": 47,
       "props": {
-        "risk_score": 45
+        "risk_score": 47
       }
     },
     {
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AE-Семь_индий",
+      "type": "Signal",
+      "label": "Семь индийцев погибли, девять пострадали",
+      "severity": 50,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-AE-Может_ли_О",
       "type": "Signal",
       "label": "Может ли ОАЭ действовать самостоятельно?",
@@ -99,13 +106,13 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-AE",
@@ -129,7 +136,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-AE",
@@ -154,6 +161,33 @@
       "to": "COUNTRY-AE",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-AE-geopolitical",
+      "to": "DOMAIN-AE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AE-infrastructure",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-Семь_индий",
+      "to": "DOMAIN-AE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-AE-Может_ли_О",
