@@ -2539,10 +2539,10 @@ function qkImpact(q){
   var C=['#3FB37F','#FFC83D','#FF7A1A','#FF2D2D'], LBL=['Низкое','Умеренное','Значительное','Тяжёлое'];
   function R(l,b){ return {lvl:l,col:C[l],label:LBL[l]+' воздействие',basis:b}; }
   var a=(q.alert||'').toLowerCase();
-  if(a==='red')    return R(3,'USGS PAGER: красный');
-  if(a==='orange') return R(2,'USGS PAGER: оранжевый');
-  if(a==='yellow') return R(1,'USGS PAGER: жёлтый');
-  if(a==='green')  return R(0,'USGS PAGER: зелёный');
+  if(a==='red')    return R(3,'уровень USGS: красный');
+  if(a==='orange') return R(2,'уровень USGS: оранжевый');
+  if(a==='yellow') return R(1,'уровень USGS: жёлтый');
+  if(a==='green')  return R(0,'уровень USGS: зелёный');
   var mmi=q.mmi;
   if(mmi!=null){ if(mmi>=7)return R(3,'макс. интенсивность MMI '+mmi.toFixed(1)); if(mmi>=6)return R(2,'макс. интенсивность MMI '+mmi.toFixed(1)); if(mmi>=4)return R(1,'макс. интенсивность MMI '+mmi.toFixed(1)); return R(0,'макс. интенсивность MMI '+mmi.toFixed(1)); }
   var d=(q.depth==null?33:q.depth), m=q.mag||0, felt=q.felt||0, cdi=q.cdi;
@@ -2620,7 +2620,7 @@ function _renderExposure(container){
   if(!ex){ container.innerHTML=''; return; }
   var rows='<div class="qk-exp-row"><span>Могли ощутить (MMI ≥ IV, оценка модели)</span><span class="qk-exp-n">'+(ex.felt>=1000?('≈ '+_numRu(ex.felt)+' чел.'):'незначительно')+'</span></div>';
   if(ex.strong>=1000) rows+='<div class="qk-exp-row"><span>Сильная тряска (MMI ≥ VI, оценка модели)</span><span class="qk-exp-n" style="color:#FF7A1A">≈ '+_numRu(ex.strong)+' чел.</span></div>';
-  container.innerHTML='<div class="qk-cities-h">Население в зоне тряски · PAGER</div>'+rows+'<div class="qk-exp-note">Оценка модели USGS — сколько людей в зоне такой тряски. Не равно ущербу.</div>';
+  container.innerHTML='<div class="qk-cities-h">Население в зоне тряски · оценка USGS</div>'+rows+'<div class="qk-exp-note">Оценка модели USGS — сколько людей в зоне такой тряски. Не равно ущербу.</div>';
 }
 function _loadExposure(container){
   var key=container.getAttribute('data-detail'); if(!key) return;
