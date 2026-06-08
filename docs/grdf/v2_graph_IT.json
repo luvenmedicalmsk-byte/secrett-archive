@@ -2,60 +2,60 @@
   "country": "IT",
   "date": "2026-06-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T07:50:43.861901+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-08T08:53:30.034450+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
@@ -87,18 +87,11 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-IT-Генштаб_ЗС",
+      "id": "SIGNAL-IT-Жители_сев",
       "type": "Signal",
-      "label": "Генштаб ЗСУ підтвердив удар по двох стра",
-      "severity": 50,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IT-На_Черкащи",
-      "type": "Signal",
-      "label": "На Черкащині затримали студента з Дніпро",
-      "severity": 50,
-      "domain": "geopolitical"
+      "label": "Жители северного Таиланда маршируют с тр",
+      "severity": 48,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +99,13 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-IT",
@@ -163,22 +156,37 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IT-Массовая_г",
       "to": "DOMAIN-IT-social",
       "type": "AMPLIFIES",
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-IT-Генштаб_ЗС",
-      "to": "DOMAIN-IT-geopolitical",
+      "from": "SIGNAL-IT-Жители_сев",
+      "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-IT-На_Черкащи",
-      "to": "DOMAIN-IT-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.48
     }
   ]
 }
