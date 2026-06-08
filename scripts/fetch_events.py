@@ -1227,6 +1227,16 @@ def _systemic_class(title, desc=''):
     return None
 
 
+_NAT_HAZARD = ['землетряс','earthquake','quake','магнитуд','сейсм','seismic','афтершок','aftershock',
+               'цунами','tsunami','вулкан','volcan','изверж','eruption','наводнен','паводок','подтоплен',
+               'flood','ураган','hurricane','тайфун','typhoon','циклон','cyclone','торнадо','tornado',
+               'оползен','landslide','засух','drought','лесной пожар','wildfire','шторм','storm surge']
+def _is_nat_hazard(title, desc=''):
+    """S40: стихийное бедствие -> домен климат, независимо от источника."""
+    t = ((title or '') + ' ' + (desc or '')).lower()
+    return any(w in t for w in _NAT_HAZARD)
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -1298,10 +1308,15 @@ def process_events(raw_items):
         _ttl0 = str(item.get('title','')).strip().lower()
         if _ttl0.startswith(('смотрите','смотри:','видео:','watch:','смотреть','фото:')):
             _LOSS['sev']+=1; continue
+        # S40: бюрократические сводки/отчёты о ситуации -- не сигнал, убираем безусловно
+        if any(k in _ttl0 for k in ('отчет о ситуации','отчёт о ситуации','situation report','sitrep','период отчетности','reporting period','cluster report')):
+            _LOSS['sev']+=1; continue
         # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
         _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
         if _sys:
             domain = _sys[0]; severity = max(severity, _sys[1])
+        elif item.get('_force_severity') is None and _is_nat_hazard(item.get('title',''), item.get('desc','')):
+            domain = 'climate'  # S40: стихия -- только климат, независимо от источника
         _is_tg = str(item.get('source','')).startswith('Telegram')
         _thr = 0 if _is_tg else (35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD)
         if item.get('_force_severity') is None and not _sys and severity < _thr: _LOSS['sev']+=1; continue
