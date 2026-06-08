@@ -983,7 +983,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#06050A;font-family:
 #grdf-status-bar .sb-events{font-size:10px;color:#4a6380}
 #grdf-status-bar .sb-crit{color:#ef4444}
 #grdf-status-bar .sb-utc{font-size:10px;color:#2d4060}
-#grdf-status-bar #grdf-sb-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:400;color:#D4AF5A;letter-spacing:0.1em;white-space:nowrap}
+#grdf-status-bar #grdf-sb-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:400;color:#D4AF5A;letter-spacing:0.1em;white-space:nowrap;position:absolute;left:50%;transform:translateX(-50%)}
+#grdf-status-bar .sb-left{display:flex;align-items:center;gap:8px}
+#grdf-status-bar .sb-logo{flex-shrink:0;display:block}
 @media(max-width:100000px){
   #grdf-status-bar{display:flex}
   #header{display:none!important}
@@ -7091,9 +7093,18 @@ function _evM(val, lbl, col) {
 
 <!-- Sprint 1: Compact status bar -->
 <div id="grdf-status-bar">
-  <div class="sb-active"><span class="sb-pulse"></span>Активно</div>
+  <div class="sb-left">
+    <svg class="sb-logo" viewBox="0 0 100 100" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-label="Архив">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#D4AF5A" stroke-width="1.6"/>
+      <ellipse cx="50" cy="50" rx="17" ry="46" fill="none" stroke="#7a5f23" stroke-width="1.2"/>
+      <ellipse cx="50" cy="50" rx="46" ry="15" fill="none" stroke="#7a5f23" stroke-width="1.2"/>
+      <text x="50" y="84" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="80" font-weight="500" fill="#1faacc">A</text>
+      <circle cx="80" cy="22" r="13" fill="none" stroke="#7a5f23" stroke-width="1.2"/>
+      <circle cx="80" cy="22" r="6" fill="#D4AF5A"/>
+    </svg>
+    <span class="sb-active"><span class="sb-pulse"></span>Активно</span>
+  </div>
   <div id="grdf-sb-title">АРХИВ • АТЛАС СИГНАЛОВ</div>
-  <span class="sb-utc" id="grdf-sb-utc">—:— UTC</span>
 </div>
 
 <!-- Sprint 1: Filter FAB -->
@@ -7479,9 +7490,7 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 // ── Sprint 1: Status bar update ──────────────────────────────────
 function grdfUpdateStatusBar(totalEvents, criticalN) {
   var sb = document.getElementById('grdf-sb-events');
-  var ut = document.getElementById('grdf-sb-utc');
   if(sb) sb.style.display = 'none';  // убрано по запросу: дублирует счётчики
-  if(ut){ var now=new Date(); ut.textContent=String(now.getUTCHours()).padStart(2,'0')+':'+String(now.getUTCMinutes()).padStart(2,'0')+' UTC'; }
 }
 setInterval(function(){ grdfUpdateStatusBar(); }, 60000);
 
@@ -8371,11 +8380,8 @@ function installDataHook() {
 }
 installDataHook();
 
-// ── Update UTC every minute ───────────────────────────────────────
-setInterval(function(){
-  var ut = document.getElementById('grdf-sb-utc');
-  if(ut){ var n=new Date(); ut.textContent=String(n.getUTCHours()).padStart(2,'0')+':'+String(n.getUTCMinutes()).padStart(2,'0')+' UTC'; }
-}, 30000);
+// ── UTC indicator removed from status bar ────────────────────────
+
 
 // ── Expose to map marker click handler ───────────────────────────
 window.grdfMobileOpenCountry = window.grdfOpenCountrySheet;
