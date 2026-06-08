@@ -8134,6 +8134,8 @@ function grdfRenderSignals(dom){
   var items = (dom==='all') ? src.slice() : src.filter(function(e){ return e.domain===dom; });
   // Source curation — hide items whose source label is on the blocklist (exact match, география не трогается)
   items = items.filter(function(e){ var r=String(e.region||'').trim().toLowerCase(); return FEED_SRC_BLOCK.indexOf(r)<0; });
+  // hide video-teaser clickbait (Смотрите:/Видео:/Watch:/Фото:) — событие приходит профильным сигналом
+  items = items.filter(function(e){ var _t=String(e.title||'').trim().toLowerCase(); return !(_t.indexOf('смотри')===0||_t.indexOf('видео:')===0||_t.indexOf('watch:')===0||_t.indexOf('фото:')===0||_t.indexOf('look:')===0); });
   // C — collapse rolling multi-day duplicates of the same event (same domain|title|region)
   var _seen={}, _ded=[];
   items.forEach(function(e){
