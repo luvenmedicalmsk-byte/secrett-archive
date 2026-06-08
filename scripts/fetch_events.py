@@ -1517,6 +1517,7 @@ def _classify_climate(ev):
     if any(k in t for k in storm_kw):   return 'weather'
     if any(k in t for k in fire_kw):    return 'fire'
     if s == 'GDACS/Copernicus': return 'flood'   # fetch_copernicus_floods -- паводки
+    if s == 'Copernicus EMS':   return 'flood'   # fetch_copernicus_ems -- активации наводнений
     if s == 'NASA EONET':       return 'weather' # прочие природные события EONET
     return None
 
@@ -2250,13 +2251,12 @@ def _tg_classify(text):
 # НАВОДНЕНИЯ -- Floodlist + Copernicus EMS (S36.5, без ключей)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_floods_rss():
-    """Floodlist + Copernicus EMS Rapid Mapping -- наводнения по миру. Домен climate."""
+    """FloodList -- наводнения по миру (RSS). Домен climate.
+    Copernicus EMS вынесен в отдельный JSON-адаптер fetch_copernicus_ems()
+    (легаси-RSS на emergency.copernicus.eu был мёртв: нет координат/масштабов)."""
     sources = [
         ('https://floodlist.com/feed', 'FloodList', 'climate'),
         ('https://feeds.feedburner.com/Floodlist', 'FloodList', 'climate'),
-        ('https://emergency.copernicus.eu/mapping/list-of-activations-rapid/feed', 'Copernicus EMS', 'climate'),
-        ('https://emergency.copernicus.eu/mapping/activations-rapid/feed', 'Copernicus EMS', 'climate'),
-        ('https://emergency.copernicus.eu/mapping/ems/rss.xml', 'Copernicus EMS', 'climate'),
     ]
     items = []
     seen_urls = set()
@@ -2306,8 +2306,108 @@ def fetch_floods_rss():
         key = it['title'][:50].lower()
         if key not in seen:
             seen.add(key); unique.append(it)
-    print(f'  Наводнения RSS (Floodlist/EMS): {len(unique)} событий', file=sys.stderr)
+    print(f'  Наводнения RSS (FloodList): {len(unique)} событий', file=sys.stderr)
     return unique
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Copernicus EMS Rapid Mapping -- официальные активации кризисного картирования
+# Публичный JSON-API без авторизации. По умолчанию -- наводнения (масштабы
+# затопления, ущерб инфраструктуре, официальные кризисные карты). Домен climate.
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_copernicus_ems():
+    api = "https://rapidmapping.emergency.copernicus.eu/backend/dashboard-api/public-activations-info/"
+    data = fetch_url(api, timeout=12, retries=2, headers={
+        'User-Agent': 'Mozilla/5.0 (compatible; ArchiveRiskMonitor/2.0)',
+        'Accept': 'application/json',
+    })
+    if not data:
+        print("  [SKIP] Copernicus EMS: API недоступен", file=sys.stderr)
+        return []
+    try:
+        payload = json.loads(data)
+    except Exception as e:
+        print(f"  [WARN] Copernicus EMS parse: {e}", file=sys.stderr)
+        return []
+
+    results = payload.get('results') or []
+    # Категории-цели. Сейчас -- только наводнения (запрос Мии). Чтобы подключить
+    # ВСЕ официальные кризисные карты (пожары, землетрясения, штормы и т.д.),
+    # расширь FLOOD_CATEGORIES или сними фильтр is_flood.
+    FLOOD_CATEGORIES = {'flood'}
+    FLOOD_WORDS = ('flood', 'flooding', 'inundation', 'storm surge', 'overflow')
+
+    items = []
+    n_take = 0
+    for a in results:
+        try:
+            cat = (a.get('category') or '').strip()
+            name = (a.get('name') or '').strip()
+            is_flood = cat.lower() in FLOOD_CATEGORIES or any(w in name.lower() for w in FLOOD_WORDS)
+            if not is_flood:
+                continue
+
+            # centroid в формате WKT: "POINT (lon lat)" -- сначала долгота, затем широта
+            m = re.search(r'POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)', a.get('centroid') or '')
+            if not m:
+                continue  # без геопозиции на карту не кладём (политика S36.6)
+            lng = float(m.group(1)); lat = float(m.group(2))
+            if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+                continue
+
+            code = (a.get('code') or '').strip()
+            # countries: в list-эндпоинте -- массив строк; в details -- массив {name}
+            raw_c = a.get('countries') or []
+            countries = [(c.get('name') if isinstance(c, dict) else str(c)) for c in raw_c]
+            countries = [c for c in countries if c]
+            cstr = ', '.join(countries[:3]) + ('…' if len(countries) > 3 else '')
+
+            closed = bool(a.get('closed'))
+            status = 'закрыта' if closed else 'активна'
+            n_aois = int(a.get('n_aois') or 0)
+            n_products = int(a.get('n_products') or 0)
+
+            # Дата -- самая свежая из доступных, чтобы продолжающиеся активации
+            # не выпадали из окна свежести (14 дней).
+            d = parse_date(a.get('lastUpdate') or a.get('activationTime') or a.get('eventTime') or '')
+
+            # Severity: официальная активация = подтверждённое крупное бедствие.
+            sev = 60
+            if not closed:
+                sev += 12                            # продолжающийся кризис
+            sev += min(16, n_aois * 2 + n_products)  # масштаб картирования
+            sev = max(55, min(95, sev))
+
+            portal = f"https://mapping.emergency.copernicus.eu/activations/{code}/"
+            title = (f"Наводнение · {cstr}" if cstr
+                     else (f"Наводнение · {name}" if name else "Наводнение (Copernicus EMS)"))
+            desc = (f"Официальная активация Copernicus EMS {code} ({status}). {name}. "
+                    f"Картировано районов (AOI): {n_aois}, продуктов "
+                    f"(делинеация затопления / оценка ущерба инфраструктуре): {n_products}. "
+                    f"Кризисные карты: {portal}")
+
+            items.append({
+                'title': title[:130],
+                'desc': desc,
+                'date': d,
+                'source': 'Copernicus EMS',
+                '_lat': lat, '_lng': lng,
+                '_region': detect_region_by_coords(lat, lng),
+                '_domain': 'climate',
+                '_force_severity': sev,
+                '_meta': {
+                    'kind': 'cems', 'verified': True, 'code': code,
+                    'status': status, 'closed': closed, 'category': cat,
+                    'n_aois': n_aois, 'n_products': n_products,
+                    'gdacs_id': a.get('gdacsId'), 'url': portal,
+                },
+            })
+            n_take += 1
+        except Exception:
+            continue
+
+    print(f"  Copernicus EMS: {n_take} наводнений из {len(results)} активаций", file=sys.stderr)
+    return items
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -5063,6 +5163,7 @@ if __name__ == '__main__':
             ('russia_static',      get_russia_static_risks),
             ('structural',         fetch_global_structural_risks),
             ('copernicus_floods',  fetch_copernicus_floods),
+            ('copernicus_ems',     fetch_copernicus_ems),
             ('copernicus_cyber',   fetch_copernicus_cyber),
             ('copernicus_sentinel', lambda: fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))),
             ('nasa_firms',         lambda: fetch_nasa_firms(get_env('FIRMS_API_KEY'))),
