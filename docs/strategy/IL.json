@@ -2,102 +2,102 @@
   "country": "IL",
   "country_name": "Израиль",
   "date": "2026-06-08",
-  "generated_at": "2026-06-08T19:36:18.575975+00:00",
-  "strategy_score": 49,
+  "generated_at": "2026-06-08T19:52:27.867960+00:00",
+  "strategy_score": 37,
   "strategy_confidence": 44,
-  "urgency_level": "critical",
-  "urgency_level_ru": "Критическая",
-  "urgency_color": "#ef4444",
-  "preparedness_level": "emergency",
-  "preparedness_level_ru": "Чрезвычайная готовность",
-  "monitoring_priority": 4,
-  "monitoring_ru": "Ежечасно",
+  "urgency_level": "high",
+  "urgency_level_ru": "Высокая",
+  "urgency_color": "#f59e0b",
+  "preparedness_level": "active",
+  "preparedness_level_ru": "Активная готовность",
+  "monitoring_priority": 3,
+  "monitoring_ru": "Каждые 6 часов",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "E-01",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
+      "action": "Удержать деэскалационный потенциал",
+      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
+      "trigger": "escalating + best dominant",
       "expiry": "state transition",
-      "confidence": 52,
+      "confidence": 54,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
+      "id": "E-02",
       "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
-      "trigger": "always",
-      "expiry": "deescalation confirmed",
-      "confidence": 52,
+      "action": "Инициировать дипломатические/превентивные контакты",
+      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
+      "trigger": "prob_best > 20%",
+      "expiry": "prob_best < 15%",
+      "confidence": 54,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "critical",
+  "state": "escalating",
   "dominant_scenario": "best",
-  "scenario_score": 23,
-  "instability": 39,
+  "scenario_score": 21,
+  "instability": 34,
   "calibration_grade": "poor",
   "escalation_triggers": [
     {
       "condition": "risk_score ≥ 66 (+8pt)",
-      "leads_to": "cascade",
-      "probability": 22
+      "leads_to": "critical",
+      "probability": 21
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "cascade",
-      "probability": 20
+      "leads_to": "critical",
+      "probability": 17
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
-      "leads_to": "cascade",
-      "probability": 28
+      "condition": "Worst-case 30d ≥ 89",
+      "leads_to": "critical",
+      "probability": 27
     },
     {
       "condition": "Новый критический драйвер в geopolitics",
-      "leads_to": "cascade",
+      "leads_to": "critical",
       "probability": 20
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 79,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 72,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "90 дней",
-      "score": 70,
+      "score": 64,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "180 дней",
-      "score": 62,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 56,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "365 дней",
-      "score": 55,
+      "score": 49,
       "state": "contained",
       "urgency": "moderate",
       "preparedness": "enhanced"
     }
   ],
   "probabilities": {
-    "worst": 28,
+    "worst": 27,
     "stress": 25,
     "base": 18,
-    "best": 29
+    "best": 30
   }
 }
