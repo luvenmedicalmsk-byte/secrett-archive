@@ -1987,6 +1987,7 @@ function applyEvents(events, updatedIso) {
   ALL_EVENTS = events;
   filtered = filter === 'all' ? [...ALL_EVENTS] : ALL_EVENTS.filter(e => e.domain === filter);
   updateStats(); renderList(); renderMarkers();
+  try{ if(window.grdfOnDataLoad) window.grdfOnDataLoad(window._lastSnapshotData||{}); }catch(_e){}
   if (updatedIso) {
     const d = new Date(updatedIso);
     _clockTick();
@@ -7468,9 +7469,14 @@ function grdfUpdateStatusBar(totalEvents, criticalN) {
 setInterval(function(){ grdfUpdateStatusBar(); }, 60000);
 
 // Hook into existing data load — called from main script when countries load
+function _grdfCountriesFromEvents(events){var by={};(events||[]).forEach(function(e){var r=((e.region||'')+'').trim();if(!r||r==='Глобально')return;var sev=(+e.severity)||0;if(!by[r])by[r]={country:r,country_name:r,count:0,_max:0};by[r].count++;if(sev>by[r]._max)by[r]._max=sev;});return Object.keys(by).map(function(k){var o=by[k];var rs=Math.min(100,Math.round(o._max+Math.min(15,(o.count-1)*2)));return {country:o.country,country_name:o.country_name,risk_score:rs,count:o.count,delta:0};}).sort(function(a,b){return b.risk_score-a.risk_score||b.count-a.count;});}
 window.grdfOnDataLoad = function(data) {
   _grdfData = data;
   var countries = (data&&data.countries)||[];
+  if((!countries||!countries.length) && typeof ALL_EVENTS!=='undefined' && ALL_EVENTS && ALL_EVENTS.length){
+    countries = _grdfCountriesFromEvents(ALL_EVENTS);
+    data = data||{}; data.countries = countries; _grdfData = data;
+  }
   var activeCountries = countries.length; // FIX: это страны, не события
   var critN = countries.filter(function(c){ return c.risk_score>=75; }).length;
   var warnN = countries.filter(function(c){ return c.risk_score>=60; }).length;
