@@ -1517,7 +1517,6 @@ def _classify_climate(ev):
     if any(k in t for k in storm_kw):   return 'weather'
     if any(k in t for k in fire_kw):    return 'fire'
     if s == 'GDACS/Copernicus': return 'flood'   # fetch_copernicus_floods -- паводки
-    if s == 'Copernicus EMS':   return 'flood'   # fetch_copernicus_ems -- активации наводнений
     if s == 'NASA EONET':       return 'weather' # прочие природные события EONET
     return None
 
@@ -2331,11 +2330,35 @@ def fetch_copernicus_ems():
         return []
 
     results = payload.get('results') or []
-    # Категории-цели. Сейчас -- только наводнения (запрос Мии). Чтобы подключить
-    # ВСЕ официальные кризисные карты (пожары, землетрясения, штормы и т.д.),
-    # расширь FLOOD_CATEGORIES или сними фильтр is_flood.
-    FLOOD_CATEGORIES = {'flood'}
-    FLOOD_WORDS = ('flood', 'flooding', 'inundation', 'storm surge', 'overflow')
+    # Все официальные кризисные карты EMS, КРОМЕ землетрясений (их закрывает USGS).
+    # Тип активации -> (русская метка, домен). Сейсмика -> None (пропуск).
+    def _ems_kind(cat, name):
+        t = ((cat or '') + ' ' + (name or '')).lower()
+        if any(w in t for w in ('earthquake', 'seismic', 'землетряс')):
+            return None  # уже подключено через USGS
+        if any(w in t for w in ('flood', 'flooding', 'inundation', 'storm surge', 'наводн')):
+            return ('Наводнение', 'climate')
+        if any(w in t for w in ('wildfire', 'forest fire', 'fire', 'пожар')):
+            return ('Пожар', 'climate')
+        if any(w in t for w in ('cyclone', 'typhoon', 'hurricane', 'tropical')):
+            return ('Циклон', 'climate')
+        if any(w in t for w in ('storm', 'wind', 'tornado', 'шторм', 'буря')):
+            return ('Шторм', 'climate')
+        if any(w in t for w in ('volcan', 'eruption', 'вулкан')):
+            return ('Извержение вулкана', 'climate')
+        if any(w in t for w in ('landslide', 'mass movement', 'mudflow', 'оползен')):
+            return ('Оползень', 'climate')
+        if any(w in t for w in ('tsunami', 'цунами')):
+            return ('Цунами', 'climate')
+        if any(w in t for w in ('drought', 'засух')):
+            return ('Засуха', 'climate')
+        if any(w in t for w in ('industrial', 'technolog', 'explosion', 'chemical', 'oil spill', 'nuclear')):
+            return ('Техногенная авария', 'technology')
+        if any(w in t for w in ('humanitarian', 'conflict', 'population', 'displac', 'refugee', 'migration', 'war')):
+            return ('Гуманитарный кризис', 'geopolitics')
+        if any(w in t for w in ('epidemic', 'disease', 'outbreak')):
+            return ('Эпидемия', 'social')
+        return ('ЧС', 'climate')  # прочие/неклассифицированные природные -> климат
 
     items = []
     n_take = 0
@@ -2343,9 +2366,10 @@ def fetch_copernicus_ems():
         try:
             cat = (a.get('category') or '').strip()
             name = (a.get('name') or '').strip()
-            is_flood = cat.lower() in FLOOD_CATEGORIES or any(w in name.lower() for w in FLOOD_WORDS)
-            if not is_flood:
-                continue
+            kind = _ems_kind(cat, name)
+            if kind is None:
+                continue  # землетрясение -- пропускаем (USGS)
+            label, ev_domain = kind
 
             # centroid в формате WKT: "POINT (lon lat)" -- сначала долгота, затем широта
             m = re.search(r'POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)', a.get('centroid') or '')
@@ -2379,11 +2403,11 @@ def fetch_copernicus_ems():
             sev = max(55, min(95, sev))
 
             portal = f"https://mapping.emergency.copernicus.eu/activations/{code}/"
-            title = (f"Наводнение · {cstr}" if cstr
-                     else (f"Наводнение · {name}" if name else "Наводнение (Copernicus EMS)"))
+            title = (f"{label} · {cstr}" if cstr
+                     else (f"{label} · {name}" if name else f"{label} (Copernicus EMS)"))
             desc = (f"Официальная активация Copernicus EMS {code} ({status}). {name}. "
                     f"Картировано районов (AOI): {n_aois}, продуктов "
-                    f"(делинеация затопления / оценка ущерба инфраструктуре): {n_products}. "
+                    f"(делинеация / оценка ущерба инфраструктуре): {n_products}. "
                     f"Кризисные карты: {portal}")
 
             items.append({
@@ -2393,10 +2417,10 @@ def fetch_copernicus_ems():
                 'source': 'Copernicus EMS',
                 '_lat': lat, '_lng': lng,
                 '_region': detect_region_by_coords(lat, lng),
-                '_domain': 'climate',
+                '_domain': ev_domain,
                 '_force_severity': sev,
                 '_meta': {
-                    'kind': 'cems', 'verified': True, 'code': code,
+                    'kind': 'cems', 'verified': True, 'code': code, 'event': label,
                     'status': status, 'closed': closed, 'category': cat,
                     'n_aois': n_aois, 'n_products': n_products,
                     'gdacs_id': a.get('gdacsId'), 'url': portal,
@@ -2406,7 +2430,7 @@ def fetch_copernicus_ems():
         except Exception:
             continue
 
-    print(f"  Copernicus EMS: {n_take} наводнений из {len(results)} активаций", file=sys.stderr)
+    print(f"  Copernicus EMS: {n_take} активаций (без землетрясений) из {len(results)}", file=sys.stderr)
     return items
 
 
