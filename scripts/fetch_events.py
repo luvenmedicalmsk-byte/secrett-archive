@@ -2524,6 +2524,108 @@ def fetch_copernicus_ems():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: Росгидромет CAP — официальные метеопредупреждения по России (климат)
+# Atom-фид Гидрометцентра -> отдельные CAP-документы (OASIS 1.2).
+# ══════════════════════════════════════════════════════════════════════════════
+_ROSGIDROMET_FEED = "https://meteoinfo.ru/hmc-output/cap/cap-feed/ru/atom.xml"
+_CAP_SEV = {"extreme": 92, "severe": 74, "moderate": 56, "minor": 40, "unknown": 36}
+
+def _cap_local(tag):
+    return tag.rsplit("}", 1)[-1].lower()
+
+def _cap_find(elem, name):
+    name = name.lower()
+    for e in elem.iter():
+        if _cap_local(e.tag) == name:
+            return e
+    return None
+
+def _cap_centroid(poly_text):
+    pts = []
+    for pair in (poly_text or "").split():
+        if "," in pair:
+            try:
+                la, lo = pair.split(",")[:2]
+                pts.append((float(la), float(lo)))
+            except Exception:
+                pass
+    if not pts:
+        return None, None
+    return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
+
+def fetch_rosgidromet_cap():
+    """Официальные метеопредупреждения Гидрометцентра РФ (CAP) — климат России.
+    Жара, осадки, грозы, шквалы, пожарная опасность, паводки, штормы и т.п."""
+    items = []
+    feed = fetch_url(_ROSGIDROMET_FEED, timeout=20)
+    if not feed:
+        print("  [SKIP] Росгидромет CAP: фид недоступен", file=sys.stderr)
+        return items
+    try:
+        root = ET.fromstring(feed.strip().lstrip("\ufeff"))
+    except Exception as e:
+        print(f"  [WARN] Росгидромет CAP feed: {e}", file=sys.stderr)
+        return items
+    urls, seen = [], set()
+    for entry in root.iter():
+        if _cap_local(entry.tag) != "entry":
+            continue
+        for ln in entry:
+            if _cap_local(ln.tag) == "link" and (ln.get("type") or "").endswith("cap+xml"):
+                href = ln.get("href")
+                if href and href not in seen:
+                    seen.add(href); urls.append(href)
+    urls = urls[:70]
+    now = datetime.now(timezone.utc)
+    for url in urls:
+        doc = fetch_url(url, timeout=15)
+        if not doc:
+            continue
+        try:
+            a = ET.fromstring(doc.strip().lstrip("\ufeff"))
+        except Exception:
+            continue
+        st = _cap_find(a, "status")
+        if st is not None and (st.text or "").strip().lower() not in ("", "actual"):
+            continue
+        ev = _cap_find(a, "event")
+        event = (ev.text or "").strip() if ev is not None else ""
+        if not event:
+            continue
+        exp = _cap_find(a, "expires")
+        if exp is not None and exp.text:
+            try:
+                if datetime.fromisoformat(exp.text.strip().replace("Z", "+00:00")) < now:
+                    continue
+            except Exception:
+                pass
+        sev = _cap_find(a, "severity")
+        sevkey = (sev.text or "").strip().lower() if sev is not None else "unknown"
+        score = _CAP_SEV.get(sevkey, 50)
+        area = _cap_find(a, "areaDesc")
+        areaDesc = (area.text or "").strip() if area is not None else ""
+        poly = _cap_find(a, "polygon")
+        lat, lng = _cap_centroid(poly.text if poly is not None else "")
+        dsc = _cap_find(a, "description")
+        dtext = (dsc.text or "").strip() if dsc is not None else event
+        title = (f"{event}: {areaDesc} (Россия)" if areaDesc else f"{event} (Россия)")
+        items.append({
+            "title": title[:130],
+            "desc": f"{dtext} · Росгидромет, {areaDesc}, Россия".strip(" ·"),
+            "date": now.strftime("%Y-%m-%d"),
+            "source": "Росгидромет CAP",
+            "_lat": lat, "_lng": lng,
+            "_region": (f"{areaDesc}, Россия" if areaDesc else "Россия"),
+            "_domain": "climate",
+            "_force_severity": score,
+            "_meta": {"kind": "rosgidromet_cap", "verified": True,
+                      "event": event, "severity": sevkey, "area": areaDesc},
+        })
+    print(f"  Росгидромет CAP: {len(items)} активных предупреждений", file=sys.stderr)
+    return items
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # GloFAS -- точки риска наводнений из прогноза речного стока (CEMS EWDS, S36.5)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_glofas():
@@ -5315,6 +5417,7 @@ if __name__ == '__main__':
             ('nasa_eonet',         fetch_nasa_eonet),
             ('gdacs',              fetch_gdacs),
             ('usgs',               fetch_usgs_earthquakes),
+            ('rosgidromet_cap',    fetch_rosgidromet_cap),
             ('acled',              fetch_acled_rss),
             ('geopolitics',        fetch_geopolitics_rss),
             ('social',             fetch_social_rss),
