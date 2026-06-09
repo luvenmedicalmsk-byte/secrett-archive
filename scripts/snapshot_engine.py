@@ -8357,11 +8357,23 @@ def _signal_domain_score(cc: str, domain: str):
                 return None
         except Exception:
             pass
-    sevs = [s for s in (int(it.get("severity", 0) or 0) for it in items) if s > 0]
-    if not sevs:
+    _W = {"risk": 1.0, "neutral": 0.25, "positive": -0.6}
+    contribs, risk_n = [], 0
+    for it in items:
+        sev = int(it.get("severity", 0) or 0)
+        if sev <= 0:
+            continue
+        tone = str(it.get("tone", "risk")).lower().strip()
+        contribs.append(sev * _W.get(tone, 1.0))
+        if tone == "risk":
+            risk_n += 1
+    if not contribs:
         return None
-    score = min(95, round(sum(sevs) / len(sevs) + min(len(sevs) * 1.0, 8)))
-    return int(score)
+    raw = sum(contribs) / len(contribs)        # знаковое среднее severity
+    score = 50 + raw * 0.5                       # 50 = нейтрально; риск>50, позитив<50
+    if raw > 0:
+        score += min(risk_n, 5)                  # подтверждение несколькими риск-сигналами
+    return int(max(5, min(95, round(score))))
 
 
 def _reloc_domain_scores(cc: str, snap: dict) -> dict:

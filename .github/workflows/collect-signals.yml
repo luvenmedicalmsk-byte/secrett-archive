@@ -1,10 +1,12 @@
-name: Сбор сигналов (пилот)
+name: Сбор сигналов
 
 on:
+  schedule:
+    - cron: '0 18 * * *'   # ежедневно ~21:00 (Анкара/МСК), сбор по всем странам
   workflow_dispatch:
     inputs:
       country:
-        description: 'Код страны (ISO2), напр. RU'
+        description: 'Код страны (ISO2) или ALL'
         required: true
         default: 'RU'
       model:
@@ -34,12 +36,15 @@ jobs:
 
       - name: Сбор сигналов
         id: collect
-        timeout-minutes: 10
+        timeout-minutes: 45
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          SIGNALS_MODEL: ${{ github.event.inputs.model }}
         run: |
-          python scripts/collect_signals.py "${{ github.event.inputs.country }}"
+          CC="${{ github.event.inputs.country }}"; CC="${CC:-ALL}"
+          MDL="${{ github.event.inputs.model }}"; MDL="${MDL:-gpt-5.4-mini}"
+          export SIGNALS_MODEL="$MDL"
+          echo "Сбор сигналов: $CC (model=$MDL)"
+          python scripts/collect_signals.py "$CC"
 
       - name: Коммит результата
         run: |
@@ -47,9 +52,9 @@ jobs:
           git config user.email "bot@secrett-archive.com"
           git add docs/signals/
           if git diff --staged --quiet; then
-            echo "Нет изменений — модель ничего не вернула или файлы не поменялись"
+            echo "Нет изменений"
           else
-            CC="${{ github.event.inputs.country }}"
+            CC="${{ github.event.inputs.country }}"; CC="${CC:-ALL}"
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
             git commit -m "Сигналы · $CC · $TIMESTAMP"
             git pull --rebase origin main

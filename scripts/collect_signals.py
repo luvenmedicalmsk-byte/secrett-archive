@@ -52,13 +52,19 @@ NAMES = {
     "EG":"Египет","ZA":"ЮАР","MX":"Мексика",
 }
 
+_TONES = {"risk", "neutral", "positive"}
+def _norm_tone(t):
+    t = str(t or "risk").lower().strip()
+    return t if t in _TONES else "risk"
+
 _OBJ_FMT = (
     'Для каждого реального события верни объект:\n'
     '{"title": краткий заголовок на русском,\n'
     '  "summary": 1-2 предложения на русском,\n'
     '  "source_url": ссылка на первоисточник,\n'
     '  "date": "YYYY-MM-DD",\n'
-    '  "severity": целое 0-100 (значимость для риска страны)}\n'
+    '  "severity": целое 0-100 (значимость события),\n'
+    '  "tone": тональность для риска страны — "risk" (повышает риск), "neutral" (нейтрально) или "positive" (снижает риск)}\n'
 )
 _RULES = (
     "Правила: только реальные события из поиска с датами и ссылками; ничего не выдумывай; "
@@ -144,6 +150,7 @@ def write_files(iso2: str, items: list) -> dict:
                 "source_url": str(it.get("source_url", "")).strip(),
                 "date":       str(it.get("date", "")).strip(),
                 "severity":   int(it.get("severity", 50) or 50),
+                "tone":       _norm_tone(it.get("tone")),
             })
     d_out = OUT / iso2
     d_out.mkdir(parents=True, exist_ok=True)
@@ -155,11 +162,16 @@ def write_files(iso2: str, items: list) -> dict:
     return {d: len(by[d]) for d in active}
 
 if __name__ == "__main__":
-    iso2 = (sys.argv[1] if len(sys.argv) > 1 else "RU").upper()
+    arg = (sys.argv[1] if len(sys.argv) > 1 else "RU").upper()
     if not os.environ.get("OPENAI_API_KEY"):
         print("ERROR: установите OPENAI_API_KEY", file=sys.stderr); sys.exit(1)
-    print(f"[collect] {iso2} via {MODEL} (mode={MODE}) …", file=sys.stderr)
-    items  = collect(iso2)
-    counts = write_files(iso2, items)
-    print(f"[collect] {iso2}: " + "  ".join(f"{d}={n}" for d, n in counts.items()), file=sys.stderr)
-    print(f"[collect] → docs/signals/{iso2}/*.json готово (mode={MODE})")
+    targets = list(NAMES.keys()) if arg == "ALL" else [arg]
+    print(f"[collect] стран: {len(targets)} via {MODEL} (mode={MODE}) …", file=sys.stderr)
+    for cc in targets:
+        try:
+            items  = collect(cc)
+            counts = write_files(cc, items)
+            print(f"[collect] {cc}: " + "  ".join(f"{d}={n}" for d, n in counts.items()), file=sys.stderr)
+        except Exception as e:
+            print(f"[collect] {cc}: ОШИБКА {e}", file=sys.stderr)
+    print(f"[collect] → docs/signals/*/ готово (mode={MODE}, стран={len(targets)})")
