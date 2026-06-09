@@ -1003,6 +1003,47 @@ def _load_prev_snapshot(iso2: str) -> dict:
         return {}
 
 
+def _rosgidromet_alert() -> dict:
+    """Сводный алерт по РФ из метеопредупреждений Росгидромета (severity>50).
+    Один алерт с разворотом по типам явлений и регионам — чтобы не засорять ленту."""
+    from collections import Counter
+    try:
+        events = load_events()
+    except Exception:
+        return {}
+    cap = [e for e in events
+           if str(e.get("source", "")) == "Росгидромет CAP"
+           and isinstance(e.get("severity"), (int, float))
+           and e.get("severity") > 50]
+    if not cap:
+        return {}
+    by_type, regions, maxsev = Counter(), [], 0
+    for e in cap:
+        maxsev = max(maxsev, int(e["severity"]))
+        title = str(e.get("title", ""))
+        ev_type = title.split(":")[0].strip() if ":" in title else title.strip()
+        if ev_type:
+            by_type[ev_type] += 1
+        reg = str(e.get("region", "") or e.get("_region", "") or "").replace(", Россия", "").strip()
+        if reg:
+            regions.append(reg)
+    parts = [f"{k} ({v})" for k, v in by_type.most_common(4)]
+    msg = f"{len(cap)} активных предупреждений: " + "; ".join(parts)
+    uniq = list(dict.fromkeys(regions))[:6]
+    if uniq:
+        msg += " · регионы: " + ", ".join(uniq)
+    return {
+        "type":         "meteo_warning",
+        "severity":     min(95, maxsev),
+        "country":      "RU",
+        "country_name": "Россия",
+        "title":        "Метеопредупреждения Росгидромета",
+        "message":      msg[:240],
+        "domain":       "climate",
+        "timestamp":    datetime.now(timezone.utc).isoformat(),
+    }
+
+
 def generate_global_alerts(snapshots: list[dict]) -> None:
     """
     Alert Engine V1 — global aggregator.
@@ -1017,6 +1058,11 @@ def generate_global_alerts(snapshots: list[dict]) -> None:
         prev     = _load_prev_snapshot(iso2)
         country_alerts = generate_alerts(snap, prev)
         all_alerts.extend(country_alerts)
+
+    # Метеопредупреждения Росгидромета (severity>50) -> один сводный алерт по РФ
+    _cap = _rosgidromet_alert()
+    if _cap:
+        all_alerts.append(_cap)
 
     # Deduplicate: one alert per (country, type) per day
     seen: set[str] = set()
