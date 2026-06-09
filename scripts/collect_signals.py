@@ -39,13 +39,17 @@ MODE  = os.environ.get("SIGNALS_MODE", "targeted")
 SEARCH_DOMAINS = [d.strip() for d in os.environ.get(
     "SIGNALS_SEARCH_DOMAINS", "climate,economy,technology,social").split(",")
     if d.strip() in DOMAINS]
+# Активный набор стран для сбора (фокус релокации). Override: env SIGNALS_COUNTRIES
+SIGNAL_COUNTRIES = [x.strip().upper() for x in os.environ.get(
+    "SIGNALS_COUNTRIES",
+    "RU,BY,KZ,GE,TR,DE,IT,ES,RS,GB,US,CA,AE,UA,ME,CY,TH").split(",") if x.strip()]
 ROOT  = pathlib.Path(__file__).resolve().parents[1]
 OUT   = ROOT / "docs" / "signals"
 
 NAMES = {
     "RU":"Россия","US":"США","CN":"Китай","DE":"Германия","FR":"Франция","GB":"Великобритания",
     "TR":"Турция","IN":"Индия","JP":"Япония","BR":"Бразилия","IR":"Иран","IL":"Израиль",
-    "UA":"Украина","PL":"Польша","KZ":"Казахстан","AE":"ОАЭ","SA":"Саудовская Аравия",
+    "UA":"Украина","PL":"Польша","KZ":"Казахстан","BY":"Беларусь","CA":"Канада","AE":"ОАЭ","SA":"Саудовская Аравия",
     "GE":"Грузия","AM":"Армения","RS":"Сербия","UZ":"Узбекистан","TH":"Таиланд","VN":"Вьетнам",
     "MY":"Малайзия","SG":"Сингапур","PT":"Португалия","CY":"Кипр","GR":"Греция","ME":"Черногория",
     "IT":"Италия","ES":"Испания","NL":"Нидерланды","KR":"Южная Корея","ID":"Индонезия",
@@ -165,7 +169,7 @@ if __name__ == "__main__":
     arg = (sys.argv[1] if len(sys.argv) > 1 else "RU").upper()
     if not os.environ.get("OPENAI_API_KEY"):
         print("ERROR: установите OPENAI_API_KEY", file=sys.stderr); sys.exit(1)
-    targets = list(NAMES.keys()) if arg == "ALL" else [arg]
+    targets = SIGNAL_COUNTRIES if arg in ("ALL", "LIST") else [arg]
     print(f"[collect] стран: {len(targets)} via {MODEL} (mode={MODE}) …", file=sys.stderr)
     for cc in targets:
         try:

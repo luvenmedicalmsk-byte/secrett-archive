@@ -107,6 +107,16 @@ COUNTRIES = {
         "kw": ["kazakhstan","казахстан","almaty","алматы","astana","астана","nur-sultan","нурсултан"],
         "baseline": 58,
     },
+    "BY": {
+        "name": "Belarus",      "name_ru": "Беларусь",
+        "kw": ["belarus","беларусь","белоруссия","minsk","минск","lukashenko","лукашенко"],
+        "baseline": 70,
+    },
+    "CA": {
+        "name": "Canada",       "name_ru": "Канада",
+        "kw": ["canada","канада","ottawa","оттава","toronto","торонто","trudeau"],
+        "baseline": 38,
+    },
     "AE": {
         "name": "UAE",          "name_ru": "ОАЭ",
         "kw": ["uae","emirates","эмираты","dubai","дубай","abu dhabi","абу-даби","оаэ"],
