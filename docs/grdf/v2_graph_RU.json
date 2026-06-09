@@ -2,45 +2,45 @@
   "country": "RU",
   "date": "2026-06-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-09T18:34:13.915126+00:00",
+  "generated_at": "2026-06-09T19:10:12.720311+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 34,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
+      "score": 9,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
+      "score": 9,
       "trend": "stable"
     },
     {
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -87,16 +87,16 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-RU-Зеленый_ур",
+      "type": "Signal",
+      "label": "Зеленый уровень угрозы наводнения в Росс",
+      "severity": 54,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-Хакеры_выд",
       "type": "Signal",
       "label": "Хакеры выдают себя за женщин, ищущих ром",
-      "severity": 50,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-RU-Проевропей",
-      "type": "Signal",
-      "label": "Проевропейская партия Армении выигрывает",
       "severity": 50,
       "domain": "technology"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-RU",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-RU",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-RU-Совет_безо",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
     {
-      "from": "SIGNAL-RU-Хакеры_выд",
-      "to": "DOMAIN-RU-technology",
+      "from": "SIGNAL-RU-Зеленый_ур",
+      "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.54
     },
     {
-      "from": "SIGNAL-RU-Проевропей",
+      "from": "SIGNAL-RU-Хакеры_выд",
       "to": "DOMAIN-RU-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
