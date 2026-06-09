@@ -2,60 +2,60 @@
   "country": "IT",
   "date": "2026-06-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-09T20:32:48.713168+00:00",
+  "generated_at": "2026-06-09T20:55:14.706706+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 63,
+      "score": 66,
       "props": {
-        "risk_score": 63
+        "risk_score": 66
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 63,
-      "trend": "stable"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-IT-Пожарная_о",
+      "type": "Signal",
+      "label": "Пожарная опасность: Ханты-Мансийский а.о",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Лесной_пож",
       "type": "Signal",
       "label": "Лесной пожар в Тоскане, Италия",
       "severity": 64,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Google_уст",
-      "type": "Signal",
-      "label": "Google устраняет новую уязвимость нулево",
-      "severity": 60,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IT",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-IT-geopolitical",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-IT-Наводнение",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.76
     },
     {
+      "from": "SIGNAL-IT-Пожарная_о",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-IT-Лесной_пож",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-IT-Google_уст",
-      "to": "DOMAIN-IT-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }
