@@ -1411,6 +1411,10 @@ def process_events(raw_items):
         'BleepingComputer', 'Industrial Cyber', 'Semafor',
     }
 
+    # LLM-гейт риск/шум: финальный отсев шума на пограничных событиях
+    # (keyword не отличит «Открытие западного Китая» от «Землетрясение в западном Китае»)
+    events = _risk_gate(events)
+
     # S36.5: резерв слотов для наводнений (иначе тонут в квоте климата за пожарами/красными GDACS)
     FLOOD_RESERVE = 25
     _flood_reserved = set()
@@ -4881,6 +4885,61 @@ def is_english(text):
     cyrillic = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
     latin = sum(1 for c in text if c.isalpha() and c.isascii())
     return cyrillic < len(text) * 0.15 and latin > len(text) * 0.3
+
+def _risk_gate(events):
+    """LLM-гейт риск/шум для пайплайна. Финальный отсев шума (реклама/культура/
+    тревел-фичеры/риторические лозунги), который прошёл keyword-фильтры.
+    Трогаем только пограничные по severity (< GATE_MAX) -- сильные сигналы не рискуем.
+    Фолбэк: нет ключа / ошибка / нет вердикта -> событие остаётся (сигнал не теряем)."""
+    import os as _os, json as _json, urllib.request as _u
+    key = _os.environ.get('OPENAI_API_KEY', '')
+    if not key or not events:
+        return events
+    GATE_MAX = 62
+    cand = [e for e in events
+            if isinstance(e.get('severity'), (int, float)) and e['severity'] < GATE_MAX][:120]
+    if not cand:
+        return events
+    sys_p = ('Ты — фильтр платформы мониторинга СИСТЕМНЫХ РИСКОВ. Для каждого элемента входного '
+             'массива реши, это СИГНАЛ риска или ШУМ. СИГНАЛ: война, удары, обстрелы, санкции, '
+             'протесты, перевороты, теракты, стихийные бедствия, аварии инфраструктуры, кибератаки, '
+             'утечки данных, обвалы рынков, дефолты, эпидемии, гуманитарные кризисы, крупные '
+             'политические/правовые/экономические события с последствиями. ШУМ: реклама, промо, '
+             'подкасты, культура/искусство/кино, лайфстайл, знаменитости, спорт, тревел-фичеры, '
+             'риторические лозунги и заявления без конкретного события, опросы, рецепты, гороскопы. '
+             'Верни СТРОГО валидный JSON-объект: ключ = значение i (строкой), значение = 1 если '
+             'сигнал риска иначе 0. Без markdown и пояснений.')
+    verdict = {}
+    for start in range(0, len(cand), 20):
+        batch = cand[start:start + 20]
+        payload = [{'i': k, 't': (b.get('title', '') + ' ' + (b.get('summary', '') or ''))[:300]}
+                   for k, b in enumerate(batch)]
+        try:
+            body = _json.dumps({
+                'model': 'gpt-4o-mini', 'max_tokens': 800, 'temperature': 0,
+                'response_format': {'type': 'json_object'},
+                'messages': [{'role': 'system', 'content': sys_p},
+                             {'role': 'user', 'content': 'Классифицируй:\n' + _json.dumps(payload, ensure_ascii=False)}],
+            }).encode()
+            req = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
+                             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key},
+                             method='POST')
+            with _u.urlopen(req, timeout=20) as r:
+                data = _json.loads(r.read())
+            parsed = _json.loads(data['choices'][0]['message']['content'])
+            for k, b in enumerate(batch):
+                v = parsed.get(str(k), parsed.get(k))
+                if v is not None:
+                    verdict[b['id']] = (v == 1 or v is True or v == '1')
+        except Exception as _e:
+            print(f"  [WARN] risk_gate batch: {_e}", file=sys.stderr)
+            continue
+    if not verdict:
+        return events
+    kept = [e for e in events if verdict.get(e['id'], True)]  # нет вердикта -> оставляем
+    print(f"  Risk-gate: отсеяно шума {len(events) - len(kept)} из {len(cand)} пограничных", file=sys.stderr)
+    return kept
+
 
 def translate_batch(texts):
     """Переводит список текстов на русский (OpenAI JSON-контракт) с дисковым кэшем по хэшу."""
