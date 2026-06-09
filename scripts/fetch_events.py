@@ -9,7 +9,7 @@
                скомпилированные regex, import random на уровне модуля
 """
 
-import json, os, sys, hashlib, math, re, time, urllib.request, urllib.parse, urllib.error
+import json, os, sys, hashlib, math, re, time, html, urllib.request, urllib.parse, urllib.error
 import xml.etree.ElementTree as ET
 import random
 # signal schema enrichment v2.2
@@ -57,19 +57,28 @@ except ImportError as _pe:
         return out
 
 def strip_html(text):
-    """Удаляет HTML-теги и лишнее из текста"""
+    """Удаляет HTML-теги и декодирует HTML-сущности (вкл. числовые: &#036; -> $)."""
     if not text:
         return ''
     text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'&nbsp;', ' ', text)
-    text = re.sub(r'&amp;', '&', text)
-    text = re.sub(r'&lt;', '<', text)
-    text = re.sub(r'&gt;', '>', text)
-    text = re.sub(r'&quot;', '"', text)
+    text = html.unescape(text)              # &#036;->$, &amp;->&, &#8217;->’, &nbsp; и т.д.
+    text = text.replace('\xa0', ' ')
     text = re.sub(r'\s+', ' ', text).strip()
     # Убираем мусорные разделители
     text = text.split('|||')[0].split(' | ')[0].strip()
     return text
+
+
+def _smart_truncate(text, limit=130):
+    """Аккуратная обрезка: первое предложение если влезает, иначе по границе слова + …"""
+    text = (text or '').strip()
+    if len(text) <= limit:
+        return text
+    m = re.match(r'^(.{30,}?[.!?])(?:\s|$)', text)   # первое предложение
+    if m and len(m.group(1)) <= limit:
+        return m.group(1).strip()
+    cut = text[:limit].rsplit(' ', 1)[0].rstrip(' ,;:—-')
+    return (cut or text[:limit]).rstrip() + '…'
 
 
 
@@ -1362,7 +1371,7 @@ def process_events(raw_items):
 
         _ev = {
             "id": ev_id,
-            "title": item['title'][:130],
+            "title": _smart_truncate(item['title'], 130),
             "domain": domain,
             "severity": severity,
             "lat": lat, "lng": lng,
@@ -2618,7 +2627,7 @@ def fetch_telegram():
             text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
             if len(text) < 20: continue
             items.append({
-                'title': text[:160],
+                'title': text[:240],
                 'desc': text[:300],
                 'date': today,
                 'source': f'Telegram/{ch}',
