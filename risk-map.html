@@ -2802,6 +2802,52 @@ window._grdfDisasterEnsure=function(){
 // расширяем переключатель вкладок: при выборе «Погода» — поднимаем ленту
 (function(){ var _o=window.grdfAlertsTab; window.grdfAlertsTab=function(name){ if(_o) _o(name); if(name==='weather') window._grdfDisasterEnsure(); }; })();
 
+// ═══════════════════════════════════════════════════════════════════
+// Росгидромет — официальные метеопредупреждения (CAP) в «Экстремальная погода»
+// ═══════════════════════════════════════════════════════════════════
+(function(){
+  var rgInterval=null, rgCache=[];
+  function rgCol(s){ return s>=85?'#C0392B':s>=70?'#FF7A1A':s>=56?'#E0A82E':'#3CB371'; }
+  function rgLbl(s){ return s>=85?'критический':s>=70?'высокий':s>=56?'повышенный':'умеренный'; }
+  function rgDate(d){ try{ return new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}); }catch(e){ return ''; } }
+  function renderRosgidromet(){
+    var box=document.getElementById('rosgidromet-list'); if(!box) return;
+    if(!rgCache.length){ box.innerHTML=''; return; }
+    var hdr='<div style="padding:12px 14px 6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#B8973A">Росгидромет · официальные предупреждения ('+rgCache.length+')</div>';
+    box.innerHTML=hdr+rgCache.map(function(it){
+      var s=it.severity||0, col=rgCol(s);
+      var t=String(it.title||'');
+      var typ=(t.indexOf(':')>0?t.split(':')[0]:t).trim();
+      var reg=String(it.region||'').replace(/,\s*Россия/,'').trim();
+      return '<div class="dn-card" style="cursor:default">'+
+        '<span class="qk-dot" style="background:'+col+';margin-top:6px"></span>'+
+        '<div class="qk-main">'+
+          '<div class="qk-dom" style="color:'+col+'">'+qkEsc(typ)+'</div>'+
+          '<div class="dn-text" style="-webkit-line-clamp:unset">'+qkEsc(reg)+'</div>'+
+          '<div class="qk-meta"><span>'+rgLbl(s)+' · '+rgDate(it.date)+'</span></div>'+
+        '</div></div>';
+    }).join('');
+  }
+  async function loadRosgidromet(){
+    try{
+      var r=await fetch(API_BASE+'/api/events',{cache:'no-store'});
+      if(!r.ok) return;
+      var j=await r.json();
+      var evs=(j&&(j.events||j))||[];
+      rgCache=evs.filter(function(e){ return String(e.source||'')==='Росгидромет CAP'; })
+                 .sort(function(a,b){ return (b.severity||0)-(a.severity||0); });
+      renderRosgidromet();
+      console.info('[Rosgidromet]',rgCache.length,'предупреждений');
+    }catch(e){ console.warn('[Rosgidromet]',e.message); }
+  }
+  window._grdfRosgidrometEnsure=function(){
+    if(!rgInterval){ loadRosgidromet(); rgInterval=setInterval(loadRosgidromet,60000); }
+    else { renderRosgidromet(); }
+  };
+  var _o2=window.grdfAlertsTab;
+  window.grdfAlertsTab=function(name){ if(_o2) _o2(name); if(name==='weather') window._grdfRosgidrometEnsure(); };
+})();
+
 
 
 
@@ -7308,6 +7354,7 @@ function _evM(val, lbl, col) {
     <div id="quake-list"></div>
   </div>
   <div id="ga-weather" style="display:none">
+    <div id="rosgidromet-list"></div>
     <div id="weather-list"><div class="qk-empty">Загрузка ленты ЧС…</div></div>
   </div>
 </div>
