@@ -7849,6 +7849,33 @@ function grdfRelocPanelHTML(c, isSig){
   return h;
 }
 
+function grdfRelocCabinetHTML(){
+  var all=(((typeof _grdfData!=='undefined'&&_grdfData)&&_grdfData.countries)||[]).map(function(x){ return {cc:x.country, name:x.country_name||x.country, R:grdfReloc(x)}; });
+  if(!all.length) return '';
+  function chip(lbl,v){ return '<span style="color:'+_relocCol(v)+';font-weight:600">'+lbl+v+'</span>'; }
+  function lst(key,title){
+    var arr=all.slice().sort(function(a,b){ return b.R[key]-a.R[key]; }).slice(0,5);
+    var s='<div style="font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:rgba(232,224,208,.42);margin:11px 0 6px">'+title+'</div>';
+    arr.forEach(function(it){
+      var R=it.R;
+      s+='<div onclick="closeCabinet();openCountryCard(\''+it.cc+'\')" style="cursor:pointer;padding:7px 9px;margin-bottom:5px;border:0.5px solid rgba(184,151,58,.14);border-radius:8px;background:rgba(184,151,58,.03)">'
+        +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span>'+_flag(it.cc)+'</span><span style="font-size:12.5px;color:#e8e0d0;flex:1">'+(it.name||it.cc)+'</span><span style="font-size:8px;color:rgba(232,224,208,.3)">Country Intelligence &rarr;</span></div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:10px">'
+        + chip('R ',R.resilience)+chip('Кл ',R.climate)+chip('Гео ',R.geo)+chip('Эк ',R.economic)+chip('Тех ',R.technology)+chip('Соц ',R.social)
+        +'</div></div>';
+    });
+    return s;
+  }
+  var h='<div class="cab-seclabel">Relocation Intelligence</div>';
+  h+='<div style="font-size:9px;color:rgba(232,224,208,.35);margin:-2px 0 2px;line-height:1.45">Оценка стран для релокации · '+all.length+' стран · шкала 0–100, выше — безопаснее. Тап по стране — Country Intelligence.</div>';
+  h+=lst('resilience','Top Resilient Countries');
+  h+=lst('climate','Top Climate Safe Countries');
+  h+=lst('economic','Top Economic Safe Countries');
+  h+=lst('technology','Top Technology Leaders');
+  h+=lst('social','Top Social Stability Countries');
+  return h;
+}
+
 function grdfRenderCountryPanel(cc) {
   var countries = (_grdfData&&_grdfData.countries)||[];
   var c = countries.find(function(x){ return x.country===cc; });
@@ -8672,7 +8699,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess(
         +'<button class="cab-btn ghost" onclick="cabLogin(\'cab-code2\')">Применить</button>'
         +'<div id="cab-login-msg" class="cab-msg"></div>'
         +'</div>';
-      h+='<div class="cab-logout"><button class="cab-btn" onclick="cabLogout()">Выйти</button></div>';
+      h+=grdfRelocCabinetHTML();
+  h+='<div class="cab-logout"><button class="cab-btn" onclick="cabLogout()">Выйти</button></div>';
     } else {
       h+='<div class="cab-statuscard"><div class="cab-sc-tier"><span class="cab-sc-dot" style="background:#6b7280;box-shadow:none"></span>Бесплатный доступ</div><div class="cab-sc-sub">Базовые сигналы и профили стран</div></div>';
       h+='<div class="cab-seclabel">Вход в систему</div>';
