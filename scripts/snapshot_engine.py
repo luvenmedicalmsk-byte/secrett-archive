@@ -769,6 +769,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         file=sys.stderr
     )
     snap["_seismic_risk"] = _hazard_climate_risk(matched)
+    snap["_econ_risk"] = _economy_authority_risk(matched)
     snap["domain_scores"] = _reloc_domain_scores(iso2, snap)
     return snap
 
@@ -8446,6 +8447,14 @@ _CLIMATE_BASELINE = {
     "EG": 58, "IR": 58, "IQ": 60, "IN": 55, "PK": 58,
 }
 
+def _economy_authority_risk(matched: list) -> int:
+    """Макс. severity экономических сигналов от официальных источников (ЦБ РФ) — вливается в экономику."""
+    sev = [float(e.get("severity", 0)) for e in matched
+           if str(e.get("source", "")) == "Банк России"
+           and str(e.get("domain", "")) == "economy"
+           and isinstance(e.get("severity"), (int, float))]
+    return int(max(sev)) if sev else 0
+
 def _hazard_climate_risk(matched: list) -> int:
     """Макс. severity природных катастроф по стране — вливается в климатический домен.
     Сейсмика: USGS/EMSC. Катастрофы (паводки/пожары/штормы): Copernicus EMS, GDACS, GloFAS."""
@@ -8494,6 +8503,10 @@ def _reloc_domain_scores(cc: str, snap: dict) -> dict:
     floor = max(_CLIMATE_BASELINE.get(cc, 0), seis)
     if floor:
         out["climate"] = max(out.get("climate", 0) or 0, floor)
+    # Экономика: официальный сигнал ЦБ (девальвация) поднимает риск, если значим
+    econ = snap.pop("_econ_risk", 0) or 0
+    if econ:
+        out["economy"] = max(out.get("economy", 0) or 0, econ)
     return out
 
 

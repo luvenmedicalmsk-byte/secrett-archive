@@ -2702,6 +2702,77 @@ def fetch_mgm_turkey():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: Банк России — курс рубля и девальвация (экономика РФ)
+# XML_dynamic.asp отдаёт ряд курса USD за период. Сигнал = ослабление рубля.
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_cbr_russia():
+    """Экономический сигнал РФ: девальвация рубля по данным ЦБ (USD, динамика)."""
+    import re
+    from datetime import timedelta
+    items = []
+    end   = datetime.now(timezone.utc)
+    start = end - timedelta(days=35)
+    url = ("https://www.cbr.ru/scripts/XML_dynamic.asp?"
+           f"date_req1={start.strftime('%d/%m/%Y')}&date_req2={end.strftime('%d/%m/%Y')}&VAL_NM_RQ=R01235")
+    raw = fetch_url(url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+    if not raw:
+        print("  [SKIP] Банк России: фид недоступен", file=sys.stderr)
+        return items
+    try:
+        xml = re.sub(r"<\?xml[^>]*\?>", "", raw, count=1)
+        root = ET.fromstring(xml)
+    except Exception as e:
+        print(f"  [WARN] ЦБ parse: {e}", file=sys.stderr)
+        return items
+    recs = []
+    for r in root.findall("Record"):
+        d = r.get("Date"); v = r.findtext("Value")
+        if not d or not v:
+            continue
+        try:
+            recs.append((datetime.strptime(d, "%d.%m.%Y"), float(v.replace(",", "."))))
+        except Exception:
+            pass
+    if len(recs) < 5:
+        print("  [WARN] ЦБ: недостаточно данных", file=sys.stderr)
+        return items
+    recs.sort(key=lambda x: x[0])
+    cur_dt, cur = recs[-1]
+    month_ago = recs[0][1]
+    week_ago = recs[0][1]
+    for dt, val in recs:
+        if (cur_dt - dt).days >= 7:
+            week_ago = val   # последняя запись возрастом >=7 дней ≈ неделю назад
+    week_dev  = (cur - week_ago) / week_ago * 100 if week_ago else 0.0
+    month_dev = (cur - month_ago) / month_ago * 100 if month_ago else 0.0
+    dev = max(week_dev, month_dev)   # >0 = рубль ослаб
+    if dev < 2:
+        # рубль стабилен/укрепился — экономического сигнала риска нет
+        print(f"  Банк России: USD {cur:.2f}₽ (нед {week_dev:+.1f}% мес {month_dev:+.1f}%) — стабильно, без сигнала", file=sys.stderr)
+        return items
+    if   dev < 5:  sev = 52
+    elif dev < 10: sev = 66
+    elif dev < 20: sev = 80
+    else:          sev = 90
+    title = f"Рубль ослаб: USD {cur:.2f}₽ (нед. {week_dev:+.1f}%, мес. {month_dev:+.1f}%) — Россия"
+    items.append({
+        "title": title[:130],
+        "desc": (f"Курс доллара ЦБ РФ: {cur:.2f} ₽. Изменение за неделю {week_dev:+.1f}%, "
+                 f"за месяц {month_dev:+.1f}%. Источник: Банк России. Россия"),
+        "date": end.strftime("%Y-%m-%d"),
+        "source": "Банк России",
+        "_lat": 55.75, "_lng": 37.62,
+        "_region": "Россия",
+        "_domain": "economy",
+        "_force_severity": sev,
+        "_meta": {"kind": "cbr_fx", "verified": True, "usd": round(cur, 4),
+                  "week_pct": round(week_dev, 2), "month_pct": round(month_dev, 2)},
+    })
+    print(f"  Банк России: USD {cur:.2f}₽, девальвация нед {week_dev:+.1f}% мес {month_dev:+.1f}% -> sev {sev}", file=sys.stderr)
+    return items
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # GloFAS -- точки риска наводнений из прогноза речного стока (CEMS EWDS, S36.5)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_glofas():
@@ -5495,6 +5566,7 @@ if __name__ == '__main__':
             ('usgs',               fetch_usgs_earthquakes),
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
             ('mgm_turkey',         fetch_mgm_turkey),
+            ('cbr_russia',         fetch_cbr_russia),
             ('acled',              fetch_acled_rss),
             ('geopolitics',        fetch_geopolitics_rss),
             ('social',             fetch_social_rss),
