@@ -8386,6 +8386,14 @@ def _signal_domain_score(cc: str, domain: str):
     return int(max(5, min(95, round(score))))
 
 
+# Путь 2: климатический «пол» риска для жарких/аридных стран.
+# Хроническая жара/водный стресс не ловятся событийными лентами — задаём минимум риска,
+# чтобы отсутствие новостей не делало страну «климатически безопасной».
+_CLIMATE_RISK_FLOOR = {
+    "AE": 60, "SA": 62, "QA": 60, "KW": 62, "OM": 58, "BH": 58,
+    "EG": 58, "IR": 58, "IQ": 60, "IN": 55, "PK": 58,
+}
+
 def _reloc_domain_scores(cc: str, snap: dict) -> dict:
     """Flat domain risk scores {climate,geopolitics,economy,technology,social: 0-100} for snapshot consumers (Relocation layer)."""
     try:
@@ -8414,6 +8422,9 @@ def _reloc_domain_scores(cc: str, snap: dict) -> dict:
         sv = _signal_domain_score(cc, sigdom)
         if sv is not None:
             out[sigdom] = sv
+    floor = _CLIMATE_RISK_FLOOR.get(cc)
+    if floor is not None:
+        out["climate"] = max(out.get("climate", 0) or 0, floor)
     return out
 
 

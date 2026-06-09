@@ -76,12 +76,21 @@ _RULES = (
     "Верни ТОЛЬКО валидный JSON-массив, без markdown и пояснений."
 )
 
+_DOMAIN_HINTS = {
+    "climate": ("Учитывай не только разовые события, но и ТЕКУЩИЕ условия: волны жары, "
+                "температурные рекорды и аномалии, дефицит воды и засуху, угрозу урожаю. "
+                "Длительная сильная жара или водный стресс - это высокая значимость (severity), "
+                "даже если это не «новость дня».\n"),
+}
+
 def build_domain_prompt(name: str, domain: str) -> str:
     today  = datetime.date.today().isoformat()
     themes = ", ".join(DOMAIN_FILTERS[domain])
+    hint   = _DOMAIN_HINTS.get(domain, "")
     return (
         f"Найди в интернете значимые события за последние 24-48 часов по стране: {name}, "
         f"в домене «{DOMAIN_RU[domain]}». Ищи по темам: {themes}.\n"
+        f"{hint}"
         f"{_OBJ_FMT}"
         f"Если по этому домену ничего значимого нет — верни пустой массив []. До 5 событий.\n"
         f"{_RULES} Сегодня: {today}."
@@ -131,9 +140,13 @@ def collect(iso2: str):
     all_items = []
     for d in SEARCH_DOMAINS:
         try:
-            resp  = client.responses.create(model=MODEL, tools=[{"type": "web_search"}],
-                                            input=build_domain_prompt(name, d))
-            items = extract_json(_resp_text(resp))
+            items = []
+            for _attempt in range(2):  # повтор при пустом ответе (разброс модели)
+                resp  = client.responses.create(model=MODEL, tools=[{"type": "web_search"}],
+                                                input=build_domain_prompt(name, d))
+                items = extract_json(_resp_text(resp))
+                if items:
+                    break
             for it in items:
                 it["domain"] = d
             print(f"[collect]   {d}: {len(items)}", file=sys.stderr)
