@@ -34,6 +34,11 @@ DOMAIN_FILTERS = {
 }
 MODEL = os.environ.get("SIGNALS_MODEL", "gpt-5.4-mini")
 MODE  = os.environ.get("SIGNALS_MODE", "targeted")
+# Домены, собираемые поиском OpenAI. Геополитика намеренно НЕ здесь —
+# она остаётся на лентах движка (GDELT/ACLED).
+SEARCH_DOMAINS = [d.strip() for d in os.environ.get(
+    "SIGNALS_SEARCH_DOMAINS", "climate,economy,technology,social").split(",")
+    if d.strip() in DOMAINS]
 ROOT  = pathlib.Path(__file__).resolve().parents[1]
 OUT   = ROOT / "docs" / "signals"
 
@@ -114,7 +119,7 @@ def collect(iso2: str):
         return extract_json(_resp_text(resp))
     # targeted: 5 запросов, по одному на домен
     all_items = []
-    for d in DOMAINS:
+    for d in SEARCH_DOMAINS:
         try:
             resp  = client.responses.create(model=MODEL, tools=[{"type": "web_search"}],
                                             input=build_domain_prompt(name, d))
@@ -142,11 +147,12 @@ def write_files(iso2: str, items: list) -> dict:
             })
     d_out = OUT / iso2
     d_out.mkdir(parents=True, exist_ok=True)
-    for d in DOMAINS:
+    active = SEARCH_DOMAINS if MODE == "targeted" else DOMAINS
+    for d in active:
         rec = {"country": iso2, "domain": d, "domain_ru": DOMAIN_RU[d],
                "mode": MODE, "collected_at": now, "count": len(by[d]), "items": by[d]}
         (d_out / f"{d}.json").write_text(json.dumps(rec, ensure_ascii=False, indent=2))
-    return {d: len(by[d]) for d in DOMAINS}
+    return {d: len(by[d]) for d in active}
 
 if __name__ == "__main__":
     iso2 = (sys.argv[1] if len(sys.argv) > 1 else "RU").upper()
