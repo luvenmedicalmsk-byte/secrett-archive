@@ -2067,7 +2067,7 @@ function getTierCapabilities(tier) {
       change_attribution:  true,
       summary:             true,
       forecast_7d:         'full',
-      forecast_30d:        false,
+      forecast_30d:        'full',
       forecast_90d:        false,
       forecast_180d:       false,
       country_comparison:  false,

@@ -3397,7 +3397,7 @@ const SCORE_COLOR = s => s >= 80 ? '#E84030' : s >= 65 ? '#E87030' : s >= 50 ? '
 function _getClientCaps(tier) {
   var C={
     free:      {tier:'free',      history_days:0,  drivers_details:false,change_attribution:false,summary:false,forecast_7d:'direction_only',forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:3,alerts_limit:3,timeline_days:7,scenario_access:'none',correlation_access:'none',propagation_access:'teaser',systemic_access:'score',early_warning_access:'score',decision_access:'score',resilience_access:'score',calibration_access:'score',strategy_access:'teaser',feedback_access:'teaser',validation_access:'teaser',dashboard_access:'teaser',dq_access:'teaser',so_access:'teaser',rec_access:'teaser',ase_access:'teaser',grie_access:'teaser'},
-    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:false,forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary',rec_access:'summary',ase_access:'summary',grie_access:'summary'},
+    signal:    {tier:'signal',    history_days:30, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:false,forecast_180d:false,intel_limit:10,alerts_limit:20,timeline_days:30,scenario_access:'base',correlation_access:'top3',propagation_access:'chain',systemic_access:'score+level',early_warning_access:'score+level',decision_access:'score+level',resilience_access:'score+level',calibration_access:'score+bias',strategy_access:'summary',feedback_access:'summary',validation_access:'summary',dashboard_access:'summary',dq_access:'summary',so_access:'summary',rec_access:'summary',ase_access:'summary',grie_access:'summary'},
     strategic: {tier:'strategic', history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:false,intel_limit:-1,alerts_limit:100,timeline_days:180,scenario_access:'full',correlation_access:'full',propagation_access:'full',systemic_access:'full',early_warning_access:'full',decision_access:'full',resilience_access:'full',calibration_access:'full',strategy_access:'full',feedback_access:'full',validation_access:'full',dashboard_access:'full',dq_access:'full',so_access:'full',rec_access:'full',ase_access:'full',grie_access:'full'},
     elite:     {tier:'elite',     history_days:-1, drivers_details:true, change_attribution:true, summary:true, forecast_7d:'full',           forecast_30d:'full',forecast_90d:'full',forecast_180d:'full',intel_limit:-1,alerts_limit:-1,timeline_days:-1,scenario_access:'drivers',correlation_access:'full+explain',propagation_access:'full+explain',systemic_access:'full+explain',early_warning_access:'full+explain',decision_access:'full+explain',resilience_access:'full+explain',calibration_access:'full+diagnostics',strategy_access:'full+explain',feedback_access:'full+explain',validation_access:'full+explain',dashboard_access:'full+explain',dq_access:'full+explain',so_access:'full+explain',rec_access:'full+explain',ase_access:'full+explain',grie_access:'full+explain'},
   };
@@ -3426,6 +3426,7 @@ async function fetchToday() {
     if (!r.ok) return null;
     _todayData = await r.json();
     if (_todayData && _todayData.tier) _clientCaps = _getClientCaps(_todayData.tier);
+    if (_todayData && _todayData.tier) { _grdfTier = (_todayData.tier !== 'free') ? 'SIGNAL_PRO' : 'FREE'; }
     return _todayData;
   } catch(e) {
     console.warn('[CC] fetchToday:', e.message);
@@ -3733,7 +3734,7 @@ function renderOutlook30d(fc30, caps){
     // STRATEGIC PRO+ only
     if(caps.forecast_7d==='full'&&!caps.forecast_30d){
       // SIGNAL PRO sees a locked teaser
-      block.innerHTML='<div class="cc-outlook"><div class="cc-outlook-label">Прогноз 30 дней</div><div class="cc-outlook-locked">🔒 Доступно в Strategic PRO</div></div>';
+      block.innerHTML='<div class="cc-outlook"><div class="cc-outlook-label">Прогноз 30 дней</div><div class="cc-outlook-locked"></div></div>';
     }else{
       block.innerHTML='';
     }
@@ -4291,7 +4292,7 @@ function renderAlerts(data) {
   // Show tier lock after limit
   if (limit > 0 && alerts.length >= limit) {
     var nextTier = tier === 'free' ? 'Signal PRO'
-                 : tier === 'signal' ? 'Strategic PRO'
+                 : tier === 'signal' ? null
                  : null;
     if (nextTier) {
       html += '<div class="ap-lock">🔒 Больше алертов в ' + nextTier + '</div>';
@@ -4403,7 +4404,7 @@ function renderCountryTimeline(data, caps) {
   var tierOrder = ['free','signal','strategic','elite'];
   var curIdx = tierOrder.indexOf(data.tier || 'free');
   if (curIdx < 3) {
-    var nextTier = curIdx === 0 ? 'Signal PRO (30 дней)' : curIdx === 1 ? 'Strategic PRO (180 дней)' : null;
+    var nextTier = curIdx === 0 ? 'Signal PRO (30 дней)' : null;
     if (nextTier) html += '<div class="cc-timeline-lock">🔒 Глубже в ' + nextTier + '</div>';
   }
 
@@ -4557,7 +4558,7 @@ function renderScenarios(data, caps) {
     html += '</div>';
     var dom = scenarios.find(function(s){return s.type === domSc;}) || scenarios[0];
     if (dom) html += _renderScCard(dom, access, SC_COL, ST_COL, HZ_COLS);
-    html += '<div class="cc-scenarios-lock">🔒 Все сценарии в Strategic PRO</div>';
+    html += '';
     html += '</div>';
     block.innerHTML = html;
     return;
@@ -4861,7 +4862,7 @@ function renderPropagation(data, caps) {
   }
 
   if (access === 'chain') {
-    html += '<div class="cc-prop-lock">🔒 Вторичные цепочки в Strategic PRO</div>';
+    html += '';
     html += '</div>';
     block.innerHTML = html;
     return;
@@ -5028,7 +5029,7 @@ function renderSystemic(data, caps) {
     var dom_cnt = data.active_domain_count || 0;
     html += '<div class="cc-sys-teaser">Активных доменов: ' + dom_cnt
           + ' · Критических комбинаций: ' + cc_cnt + '</div>'
-          + '<div class="cc-sys-lock">🔒 Комбинации рисков в Strategic PRO</div>';
+          + '';
     html += '</div>';
     block.innerHTML = html;
     return;
@@ -5160,7 +5161,7 @@ function renderEarlyWarning(data, caps) {
         + '</div>';
 
   if (access === 'score+level') {
-    html += '<div class="cc-ew-lock">🔒 Полный анализ в Strategic PRO</div>';
+    html += '';
     html += '</div>';
     block.innerHTML = html;
     return;
@@ -5302,7 +5303,7 @@ function renderDecisionSupport(data, caps) {
         + ' · ' + _esc(data.dominant_domain || '') + '</div>';
 
   if (access === 'score+level') {
-    html += '<div class="cc-ds-lock">🔒 Матрица действий в Strategic PRO</div>';
+    html += '';
     html += '</div>';
     block.innerHTML = html;
     return;
@@ -5491,7 +5492,7 @@ function renderResilience(data, caps) {
         + '</div>';
 
   if (access === 'score+level') {
-    html += '<div class="cc-res-lock">🔒 Матрица доменов в Strategic PRO</div>';
+    html += '';
     html += '</div>';
     block.innerHTML = html;
     return;
@@ -5631,7 +5632,7 @@ function renderCalibration(data, caps) {
   }
 
   if (access === 'score+bias') {
-    html += '<div class="cc-cal-lock">🔒 Полные метрики в Strategic PRO</div>';
+    html += '';
     html += '<div class="cc-cal-depth">История: ' + depth + ' дней</div>'
          + '</div>';
     block.innerHTML = html;
@@ -5759,7 +5760,7 @@ function renderStrategy(data, caps) {
   }
 
   if (access === 'summary') {
-    html += '<div class="cc-strat-lock">🔒 Полный план действий в Strategic PRO</div>'
+    html += ''
           + '</div>';
     block.innerHTML = html;
     return;
@@ -5916,7 +5917,7 @@ function renderStrategyFeedback(data, caps) {
   }
 
   if (access === 'summary') {
-    html += '<div class="cc-fb-lock">🔒 Аналитика действий в Strategic PRO</div>'
+    html += ''
           + '<div class="cc-fb-depth">История: ' + depth + 'д · Оценено: ' + nEval + '</div>'
           + '</div>';
     block.innerHTML = html;
@@ -6047,7 +6048,7 @@ function renderValidation(data, caps) {
   }
 
   if (access === 'summary') {
-    html += '<div class="cc-val-lock">🔒 Горизонтальный разбор в Strategic PRO</div>'
+    html += ''
           + '<div class="cc-val-depth">История: ' + depth + ' дней</div></div>';
     block.innerHTML = html;
     return;
@@ -6193,7 +6194,7 @@ function renderDashboard(data, caps) {
   }
 
   if (access === 'summary') {
-    html += '<div class="cc-dash-lock">🔒 Детальные метрики в Strategic PRO</div>'
+    html += ''
           + '<div class="cc-dash-depth">История: '+depth+' дней</div></div>';
     block.innerHTML = html; return;
   }
@@ -6382,7 +6383,7 @@ function renderDecisionQuality(data, caps) {
   }
 
   if (access === 'summary') {
-    html += '<div class="cc-dq-lock">🔒 Полный анализ в Strategic PRO</div>'
+    html += ''
           + '<div class="cc-dq-depth">История: '+depth+' · Оценено: '+nEval+'</div></div>';
     block.innerHTML = html; return;
   }
@@ -6529,7 +6530,7 @@ function renderStrategyOptimization(data,caps){
         +'<div class="cc-so-action-bar-wrap"><div class="cc-so-action-bar" style="width:'+Math.min(100,a.win_rate||0)+'%;background:'+aC+'"></div></div>'
         +'<span class="cc-so-action-val" style="color:'+aC+'">'+(a.avg_alpha>0?'+':'')+a.avg_alpha+'</span>'
         +'<span class="cc-so-action-badge boost">boost</span></div>';});}
-  if(access==='summary'){html+='<div class="cc-so-lock">🔒 Полный план в Strategic PRO</div><div class="cc-so-depth">История: '+depth+'</div></div>';block.innerHTML=html;return;}
+  if(access==='summary'){html+='<div class="cc-so-depth">История: '+depth+'</div></div>';block.innerHTML=html;return;}
   // STRATEGIC+: Section C (underperform) + D (rebalance) + E (diag)
   var up=data.underperforming||[];
   if(up.length){html+='<div class="cc-so-section">C · Слабые действия ('+up.length+')</div>';
@@ -6651,7 +6652,7 @@ function renderRecommendations(data, caps) {
   }
 
   if (access === 'summary') {
-    html += '<div class="cc-rec-lock">🔒 План действий в Strategic PRO</div></div>';
+    html += '</div>';
     block.innerHTML = html; return;
   }
 
@@ -6795,7 +6796,7 @@ function renderScenarioEvolution(data,caps){
         +'<span class="cc-ase-pw-status" style="color:#a78bfa">emerging</span>'
         +'</div>';});}
 
-  if(access==='summary'){html+='<div class="cc-ase-lock">🔒 Детали в Strategic PRO</div></div>';block.innerHTML=html;return;}
+  if(access==='summary'){html+='</div>';block.innerHTML=html;return;}
 
   // STRATEGIC+: C convergences + D divergences + E ranked + F landscape
   var conv=data.convergences||[];
@@ -6916,7 +6917,7 @@ function renderGlobalRisks(data,caps){
         +'<span class="cc-grie-risk-title">'+_esc(e.title||e.id||'')+'</span>'
         +'</div></div>';});}
 
-  if(access==='summary'){html+='<div class="cc-grie-lock">🔒 Каскады и системные риски в Strategic PRO</div></div>';block.innerHTML=html;return;}
+  if(access==='summary'){html+='</div>';block.innerHTML=html;return;}
 
   // STRATEGIC+: D cascades + E systemic + F ranking + outlook
   var casc=data.cascading_risks||[];
@@ -7347,7 +7348,7 @@ function _evM(val, lbl, col) {
     <div class="free-preview-row"><div class="free-preview-dot" style="background:#eab308"></div><div class="free-preview-text">Economic Instability Index · Действие</div><div class="free-preview-score">65%</div></div>
     <div class="free-lock-items">
       <div class="free-lock-item"><span><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span><div><strong>Signal Pro</strong>15 сигналов</div></div>
-      <div class="free-lock-item"><span><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><div><strong>Прогнозы</strong>24ч · 7д</div></div>
+      <div class="free-lock-item"><span><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span><div><strong>Прогнозы</strong>7д · 30д</div></div>
       <div class="free-lock-item"><span><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><div><strong>Архив</strong>Великое пробуждение</div></div>
       <div class="free-lock-item"><span><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><div><strong>EWS</strong>Раннее предупреждение</div></div>
       <div class="free-lock-item"><span><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21"/><line x1="8" y1="3" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="21"/></svg></span><div><strong>Risk Matrix</strong>2Y · 5Y</div></div>
@@ -7403,15 +7404,12 @@ function _evM(val, lbl, col) {
     <div style="margin-top:12px;background:rgba(184,151,58,0.05);border:0.5px solid rgba(184,151,58,0.22);border-radius:9px;padding:12px">
       <div style="font-size:11px;font-weight:500;color:#D4AF5A;margin-bottom:3px;display:flex;align-items:center;gap:6px"><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Программа для участников Архива</div>
       <div style="font-size:10px;color:rgba(168,160,144,0.65);margin-bottom:9px">Сигнал Про включён · Прогноз 7д включён · Участники получают доступ автоматически</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <div style="display:grid;grid-template-columns:1fr;gap:6px">
         <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:8px;text-align:center">
           <div style="font-size:10px;color:#B8973A;font-weight:500">Сигнал Про</div>
           <div style="font-size:14px;color:#f1f5f9;font-weight:600">0 ₽</div>
         </div>
-        <div style="background:rgba(0,0,0,.2);border-radius:6px;padding:8px;text-align:center;border:0.5px solid rgba(255,255,255,.05)">
-          <div style="font-size:10px;color:rgba(168,160,144,0.5);font-weight:500">Strategic Pro</div>
-          <div style="font-size:11px;color:rgba(168,160,144,0.4);margin-top:3px">Будущий уровень</div>
-        </div>
+        
       </div>
     </div>
   </div>
@@ -8040,10 +8038,8 @@ window.grdfCloseUpgrade = function() {
 var _grdfModEl=document.getElementById('grdf-upgrade-modal');
 if(_grdfModEl) _grdfModEl.addEventListener('click', function(e){ if(e.target===this) grdfCloseUpgrade(); });
 window.grdfActivateSignalPro = function() {
-  _grdfTier = 'SIGNAL_PRO';
   grdfCloseUpgrade();
-  // Re-render country panel if open
-  if(_grdfCurrentCountry) grdfRenderCountryPanel(_grdfCurrentCountry);
+  openAccess();
 };
 
 // ── Sprint 2: Bottom navigation ───────────────────────────────────
@@ -8418,7 +8414,7 @@ window.addEventListener('resize', function(){
       <div class="am-item"><span class="am-item-icon">🌍</span><div class="am-item-text"><strong>Country Intel</strong>180+ стран</div></div>
       <div class="am-item"><span class="am-item-icon">🔔</span><div class="am-item-text"><strong>EWS</strong>Раннее предупреждение</div></div>
       <div class="am-item"><span class="am-item-icon">📋</span><div class="am-item-text"><strong>Брифинги</strong>Еженедельно</div></div>
-      <div class="am-item"><span class="am-item-icon">📈</span><div class="am-item-text"><strong>Прогнозы</strong>24ч · 7д</div></div>
+      <div class="am-item"><span class="am-item-icon">📈</span><div class="am-item-text"><strong>Прогнозы</strong>7д · 30д</div></div>
     </div>
 
     <a href="https://payform.ru/bebmpSh/" target="_blank" class="am-btn-main">ОФОРМИТЬ ДОСТУП · 212 000 ₽ →</a>
