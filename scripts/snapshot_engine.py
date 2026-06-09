@@ -8456,7 +8456,7 @@ def _hazard_climate_risk(matched: list) -> int:
         src = str(e.get("source", "")).upper()
         dom = str(e.get("domain", "") or "")
         is_seis = src in ("USGS", "EMSC")
-        is_cat  = ("COPERNICUS" in src or "GDACS" in src or "GLOFAS" in src or "РОСГИДРОМЕТ" in src) and dom == "climate"
+        is_cat  = ("COPERNICUS" in src or "GDACS" in src or "GLOFAS" in src or "РОСГИДРОМЕТ" in src or "MGM" in src) and dom == "climate"
         if is_seis or is_cat:
             sev.append(float(e["severity"]))
     return int(max(sev)) if sev else 0

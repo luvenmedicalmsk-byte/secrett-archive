@@ -2626,6 +2626,82 @@ def fetch_rosgidromet_cap():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: MGM (Turkish State Meteorological Service) — метеопредупреждения Турции
+# servis.mgm.gov.tr отдаёт большой JSON-массив (архив+активные); фильтруем активные.
+# Цветовая система: yellow/orange/red. Климат Турции.
+# ══════════════════════════════════════════════════════════════════════════════
+_MGM_URL = "https://servis.mgm.gov.tr/web/meteoalarm"
+_MGM_SEV = {"yellow": 50, "orange": 70, "red": 90}
+_MGM_TYPE_RU = {
+    "thunderstorm": "Гроза", "rain": "Сильный дождь / ливень", "snow": "Снегопад",
+    "wind": "Сильный ветер", "dust": "Пыльная буря", "agricultural": "Агрометеоусловия",
+    "heat": "Аномальная жара", "frost": "Заморозки", "fog": "Туман",
+    "avalanche": "Лавинная опасность", "ice": "Гололёд",
+}
+
+def _mgm_repair(raw):
+    """Фид MGM большой и часто обрезается каналом — отрезаем до последнего целого объекта."""
+    try:
+        return json.loads(raw)
+    except Exception:
+        cut = raw.rfind("},")
+        if cut > 0:
+            try:
+                return json.loads(raw[:cut + 1] + "]")
+            except Exception:
+                return []
+        return []
+
+def fetch_mgm_turkey():
+    """Активные метеопредупреждения Турции (MGM). Климат TR."""
+    items = []
+    raw = fetch_url(_MGM_URL, timeout=25,
+                    headers={"User-Agent": "Mozilla/5.0",
+                             "Origin": "https://www.mgm.gov.tr",
+                             "Referer": "https://www.mgm.gov.tr/",
+                             "Accept": "application/json"})
+    if not raw:
+        print("  [SKIP] MGM Турция: фид недоступен", file=sys.stderr)
+        return items
+    data = _mgm_repair(raw)
+    if not data:
+        print("  [WARN] MGM Турция: пустой/битый ответ", file=sys.stderr)
+        return items
+    now = datetime.now(timezone.utc)
+    for a in data:
+        end = str(a.get("end", ""))
+        try:
+            if datetime.fromisoformat(end.replace("Z", "+00:00")) < now:
+                continue  # только активные
+        except Exception:
+            continue
+        w = a.get("weather", {}) or {}
+        # самый высокий цвет среди активных типов
+        col = "red" if w.get("red") else ("orange" if w.get("orange") else ("yellow" if w.get("yellow") else None))
+        if not col:
+            continue
+        types = w.get(col) or []
+        ru_types = ", ".join(_MGM_TYPE_RU.get(t, t) for t in types) or "Опасное явление"
+        txt = (a.get("text", {}) or {}).get(col, "") or ""
+        score = _MGM_SEV.get(col, 50)
+        title = f"{ru_types}: Турция (уровень {col})"
+        items.append({
+            "title": title[:130],
+            "desc": f"{txt} · MGM (Метеослужба Турции), уровень {col}. Турция".strip(" ·"),
+            "date": now.strftime("%Y-%m-%d"),
+            "source": "MGM Турция",
+            "_lat": 39.0, "_lng": 35.0,  # центр Турции (детальной геопривязки по town-кодам нет)
+            "_region": "Турция",
+            "_domain": "climate",
+            "_force_severity": score,
+            "_meta": {"kind": "mgm", "verified": True, "color": col,
+                      "types": types, "alertNo": a.get("alertNo")},
+        })
+    print(f"  MGM Турция: {len(items)} активных предупреждений", file=sys.stderr)
+    return items
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # GloFAS -- точки риска наводнений из прогноза речного стока (CEMS EWDS, S36.5)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_glofas():
@@ -5418,6 +5494,7 @@ if __name__ == '__main__':
             ('gdacs',              fetch_gdacs),
             ('usgs',               fetch_usgs_earthquakes),
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
+            ('mgm_turkey',         fetch_mgm_turkey),
             ('acled',              fetch_acled_rss),
             ('geopolitics',        fetch_geopolitics_rss),
             ('social',             fetch_social_rss),
