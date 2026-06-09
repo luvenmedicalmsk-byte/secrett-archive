@@ -1,61 +1,61 @@
 {
   "country": "IL",
-  "date": "2026-06-08",
+  "date": "2026-06-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T21:50:37.802484+00:00",
+  "generated_at": "2026-06-09T02:45:18.343960+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 57,
+      "score": 60,
       "props": {
-        "risk_score": 57
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "down"
+      "score": 23,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-IL-Золото_ста",
+      "type": "Signal",
+      "label": "Золото стабилизируется после того, как И",
+      "severity": 59,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-IL-Трамп_гово",
       "type": "Signal",
       "label": "Трамп говорит, что призовет Нетаньяху не",
       "severity": 55,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Трамп_нача",
-      "type": "Signal",
-      "label": "Трамп начал войну, которую не может конт",
-      "severity": 47,
       "domain": "geopolitical"
     }
   ],
@@ -106,25 +106,25 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IL",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IL",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IL-Check_Poin",
       "to": "DOMAIN-IL-technology",
       "type": "AMPLIFIES",
       "weight": 0.95
     },
     {
+      "from": "SIGNAL-IL-Золото_ста",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.59
+    },
+    {
       "from": "SIGNAL-IL-Трамп_гово",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-IL-Трамп_нача",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }

@@ -1,33 +1,33 @@
 {
   "country": "US",
-  "date": "2026-06-08",
+  "date": "2026-06-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-08T21:50:37.794668+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-09T02:45:18.335438+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 50,
+      "score": 49,
       "props": {
-        "risk_score": 50
+        "risk_score": 49
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 49,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -40,28 +40,28 @@
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "stable"
+      "score": 32,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 20,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -87,18 +87,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-US-Экономика_",
+      "id": "SIGNAL-US-Лесной_пож",
       "type": "Signal",
-      "label": "Экономика США демонстрирует удивительную",
-      "severity": 48,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-Агентный_И",
-      "type": "Signal",
-      "label": "Агентный ИИ открывает двери для вооружен",
+      "label": "Лесной пожар CHESTNUT, Шелан, Вашингтон",
       "severity": 47,
-      "domain": "geopolitical"
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +99,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-US",
@@ -124,7 +117,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-US",
@@ -136,13 +129,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,20 +156,35 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Новая_атак",
       "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-US-Экономика_",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-US-Агентный_И",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "SIGNAL-US-Лесной_пож",
+      "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.47
     }
