@@ -1769,7 +1769,7 @@ const NEWS_TG_CHANNELS = [
   { handle: 'bbbreaking',      name: 'Breaking' },
   { handle: 'bloomberg',       name: 'Bloomberg' },
   { handle: 'rbc_news',        name: 'РБК' },
-  { handle: 'toporlive',       name: 'Топор Live' },
+  { handle: 'toporlive',       name: 'T Live' },
 ];
 function _stripNonFlagEmoji(s){
   if(!s) return s;
