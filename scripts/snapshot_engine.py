@@ -768,6 +768,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         f"drivers={len(drivers)} summary={'ok' if summary else 'null'}",
         file=sys.stderr
     )
+    snap["_seismic_risk"] = _seismic_climate_risk(matched)
     snap["domain_scores"] = _reloc_domain_scores(iso2, snap)
     return snap
 
@@ -8386,13 +8387,25 @@ def _signal_domain_score(cc: str, domain: str):
     return int(max(5, min(95, round(score))))
 
 
-# Путь 2: климатический «пол» риска для жарких/аридных стран.
-# Хроническая жара/водный стресс не ловятся событийными лентами — задаём минимум риска,
-# чтобы отсутствие новостей не делало страну «климатически безопасной».
-_CLIMATE_RISK_FLOOR = {
-    "AE": 60, "SA": 62, "QA": 60, "KW": 62, "OM": 58, "BH": 58,
+# Климатический baseline риска по странам (вариант 3, экспертная калибровка).
+# Учитывает хроническую экспозицию: жара/засуха/пожары/паводки/сейсмика.
+# Событийные ленты и собранные сигналы накладываются сверху (берётся максимум).
+_CLIMATE_BASELINE = {
+    # активные 17
+    "RU": 48, "BY": 30, "KZ": 42, "GE": 50, "TR": 62, "DE": 40, "IT": 58,
+    "ES": 60, "RS": 42, "GB": 30, "US": 55, "CA": 42, "AE": 60, "UA": 42,
+    "ME": 46, "CY": 56, "TH": 58,
+    # жаркие/аридные (страховка на случай добавления стран)
+    "SA": 62, "QA": 60, "KW": 62, "OM": 58, "BH": 58,
     "EG": 58, "IR": 58, "IQ": 60, "IN": 55, "PK": 58,
 }
+
+def _seismic_climate_risk(matched: list) -> int:
+    """Макс. severity сейсмособытий (USGS/EMSC) по стране — вливается в климатический домен."""
+    sev = [float(e.get("severity", 0)) for e in matched
+           if str(e.get("source", "")).upper() in ("USGS", "EMSC")
+           and isinstance(e.get("severity"), (int, float))]
+    return int(max(sev)) if sev else 0
 
 def _reloc_domain_scores(cc: str, snap: dict) -> dict:
     """Flat domain risk scores {climate,geopolitics,economy,technology,social: 0-100} for snapshot consumers (Relocation layer)."""
@@ -8422,8 +8435,10 @@ def _reloc_domain_scores(cc: str, snap: dict) -> dict:
         sv = _signal_domain_score(cc, sigdom)
         if sv is not None:
             out[sigdom] = sv
-    floor = _CLIMATE_RISK_FLOOR.get(cc)
-    if floor is not None:
+    # Климат: максимум из оценки движка/сигнала, странового baseline и сейсмики (USGS/EMSC)
+    seis  = snap.pop("_seismic_risk", 0) or 0
+    floor = max(_CLIMATE_BASELINE.get(cc, 0), seis)
+    if floor:
         out["climate"] = max(out.get("climate", 0) or 0, floor)
     return out
 
