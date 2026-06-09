@@ -194,6 +194,66 @@ COUNTRIES = {
         "kw": ["switzerland","швейцария","zurich","цюрих","geneva","женева","swiss franc","chf"],
         "baseline": 32,
     },
+    "GE": {
+        "name": "Georgia",      "name_ru": "Грузия",
+        "kw": ["georgia","грузия","tbilisi","тбилиси","georgian","грузинск"],
+        "baseline": 58,
+    },
+    "AM": {
+        "name": "Armenia",      "name_ru": "Армения",
+        "kw": ["armenia","армения","yerevan","ереван","armenian","армянск"],
+        "baseline": 60,
+    },
+    "RS": {
+        "name": "Serbia",       "name_ru": "Сербия",
+        "kw": ["serbia","сербия","belgrade","белград","serbian","сербск"],
+        "baseline": 55,
+    },
+    "ME": {
+        "name": "Montenegro",   "name_ru": "Черногория",
+        "kw": ["montenegro","черногория","podgorica","подгорица","montenegrin","черногорск"],
+        "baseline": 45,
+    },
+    "UZ": {
+        "name": "Uzbekistan",   "name_ru": "Узбекистан",
+        "kw": ["uzbekistan","узбекистан","tashkent","ташкент","uzbek","узбекск"],
+        "baseline": 52,
+    },
+    "TH": {
+        "name": "Thailand",     "name_ru": "Таиланд",
+        "kw": ["thailand","таиланд","тайланд","bangkok","бангкок","thai","тайск"],
+        "baseline": 50,
+    },
+    "VN": {
+        "name": "Vietnam",      "name_ru": "Вьетнам",
+        "kw": ["vietnam","вьетнам","hanoi","ханой","vietnamese","вьетнамск"],
+        "baseline": 45,
+    },
+    "MY": {
+        "name": "Malaysia",     "name_ru": "Малайзия",
+        "kw": ["malaysia","малайзия","kuala lumpur","куала-лумпур","malaysian","малайзийск"],
+        "baseline": 45,
+    },
+    "SG": {
+        "name": "Singapore",    "name_ru": "Сингапур",
+        "kw": ["singapore","сингапур","singaporean","сингапурск"],
+        "baseline": 38,
+    },
+    "PT": {
+        "name": "Portugal",     "name_ru": "Португалия",
+        "kw": ["portugal","португалия","lisbon","лиссабон","portuguese","португальск"],
+        "baseline": 42,
+    },
+    "CY": {
+        "name": "Cyprus",       "name_ru": "Кипр",
+        "kw": ["cyprus","кипр","nicosia","никосия","cypriot","кипрск"],
+        "baseline": 45,
+    },
+    "GR": {
+        "name": "Greece",       "name_ru": "Греция",
+        "kw": ["greece","греция","athens","афины","greek","греческ"],
+        "baseline": 48,
+    },
 }
 
 DOMAIN_LABELS = {
@@ -29284,7 +29344,7 @@ def _build_ews_scenarios(snapshots: list, forecasts_data: dict) -> dict:
     fc_map = {f["country"]: f for f in forecasts_data.get("forecasts",[])}
     scenarios_by_country: list[dict] = []
 
-    for snap in snapshots[:25]:   # top 25 countries
+    for snap in snapshots[:50]:   # all tracked countries
         iso2  = snap["country"]
         risk  = int(snap.get("risk_score",50) or 50)
         delta = float(snap.get("delta",0) or 0)
@@ -29499,7 +29559,7 @@ def _build_ews_history(snapshots: list, scores_data: dict) -> dict:
 
     score_map = {s["country"]: s for s in scores_data.get("scores",[])}
 
-    for snap in snapshots[:20]:
+    for snap in snapshots[:50]:
         iso2  = snap["country"]
         risk  = int(snap.get("risk_score",50) or 50)
         dom   = snap.get("dominant_domain","economic") or "economic"
@@ -30953,7 +31013,7 @@ def _build_ci_signals(snapshots: list) -> dict:
     now_ts  = datetime.now(timezone.utc).isoformat()
     feeds: list[dict] = []
 
-    for snap in sorted(snapshots, key=lambda x: -int(x.get("risk_score",50) or 50))[:25]:
+    for snap in sorted(snapshots, key=lambda x: -int(x.get("risk_score",50) or 50))[:50]:
         iso2  = snap["country"]
         risk  = int(snap.get("risk_score",50) or 50)
         delta = float(snap.get("delta",0) or 0)
@@ -31094,7 +31154,7 @@ def _build_ci_risk_matrix(snapshots: list) -> dict:
     """Part 7: Risk Matrix — 2Y (SIGNAL PRO) / 5Y / 10Y (STRATEGIC PRO)."""
     matrix_data: list[dict] = []
 
-    for snap in snapshots[:20]:
+    for snap in snapshots[:50]:
         iso2   = snap["country"]
         risk   = int(snap.get("risk_score",50) or 50)
         delta  = float(snap.get("delta",0) or 0)
@@ -31121,7 +31181,7 @@ def _build_ci_risk_matrix(snapshots: list) -> dict:
         "total_countries": len(matrix_data),
         "tier_gates":      _CI_MATRIX_TIERS,
         "horizons":        {"2Y":"SIGNAL_PRO","5Y":"STRATEGIC_PRO","10Y":"STRATEGIC_PRO"},
-        "matrices":        matrix_data[:10],
+        "matrices":        matrix_data[:50],
         "as_of":           TODAY,
     }
 
