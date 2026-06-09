@@ -853,6 +853,7 @@ def update_index(snapshots: list[dict]) -> None:
                 "dominant_domain":  s["dominant_domain"],
                 "escalation_level": s["escalation_level"],
                 "delta":            s["delta"],
+                "domain_scores":    s.get("domain_scores") or {},
                 "forecast_7d":      s.get("forecast_7d"),
                 "forecast_30d":     s.get("forecast_30d"),
                 # summary intentionally omitted — served only to premium via history endpoint
