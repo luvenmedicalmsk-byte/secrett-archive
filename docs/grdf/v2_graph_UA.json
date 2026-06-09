@@ -2,60 +2,60 @@
   "country": "UA",
   "date": "2026-06-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-09T21:13:58.142406+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-09T21:55:26.779150+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 45,
+      "score": 47,
       "props": {
-        "risk_score": 45
+        "risk_score": 47
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -87,10 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-Польша_не_",
+      "id": "SIGNAL-UA-Saab_опубл",
       "type": "Signal",
-      "label": "Польша не будет блокировать начало перег",
-      "severity": 42,
+      "label": "Saab опубликован в Financial Times о под",
+      "severity": 47,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-UA-Скептицизм",
+      "type": "Signal",
+      "label": "Скептицизм — это стратегия внешней полит",
+      "severity": 47,
       "domain": "geopolitical"
     }
   ],
@@ -99,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-UA",
@@ -123,13 +130,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-UA",
@@ -156,16 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-Закон_о_по",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.47
     },
     {
-      "from": "SIGNAL-UA-Польша_не_",
+      "from": "SIGNAL-UA-Saab_опубл",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-UA-Скептицизм",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }
