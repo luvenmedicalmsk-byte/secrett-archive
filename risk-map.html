@@ -7781,6 +7781,74 @@ function grdfRiskMatrixHTML(risk, delta, isSig){
   }
   return h;
 }
+// ── Relocation Intelligence Layer V1 (derived from Atlas domain_scores; no new model) ──
+var _RELOC_FUTURE_LAYERS = {
+  strategic: ['Long-Term Outlook 2Y','Long-Term Outlook 5Y','Long-Term Outlook 10Y','Country Comparison','Relocation Scenarios','Strategic Relocation Analysis','Migration Opportunities','Climate Outlook','Economic Outlook','Strategic Recommendations','Country Benchmarking','Country Analogues'],
+  elite: ['Personal Relocation Briefing','Multi-Country Comparison','Executive Reports','Custom Intelligence','API Access']
+};
+function _relocCol(v){ return v>=75?'#22c55e':v>=60?'#84cc16':v>=45?'#eab308':v>=30?'#f97316':'#ef4444'; }
+function grdfReloc(c){
+  var ds=(c&&c.domain_scores)||{};
+  function sf(d){ var v=parseFloat(ds[d]); if(isNaN(v))v=50; return Math.max(0,Math.min(100,Math.round(100-v))); }
+  var climate=sf('climate'), geo=sf('geopolitics'), economic=sf('economy'), technology=sf('technology'), social=sf('social');
+  var resilience=Math.round((climate+geo+economic+technology+social)/5);
+  return {resilience:resilience, climate:climate, geo:geo, economic:economic, technology:technology, social:social};
+}
+function grdfRelocTopListsHTML(){
+  var all=(((typeof _grdfData!=='undefined'&&_grdfData)&&_grdfData.countries)||[]).map(function(x){ return {cc:x.country, name:x.country_name||x.country, R:grdfReloc(x)}; });
+  if(!all.length) return '';
+  function top(key,title){
+    var arr=all.slice().sort(function(a,b){ return b.R[key]-a.R[key]; }).slice(0,5);
+    var s='<div style="margin-bottom:9px"><div style="font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;margin-bottom:4px">'+title+'</div>';
+    arr.forEach(function(it,i){
+      s+='<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:2px 0"><span style="color:rgba(255,255,255,.3);width:13px">'+(i+1)+'</span><span>'+_flag(it.cc)+'</span><span style="flex:1;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(it.name||it.cc)+'</span><span style="color:'+_relocCol(it.R[key])+';font-weight:600">'+it.R[key]+'</span></div>';
+    });
+    return s+'</div>';
+  }
+  var h='<div style="padding:4px 14px 12px;border-top:1px solid rgba(184,151,58,.12);margin-top:4px">';
+  h+='<div style="font-size:11px;font-weight:600;color:#cbd5e1;margin:2px 0 8px">Рейтинги релокации · '+all.length+' стран</div>';
+  h+=top('resilience','Top Resilient Countries');
+  h+=top('climate','Top Climate Safe');
+  h+=top('economic','Top Economic Safe');
+  h+=top('technology','Top Technology Leaders');
+  h+=top('social','Top Social Stability');
+  h+='</div>';
+  return h;
+}
+function grdfRelocPanelHTML(c, isSig){
+  var R=grdfReloc(c);
+  var h='<div class="grdf-section-head">Relocation Intelligence</div>';
+  if(!isSig){
+    h+='<div style="padding:0 14px 10px"><div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(184,151,58,0.18)">';
+    h+='<div style="padding:14px;filter:blur(3px);opacity:.5"><div style="font-size:26px;color:#D4AF5A">'+R.resilience+'</div><div style="font-size:9px;color:#94a3b8">Resilience Score</div></div>';
+    h+='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#D4AF5A;background:rgba(6,5,10,.42)">🔒 Оценка стран для релокации — в Signal PRO</div>';
+    h+='</div></div>';
+    return h;
+  }
+  var all=(((typeof _grdfData!=='undefined'&&_grdfData)&&_grdfData.countries)||[]).map(function(x){ return {cc:x.country, r:grdfReloc(x).resilience}; });
+  all.sort(function(a,b){ return b.r-a.r; });
+  var ri=-1; for(var i=0;i<all.length;i++){ if(all[i].cc===c.country){ ri=i; break; } }
+  var rank = ri<0?'—':(ri+1);
+  var lvl = R.resilience>=75?'Высокая устойчивость':R.resilience>=55?'Умеренная устойчивость':'Низкая устойчивость';
+  h+='<div style="padding:0 14px 12px">';
+  h+='<div style="display:flex;align-items:baseline;gap:11px;margin-bottom:9px"><span style="font-family:\'Cormorant Garamond\',serif;font-size:34px;line-height:1;color:'+_relocCol(R.resilience)+'">'+R.resilience+'</span><div><div style="font-size:11px;color:#e2e8f0">Resilience Score</div><div style="font-size:9px;color:#94a3b8">'+lvl+' · #'+rank+' из '+all.length+'</div></div></div>';
+  var rows=[['Климат',R.climate],['Геополитика',R.geo],['Экономика',R.economic],['Технологии',R.technology],['Социум',R.social]];
+  rows.forEach(function(it){
+    var col=_relocCol(it[1]);
+    h+='<div style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="color:#cbd5e1">'+it[0]+'</span><span style="color:'+col+';font-weight:600">'+it[1]+'</span></div><div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px"><div style="height:100%;width:'+it[1]+'%;background:'+col+';border-radius:2px"></div></div></div>';
+  });
+  h+='<div style="font-size:8px;color:rgba(255,255,255,.3);margin-top:4px">Шкала 0–100: выше — безопаснее. Из доменных индексов Atlas, обновляется ежедневно.</div>';
+  h+='</div>';
+  if(typeof _GRDF_SELL_FUTURE!=='undefined' && _GRDF_SELL_FUTURE){
+    h+='<div style="padding:0 14px 10px">';
+    _RELOC_FUTURE_LAYERS.strategic.forEach(function(t){ h+='<div style="font-size:10px;color:rgba(255,255,255,.3);padding:2px 0">🔒 '+t+'</div>'; });
+    _RELOC_FUTURE_LAYERS.elite.forEach(function(t){ h+='<div style="font-size:10px;color:rgba(255,255,255,.25);padding:2px 0">🔒 '+t+'</div>'; });
+    h+='</div>';
+  }
+  h+=grdfRelocTopListsHTML();
+  return h;
+}
+
 function grdfRenderCountryPanel(cc) {
   var countries = (_grdfData&&_grdfData.countries)||[];
   var c = countries.find(function(x){ return x.country===cc; });
@@ -7906,6 +7974,7 @@ function grdfRenderCountryPanel(cc) {
   html += '</div>';
 
   html += grdfRiskMatrixHTML(parseFloat(c.risk_score||50), parseFloat(c.delta||0), isSig);
+  html += grdfRelocPanelHTML(c, isSig);
   // Drivers (paid) / single Архив + Signal Pro zone (free)
   if(isSig){
     html += '<div class="grdf-section-head">Риск-драйверы</div>';
