@@ -2260,6 +2260,7 @@ function _filterSnapshotTier(data, caps) {
       escalation_level: c.escalation_level,
       delta:            c.delta,
     };
+    if (c.domain_scores) base.domain_scores = c.domain_scores;
 
     // Drivers: names+domain+severity always visible; impact requires drivers_details
     if (c.drivers && c.drivers.length) {

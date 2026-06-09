@@ -758,6 +758,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         f"drivers={len(drivers)} summary={'ok' if summary else 'null'}",
         file=sys.stderr
     )
+    snap["domain_scores"] = _reloc_domain_scores(iso2, snap)
     return snap
 
 
@@ -8327,6 +8328,32 @@ def _domain_scores_fill_fallback(snap: dict,
             }
             scores[d] = max(5, min(100, round(base * factors.get(d, 0.75))))
     return scores
+
+
+def _reloc_domain_scores(cc: str, snap: dict) -> dict:
+    """Flat domain risk scores {climate,geopolitics,economy,technology,social: 0-100} for snapshot consumers (Relocation layer)."""
+    try:
+        full = _get_domain_scores(cc, snap)
+    except Exception:
+        return {}
+    def pick(*names):
+        for n in names:
+            v = full.get(n)
+            if isinstance(v, dict) and v.get("score") is not None:
+                return int(v["score"])
+            if isinstance(v, (int, float)):
+                return int(v)
+        return None
+    out = {}
+    for outk, srcs in (("climate", ("climate",)),
+                       ("geopolitics", ("geopolitical", "geopolitics")),
+                       ("economy", ("economic", "economy")),
+                       ("technology", ("technology",)),
+                       ("social", ("social",))):
+        v = pick(*srcs)
+        if v is not None:
+            out[outk] = v
+    return out
 
 
 def _get_domain_scores(cc: str, snap: dict) -> dict[str, dict]:
