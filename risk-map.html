@@ -7749,6 +7749,29 @@ window._grdfIdxInfo = function(k){
   box.classList.add('open');
 };
 
+function grdfRiskMatrixHTML(risk, delta, isSig){
+  risk = Math.max(0, Math.min(100, Math.round(risk||50))); delta = delta||0;
+  function rmCol(v){ return v>=75?'#ef4444':v>=60?'#f97316':v>=45?'#eab308':v>=30?'#84cc16':'#22c55e'; }
+  var m2=[]; for(var m=1;m<=24;m++){ m2.push(Math.min(100,Math.round(risk+delta*(m/12)*0.8))); }
+  var y5=[]; for(var y=1;y<=5;y++){ y5.push(Math.min(100,Math.round(risk+delta*y*0.3))); }
+  var h='<div class="grdf-section-head">Risk Matrix · проекция риска</div>';
+  if(isSig){
+    h+='<div style="padding:0 14px 10px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px"><span style="font-size:10px;color:#94a3b8;letter-spacing:.04em">2 года · по месяцам</span><span style="font-size:10px;color:'+rmCol(m2[23])+';font-weight:600">'+m2[0]+' → '+m2[23]+'</span></div>';
+    h+='<div style="display:flex;gap:1px;height:22px;margin-bottom:2px">';
+    m2.forEach(function(v){ h+='<div style="flex:1;background:'+rmCol(v)+';opacity:'+(0.45+v/100*0.55).toFixed(2)+';border-radius:1px"></div>'; });
+    h+='</div><div style="display:flex;justify-content:space-between;font-size:7px;color:rgba(255,255,255,.25);margin-bottom:9px"><span>сейчас</span><span>6м</span><span>12м</span><span>18м</span><span>24м</span></div>';
+    h+='<div style="font-size:10px;color:#94a3b8;letter-spacing:.04em;margin-bottom:3px">5 лет · по годам</div>';
+    h+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px">';
+    y5.forEach(function(v,i){ h+='<div style="text-align:center;background:rgba(255,255,255,.03);border-radius:4px;padding:5px 2px"><div style="font-size:7px;color:rgba(255,255,255,.3);margin-bottom:2px">'+(i+1)+'Y</div><div style="font-size:14px;font-weight:700;font-family:\'Cormorant Garamond\',serif;color:'+rmCol(v)+'">'+v+'</div></div>'; });
+    h+='</div><div style="font-size:8px;color:rgba(255,255,255,.28);margin-top:6px">Проекция на основе текущего риска и динамики. Не является гарантией.</div></div>';
+  } else {
+    h+='<div style="padding:0 14px 10px"><div style="position:relative;border-radius:6px;overflow:hidden"><div style="display:flex;gap:1px;height:22px;filter:blur(2px);opacity:.5">';
+    m2.forEach(function(v){ h+='<div style="flex:1;background:'+rmCol(v)+';border-radius:1px"></div>'; });
+    h+='</div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#D4AF5A;background:rgba(6,5,10,.35)">🔒 Risk Matrix 2Y / 5Y — в Signal PRO</div></div></div>';
+  }
+  return h;
+}
 function grdfRenderCountryPanel(cc) {
   var countries = (_grdfData&&_grdfData.countries)||[];
   var c = countries.find(function(x){ return x.country===cc; });
@@ -7873,6 +7896,7 @@ function grdfRenderCountryPanel(cc) {
   }
   html += '</div>';
 
+  html += grdfRiskMatrixHTML(parseFloat(c.risk_score||50), parseFloat(c.delta||0), isSig);
   // Drivers (paid) / single Архив + Signal Pro zone (free)
   if(isSig){
     html += '<div class="grdf-section-head">Риск-драйверы</div>';
@@ -7901,7 +7925,7 @@ function grdfRenderCountryPanel(cc) {
     html += '<div class="grdf-pro-item">Прогноз риска на 7 дней</div>';
     html += '<div class="grdf-pro-item">Signal Drivers — 5 драйверов + сигналы SIG-NNN</div>';
     html += '<div class="grdf-pro-item">Country Intelligence — досье страны</div>';
-    html += '<div class="grdf-pro-item">Risk Matrix 2 / 5 / 10</div>';
+    html += '<div class="grdf-pro-item">Risk Matrix 2Y / 5Y</div>';
     html += '<div class="grdf-pro-item">Уверенность модели</div>';
     html += '<div class="grdf-pro-item">Расширенная аналитика</div>';
     html += '</div>';
