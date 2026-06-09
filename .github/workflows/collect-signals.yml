@@ -1,12 +1,18 @@
-name: Сбор сигналов
+name: Сбор сигналов (OpenAI — ОТКЛЮЧЁН)
+
+# ⚠️ ПЛАТНЫЙ воркфлоу (OpenAI web_search, ~$6 за прогон ALL).
+# Расписание убрано. Запуск только вручную и только с явным подтверждением.
+# Автопополнение карты в OpenAI выключено; баланс ограничен.
 
 on:
-  schedule:
-    - cron: '0 18 * * *'   # ежедневно ~21:00 (Анкара/МСК), сбор по всем странам
   workflow_dispatch:
     inputs:
+      confirm:
+        description: 'Платно! Впишите ровно CONFIRM, иначе запуск не пойдёт'
+        required: true
+        default: 'NO'
       country:
-        description: 'Код страны (ISO2) или ALL'
+        description: 'Код страны (ISO2). ALL = все 17 (дорого!)'
         required: true
         default: 'RU'
       model:
@@ -21,6 +27,14 @@ jobs:
       contents: write
 
     steps:
+      - name: Предохранитель — требуется подтверждение CONFIRM
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "CONFIRM" ]; then
+            echo "::error::Сбор не запущен. Это ПЛАТНЫЙ запуск (OpenAI). Впишите CONFIRM в поле подтверждения."
+            exit 1
+          fi
+          echo "Подтверждение получено."
+
       - name: Клонирование репозитория
         uses: actions/checkout@v4
         with:
@@ -40,7 +54,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          CC="${{ github.event.inputs.country }}"; CC="${CC:-ALL}"
+          CC="${{ github.event.inputs.country }}"; CC="${CC:-RU}"
           MDL="${{ github.event.inputs.model }}"; MDL="${MDL:-gpt-5.4-mini}"
           export SIGNALS_MODEL="$MDL"
           echo "Сбор сигналов: $CC (model=$MDL)"
@@ -54,7 +68,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else
-            CC="${{ github.event.inputs.country }}"; CC="${CC:-ALL}"
+            CC="${{ github.event.inputs.country }}"; CC="${CC:-RU}"
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
             git commit -m "Сигналы · $CC · $TIMESTAMP"
             git pull --rebase origin main
