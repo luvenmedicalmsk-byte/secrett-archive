@@ -8331,6 +8331,39 @@ def _domain_scores_fill_fallback(snap: dict,
     return scores
 
 
+SIGNALS_DIR = DOCS_DIR / "signals"
+_SIGNAL_MAX_AGE_DAYS = 3
+
+def _signal_domain_score(cc: str, domain: str):
+    """Risk 0-100 из собранных сигналов docs/signals/{cc}/{domain}.json.
+    None - если файла нет, он устарел (> _SIGNAL_MAX_AGE_DAYS дней) или пуст."""
+    path = SIGNALS_DIR / cc / f"{domain}.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        return None
+    items = data.get("items") or []
+    if not items:
+        return None
+    ca = data.get("collected_at", "")
+    if ca:
+        try:
+            dt = datetime.fromisoformat(ca)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            if (datetime.now(timezone.utc) - dt).days > _SIGNAL_MAX_AGE_DAYS:
+                return None
+        except Exception:
+            pass
+    sevs = [s for s in (int(it.get("severity", 0) or 0) for it in items) if s > 0]
+    if not sevs:
+        return None
+    score = min(95, round(sum(sevs) / len(sevs) + min(len(sevs) * 1.0, 8)))
+    return int(score)
+
+
 def _reloc_domain_scores(cc: str, snap: dict) -> dict:
     """Flat domain risk scores {climate,geopolitics,economy,technology,social: 0-100} for snapshot consumers (Relocation layer)."""
     try:
@@ -8354,6 +8387,11 @@ def _reloc_domain_scores(cc: str, snap: dict) -> dict:
         v = pick(*srcs)
         if v is not None:
             out[outk] = v
+    # Гибрид: свежие собранные сигналы перекрывают оценку движка по 4 поисковым доменам
+    for sigdom in ("climate", "economy", "technology", "social"):
+        sv = _signal_domain_score(cc, sigdom)
+        if sv is not None:
+            out[sigdom] = sv
     return out
 
 
