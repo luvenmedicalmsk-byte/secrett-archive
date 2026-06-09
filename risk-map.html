@@ -2812,7 +2812,7 @@ window._grdfDisasterEnsure=function(){
   function rgDate(d){ try{ return new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}); }catch(e){ return ''; } }
   function renderRosgidromet(){
     var box=document.getElementById('rosgidromet-list'); if(!box) return;
-    if(!rgCache.length){ box.innerHTML=''; return; }
+    if(!rgCache.length){ box.innerHTML='<div class="qk-empty">Нет активных предупреждений Росгидромета.</div>'; return; }
     var hdr='<div style="padding:12px 14px 6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#B8973A">Росгидромет · официальные предупреждения ('+rgCache.length+')</div>';
     box.innerHTML=hdr+rgCache.map(function(it){
       var s=it.severity||0, col=rgCol(s);
@@ -2845,7 +2845,7 @@ window._grdfDisasterEnsure=function(){
     else { renderRosgidromet(); }
   };
   var _o2=window.grdfAlertsTab;
-  window.grdfAlertsTab=function(name){ if(_o2) _o2(name); if(name==='weather') window._grdfRosgidrometEnsure(); };
+  window.grdfAlertsTab=function(name){ if(_o2) _o2(name); var ru=document.getElementById('ga-russia'); if(ru) ru.style.display=(name==='russia'?'block':'none'); if(name==='russia') window._grdfRosgidrometEnsure(); };
 })();
 
 
@@ -7344,6 +7344,7 @@ function _evM(val, lbl, col) {
   <div id="grdf-alerts-tabs">
     <button class="ga-tab active" data-tab="quakes" onclick="grdfAlertsTab('quakes')">Землетрясения</button>
     <button class="ga-tab" data-tab="weather" onclick="grdfAlertsTab('weather')">Экстремальная погода</button>
+    <button class="ga-tab" data-tab="russia" onclick="grdfAlertsTab('russia')">Россия</button>
   </div>
   <div id="ga-quakes">
     <div id="quake-tiers">
@@ -7354,8 +7355,10 @@ function _evM(val, lbl, col) {
     <div id="quake-list"></div>
   </div>
   <div id="ga-weather" style="display:none">
-    <div id="rosgidromet-list"></div>
     <div id="weather-list"><div class="qk-empty">Загрузка ленты ЧС…</div></div>
+  </div>
+  <div id="ga-russia" style="display:none">
+    <div id="rosgidromet-list"><div class="qk-empty">Загрузка предупреждений…</div></div>
   </div>
 </div>
 
