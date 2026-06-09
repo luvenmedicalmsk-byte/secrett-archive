@@ -6954,7 +6954,7 @@ async function handleGRDF(request, env) {
         if (!d) return new Response(JSON.stringify({error:'V10 action atlas not built yet'}),{status:404,headers:CORS});
         const url4 = new URL(request.url);
         const cc   = url4.searchParams.get('cc')?.toUpperCase().replace(/[^A-Z]/g,'');
-        const atlas= cc ? d.atlas?.filter(a=>a.country===cc) : d.atlas?.slice(0,25);
+        const atlas= cc ? d.atlas?.filter(a=>a.country===cc) : d.atlas?.slice(0,50);
         return new Response(JSON.stringify({date:d.date,total_countries:d.total_countries,
           total_actions:d.total_actions,action_types:d.action_types,atlas,tier}),{headers:CORS});
       } catch(e){return new Response(JSON.stringify({error:String(e)}),{status:502,headers:CORS});}
