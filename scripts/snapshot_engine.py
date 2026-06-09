@@ -768,7 +768,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
         f"drivers={len(drivers)} summary={'ok' if summary else 'null'}",
         file=sys.stderr
     )
-    snap["_seismic_risk"] = _seismic_climate_risk(matched)
+    snap["_seismic_risk"] = _hazard_climate_risk(matched)
     snap["domain_scores"] = _reloc_domain_scores(iso2, snap)
     return snap
 
@@ -8400,11 +8400,19 @@ _CLIMATE_BASELINE = {
     "EG": 58, "IR": 58, "IQ": 60, "IN": 55, "PK": 58,
 }
 
-def _seismic_climate_risk(matched: list) -> int:
-    """Макс. severity сейсмособытий (USGS/EMSC) по стране — вливается в климатический домен."""
-    sev = [float(e.get("severity", 0)) for e in matched
-           if str(e.get("source", "")).upper() in ("USGS", "EMSC")
-           and isinstance(e.get("severity"), (int, float))]
+def _hazard_climate_risk(matched: list) -> int:
+    """Макс. severity природных катастроф по стране — вливается в климатический домен.
+    Сейсмика: USGS/EMSC. Катастрофы (паводки/пожары/штормы): Copernicus EMS, GDACS, GloFAS."""
+    sev = []
+    for e in matched:
+        if not isinstance(e.get("severity"), (int, float)):
+            continue
+        src = str(e.get("source", "")).upper()
+        dom = str(e.get("domain", "") or "")
+        is_seis = src in ("USGS", "EMSC")
+        is_cat  = ("COPERNICUS" in src or "GDACS" in src or "GLOFAS" in src) and dom == "climate"
+        if is_seis or is_cat:
+            sev.append(float(e["severity"]))
     return int(max(sev)) if sev else 0
 
 def _reloc_domain_scores(cc: str, snap: dict) -> dict:
@@ -8435,7 +8443,7 @@ def _reloc_domain_scores(cc: str, snap: dict) -> dict:
         sv = _signal_domain_score(cc, sigdom)
         if sv is not None:
             out[sigdom] = sv
-    # Климат: максимум из оценки движка/сигнала, странового baseline и сейсмики (USGS/EMSC)
+    # Климат: максимум из оценки движка/сигнала, странового baseline и катастроф (USGS/EMSC/Copernicus/GDACS)
     seis  = snap.pop("_seismic_risk", 0) or 0
     floor = max(_CLIMATE_BASELINE.get(cc, 0), seis)
     if floor:
