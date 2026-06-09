@@ -1205,6 +1205,8 @@ html,body{overscroll-behavior-y:contain}
   #grdf-warnings-screen,#grdf-countries-screen,#grdf-analytics-screen,#grdf-signals-screen,#grdf-alerts-screen{display:block;transform:translateX(100%);transition:transform .3s ease;pointer-events:none}
   #grdf-warnings-screen.visible,#grdf-countries-screen.visible,#grdf-analytics-screen.visible,#grdf-signals-screen.visible,#grdf-alerts-screen.visible{transform:translateX(0);pointer-events:all}
 }
+#grdf-matrix-screen{display:none;flex-direction:column;position:fixed;top:0;left:0;right:0;bottom:56px;z-index:120;background:rgba(6,5,10,0.97);backdrop-filter:blur(20px);padding-top:42px;transform:translateX(100%);transition:transform .3s ease;pointer-events:none}
+#grdf-matrix-screen.visible{display:flex;transform:translateX(0);pointer-events:all}
 .grdf-warn-row{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1)}
 .grdf-country-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}
 .grdf-country-avatar{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
@@ -7258,6 +7260,7 @@ function _evM(val, lbl, col) {
     <button class="grdf-nav-btn" id="grdf-nav-signals" onclick="grdfNavTo('signals')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>События</span>
     </button>
+    <button class="grdf-nav-btn" id="grdf-nav-matrix" onclick="grdfNavTo('matrix')"><span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span><span>Связи</span></button>
     <button class="grdf-nav-btn" id="grdf-nav-countries" onclick="grdfNavTo('countries')">
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span>Страны</span>
     </button>
@@ -7265,6 +7268,12 @@ function _evM(val, lbl, col) {
       <span class="grdf-nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Аналитика</span>
     </button>
   </div>
+</div>
+
+<div id="grdf-matrix-screen">
+  <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
+  <div class="grdf-screen-head"><div class="grdf-screen-title">Связи рисков</div></div>
+  <iframe src="risk-matrix.html" title="Карта взаимосвязей рисков" loading="lazy" style="flex:1;width:100%;border:0;display:block"></iframe>
 </div>
 
 <!-- S36.1: Signals feed screen (same source as map: ALL_EVENTS) -->
@@ -8080,10 +8089,11 @@ window.grdfNavTo = function(tab) {
   var analScreen = document.getElementById('grdf-analytics-screen');
   var sigScreen  = document.getElementById('grdf-signals-screen');
   var alertScreen= document.getElementById('grdf-alerts-screen');
+  var matrixScreen= document.getElementById('grdf-matrix-screen');
   var drawer     = document.getElementById('grdf-intel-drawer');
   var sheet      = document.getElementById('grdf-country-sheet');
 
-  [warnScreen, ctryScreen, analScreen, sigScreen, alertScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
+  [warnScreen, ctryScreen, analScreen, sigScreen, alertScreen, matrixScreen].forEach(function(s){ if(s) s.classList.remove('visible'); });
   if(drawer) drawer.style.display = 'flex';
   var clPanel0 = document.getElementById('climate-panel');
   if(clPanel0 && tab!=='climate') clPanel0.classList.remove('open');
@@ -8095,6 +8105,10 @@ window.grdfNavTo = function(tab) {
     if(drawer) drawer.style.display='none';
     if(sheet) { sheet.className=''; _grdfSheetSnap=0; }
     grdfRenderSignals(_grdfSigFilter||'all');
+  } else if(tab==='matrix'){
+    if(matrixScreen) matrixScreen.classList.add('visible');
+    if(drawer) drawer.style.display='none';
+    if(sheet) { sheet.className=''; _grdfSheetSnap=0; }
   } else if(tab==='climate'){
     if(clPanel0) clPanel0.classList.add('open');
     if(drawer) drawer.style.display='none';
