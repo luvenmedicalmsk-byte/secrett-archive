@@ -1,0 +1,57 @@
+name: Сбор сигналов (пилот)
+
+on:
+  workflow_dispatch:
+    inputs:
+      country:
+        description: 'Код страны (ISO2), напр. RU'
+        required: true
+        default: 'RU'
+      model:
+        description: 'Модель OpenAI'
+        required: false
+        default: 'gpt-5.4-mini'
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Клонирование репозитория
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Настройка Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Установка зависимостей
+        run: pip install openai
+
+      - name: Сбор сигналов
+        id: collect
+        timeout-minutes: 10
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SIGNALS_MODEL: ${{ github.event.inputs.model }}
+        run: |
+          python scripts/collect_signals.py "${{ github.event.inputs.country }}"
+
+      - name: Коммит результата
+        run: |
+          git config user.name "archive-bot"
+          git config user.email "bot@secrett-archive.com"
+          git add docs/signals/
+          if git diff --staged --quiet; then
+            echo "Нет изменений — модель ничего не вернула или файлы не поменялись"
+          else
+            CC="${{ github.event.inputs.country }}"
+            TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+            git commit -m "Сигналы · $CC · $TIMESTAMP"
+            git pull --rebase origin main
+            git push
+          fi
