@@ -8478,6 +8478,13 @@ function openAccess(){
   var sb=document.getElementById('grdf-signals-bar');
   if(sb) sb.style.display='none';
 }
+window.addEventListener("message", function(e){
+  try{ if(e.origin!==location.origin) return; }catch(_){ return; }
+  if(e.data && e.data.type==="atlas-open-access"){
+    try{ grdfNavTo("map"); }catch(_){}
+    if(typeof openAccess==="function") openAccess();
+  }
+});
 function closeAccess(){
   document.getElementById('access-modal').classList.remove('open');
   document.body.style.overflow='';
