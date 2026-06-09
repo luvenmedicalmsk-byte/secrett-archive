@@ -2,66 +2,66 @@
   "country": "GB",
   "date": "2026-06-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-09T11:01:48.646686+00:00",
+  "generated_at": "2026-06-09T12:41:17.907988+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 48,
+      "score": 52,
       "props": {
-        "risk_score": 48
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 2,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-По_меньшей",
+      "type": "Signal",
+      "label": "По меньшей мере 8 человек погибли в резу",
+      "severity": 65,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-Два_пилота",
       "type": "Signal",
       "label": "Два пилота США погибли после крушения са",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-GB-Гаити:_Нов",
+      "id": "SIGNAL-GB-Великобрит",
       "type": "Signal",
-      "label": "Гаити: Новые судебные органы должны обес",
-      "severity": 44,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-GB-Мы_не_буде",
-      "type": "Signal",
-      "label": "Мы не будем поражены до молчания",
-      "severity": 44,
-      "domain": "social"
+      "label": "Великобритания вводит санкции против орг",
+      "severity": 47,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "DRIVER-GB-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-По_меньшей",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.65
+    },
+    {
       "from": "SIGNAL-GB-Два_пилота",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-GB-Гаити:_Нов",
-      "to": "DOMAIN-GB-social",
+      "from": "SIGNAL-GB-Великобрит",
+      "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-GB-Мы_не_буде",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.47
     }
   ]
 }
