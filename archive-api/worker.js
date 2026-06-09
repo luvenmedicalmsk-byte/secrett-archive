@@ -1664,6 +1664,7 @@ async function handleProxyDisasterNews(env) {
       let text = tm ? tm[1] : '';
       text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
       text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+      text = text.replace(/\s*Топор\s*Live[\s\S]*$/i, '').trim();  // срез самоподписи канала
       if (text.length < 10) continue;
       const dt = seg.match(/datetime="([^"]+)"/);
       const media = [];
@@ -1794,6 +1795,7 @@ function _tgParseChannel(html, handle, name) {
     let text = tm ? tm[1] : '';
     text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
     text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    text = text.replace(/\s*Топор\s*Live[\s\S]*$/i, '').trim();  // срез самоподписи канала
     if (text.length < 8) continue;
     const _tl = text.toLowerCase();
     if (NEWS_STOPWORDS.some(s => _tl.includes(s))) continue;
