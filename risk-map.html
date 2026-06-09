@@ -7469,7 +7469,8 @@ var _grdfCurrentCountry = null;
 var _grdfDrawerOpen = false;
 var _grdfNav = 'map';
 var _grdfData = null;
-var _GRDF_SELL_FUTURE = false; // Strategic/Elite ещё не в продаже — держим в архитектуре, скрываем из карточки до запуска
+var _GRDF_SELL_FUTURE = false;
+var _GRDF_ACTIVE={RU:1,BY:1,KZ:1,GE:1,TR:1,DE:1,IT:1,ES:1,RS:1,GB:1,US:1,CA:1,AE:1,UA:1,ME:1,CY:1,TH:1}; // 17 стран полного покрытия (сбор сигналов); остальные — «в разработке» // Strategic/Elite ещё не в продаже — держим в архитектуре, скрываем из карточки до запуска
 
 // Domain colors
 var DOM_COLORS = {
@@ -7818,6 +7819,9 @@ function grdfRelocTopListsHTML(){
 function grdfRelocPanelHTML(c, isSig){
   var R=grdfReloc(c);
   var h='<div class="grdf-section-head">Relocation Intelligence</div>';
+  if(typeof _GRDF_ACTIVE!=='undefined' && c && !_GRDF_ACTIVE[c.country]){
+    h+='<div style="padding:0 14px 8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#a78bfa;border:1px solid rgba(167,139,250,.35);border-radius:5px;padding:2px 7px">в разработке</span><span style="font-size:9px;color:#94a3b8">оценка предварительная — без ежедневного сбора сигналов</span></div>';
+  }
   if(!isSig){
     h+='<div style="padding:0 14px 10px"><div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(184,151,58,0.18)">';
     h+='<div style="padding:14px;filter:blur(3px);opacity:.5"><div style="font-size:26px;color:#D4AF5A">'+R.resilience+'</div><div style="font-size:9px;color:#94a3b8">Resilience Score</div></div>';
