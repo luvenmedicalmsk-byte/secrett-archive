@@ -577,7 +577,7 @@ var NET_EDGES=[
 ];
 function layoutNet(){
   /* круговая раскладка как у WEF: «Неравенство» в центре, остальные радиально по секторам категорий */
-  var cx=W/2, cy=H/2, Rring=Math.min(W,H)*0.26;
+  var cx=W/2, cy=H/2, Rring=Math.min(W,H)*0.33;
   var order=['climate','geopolitics','technology','social','economy'];
   var groups={}; order.forEach(function(c){groups[c]=[];});
   NET_NODES.forEach(function(n){ if(n.id!=='ineq' && groups[n.d]) groups[n.d].push(n); });
@@ -600,7 +600,7 @@ function drawNetwork(){
   cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px';
   var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
   /* круглая подложка — золотистый тон + рамка (как нижний блок), чтобы граф выделялся */
-  var cx=W/2, cy=H/2, Rbg=Math.min(W,H)*0.40;
+  var cx=W/2, cy=H/2, Rbg=Math.min(W,H)*0.47;
   var g=ctx.createRadialGradient(cx,cy,Rbg*0.2,cx,cy,Rbg);
   g.addColorStop(0,'rgba(184,151,58,0.07)'); g.addColorStop(1,'rgba(184,151,58,0.025)');
   ctx.beginPath(); ctx.arc(cx,cy,Rbg,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
@@ -627,12 +627,19 @@ function drawNetwork(){
   /* подписи — короткие, наружу от центра, с тенью */
   ctx.font='8px Montserrat,sans-serif';
   ctx.shadowColor='rgba(6,5,10,0.98)'; ctx.shadowBlur=4;
+  ctx.fillStyle='rgba(232,224,208,0.92)';
   NET_NODES.forEach(function(n){
     var active=curD==='all'||n.d===curD; if(!active)return;
-    var rad=4+n.inf/100*10;
-    ctx.fillStyle='rgba(232,224,208,0.92)'; ctx.textBaseline='middle';
-    if(n.nx>=cx){ ctx.textAlign='start'; ctx.fillText(n.lab,n.nx+rad+4,n.ny); }
-    else { ctx.textAlign='end'; ctx.fillText(n.lab,n.nx-rad-4,n.ny); }
+    var rad=4+n.inf/100*10, w=ctx.measureText(n.lab).width;
+    if(n.nx>=cx){
+      var sx=n.nx+rad+4;
+      if(sx+w>W-2){ ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(n.lab,Math.max(w/2+2,Math.min(W-w/2-2,n.nx)),n.ny-rad-3); }
+      else { ctx.textAlign='start'; ctx.textBaseline='middle'; ctx.fillText(n.lab,sx,n.ny); }
+    } else {
+      var ex=n.nx-rad-4;
+      if(ex-w<2){ ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(n.lab,Math.max(w/2+2,Math.min(W-w/2-2,n.nx)),n.ny-rad-3); }
+      else { ctx.textAlign='end'; ctx.textBaseline='middle'; ctx.fillText(n.lab,ex,n.ny); }
+    }
   });
   ctx.shadowBlur=0; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
 }
