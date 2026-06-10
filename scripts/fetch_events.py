@@ -3984,16 +3984,16 @@ def fetch_cloudflare_radar(token=None):
     except Exception as e:
         print(f"  [WARN] Radar outages: {e}", file=sys.stderr)
 
-    # --- 2. Аномалии трафика (ранний признак сбоя; только подтверждённые Cloudflare) ---
+    # --- 2. Аномалии трафика (ранний признак сбоя; подтверждённые + предварительные) ---
     try:
-        d2 = _q("traffic_anomalies?dateRange=28d&limit=50&format=json")
+        d2 = _q("traffic_anomalies?dateRange=28d&limit=100&format=json")
         tas = (d2.get('result') or {}).get('trafficAnomalies') or []
         today_s = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        # подтверждённые — первыми: при дедупе по стране остаётся VERIFIED
+        tas.sort(key=lambda x: 0 if str(x.get('status') or '').upper() == 'VERIFIED' else 1)
         seen_loc = set()
         _m = 0
         for ta in tas:
-            if str(ta.get('status') or '').upper() != 'VERIFIED':
-                continue
             ld = ta.get('locationDetails') or {}
             code = ld.get('code') or (((ta.get('asnDetails') or {}).get('locations') or {}).get('code'))
             geo = _cc(code)
@@ -4003,12 +4003,14 @@ def fetch_cloudflare_radar(token=None):
             if cname in seen_loc:          # один сигнал на страну
                 continue
             seen_loc.add(cname)
+            verified = str(ta.get('status') or '').upper() == 'VERIFIED'
             sd = str(ta.get('startDate') or '')[:10]
             ed = str(ta.get('endDate') or '')[:10]
             ongoing = (not ed) or (ed >= today_s)
             eff_date = today_s if ongoing else ed
             asn = (ta.get('asnDetails') or {}).get('name') or ''
-            desc = ("Cloudflare Radar: подтверждённая аномалия интернет-трафика "
+            tag = "подтверждённая" if verified else "предварительная (не подтверждена)"
+            desc = (f"Cloudflare Radar: {tag} аномалия интернет-трафика "
                     "(резкое нетипичное отклонение — возможный ранний признак сбоя)."
                     + (f" Сеть: {asn}." if asn else "")
                     + (f" Начало: {sd}." if sd else "")
@@ -4016,9 +4018,9 @@ def fetch_cloudflare_radar(token=None):
             items.append({
                 'title': f"Аномалия трафика: {cname}", 'desc': desc, 'date': eff_date,
                 'source': 'Cloudflare Radar',
-                '_force_severity': 50, '_lat': lat, '_lng': lng,
+                '_force_severity': (54 if verified else 46), '_lat': lat, '_lng': lng,
                 '_region': cname, '_domain': 'technology',
-                '_meta': {'kind': 'radar_anomaly', 'verified': True}
+                '_meta': {'kind': 'radar_anomaly', 'status': (ta.get('status') or ''), 'verified': verified}
             })
             _m += 1
         print(f"  Cloudflare Radar: {_m} аномалий трафика", file=sys.stderr)
