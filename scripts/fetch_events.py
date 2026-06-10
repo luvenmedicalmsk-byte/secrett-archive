@@ -3989,11 +3989,14 @@ def fetch_cloudflare_radar(token=None):
         d2 = _q("traffic_anomalies?dateRange=28d&limit=100&format=json")
         tas = (d2.get('result') or {}).get('trafficAnomalies') or []
         today_s = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-        # подтверждённые — первыми: при дедупе по стране остаётся VERIFIED
-        tas.sort(key=lambda x: 0 if str(x.get('status') or '').upper() == 'VERIFIED' else 1)
+        # подтверждённые (TP/VERIFIED) — первыми: при дедупе по стране остаётся подтверждённая
+        tas.sort(key=lambda x: 0 if str(x.get('status') or '').upper() in ('VERIFIED', 'TP') else 1)
         seen_loc = set()
         _m = 0
         for ta in tas:
+            st = str(ta.get('status') or '').upper()
+            if st == 'FP':                 # ложное срабатывание (Cloudflare сам отметил) — шум, пропускаем
+                continue
             ld = ta.get('locationDetails') or {}
             code = ld.get('code') or (((ta.get('asnDetails') or {}).get('locations') or {}).get('code'))
             geo = _cc(code)
@@ -4003,7 +4006,7 @@ def fetch_cloudflare_radar(token=None):
             if cname in seen_loc:          # один сигнал на страну
                 continue
             seen_loc.add(cname)
-            verified = str(ta.get('status') or '').upper() == 'VERIFIED'
+            verified = st in ('VERIFIED', 'TP')
             sd = str(ta.get('startDate') or '')[:10]
             ed = str(ta.get('endDate') or '')[:10]
             ongoing = (not ed) or (ed >= today_s)
