@@ -576,15 +576,35 @@ var NET_EDGES=[
  ['bubble','debt',1],['disasters','critinfra',1]
 ];
 function layoutNet(){
-  /* фиксированная раскладка по образцу WEF — без физики */
-  NET_NODES.forEach(function(n){ n.nx=n.nxr*W; n.ny=n.nyr*H; });
+  /* круговая раскладка как у WEF: «Неравенство» в центре, остальные радиально по секторам категорий */
+  var cx=W/2, cy=H/2, Rring=Math.min(W,H)*0.34;
+  var order=['climate','geopolitics','technology','social','economy'];
+  var groups={}; order.forEach(function(c){groups[c]=[];});
+  NET_NODES.forEach(function(n){ if(n.id!=='ineq' && groups[n.d]) groups[n.d].push(n); });
+  order.forEach(function(c){ groups[c].sort(function(a,b){return b.inf-a.inf;}); });
+  var seq=[]; order.forEach(function(c){ seq=seq.concat(groups[c]); });
+  var N=seq.length;
+  seq.forEach(function(n,i){
+    var ang=-Math.PI/2 + (i/N)*Math.PI*2;
+    var rf=0.60 + (1-(n.inf-38)/(100-38))*0.42; if(rf>1)rf=1;
+    n.nx=cx+Math.cos(ang)*Rring*rf;
+    n.ny=cy+Math.sin(ang)*Rring*rf;
+  });
+  var iq=NET_NODES.filter(function(n){return n.id==='ineq';})[0];
+  if(iq){ iq.nx=cx; iq.ny=cy; }
 }
 function drawNetwork(){
   var dpr=window.devicePixelRatio||1;
   var rect=cv.getBoundingClientRect();
-  W=rect.width; H=Math.round(W*1.12);
+  W=rect.width; H=W;
   cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px';
   var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  /* круглая подложка — золотистый тон + рамка (как нижний блок), чтобы граф выделялся */
+  var cx=W/2, cy=H/2, Rbg=Math.min(W,H)*0.47;
+  var g=ctx.createRadialGradient(cx,cy,Rbg*0.2,cx,cy,Rbg);
+  g.addColorStop(0,'rgba(184,151,58,0.07)'); g.addColorStop(1,'rgba(184,151,58,0.025)');
+  ctx.beginPath(); ctx.arc(cx,cy,Rbg,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+  ctx.lineWidth=1; ctx.strokeStyle='rgba(184,151,58,0.28)'; ctx.stroke();
   layoutNet();
   var idx={}; NET_NODES.forEach(function(n){idx[n.id]=n;});
   NET_EDGES.forEach(function(e){
@@ -600,21 +620,19 @@ function drawNetwork(){
     var rad=4+n.inf/100*10;
     ctx.globalAlpha=active?1:0.1;
     ctx.beginPath(); ctx.arc(n.nx,n.ny,rad,0,Math.PI*2); ctx.fillStyle=DC[n.d]; ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=0.5; ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=0.6; ctx.stroke();
     ctx.globalAlpha=1;
     pts.push({x:n.nx,y:n.ny,r:rad,risk:{t:n.t,d:n.d,sev:n.inf,r:'Глобально',s:n.s||'',x:'—',y:'—'}});
   });
-  /* подписи поверх — короткие, наружу от центра, с тенью для читаемости */
+  /* подписи — короткие, наружу от центра, с тенью */
   ctx.font='8px Montserrat,sans-serif';
-  ctx.shadowColor='rgba(6,5,10,0.95)'; ctx.shadowBlur=4;
+  ctx.shadowColor='rgba(6,5,10,0.98)'; ctx.shadowBlur=4;
   NET_NODES.forEach(function(n){
     var active=curD==='all'||n.d===curD; if(!active)return;
     var rad=4+n.inf/100*10;
-    ctx.fillStyle='rgba(232,224,208,0.9)';
-    if(n.nyr<0.12){ ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(n.lab,n.nx,n.ny-rad-3); }
-    else if(n.nyr>0.9){ ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(n.lab,n.nx,n.ny+rad+3); }
-    else if(n.nxr<0.5){ ctx.textAlign='end'; ctx.textBaseline='middle'; ctx.fillText(n.lab,n.nx-rad-4,n.ny); }
-    else { ctx.textAlign='start'; ctx.textBaseline='middle'; ctx.fillText(n.lab,n.nx+rad+4,n.ny); }
+    ctx.fillStyle='rgba(232,224,208,0.92)'; ctx.textBaseline='middle';
+    if(n.nx>=cx){ ctx.textAlign='start'; ctx.fillText(n.lab,n.nx+rad+4,n.ny); }
+    else { ctx.textAlign='end'; ctx.fillText(n.lab,n.nx-rad-4,n.ny); }
   });
   ctx.shadowBlur=0; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
 }
