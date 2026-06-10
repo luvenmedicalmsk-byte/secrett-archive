@@ -587,7 +587,9 @@ var NET_EDGES=[
  ['bubble','debt',1],['disasters','critinfra',1]
 ];
 function layoutNet(){
-  /* круговая раскладка как у'climate','geopolitics','technology','social','economy'];
+  /* круговая раскладка — Неравенство в центре, остальные радиально по секторам категорий */
+  var cx=W/2, cy=H/2, Rring=Math.min(W,H)*0.33;
+  var order=['climate','geopolitics','technology','social','economy'];
   var groups={}; order.forEach(function(c){groups[c]=[];});
   NET_NODES.forEach(function(n){ if(n.id!=='ineq' && groups[n.d]) groups[n.d].push(n); });
   order.forEach(function(c){ groups[c].sort(function(a,b){return b.inf-a.inf;}); });
