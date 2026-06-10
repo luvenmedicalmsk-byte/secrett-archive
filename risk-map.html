@@ -7829,7 +7829,7 @@ function grdfRiskMatrixHTML(risk, delta, isSig){
   } else {
     h+='<div style="padding:0 14px 10px"><div style="position:relative;border-radius:6px;overflow:hidden"><div style="display:flex;gap:1px;height:22px;filter:blur(2px);opacity:.5">';
     m2.forEach(function(v){ h+='<div style="flex:1;background:'+rmCol(v)+';border-radius:1px"></div>'; });
-    h+='</div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;color:#D4AF5A;background:rgba(6,5,10,.35)"><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Матрица рисков 2 / 5 лет — Архив системных рисков</div></div></div>';
+    h+='</div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;color:#D4AF5A;background:rgba(6,5,10,.35)"><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Матрица рисков 2 / 5 лет</div></div></div>';
   }
   return h;
 }
@@ -7989,7 +7989,7 @@ function grdfRenderCountryPanel(cc) {
 
   // Forecast
   html += '<div class="grdf-section-head">Прогноз</div>';
-  html += '<div class="grdf-forecast-grid"'+(_GRDF_SELL_FUTURE?'':' style="grid-template-columns:repeat(2,1fr)"')+'>';
+  html += '<div class="grdf-forecast-grid"'+(_GRDF_SELL_FUTURE?'':' style="grid-template-columns:repeat(3,1fr)"')+'>';
   // 24h FREE
   html += '<div class="grdf-fc-box" style="padding:8px 4px">';
   html += '<div class="grdf-fc-hz">24 часа</div>';
@@ -8006,7 +8006,20 @@ function grdfRenderCountryPanel(cc) {
     html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_7d" style="cursor:pointer">';
     html += '<div class="grdf-fc-hz">7 дней</div>';
     html += '<div style="margin:3px 0;display:flex;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>';
-    html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px">Архив</div></div>';
+    html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px;line-height:1.15;white-space:normal">Архив системных рисков</div></div>';
+  }
+  // 30 дней — прогноз есть; на текущем этапе показываем как уровень «Архив»
+  if(!_GRDF_SELL_FUTURE){
+    if(isSig){
+      html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">30 дней</div>';
+      html += '<div class="grdf-fc-val" style="color:#60a5fa">'+fc30d+'</div>';
+      html += '<div class="grdf-fc-tier" style="color:#10b981;font-size:8px">PRO</div></div>';
+    } else {
+      html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_30d" style="cursor:pointer">';
+      html += '<div class="grdf-fc-hz">30 дней</div>';
+      html += '<div style="margin:3px 0;display:flex;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>';
+      html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px;line-height:1.15;white-space:normal">Архив системных рисков</div></div>';
+    }
   }
   // 30d / 90d — Strategic / Elite. Не в продаже на текущем этапе: скрыты за флагом,
   // логика и данные сохранены в архитектуре (включить = _GRDF_SELL_FUTURE=true).
