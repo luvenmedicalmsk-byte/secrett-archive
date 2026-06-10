@@ -3961,14 +3961,19 @@ def fetch_cloudflare_radar(token=None):
             sev = base + (5 if cause in CHARGED else 0)
             sev = min(74, sev)
             sd = str(a.get('startDate') or '')[:10]
+            ed = str(a.get('endDate') or '')[:10]
+            today_s = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+            ongoing = (not ed) or (ed >= today_s)
+            eff_date = today_s if ongoing else ed   # продолжающиеся датируем сегодня, иначе датой завершения
             scope = (a.get('scope') or '').strip()
             title = (f"Отключение интернета ({ot_ru}): {cname}"
                      if ot in ('NATIONWIDE', 'REGIONAL') else f"Сбой сети: {cname}")
             desc = (f"Cloudflare Radar: подтверждённое {ot_ru} отключение. Причина: {cause_ru}."
                     + (f" Зона: {scope}." if scope else "")
-                    + (f" Начало: {sd}." if sd else ""))
+                    + (f" Начало: {sd}." if sd else "")
+                    + (" Продолжается." if ongoing else (f" Завершено: {ed}." if ed else "")))
             items.append({
-                'title': title, 'desc': desc, 'date': (sd or datetime.now(timezone.utc).strftime('%Y-%m-%d')),
+                'title': title, 'desc': desc, 'date': eff_date,
                 'source': 'Cloudflare Radar',
                 '_force_severity': sev, '_lat': lat, '_lng': lng,
                 '_region': cname, '_domain': 'technology',
