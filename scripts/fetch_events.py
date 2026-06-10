@@ -3943,7 +3943,7 @@ def fetch_cloudflare_radar(token=None):
              'UNKNOWN': 'причина неизвестна'}
     CHARGED = ('GOVERNMENT_DIRECTED', 'SHUTDOWN', 'MILITARY_ACTION', 'WAR', 'CYBER_ATTACK', 'ATTACK')
     try:
-        d = _q("annotations/outages?dateRange=30d&limit=50&format=json")
+        d = _q("annotations/outages?dateRange=28d&limit=50&format=json")
         ann = (d.get('result') or {}).get('annotations') or []
         _n = 0
         for a in ann[:20]:
