@@ -56,6 +56,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Montse
 }
 .tab:hover{border-color:var(--gold);color:var(--text)}
 .tab.active{border-color:var(--gold);color:var(--gold-light);background:rgba(184,151,58,0.08)}
+#mode-toggle{display:flex;gap:6px;margin:-6px 0 14px}
+.mode-btn{padding:7px 16px;font-size:8px;letter-spacing:0.14em;text-transform:uppercase;border:1px solid var(--gold-dim);border-radius:2px;cursor:pointer;color:var(--text2);background:transparent;transition:all .2s;font-family:'Montserrat',sans-serif}
+.mode-btn:hover{border-color:var(--gold);color:var(--text)}
+.mode-btn.active{border-color:var(--gold);color:var(--gold-light);background:rgba(184,151,58,0.08)}
 
 /* DESC */
 #desc-bar{
@@ -200,6 +204,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Montse
     <button class="tab active" data-h="2y">◆ 2 года</button>
     <button class="tab" data-h="5y">5 лет</button>
     <button class="tab" data-h="10y">10 лет</button>
+  </div>
+
+  <div id="mode-toggle">
+    <button class="mode-btn active" data-m="matrix">◆ Матрица</button>
+    <button class="mode-btn" data-m="graph">Граф связей</button>
   </div>
 
   <div id="desc-bar">
@@ -469,7 +478,7 @@ document.querySelectorAll('.tab').forEach(el=>{
     curH=el.dataset.h;
     document.getElementById('tab-desc').textContent=DESCS[curH];
     document.getElementById('risk-count').textContent=(RISKS[curH]||[]).length+' рисков';
-    draw(); renderGrid();
+    render(); renderGrid();
   });
 });
 
@@ -478,7 +487,7 @@ document.querySelectorAll('.leg').forEach(el=>{
     document.querySelectorAll('.leg').forEach(l=>l.classList.remove('on'));
     el.classList.add('on');
     curD=el.dataset.d;
-    draw(); renderGrid();
+    render(); renderGrid();
   });
 });
 
@@ -504,10 +513,149 @@ function renderGrid(){
   });
 }
 
+/* ── Граф взаимосвязей рисков (по WEF Global Risks Report 2026, Figure 6) ──
+   Узлы — риски WEF; размер = влияние; цвет = категория; в центре — Неравенство
+   (самый взаимосвязанный риск по WEF). Рёбра — авторская реконструкция сильнейших
+   задокументированных сцепок (точная матрица связей WEF — векторная, не извлекается). */
+var mode='matrix';
+var NET_NODES=[
+ {id:'ineq',t:'Неравенство',d:'social',inf:100,s:'Самый взаимосвязанный глобальный риск по WEF (2 года подряд). Узел, через который сцепляются почти все остальные.'},
+ {id:'downturn',t:'Экономический спад',d:'economy',inf:82,s:'Рецессия усиливает долговую нагрузку, безработицу и социальное напряжение.'},
+ {id:'health',t:'Спад здоровья и благополучия',d:'social',inf:80,s:'Связан с неравенством, загрязнением, климатом и инфекциями.'},
+ {id:'polar',t:'Социальная поляризация',d:'social',inf:78,s:'Питается дезинформацией и неравенством, ведёт к насилию и эрозии прав.'},
+ {id:'geoecon',t:'Геоэкономическое противостояние',d:'geopolitics',inf:76,s:'Санкции и тарифы рвут цепочки поставок, разгоняют инфляцию.'},
+ {id:'misinfo',t:'Дезинформация',d:'technology',inf:74,s:'Усиливает поляризацию, переплетается с кибер-рисками и ИИ.'},
+ {id:'migration',t:'Вынужденная миграция',d:'social',inf:68,s:'Следствие конфликтов и климата; обостряет неравенство.'},
+ {id:'weather',t:'Экстремальные погодные явления',d:'climate',inf:66,s:'Корень климатического кластера: биоразнообразие, ресурсы, миграция.'},
+ {id:'cyber',t:'Кибербезопасность',d:'technology',inf:64,s:'Бьёт по критической инфраструктуре и цепочкам поставок.'},
+ {id:'rights',t:'Эрозия прав человека',d:'social',inf:62,s:'Связана с цензурой, поляризацией и насилием.'},
+ {id:'conflict',t:'Вооружённые конфликты',d:'geopolitics',inf:60,s:'Драйвер миграции и угрозы ОМП.'},
+ {id:'infra',t:'Недостаток инфраструктуры и соцзащиты',d:'social',inf:60,s:'Усиливает неравенство и спад здоровья.'},
+ {id:'ai',t:'Неблагоприятные исходы ИИ',d:'technology',inf:58,s:'Связан с дезинформацией, кибер-рисками и безработицей.'},
+ {id:'unemploy',t:'Безработица и нехватка возможностей',d:'social',inf:58,s:'Сцеплена с неравенством, спадом и автоматизацией.'},
+ {id:'concentr',t:'Концентрация стратег. ресурсов',d:'economy',inf:56,s:'Контроль над минералами и технологиями как рычаг давления.'},
+ {id:'critinfra',t:'Сбои критической инфраструктуры',d:'economy',inf:56,s:'На пересечении кибер-рисков, цепочек поставок и погоды.'},
+ {id:'biodiv',t:'Потеря биоразнообразия',d:'climate',inf:56,s:'Тесно связана с экстремальной погодой и системами Земли.'},
+ {id:'earth',t:'Критические изменения систем Земли',d:'climate',inf:54,s:'Необратимые пороги; усиливают погодные явления.'},
+ {id:'supply',t:'Сбои цепочек поставок',d:'economy',inf:54,s:'Узел между геоэкономикой, инфляцией и кибер-рисками.'},
+ {id:'resources',t:'Нехватка природных ресурсов',d:'climate',inf:52,s:'Вода и продовольствие; источник конфликтов и миграции.'},
+ {id:'debt',t:'Долговая нагрузка',d:'economy',inf:52,s:'Связана со спадом и инфляцией.'},
+ {id:'disease',t:'Инфекционные заболевания',d:'social',inf:50,s:'Сцеплены со здоровьем, миграцией и климатом.'},
+ {id:'inflation',t:'Инфляция',d:'economy',inf:50,s:'Разгоняется геоэкономикой и сбоями поставок.'},
+ {id:'bubble',t:'Схлопывание пузырей активов',d:'economy',inf:48,s:'Связано со спадом и долгом.'},
+ {id:'pollution',t:'Загрязнение',d:'climate',inf:48,s:'Влияет на здоровье и экосистемы.'},
+ {id:'online',t:'Онлайн-вред',d:'technology',inf:46,s:'Переплетается с дезинформацией и ИИ.'},
+ {id:'intraviol',t:'Внутригосударственное насилие',d:'geopolitics',inf:46,s:'Следствие поляризации и эрозии прав.'},
+ {id:'crime',t:'Преступность и теневая экономика',d:'economy',inf:44,s:'Связана с неравенством и насилием.'},
+ {id:'censor',t:'Цензура и слежка',d:'technology',inf:44,s:'Сцеплена с правами человека и дезинформацией.'},
+ {id:'cbrn',t:'Био-, хим- и ядерные угрозы',d:'geopolitics',inf:42,s:'Связаны с вооружёнными конфликтами.'},
+ {id:'talent',t:'Дефицит кадров и труда',d:'economy',inf:40,s:'Связан с безработицей и спадом.'},
+ {id:'frontier',t:'Передовые технологии',d:'technology',inf:40,s:'Квантовые и био-технологии; смыкаются с ИИ.'},
+ {id:'disasters',t:'Стихийные бедствия (непогодные)',d:'climate',inf:38,s:'Землетрясения, вулканы; бьют по инфраструктуре.'}
+];
+var NET_EDGES=[
+ ['ineq','polar',3],['ineq','unemploy',3],['ineq','downturn',2],['ineq','rights',2],['ineq','health',2],
+ ['ineq','migration',2],['ineq','infra',2],['ineq','crime',1],['ineq','disease',1],
+ ['polar','misinfo',3],['polar','rights',2],['polar','censor',2],['polar','intraviol',2],
+ ['misinfo','cyber',2],['misinfo','online',2],['misinfo','ai',2],['misinfo','censor',2],
+ ['geoecon','supply',3],['geoecon','inflation',2],['geoecon','concentr',2],['geoecon','conflict',2],['geoecon','downturn',2],
+ ['downturn','debt',2],['downturn','inflation',2],['downturn','bubble',2],['downturn','unemploy',2],['downturn','talent',1],
+ ['weather','biodiv',3],['weather','earth',3],['weather','resources',2],['weather','pollution',2],['weather','migration',2],['weather','disease',1],['weather','disasters',1],
+ ['biodiv','earth',2],['biodiv','resources',2],
+ ['cyber','critinfra',3],['cyber','supply',1],['cyber','ai',2],
+ ['ai','frontier',2],['ai','unemploy',2],['ai','online',1],
+ ['conflict','cbrn',2],['conflict','migration',2],['conflict','intraviol',2],
+ ['migration','disease',1],['migration','rights',1],
+ ['health','disease',2],['health','pollution',1],
+ ['supply','critinfra',2],['supply','inflation',1],
+ ['concentr','supply',1],['concentr','ai',1],
+ ['rights','censor',2],['rights','intraviol',1],
+ ['unemploy','talent',1],['infra','health',1],['inflation','debt',1],
+ ['resources','conflict',1],['crime','intraviol',1],['pollution','disease',1],
+ ['bubble','debt',1],['disasters','critinfra',1]
+];
+function layoutNet(){
+  var cx=W/2, cy=H/2, i, j;
+  for(i=0;i<NET_NODES.length;i++){
+    var n=NET_NODES[i];
+    if(n.id==='ineq'){ n.nx=cx; n.ny=cy; }
+    else { var a=i/NET_NODES.length*Math.PI*2; n.nx=cx+Math.cos(a)*W*0.30; n.ny=cy+Math.sin(a)*H*0.30; }
+    n.vx=0; n.vy=0;
+  }
+  var idx={}; NET_NODES.forEach(function(n){idx[n.id]=n;});
+  for(var it=0; it<460; it++){
+    for(i=0;i<NET_NODES.length;i++){
+      var A=NET_NODES[i];
+      for(j=i+1;j<NET_NODES.length;j++){
+        var B=NET_NODES[j];
+        var dx=A.nx-B.nx, dy=A.ny-B.ny, d2=dx*dx+dy*dy||1, d=Math.sqrt(d2);
+        var f=2700/d2, ux=dx/d, uy=dy/d;
+        A.vx+=ux*f; A.vy+=uy*f; B.vx-=ux*f; B.vy-=uy*f;
+      }
+    }
+    NET_EDGES.forEach(function(e){
+      var a=idx[e[0]], b=idx[e[1]]; if(!a||!b)return;
+      var dx=b.nx-a.nx, dy=b.ny-a.ny, d=Math.hypot(dx,dy)||1;
+      var f=(d-72)*0.016*(e[2]||1), ux=dx/d, uy=dy/d;
+      a.vx+=ux*f; a.vy+=uy*f; b.vx-=ux*f; b.vy-=uy*f;
+    });
+    NET_NODES.forEach(function(n){
+      n.vx+=(cx-n.nx)*0.009; n.vy+=(cy-n.ny)*0.009;
+      n.nx+=n.vx*0.5; n.ny+=n.vy*0.5; n.vx*=0.82; n.vy*=0.82;
+      if(n.id==='ineq'){ n.nx=cx; n.ny=cy; }
+    });
+  }
+  var pad=26;
+  NET_NODES.forEach(function(n){ n.nx=Math.max(pad,Math.min(W-pad,n.nx)); n.ny=Math.max(pad,Math.min(H-pad,n.ny)); });
+}
+function drawNetwork(){
+  var dpr=window.devicePixelRatio||1;
+  var rect=cv.getBoundingClientRect();
+  W=rect.width; H=Math.round(W*0.95);
+  cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px';
+  var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+  if(NET_NODES[0].nx===undefined) layoutNet();
+  var idx={}; NET_NODES.forEach(function(n){idx[n.id]=n;});
+  NET_EDGES.forEach(function(e){
+    var a=idx[e[0]], b=idx[e[1]]; if(!a||!b)return;
+    var act=curD==='all'||a.d===curD||b.d===curD;
+    ctx.strokeStyle='rgba(184,151,58,'+(act?(0.05+0.05*(e[2]||1)):0.03)+')';
+    ctx.lineWidth=(e[2]||1)*0.6;
+    ctx.beginPath(); ctx.moveTo(a.nx,a.ny); ctx.lineTo(b.nx,b.ny); ctx.stroke();
+  });
+  pts=[];
+  NET_NODES.forEach(function(n){
+    var active=curD==='all'||n.d===curD;
+    var rad=4+n.inf/100*11;
+    ctx.globalAlpha=active?1:0.12;
+    ctx.beginPath(); ctx.arc(n.nx,n.ny,rad,0,Math.PI*2); ctx.fillStyle=DC[n.d]; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=0.5; ctx.stroke();
+    if(n.inf>=58 && active){
+      ctx.globalAlpha=0.92; ctx.fillStyle='#E8E0D0'; ctx.font='8px Montserrat,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(n.t, n.nx, n.ny+rad+9); ctx.textAlign='left';
+    }
+    ctx.globalAlpha=1;
+    pts.push({x:n.nx,y:n.ny,r:rad,risk:{t:n.t,d:n.d,sev:n.inf,r:'Глобально',s:n.s||'',x:'—',y:'—'}});
+  });
+}
+function render(){ if(mode==='graph') drawNetwork(); else draw(); }
+document.querySelectorAll('.mode-btn').forEach(function(el){
+  el.addEventListener('click',function(){
+    document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active');});
+    el.classList.add('active');
+    mode=el.dataset.m;
+    var graph=(mode==='graph');
+    ['x-label','y-label','y-axis','x-axis','tabs','desc-bar','top-risks'].forEach(function(id){
+      var e=document.getElementById(id); if(e) e.style.display=graph?'none':'';
+    });
+    render();
+  });
+});
+
 document.getElementById('tab-desc').textContent=DESCS['2y'];
 document.getElementById('risk-count').textContent=(RISKS['2y']||[]).length+' рисков';
-setTimeout(()=>{draw();renderGrid();},80);
-window.addEventListener('resize',draw);
+setTimeout(()=>{render();renderGrid();},80);
+window.addEventListener('resize',render);
 </script>
 <script>
 (function(){
