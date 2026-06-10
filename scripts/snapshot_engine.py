@@ -8450,7 +8450,7 @@ _CLIMATE_BASELINE = {
 def _economy_authority_risk(matched: list) -> int:
     """Макс. severity экономических сигналов от официальных источников (ЦБ РФ) — вливается в экономику."""
     sev = [float(e.get("severity", 0)) for e in matched
-           if str(e.get("source", "")) == "Банк России"
+           if str(e.get("source", "")) in ("Банк России", "ЦБ Турции")
            and str(e.get("domain", "")) == "economy"
            and isinstance(e.get("severity"), (int, float))]
     return int(max(sev)) if sev else 0

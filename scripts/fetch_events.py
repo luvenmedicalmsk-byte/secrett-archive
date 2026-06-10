@@ -2773,6 +2773,81 @@ def fetch_cbr_russia():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: Центробанк Турции (CBRT/TCMB) — курс лиры и девальвация (экономика TR)
+# today.xml = снимок на сегодня; архив kurlar/ГГГГММ/ДДММГГГГ.xml — за прошлые даты.
+# ══════════════════════════════════════════════════════════════════════════════
+def _cbrt_usd(xml_text):
+    """Достаёт USD ForexSelling из XML CBRT."""
+    import re
+    try:
+        x = re.sub(r"<\?xml[^>]*\?>", "", xml_text, count=1)
+        x = re.sub(r"<\?xml-stylesheet[^>]*\?>", "", x, count=1)
+        root = ET.fromstring(x)
+    except Exception:
+        return None
+    for cur in root.findall("Currency"):
+        if cur.get("CurrencyCode") == "USD" or cur.get("Kod") == "USD":
+            v = cur.findtext("ForexSelling") or cur.findtext("ForexBuying")
+            try:
+                return float(v)
+            except Exception:
+                return None
+    return None
+
+def fetch_cbrt_turkey():
+    """Экономический сигнал Турции: девальвация лиры к USD по данным CBRT."""
+    from datetime import timedelta
+    items = []
+    today_raw = fetch_url("https://www.tcmb.gov.tr/kurlar/today.xml", timeout=20,
+                          headers={"User-Agent": "Mozilla/5.0"})
+    cur = _cbrt_usd(today_raw) if today_raw else None
+    if not cur:
+        print("  [SKIP] CBRT Турция: курс недоступен", file=sys.stderr)
+        return items
+    now = datetime.now(timezone.utc)
+
+    def usd_on(days_back):
+        # CBRT публикует по будням; отступаем назад до рабочего дня (до 5 попыток)
+        for off in range(days_back, days_back + 5):
+            d = now - timedelta(days=off)
+            url = f"https://www.tcmb.gov.tr/kurlar/{d.strftime('%Y%m')}/{d.strftime('%d%m%Y')}.xml"
+            raw = fetch_url(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+            v = _cbrt_usd(raw) if raw else None
+            if v:
+                return v
+        return None
+
+    week_ago  = usd_on(7)
+    month_ago = usd_on(30)
+    week_dev  = (cur - week_ago) / week_ago * 100 if week_ago else 0.0
+    month_dev = (cur - month_ago) / month_ago * 100 if month_ago else 0.0
+    dev = max(week_dev, month_dev)
+    if dev < 2:
+        print(f"  CBRT Турция: USD {cur:.2f}₺ (нед {week_dev:+.1f}% мес {month_dev:+.1f}%) — стабильно, без сигнала", file=sys.stderr)
+        return items
+    if   dev < 5:  sev = 52
+    elif dev < 10: sev = 66
+    elif dev < 20: sev = 80
+    else:          sev = 90
+    title = f"Лира ослабла: USD {cur:.2f}₺ (нед. {week_dev:+.1f}%, мес. {month_dev:+.1f}%) — Турция"
+    items.append({
+        "title": title[:130],
+        "desc": (f"Курс доллара ЦБ Турции: {cur:.2f} ₺. Изменение за неделю {week_dev:+.1f}%, "
+                 f"за месяц {month_dev:+.1f}%. Источник: CBRT. Турция"),
+        "date": now.strftime("%Y-%m-%d"),
+        "source": "ЦБ Турции",
+        "_lat": 39.93, "_lng": 32.85,
+        "_region": "Турция",
+        "_domain": "economy",
+        "_force_severity": sev,
+        "_meta": {"kind": "cbrt_fx", "verified": True, "usd": round(cur, 4),
+                  "week_pct": round(week_dev, 2), "month_pct": round(month_dev, 2)},
+    })
+    print(f"  CBRT Турция: USD {cur:.2f}₺, девальвация нед {week_dev:+.1f}% мес {month_dev:+.1f}% -> sev {sev}", file=sys.stderr)
+    return items
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # GloFAS -- точки риска наводнений из прогноза речного стока (CEMS EWDS, S36.5)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_glofas():
@@ -5567,6 +5642,7 @@ if __name__ == '__main__':
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
             ('mgm_turkey',         fetch_mgm_turkey),
             ('cbr_russia',         fetch_cbr_russia),
+            ('cbrt_turkey',        fetch_cbrt_turkey),
             ('acled',              fetch_acled_rss),
             ('geopolitics',        fetch_geopolitics_rss),
             ('social',             fetch_social_rss),
