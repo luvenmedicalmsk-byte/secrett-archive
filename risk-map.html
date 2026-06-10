@@ -7520,7 +7520,8 @@ var _grdfDrawerOpen = false;
 var _grdfNav = 'map';
 var _grdfData = null;
 var _GRDF_SELL_FUTURE = false;
-var _GRDF_ACTIVE={RU:1,BY:1,KZ:1,GE:1,TR:1,DE:1,IT:1,ES:1,RS:1,GB:1,US:1,CA:1,AE:1,UA:1,ME:1,CY:1,TH:1}; // 17 стран полного покрытия (сбор сигналов); остальные — «в разработке» // Strategic/Elite ещё не в продаже — держим в архитектуре, скрываем из карточки до запуска
+var _GRDF_ACTIVE={RU:1,BY:1,KZ:1,GE:1,TR:1,DE:1,IT:1,ES:1,RS:1,GB:1,US:1,CA:1,AE:1,UA:1,ME:1,CY:1,TH:1};
+var _GRDF_READY={RU:1,TR:1}; // готовые страны: есть национальные источники (полные данные). Растёт по мере подключения. // 17 стран полного покрытия (сбор сигналов); остальные — «в разработке» // Strategic/Elite ещё не в продаже — держим в архитектуре, скрываем из карточки до запуска
 
 // Domain colors
 var DOM_COLORS = {
@@ -7870,7 +7871,7 @@ function grdfRelocTopListsHTML(){
 function grdfRelocPanelHTML(c, isSig){
   var R=grdfReloc(c);
   var h='<div class="grdf-section-head">Relocation Intelligence</div>';
-  if(typeof _GRDF_ACTIVE!=='undefined' && c && !_GRDF_ACTIVE[c.country]){
+  if(typeof _GRDF_READY!=='undefined' && c && !_GRDF_READY[c.country]){
     h+='<div style="padding:0 14px 8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#a78bfa;border:1px solid rgba(167,139,250,.35);border-radius:5px;padding:2px 7px">в разработке</span><span style="font-size:9px;color:#94a3b8">оценка предварительная — без ежедневного сбора сигналов</span></div>';
   }
   if(!isSig){
@@ -8414,20 +8415,29 @@ function grdfPopulateCountriesList(countries) {
     list.innerHTML='<div style="padding:20px 14px;font-size:12px;color:#4a6380;text-align:center">Загрузка стран...</div>';
     return;
   }
+  var READY = (typeof _GRDF_READY!=='undefined') ? _GRDF_READY : {RU:1,TR:1};
   var sorted = countries.slice().sort(function(a,b){ return (b.risk_score||0)-(a.risk_score||0); });
-  var html = '';
-  sorted.slice(0,30).forEach(function(c){
+  function row(c, dev){
     var gri = fr(c.risk_score);
     var sc  = STATUS_COLORS[getStatus(gri)]||'#888';
     var delta = parseFloat(c.delta||0);
-    html += '<div class="grdf-country-row" data-grdf-cc="'+esc(c.country)+'" onclick="grdfOpenCountrySheet(this.dataset.grdfCc)">';
-    html += '<div class="grdf-country-avatar" style="background:'+sc+'18;border:1.5px solid '+sc+'30;font-size:20px">'+_flag(c.country)+'</div>';
-    html += '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#e2e8f0">'+esc(c.country_name||c.country)+'</div>';
-    html += '<div style="font-size:10px;color:#3d5068;margin-top:1px">GRI '+gri+' · EWS '+fr(c.ews_score||gri)+'</div></div>';
-    html += '<div style="text-align:right"><div style="font-size:10px;color:'+sc+';font-weight:500">'+STATUS_RU[getStatus(gri)]+'</div>';
-    html += '<div style="font-size:9px;color:'+(delta>0?'#f97316':'#10b981')+';margin-top:1px">'+(delta>0?'+':'')+delta.toFixed(1)+'</div></div>';
-    html += '</div>';
-  });
+    var h = '<div class="grdf-country-row" style="'+(dev?'opacity:.6;':'')+'" data-grdf-cc="'+esc(c.country)+'" onclick="grdfOpenCountrySheet(this.dataset.grdfCc)">';
+    h += '<div class="grdf-country-avatar" style="background:'+sc+'18;border:1.5px solid '+sc+'30;font-size:20px">'+_flag(c.country)+'</div>';
+    h += '<div style="flex:1"><div style="font-size:12px;font-weight:500;color:#e2e8f0">'+esc(c.country_name||c.country)
+       + (dev?' <span style="font-size:7.5px;letter-spacing:.05em;text-transform:uppercase;color:#a78bfa;border:1px solid rgba(167,139,250,.4);border-radius:4px;padding:1px 5px;vertical-align:middle">в разработке</span>':'')
+       + '</div>';
+    h += '<div style="font-size:10px;color:#3d5068;margin-top:1px">GRI '+gri+' · EWS '+fr(c.ews_score||gri)+'</div></div>';
+    h += '<div style="text-align:right"><div style="font-size:10px;color:'+sc+';font-weight:500">'+STATUS_RU[getStatus(gri)]+'</div>';
+    h += '<div style="font-size:9px;color:'+(delta>0?'#f97316':'#10b981')+';margin-top:1px">'+(delta>0?'+':'')+delta.toFixed(1)+'</div></div>';
+    h += '</div>';
+    return h;
+  }
+  function hdr(t,sub){ return '<div style="padding:11px 14px 5px"><div style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#9a7b2e;font-weight:600">'+t+'</div>'+(sub?'<div style="font-size:9px;color:#56708c;margin-top:2px">'+sub+'</div>':'')+'</div>'; }
+  var ready = sorted.filter(function(c){ return READY[c.country]; });
+  var dev   = sorted.filter(function(c){ return !READY[c.country]; }).slice(0,30);
+  var html = '';
+  if(ready.length){ html += hdr('Готово · национальные источники', 'полные данные'); ready.forEach(function(c){ html+=row(c,false); }); }
+  if(dev.length){ html += hdr('В разработке', 'предварительная оценка'); dev.forEach(function(c){ html+=row(c,true); }); }
   list.innerHTML = html;
 }
 
