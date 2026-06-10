@@ -2,60 +2,60 @@
   "country": "IL",
   "date": "2026-06-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-10T08:08:10.813084+00:00",
+  "generated_at": "2026-06-10T08:41:11.388835+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 49,
+      "score": 52,
       "props": {
-        "risk_score": 49
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Израиль_ат",
+      "type": "Signal",
+      "label": "Израиль атакует Тир, несмотря на предупр",
+      "severity": 54,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Ливан_сооб",
       "type": "Signal",
       "label": "Ливан сообщает о 11 погибших в результат",
@@ -92,13 +99,6 @@
       "label": "Иран атакует базы США в Иордании и Бахре",
       "severity": 48,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Иран_и_Изр",
-      "type": "Signal",
-      "label": "Иран и Израиль отступают от грани после ",
-      "severity": 47,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IL",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IL",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Израиль_ат",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.54
+    },
+    {
       "from": "SIGNAL-IL-Ливан_сооб",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-IL-Иран_и_Изр",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
