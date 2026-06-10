@@ -3000,7 +3000,6 @@ def fetch_tech_rss():
         ('https://www.darkreading.com/rss.xml', 'Dark Reading', 'technology'),
         ('https://www.helpnetsecurity.com/feed/', 'Help Net Security', 'technology'),
         ('https://industrialcyber.co/feed/', 'Industrial Cyber', 'technology'),
-        ('https://securelist.com/feed/', 'Securelist', 'technology'),
         # AI и технологии
         ('https://www.technologyreview.com/feed/', 'MIT Technology Review', 'technology'),
         ('https://www.technologyreview.com/rss/feed/', 'MIT Technology Review', 'technology'),
@@ -3944,7 +3943,7 @@ def fetch_cloudflare_radar(token=None):
              'UNKNOWN': 'причина неизвестна'}
     CHARGED = ('GOVERNMENT_DIRECTED', 'SHUTDOWN', 'MILITARY_ACTION', 'WAR', 'CYBER_ATTACK', 'ATTACK')
     try:
-        d = _q("annotations/outages?dateRange=7d&limit=50&format=json")
+        d = _q("annotations/outages?dateRange=30d&limit=50&format=json")
         ann = (d.get('result') or {}).get('annotations') or []
         _n = 0
         for a in ann[:20]:
