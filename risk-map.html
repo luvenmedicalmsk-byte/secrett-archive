@@ -7815,7 +7815,7 @@ function grdfRiskMatrixHTML(risk, delta, isSig){
   function rmCol(v){ return v>=75?'#ef4444':v>=60?'#f97316':v>=45?'#eab308':v>=30?'#84cc16':'#22c55e'; }
   var m2=[]; for(var m=1;m<=24;m++){ m2.push(Math.min(100,Math.round(risk+delta*(m/12)*0.8))); }
   var y5=[]; for(var y=1;y<=5;y++){ y5.push(Math.min(100,Math.round(risk+delta*y*0.3))); }
-  var h='<div class="grdf-section-head">Risk Matrix · проекция риска</div>';
+  var h='<div class="grdf-section-head">Матрица рисков · проекция риска</div>';
   if(isSig){
     h+='<div style="padding:0 14px 10px">';
     h+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px"><span style="font-size:10px;color:#94a3b8;letter-spacing:.04em">2 года · по месяцам</span><span style="font-size:10px;color:'+rmCol(m2[23])+';font-weight:600">'+m2[0]+' → '+m2[23]+'</span></div>';
@@ -7829,7 +7829,7 @@ function grdfRiskMatrixHTML(risk, delta, isSig){
   } else {
     h+='<div style="padding:0 14px 10px"><div style="position:relative;border-radius:6px;overflow:hidden"><div style="display:flex;gap:1px;height:22px;filter:blur(2px);opacity:.5">';
     m2.forEach(function(v){ h+='<div style="flex:1;background:'+rmCol(v)+';border-radius:1px"></div>'; });
-    h+='</div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#D4AF5A;background:rgba(6,5,10,.35)">🔒 Risk Matrix 2Y / 5Y — в Signal PRO</div></div></div>';
+    h+='</div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;color:#D4AF5A;background:rgba(6,5,10,.35)"><svg viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Матрица рисков 2 / 5 лет — Архив системных рисков</div></div></div>';
   }
   return h;
 }
@@ -7870,14 +7870,14 @@ function grdfRelocTopListsHTML(){
 }
 function grdfRelocPanelHTML(c, isSig){
   var R=grdfReloc(c);
-  var h='<div class="grdf-section-head">Relocation Intelligence</div>';
+  var h='<div class="grdf-section-head">Аналитика релокации</div>';
   if(typeof _GRDF_READY!=='undefined' && c && !_GRDF_READY[c.country]){
     h+='<div style="padding:0 14px 8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#a78bfa;border:1px solid rgba(167,139,250,.35);border-radius:5px;padding:2px 7px">в разработке</span><span style="font-size:9px;color:#94a3b8">оценка предварительная — без ежедневного сбора сигналов</span></div>';
   }
   if(!isSig){
     h+='<div style="padding:0 14px 10px"><div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid rgba(184,151,58,0.18)">';
     h+='<div style="padding:14px;filter:blur(3px);opacity:.5"><div style="font-size:26px;color:#D4AF5A">'+R.resilience+'</div><div style="font-size:9px;color:#94a3b8">Resilience Score</div></div>';
-    h+='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#D4AF5A;background:rgba(6,5,10,.42)">🔒 Оценка стран для релокации — в Signal PRO</div>';
+    h+='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;color:#a78bfa;background:rgba(6,5,10,.42)"><svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Оценка стран для релокации — в разработке</div>';
     h+='</div></div>';
     return h;
   }
@@ -7995,7 +7995,6 @@ function grdfRenderCountryPanel(cc) {
   html += '<div class="grdf-fc-hz">24 часа</div>';
   html += '<div style="font-size:17px;color:'+statusCol+';font-weight:600;font-family:Cormorant Garamond,serif;line-height:1;margin:3px 0">'+fc24+' / 100</div>';
   html += '<div style="font-size:9px;color:'+_riskLabelCol(fc24)+';margin-bottom:2px">'+_riskLabel(fc24)+'</div>';
-  html += '<div class="grdf-fc-tier" style="color:#10b981;font-size:8px">Бесплатно</div>';
   html += '</div>';
   // 7d
   if(isSig){
@@ -8006,7 +8005,7 @@ function grdfRenderCountryPanel(cc) {
   } else {
     html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_7d" style="cursor:pointer">';
     html += '<div class="grdf-fc-hz">7 дней</div>';
-    html += '<div style="font-size:10px;color:#374151;margin:2px 0">🔒</div>';
+    html += '<div style="margin:3px 0;display:flex;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>';
     html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px">Архив</div></div>';
   }
   // 30d / 90d — Strategic / Elite. Не в продаже на текущем этапе: скрыты за флагом,
@@ -8057,9 +8056,9 @@ function grdfRenderCountryPanel(cc) {
     html += '<div class="grdf-pro-sub">Полный аналитический профиль страны</div>';
     html += '<div class="grdf-pro-list">';
     html += '<div class="grdf-pro-item">Прогноз риска на 7 дней</div>';
-    html += '<div class="grdf-pro-item">Signal Drivers — 5 драйверов + сигналы SIG-NNN</div>';
-    html += '<div class="grdf-pro-item">Country Intelligence — досье страны</div>';
-    html += '<div class="grdf-pro-item">Risk Matrix 2Y / 5Y</div>';
+    html += '<div class="grdf-pro-item">Драйверы сигналов — 5 драйверов + сигналы SIG-NNN</div>';
+    html += '<div class="grdf-pro-item">Досье страны</div>';
+    html += '<div class="grdf-pro-item">Матрица рисков 2 / 5 лет</div>';
     html += '<div class="grdf-pro-item">Уверенность модели</div>';
     html += '<div class="grdf-pro-item">Расширенная аналитика</div>';
     html += '</div>';
