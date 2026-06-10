@@ -669,8 +669,12 @@ document.querySelectorAll('.mode-btn').forEach(function(el){
 
 document.getElementById('tab-desc').textContent=DESCS['2y'];
 document.getElementById('risk-count').textContent=(RISKS['2y']||[]).length+' рисков';
-setTimeout(()=>{render();renderGrid();},80);
+function _boot(){ render(); renderGrid(); }
+setTimeout(_boot,80); setTimeout(_boot,500); setTimeout(_boot,1200);
+window.addEventListener('load',_boot);
 window.addEventListener('resize',render);
+/* перерисовать, когда холст впервые получает ненулевую ширину (панель открывается с анимацией) */
+if(window.ResizeObserver){ try{ new ResizeObserver(function(){ var w=cv.getBoundingClientRect().width; if(w>0 && Math.abs(w-(W||0))>1) _boot(); }).observe(cv); }catch(e){} }
 </script>
 <script>
 (function(){
