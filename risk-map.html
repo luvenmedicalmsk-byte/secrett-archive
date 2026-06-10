@@ -1736,7 +1736,7 @@ let markersLayer = L.layerGroup().addTo(map);
 const FALLBACK = [
   {id:'f1',title:'Тепловые волны — Южная Европа',domain:'climate',lat:40,lng:15,severity:82,region:'Южная Европа',summary:'Экстремальная жара, температуры выше исторических максимумов в Италии, Испании, Греции.',source:'NASA EONET',date:'2026-05-20'},
   {id:'f2',title:'Инфляционное давление — ЕЦБ',domain:'economy',lat:50,lng:10,severity:74,region:'Еврозона',summary:'ЕЦБ сохраняет ставку на фоне устойчивой инфляции в секторе услуг.',source:'Reuters',date:'2026-05-18'},
-  {id:'f3',title:'Напряжённость на Ближнем Востоке',domain:'geopolitics',lat:32,lng:40,severity:88,region:'Ближний Восток',summary:'Эскалация в ряде субрегионов, повышенная активность дипломатических переговоров.',source:'Reuters',date:'2026-05-22'},
+  {id:'f3',title:'Напряжённость на Ближнем Востоке',domain:'geopolitics',lat:32,lng:40,severity:88,region:'Ближний Восток',summary:'Обострение в ряде субрегионов, повышенная активность дипломатических переговоров.',source:'Reuters',date:'2026-05-22'},
   {id:'f4',title:'Уязвимости критической инфраструктуры',domain:'technology',lat:55,lng:20,severity:79,region:'Европа',summary:'CISA зафиксировала серию целевых атак на энергетическую инфраструктуру.',source:'CISA',date:'2026-05-21'},
   {id:'f5',title:'Наводнения — Центральная Азия',domain:'climate',lat:43,lng:67,severity:76,region:'Казахстан / Узбекистан',summary:'Ранний сход ледников провоцирует паводки в нескольких регионах.',source:'GDACS',date:'2026-05-19'},
   {id:'f6',title:'Продовольственная безопасность — Африка',domain:'social',lat:12,lng:20,severity:85,region:'Сахель',summary:'ВПП ООН фиксирует ухудшение ситуации в 6 странах субрегиона.',source:'WFP',date:'2026-05-17'},
@@ -4262,7 +4262,7 @@ var _AP_TYPE_LABELS = {
   risk_spike:         'Резкий рост',
   risk_drop:          'Снижение риска',
   critical_driver:    'Критический фактор',
-  escalation_upgrade: 'Эскалация',
+  escalation_upgrade: 'Обострение',
   forecast_alert:     'Прогноз: угроза'
 };
 
@@ -4376,8 +4376,8 @@ var _tlCache = {};   // {CC: timeline data}
 
 var _TL_TYPE_LABELS = {
   risk_change:          'Изменение риска',
-  escalation_upgrade:   'Эскалация',
-  escalation_downgrade: 'Деэскалация',
+  escalation_upgrade:   'Обострение',
+  escalation_downgrade: 'Снижение',
   critical_driver:      'Критический фактор',
   risk_recovery:        'Снижение угрозы',
   forecast_alert:       'Прогноз: угроза',
@@ -5242,7 +5242,7 @@ function renderEarlyWarning(data, caps) {
   // Horizons
   var horizons = data.horizons || [];
   if (horizons.length) {
-    html += '<div class="cc-ew-section-title">Горизонты эскалации</div>';
+    html += '<div class="cc-ew-section-title">Горизонты обострения</div>';
     html += '<div class="cc-ew-horizons">';
     horizons.forEach(function(h) {
       var prob = h.escalation_probability || 0;
@@ -5836,7 +5836,7 @@ function renderStrategy(data, caps) {
 
   var triggers = data.escalation_triggers || [];
   if (triggers.length) {
-    html += '<div class="cc-strat-section">Триггеры эскалации</div>';
+    html += '<div class="cc-strat-section">Триггеры обострения</div>';
     triggers.forEach(function(t) {
       html += '<div class="cc-strat-trigger">'
             +   '<span class="cc-strat-trig-cond">' + _esc(t.condition) + '</span>'
@@ -7228,7 +7228,7 @@ function _evM(val, lbl, col) {
           <span style="color:#10b981;font-weight:600">•</span> Ленту предупреждений
         </div>
         <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:#d1fae5">
-          <span style="color:#10b981;font-weight:600">•</span> Монитор эскалации
+          <span style="color:#10b981;font-weight:600">•</span> Монитор обострений
         </div>
       </div>
     </div>
@@ -7288,7 +7288,7 @@ function _evM(val, lbl, col) {
     <!-- Footer note -->
     <div style="margin-top:11px;padding:10px 12px;background:rgba(16,185,129,.05);border-radius:7px;border:0.5px solid rgba(16,185,129,.15)">
       <div style="font-size:10px;color:#6ee7b7;line-height:1.65;text-align:center">
-        ⭐ Участникам Архива доступны: Прогноз на 7 дней, риск-драйверы, лента сигналов, лента предупреждений и монитор эскалации.
+        ⭐ Участникам Архива доступны: Прогноз на 7 дней, риск-драйверы, лента сигналов, лента предупреждений и монитор обострений.
       </div>
     </div>
   </div>
@@ -7400,7 +7400,7 @@ function _evM(val, lbl, col) {
       <span class="free-lock-tag">Архив + Signal Pro</span>
     </div>
     <div class="free-lock-title">15 сигналов · Прогнозы · Аналитика</div>
-    <div class="free-lock-desc">Полный доступ к разведывательной платформе. Сигналы до эскалации — с вероятностью и рекомендацией.</div>
+    <div class="free-lock-desc">Полный доступ к аналитической платформе. Сигналы до обострения — с вероятностью и рекомендацией.</div>
     <!-- blurred preview -->
     <div class="free-preview-row"><div class="free-preview-dot" style="background:#ef4444"></div><div class="free-preview-text">Climate Stress Escalation · Score 94/100</div><div class="free-preview-score">84%</div></div>
     <div class="free-preview-row"><div class="free-preview-dot" style="background:#f97316"></div><div class="free-preview-text">Geopolitical Conflict Risk · горизонт 7д</div><div class="free-preview-score">71%</div></div>
@@ -7424,7 +7424,7 @@ function _evM(val, lbl, col) {
       <div class="grdf-acc-val" id="grdf-acc-score">—</div>
     </div>
     <div class="grdf-acc-card">
-      <div><div class="grdf-acc-label">Точность (P)</div><div class="grdf-acc-sub">Верные эскалации</div></div>
+      <div><div class="grdf-acc-label">Точность (P)</div><div class="grdf-acc-sub">Верные обострения</div></div>
       <div class="grdf-acc-val" id="grdf-acc-prec">—</div>
     </div>
     <div class="grdf-acc-card">
@@ -7657,7 +7657,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
       STABLE:     'Климатические показатели в норме. Активных угроз не зафиксировано.',
     },
     geopolitics: {
-      CRITICAL:   'Геополитическая напряжённость достигла критического уровня. Система фиксирует множественные эскалационные сигналы.',
+      CRITICAL:   'Геополитическая напряжённость достигла критического уровня. Система фиксирует множественные сигналы обострения.',
       ESCALATING: 'Система фиксирует нарастание геополитической напряжённости и рост дипломатических предупреждений.',
       ELEVATED:   'Геополитические риски выше нормы. Зафиксированы активные сигналы напряжённости.',
       STABLE:     'Геополитическая ситуация стабильна. Активных угроз не зафиксировано.',
@@ -8581,7 +8581,7 @@ window.addEventListener('resize', function(){
   <div class="am-inner">
     <div class="am-eyebrow">Архив — Карта сигналов</div>
     <div class="am-title">Архив +<br><em>Signal Pro</em></div>
-    <div class="am-sub">Разведывательная платформа системных рисков.<br>Сигналы до эскалации — с вероятностью и рекомендацией.</div>
+    <div class="am-sub">Аналитическая платформа системных рисков.<br>Сигналы до обострения — с вероятностью и рекомендацией.</div>
 
     <div class="am-price-blk">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px;"><div class="am-price-old">250 000 ₽</div><div style="font-size:8px;padding:2px 8px;background:rgba(239,68,68,.12);border:0.5px solid rgba(239,68,68,.35);color:#f87171;letter-spacing:.08em;border-radius:3px;font-weight:600;">⏱ ТОЛЬКО 48 ЧАСОВ</div></div>
