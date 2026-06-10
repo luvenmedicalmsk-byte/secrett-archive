@@ -2,67 +2,72 @@
   "country": "AM",
   "date": "2026-06-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-10T15:28:33.632926+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-10T18:32:28.954572+00:00",
+  "node_count": 11,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-AM",
       "type": "Country",
       "label": "AM",
-      "score": 43,
+      "score": 60,
       "props": {
-        "risk_score": 43
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-AM-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 22,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 39,
-      "trend": "down"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 30,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 28,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-social",
       "type": "Domain",
       "label": "social",
-      "score": 32,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 30,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 26,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-AM-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-AM-economic",
@@ -73,25 +78,6 @@
       "id": "DRIVER-AM-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-AM-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-AM-В_Армении_",
-      "type": "Signal",
-      "label": "В Армении уже принят закон о вступлении ",
-      "severity": 42,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AM-Страны_ОДК",
-      "type": "Signal",
-      "label": "Страны ОДКБ договорились рассмотреть при",
-      "severity": 42,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -99,43 +85,49 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-economic",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-climate",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-technology",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-social",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-cyber",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.36
+    },
+    {
+      "from": "DRIVER-AM-geopolitical",
+      "to": "COUNTRY-AM",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-AM-economic",
@@ -150,22 +142,67 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AM-climate",
-      "to": "COUNTRY-AM",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-AM-geopolitical",
+      "to": "DOMAIN-AM-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-AM-В_Армении_",
-      "to": "DOMAIN-AM-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.42
-    },
-    {
-      "from": "SIGNAL-AM-Страны_ОДК",
+      "from": "DOMAIN-AM-infrastructure",
       "to": "DOMAIN-AM-economic",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AM-economic",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-AM-climate",
+      "to": "DOMAIN-AM-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-AM-infrastructure",
+      "to": "DOMAIN-AM-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AM-economic",
+      "to": "DOMAIN-AM-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-AM-climate",
+      "to": "DOMAIN-AM-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-AM-economic",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-AM-social",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     }
   ]
 }
