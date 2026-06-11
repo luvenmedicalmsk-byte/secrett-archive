@@ -3003,7 +3003,7 @@ def fetch_telegram():
         for raw_html in msgs[-25:]:
             text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
             if len(text) < 20: continue
-            tl = text.lower()
+            tl = text[:200].lower()   # фильтр по заголовку/лиду: пара слов рядом = реально связана (не ложное со-вхождение в длинной простыне)
             is_srisk = any(k in tl for k in SOCIAL_RISK_KW) or any(a in tl and b in tl for a,b in SOCIAL_RISK_PAIRS)
             if ch in SOCIAL_SRC:
                 if not is_srisk:
