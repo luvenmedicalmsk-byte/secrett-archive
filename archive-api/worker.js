@@ -7,7 +7,7 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Last-Event-ID',
+  'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Last-Event-ID, X-Snapshot-Token, X-Session-Token, Authorization',
 };
 
 
