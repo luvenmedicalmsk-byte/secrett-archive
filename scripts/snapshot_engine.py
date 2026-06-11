@@ -276,6 +276,60 @@ DOMAIN_LABELS = {
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 
+def _country_match_tokens(kw_list):
+    """Build robust match tokens. Cyrillic words >=6 chars -> 5-char stem so
+    declensions (Россия/России/Россией/Москва/Москве) are caught. Latin kept as-is."""
+    toks = []
+    for k in kw_list:
+        k = str(k).strip().lower()
+        if not k:
+            continue
+        if len(k) >= 6 and any('\u0430' <= ch <= '\u044f' or ch == '\u0451' for ch in k):
+            toks.append(k[:5])
+        else:
+            toks.append(k)
+    return toks
+
+_CC_TOKENS = None
+def _tag_event_countries(events: list[dict]) -> None:
+    """Annotate each event with country_codes (all matches) + primary country_code.
+    Powers per-country signals. Stem-based so RU declensions match."""
+    global _CC_TOKENS
+    if _CC_TOKENS is None:
+        _CC_TOKENS = {iso: _country_match_tokens(meta.get("kw", [])) for iso, meta in COUNTRIES.items()}
+    for ev in events:
+        text = " ".join([
+            str(ev.get("title", "")),
+            str(ev.get("summary", "")),
+            str(ev.get("region", "")),
+        ]).lower()
+        ccs = [iso for iso, toks in _CC_TOKENS.items() if any(t in text for t in toks)]
+        ev["country_codes"] = ccs
+        if ccs:
+            ev["country_code"] = ccs[0]
+        elif "country_code" not in ev:
+            ev["country_code"] = ""
+
+def _persist_tagged_events(events: list[dict]) -> None:
+    """Re-write docs/events.json with country tags (preserve wrapper keys)."""
+    path = DOCS_DIR / "events.json"
+    try:
+        with open(path) as f:
+            d = json.load(f)
+    except Exception:
+        d = {}
+    if not isinstance(d, dict):
+        d = {"events": events}
+    d["events"] = events
+    d["count"] = len(events)
+    try:
+        with open(path, "w") as f:
+            json.dump(d, f, ensure_ascii=False, indent=2)
+        print(f"[SNAP] events.json re-tagged with country codes ({len(events)} events)", file=sys.stderr)
+    except Exception as e:
+        print(f"[SNAP] WARN: could not persist tagged events: {e}", file=sys.stderr)
+
+
 def load_events() -> list[dict]:
     """Load events from docs/events.json"""
     path = DOCS_DIR / "events.json"
@@ -284,7 +338,9 @@ def load_events() -> list[dict]:
         return []
     with open(path) as f:
         d = json.load(f)
-    return d.get("events", [])
+    evs = d.get("events", [])
+    _tag_event_countries(evs)
+    return evs
 
 
 def match_events(events: list[dict], iso2: str) -> list[dict]:
@@ -31939,6 +31995,7 @@ def main():
     print(f"Date: {TODAY}  Countries: {len(COUNTRIES)}", file=sys.stderr)
 
     events = load_events()
+    _persist_tagged_events(events)
     if not events:
         print("[SNAP] No events — using baselines for all countries", file=sys.stderr)
 
