@@ -2,67 +2,72 @@
   "country": "PT",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T17:43:09.429571+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-11T18:23:18.201239+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 49,
+      "score": 53,
       "props": {
-        "risk_score": 49
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 44,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
-      "trend": "stable"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 32,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
-      "score": 37,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 34,
-      "trend": "stable"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 29,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-PT-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-PT-economic",
@@ -75,23 +80,11 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-PT-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "SIGNAL-PT-Португалия",
       "type": "Signal",
       "label": "Португалия требует от Тегерана прекратит",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-PT-Закрытие_о",
-      "type": "Signal",
-      "label": "Закрытие отделений неотложной помощи угр",
-      "severity": 43,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -99,43 +92,49 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-technology",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-social",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-cyber",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.32
+    },
+    {
+      "from": "DRIVER-PT-geopolitical",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-PT-economic",
@@ -150,22 +149,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-PT-geopolitical",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-PT-Португалия",
       "to": "DOMAIN-PT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-PT-Закрытие_о",
-      "to": "DOMAIN-PT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.43
     }
   ]
 }
