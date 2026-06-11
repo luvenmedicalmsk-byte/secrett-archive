@@ -133,7 +133,8 @@ async function handleAuthMe(request, env){
   if (!sess) return jsonResponse({ auth:false }, 401);
   const c = await _clientStatus(env, sess.tg);
   const active = _activeNow(c);
-  return jsonResponse({ auth: active, telegram_id: sess.tg, status: c?c.status:'NONE' }, active?200:403);
+  const tier = active ? ((c && c.tier) ? String(c.tier).toLowerCase() : 'signal') : 'free';
+  return jsonResponse({ auth: active, telegram_id: sess.tg, status: c?c.status:'NONE', tier }, active?200:403);
 }
 // ===== /Авторизация =====
 
