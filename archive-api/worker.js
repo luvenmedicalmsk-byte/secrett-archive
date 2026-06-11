@@ -2386,6 +2386,8 @@ function _filterSnapshotTier(data, caps) {
       country:          c.country,
       country_name:     c.country_name,
       risk_score:       c.risk_score,
+      ews_score:        c.ews_score,
+      cri_score:        c.cri_score,
       dominant_domain:  c.dominant_domain,
       escalation_level: c.escalation_level,
       delta:            c.delta,
