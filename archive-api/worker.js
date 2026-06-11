@@ -82,6 +82,8 @@ function _randToken(){ const a=new Uint8Array(32); crypto.getRandomValues(a); re
 function _sessionToken(request){
   const h = request.headers.get('X-Session-Token') || '';
   if (h) return h;
+  const s = request.headers.get('X-Snapshot-Token') || '';
+  if (s) return s;
   const auth = request.headers.get('Authorization') || '';
   if (auth.startsWith('Bearer ')) return auth.slice(7);
   return '';
