@@ -7861,9 +7861,9 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
 window._grdfIdxInfo = function(k){
   var box=document.getElementById('grdf-idx-info'); if(!box) return;
   var INFO={
-    GRI:{t:'GRI · Global Risk Index',d:'Итоговый индекс риска страны. Формируется на основе геополитики, экономики, климата, технологий и социальных сигналов.',s:'Шкала 0–100'},
-    EWS:{t:'EWS · Early Warning Score',d:'Индекс раннего предупреждения. Показывает скорость появления новых сигналов и вероятность ухудшения ситуации.',s:'Шкала 0–100'},
-    CRI:{t:'CRI · Country Resilience Index',d:'Индекс устойчивости страны. Показывает способность государства адаптироваться к кризисам и восстанавливаться после шоков.',s:'Шкала 0–100'}
+    GRI:{t:'GRI · Global Risk Index',d:'Текущий уровень риска: взвешенная severity реальных сигналов по геополитике, экономике, климату, технологиям и социуму.',s:'Шкала 0–100 · выше — опаснее'},
+    EWS:{t:'EWS · Early Warning Score',d:'Темп нарастания: эскалация сигналов и ускорение трендов. Высокий EWS при умеренном GRI — ситуация быстро ухудшается.',s:'Шкала 0–100 · выше — быстрее нарастает'},
+    CRI:{t:'CRI · Cascade Risk Index',d:'Системность: насколько риск распространяется между доменами. Считается из числа активных доменов, разброса severity, каскадов и векторов.',s:'Шкала 0–100 · выше — системнее'}
   };
   var i=INFO[k]; if(!i) return;
   if(box._k===k && box.classList.contains('open')){ box.classList.remove('open'); box._k=null; return; }
@@ -7974,11 +7974,11 @@ function grdfRenderCountryPanel(cc) {
   if(!c){ document.getElementById('grdf-cs-content').innerHTML='<div style="padding:14px;color:#4a6380;font-size:12px">Данные не найдены</div>'; return; }
 
   var gri = fr(c.risk_score);
-  var cri = fr(gri*0.85);
+  var cri = fr((c.cri_score!=null)?c.cri_score:gri*0.85);
   // Risk level label helpers (local)
   function _riskLabel(v){ return v>=80?'Критический':v>=60?'Высокий':v>=40?'Умеренный':'Низкий'; }
   function _riskLabelCol(v){ return v>=80?'#ef4444':v>=60?'#f97316':v>=40?'#eab308':'#10b981'; }
-  var ews = fr(c.ews_score||gri*0.95);
+  var ews = fr((c.ews_score!=null)?c.ews_score:gri*0.95);
   var status = getStatus(gri);
   var statusCol = STATUS_COLORS[status]||'#10B981';
   var dom = c.dominant_domain||'economy';
