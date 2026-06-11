@@ -2996,9 +2996,21 @@ def fetch_telegram():
                          ('рост','заболеваем'),('всплеск','заболеваем'),('рост','безработиц'),('рост','смертност')]
     items = []
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    import time as _time
+    UAS = ["Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+           "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"]
     for ch in channels:
-        data = fetch_url(f"https://t.me/s/{ch}", headers={'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'}, timeout=10)
-        if not data: continue
+        data = None
+        for _att in range(3):   # ретраи + ротация UA: t.me/s капризен, нулевые ответы частые
+            data = fetch_url(f"https://t.me/s/{ch}", headers={'User-Agent': UAS[_att % len(UAS)]}, timeout=18, retries=1)
+            if data and 'tgme_widget_message_text' in data:
+                break
+            _time.sleep(1.5)
+        if not data or 'tgme_widget_message_text' not in data:
+            print(f"  [TG] {ch}: пусто после ретраев", file=sys.stderr)
+            continue
+        _time.sleep(0.8)   # пауза между каналами против rate-limit
         msgs = _re.findall(r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>', data, _re.S)
         for raw_html in msgs[-25:]:
             text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
