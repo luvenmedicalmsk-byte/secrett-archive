@@ -2,67 +2,67 @@
   "country": "ME",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T19:32:15.231904+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-11T19:43:59.876575+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 54,
+      "score": 56,
       "props": {
-        "risk_score": 54
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-ME-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 49,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "stable"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 35,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-social",
       "type": "Domain",
       "label": "social",
-      "score": 40,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 38,
-      "trend": "stable"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 32,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DRIVER-ME-economic",
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-ME-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-ME-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-ME-climate",
-      "type": "Driver",
-      "label": "climate"
     },
     {
       "id": "SIGNAL-ME-Африкански",
@@ -87,18 +87,11 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-ME-Свежие_уда",
+      "id": "SIGNAL-ME-Захват_ост",
       "type": "Signal",
-      "label": "Свежие удары по Тире убивают восемь чело",
-      "severity": 56,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-ME-Разблокиро",
-      "type": "Signal",
-      "label": "Разблокировка любопытства: представляем ",
-      "severity": 46,
-      "domain": "geopolitical"
+      "label": "Захват острова Харк 'вполне осуществим' ",
+      "severity": 53,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,46 +99,52 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-economic",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-technology",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-social",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-cyber",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.34
     },
     {
       "from": "DRIVER-ME-economic",
+      "to": "COUNTRY-ME",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-ME-geopolitical",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,10 +156,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ME-climate",
-      "to": "COUNTRY-ME",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-ME-geopolitical",
+      "to": "DOMAIN-ME-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ME-infrastructure",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-ME-Африкански",
@@ -169,16 +183,10 @@
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-ME-Свежие_уда",
-      "to": "DOMAIN-ME-geopolitical",
+      "from": "SIGNAL-ME-Захват_ост",
+      "to": "DOMAIN-ME-economic",
       "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-ME-Разблокиро",
-      "to": "DOMAIN-ME-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.53
     }
   ]
 }
