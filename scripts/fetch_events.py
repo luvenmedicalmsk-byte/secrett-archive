@@ -554,12 +554,19 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
            'чрезвыч','пострадав','напряжен','столкновен','атак','боевик']
     kw_high = sum(1 for s in high if s in text)
     kw_med  = sum(1 for s in med if s in text)
+    # Конфликтные системные сигналы (RU+EN). Без «эскалации» — только конкретика.
+    conflict = ['war','airstrike','air strike','missile','drone','shelling','offensive',
+                'sanction','invasion','mobiliz','refinery','strike','attack',
+                'война','удар','обстрел','атак','бпла','беспилотник','дрон','ракет',
+                'наступлен','санкци','мобилизац','нпз','пво','взрыв','боеприпас']
+    kw_conflict = sum(1 for s in conflict if s in text)
     casualties = 0
     for num_str, _ in re.findall(r'\b(\d[\d,]*)\s*(killed|dead|displaced|million|billion)', text):
         try: casualties = max(casualties, int(num_str.replace(',', '')))
         except Exception: pass
     return normalize_severity('news', {'kw_high': kw_high, 'kw_med': kw_med,
-                                       'casualties': casualties, 'bias': bias, 'weight': weight})
+                                       'casualties': casualties, 'bias': bias, 'weight': weight,
+                                       'kw_conflict': kw_conflict})
 
 
 def normalize_severity(source_type, m):
@@ -640,6 +647,10 @@ def normalize_severity(source_type, m):
         elif cas > 0:       score += 4
         score += min(8, (m.get('bias') or 0) // 2)   # влияние source_bias уменьшено вдвое, потолок +8
         cap = 75 if confirmed else 65                # подтверждённый ущерб ≤75, аналитика/мнение ≤65
+        kc = m.get('kw_conflict') or 0               # конфликтные сигналы — вровень с климатом (74-78)
+        if kc:
+            score += 6 * kc
+            cap = max(cap, 78)
         score = min(cap, score)
         w = m.get('weight', 1.0) or 1.0              # source_weight: даунвейт медиа к полу 40
         score = 40 + (score - 40) * w
