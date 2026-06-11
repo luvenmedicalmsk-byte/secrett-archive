@@ -2127,7 +2127,7 @@ async function handleProxyNewsFeed(env) {
 //   (no match)          → free
 //
 // Usage:
-//   const tier = _resolveClientTier(request, env);
+//   const tier = await _resolveClientTier(request, env);
 //   const caps = getTierCapabilities(tier);
 //   if (caps.summary) { ... }
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2296,9 +2296,23 @@ function getTierCapabilities(tier) {
 }
 
 // ── Token → tier resolution ───────────────────────────────────────────────
-function _resolveClientTier(request, env) {
+async function _resolveClientTier(request, env) {
   const token = request.headers.get('X-Snapshot-Token') || '';
   if (!token) return 'free';
+  // Сессия Telegram-входа: валидная сессия + активный клиент -> его тариф (по умолчанию signal)
+  if (env.SESSIONS_KV) {
+    try {
+      const _sv = await env.SESSIONS_KV.get('sess:'+token);
+      if (_sv) {
+        const _sess = JSON.parse(_sv);
+        const _c = await _clientStatus(env, _sess.tg);
+        if (_activeNow(_c)) {
+          const _ct = (_c && _c.tier) ? String(_c.tier).toLowerCase() : 'signal';
+          return (['free','signal','strategic','elite'].indexOf(_ct) >= 0) ? _ct : 'signal';
+        }
+      }
+    } catch(_e) {}
+  }
   // Check tokens in order: elite → strategic → signal
   // Allows a single token to grant exactly one tier
   if (env.ELITE_TOKEN     && token === env.ELITE_TOKEN)     return 'elite';
@@ -2312,7 +2326,7 @@ function _resolveClientTier(request, env) {
 // ── Snapshot today endpoint ───────────────────────────────────────────────
 async function handleSnapshotToday(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier  = _resolveClientTier(request, env);
+  const tier  = await _resolveClientTier(request, env);
   const caps  = getTierCapabilities(tier);
 
   // Try KV cache (300s). Cache key includes tier so each tier gets own cache.
@@ -2437,7 +2451,7 @@ function _filterSnapshotTier(data, caps) {
 
 // ── History endpoint ──────────────────────────────────────────────────────
 async function handleSnapshotHistory(request, env) {
-  const tier  = _resolveClientTier(request, env);
+  const tier  = await _resolveClientTier(request, env);
   const caps  = getTierCapabilities(tier);
   const url   = new URL(request.url);
   const cc    = url.pathname.split('/').pop()?.toUpperCase();
@@ -2522,7 +2536,7 @@ async function handleSnapshotHistory(request, env) {
 
 async function handleIntelligenceDaily(request, env) {
   const REPO  = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier  = _resolveClientTier(request, env);
+  const tier  = await _resolveClientTier(request, env);
   const caps  = getTierCapabilities(tier);
   const limit = caps.intel_limit;            // 3 | 10 | -1
 
@@ -2605,7 +2619,7 @@ function _filterIntelFeed(raw, caps, limit) {
 
 async function handleAlerts(request, env) {
   const REPO  = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier  = _resolveClientTier(request, env);
+  const tier  = await _resolveClientTier(request, env);
   const caps  = getTierCapabilities(tier);
   const limit = caps.alerts_limit;          // 3 | 20 | 100 | -1
 
@@ -2703,7 +2717,7 @@ function _filterAlerts(raw, caps, limit) {
 
 async function handleTimeline(request, env) {
   const REPO  = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier  = _resolveClientTier(request, env);
+  const tier  = await _resolveClientTier(request, env);
   const caps  = getTierCapabilities(tier);
   const days  = caps.timeline_days;   // 7 | 30 | 180 | -1
 
@@ -2782,7 +2796,7 @@ async function handleTimeline(request, env) {
 
 async function handleScenarios_v1(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.scenario_access || 'none';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
@@ -2895,7 +2909,7 @@ function _filterScenarios(data,access,tier){
 
 async function handleCorrelations(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.correlation_access || 'none';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
@@ -2994,7 +3008,7 @@ function _filterCorrelations(data, access, tier) {
 
 async function handlePropagation(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.propagation_access || 'teaser';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
@@ -3102,7 +3116,7 @@ function _filterPropagation(data, access, tier) {
 
 async function handleSystemic(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.systemic_access || 'score';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
@@ -3198,7 +3212,7 @@ function _filterSystemic(data, access, tier) {
 
 async function handleEarlyWarning(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.early_warning_access || 'score';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
@@ -3297,7 +3311,7 @@ function _filterEarlyWarning(data, access, tier) {
 
 async function handleDecisionSupport(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.decision_access || 'score';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g, '');
@@ -3397,7 +3411,7 @@ function _filterDecisionSupport(data, access, tier) {
 
 async function handleResilience(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.resilience_access || 'score';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
@@ -3498,7 +3512,7 @@ function _filterResilience(data, access, tier) {
 
 async function handleCalibration(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.calibration_access || 'score';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
@@ -3606,7 +3620,7 @@ function _stripMetrics(m) {
 
 async function handleStrategy(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.strategy_access || 'teaser';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
@@ -3713,7 +3727,7 @@ function _filterStrategy(data, access, tier) {
 
 async function handleStrategyFeedback(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.feedback_access || 'teaser';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
@@ -3812,7 +3826,7 @@ function _filterFeedback(data, access, tier) {
 
 async function handleValidation(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.validation_access || 'teaser';
   const cc     = request.url.split('/').pop().toUpperCase().replace(/[^A-Z]/g,'');
@@ -3928,7 +3942,7 @@ function _filterValidation(data, access, tier) {
 
 async function handleDashboard(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.dashboard_access || 'teaser';
 
@@ -4073,7 +4087,7 @@ function _filterDashboard(data, access, tier) {
 
 async function handleDecisionQuality(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.dq_access || 'teaser';
   const cc     = request.url.split('/api/decision-quality/')[1]?.toUpperCase().replace(/[^A-Z]/g,'') || '';
@@ -4118,7 +4132,7 @@ async function handleDecisionQuality(request, env) {
 
 async function handleDecisionRanking(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   if ((caps.dq_access || 'teaser') === 'teaser') return new Response(
     JSON.stringify({error:'Decision ranking requires Signal tier or above'}),
@@ -4206,7 +4220,7 @@ function _filterDQ(data, access, tier) {
 
 async function handleStrategyOptimization(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.so_access || 'teaser';
   const cc     = (request.url.split('/api/strategy-optimization/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
@@ -4245,7 +4259,7 @@ async function handleStrategyOptimization(request, env) {
 
 async function handleStrategyEvolution(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   if ((caps.so_access||'teaser')==='teaser') return new Response(
     JSON.stringify({error:'Evolution timeline requires Signal tier or above'}),
@@ -4332,7 +4346,7 @@ function _filterSO(data, access, tier) {
 
 async function handleRecommendations(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.rec_access || 'teaser';
   const raw    = (request.url.split('/api/recommendations/')[1] || '').replace(/[^A-Za-z_]/g,'');
@@ -4396,7 +4410,7 @@ async function handleRecommendations(request, env) {
 
 async function handleExecutiveSummary(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   if ((caps.rec_access||'teaser')==='teaser') return new Response(
     JSON.stringify({error:'Executive summary requires Signal tier or above'}),
@@ -4480,7 +4494,7 @@ async function _fetchASE(repo, cc, folder, env, ttl) {
 
 async function handleScenarioEvolution(request, env) {
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env); const caps=getTierCapabilities(tier);
+  const tier=await _resolveClientTier(request,env); const caps=getTierCapabilities(tier);
   const access=caps.ase_access||'teaser';
   const raw=(request.url.split('/api/scenario-evolution/')[1]||'').replace(/[^A-Za-z_]/g,'');
   const isGlobal=raw.toUpperCase()==='_GLOBAL';
@@ -4505,7 +4519,7 @@ async function handleScenarioEvolution(request, env) {
 
 async function handleScenarioPathways(request, env) {
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env); const caps=getTierCapabilities(tier);
+  const tier=await _resolveClientTier(request,env); const caps=getTierCapabilities(tier);
   if((caps.ase_access||'teaser')==='teaser')return new Response(JSON.stringify({error:'Pathways require Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   const cc=(request.url.split('/api/scenario-pathways/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
   if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
@@ -4517,7 +4531,7 @@ async function handleScenarioPathways(request, env) {
 
 async function handleScenarioTree(request, env) {
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env); const caps=getTierCapabilities(tier);
+  const tier=await _resolveClientTier(request,env); const caps=getTierCapabilities(tier);
   if(!['full','full+explain'].includes(caps.ase_access||'teaser'))return new Response(JSON.stringify({error:'Tree requires Strategic tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   const cc=(request.url.split('/api/scenario-tree/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
   if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid country code'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
@@ -4569,7 +4583,7 @@ async function _grFetch(repo, cc, folder, ttl) {
 
 async function handleGlobalRisks(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  const tier=await _resolveClientTier(request,env);const caps=getTierCapabilities(tier);
   const access=caps.grie_access||'teaser';
   const raw=(request.url.split('/api/global-risks/')[1]||'').replace(/[^A-Za-z_]/g,'');
   const isGlobal=raw.toUpperCase()==='_GLOBAL';
@@ -4594,7 +4608,7 @@ async function handleGlobalRisks(request,env){
 
 async function handleRiskRanking(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  const tier=await _resolveClientTier(request,env);const caps=getTierCapabilities(tier);
   if((caps.grie_access||'teaser')==='teaser')return new Response(JSON.stringify({error:'Risk ranking requires Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   const cc=(request.url.split('/api/risk-ranking/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
   if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
@@ -4605,7 +4619,7 @@ async function handleRiskRanking(request,env){
 
 async function handleRiskHierarchy(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  const tier=await _resolveClientTier(request,env);const caps=getTierCapabilities(tier);
   if(!['full','full+explain'].includes(caps.grie_access||'teaser'))return new Response(JSON.stringify({error:'Hierarchy requires Strategic tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   const cc=(request.url.split('/api/risk-hierarchy/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
   if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
@@ -4616,7 +4630,7 @@ async function handleRiskHierarchy(request,env){
 
 async function handleRiskAcceleration(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env);const caps=getTierCapabilities(tier);
+  const tier=await _resolveClientTier(request,env);const caps=getTierCapabilities(tier);
   if((caps.grie_access||'teaser')==='teaser')return new Response(JSON.stringify({error:'Acceleration requires Signal tier'}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   const cc=(request.url.split('/api/risk-acceleration/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
   if(!cc||cc.length!==2)return new Response(JSON.stringify({error:'Invalid CC'}),{status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
@@ -4676,12 +4690,12 @@ function _evAuthCheck(caps) {
 
 async function handleExtValMetrics(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const caps=getTierCapabilities(await _resolveClientTier(request,env));
   const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   try{const d=await _evFetch(REPO,'metrics.json',3600);
   if(!d)return new Response(JSON.stringify({error:'No validation metrics — run external_validation.py'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   // Elite gets full; signal/strategic gets summary
-  const tier=_resolveClientTier(request,env);
+  const tier=await _resolveClientTier(request,env);
   const full=['full','full+explain'].includes(caps.grie_access);
   const result=full?d:{
     generated_at:d.generated_at,events_database_size:d.events_database_size,
@@ -4697,7 +4711,7 @@ async function handleExtValMetrics(request,env){
 
 async function handleExtValCountry(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const caps=getTierCapabilities(await _resolveClientTier(request,env));
   const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   const cc=(request.url.split('/api/extval/country/')[1]||'').toUpperCase().replace(/[^A-Z]/g,'');
   try{const d=await _evFetch(REPO,'country_performance.json',3600);
@@ -4712,7 +4726,7 @@ async function handleExtValCountry(request,env){
 
 async function handleExtValCalibration(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const caps=getTierCapabilities(await _resolveClientTier(request,env));
   const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   try{const d=await _evFetch(REPO,'calibration_curve.json',3600);
   if(!d)return new Response(JSON.stringify({error:'No calibration data'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
@@ -4722,7 +4736,7 @@ async function handleExtValCalibration(request,env){
 
 async function handleExtValLeadTime(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const caps=getTierCapabilities(_resolveClientTier(request,env));
+  const caps=getTierCapabilities(await _resolveClientTier(request,env));
   const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   try{const d=await _evFetch(REPO,'lead_time_analysis.json',3600);
   if(!d)return new Response(JSON.stringify({error:'No lead time data'}),{status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
@@ -4732,7 +4746,7 @@ async function handleExtValLeadTime(request,env){
 
 async function handleExtValLearning(request,env){
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env);
+  const tier=await _resolveClientTier(request,env);
   const caps=getTierCapabilities(tier);
   const auth=_evAuthCheck(caps); if(!auth.ok)return new Response(JSON.stringify({error:auth.error}),{status:403,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   // Learning signals: full detail for elite only
@@ -4763,7 +4777,7 @@ async function handleExtValLearning(request,env){
 
 async function handleTrackRecord(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.tr_access || 'teaser';
 
@@ -4857,7 +4871,7 @@ async function handleTrackRecord(request, env) {
 
 async function handleModelHistory(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/model-history.json`;
     const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
@@ -4956,7 +4970,7 @@ async function _valFetch(repo, path, ttl) {
 
 async function handleValidationSummary(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   const access = caps.validation_access || 'teaser';
   const cacheKey = `vale:summary:${tier}`;
@@ -5006,7 +5020,7 @@ async function handleValidationSummary(request, env) {
 
 async function handleValidationCountry(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   const access = caps.validation_access || 'teaser';
   if (access === 'teaser') return new Response(JSON.stringify({error:'Country validation metrics require Signal tier'}),
@@ -5024,7 +5038,7 @@ async function handleValidationCountry(request, env) {
 
 async function handleValidationDomain(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   const access = caps.validation_access || 'teaser';
   if (access === 'teaser') return new Response(JSON.stringify({error:'Domain validation metrics require Signal tier'}),
@@ -5042,7 +5056,7 @@ async function handleValidationDomain(request, env) {
 
 async function handleValidationEvent(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   const access = caps.validation_access || 'teaser';
   if (access === 'teaser') return new Response(JSON.stringify({error:'Event records require Signal tier'}),
@@ -5061,7 +5075,7 @@ async function handleValidationEvent(request, env) {
 
 async function handleValidationLatest(request, env) {
   const REPO = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier = _resolveClientTier(request, env);
+  const tier = await _resolveClientTier(request, env);
   const caps = getTierCapabilities(tier);
   const access = caps.validation_access || 'teaser';
   if (access === 'teaser') return new Response(JSON.stringify({error:'Full report requires Signal tier'}),
@@ -5101,7 +5115,7 @@ async function _explFetch(repo, path, ttl) {
 
 async function handleExplainability(request, env) {
   const REPO   = env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request,env);
+  const tier   = await _resolveClientTier(request,env);
   const caps   = getTierCapabilities(tier);
   const access = caps.expl_access||'teaser';
   const raw    = (request.url.split('/api/explainability/')[1]||'').replace(/\/latest$/,'');
@@ -5239,7 +5253,7 @@ function _filterAlert(data, access, tier) {
 
 async function handleAlertsSub(request, env) {
   const REPO   = env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request,env);
+  const tier   = await _resolveClientTier(request,env);
   const caps   = getTierCapabilities(tier);
   const access = caps.alert_access||'teaser';
   const path   = request.url.split('?')[0];
@@ -5329,7 +5343,7 @@ async function _mapFetch(repo, path, ttl) {
 
 async function handleMap(request, env) {
   const REPO   = env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request,env);
+  const tier   = await _resolveClientTier(request,env);
   const caps   = getTierCapabilities(tier);
   const access = caps.map_access||'teaser';
   const seg    = (request.url.split('/api/map/')[1]||'').split('/').filter(Boolean);
@@ -5474,7 +5488,7 @@ async function _grivlFetch(repo, path, ttl) {
 
 async function handleGRIVL(request, env) {
   const REPO=env.GITHUB_REPO||'luvenmedicalmsk-byte/secrett-archive';
-  const tier=_resolveClientTier(request,env);
+  const tier=await _resolveClientTier(request,env);
   const caps=getTierCapabilities(tier);
   const seg=(request.url.split('/api/grivl/')[1]||'').split('/').filter(Boolean);
   const CORS={'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier};
@@ -5698,7 +5712,7 @@ async function _grdfFetch(repo, path, ttl) {
 
 async function handleGRDF(request, env) {
   const REPO   = env.GITHUB_REPO || 'luvenmedicalmsk-byte/secrett-archive';
-  const tier   = _resolveClientTier(request, env);
+  const tier   = await _resolveClientTier(request, env);
   const caps   = getTierCapabilities(tier);
   const access = caps.grdf_access || 'teaser';
   const CORS   = { 'Content-Type':'application/json', 'Access-Control-Allow-Origin':'*', 'X-Tier':tier };
