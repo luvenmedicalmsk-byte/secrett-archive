@@ -8142,7 +8142,14 @@ function grdfRenderCountryPanel(cc) {
   // Signals preview
   if(isSig){
     html += '<div class="grdf-section-head">Последние сигналы</div>';
-    var sigs = (_grdfData&&_grdfData.events||[]).filter(function(e){ return e.country_code===cc||e.iso===cc; }).slice(0,3);
+    var _sigSrc = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS && ALL_EVENTS.length) ? ALL_EVENTS : ((_grdfData&&_grdfData.events)||[]);
+    var _cnLc = (c.country_name||'').toLowerCase();
+    var sigs = _sigSrc.filter(function(e){
+      if(e.country_codes && e.country_codes.indexOf(cc)>=0) return true;
+      if(e.country_code===cc || e.iso===cc) return true;
+      if(_cnLc){ var _t=((e.title||'')+' '+(e.region||'')+' '+(e.summary||'')).toLowerCase(); if(_t.indexOf(_cnLc)>=0) return true; }
+      return false;
+    }).sort(function(a,b){ return (b.severity||0)-(a.severity||0); }).slice(0,3);
     if(sigs.length===0) html += '<div style="padding:4px 14px 8px;font-size:11px;color:#4a6380">Нет активных сигналов</div>';
     sigs.forEach(function(s){
       html += '<div class="grdf-sig-row">';
