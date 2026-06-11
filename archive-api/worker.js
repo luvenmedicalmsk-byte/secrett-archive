@@ -30,6 +30,85 @@ function checkRateLimit(ip) {
 }
 
 
+// ===== Авторизация Atlas Signals (за флагом env.ENFORCE_AUTH==='true') =====
+const _PREMIUM_PREFIXES = [
+  '/api/grdf','/api/resilience','/api/dashboard','/api/scenarios','/api/scenario-tree',
+  '/api/scenario-pathways','/api/scenario-evolution','/api/strategy','/api/strategy-feedback',
+  '/api/strategy-history','/api/strategy-optimization','/api/decision-support','/api/decision-quality',
+  '/api/decision-ranking','/api/early-warning','/api/executive-summary','/api/calibration',
+  '/api/correlations','/api/systemic','/api/timelines','/api/propagation','/api/recommendations',
+  '/api/risk-ranking','/api/risk-hierarchy','/api/risk-acceleration','/api/validation',
+  '/api/explanations','/api/global-risks','/api/snapshots','/api/track-record'
+];
+function _isPremiumPath(p){
+  for (const pre of _PREMIUM_PREFIXES){ if (p === pre || p.startsWith(pre + '/')) return true; }
+  return false;
+}
+async function _sha256bytes(buf){ return new Uint8Array(await crypto.subtle.digest('SHA-256', buf)); }
+async function _hmacHex(keyBytes, msg){
+  const key = await crypto.subtle.importKey('raw', keyBytes, {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(msg));
+  return [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function _verifyTelegram(data, botToken){
+  if (!data || !data.hash || !botToken) return false;
+  const pairs = Object.keys(data).filter(k=>k!=='hash').sort().map(k=>k+'='+data[k]).join('\n');
+  const secret = await _sha256bytes(new TextEncoder().encode(botToken));
+  const calc = await _hmacHex(secret, pairs);
+  if (calc !== String(data.hash)) return false;
+  const age = Math.floor(Date.now()/1000) - Number(data.auth_date||0);
+  return (age >= 0 && age < 86400);
+}
+function _randToken(){ const a=new Uint8Array(32); crypto.getRandomValues(a); return [...a].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function _sessionToken(request){
+  const h = request.headers.get('X-Session-Token') || '';
+  if (h) return h;
+  const auth = request.headers.get('Authorization') || '';
+  if (auth.startsWith('Bearer ')) return auth.slice(7);
+  return '';
+}
+async function _clientStatus(env, tgId){
+  if (!env.CLIENTS_KV) return null;
+  try { const v = await env.CLIENTS_KV.get('client:'+tgId); return v ? JSON.parse(v) : null; } catch(_) { return null; }
+}
+function _activeNow(c){
+  if (!c) return false;
+  if (String(c.status||'').toUpperCase() !== 'ACTIVE') return false;
+  if (c.expires && new Date(c.expires).getTime() < Date.now()) return false;
+  return true;
+}
+async function _authGate(request, env){
+  if (!env.SESSIONS_KV || !env.CLIENTS_KV) return { ok:false, status:503, error:'Авторизация не настроена' };
+  const tk = _sessionToken(request);
+  if (!tk) return { ok:false, status:401, error:'Требуется вход' };
+  let sess; try { const v = await env.SESSIONS_KV.get('sess:'+tk); sess = v ? JSON.parse(v) : null; } catch(_) { sess=null; }
+  if (!sess || !sess.tg) return { ok:false, status:401, error:'Сессия недействительна' };
+  const c = await _clientStatus(env, sess.tg);
+  if (!_activeNow(c)) return { ok:false, status:403, error:'Доступ неактивен' };
+  return { ok:true, tg:sess.tg };
+}
+async function handleAuthTelegram(request, env){
+  let data; try { data = await request.json(); } catch(_) { return jsonResponse({error:'bad request'},400); }
+  const okSig = await _verifyTelegram(data, env.TELEGRAM_BOT_TOKEN);
+  if (!okSig) return jsonResponse({ error:'Подпись Telegram недействительна', auth:'invalid' }, 401);
+  const tgId = String(data.id);
+  const c = await _clientStatus(env, tgId);
+  if (!_activeNow(c)) return jsonResponse({ error:'Доступ не найден или неактивен. Оформите доступ.', auth:'no_access' }, 403);
+  const token = _randToken();
+  if (env.SESSIONS_KV) await env.SESSIONS_KV.put('sess:'+token, JSON.stringify({tg:tgId, u:data.username||'', t:Date.now()}), { expirationTtl: 2592000 });
+  return jsonResponse({ token, status:'ACTIVE', telegram_id: tgId, username: data.username||'' });
+}
+async function handleAuthMe(request, env){
+  const tk = _sessionToken(request);
+  if (!tk || !env.SESSIONS_KV) return jsonResponse({ auth:false }, 401);
+  let sess; try { const v = await env.SESSIONS_KV.get('sess:'+tk); sess = v?JSON.parse(v):null; } catch(_) { sess=null; }
+  if (!sess) return jsonResponse({ auth:false }, 401);
+  const c = await _clientStatus(env, sess.tg);
+  const active = _activeNow(c);
+  return jsonResponse({ auth: active, telegram_id: sess.tg, status: c?c.status:'NONE' }, active?200:403);
+}
+// ===== /Авторизация =====
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
@@ -38,6 +117,12 @@ export default {
 
     const url  = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '');
+
+    // --- Гейт авторизации премиум-роутов (за флагом ENFORCE_AUTH) ---
+    if (env.ENFORCE_AUTH === 'true' && _isPremiumPath(path)) {
+      const _g = await _authGate(request, env);
+      if (!_g.ok) return jsonResponse({ error: _g.error, auth:'required' }, _g.status);
+    }
 
     // Rate limit для AI-эндпоинтов
     const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
@@ -48,6 +133,8 @@ export default {
 
     try {
       if (path === '/api/health')                               return handleHealth(env);
+      if (path === '/api/auth/telegram' && request.method === 'POST') return handleAuthTelegram(request, env);
+      if (path === '/api/auth/me')                                    return handleAuthMe(request, env);
       if (path === '/api/stream')                               return handleStream(request, env, ctx);
       if (path === '/api/events' && request.method === 'GET')   return handleGetEvents(url, env);
       if (path === '/api/stats'  && request.method === 'GET')   return handleStats(url, env);
