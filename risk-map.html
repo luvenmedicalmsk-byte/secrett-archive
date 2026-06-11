@@ -8000,7 +8000,70 @@ function grdfRelocPanelHTML(c, isSig){
   return h;
 }
 
+function _grdfContextHtml(c){
+  var cc=c.country, cnLc=(c.country_name||'').toLowerCase();
+  var evs=(typeof ALL_EVENTS!=='undefined'&&ALL_EVENTS?ALL_EVENTS:[]).filter(function(e){
+    if(e.country_codes && e.country_codes.indexOf(cc)>=0) return true;
+    if(e.country_code===cc||e.iso===cc) return true;
+    if(cnLc){ var t=((e.title||'')+' '+(e.region||'')).toLowerCase(); return t.indexOf(cnLc)>=0; }
+    return false;
+  });
+  if(!evs.length) return '';
+  function card(label, inner){
+    return '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">'
+      + '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">'+label+'</div>'+inner+'</div>';
+  }
+  var H='';
+  function dtag(v){ if(v==null) return '<span style="color:#4a6380">накапливается</span>'; var col=v===0?'#4a6380':v>0?'#f97316':'#10b981',arr=v===0?'\u2192':v>0?'\u2191':'\u2193'; return '<span style="color:'+col+';font-weight:600">'+arr+' '+(v>0?'+':'')+v+'</span>'; }
+  H+=card('Изменение за 7 дней',
+    '<div style="display:flex;gap:16px;font-size:12px;color:#94a3b8">'
+    +'<div>GRI '+dtag(c.gri_delta_7d)+'</div>'
+    +'<div>EWS '+dtag(c.ews_delta_7d)+'</div>'
+    +'<div>CRI '+dtag(c.cri_delta_7d)+'</div></div>');
+  var dc={};
+  evs.forEach(function(e){ var d=e.domain||'other'; dc[d]=(dc[d]||0)+1; });
+  var ord=Object.keys(dc).sort(function(a,b){ return dc[b]-dc[a]; });
+  var topEv=evs.slice().sort(function(a,b){ return (b.severity||0)-(a.severity||0); }).slice(0,4);
+  var f2=topEv.map(function(e){
+    var d=e.domain||'other', ttl=String(e.title||'').replace(/\s+/g,' ').trim(); if(ttl.length>50) ttl=ttl.slice(0,50)+'\u2026';
+    return '<div style="display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:11px;color:#cbd5e1">'
+      +'<span style="width:5px;height:5px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';margin-top:5px;flex-shrink:0"></span>'
+      +'<span style="flex:1">'+esc(ttl)+' <span style="color:#4a6380">\u00b7 '+(DOM_LABELS[d]||d)+' \u00b7 '+dc[d]+' сигн.</span></span></div>';
+  }).join('');
+  H+=card('Что повлияло на риск', f2);
+  var f3=ord.map(function(d){
+    return '<div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;padding:2px 0">'
+      +'<span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';margin-right:6px"></span>'+(DOM_LABELS[d]||d)+'</span>'
+      +'<span style="color:#cbd5e1;font-weight:600">'+dc[d]+'</span></div>';
+  }).join('');
+  H+=card('Покрытие \u00b7 сигналов обработано', f3);
+  var rc={};
+  evs.forEach(function(e){ var r=String(e.region||'').replace(/,?\s*(Россия|Russia|Турция|Turkey)\s*$/i,'').trim(); if(r && r.toLowerCase()!==cnLc) rc[r]=(rc[r]||0)+1; });
+  var regs=Object.keys(rc).sort(function(a,b){ return rc[b]-rc[a]; }).slice(0,8);
+  if(regs.length){
+    var f4=regs.map(function(r){ return '<span style="display:inline-block;font-size:10px;color:#cbd5e1;background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:5px;padding:2px 7px;margin:0 4px 4px 0">'+esc(r)+' <span style="color:#4a6380">'+rc[r]+'</span></span>'; }).join('');
+    H+=card('География сигналов', f4);
+  }
+  var sc={};
+  evs.forEach(function(e){ var s=String(e.source||'').trim(); if(s) sc[s]=(sc[s]||0)+1; });
+  var srcs=Object.keys(sc).sort(function(a,b){ return sc[b]-sc[a]; });
+  var f5=srcs.slice(0,8).map(function(s){ return '<span style="display:inline-block;font-size:10px;color:#cbd5e1;background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:5px;padding:2px 7px;margin:0 4px 4px 0">'+esc(s)+'</span>'; }).join('');
+  if(f5) H+=card('Источники мониторинга', f5);
+  var n=evs.length, nsrc=srcs.length;
+  var gen=(typeof _todayData!=='undefined'&&_todayData&&_todayData.generated_at)?Date.parse(_todayData.generated_at):NaN;
+  var hrs=isNaN(gen)?null:Math.max(0,Math.round((Date.now()-gen)/3600000));
+  var freshF=hrs==null?0.6:hrs<6?1:hrs<24?0.8:hrs<72?0.5:0.3;
+  var conf=Math.max(0,Math.min(99,Math.round(45 + 30*Math.min(1,n/30) + 15*Math.min(1,nsrc/5) + 10*freshF)));
+  H+=card('Уверенность оценки',
+    '<div style="font-size:20px;font-family:\'Cormorant Garamond\',serif;color:'+(conf>=75?'#10b981':conf>=55?'#eab308':'#f97316')+';line-height:1">'+conf+'%</div>'
+    +'<div style="font-size:10px;color:#4a6380;margin-top:4px">Основано на '+n+' сигналах \u00b7 '+nsrc+' источниках'+(hrs!=null?' \u00b7 обновление '+hrs+' ч назад':'')+'</div>');
+  var dt=(typeof _todayData!=='undefined'&&_todayData&&_todayData.date)?_todayData.date:'';
+  if(dt) H+=card('Обновлено', '<div style="font-size:11px;color:#cbd5e1">'+esc(dt)+(hrs!=null?' \u00b7 '+hrs+' ч назад':'')+'</div>');
+  return H;
+}
+
 function grdfRenderCountryPanel(cc) {
+
   try{ var _ct=(window.CC&&CC.tier&&CC.tier())||''; if(_ct&&_ct!=='free') _grdfTier='SIGNAL_PRO'; }catch(e){}
   var countries = (_grdfData&&_grdfData.countries)||[];
   var c = countries.find(function(x){ return x.country===cc; });
@@ -8195,16 +8258,20 @@ function grdfRenderCountryPanel(cc) {
     sigs = sigs.sort(function(a,b){ return (b.severity||0)-(a.severity||0); }).slice(0,4);
     if(sigs.length===0) html += '<div style="padding:4px 14px 8px;font-size:11px;color:#4a6380">Нет активных сигналов</div>';
     sigs.forEach(function(s){
+      var _sd=s.domain||dom, _sc=DOM_COLORS[_sd]||'#f97316';
+      var _sv=s.severity||0, _slvl=_sv>=70?'Высокий':_sv>=45?'Средний':'Низкий';
+      var _smeta=[(DOM_LABELS[_sd]||_sd),(s.date||''),(s.source||''),_slvl].filter(Boolean).join(' · ');
       html += '<div class="grdf-sig-row">';
-      html += '<span class="grdf-sig-dot" style="background:#f97316"></span>';
+      html += '<span class="grdf-sig-dot" style="background:'+_sc+'"></span>';
       html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+esc(s.title||s.signal||'Сигнал')+'</div>';
-      html += '<div style="font-size:9px;color:#3d5068;margin-top:1px">'+esc(s.category||dom)+'</div></div>';
+      html += '<div style="font-size:9px;color:#3d5068;margin-top:1px">'+esc(_smeta)+'</div></div>';
       html += '</div>';
     });
   }
 
   // ── Actionable Intelligence Layer ─────────────────────────────
   html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, 'rest');
+  if(isSig){ html += _grdfContextHtml(c); }
   // Bottom padding: 56px nav + 24px safe area + 20px buffer = 100px
   html += '<div style="height:100px"></div>';
   var _csEl = document.getElementById('grdf-cs-content');
