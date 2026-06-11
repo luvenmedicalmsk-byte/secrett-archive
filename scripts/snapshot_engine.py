@@ -345,7 +345,7 @@ def load_events() -> list[dict]:
 
 def match_events(events: list[dict], iso2: str) -> list[dict]:
     """Return events relevant to this country by keyword matching."""
-    kws = [k.lower() for k in COUNTRIES[iso2]["kw"]]
+    kws = _country_match_tokens(COUNTRIES[iso2]["kw"])  # стемы: ловим падежи (Россия/России/Россией)
     matched = []
     for ev in events:
         text = " ".join([
