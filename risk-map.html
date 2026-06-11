@@ -8842,7 +8842,7 @@ window.onTelegramAuth=function(user){
   var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
   var to=setTimeout(function(){ if(ctrl){try{ctrl.abort();}catch(_){}} setm('#ef4444','Таймаут: сервер не ответил за 12с (CORS/сеть)'); },12000);
   try{
-    fetch(API+'/api/auth/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(user),signal:ctrl?ctrl.signal:undefined})
+    fetch('https://archive-api.luven-medical-msk.workers.dev/api/auth/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(user),signal:ctrl?ctrl.signal:undefined})
      .then(function(r){
         clearTimeout(to);
         return r.text().then(function(tx){ var d={}; try{d=JSON.parse(tx);}catch(_){d={_raw:(tx||'').slice(0,80)};} return {s:r.status,ok:r.ok,d:d}; });
