@@ -4555,6 +4555,48 @@ async function fetchScenarios(cc) {
   } catch(e) { return null; }
 }
 
+function _noEsc(s){
+  if(s==null) return s;
+  return String(s)
+    .replace(/Критическая эскалация/g,'Критическое обострение')
+    .replace(/критическая эскалация/g,'критическое обострение')
+    .replace(/Каскадная эскалация/g,'Каскадное обострение')
+    .replace(/каскадная эскалация/g,'каскадное обострение')
+    .replace(/Дипломатическая эскалация/g,'Дипломатическое обострение')
+    .replace(/дипломатическая эскалация/g,'дипломатическое обострение')
+    .replace(/Ложная эскалация/g,'Ложное обострение')
+    .replace(/ложная эскалация/g,'ложное обострение')
+    .replace(/Быстрая эскалация/g,'Быстрое обострение')
+    .replace(/быстрая эскалация/g,'быстрое обострение')
+    .replace(/Контролируемая деэскалация/g,'Контролируемое снижение')
+    .replace(/контролируемая деэскалация/g,'контролируемое снижение')
+    .replace(/Деэскалационн([а-яё]*)/g,'Понижательн$1')
+    .replace(/деэскалационн([а-яё]*)/g,'понижательн$1')
+    .replace(/Эскалационн([а-яё]*)/g,'Повышательн$1')
+    .replace(/эскалационн([а-яё]*)/g,'повышательн$1')
+    .replace(/Эскалирующ/g,'Нарастающ')
+    .replace(/эскалирующ/g,'нарастающ')
+    .replace(/Деэскалацией/g,'Снижением')
+    .replace(/Деэскалацию/g,'Снижение')
+    .replace(/Деэскалации/g,'Снижения')
+    .replace(/Деэскалация/g,'Снижение')
+    .replace(/деэскалацией/g,'снижением')
+    .replace(/деэскалацию/g,'снижение')
+    .replace(/деэскалации/g,'снижения')
+    .replace(/деэскалация/g,'снижение')
+    .replace(/Эскалацией/g,'Обострением')
+    .replace(/Эскалацию/g,'Обострение')
+    .replace(/Эскалации/g,'Обострения')
+    .replace(/Эскалация/g,'Обострение')
+    .replace(/эскалацией/g,'обострением')
+    .replace(/эскалацию/g,'обострение')
+    .replace(/эскалации/g,'обострения')
+    .replace(/эскалация/g,'обострение')
+    .replace(/Деэскалаци/g,'Снижени')
+    .replace(/деэскалаци/g,'снижени')
+    .replace(/Эскалаци/g,'Обострени')
+    .replace(/эскалаци/g,'обострени');
+}
 function renderScenarios(data, caps) {
   var block  = document.getElementById('cc-scenarios-block');
   if (!block) return;
@@ -4608,7 +4650,7 @@ function renderScenarios(data, caps) {
     if (dom) html += _renderScCard(dom, access, SC_COL, ST_COL, HZ_COLS);
     html += '';
     html += '</div>';
-    block.innerHTML = html;
+    block.innerHTML = _noEsc(html);
     return;
   }
 
@@ -4634,7 +4676,7 @@ function renderScenarios(data, caps) {
   }
 
   html += '</div>';
-  block.innerHTML = html;
+  block.innerHTML = _noEsc(html);
 }
 
 function _renderScCard(sc, access, SC_COL, ST_COL, HZ_COLS) {
