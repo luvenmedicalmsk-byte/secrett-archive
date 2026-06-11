@@ -8807,6 +8807,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess(
       h+='<div class="cab-seclabel">Вход в систему</div>';
       h+='<input id="cab-code" class="cab-input" placeholder="Код доступа" autocapitalize="off" autocomplete="off">';
       h+='<button class="cab-btn" onclick="cabLogin()">Войти</button>';
+      h+='<div class="cab-tg-or" style="text-align:center;color:#6b7280;font:400 11px Montserrat,sans-serif;margin:14px 0 8px;letter-spacing:.1em">— ИЛИ —</div>';
+      h+='<div id="cab-tg-login" style="display:flex;justify-content:center;min-height:44px"></div>';
       h+='<div id="cab-login-msg" class="cab-msg"></div>';
       h+='<div class="cab-note">Код доступа приходит на email после оформления.</div>';
       h+='<div class="cab-divider"></div>';
@@ -8818,9 +8820,42 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAccess(
         +'</div>';
       h+='<button class="cab-btn" onclick="closeCabinet();openAccess();">Получить доступ →</button>';
     }
-    body.innerHTML=h;
+    body.innerHTML=h; if(typeof _mountTgLogin==='function') _mountTgLogin();
   }
-  window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if(b) b.style.display = b.style.display==='none'?'block':'none'; };
+  function _mountTgLogin(){
+  var el=document.getElementById('cab-tg-login');
+  if(!el || el.getAttribute('data-m')) return;
+  el.setAttribute('data-m','1');
+  var s=document.createElement('script');
+  s.async=true; s.src='https://telegram.org/js/telegram-widget.js?22';
+  s.setAttribute('data-telegram-login','AtlassSignals_Bot');
+  s.setAttribute('data-size','large');
+  s.setAttribute('data-radius','8');
+  s.setAttribute('data-onauth','onTelegramAuth(user)');
+  s.setAttribute('data-request-access','write');
+  el.appendChild(s);
+}
+window.onTelegramAuth=function(user){
+  var msg=document.getElementById('cab-login-msg');
+  function setm(c,txt){ if(msg){ msg.style.color=c; msg.textContent=txt; } }
+  setm('#9aa0a6','\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0434\u043e\u0441\u0442\u0443\u043f\u2026');
+  fetch(API+'/api/auth/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(user)})
+   .then(function(r){ return r.json().then(function(d){return {s:r.status,ok:r.ok,d:d};}).catch(function(){return {s:r.status,ok:r.ok,d:{}};}); })
+   .then(function(res){
+     if(res.ok && res.d && res.d.token){
+       CC.setToken(res.d.token);
+       setm('#22c55e','\u0412\u0445\u043e\u0434 \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d');
+       setTimeout(function(){ location.reload(); }, 600);
+     } else if(res.s===403){
+       setm('#f59e0b','\u0414\u043e\u0441\u0442\u0443\u043f \u043d\u0435 \u043e\u0444\u043e\u0440\u043c\u043b\u0435\u043d');
+       if(typeof openAccess==='function'){ setTimeout(openAccess,400); }
+     } else {
+       setm('#ef4444','\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0432\u043e\u0439\u0442\u0438. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0441\u043d\u043e\u0432\u0430.');
+     }
+   })
+   .catch(function(){ setm('#ef4444','\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0435\u0442\u0438.'); });
+};
+window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if(b) b.style.display = b.style.display==='none'?'block':'none'; };
   window.cabLogin=async function(inpId){
     inpId=inpId||'cab-code';
     var inp=document.getElementById(inpId); if(!inp) return;
