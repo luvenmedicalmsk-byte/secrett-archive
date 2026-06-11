@@ -492,6 +492,43 @@ def compute_delta(iso2: str, today_score: int) -> int:
         return 0
 
 
+def compute_delta_7d(iso2: str, field: str, today_val):
+    """Недельная дельта метрики из истории (ближайшая запись возрастом ~7 дней).
+    None, если данных нет или поля ещё нет в истории (честно для EWS/CRI до накопления)."""
+    if today_val is None:
+        return None
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    if not hist_path.exists():
+        return None
+    try:
+        snaps = json.load(open(hist_path)).get("snapshots", [])
+    except Exception:
+        return None
+    from datetime import date as _date
+    try:
+        today_d = _date.fromisoformat(TODAY)
+    except Exception:
+        today_d = None
+    best, best_gap = None, None
+    for rec in snaps:
+        v = rec.get(field)
+        if v is None:
+            continue
+        try:
+            rd = _date.fromisoformat(rec.get("date"))
+        except Exception:
+            continue
+        gap = abs((today_d - rd).days - 7) if today_d else 0
+        if best is None or gap < best_gap:
+            best, best_gap = rec, gap
+    if best is None:
+        return None
+    try:
+        return int(today_val) - int(best[field])
+    except Exception:
+        return None
+
+
 def generate_summary(iso2: str, score: int, domain: str,
                      events: list[dict], level: str) -> Optional[str]:
     """
@@ -877,6 +914,9 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     snap["domain_scores"] = _reloc_domain_scores(iso2, snap)
     snap["ews_score"] = compute_ews(matched)   # реальный EWS из данных
     snap["cri_score"] = compute_cri(matched)   # реальный CRI из данных
+    snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
+    snap["ews_delta_7d"] = compute_delta_7d(iso2, "ews_score", snap["ews_score"])
+    snap["cri_delta_7d"] = compute_delta_7d(iso2, "cri_score", snap["cri_score"])
     return snap
 
 
@@ -925,6 +965,8 @@ def update_history(snap: dict) -> None:
         "dominant_domain":    snap["dominant_domain"],
         "escalation_level":   snap["escalation_level"],
         "delta":              snap["delta"],
+        "ews_score":          snap.get("ews_score"),
+        "cri_score":          snap.get("cri_score"),
         "drivers":            [{"name": d["name"], "severity": d["severity"]}
                                 for d in snap.get("drivers", [])],
         "forecast_direction": _f7.get("direction"),
@@ -974,6 +1016,9 @@ def update_index(snapshots: list[dict]) -> None:
                 "domain_scores":    s.get("domain_scores") or {},
                 "ews_score":        s.get("ews_score"),
                 "cri_score":        s.get("cri_score"),
+                "gri_delta_7d":     s.get("gri_delta_7d"),
+                "ews_delta_7d":     s.get("ews_delta_7d"),
+                "cri_delta_7d":     s.get("cri_delta_7d"),
                 "forecast_7d":      s.get("forecast_7d"),
                 "forecast_30d":     s.get("forecast_30d"),
                 # summary intentionally omitted — served only to premium via history endpoint
