@@ -2995,8 +2995,8 @@ def fetch_telegram():
             text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
             if len(text) < 20: continue
             _d = _tg_classify(text)
-            if ch in CH_DEFAULT and (_d is None or _d == 'geopolitics'):
-                _d = CH_DEFAULT[ch]   # профильный канал: None/геополит. ложняк -> дефолт канала
+            if ch in CH_DEFAULT and _d in (None, 'geopolitics', 'economy'):
+                _d = CH_DEFAULT[ch]   # профильный тех-канал: None/геополит./эконом. ложняк -> технологии (климат/социум оставляем)
             items.append({
                 'title': text[:240],
                 'desc': text[:300],
