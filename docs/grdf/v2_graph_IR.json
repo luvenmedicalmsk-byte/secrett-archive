@@ -2,66 +2,66 @@
   "country": "IR",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T16:19:21.730029+00:00",
+  "generated_at": "2026-06-11T16:29:45.314600+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 57,
+      "score": 62,
       "props": {
-        "risk_score": 57
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Всемирный_",
-      "type": "Signal",
-      "label": "Всемирный банк снижает прогноз глобально",
-      "severity": 58,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-IR-Ближний_Во",
-      "type": "Signal",
-      "label": "Ближний Восток LIVE: Дипломатия в центре",
-      "severity": 57,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IR-Трамп_пред",
       "type": "Signal",
       "label": "Трамп предупреждает Иран: США захватят о",
-      "severity": 53,
+      "severity": 65,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Золото_кол",
+      "type": "Signal",
+      "label": "Золото колебалось в волатильной сессии п",
+      "severity": 63,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-IR-Трамп_гово",
+      "type": "Signal",
+      "label": "Трамп говорит, что новые удары по Ирану ",
+      "severity": 63,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-IR-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Всемирный_",
-      "to": "DOMAIN-IR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IR-Ближний_Во",
-      "to": "DOMAIN-IR-geopolitical",
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IR-Трамп_пред",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-IR-Золото_кол",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.63
+    },
+    {
+      "from": "SIGNAL-IR-Трамп_гово",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.63
     }
   ]
 }
