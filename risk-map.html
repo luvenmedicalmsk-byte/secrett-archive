@@ -5301,6 +5301,7 @@ async function fetchDecisionSupport(cc) {
 function renderDecisionSupport(data, caps) {
   var block = document.getElementById('cc-ds-block');
   if (!block) return;
+  if (_DEV_ENGINES) { block.innerHTML = _devCard('Поддержка решений'); return; }
   var access = caps.decision_access || 'score';
 
   if (!data) { block.innerHTML = ''; return; }
@@ -5500,9 +5501,16 @@ async function fetchResilience(cc) {
   } catch(e) { return null; }
 }
 
+var _DEV_ENGINES = true; // Resilience/Decision/Calibration/Strategy — статус «в разработке» (sales-ready)
+function _devCard(title){
+  return '<div style="margin:10px 0;padding:14px 16px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.02);">'
+       + '<div style="font:600 13px/1.3 Montserrat,system-ui,sans-serif;color:#C9CCD3;letter-spacing:.2px;">'+title+'</div>'
+       + '<div style="margin-top:5px;font:400 12px/1.45 Montserrat,system-ui,sans-serif;color:#8A8F98;">Раздел в разработке</div></div>';
+}
 function renderResilience(data, caps) {
   var block = document.getElementById('cc-resilience-block');
   if (!block) return;
+  if (_DEV_ENGINES) { block.innerHTML = _devCard('Устойчивость'); return; }
   var access = caps.resilience_access || 'score';
   if (!data) { block.innerHTML = ''; return; }
 
@@ -5610,6 +5618,7 @@ async function fetchCalibration(cc) {
 function renderCalibration(data, caps) {
   var block = document.getElementById('cc-calibration-block');
   if (!block) return;
+  if (_DEV_ENGINES) { block.innerHTML = _devCard('Калибровка'); return; }
   var access = caps.calibration_access || 'score';
   if (!data || data.error) { block.innerHTML = ''; return; }
 
@@ -5751,6 +5760,7 @@ async function fetchStrategy(cc) {
 function renderStrategy(data, caps) {
   var block  = document.getElementById('cc-strategy-block');
   if (!block) return;
+  if (_DEV_ENGINES) { block.innerHTML = _devCard('Стратегия'); return; }
   var access = caps.strategy_access || 'teaser';
   if (!data || data.error) { block.innerHTML = ''; return; }
 
