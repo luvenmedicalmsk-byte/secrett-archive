@@ -3763,7 +3763,7 @@ function renderCard(c) {
        </a>`;
   }
 
-  document.getElementById('cc-footer').textContent = 'Данные на ' + c.date || '';
+  document.getElementById('cc-footer').textContent = 'Данные на ' + (c.date||'') + ' · tier: ' + (_clientCaps&&_clientCaps.tier||'?') + ' · 7d:' + (_clientCaps&&_clientCaps.forecast_7d) + ' · sum:' + (c.summary?'есть':'НЕТ');
   // Domain accent: top border on card
   document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
   renderForecast(c.forecast_7d||null,_clientCaps);
