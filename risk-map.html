@@ -8848,7 +8848,7 @@ window.onTelegramAuth=function(user){
         return r.text().then(function(tx){ var d={}; try{d=JSON.parse(tx);}catch(_){d={_raw:(tx||'').slice(0,80)};} return {s:r.status,ok:r.ok,d:d}; });
      })
      .then(function(res){
-        if(res.ok && res.d && res.d.token){ CC.setToken(res.d.token); setm('#22c55e','Вход выполнен'); setTimeout(function(){location.reload();},700); }
+        if(res.ok && res.d && res.d.token){ CC.setToken(res.d.token); setm('#22c55e','Вход выполнен · тариф: '+(res.d.tier||'?')); setTimeout(function(){location.reload();},1800); }
         else if(res.s===403){ setm('#f59e0b',(res.d&&res.d.error)||'Доступ не оформлен'); if(typeof openAccess==='function') setTimeout(openAccess,500); }
         else { setm('#ef4444','Ошибка '+res.s+': '+((res.d&&(res.d.error||res.d._raw))||'')); }
      })
