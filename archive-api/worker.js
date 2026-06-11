@@ -120,7 +120,11 @@ async function handleAuthTelegram(request, env){
   if (!okSig) return jsonResponse({ error:'Подпись Telegram недействительна', auth:'invalid' }, 401);
   const tgId = String(data.id);
   const c = await _clientStatus(env, tgId);
-  if (!_activeNow(c)) return jsonResponse({ error:'Доступ не оформлен или неактивен. Оформите доступ.', auth:'no_access' }, 403);
+  if (!_activeNow(c)) {
+    let _kvb=!!env.CLIENTS_KV, _sb=!!env.SESSIONS_KV, _raw=null;
+    try { if(env.CLIENTS_KV) _raw = await env.CLIENTS_KV.get('client:'+tgId); } catch(_e){ _raw='ERR'; }
+    return jsonResponse({ error:'ID '+tgId+' · CLIENTS_KV:'+(_kvb?'есть':'НЕТ')+' · SESSIONS_KV:'+(_sb?'есть':'НЕТ')+' · запись:'+(_raw===null?'НЕТ':String(_raw).slice(0,40)), auth:'no_access' }, 403);
+  }
   const token = _randToken();
   if (env.SESSIONS_KV) await env.SESSIONS_KV.put('sess:'+token, JSON.stringify({tg:tgId, u:data.username||'', t:Date.now()}), { expirationTtl: 2592000 });
   return jsonResponse({ token, status:'ACTIVE', telegram_id: tgId, username: data.username||'' });
