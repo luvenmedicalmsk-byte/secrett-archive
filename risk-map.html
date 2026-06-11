@@ -7746,6 +7746,39 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
   var status = gri>=80?'CRITICAL':gri>=60?'ESCALATING':gri>=40?'ELEVATED':'STABLE';
   var domInsights = DOMAIN_INSIGHTS[dom] || DOMAIN_INSIGHTS['economy'];
   var keyInsight  = domInsights[status];
+  // === Детерминированный вывод из реальных сигналов (переопределяет генерик-шаблон) ===
+  try {
+    var _kcc = c.country, _kcn = (c.country_name||'').toLowerCase();
+    var _kev = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS ? ALL_EVENTS : []).filter(function(e){
+      if(e.country_codes && e.country_codes.indexOf(_kcc)>=0) return true;
+      if(e.country_code===_kcc || e.iso===_kcc) return true;
+      if(_kcn){ var _tt=((e.title||'')+' '+(e.region||'')).toLowerCase(); return _tt.indexOf(_kcn)>=0; }
+      return false;
+    });
+    if(_kev.length){
+      var _kdc={}, _kdt={};
+      _kev.forEach(function(e){ var d=e.domain||'other'; _kdc[d]=(_kdc[d]||0)+1; if(!_kdt[d]||(e.severity||0)>(_kdt[d].severity||0)) _kdt[d]=e; });
+      var _kord = Object.keys(_kdc).sort(function(a,b){ return _kdc[b]-_kdc[a]; });
+      var _klvl = gri>=80?'критический риск':gri>=60?'высокий риск':gri>=40?'умеренный риск':'низкий риск';
+      var _kews = ews>=60?'сигналы быстро нарастают':ews>=35?'умеренная динамика нарастания':'резкого ускорения нет';
+      var _kcri = cri>=60?'риск системный — затрагивает несколько доменов':cri>=35?'риск частично межсекторный':'риск сконцентрирован в одном домене';
+      var _kl1 = 'GRI '+gri+' — '+_klvl+'. '+_kews.charAt(0).toUpperCase()+_kews.slice(1)+' (EWS '+ews+'); '+_kcri+' (CRI '+cri+').';
+      var _kpress = _kord.slice(0,2).map(function(d){
+        var _e=_kdt[d], _ti=(_e&&_e.title)?String(_e.title).replace(/\s+/g,' ').trim():'';
+        if(_ti.length>58) _ti=_ti.slice(0,58)+'…';
+        return '<div style="margin-top:4px"><span style="color:'+(DOM_COLORS[d]||'#94a3b8')+'">'+(DOM_LABELS[d]||d)+'</span> — '+_esc(_ti)+' <span style="color:#4a6380">('+_kdc[d]+' сигн.)</span></div>';
+      }).join('');
+      var _kwatch=[];
+      if(ews>=45) _kwatch.push('ускорение сигналов');
+      if(_kord.length>1) _kwatch.push('рост по «'+(DOM_LABELS[_kord[1]]||_kord[1])+'»');
+      if(delta>=3) _kwatch.push('продолжение роста GRI');
+      if(!_kwatch.length) _kwatch.push('новые сигналы в неактивных доменах');
+      keyInsight = '<div>'+_esc(_kl1)+'</div>'
+        + (_kpress ? '<div style="margin-top:8px;font-size:9px;color:#4a6380;letter-spacing:.08em;text-transform:uppercase">Что давит</div>'+_kpress : '')
+        + '<div style="margin-top:8px;font-size:9px;color:#4a6380;letter-spacing:.08em;text-transform:uppercase">За чем следить</div>'
+        + '<div style="margin-top:2px">'+_esc(_kwatch.slice(0,2).join('; '))+'</div>';
+    }
+  } catch(_kerr){}
 
   if(part!=='rest'){
   // ── Section: Ключевой вывод ─────────────────────────────────────
