@@ -2,67 +2,72 @@
   "country": "JP",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T08:44:46.281908+00:00",
-  "node_count": 11,
-  "edge_count": 13,
+  "generated_at": "2026-06-11T15:57:14.881398+00:00",
+  "node_count": 12,
+  "edge_count": 11,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 44,
+      "score": 35,
       "props": {
-        "risk_score": 44
+        "risk_score": 35
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 52,
-      "trend": "up"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "up"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "up"
+      "score": 12,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "up"
+      "score": 9,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "up"
+      "score": 18,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "up"
+      "score": 20,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-JP-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -75,9 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-JP-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-JP-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M3.7 — Хоккайдо, Япония ре",
+      "severity": 35,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,43 +92,49 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
+    },
+    {
+      "from": "DRIVER-JP-Economic",
+      "to": "COUNTRY-JP",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-JP-Geopolitical",
@@ -136,31 +149,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-JP-Economic",
-      "to": "COUNTRY-JP",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-JP-geopolitical",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
-      "to": "DOMAIN-JP-economic",
+      "from": "SIGNAL-JP-Землетрясе",
+      "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.35
     }
   ]
 }

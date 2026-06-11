@@ -2,32 +2,32 @@
   "country": "IR",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T08:44:46.284837+00:00",
+  "generated_at": "2026-06-11T15:57:14.884260+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,11 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Трое_индий",
+      "id": "SIGNAL-IR-Всемирный_",
       "type": "Signal",
-      "label": "Трое индийских моряков погибли после уда",
+      "label": "Всемирный банк снижает прогноз глобально",
       "severity": 58,
-      "domain": "geopolitical"
+      "domain": "social"
     },
     {
       "id": "SIGNAL-IR-Ближний_Во",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-США_снова_",
+      "id": "SIGNAL-IR-Трамп_пред",
       "type": "Signal",
-      "label": "США снова атакуют Иран после того, как Т",
-      "severity": 57,
+      "label": "Трамп предупреждает Иран: США захватят о",
+      "severity": 53,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IR",
@@ -163,8 +163,29 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Трое_индий",
-      "to": "DOMAIN-IR-geopolitical",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Всемирный_",
+      "to": "DOMAIN-IR-social",
       "type": "AMPLIFIES",
       "weight": 0.58
     },
@@ -175,10 +196,10 @@
       "weight": 0.57
     },
     {
-      "from": "SIGNAL-IR-США_снова_",
+      "from": "SIGNAL-IR-Трамп_пред",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.53
     }
   ]
 }
