@@ -2,60 +2,60 @@
   "country": "RU",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T20:22:11.782343+00:00",
+  "generated_at": "2026-06-11T22:02:33.945960+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 64,
+      "score": 67,
       "props": {
-        "risk_score": 64
+        "risk_score": 67
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 64,
-      "trend": "stable"
+      "score": 67,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "stable"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Путин_боль",
+      "type": "Signal",
+      "label": "Путин больше не может защищать обычных р",
+      "severity": 78,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-Пожарная_о",
       "type": "Signal",
       "label": "Пожарная опасность: Иркутская обл. (Росс",
@@ -92,13 +99,6 @@
       "label": "Пожарная опасность: Республика Саха, вос",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RU-Пожарная_о",
-      "type": "Signal",
-      "label": "Пожарная опасность: Алтайский край (Росс",
-      "severity": 74,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.64
+      "weight": 0.67
     },
     {
       "from": "COUNTRY-RU",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-RU",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-RU",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-RU-geopolitical",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -184,10 +205,31 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-RU-Пожарная_о",
-      "to": "DOMAIN-RU-climate",
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-RU-Путин_боль",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.78
     },
     {
       "from": "SIGNAL-RU-Пожарная_о",

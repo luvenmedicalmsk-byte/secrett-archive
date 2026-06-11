@@ -2,102 +2,113 @@
   "country": "CA",
   "country_name": "Канада",
   "date": "2026-06-11",
-  "generated_at": "2026-06-11T20:22:11.162172+00:00",
-  "strategy_score": 35,
-  "strategy_confidence": 68,
-  "urgency_level": "high",
-  "urgency_level_ru": "Высокая",
-  "urgency_color": "#f59e0b",
-  "preparedness_level": "active",
-  "preparedness_level_ru": "Активная готовность",
-  "monitoring_priority": 3,
-  "monitoring_ru": "Каждые 6 часов",
+  "generated_at": "2026-06-11T22:02:33.307622+00:00",
+  "strategy_score": 61,
+  "strategy_confidence": 73,
+  "urgency_level": "maximum",
+  "urgency_level_ru": "Максимальная",
+  "urgency_color": "#dc2626",
+  "preparedness_level": "maximum",
+  "preparedness_level_ru": "Максимальная готовность",
+  "monitoring_priority": 5,
+  "monitoring_ru": "Непрерывно",
   "actions": [
     {
-      "id": "E-01",
+      "id": "CA-01",
       "priority": 1,
-      "action": "Удержать деэскалационный потенциал",
-      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
-      "trigger": "escalating + best dominant",
-      "expiry": "state transition",
-      "confidence": 72,
-      "domain_context": "climate",
+      "action": "КАСКАДНЫЙ КРИЗИС — МАКСИМАЛЬНАЯ ТРЕВОГА",
+      "detail": "Системный каскадный сбой. Все механизмы реагирования активированы немедленно",
+      "trigger": "cascade state",
+      "expiry": "cascade resolution",
+      "confidence": 67,
+      "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "E-02",
-      "priority": 2,
-      "action": "Инициировать дипломатические/превентивные контакты",
-      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
-      "trigger": "prob_best > 20%",
-      "expiry": "prob_best < 15%",
-      "confidence": 72,
-      "domain_context": "climate",
+      "id": "CA-02",
+      "priority": 1,
+      "action": "Полная активация антикризисного центра",
+      "detail": "Непрерывная работа антикризисного центра, координация всех задействованных сторон",
+      "trigger": "always",
+      "expiry": "cascade resolved",
+      "confidence": 67,
+      "domain_context": "geopolitics",
+      "horizon_relevant": "30d"
+    },
+    {
+      "id": "CA-03",
+      "priority": 1,
+      "action": "Изоляция критических систем",
+      "detail": "Предотвратить дальнейшее распространение каскада на смежные домены",
+      "trigger": "systemic_combos > 2",
+      "expiry": "cascade isolated",
+      "confidence": 67,
+      "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 2,
-  "state": "escalating",
-  "dominant_scenario": "best",
-  "scenario_score": 20,
-  "instability": 24,
+  "action_count": 3,
+  "state": "cascade",
+  "dominant_scenario": "worst",
+  "scenario_score": 34,
+  "instability": 48,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 58 (+8pt)",
-      "leads_to": "critical",
-      "probability": 18
+      "condition": "risk_score ≥ 65 (+8pt)",
+      "leads_to": "cascade",
+      "probability": 25
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "critical",
-      "probability": 12
+      "leads_to": "cascade",
+      "probability": 24
     },
     {
-      "condition": "Worst-case 30d ≥ 85",
-      "leads_to": "critical",
+      "condition": "Worst-case 30d ≥ 95",
+      "leads_to": "cascade",
+      "probability": 32
+    },
+    {
+      "condition": "Новый критический драйвер в geopolitics",
+      "leads_to": "cascade",
       "probability": 22
-    },
-    {
-      "condition": "Новый критический драйвер в climate",
-      "leads_to": "critical",
-      "probability": 18
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 64,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     },
     {
       "horizon": "90 дней",
-      "score": 57,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     },
     {
       "horizon": "180 дней",
-      "score": 51,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     },
     {
       "horizon": "365 дней",
-      "score": 45,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 95,
+      "state": "cascade",
+      "urgency": "maximum",
+      "preparedness": "maximum"
     }
   ],
   "probabilities": {
-    "worst": 22,
-    "stress": 23,
-    "base": 23,
-    "best": 32
+    "worst": 32,
+    "stress": 27,
+    "base": 13,
+    "best": 28
   }
 }
