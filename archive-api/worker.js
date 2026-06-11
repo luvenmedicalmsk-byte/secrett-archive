@@ -30,6 +30,25 @@ function checkRateLimit(ip) {
 }
 
 
+const _PREMIUM_DOC = /^docs\/(grdf|resilience|dashboard|scenarios|scenario-tree|scenario-pathways|scenario-evolution|strategy|strategy-feedback|strategy-history|strategy-optimization|decision-support|decision-quality|decision-ranking|early-warning|executive-summary|calibration|correlations|systemic|timelines|propagation|recommendations|risk-ranking|risk-hierarchy|risk-acceleration|validation-external|validation|explanations|global-risks|snapshots|track-record)\//;
+async function _dfetch(env, url, opts){
+  try {
+    if (env && env.DATA_FROM_PRIVATE === 'true') {
+      const m = String(url).match(/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/main\/(docs\/[^?"'`\s]+)/);
+      const docPath = m ? m[1] : null;
+      const tok = (env.DATA_REPO_TOKEN || env.GITHUB_TOKEN);
+      if (docPath && _PREMIUM_DOC.test(docPath) && tok) {
+        const DREPO = env.DATA_REPO || 'luvenmedicalmsk-byte/secrett-archive-data';
+        return fetch('https://api.github.com/repos/' + DREPO + '/contents/' + docPath + '?ref=main', {
+          headers: { 'Authorization': 'token ' + tok, 'Accept': 'application/vnd.github.raw', 'User-Agent': 'archive-worker' },
+          cf: (opts && opts.cf) || undefined
+        });
+      }
+    }
+  } catch (_) {}
+  return fetch(url, opts);
+}
+
 // ===== Авторизация Atlas Signals (за флагом env.ENFORCE_AUTH==='true') =====
 const _PREMIUM_PREFIXES = [
   '/api/grdf','/api/resilience','/api/dashboard','/api/scenarios','/api/scenario-tree',
@@ -2307,7 +2326,7 @@ async function handleSnapshotToday(request, env) {
   // Fetch raw data from GitHub CDN
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/snapshots/index.json`;
-    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+    const r = await _dfetch(env, url, { cf: { cacheTtl: 300, cacheEverything: true } });
     if (!r.ok) throw new Error('GitHub fetch failed: ' + r.status);
     const data = await r.json();
 
@@ -2452,7 +2471,7 @@ async function handleSnapshotHistory(request, env) {
 
   try {
     const rawUrl = `https://raw.githubusercontent.com/${REPO}/main/docs/snapshots/history/${cc}.json`;
-    const r = await fetch(rawUrl, { cf: { cacheTtl: 600, cacheEverything: true } });
+    const r = await _dfetch(env, rawUrl, { cf: { cacheTtl: 600, cacheEverything: true } });
     if (r.status === 404) {
       return new Response(JSON.stringify({ error: 'No history yet for ' + cc }), {
         status: 404, headers: { 'Content-Type': 'application/json',
@@ -2515,7 +2534,7 @@ async function handleIntelligenceDaily(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/intelligence/daily.json`;
-    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+    const r = await _dfetch(env, url, { cf: { cacheTtl: 300, cacheEverything: true } });
     if (!r.ok) throw new Error('Feed not found: ' + r.status);
     const raw = await r.json();
 
@@ -2598,7 +2617,7 @@ async function handleAlerts(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/alerts/latest.json`;
-    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+    const r = await _dfetch(env, url, { cf: { cacheTtl: 300, cacheEverything: true } });
     if (!r.ok) throw new Error('Alerts not found: ' + r.status);
     const raw = await r.json();
 
@@ -2705,7 +2724,7 @@ async function handleTimeline(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/timelines/${cc}.json`;
-    const r = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    const r = await _dfetch(env, url, { cf: { cacheTtl: 600, cacheEverything: true } });
     if (r.status === 404) {
       return new Response(JSON.stringify({ error: 'No timeline for ' + cc }), {
         status: 404,
@@ -2777,7 +2796,7 @@ async function handleScenarios_v1(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/scenarios/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No scenarios for '+cc}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -2892,7 +2911,7 @@ async function handleCorrelations(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/correlations/${cc}.json`;
-    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    const r   = await _dfetch(env, url, { cf: { cacheTtl: 600, cacheEverything: true } });
     if (r.status === 404) return new Response(JSON.stringify({ error: 'No correlations for ' + cc }), {
       status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
@@ -2991,7 +3010,7 @@ async function handlePropagation(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/propagation/${cc}.json`;
-    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    const r   = await _dfetch(env, url, { cf: { cacheTtl: 600, cacheEverything: true } });
     if (r.status === 404) return new Response(JSON.stringify({ error: 'No propagation for ' + cc }), {
       status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
@@ -3099,7 +3118,7 @@ async function handleSystemic(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/systemic/${cc}.json`;
-    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    const r   = await _dfetch(env, url, { cf: { cacheTtl: 600, cacheEverything: true } });
     if (r.status === 404) return new Response(JSON.stringify({ error: 'No systemic data for ' + cc }), {
       status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
@@ -3195,7 +3214,7 @@ async function handleEarlyWarning(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/early-warning/${cc}.json`;
-    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    const r   = await _dfetch(env, url, { cf: { cacheTtl: 600, cacheEverything: true } });
     if (r.status === 404) return new Response(JSON.stringify({ error: 'No early warning for ' + cc }), {
       status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
@@ -3294,7 +3313,7 @@ async function handleDecisionSupport(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/decision-support/${cc}.json`;
-    const r   = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+    const r   = await _dfetch(env, url, { cf: { cacheTtl: 600, cacheEverything: true } });
     if (r.status === 404) return new Response(JSON.stringify({ error: 'No decision support for ' + cc }), {
       status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     });
@@ -3392,7 +3411,7 @@ async function handleResilience(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/resilience/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No resilience data for '+cc}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -3493,7 +3512,7 @@ async function handleCalibration(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/calibration/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No calibration data for '+cc+' — needs history'}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -3601,7 +3620,7 @@ async function handleStrategy(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/strategy/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No strategy data for '+cc}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -3708,7 +3727,7 @@ async function handleStrategyFeedback(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/strategy-feedback/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No feedback data for '+cc+' yet — needs 30d+ strategy history'}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -3807,7 +3826,7 @@ async function handleValidation(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/validation/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No validation data for '+cc+' — needs history'}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -3931,7 +3950,7 @@ async function handleDashboard(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/dashboard/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No dashboard data for '+cc+' — needs validation history'}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -3960,7 +3979,7 @@ async function _handleDashboardRanking(request, env, tier, access) {
   );
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/dashboard/_ranking.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (!r.ok) throw new Error('fetch '+r.status);
     const data = await r.json();
     // Elite gets full ranking, others get top/lowest only
@@ -4068,7 +4087,7 @@ async function handleDecisionQuality(request, env) {
 
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/decision-quality/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (r.status === 404) return new Response(
       JSON.stringify({error:'No decision quality data for '+cc+' — needs 30d+ strategy history'}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -4099,7 +4118,7 @@ async function handleDecisionRanking(request, env) {
   );
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/decision-ranking/_global.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (!r.ok) throw new Error('fetch '+r.status);
     const data = await r.json();
     // Full for elite, top/lowest only for signal/strategic
@@ -4200,7 +4219,7 @@ async function handleStrategyOptimization(request, env) {
   }
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/strategy-optimization/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (r.status===404) return new Response(JSON.stringify({error:'No optimization data for '+cc}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
     if (!r.ok) throw new Error('fetch '+r.status);
@@ -4229,7 +4248,7 @@ async function handleStrategyEvolution(request, env) {
     {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/strategy-evolution/${cc}.json`;
-    const r   = await fetch(url,{cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url,{cf:{cacheTtl:3600,cacheEverything:true}});
     if (!r.ok) throw new Error('fetch '+r.status);
     const data = await r.json();
     // Slim for signal, full for elite
@@ -4318,7 +4337,7 @@ async function handleRecommendations(request, env) {
     );
     try {
       const url = `https://raw.githubusercontent.com/${REPO}/main/docs/recommendations/_global.json`;
-      const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+      const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
       if (!r.ok) throw new Error('fetch '+r.status);
       const data = await r.json();
       const result = access==='full+explain' ? data : {
@@ -4351,7 +4370,7 @@ async function handleRecommendations(request, env) {
   }
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/recommendations/${cc}.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:600,cacheEverything:true}});
     if (r.status===404) return new Response(JSON.stringify({error:'No recommendations for '+cc}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
     if (!r.ok) throw new Error('fetch '+r.status);
@@ -4380,7 +4399,7 @@ async function handleExecutiveSummary(request, env) {
     {status:400,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/executive-summary/${cc}.json`;
-    const r   = await fetch(url,{cf:{cacheTtl:600,cacheEverything:true}});
+    const r   = await _dfetch(env, url,{cf:{cacheTtl:600,cacheEverything:true}});
     if (!r.ok) throw new Error('fetch '+r.status);
     return new Response(await r.text(),{
       headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','X-Tier':tier}
@@ -4752,7 +4771,7 @@ async function handleTrackRecord(request, env) {
     );
     try {
       const url = `https://raw.githubusercontent.com/${REPO}/main/docs/track-record/metrics.json`;
-      const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+      const r   = await _dfetch(env, url, {cf:{cacheTtl:600,cacheEverything:true}});
       if (!r.ok) return new Response(JSON.stringify({error:'No metrics yet'}),
         {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
       return new Response(await r.text(),
@@ -4788,7 +4807,7 @@ async function handleTrackRecord(request, env) {
       // STEP 3 — Forecast replay: fetch specific date from daily archive
       const dateClean = date.replace(/[^0-9\-]/g,'');
       const url = `https://raw.githubusercontent.com/${REPO}/main/docs/track-record/daily/${dateClean}.json`;
-      const r   = await fetch(url, {cf:{cacheTtl:86400,cacheEverything:true}});
+      const r   = await _dfetch(env, url, {cf:{cacheTtl:86400,cacheEverything:true}});
       if (r.status === 404) return new Response(
         JSON.stringify({error:`No track record for ${cc} on ${dateClean} — archive starts 2026-05-30`}),
         {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -4805,7 +4824,7 @@ async function handleTrackRecord(request, env) {
     } else {
       // Full history
       const url = `https://raw.githubusercontent.com/${REPO}/main/docs/track-record/history/${cc}.json`;
-      const r   = await fetch(url, {cf:{cacheTtl:600,cacheEverything:true}});
+      const r   = await _dfetch(env, url, {cf:{cacheTtl:600,cacheEverything:true}});
       if (r.status === 404) return new Response(
         JSON.stringify({error:`No track record history for ${cc} yet`}),
         {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}}
@@ -4833,7 +4852,7 @@ async function handleModelHistory(request, env) {
   const tier = _resolveClientTier(request, env);
   try {
     const url = `https://raw.githubusercontent.com/${REPO}/main/docs/model-history.json`;
-    const r   = await fetch(url, {cf:{cacheTtl:3600,cacheEverything:true}});
+    const r   = await _dfetch(env, url, {cf:{cacheTtl:3600,cacheEverything:true}});
     if (!r.ok) return new Response(JSON.stringify({error:'No model history yet'}),
       {status:404,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}});
     return new Response(await r.text(),
