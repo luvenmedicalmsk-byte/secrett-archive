@@ -786,6 +786,54 @@ def compute_forecast_30d(
 
 # ── MAIN SNAPSHOT LOGIC ───────────────────────────────────────────────────────
 
+def compute_ews(matched: list[dict]) -> int:
+    """EWS (Early Warning Score) 0-100 — насколько сигналы НАРАСТАЮТ.
+    Реальные поля: escalation_score, forecast_trend, escalation_level, severity vs avg_severity_7d.
+    Отличается от GRI: GRI = уровень сейчас, EWS = темп/ускорение нарастания."""
+    if not matched:
+        return 0
+    n = len(matched)
+    esc = sum((e.get("escalation_score") or 0) for e in matched) / n          # реальный 0-50
+    accel = sum(1 for e in matched if str(e.get("forecast_trend", "")).lower()
+                in ("accelerating", "rising", "escalating", "up"))
+    revers = sum(1 for e in matched if str(e.get("forecast_trend", "")).lower()
+                 in ("reversing", "easing", "down", "cooling"))
+    momentum = (accel - revers) / n                                          # -1..1
+    lvlmap = {"none": 0, "weak": 1, "moderate": 2, "elevated": 2, "strong": 3,
+              "high": 3, "severe": 4, "critical": 4}
+    lvl = sum(lvlmap.get(str(e.get("escalation_level", "none")).lower(), 0) for e in matched) / n
+    above = sum(max(0, (e.get("severity") or 0) - (e.get("avg_severity_7d") or e.get("severity") or 0))
+                for e in matched) / n
+    ews = esc * 2.0 + momentum * 18 + lvl * 9 + above * 0.5
+    return int(max(0, min(100, round(ews))))
+
+
+def compute_cri(matched: list[dict]) -> int:
+    """CRI (Cascade Risk Index) 0-100 — насколько риск РАСПРОСТРАНЯЕТСЯ между доменами (системность).
+    Реальные поля: число активных доменов, разброс severity, cascade, vectors.
+    Отличается от GRI/EWS: про межсекторную связность, а не уровень/темп."""
+    if not matched:
+        return 0
+    n = len(matched)
+    dom_sev = {}
+    for e in matched:
+        d = e.get("domain", "other")
+        dom_sev[d] = dom_sev.get(d, 0) + (e.get("severity") or 0)
+    active = [d for d, sv in dom_sev.items() if sv > 0]
+    breadth = min(1.0, len(active) / 5.0)                                    # 0..1 (5 доменов)
+    total = sum(dom_sev.values()) or 1
+    hhi = sum((sv / total) ** 2 for sv in dom_sev.values())                  # концентрация 0..1
+    spread = max(0.0, 1.0 - hhi)                                             # выше = размазано по доменам
+    cascade_share = sum(1 for e in matched if e.get("cascade")) / n          # межсекторные связи
+    vectors = set()
+    for e in matched:
+        for v in (e.get("vectors") or []):
+            vectors.add(v)
+    vec_div = min(1.0, len(vectors) / 5.0)
+    cri = breadth * 42 + spread * 28 + cascade_share * 18 + vec_div * 12
+    return int(max(0, min(100, round(cri))))
+
+
 def build_snapshot(iso2: str, events: list[dict]) -> dict:
     """Build a single country snapshot dict."""
     country  = COUNTRIES[iso2]
@@ -827,6 +875,8 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     snap["_seismic_risk"] = _hazard_climate_risk(matched)
     snap["_econ_risk"] = _economy_authority_risk(matched)
     snap["domain_scores"] = _reloc_domain_scores(iso2, snap)
+    snap["ews_score"] = compute_ews(matched)   # реальный EWS из данных
+    snap["cri_score"] = compute_cri(matched)   # реальный CRI из данных
     return snap
 
 
@@ -922,6 +972,8 @@ def update_index(snapshots: list[dict]) -> None:
                 "escalation_level": s["escalation_level"],
                 "delta":            s["delta"],
                 "domain_scores":    s.get("domain_scores") or {},
+                "ews_score":        s.get("ews_score"),
+                "cri_score":        s.get("cri_score"),
                 "forecast_7d":      s.get("forecast_7d"),
                 "forecast_30d":     s.get("forecast_30d"),
                 # summary intentionally omitted — served only to premium via history endpoint
