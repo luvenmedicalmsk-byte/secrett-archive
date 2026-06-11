@@ -31,12 +31,18 @@ function checkRateLimit(ip) {
 
 
 const _PREMIUM_DOC = /^docs\/(grdf|resilience|dashboard|scenarios|scenario-tree|scenario-pathways|scenario-evolution|strategy|strategy-feedback|strategy-history|strategy-optimization|decision-support|decision-quality|decision-ranking|early-warning|executive-summary|calibration|correlations|systemic|timelines|propagation|recommendations|risk-ranking|risk-hierarchy|risk-acceleration|validation-external|validation|explanations|global-risks|snapshots|track-record)\//;
+async function _secretVal(v){
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v.get === 'function') { try { return await v.get(); } catch(_) { return ''; } }
+  return '';
+}
 async function _dfetch(env, url, opts){
   try {
     if (env && env.DATA_FROM_PRIVATE === 'true') {
       const m = String(url).match(/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/main\/(docs\/[^?"'`\s]+)/);
       const docPath = m ? m[1] : null;
-      const tok = (env.DATA_REPO_TOKEN || env.GITHUB_TOKEN);
+      const tok = (await _secretVal(env.DATA_REPO_TOKEN)) || (await _secretVal(env.GITHUB_TOKEN));
       if (docPath && _PREMIUM_DOC.test(docPath) && tok) {
         const DREPO = env.DATA_REPO || 'luvenmedicalmsk-byte/secrett-archive-data';
         return fetch('https://api.github.com/repos/' + DREPO + '/contents/' + docPath + '?ref=main', {
