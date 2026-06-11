@@ -2,9 +2,9 @@
   "country": "FR",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T18:23:18.188090+00:00",
+  "generated_at": "2026-06-11T18:48:19.230192+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-FR",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-FR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
+      "score": 53,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-FR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
+      "score": 37,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-FR-Война_в_Ук",
-      "type": "Signal",
-      "label": "Война в Украине продолжается 1569 дней, ",
-      "severity": 52,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-FR-Министерст",
       "type": "Signal",
       "label": "Министерство обороны предупреждает о вое",
       "severity": 48,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-FR-«Мне_нрави",
+      "type": "Signal",
+      "label": "«Мне нравится инфляция»: комментарий Тра",
+      "severity": 46,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-FR",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-FR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-FR-geopolitical",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-FR-Активно_эк",
       "to": "DOMAIN-FR-technology",
       "type": "AMPLIFIES",
       "weight": 0.7
     },
     {
-      "from": "SIGNAL-FR-Война_в_Ук",
-      "to": "DOMAIN-FR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
       "from": "SIGNAL-FR-Министерст",
       "to": "DOMAIN-FR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.48
+    },
+    {
+      "from": "SIGNAL-FR-«Мне_нрави",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
