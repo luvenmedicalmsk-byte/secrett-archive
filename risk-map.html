@@ -8031,10 +8031,12 @@ function _grdfContextHtml(c){
       +'<span style="flex:1">'+esc(ttl)+' <span style="color:#4a6380">\u00b7 '+(DOM_LABELS[d]||d)+' \u00b7 '+dc[d]+' сигн.</span></span></div>';
   }).join('');
   H+=card('Что повлияло на риск', f2);
-  var f3=ord.map(function(d){
-    return '<div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;padding:2px 0">'
-      +'<span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';margin-right:6px"></span>'+(DOM_LABELS[d]||d)+'</span>'
-      +'<span style="color:#cbd5e1;font-weight:600">'+dc[d]+'</span></div>';
+  var _ALLDOM=['climate','geopolitics','economy','technology','social'];
+  var f3=_ALLDOM.slice().sort(function(a,b){ return (dc[b]||0)-(dc[a]||0); }).map(function(d){
+    var _cn=dc[d]||0;
+    return '<div style="display:flex;justify-content:space-between;font-size:11px;color:'+(_cn?'#94a3b8':'#4a6380')+';padding:2px 0">'
+      +'<span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';margin-right:6px;opacity:'+(_cn?'1':'.4')+'"></span>'+(DOM_LABELS[d]||d)+'</span>'
+      +'<span style="color:'+(_cn?'#cbd5e1':'#4a6380')+';font-weight:600">'+_cn+'</span></div>';
   }).join('');
   H+=card('Покрытие \u00b7 сигналов обработано', f3);
   var rc={};
@@ -8048,7 +8050,7 @@ function _grdfContextHtml(c){
   evs.forEach(function(e){ var s=String(e.source||'').trim(); if(s) sc[s]=(sc[s]||0)+1; });
   var srcs=Object.keys(sc).sort(function(a,b){ return sc[b]-sc[a]; });
   var f5=srcs.slice(0,8).map(function(s){ return '<span style="display:inline-block;font-size:10px;color:#cbd5e1;background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.08);border-radius:5px;padding:2px 7px;margin:0 4px 4px 0">'+esc(s)+'</span>'; }).join('');
-  if(f5) H+=card('Источники мониторинга', f5);
+
   var n=evs.length, nsrc=srcs.length;
   var gen=(typeof _todayData!=='undefined'&&_todayData&&_todayData.generated_at)?Date.parse(_todayData.generated_at):NaN;
   var hrs=isNaN(gen)?null:Math.max(0,Math.round((Date.now()-gen)/3600000));
