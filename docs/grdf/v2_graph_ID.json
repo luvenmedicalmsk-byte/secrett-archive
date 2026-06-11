@@ -2,72 +2,67 @@
   "country": "ID",
   "date": "2026-06-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-11T03:34:57.881465+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-11T08:44:46.287517+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 40,
+      "score": 52,
       "props": {
-        "risk_score": 40
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 18,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-ID-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,11 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Продажа_об",
-      "type": "Signal",
-      "label": "Продажа облигаций в Индонезии возобновля",
-      "severity": 40,
-      "domain": "economic"
+      "id": "DRIVER-ID-Economic",
+      "type": "Driver",
+      "label": "Economic"
     }
   ],
   "edges": [
@@ -92,49 +85,43 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
-    },
-    {
-      "from": "DRIVER-ID-Economic",
-      "to": "COUNTRY-ID",
-      "type": "CAUSES",
-      "weight": 0.8
+      "weight": 0.02
     },
     {
       "from": "DRIVER-ID-Geopolitical",
@@ -149,10 +136,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-ID-Продажа_об",
+      "from": "DRIVER-ID-Economic",
+      "to": "COUNTRY-ID",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
       "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
-      "weight": 0.4
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
