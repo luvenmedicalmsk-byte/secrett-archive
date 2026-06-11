@@ -2310,7 +2310,10 @@ def _tg_classify(text):
         'technology': ['кибер','хакер','взлом','утечк','искусственн интеллект','нейросет',
                        'технолог','интернет','сервер','сбой','приложени','смартфон',
                        'роскомнадзор','блокировк','vpn','спутник','чип','процессор','софт',
-                       'мессенджер','цифров','база данных','дата-центр'],
+                       'мессенджер','цифров','база данных','дата-центр',
+                       'ддос','глонасс','навигацион','эквайринг','сбп','платёж','облачн','цод',
+                       'телеком','оператор связ','блэкаут','подстанц','энергоавари','дипфейк',
+                       'вымогател','шифровальщик','фишинг','критическ инфраструктур','маршрутизатор','роутер'],
         'social': ['семь','многодетн','дети','здравоохран','больниц','врач','образован',
                    'школ','студент','пенсионер','мигра','безработиц','бедност','пособи',
                    'демограф','рождаем','смертн','материнск','инвалид','госдум','соцвыплат',
@@ -2980,7 +2983,8 @@ def fetch_telegram():
     """RU Telegram-каналы через web-preview t.me/s/<channel> (S36.4).
     Домен не форсируем -- классификация по ключевым словам (RU)."""
     import re as _re
-    channels = ['bbbreaking']
+    channels = ['bbbreaking', 'kyberhub']
+    CH_DEFAULT = {'kyberhub': 'technology'}  # кибер-канал: дефолтный домен — технологии
     items = []
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     for ch in channels:
@@ -2990,13 +2994,16 @@ def fetch_telegram():
         for raw_html in msgs[-25:]:
             text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
             if len(text) < 20: continue
+            _d = _tg_classify(text)
+            if ch in CH_DEFAULT and (_d is None or _d == 'geopolitics'):
+                _d = CH_DEFAULT[ch]   # профильный канал: None/геополит. ложняк -> дефолт канала
             items.append({
                 'title': text[:240],
                 'desc': text[:300],
                 'date': today,
                 'source': f'Telegram/{ch}',
                 'source_bias': 5,
-                '_domain': _tg_classify(text) or 'geopolitics',  # S36.4: по словам, fallback -- социум
+                '_domain': _d or CH_DEFAULT.get(ch, 'geopolitics'),
             })
     print(f"  Telegram: {len(items)} постов", file=sys.stderr)
     return items
