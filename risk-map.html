@@ -3463,6 +3463,12 @@ window.CC = {
   tier()       { return _clientCaps.tier; },
   caps()       { return _clientCaps; },
 };
+function _tierRank(t){ return ({free:0,signal:1,strategic:2,elite:3})[t]||0; }
+// Никогда не понижаем тариф из ответов отдельных эндпоинтов — только повышаем.
+function _applyTier(t){ if(t && _tierRank(t) >= _tierRank(_clientCaps.tier)) _clientCaps=_getClientCaps(t); }
+// Авторитетный тариф из сессии — не зависит от того, какой эндпоинт ответил первым.
+async function _ccEstablishTier(){ if(!_clientToken) return; try{ var r=await fetch(API+'/api/auth/me',{headers:{'X-Snapshot-Token':_clientToken}}); if(r.ok){ var d=await r.json(); if(d&&d.tier) _applyTier(d.tier); } }catch(e){} }
+try{ _ccEstablishTier(); }catch(e){}
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────
 async function fetchToday() {
@@ -3473,8 +3479,8 @@ async function fetchToday() {
     const r = await fetch(API + '/api/snapshot/today', { headers });
     if (!r.ok) return null;
     _todayData = await r.json();
-    if (_todayData && _todayData.tier) _clientCaps = _getClientCaps(_todayData.tier);
-    if (_todayData && _todayData.tier) { _grdfTier = (_todayData.tier !== 'free') ? 'SIGNAL_PRO' : 'FREE'; }
+    if (_todayData && _todayData.tier) _applyTier(_todayData.tier);
+    if (_todayData && _todayData.tier && _todayData.tier !== 'free') _grdfTier = 'SIGNAL_PRO';
     return _todayData;
   } catch(e) {
     console.warn('[CC] fetchToday:', e.message);
@@ -3763,7 +3769,7 @@ function renderCard(c) {
        </a>`;
   }
 
-  document.getElementById('cc-footer').textContent = 'Данные на ' + (c.date||'') + ' · tier: ' + (_clientCaps&&_clientCaps.tier||'?') + ' · 7d:' + (_clientCaps&&_clientCaps.forecast_7d) + ' · sum:' + (c.summary?'есть':'НЕТ');
+  document.getElementById('cc-footer').textContent = 'Данные на ' + (c.date||'');
   // Domain accent: top border on card
   document.getElementById('cc-card').style.borderTop = '2px solid ' + domCol + '99';
   renderForecast(c.forecast_7d||null,_clientCaps);
@@ -4101,7 +4107,7 @@ async function fetchIntelFeed() {
     var r = await fetch(API + '/api/intelligence/daily', { headers });
     if (!r.ok) return null;
     _intelData = await r.json();
-    if (_intelData && _intelData.tier) _clientCaps = _getClientCaps(_intelData.tier);
+    if (_intelData && _intelData.tier) _applyTier(_intelData.tier);
     return _intelData;
   } catch(e) {
     console.warn('[INTEL] fetch error:', e.message);
@@ -4274,7 +4280,7 @@ async function fetchAlerts() {
     var r = await fetch(API + '/api/alerts', { headers });
     if (!r.ok) return null;
     _alertsData = await r.json();
-    if (_alertsData && _alertsData.tier) _clientCaps = _getClientCaps(_alertsData.tier);
+    if (_alertsData && _alertsData.tier) _applyTier(_alertsData.tier);
     // Highlight button if alerts exist
     if (_alertsData && _alertsData.count > 0) {
       document.getElementById('alerts-btn').classList.add('has-alerts');
@@ -7602,6 +7608,7 @@ setInterval(function(){ grdfUpdateStatusBar(); }, 60000);
 // Hook into existing data load — called from main script when countries load
 function _grdfCountriesFromEvents(events){var by={};(events||[]).forEach(function(e){var r=((e.region||'')+'').trim();if(!r||r==='Глобально')return;var sev=(+e.severity)||0;if(!by[r])by[r]={country:r,country_name:r,count:0,_max:0};by[r].count++;if(sev>by[r]._max)by[r]._max=sev;});return Object.keys(by).map(function(k){var o=by[k];var rs=Math.min(100,Math.round(o._max+Math.min(15,(o.count-1)*2)));return {country:o.country,country_name:o.country_name,risk_score:rs,count:o.count,delta:0};}).sort(function(a,b){return b.risk_score-a.risk_score||b.count-a.count;});}
 window.grdfOnDataLoad = function(data) {
+  try{ var _ct=(window.CC&&CC.tier&&CC.tier())||''; if(_ct&&_ct!=='free') _grdfTier='SIGNAL_PRO'; }catch(e){}
   _grdfData = data;
   var countries = (data&&data.countries)||[];
   if((!countries||!countries.length) && typeof ALL_EVENTS!=='undefined' && ALL_EVENTS && ALL_EVENTS.length){
@@ -7958,6 +7965,7 @@ function grdfRelocPanelHTML(c, isSig){
 }
 
 function grdfRenderCountryPanel(cc) {
+  try{ var _ct=(window.CC&&CC.tier&&CC.tier())||''; if(_ct&&_ct!=='free') _grdfTier='SIGNAL_PRO'; }catch(e){}
   var countries = (_grdfData&&_grdfData.countries)||[];
   var c = countries.find(function(x){ return x.country===cc; });
   if(!c){ document.getElementById('grdf-cs-content').innerHTML='<div style="padding:14px;color:#4a6380;font-size:12px">Данные не найдены</div>'; return; }
