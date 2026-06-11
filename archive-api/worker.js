@@ -123,7 +123,8 @@ async function handleAuthTelegram(request, env){
   if (!_activeNow(c)) return jsonResponse({ error:'Доступ не оформлен или неактивен. Оформите доступ.', auth:'no_access' }, 403);
   const token = _randToken();
   if (env.SESSIONS_KV) await env.SESSIONS_KV.put('sess:'+token, JSON.stringify({tg:tgId, u:data.username||'', t:Date.now()}), { expirationTtl: 2592000 });
-  return jsonResponse({ token, status:'ACTIVE', telegram_id: tgId, username: data.username||'' });
+  const _tier = (c && c.tier) ? String(c.tier).toLowerCase() : 'signal';
+  return jsonResponse({ token, status:'ACTIVE', telegram_id: tgId, username: data.username||'', tier: _tier });
 }
 async function handleAuthMe(request, env){
   const tk = _sessionToken(request);
@@ -2307,8 +2308,8 @@ async function _resolveClientTier(request, env) {
         const _sess = JSON.parse(_sv);
         const _c = await _clientStatus(env, _sess.tg);
         if (_activeNow(_c)) {
-          const _ct = (_c && _c.tier) ? String(_c.tier).toLowerCase() : 'strategic';
-          return (['free','signal','strategic','elite'].indexOf(_ct) >= 0) ? _ct : 'strategic';
+          const _ct = (_c && _c.tier) ? String(_c.tier).toLowerCase() : 'signal';
+          return (['free','signal','strategic','elite'].indexOf(_ct) >= 0) ? _ct : 'signal';
         }
       }
     } catch(_e) {}
