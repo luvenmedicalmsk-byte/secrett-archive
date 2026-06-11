@@ -2985,8 +2985,13 @@ def fetch_telegram():
     """RU Telegram-каналы через web-preview t.me/s/<channel> (S36.4).
     Домен не форсируем -- классификация по ключевым словам (RU)."""
     import re as _re
-    channels = ['bbbreaking', 'minzdrav_ru', 'mintrudrf']
-    CH_DEFAULT = {'minzdrav_ru': 'social', 'mintrudrf': 'social'}  # офиц. каналы: здоровье/труд -> социум
+    channels = ['bbbreaking', 'minzdrav_ru', 'mintrudrf', 'readovkanews', 'bazabazon', 'mash']
+    # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
+    SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'readovkanews', 'bazabazon', 'mash'}
+    SOCIAL_RISK_KW = ['вспышк','заболеваем','инфекци','эпидеми','корь','грипп','лихорадк','карантин','госпитализац','очаг заражен',
+                      'дефицит врач','нехватк врач','закрыт больниц','закрыти больниц','закрыл больниц',
+                      'сокращени','увольнени','массов сокращ','безработиц','задержк зарплат','задолженност по зарплат','невыплат зарплат',
+                      'забастовк','протест','митинг','демографическ','убыль населен','рост смертност','смертност вырос']
     items = []
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     for ch in channels:
@@ -2996,16 +3001,23 @@ def fetch_telegram():
         for raw_html in msgs[-25:]:
             text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
             if len(text) < 20: continue
-            _d = _tg_classify(text)
-            if ch in CH_DEFAULT and _d in (None, 'geopolitics', 'economy'):
-                _d = CH_DEFAULT[ch]   # профильный канал: None/геополит./эконом. ложняк -> дефолт канала (климат оставляем)
+            tl = text.lower()
+            is_srisk = any(k in tl for k in SOCIAL_RISK_KW)
+            if ch in SOCIAL_SRC:
+                if not is_srisk:
+                    continue           # соц-источник: только риск-сигналы, пиар пропускаем
+                _d = 'social'
+            else:
+                _d = _tg_classify(text) or 'geopolitics'
+                if is_srisk:
+                    _d = 'social'      # общий канал: соц-риск тоже ловим
             items.append({
                 'title': text[:240],
                 'desc': text[:300],
                 'date': today,
                 'source': f'Telegram/{ch}',
                 'source_bias': 5,
-                '_domain': _d or CH_DEFAULT.get(ch, 'geopolitics'),
+                '_domain': _d,
             })
     print(f"  Telegram: {len(items)} постов", file=sys.stderr)
     return items
