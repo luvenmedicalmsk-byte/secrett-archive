@@ -2,32 +2,32 @@
   "country": "MX",
   "date": "2026-06-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-12T07:27:11.828526+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-12T08:24:41.961878+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 49,
+      "score": 48,
       "props": {
-        "risk_score": 49
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 48,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "stable"
+      "score": 31,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-cyber",
@@ -87,10 +87,17 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-MX-В_Мексике_",
+      "id": "SIGNAL-MX-Игроки_сбо",
       "type": "Signal",
-      "label": "В Мексике стартовал ЧМ-2026 по футболу.",
-      "severity": 42,
+      "label": "Игроки сборной Ирана по футболу вышли на",
+      "severity": 47,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-MX-Массовое_п",
+      "type": "Signal",
+      "label": "Массовое присутствие полиции в Джакарте ",
+      "severity": 44,
       "domain": "economic"
     }
   ],
@@ -99,13 +106,13 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-MX",
@@ -156,16 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-MX-Мексика:_В",
       "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-MX-В_Мексике_",
+      "from": "SIGNAL-MX-Игроки_сбо",
+      "to": "DOMAIN-MX-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-MX-Массовое_п",
       "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.44
     }
   ]
 }
