@@ -2981,12 +2981,13 @@ def fetch_glofas():
 # ══════════════════════════════════════════════════════════════════════════════
 # TELEGRAM -- RU-каналы через web-preview (S36.4)
 # ══════════════════════════════════════════════════════════════════════════════
-def _tg_write_debug(transport, items, error):
+def _tg_write_debug(transport, items, error, raw=None):
     try:
         from collections import Counter as _C
         import json as _j
         dbg = {'transport': transport, 'error': error,
-               'channels': dict(_C(i['source'] for i in items)), 'total': len(items)}
+               'channels': dict(_C(i['source'] for i in items)), 'total': len(items),
+               'raw_per_channel': raw}
         _j.dump(dbg, open('docs/_tg_debug.json','w'), ensure_ascii=False, indent=2)
     except Exception:
         pass
@@ -3030,16 +3031,21 @@ def fetch_telegram():
             from telethon.sync import TelegramClient
             from telethon.sessions import StringSession
             api_id = int(os.environ['TG_API_ID']); api_hash = os.environ['TG_API_HASH']
+            _raw = {}
             with TelegramClient(StringSession(os.environ['TG_SESSION']), api_id, api_hash) as client:
                 for ch in channels:
+                    nraw = 0
                     try:
                         for msg in client.iter_messages(ch, limit=30):
+                            nraw += 1
                             it = _build(ch, msg.message or '')
                             if it: items.append(it)
+                        _raw[ch] = {'raw': nraw}
                     except Exception as e:
+                        _raw[ch] = {'err': repr(e)}
                         print(f"  [TG-MTProto] {ch}: {e}", file=sys.stderr)
             print(f"  Telegram(MTProto): {len(items)} постов", file=sys.stderr)
-            _tg_write_debug("mtproto", items, None)
+            _tg_write_debug("mtproto", items, None, _raw)
             return items
         except Exception as e:
             _tg_err = repr(e)
