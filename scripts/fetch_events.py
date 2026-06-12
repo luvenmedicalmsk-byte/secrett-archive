@@ -2998,9 +2998,9 @@ def fetch_telegram():
     иначе фолбэк на скрейпинг t.me/s. Классификатор и риск-фильтр социума — общие для обоих режимов."""
     import re as _re
     import os, sys, time as _time
-    channels = ['bbbreaking', 'minzdrav_ru', 'mintrudrf', 'readovkanews', 'bazabazon', 'mash']
+    channels = ['bbbreaking', 'novosti_efir', 'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash']
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
-    SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'readovkanews', 'bazabazon', 'mash'}
+    SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash'}
     # одиночные стемы (специфичные) + пары стемов (оба слова где угодно — устойчиво к склонениям)
     SOCIAL_RISK_KW = ['вспышк','эпидеми','очаг заражен','забастовк','протест','митинг','убыль населен','демографическ кризис']
     SOCIAL_RISK_PAIRS = [('сокращен','зарплат'),('задержк','зарплат'),('невыплат','зарплат'),('задолжен','зарплат'),
@@ -3081,6 +3081,8 @@ def fetch_tech_rss():
     404 Media, Help Net Security, Industrial Cyber, Lawfare, RAND, WEF"""
     sources = [
         # Кибербезопасность
+        ('https://novostiitkanala.ru/feed/', 'Новости IT-канала', 'technology'),
+        ('https://novostiitkanala.ru/rss/', 'Новости IT-канала', 'technology'),
         ('https://therecord.media/feed', 'The Record', 'technology'),
         ('https://therecord.media/rss', 'The Record', 'technology'),
         ('https://cyberscoop.com/feed/', 'CyberScoop', 'technology'),
