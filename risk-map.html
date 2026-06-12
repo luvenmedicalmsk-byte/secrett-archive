@@ -4129,6 +4129,26 @@ function renderIntelFeed(data) {
 
   var html = '';
 
+  // Global Hotspot Radar — реальный сдвиг GRI за 7 дней (ATLAS -> клиент)
+  try {
+    var _cs=(typeof _todayData!=='undefined'&&_todayData&&_todayData.countries)?_todayData.countries:[];
+    var _lim=(_clientCaps&&_clientCaps.intel_limit>0)?_clientCaps.intel_limit:10;
+    var _hot=_cs.filter(function(x){return x.gri_delta_7d!=null;}).sort(function(a,b){return b.gri_delta_7d-a.gri_delta_7d;}).slice(0,_lim);
+    html += renderIntelSection('Global Hotspot Radar \u00b7 сдвиг за 7 дней', '', _hot, function(item){
+      var col=DCL_INTEL[item.dominant_domain]||'#B8973A';
+      var d=item.gri_delta_7d, dCls=d>0?'up':d<0?'down':'flat', dSign=(d>0?'+':'')+d;
+      return '<div class="ip-item" onclick="openCountryCard(\''+item.country+'\')">'
+        +'<div class="ip-item-row">'
+        +'<span class="ip-item-name">'+_esc(FLAGS[item.country]||'')+' '+_esc(item.country_name||item.country)+'</span>'
+        +'<span class="ip-item-score" style="color:'+col+'">'+item.risk_score+'</span>'
+        +'<span class="ip-item-delta '+dCls+'">'+dSign+'</span></div>'
+        +'<div class="ip-item-sub"><span class="ip-domain-dot" style="background:'+col+'"></span>'
+        +_esc(DOMAIN_RU[item.dominant_domain]||item.dominant_domain||'')
+        +(item.cri_delta_7d!=null?' \u00b7 CRI '+(item.cri_delta_7d>0?'+':'')+item.cri_delta_7d:'')
+        +'</div></div>';
+    }, tier);
+  } catch(e){}
+
   // ── Top Risk Increase ──────────────────────────────────────────────────
   html += renderIntelSection(
     '↑ Рост риска', '🔴',
@@ -8020,6 +8040,22 @@ function _grdfContextHtml(c){
     +'<div>GRI '+dtag(c.gri_delta_7d)+'</div>'
     +'<div>EWS '+dtag(c.ews_delta_7d)+'</div>'
     +'<div>CRI '+dtag(c.cri_delta_7d)+'</div></div>');
+  // Каскад · мульти-домен · траектория — реальные индексы (ATLAS → клиент)
+  var _AD=['climate','geopolitics','economy','technology','social'];
+  var _ds=c.domain_scores||{};
+  var _act=_AD.filter(function(d){return (_ds[d]||0)>=60;});
+  var _cri=(c.cri_score!=null)?c.cri_score:null;
+  function _cband(v){ if(v==null)return ''; if(v>=75)return 'системный'; if(v>=60)return 'междоменный'; if(v>=40)return 'ограниченный'; return 'локальный'; }
+  function _next(g){ var ts=[40,60,75]; for(var i=0;i<ts.length;i++){ if(g<ts[i])return ts[i]; } return null; }
+  var _g=parseFloat(c.risk_score)||0, _t=_next(_g), _m=c.gri_delta_7d;
+  var _traj=(_t==null)?'<span style="color:#4a6380">верхний уровень</span>'
+    :'до порога '+_t+' \u00b7 '+(_t-_g)+' \u043f.'+(_m!=null&&_m>0?' <span style="color:#f97316">(+'+_m+'/\u043d\u0435\u0434)</span>':(_m!=null&&_m<0?' <span style="color:#10b981">('+_m+'/\u043d\u0435\u0434)</span>':''));
+  var _dots=_AD.map(function(d){var on=(_ds[d]||0)>=60;return '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';opacity:'+(on?1:.18)+';margin-right:3px"></span>';}).join('');
+  H+=card('\u041a\u0430\u0441\u043a\u0430\u0434 \u00b7 \u043c\u0443\u043b\u044c\u0442\u0438-\u0434\u043e\u043c\u0435\u043d \u00b7 \u0442\u0440\u0430\u0435\u043a\u0442\u043e\u0440\u0438\u044f',
+    '<div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:#94a3b8">'
+    +(_cri!=null?'<div>\u041a\u0430\u0441\u043a\u0430\u0434\u043d\u044b\u0439 \u0440\u0438\u0441\u043a (CRI): <b style="color:#cbd5e1">'+_cri+'</b> <span style="color:#4a6380">'+_cband(_cri)+'</span></div>':'')
+    +'<div>\u0410\u043a\u0442\u0438\u0432\u043d\u044b \u0434\u043e\u043c\u0435\u043d\u044b: '+_dots+' <span style="color:#cbd5e1">'+_act.length+'/5</span></div>'
+    +'<div>\u0422\u0440\u0430\u0435\u043a\u0442\u043e\u0440\u0438\u044f: '+_traj+'</div></div>');
   var dc={};
   evs.forEach(function(e){ var d=e.domain||'other'; dc[d]=(dc[d]||0)+1; });
   var ord=Object.keys(dc).sort(function(a,b){ return dc[b]-dc[a]; });
