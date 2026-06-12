@@ -1430,10 +1430,10 @@ def process_events(raw_items):
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     DOMAIN_QUOTA = {
         'climate':     int(MAX_EVENTS * 0.40),   # 80
-        'geopolitics': int(MAX_EVENTS * 0.30),   # 60
+        'geopolitics': int(MAX_EVENTS * 0.25),   # 50
         'economy':     int(MAX_EVENTS * 0.15),   # 30
-        'technology':  int(MAX_EVENTS * 0.075),  # 15
-        'social':      int(MAX_EVENTS * 0.075),  # 15
+        'technology':  int(MAX_EVENTS * 0.125),  # 25
+        'social':      int(MAX_EVENTS * 0.10),   # 20
     }
     # Корректируем если из-за округления сумма != MAX_EVENTS
     _quota_sum = sum(DOMAIN_QUOTA.values())
@@ -1493,7 +1493,7 @@ def process_events(raw_items):
             source = ev.get('source', '')
             _evd = ev.get('domain','')
             # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
-            max_days = 7 if _evd in ('economy','social') else 3  # S36.4: 72ч окно для новостных доменов
+            max_days = 14 if _evd in ('technology','social') else 7 if _evd == 'economy' else 3  # S36.4: 72ч окно для новостных доменов
             if days_old > max_days:
                 _LOSS['fresh']+=1; continue
         except:
