@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>ATLAS INTELLIGENCE · внутренняя консоль</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@300;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e14; --panel:rgba(255,255,255,.03); --line:rgba(255,255,255,.08);
+    --ink:#d7dde6; --dim:#8a98ad; --faint:#4a6380;
+    --up:#f97316; --down:#10b981; --warn:#eab308; --crit:#ef4444; --exp:#7c6f9c;
+    --head:'Cormorant Garamond',serif; --body:'Montserrat',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:300;
+       -webkit-font-smoothing:antialiased;padding:0 0 80px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+  header{padding:26px 0 14px;border-bottom:0.5px solid var(--line);margin-bottom:22px}
+  h1{font-family:var(--head);font-weight:600;font-size:30px;letter-spacing:.04em;margin:0}
+  .sub{color:var(--dim);font-size:12px;margin-top:5px;letter-spacing:.02em}
+  .meta{color:var(--faint);font-size:11px;margin-top:8px}
+  h2{font-family:var(--head);font-weight:600;font-size:20px;letter-spacing:.03em;margin:30px 0 4px}
+  .h2note{color:var(--faint);font-size:11px;margin-bottom:12px}
+  .tag{display:inline-block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+       padding:2px 7px;border-radius:4px;margin-left:9px;vertical-align:middle;font-weight:500}
+  .tag-real{background:rgba(16,185,129,.12);color:#10b981;border:0.5px solid rgba(16,185,129,.3)}
+  .tag-exp{background:rgba(124,111,156,.14);color:#a99fc4;border:0.5px solid rgba(124,111,156,.4)}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;color:var(--faint);font-weight:500;font-size:9px;letter-spacing:.1em;
+     text-transform:uppercase;padding:7px 9px;border-bottom:0.5px solid var(--line)}
+  td{padding:8px 9px;border-bottom:0.5px solid rgba(255,255,255,.04);vertical-align:middle}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .cc{font-weight:500;color:#eef2f7}
+  .ccn{color:var(--dim);font-size:10px;margin-left:5px}
+  .num{font-variant-numeric:tabular-nums}
+  .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--faint)}
+  .exp{color:var(--exp)}
+  .pill{display:inline-block;font-size:10px;padding:1px 8px;border-radius:9px;border:0.5px solid var(--line)}
+  .lvl-0{color:var(--faint)} .lvl-1{color:var(--warn)} .lvl-2{color:var(--up)} .lvl-3{color:var(--crit)}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:10px}
+  .radar-row{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:0.5px solid rgba(255,255,255,.04);font-size:13px}
+  .rk{width:22px;color:var(--faint);font-variant-numeric:tabular-nums;text-align:right}
+  .legend{margin-top:34px;padding:14px 16px;background:var(--panel);border:0.5px solid var(--line);border-radius:11px;font-size:11px;color:var(--dim);line-height:1.7}
+  .legend b{color:var(--ink);font-weight:500}
+  .alert{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;margin-bottom:7px;font-size:12px;
+         background:rgba(234,179,8,.06);border:0.5px solid rgba(234,179,8,.25)}
+  .alert.hi{background:rgba(249,115,22,.07);border-color:rgba(249,115,22,.3)}
+  .alert.crit{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35)}
+  .err{color:#ef9a9a;font-size:13px;padding:16px;background:rgba(239,68,68,.06);border:0.5px solid rgba(239,68,68,.25);border-radius:10px}
+  .loading{color:var(--faint);font-size:13px;padding:30px 0}
+  .small{font-size:10px;color:var(--faint)}
+  .domdots{display:inline-flex;gap:3px;vertical-align:middle}
+  .dot{width:7px;height:7px;border-radius:50%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ATLAS INTELLIGENCE</h1>
+    <div class="sub">Внутренняя аналитическая консоль · каскады и междоменные взаимосвязи</div>
+    <div class="meta" id="meta">Загрузка данных…</div>
+  </header>
+
+  <div id="content"><div class="loading">Чтение снапшота…</div></div>
+
+  <div class="legend" id="legend" style="display:none">
+    <div style="font-family:var(--head);font-size:15px;color:var(--ink);margin-bottom:8px">Что реально, что эксперимент</div>
+    <span class="tag tag-real">реально</span> — посчитано напрямую из снапшота Atlas (наши измеренные индексы и их недельная динамика).<br>
+    <span class="tag tag-exp">эксперимент</span> — эвристика для оценки идеи, <b>не</b> валидированная вероятность. В клиентский продукт не выводится, пока нет данных и методологии.<br><br>
+    <b>Risk Momentum</b> — недельная дельта GRI (текущий минус 7 дней назад). <b>Cascade (CRI)</b> — наш индекс каскадного риска: ширина активных доменов + разброс тяжести + доля каскадных сигналов. <b>Мульти‑доменный сигнал</b> — сколько доменов одновременно в зоне повышенного риска (≥60). <b>Траектория</b> — расстояние GRI до следующего порога и направление движения (без выдуманного процента). <b>CSI*/FRI*</b> — экспериментальные: CSI — эвристика «потенциала распространения», FRI требует структурных данных (инфраструктура, демография), которых мы не собираем, поэтому не рассчитывается.
+  </div>
+</div>
+
+<script>
+const BANDS = [
+  {min:75, name:'Критический', cls:'lvl-3'},
+  {min:60, name:'Высокий',     cls:'lvl-2'},
+  {min:40, name:'Повышенный',  cls:'lvl-1'},
+  {min:0,  name:'Спокойный',   cls:'lvl-0'}
+];
+const DOM = {
+  climate:{l:'Климат',c:'#38bdf8'}, geopolitics:{l:'Геополитика',c:'#f87171'},
+  economy:{l:'Экономика',c:'#fbbf24'}, technology:{l:'Технологии',c:'#a78bfa'},
+  social:{l:'Социум',c:'#34d399'}
+};
+const DOM_ORDER = ['climate','geopolitics','economy','technology','social'];
+const ELEV = 60; // порог "домен в зоне повышенного риска"
+
+function band(v){ for(const b of BANDS){ if(v>=b.min) return b; } return BANDS[BANDS.length-1]; }
+function nextThreshold(v){ const ts=[40,60,75]; for(const t of ts){ if(v<t) return t; } return null; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+function deltaHtml(v){
+  if(v==null) return '<span class="flat">накапл.</span>';
+  if(v===0) return '<span class="flat num">→ 0</span>';
+  const up=v>0;
+  return '<span class="'+(up?'up':'down')+' num">'+(up?'↑ +':'↓ ')+v+'</span>';
+}
+
+function activeDomains(ds){
+  if(!ds) return [];
+  return DOM_ORDER.filter(d => (ds[d]||0) >= ELEV);
+}
+
+// ЭКСПЕРИМЕНТ: эвристика "потенциала распространения" (НЕ вероятность)
+function csiExperimental(c){
+  const cri = c.cri_score||0;
+  const breadth = activeDomains(c.domain_scores).length / 5 * 100;
+  const mom = Math.max(0, c.gri_delta_7d||0);
+  const v = Math.round(0.45*cri + 0.35*breadth + 0.20*Math.min(100, mom*4));
+  return Math.max(0, Math.min(100, v));
+}
+function csiBand(v){
+  if(v>=76) return {t:'системный каскад', cls:'lvl-3'};
+  if(v>=51) return {t:'междоменный', cls:'lvl-2'};
+  if(v>=26) return {t:'ограниченный', cls:'lvl-1'};
+  return {t:'локальный', cls:'lvl-0'};
+}
+
+function transition(c){
+  const g = c.risk_score, m = c.gri_delta_7d;
+  const t = nextThreshold(g);
+  if(t==null) return '<span class="flat small">на верхнем уровне</span>';
+  const gap = t - g;
+  const nb = band(t).name.toLowerCase();
+  let dir = '';
+  if(m!=null && m>0) dir = ' <span class="up num">(+'+m+'/нед)</span>';
+  else if(m!=null && m<0) dir = ' <span class="down num">('+m+'/нед)</span>';
+  return '<span class="small">до «'+esc(nb)+'» '+gap+' п.</span>'+dir;
+}
+
+function domDots(ds){
+  if(!ds) return '';
+  return '<span class="domdots">'+DOM_ORDER.map(d=>{
+    const on=(ds[d]||0)>=ELEV;
+    return '<span class="dot" style="background:'+DOM[d].c+';opacity:'+(on?1:.18)+'" title="'+DOM[d].l+': '+(ds[d]||0)+'"></span>';
+  }).join('')+'</span>';
+}
+
+function render(idx){
+  const cs = idx.countries||[];
+  document.getElementById('meta').textContent =
+    'Снапшот: '+esc(idx.date||'')+' · '+cs.length+' территорий · источник: index.json (полный, без тарифной фильтрации)';
+
+  // --- Global Hotspot Radar: топ-10 по недельной дельте GRI ---
+  const ranked = cs.filter(c=>c.gri_delta_7d!=null).sort((a,b)=>b.gri_delta_7d-a.gri_delta_7d).slice(0,10);
+  let radar = '<h2>Global Hotspot Radar <span class="tag tag-real">реально</span></h2>'+
+    '<div class="h2note">Топ‑10 территорий по росту GRI за 7 дней. Ранжирование — по измеренной динамике нашего индекса.</div><div class="card">';
+  if(!ranked.length) radar += '<div class="small">Недельная динамика ещё накапливается.</div>';
+  ranked.forEach((c,i)=>{
+    radar += '<div class="radar-row">'+
+      '<span class="rk">'+(i+1)+'</span>'+
+      '<span style="flex:1"><span class="cc">'+esc(c.country_name||c.country)+'</span></span>'+
+      '<span style="width:90px">GRI '+deltaHtml(c.gri_delta_7d)+'</span>'+
+      '<span style="width:90px">CRI '+deltaHtml(c.cri_delta_7d)+'</span>'+
+      '<span style="width:120px" class="small">'+domDots(c.domain_scores)+' '+esc(DOM[c.dominant_domain]?DOM[c.dominant_domain].l:c.dominant_domain||'')+'</span>'+
+      '</div>';
+  });
+  radar += '</div>';
+
+  // --- Мульти-доменное усиление: 3+ активных домена и рост ---
+  const multi = cs.map(c=>({c, ad:activeDomains(c.domain_scores)}))
+                  .filter(x=>x.ad.length>=3)
+                  .sort((a,b)=> b.ad.length-a.ad.length || (b.c.gri_delta_7d||0)-(a.c.gri_delta_7d||0));
+  let alerts = '<h2>Мульти‑доменный сигнал <span class="tag tag-real">реально</span></h2>'+
+    '<div class="h2note">Территории, где одновременно ≥3 доменов в зоне повышенного риска (≥'+ELEV+'). Уровень — по числу доменов.</div><div>';
+  if(!multi.length) alerts += '<div class="small" style="padding:6px 2px">Сейчас нет территорий с 3+ одновременно активными доменами.</div>';
+  multi.slice(0,12).forEach(x=>{
+    const n=x.ad.length, m=x.c.gri_delta_7d;
+    const cls = n>=5?'crit':n>=4?'hi':'';
+    const lvl = n>=5?'Критический':n>=4?'Высокий':'Средний';
+    alerts += '<div class="alert '+cls+'">'+
+      '<span style="font-size:14px">⚠</span>'+
+      '<span style="flex:1"><b>'+esc(x.c.country_name||x.c.country)+'</b> — '+n+' доменов '+domDots(x.c.domain_scores)+'</span>'+
+      '<span class="pill">'+lvl+'</span>'+
+      (m!=null?'<span style="width:70px;text-align:right">'+deltaHtml(m)+'</span>':'')+
+      '</div>';
+  });
+  alerts += '</div>';
+
+  // --- Полная таблица территорий ---
+  const rows = cs.slice().sort((a,b)=>(b.gri_delta_7d||-999)-(a.gri_delta_7d||-999));
+  let table = '<h2>Все территории</h2>'+
+    '<div class="h2note">Momentum, каскад и траектория — реально. Колонки CSI* и FRI* — экспериментальные.</div>'+
+    '<table><thead><tr>'+
+    '<th>Территория</th><th>GRI</th><th>Уровень</th><th>Momentum</th><th>Cascade (CRI)</th>'+
+    '<th>Домены</th><th>Траектория</th><th>CSI*</th><th>FRI*</th>'+
+    '</tr></thead><tbody>';
+  rows.forEach(c=>{
+    const b=band(c.risk_score);
+    const csi=csiExperimental(c), cb=csiBand(csi);
+    table += '<tr>'+
+      '<td><span class="cc">'+esc(c.country_name||c.country)+'</span></td>'+
+      '<td class="num">'+c.risk_score+'</td>'+
+      '<td class="'+b.cls+'">'+b.name+'</td>'+
+      '<td>'+deltaHtml(c.gri_delta_7d)+'</td>'+
+      '<td><span class="num">'+(c.cri_score!=null?c.cri_score:'—')+'</span> '+deltaHtml(c.cri_delta_7d)+'</td>'+
+      '<td>'+domDots(c.domain_scores)+' <span class="small">'+activeDomains(c.domain_scores).length+'/5</span></td>'+
+      '<td>'+transition(c)+'</td>'+
+      '<td class="exp num" title="Экспериментальная эвристика, не вероятность">'+csi+' <span class="small exp">'+cb.t+'</span></td>'+
+      '<td class="exp small" title="Требует структурных данных (инфраструктура, демография, эконом-устойчивость) — из сигналов не считается">н/д</td>'+
+      '</tr>';
+  });
+  table += '</tbody></table>';
+
+  document.getElementById('content').innerHTML = radar + alerts + table;
+  document.getElementById('legend').style.display = 'block';
+}
+
+(async function(){
+  // несколько кандидатов пути к снапшоту (консоль может жить в разных местах)
+  const paths = ['docs/snapshots/index.json','/docs/snapshots/index.json','snapshots/index.json'];
+  let data=null, lastErr=null;
+  for(const p of paths){
+    try{
+      const r = await fetch(p, {cache:'no-store'});
+      if(r.ok){ data = await r.json(); break; }
+      lastErr = 'HTTP '+r.status+' ('+p+')';
+    }catch(e){ lastErr = e.message+' ('+p+')'; }
+  }
+  if(!data){
+    document.getElementById('content').innerHTML =
+      '<div class="err">Не удалось загрузить index.json. '+esc(lastErr||'')+
+      '<br><br>Если консоль открыта не на secrett-archive.com, укажите полный URL снапшота в коде (массив paths).</div>';
+    document.getElementById('meta').textContent='Ошибка загрузки';
+    return;
+  }
+  try{ render(data); }
+  catch(e){
+    document.getElementById('content').innerHTML='<div class="err">Ошибка рендера: '+esc(e.message)+'</div>';
+  }
+})();
+</script>
+</body>
+</html>
