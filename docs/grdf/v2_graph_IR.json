@@ -2,32 +2,32 @@
   "country": "IR",
   "date": "2026-06-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-12T08:24:41.959032+00:00",
+  "generated_at": "2026-06-12T14:53:06.146920+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 60,
+      "score": 62,
       "props": {
-        "risk_score": 60
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Это_конец_",
+      "id": "SIGNAL-IR-Война_на_З",
       "type": "Signal",
-      "label": "Это конец войны с Ираном?",
+      "label": "Война на Западной Азии в прямом эфире: Т",
+      "severity": 72,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Система_пр",
+      "type": "Signal",
+      "label": "Система противоракетной обороны сработал",
       "severity": 67,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Трамп_отме",
+      "id": "SIGNAL-IR-Это_конец_",
       "type": "Signal",
-      "label": "Трамп отменяет последние угрозы ударов п",
-      "severity": 66,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-«Мы_законч",
-      "type": "Signal",
-      "label": "«Мы закончили войну»: Трамп хвалится пре",
-      "severity": 62,
+      "label": "Это конец войны с Ираном?",
+      "severity": 67,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Это_конец_",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Война_на_З",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-IR-Система_пр",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-IR-Трамп_отме",
+      "from": "SIGNAL-IR-Это_конец_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.66
-    },
-    {
-      "from": "SIGNAL-IR-«Мы_законч",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.67
     }
   ]
 }

@@ -2,67 +2,67 @@
   "country": "TR",
   "date": "2026-06-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-12T08:24:41.952615+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-12T14:53:06.140418+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 38,
+      "score": 45,
       "props": {
-        "risk_score": 38
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 17,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 17,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 9,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 10,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-TR-Geopolitical",
@@ -80,18 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-«Они_делаю",
+      "id": "SIGNAL-TR-Мировые_но",
       "type": "Signal",
-      "label": "«Они делают это, когда им удобно»: Джаиш",
-      "severity": 53,
+      "label": "Мировые новости в кратком изложении: Тур",
+      "severity": 56,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-TR-Зеленое_пр",
+      "id": "SIGNAL-TR-Гроза:_Тур",
       "type": "Signal",
-      "label": "Зеленое предупреждение о наводнении в Ту",
-      "severity": 22,
+      "label": "Гроза: Турция (уровень yellow)",
+      "severity": 50,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-TR-В_Мали_Тур",
+      "type": "Signal",
+      "label": "В Мали Турция видит возможность",
+      "severity": 46,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -99,37 +106,37 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-TR",
@@ -156,16 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-TR-«Они_делаю",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-TR-Зеленое_пр",
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-TR-Мировые_но",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-TR-Гроза:_Тур",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.22
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-TR-В_Мали_Тур",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
