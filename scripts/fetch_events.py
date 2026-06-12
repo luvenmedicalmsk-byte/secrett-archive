@@ -2981,6 +2981,17 @@ def fetch_glofas():
 # ══════════════════════════════════════════════════════════════════════════════
 # TELEGRAM -- RU-каналы через web-preview (S36.4)
 # ══════════════════════════════════════════════════════════════════════════════
+def _tg_write_debug(transport, items, error):
+    try:
+        from collections import Counter as _C
+        import json as _j
+        dbg = {'transport': transport, 'error': error,
+               'channels': dict(_C(i['source'] for i in items)), 'total': len(items)}
+        _j.dump(dbg, open('docs/_tg_debug.json','w'), ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
 def fetch_telegram():
     """RU Telegram. Транспорт: MTProto (Telethon) если заданы секреты TG_API_ID/TG_API_HASH/TG_SESSION,
     иначе фолбэк на скрейпинг t.me/s. Классификатор и риск-фильтр социума — общие для обоих режимов."""
@@ -2996,6 +3007,7 @@ def fetch_telegram():
                          ('массов','сокращ'),('массов','увольн'),('массов','отравлен'),('массов','госпитал'),
                          ('рост','заболеваем'),('всплеск','заболеваем'),('рост','безработиц'),('рост','смертност')]
     items = []
+    _tg_err = None
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
     def _build(ch, text):
@@ -3027,8 +3039,10 @@ def fetch_telegram():
                     except Exception as e:
                         print(f"  [TG-MTProto] {ch}: {e}", file=sys.stderr)
             print(f"  Telegram(MTProto): {len(items)} постов", file=sys.stderr)
+            _tg_write_debug("mtproto", items, None)
             return items
         except Exception as e:
+            _tg_err = repr(e)
             print(f"  [TG-MTProto] init failed -> fallback scrape: {e}", file=sys.stderr)
 
     # --- Транспорт 2: скрейпинг t.me/s (фолбэк) ---
@@ -3049,6 +3063,7 @@ def fetch_telegram():
             it = _build(ch, strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')))
             if it: items.append(it)
     print(f"  Telegram(scrape): {len(items)} постов", file=sys.stderr)
+    _tg_write_debug("scrape", items, _tg_err)
     return items
 
 
