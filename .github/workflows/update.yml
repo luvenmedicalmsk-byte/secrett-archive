@@ -22,6 +22,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Зависимости (Telethon для MTProto-забора Telegram)
+        run: pip install --quiet telethon
+
 
       - name: Запуск парсера
         id: parser
@@ -37,6 +40,9 @@ jobs:
           WORKER_URL: ${{ secrets.WORKER_URL }}
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
           CF_RADAR_TOKEN: ${{ secrets.CF_RADAR_TOKEN }}
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+          TG_SESSION: ${{ secrets.TG_SESSION }}
         run: |
           python scripts/fetch_events.py
 
