@@ -2,67 +2,67 @@
   "country": "TH",
   "date": "2026-06-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-12T03:20:01.874661+00:00",
+  "generated_at": "2026-06-12T03:33:42.933746+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 58,
+      "score": 59,
       "props": {
-        "risk_score": 58
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 55,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 52,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 37,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 38,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
       "score": 44,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 41,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 35,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-TH-geopolitical",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TH-Нефтеперер",
+      "id": "SIGNAL-TH-Гроза:_Алт",
       "type": "Signal",
-      "label": "Нефтепереработчики корректируют источник",
-      "severity": 48,
-      "domain": "geopolitical"
+      "label": "Гроза: Алтайский край (Россия)",
+      "severity": 56,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-TH",
@@ -184,25 +184,46 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
       "from": "DOMAIN-TH-infrastructure",
       "to": "DOMAIN-TH-economic",
-      "type": "ESCALATES",
-      "weight": 0.78,
-      "lag_days": 7
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
     },
     {
       "from": "DOMAIN-TH-economic",
       "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 21
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TH-economic",
       "to": "DOMAIN-TH-social",
-      "type": "CORRELATES",
-      "weight": 0.5,
+      "type": "AMPLIFIES",
+      "weight": 0.7,
       "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TH-social",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-TH-Пожарная_о",
@@ -217,10 +238,10 @@
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-TH-Нефтеперер",
-      "to": "DOMAIN-TH-geopolitical",
+      "from": "SIGNAL-TH-Гроза:_Алт",
+      "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.56
     }
   ]
 }
