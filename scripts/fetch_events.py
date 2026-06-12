@@ -2998,7 +2998,7 @@ def fetch_telegram():
     иначе фолбэк на скрейпинг t.me/s. Классификатор и риск-фильтр социума — общие для обоих режимов."""
     import re as _re
     import os, sys, time as _time
-    channels = ['bbbreaking', 'novosti_efir', 'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash']
+    channels = ['bbbreaking', 'novosti_efir', 'itchannelnewsru', 'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash']
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash'}
     # одиночные стемы (специфичные) + пары стемов (оба слова где угодно — устойчиво к склонениям)
@@ -3007,6 +3007,14 @@ def fetch_telegram():
                          ('дефицит','врач'),('нехватк','врач'),('закры','больниц'),('закры','роддом'),('закры','поликлин'),
                          ('массов','сокращ'),('массов','увольн'),('массов','отравлен'),('массов','госпитал'),
                          ('рост','заболеваем'),('всплеск','заболеваем'),('рост','безработиц'),('рост','смертност')]
+    # тех-источник: только инциденты/риски (как соц-фильтр), не пиар продуктов
+    TECH_SRC = {'itchannelnewsru'}
+    TECH_RISK_KW = ['кибератак','кибербез','взлом','шифровальщик','вымогател','фишинг','ддос','блэкаут',
+                    'глонасс','эквайринг','импортозамещ','санкц','блокировк','уязвим','дипфейк']
+    TECH_RISK_PAIRS = [('утечк','данн'),('сбой','связ'),('перебои','связ'),('сбой','операт'),('отключен','интернет'),
+                       ('дефицит','чип'),('дефицит','электрон'),('дефицит','полупровод'),('нехватк','чип'),('дефицит','кадр'),
+                       ('сбой','цод'),('отказ','цод'),('сбой','облак'),('авари','энерг'),('отключен','электр'),
+                       ('сбой','плат'),('сбой','банк'),('атак','инфраструктур'),('риск','ии'),('риск','искусственн')]
     items = []
     _tg_err = None
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
@@ -3019,6 +3027,10 @@ def fetch_telegram():
         if ch in SOCIAL_SRC:
             if not is_srisk: return None
             _d = 'social'
+        elif ch in TECH_SRC:
+            is_trisk = any(k in tl for k in TECH_RISK_KW) or any(a in tl and b in tl for a,b in TECH_RISK_PAIRS)
+            if not is_trisk: return None        # тех-источник: только риск/инцидент, пиар отсекаем
+            _d = 'social' if is_srisk else 'technology'
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
@@ -3081,8 +3093,6 @@ def fetch_tech_rss():
     404 Media, Help Net Security, Industrial Cyber, Lawfare, RAND, WEF"""
     sources = [
         # Кибербезопасность
-        ('https://novostiitkanala.ru/feed/', 'Новости IT-канала', 'technology'),
-        ('https://novostiitkanala.ru/rss/', 'Новости IT-канала', 'technology'),
         ('https://therecord.media/feed', 'The Record', 'technology'),
         ('https://therecord.media/rss', 'The Record', 'technology'),
         ('https://cyberscoop.com/feed/', 'CyberScoop', 'technology'),
