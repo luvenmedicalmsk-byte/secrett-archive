@@ -2,60 +2,60 @@
   "country": "CN",
   "date": "2026-06-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-12T16:23:30.280149+00:00",
+  "generated_at": "2026-06-12T18:07:25.941587+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 54,
+      "score": 57,
       "props": {
-        "risk_score": 54
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CN-Настоящая_",
+      "id": "SIGNAL-CN-Цепочка_ми",
       "type": "Signal",
-      "label": "Настоящая проблема глобальной торговли",
-      "severity": 53,
+      "label": "Цепочка мира: могут ли узкие места в цеп",
+      "severity": 60,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CN-Удар,_отве",
+      "id": "SIGNAL-CN-Зеленое_пр",
       "type": "Signal",
-      "label": "Удар, ответный удар, повторить",
-      "severity": 50,
-      "domain": "geopolitical"
+      "label": "Зеленое предупреждение о наводнении в Ки",
+      "severity": 58,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-CN",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CN",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Система_пр",
       "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-CN-Настоящая_",
+      "from": "SIGNAL-CN-Цепочка_ми",
       "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.6
     },
     {
-      "from": "SIGNAL-CN-Удар,_отве",
-      "to": "DOMAIN-CN-geopolitical",
+      "from": "SIGNAL-CN-Зеленое_пр",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.58
     }
   ]
 }
