@@ -2982,9 +2982,10 @@ def fetch_glofas():
 # TELEGRAM -- RU-каналы через web-preview (S36.4)
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_telegram():
-    """RU Telegram-каналы через web-preview t.me/s/<channel> (S36.4).
-    Домен не форсируем -- классификация по ключевым словам (RU)."""
+    """RU Telegram. Транспорт: MTProto (Telethon) если заданы секреты TG_API_ID/TG_API_HASH/TG_SESSION,
+    иначе фолбэк на скрейпинг t.me/s. Классификатор и риск-фильтр социума — общие для обоих режимов."""
     import re as _re
+    import os, sys, time as _time
     channels = ['bbbreaking', 'minzdrav_ru', 'mintrudrf', 'readovkanews', 'bazabazon', 'mash']
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'readovkanews', 'bazabazon', 'mash'}
@@ -2996,44 +2997,58 @@ def fetch_telegram():
                          ('рост','заболеваем'),('всплеск','заболеваем'),('рост','безработиц'),('рост','смертност')]
     items = []
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    import time as _time
+
+    def _build(ch, text):
+        text = (text or '').strip()
+        if len(text) < 20: return None
+        tl = text[:200].lower()
+        is_srisk = any(k in tl for k in SOCIAL_RISK_KW) or any(a in tl and b in tl for a,b in SOCIAL_RISK_PAIRS)
+        if ch in SOCIAL_SRC:
+            if not is_srisk: return None
+            _d = 'social'
+        else:
+            _d = _tg_classify(text) or 'geopolitics'
+            if is_srisk: _d = 'social'
+        return {'title': text[:240], 'desc': text[:300], 'date': today,
+                'source': f'Telegram/{ch}', 'source_bias': 5, '_domain': _d}
+
+    # --- Транспорт 1: MTProto через Telethon (надёжно, без троттлинга) ---
+    if os.environ.get('TG_API_ID') and os.environ.get('TG_API_HASH') and os.environ.get('TG_SESSION'):
+        try:
+            from telethon.sync import TelegramClient
+            from telethon.sessions import StringSession
+            api_id = int(os.environ['TG_API_ID']); api_hash = os.environ['TG_API_HASH']
+            with TelegramClient(StringSession(os.environ['TG_SESSION']), api_id, api_hash) as client:
+                for ch in channels:
+                    try:
+                        for msg in client.iter_messages(ch, limit=30):
+                            it = _build(ch, msg.message or '')
+                            if it: items.append(it)
+                    except Exception as e:
+                        print(f"  [TG-MTProto] {ch}: {e}", file=sys.stderr)
+            print(f"  Telegram(MTProto): {len(items)} постов", file=sys.stderr)
+            return items
+        except Exception as e:
+            print(f"  [TG-MTProto] init failed -> fallback scrape: {e}", file=sys.stderr)
+
+    # --- Транспорт 2: скрейпинг t.me/s (фолбэк) ---
     UAS = ["Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"]
     for ch in channels:
         data = None
-        for _att in range(3):   # ретраи + ротация UA: t.me/s капризен, нулевые ответы частые
+        for _att in range(3):
             data = fetch_url(f"https://t.me/s/{ch}", headers={'User-Agent': UAS[_att % len(UAS)]}, timeout=18, retries=1)
-            if data and 'tgme_widget_message_text' in data:
-                break
+            if data and 'tgme_widget_message_text' in data: break
             _time.sleep(1.5)
         if not data or 'tgme_widget_message_text' not in data:
-            print(f"  [TG] {ch}: пусто после ретраев", file=sys.stderr)
-            continue
-        _time.sleep(0.8)   # пауза между каналами против rate-limit
+            print(f"  [TG] {ch}: пусто после ретраев", file=sys.stderr); continue
+        _time.sleep(0.8)
         msgs = _re.findall(r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>', data, _re.S)
         for raw_html in msgs[-25:]:
-            text = strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')).strip()
-            if len(text) < 20: continue
-            tl = text[:200].lower()   # фильтр по заголовку/лиду: пара слов рядом = реально связана (не ложное со-вхождение в длинной простыне)
-            is_srisk = any(k in tl for k in SOCIAL_RISK_KW) or any(a in tl and b in tl for a,b in SOCIAL_RISK_PAIRS)
-            if ch in SOCIAL_SRC:
-                if not is_srisk:
-                    continue           # соц-источник: только риск-сигналы, пиар пропускаем
-                _d = 'social'
-            else:
-                _d = _tg_classify(text) or 'geopolitics'
-                if is_srisk:
-                    _d = 'social'      # общий канал: соц-риск тоже ловим
-            items.append({
-                'title': text[:240],
-                'desc': text[:300],
-                'date': today,
-                'source': f'Telegram/{ch}',
-                'source_bias': 5,
-                '_domain': _d,
-            })
-    print(f"  Telegram: {len(items)} постов", file=sys.stderr)
+            it = _build(ch, strip_html(raw_html.replace('<br/>', ' ').replace('<br>', ' ')))
+            if it: items.append(it)
+    print(f"  Telegram(scrape): {len(items)} постов", file=sys.stderr)
     return items
 
 
