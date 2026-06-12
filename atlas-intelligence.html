@@ -64,6 +64,7 @@
     <div class="meta" id="meta">Загрузка данных…</div>
   </header>
 
+  <div id="cascade" style="margin-bottom:10px"></div>
   <div id="content"><div class="loading">Чтение снапшота…</div></div>
 
   <div class="legend" id="legend" style="display:none">
@@ -233,6 +234,146 @@ function render(idx){
     document.getElementById('content').innerHTML='<div class="err">Ошибка рендера: '+esc(e.message)+'</div>';
   }
 })();
+</script>
+<script>
+/* ATLAS CASCADE FLOW (client) — co-occurrence Sankey, real counts */
+(function(){
+  var CF_ORDER=['climate','technology','economy','geopolitics','social'];
+  var CF_DOM={climate:{l:'Климат',c:'#38bdf8'},geopolitics:{l:'Геополитика',c:'#f87171'},economy:{l:'Экономика',c:'#fbbf24'},technology:{l:'Технологии',c:'#a78bfa'},social:{l:'Социум',c:'#34d399'}};
+  var CF_ELEV=60, GOLD='#B8973A';
+  var cfState={mode:'world',country:'',idx:null,events:null};
+  function E(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];}); }
+  function activeDomains(ds){ if(!ds) return []; return CF_ORDER.filter(function(d){return (ds[d]||0)>=CF_ELEV;}); }
+
+  function pairsWorld(countries){
+    var pc={}, da={}; CF_ORDER.forEach(function(d){da[d]=0;});
+    countries.forEach(function(c){
+      var act=activeDomains(c.domain_scores);
+      act.forEach(function(d){ da[d]++; });
+      for(var i=0;i<act.length;i++) for(var j=i+1;j<act.length;j++){
+        var a=act[i],b=act[j], k=a<b?a+'|'+b:b+'|'+a; pc[k]=(pc[k]||0)+1;
+      }
+    });
+    return {pc:pc, da:da, unit:'стран'};
+  }
+  function pairsCountry(events, cc, cname){
+    var byReg={}, da={}; CF_ORDER.forEach(function(d){da[d]=0;});
+    var cnLc=(cname||'').toLowerCase();
+    events.forEach(function(e){
+      var inC=(e.country_codes&&e.country_codes.indexOf(cc)>=0)||e.country_code===cc||e.iso===cc;
+      if(!inC && cnLc){ var t=((e.title||'')+' '+(e.region||'')).toLowerCase(); inC=t.indexOf(cnLc)>=0; }
+      if(!inC) return;
+      var d=e.domain; if(CF_ORDER.indexOf(d)<0) return;
+      var r=String(e.region||'').trim()||'_';
+      (byReg[r]=byReg[r]||{})[d]=true;
+    });
+    var pc={};
+    Object.keys(byReg).forEach(function(r){
+      var doms=Object.keys(byReg[r]); doms.forEach(function(d){da[d]++;});
+      for(var i=0;i<doms.length;i++) for(var j=i+1;j<doms.length;j++){
+        var a=doms[i],b=doms[j], k=a<b?a+'|'+b:b+'|'+a; pc[k]=(pc[k]||0)+1;
+      }
+    });
+    return {pc:pc, da:da, unit:'регионов'};
+  }
+
+  function sankeySVG(pc, da){
+    var W=720,H=430,padT=30,padB=20,Lx=170,Rx=W-170,gap=14;
+    var leftTot={},rightTot={}, links=[];
+    CF_ORDER.forEach(function(d){leftTot[d]=0;rightTot[d]=0;});
+    for(var i=0;i<CF_ORDER.length;i++) for(var j=i+1;j<CF_ORDER.length;j++){
+      var a=CF_ORDER[i],b=CF_ORDER[j], k=a<b?a+'|'+b:b+'|'+a, w=pc[k]||0;
+      if(w>0){ links.push({a:a,b:b,w:w}); leftTot[a]+=w; rightTot[b]+=w; }
+    }
+    if(!links.length) return '<div style="color:var(--faint);font-size:12px;padding:20px;text-align:center">Недостаточно совместных сигналов для каскада в этом режиме.</div>';
+    var maxW=0; links.forEach(function(l){ if(l.w>maxW)maxW=l.w; });
+    var tot={}, sumAll=0; CF_ORDER.forEach(function(d){ tot[d]=leftTot[d]+rightTot[d]; sumAll+=tot[d]; });
+    var usableH=H-padT-padB - gap*(CF_ORDER.length-1), scale=usableH/Math.max(1,sumAll);
+    var yL={},yR={},hN={}, yc=padT;
+    CF_ORDER.forEach(function(d){ var h=Math.max(6,tot[d]*scale); hN[d]=h; yL[d]=yc; yR[d]=yc; yc+=h+gap; });
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">';
+    var offL={},offR={}; CF_ORDER.forEach(function(d){offL[d]=0;offR[d]=0;});
+    links.sort(function(x,y){return y.w-x.w;});
+    links.forEach(function(l){
+      var lhA=Math.max(2,(l.w/Math.max(1,leftTot[l.a]))*hN[l.a]);
+      var lhB=Math.max(2,(l.w/Math.max(1,rightTot[l.b]))*hN[l.b]);
+      var y0=yL[l.a]+offL[l.a], y1=yR[l.b]+offR[l.b]; offL[l.a]+=lhA; offR[l.b]+=lhB;
+      var x0=Lx+8, x1=Rx-8, mx=(x0+x1)/2, ca=CF_DOM[l.a].c, cb=CF_DOM[l.b].c, gid='g'+l.a+l.b;
+      svg+='<defs><linearGradient id="'+gid+'" x1="0" x2="1"><stop offset="0" stop-color="'+ca+'" stop-opacity="0.55"/><stop offset="1" stop-color="'+cb+'" stop-opacity="0.55"/></linearGradient></defs>';
+      svg+='<path d="M'+x0+','+(y0+lhA/2)+' C'+mx+','+(y0+lhA/2)+' '+mx+','+(y1+lhB/2)+' '+x1+','+(y1+lhB/2)+'" fill="none" stroke="url(#'+gid+')" stroke-width="'+((lhA+lhB)/2)+'" opacity="0.85"><title>'+CF_DOM[l.a].l+' \u2194 '+CF_DOM[l.b].l+': '+l.w+'</title></path>';
+    });
+    CF_ORDER.forEach(function(d){
+      svg+='<rect x="'+(Lx-2)+'" y="'+yL[d]+'" width="10" height="'+hN[d]+'" rx="2" fill="'+CF_DOM[d].c+'"/>';
+      svg+='<text x="'+(Lx-12)+'" y="'+(yL[d]+hN[d]/2+4)+'" text-anchor="end" font-size="12" fill="#cbd5e1" font-family="var(--body)">'+CF_DOM[d].l+'</text>';
+      svg+='<rect x="'+(Rx-8)+'" y="'+yR[d]+'" width="10" height="'+hN[d]+'" rx="2" fill="'+CF_DOM[d].c+'"/>';
+      svg+='<text x="'+(Rx+14)+'" y="'+(yR[d]+hN[d]/2+4)+'" text-anchor="start" font-size="12" fill="#cbd5e1" font-family="var(--body)">'+CF_DOM[d].l+'</text>';
+    });
+    return svg+'</svg>';
+  }
+
+  function analytics(res){
+    var pc=res.pc, da=res.da, unit=res.unit;
+    var driver=CF_ORDER.slice().sort(function(a,b){return (da[b]||0)-(da[a]||0);})[0];
+    var bestK='',bestW=0; Object.keys(pc).forEach(function(k){ if(pc[k]>bestW){bestW=pc[k];bestK=k;} });
+    var H='';
+    if(da[driver]>0) H+='<div style="margin-bottom:8px">Основной драйвер — <b style="color:'+CF_DOM[driver].c+'">'+CF_DOM[driver].l+'</b> (активен в '+da[driver]+' '+unit+').</div>';
+    if(bestK){ var p=bestK.split('|'); H+='<div style="margin-bottom:8px">Сильнейшая связь: <b style="color:var(--ink)">'+CF_DOM[p[0]].l+' \u2194 '+CF_DOM[p[1]].l+'</b> — совместно в '+bestW+' '+unit+'.</div>'; }
+    var cond=[]; CF_ORDER.forEach(function(b){ if(b===driver)return; var k=driver<b?driver+'|'+b:b+'|'+driver; if(pc[k]) cond.push({b:b,n:pc[k]}); });
+    cond.sort(function(x,y){return y.n-x.n;});
+    if(cond.length && da[driver]>0){
+      var c0=cond[0];
+      H+='<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--line)">'
+        +'<div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:6px">Наблюдение · сопутствующий домен</div>'
+        +'Там, где активен <b style="color:'+CF_DOM[driver].c+'">'+CF_DOM[driver].l+'</b>, чаще всего также активен '
+        +'<b style="color:'+CF_DOM[c0.b].c+'">'+CF_DOM[c0.b].l+'</b> — в <b>'+c0.n+' из '+da[driver]+'</b> '+unit+'.'
+        +'<div style="font-size:10px;color:var(--faint);margin-top:6px">Наблюдаемая частота за окно, не прогноз вероятности.</div></div>';
+    }
+    return H||'<div style="color:var(--faint)">Недостаточно данных для аналитики.</div>';
+  }
+
+  function paint(){
+    var body=document.getElementById('cascade'); if(!body) return;
+    var res;
+    if(cfState.mode==='country' && cfState.country){
+      var cn=''; (cfState.idx.countries||[]).forEach(function(c){ if(c.country===cfState.country) cn=c.country_name; });
+      res=pairsCountry(cfState.events||[], cfState.country, cn);
+    } else res=pairsWorld(cfState.idx.countries||[]);
+    var H='<h2>Cascade Flow</h2><div class="h2note">Каскады между доменами по реальной ко‑встречаемости сигналов.</div>';
+    H+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">';
+    H+='<button onclick="cfSetMode(\'world\')" style="padding:6px 14px;border-radius:6px;font-size:11px;cursor:pointer;border:0.5px solid var(--line);background:'+(cfState.mode==='world'?GOLD:'transparent')+';color:'+(cfState.mode==='world'?'#0a0e14':'var(--ink)')+'">Мир</button>';
+    H+='<button onclick="cfSetMode(\'country\')" style="padding:6px 14px;border-radius:6px;font-size:11px;cursor:pointer;border:0.5px solid var(--line);background:'+(cfState.mode==='country'?GOLD:'transparent')+';color:'+(cfState.mode==='country'?'#0a0e14':'var(--ink)')+'">Страна</button>';
+    if(cfState.mode==='country'){
+      var opts=(cfState.idx.countries||[]).slice().sort(function(a,b){return (b.risk_score||0)-(a.risk_score||0);}).map(function(c){
+        return '<option value="'+c.country+'"'+(c.country===cfState.country?' selected':'')+'>'+E(c.country_name||c.country)+'</option>';
+      }).join('');
+      H+='<select onchange="cfSetCountry(this.value)" style="padding:6px 10px;border-radius:6px;font-size:11px;background:var(--panel);color:var(--ink);border:0.5px solid var(--line)">'+opts+'</select>';
+    }
+    H+='</div>';
+    H+='<div style="font-size:11px;color:var(--faint);margin-bottom:8px">Толщина связи = число '+res.unit+', где домены одновременно в зоне риска (ко‑встречаемость, не вероятность). Порядок доменов — для читаемости, не направление причинности.</div>';
+    H+='<div class="card" style="padding:10px 6px">'+sankeySVG(res.pc,res.da)+'</div>';
+    H+='<h2>Аналитика</h2><div class="card" style="font-size:12px;color:var(--dim);line-height:1.6">'+analytics(res)+'</div>';
+    body.innerHTML=H;
+  }
+  window.cfSetMode=function(m){ cfState.mode=m; if(m==='country'&&!cfState.country&&cfState.idx){ var cs=(cfState.idx.countries||[]).slice().sort(function(a,b){return (b.risk_score||0)-(a.risk_score||0);}); if(cs[0]) cfState.country=cs[0].country; } paint(); };
+  window.cfSetCountry=function(cc){ cfState.country=cc; paint(); };
+
+  function getJSON(urls){ return new Promise(function(res){ var i=0;(function go(){ if(i>=urls.length){res(null);return;} fetch(urls[i],{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject(0);}).then(res).catch(function(){i++;go();}); })(); }); }
+  function boot(){
+    var body=document.getElementById('cascade'); if(!body) return;
+    body.innerHTML='<div style="color:var(--faint);font-size:12px;padding:18px 0">Чтение снапшота и событий…</div>';
+    Promise.all([
+      getJSON(['docs/snapshots/index.json','/docs/snapshots/index.json','https://secrett-archive.com/docs/snapshots/index.json']),
+      getJSON(['docs/events.json','/docs/events.json','https://secrett-archive.com/docs/events.json'])
+    ]).then(function(r){
+      cfState.idx=r[0]||{countries:[]};
+      cfState.events=(r[1]&&r[1].events)?r[1].events:(Array.isArray(r[1])?r[1]:[]);
+      if(!cfState.idx.countries||!cfState.idx.countries.length){ body.innerHTML='<div style="color:#ef9a9a;font-size:12px">Не удалось загрузить данные.</div>'; return; }
+      paint();
+    });
+  }
+  if(document.readyState!=='loading') boot(); else document.addEventListener('DOMContentLoaded',boot);
+})();
+
 </script>
 </body>
 </html>
