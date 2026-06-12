@@ -2,66 +2,66 @@
   "country": "CN",
   "date": "2026-06-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-12T04:07:49.494869+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-12T07:27:11.817170+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 52,
+      "score": 55,
       "props": {
-        "risk_score": 52
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -78,6 +78,13 @@
       "id": "DRIVER-CN-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-CN-Зеленое_пр",
+      "type": "Signal",
+      "label": "Зеленое предупреждение о наводнении в Ки",
+      "severity": 58,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CN-Настоящая_",
@@ -99,13 +106,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-CN",
@@ -123,19 +130,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-CN-Geopolitical",
@@ -154,6 +161,33 @@
       "to": "COUNTRY-CN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CN-Зеленое_пр",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     },
     {
       "from": "SIGNAL-CN-Настоящая_",
