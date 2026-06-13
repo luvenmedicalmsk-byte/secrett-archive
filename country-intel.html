@@ -437,6 +437,9 @@ function countryEvents(cc, name){
   });
 }
 
+function fc7(c){ const f=c.forecast_7d; if(f==null) return null; if(typeof f==='number') return String(Math.round(f)); if(f.score_min!=null&&f.score_max!=null) return Math.round(f.score_min)+'\u2013'+Math.round(f.score_max); if(f.base_case!=null) return String(Math.round(f.base_case)); return null; }
+function fc30(c){ const f=c.forecast_30d; if(f==null) return null; if(typeof f==='number') return String(Math.round(f)); if(f.base_case!=null) return String(Math.round(f.base_case)); if(f.score_min!=null&&f.score_max!=null) return Math.round(f.score_min)+'\u2013'+Math.round(f.score_max); return null; }
+function fc30range(c){ const f=c.forecast_30d; if(f&&f.best_case!=null&&f.worst_case!=null) return Math.round(f.best_case)+'\u2013'+Math.round(f.worst_case); return null; }
 function render(cc){
   const c=(IDX.countries||[]).find(x=>x.country===cc); if(!c) return;
   const gri=Math.round(c.risk_score||0), L=lvl(gri), ds=c.domain_scores||{};
@@ -489,10 +492,11 @@ function render(cc){
   const t=nextT(gri), m=c.gri_delta_7d;
   let traj = t==null ? '<span style="color:var(--muted)">верхний уровень шкалы</span>'
     : `до порога <b style="color:var(--cream)">${t}</b> — <b style="color:var(--cream)">${t-gri}</b> пунктов ${m!=null?dtag(m):''}`;
+  const F7=fc7(c), F30=fc30(c), F30r=fc30range(c);
   let fc='';
-  if(c.forecast_7d!=null||c.forecast_30d!=null){ fc=`<div style="display:flex;gap:24px;margin-top:12px">
-    ${c.forecast_7d!=null?`<div><div style="font-family:var(--font-serif);font-size:22px;color:var(--cream)">${Math.round(c.forecast_7d)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">прогноз 7д</div></div>`:''}
-    ${c.forecast_30d!=null?`<div><div style="font-family:var(--font-serif);font-size:22px;color:var(--cream)">${Math.round(c.forecast_30d)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">прогноз 30д</div></div>`:''}
+  if(F7||F30){ fc=`<div style="display:flex;gap:24px;margin-top:12px">
+    ${F7?`<div><div style="font-family:var(--font-serif);font-size:22px;color:var(--cream)">${F7}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">прогноз 7д</div></div>`:''}
+    ${F30?`<div><div style="font-family:var(--font-serif);font-size:22px;color:var(--cream)">${F30}${F30r?`<span style="font-size:11px;color:var(--muted)"> (${F30r})</span>`:''}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">прогноз 30д</div></div>`:''}
   </div>`; }
   H+=panel('Траектория', `<div style="font-size:13px;color:var(--ink)">${traj}</div>${fc}`);
 
@@ -510,8 +514,8 @@ function render(cc){
       const nd=inactive[0], sc=Math.round(ds[nd]||0);
       rows.push(`Ближе всего к зоне риска: <b style="color:${DOM[nd].c}">${DOM[nd].l}</b> — ${sc}/100, до порога 60 осталось <b style="color:var(--cream)">${60-sc}</b> п.`);
     }
-    if(c.forecast_7d!=null || c.forecast_30d!=null){
-      rows.push(`Прогноз модели: ${c.forecast_7d!=null?`7д <b style="color:var(--cream)">${Math.round(c.forecast_7d)}</b>`:''}${c.forecast_7d!=null&&c.forecast_30d!=null?' · ':''}${c.forecast_30d!=null?`30д <b style="color:var(--cream)">${Math.round(c.forecast_30d)}</b>`:''}.`);
+    if(F7||F30){
+      rows.push(`Прогноз модели: ${F7?`7д <b style="color:var(--cream)">${F7}</b>`:''}${F7&&F30?' · ':''}${F30?`30д <b style="color:var(--cream)">${F30}${F30r?' ('+F30r+')':''}</b>`:''}.`);
     }
     if(rows.length){
       const inner='<div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--ink);line-height:1.55">'
