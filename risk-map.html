@@ -8181,9 +8181,9 @@ function _grdfContextHtml(c){
   var regs=Object.keys(rc).sort(function(a,b){ return rc[b]-rc[a]; }).slice(0,8);
   if(regs.length){
     var _mx=rc[regs[0]]||1;
-    var f4=regs.map(function(r){ var hot=(rc[r]>=Math.max(2,_mx*0.6)), dotc=hot?'#f97316':'rgba(255,255,255,.25)';
-      return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#cbd5e1;background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.10);border-radius:6px;padding:3px 9px;margin:0 5px 5px 0"><span style="width:6px;height:6px;border-radius:50%;background:'+dotc+';flex-shrink:0"></span>'+esc(r)+' <span style="color:#4a6380">'+rc[r]+'</span></span>'; }).join('');
-    H+=card('Горячие регионы', f4+'<div style="font-size:10px;color:#4a6380;margin-top:5px">Цвет точки — концентрация сигналов</div>');
+    var f4=regs.map(function(r){ var hot=(rc[r]>=Math.max(2,_mx*0.6));
+      return '<span style="display:inline-block;font-size:11px;color:'+(hot?'#e8eef5':'#94a3b8')+';background:rgba(255,255,255,.04);border:0.5px solid rgba(255,255,255,.10);border-radius:6px;padding:3px 9px;margin:0 5px 5px 0">'+esc(r)+' <span style="color:#4a6380">'+rc[r]+'</span></span>'; }).join('');
+    H+=card('Горячие регионы', f4);
   }
 
   // ── 7. Статистика обработки сигналов (всего + покрытие) ──
