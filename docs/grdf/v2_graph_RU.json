@@ -2,9 +2,9 @@
   "country": "RU",
   "date": "2026-06-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-13T10:28:33.997969+00:00",
+  "generated_at": "2026-06-13T12:26:55.525335+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
@@ -20,21 +20,21 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 64,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 37,
-      "trend": "down"
+      "score": 40,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-technology",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -80,23 +80,23 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Очень_высо",
+      "type": "Signal",
+      "label": "Очень высокая температура: Архангельская",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-RU-Очень_высо",
+      "type": "Signal",
+      "label": "Очень высокая температура: Вологодская о",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-Пожарная_о",
       "type": "Signal",
       "label": "Пожарная опасность: Алтайский край (Росс",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RU-Очень_высо",
-      "type": "Signal",
-      "label": "Очень высокая температура: Алтайский кра",
-      "severity": 74,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RU-Очень_высо",
-      "type": "Signal",
-      "label": "Очень высокая температура: Новосибирская",
       "severity": 74,
       "domain": "climate"
     }
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-RU",
@@ -184,19 +184,61 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-RU-Очень_высо",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-RU-Очень_высо",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-RU-Пожарная_о",
-      "to": "DOMAIN-RU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-RU-Очень_высо",
-      "to": "DOMAIN-RU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-RU-Очень_высо",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
