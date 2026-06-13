@@ -7856,40 +7856,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
   }
 
   if(part!=='top'){
-  // ── Section: Изменения за 7 дней ───────────────────────────────
-  if(absDelta >= 1) {
-    out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
-    out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Изменения за 7 дней</div>';
 
-    var dSign = delta>0?'↑':'↓';
-    var dCol  = delta>0?'#f97316':'#10b981';
-    var ewsDelta = fr(delta * 0.9);
-    var warnPct  = fr(absDelta * 2.1);
-    var sigPct   = fr(absDelta * 2.8);
-
-    out += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
-    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
-    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">GRI</div>';
-    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+(delta>0?'+':'')+fr(delta)+'</div>';
-    out += '</div>';
-
-    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
-    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">EWS</div>';
-    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+(ewsDelta>0?'+':'')+ewsDelta+'</div>';
-    out += '</div>';
-
-    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
-    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">Предупреждения</div>';
-    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+warnPct+'%</div>';
-    out += '</div>';
-
-    out += '<div style="background:rgba(0,0,0,.25);border-radius:6px;padding:8px;text-align:center">';
-    out += '<div style="font-size:9px;color:#4a6380;margin-bottom:2px">Сигналы</div>';
-    out += '<div style="font-size:16px;font-weight:700;color:'+dCol+'">'+dSign+' '+sigPct+'%</div>';
-    out += '</div>';
-    out += '</div>';
-    out += '</div>';
-  }
 
   // ── Section: Что отслеживает система (from active domains) ──────
   var DOMAIN_TRACKS = {
@@ -8131,21 +8098,6 @@ function _grdfContextHtml(c){
     H+=card('Структура GRI', rows);
   })();
 
-  // ── 4. Главные драйверы риска ──
-  var byDom={}; evs.forEach(function(e){ var dd=e.domain||'other'; (byDom[dd]=byDom[dd]||[]).push(e); });
-  var ds0=c.domain_scores||{};
-  var drv=Object.keys(byDom).sort(function(a,b){ return byDom[b].length-byDom[a].length; }).map(function(dd){
-    var list=byDom[dd].slice().sort(function(a,b){ return (b.severity||0)-(a.severity||0); });
-    var head='<div style="display:flex;align-items:center;gap:7px;margin:9px 0 4px">'
-      +'<span style="width:8px;height:8px;border-radius:50%;background:'+(DOM_COLORS[dd]||'#888')+';flex-shrink:0"></span>'
-      +'<b style="color:#cbd5e1;font-size:12px">'+(DOM_LABELS[dd]||dd)+'</b>'
-      +'<span style="color:#4a6380;font-size:11px">'+list.length+' сигн.'+(ds0[dd]!=null?' · уровень '+Math.round(ds0[dd]):'')+'</span></div>';
-    var items=list.slice(0,3).map(function(e){ var ttl=String(e.title||'').replace(/\s+/g,' ').trim(); if(ttl.length>56) ttl=ttl.slice(0,56)+'…';
-      return '<div style="font-size:11px;color:#94a3b8;padding:2px 0 2px 15px">• '+esc(ttl)+(e.region?' <span style="color:#4a6380">— '+esc(e.region)+'</span>':'')+'</div>'; }).join('');
-    return head+items;
-  }).join('');
-  H+=card('Главные драйверы риска', drv);
-
   // ── 5. Прогноз риска (линейная проекция + сценарии модели) ──
   (function(){
     var gri=Math.round(parseFloat(c.risk_score)||0), m=c.gri_delta_7d, ds=c.domain_scores||{}, nt=null, ts=[40,60,75];
@@ -8163,8 +8115,24 @@ function _grdfContextHtml(c){
     var inner = proj
       + '<div style="font-size:10px;color:#4a6380;letter-spacing:.06em;text-transform:uppercase;margin:13px 0 6px">Сценарии модели · 30 дней</div>'
       + '<div id="grdf-scen"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>';
-    H+=card('Прогноз риска', inner);
+    H+=card('Прогноз риска и сценарии модели', inner);
   })();
+  // ── 4. Главные драйверы риска ──
+  var byDom={}; evs.forEach(function(e){ var dd=e.domain||'other'; (byDom[dd]=byDom[dd]||[]).push(e); });
+  var ds0=c.domain_scores||{};
+  var drv=Object.keys(byDom).sort(function(a,b){ return byDom[b].length-byDom[a].length; }).map(function(dd){
+    var list=byDom[dd].slice().sort(function(a,b){ return (b.severity||0)-(a.severity||0); });
+    var head='<div style="display:flex;align-items:center;gap:7px;margin:9px 0 4px">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+(DOM_COLORS[dd]||'#888')+';flex-shrink:0"></span>'
+      +'<b style="color:#cbd5e1;font-size:12px">'+(DOM_LABELS[dd]||dd)+'</b>'
+      +'<span style="color:#4a6380;font-size:11px">'+list.length+' сигн.'+(ds0[dd]!=null?' · уровень '+Math.round(ds0[dd]):'')+'</span></div>';
+    var items=list.slice(0,3).map(function(e){ var ttl=String(e.title||'').replace(/\s+/g,' ').trim(); if(ttl.length>56) ttl=ttl.slice(0,56)+'…';
+      return '<div style="font-size:11px;color:#94a3b8;padding:2px 0 2px 15px">• '+esc(ttl)+(e.region?' <span style="color:#4a6380">— '+esc(e.region)+'</span>':'')+'</div>'; }).join('');
+    return head+items;
+  }).join('');
+  H+=card('Главные драйверы риска', drv);
+
+
 
   // ── 6. Каскадный риск (CRI) ──
   var _g=parseFloat(c.risk_score)||0, _t=_next(_g), _m=c.gri_delta_7d;
@@ -8301,84 +8269,12 @@ function grdfRenderCountryPanel(cc) {
   // Key conclusion + reasoning raised above the forecast (Variant B order)
   html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, 'top');
 
-  // Forecast
-  html += '<div class="grdf-section-head">Прогноз</div>';
-  html += '<div class="grdf-forecast-grid"'+(_GRDF_SELL_FUTURE?'':' style="grid-template-columns:repeat(3,1fr)"')+'>';
-  // 24h FREE
-  html += '<div class="grdf-fc-box" style="padding:8px 4px">';
-  html += '<div class="grdf-fc-hz">24 часа</div>';
-  html += '<div style="font-size:17px;color:'+statusCol+';font-weight:600;font-family:Cormorant Garamond,serif;line-height:1;margin:3px 0">'+fc24+' / 100</div>';
-  html += '<div style="font-size:9px;color:'+_riskLabelCol(fc24)+';margin-bottom:2px">'+_riskLabel(fc24)+'</div>';
-  html += '</div>';
-  // 7d
-  if(isSig){
-    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">7 дней</div>';
-    html += '<div class="grdf-fc-val" style="color:'+(getStatus(fc7d)==='CRITICAL'?'#ef4444':getStatus(fc7d)==='ESCALATING'?'#f97316':'#eab308')+'">'+fc7d+'</div>';
-    html += '<div style="font-size:9px;color:'+(getStatus(fc7d)==='CRITICAL'?'#ef4444':getStatus(fc7d)==='ESCALATING'?'#f97316':'#eab308')+'">'+(getStatus(fc7d)==='CRITICAL'?'Критический':getStatus(fc7d)==='ESCALATING'?'Высокий':'Умеренный')+'</div>';
-    html += '<div class="grdf-fc-tier" style="color:#10b981">PRO</div></div>';
-  } else {
-    html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_7d" style="cursor:pointer">';
-    html += '<div class="grdf-fc-hz">7 дней</div>';
-    html += '<div style="margin:3px 0;display:flex;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>';
-    html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px;line-height:1.15;white-space:normal">Архив системных рисков</div></div>';
-  }
-  // 30 дней — прогноз есть; на текущем этапе показываем как уровень «Архив»
-  if(!_GRDF_SELL_FUTURE){
-    if(isSig){
-      html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">30 дней</div>';
-      html += '<div class="grdf-fc-val" style="color:#60a5fa">'+fc30d+'</div>';
-      html += '<div class="grdf-fc-tier" style="color:#10b981;font-size:8px">PRO</div></div>';
-    } else {
-      html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_30d" style="cursor:pointer">';
-      html += '<div class="grdf-fc-hz">30 дней</div>';
-      html += '<div style="margin:3px 0;display:flex;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>';
-      html += '<div class="grdf-fc-tier" style="color:#d97706;font-size:8px;line-height:1.15;white-space:normal">Архив системных рисков</div></div>';
-    }
-  }
-  // 30d / 90d — Strategic / Elite. Не в продаже на текущем этапе: скрыты за флагом,
-  // логика и данные сохранены в архитектуре (включить = _GRDF_SELL_FUTURE=true).
-  if(_GRDF_SELL_FUTURE){
-  // 30d
-  if(isSig){
-    html += '<div class="grdf-fc-box"><div class="grdf-fc-hz">30d</div>';
-    html += '<div class="grdf-fc-val" style="color:#60a5fa">'+fc30d+'</div>';
-    html += '<div class="grdf-fc-tier" style="color:#10b981">PRO</div></div>';
-  } else {
-    html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_30d" style="cursor:pointer">';
-    html += '<div class="grdf-fc-hz">30d</div><div style="font-size:16px;color:#374151">🔒</div>';
-    html += '<div class="grdf-fc-tier" style="color:#6366f1">Strategic</div></div>';
-  }
-  // 90d always locked at launch
-  html += '<div class="grdf-fc-box locked" onclick="grdfOpenUpgrade(this.dataset.grdfUpgrade)" data-grdf-upgrade="forecast_90d" style="cursor:pointer">';
-  html += '<div class="grdf-fc-hz">90d</div><div style="font-size:16px;color:#2d3f55">🔒</div>';
-  html += '<div class="grdf-fc-tier" style="color:#854d0e">Elite</div></div>';
-  }
-  html += '</div>';
-
   if(_GRDF_SHOW_MATRIX_RELOC){
     html += grdfRiskMatrixHTML(parseFloat(c.risk_score||50), parseFloat(c.delta||0), isSig);
     html += grdfRelocPanelHTML(c, isSig);
   }
   // Drivers (paid) / single Архив + Signal Pro zone (free)
-  if(isSig){
-    html += '<div class="grdf-section-head">Риск-драйверы</div>';
-    html += '<div style="padding:0 14px 8px">';
-    top3.forEach(function(r){
-      var dc = DOM_COLORS[r.d]||'#888';
-      var pct = fr(r.s/totalDS*100);
-      var trend = pct>35?'↑':pct>20?'→':'↓';
-      html += '<div style="margin-bottom:8px">';
-      html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px">';
-      html += '<span style="font-size:11px;color:#cbd5e1;display:flex;align-items:center;gap:4px">';
-      html += '<span style="width:5px;height:5px;border-radius:50%;background:'+dc+';display:inline-block"></span>';
-      html += (DOM_LABELS[r.d]||r.d)+'</span>';
-      html += '<span style="font-size:11px;color:'+dc+';font-weight:500">'+pct+'% '+trend+'</span></div>';
-      html += '<div style="height:2.5px;background:rgba(255,255,255,.06);border-radius:2px">';
-      html += '<div style="height:100%;width:'+Math.min(pct*2.2,100)+'%;background:'+dc+';border-radius:2px"></div></div>';
-      html += '</div>';
-    });
-    html += '</div>';
-  } else {
+  if(!isSig){
     html += '<div class="grdf-section-head">Архив + Signal Pro</div>';
     html += '<div class="grdf-pro-zone">';
     html += '<div class="grdf-pro-head"><span class="grdf-pro-star">⭐</span><span class="grdf-pro-title">Архив + Signal Pro</span></div>';
@@ -8394,35 +8290,7 @@ function grdfRenderCountryPanel(cc) {
     html += '</div>';
   }
 
-  // Signals preview
-  if(isSig){
-    html += '<div class="grdf-section-head">Последние сигналы</div>';
-    var _sigSrc = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS && ALL_EVENTS.length) ? ALL_EVENTS : ((_grdfData&&_grdfData.events)||[]);
-    var _cnLc = (c.country_name||'').toLowerCase();
-    var _matched = _sigSrc.filter(function(e){
-      if(e.country_codes && e.country_codes.indexOf(cc)>=0) return true;
-      if(e.country_code===cc || e.iso===cc) return true;
-      if(_cnLc){ var _t=((e.title||'')+' '+(e.region||'')+' '+(e.summary||'')).toLowerCase(); if(_t.indexOf(_cnLc)>=0) return true; }
-      return false;
-    }).sort(function(a,b){ return (b.severity||0)-(a.severity||0); });
-    // Доменно-сбалансированно: топ-сигнал из каждого домена, затем добор по severity (до 4),
-    // чтобы геополитика была видна, даже если климат-алертов численно больше.
-    var _seenDom={}, sigs=[];
-    _matched.forEach(function(e){ var d=e.domain||'other'; if(!_seenDom[d]){ _seenDom[d]=1; sigs.push(e); } });
-    _matched.forEach(function(e){ if(sigs.length<4 && sigs.indexOf(e)<0) sigs.push(e); });
-    sigs = sigs.sort(function(a,b){ return (b.severity||0)-(a.severity||0); }).slice(0,4);
-    if(sigs.length===0) html += '<div style="padding:4px 14px 8px;font-size:11px;color:#4a6380">Нет активных сигналов</div>';
-    sigs.forEach(function(s){
-      var _sd=s.domain||dom, _sc=DOM_COLORS[_sd]||'#f97316';
-      var _sv=s.severity||0, _slvl=_sv>=70?'Высокий':_sv>=45?'Средний':'Низкий';
-      var _smeta=[(DOM_LABELS[_sd]||_sd),(s.date||''),(s.source||''),_slvl].filter(Boolean).join(' · ');
-      html += '<div class="grdf-sig-row">';
-      html += '<span class="grdf-sig-dot" style="background:'+_sc+'"></span>';
-      html += '<div style="flex:1"><div style="font-size:11px;color:#d1d5db">'+esc(s.title||s.signal||'Сигнал')+'</div>';
-      html += '<div style="font-size:9px;color:#3d5068;margin-top:1px">'+esc(_smeta)+'</div></div>';
-      html += '</div>';
-    });
-  }
+
 
   // ── Actionable Intelligence Layer ─────────────────────────────
   html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, 'rest');
