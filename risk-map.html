@@ -8622,7 +8622,7 @@ window.grdfRenderRadar = function(force){
   window._radarSig = _sig;
   window._radarReg = {};
   var total=0;
-  var S=400, C=S/2, R=168, RMIN=36;
+  var S=400, C=S/2, R=168, RMIN=20;
   function rad(deg){ return (deg-90)*Math.PI/180; }
   function rFor(sev){ var t = 1 - Math.max(0,Math.min(100,sev))/100; return RMIN + t*(R-RMIN); }
   var svg = '<svg viewBox="0 0 '+S+' '+S+'" width="100%" style="max-width:440px" xmlns="http://www.w3.org/2000/svg">';
@@ -8632,12 +8632,17 @@ window.grdfRenderRadar = function(force){
     svg += '<path d="M'+C+','+C+' L'+P(-130,R)+' A'+R+','+R+' 0 0 1 '+P(-90,R)+' Z" fill="url(#rdrSweep)"><animateTransform attributeName="transform" type="rotate" values="0 '+C+' '+C+';360 '+C+' '+C+'" dur="7s" repeatCount="indefinite"/></path>';
     svg += '<line x1="'+C+'" y1="'+C+'" x2="'+C+'" y2="'+(C-R)+'" stroke="#D4AF5A" stroke-opacity="0.35" stroke-width="1"><animateTransform attributeName="transform" type="rotate" values="0 '+C+' '+C+';360 '+C+' '+C+'" dur="7s" repeatCount="indefinite"/></line>'; })();
   [0.40,0.72,1.0].forEach(function(t){ var rr=RMIN+t*(R-RMIN); svg += '<circle cx="'+C+'" cy="'+C+'" r="'+rr.toFixed(1)+'" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>'; });
+  svg += '<circle cx="'+C+'" cy="'+C+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,0.13)" stroke-width="1"/>';
   var ringLbls=[['\u041e\u0421\u0422\u0420\u042b\u0415',0.18],['\u0410\u041a\u0422\u0418\u0412\u041d\u042b\u0415',0.56],['\u0421\u041b\u0410\u0411\u042b\u0415',0.88]];
   ringLbls.forEach(function(rl){ var rr=RMIN+rl[1]*(R-RMIN); svg += '<text x="'+C+'" y="'+(C-rr).toFixed(1)+'" fill="rgba(255,255,255,0.46)" font-size="7.5" font-family="Montserrat,sans-serif" text-anchor="middle" letter-spacing="1.5">'+rl[0]+'</text>'; });
   DOMS.forEach(function(d,i){
     var a0=i*72, am=a0+36;
     var x1=C+R*Math.cos(rad(a0)), y1=C+R*Math.sin(rad(a0));
     svg += '<line x1="'+C+'" y1="'+C+'" x2="'+x1.toFixed(1)+'" y2="'+y1.toFixed(1)+'" stroke="rgba(255,255,255,0.11)" stroke-width="1"/>';
+    var Rb=R+2.5, ga0=a0+3, ga1=a0+69;
+    var ax0=(C+Rb*Math.cos(rad(ga0))).toFixed(1), ay0=(C+Rb*Math.sin(rad(ga0))).toFixed(1);
+    var ax1=(C+Rb*Math.cos(rad(ga1))).toFixed(1), ay1=(C+Rb*Math.sin(rad(ga1))).toFixed(1);
+    svg += '<path d="M'+ax0+','+ay0+' A'+Rb+','+Rb+' 0 0 1 '+ax1+','+ay1+'" fill="none" stroke="'+DC2[d]+'" stroke-width="3" stroke-opacity="0.6" stroke-linecap="round"/>';
     var lx=C+(R+10)*Math.cos(rad(am)), ly=C+(R+10)*Math.sin(rad(am));
     var anchor=(lx<C-5)?'end':(lx>C+5?'start':'middle');
     var arr=byDom[d], n=arr.length;
@@ -8656,9 +8661,9 @@ window.grdfRenderRadar = function(force){
       svg += '<circle class="grdf-radar-dot" data-rid="'+id+'" cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="'+dotR.toFixed(1)+'" fill="'+DC2[d]+'" fill-opacity="'+Math.min(1,(parseFloat(op)+0.3)).toFixed(2)+'" stroke="rgba(255,255,255,0.55)" stroke-width="0.7" style="cursor:pointer"><title>'+tt+' ('+e._sev+'/100)</title></circle>';
     });
   });
-  svg += '<circle cx="'+C+'" cy="'+C+'" r="28" fill="rgba(8,7,14,0.85)" stroke="rgba(212,175,90,0.28)" stroke-width="1"/>';
-  svg += '<text x="'+C+'" y="'+(C-3)+'" fill="#D4AF5A" font-size="21" font-weight="700" font-family="Cormorant Garamond,serif" text-anchor="middle" dominant-baseline="middle">'+total+'</text>';
-  svg += '<text x="'+C+'" y="'+(C+12)+'" fill="rgba(232,224,208,0.55)" font-size="7" font-family="Montserrat,sans-serif" text-anchor="middle" letter-spacing="1.5" dominant-baseline="middle">\u0421\u0418\u0413\u041d\u0410\u041b\u041e\u0412</text>';
+  svg += '<circle cx="'+C+'" cy="'+C+'" r="3" fill="#D4AF5A"/>';
+  svg += '<circle cx="'+C+'" cy="'+C+'" r="7.5" fill="none" stroke="rgba(212,175,90,0.4)" stroke-width="0.8"/>';
+  svg += '<path d="M'+(C-12)+' '+C+' h5 M'+(C+7)+' '+C+' h5 M'+C+' '+(C-12)+' v5 M'+C+' '+(C+7)+' v5" stroke="rgba(212,175,90,0.35)" stroke-width="0.8"/>';
   svg += '</svg>';
   canvas.innerHTML = svg;
   canvas.querySelectorAll('.grdf-radar-dot').forEach(function(el){ el.addEventListener('click', function(){ if(window._radarPick) window._radarPick(el.getAttribute('data-rid')); }); });
