@@ -3477,8 +3477,11 @@ function _loadCoverageTotals(){
   var urls=['https://secrett-archive.com/docs/coverage_totals.json','docs/coverage_totals.json','/docs/coverage_totals.json'];
   var i=0;(function go(){ if(i>=urls.length) return;
     fetch(urls[i],{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject(0);})
-      .then(function(d){ if(d&&d.countries) _COV_TOTALS=d; }).catch(function(){ i++; go(); }); })();
+      .then(function(d){ if(d&&d.countries){ _COV_TOTALS=d; try{ if(typeof grdfRenderCountryPanel==='function' && _grdfCurrentCountry) grdfRenderCountryPanel(_grdfCurrentCountry); }catch(e){} } }).catch(function(){ i++; go(); }); })();
 }
+try{ _loadCoverageTotals(); }catch(e){}
+setTimeout(function(){ try{ _loadCoverageTotals(); }catch(e){} }, 2000);
+setTimeout(function(){ try{ _loadCoverageTotals(); }catch(e){} }, 5000);
 async function fetchToday() {
   if (_todayData) return _todayData;
   try {
