@@ -8117,16 +8117,16 @@ function _grdfContextHtml(c){
   var dt=(typeof _todayData!=='undefined'&&_todayData&&_todayData.date)?_todayData.date:'';
   if(dt) H+=card('Обновлено', '<div style="font-size:11px;color:#cbd5e1">'+esc(dt)+(hrs!=null?' \u00b7 '+hrs+' ч назад':'')+'</div>');
     // Как отбираются сигналы — прозрачность отбора по доменам
-  function _mc(col,lab,txt){ return '<div><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+col+';margin-right:7px;vertical-align:middle"></span><b style="color:#cbd5e1">'+lab+'</b> \u2014 '+txt+'</div>'; }
+  function _mc(col,lab,txt,src){ return '<div><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+col+';margin-right:7px;vertical-align:middle"></span><b style="color:#cbd5e1">'+lab+'</b> \u2014 '+txt+(src?'<div style="color:#4a6380;font-size:11px;margin-top:3px;margin-left:14px">Источники: '+src+'</div>':'')+'</div>'; }
   H+=card('Как отбираются сигналы',
     '<details style="font-size:12px;color:#94a3b8">'
-    +'<summary style="cursor:pointer;color:#cbd5e1">Критерии отбора по 5 доменам</summary>'
-    +'<div style="margin-top:10px;display:flex;flex-direction:column;gap:9px;line-height:1.55">'
-    +_mc('#38bdf8','Климат','спутниковый и геофизический мониторинг — природные пожары, паводки и наводнения, аномальная жара и холод, сейсмика. Отбор по порогу серьёзности и охвату территории.')
-    +_mc('#f87171','Геополитика','события из первичных источников — вооружённые конфликты, политическая нестабильность, безопасность, международные ограничения.')
-    +_mc('#fbbf24','Экономика','сигналы экономического стресса (раннее предупреждение): разгон инфляции, рост безработицы и просрочки, банкротства, проблемы банков, спад производства и спроса, дефициты региональных бюджетов. Нейтральные новости отсекаются.')
-    +_mc('#a78bfa','Технологии','киберинциденты, сбои связи и инфраструктуры, дефицит электроники и чипов, технологические и санкционные ограничения.')
-    +_mc('#34d399','Социум','здравоохранение, труд, демография — вспышки и эпидемии, забастовки и протесты, отток и нехватка медкадров, задержки и невыплаты зарплат, падение рождаемости и убыль населения.')
+    +'<summary style="cursor:pointer;color:#cbd5e1">Критерии и источники по 5 доменам</summary>'
+    +'<div style="margin-top:10px;display:flex;flex-direction:column;gap:11px;line-height:1.55">'
+    +_mc('#38bdf8','Климат','спутниковый и геофизический мониторинг — природные пожары, паводки и наводнения, аномальная жара и холод, сейсмика. Отбор по порогу серьёзности и охвату территории.','NASA FIRMS, GDACS, USGS, EMSC, Copernicus EMS, NASA EONET, Росгидромет, The Watchers')
+    +_mc('#f87171','Геополитика','события из первичных источников — вооружённые конфликты, политическая нестабильность, безопасность, международные ограничения.','UN News, Foreign Affairs, Foreign Policy, Politico, France24, The Diplomat, SCMP, War on the Rocks и др.')
+    +_mc('#fbbf24','Экономика','сигналы экономического стресса (раннее предупреждение): разгон инфляции, рост безработицы и просрочки, банкротства, проблемы банков, спад производства и спроса, дефициты региональных бюджетов. Нейтральные новости отсекаются.','Bloomberg, Project Syndicate, EUobserver, региональные деловые издания + профильные аналитические каналы')
+    +_mc('#a78bfa','Технологии','киберинциденты, сбои связи и инфраструктуры, дефицит электроники и чипов, технологические и санкционные ограничения.','CISA, Krebs on Security, BleepingComputer, The Hacker News, CyberScoop')
+    +_mc('#34d399','Социум','здравоохранение, труд, демография — вспышки и эпидемии, забастовки и протесты, отток и нехватка медкадров, задержки и невыплаты зарплат, падение рождаемости и убыль населения.','WHO, ReliefWeb, Amnesty International + отраслевые каналы (здравоохранение, труд, демография)')
     +'</div></details>');
   return H;
 }
