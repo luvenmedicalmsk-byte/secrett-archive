@@ -8042,7 +8042,7 @@ function _grdfLoadHistory(cc){
   var i=0;(function go(){ if(i>=urls.length){ if(chartEl)chartEl.innerHTML='<div style="color:#4a6380;font-size:11px">История недоступна.</div>'; if(scenEl)scenEl.innerHTML=''; return; }
     fetch(urls[i],{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject(0);}).then(function(d){ _grdfHistCache[cc]=d; draw(d); }).catch(function(){ i++; go(); }); })();
 }
-function _grdfSetRange(n){ _grdfChartRange=n; var cc=(typeof _grdfCurrentCountry!=='undefined')?_grdfCurrentCountry:null; if(cc && _grdfHistCache[cc]){ var el=document.getElementById('grdf-hist'); if(el) el.innerHTML=_grdfChartHtml(_grdfHistCache[cc]); } }
+window._grdfSetRange=function(n){ _grdfChartRange=n; var cc=(typeof _grdfCurrentCountry!=='undefined')?_grdfCurrentCountry:null; if(cc && _grdfHistCache[cc]){ var el=document.getElementById('grdf-hist'); if(el) el.innerHTML=_grdfChartHtml(_grdfHistCache[cc]); } };
 function _grdfChartHtml(d){
   var sn=(d&&d.snapshots)||[]; if(!sn.length) return '<div style="color:#4a6380;font-size:11px">Нет истории.</div>';
   var R=_grdfChartRange, pts=(R>=999)?sn:sn.slice(-R);
