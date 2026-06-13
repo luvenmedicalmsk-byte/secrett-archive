@@ -7846,7 +7846,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
   if(reasons.length === 0) reasons.push('Система отслеживает стандартный профиль рисков');
 
   out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
-  out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Почему система присвоила этот уровень</div>';
+  out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Основания оценки</div>';
   reasons.slice(0,5).forEach(function(r){
     out += '<div style="display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:11px;color:#94a3b8">';
     out += '<span style="color:'+sCol+';font-weight:700;flex-shrink:0;margin-top:1px">·</span><span>'+r+'</span></div>';
@@ -8094,6 +8094,7 @@ function _grdfContextHtml(c){
   function _cband(v){ if(v==null)return ''; if(v>=75)return 'системный'; if(v>=60)return 'междоменный'; if(v>=40)return 'ограниченный'; return 'локальный'; }
   function _next(g){ var ts=[40,60,75]; for(var i=0;i<ts.length;i++){ if(g<ts[i])return ts[i]; } return null; }
   var dc={}; evs.forEach(function(e){ var d=e.domain||'other'; dc[d]=(dc[d]||0)+1; });
+  function cardS(label, inner){ return '<div style="margin:0 14px 8px;padding:9px 12px;background:rgba(255,255,255,.012);border:0.5px solid rgba(255,255,255,.05);border-radius:9px;opacity:.72"><div style="font-size:9px;color:#3d5068;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">'+label+'</div>'+inner+'</div>'; }
   var H='';
 
   // ── 1. Risk Momentum ──
@@ -8202,7 +8203,7 @@ function _grdfContextHtml(c){
   var _covLine=_AD.slice().sort(function(a,b){ return (_covSrc[b]||0)-(_covSrc[a]||0); }).map(function(d){ var _cn=_covSrc[d]||0;
     return '<div style="display:flex;justify-content:space-between;font-size:11px;color:'+(_cn?'#94a3b8':'#4a6380')+';padding:2px 0"><span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';margin-right:6px;opacity:'+(_cn?'1':'.4')+'"></span>'+(DOM_LABELS[d]||d)+'</span><span style="color:'+(_cn?'#cbd5e1':'#4a6380')+';font-weight:600">'+_cn+'</span></div>'; }).join('');
   _statInner+='<div style="font-size:10px;color:#4a6380;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Покрытие · '+esc(c.country_name||c.country)+'</div>'+_covLine;
-  H+=card('Статистика обработки сигналов', _statInner);
+  H+=cardS('Статистика обработки сигналов', _statInner);
 
   // ── 9. Уверенность оценки ──
   var sc={}; evs.forEach(function(e){ var ss=String(e.source||'').trim(); if(ss) sc[ss]=(sc[ss]||0)+1; });
@@ -8211,15 +8212,15 @@ function _grdfContextHtml(c){
   var hrs=isNaN(gen)?null:Math.max(0,Math.round((Date.now()-gen)/3600000));
   var freshF=hrs==null?0.6:hrs<6?1:hrs<24?0.8:hrs<72?0.5:0.3;
   var conf=Math.max(0,Math.min(92,Math.round(38 + 30*Math.min(1,n/50) + 16*Math.min(1,nsrc/8) + 8*freshF)));
-  H+=card('Уверенность оценки',
+  H+=cardS('Уверенность оценки',
     '<div style="font-size:20px;font-family:\'Cormorant Garamond\',serif;color:'+(conf>=75?'#10b981':conf>=55?'#eab308':'#f97316')+';line-height:1">'+conf+'%</div>'
     +'<div style="font-size:10px;color:#4a6380;margin-top:4px">'+n+' сигналов · '+nsrc+' источников · '+_act.length+' активных доменов'+(hrs!=null?' · обновление '+hrs+' ч назад':'')+'</div>');
   var dt2=(typeof _todayData!=='undefined'&&_todayData&&_todayData.date)?_todayData.date:'';
-  if(dt2) H+=card('Обновлено', '<div style="font-size:11px;color:#cbd5e1">'+esc(dt2)+(hrs!=null?' · '+hrs+' ч назад':'')+'</div>');
+  if(dt2) H+=cardS('Обновлено', '<div style="font-size:11px;color:#cbd5e1">'+esc(dt2)+(hrs!=null?' · '+hrs+' ч назад':'')+'</div>');
 
   // ── 10. Методология оценки ──
   function _mc(col,lab,txt,src){ return '<div><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+col+';margin-right:7px;vertical-align:middle"></span><b style="color:#cbd5e1">'+lab+'</b> — '+txt+(src?'<div style="color:#4a6380;font-size:11px;margin-top:3px;margin-left:14px">Источники: '+src+'</div>':'')+'</div>'; }
-  H+=card('Методология оценки',
+  H+=cardS('Методология оценки',
     '<details style="font-size:12px;color:#94a3b8">'
     +'<summary style="cursor:pointer;color:#cbd5e1;list-style:none">ⓘ Как отбираются сигналы — критерии и источники</summary>'
     +'<div style="margin-top:10px;display:flex;flex-direction:column;gap:11px;line-height:1.55">'
@@ -8285,24 +8286,16 @@ function grdfRenderCountryPanel(cc) {
     html += '<div class="grdf-archive-badge"><span>⭐ Участник Архива</span><small> · Прогноз 7д включён</small></div>';
   }
   // Metrics — tappable, each index explains its own meaning/origin
+  function _miniDelta(v){ if(v==null) return '<div style="font-size:9px;color:#4a6380;margin-top:3px">накапл.</div>'; var cl=v>0?'#f97316':v<0?'#10b981':'#4a6380',ar=v>0?'▲':v<0?'▼':'→'; return '<div style="font-size:9px;color:'+cl+';margin-top:3px">'+ar+' '+(v>0?'+':'')+v+'</div>'; }
+  var _adN=['climate','geopolitics','economy','technology','social'].filter(function(d){return ((c.domain_scores||{})[d]||0)>=60;}).length;
+  var _miniCri='<div style="font-size:9px;color:#4a6380;margin-top:3px">'+_adN+'/5 доменов</div>';
   html += '<div class="grdf-metrics">';
-  html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'GRI\')"><div class="grdf-metric-val" style="color:'+statusCol+'">'+gri+'</div><div class="grdf-metric-lbl">GRI <span class="grdf-idx-i">i</span></div></div>';
-  html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'EWS\')"><div class="grdf-metric-val" style="color:'+(ews>=80?'#ef4444':ews>=65?'#f97316':'#eab308')+'">'+ews+'</div><div class="grdf-metric-lbl">EWS <span class="grdf-idx-i">i</span></div></div>';
-  html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'CRI\')"><div class="grdf-metric-val" style="color:#f59e0b">'+cri+'</div><div class="grdf-metric-lbl">CRI <span class="grdf-idx-i">i</span></div></div>';
+  html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'GRI\')"><div class="grdf-metric-val" style="color:'+statusCol+'">'+gri+'</div><div class="grdf-metric-lbl">GRI <span class="grdf-idx-i">i</span></div>'+_miniDelta(c.gri_delta_7d)+'</div>';
+  html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'EWS\')"><div class="grdf-metric-val" style="color:'+(ews>=80?'#ef4444':ews>=65?'#f97316':'#eab308')+'">'+ews+'</div><div class="grdf-metric-lbl">EWS <span class="grdf-idx-i">i</span></div>'+_miniDelta(c.ews_delta_7d)+'</div>';
+  html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'CRI\')"><div class="grdf-metric-val" style="color:#f59e0b">'+cri+'</div><div class="grdf-metric-lbl">CRI <span class="grdf-idx-i">i</span></div>'+_miniCri+'</div>';
   html += '</div>';
   html += '<div id="grdf-idx-info" class="grdf-idx-info"></div>';
-  // Микро-индикаторы под индексами (реальные значения)
-  (function(){
-    var dsx=c.domain_scores||{}, ad=['climate','geopolitics','economy','technology','social'].filter(function(d){return (dsx[d]||0)>=60;}).length;
-    var warn=(typeof ALL_EVENTS!=='undefined'&&ALL_EVENTS?ALL_EVENTS:[]).filter(function(e){ var inC=(e.country_codes&&e.country_codes.indexOf(c.country)>=0)||e.country_code===c.country; return inC && (e.severity||0)>=70; }).length;
-    var dl=(delta==null)?null:Math.round(delta*10)/10, dcol=(dl>0)?'#f97316':(dl<0)?'#10b981':'#4a6380', darr=(dl>0)?'▲':(dl<0)?'▼':'→';
-    function chip(val,lab){ return '<div style="flex:1;text-align:center"><div style="font-size:13px;color:#e8eef5;font-weight:600">'+val+'</div><div style="font-size:8px;color:#4a6380;letter-spacing:.05em;text-transform:uppercase;margin-top:2px">'+lab+'</div></div>'; }
-    html += '<div style="display:flex;gap:6px;margin:0 14px 10px;padding:8px 4px;background:rgba(255,255,255,.02);border:0.5px solid rgba(255,255,255,.06);border-radius:7px">'
-      + chip(dl==null?'—':'<span style="color:'+dcol+'">'+darr+' '+(dl>0?'+':'')+dl+'</span>','GRI за 7д')
-      + chip(ad+'/5','Активных доменов')
-      + chip(warn,'Предупреждений')
-      + '</div>';
-  })();
+
 
   // GRI formation — index is assembled from 5 domain models (V1–V34)
   // Key conclusion + reasoning raised above the forecast (Variant B order)
