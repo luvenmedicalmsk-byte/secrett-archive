@@ -8052,6 +8052,20 @@ function _grdfContextHtml(c){
     +'<div>GRI '+dtag(c.gri_delta_7d)+'</div>'
     +'<div>EWS '+dtag(c.ews_delta_7d)+'</div>'
     +'<div>CRI '+dtag(c.cri_delta_7d)+'</div></div>');
+  // #2 Risk Momentum — статус из реальных дельт за 7д
+  (function(){
+    var g=c.gri_delta_7d||0, ew=c.ews_delta_7d||0, cr=c.cri_delta_7d||0, sum=g+ew+cr;
+    var st,col;
+    if(sum<=1){ st='Стабильно'; col='#10b981'; }
+    else if(sum<=8){ st='Ускорение'; col='#eab308'; }
+    else if(sum<=18){ st='Рост риска'; col='#f97316'; }
+    else { st='Резкий рост'; col='#ef4444'; }
+    H+=card('Risk Momentum \u00b7 скорость изменения',
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<span style="width:10px;height:10px;border-radius:50%;background:'+col+'"></span>'
+      +'<b style="color:'+col+';font-size:14px">'+st+'</b>'
+      +'<span style="color:#4a6380;font-size:11px">GRI '+(g>0?'+':'')+g+' \u00b7 EWS '+(ew>0?'+':'')+ew+' \u00b7 CRI '+(cr>0?'+':'')+cr+' за 7д</span></div>');
+  })();
   // Каскад · мульти-домен · траектория — реальные индексы (ATLAS → клиент)
   // Радиал по 5 доменам (как на профиле страны) — визуальный центр
   function _carc(cx,cy,r,d0,d1){ var a0=d0*Math.PI/180,a1=d1*Math.PI/180; var x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1); var lg=d1-d0>180?1:0; return 'M'+x0+','+y0+' A'+r+','+r+',0,'+lg+',1,'+x1+','+y1; }
@@ -8102,14 +8116,20 @@ function _grdfContextHtml(c){
   var dc={};
   evs.forEach(function(e){ var d=e.domain||'other'; dc[d]=(dc[d]||0)+1; });
   var ord=Object.keys(dc).sort(function(a,b){ return dc[b]-dc[a]; });
-  var topEv=evs.slice().sort(function(a,b){ return (b.severity||0)-(a.severity||0); }).slice(0,4);
-  var f2=topEv.map(function(e){
-    var d=e.domain||'other', ttl=String(e.title||'').replace(/\s+/g,' ').trim(); if(ttl.length>50) ttl=ttl.slice(0,50)+'\u2026';
-    return '<div style="display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:11px;color:#cbd5e1">'
-      +'<span style="width:5px;height:5px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';margin-top:5px;flex-shrink:0"></span>'
-      +'<span style="flex:1">'+esc(ttl)+' <span style="color:#4a6380">\u00b7 '+(DOM_LABELS[d]||d)+' \u00b7 '+dc[d]+' сигн.</span></span></div>';
+  // #1 Главные драйверы риска — объединённый блок (домен → сигналы)
+  var byDom={}; evs.forEach(function(e){ var dd=e.domain||'other'; (byDom[dd]=byDom[dd]||[]).push(e); });
+  var ds0=c.domain_scores||{};
+  var drv=Object.keys(byDom).sort(function(a,b){ return byDom[b].length-byDom[a].length; }).map(function(dd){
+    var list=byDom[dd].slice().sort(function(a,b){ return (b.severity||0)-(a.severity||0); });
+    var head='<div style="display:flex;align-items:center;gap:7px;margin:9px 0 4px">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+(DOM_COLORS[dd]||'#888')+';flex-shrink:0"></span>'
+      +'<b style="color:#cbd5e1;font-size:12px">'+(DOM_LABELS[dd]||dd)+'</b>'
+      +'<span style="color:#4a6380;font-size:11px">'+list.length+' сигн.'+(ds0[dd]!=null?' \u00b7 уровень '+Math.round(ds0[dd]):'')+'</span></div>';
+    var items=list.slice(0,3).map(function(e){ var ttl=String(e.title||'').replace(/\s+/g,' ').trim(); if(ttl.length>56) ttl=ttl.slice(0,56)+'\u2026';
+      return '<div style="font-size:11px;color:#94a3b8;padding:2px 0 2px 15px">\u2022 '+esc(ttl)+(e.region?' <span style="color:#4a6380">\u2014 '+esc(e.region)+'</span>':'')+'</div>'; }).join('');
+    return head+items;
   }).join('');
-  H+=card('Что повлияло на риск', f2);
+  H+=card('Главные драйверы риска', drv);
   var _ALLDOM=['climate','geopolitics','economy','technology','social'];
   var _covC=(typeof window._COV_TOTALS!=='undefined'&&window._COV_TOTALS&&window._COV_TOTALS.countries&&window._COV_TOTALS.countries[c.country])?window._COV_TOTALS.countries[c.country]:null;
   var _covSrc=_covC||dc;
