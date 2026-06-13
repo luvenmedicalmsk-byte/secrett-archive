@@ -1,68 +1,68 @@
 {
   "country": "UA",
-  "date": "2026-06-12",
+  "date": "2026-06-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-12T21:32:59.007279+00:00",
+  "generated_at": "2026-06-13T02:59:06.924798+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 58,
+      "score": 60,
       "props": {
-        "risk_score": 58
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "down"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-UA-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-В_Одесі_пр",
+      "type": "Signal",
+      "label": "В Одесі пролунали вибухи: місто атакувал",
+      "severity": 72,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-Топливо_за",
       "type": "Signal",
       "label": "Топливо заканчивается в Крыму, контролир",
@@ -92,13 +99,6 @@
       "label": "Украинские дроны сбиты над 15 регионами ",
       "severity": 65,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-UA-Член_групп",
-      "type": "Signal",
-      "label": "Член группы-вымогателей Conti признал се",
-      "severity": 58,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-UA-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-UA-В_Одесі_пр",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-UA-Топливо_за",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-UA-climate",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-UA-Член_групп",
-      "to": "DOMAIN-UA-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }
