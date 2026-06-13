@@ -3471,13 +3471,13 @@ async function _ccEstablishTier(){ if(!_clientToken) return; try{ var r=await fe
 try{ _ccEstablishTier(); }catch(e){}
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────
-var _COV_TOTALS=null;
+window._COV_TOTALS=window._COV_TOTALS||null;
 function _loadCoverageTotals(){
-  if(_COV_TOTALS) return;
+  if(window._COV_TOTALS) return;
   var urls=['https://secrett-archive.com/docs/coverage_totals.json','docs/coverage_totals.json','/docs/coverage_totals.json'];
   var i=0;(function go(){ if(i>=urls.length) return;
     fetch(urls[i],{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject(0);})
-      .then(function(d){ if(d&&d.countries){ _COV_TOTALS=d; try{ if(typeof grdfRenderCountryPanel==='function' && _grdfCurrentCountry) grdfRenderCountryPanel(_grdfCurrentCountry); }catch(e){} } }).catch(function(){ i++; go(); }); })();
+      .then(function(d){ if(d&&d.countries){ window._COV_TOTALS=d; try{ if(typeof grdfRenderCountryPanel==='function' && _grdfCurrentCountry) grdfRenderCountryPanel(_grdfCurrentCountry); }catch(e){} } }).catch(function(){ i++; go(); }); })();
 }
 try{ _loadCoverageTotals(); }catch(e){}
 setTimeout(function(){ try{ _loadCoverageTotals(); }catch(e){} }, 2000);
@@ -8080,11 +8080,11 @@ function _grdfContextHtml(c){
   }).join('');
   H+=card('Что повлияло на риск', f2);
   var _ALLDOM=['climate','geopolitics','economy','technology','social'];
-  var _covC=(typeof _COV_TOTALS!=='undefined'&&_COV_TOTALS&&_COV_TOTALS.countries&&_COV_TOTALS.countries[c.country])?_COV_TOTALS.countries[c.country]:null;
+  var _covC=(typeof window._COV_TOTALS!=='undefined'&&window._COV_TOTALS&&window._COV_TOTALS.countries&&window._COV_TOTALS.countries[c.country])?window._COV_TOTALS.countries[c.country]:null;
   var _covSrc=_covC||dc;
-  if(typeof _COV_TOTALS!=='undefined'&&_COV_TOTALS&&_COV_TOTALS.global){
-    var _gtot=_COV_TOTALS.total||0, _since=_COV_TOTALS.since||'';
-    var _gline=_ALLDOM.map(function(d){return (DOM_LABELS[d]||d)+' '+(_COV_TOTALS.global[d]||0);}).join(' \u00b7 ');
+  if(typeof window._COV_TOTALS!=='undefined'&&window._COV_TOTALS&&window._COV_TOTALS.global){
+    var _gtot=window._COV_TOTALS.total||0, _since=window._COV_TOTALS.since||'';
+    var _gline=_ALLDOM.map(function(d){return (DOM_LABELS[d]||d)+' '+(window._COV_TOTALS.global[d]||0);}).join(' \u00b7 ');
     H+=card('ВСЕГО ОБРАБОТАНО', '<div style="font-size:15px;color:#e8eef5;font-weight:700;margin-bottom:3px">'+_gtot.toLocaleString('ru-RU')+' сигналов <span style="color:#4a6380;font-size:11px;font-weight:400">'+(_since?'с '+_since:'')+'</span></div><div style="font-size:11px;color:#94a3b8;line-height:1.6">'+_gline+'</div>');
   }
   var f3=_ALLDOM.slice().sort(function(a,b){ return (_covSrc[b]||0)-(_covSrc[a]||0); }).map(function(d){
