@@ -2999,7 +2999,8 @@ def fetch_telegram():
     import re as _re
     import os, sys, time as _time
     channels = ['bbbreaking', 'novosti_efir', 'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
-                'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography']
+                'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography',
+                'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist']
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                   'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography'}
@@ -3021,6 +3022,15 @@ def fetch_telegram():
                        ('дефицит','чип'),('дефицит','электрон'),('дефицит','полупровод'),('нехватк','чип'),('дефицит','кадр'),
                        ('сбой','цод'),('отказ','цод'),('сбой','облак'),('авари','энерг'),('отключен','электр'),
                        ('сбой','плат'),('сбой','банк'),('атак','инфраструктур'),('риск','ии'),('риск','искусственн')]
+    # эконом-источник: аналитические каналы — только сигналы стресса/риска (раннее предупреждение)
+    ECON_SRC = {'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist'}
+    ECON_RISK_KW = ['банкротств','дефолт','девальвац','рецесси','стагфляц','неплатёжеспособн','просрочк','кассовый разрыв','секвестр','обвал']
+    ECON_RISK_PAIRS = [('рост','инфляц'),('ускорен','инфляц'),('разгон','цен'),('рост','безработиц'),('рост','увольн'),
+                       ('массов','увольн'),('сокращен','штат'),('падени','доход'),('сниж','доход'),('рост','просрочк'),
+                       ('плох','долг'),('проблем','банк'),('отзыв','лицензи'),('набег','вкладчик'),('спад','производств'),
+                       ('падени','выпуск'),('остановк','завод'),('падени','спрос'),('сжат','спрос'),('обвал','рубл'),
+                       ('падени','продаж'),('заморозк','строй'),('проблем','застройщик'),('дефицит','бюджет'),('госдолг','регион'),
+                       ('сбой','поставок'),('разрыв','цепочк'),('повышен','ндс'),('рост','ставк')]
     items = []
     _tg_err = None
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
@@ -3037,6 +3047,10 @@ def fetch_telegram():
             is_trisk = any(k in tl for k in TECH_RISK_KW) or any(a in tl and b in tl for a,b in TECH_RISK_PAIRS)
             if not is_trisk: return None        # тех-источник: только риск/инцидент, пиар отсекаем
             _d = 'social' if is_srisk else 'technology'
+        elif ch in ECON_SRC:
+            is_erisk = any(k in tl for k in ECON_RISK_KW) or any(a in tl and b in tl for a,b in ECON_RISK_PAIRS)
+            if not is_erisk: return None        # только сигналы стресса/риска
+            _d = 'economy'
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
