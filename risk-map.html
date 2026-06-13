@@ -7830,20 +7830,22 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
 
   // ── Section: Причины оценки ─────────────────────────────────────
   var reasons = [];
-  if(delta >= 5)  reasons.push('Индекс риска вырос на +'+fr(delta)+' за последние 7 дней');
-  else if(delta <= -5) reasons.push('Индекс риска снизился на '+fr(delta)+' за последние 7 дней');
-  if(gri >= 80)   reasons.push('GRI достиг критического уровня ('+gri+'/100)');
-  else if(gri >= 60) reasons.push('GRI на уровне высокого риска ('+gri+'/100)');
-  if(ews >= 75)   reasons.push('Высокий уровень раннего предупреждения EWS '+ews);
-  else if(ews >= 60) reasons.push('Повышенный уровень раннего предупреждения EWS '+ews);
-  if(top3.length > 0) {
-    var totalS = top3.reduce(function(a,x){ return a+x.s; },0)||1;
-    var domPct = fr(top3[0].s/totalS*100);
-    if(domPct >= 40) reasons.push('Доминирующий домен «'+(DOM_LABELS[top3[0].d]||top3[0].d)+'» составляет '+domPct+'% профиля риска');
-  }
-  if(top3.length >= 2) reasons.push('Активированы риски в '+top3.length+' доменах: '+top3.map(function(x){ return DOM_LABELS[x.d]||x.d; }).join(', '));
-
-  if(reasons.length === 0) reasons.push('Система отслеживает стандартный профиль рисков');
+  var _rds = c.domain_scores||{};
+  var _adj = {climate:'Климатический', geopolitics:'Геополитический', economy:'Экономический', technology:'Технологический', social:'Социальный'};
+  Object.keys(_rds).sort(function(a,b){return (_rds[b]||0)-(_rds[a]||0);}).forEach(function(d){
+    var v=Math.round(_rds[d]||0);
+    if(v>=75) reasons.push((_adj[d]||d)+' риск достиг критического уровня ('+v+')');
+    else if(v>=60) reasons.push((_adj[d]||d)+' риск на высоком уровне ('+v+')');
+  });
+  var _adN = Object.keys(_rds).filter(function(d){return (_rds[d]||0)>=60;}).length;
+  if(_adN>=2) reasons.push('Активны '+_adN+' из 5 доменов риска');
+  var _cd = (c.cri_delta_7d!=null)?Math.round(c.cri_delta_7d):null;
+  if(_cd!=null && _cd>=3) reasons.push('Каскадный риск вырос на '+_cd+' пунктов за 7 дней');
+  else if(_cd!=null && _cd<=-3) reasons.push('Каскадный риск снизился на '+Math.abs(_cd)+' пунктов за 7 дней');
+  if(delta >= 5) reasons.push('Индекс риска вырос на +'+fr(delta)+' за 7 дней');
+  else if(delta <= -5) reasons.push('Индекс риска снизился на '+fr(delta)+' за 7 дней');
+  reasons = reasons.slice(0,5);
+  if(reasons.length === 0) reasons.push('Профиль рисков в пределах нормы');
 
   out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
   out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Основания оценки</div>';
@@ -8087,15 +8089,16 @@ function _grdfContextHtml(c){
   // ── 3. Структура GRI · рейтинг доменов (полосы вместо радиала) ──
   (function(){
     function dlvl(v){ if(v>=75)return['критический','#ef4444']; if(v>=60)return['высокий','#f97316']; if(v>=40)return['повышенный','#eab308']; if(v>=20)return['низкий','#10b981']; return['минимальный','#4a6380']; }
+    var _sum=_AD.reduce(function(a,d){return a+Math.round(_ds[d]||0);},0)||1;
     var rows=_AD.map(function(d){ return {d:d,v:Math.round(_ds[d]||0)}; }).sort(function(a,b){return b.v-a.v;}).map(function(o){
-      var lv=dlvl(o.v), col=DOM_COLORS[o.d]||'#888';
+      var lv=dlvl(o.v), col=DOM_COLORS[o.d]||'#888', pct=Math.round(o.v/_sum*100);
       return '<div style="display:flex;align-items:center;gap:8px;margin:6px 0">'
         +'<span style="width:80px;font-size:11px;color:#cbd5e1;flex-shrink:0">'+(DOM_LABELS[o.d]||o.d)+'</span>'
         +'<span style="flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:'+Math.max(2,o.v)+'%;background:'+col+'"></span></span>'
-        +'<span style="width:26px;text-align:right;font-size:12px;color:#cbd5e1">'+o.v+'</span>'
-        +'<span style="width:76px;text-align:right;font-size:10px;color:'+lv[1]+'">'+lv[0]+'</span></div>';
+        +'<span style="width:56px;text-align:right;font-size:12px;color:#cbd5e1">'+o.v+' <span style="color:#4a6380;font-size:10px">'+pct+'%</span></span>'
+        +'<span style="width:72px;text-align:right;font-size:10px;color:'+lv[1]+'">'+lv[0]+'</span></div>';
     }).join('');
-    H+=card('Структура GRI', rows);
+    H+=card('Структура GRI', rows+'<div style="font-size:9px;color:#4a6380;margin-top:7px">Уровень домена и его вклад в итоговый GRI.</div>');
   })();
 
   // ── 5. Прогноз риска (линейная проекция + сценарии модели) ──
@@ -8112,7 +8115,14 @@ function _grdfContextHtml(c){
     if(f30&&f30.base_case!=null){ fs+=(fs?' · ':'')+'30д '+Math.round(f30.base_case)+(f30.best_case!=null?' ('+Math.round(f30.best_case)+'–'+Math.round(f30.worst_case)+')':''); }
     if(fs) rows.push('Прогноз модели: '+fs+'.');
     var proj = rows.length ? '<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:#94a3b8;line-height:1.5">'+rows.map(function(x){return '<div>'+x+'</div>';}).join('')+'<div style="font-size:10px;color:#4a6380;margin-top:3px">Линейная проекция по текущему темпу — не прогноз вероятности.</div></div>' : '';
-    var inner = proj
+    var g0=Math.round(parseFloat(c.risk_score)||0), dl0=c.gri_delta_7d||0;
+    var _ph='<div style="margin-bottom:9px;padding-bottom:9px;border-bottom:0.5px solid rgba(255,255,255,.06)">'
+      +'<div style="font-size:10px;color:#4a6380;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">Горизонт прогноза</div>'
+      +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#cbd5e1">'
+      +'<span>24ч — GRI <b>'+Math.round(g0+dl0*0.15)+'</b></span>'
+      +'<span>7д — GRI <b>'+Math.round(g0+dl0*1.0)+'</b></span>'
+      +'<span>30д — GRI <b>'+Math.round(g0+dl0*2.5)+'</b></span></div></div>';
+    var inner = _ph + proj
       + '<div style="font-size:10px;color:#4a6380;letter-spacing:.06em;text-transform:uppercase;margin:13px 0 6px">Сценарии модели · 30 дней</div>'
       + '<div id="grdf-scen"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>';
     H+=card('Прогноз риска и сценарии модели', inner);
