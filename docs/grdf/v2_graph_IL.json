@@ -2,66 +2,66 @@
   "country": "IL",
   "date": "2026-06-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-13T12:26:55.535250+00:00",
+  "generated_at": "2026-06-13T12:50:26.281943+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 54,
+      "score": 58,
       "props": {
-        "risk_score": 54
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 22,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Похороны_у",
+      "type": "Signal",
+      "label": "Похороны убитого иранского верховного ли",
+      "severity": 73,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Больше_уда",
       "type": "Signal",
       "label": "Больше ударов по больницам Ливана, гуман",
@@ -92,13 +99,6 @@
       "label": "Переизбрание Нетаньяху может зависеть от",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Ускорение_",
-      "type": "Signal",
-      "label": "Ускорение этнической чистки палестинцев ",
-      "severity": 51,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-IL-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Похороны_у",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.73
+    },
+    {
       "from": "SIGNAL-IL-Больше_уда",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-IL-Ускорение_",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }

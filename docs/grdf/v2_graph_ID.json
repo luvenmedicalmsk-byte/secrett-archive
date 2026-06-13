@@ -2,60 +2,60 @@
   "country": "ID",
   "date": "2026-06-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-13T12:26:55.538323+00:00",
-  "node_count": 12,
-  "edge_count": 14,
+  "generated_at": "2026-06-13T12:50:26.285096+00:00",
+  "node_count": 13,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 49,
+      "score": 51,
       "props": {
-        "risk_score": 49
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 49,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 35,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
@@ -82,6 +82,13 @@
     {
       "id": "SIGNAL-ID-Землетрясе",
       "type": "Signal",
+      "label": "Землетрясение M5.1 — 118 км к ВЮВ от Bit",
+      "severity": 51,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Землетрясе",
+      "type": "Signal",
       "label": "Землетрясение M4.9 — 137 км к С от Tobel",
       "severity": 49,
       "domain": "climate"
@@ -92,7 +99,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-ID",
@@ -104,7 +111,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-ID",
@@ -149,6 +156,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-ID-geopolitical",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
@@ -168,6 +217,12 @@
       "type": "AMPLIFIES",
       "weight": 0.6,
       "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ID-Землетрясе",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.51
     },
     {
       "from": "SIGNAL-ID-Землетрясе",
