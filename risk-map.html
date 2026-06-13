@@ -1218,6 +1218,8 @@ html,body{overscroll-behavior-y:contain}
 .grdf-radar-dot.sel{stroke:#fff;stroke-width:1.6}
 .grdf-radar-live{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:6px;vertical-align:middle;animation:rdrPulse 1.8s ease-in-out infinite}
 @keyframes rdrPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+#grdf-radar-canvas svg{animation:rdrFade .45s ease}
+@keyframes rdrFade{from{opacity:0}to{opacity:1}}
 #grdf-radar-detail{display:none;max-width:520px;margin:0 auto 8px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:8px;position:relative;font-family:'Montserrat',sans-serif}
 #grdf-radar-detail.show{display:block}
 .grdf-rd-x{position:absolute;top:8px;right:8px;background:none;border:none;color:rgba(255,255,255,.35);font-size:13px;cursor:pointer;padding:4px;line-height:1}
@@ -8633,7 +8635,10 @@ window.grdfRenderRadar = function(force){
     svg += '<line x1="'+C+'" y1="'+C+'" x2="'+C+'" y2="'+(C-R)+'" stroke="#D4AF5A" stroke-opacity="0.35" stroke-width="1"><animateTransform attributeName="transform" type="rotate" values="0 '+C+' '+C+';360 '+C+' '+C+'" dur="7s" repeatCount="indefinite"/></line>'; })();
   [0.40,0.72,1.0].forEach(function(t){ var rr=RMIN+t*(R-RMIN); svg += '<circle cx="'+C+'" cy="'+C+'" r="'+rr.toFixed(1)+'" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>'; });
   svg += '<circle cx="'+C+'" cy="'+C+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,0.13)" stroke-width="1"/>';
-  var ringLbls=[['\u041e\u0421\u0422\u0420\u042b\u0415',0.18],['\u0410\u041a\u0422\u0418\u0412\u041d\u042b\u0415',0.56],['\u0421\u041b\u0410\u0411\u042b\u0415',0.88]];
+  for(var _tk=0;_tk<60;_tk++){ var _ta=_tk*6, _maj=(_tk%12===0), _r2=R-(_maj?6:2.5);
+    var _tx1=(C+R*Math.cos(rad(_ta))).toFixed(1), _ty1=(C+R*Math.sin(rad(_ta))).toFixed(1), _tx2=(C+_r2*Math.cos(rad(_ta))).toFixed(1), _ty2=(C+_r2*Math.sin(rad(_ta))).toFixed(1);
+    svg += '<line x1="'+_tx1+'" y1="'+_ty1+'" x2="'+_tx2+'" y2="'+_ty2+'" stroke="'+(_maj?'rgba(212,175,90,0.45)':'rgba(255,255,255,0.12)')+'" stroke-width="'+(_maj?'1':'0.6')+'"/>'; }
+  var ringLbls=[['ОСТРЫЕ',0.18],['АКТИВНЫЕ',0.56],['СЛАБЫЕ',0.88]];
   ringLbls.forEach(function(rl){ var rr=RMIN+rl[1]*(R-RMIN); svg += '<text x="'+C+'" y="'+(C-rr).toFixed(1)+'" fill="rgba(255,255,255,0.46)" font-size="7.5" font-family="Montserrat,sans-serif" text-anchor="middle" letter-spacing="1.5">'+rl[0]+'</text>'; });
   DOMS.forEach(function(d,i){
     var a0=i*72, am=a0+36;
@@ -8664,10 +8669,11 @@ window.grdfRenderRadar = function(force){
   svg += '<circle cx="'+C+'" cy="'+C+'" r="3" fill="#D4AF5A"/>';
   svg += '<circle cx="'+C+'" cy="'+C+'" r="7.5" fill="none" stroke="rgba(212,175,90,0.4)" stroke-width="0.8"/>';
   svg += '<path d="M'+(C-12)+' '+C+' h5 M'+(C+7)+' '+C+' h5 M'+C+' '+(C-12)+' v5 M'+C+' '+(C+7)+' v5" stroke="rgba(212,175,90,0.35)" stroke-width="0.8"/>';
+  [[6,6,1,1],[S-6,6,-1,1],[6,S-6,1,-1],[S-6,S-6,-1,-1]].forEach(function(_c){ var _b=22; svg += '<path d="M'+(_c[0]+_c[2]*_b)+' '+_c[1]+' H'+_c[0]+' V'+(_c[1]+_c[3]*_b)+'" fill="none" stroke="rgba(212,175,90,0.32)" stroke-width="1.2"/>'; });
   svg += '</svg>';
   canvas.innerHTML = svg;
   canvas.querySelectorAll('.grdf-radar-dot').forEach(function(el){ el.addEventListener('click', function(){ if(window._radarPick) window._radarPick(el.getAttribute('data-rid')); }); });
-  var cnt=document.getElementById('grdf-radar-count'); if(cnt) cnt.textContent = total+' \u0441\u0438\u0433\u043d\u0430\u043b\u043e\u0432';
+  var cnt=document.getElementById('grdf-radar-count'); if(cnt){ var _h=new Date(); var _t=('0'+_h.getHours()).slice(-2)+':'+('0'+_h.getMinutes()).slice(-2); cnt.textContent = total+' сигналов · '+_t; }
   var lg=document.getElementById('grdf-radar-legend');
   if(lg){ lg.innerHTML = DOMS.map(function(d){ return '<span class="grdf-radar-lg"><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+'</span>'; }).join(''); }
 };
