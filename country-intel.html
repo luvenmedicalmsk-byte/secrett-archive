@@ -410,17 +410,22 @@ function panel(title, inner, extra){ return `<div style="background:var(--card);
   <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">${title}${extra?`<span style="float:right;color:var(--gold)">${extra}</span>`:''}</div>${inner}</div>`; }
 
 function radialSVG(ds, gri, col){
-  const seg=360/ORDER.length;
-  let arcs='';
+  const seg=360/ORDER.length, cx=100, cy=100, r=72;
+  let arcs='', labels='';
   ORDER.forEach((d,i)=>{
     const v=Math.max(0,Math.min(100,ds[d]||0));
     const s=-90+i*seg, e=s+seg*v/100-3;
-    arcs += `<path d="${circleArc(70,70,56,s,Math.max(s+0.1,e))}" fill="none" stroke="${DOM[d].c}" stroke-width="9" stroke-linecap="round" opacity=".9"/>`;
-    arcs += `<path d="${circleArc(70,70,56,s,s+seg-3)}" fill="none" stroke="${DOM[d].c}" stroke-width="9" stroke-linecap="round" opacity=".10"/>`;
+    arcs += `<path d="${circleArc(cx,cy,r,s,s+seg-3)}" fill="none" stroke="${DOM[d].c}" stroke-width="11" stroke-linecap="round" opacity=".10"/>`;
+    arcs += `<path d="${circleArc(cx,cy,r,s,Math.max(s+0.1,e))}" fill="none" stroke="${DOM[d].c}" stroke-width="11" stroke-linecap="round" opacity=".92"/>`;
+    const mid=(s+(s+seg-3))/2, a=mid*Math.PI/180;
+    const lx=cx+(r+22)*Math.cos(a), ly=cy+(r+22)*Math.sin(a);
+    const anc=Math.cos(a)>0.3?'start':(Math.cos(a)<-0.3?'end':'middle');
+    labels += `<text x="${lx.toFixed(1)}" y="${(ly-2).toFixed(1)}" text-anchor="${anc}" font-size="9" fill="${DOM[d].c}">${DOM[d].l}</text>`;
+    labels += `<text x="${lx.toFixed(1)}" y="${(ly+9).toFixed(1)}" text-anchor="${anc}" font-family="var(--font-serif)" font-size="12" fill="var(--cream)">${Math.round(v)}</text>`;
   });
-  return `<svg viewBox="0 0 140 140" style="width:170px;height:170px">${arcs}
-    <text x="70" y="64" text-anchor="middle" font-family="var(--font-serif)" font-size="38" fill="${col}">${gri}</text>
-    <text x="70" y="84" text-anchor="middle" font-size="9" letter-spacing="2" fill="var(--muted)">GRI</text></svg>`;
+  return `<svg viewBox="0 0 200 200" style="width:230px;height:230px;max-width:100%">${arcs}${labels}
+    <text x="${cx}" y="${cy-2}" text-anchor="middle" font-family="var(--font-serif)" font-size="44" fill="${col}">${gri}</text>
+    <text x="${cx}" y="${cy+18}" text-anchor="middle" font-size="9" letter-spacing="2" fill="var(--muted)">GRI</text></svg>`;
 }
 
 function countryEvents(cc, name){
@@ -490,6 +495,31 @@ function render(cc){
     ${c.forecast_30d!=null?`<div><div style="font-family:var(--font-serif);font-size:22px;color:var(--cream)">${Math.round(c.forecast_30d)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">прогноз 30д</div></div>`:''}
   </div>`; }
   H+=panel('Траектория', `<div style="font-size:13px;color:var(--ink)">${traj}</div>${fc}`);
+
+  // Что дальше, если усилится — линейная проекция по реальному темпу (без выдуманных %)
+  {
+    let rows=[];
+    if(m!=null && m>0 && t!=null){
+      const wk=Math.max(0.5, Math.round((t-gri)/m*10)/10);
+      rows.push(`Если усиление продолжится текущим темпом <b style="color:#C0622B">+${m}/нед</b>, уровень <b style="color:${lvl(t).c}">${lvl(t).t.toLowerCase()}</b> (порог ${t}) — ориентировочно через <b style="color:var(--cream)">~${wk} нед</b>.`);
+    } else if(m!=null && m<=0){
+      rows.push(`Риск <b style="color:#1E8449">не растёт</b> (${m>=0?'+':''}${m}/нед) — ближайший порог не приближается.`);
+    }
+    const inactive=ORDER.filter(d=>(ds[d]||0)<60).sort((a,b)=>(ds[b]||0)-(ds[a]||0));
+    if(inactive.length && (ds[inactive[0]]||0)>=35){
+      const nd=inactive[0], sc=Math.round(ds[nd]||0);
+      rows.push(`Ближе всего к зоне риска: <b style="color:${DOM[nd].c}">${DOM[nd].l}</b> — ${sc}/100, до порога 60 осталось <b style="color:var(--cream)">${60-sc}</b> п.`);
+    }
+    if(c.forecast_7d!=null || c.forecast_30d!=null){
+      rows.push(`Прогноз модели: ${c.forecast_7d!=null?`7д <b style="color:var(--cream)">${Math.round(c.forecast_7d)}</b>`:''}${c.forecast_7d!=null&&c.forecast_30d!=null?' · ':''}${c.forecast_30d!=null?`30д <b style="color:var(--cream)">${Math.round(c.forecast_30d)}</b>`:''}.`);
+    }
+    if(rows.length){
+      const inner='<div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--ink);line-height:1.55">'
+        +rows.map(x=>'<div>'+x+'</div>').join('')
+        +'<div style="font-size:10px;color:var(--muted);margin-top:4px">Линейная проекция по текущему темпу — не прогноз вероятности.</div></div>';
+      H+=panel('Что дальше, если усилится', inner);
+    }
+  }
 
   // DRIVERS
   const top=evs.slice().sort((a,b)=>(b.severity||0)-(a.severity||0)).slice(0,6);
