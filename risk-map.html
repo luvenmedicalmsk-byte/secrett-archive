@@ -8058,15 +8058,15 @@ function _grdfContextHtml(c){
   (function(){
     var ORD=['climate','geopolitics','economy','technology','social'], ds=c.domain_scores||{}, gri=Math.round(parseFloat(c.risk_score)||0);
     var gcol=gri>=75?'#B03A2E':gri>=60?'#C0622B':gri>=40?'#f59e0b':'#10b981', seg=72;
-    var svg='<svg viewBox="0 0 200 200" style="width:200px;height:200px;max-width:100%;display:block;margin:0 auto">';
+    var svg='<svg viewBox="0 0 300 210" style="width:100%;max-width:300px;height:auto;display:block;margin:0 auto">';
     ORD.forEach(function(d,i){ var v=Math.max(0,Math.min(100,ds[d]||0)), st=-90+i*seg, e=st+seg*v/100-3, col=(DOM_COLORS[d]||'#888');
-      svg+='<path d="'+_carc(100,100,72,st,st+seg-3)+'" fill="none" stroke="'+col+'" stroke-width="11" stroke-linecap="round" opacity="0.12"/>';
-      svg+='<path d="'+_carc(100,100,72,st,Math.max(st+0.1,e))+'" fill="none" stroke="'+col+'" stroke-width="11" stroke-linecap="round" opacity="0.92"/>';
-      var mid=(st+(st+seg-3))/2, a=mid*Math.PI/180, lx=100+94*Math.cos(a), ly=100+94*Math.sin(a), anc=Math.cos(a)>0.3?'start':(Math.cos(a)<-0.3?'end':'middle');
-      svg+='<text x="'+lx.toFixed(1)+'" y="'+(ly-2).toFixed(1)+'" text-anchor="'+anc+'" font-size="8.5" fill="'+col+'">'+(DOM_LABELS[d]||d)+'</text>';
+      svg+='<path d="'+_carc(150,100,64,st,st+seg-3)+'" fill="none" stroke="'+col+'" stroke-width="11" stroke-linecap="round" opacity="0.12"/>';
+      svg+='<path d="'+_carc(150,100,64,st,Math.max(st+0.1,e))+'" fill="none" stroke="'+col+'" stroke-width="11" stroke-linecap="round" opacity="0.92"/>';
+      var mid=(st+(st+seg-3))/2, a=mid*Math.PI/180, lx=150+84*Math.cos(a), ly=100+84*Math.sin(a), anc=Math.cos(a)>0.3?'start':(Math.cos(a)<-0.3?'end':'middle');
+      svg+='<text x="'+lx.toFixed(1)+'" y="'+(ly-2).toFixed(1)+'" text-anchor="'+anc+'" font-size="9" fill="'+col+'">'+(DOM_LABELS[d]||d)+'</text>';
       svg+='<text x="'+lx.toFixed(1)+'" y="'+(ly+9).toFixed(1)+'" text-anchor="'+anc+'" font-size="11" fill="#cbd5e1">'+Math.round(v)+'</text>'; });
-    svg+='<text x="100" y="96" text-anchor="middle" font-size="40" fill="'+gcol+'">'+gri+'</text>';
-    svg+='<text x="100" y="114" text-anchor="middle" font-size="8" letter-spacing="2" fill="#4a6380">GRI</text></svg>';
+    svg+='<text x="150" y="96" text-anchor="middle" font-size="40" fill="'+gcol+'">'+gri+'</text>';
+    svg+='<text x="150" y="114" text-anchor="middle" font-size="8" letter-spacing="2" fill="#4a6380">GRI</text></svg>';
     H+=card('\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u0434\u043e\u043c\u0435\u043d\u043e\u0432', svg);
   })();
   var _AD=['climate','geopolitics','economy','technology','social'];
