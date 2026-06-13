@@ -3471,6 +3471,14 @@ async function _ccEstablishTier(){ if(!_clientToken) return; try{ var r=await fe
 try{ _ccEstablishTier(); }catch(e){}
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────
+var _COV_TOTALS=null;
+function _loadCoverageTotals(){
+  if(_COV_TOTALS) return;
+  var urls=['https://secrett-archive.com/docs/coverage_totals.json','docs/coverage_totals.json','/docs/coverage_totals.json'];
+  var i=0;(function go(){ if(i>=urls.length) return;
+    fetch(urls[i],{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject(0);})
+      .then(function(d){ if(d&&d.countries) _COV_TOTALS=d; }).catch(function(){ i++; go(); }); })();
+}
 async function fetchToday() {
   if (_todayData) return _todayData;
   try {
@@ -3479,6 +3487,7 @@ async function fetchToday() {
     const r = await fetch(API + '/api/snapshot/today', { headers });
     if (!r.ok) return null;
     _todayData = await r.json();
+    _loadCoverageTotals();
     if (_todayData && _todayData.tier) _applyTier(_todayData.tier);
     if (_todayData && _todayData.tier && _todayData.tier !== 'free') _grdfTier = 'SIGNAL_PRO';
     return _todayData;
@@ -8068,8 +8077,10 @@ function _grdfContextHtml(c){
   }).join('');
   H+=card('Что повлияло на риск', f2);
   var _ALLDOM=['climate','geopolitics','economy','technology','social'];
-  var f3=_ALLDOM.slice().sort(function(a,b){ return (dc[b]||0)-(dc[a]||0); }).map(function(d){
-    var _cn=dc[d]||0;
+  var _covC=(typeof _COV_TOTALS!=='undefined'&&_COV_TOTALS&&_COV_TOTALS.countries&&_COV_TOTALS.countries[c.country])?_COV_TOTALS.countries[c.country]:null;
+  var _covSrc=_covC||dc;
+  var f3=_ALLDOM.slice().sort(function(a,b){ return (_covSrc[b]||0)-(_covSrc[a]||0); }).map(function(d){
+    var _cn=_covSrc[d]||0;
     return '<div style="display:flex;justify-content:space-between;font-size:11px;color:'+(_cn?'#94a3b8':'#4a6380')+';padding:2px 0">'
       +'<span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(DOM_COLORS[d]||'#888')+';margin-right:6px;opacity:'+(_cn?'1':'.4')+'"></span>'+(DOM_LABELS[d]||d)+'</span>'
       +'<span style="color:'+(_cn?'#cbd5e1':'#4a6380')+';font-weight:600">'+_cn+'</span></div>';
