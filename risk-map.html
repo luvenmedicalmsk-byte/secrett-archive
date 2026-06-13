@@ -1215,6 +1215,21 @@ html,body{overscroll-behavior-y:contain}
 .grdf-radar-lg i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .grdf-radar-note{font-size:10px;line-height:1.55;color:rgba(168,160,144,.55);padding:2px 18px 22px;font-family:'Montserrat',sans-serif;text-align:center;max-width:540px;margin:0 auto}
 .grdf-radar-dot{transition:opacity .15s}.grdf-radar-dot:hover{fill-opacity:1!important}
+.grdf-radar-dot.sel{stroke:#fff;stroke-width:1.6}
+#grdf-radar-detail{display:none;max-width:520px;margin:0 auto 8px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:8px;position:relative;font-family:'Montserrat',sans-serif}
+#grdf-radar-detail.show{display:block}
+.grdf-rd-x{position:absolute;top:8px;right:8px;background:none;border:none;color:rgba(255,255,255,.35);font-size:13px;cursor:pointer;padding:4px;line-height:1}
+.grdf-rd-x:hover{color:#D4AF5A}
+.grdf-rd-tag{display:flex;align-items:center;gap:5px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+.grdf-rd-tag i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.grdf-rd-title{font-size:13px;color:#E8E0D0;line-height:1.35;font-weight:600;padding-right:18px}
+.grdf-rd-meta{font-size:9.5px;color:rgba(168,160,144,.7);margin-top:5px}
+.grdf-rd-bar{height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
+.grdf-rd-bar>div{height:100%}
+.grdf-rd-sev{font-size:9px;color:rgba(168,160,144,.6);margin-top:4px;letter-spacing:.05em}
+.grdf-rd-sum{font-size:11px;color:#A8A090;line-height:1.5;margin-top:8px}
+.grdf-rd-map{margin-top:10px;background:rgba(212,175,90,.10);border:1px solid rgba(212,175,90,.30);color:#D4AF5A;font-size:10px;letter-spacing:.05em;padding:6px 10px;border-radius:5px;cursor:pointer;font-family:'Montserrat',sans-serif}
+.grdf-rd-map:hover{background:rgba(212,175,90,.18)}
 .grdf-warn-row{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1)}
 .grdf-country-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}
 .grdf-country-avatar{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
@@ -7428,6 +7443,7 @@ function _evM(val, lbl, col) {
   <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
   <div class="grdf-screen-head"><div class="grdf-screen-title">Радар сигналов</div><span style="font-size:10px;color:rgba(168,160,144,0.5)" id="grdf-radar-count"></span></div>
   <div id="grdf-radar-canvas"></div>
+  <div id="grdf-radar-detail"></div>
   <div class="grdf-radar-legend" id="grdf-radar-legend"></div>
   <div class="grdf-radar-note">Кольца — сила сигнала: в центре острые, к краю слабые. Сектор — домен (STEEP). Радар показывает текущую картину сигналов, а не прогноз на годы.</div>
 </div>
@@ -8638,10 +8654,44 @@ window.grdfRenderRadar = function(){
 window._radarPick = function(id){
   var e = window._radarReg && window._radarReg[id];
   if(!e) return;
+  var box = document.getElementById('grdf-radar-detail');
+  if(!box) return;
+  try{ document.querySelectorAll('.grdf-radar-dot.sel').forEach(function(el){ el.classList.remove('sel'); });
+       var dot=document.querySelector('.grdf-radar-dot[data-rid="'+id+'"]'); if(dot) dot.classList.add('sel'); }catch(_){}
+  var DC2 = (typeof DC!=='undefined' && DC) ? DC : {climate:'#22c55e',geopolitics:'#ff7a00',economy:'#38bdf8',technology:'#a855f7',social:'#ef4444'};
+  var DL2 = (typeof DL!=='undefined' && DL) ? DL : {climate:'\u041a\u043b\u0438\u043c\u0430\u0442',geopolitics:'\u0413\u0435\u043e\u043f\u043e\u043b\u0438\u0442\u0438\u043a\u0430',economy:'\u042d\u043a\u043e\u043d\u043e\u043c\u0438\u043a\u0430',technology:'\u0422\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u0438',social:'\u0421\u043e\u0446\u0438\u0443\u043c'};
+  function esc2(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var col = DC2[e.domain] || '#B8973A';
+  var sev = (e._sev!=null) ? e._sev : e.severity;
+  var sum = String(e.summary||'').split('|||')[0].split('|')[0].trim(); if(sum.length>200) sum=sum.slice(0,200)+'\u2026';
+  var dd=''; try{ if(e.date && typeof fd==='function') dd=fd(e.date); }catch(_){}
+  var meta=[]; if(e.region) meta.push(esc2(e.region)); if(dd) meta.push(dd); if(e.source) meta.push(esc2(e.source));
+  var html = '<button class="grdf-rd-x" type="button">\u2715</button>'
+    + '<div class="grdf-rd-tag" style="color:'+col+'"><i style="background:'+col+'"></i>'+esc2(DL2[e.domain]||e.domain)+'</div>'
+    + '<div class="grdf-rd-title">'+esc2(e.title||'')+'</div>'
+    + (meta.length?'<div class="grdf-rd-meta">'+meta.join(' \u00b7 ')+'</div>':'')
+    + '<div class="grdf-rd-bar"><div style="width:'+Math.max(0,Math.min(100,sev))+'%;background:'+col+'"></div></div>'
+    + '<div class="grdf-rd-sev">\u0421\u0438\u043b\u0430 \u0441\u0438\u0433\u043d\u0430\u043b\u0430 \u00b7 '+sev+'/100</div>'
+    + (sum?'<div class="grdf-rd-sum">'+esc2(sum)+'</div>':'')
+    + ((e.lat!=null&&e.lng!=null)?'<button class="grdf-rd-map" type="button">\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u043d\u0430 \u043a\u0430\u0440\u0442\u0435 \u2192</button>':'');
+  box.innerHTML = html;
+  box.classList.add('show');
+  var bx=box.querySelector('.grdf-rd-x'); if(bx) bx.addEventListener('click', window._radarHideDetail);
+  var bm=box.querySelector('.grdf-rd-map'); if(bm) bm.addEventListener('click', function(){ window._radarToMap(id); });
+  try{ box.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(_){}
+};
+
+window._radarHideDetail = function(){
+  var b=document.getElementById('grdf-radar-detail'); if(b){ b.classList.remove('show'); b.innerHTML=''; }
+  try{ document.querySelectorAll('.grdf-radar-dot.sel').forEach(function(el){ el.classList.remove('sel'); }); }catch(_){}
+};
+
+window._radarToMap = function(id){
+  var e = window._radarReg && window._radarReg[id]; if(!e) return;
   if(e.lat!=null && e.lng!=null && typeof map!=='undefined' && map){
     window.grdfNavTo('map');
     try{ map.setView([e.lat,e.lng], Math.max((map.getZoom&&map.getZoom())||3,4)); if(typeof L!=='undefined' && typeof _evPopup==='function'){ L.popup({maxWidth:240}).setLatLng([e.lat,e.lng]).setContent(_evPopup(e)).openOn(map); } }catch(_){}
-  } else if(typeof showDetail==='function'){ try{ showDetail(e); }catch(_){} }
+  }
 };
 
 function grdfRenderSignals(dom){
