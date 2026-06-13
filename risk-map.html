@@ -8087,7 +8087,6 @@ function _grdfContextHtml(c){
     return '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">'
       + '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">'+label+'</div>'+inner+'</div>';
   }
-  function _carc(cx,cy,r,d0,d1){ var a0=d0*Math.PI/180,a1=d1*Math.PI/180; var x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1); var lg=d1-d0>180?1:0; return 'M'+x0+','+y0+' A'+r+','+r+',0,'+lg+',1,'+x1+','+y1; }
   var _AD=['climate','geopolitics','economy','technology','social'];
   var _ds=c.domain_scores||{};
   var _act=_AD.filter(function(d){return (_ds[d]||0)>=60;});
@@ -8097,7 +8096,7 @@ function _grdfContextHtml(c){
   var dc={}; evs.forEach(function(e){ var d=e.domain||'other'; dc[d]=(dc[d]||0)+1; });
   var H='';
 
-  // ── 1. Risk Momentum (скорость + дельты за 7д) ──
+  // ── 1. Risk Momentum ──
   (function(){
     var g=c.gri_delta_7d||0, ew=c.ews_delta_7d||0, cr=c.cri_delta_7d||0, sum=g+ew+cr, st,col;
     if(sum<=1){ st='Стабильно'; col='#10b981'; }
@@ -8114,7 +8113,24 @@ function _grdfContextHtml(c){
       +'<div style="font-size:10px;color:#4a6380;margin-top:4px">за 7 дней</div>');
   })();
 
-  // ── 2. Главные драйверы риска (домен → сигналы) ──
+  // ── 2. Динамика риска · график (history) ──
+  H+=card('Динамика риска · GRI/EWS/CRI', '<div id="grdf-hist" style="min-height:70px"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>');
+
+  // ── 3. Структура GRI · рейтинг доменов (полосы вместо радиала) ──
+  (function(){
+    function dlvl(v){ if(v>=75)return['критический','#ef4444']; if(v>=60)return['высокий','#f97316']; if(v>=40)return['повышенный','#eab308']; if(v>=20)return['низкий','#10b981']; return['минимальный','#4a6380']; }
+    var rows=_AD.map(function(d){ return {d:d,v:Math.round(_ds[d]||0)}; }).sort(function(a,b){return b.v-a.v;}).map(function(o){
+      var lv=dlvl(o.v), col=DOM_COLORS[o.d]||'#888';
+      return '<div style="display:flex;align-items:center;gap:8px;margin:6px 0">'
+        +'<span style="width:80px;font-size:11px;color:#cbd5e1;flex-shrink:0">'+(DOM_LABELS[o.d]||o.d)+'</span>'
+        +'<span style="flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:'+Math.max(2,o.v)+'%;background:'+col+'"></span></span>'
+        +'<span style="width:26px;text-align:right;font-size:12px;color:#cbd5e1">'+o.v+'</span>'
+        +'<span style="width:76px;text-align:right;font-size:10px;color:'+lv[1]+'">'+lv[0]+'</span></div>';
+    }).join('');
+    H+=card('Структура GRI · домены', rows);
+  })();
+
+  // ── 4. Главные драйверы риска ──
   var byDom={}; evs.forEach(function(e){ var dd=e.domain||'other'; (byDom[dd]=byDom[dd]||[]).push(e); });
   var ds0=c.domain_scores||{};
   var drv=Object.keys(byDom).sort(function(a,b){ return byDom[b].length-byDom[a].length; }).map(function(dd){
@@ -8129,27 +8145,27 @@ function _grdfContextHtml(c){
   }).join('');
   H+=card('Главные драйверы риска', drv);
 
-  // ── 3. Вероятные сценарии · 30 дней (history) ──
-  H+=card('Вероятные сценарии · 30 дней', '<div id="grdf-scen"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>');
-
-  // ── 4. Динамика риска · график (history) ──
-  H+=card('Динамика риска · GRI/EWS/CRI', '<div id="grdf-hist" style="min-height:70px"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>');
-
-  // ── 5. Каскадный риск (CRI): профиль доменов + индексы + что дальше ──
+  // ── 5. Прогноз риска (линейная проекция + сценарии модели) ──
   (function(){
-    var ORD=['climate','geopolitics','economy','technology','social'], ds=c.domain_scores||{}, gri=Math.round(parseFloat(c.risk_score)||0);
-    var gcol=gri>=75?'#B03A2E':gri>=60?'#C0622B':gri>=40?'#f59e0b':'#10b981', seg=72;
-    var svg='<svg viewBox="0 0 300 210" style="width:100%;max-width:300px;height:auto;display:block;margin:0 auto">';
-    ORD.forEach(function(d,i){ var v=Math.max(0,Math.min(100,ds[d]||0)), st=-90+i*seg, e=st+seg*v/100-3, col=(DOM_COLORS[d]||'#888');
-      svg+='<path d="'+_carc(150,100,64,st,st+seg-3)+'" fill="none" stroke="'+col+'" stroke-width="11" stroke-linecap="round" opacity="0.12"/>';
-      svg+='<path d="'+_carc(150,100,64,st,Math.max(st+0.1,e))+'" fill="none" stroke="'+col+'" stroke-width="11" stroke-linecap="round" opacity="0.92"/>';
-      var mid=(st+(st+seg-3))/2, a=mid*Math.PI/180, lx=150+84*Math.cos(a), ly=100+84*Math.sin(a), anc=Math.cos(a)>0.3?'start':(Math.cos(a)<-0.3?'end':'middle');
-      svg+='<text x="'+lx.toFixed(1)+'" y="'+(ly-2).toFixed(1)+'" text-anchor="'+anc+'" font-size="9" fill="'+col+'">'+(DOM_LABELS[d]||d)+'</text>';
-      svg+='<text x="'+lx.toFixed(1)+'" y="'+(ly+9).toFixed(1)+'" text-anchor="'+anc+'" font-size="11" fill="#cbd5e1">'+Math.round(v)+'</text>'; });
-    svg+='<text x="150" y="96" text-anchor="middle" font-size="40" fill="'+gcol+'">'+gri+'</text>';
-    svg+='<text x="150" y="114" text-anchor="middle" font-size="8" letter-spacing="2" fill="#4a6380">GRI</text></svg>';
-    H+=card('Профиль доменов', svg);
+    var gri=Math.round(parseFloat(c.risk_score)||0), m=c.gri_delta_7d, ds=c.domain_scores||{}, nt=null, ts=[40,60,75];
+    for(var k=0;k<ts.length;k++){ if(gri<ts[k]){nt=ts[k];break;} }
+    var rows=[];
+    if(m!=null&&m>0&&nt!=null){ var wk=Math.max(0.5,Math.round((nt-gri)/m*10)/10), lt=nt>=75?'критический':nt>=60?'высокий':'повышенный'; rows.push('Если рост продолжится темпом <b style="color:#f97316">+'+m+'/нед</b>, уровень «'+lt+'» (порог '+nt+') — ориентировочно через <b style="color:#cbd5e1">~'+wk+' нед</b>.'); }
+    else if(m!=null&&m<=0){ rows.push('Риск <b style="color:#10b981">не растёт</b> ('+(m>0?'+':'')+m+'/нед) — порог не приближается.'); }
+    var ina=_AD.filter(function(d){return (ds[d]||0)<60;}).sort(function(a,b){return (ds[b]||0)-(ds[a]||0);});
+    if(ina.length && (ds[ina[0]]||0)>=35){ var nd=ina[0], scn=Math.round(ds[nd]||0); rows.push('Ближе всего к зоне риска: <b style="color:'+(DOM_COLORS[nd]||'#888')+'">'+(DOM_LABELS[nd]||nd)+'</b> — '+scn+'/100, до порога 60 осталось <b style="color:#cbd5e1">'+(60-scn)+'</b> п.'); }
+    var f7=c.forecast_7d, f30=c.forecast_30d, fs='';
+    if(f7&&f7.score_min!=null) fs+='7д '+Math.round(f7.score_min)+'–'+Math.round(f7.score_max);
+    if(f30&&f30.base_case!=null){ fs+=(fs?' · ':'')+'30д '+Math.round(f30.base_case)+(f30.best_case!=null?' ('+Math.round(f30.best_case)+'–'+Math.round(f30.worst_case)+')':''); }
+    if(fs) rows.push('Прогноз модели: '+fs+'.');
+    var proj = rows.length ? '<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:#94a3b8;line-height:1.5">'+rows.map(function(x){return '<div>'+x+'</div>';}).join('')+'<div style="font-size:10px;color:#4a6380;margin-top:3px">Линейная проекция по текущему темпу — не прогноз вероятности.</div></div>' : '';
+    var inner = proj
+      + '<div style="font-size:10px;color:#4a6380;letter-spacing:.06em;text-transform:uppercase;margin:13px 0 6px">Сценарии модели · 30 дней</div>'
+      + '<div id="grdf-scen"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>';
+    H+=card('Прогноз риска', inner);
   })();
+
+  // ── 6. Каскадный риск (CRI) ──
   var _g=parseFloat(c.risk_score)||0, _t=_next(_g), _m=c.gri_delta_7d;
   var _traj=(_t==null)?'<span style="color:#4a6380">верхний уровень</span>'
     :'до порога '+_t+' · '+(_t-_g)+' п.'+(_m!=null&&_m>0?' <span style="color:#f97316">(+'+_m+'/нед)</span>':(_m!=null&&_m<0?' <span style="color:#10b981">('+_m+'/нед)</span>':''));
@@ -8160,22 +8176,8 @@ function _grdfContextHtml(c){
     +(_cri!=null?'<div>Каскадный риск (CRI): <b style="color:#cbd5e1">'+_cri+'</b> <span style="color:#4a6380">'+_cband(_cri)+'</span></div>':'')
     +'<div>Активны домены: '+_dots+' <span style="color:#cbd5e1">'+_act.length+'/5</span> <span style="color:#4a6380">· '+_casc+'</span></div>'
     +'<div>Траектория: '+_traj+'</div></div>');
-  (function(){
-    var gri=Math.round(parseFloat(c.risk_score)||0), m=c.gri_delta_7d, ds=c.domain_scores||{}, nt=null, ts=[40,60,75];
-    for(var k=0;k<ts.length;k++){ if(gri<ts[k]){nt=ts[k];break;} }
-    var rows=[];
-    if(m!=null&&m>0&&nt!=null){ var wk=Math.max(0.5,Math.round((nt-gri)/m*10)/10), lt=nt>=75?'критический':nt>=60?'высокий':'повышенный'; rows.push('Если рост продолжится темпом <b style="color:#f97316">+'+m+'/нед</b>, уровень «'+lt+'» (порог '+nt+') — ориентировочно через <b style="color:#cbd5e1">~'+wk+' нед</b>.'); }
-    else if(m!=null&&m<=0){ rows.push('Риск <b style="color:#10b981">не растёт</b> ('+(m>0?'+':'')+m+'/нед) — порог не приближается.'); }
-    var ina=['climate','geopolitics','economy','technology','social'].filter(function(d){return (ds[d]||0)<60;}).sort(function(a,b){return (ds[b]||0)-(ds[a]||0);});
-    if(ina.length && (ds[ina[0]]||0)>=35){ var nd=ina[0], scn=Math.round(ds[nd]||0); rows.push('Ближе всего к зоне риска: <b style="color:'+(DOM_COLORS[nd]||'#888')+'">'+(DOM_LABELS[nd]||nd)+'</b> — '+scn+'/100, до порога 60 осталось <b style="color:#cbd5e1">'+(60-scn)+'</b> п.'); }
-    var f7=c.forecast_7d, f30=c.forecast_30d, fs='';
-    if(f7&&f7.score_min!=null) fs+='7д '+Math.round(f7.score_min)+'–'+Math.round(f7.score_max);
-    if(f30&&f30.base_case!=null){ fs+=(fs?' · ':'')+'30д '+Math.round(f30.base_case)+(f30.best_case!=null?' ('+Math.round(f30.best_case)+'–'+Math.round(f30.worst_case)+')':''); }
-    if(fs) rows.push('Прогноз модели: '+fs+'.');
-    if(rows.length){ H+=card('Что дальше, если усилится','<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:#94a3b8;line-height:1.5">'+rows.map(function(x){return '<div>'+x+'</div>';}).join('')+'<div style="font-size:10px;color:#4a6380;margin-top:3px">Линейная проекция по текущему темпу — не прогноз вероятности.</div></div>'); }
-  })();
 
-  // ── 6. Горячие регионы ──
+  // ── 7. Горячие регионы ──
   var rc={};
   evs.forEach(function(e){ var r=String(e.region||'').replace(/,?\s*(Россия|Russia|Турция|Turkey)\s*$/i,'').trim(); if(r && r.toLowerCase()!==cnLc) rc[r]=(rc[r]||0)+1; });
   var regs=Object.keys(rc).sort(function(a,b){ return rc[b]-rc[a]; }).slice(0,8);
@@ -8186,7 +8188,7 @@ function _grdfContextHtml(c){
     H+=card('Горячие регионы', f4);
   }
 
-  // ── 7. Статистика обработки сигналов (всего + покрытие) ──
+  // ── 8. Статистика обработки сигналов ──
   var _covC=(window._COV_TOTALS&&window._COV_TOTALS.countries&&window._COV_TOTALS.countries[c.country])?window._COV_TOTALS.countries[c.country]:null;
   var _covSrc=_covC||dc;
   var _statInner='';
@@ -8202,7 +8204,7 @@ function _grdfContextHtml(c){
   _statInner+='<div style="font-size:10px;color:#4a6380;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Покрытие · '+esc(c.country_name||c.country)+'</div>'+_covLine;
   H+=card('Статистика обработки сигналов', _statInner);
 
-  // ── 8. Уверенность оценки (+ активные домены) ──
+  // ── 9. Уверенность оценки ──
   var sc={}; evs.forEach(function(e){ var ss=String(e.source||'').trim(); if(ss) sc[ss]=(sc[ss]||0)+1; });
   var nsrc=Object.keys(sc).length, n=evs.length;
   var gen=(typeof _todayData!=='undefined'&&_todayData&&_todayData.generated_at)?Date.parse(_todayData.generated_at):NaN;
@@ -8215,7 +8217,7 @@ function _grdfContextHtml(c){
   var dt2=(typeof _todayData!=='undefined'&&_todayData&&_todayData.date)?_todayData.date:'';
   if(dt2) H+=card('Обновлено', '<div style="font-size:11px;color:#cbd5e1">'+esc(dt2)+(hrs!=null?' · '+hrs+' ч назад':'')+'</div>');
 
-  // ── 9. Методология оценки (компактная панель) ──
+  // ── 10. Методология оценки ──
   function _mc(col,lab,txt,src){ return '<div><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+col+';margin-right:7px;vertical-align:middle"></span><b style="color:#cbd5e1">'+lab+'</b> — '+txt+(src?'<div style="color:#4a6380;font-size:11px;margin-top:3px;margin-left:14px">Источники: '+src+'</div>':'')+'</div>'; }
   H+=card('Методология оценки',
     '<details style="font-size:12px;color:#94a3b8">'
