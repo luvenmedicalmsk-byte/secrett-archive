@@ -180,6 +180,7 @@ export default {
       if (path === '/api/proxy/disaster-news') return handleProxyDisasterNews(env);
       if (path === '/api/proxy/img') return handleProxyImg(url, request);
       if (path === '/api/proxy/news-feed') return handleProxyNewsFeed(env);
+      if (path === '/api/gate-discarded') return handleGateDiscarded(env);
 
   // ── SNAPSHOT API ──────────────────────────────────────────────────────────
   // /api/snapshot/today        → all 25 countries, current scores (FREE: no summary)
@@ -2076,16 +2077,39 @@ async function _classifyNewsItems(items, env){
   }
   // применяем: шум -> выброс; риск -> домен/индекс от модели; без вердикта -> keyword
   const out = [];
+  const _discarded = [];
   for (const it of items){
     const v = it._llm;
     if (v){
-      if (!v.risk) continue;
+      if (!v.risk){
+        _discarded.push({ t: (it.text||'').slice(0,160), src: it.source||it.channel||'', dom: v.domain||null, sev: (v.severity!=null?v.severity:null), ts: it.time||null });
+        continue;
+      }
       if (v.domain) it.domain = v.domain;
       if (typeof v.severity === 'number' && v.severity > 0) it.severity = Math.max(1, Math.min(100, Math.round(v.severity)));
     }
     out.push(it);
   }
+  // Корзина выброшенного: лёгкий лог решений гейта «шум» для еженедельной ревизии (последние 200, TTL 30 дней)
+  if (_discarded.length && env.EVENTS_KV){
+    try {
+      const prev = (await env.EVENTS_KV.get('gate:discarded:log', { type:'json' })) || [];
+      const merged = _discarded.concat(Array.isArray(prev) ? prev : []).slice(0, 200);
+      await env.EVENTS_KV.put('gate:discarded:log', JSON.stringify(merged), { expirationTtl: 2592000 });
+    } catch(_){}
+  }
   return out;
+}
+
+async function handleGateDiscarded(env){
+  let log = [];
+  try { log = (await env.EVENTS_KV.get('gate:discarded:log', { type:'json' })) || []; } catch(_){}
+  if (!Array.isArray(log)) log = [];
+  const byDom = {};
+  log.forEach(r => { const d = (r && r.dom) ? r.dom : 'не определён'; byDom[d] = (byDom[d]||0)+1; });
+  return new Response(JSON.stringify({ count: log.length, by_domain: byDom, items: log }, null, 2), {
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' }
+  });
 }
 
 async function handleProxyNewsFeed(env) {
