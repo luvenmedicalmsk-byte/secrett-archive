@@ -967,6 +967,8 @@ def update_history(snap: dict) -> None:
         "delta":              snap["delta"],
         "ews_score":          snap.get("ews_score"),
         "cri_score":          snap.get("cri_score"),
+        "domain_scores":      snap.get("domain_scores"),
+        "event_count":        snap.get("event_count"),
         "drivers":            [{"name": d["name"], "severity": d["severity"]}
                                 for d in snap.get("drivers", [])],
         "forecast_direction": _f7.get("direction"),
