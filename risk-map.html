@@ -8079,6 +8079,11 @@ function _grdfContextHtml(c){
   var _ALLDOM=['climate','geopolitics','economy','technology','social'];
   var _covC=(typeof _COV_TOTALS!=='undefined'&&_COV_TOTALS&&_COV_TOTALS.countries&&_COV_TOTALS.countries[c.country])?_COV_TOTALS.countries[c.country]:null;
   var _covSrc=_covC||dc;
+  if(typeof _COV_TOTALS!=='undefined'&&_COV_TOTALS&&_COV_TOTALS.global){
+    var _gtot=_COV_TOTALS.total||0, _since=_COV_TOTALS.since||'';
+    var _gline=_ALLDOM.map(function(d){return (DOM_LABELS[d]||d)+' '+(_COV_TOTALS.global[d]||0);}).join(' \u00b7 ');
+    H+=card('ВСЕГО ОБРАБОТАНО', '<div style="font-size:15px;color:#e8eef5;font-weight:700;margin-bottom:3px">'+_gtot.toLocaleString('ru-RU')+' сигналов <span style="color:#4a6380;font-size:11px;font-weight:400">'+(_since?'с '+_since:'')+'</span></div><div style="font-size:11px;color:#94a3b8;line-height:1.6">'+_gline+'</div>');
+  }
   var f3=_ALLDOM.slice().sort(function(a,b){ return (_covSrc[b]||0)-(_covSrc[a]||0); }).map(function(d){
     var _cn=_covSrc[d]||0;
     return '<div style="display:flex;justify-content:space-between;font-size:11px;color:'+(_cn?'#94a3b8':'#4a6380')+';padding:2px 0">'
