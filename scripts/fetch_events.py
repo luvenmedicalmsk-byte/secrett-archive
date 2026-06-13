@@ -5873,6 +5873,25 @@ if __name__ == '__main__':
         structural = [r for r in raw if r.get('source') == 'Архив · Структурные риски']
         news_raw   = [r for r in raw if r.get('source') != 'Архив · Структурные риски']
 
+        # Source liveness (честный coverage-сигнал): сколько событий дал каждый источник в этом прогоне.
+        # Только накопление/видимость — в GRI не вмешивается. Помогает видеть vantage-dependent просадки.
+        try:
+            import datetime as _dt
+            from collections import Counter as _SC
+            _src_counts = dict(_SC((r.get("source") or "?") for r in raw))
+            _health = {
+                "date": _dt.date.today().isoformat(),
+                "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+                "total": len(raw),
+                "sources": _src_counts,
+            }
+            _hp = OUTPUT_PATH.parent / "sources_health.json"
+            with open(_hp, "w", encoding="utf-8") as _hf:
+                json.dump(_health, _hf, ensure_ascii=False, indent=2)
+            print(f"  [HEALTH] sources_health.json: {len(_src_counts)} sources, total={len(raw)}", file=sys.stderr)
+        except Exception as _he:
+            print(f"  [HEALTH] skip: {_he}", file=sys.stderr)
+
         news_events = process_events(news_raw)
 
         if not news_events and not structural:
