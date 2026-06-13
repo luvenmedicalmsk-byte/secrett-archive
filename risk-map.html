@@ -8127,7 +8127,7 @@ function _grdfContextHtml(c){
         +'<span style="width:26px;text-align:right;font-size:12px;color:#cbd5e1">'+o.v+'</span>'
         +'<span style="width:76px;text-align:right;font-size:10px;color:'+lv[1]+'">'+lv[0]+'</span></div>';
     }).join('');
-    H+=card('Структура GRI · домены', rows);
+    H+=card('Структура GRI', rows);
   })();
 
   // ── 4. Главные драйверы риска ──
@@ -8291,27 +8291,20 @@ function grdfRenderCountryPanel(cc) {
   html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'CRI\')"><div class="grdf-metric-val" style="color:#f59e0b">'+cri+'</div><div class="grdf-metric-lbl">CRI <span class="grdf-idx-i">i</span></div></div>';
   html += '</div>';
   html += '<div id="grdf-idx-info" class="grdf-idx-info"></div>';
+  // Микро-индикаторы под индексами (реальные значения)
+  (function(){
+    var dsx=c.domain_scores||{}, ad=['climate','geopolitics','economy','technology','social'].filter(function(d){return (dsx[d]||0)>=60;}).length;
+    var warn=(typeof ALL_EVENTS!=='undefined'&&ALL_EVENTS?ALL_EVENTS:[]).filter(function(e){ var inC=(e.country_codes&&e.country_codes.indexOf(c.country)>=0)||e.country_code===c.country; return inC && (e.severity||0)>=70; }).length;
+    var dl=(delta==null)?null:Math.round(delta*10)/10, dcol=(dl>0)?'#f97316':(dl<0)?'#10b981':'#4a6380', darr=(dl>0)?'▲':(dl<0)?'▼':'→';
+    function chip(val,lab){ return '<div style="flex:1;text-align:center"><div style="font-size:13px;color:#e8eef5;font-weight:600">'+val+'</div><div style="font-size:8px;color:#4a6380;letter-spacing:.05em;text-transform:uppercase;margin-top:2px">'+lab+'</div></div>'; }
+    html += '<div style="display:flex;gap:6px;margin:0 14px 10px;padding:8px 4px;background:rgba(255,255,255,.02);border:0.5px solid rgba(255,255,255,.06);border-radius:7px">'
+      + chip(dl==null?'—':'<span style="color:'+dcol+'">'+darr+' '+(dl>0?'+':'')+dl+'</span>','GRI за 7д')
+      + chip(ad+'/5','Активных доменов')
+      + chip(warn,'Предупреждений')
+      + '</div>';
+  })();
 
   // GRI formation — index is assembled from 5 domain models (V1–V34)
-  html += '<div class="grdf-section-head">Структура GRI</div>';
-  var GRI_DOMAINS = ['geopolitics','economy','climate','technology','social'];
-  var dsTotal = GRI_DOMAINS.reduce(function(a,d){ return a+parseFloat(drivers[d]||0); },0);
-  if(dsTotal>0){
-    html += '<div class="grdf-gri-struct">';
-    GRI_DOMAINS.forEach(function(d){
-      var v=parseFloat(drivers[d]||0), pct=fr(v/dsTotal*100), dc=DOM_COLORS[d]||'#888';
-      html += '<div class="grdf-gri-row">'
-            + '<span class="grdf-gri-lbl"><span class="grdf-gri-dot" style="background:'+dc+'"></span>'+(DOM_LABELS[d]||d)+'</span>'
-            + '<span class="grdf-gri-bar"><span style="width:'+Math.min(pct,100)+'%;background:'+dc+'"></span></span>'
-            + '<span class="grdf-gri-pct" style="color:'+(pct>0?dc:'#3d5068')+'">'+pct+'%</span>'
-            + '</div>';
-    });
-    html += '<div class="grdf-gri-sum">→ Итоговый GRI <b style="color:'+statusCol+'">'+gri+'</b></div>';
-    html += '</div>';
-  } else {
-    html += '<div class="grdf-gri-empty">Разбивка по доменам появится по мере накопления сигналов по стране. Сейчас система отслеживает базовый профиль риска.</div>';
-  }
-
   // Key conclusion + reasoning raised above the forecast (Variant B order)
   html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, 'top');
 
