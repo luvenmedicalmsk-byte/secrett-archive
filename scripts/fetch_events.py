@@ -1314,6 +1314,32 @@ def _reclass_domain(title, summary, current):
         return best
     return None
 
+
+# S45: severity = масштаб риска, а не громкость события. Пересчёт до сортировки/квот.
+def _recompute_severity(ev):
+    b = ((ev.get('title') or '') + ' ' + (ev.get('summary') or '')).lower()
+    dom = ev.get('domain') or ''
+    sev = ev.get('severity', 45) or 45
+    _ROUTINE_WX = ('гроза','дожд','ливень','ветер','шквал','туман','гололёд','гололед','снегопад','метел','жара','высокая температура','пожарная опасность','прочие опасности','заморозк','сильный снег','осадк')
+    _MAJOR_WX = ('наводнен','паводок','шторм','ураган','тайфун','циклон','цунами','землетряс','оползен','прорыв','эвакуир','погиб','жертв','разрушен','катастроф')
+    # ПОНИЖЕНИЕ 1: рутинные погодные алерты -- локальные, не системные
+    if dom == 'climate' and any(w in b for w in _ROUTINE_WX) and not any(w in b for w in _MAJOR_WX):
+        sev = min(sev, 38)
+    # ПОНИЖЕНИЕ 2: одиночная уязвимость/CVE -- объектный масштаб (если нет массовой/инфраструктурной эксплуатации)
+    if any(w in b for w in ('cve','cisa','уязвим','vulnerab',' kev')):
+        if not any(w in b for w in ('critical infrastructure','критическ инфра','массов','wormable','energy grid','энергосет','банковск','national','общенацио')):
+            sev = min(sev, 52)
+    # ПОНИЖЕНИЕ 3: остаточные локальные ЧП -- даже при жертвах
+    if any(w in b for w in ('бытов','единичн','локальн пожар','местн житель')):
+        sev = min(sev, 42)
+    # ПОВЫШЕНИЕ: глобальный / многострановой охват
+    if any(w in b for w in ('глобальн','по всему миру','worldwide','global','international','несколько стран','страны ес','мировой рынок','пандеми','pandemic')):
+        sev = max(sev, 76)
+    # ПОВЫШЕНИЕ: стратегические ресурсы / критич. инфраструктура / каскад
+    if any(w in b for w in ('газопровод','нефтепровод','санкц','sanction','ядерн','nuclear','аэс','пролив','strait','коридор','энергосист','power grid','блэкаут','blackout','цепочк поставок','supply chain','swift','дефолт','default')):
+        sev = max(sev, 62)
+    return max(12, min(100, int(round(sev))))
+
 def _is_broken_fragment(title, summary):
     """#4: обрывки TG -- заголовок с '#', слишком короткий, почти без букв, хвосты статистики."""
     t = (title or '').strip()
@@ -1545,6 +1571,9 @@ def process_events(raw_items):
         if item.get('_meta'): _ev["meta"] = item['_meta']
         events.append(_ev)
 
+    # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
+    for _ev in events:
+        _ev['severity'] = _recompute_severity(_ev)
     events.sort(key=lambda e: e['severity'], reverse=True)
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
