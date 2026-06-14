@@ -139,6 +139,18 @@ async function handleAuthMe(request, env){
 // ===== /Авторизация =====
 
 export default {
+  // Фоновая разметка ленты «События»: крон классифицирует и переводит посты заранее
+  // и кладёт вердикты/переводы в KV (TTL 7д). Live-эндпоинт затем только читает готовый кэш,
+  // без лимита времени запроса -> llm_classified ≈ count.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      try {
+        const items = await _fetchNewsItems(env);
+        await _classifyNewsItems(items, env);
+        try { await _translateNewsItems(items, env); } catch(_){}
+      } catch(_){}
+    })());
+  },
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS });
@@ -2161,7 +2173,7 @@ async function handleGateDiscarded(env){
   });
 }
 
-async function handleProxyNewsFeed(env) {
+async function _fetchNewsItems(env) {
   const BREAKING = 'bbbreaking';
   const brkMeta = NEWS_TG_CHANNELS.find(c => c.handle === BREAKING);
   const others = NEWS_TG_CHANNELS.filter(c => c.handle !== BREAKING);
@@ -2179,7 +2191,12 @@ async function handleProxyNewsFeed(env) {
   items.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
   items = items.map(({ _ts, ...rest }) => rest);
   items = items.slice(0, 40);  // лимит ленты ~ лимиту классификатора, чтобы LLM покрывал почти всё
-  // LLM-гейт риск/шум (с кэшем, фолбэк на keyword); шум отсеивается до перевода
+  return items;
+}
+
+async function handleProxyNewsFeed(env) {
+  let items = await _fetchNewsItems(env);
+  // LLM-гейт риск/шум (с кэшем от крона, фолбэк на keyword); шум отсеивается до перевода
   try { items = await _classifyNewsItems(items, env); } catch(_){}
   const _llmCount = items.filter(it => it._llm).length;
   try { await _translateNewsItems(items, env); } catch(_){}
