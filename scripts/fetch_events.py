@@ -1268,6 +1268,35 @@ _SIG_RE = re.compile(
     re.IGNORECASE)
 
 
+def _is_news_not_signal(title, summary, domain):
+    """S43: «сигнал или шум» на финальном (русском) тексте. True = новость, не сигнал.
+    Дубль логики S41/S42, но на переведённом тексте -- ловит мусор из англоязычных
+    источников, который прошёл цикл на английском (перевод делается после отбора)."""
+    b = ((title or '') + ' ' + (summary or '')).lower()
+    _combat = any(w in b for w in ('сбит','сбил','зенит','ракет','обстрел','атаков','удар по','уничтож','боеприпас','диверс','теракт','снаряд','дрон','бпла','всу','пво'))
+    _fluff = any(w in b for w in (
+        'нба','nba','нхл','нфл','ufc','плей-офф','лига чемпионов','чемпионат мира','олимпийск иг','кубок гагарина','knicks',
+        'mrbeast','млн подписчиков','подписчиков на youtube','ютубер','тиктокер','инфлюенсер',
+        'подарки на день','подарки ко дню','ко дню отца','ко дню матери','что подарить','в стиле роскоши','гид по подаркам','распродаж','чёрная пятниц','черная пятниц',
+        'отвечает на ваши вопросы','размышления о','колонка:','мнение:',' эссе','почему я ',' weekend','уикенд'))
+    _local = (
+        ('акул' in b and any(w in b for w in ('атак','укус','напал','пострадал','погиб'))
+            and not any(w in b for w in ('подлод','субмарин','лодк','флот','учени','тихоокеан')))
+        or 'в колодец' in b
+        or 'провалился под лёд' in b or 'провалилась под лёд' in b
+        or 'поскользнул' in b
+        or any(w in b for w in ('изнасилов','педофил','маньяк'))
+    )
+    _accident = (any(w in b for w in ('крушени','авиакатастроф','разбил'))
+                 and any(w in b for w in ('самолет','самолёт','вертолет','вертолёт','параплан','парашютн','дельтаплан','легкомоторн')))
+    _gas = ('взрыв' in b and any(w in b for w in ('газа','бытов','в жилом','в квартир','в доме','котельн','газовый баллон','газового баллон')))
+    if _fluff or _local or ((_accident or _gas) and not _combat):
+        return True
+    if domain in ('geopolitics','economy','social','technology') and not _SIG_RE.search(b):
+        return True
+    return False
+
+
 # S41: нативная реклама/промо/самопиар канала -- не сигнал риска.
 _AD_MARKERS = ['*реклама', 'на правах рекламы', 'рекламодател', 'промокод',
                'реклама. ооо', 'реклама, ооо', 'на сайте девелопера', 'partner content',
@@ -1567,10 +1596,9 @@ def process_events(raw_items):
         else:
             overflow.append(ev)
     
-    # Добираем до MAX_EVENTS из overflow если не хватает
-    remaining = MAX_EVENTS - len(balanced)
-    if remaining > 0:
-        balanced.extend(overflow[:remaining])
+    # MAX_EVENTS -- это КАП, не цель: overflow до 200 НЕ добираем, иначе освободившиеся
+    # слоты заливаются высоко-severity климатом, а число пиннится на 200.
+    # Пусть итог отражает реальную наполняемость доменов (цель brief'а: «меньше событий»).
     
     top_events = balanced[:MAX_EVENTS]
     
@@ -1597,6 +1625,13 @@ def process_events(raw_items):
     for i, ev in enumerate(top_events):
         if ev.get('summary'):
             ev['summary'] = translated_summaries[i]
+
+    # S43: финальный гейт «сигнал или шум» на ПЕРЕВЕДЁННОМ тексте (англоисточники проходили
+    # цикл на английском -- русские ключи их не видели). Число при этом падает -- это и есть цель.
+    _before_s43 = len(top_events)
+    top_events = [e for e in top_events
+                  if not _is_news_not_signal(e.get('title',''), e.get('summary',''), e.get('domain',''))]
+    print(f"  [S43] финальный гейт сигнал/шум: {_before_s43} -> {len(top_events)}", file=sys.stderr)
 
     for _e in top_events:
         try:
