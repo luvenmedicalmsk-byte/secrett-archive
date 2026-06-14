@@ -2605,7 +2605,7 @@ function qkImpact(q){
 }
 function qkRadius(m){ return Math.max(6,(m-3)*4); }
 function qkEsc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function _qkFmt(t,off,wd){var d=new Date(t+off*60000),h=('0'+d.getUTCHours()).slice(-2),m=('0'+d.getUTCMinutes()).slice(-2);if(!wd)return h+':'+m;var M=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][d.getUTCMonth()];return d.getUTCDate()+' '+M+', '+h+':'+m;}function _qkLocOff(lng){return Math.round((lng||0)/15)*60;}function qkTimeMeta(t,lng){return _qkFmt(t,180,false)+' МСК · '+_qkFmt(t,_qkLocOff(lng),false)+' мест.';}function qkTimeFull(t,lng){return _qkFmt(t,180,true)+' · МСК<br>'+_qkFmt(t,_qkLocOff(lng),true)+' · ≈ местное';}
+function _qkFmt(t,off,wd){var d=new Date(t+off*60000),h=('0'+d.getUTCHours()).slice(-2),m=('0'+d.getUTCMinutes()).slice(-2);if(!wd)return h+':'+m;var M=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][d.getUTCMonth()];return d.getUTCDate()+' '+M+', '+h+':'+m;}function _qkLocOff(lng){return Math.round((lng||0)/15)*60;}function _qkDate(t,off){var d=new Date(t+off*60000),M=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'][d.getUTCMonth()];return d.getUTCDate()+' '+M;}function qkTimeMeta(t,lng){return _qkDate(t,180)+' · '+_qkFmt(t,180,false)+' МСК · '+_qkFmt(t,_qkLocOff(lng),false)+' мест.';}function qkTimeFull(t,lng){return _qkFmt(t,180,true)+' · МСК<br>'+_qkFmt(t,_qkLocOff(lng),true)+' · ≈ местное';}
 function qkInBand(m){ return m>=quakeMinMag; }
 
 function renderQuakeMarkers(){
