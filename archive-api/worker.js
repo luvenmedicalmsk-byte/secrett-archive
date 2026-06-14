@@ -148,6 +148,7 @@ export default {
         const items = await _fetchNewsItems(env);
         await _classifyNewsItems(items, env);
         try { await _translateNewsItems(items, env); } catch(_){}
+        if (env.EVENTS_KV){ try { await env.EVENTS_KV.put('cron:newsfeed:last', JSON.stringify({ t: Date.now(), classified: items.filter(it => it._llm).length, total: items.length })); } catch(_){} }
       } catch(_){}
     })());
   },
@@ -2199,6 +2200,7 @@ async function handleProxyNewsFeed(env) {
   // LLM-гейт риск/шум (с кэшем от крона, фолбэк на keyword); шум отсеивается до перевода
   try { items = await _classifyNewsItems(items, env); } catch(_){}
   const _llmCount = items.filter(it => it._llm).length;
+  let _cronLast = null; if (env.EVENTS_KV){ try { _cronLast = await env.EVENTS_KV.get('cron:newsfeed:last', { type: 'json' }); } catch(_){} }
   try { await _translateNewsItems(items, env); } catch(_){}
   items = items.map(({ _trkey, _done, _rkey, _llm, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); rest._sig = (_llm && _llm.k) ? _llm.k : ''; return rest; });
   // дроп мусорных одно-словных/слишком коротких постов (напр. «Иран» после очистки эмодзи)
@@ -2223,7 +2225,7 @@ async function handleProxyNewsFeed(env) {
     items=coll.sort(function(a,b){ return ((b.time?Date.parse(b.time):0)-(a.time?Date.parse(a.time):0))||(b.id-a.id); });
   })();
   items = items.map(function(it){ delete it._sig; return it; });
-  return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), llm_active: !!env.OPENAI_API_KEY, kv: !!env.EVENTS_KV, llm_classified: _llmCount, count: items.length, items }), {
+  return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), llm_active: !!env.OPENAI_API_KEY, kv: !!env.EVENTS_KV, cron_last: _cronLast, llm_classified: _llmCount, count: items.length, items }), {
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
   });
 }
