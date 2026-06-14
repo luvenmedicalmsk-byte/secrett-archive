@@ -2,67 +2,67 @@
   "country": "UA",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T20:13:05.004161+00:00",
+  "generated_at": "2026-06-14T20:36:47.978043+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 49,
+      "score": 56,
       "props": {
-        "risk_score": 49
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 19,
-      "trend": "down"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 18,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 10,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-UA-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-Їхав_на_мо",
+      "type": "Signal",
+      "label": "Їхав на мопеді: у Ворожбянській громаді ",
+      "severity": 78,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-Над_14_рег",
       "type": "Signal",
       "label": "Над 14 регионами России сбили почти 250 ",
       "severity": 67,
-      "domain": "climate"
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-UA-Зеленский_",
+      "id": "SIGNAL-UA-\"Дуже_серй",
       "type": "Signal",
-      "label": "Зеленский подтвердил украинские удары по",
-      "severity": 55,
+      "label": "\"Дуже серйозні пошкодження\" — архітектор",
+      "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-Зеленый_ур",
-      "type": "Signal",
-      "label": "Зеленый уровень угрозы наводнения в Укра",
-      "severity": 50,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-UA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-UA-Їхав_на_мо",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.78
+    },
+    {
       "from": "SIGNAL-UA-Над_14_рег",
-      "to": "DOMAIN-UA-climate",
+      "to": "DOMAIN-UA-economic",
       "type": "AMPLIFIES",
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-UA-Зеленский_",
+      "from": "SIGNAL-UA-\"Дуже_серй",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-UA-Зеленый_ур",
-      "to": "DOMAIN-UA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.62
     }
   ]
 }
