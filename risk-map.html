@@ -2710,10 +2710,15 @@ function _loadCities(container){
 
 window.grdfRenderRiskPulse = function(){
   var el=document.getElementById('grdf-risk-pulse'); if(!el) return;
+  var now=Date.now(), DAY=86400000;
+  var nat=[];
+  var _src=(typeof ALL_EVENTS!=='undefined' && ALL_EVENTS) ? ALL_EVENTS : [];
+  _src.forEach(function(e){ if(e && e.domain==='climate'){ var t=Date.parse(e.date); if(!isNaN(t)) nat.push(t); } });
   var qc=(typeof quakeCache!=='undefined' && quakeCache) ? quakeCache : [];
-  var total=qc.length;
-  var now=Date.now(), DAY=86400000, days=[];
-  for(var d=6; d>=0; d--){ var lo=now-(d+1)*DAY, hi=now-d*DAY; days.push(qc.filter(function(q){ return q.time>=lo && q.time<hi; }).length); }
+  qc.forEach(function(q){ if(q && q.time) nat.push(q.time); });
+  var win=nat.filter(function(t){ return t>=now-7*DAY; });
+  var total=win.length, days=[];
+  for(var d=6; d>=0; d--){ var lo=now-(d+1)*DAY, hi=now-d*DAY; days.push(win.filter(function(t){ return t>=lo && t<hi; }).length); }
   var maxd=Math.max(1, Math.max.apply(null,days));
   var recent=(days[4]+days[5]+days[6])/3, earlier=(days[0]+days[1]+days[2]+days[3])/4;
   var dir = recent>earlier*1.15 ? 'up' : (recent<earlier*0.85 ? 'down' : 'flat');
@@ -2723,7 +2728,7 @@ window.grdfRenderRiskPulse = function(){
   var bars='';
   days.forEach(function(c){ var bh=Math.max(2,(c/maxd)*26); bars+='<i style="width:10px;height:'+bh.toFixed(0)+'px;background:'+dirCol+';opacity:'+(0.35+0.65*(c/maxd)).toFixed(2)+'"></i>'; });
   el.innerHTML =
-    '<div class="rp-num"><span class="rp-big">'+total+'</span><span class="rp-lbl">толчков M5+ · 7 дней</span></div>'
+    '<div class="rp-num"><span class="rp-big">'+total+'</span><span class="rp-lbl">природных событий · 7 дней</span></div>'
     +'<div class="rp-spark">'+bars+'</div>'
     +'<div class="rp-read" style="color:'+dirCol+'">'+arrow+' '+dirTxt+'</div>';
 };
