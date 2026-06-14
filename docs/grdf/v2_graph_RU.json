@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T08:14:41.600441+00:00",
+  "generated_at": "2026-06-14T14:03:50.629549+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,37 +10,37 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 63,
+      "score": 65,
       "props": {
-        "risk_score": 63
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 63,
-      "trend": "stable"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 30,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 40,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
+      "score": 8,
       "trend": "stable"
     },
     {
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-После_атак",
+      "type": "Signal",
+      "label": "После атаки беспилотников на нефтебазу Р",
+      "severity": 78,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-Украинский",
       "type": "Signal",
       "label": "Украинский БПЛА ударил по жилому дому в ",
@@ -92,13 +99,6 @@
       "label": "Очень высокая температура: Архангельская",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RU-Очень_высо",
-      "type": "Signal",
-      "label": "Очень высокая температура: Вологодская о",
-      "severity": 74,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.63
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-RU",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-RU",
@@ -163,27 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-RU-geopolitical",
-      "to": "DOMAIN-RU-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-RU-infrastructure",
-      "to": "DOMAIN-RU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RU-economic",
-      "to": "DOMAIN-RU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-RU-climate",
       "to": "DOMAIN-RU-economic",
       "type": "ESCALATES",
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.65,
       "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-RU-climate",
@@ -226,16 +226,16 @@
       "lag_days": 30
     },
     {
+      "from": "SIGNAL-RU-После_атак",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.78
+    },
+    {
       "from": "SIGNAL-RU-Украинский",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.77
-    },
-    {
-      "from": "SIGNAL-RU-Очень_высо",
-      "to": "DOMAIN-RU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.74
     },
     {
       "from": "SIGNAL-RU-Очень_высо",
