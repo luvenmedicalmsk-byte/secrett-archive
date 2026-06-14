@@ -1882,6 +1882,10 @@ const NEWS_STOPWORDS = ['обложка','#обложка','erid','промок�
   'подкаст','forbes young','apple podcasts','яндекс музык','на других стримингах',
   'слушай прямо сейчас','#young_art','#кудасходить','#кетмб','выставк','музеях'];
 // лёгкий расчёт риска новости (ключевые слова RU/EN), шкала ~35..92
+function _newsIsNoise(text){
+  const t = (text || '').toLowerCase();
+  return /\u043c\u043d\u0435\u043d\u0438\u0435\s*:|\u043a\u043e\u043b\u043e\u043d\u043a|\u043f\u043e\u0434\u043f\u0438\u0441\u0447\u0438\u043a|youtuber|\u044e\u0442\u0443\u0431|\u0431\u043b\u043e\u0433\u0435\u0440|streamer|\u0441\u0442\u0440\u0438\u043c\u0435\u0440|mrbeast|\u0433\u043e\u0440\u043e\u0441\u043a\u043e\u043f|horoscope|\u0440\u0435\u0446\u0435\u043f\u0442|\u0441\u0435\u0440\u0438\u0430\u043b|\u0442\u0440\u0435\u0439\u043b\u0435\u0440|\u0437\u043d\u0430\u043c\u0435\u043d\u0438\u0442\u043e\u0441\u0442|celebrity|\u043f\u043e\u0434\u043a\u0430\u0441\u0442|podcast|\u0444\u0443\u0442\u0431\u043e\u043b|\u0447\u0435\u043c\u043f\u0438\u043e\u043d\u0430\u0442|\u043c\u0430\u0442\u0447 |\u0440\u043e\u0437\u044b\u0433\u0440\u044b\u0448/i.test(t);
+}
 function _newsRisk(text) {
   const t = (text || '').toLowerCase();
   let s = 42;
@@ -2130,8 +2134,8 @@ async function _classifyNewsItems(items, env){
       }
       if (v.domain) it.domain = v.domain;
       if (typeof v.severity === 'number' && v.severity > 0) it.severity = Math.max(1, Math.min(100, Math.round(v.severity)));
-    } else if (env.OPENAI_API_KEY){
-      continue;  // нет вердикта, но LLM доступен — придержим до следующего цикла (не пускаем шум/дефолтный домен)
+    } else if (_newsIsNoise(it.text)){
+      continue;  // нет вердикта LLM — отсеиваем явный шум по ключевым словам, остальное показываем (лента не должна пустеть)
     }
     out.push(it);
   }
