@@ -2,67 +2,77 @@
   "country": "GR",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T19:42:08.823253+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-14T19:59:29.901669+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 48,
+      "score": 52,
       "props": {
-        "risk_score": 48
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 21,
-      "trend": "down"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 43,
-      "trend": "down"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
-      "trend": "down"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 31,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
-      "score": 36,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 34,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 29,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-GR-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
+      "id": "DRIVER-GR-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-GR-economic",
@@ -70,14 +80,11 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-GR-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
-      "id": "DRIVER-GR-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-GR-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M4.9 — 20 км к ЮЮЗ от Meth",
+      "severity": 52,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,43 +92,55 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-economic",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-technology",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-social",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-cyber",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.31
+    },
+    {
+      "from": "DRIVER-GR-climate",
+      "to": "COUNTRY-GR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-GR-geopolitical",
+      "to": "COUNTRY-GR",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-GR-economic",
@@ -130,16 +149,73 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-social",
-      "to": "COUNTRY-GR",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-GR-climate",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "DRIVER-GR-climate",
-      "to": "COUNTRY-GR",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GR-climate",
+      "to": "DOMAIN-GR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GR-social",
+      "to": "DOMAIN-GR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GR-geopolitical",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GR-Землетрясе",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
     }
   ]
 }

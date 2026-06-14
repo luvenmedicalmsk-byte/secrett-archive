@@ -2,66 +2,66 @@
   "country": "ID",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T19:42:08.817256+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-14T19:59:29.895686+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 48,
       "props": {
-        "risk_score": 52
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
+      "score": 48,
       "trend": "down"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 25,
+      "score": 34,
       "trend": "down"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
+      "score": 21,
       "trend": "down"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
+      "score": 8,
       "trend": "down"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
+      "score": 17,
       "trend": "down"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
+      "score": 19,
       "trend": "down"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 4,
       "trend": "down"
     },
     {
@@ -78,6 +78,20 @@
       "id": "DRIVER-ID-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-ID-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M5.1 — 118 км к ВЮВ от Bit",
+      "severity": 51,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M4.6 — 69 км к ЮЮЗ от Tamb",
+      "severity": 44,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,43 +99,43 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-ID-Geopolitical",
@@ -140,6 +154,39 @@
       "to": "COUNTRY-ID",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ID-Землетрясе",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.51
+    },
+    {
+      "from": "SIGNAL-ID-Землетрясе",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.44
     }
   ]
 }
