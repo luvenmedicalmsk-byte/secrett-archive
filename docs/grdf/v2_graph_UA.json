@@ -2,32 +2,32 @@
   "country": "UA",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T14:03:50.636149+00:00",
+  "generated_at": "2026-06-14T17:20:17.153524+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 57,
+      "score": 59,
       "props": {
-        "risk_score": 57
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 27,
-      "trend": "down"
+      "score": 28,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-UA-Гражданин_",
+      "id": "SIGNAL-UA-Великобрит",
       "type": "Signal",
-      "label": "Гражданин Украины признал себя виновным ",
-      "severity": 58,
-      "domain": "technology"
+      "label": "Великобритания задерживает санкционирова",
+      "severity": 65,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-UA",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-UA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-Украинский",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-UA-Гражданин_",
-      "to": "DOMAIN-UA-technology",
+      "from": "SIGNAL-UA-Великобрит",
+      "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.65
     }
   ]
 }

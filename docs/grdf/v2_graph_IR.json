@@ -2,60 +2,60 @@
   "country": "IR",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T14:03:50.640123+00:00",
+  "generated_at": "2026-06-14T17:20:17.156641+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 57,
+      "score": 59,
       "props": {
-        "risk_score": 57
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "down"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
+      "score": 7,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
+      "score": 7,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Индия_огра",
+      "type": "Signal",
+      "label": "Индия ограничивает развертывание моряков",
+      "severity": 74,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IR-Система_пр",
       "type": "Signal",
       "label": "Система противоракетной обороны сработал",
@@ -87,17 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-ФРС_и_Банк",
+      "id": "SIGNAL-IR-Высший_сов",
       "type": "Signal",
-      "label": "ФРС и Банк Англии остаются настороженным",
-      "severity": 53,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IR-Переизбран",
-      "type": "Signal",
-      "label": "Переизбрание Нетаньяху может зависеть от",
-      "severity": 53,
+      "label": "Высший совет национальной безопасности (",
+      "severity": 59,
       "domain": "geopolitical"
     }
   ],
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Индия_огра",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
       "from": "SIGNAL-IR-Система_пр",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-IR-ФРС_и_Банк",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-IR-Переизбран",
+      "from": "SIGNAL-IR-Высший_сов",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.59
     }
   ]
 }
