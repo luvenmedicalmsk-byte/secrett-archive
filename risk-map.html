@@ -2929,7 +2929,15 @@ window._grdfDisasterEnsure=function(){
 // ═══════════════════════════════════════════════════════════════════
 (function(){
   window.NEWS_EVENTS = window.NEWS_EVENTS || [];
-  window._toggleSig = function(el){ el.classList.toggle('sig-open'); };
+  window._toggleSig = function(el){
+    var open = el.classList.toggle('sig-open');
+    var t = el.querySelector('.sig-clamp');
+    if(!t) return;
+    // iOS Safari: смена -webkit-line-clamp через класс не перерисовывает -webkit-box.
+    // Мутация inline-стиля самого текста форсит репейнт — карточка разворачивается надёжно.
+    if(open){ t.style.display='block'; t.style.webkitLineClamp='none'; t.style.overflow='visible'; }
+    else    { t.style.display='';      t.style.webkitLineClamp='';     t.style.overflow=''; }
+  };
   (function(){ var s=document.createElement('style'); s.textContent='.grdf-sig-card.sig-news{cursor:pointer}.grdf-sig-card.sig-news .sig-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.grdf-sig-card.sig-news.sig-open .sig-clamp{-webkit-line-clamp:unset;overflow:visible;display:block}'; document.head.appendChild(s); })();
   function _newsToEv(items){
     return items.map(function(it){
