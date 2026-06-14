@@ -2934,7 +2934,7 @@ window._grdfDisasterEnsure=function(){
   function _newsToEv(items){
     return items.map(function(it){
       var full=(it.text||'').replace(/\s*\n\s*/g,' ').trim();
-      return { domain: it.domain||'geopolitics', title: full, region: it.source||'', date: it.time||'', severity:(typeof it.severity==='number'?it.severity:50), _news:true };
+      return { domain: it.domain||'geopolitics', title: full, region: it.source||'', date: it.time||'', severity:(typeof it.severity==='number'?it.severity:50), dup_count: it.dup_count||0, dup_sources: it.dup_sources||[], _news:true };
     });
   }
   async function _loadNewsEv(){
@@ -8738,7 +8738,7 @@ window._radarPick = function(id){
   var sev = (e._sev!=null) ? e._sev : e.severity;
   var sum = String(e.summary||'').split('|||')[0].split('|')[0].trim(); if(sum.length>200) sum=sum.slice(0,200)+'\u2026';
   var dd=''; try{ if(e.date && typeof fd==='function') dd=fd(e.date); }catch(_){}
-  var meta=[]; if(e.region) meta.push(esc2(e.region)); if(dd) meta.push(dd); if(e.source) meta.push(esc2(e.source));
+  var meta=[]; if(e.region) meta.push(esc2(e.region)); if(dd) meta.push(dd); if(e.source) meta.push(esc2(e.source)); if(e.dup_count){ meta.push('+ ещё '+e.dup_count+(e.dup_sources&&e.dup_sources.length?' ('+e.dup_sources.map(function(x){return esc2(x);}).join(', ')+')':'')); }
   var html = '<button class="grdf-rd-x" type="button">\u2715</button>'
     + '<div class="grdf-rd-tag" style="color:'+col+'"><i style="background:'+col+'"></i>'+esc2(DL2[e.domain]||e.domain)+'</div>'
     + '<div class="grdf-rd-title">'+esc2(e.title||'')+'</div>'
@@ -8841,7 +8841,7 @@ function grdfRenderSignals(dom){
       +   '<div class="grdf-sig-title'+(ev._news?' sig-clamp':'')+'">'+escx(_stripPromo(_deEnt(ev.title)))+'</div>'
       +   ((_m && _m.kind==='firms') ? '<div class="grdf-sig-flag">Сигнал · не подтверждён · '+(((_m.confidence==='h'||_m.confidence==='high'))?'выс. достоверность':'ном. достоверность')+(_m.frp?(' · FRP '+Math.round(_m.frp)):'')+(_m.persist_days>=2?(' · '+_m.persist_days+'д подряд'):'')+'</div>' : '')
       +   ((_m && _m.kind==='radar_outage') ? '<div class="grdf-sig-flag">Cloudflare Radar · '+(_RDOT[_m.outage_type]||'отключение')+(_RDC[_m.cause]?(' · '+_RDC[_m.cause]):'')+'</div>' : '')
-      +   '<div class="grdf-sig-meta"><span>'+escx(_deEnt(ev.region))+'</span><span>'+fdx(ev.date)+'</span></div>'
+      +   '<div class="grdf-sig-meta"><span>'+escx(_deEnt(ev.region))+'</span><span>'+fdx(ev.date)+'</span>'+(ev.dup_count?'<span style="color:'+col+';opacity:.85">+ ещё '+ev.dup_count+'</span>':'')+'</div>'
       + '</div>'
       + '<div class="grdf-sig-sev" style="color:'+scx(sev)+'">'+sev+'<span style="font-size:9px;opacity:.45;font-family:Montserrat,sans-serif;letter-spacing:.04em"> /100</span></div>'
       + '</div>';
