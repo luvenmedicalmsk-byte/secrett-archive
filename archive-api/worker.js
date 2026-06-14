@@ -1757,44 +1757,75 @@ async function handleProxyImg(url, request) {
     return new Response('err', { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } });
   }
 }
-async function handleProxyDisasterNews(env) {
+// === Disaster/weather feed: список каналов + freshness-гейт ===
+// Каналы проверяются вручную через t.me/s/<handle> (дата последнего поста + подписчики)
+// перед добавлением. Гейт ниже авто-отключает любой канал, у которого свежий пост старше N дней.
+const DISASTER_TG_CHANNELS = ['Disaster_News', 'top_disasters', 'naturaldisasterbb'];
+const DISASTER_FRESHNESS_DAYS = 6;
+
+function _dnParseChannel(html, handle) {
+  const items = [];
+  const parts = html.split('data-post="' + handle + '/');
+  for (let k = 1; k < parts.length; k++) {
+    const seg = parts[k];
+    const idm = seg.match(/^(\d+)/); if (!idm) continue;
+    const id = parseInt(idm[1], 10);
+    const tm = seg.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    let text = tm ? tm[1] : '';
+    text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+    text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    text = text.replace(/\s*\s*Live[\s\S]*$/i, '').trim();
+    if (text.length < 10) continue;
+    const dt = seg.match(/datetime="([^"]+)"/);
+    const media = [];
+    const reImg = /tgme_widget_message_(?:photo_wrap|video_thumb)[^>]*background-image:url\('([^']+)'\)/g;
+    let mm;
+    while ((mm = reImg.exec(seg)) !== null) { if (media.indexOf(mm[1]) < 0 && media.length < 12) media.push(mm[1]); }
+    const videos = [];
+    const reVid = /<video[^>]+src="([^"]+)"/g; let vv;
+    while ((vv = reVid.exec(seg)) !== null) { if (videos.indexOf(vv[1]) < 0 && videos.length < 6) videos.push(vv[1]); }
+    const hasVideo = /tgme_widget_message_video(?!_thumb)|message_video_player|message_roundvideo/.test(seg) || videos.length > 0;
+    items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/' + handle + '/' + id, media, videos, hasVideo, handle });
+  }
+  return items;
+}
+
+async function _dnFetchChannel(handle) {
   try {
     const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 10000);
-    const r = await fetch('https://t.me/s/Disaster_News', {
+    const tid = setTimeout(() => ctrl.abort(), 9000);
+    const r = await fetch('https://t.me/s/' + handle, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
       signal: ctrl.signal,
       cf: { cacheTtl: 30, cacheEverything: true }
     });
     clearTimeout(tid);
-    if (!r.ok) return new Response(JSON.stringify({ error: 'upstream ' + r.status, items: [] }), {
-      status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
-    const html = await r.text();
-    const items = [];
-    const parts = html.split('data-post="Disaster_News/');
-    for (let k = 1; k < parts.length; k++) {
-      const seg = parts[k];
-      const idm = seg.match(/^(\d+)/); if (!idm) continue;
-      const id = parseInt(idm[1], 10);
-      const tm = seg.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/);
-      let text = tm ? tm[1] : '';
-      text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
-      text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-      text = text.replace(/\s*Топор\s*Live[\s\S]*$/i, '').trim();  // срез самоподписи канала
-      if (text.length < 10) continue;
-      const dt = seg.match(/datetime="([^"]+)"/);
-      const media = [];
-      const reImg = /tgme_widget_message_(?:photo_wrap|video_thumb)[^>]*background-image:url\('([^']+)'\)/g;
-      let mm;
-      while ((mm = reImg.exec(seg)) !== null) { if (media.indexOf(mm[1]) < 0 && media.length < 12) media.push(mm[1]); }
-      const videos = [];
-      const reVid = /<video[^>]+src="([^"]+)"/g; let vv;
-      while ((vv = reVid.exec(seg)) !== null) { if (videos.indexOf(vv[1]) < 0 && videos.length < 6) videos.push(vv[1]); }
-      const hasVideo = /tgme_widget_message_video(?!_thumb)|message_video_player|message_roundvideo/.test(seg) || videos.length > 0;
-      items.push({ id, text, time: dt ? dt[1] : '', url: 'https://t.me/Disaster_News/' + id, media, videos, hasVideo });
+    if (!r.ok) return { handle, ok: false, items: [], newest: 0 };
+    const items = _dnParseChannel(await r.text(), handle);
+    let newest = 0;
+    for (const it of items) { if (it.time) { const t = Date.parse(it.time); if (!isNaN(t) && t > newest) newest = t; } }
+    return { handle, ok: true, items, newest };
+  } catch (e) { return { handle, ok: false, items: [], newest: 0 }; }
+}
+
+async function handleProxyDisasterNews(env) {
+  try {
+    const results = await Promise.all(DISASTER_TG_CHANNELS.map(_dnFetchChannel));
+    const now = Date.now();
+    const maxAge = DISASTER_FRESHNESS_DAYS * 86400000;
+    let items = [];
+    const sources = [];
+    for (const res of results) {
+      const stale = res.newest > 0 && (now - res.newest) > maxAge;
+      const used = res.ok && res.items.length > 0 && !stale;
+      sources.push({ handle: res.handle, ok: res.ok, count: res.items.length, newest: res.newest ? new Date(res.newest).toISOString() : null, stale, used });
+      if (used) items = items.concat(res.items);
     }
-    items.sort((a, b) => b.id - a.id);
+    items.sort((a, b) => {
+      const ta = Date.parse(a.time) || 0, tb = Date.parse(b.time) || 0;
+      if (tb !== ta) return tb - ta;
+      return b.id - a.id;
+    });
     const _seen = {}, _dedup = [];
     for (const it of items) {
       const key = (it.text || '').toLowerCase().replace(/[^a-z\u0430-\u044f0-9]+/gi, '').slice(0, 80);
@@ -1809,10 +1840,15 @@ async function handleProxyDisasterNews(env) {
       _dedup.push(it);
     }
     const out = _dedup.slice(0, 40);
-    out.forEach(it => { it.handle = 'Disaster_News'; });
     try { await _translateNewsItems(out, env); } catch (_) {}
     const clean = out.map(({ _trkey, _done, handle, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); return rest; });
-    return new Response(JSON.stringify({ channel: 'Disaster_News', count: clean.length, items: clean }), {
+    try {
+      const dropped = sources.filter(x => !x.used);
+      if (dropped.length && env && env.EVENTS_KV) {
+        await env.EVENTS_KV.put('disaster-stale:' + Date.now(), JSON.stringify({ ts: new Date().toISOString(), dropped }), { expirationTtl: 604800 });
+      }
+    } catch (_) {}
+    return new Response(JSON.stringify({ channel: 'disaster', sources, count: clean.length, items: clean }), {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
