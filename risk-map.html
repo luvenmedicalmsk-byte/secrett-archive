@@ -2788,7 +2788,7 @@ document.addEventListener('click',function(e){
 // ═══════════════════════════════════════════════════════════════════
 // ЭКСТРЕМАЛЬНАЯ ПОГОДА / ЧС — Telegram Disaster_News через Worker-прокси
 // ═══════════════════════════════════════════════════════════════════
-(function(){var s=document.createElement('style');s.textContent='.dn-card{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}.dn-text{font-size:12px;color:#E8E0D0;line-height:1.42;margin:1px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.dn-card.dn-open .dn-text{-webkit-line-clamp:unset;overflow:visible;display:block}.dn-actions{margin-top:5px}.dn-actions a{color:rgba(168,160,144,0.85);text-decoration:none;font-size:10px}.dn-media{display:flex;gap:4px;margin:6px 0 2px;flex-wrap:wrap}.dn-thumb{width:66px;height:50px;border-radius:6px;background-color:#10161f;position:relative;overflow:hidden;flex-shrink:0}.dn-thumb img{width:100%;height:100%;object-fit:cover;display:block}.dn-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}.dn-more{width:40px;height:50px;border-radius:6px;background:#10161f;color:#8a93a3;font-size:11px;display:flex;align-items:center;justify-content:center}.dn-thumb[data-vid]{cursor:pointer}.dn-thumb[data-c],.dn-more[data-c]{cursor:pointer}#dn-lb{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center}#dn-lb.open{display:flex}#dn-lb .dn-lb-stage{max-width:100vw;max-height:100vh;display:flex;align-items:center;justify-content:center}#dn-lb img,#dn-lb video{max-width:96vw;max-height:84vh;border-radius:8px;background:#000}#dn-lb .dn-lb-x{position:absolute;top:14px;right:16px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;cursor:pointer}#dn-lb .dn-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;cursor:pointer}#dn-lb .dn-lb-prev{left:10px}#dn-lb .dn-lb-next{right:10px}#dn-lb .dn-lb-nav.hide{display:none}#dn-lb .dn-lb-count{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:#cbd5e1;font-size:13px}';document.head.appendChild(s);})();
+(function(){var s=document.createElement('style');s.textContent='.dn-card{display:flex;align-items:flex-start;gap:9px;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}.dn-title{font-size:13px;color:#E8E0D0;font-weight:600;line-height:1.3;margin:1px 0 4px}.dn-text{font-size:12px;color:rgba(232,224,208,0.82);line-height:1.42;margin:1px 0 4px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.dn-card.dn-open .dn-text{-webkit-line-clamp:unset;overflow:visible;display:block}.dn-actions{margin-top:5px}.dn-actions a{color:rgba(168,160,144,0.85);text-decoration:none;font-size:10px}.dn-media{display:flex;gap:4px;margin:6px 0 2px;flex-wrap:wrap}.dn-thumb{width:66px;height:50px;border-radius:6px;background-color:#10161f;position:relative;overflow:hidden;flex-shrink:0}.dn-thumb img{width:100%;height:100%;object-fit:cover;display:block}.dn-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}.dn-more{width:40px;height:50px;border-radius:6px;background:#10161f;color:#8a93a3;font-size:11px;display:flex;align-items:center;justify-content:center}.dn-thumb[data-vid]{cursor:pointer}.dn-thumb[data-c],.dn-more[data-c]{cursor:pointer}#dn-lb{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center}#dn-lb.open{display:flex}#dn-lb .dn-lb-stage{max-width:100vw;max-height:100vh;display:flex;align-items:center;justify-content:center}#dn-lb img,#dn-lb video{max-width:96vw;max-height:84vh;border-radius:8px;background:#000}#dn-lb .dn-lb-x{position:absolute;top:14px;right:16px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;cursor:pointer}#dn-lb .dn-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;cursor:pointer}#dn-lb .dn-lb-prev{left:10px}#dn-lb .dn-lb-next{right:10px}#dn-lb .dn-lb-nav.hide{display:none}#dn-lb .dn-lb-count{position:absolute;bottom:18px;left:0;right:0;text-align:center;color:#cbd5e1;font-size:13px}';document.head.appendChild(s);})();
 
 var dnInterval=null, dnCache=[];
 function dnTime(t){ try{ var ms=new Date(t).getTime(); if(isNaN(ms)) return ''; return _qkDate(ms,180)+' · '+_qkFmt(ms,180,false)+' МСК'; }catch(e){ return ''; } }
@@ -2800,7 +2800,12 @@ function renderDisaster(){
   var PLAY='<svg class="dn-play" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,.55)"/><path d="M9.6 7.4 16 12l-6.4 4.6z" fill="#fff"/></svg>';
   function _dnProx(u){ return PROXY+encodeURIComponent(String(u)); }
   box.innerHTML=dnCache.map(function(it,ci){
-    var text=qkEsc(it.text||'').replace(/\n/g,'<br>');
+    var raw=(it.text||'').trim();
+    var _nl=raw.indexOf('\n'); var ttl, bdy;
+    if(_nl>0){ ttl=raw.slice(0,_nl).trim(); bdy=raw.slice(_nl+1).trim(); }
+    else { var _m=raw.match(/^([\s\S]{12,90}?[.!?\u2026])\s+([\s\S]+)$/); if(_m){ ttl=_m[1].trim(); bdy=_m[2].trim(); } else { ttl=raw; bdy=''; } }
+    var ttlH=qkEsc(ttl);
+    var text=qkEsc(bdy).replace(/\n/g,'<br>');
     var md=(it.media||[]).filter(function(u){return /^https?:/.test(u);});
     var vids=(it.videos||[]).filter(function(u){return /^https?:/.test(u);});
     var mh='';
@@ -2815,8 +2820,8 @@ function renderDisaster(){
     return '<div class="dn-card" onclick="window._toggleDn(this)">'+
       '<span class="qk-dot" style="background:#FF7A1A;margin-top:6px"></span>'+
       '<div class="qk-main">'+
-        '<div class="qk-dom" style="color:#FF7A1A">ЧС \u2022 Экстремальная погода</div>'+
-        '<div class="dn-text">'+text+'</div>'+
+        '<div class="dn-title">'+ttlH+'</div>'+
+        (text?'<div class="dn-text">'+text+'</div>':'')+
         mh+
         '<div class="qk-meta"><span>'+dnTime(it.time)+'</span></div>'+
       '</div>'+
