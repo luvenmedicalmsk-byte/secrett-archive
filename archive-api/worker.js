@@ -2086,18 +2086,19 @@ async function _classifyNewsItems(items, env){
   for (const it of items){ it._rkey = 'risk5:' + (it.url || ('x/' + it.id)); }
   for (const it of items){ if (_newsRiskCache.has(it._rkey)) it._llm = _newsRiskCache.get(it._rkey); }
   if (env.EVENTS_KV){
-    await Promise.all(items.filter(it => !it._llm).map(async it => {
-      try { const v = await env.EVENTS_KV.get(it._rkey, { type: 'json' }); if (v){ _newsRiskCache.set(it._rkey, v); it._llm = v; } } catch(_){}
-    }));
+    let _cmap = null; try { _cmap = await env.EVENTS_KV.get('newsverdicts:v1', { type: 'json' }); } catch(_){}
+    if (_cmap){ for (const it of items){ if (!it._llm && _cmap[it._rkey]){ it._llm = _cmap[it._rkey]; _newsRiskCache.set(it._rkey, it._llm); } } }
   }
   const todo = items.filter(it => !it._llm).slice(0, 40);   // лимит на запрос, остальное -- к следующему обновлению
   if (todo.length && env.OPENAI_API_KEY){
     const sys = 'Ты — фильтр ленты платформы мониторинга СИСТЕМНЫХ РИСКОВ. Для каждого элемента реши: это СИГНАЛ системного риска или ШУМ, и определи домен. СИГНАЛ: война, удары, обстрелы, ракеты, вооружённые конфликты, санкции, протесты, перевороты, теракты, стихийные бедствия, аварии инфраструктуры, кибератаки, утечки данных, обвалы рынков, дефолты государств, банковские и секторальные кризисы, резкие движения валют и цен, эпидемии, гуманитарные кризисы, крупные политические и правовые события с последствиями. ШУМ: реклама, промо, самопиар канала, подкасты, культура и кино, лайфстайл, знаменитости, спорт, гороскопы, опросы, рецепты, анонсы мероприятий, А ТАКЖЕ новости об ОТДЕЛЬНОЙ компании или бренде без системных последствий (банкротство или проблемы одного ритейлера, магазина, сети; запуск продукта; корпоративная рутина). ДОМЕН (важно): если есть военные действия, удары, ракеты, БПЛА, беспилотники, дроны, обломки дронов или ракет, обстрелы, теракты, война, вооружённый конфликт — домен geopolitics, ДАЖЕ если затронуты экономическая инфраструктура или промышленные объекты (НПЗ, топливные хранилища, порты, нефть, заводы, энергообъекты). economy — только системные и макро-экономические события. Стихийные бедствия и природные ЧС (наводнения, прорывы дамб, паводки, подтопления, пожары, штормы, землетрясения, засуха, аномальная жара) — домен climate, ДАЖЕ если затронуты сельхозземли, посевы или инфраструктура. ШКАЛА s (0-100) ЕДИНА ДЛЯ ВСЕХ ДОМЕНОВ. Главные факторы: человеческие жертвы (погибшие важнее раненых важнее пострадавших), масштаб (сколько людей затронуто и насколько системно) и эскалация. ЖЕРТВЫ ПОДНИМАЮТ ИНДЕКС В ЛЮБОМ ДОМЕНЕ: климат (бедствия с погибшими), социум (эпидемии, вирусы, убийства, протесты с жертвами, голод), геополитика (удары, теракты), а также экономика и технологии. Ориентиры: 90-100 — массовые жертвы или системная катастрофа (эскалация войны, ядерная или радиационная угроза, пандемия, дефолт государства или обвал рынка с широкими последствиями, отказ критической инфраструктуры); 75-89 — события С ПОГИБШИМИ (удары, теракты, стихийные бедствия, крупные аварии, вспышки болезней с жертвами) либо тяжёлый системный кризис без жертв (крах банка, масштабная кибератака на инфраструктуру, обвал валюты); 60-74 — раненые или пострадавшие без погибших, серьёзные аварии, крупная утечка данных, заметный экономический шок; 45-59 — материальные или стратегические события БЕЗ жертв и без системных последствий (захват судна, отдельные санкции, пожар без пострадавших, перехват дронов без потерь, локальный технический сбой); 35-44 — напряжённость, переговоры, дипломатия, заявления и угрозы без действий. При прочих равных событие С жертвами или с более широким системным охватом получает индекс ВЫШЕ. Верни СТРОГО валидный JSON-объект: ключ = значение поля i (строкой), значение = объект {\"r\":1 если сигнал риска иначе 0,\"d\":домен из [climate,economy,geopolitics,technology,social],\"s\":индекс риска целое 0-100 (0 для шума),\"k\":краткая сигнатура события 2-5 слов в нижнем регистре только ключевые сущности и действие одинаковая для разных формулировок одной новости}. Без markdown и пояснений.';
-    for (let start = 0; start < todo.length; start += 20){
-      const batch = todo.slice(start, start + 20);
+    const _batches = [];
+    for (let start = 0; start < todo.length; start += 20) _batches.push(todo.slice(start, start + 20));
+    const DOMS = { climate:1, economy:1, geopolitics:1, technology:1, social:1 };
+    await Promise.all(_batches.map(async (batch) => {
       const payload = batch.map((it, i) => ({ i, t: (it.text || '').slice(0, 400) }));
       try {
-        const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 12000);
+        const ctrl = new AbortController(); const tid = setTimeout(() => ctrl.abort(), 15000);
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + env.OPENAI_API_KEY },
@@ -2107,18 +2108,17 @@ async function _classifyNewsItems(items, env){
           signal: ctrl.signal
         });
         clearTimeout(tid);
-        if (!res.ok) continue;
+        if (!res.ok) return;
         const data = await res.json();
         const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-        if (!content) continue;
-        let parsed; try { parsed = JSON.parse(content); } catch(_) { continue; }
+        if (!content) return;
+        let parsed; try { parsed = JSON.parse(content); } catch(_) { return; }
         let map = {};
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)){
           const arrLike = parsed.r || parsed.results || parsed.items;
           if (Array.isArray(arrLike)) arrLike.forEach((o, k) => { map[(o && o.i != null) ? o.i : k] = o; });
           else map = parsed;
         } else if (Array.isArray(parsed)) parsed.forEach((o, k) => { map[k] = o; });
-        const DOMS = { climate:1, economy:1, geopolitics:1, technology:1, social:1 };
         for (let k = 0; k < batch.length; k++){
           const o = (map[String(k)] != null) ? map[String(k)] : map[k];
           if (!o || typeof o !== 'object') continue;
@@ -2130,9 +2130,18 @@ async function _classifyNewsItems(items, env){
           };
           batch[k]._llm = verdict;
           _newsRiskCache.set(batch[k]._rkey, verdict);
-          if (env.EVENTS_KV){ try { await env.EVENTS_KV.put(batch[k]._rkey, JSON.stringify(verdict), { expirationTtl: 604800 }); } catch(_){} }
         }
-      } catch(_){ continue; }
+      } catch(_){ return; }
+    }));
+    // единая запись всех вердиктов в ОДИН KV-ключ (1 GET + 1 PUT вместо ~80 субреквестов)
+    if (env.EVENTS_KV){
+      try {
+        let _wmap = (await env.EVENTS_KV.get('newsverdicts:v1', { type: 'json' })) || {};
+        for (const it of items){ if (it._llm) _wmap[it._rkey] = it._llm; }
+        const _ks = Object.keys(_wmap);
+        if (_ks.length > 400){ for (const k of _ks.slice(0, _ks.length - 400)) delete _wmap[k]; }
+        await env.EVENTS_KV.put('newsverdicts:v1', JSON.stringify(_wmap), { expirationTtl: 604800 });
+      } catch(_){}
     }
   }
   // применяем: шум -> выброс; риск -> домен/индекс от модели; без вердикта -> keyword
