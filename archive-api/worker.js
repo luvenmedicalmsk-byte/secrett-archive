@@ -2211,7 +2211,17 @@ async function handleProxyNewsFeed(env) {
   const _llmCount = items.filter(it => it._llm).length;
   let _cronLast = null; if (env.EVENTS_KV){ try { _cronLast = await env.EVENTS_KV.get('cron:newsfeed:last', { type: 'json' }); } catch(_){} }
   try { await _translateNewsItems(items, env); } catch(_){}
-  items = items.map(({ _trkey, _done, _rkey, _llm, ...rest }) => { rest.text = _stripNonFlagEmoji(rest.text); rest._sig = (_llm && _llm.k) ? _llm.k : ''; return rest; });
+  items = items.map(({ _trkey, _done, _rkey, _llm, ...rest }) => {
+    rest.text = _stripNonFlagEmoji(rest.text);
+    // срез служебных префиксов канала на финальном (переведённом) тексте: «Кратко:», «Срочно:», «Breaking:» и т.п.
+    rest.text = rest.text.replace(/^\s*(кратко|срочно|важно|молния|эксклюзив|breaking|briefly|just in|update|exclusive)\s*[:\-\u2013\u2014]\s*/i, '').replace(/^\s+/, '');
+    // демпфер разрядки: сделка/перемирие/переговоры/мирный план -- не активная война, риск не «военного» уровня
+    if (/(соглашен|сделк|перемири|прекращени\w* огн|прекращени\w* войн|переговор|урегулир|мирн\w*\s+(план|соглаш|договор|урегулир)|освобожд\w*\s+заложник|ceasefire|truce|peace\s+(deal|talks)|negotiat)/i.test(rest.text)) {
+      if (typeof rest.severity === 'number') rest.severity = Math.min(rest.severity, 58);
+    }
+    rest._sig = (_llm && _llm.k) ? _llm.k : '';
+    return rest;
+  });
   // дроп мусорных одно-словных/слишком коротких постов (напр. «Иран» после очистки эмодзи)
   items = items.filter(it => { const w = (it.text||'').trim().split(/\s+/).filter(Boolean); return w.length >= 2 && (it.text||'').trim().length >= 10; });
   // семантический дедуп: схлопываем перефразированные репосты одной новости по сигнатуре LLM
