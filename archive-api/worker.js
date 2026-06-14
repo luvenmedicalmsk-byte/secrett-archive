@@ -1760,9 +1760,10 @@ async function handleProxyImg(url, request) {
 // === Disaster/weather feed: список каналов + freshness-гейт ===
 // Каналы проверяются вручную через t.me/s/<handle> (дата последнего поста + подписчики)
 // перед добавлением. Гейт ниже авто-отключает любой канал, у которого свежий пост старше N дней.
-const DISASTER_TG_CHANNELS = ['Disaster_News', 'top_disasters', 'naturaldisasterbb'];
+const DISASTER_TG_CHANNELS = ['Disaster_News', 'fobosplanetreal', 'top_disasters', 'naturaldisasterbb'];
 const DISASTER_FRESHNESS_DAYS = 6;
 
+function _dnIsQuake(t){ return /earthquake|\bquake\b|aftershock|seismic|richter|magnitude\b|\u0437\u0435\u043c\u043b\u0435\u0442\u0440\u044f\u0441\u0435\u043d|\u0441\u0435\u0439\u0441\u043c\u0438\u0447|\u0430\u0444\u0442\u0435\u0440\u0448\u043e\u043a|\u043c\u0430\u0433\u043d\u0438\u0442\u0443\u0434|\u043f\u043e\u0434\u0437\u0435\u043c\u043d\u044b\w* \u0442\u043e\u043b\u0447\u043a/i.test(t||''); }
 function _dnParseChannel(html, handle) {
   const items = [];
   const parts = html.split('data-post="' + handle + '/');
@@ -1776,6 +1777,7 @@ function _dnParseChannel(html, handle) {
     text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
     text = text.replace(/\s*\s*Live[\s\S]*$/i, '').trim();
     if (text.length < 10) continue;
+    if (_dnIsQuake(text)) continue;
     const dt = seg.match(/datetime="([^"]+)"/);
     const media = [];
     const reImg = /tgme_widget_message_(?:photo_wrap|video_thumb)[^>]*background-image:url\('([^']+)'\)/g;
