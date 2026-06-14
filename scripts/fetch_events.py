@@ -1406,8 +1406,17 @@ def process_events(raw_items):
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
-        summary = strip_html(item.get('desc',''))[:250].strip()
-        if summary and not summary.endswith('.'): summary += '...'
+        _raw = strip_html(item.get('desc','')).strip()
+        if len(_raw) <= 280:
+            summary = _raw
+        else:
+            _cut = _raw[:280]
+            _se = max(_cut.rfind('. '), _cut.rfind('! '), _cut.rfind('? '))
+            if _se >= 140:
+                summary = _cut[:_se+1]
+            else:
+                _sp = _cut.rfind(' ')
+                summary = (_cut[:_sp] if _sp >= 140 else _cut).rstrip() + '…'
 
         _ev = {
             "id": ev_id,
