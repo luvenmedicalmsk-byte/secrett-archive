@@ -1764,6 +1764,7 @@ const DISASTER_TG_CHANNELS = ['Disaster_News', 'fobosplanetreal', 'top_disasters
 const DISASTER_FRESHNESS_DAYS = 6;
 
 function _dnIsQuake(t){ return /earthquake|\bquake\b|aftershock|seismic|richter|magnitude\b|\u0437\u0435\u043c\u043b\u0435\u0442\u0440\u044f\u0441\u0435\u043d|\u0441\u0435\u0439\u0441\u043c\u0438\u0447|\u0430\u0444\u0442\u0435\u0440\u0448\u043e\u043a|\u043c\u0430\u0433\u043d\u0438\u0442\u0443\u0434|\u043f\u043e\u0434\u0437\u0435\u043c\u043d\u044b\w* \u0442\u043e\u043b\u0447\u043a/i.test(t||''); }
+const _DN_STOP_RE = /рога дьявол|дьявол|сатан|апокалипс|библейск|знамени[ея]|конец света|пророчеств|мистическ|сверхъестествен|божеств|кара небесн|гнев бож|длань бож|devil|satan|apocalyp|biblical|prophec|supernatural|act of god|wrath of god/i;
 function _dnParseChannel(html, handle) {
   const items = [];
   const parts = html.split('data-post="' + handle + '/');
@@ -1778,6 +1779,7 @@ function _dnParseChannel(html, handle) {
     text = text.replace(/\s*\s*Live[\s\S]*$/i, '').trim();
     if (text.length < 10) continue;
     if (_dnIsQuake(text)) continue;
+    if (_DN_STOP_RE.test(text)) continue;
     const dt = seg.match(/datetime="([^"]+)"/);
     const media = [];
     const reImg = /tgme_widget_message_(?:photo_wrap|video_thumb)[^>]*background-image:url\('([^']+)'\)/g;
