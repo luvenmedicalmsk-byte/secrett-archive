@@ -2,67 +2,67 @@
   "country": "MX",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T20:47:42.812363+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-06-14T21:12:27.142503+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 51,
+      "score": 60,
       "props": {
-        "risk_score": 51
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 51,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 25,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-MX-Сборная_Ир",
+      "type": "Signal",
+      "label": "Сборная Ирана по футболу прибыла в Соеди",
+      "severity": 76,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-MX-Землетрясе",
       "type": "Signal",
       "label": "Землетрясение M5.1 — 2 км к Ю от Cerro d",
@@ -87,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-MX-Сборная_Ир",
+      "id": "SIGNAL-MX-Землетрясе",
       "type": "Signal",
-      "label": "Сборная Ирана по футболу прибыла в Соеди",
+      "label": "Землетрясение M4.5 — 39 км к ЮЮЗ от Corr",
       "severity": 46,
-      "domain": "geopolitical"
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -99,37 +106,37 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-MX",
@@ -156,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-MX-geopolitical",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
@@ -177,14 +226,20 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-MX-Сборная_Ир",
+      "to": "DOMAIN-MX-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
       "from": "SIGNAL-MX-Землетрясе",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-MX-Сборная_Ир",
-      "to": "DOMAIN-MX-geopolitical",
+      "from": "SIGNAL-MX-Землетрясе",
+      "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.46
     }
