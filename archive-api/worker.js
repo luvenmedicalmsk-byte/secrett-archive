@@ -2178,6 +2178,7 @@ async function handleProxyNewsFeed(env) {
   items.forEach(it => { it._ts = it.time ? Date.parse(it.time) : 0; });
   items.sort((a, b) => (b._ts || 0) - (a._ts || 0) || b.id - a.id);
   items = items.map(({ _ts, ...rest }) => rest);
+  items = items.slice(0, 40);  // лимит ленты ~ лимиту классификатора, чтобы LLM покрывал почти всё
   // LLM-гейт риск/шум (с кэшем, фолбэк на keyword); шум отсеивается до перевода
   try { items = await _classifyNewsItems(items, env); } catch(_){}
   const _llmCount = items.filter(it => it._llm).length;
@@ -2206,7 +2207,7 @@ async function handleProxyNewsFeed(env) {
   })();
   items = items.map(function(it){ delete it._sig; return it; });
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), llm_active: !!env.OPENAI_API_KEY, llm_classified: _llmCount, count: items.length, items }), {
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
+    headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
   });
 }
 
