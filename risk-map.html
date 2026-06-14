@@ -8503,6 +8503,7 @@ window.grdfNavTo = function(tab) {
   // No _isMobile guard: CSS handles visibility, JS handles behavior
   _grdfNav = tab;
   if(window._radarTimer && tab!=='radar'){ clearInterval(window._radarTimer); window._radarTimer=null; }
+  if(window._riskPulseTimer && tab!=='alerts'){ clearInterval(window._riskPulseTimer); window._riskPulseTimer=null; }
   var navBtns = document.querySelectorAll('.grdf-nav-btn');
   navBtns.forEach(function(b){ b.classList.remove('active'); });
   var activeBtn = document.getElementById('grdf-nav-'+tab);
@@ -8564,6 +8565,8 @@ window.grdfNavTo = function(tab) {
     if(window.grdfAlertsTab) window.grdfAlertsTab('weather');
     if(window.grdfRenderRiskPulse) window.grdfRenderRiskPulse();
     if(window._grdfQuakesEnsure) window._grdfQuakesEnsure();
+    if(window._riskPulseTimer) clearInterval(window._riskPulseTimer);
+    window._riskPulseTimer = setInterval(function(){ if(window.grdfRenderRiskPulse) window.grdfRenderRiskPulse(); }, 30000);
   }
 };
 
