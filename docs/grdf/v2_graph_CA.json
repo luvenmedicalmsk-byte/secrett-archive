@@ -2,60 +2,60 @@
   "country": "CA",
   "date": "2026-06-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-14T17:20:17.152645+00:00",
+  "generated_at": "2026-06-14T19:20:23.637513+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 55,
+      "score": 60,
       "props": {
-        "risk_score": 55
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 27,
-      "trend": "stable"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "stable"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Подозревае",
+      "id": "SIGNAL-CA-Над_14_рег",
       "type": "Signal",
-      "label": "Подозреваемые разыскиваются по делу о на",
-      "severity": 56,
-      "domain": "geopolitical"
+      "label": "Над 14 регионами России сбили почти 250 ",
+      "severity": 67,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-CA",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Очень_высо",
-      "to": "DOMAIN-CA-climate",
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Очень_высо",
@@ -175,10 +190,16 @@
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-CA-Подозревае",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "SIGNAL-CA-Очень_высо",
+      "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-CA-Над_14_рег",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.67
     }
   ]
 }
