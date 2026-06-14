@@ -1693,7 +1693,8 @@ def process_events(raw_items):
     _before_s43 = len(top_events)
     top_events = [e for e in top_events
                   if not _is_news_not_signal(e.get('title',''), e.get('summary',''), e.get('domain',''))
-                  and not _is_broken_fragment(e.get('title',''), e.get('summary',''))]
+                  and not _is_broken_fragment(e.get('title',''), e.get('summary',''))
+                  and len(re.findall(r'[іїєґІЇЄҐ]', (e.get('title') or '') + (e.get('summary') or ''))) < 3]
     # S44: домен по содержанию -- переназначаем неверно-доменные сигналы (политика из экономики и т.п.)
     _moved = 0
     for e in top_events:
