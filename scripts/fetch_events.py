@@ -1388,6 +1388,19 @@ def process_events(raw_items):
         # S40: бюрократические сводки/отчёты о ситуации -- не сигнал, убираем безусловно
         if any(k in _ttl0 for k in ('отчет о ситуации','отчёт о ситуации','situation report','sitrep','период отчетности','reporting period','cluster report')):
             _LOSS['sev']+=1; continue
+        # S41: локальные ЧП без системного значения (атаки животных, падения/бытовые аварии,
+        # отдельный криминал) -- не сигнал раннего предупреждения, исключаем безусловно.
+        _blob = _ttl0 + ' ' + str(item.get('desc','')).lower()
+        _local = (
+            ('акул' in _blob and any(w in _blob for w in ('атак','укус','напал','пострадал','погиб'))
+                and not any(w in _blob for w in ('подлод','субмарин','лодк','флот','учени','военн','тихоокеан')))
+            or 'в колодец' in _blob
+            or 'провалился под лёд' in _blob or 'провалилась под лёд' in _blob
+            or 'поскользнул' in _blob
+            or any(w in _blob for w in ('изнасилов','педофил','маньяк'))
+        )
+        if _local and not any(w in _blob for w in ('теракт','стрельб','захват заложник')):
+            _LOSS['sev']+=1; continue
         # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
         _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
         if _sys:
