@@ -2200,7 +2200,7 @@ async function handleProxyNewsFeed(env) {
     items=coll.sort(function(a,b){ return ((b.time?Date.parse(b.time):0)-(a.time?Date.parse(a.time):0))||(b.id-a.id); });
   })();
   items = items.map(function(it){ delete it._sig; return it; });
-  return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), count: items.length, items }), {
+  return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), llm_active: !!env.OPENAI_API_KEY, count: items.length, items }), {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
   });
 }
