@@ -8700,6 +8700,15 @@ function _fixDomain(e){
   return null;
 }
 window._pressColor = function(p){ return p>=75?'#ef4444':(p>=60?'#ff7a00':(p>=40?'#eab308':'#22c55e')); };
+window._arrow = function(t){
+  var s='<svg width="11" height="11" viewBox="0 0 12 12" style="vertical-align:-1px" xmlns="http://www.w3.org/2000/svg">';
+  if(t==='up') s+='<path d="M6 2 L10 7 L7 7 L7 10 L5 10 L5 7 L2 7 Z" fill="currentColor"/>';
+  else if(t==='down') s+='<path d="M6 10 L2 5 L5 5 L5 2 L7 2 L7 5 L10 5 Z" fill="currentColor"/>';
+  else if(t==='right') s+='<path d="M2 6 H8.5 M5.5 3 L8.5 6 L5.5 9" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  else if(t==='both') s+='<path d="M2 6 H10 M2 6 L4 4 M2 6 L4 8 M10 6 L8 4 M10 6 L8 8" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  else s+='<rect x="2" y="5.2" width="8" height="1.6" rx="0.8" fill="currentColor"/>';
+  return s+'</svg>';
+};
 window._radarMetrics = function(ded){
   var DOMS=['climate','geopolitics','economy','technology','social'];
   var DAY=86400000, now=Date.now();
@@ -8745,10 +8754,10 @@ window._radarRenderPanels = function(M){
   var lk=window._radarLvlKey||'all';
   var fEl=document.getElementById('grdf-radar-funnel');
   if(fEl){ var steps=[['all',M.total,'сигналов'],['active',M.active,'активных'],['systemic',M.systemic,'системных'],['critical',M.critical,'критических']];
-    fEl.innerHTML='<div class="grdf-funnel">'+steps.map(function(x,i){ var sep=i>0?'<span class="grdf-funnel-arrow">&rarr;</span>':'';
+    fEl.innerHTML='<div class="grdf-funnel">'+steps.map(function(x,i){ var sep=i>0?'<span class="grdf-funnel-arrow">'+window._arrow('right')+'</span>':'';
       return sep+'<div class="grdf-funnel-step'+(lk===x[0]?' on':'')+'" onclick="window._radarLevel(\''+x[0]+'\')"><span class="grdf-funnel-n">'+x[1]+'</span><span class="grdf-funnel-l">'+x[2]+'</span></div>'; }).join('')+'</div>'; }
   var dEl=document.getElementById('grdf-radar-dynamics');
-  if(dEl){ dEl.innerHTML='<div class="grdf-dyn">'+DOMS.map(function(d){ var a=M.dyn[d],ar=a==='up'?'&uarr;':(a==='down'?'&darr;':'&rarr;');
+  if(dEl){ dEl.innerHTML='<div class="grdf-dyn">'+DOMS.map(function(d){ var a=M.dyn[d],ar=window._arrow(a==='up'?'up':(a==='down'?'down':'flat'));
       return '<span class="grdf-dyn-item d-'+a+'"><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+' '+ar+'</span>'; }).join('')+'</div><div class="grdf-dyn-cap">Изменение интенсивности сигналов &middot; 7 дней</div>'; }
   var pEl=document.getElementById('grdf-radar-panel');
   if(pEl){ var cells=DOMS.map(function(d){ return '<div class="grdf-rp-cell"><b style="color:'+DC2[d]+'">'+M.perDom[d].n+'</b><span>'+(DL2[d]||d)+'</span></div>'; });
@@ -8759,7 +8768,7 @@ window._radarRenderPanels = function(M){
     var drv='<div class="grdf-rsec"><div class="grdf-rsec-t">Основные драйверы давления</div>'+
       M.drivers.map(function(d){ return '<div class="grdf-rrow"><span><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+'</span><b>'+M.perDom[d].n+' сигн.</b></div>'; }).join('')+'</div>';
     var cas = M.pairs.length ? ('<div class="grdf-rsec"><div class="grdf-rsec-t">Каскадные связи доменов</div>'+
-      M.pairs.map(function(p){ return '<div class="grdf-rrow"><span>'+(DL2[p.a]||p.a)+' &harr; '+(DL2[p.b]||p.b)+'</span><b>'+p.n+'</b></div>'; }).join('')+'</div>')
+      M.pairs.map(function(p){ return '<div class="grdf-rrow"><span>'+(DL2[p.a]||p.a)+' '+window._arrow('both')+' '+(DL2[p.b]||p.b)+'</span><b>'+p.n+'</b></div>'; }).join('')+'</div>')
       : '<div class="grdf-rsec"><div class="grdf-rsec-t">Каскадные связи доменов</div><div class="grdf-rrow" style="opacity:.55;border:none"><span>нет системных пересечений</span></div></div>';
     pEl.innerHTML=grid+drv+cas; }
 };
