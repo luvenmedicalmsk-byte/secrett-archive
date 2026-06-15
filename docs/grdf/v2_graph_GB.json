@@ -2,31 +2,31 @@
   "country": "GB",
   "date": "2026-06-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T14:07:09.084001+00:00",
+  "generated_at": "2026-06-15T14:22:40.338287+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 51,
+      "score": 53,
       "props": {
-        "risk_score": 51
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
+      "score": 44,
       "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
+      "score": 32,
       "trend": "up"
     },
     {
@@ -47,14 +47,14 @@
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
+      "score": 16,
       "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
+      "score": 18,
       "trend": "up"
     },
     {
@@ -62,7 +62,7 @@
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "social"
     },
     {
+      "id": "SIGNAL-GB-Чему_амери",
+      "type": "Signal",
+      "label": "Чему американцы могут научиться у Лондон",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-От_Америка",
       "type": "Signal",
       "label": "От Американской революции до всеобщего и",
       "severity": 47,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GB-Лондонский",
-      "type": "Signal",
-      "label": "Лондонский финансовый центр - всё.",
-      "severity": 42,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-GB",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-GB",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-Жестокие_н",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
       "weight": 0.6
     },
     {
+      "from": "SIGNAL-GB-Чему_амери",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-GB-От_Америка",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-GB-Лондонский",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.42
     }
   ]
 }
