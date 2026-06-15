@@ -8350,6 +8350,47 @@ function _grdfContextHtml(c){
     +'</div></details>');
   return H;
 }
+window._spRenderCountryLocal = function(el, d, cname){
+  function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function ul(arr){ return '<ul class="sp-ul">'+(arr||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
+  function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,175,90,.7);margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
+  if(!el) return;
+  if(d && d.locked){
+    el.innerHTML='<div style="margin:0 14px 8px"><div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
+      +'<div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO · LOCAL</span></div>'
+      +'<div class="sp-sub">Что текущие сигналы означают для страны: '+esc(cname||'')+'</div>'
+      +'<div class="sp-body"><div class="sp-block">'
+      +ul(['Влияние на бизнес и поставки','Риски для инвесторов и рынков','Влияние на стоимость жизни'])
+      +'<div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Signal Pro объясняет, как текущие сигналы влияют именно на эту страну — для бизнеса, инвесторов и частных лиц.</div>'
+      +'<button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Получить доступ</button>'
+      +'</div></div></div></div>';
+    return;
+  }
+  if(!d || !d.local || !d.local.country_name){ el.innerHTML=''; return; }
+  var L=d.local;
+  el.innerHTML='<div style="margin:0 14px 8px"><div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
+    +'<div class="sp-head"><span class="sp-badge">SIGNAL PRO · LOCAL</span></div>'
+    +'<div class="sp-sub">Что это означает для страны: '+esc(L.country_name)+(L.generic?' · базовый профиль':'')+'</div>'
+    +'<div class="sp-body"><div class="sp-blocks"><div class="sp-block">'
+    +subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private)
+    +'</div></div></div></div>';
+};
+window._renderCountryLocal = function(c){
+  var el=document.getElementById('grdf-cc-local'); if(!el||!c) return;
+  var DOMS=['climate','geopolitics','economy','technology','social'];
+  var ds=c.domain_scores||{};
+  var drivers=Object.keys(ds).map(function(d){return {d:d,s:parseFloat(ds[d]||0)};}).sort(function(a,b){return b.s-a.s;}).map(function(x){return x.d;}).filter(function(d){return DOMS.indexOf(d)>=0;});
+  var cc=c.country||'', cname=c.country_name||cc;
+  var payload={drivers:drivers,country:cc,country_name:cname};
+  var tok=''; try{ tok=localStorage.getItem('cc_token')||''; }catch(e){}
+  var base=(typeof API!=='undefined'&&API)?API:'https://archive-api.luven-medical-msk.workers.dev';
+  var h={'Content-Type':'application/json'}; if(tok) h['X-Snapshot-Token']=tok;
+  el.innerHTML='<div style="margin:0 14px 8px"><div class="sp-block"><div class="sp-p" style="opacity:.5">Загрузка локальной аналитики…</div></div></div>';
+  fetch(base+'/api/signal-pro',{method:'POST',headers:h,body:JSON.stringify(payload)})
+    .then(function(r){return r.json();})
+    .then(function(d){ window._spRenderCountryLocal(el,d,cname); })
+    .catch(function(){ window._spRenderCountryLocal(el,{locked:true},cname); });
+};
 function grdfRenderCountryPanel(cc) {
 
   try{ var _ct=(window.CC&&CC.tier&&CC.tier())||''; if(_ct&&_ct!=='free') _grdfTier='SIGNAL_PRO'; }catch(e){}
@@ -8446,11 +8487,13 @@ function grdfRenderCountryPanel(cc) {
   html += _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, 'rest');
   if(isSig){ html += _grdfContextHtml(c); }
   // Bottom padding: 56px nav + 24px safe area + 20px buffer = 100px
+  html += '<div id="grdf-cc-local"></div>';
   html += '<div style="height:100px"></div>';
   var _csEl = document.getElementById('grdf-cs-content');
   if(_csEl) {
     _csEl.scrollTop = 0;       // reset BEFORE setting content
     _csEl.innerHTML = html;
+    try{ window._renderCountryLocal(c); }catch(_e){}
     if(isSig){ try{ _grdfLoadHistory(c.country); }catch(e){} }
     _csEl.scrollTop = 0;       // reset AFTER setting content (point 5)
   }
@@ -8829,24 +8872,9 @@ window._spRender = function(el,d){
     +block('Каскадные сценарии',cascHtml||'<p class="sp-p">Каскадные цепочки пока не формируются.</p>')
     +block('Ключевой вывод дня','<p class="sp-p sp-key">'+esc(d.key||'')+'</p>');
   var weekly = d.weekly ? ('<div class="sp-block" style="border-color:rgba(184,151,58,.32);background:rgba(184,151,58,.07);margin-top:10px"><div class="sp-block-h" style="color:#D4AF5A">Главный вывод недели</div><p class="sp-p sp-key">'+esc(d.weekly)+'</p></div>') : '';
-  var local='';
-  if(d.local && d.local.country_name){
-    var L=d.local;
-    local='<div class="sp-section" style="margin-top:16px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:16px">'
-      +'<div class="sp-head"><span class="sp-badge">SIGNAL PRO · LOCAL</span></div>'
-      +'<div class="sp-sub">Что это означает для страны: '+esc(L.country_name)+(L.generic?' · базовый профиль':'')+'</div>'
-      +'<div class="sp-body"><div class="sp-blocks">'
-      +block('Практическая интерпретация — '+L.country_name, subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private))
-      +'</div></div></div>';
-  } else {
-    local='<div class="sp-section" style="margin-top:16px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:16px">'
-      +'<div class="sp-head"><span class="sp-badge">SIGNAL PRO · LOCAL</span></div>'
-      +'<div class="sp-sub">Локальная интерпретация</div>'
-      +'<div class="sp-body"><div class="sp-block"><p class="sp-p" style="opacity:.75">Откройте страну в разделе «Страны» — Signal Pro покажет, что текущие сигналы означают именно для неё: для бизнеса, инвесторов и частных лиц.</p></div></div></div>';
-  }
-  el.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">SIGNAL PRO · GLOBAL</span></div>'
-    +'<div class="sp-sub">Глобальная интерпретация сигналов</div>'
-    +'<div class="sp-body"><div class="sp-blocks">'+blocks+'</div>'+weekly+'</div></div>'+local;
+  el.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">SIGNAL PRO</span></div>'
+    +'<div class="sp-sub">Аналитическая интерпретация сигналов</div>'
+    +'<div class="sp-body"><div class="sp-blocks">'+blocks+'</div>'+weekly+'</div></div>';
 };
 window._renderSignalPro = function(M){
   var el=document.getElementById('grdf-signalpro'); if(!el||!M) return;
