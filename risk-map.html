@@ -1213,6 +1213,22 @@ html,body{overscroll-behavior-y:contain}
 .grdf-radar-legend{display:flex;flex-wrap:wrap;gap:7px 14px;justify-content:center;padding:8px 16px 12px;font-family:'Montserrat',sans-serif}
 .grdf-radar-lg{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(232,224,208,.6)}
 .grdf-radar-lg i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.grdf-funnel{display:flex;align-items:stretch;justify-content:center;gap:3px;flex-wrap:wrap;padding:8px 12px 2px;font-family:'Montserrat',sans-serif}
+.grdf-funnel-step{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:60px;padding:6px 9px;border:1px solid rgba(212,175,90,0.18);border-radius:8px;cursor:pointer;background:rgba(255,255,255,0.02);transition:border-color .2s,background .2s}
+.grdf-funnel-step:hover{border-color:rgba(212,175,90,0.45)}
+.grdf-funnel-step.on{border-color:#D4AF5A;background:rgba(212,175,90,0.10)}
+.grdf-funnel-n{font-size:19px;font-weight:600;color:#E8E0D0;font-family:'Cormorant Garamond',serif;line-height:1}
+.grdf-funnel-l{font-size:8px;color:rgba(168,160,144,0.7);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}
+.grdf-funnel-arrow{display:flex;align-items:center;color:rgba(212,175,90,0.4);font-size:13px;padding:0 1px}
+.grdf-dyn{display:flex;flex-wrap:wrap;gap:5px 10px;justify-content:center;padding:4px 14px 1px;font-family:'Montserrat',sans-serif}
+.grdf-dyn-item{display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(232,224,208,0.7)}
+.grdf-dyn-item i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.grdf-dyn-item.d-up{color:#34d399}.grdf-dyn-item.d-down{color:#f87171}.grdf-dyn-item.d-flat{color:rgba(168,160,144,0.55)}
+.grdf-dyn-cap{text-align:center;font-size:8px;color:rgba(168,160,144,0.45);font-family:'Montserrat',sans-serif;padding:2px 0 4px;letter-spacing:0.5px;text-transform:uppercase}
+.grdf-rpanel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:10px 14px 14px;font-family:'Montserrat',sans-serif}
+.grdf-rp-cell{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border:1px solid rgba(255,255,255,0.06);border-radius:7px;background:rgba(255,255,255,0.02)}
+.grdf-rp-cell b{font-size:17px;color:#E8E0D0;font-family:'Cormorant Garamond',serif;font-weight:600;line-height:1}
+.grdf-rp-cell span{font-size:8px;color:rgba(168,160,144,0.65);text-transform:uppercase;letter-spacing:0.4px;margin-top:4px;text-align:center}
 .grdf-radar-note{font-size:10px;line-height:1.55;color:rgba(168,160,144,.55);padding:2px 18px 22px;font-family:'Montserrat',sans-serif;text-align:center;max-width:540px;margin:0 auto}
 .grdf-radar-dot{transition:opacity .15s}.grdf-radar-dot:hover{fill-opacity:1!important}
 .grdf-radar-dot.sel{stroke:#fff;stroke-width:1.6}
@@ -7508,10 +7524,13 @@ function _evM(val, lbl, col) {
 <div id="grdf-radar-screen">
   <span class="grdf-screen-x" onclick="grdfNavTo('map')">✕</span>
   <div class="grdf-screen-head"><div class="grdf-screen-title">Радар сигналов</div><span class="grdf-radar-live"></span><span style="font-size:10px;color:rgba(168,160,144,0.5)" id="grdf-radar-count"></span></div>
+  <div id="grdf-radar-funnel"></div>
   <div id="grdf-radar-canvas"></div>
+  <div id="grdf-radar-dynamics"></div>
   <div id="grdf-radar-detail"></div>
   <div class="grdf-radar-legend" id="grdf-radar-legend"></div>
-  <div class="grdf-radar-note">Кольца — сила сигнала: в центре острые, к краю слабые. Цвет точки — домен (STEEP), см. легенду. Радар показывает текущую картину сигналов, а не прогноз на годы.</div>
+  <div id="grdf-radar-panel"></div>
+  <div class="grdf-radar-note">Радар отображает текущую структуру глобальных сигналов и позволяет выявлять зоны повышенного системного давления. Чем ближе сигнал к центру, тем выше его актуальность и потенциальное влияние. Цвет отражает домен риска. Радар показывает текущее состояние системы и формирующиеся тенденции.</div>
 </div>
 
 <!-- S36.1: Signals feed screen (same source as map: ALL_EVENTS) -->
@@ -8670,6 +8689,56 @@ function _fixDomain(e){
   if(FEED_HUMAN.test(_sf) && FEED_WAR.test(_sf)) return 'geopolitics';
   return null;
 }
+window._radarMetrics = function(ded){
+  var DOMS=['climate','geopolitics','economy','technology','social'];
+  var DAY=86400000, now=Date.now();
+  var total=ded.length, active=0, systemic=0, critical=0, sevSum=0, new24=0;
+  var perDom={}; DOMS.forEach(function(d){ perDom[d]={n:0,sev:0,rec:0,old:0}; });
+  ded.forEach(function(e){
+    var s=e._sev||0; sevSum+=s;
+    if(s>=40) active++; if(s>=60) systemic++; if(s>=75) critical++;
+    var t=Date.parse(e.date||'')||0;
+    if(t && (now-t)<=DAY) new24++;
+    var pd=perDom[e.domain]; if(pd){ pd.n++; pd.sev+=s;
+      if(t){ var age=now-t; if(age<=3.5*DAY) pd.rec+=s; else if(age<=7*DAY) pd.old+=s; } }
+  });
+  var avgSev= total? sevSum/total : 0;
+  var domsSys=DOMS.filter(function(d){ return ded.some(function(e){ return e.domain===d && (e._sev||0)>=60; }); });
+  var crossLinks=domsSys.length*(domsSys.length-1)/2;
+  var intensity=avgSev/100, sysShare= total?(systemic+critical)/total:0;
+  var critW=Math.min(critical/5,1), volW=Math.min(total/50,1), crossW=Math.min(crossLinks/8,1);
+  var pressure=Math.round(100*(0.30*intensity+0.25*sysShare+0.20*critW+0.15*volW+0.10*crossW));
+  pressure=Math.max(0,Math.min(100,pressure));
+  var dyn={}; DOMS.forEach(function(d){ var pd=perDom[d];
+    dyn[d]=(pd.rec>pd.old*1.15)?'up':(pd.rec<pd.old*0.85?'down':'flat'); if(pd.rec===0&&pd.old===0) dyn[d]='flat'; });
+  return {total:total,active:active,systemic:systemic,critical:critical,avgSev:Math.round(avgSev),new24:new24,crossLinks:crossLinks,pressure:pressure,perDom:perDom,dyn:dyn};
+};
+window._radarLevel = function(lvl){
+  var mp={all:0,active:40,systemic:60,critical:75};
+  window._radarLvlMin=(lvl!=='all' && window._radarLvlMin===mp[lvl])?0:mp[lvl];
+  window._radarLvlKey=(window._radarLvlMin===0)?'all':lvl;
+  if(window.grdfRenderRadar) window.grdfRenderRadar(true);
+};
+window._radarRenderPanels = function(M){
+  var DOMS=['climate','geopolitics','economy','technology','social'];
+  var DC2=(typeof DC!=='undefined'&&DC)?DC:{climate:'#22c55e',geopolitics:'#ff7a00',economy:'#38bdf8',technology:'#a855f7',social:'#ef4444'};
+  var DL2=(typeof DL!=='undefined'&&DL)?DL:{climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'};
+  var lk=window._radarLvlKey||'all';
+  var fEl=document.getElementById('grdf-radar-funnel');
+  if(fEl){ var steps=[['all',M.total,'сигналов'],['active',M.active,'активных'],['systemic',M.systemic,'системных'],['critical',M.critical,'критических']];
+    fEl.innerHTML='<div class="grdf-funnel">'+steps.map(function(x,i){ var sep=i>0?'<span class="grdf-funnel-arrow">&rarr;</span>':'';
+      return sep+'<div class="grdf-funnel-step'+(lk===x[0]?' on':'')+'" onclick="window._radarLevel(\''+x[0]+'\')"><span class="grdf-funnel-n">'+x[1]+'</span><span class="grdf-funnel-l">'+x[2]+'</span></div>'; }).join('')+'</div>'; }
+  var dEl=document.getElementById('grdf-radar-dynamics');
+  if(dEl){ dEl.innerHTML='<div class="grdf-dyn">'+DOMS.map(function(d){ var a=M.dyn[d],ar=a==='up'?'&uarr;':(a==='down'?'&darr;':'&rarr;');
+      return '<span class="grdf-dyn-item d-'+a+'"><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+' '+ar+'</span>'; }).join('')+'</div><div class="grdf-dyn-cap">Изменение интенсивности сигналов &middot; 7 дней</div>'; }
+  var pEl=document.getElementById('grdf-radar-panel');
+  if(pEl){ var cells=DOMS.map(function(d){ return '<div class="grdf-rp-cell"><b style="color:'+DC2[d]+'">'+M.perDom[d].n+'</b><span>'+(DL2[d]||d)+'</span></div>'; });
+    cells.push('<div class="grdf-rp-cell"><b>'+M.new24+'</b><span>новых за 24ч</span></div>');
+    cells.push('<div class="grdf-rp-cell"><b style="color:#ef4444">'+M.critical+'</b><span>критических</span></div>');
+    cells.push('<div class="grdf-rp-cell"><b style="color:#D4AF5A">'+M.pressure+'</b><span>сист. давление</span></div>');
+    cells.push('<div class="grdf-rp-cell"><b>'+M.crossLinks+'</b><span>междом. связей</span></div>');
+    pEl.innerHTML='<div class="grdf-rpanel">'+cells.join('')+'</div>'; }
+};
 window.grdfRenderRadar = function(force){
   var canvas = document.getElementById('grdf-radar-canvas');
   if(!canvas) return;
@@ -8694,9 +8763,10 @@ window.grdfRenderRadar = function(force){
     else { var p=ded[seen[k]]; if((e._sev||0)>(p._sev||0)) ded[seen[k]]=e; }
   });
   var byDom={}; DOMS.forEach(function(d){ byDom[d]=[]; });
-  ded.forEach(function(e){ byDom[e.domain].push(e); });
+  ded.forEach(function(e){ if((e._sev||0)>=(window._radarLvlMin||0)) byDom[e.domain].push(e); });
   DOMS.forEach(function(d){ byDom[d].sort(function(a,b){ return (b._sev||0)-(a._sev||0); }); byDom[d]=byDom[d].slice(0,12); });
-  var _sig = DOMS.map(function(d){ return byDom[d].map(function(e){ return (e.title||'')+'~'+e._sev; }).join(','); }).join('|');
+  var M = window._radarMetrics(ded); try{ window._radarRenderPanels(M); }catch(_e){}
+  var _sig = DOMS.map(function(d){ return byDom[d].map(function(e){ return (e.title||'')+'~'+e._sev; }).join(','); }).join('|') + '|P'+M.pressure+'|L'+(window._radarLvlMin||0);
   if(!force && _sig===window._radarSig){ return; }
   window._radarSig = _sig;
   window._radarReg = {};
@@ -8747,6 +8817,9 @@ window.grdfRenderRadar = function(force){
   svg += '<circle cx="'+C+'" cy="'+C+'" r="7.5" fill="none" stroke="rgba(212,175,90,0.4)" stroke-width="0.8"/>';
   svg += '<path d="M'+(C-12)+' '+C+' h5 M'+(C+7)+' '+C+' h5 M'+C+' '+(C-12)+' v5 M'+C+' '+(C+7)+' v5" stroke="rgba(212,175,90,0.35)" stroke-width="0.8"/>';
   [[6,6,1,1],[S-6,6,-1,1],[6,S-6,1,-1],[S-6,S-6,-1,-1]].forEach(function(_c){ var _b=22; svg += '<path d="M'+(_c[0]+_c[2]*_b)+' '+_c[1]+' H'+_c[0]+' V'+(_c[1]+_c[3]*_b)+'" fill="none" stroke="rgba(212,175,90,0.32)" stroke-width="1.2"/>'; });
+  svg += '<circle cx="'+C+'" cy="'+C+'" r="30" fill="rgba(6,5,10,0.86)" stroke="#D4AF5A" stroke-opacity="0.5" stroke-width="1"/>';
+  svg += '<text x="'+C+'" y="'+(C-3)+'" text-anchor="middle" fill="#D4AF5A" font-size="20" font-family="Cormorant Garamond,serif" font-weight="600">'+M.pressure+'</text>';
+  svg += '<text x="'+C+'" y="'+(C+9)+'" text-anchor="middle" fill="rgba(232,224,208,0.5)" font-size="5.4" font-family="Montserrat,sans-serif" letter-spacing="0.8">SYSTEM PRESSURE</text>';
   svg += '</svg>';
   canvas.innerHTML = svg;
   canvas.querySelectorAll('.grdf-radar-dot').forEach(function(el){ el.addEventListener('click', function(){ if(window._radarPick) window._radarPick(el.getAttribute('data-rid')); }); });
