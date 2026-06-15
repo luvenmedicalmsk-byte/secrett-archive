@@ -8655,6 +8655,8 @@ var FEED_GEO_WEAK = ['атак','удар','войск','военн','флот',
 var FEED_GEO_MILCTX = /(дрон|бпла|ракет|обстрел|нпз|нефтебаз|инфраструктур|позици|фронт|снаряд|войн|пво|удар по)/;
 // Природа/быт/криминал — никогда не переносим в геополитику.
 var FEED_GEO_BLOCK = /(акул|медвед|собак|укус|молни|наводнен|паводок|подтоплен|землетряс|оползен|пожар|шторм|ливень|засух|дтп|провали|колодец|утонул|поскользн|бытов|ограблен|кража|изнасил|маньяк|педофил|наркот)/;
+var FEED_HUMAN = /(гуманитарн|беженц|перемещ|недоедан|голод|мирных жител|мирные жител|мирного насел|эвакуир насел|гуманитарной помощ|гуманитарную помощ)/;
+var FEED_WAR = /(войн|военн|конфликт|боев|обстрел|бомбардир|оккупац|осад|блокад|вторжен|фронт|всу |армия|авиаудар|удар по)/;
 function _fixDomain(e){
   if(!e) return null;
   var d=String(e.domain||'').toLowerCase();
@@ -8663,6 +8665,9 @@ function _fixDomain(e){
   if(FEED_GEO_BLOCK.test(s)) return null;
   for(var i=0;i<FEED_GEO_STRONG.length;i++){ if(s.indexOf(FEED_GEO_STRONG[i])>=0) return 'geopolitics'; }
   if(FEED_GEO_MILCTX.test(s)){ for(var j=0;j<FEED_GEO_WEAK.length;j++){ if(s.indexOf(FEED_GEO_WEAK[j])>=0) return 'geopolitics'; } }
+  // гуманитарные последствия войны -> геополитика (Этап 9, п.4): гум.маркер + военный контекст
+  var _sf = s + ' ' + String(e.summary||'').toLowerCase();
+  if(FEED_HUMAN.test(_sf) && FEED_WAR.test(_sf)) return 'geopolitics';
   return null;
 }
 window.grdfRenderRadar = function(force){
