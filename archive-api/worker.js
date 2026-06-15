@@ -202,6 +202,8 @@ export default {
     return handleSnapshotToday(request, env);
   if (path.startsWith('/api/snapshot/history/') && request.method === 'GET')
     return handleSnapshotHistory(request, env);
+  if (path === '/api/signal-pro' && request.method === 'POST')
+    return handleSignalPro(request, env);
   if (path === '/api/intelligence/daily' && request.method === 'GET')
     return handleIntelligenceDaily(request, env);
   if (path === '/api/alerts' && request.method === 'GET')
@@ -2413,6 +2415,56 @@ async function handleProxyNewsFeed(env) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Capabilities model — single source of truth ───────────────────────────
+// ── Signal Pro — серверный аналитический синтез (закрытый контур) ──────────
+function _buildSignalPro(M) {
+  const DOMS = ['climate','geopolitics','economy','technology','social'];
+  const DL = {climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'};
+  M = M || {}; M.perDom = M.perDom || {}; M.dyn = M.dyn || {}; M.drivers = M.drivers || [];
+  const pressure = Math.max(0, Math.min(100, parseInt(M.pressure,10) || 0));
+  const total = parseInt(M.total,10) || 0, systemic = parseInt(M.systemic,10) || 0, crossLinks = parseInt(M.crossLinks,10) || 0;
+  const lvl = (p) => p>=75?'высокое':(p>=60?'повышенное':(p>=40?'умеренное':'низкое'));
+  const dl = (d) => DL[d] || d;
+  const pct = (d) => { const pd = M.perDom[d]||{}; const rec=parseFloat(pd.rec)||0, old=parseFloat(pd.old)||0; if(old>0) return Math.round(100*(rec-old)/old); return rec>0?100:0; };
+  const SECTORS = {geopolitics:['логистика','транспортные маршруты','энергетические рынки'],climate:['продовольственные цепочки','энергетика','водные ресурсы'],economy:['финансовые рынки','цепочки поставок','энергетика'],technology:['коммуникации','критическая инфраструктура','финансовые системы'],social:['внутренняя стабильность','рынок труда','общественные сервисы']};
+  const EMERGING = {climate:'климатических аномалий',geopolitics:'геополитической напряжённости',economy:'давления на рынки и торговлю',technology:'технологических и инфраструктурных рисков',social:'социальной напряжённости'};
+  const CHAINS = {climate:['Климат','Энергетика','Экономика'],geopolitics:['Геополитика','Логистика','Инфраструктура'],economy:['Экономика','Финансовые рынки','Социум'],technology:['Технологии','Коммуникации','Социум'],social:['Социум','Внутренняя стабильность','Экономика']};
+  const drivers = (M.drivers||[]).filter(d => DOMS.indexOf(d) >= 0);
+  const topDrivers = drivers.slice(0,2), drv = topDrivers.map(dl);
+
+  let interpretation = 'Системное давление — '+lvl(pressure)+' ('+pressure+'/100). ';
+  if (drv.length) interpretation += 'Основными драйверами выступают '+drv.join(' и ')+'. ';
+  interpretation += 'Системных сигналов: '+systemic+' из '+total+'. ';
+  interpretation += (crossLinks>=2) ? 'Наблюдаются признаки формирования условий для каскадных эффектов между доменами.' : 'Выраженных межсекторных каскадных условий пока не наблюдается.';
+
+  const rows = [];
+  DOMS.forEach(d => { const pd = M.perDom[d]; if(!pd || !((parseInt(pd.n,10)||0)>0)) return; rows.push({domain:d, dir:(M.dyn[d]||'flat'), pct:pct(d)}); });
+  const ups = DOMS.filter(d => M.dyn[d]==='up');
+  const ext = ups.filter(d => d==='geopolitics' || d==='climate').length;
+  const note = ups.length ? ((ext >= (ups.length-ext)) ? 'Система смещается в сторону внешних рисков.' : 'Система смещается в сторону внутренних рисков.') : 'Существенных смещений в структуре рисков не наблюдается.';
+
+  const secs = []; topDrivers.forEach(d => (SECTORS[d]||[]).forEach(s => { if(secs.indexOf(s)<0) secs.push(s); }));
+  const consequences = secs.slice(0,5);
+  const emerging = ups.map(d => EMERGING[d]).filter(Boolean);
+  const cascades = drivers.slice(0,3).map(d => CHAINS[d] || [dl(d)]);
+
+  let key = 'Главным источником системного давления '+(drv.length ? ('остаётся '+drv[0]) : 'выступает совокупность факторов')+'. ';
+  key += (pressure>=60) ? ('Повышается вероятность новых каскадных эффектов'+(consequences.length ? (' в таких направлениях, как '+consequences.slice(0,3).join(', ')) : '')+'.') : 'Формируются условия, требующие наблюдения за дальнейшим развитием ситуации.';
+
+  return { interpretation, change:{rows, note}, consequences, emerging, cascades, key };
+}
+
+async function handleSignalPro(request, env) {
+  const tier = await _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  if (!caps.signal_pro_analysis) {
+    return jsonResponse({ locked:true, title:'Signal Pro', description:'Получите доступ к аналитической интерпретации сигналов, последствиям и каскадным сценариям.' }, 200);
+  }
+  let M = {};
+  try { M = await request.json(); } catch(e) { M = {}; }
+  const blocks = _buildSignalPro(M);
+  return jsonResponse(Object.assign({ locked:false, tier:caps.tier }, blocks), 200);
+}
+
 function getTierCapabilities(tier) {
   const CAPS = {
     free: {
@@ -2572,7 +2624,9 @@ function getTierCapabilities(tier) {
       validation_access: 'full+explain',
     },
   };
-  return CAPS[tier] || CAPS.free;
+  const _spc = CAPS[tier] || CAPS.free;
+  _spc.signal_pro_analysis = (_spc.tier !== 'free');
+  return _spc;
 }
 
 // ── Token → tier resolution ───────────────────────────────────────────────
