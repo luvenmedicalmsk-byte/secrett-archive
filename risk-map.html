@@ -8802,11 +8802,12 @@ window._spRender = function(el,d){
   function ul(arr){ return '<ul class="sp-ul">'+(arr||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
   function block(h,body){ return '<div class="sp-block"><div class="sp-block-h">'+esc(h)+'</div>'+body+'</div>'; }
   function badge(label){ var col=/Сильн|Высок/.test(label)?'#ef4444':(/Средн/.test(label)?'#eab308':'#22c55e'); return '<span style="font-size:9px;font-weight:600;letter-spacing:.04em;padding:1px 7px;border-radius:999px;border:1px solid '+col+';color:'+col+';margin-left:6px;white-space:nowrap">'+esc(label)+'</span>'; }
+  function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,175,90,.7);margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
   if(d && d.locked){
     el.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO</span></div>'
       +'<div class="sp-sub">Аналитическая интерпретация сигналов</div>'
       +'<div class="sp-body"><div class="sp-block">'
-      +ul(['Что означают текущие изменения','Основные последствия','Формирующиеся тенденции','Каскадные сценарии','Практические выводы и рекомендации'])
+      +ul(['Что означают текущие изменения','Основные последствия','Формирующиеся тенденции','Каскадные сценарии','Практические выводы для бизнеса, инвесторов и частных лиц','Локальная интерпретация для вашей страны'])
       +'<div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Сигналы показывают, что происходит. Signal Pro объясняет, что это означает и к чему может привести.</div>'
       +'<button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Получить доступ</button>'
       +'</div></div></div>';
@@ -8820,28 +8821,43 @@ window._spRender = function(el,d){
     return line; }).join('');
   var emHtml=''; if(d.emerging&&d.emerging.length){ emHtml='<ul class="sp-ul">'+d.emerging.map(function(e){ if(typeof e==='string') return '<li>'+esc(e)+'</li>'; return '<li>'+esc(e.text)+(e.level?badge(e.level):'')+'</li>'; }).join('')+'</ul>'; }
   var cascHtml=(d.cascades||[]).map(function(c){ var chain=Array.isArray(c)?c:(c.chain||[]); var imp=(!Array.isArray(c)&&c.impact)?c.impact:''; return '<div class="sp-chain">'+chain.map(esc).join(' <span class="sp-arrow">→</span> ')+(imp?badge(imp):'')+'</div>'; }).join('');
-  var practHtml=''; if(d.practical){ var P=d.practical; function sub(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,175,90,.7);margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; } practHtml=sub('Для бизнеса',P.business)+sub('Для инвесторов',P.investors)+sub('Для частных лиц',P.private); }
   var blocks=
      block('Интерпретация системы','<p class="sp-p">'+esc(d.interpretation)+'</p>')
     +block('Что изменилось за 7 дней',(rowsHtml||'<p class="sp-p">Недостаточно данных для оценки динамики.</p>')+'<p class="sp-note">'+esc((d.change&&d.change.note)||'')+'</p>')
     +block('Основные последствия','<p class="sp-lead">Наиболее вероятные зоны распространения давления:</p>'+((d.consequences&&d.consequences.length)?ul(d.consequences):'<p class="sp-p">Выраженных зон распространения не выявлено.</p>'))
     +block('Формирующиеся тенденции',emHtml?('<p class="sp-lead">Наблюдаются ранние признаки усиления:</p>'+emHtml):'<p class="sp-p">Выраженных усиливающихся слабых сигналов не наблюдается.</p>')
     +block('Каскадные сценарии',cascHtml||'<p class="sp-p">Каскадные цепочки пока не формируются.</p>')
-    +(practHtml?block('Практическая интерпретация',practHtml):'')
     +block('Ключевой вывод дня','<p class="sp-p sp-key">'+esc(d.key||'')+'</p>');
   var weekly = d.weekly ? ('<div class="sp-block" style="border-color:rgba(184,151,58,.32);background:rgba(184,151,58,.07);margin-top:10px"><div class="sp-block-h" style="color:#D4AF5A">Главный вывод недели</div><p class="sp-p sp-key">'+esc(d.weekly)+'</p></div>') : '';
-  el.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">SIGNAL PRO</span></div>'
-    +'<div class="sp-sub">Аналитическая интерпретация сигналов</div>'
-    +'<div class="sp-body"><div class="sp-blocks">'+blocks+'</div>'+weekly+'</div></div>';
+  var local='';
+  if(d.local && d.local.country_name){
+    var L=d.local;
+    local='<div class="sp-section" style="margin-top:16px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:16px">'
+      +'<div class="sp-head"><span class="sp-badge">SIGNAL PRO · LOCAL</span></div>'
+      +'<div class="sp-sub">Что это означает для страны: '+esc(L.country_name)+(L.generic?' · базовый профиль':'')+'</div>'
+      +'<div class="sp-body"><div class="sp-blocks">'
+      +block('Практическая интерпретация — '+L.country_name, subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private))
+      +'</div></div></div>';
+  } else {
+    local='<div class="sp-section" style="margin-top:16px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:16px">'
+      +'<div class="sp-head"><span class="sp-badge">SIGNAL PRO · LOCAL</span></div>'
+      +'<div class="sp-sub">Локальная интерпретация</div>'
+      +'<div class="sp-body"><div class="sp-block"><p class="sp-p" style="opacity:.75">Откройте страну в разделе «Страны» — Signal Pro покажет, что текущие сигналы означают именно для неё: для бизнеса, инвесторов и частных лиц.</p></div></div></div>';
+  }
+  el.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">SIGNAL PRO · GLOBAL</span></div>'
+    +'<div class="sp-sub">Глобальная интерпретация сигналов</div>'
+    +'<div class="sp-body"><div class="sp-blocks">'+blocks+'</div>'+weekly+'</div></div>'+local;
 };
 window._renderSignalPro = function(M){
   var el=document.getElementById('grdf-signalpro'); if(!el||!M) return;
   var DOMS=['climate','geopolitics','economy','technology','social'];
-  var sig=[M.pressure,M.total,M.systemic,M.critical,M.crossLinks,(M.drivers||[]).join('-'),DOMS.map(function(d){return (M.dyn&&M.dyn[d])||'';}).join('')].join('|');
+  var cc=''; try{ cc=(typeof _grdfCurrentCountry!=='undefined'&&_grdfCurrentCountry)?_grdfCurrentCountry:''; }catch(e){}
+  var cname=''; try{ var _arr=(typeof _grdfData!=='undefined'&&_grdfData&&_grdfData.countries)||[]; for(var _i=0;_i<_arr.length;_i++){ if(_arr[_i].country===cc){ cname=_arr[_i].country_name||''; break; } } }catch(e){}
+  var sig=[M.pressure,M.total,M.systemic,M.critical,M.crossLinks,(M.drivers||[]).join('-'),DOMS.map(function(d){return (M.dyn&&M.dyn[d])||'';}).join(''),cc].join('|');
   if(el.getAttribute('data-sig')===sig && el.getAttribute('data-done')==='1') return;
   el.setAttribute('data-sig',sig);
-  var perDom={}; DOMS.forEach(function(d){ var pd=(M.perDom&&M.perDom[d])||{}; perDom[d]={n:pd.n||0,rec:pd.rec||0,old:pd.old||0}; });
-  var payload={total:M.total,active:M.active,systemic:M.systemic,critical:M.critical,pressure:M.pressure,crossLinks:M.crossLinks,perDom:perDom,dyn:M.dyn||{},drivers:M.drivers||[]};
+  var perDom={}; DOMS.forEach(function(d){ var pd=(M.perDom&&M.perDom[d])||{}; perDom[d]={n:pd.n||0,rec:pd.rec||0,old:pd.old||0,sys:pd.sys||0}; });
+  var payload={total:M.total,active:M.active,systemic:M.systemic,critical:M.critical,pressure:M.pressure,crossLinks:M.crossLinks,perDom:perDom,dyn:M.dyn||{},drivers:M.drivers||[],country:cc,country_name:cname};
   var tok=''; try{ tok=localStorage.getItem('cc_token')||''; }catch(e){}
   var base=(typeof API!=='undefined'&&API)?API:'https://archive-api.luven-medical-msk.workers.dev';
   var h={'Content-Type':'application/json'}; if(tok) h['X-Snapshot-Token']=tok;
