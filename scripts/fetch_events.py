@@ -1820,6 +1820,21 @@ def process_events(raw_items):
 
 _ACTOR_REGION = [('евросоюз','ЕС'),('еврокомисс','ЕС'),('еврокоми','ЕС'),('брюссель','ЕС'),('ес ','ЕС'),('ес,','ЕС'),
                  ('сша ','США'),('вашингтон','США'),('белый дом','США'),('нато ','НАТО'),('оон ','ООН'),('g7','G7'),('джи-7','G7')]
+_TRIVIA_TITLE_RE = re.compile(r'\u0437\u043d\u0430\u043c\u0435\u043d\u0438\u0442\w*\s+\u0444\u0438\u043b\u044c\u043c|\u043a\u0438\u043d\u043e\u0441\u0442\u0443\u0434\u0438\w*[^.]{0,60}(?:\u0441\u043d\u044f[\u043b\u0442]\w*|\u0444\u0438\u043b\u044c\u043c|\u043a\u0430\u0440\u0442\u0438\u043d)', re.IGNORECASE)
+def _fix_trivia_title(e):
+    """Если заголовок — киношная тривия из тела статьи, берём первое предложение саммари (реальный лид)."""
+    try:
+        t = e.get('title') or ''
+        if not _TRIVIA_TITLE_RE.search(t): return e
+        s = (e.get('summary') or '').strip()
+        if not s: return e
+        m = re.match(r'\s*(.{15,150}?[.!?\u2026])(\s|$)', s)
+        cand = (m.group(1) if m else s[:120]).strip()
+        if cand and not _TRIVIA_TITLE_RE.search(cand):
+            e['title'] = cand
+    except Exception:
+        pass
+    return e
 def _ndup_stems(t):
     out=[]; sn=set()
     for w in re.sub(r'[^0-9a-zа-яё ]',' ',(t or '').lower()).split():
@@ -6058,6 +6073,8 @@ def save_enriched(events, previous_snapshot=None):
                     for _act,_reg in _ACTOR_REGION:
                         if _tt.startswith(_act): _e['region'] = _reg; break
                 except Exception: pass
+            for _e in enriched["events"]:
+                _fix_trivia_title(_e)
             enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
