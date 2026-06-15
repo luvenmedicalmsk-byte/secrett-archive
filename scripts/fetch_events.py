@@ -1820,6 +1820,40 @@ def process_events(raw_items):
 
 _ACTOR_REGION = [('евросоюз','ЕС'),('еврокомисс','ЕС'),('еврокоми','ЕС'),('брюссель','ЕС'),('ес ','ЕС'),('ес,','ЕС'),
                  ('сша ','США'),('вашингтон','США'),('белый дом','США'),('нато ','НАТО'),('оон ','ООН'),('g7','G7'),('джи-7','G7')]
+def _ndup_stems(t):
+    out=[]; sn=set()
+    for w in re.sub(r'[^0-9a-zа-яё ]',' ',(t or '').lower()).split():
+        if len(w)>=4:
+            p=w[:4]
+            if p not in sn: sn.add(p); out.append(p)
+    return out
+def _ndup_ovl(a,b):
+    if not a or not b: return (0,0.0)
+    sa=set(a); inter=sum(1 for p in b if p in sa)
+    return (inter, inter/min(len(a),len(b)))
+def _ndup_day(s):
+    try:
+        import datetime as _dt; return _dt.date.fromisoformat((s or '')[:10]).toordinal()
+    except Exception: return None
+def _ndup_sev(e):
+    try: return float(e.get('severity') or 0)
+    except Exception: return 0.0
+def _ndup_collapse(events):
+    """Near-dup collapse (паритет с C2 Событий): перефраз. репосты, тот же домен, дата +-3д, оставляем макс. риск."""
+    kept=[]; out=[]
+    for e in events:
+        ew=_ndup_stems(e.get('title')); et=_ndup_day(e.get('date')); dup=-1
+        for idx,k in enumerate(kept):
+            if k['dom']!=(e.get('domain') or ''): continue
+            if et is not None and k['t'] is not None and abs(et-k['t'])>3: continue
+            inter,ratio=_ndup_ovl(ew,k['words'])
+            if inter>=4 and ratio>=0.6: dup=idx; break
+        if dup<0:
+            kept.append({'dom':(e.get('domain') or ''),'t':et,'words':ew,'idx':len(out)}); out.append(e)
+        else:
+            pi=kept[dup]['idx']
+            if _ndup_sev(e)>_ndup_sev(out[pi]): out[pi]=e; kept[dup]['words']=ew
+    return out
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -6024,6 +6058,7 @@ def save_enriched(events, previous_snapshot=None):
                     for _act,_reg in _ACTOR_REGION:
                         if _tt.startswith(_act): _e['region'] = _reg; break
                 except Exception: pass
+            enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
