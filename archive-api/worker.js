@@ -2504,6 +2504,7 @@ function _buildSignalProLocal(p) {
   p = p || {};
   const DOMS=['climate','geopolitics','economy','technology','social'];
   const DL={climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'};
+  const DOM_FACTOR={climate:'климатическими факторами',geopolitics:'геополитическими факторами',economy:'экономическими факторами',technology:'технологическими факторами',social:'социальными факторами'};
   const SP_STRAT_WEIGHT={
     RU:{geopolitics:1.8,economy:1.4},
     UA:{geopolitics:2.0,economy:1.3},
@@ -2519,23 +2520,30 @@ function _buildSignalProLocal(p) {
   const name=(prof&&prof.name)||p.country_name||cc||'';
   if(!name) return null;
   const num=(x)=>{ const v=parseFloat(x); return isNaN(v)?null:v; };
+  const clamp01=(x)=> Math.max(0, Math.min(1, x));
   const ds=p.domain_scores||{};
   let ordered;
   if(Object.keys(ds).length){ ordered=DOMS.filter(d=>ds[d]!=null).map(d=>({d:d,s:num(ds[d])||0})).sort((a,b)=>b.s-a.s); }
   else { ordered=(p.drivers||[]).filter(d=>DOMS.indexOf(d)>=0).map(d=>({d:d,s:0})); }
-  // ведущий ПО ДАННЫМ (объём/уровень)
   const dataLead = ordered[0]?ordered[0].d:null;
   const dataScore = ordered[0]?Math.round(ordered[0].s):null;
-  // ведущий ПО СТРАТЕГИЧЕСКОМУ ВЕСУ (score × вес)
-  const W = SP_STRAT_WEIGHT[key] || {};
-  const wOf = (d)=> (W[d]!=null ? W[d] : 1.0);
-  const orderedStrat = ordered.map(o=>({d:o.d,s:o.s,w:o.s*wOf(o.d)})).sort((a,b)=>b.w-a.w);
-  const stratLead = orderedStrat[0]?orderedStrat[0].d:null;
-  const stratD2 = orderedStrat[1]?orderedStrat[1].d:null;
-  const topDoms = orderedStrat.slice(0,2).map(o=>o.d);
   const gri=num(p.gri), cri=num(p.cri);
   const d7=p.d7||{}; const g7=num(d7.gri), c7=num(d7.cri);
   const fc=p.forecast||null;
+  // ── адаптивный коэффициент текущей ситуации (0..1) ──
+  const fcUp = (fc && num(fc.score_max)!=null && gri!=null && num(fc.score_max)>gri) ? 1 : 0;
+  const intensity = clamp01(0.30*((gri!=null?gri:0)/100) + 0.25*((cri!=null?cri:0)/100)
+    + 0.20*clamp01((g7!=null?g7:0)/10) + 0.15*clamp01((c7!=null?c7:0)/10) + 0.10*fcUp);
+  const baseW=(d)=> { const W=SP_STRAT_WEIGHT[key]||{}; return W[d]!=null?W[d]:1.0; };
+  // стратегические домены усиливаются текущей ситуацией; иначе — базовый вес
+  const adaptiveW=(d)=> { const b=baseW(d); return b + (b>1 ? (b-1)*intensity*0.9 : 0); };
+  const orderedStrat = ordered.map(o=>({d:o.d,s:o.s,aw:adaptiveW(o.d),w:o.s*adaptiveW(o.d)})).sort((a,b)=>b.w-a.w);
+  const stratLead = orderedStrat[0]?orderedStrat[0].d:null;
+  const stratD2 = orderedStrat[1]?orderedStrat[1].d:null;
+  const topDoms = orderedStrat.slice(0,2).map(o=>o.d);
+  const stratScore = orderedStrat[0]?orderedStrat[0].w:0;
+  const stratLevel = stratScore>=90?'Критическое':(stratScore>=70?'Высокое':(stratScore>=50?'Повышенное':(stratScore>=30?'Умеренное':'Низкое')));
+
   const DOM_AUD={
     climate:{business:'усиление климатических рисков для логистики и инфраструктуры',investors:'климатический домен как источник неопределённости; внимание к сырьевым и энергетическим активам',private:'возможное влияние погодных событий на транспорт и коммунальную инфраструктуру'},
     geopolitics:{business:'сохранение геополитического давления на международные операции и поставки',investors:'геополитическая премия за риск остаётся значимым фактором',private:'возможное влияние на цены и доступность отдельных товаров'},
@@ -2545,9 +2553,13 @@ function _buildSignalProLocal(p) {
   };
   function aud(k){ const out=[]; topDoms.forEach(d=>{ const h=(DOM_AUD[d]||{})[k]; if(h&&out.indexOf(h)<0) out.push(h); }); if(prof&&prof[k]&&prof[k][0]&&out.indexOf(prof[k][0])<0) out.push(prof[k][0]); if(!out.length) out.push('требуется наблюдение за развитием ситуации'); return out.slice(0,4); }
 
+  const stratNote = (stratLead && dataLead && stratLead!==dataLead)
+    ? ('Несмотря на то, что наибольший объём сигналов зафиксирован в домене '+(DL[dataLead]||dataLead)+', текущее системное давление в большей степени формируется '+(DOM_FACTOR[stratLead]||('доменом «'+(DL[stratLead]||stratLead)+'»'))+'.')
+    : '';
+
   let changed7d='';
   if(stratLead && dataLead && stratLead!==dataLead){
-    changed7d+='Наибольший объём сигналов сейчас фиксируется в домене '+(DL[dataLead]||dataLead)+(dataScore!=null&&dataScore>0?(' ('+dataScore+'/100)'):'')+', однако основным стратегическим источником риска остаётся '+(DL[stratLead]||stratLead)+'. ';
+    changed7d+='Наибольший объём сигналов сейчас фиксируется в домене '+(DL[dataLead]||dataLead)+(dataScore!=null&&dataScore>0?(' ('+dataScore+'/100)'):'')+', однако основным стратегическим источником риска остаётся '+(DL[stratLead]||stratLead)+' (стратегическое влияние: '+stratLevel.toLowerCase()+'). ';
   } else if(stratLead||dataLead){
     changed7d+='Ведущий домен — '+(DL[stratLead||dataLead]||(stratLead||dataLead))+(dataScore!=null&&dataScore>0?(' ('+dataScore+'/100)'):'')+'. ';
   }
@@ -2560,17 +2572,17 @@ function _buildSignalProLocal(p) {
   var watchDom = (dataScore!=null&&dataScore>=55&&dataScore<60) ? dataLead : (stratD2||stratLead);
   if(watchDom) watch+='Повышенное внимание к домену «'+(DL[watchDom]||watchDom)+'». ';
   if(dataScore!=null&&dataScore>=55&&dataScore<60) watch+='Он приближается к зоне высокого риска (порог 60). ';
-  if(fc&&num(fc.score_max)!=null&&gri!=null&&num(fc.score_max)>gri) watch+='При сохранении текущего темпа возможно дальнейшее усиление риска. ';
+  if(fcUp) watch+='При сохранении текущего темпа возможно дальнейшее усиление риска. ';
   watch+='Требуется наблюдение за дальнейшей динамикой.';
 
-  let keyLocal='Ключевым стратегическим источником локального давления сейчас выступает '+(stratLead?(DL[stratLead]||stratLead):'совокупность факторов')+'. ';
+  let keyLocal='Ключевым стратегическим источником локального давления сейчас выступает '+(stratLead?(DL[stratLead]||stratLead):'совокупность факторов')+(stratLead?(' (стратегическое влияние: '+stratLevel.toLowerCase()+')'):'')+'. ';
   if(g7!=null&&g7>0) keyLocal+='Сохраняется тенденция к росту риска. ';
   else if(g7!=null&&g7<0) keyLocal+='Наблюдается снижение интенсивности риска. ';
   keyLocal+='Повышается вероятность распространения влияния на смежные сферы; требуется наблюдение за развитием ситуации.';
   if(cri!=null&&cri>=75) keyLocal+=' Каскадный риск находится на высоком уровне.';
 
   return { country:key, country_name:name, generic:!prof,
-    data_lead:dataLead, strat_lead:stratLead,
+    data_lead:dataLead, data_score:dataScore, strat_lead:stratLead, strat_level:stratLevel, strat_note:stratNote,
     changed7d:changed7d.trim(), business:aud('business'), investors:aud('investors'), private:aud('private'),
     watch:watch.trim(), keyLocal:keyLocal.trim() };
 }
