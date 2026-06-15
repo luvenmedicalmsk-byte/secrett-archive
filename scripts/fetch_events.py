@@ -69,6 +69,22 @@ def strip_html(text):
     return text
 
 
+_PROMO_RE = re.compile(
+    r'(\s*@[^|\n]{1,60}\|\s*подписывайтесь[.!\s]*$)'
+    r'|(\s*\|\s*подписывайтесь[.!\s]*$)'
+    r'|(\s*подписывайтесь[^.!?\n]{0,45}[.!\s]*$)'
+    r'|(\s*подписаться[^.!?\n]{0,45}[.!\s]*$)'
+    r'|(\s*подпишитесь[^.!?\n]{0,45}[.!\s]*$)'
+    r'|(\s*читайте (?:нас|подробнее)[^.!?\n]{0,45}[.!\s]*$)'
+    r'|(\s*@[A-Za-z\u0410-\u044f\u0401\u04510-9_ ]{2,40}\s*$)',
+    re.IGNORECASE)
+def _strip_promo(t):
+    """Срез промо-хвостов TG (@Канал | Подписывайтесь, Подписывайтесь..., хвостовой @хендл)."""
+    t = (t or '').strip(); prev = None
+    while prev != t and t:
+        prev = t; t = _PROMO_RE.sub('', t).rstrip(' \t\n|\u00b7\u2014\u2013-')
+    return t.strip()
+
 def _smart_truncate(text, limit=150):
     """Аккуратная обрезка: первое предложение -> граница клаузы -> граница слова + …"""
     text = (text or '').strip()
@@ -1605,7 +1621,7 @@ def process_events(raw_items):
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
-        _raw = strip_html(item.get('desc','')).strip()
+        _raw = _strip_promo(strip_html(item.get('desc','')).strip())
         if len(_raw) <= 1100:
             summary = _raw
         else:
@@ -1619,7 +1635,7 @@ def process_events(raw_items):
 
         _ev = {
             "id": ev_id,
-            "title": _smart_truncate(item['title'], 130),
+            "title": _smart_truncate(_strip_promo(item['title']), 130),
             "domain": domain,
             "severity": severity,
             "lat": lat, "lng": lng,
