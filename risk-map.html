@@ -8361,7 +8361,7 @@ window._spRenderCountryLocal = function(el, d, cname){
       +'<div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO · LOCAL</span></div>'
       +'<div class="sp-sub">Что текущие сигналы означают для страны: '+esc(cname||'')+'</div>'
       +'<div class="sp-body"><div class="sp-block">'
-      +ul(['Рейтинг стратегического влияния по доменам (0–100)','Прогноз стратегического влияния на 7 и 30 дней','Траектория и смещение стратегического давления','Баланс фактического, стратегического и прогнозного давления','Ключевой локальный вывод'])
+      +ul(['Рейтинг стратегического влияния по доменам (0–100)','Прогноз стратегического влияния на 7 и 30 дней','Траектория и смещение стратегического давления','Карта переходов давления между доменами','Баланс фактического, стратегического и прогнозного давления','Ключевой локальный вывод'])
       +'<div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Signal Pro объясняет, что означают текущие сигналы и куда смещается давление.</div>'
       +'<button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Получить доступ</button>'
       +'</div></div></div></div>';
@@ -8397,6 +8397,28 @@ window._spRenderCountryLocal = function(el, d, cname){
       +(T.confidence!=null?'<div class="sp-dyn"><span class="sp-dyn-d">Уверенность модели</span><span class="sp-dyn-v" style="color:#cbd5e1">'+T.confidence+'%</span></div>':'')
       +(T.shift_note?'<p class="sp-note">'+esc(T.shift_note)+'</p>':''));
   }
+  var nextp='';
+  if(L.next_pressure && L.next_pressure.domain){
+    var NP=L.next_pressure;
+    nextp=blk('Следующий домен под давлением',
+       '<div class="sp-dyn"><span class="sp-dyn-d">Домен</span><span class="sp-dyn-v" style="color:#ff7a00;font-weight:600">'+esc(dlc(NP.domain))+'</span></div>'
+      +'<div class="sp-dyn"><span class="sp-dyn-d">Источник давления</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(NP.source))+'</span></div>'
+      +(NP.confidence!=null?'<div class="sp-dyn"><span class="sp-dyn-d">Уверенность</span><span class="sp-dyn-v" style="color:#cbd5e1">'+NP.confidence+'%</span></div>':'')
+      +(NP.cause?'<p class="sp-note">'+esc(NP.cause)+'</p>':''));
+  }
+  var trans='';
+  if(L.pressure_transitions && L.pressure_transitions.length){
+    var bandCol=function(b){ return b==='high'?'#ff7a00':(b==='medium'?'#eab308':'rgba(232,224,208,.5)'); };
+    var bandLab=function(b){ return b==='high'?'Высокая вероятность':(b==='medium'?'Средняя вероятность':'Низкая вероятность'); };
+    var groups={high:[],medium:[],low:[]};
+    L.pressure_transitions.forEach(function(x){ (groups[x.band]||groups.low).push(x); });
+    var tinner='';
+    ['high','medium','low'].forEach(function(b){ if(!groups[b].length) return;
+      tinner+='<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:'+bandCol(b)+';margin:8px 0 4px">'+bandLab(b)+'</div>';
+      tinner+=groups[b].map(function(x){ return '<div class="sp-dyn"><span class="sp-dyn-d" style="color:#E8E0D0">'+esc(dlc(x.source))+' → '+esc(dlc(x.target))+'</span><span class="sp-dyn-v" style="color:'+bandCol(x.band)+';font-weight:600">'+x.pts+'</span></div>'; }).join('');
+    });
+    trans=blk('Вероятные переходы давления', tinner);
+  }
   var sfiMap={}; (L.sfi||[]).forEach(function(x){sfiMap[x.domain]=x;});
   var rk='';
   if(L.ranking&&L.ranking.length){
@@ -8430,7 +8452,7 @@ window._spRenderCountryLocal = function(el, d, cname){
        '<p class="sp-p" style="margin-bottom:8px">'+esc(dlc(wd))+'</p>'
       +frow('Влияние на каскады', sfc.cascade)+frow('Скорость роста', sfc.velocity)+frow('Прогноз', sfc.forecast)+frow('Междоменное распространение', sfc.cross)+frow('Страновой коэффициент', wq));
   }
-  var blocks= focus + traj + rk + pb
+  var blocks= focus + traj + nextp + trans + rk + pb
     +(L.changed7d?blk('Что изменилось за 7 дней','<p class="sp-p">'+esc(L.changed7d)+'</p>'):'')
     +blk('Практическая интерпретация', subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private))
     +(L.watch?blk('На что обратить внимание','<p class="sp-p">'+esc(L.watch)+'</p>'):'')
