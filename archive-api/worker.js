@@ -2442,13 +2442,6 @@ function _buildSignalPro(M) {
     technology:{up:'Рост технологических и инфраструктурных сигналов.',down:'Снижение интенсивности новых технологических сигналов.'},
     social:{up:'Рост социальной напряжённости в потоке сигналов.',down:'Снижение интенсивности социальных сигналов.'}
   };
-  const PRACT = {
-    geopolitics:{business:['усиление санкционных рисков','логистические ограничения','давление на международные поставки'],investors:['рост геополитической премии в ценах','давление на сырьевые рынки','усиление интереса к защитным активам'],private:['возможное влияние на цены отдельных товаров']},
-    climate:{business:['риски для цепочек поставок сырья','рост страховых издержек','перебои в энергоснабжении'],investors:['давление на агро- и сырьевые рынки','рост волатильности в сезонных активах'],private:['возможное влияние на цены продовольствия']},
-    economy:{business:['рост неопределённости в отдельных секторах','давление на стоимость капитала'],investors:['признаки роста волатильности','изменение структуры рисков'],private:['возможное влияние на занятость и доходы']},
-    technology:{business:['риски для цифровой инфраструктуры','рост требований к устойчивости систем'],investors:['переоценка технологических рисков'],private:['возможные перебои в цифровых сервисах']},
-    social:{business:['рост операционных и репутационных рисков'],investors:['рост страновой премии за риск'],private:['влияние на повседневную стабильность и сервисы']}
-  };
   const drivers = (M.drivers||[]).filter(d => DOMS.indexOf(d) >= 0);
   const topDrivers = drivers.slice(0,2), drv = topDrivers.map(dl), top = drivers[0] || null;
 
@@ -2477,10 +2470,6 @@ function _buildSignalPro(M) {
 
   const cascades = drivers.slice(0,3).map(d => { const s = sysOf(d); const impact = (s>=3 && pressure>=60) ? 'Высокое' : (s>=1 ? 'Среднее' : 'Низкое'); return { chain: CHAINS[d] || [dl(d)], impact: impact }; });
 
-  function gather(aud){ const out=[]; topDrivers.forEach(d => { ((PRACT[d]||{})[aud]||[]).forEach(x => { if(out.indexOf(x)<0) out.push(x); }); }); return out.slice(0,4); }
-  const practical = { business: gather('business'), investors: gather('investors'),
-    private: gather('private').concat(['необходимость наблюдения за развитием ситуации']).filter((v,i,a)=>a.indexOf(v)===i).slice(0,4) };
-
   let key = 'Главным источником системного давления '+(drv.length ? ('остаётся '+drv[0]) : 'выступает совокупность факторов')+'. ';
   key += (pressure>=60) ? ('Повышается вероятность новых каскадных эффектов'+(consequences.length ? (' в таких направлениях, как '+consequences.slice(0,3).join(', ')) : '')+'.') : 'Формируются условия, требующие наблюдения за дальнейшим развитием ситуации.';
 
@@ -2489,7 +2478,47 @@ function _buildSignalPro(M) {
   weekly += (critical>0) ? 'Присутствуют отдельные сигналы критического уровня; уровень неопределённости высокий.'
     : ('Критических признаков системного кризиса не наблюдается, однако уровень неопределённости остаётся '+(pressure>=60?'повышенным':'умеренным')+'.');
 
-  return { interpretation, change:{rows, note}, consequences, emerging, cascades, practical, key, weekly };
+  return { interpretation, change:{rows, note}, consequences, emerging, cascades, key, weekly };
+}
+
+
+const SP_COUNTRY_PROFILE = {
+  TR:{name:'Турция', business:['логистические коридоры Чёрного моря','импорт энергоносителей','туристический поток'], investors:['курсовые и инфляционные риски','чувствительность к ценам на сырьё'], private:['инфляционное давление на стоимость жизни','цены на топливо и продовольствие']},
+  RU:{name:'Россия', business:['санкционные режимы','экспорт сырья','транспортные коридоры','международные расчёты'], investors:['валютные и сырьевые риски','ограничения доступа к рынкам капитала'], private:['курсовая динамика и цены','доступность импортных товаров']},
+  DE:{name:'Германия', business:['экспортная промышленность','энергорынок','цепочки поставок'], investors:['экспозиция промышленного сектора','энергетические издержки'], private:['цены на энергоносители','рынок труда в промышленности']},
+  US:{name:'США', business:['внешняя торговля','цепочки поставок','энергетика'], investors:['фондовые рынки','ставки и курс доллара'], private:['цены на топливо','занятость']},
+  UA:{name:'Украина', business:['логистика и инфраструктура','энергоснабжение','экспортные коридоры'], investors:['высокий страновой риск','волатильность активов'], private:['прямое влияние на безопасность и быт','цены и доступность товаров']},
+  CN:{name:'Китай', business:['экспортные цепочки','промышленное производство','торговые ограничения'], investors:['рыночная и регуляторная неопределённость','сырьевой спрос'], private:['занятость в экспортных секторах','цены']},
+  GB:{name:'Великобритания', business:['финансовый сектор','торговые связи','энергорынок'], investors:['курс фунта и ставки','финансовые рынки'], private:['стоимость жизни','энергозатраты']},
+  FR:{name:'Франция', business:['промышленность и АПК','энергетика','экспорт'], investors:['экспозиция к ценам на энергоносители'], private:['цены на энергию и продовольствие']},
+  IL:{name:'Израиль', business:['безопасность поставок','технологический экспорт'], investors:['повышенная геополитическая премия'], private:['влияние на безопасность и быт']},
+  IR:{name:'Иран', business:['санкционные ограничения','экспорт нефти'], investors:['ограниченный доступ к рынкам','валютные риски'], private:['инфляция и цены']},
+  IN:{name:'Индия', business:['импорт энергоносителей','экспортные секторы'], investors:['чувствительность к ценам на нефть','волатильность рупии'], private:['цены на топливо и продовольствие']},
+  SA:{name:'Саудовская Аравия', business:['нефтяной экспорт','региональная логистика'], investors:['зависимость от цен на нефть'], private:['региональные риски']},
+  KZ:{name:'Казахстан', business:['транзитные коридоры','экспорт сырья'], investors:['сырьевая зависимость','валютные риски'], private:['цены и логистика товаров']},
+  PL:{name:'Польша', business:['логистический хаб региона','энергорынок'], investors:['экспозиция к региональным рискам'], private:['цены на энергию']},
+  JP:{name:'Япония', business:['импорт энергоносителей','цепочки поставок'], investors:['курс иены и сырьевые цены'], private:['цены на импорт и энергию']}
+};
+const SP_C_ALIAS = {'турция':'TR','россия':'RU','германия':'DE','сша':'US','соединённые штаты':'US','украина':'UA','китай':'CN','великобритания':'GB','англия':'GB','франция':'FR','израиль':'IL','иран':'IR','индия':'IN','саудовская аравия':'SA','казахстан':'KZ','польша':'PL','япония':'JP'};
+function _buildSignalProLocal(M, cc, cname) {
+  M = M || {}; M.drivers = M.drivers || [];
+  cc = (cc==null?'':String(cc)).trim();
+  let key = cc.toUpperCase();
+  let prof = SP_COUNTRY_PROFILE[key] || null;
+  if (!prof) { const n=(cname||cc||'').toString().trim().toLowerCase(); if (SP_C_ALIAS[n]) { key=SP_C_ALIAS[n]; prof=SP_COUNTRY_PROFILE[key]; } }
+  const name = (prof && prof.name) || cname || cc || '';
+  if (!name) return null;
+  const DOMS=['climate','geopolitics','economy','technology','social'];
+  const drivers = (M.drivers||[]).filter(d=>DOMS.indexOf(d)>=0).slice(0,2);
+  const DOM_HOOK = {
+    geopolitics:{business:'давление санкционных и торговых ограничений',investors:'рост геополитической премии за риск',private:'возможное влияние на цены и доступность товаров'},
+    climate:{business:'климатические риски для поставок и инфраструктуры',investors:'давление на агро- и сырьевые активы',private:'влияние на цены продовольствия и коммунальные расходы'},
+    economy:{business:'рост стоимости капитала и неопределённости',investors:'повышенная рыночная волатильность',private:'влияние на занятость и доходы'},
+    technology:{business:'риски для цифровой инфраструктуры',investors:'переоценка технологических рисков',private:'возможные перебои в цифровых сервисах'},
+    social:{business:'операционные и репутационные риски',investors:'рост страновой премии за риск',private:'влияние на повседневную стабильность'}
+  };
+  function aud(k){ let out = (prof && prof[k]) ? prof[k].slice() : []; drivers.forEach(d=>{ const h=(DOM_HOOK[d]||{})[k]; if(h && out.indexOf(h)<0) out.push(h); }); if(!out.length) out.push('требуется наблюдение за развитием ситуации'); return out.slice(0,5); }
+  return { country: key, country_name: name, generic: !prof, business: aud('business'), investors: aud('investors'), private: aud('private') };
 }
 
 async function handleSignalPro(request, env) {
@@ -2501,7 +2530,8 @@ async function handleSignalPro(request, env) {
   let M = {};
   try { M = await request.json(); } catch(e) { M = {}; }
   const blocks = _buildSignalPro(M);
-  return jsonResponse(Object.assign({ locked:false, tier:caps.tier }, blocks), 200);
+  const local = _buildSignalProLocal(M, M.country, M.country_name);
+  return jsonResponse(Object.assign({ locked:false, tier:caps.tier, local:local }, blocks), 200);
 }
 
 function getTierCapabilities(tier) {
