@@ -8671,6 +8671,9 @@ window.grdfRenderRadar = function(force){
   var src = (typeof ALL_EVENTS!=='undefined' && ALL_EVENTS) ? ALL_EVENTS.slice() : [];
   if(typeof NEWS_EVENTS!=='undefined' && NEWS_EVENTS && NEWS_EVENTS.length) src = src.concat(NEWS_EVENTS);
   if(typeof _fixDomain==='function') src.forEach(function(e){ var nd=_fixDomain(e); if(nd) e.domain=nd; });
+  // unify with «События»: same source-blocklist + clickbait filters
+  if(typeof FEED_SRC_BLOCK!=='undefined') src = src.filter(function(e){ var r=String(e.region||'').trim().toLowerCase(); return FEED_SRC_BLOCK.indexOf(r)<0; });
+  src = src.filter(function(e){ var _t=String(e.title||'').trim().toLowerCase(); return !(_t.indexOf('смотри')===0||_t.indexOf('видео:')===0||_t.indexOf('watch:')===0||_t.indexOf('фото:')===0||_t.indexOf('look:')===0); });
   var DOMS = ['climate','geopolitics','economy','technology','social'];
   var DC2 = (typeof DC!=='undefined' && DC) ? DC : {climate:'#22c55e',geopolitics:'#ff7a00',economy:'#38bdf8',technology:'#a855f7',social:'#ef4444'};
   var DL2 = (typeof DL!=='undefined' && DL) ? DL : {climate:'\u041a\u043b\u0438\u043c\u0430\u0442',geopolitics:'\u0413\u0435\u043e\u043f\u043e\u043b\u0438\u0442\u0438\u043a\u0430',economy:'\u042d\u043a\u043e\u043d\u043e\u043c\u0438\u043a\u0430',technology:'\u0422\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u0438',social:'\u0421\u043e\u0446\u0438\u0443\u043c'};
