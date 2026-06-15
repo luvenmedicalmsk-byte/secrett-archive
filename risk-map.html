@@ -8354,26 +8354,30 @@ window._spRenderCountryLocal = function(el, d, cname){
   function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function ul(arr){ return '<ul class="sp-ul">'+(arr||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
   function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,175,90,.7);margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
+  function blk(h,body){ return '<div class="sp-block"><div class="sp-block-h">'+esc(h)+'</div>'+body+'</div>'; }
   if(!el) return;
   if(d && d.locked){
     el.innerHTML='<div style="margin:0 14px 8px"><div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
       +'<div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO · LOCAL</span></div>'
       +'<div class="sp-sub">Что текущие сигналы означают для страны: '+esc(cname||'')+'</div>'
       +'<div class="sp-body"><div class="sp-block">'
-      +ul(['Влияние на бизнес и поставки','Риски для инвесторов и рынков','Влияние на стоимость жизни'])
-      +'<div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Signal Pro объясняет, как текущие сигналы влияют именно на эту страну — для бизнеса, инвесторов и частных лиц.</div>'
+      +ul(['Что изменилось за 7 дней','Влияние на бизнес, инвесторов и частных лиц','На что обратить внимание в ближайшее время','Ключевой локальный вывод'])
+      +'<div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Signal Pro объясняет, что означают текущие сигналы именно для этой страны.</div>'
       +'<button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Получить доступ</button>'
       +'</div></div></div></div>';
     return;
   }
   if(!d || !d.local || !d.local.country_name){ el.innerHTML=''; return; }
   var L=d.local;
+  var blocks=
+     (L.changed7d?blk('Что изменилось за 7 дней','<p class="sp-p">'+esc(L.changed7d)+'</p>'):'')
+    +blk('Практическая интерпретация', subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private))
+    +(L.watch?blk('На что обратить внимание','<p class="sp-p">'+esc(L.watch)+'</p>'):'')
+    +(L.keyLocal?blk('Ключевой локальный вывод','<p class="sp-p sp-key">'+esc(L.keyLocal)+'</p>'):'');
   el.innerHTML='<div style="margin:0 14px 8px"><div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
     +'<div class="sp-head"><span class="sp-badge">SIGNAL PRO · LOCAL</span></div>'
-    +'<div class="sp-sub">Что это означает для страны: '+esc(L.country_name)+(L.generic?' · базовый профиль':'')+'</div>'
-    +'<div class="sp-body"><div class="sp-blocks"><div class="sp-block">'
-    +subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private)
-    +'</div></div></div></div>';
+    +'<div class="sp-sub">Что текущие сигналы означают для страны: '+esc(L.country_name)+(L.generic?' · базовый профиль':'')+'</div>'
+    +'<div class="sp-body"><div class="sp-blocks">'+blocks+'</div></div></div></div>';
 };
 window._renderCountryLocal = function(c){
   var el=document.getElementById('grdf-cc-local'); if(!el||!c) return;
@@ -8381,7 +8385,12 @@ window._renderCountryLocal = function(c){
   var ds=c.domain_scores||{};
   var drivers=Object.keys(ds).map(function(d){return {d:d,s:parseFloat(ds[d]||0)};}).sort(function(a,b){return b.s-a.s;}).map(function(x){return x.d;}).filter(function(d){return DOMS.indexOf(d)>=0;});
   var cc=c.country||'', cname=c.country_name||cc;
-  var payload={drivers:drivers,country:cc,country_name:cname};
+  function n(x){ var v=parseFloat(x); return isNaN(v)?null:v; }
+  var payload={ country:cc, country_name:cname, drivers:drivers, domain_scores:ds,
+    gri:n(c.risk_score), ews:n(c.ews_score), cri:n(c.cri_score),
+    d7:{ gri:n(c.gri_delta_7d), ews:n(c.ews_delta_7d), cri:n(c.cri_delta_7d) },
+    dominant:c.dominant_domain||'', escalation:c.escalation_level||'' };
+  if(c.forecast_7d) payload.forecast=c.forecast_7d;
   var tok=''; try{ tok=localStorage.getItem('cc_token')||''; }catch(e){}
   var base=(typeof API!=='undefined'&&API)?API:'https://archive-api.luven-medical-msk.workers.dev';
   var h={'Content-Type':'application/json'}; if(tok) h['X-Snapshot-Token']=tok;
