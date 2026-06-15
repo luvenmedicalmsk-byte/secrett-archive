@@ -2,67 +2,67 @@
   "country": "AE",
   "date": "2026-06-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T03:54:28.012547+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-15T10:03:23.118313+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-AE",
       "type": "Country",
       "label": "AE",
-      "score": 58,
+      "score": 63,
       "props": {
-        "risk_score": 58
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 22,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-economic",
       "type": "Domain",
       "label": "economic",
       "score": 26,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-social",
       "type": "Domain",
       "label": "social",
       "score": 13,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 15,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-AE-Geopolitical",
@@ -80,25 +80,18 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AE-ОАЭ_призыв",
+      "type": "Signal",
+      "label": "ОАЭ призывает к полному выполнению согла",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-AE-США_и_Иран",
       "type": "Signal",
       "label": "США и Иран достигли соглашения о прекращ",
       "severity": 62,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-AE-Иран_заявл",
-      "type": "Signal",
-      "label": "Иран заявляет, что проект сделки с США в",
-      "severity": 62,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AE-США_и_Иран",
-      "type": "Signal",
-      "label": "США и Иран достигли мирного соглашения, ",
-      "severity": 47,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +99,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-AE",
@@ -163,22 +156,37 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-AE-geopolitical",
+      "to": "DOMAIN-AE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AE-infrastructure",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-ОАЭ_призыв",
+      "to": "DOMAIN-AE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-AE-США_и_Иран",
       "to": "DOMAIN-AE-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-AE-Иран_заявл",
-      "to": "DOMAIN-AE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-AE-США_и_Иран",
-      "to": "DOMAIN-AE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
