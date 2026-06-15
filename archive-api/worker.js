@@ -2504,6 +2504,14 @@ function _buildSignalProLocal(p) {
   p = p || {};
   const DOMS=['climate','geopolitics','economy','technology','social'];
   const DL={climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'};
+  const SP_STRAT_WEIGHT={
+    RU:{geopolitics:1.8,economy:1.4},
+    UA:{geopolitics:2.0,economy:1.3},
+    IL:{geopolitics:2.0,technology:1.4,economy:1.2},
+    IR:{geopolitics:1.9,economy:1.3},
+    US:{geopolitics:1.4,economy:1.3,technology:1.2},
+    CN:{geopolitics:1.5,economy:1.4,technology:1.2}
+  };
   let cc=(p.country==null?'':String(p.country)).trim();
   let key=cc.toUpperCase();
   let prof=SP_COUNTRY_PROFILE[key]||null;
@@ -2511,14 +2519,20 @@ function _buildSignalProLocal(p) {
   const name=(prof&&prof.name)||p.country_name||cc||'';
   if(!name) return null;
   const num=(x)=>{ const v=parseFloat(x); return isNaN(v)?null:v; };
-  // домены по ТЕКУЩЕМУ уровню (динамика); fallback — список drivers
   const ds=p.domain_scores||{};
   let ordered;
   if(Object.keys(ds).length){ ordered=DOMS.filter(d=>ds[d]!=null).map(d=>({d:d,s:num(ds[d])||0})).sort((a,b)=>b.s-a.s); }
   else { ordered=(p.drivers||[]).filter(d=>DOMS.indexOf(d)>=0).map(d=>({d:d,s:0})); }
-  const lead = ordered[0]?ordered[0].d:null, d2 = ordered[1]?ordered[1].d:null;
-  const leadScore = ordered[0]?Math.round(ordered[0].s):null;
-  const topDoms = ordered.slice(0,2).map(o=>o.d);
+  // ведущий ПО ДАННЫМ (объём/уровень)
+  const dataLead = ordered[0]?ordered[0].d:null;
+  const dataScore = ordered[0]?Math.round(ordered[0].s):null;
+  // ведущий ПО СТРАТЕГИЧЕСКОМУ ВЕСУ (score × вес)
+  const W = SP_STRAT_WEIGHT[key] || {};
+  const wOf = (d)=> (W[d]!=null ? W[d] : 1.0);
+  const orderedStrat = ordered.map(o=>({d:o.d,s:o.s,w:o.s*wOf(o.d)})).sort((a,b)=>b.w-a.w);
+  const stratLead = orderedStrat[0]?orderedStrat[0].d:null;
+  const stratD2 = orderedStrat[1]?orderedStrat[1].d:null;
+  const topDoms = orderedStrat.slice(0,2).map(o=>o.d);
   const gri=num(p.gri), cri=num(p.cri);
   const d7=p.d7||{}; const g7=num(d7.gri), c7=num(d7.cri);
   const fc=p.forecast||null;
@@ -2532,26 +2546,31 @@ function _buildSignalProLocal(p) {
   function aud(k){ const out=[]; topDoms.forEach(d=>{ const h=(DOM_AUD[d]||{})[k]; if(h&&out.indexOf(h)<0) out.push(h); }); if(prof&&prof[k]&&prof[k][0]&&out.indexOf(prof[k][0])<0) out.push(prof[k][0]); if(!out.length) out.push('требуется наблюдение за развитием ситуации'); return out.slice(0,4); }
 
   let changed7d='';
-  if(lead) changed7d+='Ведущий домен — '+(DL[lead]||lead)+(leadScore!=null&&leadScore>0?(' ('+leadScore+'/100)'):'')+'. ';
+  if(stratLead && dataLead && stratLead!==dataLead){
+    changed7d+='Наибольший объём сигналов сейчас фиксируется в домене '+(DL[dataLead]||dataLead)+(dataScore!=null&&dataScore>0?(' ('+dataScore+'/100)'):'')+', однако основным стратегическим источником риска остаётся '+(DL[stratLead]||stratLead)+'. ';
+  } else if(stratLead||dataLead){
+    changed7d+='Ведущий домен — '+(DL[stratLead||dataLead]||(stratLead||dataLead))+(dataScore!=null&&dataScore>0?(' ('+dataScore+'/100)'):'')+'. ';
+  }
   if(g7!=null) changed7d+=(g7>0?('За 7 дней совокупный риск повысился на '+Math.abs(g7)+' п. '):(g7<0?('За 7 дней совокупный риск снизился на '+Math.abs(g7)+' п. '):'За 7 дней совокупный риск практически не изменился. '));
   if(c7!=null&&c7>0) changed7d+='Каскадный риск усиливается. ';
   else if(c7!=null&&c7<0) changed7d+='Каскадный риск снижается. ';
   if(!changed7d.trim()) changed7d='Существенных изменений за последние 7 дней не зафиксировано.';
 
   let watch='';
-  if(d2) watch+='Повышенное внимание к домену «'+(DL[d2]||d2)+'». ';
-  else if(lead) watch+='Повышенное внимание к домену «'+(DL[lead]||lead)+'». ';
-  if(leadScore!=null&&leadScore>=55&&leadScore<60) watch+='Ведущий домен приближается к зоне высокого риска (порог 60). ';
+  var watchDom = (dataScore!=null&&dataScore>=55&&dataScore<60) ? dataLead : (stratD2||stratLead);
+  if(watchDom) watch+='Повышенное внимание к домену «'+(DL[watchDom]||watchDom)+'». ';
+  if(dataScore!=null&&dataScore>=55&&dataScore<60) watch+='Он приближается к зоне высокого риска (порог 60). ';
   if(fc&&num(fc.score_max)!=null&&gri!=null&&num(fc.score_max)>gri) watch+='При сохранении текущего темпа возможно дальнейшее усиление риска. ';
   watch+='Требуется наблюдение за дальнейшей динамикой.';
 
-  let keyLocal='Ключевым источником локального давления сейчас выступает '+(lead?(DL[lead]||lead):'совокупность факторов')+'. ';
+  let keyLocal='Ключевым стратегическим источником локального давления сейчас выступает '+(stratLead?(DL[stratLead]||stratLead):'совокупность факторов')+'. ';
   if(g7!=null&&g7>0) keyLocal+='Сохраняется тенденция к росту риска. ';
   else if(g7!=null&&g7<0) keyLocal+='Наблюдается снижение интенсивности риска. ';
   keyLocal+='Повышается вероятность распространения влияния на смежные сферы; требуется наблюдение за развитием ситуации.';
   if(cri!=null&&cri>=75) keyLocal+=' Каскадный риск находится на высоком уровне.';
 
   return { country:key, country_name:name, generic:!prof,
+    data_lead:dataLead, strat_lead:stratLead,
     changed7d:changed7d.trim(), business:aud('business'), investors:aud('investors'), private:aud('private'),
     watch:watch.trim(), keyLocal:keyLocal.trim() };
 }
