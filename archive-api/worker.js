@@ -2500,25 +2500,60 @@ const SP_COUNTRY_PROFILE = {
   JP:{name:'Япония', business:['импорт энергоносителей','цепочки поставок'], investors:['курс иены и сырьевые цены'], private:['цены на импорт и энергию']}
 };
 const SP_C_ALIAS = {'турция':'TR','россия':'RU','германия':'DE','сша':'US','соединённые штаты':'US','украина':'UA','китай':'CN','великобритания':'GB','англия':'GB','франция':'FR','израиль':'IL','иран':'IR','индия':'IN','саудовская аравия':'SA','казахстан':'KZ','польша':'PL','япония':'JP'};
-function _buildSignalProLocal(M, cc, cname) {
-  M = M || {}; M.drivers = M.drivers || [];
-  cc = (cc==null?'':String(cc)).trim();
-  let key = cc.toUpperCase();
-  let prof = SP_COUNTRY_PROFILE[key] || null;
-  if (!prof) { const n=(cname||cc||'').toString().trim().toLowerCase(); if (SP_C_ALIAS[n]) { key=SP_C_ALIAS[n]; prof=SP_COUNTRY_PROFILE[key]; } }
-  const name = (prof && prof.name) || cname || cc || '';
-  if (!name) return null;
+function _buildSignalProLocal(p) {
+  p = p || {};
   const DOMS=['climate','geopolitics','economy','technology','social'];
-  const drivers = (M.drivers||[]).filter(d=>DOMS.indexOf(d)>=0).slice(0,2);
-  const DOM_HOOK = {
-    geopolitics:{business:'давление санкционных и торговых ограничений',investors:'рост геополитической премии за риск',private:'возможное влияние на цены и доступность товаров'},
-    climate:{business:'климатические риски для поставок и инфраструктуры',investors:'давление на агро- и сырьевые активы',private:'влияние на цены продовольствия и коммунальные расходы'},
-    economy:{business:'рост стоимости капитала и неопределённости',investors:'повышенная рыночная волатильность',private:'влияние на занятость и доходы'},
-    technology:{business:'риски для цифровой инфраструктуры',investors:'переоценка технологических рисков',private:'возможные перебои в цифровых сервисах'},
-    social:{business:'операционные и репутационные риски',investors:'рост страновой премии за риск',private:'влияние на повседневную стабильность'}
+  const DL={climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'};
+  let cc=(p.country==null?'':String(p.country)).trim();
+  let key=cc.toUpperCase();
+  let prof=SP_COUNTRY_PROFILE[key]||null;
+  if(!prof){ const n=(p.country_name||cc||'').toString().trim().toLowerCase(); if(SP_C_ALIAS[n]){ key=SP_C_ALIAS[n]; prof=SP_COUNTRY_PROFILE[key]; } }
+  const name=(prof&&prof.name)||p.country_name||cc||'';
+  if(!name) return null;
+  const num=(x)=>{ const v=parseFloat(x); return isNaN(v)?null:v; };
+  // домены по ТЕКУЩЕМУ уровню (динамика); fallback — список drivers
+  const ds=p.domain_scores||{};
+  let ordered;
+  if(Object.keys(ds).length){ ordered=DOMS.filter(d=>ds[d]!=null).map(d=>({d:d,s:num(ds[d])||0})).sort((a,b)=>b.s-a.s); }
+  else { ordered=(p.drivers||[]).filter(d=>DOMS.indexOf(d)>=0).map(d=>({d:d,s:0})); }
+  const lead = ordered[0]?ordered[0].d:null, d2 = ordered[1]?ordered[1].d:null;
+  const leadScore = ordered[0]?Math.round(ordered[0].s):null;
+  const topDoms = ordered.slice(0,2).map(o=>o.d);
+  const gri=num(p.gri), cri=num(p.cri);
+  const d7=p.d7||{}; const g7=num(d7.gri), c7=num(d7.cri);
+  const fc=p.forecast||null;
+  const DOM_AUD={
+    climate:{business:'усиление климатических рисков для логистики и инфраструктуры',investors:'климатический домен как источник неопределённости; внимание к сырьевым и энергетическим активам',private:'возможное влияние погодных событий на транспорт и коммунальную инфраструктуру'},
+    geopolitics:{business:'сохранение геополитического давления на международные операции и поставки',investors:'геополитическая премия за риск остаётся значимым фактором',private:'возможное влияние на цены и доступность отдельных товаров'},
+    economy:{business:'рост неопределённости и давления на стоимость капитала',investors:'повышенная рыночная волатильность; внимание к структуре рисков',private:'возможное влияние на занятость, доходы и цены'},
+    technology:{business:'риски для цифровой инфраструктуры и устойчивости систем',investors:'переоценка технологических рисков',private:'возможные перебои в цифровых сервисах'},
+    social:{business:'рост операционных и репутационных рисков',investors:'рост страновой премии за риск',private:'влияние на повседневную стабильность и сервисы'}
   };
-  function aud(k){ let out = (prof && prof[k]) ? prof[k].slice() : []; drivers.forEach(d=>{ const h=(DOM_HOOK[d]||{})[k]; if(h && out.indexOf(h)<0) out.push(h); }); if(!out.length) out.push('требуется наблюдение за развитием ситуации'); return out.slice(0,5); }
-  return { country: key, country_name: name, generic: !prof, business: aud('business'), investors: aud('investors'), private: aud('private') };
+  function aud(k){ const out=[]; topDoms.forEach(d=>{ const h=(DOM_AUD[d]||{})[k]; if(h&&out.indexOf(h)<0) out.push(h); }); if(prof&&prof[k]&&prof[k][0]&&out.indexOf(prof[k][0])<0) out.push(prof[k][0]); if(!out.length) out.push('требуется наблюдение за развитием ситуации'); return out.slice(0,4); }
+
+  let changed7d='';
+  if(lead) changed7d+='Ведущий домен — '+(DL[lead]||lead)+(leadScore!=null&&leadScore>0?(' ('+leadScore+'/100)'):'')+'. ';
+  if(g7!=null) changed7d+=(g7>0?('За 7 дней совокупный риск повысился на '+Math.abs(g7)+' п. '):(g7<0?('За 7 дней совокупный риск снизился на '+Math.abs(g7)+' п. '):'За 7 дней совокупный риск практически не изменился. '));
+  if(c7!=null&&c7>0) changed7d+='Каскадный риск усиливается. ';
+  else if(c7!=null&&c7<0) changed7d+='Каскадный риск снижается. ';
+  if(!changed7d.trim()) changed7d='Существенных изменений за последние 7 дней не зафиксировано.';
+
+  let watch='';
+  if(d2) watch+='Повышенное внимание к домену «'+(DL[d2]||d2)+'». ';
+  else if(lead) watch+='Повышенное внимание к домену «'+(DL[lead]||lead)+'». ';
+  if(leadScore!=null&&leadScore>=55&&leadScore<60) watch+='Ведущий домен приближается к зоне высокого риска (порог 60). ';
+  if(fc&&num(fc.score_max)!=null&&gri!=null&&num(fc.score_max)>gri) watch+='При сохранении текущего темпа возможно дальнейшее усиление риска. ';
+  watch+='Требуется наблюдение за дальнейшей динамикой.';
+
+  let keyLocal='Ключевым источником локального давления сейчас выступает '+(lead?(DL[lead]||lead):'совокупность факторов')+'. ';
+  if(g7!=null&&g7>0) keyLocal+='Сохраняется тенденция к росту риска. ';
+  else if(g7!=null&&g7<0) keyLocal+='Наблюдается снижение интенсивности риска. ';
+  keyLocal+='Повышается вероятность распространения влияния на смежные сферы; требуется наблюдение за развитием ситуации.';
+  if(cri!=null&&cri>=75) keyLocal+=' Каскадный риск находится на высоком уровне.';
+
+  return { country:key, country_name:name, generic:!prof,
+    changed7d:changed7d.trim(), business:aud('business'), investors:aud('investors'), private:aud('private'),
+    watch:watch.trim(), keyLocal:keyLocal.trim() };
 }
 
 async function handleSignalPro(request, env) {
@@ -2530,7 +2565,7 @@ async function handleSignalPro(request, env) {
   let M = {};
   try { M = await request.json(); } catch(e) { M = {}; }
   const blocks = _buildSignalPro(M);
-  const local = _buildSignalProLocal(M, M.country, M.country_name);
+  const local = _buildSignalProLocal(M);
   return jsonResponse(Object.assign({ locked:false, tier:caps.tier, local:local }, blocks), 200);
 }
 
