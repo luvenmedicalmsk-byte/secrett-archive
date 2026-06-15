@@ -2,9 +2,9 @@
   "country": "GR",
   "date": "2026-06-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T14:41:48.517692+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-15T17:09:52.466616+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-GR",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
+      "score": 35,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-GR-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-GR-economic",
       "type": "Driver",
       "label": "economic"
@@ -75,9 +80,18 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-GR-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "id": "SIGNAL-GR-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M4.9 — 20 км к ЮЮЗ от Meth",
+      "severity": 52,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-GR-Армения,_С",
+      "type": "Signal",
+      "label": "Армения, США, Франция и Греция проведут ",
+      "severity": 42,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -85,7 +99,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-GR",
@@ -97,7 +111,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-GR",
@@ -124,6 +138,12 @@
       "weight": 0.29
     },
     {
+      "from": "DRIVER-GR-geopolitical",
+      "to": "COUNTRY-GR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-GR-economic",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
@@ -136,10 +156,37 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-geopolitical",
-      "to": "COUNTRY-GR",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-GR-geopolitical",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GR-Землетрясе",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-GR-Армения,_С",
+      "to": "DOMAIN-GR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.42
     }
   ]
 }

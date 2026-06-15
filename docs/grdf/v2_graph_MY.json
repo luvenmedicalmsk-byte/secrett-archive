@@ -2,67 +2,67 @@
   "country": "MY",
   "date": "2026-06-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T14:41:48.516236+00:00",
+  "generated_at": "2026-06-15T17:09:52.465072+00:00",
   "node_count": 12,
-  "edge_count": 11,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-MY",
       "type": "Country",
       "label": "MY",
-      "score": 22,
+      "score": 50,
       "props": {
-        "risk_score": 22
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 21,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "stable"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 24,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 14,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "stable"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 13,
-      "trend": "stable"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DRIVER-MY-climate",
@@ -83,7 +83,7 @@
       "id": "SIGNAL-MY-Зеленый_ур",
       "type": "Signal",
       "label": "Зеленый уровень тревоги наводнения в Мал",
-      "severity": 22,
+      "severity": 50,
       "domain": "climate"
     }
   ],
@@ -92,43 +92,43 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-climate",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-technology",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-cyber",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.3
     },
     {
       "from": "DRIVER-MY-climate",
@@ -149,10 +149,73 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MY-social",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MY-geopolitical",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-MY-Зеленый_ур",
       "to": "DOMAIN-MY-climate",
       "type": "AMPLIFIES",
-      "weight": 0.22
+      "weight": 0.5
     }
   ]
 }
