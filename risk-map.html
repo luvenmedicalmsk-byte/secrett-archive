@@ -8361,8 +8361,8 @@ window._spRenderCountryLocal = function(el, d, cname){
       +'<div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO · LOCAL</span></div>'
       +'<div class="sp-sub">Что текущие сигналы означают для страны: '+esc(cname||'')+'</div>'
       +'<div class="sp-body"><div class="sp-block">'
-      +ul(['Рейтинг стратегического влияния по доменам (0–100)','Баланс фактического, стратегического и прогнозного давления','Лидер по объёму и по стратегическому влиянию','Домен под наблюдением','Ключевой локальный вывод'])
-      +'<div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Signal Pro объясняет, что означают текущие сигналы именно для этой страны.</div>'
+      +ul(['Рейтинг стратегического влияния по доменам (0–100)','Прогноз стратегического влияния на 7 и 30 дней','Траектория и смещение стратегического давления','Баланс фактического, стратегического и прогнозного давления','Ключевой локальный вывод'])
+      +'<div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Signal Pro объясняет, что означают текущие сигналы и куда смещается давление.</div>'
       +'<button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Получить доступ</button>'
       +'</div></div></div></div>';
     return;
@@ -8374,20 +8374,38 @@ window._spRenderCountryLocal = function(el, d, cname){
   function lvlCol(lv){ return /Критическ|Высок/.test(lv)?'#ef4444':(/Повышен/.test(lv)?'#ff7a00':(/Умерен/.test(lv)?'#eab308':'#22c55e')); }
   function lbadge(lv){ return lv?(' <span style="font-size:9px;font-weight:600;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid '+lvlCol(lv)+';color:'+lvlCol(lv)+'">'+esc(lv)+'</span>'):''; }
   function gapCol(g){ return /высок/.test(g)?'#ef4444':(/умерен/.test(g)?'#eab308':'#22c55e'); }
+  function arr(st){ return st==='up'?'<span style="color:#ff7a00">↑</span>':(st==='down'?'<span style="color:#22c55e">↓</span>':'<span style="color:rgba(232,224,208,.4)">→</span>'); }
   var mixTag = L.mixed?(' <span style="font-size:9px;font-weight:600;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid #ff7a00;color:#ff7a00">смешанное</span>'):'';
   var focus=blk('Стратегический фокус',
      '<div class="sp-dyn"><span class="sp-dyn-d">По объёму сигналов</span><span class="sp-dyn-v" style="color:#E8E0D0">'+esc(dlc(L.data_lead))+(L.data_score!=null?(' · '+L.data_score):'')+'</span></div>'
     +'<div class="sp-dyn"><span class="sp-dyn-d">По стратегическому влиянию</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(L.strat_lead))+lbadge(L.strat_level)+mixTag+'</span></div>'
+    +(L.forward?('<div class="sp-dyn"><span class="sp-dyn-d">Прогнозный лидер (30 дней)</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(L.forward.forecast_lead))+'</span></div>'):'')
+    +(L.forward&&L.forward.direction?('<div class="sp-dyn"><span class="sp-dyn-d">Направление</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(L.forward.direction)+'</span></div>'):'')
     +(L.watch_lead?('<div class="sp-dyn"><span class="sp-dyn-d">Под наблюдением</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(L.watch_lead))+lbadge(L.watch_level)+'</span></div>'):'')
     +(L.data_strategy_gap?('<div class="sp-dyn"><span class="sp-dyn-d">Расхождение данные/стратегия</span><span class="sp-dyn-v" style="color:'+gapCol(L.data_strategy_gap)+'">'+esc(L.data_strategy_gap)+'</span></div>'):'')
     +(L.strat_note?'<p class="sp-note">'+esc(L.strat_note)+'</p>':''));
+  var traj='';
+  if(L.trajectory){
+    var T=L.trajectory;
+    function cell(lab,dom,col){ return '<div style="flex:1"><div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(232,224,208,.45);margin-bottom:3px">'+esc(lab)+'</div><div style="font-size:12px;color:'+col+';font-weight:600">'+esc(dlc(dom))+'</div></div>'; }
+    traj=blk('Траектория стратегического давления',
+       '<div style="display:flex;justify-content:space-between;gap:6px;text-align:center;margin-bottom:6px">'
+      +cell('Сегодня',T.today,'#E8E0D0')+'<div style="align-self:center;color:rgba(212,175,90,.5)">→</div>'
+      +cell('7 дней',T.d7,'#E8E0D0')+'<div style="align-self:center;color:rgba(212,175,90,.5)">→</div>'
+      +cell('30 дней',T.d30,(T.shift?'#ff7a00':'#D4AF5A'))
+      +'</div>'
+      +(T.confidence!=null?'<div class="sp-dyn"><span class="sp-dyn-d">Уверенность модели</span><span class="sp-dyn-v" style="color:#cbd5e1">'+T.confidence+'%</span></div>':'')
+      +(T.shift_note?'<p class="sp-note">'+esc(T.shift_note)+'</p>':''));
+  }
+  var sfiMap={}; (L.sfi||[]).forEach(function(x){sfiMap[x.domain]=x;});
   var rk='';
   if(L.ranking&&L.ranking.length){
-    rk=L.ranking.map(function(r){ var col=lvlCol(r.level);
+    rk=L.ranking.map(function(r){ var col=lvlCol(r.level); var sf=sfiMap[r.domain];
       return '<div style="margin:0 0 9px">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px;color:#E8E0D0">'+esc(dlc(r.domain))+'</span><span style="font-size:11px;color:'+col+';font-weight:600">'+r.sis+' · '+esc(r.level)+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px;color:#E8E0D0">'+esc(dlc(r.domain))+(sf?(' '+arr(sf.status)):'')+'</span><span style="font-size:11px;color:'+col+';font-weight:600">'+r.sis+' · '+esc(r.level)+'</span></div>'
         +'<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden"><div style="height:100%;width:'+Math.max(2,r.sis)+'%;background:'+col+';border-radius:3px"></div></div>'
-        +(r.reason&&r.reason.length?'<div style="font-size:10px;color:rgba(232,224,208,.5);margin-top:3px;line-height:1.4">'+esc(r.reason.join(' · '))+'</div>':'')
+        +(sf?'<div style="font-size:10px;color:rgba(212,175,90,.55);margin-top:3px">сейчас '+sf.now+' · 7д '+sf.d7+' · 30д '+sf.d30+'</div>':'')
+        +(r.reason&&r.reason.length?'<div style="font-size:10px;color:rgba(232,224,208,.5);margin-top:2px;line-height:1.4">'+esc(r.reason.join(' · '))+'</div>':'')
         +'</div>'; }).join('');
     rk=blk('Рейтинг стратегического влияния (0–100)', rk);
   }
@@ -8410,13 +8428,9 @@ window._spRenderCountryLocal = function(el, d, cname){
     var wq=(sfc.country_weight_base&&sfc.country_weight&&sfc.country_weight_base!=sfc.country_weight)?('×'+sfc.country_weight+' (база ×'+sfc.country_weight_base+')'):('×'+sfc.country_weight);
     why=blk('Почему система считает этот домен стратегическим',
        '<p class="sp-p" style="margin-bottom:8px">'+esc(dlc(wd))+'</p>'
-      +frow('Влияние на каскады', sfc.cascade)
-      +frow('Скорость роста', sfc.velocity)
-      +frow('Прогноз', sfc.forecast)
-      +frow('Междоменное распространение', sfc.cross)
-      +frow('Страновой коэффициент', wq));
+      +frow('Влияние на каскады', sfc.cascade)+frow('Скорость роста', sfc.velocity)+frow('Прогноз', sfc.forecast)+frow('Междоменное распространение', sfc.cross)+frow('Страновой коэффициент', wq));
   }
-  var blocks= focus + rk + pb
+  var blocks= focus + traj + rk + pb
     +(L.changed7d?blk('Что изменилось за 7 дней','<p class="sp-p">'+esc(L.changed7d)+'</p>'):'')
     +blk('Практическая интерпретация', subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private))
     +(L.watch?blk('На что обратить внимание','<p class="sp-p">'+esc(L.watch)+'</p>'):'')
