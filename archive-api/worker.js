@@ -2305,6 +2305,23 @@ async function handleProxyNewsFeed(env) {
     });
     items=coll.sort(function(a,b){ return ((b.time?Date.parse(b.time):0)-(a.time?Date.parse(a.time):0))||(b.id-a.id); });
   })();
+  // near-dup по редким общим токенам (топонимы/имена/числа) -- ловит перефразированные репосты одного события,
+  // не склеивая разные события (они делят лишь частые слова: БПЛА/погибли/область).
+  (function(){
+    function _toks(t){ var s={}, arr=(t||'').toLowerCase().replace(/[^a-zа-яё0-9 ]/gi,' ').split(/\s+/); for(var i=0;i<arr.length;i++){ var w=arr[i]; if(w.length>=5){ s[w.slice(0,7)]=1; } } return Object.keys(s); }
+    var df={};
+    items.forEach(function(it){ _toks(it.text).forEach(function(t){ df[t]=(df[t]||0)+1; }); });
+    var kept=[];
+    items.slice().sort(function(a,b){ return (b.severity||0)-(a.severity||0); }).forEach(function(it){
+      var rare=_toks(it.text).filter(function(t){ return df[t]<=3; });
+      var dup=null;
+      for(var i=0;i<kept.length;i++){ var sh=0; for(var j=0;j<rare.length;j++){ if(kept[i]._rare[rare[j]]) sh++; } if(sh>=2){ dup=kept[i]; break; } }
+      if(dup){ dup.dup_count=(dup.dup_count||0)+1; if(it.source&&it.source!==dup.source){ dup.dup_sources=dup.dup_sources||[]; if(dup.dup_sources.indexOf(it.source)<0) dup.dup_sources.push(it.source); } }
+      else { var rm={}; rare.forEach(function(t){ rm[t]=1; }); it._rare=rm; kept.push(it); }
+    });
+    kept.forEach(function(k){ delete k._rare; });
+    items=kept.sort(function(a,b){ return ((b.time?Date.parse(b.time):0)-(a.time?Date.parse(a.time):0))||(b.id-a.id); });
+  })();
   items = items.map(function(it){ delete it._sig; return it; });
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), llm_active: !!env.OPENAI_API_KEY, kv: !!env.EVENTS_KV, cron_last: _cronLast, llm_classified: _llmCount, count: items.length, items }), {
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
