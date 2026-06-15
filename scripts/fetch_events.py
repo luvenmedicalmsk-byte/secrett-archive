@@ -6017,6 +6017,12 @@ def save_enriched(events, previous_snapshot=None):
                 history_map = _build_history_map(cache) if cache else {}
                 enriched = _enrich_escalation(enriched, history_map, cache)
 
+            for _e in enriched["events"]:
+                try:
+                    _tt = (_e.get('title') or '').strip().lower()
+                    for _act,_reg in _ACTOR_REGION:
+                        if _tt.startswith(_act): _e['region'] = _reg; break
+                except Exception: pass
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
