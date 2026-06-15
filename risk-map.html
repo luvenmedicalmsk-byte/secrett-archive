@@ -8369,8 +8369,20 @@ window._spRenderCountryLocal = function(el, d, cname){
   }
   if(!d || !d.local || !d.local.country_name){ el.innerHTML=''; return; }
   var L=d.local;
-  var blocks=
-     (L.changed7d?blk('Что изменилось за 7 дней','<p class="sp-p">'+esc(L.changed7d)+'</p>'):'')
+  var DLc=(window._rDL?window._rDL():{climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'});
+  function dlc(d){return DLc[d]||d;}
+  var focus='';
+  if(L.data_lead||L.strat_lead){
+    var lvl=L.strat_level||'';
+    var lvlCol=/Критическ|Высок/.test(lvl)?'#ef4444':(/Повышен/.test(lvl)?'#ff7a00':(/Умерен/.test(lvl)?'#eab308':'#22c55e'));
+    var lbadge=lvl?(' <span style="font-size:9px;font-weight:600;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid '+lvlCol+';color:'+lvlCol+'">'+esc(lvl)+'</span>'):'';
+    focus=blk('Стратегический фокус',
+      '<div class="sp-dyn"><span class="sp-dyn-d">По объёму сигналов</span><span class="sp-dyn-v" style="color:#E8E0D0">'+esc(dlc(L.data_lead))+(L.data_score!=null?(' · '+L.data_score):'')+'</span></div>'
+     +'<div class="sp-dyn"><span class="sp-dyn-d">По стратегическому влиянию</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(L.strat_lead))+lbadge+'</span></div>'
+     +(L.strat_note?'<p class="sp-note">'+esc(L.strat_note)+'</p>':''));
+  }
+  var blocks= focus
+    +(L.changed7d?blk('Что изменилось за 7 дней','<p class="sp-p">'+esc(L.changed7d)+'</p>'):'')
     +blk('Практическая интерпретация', subL('Для бизнеса',L.business)+subL('Для инвесторов',L.investors)+subL('Для частных лиц',L.private))
     +(L.watch?blk('На что обратить внимание','<p class="sp-p">'+esc(L.watch)+'</p>'):'')
     +(L.keyLocal?blk('Ключевой локальный вывод','<p class="sp-p sp-key">'+esc(L.keyLocal)+'</p>'):'');
