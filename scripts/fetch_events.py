@@ -1334,20 +1334,22 @@ def _soften_title(text):
     return text
 
 # === Этап 9: лимит карточек на одну тему (горячий токен) ===
-_TC_STOP = set(['погибл','постра','повреж','област','сообщ','человек','губерн','жертв','раненн','эвакуир','чрезвыч','разруш','происше','результ','информ','атаки','удар','взрыв','обстре','ракет','дрон','беспил','военны','войска','уничто','снаряд','границ','района','городе','города','поселк','страны','госуда','сообща'])
+_TC_STOP = ('погибл','постра','повреж','област','сообщ','человек','губерн','жертв','ранен','эвакуир','чрезвыч','разруш','происше','результ','информ','атак','удар','взрыв','обстре','ракет','дрон','беспил','военн','войск','уничто','снаряд','границ','район','город','посёлк','поселк','стран','госуда','нанес','точечн','позиц','силам','заявил','сообща','президе','министр')
 def _tc_toks(t):
     s = set()
     for w in re.sub(r'[^a-zа-яё0-9 ]', ' ', (t or '').lower()).split():
         if len(w) >= 5: s.add(w[:7])
     return s
-def _topic_cap(events, N=4):
+def _tc_is_stop(t):
+    return any(t.startswith(p) for p in _TC_STOP)
+def _topic_cap(events, N=5):
     df = {}
     for e in events:
         for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')): df[t] = df.get(t, 0) + 1
     counts = {}; out = []
     for e in sorted(events, key=lambda x: -(x.get('severity', 0) or 0)):
-        toks = [t for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')) if t not in _TC_STOP and df.get(t, 0) >= 6]
-        if not toks: out.append(e); continue
+        toks = [t for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')) if not _tc_is_stop(t) and df.get(t, 0) >= 8]
+        if len(toks) < 2: out.append(e); continue
         hot = sorted(toks, key=lambda t: -df[t])[0]
         counts[hot] = counts.get(hot, 0) + 1
         if counts[hot] <= N: out.append(e)
@@ -1771,7 +1773,7 @@ def process_events(raw_items):
         e['title'] = _soften_title(e.get('title','') or '')
         _cfm_n += 1
     print(f"  [S46/Этап8] подтверждённость скорректирована: {_cfm_n}", file=sys.stderr)
-    top_events = _topic_cap(top_events, 4)
+    top_events = _topic_cap(top_events, 5)
     print(f"  [Этап9] лимит на тему применён -> {len(top_events)}", file=sys.stderr)
 
     for _e in top_events:
