@@ -78,11 +78,12 @@ _PROMO_RE = re.compile(
     r'|(\s*читайте (?:нас|подробнее)[^.!?\n]{0,45}[.!\s]*$)'
     r'|(\s*@[A-Za-z\u0410-\u044f\u0401\u04510-9_ ]{2,40}\s*$)',
     re.IGNORECASE)
+_CHAN_SIG_RE = re.compile(r'\s*(?:Прямой\s+эфир|Топор\s*Live|Прямой эфир)\s*[.!…]?\s*$')
 def _strip_promo(t):
     """Срез промо-хвостов TG (@Канал | Подписывайтесь, Подписывайтесь..., хвостовой @хендл)."""
     t = (t or '').strip(); prev = None
     while prev != t and t:
-        prev = t; t = _PROMO_RE.sub('', t).rstrip(' \t\n|\u00b7\u2014\u2013-')
+        prev = t; t = _CHAN_SIG_RE.sub('', _PROMO_RE.sub('', t)).rstrip(' \t\n|\u00b7\u2014\u2013-')
     return t.strip()
 
 def _smart_truncate(text, limit=150):
