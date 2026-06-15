@@ -2586,6 +2586,44 @@ function _buildSignalProLocal(p) {
     forecast: (fc&&num(fc.score_max)!=null)?Math.round(num(fc.score_max)):(gri!=null?Math.round(gri):Math.round(dataLevel))
   };
 
+  // ── Strategic Forward Impact (SFI): прогноз влияния на 7 и 30 дней ──
+  function sisFromLevels(lv){
+    const tl=DOMS.reduce((a,d)=>a+lv[d],0)||1;
+    const dl=DOMS.map(d=>({d,s:lv[d]})).sort((a,b)=>b.s-a.s)[0]; const dLevel=dl?dl.s:0;
+    const dF=(d)=>{ const gap=Math.max(0,dLevel-lv[d]); if(gap<=GAP_LO) return 1; if(gap>=GAP_HI) return DAMP_MIN; return 1-(gap-GAP_LO)/(GAP_HI-GAP_LO)*(1-DAMP_MIN); };
+    const dW=(d)=>{ const b=baseW(d); return 1+(b-1)*dF(d); };
+    const o={};
+    DOMS.forEach(d=>{ const levelN=clamp01(lv[d]/100), baseWN=clamp01((dW(d)-1)/1.0), thresholdN=clamp01((lv[d]-40)/20),
+      concN=totalCount>0?clamp01((num(counts[d])||0)/totalCount):clamp01(lv[d]/tl),
+      cascadeN=(CASC[d]||0.5)*clamp01((cri!=null?cri:0)/100), momF=(d===dominant?1:0.5),
+      velocityN=clamp01((g7!=null?g7:0)/10)*momF, forecastN=(fcUp?1:0)*momF,
+      crossN=(CASC[d]||0.5)*clamp01(activeDoms/5),
+      ascentN=clamp01((lv[d]-50)/10)*(0.5+0.5*(fcUp?1:(g7!=null&&g7>0?0.5:0)));
+      const f={levelN,baseWN,thresholdN,concN,cascadeN,velocityN,forecastN,crossN,ascentN}; let sm=0; for(const k in WF) sm+=WF[k]*f[k]; o[d]=Math.round(100*clamp01(sm)); });
+    return o;
+  }
+  function projLevels(weeks){ const lv={}; DOMS.forEach(d=>{ const ap=clamp01((levels[d]-45)/20);
+    const slope=(g7!=null?g7:0)*(0.35+0.5*ap+0.15*(d===dominant?1:0));
+    const sat=0.5+0.5*clamp01((100-levels[d])/55);
+    lv[d]=Math.max(0,Math.min(100, levels[d]+slope*weeks*sat)); }); return lv; }
+  const sisNowMap={}; scored.forEach(x=>sisNowMap[x.d]=x.sis);
+  const sfi7=sisFromLevels(projLevels(1)), sfi30=sisFromLevels(projLevels(4.3));
+  const d30delta={}; DOMS.forEach(d=>d30delta[d]=(sfi30[d]||0)-(sisNowMap[d]||0));
+  const avgD30=DOMS.reduce((a,d)=>a+d30delta[d],0)/DOMS.length;
+  const statusOf=(d)=>{ const x=d30delta[d]; if(x<=-3) return 'down'; if(x>=avgD30+2&&x>0) return 'up'; if(x<=avgD30-2) return 'down'; return 'flat'; };
+  const sfi=DOMS.map(d=>({domain:d, now:sisNowMap[d]||0, d7:sfi7[d]||0, d30:sfi30[d]||0, status:statusOf(d)}))
+    .sort((a,b)=>b.now-a.now);
+  const leadBy=(m)=>{ let bd=null,bv=-1; DOMS.forEach(d=>{ if((m[d]||0)>bv){bv=m[d]||0;bd=d;} }); return bd; };
+  const todayLead=leadBy(sisNowMap), lead7=leadBy(sfi7), lead30=leadBy(sfi30);
+  const conf=(fc&&num(fc.confidence)!=null)?Math.round(num(fc.confidence)*100):(fc&&num(fc.confidence_pct)!=null?Math.round(num(fc.confidence_pct)):null);
+  const shift=!!(todayLead&&lead30&&todayLead!==lead30);
+  const DOM_ADJ={climate:'климатического',geopolitics:'геополитического',economy:'экономического',technology:'технологического',social:'социального'};
+  const trajectory={ today:todayLead, d7:lead7, d30:lead30, confidence:conf, shift:shift,
+    shift_note: shift?('Система фиксирует вероятное смещение стратегического давления в домен «'+(DL[lead30]||lead30)+'».'):'' };
+  const direction = shift ? ('Смещение стратегического давления в домен «'+(DL[lead30]||lead30)+'»')
+    : ('Усиление '+(DOM_ADJ[todayLead]||'')+' давления').replace(/\s+/g,' ').trim();
+  const forward={ current_lead:todayLead, forecast_lead:lead30, direction:direction };
+
   const DOM_AUD={
     climate:{business:'усиление климатических рисков для логистики и инфраструктуры',investors:'климатический домен как источник неопределённости; внимание к сырьевым и энергетическим активам',private:'возможное влияние погодных событий на транспорт и коммунальную инфраструктуру'},
     geopolitics:{business:'сохранение геополитического давления на международные операции и поставки',investors:'геополитическая премия за риск остаётся значимым фактором',private:'возможное влияние на цены и доступность отдельных товаров'},
@@ -2631,6 +2669,7 @@ function _buildSignalProLocal(p) {
     watch_lead:watchLead, watch_level:watchLevel, strat_note:stratNote,
     mixed:mixed, mixed_partner:mixPartner, data_strategy_gap:gapCat,
     pressure_balance:pressureBalance,
+    sfi:sfi, trajectory:trajectory, forward:forward,
     ranking:ranking.map(x=>({domain:x.d,sis:x.sis,level:x.level,reason:x.reason})),
     strat_factors:stratFactors,
     changed7d:changed7d.trim(), business:aud('business'), investors:aud('investors'), private:aud('private'),
