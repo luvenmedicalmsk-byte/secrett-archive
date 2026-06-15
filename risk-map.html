@@ -1240,6 +1240,10 @@ html,body{overscroll-behavior-y:contain}
 .grdf-pd-head b{font-size:17px;font-family:'Cormorant Garamond',serif;letter-spacing:0}
 .grdf-pd-foot{margin-top:8px;font-size:9px;color:rgba(168,160,144,0.62);line-height:1.55}
 @keyframes grdfFade{from{opacity:0}to{opacity:1}}
+.grdf-funnel-p{font-size:8px;color:rgba(212,175,90,0.72);margin-top:2px;font-weight:600}
+.grdf-rank{display:inline-block;min-width:14px;color:#D4AF5A;font-weight:700;margin-right:2px}
+.grdf-dyn{gap:4px 8px !important}
+.grdf-dyn-item{font-size:9.5px !important}
 .grdf-radar-note{font-size:10px;line-height:1.55;color:rgba(168,160,144,.55);padding:2px 18px 22px;font-family:'Montserrat',sans-serif;text-align:center;max-width:540px;margin:0 auto}
 .grdf-radar-dot{transition:opacity .15s}.grdf-radar-dot:hover{fill-opacity:1!important}
 .grdf-radar-dot.sel{stroke:#fff;stroke-width:1.6}
@@ -7540,7 +7544,7 @@ function _evM(val, lbl, col) {
   <div id="grdf-radar-dynamics"></div>
   <div id="grdf-radar-detail"></div>
   <div id="grdf-radar-panel"></div>
-  <div class="grdf-radar-note">Радар отображает текущую структуру глобальных сигналов. Чем ближе сигнал к центру, тем выше его актуальность и потенциальное влияние. Цвет отражает домен риска. Радар показывает текущее состояние системы и формирующиеся тенденции.</div>
+  <div class="grdf-radar-note">Радар отображает текущую структуру глобальных сигналов. Чем ближе сигнал к центру, тем выше его актуальность и потенциальное влияние. Системное давление отражает общий уровень нагрузки на систему.</div>
 </div>
 
 <!-- S36.1: Signals feed screen (same source as map: ALL_EVENTS) -->
@@ -8700,6 +8704,8 @@ function _fixDomain(e){
   return null;
 }
 window._pressColor = function(p){ return p>=75?'#ef4444':(p>=60?'#ff7a00':(p>=40?'#eab308':'#22c55e')); };
+window._pressLevel = function(p){ return p>=75?'Высокое':(p>=60?'Повышенное':(p>=40?'Умеренное':'Низкое')); };
+window._plur = function(n){ var a=n%10,b=n%100; return (a===1&&b!==11)?'сигнал':((a>=2&&a<=4&&(b<12||b>14))?'сигнала':'сигналов'); };
 window._arrow = function(t){
   var s='<svg width="11" height="11" viewBox="0 0 12 12" style="vertical-align:-1px" xmlns="http://www.w3.org/2000/svg">';
   if(t==='up') s+='<path d="M6 2 L10 7 L7 7 L7 10 L5 10 L5 7 L2 7 Z" fill="currentColor"/>';
@@ -8755,7 +8761,7 @@ window._radarRenderPanels = function(M){
   var fEl=document.getElementById('grdf-radar-funnel');
   if(fEl){ var steps=[['all',M.total,'сигналов'],['active',M.active,'активных'],['systemic',M.systemic,'системных'],['critical',M.critical,'критических']];
     fEl.innerHTML='<div class="grdf-funnel">'+steps.map(function(x,i){ var sep=i>0?'<span class="grdf-funnel-arrow">'+window._arrow('right')+'</span>':'';
-      return sep+'<div class="grdf-funnel-step'+(lk===x[0]?' on':'')+'" onclick="window._radarLevel(\''+x[0]+'\')"><span class="grdf-funnel-n">'+x[1]+'</span><span class="grdf-funnel-l">'+x[2]+'</span></div>'; }).join('')+'</div>'; }
+      return sep+'<div class="grdf-funnel-step'+(lk===x[0]?' on':'')+'" onclick="window._radarLevel(\''+x[0]+'\')"><span class="grdf-funnel-n">'+x[1]+'</span><span class="grdf-funnel-l">'+x[2]+'</span>'+(x[0]!=='all'&&M.total?'<span class="grdf-funnel-p">'+Math.round(100*x[1]/M.total)+'%</span>':'')+'</div>'; }).join('')+'</div>'; }
   var dEl=document.getElementById('grdf-radar-dynamics');
   if(dEl){ dEl.innerHTML='<div class="grdf-dyn">'+DOMS.map(function(d){ var a=M.dyn[d],ar=window._arrow(a==='up'?'up':(a==='down'?'down':'flat'));
       return '<span class="grdf-dyn-item d-'+a+'"><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+' '+ar+'</span>'; }).join('')+'</div><div class="grdf-dyn-cap">Изменение интенсивности сигналов &middot; 7 дней</div>'; }
@@ -8766,10 +8772,10 @@ window._radarRenderPanels = function(M){
     cells.push('<div class="grdf-rp-cell"><b style="color:'+window._pressColor(M.pressure)+'">'+M.pressure+'</b><span>сист. давление</span></div>');
     var grid='<div class="grdf-rpanel">'+cells.join('')+'</div>';
     var drv='<div class="grdf-rsec"><div class="grdf-rsec-t">Основные драйверы давления</div>'+
-      M.drivers.map(function(d){ return '<div class="grdf-rrow"><span><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+'</span><b>'+M.perDom[d].n+' сигн.</b></div>'; }).join('')+'</div>';
-    var cas = M.pairs.length ? ('<div class="grdf-rsec"><div class="grdf-rsec-t">Каскадные связи доменов</div>'+
-      M.pairs.map(function(p){ return '<div class="grdf-rrow"><span>'+(DL2[p.a]||p.a)+' '+window._arrow('both')+' '+(DL2[p.b]||p.b)+'</span><b>'+p.n+'</b></div>'; }).join('')+'</div>')
-      : '<div class="grdf-rsec"><div class="grdf-rsec-t">Каскадные связи доменов</div><div class="grdf-rrow" style="opacity:.55;border:none"><span>нет системных пересечений</span></div></div>';
+      M.drivers.map(function(d,i){ var nn=M.perDom[d].n; return '<div class="grdf-rrow"><span><b class="grdf-rank">'+(i+1)+'</b><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+'</span><b>'+nn+' '+window._plur(nn)+'</b></div>'; }).join('')+'</div>';
+    var cas = M.pairs.length ? ('<div class="grdf-rsec"><div class="grdf-rsec-t">Основные каскады</div>'+
+      M.pairs.map(function(p){ var hi=(M.perDom[p.a].sys>=M.perDom[p.b].sys)?p.a:p.b, lo=(hi===p.a)?p.b:p.a; return '<div class="grdf-rrow"><span>'+(DL2[hi]||hi)+' '+window._arrow('right')+' '+(DL2[lo]||lo)+'</span><b>'+p.n+'</b></div>'; }).join('')+'</div>')
+      : '<div class="grdf-rsec"><div class="grdf-rsec-t">Основные каскады</div><div class="grdf-rrow" style="opacity:.55;border:none"><span>нет системных пересечений</span></div></div>';
     pEl.innerHTML=grid+drv+cas; }
 };
 window._radarPressDetail = function(){
@@ -8779,7 +8785,7 @@ window._radarPressDetail = function(){
   var box=document.getElementById('grdf-radar-detail'); if(!box) return;
   var rows=DOMS.slice().sort(function(a,b){return M.contrib[b]-M.contrib[a];}).map(function(d){
     return '<div class="grdf-rrow"><span><i style="background:'+DC2[d]+'"></i>'+(DL2[d]||d)+'</span><b>'+M.contrib[d]+'%</b></div>'; }).join('');
-  box.innerHTML='<div class="grdf-pdetail"><div class="grdf-pd-head"><span>SYSTEM PRESSURE</span><b style="color:'+window._pressColor(M.pressure)+'">'+M.pressure+'/100</b></div>'+
+  box.innerHTML='<div class="grdf-pdetail"><div class="grdf-pd-head"><span>СИСТЕМНОЕ ДАВЛЕНИЕ &middot; '+window._pressLevel(M.pressure)+'</span><b style="color:'+window._pressColor(M.pressure)+'">'+M.pressure+'/100</b></div>'+
     '<div class="grdf-rsec-t" style="margin-top:8px">Вклад доменов</div>'+rows+
     '<div class="grdf-pd-foot">Системных сигналов: '+M.systemic+' &middot; критических: '+M.critical+' &middot; междоменных связей: '+M.crossLinks+'</div></div>';
   try{ box.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(_e){}
@@ -8864,9 +8870,10 @@ window.grdfRenderRadar = function(force){
   [[6,6,1,1],[S-6,6,-1,1],[6,S-6,1,-1],[S-6,S-6,-1,-1]].forEach(function(_c){ var _b=22; svg += '<path d="M'+(_c[0]+_c[2]*_b)+' '+_c[1]+' H'+_c[0]+' V'+(_c[1]+_c[3]*_b)+'" fill="none" stroke="rgba(212,175,90,0.32)" stroke-width="1.2"/>'; });
   var _pc=window._pressColor(M.pressure);
   svg += '<g style="cursor:pointer" onclick="window._radarPressDetail()">';
-  svg += '<circle cx="'+C+'" cy="'+C+'" r="30" fill="rgba(6,5,10,0.88)" stroke="'+_pc+'" stroke-opacity="0.75" stroke-width="1.5"/>';
-  svg += '<text x="'+C+'" y="'+(C-3)+'" text-anchor="middle" fill="'+_pc+'" font-size="20" font-family="Cormorant Garamond,serif" font-weight="600">'+M.pressure+'</text>';
-  svg += '<text x="'+C+'" y="'+(C+9)+'" text-anchor="middle" fill="rgba(232,224,208,0.5)" font-size="5.4" font-family="Montserrat,sans-serif" letter-spacing="0.8">SYSTEM PRESSURE</text>';
+  svg += '<circle cx="'+C+'" cy="'+C+'" r="33" fill="rgba(6,5,10,0.9)" stroke="'+_pc+'" stroke-opacity="0.75" stroke-width="1.5"/>';
+  svg += '<text x="'+C+'" y="'+(C-8)+'" text-anchor="middle" fill="'+_pc+'" font-size="18" font-family="Cormorant Garamond,serif" font-weight="600">'+M.pressure+'</text>';
+  svg += '<text x="'+C+'" y="'+(C+4)+'" text-anchor="middle" fill="'+_pc+'" font-size="7.6" font-family="Montserrat,sans-serif" font-weight="600" letter-spacing="0.3">'+window._pressLevel(M.pressure)+'</text>';
+  svg += '<text x="'+C+'" y="'+(C+13)+'" text-anchor="middle" fill="rgba(232,224,208,0.45)" font-size="4.6" font-family="Montserrat,sans-serif" letter-spacing="1.2">ДАВЛЕНИЕ</text>';
   svg += '</g>';
   svg += '</svg>';
   canvas.innerHTML = svg;
