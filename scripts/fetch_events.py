@@ -1606,10 +1606,10 @@ def process_events(raw_items):
 
         svgX, svgY = coord_to_svg(lat, lng)
         _raw = strip_html(item.get('desc','')).strip()
-        if len(_raw) <= 280:
+        if len(_raw) <= 1100:
             summary = _raw
         else:
-            _cut = _raw[:280]
+            _cut = _raw[:1100]
             _se = max(_cut.rfind('. '), _cut.rfind('! '), _cut.rfind('? '))
             if _se >= 140:
                 summary = _cut[:_se+1]
@@ -1801,9 +1801,16 @@ def process_events(raw_items):
     _save_tr_disk()
     return top_events
 
+_ACTOR_REGION = [('евросоюз','ЕС'),('еврокомисс','ЕС'),('еврокоми','ЕС'),('брюссель','ЕС'),('ес ','ЕС'),('ес,','ЕС'),
+                 ('сша ','США'),('вашингтон','США'),('белый дом','США'),('нато ','НАТО'),('оон ','ООН'),('g7','G7'),('джи-7','G7')]
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
+        except Exception: pass
+        try:
+            _tt = (_e.get('title') or '').strip().lower()
+            for _act,_reg in _ACTOR_REGION:
+                if _tt.startswith(_act): _e['region'] = _reg; break
         except Exception: pass
     _save_tr_disk()
     output = {
@@ -3308,7 +3315,7 @@ def fetch_telegram():
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
-        return {'title': text[:240], 'desc': text[:300], 'date': today,
+        return {'title': text[:240], 'desc': text[:1200], 'date': today,
                 'source': f'Telegram/{ch}', 'source_bias': 5, '_domain': _d}
 
     # --- Транспорт 1: MTProto через Telethon (надёжно, без троттлинга) ---
