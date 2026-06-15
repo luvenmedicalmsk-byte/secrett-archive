@@ -8816,6 +8816,23 @@ window.grdfRenderRadar = function(force){
     if(seen[k]===undefined){ seen[k]=ded.length; ded.push(e); }
     else { var p=ded[seen[k]]; if((e._sev||0)>(p._sev||0)) ded[seen[k]]=e; }
   });
+  // C2 — collapse reworded reposts (parity with События): stem-overlap, same domain, near date
+  (function(){
+    function _stems(t){ var out=[],sn={}; String(t||'').toLowerCase().replace(/[^0-9a-zа-яё ]/gi,' ').split(/\s+/).forEach(function(w){ if(w.length>=4){ var p=w.slice(0,4); if(!sn[p]){sn[p]=1;out.push(p);} } }); return out; }
+    function _ovl(a,b){ if(!a.length||!b.length) return [0,0]; var sa={}; a.forEach(function(p){sa[p]=1;}); var inter=0; b.forEach(function(p){ if(sa[p]) inter++; }); return [inter, inter/Math.min(a.length,b.length)]; }
+    var _kept=[], _d2=[];
+    ded.forEach(function(e){
+      var ew=_stems(e.title), et=(Date.parse(String(e.date||'').slice(0,10))||0), dup=-1;
+      for(var i=0;i<_kept.length;i++){ var k=_kept[i];
+        if(k.dom!==(e.domain||'')) continue;
+        if(et&&k.t&&Math.abs(et-k.t)>2592000000/10) continue;
+        var ov=_ovl(ew,k.words); if(ov[0]>=4 && ov[1]>=0.6){ dup=i; break; }
+      }
+      if(dup<0){ _kept.push({dom:(e.domain||''),t:et,words:ew,idx:_d2.length}); _d2.push(e); }
+      else { var pi=_kept[dup].idx; if((e._sev||0)>(_d2[pi]._sev||0)){ _d2[pi]=e; _kept[dup].words=ew; } }
+    });
+    ded=_d2;
+  })();
   var byDom={}; DOMS.forEach(function(d){ byDom[d]=[]; });
   ded.forEach(function(e){ if((e._sev||0)>=(window._radarLvlMin||0)) byDom[e.domain].push(e); });
   DOMS.forEach(function(d){ byDom[d].sort(function(a,b){ return (b._sev||0)-(a._sev||0); }); byDom[d]=byDom[d].slice(0,12); });
