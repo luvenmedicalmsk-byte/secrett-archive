@@ -2624,6 +2624,39 @@ function _buildSignalProLocal(p) {
     : ('Усиление '+(DOM_ADJ[todayLead]||'')+' давления').replace(/\s+/g,' ').trim();
   const forward={ current_lead:todayLead, forecast_lead:lead30, direction:direction };
 
+  // ── Pressure Transition Model: передача давления между доменами ──
+  const COUPLING={
+    climate:{economy:0.9,social:0.7,geopolitics:0.4,technology:0.3},
+    geopolitics:{economy:0.9,technology:0.6,social:0.6,climate:0.2},
+    economy:{social:0.85,technology:0.6,geopolitics:0.5,climate:0.2},
+    technology:{economy:0.6,social:0.5,geopolitics:0.5,climate:0.1},
+    social:{geopolitics:0.6,economy:0.5,technology:0.3,climate:0.1}
+  };
+  const CHANNEL={
+    'climate>economy':'логистику, сырьевые рынки и инфраструктуру','climate>social':'продовольствие, цены и коммунальную инфраструктуру','climate>geopolitics':'ресурсные и территориальные риски','climate>technology':'устойчивость инфраструктуры и систем',
+    'geopolitics>economy':'санкции, торговые потоки и финансовые рынки','geopolitics>technology':'цифровую инфраструктуру и технологические ограничения','geopolitics>social':'безопасность, миграцию и общественную стабильность','geopolitics>climate':'ресурсные риски',
+    'economy>social':'занятость, доходы и стоимость жизни','economy>technology':'инвестиции и устойчивость цифровых систем','economy>geopolitics':'внешнеэкономическую и политическую устойчивость','economy>climate':'ресурсные процессы',
+    'technology>economy':'цифровые сервисы и операционную устойчивость','technology>social':'доступность цифровых сервисов','technology>geopolitics':'технологический суверенитет','technology>climate':'мониторинговые системы',
+    'social>geopolitics':'внутреннюю стабильность и политические процессы','social>economy':'потребительскую активность и рынок труда','social>technology':'общественные цифровые сервисы','social>climate':'экологическую повестку'
+  };
+  const srcVel=(d)=> clamp01(((sfi30[d]||0)-(sisNowMap[d]||0))/12);
+  const activation=(s)=> clamp01(0.45*((sisNowMap[s]||0)/100)+0.30*((cri!=null?cri:0)/100)+0.15*srcVel(s)+0.10*(fcUp?1:0));
+  const ptsOf=(s,t)=>{ const cpl=(COUPLING[s]||{})[t]; if(cpl==null) return null; const scale=0.7+0.35*activation(s); const tRecv=0.85+0.15*clamp01(levels[t]/100); return Math.round(100*clamp01(cpl*scale*tRecv)); };
+  const allTrans=[];
+  DOMS.forEach(s=>{ if((levels[s]||0)<=0) return; DOMS.forEach(t=>{ if(t===s) return; const v=ptsOf(s,t); if(v==null||v<25) return; allTrans.push({source:s,target:t,pts:v,band:v>=60?'high':(v>=40?'medium':'low')}); }); });
+  allTrans.sort((a,b)=>b.pts-a.pts);
+  const perSrc={}; const pressureTransitions=[];
+  allTrans.forEach(x=>{ perSrc[x.source]=perSrc[x.source]||0; if(perSrc[x.source]<2 && pressureTransitions.length<6){ pressureTransitions.push(x); perSrc[x.source]++; } });
+  const incoming={}; allTrans.forEach(x=>{ if(!incoming[x.target]||x.pts>incoming[x.target].pts) incoming[x.target]={pts:x.pts,source:x.source}; });
+  let nextDom=null,nextSrc=null,nextPts=0;
+  DOMS.forEach(t=>{ if(incoming[t]&&incoming[t].pts>nextPts){ nextPts=incoming[t].pts; nextDom=t; nextSrc=incoming[t].source; } });
+  const fcConf=(fc&&num(fc.confidence)!=null)?num(fc.confidence)*100:60;
+  const nextConf=nextDom?Math.min(95,Math.round(0.5*nextPts+0.5*fcConf)):null;
+  const DOM_ADJ2={climate:'климатического',geopolitics:'геополитического',economy:'экономического',technology:'технологического',social:'социального'};
+  const chKey=(nextSrc&&nextDom)?(nextSrc+'>'+nextDom):'';
+  const nextCause=nextDom?('рост '+(DOM_ADJ2[nextSrc]||'')+' давления и распространение влияния на '+(CHANNEL[chKey]||'смежные сферы')+'.'):'';
+  const nextPressure=nextDom?{ domain:nextDom, source:nextSrc, confidence:nextConf, cause:nextCause }:null;
+
   const DOM_AUD={
     climate:{business:'усиление климатических рисков для логистики и инфраструктуры',investors:'климатический домен как источник неопределённости; внимание к сырьевым и энергетическим активам',private:'возможное влияние погодных событий на транспорт и коммунальную инфраструктуру'},
     geopolitics:{business:'сохранение геополитического давления на международные операции и поставки',investors:'геополитическая премия за риск остаётся значимым фактором',private:'возможное влияние на цены и доступность отдельных товаров'},
@@ -2670,6 +2703,7 @@ function _buildSignalProLocal(p) {
     mixed:mixed, mixed_partner:mixPartner, data_strategy_gap:gapCat,
     pressure_balance:pressureBalance,
     sfi:sfi, trajectory:trajectory, forward:forward,
+    pressure_transitions:pressureTransitions, next_pressure:nextPressure,
     ranking:ranking.map(x=>({domain:x.d,sis:x.sis,level:x.level,reason:x.reason})),
     strat_factors:stratFactors,
     changed7d:changed7d.trim(), business:aud('business'), investors:aud('investors'), private:aud('private'),
