@@ -2421,36 +2421,75 @@ function _buildSignalPro(M) {
   const DL = {climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'};
   M = M || {}; M.perDom = M.perDom || {}; M.dyn = M.dyn || {}; M.drivers = M.drivers || [];
   const pressure = Math.max(0, Math.min(100, parseInt(M.pressure,10) || 0));
-  const total = parseInt(M.total,10) || 0, systemic = parseInt(M.systemic,10) || 0, crossLinks = parseInt(M.crossLinks,10) || 0;
+  const total = parseInt(M.total,10) || 0, systemic = parseInt(M.systemic,10) || 0, critical = parseInt(M.critical,10) || 0, crossLinks = parseInt(M.crossLinks,10) || 0;
   const lvl = (p) => p>=75?'высокое':(p>=60?'повышенное':(p>=40?'умеренное':'низкое'));
   const dl = (d) => DL[d] || d;
+  const sysOf = (d) => { const pd=M.perDom[d]||{}; return parseInt(pd.sys,10)||0; };
   const pct = (d) => { const pd = M.perDom[d]||{}; const rec=parseFloat(pd.rec)||0, old=parseFloat(pd.old)||0; if(old>0) return Math.round(100*(rec-old)/old); return rec>0?100:0; };
-  const SECTORS = {geopolitics:['логистика','транспортные маршруты','энергетические рынки'],climate:['продовольственные цепочки','энергетика','водные ресурсы'],economy:['финансовые рынки','цепочки поставок','энергетика'],technology:['коммуникации','критическая инфраструктура','финансовые системы'],social:['внутренняя стабильность','рынок труда','общественные сервисы']};
+  const SECTORS = {
+    geopolitics:['международная логистика','транспортные маршруты','энергетические рынки','санкционные режимы'],
+    climate:['сельское хозяйство','водные ресурсы','энергетическая инфраструктура','страховые риски'],
+    economy:['финансовые рынки','стоимость капитала','занятость','инвестиционная активность'],
+    technology:['коммуникации','критическая инфраструктура','цифровые сервисы','финансовые системы'],
+    social:['внутренняя стабильность','рынок труда','общественные сервисы','миграционные процессы']
+  };
   const EMERGING = {climate:'климатических аномалий',geopolitics:'геополитической напряжённости',economy:'давления на рынки и торговлю',technology:'технологических и инфраструктурных рисков',social:'социальной напряжённости'};
   const CHAINS = {climate:['Климат','Энергетика','Экономика'],geopolitics:['Геополитика','Логистика','Инфраструктура'],economy:['Экономика','Финансовые рынки','Социум'],technology:['Технологии','Коммуникации','Социум'],social:['Социум','Внутренняя стабильность','Экономика']};
+  const CHANGE_NOTE = {
+    geopolitics:{up:'Рост числа сигналов связан с усилением международной напряжённости.',down:'Снижение интенсивности геополитических сигналов.'},
+    climate:{up:'Увеличение числа природных и погодных событий.',down:'Снижение числа климатических событий.'},
+    economy:{up:'Рост сигналов экономического давления.',down:'Снижение интенсивности экономических сигналов.'},
+    technology:{up:'Рост технологических и инфраструктурных сигналов.',down:'Снижение интенсивности новых технологических сигналов.'},
+    social:{up:'Рост социальной напряжённости в потоке сигналов.',down:'Снижение интенсивности социальных сигналов.'}
+  };
+  const PRACT = {
+    geopolitics:{business:['усиление санкционных рисков','логистические ограничения','давление на международные поставки'],investors:['рост геополитической премии в ценах','давление на сырьевые рынки','усиление интереса к защитным активам'],private:['возможное влияние на цены отдельных товаров']},
+    climate:{business:['риски для цепочек поставок сырья','рост страховых издержек','перебои в энергоснабжении'],investors:['давление на агро- и сырьевые рынки','рост волатильности в сезонных активах'],private:['возможное влияние на цены продовольствия']},
+    economy:{business:['рост неопределённости в отдельных секторах','давление на стоимость капитала'],investors:['признаки роста волатильности','изменение структуры рисков'],private:['возможное влияние на занятость и доходы']},
+    technology:{business:['риски для цифровой инфраструктуры','рост требований к устойчивости систем'],investors:['переоценка технологических рисков'],private:['возможные перебои в цифровых сервисах']},
+    social:{business:['рост операционных и репутационных рисков'],investors:['рост страновой премии за риск'],private:['влияние на повседневную стабильность и сервисы']}
+  };
   const drivers = (M.drivers||[]).filter(d => DOMS.indexOf(d) >= 0);
-  const topDrivers = drivers.slice(0,2), drv = topDrivers.map(dl);
+  const topDrivers = drivers.slice(0,2), drv = topDrivers.map(dl), top = drivers[0] || null;
 
   let interpretation = 'Системное давление — '+lvl(pressure)+' ('+pressure+'/100). ';
-  if (drv.length) interpretation += 'Основными драйверами выступают '+drv.join(' и ')+'. ';
+  if (drv.length) interpretation += 'Основной вклад в нагрузку вносят '+drv.join(' и ')+'. ';
   interpretation += 'Системных сигналов: '+systemic+' из '+total+'. ';
-  interpretation += (crossLinks>=2) ? 'Наблюдаются признаки формирования условий для каскадных эффектов между доменами.' : 'Выраженных межсекторных каскадных условий пока не наблюдается.';
+  interpretation += (crossLinks>=2) ? 'Наблюдаются признаки формирования междоменных каскадов. ' : 'Выраженных междоменных каскадных условий пока не наблюдается. ';
+  interpretation += (critical>0) ? 'Зафиксированы отдельные сигналы критического уровня — ситуация требует пристального наблюдения.'
+    : (pressure>=60 ? 'Текущая ситуация требует наблюдения, однако признаков критической системной дестабилизации не выявлено.' : 'Выраженных признаков системной дестабилизации не наблюдается.');
 
   const rows = [];
-  DOMS.forEach(d => { const pd = M.perDom[d]; if(!pd || !((parseInt(pd.n,10)||0)>0)) return; rows.push({domain:d, dir:(M.dyn[d]||'flat'), pct:pct(d)}); });
+  DOMS.forEach(d => { const pd = M.perDom[d]; if(!pd || !((parseInt(pd.n,10)||0)>0)) return;
+    const dir = M.dyn[d]||'flat';
+    const nt = dir==='flat' ? 'Без значимых изменений.' : ((CHANGE_NOTE[d]&&CHANGE_NOTE[d][dir])||'');
+    rows.push({domain:d, dir:dir, pct:pct(d), note:nt}); });
   const ups = DOMS.filter(d => M.dyn[d]==='up');
   const ext = ups.filter(d => d==='geopolitics' || d==='climate').length;
   const note = ups.length ? ((ext >= (ups.length-ext)) ? 'Система смещается в сторону внешних рисков.' : 'Система смещается в сторону внутренних рисков.') : 'Существенных смещений в структуре рисков не наблюдается.';
 
-  const secs = []; topDrivers.forEach(d => (SECTORS[d]||[]).forEach(s => { if(secs.indexOf(s)<0) secs.push(s); }));
-  const consequences = secs.slice(0,5);
-  const emerging = ups.map(d => EMERGING[d]).filter(Boolean);
-  const cascades = drivers.slice(0,3).map(d => CHAINS[d] || [dl(d)]);
+  let consequences = [];
+  if (top && SECTORS[top]) consequences = SECTORS[top].slice(0,4);
+  if (topDrivers[1] && SECTORS[topDrivers[1]]) { const s=SECTORS[topDrivers[1]][0]; if(s && consequences.indexOf(s)<0) consequences.push(s); }
+  consequences = consequences.slice(0,5);
+
+  const emerging = ups.map(d => { const p = pct(d); const level = p>=100 ? 'Сильный сигнал' : (p>=40 ? 'Средний сигнал' : 'Низкий сигнал'); return { text: EMERGING[d]||dl(d), level: level }; }).filter(x => x.text);
+
+  const cascades = drivers.slice(0,3).map(d => { const s = sysOf(d); const impact = (s>=3 && pressure>=60) ? 'Высокое' : (s>=1 ? 'Среднее' : 'Низкое'); return { chain: CHAINS[d] || [dl(d)], impact: impact }; });
+
+  function gather(aud){ const out=[]; topDrivers.forEach(d => { ((PRACT[d]||{})[aud]||[]).forEach(x => { if(out.indexOf(x)<0) out.push(x); }); }); return out.slice(0,4); }
+  const practical = { business: gather('business'), investors: gather('investors'),
+    private: gather('private').concat(['необходимость наблюдения за развитием ситуации']).filter((v,i,a)=>a.indexOf(v)===i).slice(0,4) };
 
   let key = 'Главным источником системного давления '+(drv.length ? ('остаётся '+drv[0]) : 'выступает совокупность факторов')+'. ';
   key += (pressure>=60) ? ('Повышается вероятность новых каскадных эффектов'+(consequences.length ? (' в таких направлениях, как '+consequences.slice(0,3).join(', ')) : '')+'.') : 'Формируются условия, требующие наблюдения за дальнейшим развитием ситуации.';
 
-  return { interpretation, change:{rows, note}, consequences, emerging, cascades, key };
+  let weekly = 'Главным источником системного давления '+(drv.length ? ('остаётся '+drv[0]) : 'выступает совокупность факторов')+'. ';
+  if (consequences.length) weekly += 'Формируются условия для дальнейшего распространения влияния на ключевые направления: '+consequences.slice(0,3).join(', ')+'. ';
+  weekly += (critical>0) ? 'Присутствуют отдельные сигналы критического уровня; уровень неопределённости высокий.'
+    : ('Критических признаков системного кризиса не наблюдается, однако уровень неопределённости остаётся '+(pressure>=60?'повышенным':'умеренным')+'.');
+
+  return { interpretation, change:{rows, note}, consequences, emerging, cascades, practical, key, weekly };
 }
 
 async function handleSignalPro(request, env) {
