@@ -1938,6 +1938,13 @@ function _tgIsNews(text, domain){
   return ['geopolitics','economy','social','technology'].indexOf(domain)>=0 && !_TG_SIG_RE.test(text||'');
 }
 function _tgIsUkr(text){ const m = (text||'').match(/[іїєґІЇЄҐ]/g); return !!(m && m.length>=3); }
+function _tgIsFragment(text){
+  const t = (text||'').trim();
+  if (!t || t[0]==='#') return true;
+  if ((t.match(/[а-яёa-z]/gi)||[]).length < 6) return true;
+  if (/\d+[.,]\d+\s*[+\-=]\s*\d/.test(t)) return true;
+  return false;
+}
 function _tgSeverity(text, domain, sev){
   const b = (text||'').toLowerCase();
   sev = (typeof sev==='number') ? sev : 45;
@@ -2275,6 +2282,7 @@ async function handleProxyNewsFeed(env) {
 
   // S42/S44/S45 для TG-ленты: украинский -> дроп; домен по содержанию; нет риск-маркера -> дроп; severity по масштабу
   items = items.filter(it => !_tgIsUkr(it.text||''));
+  items = items.filter(it => !_tgIsFragment(it.text||''));
   items.forEach(it => { it.domain = _tgReclass(it.text||'', it.domain); });
   items = items.filter(it => !_tgIsNews(it.text||'', it.domain));
   items.forEach(it => { it.severity = _tgSeverity(it.text||'', it.domain, it.severity); });
