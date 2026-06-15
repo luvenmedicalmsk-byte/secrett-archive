@@ -1975,13 +1975,14 @@ var _CFM_SOFTEN = [['достигли соглашения','сообщили о
 function _tgSoftenTitle(text){ for (var i=0;i<_CFM_SOFTEN.length;i++){ if (text.indexOf(_CFM_SOFTEN[i][0])>=0) return text.split(_CFM_SOFTEN[i][0]).join(_CFM_SOFTEN[i][1]); } return text; }
 function _tgTopicCap(items, N){
   function _tk(t){ var s={}, a=(t||'').toLowerCase().replace(/[^a-zа-яё0-9 ]/gi,' ').split(/\s+/); for(var i=0;i<a.length;i++){ if(a[i].length>=5) s[a[i].slice(0,7)]=1; } return Object.keys(s); }
-  var STOP={'погибл':1,'постра':1,'повреж':1,'област':1,'сообщ':1,'человек':1,'губерн':1,'жертв':1,'раненн':1,'эвакуир':1,'чрезвыч':1,'разруш':1,'происше':1,'результ':1,'информ':1,'атаки':1,'удар':1,'взрыв':1,'обстре':1,'ракет':1,'дрон':1,'беспил':1,'военны':1,'войска':1,'уничто':1,'снаряд':1,'границ':1,'района':1,'городе':1,'города':1,'поселк':1,'страны':1,'госуда':1,'сообща':1};
+  var STOP=['погибл','постра','повреж','област','сообщ','человек','губерн','жертв','ранен','эвакуир','чрезвыч','разруш','происше','результ','информ','атак','удар','взрыв','обстре','ракет','дрон','беспил','военн','войск','уничто','снаряд','границ','район','город','посёлк','поселк','стран','госуда','нанес','точечн','позиц','силам','заявил','сообща','президе','министр']
+  function _isStop(t){ for(var i=0;i<STOP.length;i++){ if(t.indexOf(STOP[i])===0) return true; } return false; }
   var df={};
   items.forEach(function(it){ _tk(it.text).forEach(function(t){ df[t]=(df[t]||0)+1; }); });
   var counts={}, out=[];
   items.slice().sort(function(a,b){ return (b.severity||0)-(a.severity||0); }).forEach(function(it){
-    var toks=_tk(it.text).filter(function(t){ return !STOP[t] && df[t]>=6; });
-    if(!toks.length){ out.push(it); return; }
+    var toks=_tk(it.text).filter(function(t){ return !_isStop(t) && df[t]>=8; });
+    if(toks.length<2){ out.push(it); return; }
     toks.sort(function(a,b){ return df[b]-df[a]; });
     var hot=toks[0];
     counts[hot]=(counts[hot]||0)+1;
@@ -2377,7 +2378,7 @@ async function handleProxyNewsFeed(env) {
     it.text = _tgSoftenTitle(it.text || '');
   });
   // Этап 9: лимит карточек на одну тему -- одна мега-история не занимает пол-ленты
-  items = _tgTopicCap(items, 4);
+  items = _tgTopicCap(items, 5);
   items.sort(function(a,b){ return ((b.time?Date.parse(b.time):0)-(a.time?Date.parse(a.time):0))||(b.id-a.id); });
   return new Response(JSON.stringify({ channels: NEWS_TG_CHANNELS.map(c => c.name), llm_active: !!env.OPENAI_API_KEY, kv: !!env.EVENTS_KV, cron_last: _cronLast, llm_classified: _llmCount, count: items.length, items }), {
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=30' }
