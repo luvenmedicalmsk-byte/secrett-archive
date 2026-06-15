@@ -8704,6 +8704,9 @@ function _fixDomain(e){
   return null;
 }
 window._pressColor = function(p){ return p>=75?'#ef4444':(p>=60?'#ff7a00':(p>=40?'#eab308':'#22c55e')); };
+window._srcLabel = function(s){ s=String(s||'').trim(); var x=s.replace(/^telegram\//i,'').replace(/^@/,'');
+  var m={'bbbreaking':'Breaking','breaking':'Breaking','rian_ru':'РИА Новости','rbc_news':'РБК','forbesrussia':'Forbes Russia','mchs_official':'МЧС','readovkanews':'Readovka','mash':'Mash','bazabazon':'Baza'};
+  return m[x.toLowerCase()] || x; };
 window._pressLevel = function(p){ return p>=75?'Высокое':(p>=60?'Повышенное':(p>=40?'Умеренное':'Низкое')); };
 window._plur = function(n){ var a=n%10,b=n%100; return (a===1&&b!==11)?'сигнал':((a>=2&&a<=4&&(b<12||b>14))?'сигнала':'сигналов'); };
 window._arrow = function(t){
@@ -8893,9 +8896,9 @@ window._radarPick = function(id){
   function esc2(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   var col = DC2[e.domain] || '#B8973A';
   var sev = (e._sev!=null) ? e._sev : e.severity;
-  var sum = String(e.summary||'').split('|||')[0].split('|')[0].trim(); if(sum.length>200) sum=sum.slice(0,200)+'\u2026';
+  var sum = String(e.summary||'').split('|||')[0].split('|')[0].trim(); if(sum.length>1500) sum=sum.slice(0,1500)+'\u2026';
   var dd=''; try{ if(e.date && typeof fd==='function') dd=fd(e.date); }catch(_){}
-  var meta=[]; if(e.region) meta.push(esc2(e.region)); if(dd) meta.push(dd); if(e.source) meta.push(esc2(e.source)); if(e.dup_count){ meta.push('+ ещё '+e.dup_count+(e.dup_sources&&e.dup_sources.length?' ('+e.dup_sources.map(function(x){return esc2(x);}).join(', ')+')':'')); }
+  var meta=[]; if(e.region) meta.push(esc2(e.region)); if(dd) meta.push(dd); if(e.source) meta.push(esc2(window._srcLabel(e.source))); if(e.dup_count){ meta.push('+ ещё '+e.dup_count+(e.dup_sources&&e.dup_sources.length?' ('+e.dup_sources.map(function(x){return esc2(x);}).join(', ')+')':'')); }
   var html = '<button class="grdf-rd-x" type="button">\u2715</button>'
     + '<div class="grdf-rd-tag" style="color:'+col+'"><i style="background:'+col+'"></i>'+esc2(DL2[e.domain]||e.domain)+'</div>'
     + '<div class="grdf-rd-title">'+esc2(e.title||'')+'</div>'
