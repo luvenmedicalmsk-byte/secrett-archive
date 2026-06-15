@@ -2,60 +2,60 @@
   "country": "IT",
   "date": "2026-06-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T17:35:16.525013+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-15T18:09:31.491446+00:00",
+  "node_count": 13,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 55,
+      "score": 57,
       "props": {
-        "risk_score": 55
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
@@ -87,13 +87,6 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IT-Цены_на_не",
-      "type": "Signal",
-      "label": "Цены на нефть падают, акции растут на фо",
-      "severity": 55,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-IT-Стихийные_",
       "type": "Signal",
       "label": "Стихийные протесты против ТЦКшников вспы",
@@ -106,25 +99,25 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IT",
@@ -163,16 +156,73 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-IT-Наводнение",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-IT-Цены_на_не",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55
     },
     {
       "from": "SIGNAL-IT-Стихийные_",
