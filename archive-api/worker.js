@@ -204,6 +204,8 @@ export default {
     return handleSnapshotHistory(request, env);
   if (path === '/api/signal-pro' && request.method === 'POST')
     return handleSignalPro(request, env);
+  if (path === '/api/atlas-brief' && request.method === 'POST')
+    return handleAtlasBrief(request, env);
   if (path === '/api/intelligence/daily' && request.method === 'GET')
     return handleIntelligenceDaily(request, env);
   if (path === '/api/alerts' && request.method === 'GET')
@@ -2708,6 +2710,79 @@ function _buildSignalProLocal(p) {
     strat_factors:stratFactors,
     changed7d:changed7d.trim(), business:aud('business'), investors:aud('investors'), private:aud('private'),
     watch:watch.trim(), keyLocal:keyLocal.trim() };
+}
+
+const COUNTRY_REGION = {
+  RU:'Евразия', UA:'Восточная Европа', BY:'Восточная Европа', PL:'Восточная Европа', RO:'Восточная Европа', BG:'Восточная Европа', RS:'Восточная Европа', HU:'Восточная Европа', CZ:'Восточная Европа', SK:'Восточная Европа',
+  DE:'Западная Европа', FR:'Западная Европа', GB:'Западная Европа', IT:'Западная Европа', ES:'Западная Европа', NL:'Западная Европа', BE:'Западная Европа', AT:'Западная Европа', CH:'Западная Европа', PT:'Западная Европа', SE:'Западная Европа', NO:'Западная Европа', FI:'Западная Европа', DK:'Западная Европа', GR:'Западная Европа',
+  US:'Северная Америка', CA:'Северная Америка', MX:'Северная Америка',
+  CN:'Восточная Азия', JP:'Восточная Азия', KR:'Восточная Азия', KP:'Восточная Азия', TW:'Восточная Азия', HK:'Восточная Азия', MN:'Восточная Азия',
+  IN:'Южная Азия', PK:'Южная Азия', BD:'Южная Азия',
+  IL:'Ближний Восток', IR:'Ближний Восток', SA:'Ближний Восток', TR:'Ближний Восток', IQ:'Ближний Восток', SY:'Ближний Восток', YE:'Ближний Восток', AE:'Ближний Восток', QA:'Ближний Восток', KW:'Ближний Восток', JO:'Ближний Восток', LB:'Ближний Восток', PS:'Ближний Восток',
+  KZ:'Центральная Азия', UZ:'Центральная Азия', TJ:'Центральная Азия', TM:'Центральная Азия', KG:'Центральная Азия', GE:'Центральная Азия', AM:'Центральная Азия', AZ:'Центральная Азия',
+  EG:'Африка', LY:'Африка', SD:'Африка', NG:'Африка', ET:'Африка', ZA:'Африка', KE:'Африка', MA:'Африка', DZ:'Африка', TN:'Африка',
+  BR:'Латинская Америка', AR:'Латинская Америка',
+  AU:'Океания', NZ:'Океания', ID:'Юго-Восточная Азия', VN:'Юго-Восточная Азия', TH:'Юго-Восточная Азия', MY:'Юго-Восточная Азия', PH:'Юго-Восточная Азия', SG:'Юго-Восточная Азия'
+};
+function _buildAtlasBrief(payload, mode) {
+  payload = payload || {};
+  const DOMS=['climate','geopolitics','economy','technology','social'];
+  const DL={climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'};
+  const num=(x)=>{ const v=parseFloat(x); return isNaN(v)?null:v; };
+  const countries = Array.isArray(payload.countries)?payload.countries:[];
+  if(!countries.length) return { empty:true };
+  let wsum=0, griAcc=0, criAcc=0, d7Acc=0, fAcc=0, n=0;
+  const lvAcc={}; DOMS.forEach(d=>lvAcc[d]=0);
+  const regionAcc={};
+  countries.forEach(c=>{
+    const gri=num(c.gri)||0, w=Math.max(1,gri);
+    DOMS.forEach(d=>{ const v=num(c.ds&&c.ds[d])||0; lvAcc[d]+=v*w; });
+    wsum+=w; griAcc+=gri; criAcc+=num(c.cri)||0; d7Acc+=num(c.d7gri)||0; fAcc+=(num(c.fmax)!=null?num(c.fmax):gri); n++;
+    const reg=COUNTRY_REGION[(c.cc||'').toString().toUpperCase()]||'Прочие регионы';
+    if(!regionAcc[reg]) regionAcc[reg]={gri:0,d7:0,n:0};
+    regionAcc[reg].gri+=gri; regionAcc[reg].d7+=num(c.d7gri)||0; regionAcc[reg].n++;
+  });
+  const globalLevels={}; DOMS.forEach(d=> globalLevels[d]= wsum?Math.round(lvAcc[d]/wsum):0);
+  const gGri=n?Math.round(griAcc/n):0, gCri=n?Math.round(criAcc/n):0, gD7=n?Math.round(d7Acc/n):0, gFmax=n?Math.round(fAcc/n):gGri;
+  const gDominant=DOMS.slice().sort((a,b)=>globalLevels[b]-globalLevels[a])[0];
+  const G=_buildSignalProLocal({ country_name:'Глобально', country:'GLOBAL', domain_scores:globalLevels,
+    domain_counts:payload.global_counts||{}, gri:gGri, cri:gCri, d7:{gri:gD7}, forecast:{score_max:gFmax,confidence:0.62}, dominant:gDominant });
+  const d24rate=Math.round((gD7/7)*10)/10;
+  const proj30=Math.max(0,Math.min(100, Math.round(gGri + gD7*3.2)));
+  const changes={
+    h24:{ rate:d24rate, text:'Средний мировой темп изменения риска ~'+(d24rate>=0?'+':'')+d24rate+' п./сутки' },
+    d7:{ delta:gD7, text:'Совокупное мировое давление '+(gD7>0?('повысилось на '+Math.abs(gD7)+' п.'):(gD7<0?('снизилось на '+Math.abs(gD7)+' п.'):'практически не изменилось'))+' за 7 дней' },
+    d30:{ proj:proj30, text:'Проекция совокупного давления на 30 дней — около '+proj30+'/100' }
+  };
+  const growth=(G.sfi||[]).map(x=>({domain:x.domain, delta:(x.d30||0)-(x.now||0), now:x.now, d30:x.d30, status:x.status}))
+    .sort((a,b)=>b.delta-a.delta).filter(x=>x.delta>0).slice(0,3);
+  const sl=G.strat_lead, dld=G.data_lead, fl=G.forward?G.forward.forecast_lead:sl, np=G.next_pressure;
+  let conclusion_day='Основное стратегическое давление сейчас формируется доменом «'+(DL[sl]||sl)+'»';
+  if(dld&&sl&&dld!==sl) conclusion_day+=' при наибольшем объёме сигналов в домене «'+(DL[dld]||dld)+'»';
+  conclusion_day+='. '+changes.d7.text+'.';
+  if(np&&np.domain) conclusion_day+=' Наиболее вероятный следующий домен под давлением — «'+(DL[np.domain]||np.domain)+'».';
+  let conclusion_week='На горизонте 30 дней ведущим стратегическим доменом '+((fl===sl)?'остаётся':'становится')+' «'+(DL[fl]||fl)+'».';
+  const topT=(G.pressure_transitions&&G.pressure_transitions[0])||null;
+  if(topT) conclusion_week+=' Основное направление передачи давления — «'+(DL[topT.source]||topT.source)+'» → «'+(DL[topT.target]||topT.target)+'» (PTS '+topT.pts+').';
+  conclusion_week+=' Сохраняется необходимость наблюдения за развитием ситуации.';
+  const brief={ scope:'global', countries_count:n,
+    changes:changes, lead_strategic:sl, lead_strategic_level:G.strat_level, lead_data:dld,
+    growth_domains:growth, next_pressure:np?{domain:np.domain,source:np.source,confidence:np.confidence}:null,
+    conclusion_day:conclusion_day, conclusion_week:conclusion_week };
+  if(mode!=='pro') return { locked_dynamics:true, brief:brief };
+  const byDomain=DOMS.map(d=>{ const s=(G.sfi||[]).find(x=>x.domain===d)||{}; const rr=(G.ranking||[]).find(r=>r.domain===d)||{}; return { domain:d, level:globalLevels[d], sis:rr.sis||0, now:s.now||0, d7:s.d7||0, d30:s.d30||0, status:s.status||'flat' }; }).sort((a,b)=>b.sis-a.sis);
+  const byRegion=Object.keys(regionAcc).map(r=>{ const o=regionAcc[r]; return { region:r, gri:Math.round(o.gri/o.n), delta:Math.round(o.d7/o.n), n:o.n }; }).sort((a,b)=>b.gri-a.gri);
+  const dynamics={ by_domain:byDomain, by_region:byRegion, global_sis:G.ranking, global_sfi:G.sfi, transitions:G.pressure_transitions, next_pressure:G.next_pressure, trajectory:G.trajectory };
+  return { locked_dynamics:false, brief:brief, dynamics:dynamics };
+}
+
+async function handleAtlasBrief(request, env) {
+  const tier = await _resolveClientTier(request, env);
+  const caps = getTierCapabilities(tier);
+  let M = {};
+  try { M = await request.json(); } catch(e) { M = {}; }
+  const res = _buildAtlasBrief(M, caps.signal_pro_analysis ? 'pro' : 'free');
+  return jsonResponse(Object.assign({ tier:caps.tier }, res), 200);
 }
 
 async function handleSignalPro(request, env) {
