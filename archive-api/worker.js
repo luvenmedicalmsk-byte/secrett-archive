@@ -2062,6 +2062,7 @@ function _tgParseChannel(html, handle, name) {
     text = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
     text = _dnDecode(text).replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
     text = text.replace(/\s*Топор\s*Live[\s\S]*$/i, '').trim();  // срез самоподписи канала
+    text = text.replace(/\s*@[^|\n]{1,60}\|\s*подписывайтесь[.!\s]*$/i,'').replace(/\s*\|\s*подписывайтесь[.!\s]*$/i,'').replace(/\s*подписывайтесь[^.!?\n]{0,45}[.!\s]*$/i,'').replace(/\s*подписаться[^.!?\n]{0,45}[.!\s]*$/i,'').replace(/\s*@[A-Za-zА-Яа-яЁё0-9_ ]{2,40}\s*$/,'').trim();  // общий срез промо-хвостов
     if (text.length < 8) continue;
     const _tl = text.toLowerCase();
     if (NEWS_STOPWORDS.some(s => _tl.includes(s))) continue;
