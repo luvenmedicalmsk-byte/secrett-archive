@@ -2,67 +2,67 @@
   "country": "TR",
   "date": "2026-06-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T18:09:31.484337+00:00",
+  "generated_at": "2026-06-15T18:42:31.169695+00:00",
   "node_count": 13,
-  "edge_count": 12,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 34,
+      "score": 48,
       "props": {
-        "risk_score": 34
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -39,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 19,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 9,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
-      "trend": "down"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DRIVER-TR-Geopolitical",
@@ -80,18 +80,18 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Зеленое_пр",
+      "type": "Signal",
+      "label": "Зеленое предупреждение о наводнении в Ту",
+      "severity": 50,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-TR-Ключевой_с",
       "type": "Signal",
       "label": "Ключевой свидетель в расследовании США п",
       "severity": 44,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TR-Зеленое_пр",
-      "type": "Signal",
-      "label": "Зеленое предупреждение о наводнении в Ту",
-      "severity": 22,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -99,43 +99,43 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.39
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.04
     },
     {
       "from": "DRIVER-TR-Geopolitical",
@@ -156,16 +156,79 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-TR-Ключевой_с",
-      "to": "DOMAIN-TR-geopolitical",
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-TR-Зеленое_пр",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.22
+      "weight": 0.5
+    },
+    {
+      "from": "SIGNAL-TR-Ключевой_с",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.44
     }
   ]
 }
