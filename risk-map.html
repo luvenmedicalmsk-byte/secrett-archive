@@ -7545,6 +7545,7 @@ function _evM(val, lbl, col) {
   <div id="grdf-radar-detail"></div>
   <div id="grdf-radar-panel"></div>
   <div class="grdf-radar-note">Радар отображает текущую структуру глобальных сигналов. Чем ближе сигнал к центру, тем выше его актуальность и потенциальное влияние. Системное давление отражает общий уровень нагрузки на систему.</div>
+  <div id="grdf-signalpro"></div>
 </div>
 
 <!-- S36.1: Signals feed screen (same source as map: ALL_EVENTS) -->
@@ -8538,6 +8539,7 @@ var UPGRADE_MSGS = {
   signals:     ['Signal + Warning Feed','SIG-NNN · WARN-NNNNN потоки событий'],
   matrix:      ['Risk Matrix 2Y','Матрица рисков 7 доменов · 24 месяца'],
   archive:     ['Archive Member','Signal Pro включён навсегда'],
+  signal_pro:  ['Аналитическая интерпретация сигналов','Последствия, формирующиеся тенденции и каскадные сценарии'],
 };
 window.grdfOpenUpgrade = function(feature) {
   var modal = document.getElementById('grdf-upgrade-modal');
@@ -8793,6 +8795,59 @@ window._radarPressDetail = function(){
     '<div class="grdf-pd-foot">Системных сигналов: '+M.systemic+' &middot; критических: '+M.critical+' &middot; междоменных связей: '+M.crossLinks+'</div></div>';
   try{ box.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(_e){}
 };
+(function(){var s=document.createElement('style');s.textContent="#grdf-signalpro{padding:4px 14px 22px}.sp-section{margin-top:6px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:16px}.sp-head{display:flex;align-items:center;gap:8px}.sp-badge{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;letter-spacing:.22em;color:#D4AF5A}.sp-sub{font-size:10px;color:rgba(232,224,208,.45);letter-spacing:.04em;margin:3px 0 12px;font-family:'Montserrat',sans-serif}.sp-body{position:relative}.sp-blocks{display:flex;flex-direction:column;gap:8px}.sp-block{background:rgba(184,151,58,.045);border:0.5px solid rgba(184,151,58,.14);border-radius:8px;padding:11px 13px}.sp-block-h{font-size:8px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:rgba(212,175,90,.85);margin-bottom:7px;font-family:'Montserrat',sans-serif}.sp-p{font-size:12px;line-height:1.5;color:#E8E0D0;margin:0;font-family:'Montserrat',sans-serif}.sp-key{color:#f1e8d0}.sp-lead{font-size:11px;color:rgba(232,224,208,.7);margin:0 0 6px;font-family:'Montserrat',sans-serif}.sp-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}.sp-ul li{font-size:12px;color:#E8E0D0;padding-left:13px;position:relative;font-family:'Montserrat',sans-serif;line-height:1.4}.sp-ul li:before{content:'';position:absolute;left:0;top:7px;width:4px;height:4px;border-radius:50%;background:#B8973A}.sp-dyn{display:flex;align-items:center;gap:8px;padding:3px 0;font-family:'Montserrat',sans-serif}.sp-dyn-ar{font-size:13px;width:12px;text-align:center}.sp-dyn-d{font-size:12px;color:#E8E0D0;flex:1}.sp-dyn-v{font-size:12px;font-weight:600}.sp-note{font-size:11px;color:rgba(232,224,208,.6);margin:8px 0 0;font-style:italic;font-family:'Montserrat',sans-serif}.sp-chain{font-size:12px;color:#E8E0D0;padding:4px 0;font-family:'Montserrat',sans-serif;display:flex;align-items:center;gap:7px;flex-wrap:wrap}.sp-arrow{color:#B8973A;font-weight:600}.sp-body.sp-locked .sp-blocks{filter:blur(6px);pointer-events:none;user-select:none;opacity:.55}.sp-overlay{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px 16px;background:linear-gradient(180deg,rgba(6,5,10,.5),rgba(6,5,10,.82));border-radius:8px}.sp-lock-ico{font-size:22px;margin-bottom:6px}.sp-lock-h{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:600;letter-spacing:.2em;color:#D4AF5A;margin-bottom:8px}.sp-lock-t{font-size:11px;line-height:1.55;color:rgba(232,224,208,.75);max-width:300px;margin-bottom:14px;font-family:'Montserrat',sans-serif}.sp-cta{background:#15803d;color:#dcfce7;border:none;border-radius:8px;padding:11px 26px;font-size:13px;font-weight:600;font-family:'Montserrat',sans-serif;cursor:pointer;letter-spacing:.02em}";document.head.appendChild(s);})();
+window._renderSignalPro = function(M){
+  var el=document.getElementById('grdf-signalpro'); if(!el||!M) return;
+  var DL=(window._rDL?window._rDL():{}), DOMS=['climate','geopolitics','economy','technology','social'];
+  function dl(d){ return DL[d]||d; }
+  function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function lvl(p){ return p>=75?'высокое':(p>=60?'повышенное':(p>=40?'умеренное':'низкое')); }
+  function pct(d){ var pd=M.perDom[d]||{rec:0,old:0}; if(pd.old>0) return Math.round(100*(pd.rec-pd.old)/pd.old); return pd.rec>0?100:0; }
+  function ul(arr){ return '<ul class="sp-ul">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
+  function block(h,body){ return '<div class="sp-block"><div class="sp-block-h">'+esc(h)+'</div>'+body+'</div>'; }
+  function spMember(){ try{ var t=(window.CC&&window.CC.tier&&window.CC.tier())||'free'; return t!=='free'; }catch(e){ return false; } }
+  var SECTORS={geopolitics:['логистика','транспортные маршруты','энергетические рынки'],climate:['продовольственные цепочки','энергетика','водные ресурсы'],economy:['финансовые рынки','цепочки поставок','энергетика'],technology:['коммуникации','критическая инфраструктура','финансовые системы'],social:['внутренняя стабильность','рынок труда','общественные сервисы']};
+  var EMERGING={climate:'климатических аномалий',geopolitics:'геополитической напряжённости',economy:'давления на рынки и торговлю',technology:'технологических и инфраструктурных рисков',social:'социальной напряжённости'};
+  var CHAINS={climate:['Климат','Энергетика','Экономика'],geopolitics:['Геополитика','Логистика','Инфраструктура'],economy:['Экономика','Финансовые рынки','Социум'],technology:['Технологии','Коммуникации','Социум'],social:['Социум','Внутренняя стабильность','Экономика']};
+  var topDrivers=(M.drivers||[]).slice(0,2), drv=topDrivers.map(dl);
+
+  var b1='Системное давление — '+lvl(M.pressure)+' ('+M.pressure+'/100). ';
+  if(drv.length) b1+='Основными драйверами выступают '+drv.join(' и ')+'. ';
+  b1+='Системных сигналов: '+M.systemic+' из '+M.total+'. ';
+  b1+=(M.crossLinks>=2)?'Наблюдаются признаки формирования условий для каскадных эффектов между доменами.':'Выраженных межсекторных каскадных условий пока не наблюдается.';
+
+  var rows='';
+  DOMS.forEach(function(d){ var pd=M.perDom[d]; if(!pd||pd.n===0) return; var p=pct(d), dir=M.dyn[d]||'flat';
+    var sym=dir==='up'?'↑':(dir==='down'?'↓':'→'), col=dir==='up'?'#ef4444':(dir==='down'?'#22c55e':'rgba(232,224,208,.5)');
+    var val=dir==='flat'?'без изменений':((p>0?'+':'')+p+'%');
+    rows+='<div class="sp-dyn"><span class="sp-dyn-ar" style="color:'+col+'">'+sym+'</span><span class="sp-dyn-d">'+esc(dl(d))+'</span><span class="sp-dyn-v" style="color:'+col+'">'+esc(val)+'</span></div>'; });
+  var ups=DOMS.filter(function(d){return M.dyn[d]==='up';});
+  var ext=ups.filter(function(d){return d==='geopolitics'||d==='climate';}).length;
+  var shift= ups.length? ((ext>=(ups.length-ext))?'Система смещается в сторону внешних рисков.':'Система смещается в сторону внутренних рисков.') : 'Существенных смещений в структуре рисков не наблюдается.';
+
+  var secs=[]; topDrivers.forEach(function(d){ (SECTORS[d]||[]).forEach(function(s){ if(secs.indexOf(s)<0) secs.push(s); }); }); secs=secs.slice(0,5);
+  var emg=ups.map(function(d){return EMERGING[d];}).filter(Boolean);
+  var chainDoms=(M.drivers||[]).slice(0,3);
+
+  var b6='Главным источником системного давления '+(drv.length?('остаётся '+drv[0]):'выступает совокупность факторов')+'. ';
+  b6+=(M.pressure>=60)?('Повышается вероятность новых каскадных эффектов'+(secs.length?(' в таких направлениях, как '+secs.slice(0,3).join(', ')):'')+'.'):'Формируются условия, требующие наблюдения за дальнейшим развитием ситуации.';
+
+  var blocks=
+    block('Интерпретация системы','<p class="sp-p">'+esc(b1)+'</p>')
+   +block('Что изменилось за 7 дней',(rows||'<p class="sp-p">Недостаточно данных для оценки динамики.</p>')+'<p class="sp-note">'+esc(shift)+'</p>')
+   +block('Основные последствия','<p class="sp-lead">Наиболее вероятные зоны распространения давления:</p>'+(secs.length?ul(secs):'<p class="sp-p">Выраженных зон распространения не выявлено.</p>'))
+   +block('Формирующиеся тенденции',emg.length?('<p class="sp-lead">Наблюдаются ранние признаки усиления:</p>'+ul(emg)):'<p class="sp-p">Выраженных усиливающихся слабых сигналов не наблюдается.</p>')
+   +block('Каскадные сценарии',chainDoms.length?chainDoms.map(function(d){ var c=CHAINS[d]||[dl(d)]; return '<div class="sp-chain">'+c.map(esc).join(' <span class="sp-arrow">→</span> ')+'</div>'; }).join(''):'<p class="sp-p">Каскадные цепочки пока не формируются.</p>')
+   +block('Ключевой вывод дня','<p class="sp-p sp-key">'+esc(b6)+'</p>');
+
+  var member=spMember();
+  var ov= member?'':('<div class="sp-overlay"><div class="sp-lock-ico">🔒</div><div class="sp-lock-h">SIGNAL PRO</div>'
+    +'<div class="sp-lock-t">Сигналы показывают, что произошло. Signal Pro объясняет, что это значит и к чему может привести.<br><br>Доступ к интерпретации сигналов, формирующимся тенденциям, каскадным сценариям и ключевым выводам системы.</div>'
+    +'<button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Получить доступ</button></div>');
+  el.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">'+(member?'':'🔒 ')+'SIGNAL PRO</span></div>'
+    +'<div class="sp-sub">Аналитическая интерпретация сигналов</div>'
+    +'<div class="sp-body'+(member?'':' sp-locked')+'"><div class="sp-blocks">'+blocks+'</div>'+ov+'</div></div>';
+};
 window.grdfRenderRadar = function(force){
   var canvas = document.getElementById('grdf-radar-canvas');
   if(!canvas) return;
@@ -8836,7 +8891,7 @@ window.grdfRenderRadar = function(force){
   var byDom={}; DOMS.forEach(function(d){ byDom[d]=[]; });
   ded.forEach(function(e){ if((e._sev||0)>=(window._radarLvlMin||0)) byDom[e.domain].push(e); });
   DOMS.forEach(function(d){ byDom[d].sort(function(a,b){ return (b._sev||0)-(a._sev||0); }); byDom[d]=byDom[d].slice(0,12); });
-  var M = window._radarMetrics(ded); try{ window._radarRenderPanels(M); }catch(_e){}
+  var M = window._radarMetrics(ded); try{ window._radarRenderPanels(M); }catch(_e){} try{ window._renderSignalPro(M); }catch(_e3){}
   var _sig = DOMS.map(function(d){ return byDom[d].map(function(e){ return (e.title||'')+'~'+e._sev; }).join(','); }).join('|') + '|P'+M.pressure+'|L'+(window._radarLvlMin||0);
   if(!force && _sig===window._radarSig){ return; }
   window._radarSig = _sig;
