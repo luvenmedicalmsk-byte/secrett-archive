@@ -1814,6 +1814,15 @@ def process_events(raw_items):
     print(f"  [S46/Этап8] подтверждённость скорректирована: {_cfm_n}", file=sys.stderr)
     top_events = _topic_cap(top_events, 5)
     print(f"  [Этап9] лимит на тему применён -> {len(top_events)}", file=sys.stderr)
+    # Этап9b: кап на поток отдельных CISA KEV / CVE -- слишком гранулярно для систем-риск ленты
+    def _is_kev(e):
+        return e.get('source') == 'CISA KEV' or str(e.get('title','')).startswith('Активно эксплуатируемая уязвимость')
+    _kev = [e for e in top_events if _is_kev(e)]
+    _KEV_CAP = 2
+    if len(_kev) > _KEV_CAP:
+        _keep = set(id(e) for e in sorted(_kev, key=lambda e: ((e.get('severity',0) or 0), e.get('date','')), reverse=True)[:_KEV_CAP])
+        top_events = [e for e in top_events if (not _is_kev(e)) or id(e) in _keep]
+        print(f"  [Этап9b] CISA KEV: оставлено {_KEV_CAP} из {len(_kev)}", file=sys.stderr)
 
     for _e in top_events:
         try:
