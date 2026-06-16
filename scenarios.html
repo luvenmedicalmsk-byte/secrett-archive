@@ -95,6 +95,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Mo
 .h-high{background:rgba(110,37,40,0.38);color:var(--high-text);border:1px solid rgba(240,101,95,0.32)}
 .h-mid{background:rgba(133,79,11,0.35);color:var(--mid-text);border:1px solid rgba(239,159,39,0.25)}
 .h-low{background:rgba(68,68,65,0.4);color:var(--low-text);border:1px solid rgba(136,135,128,0.2)}
+.asset-cat{font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(184,151,58,0.5);margin-bottom:7px;line-height:1.6}.asset-cat .nm{color:var(--gold-light)}.asset-unit{float:right;font-size:7.5px;letter-spacing:.03em;text-transform:none;color:var(--text2);border:0.5px solid var(--border);border-radius:3px;padding:3px 7px}.asset-desc{font-size:10px;line-height:1.55;color:var(--text2);margin:7px 0 0}.scen-tbl{width:100%;border-collapse:collapse;margin-top:13px;font-size:10px;border:0.5px solid var(--border)}.scen-tbl th,.scen-tbl td{padding:7px 5px;text-align:center;border:0.5px solid rgba(184,151,58,0.1)}.scen-tbl thead th{font-size:8px;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);font-weight:500}.scen-tbl thead th.lead,.scen-tbl tbody th{text-align:left}.scen-tbl tbody th{font-size:9px;letter-spacing:.03em;text-transform:uppercase;color:var(--text2);font-weight:500;white-space:nowrap}.scen-tbl tbody td{color:var(--text);font-variant-numeric:tabular-nums}.scen-foot{font-size:8.5px;color:var(--text3);font-style:italic;margin-top:9px;line-height:1.5}
 
 /* ДЕТАЛЬНАЯ ПАНЕЛЬ */
 #detail{
@@ -328,19 +329,28 @@ function label(p){ return PR[p].label; }
 function renderGrid(){
   const grid = document.getElementById('assets-grid');
   grid.innerHTML = '';
+  const catMap={metals:'Металл',real:'Реальный актив',human:'Человеческий актив'};
+  const SCEN={'Платина':{unit:'цена 1 унции (oz)',fresh:'15 мая',foot:'Данные из Архива · пост 15.05.2026 · Бычий (10 лет) — водородный сценарий',rows:[['Медвежий','$1000–1200','$1200–1500','$1500–2000'],['Базовый','$1300–1800','$2000–2600','$3000–4000'],['Бычий','$2500–3000','$3000–3400','$4000+']]}};
   ASSETS.forEach(a => {
     const match = FILTERS[activeFilter](a);
     const card = document.createElement('div');
     card.className = 'asset-card' + (selectedCard === a.num ? ' selected' : '') + (!match ? ' dimmed' : '');
+    const cat=(catMap[(a.group&&a.group[0])]||'Актив').toUpperCase();
+    const sc=SCEN[a.name];
+    const unit=sc?`<span class="asset-unit">${sc.unit}</span>`:'';
+    const fresh=(sc&&sc.fresh)?` · ${sc.fresh}`:'';
+    let body;
+    if(sc){
+      const rows=sc.rows.map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+      body=`<table class="scen-tbl"><thead><tr><th class="lead">Сценарий</th><th>2 года</th><th>5 лет</th><th>10 лет</th></tr></thead><tbody>${rows}</tbody></table><div class="scen-foot">${sc.foot}</div>`;
+    }else{
+      body=`<div class="horizon-row"><div class="h-badge ${badgeCls(a.p2)}"><span class="h-year">2 года</span>${label(a.p2)}</div><div class="h-badge ${badgeCls(a.p5)}"><span class="h-year">5 лет</span>${label(a.p5)}</div><div class="h-badge ${badgeCls(a.p10)}"><span class="h-year">10 лет</span>${label(a.p10)}</div></div>`;
+    }
     card.innerHTML = `
-      <div class="asset-num">◆ Актив ${a.num}</div>
-      <div class="asset-name">${a.name}</div>
-      <div class="asset-subtitle">${a.sub}</div>
-      <div class="horizon-row">
-        <div class="h-badge ${badgeCls(a.p2)}"><span class="h-year">2 года</span>${label(a.p2)}</div>
-        <div class="h-badge ${badgeCls(a.p5)}"><span class="h-year">5 лет</span>${label(a.p5)}</div>
-        <div class="h-badge ${badgeCls(a.p10)}"><span class="h-year">10 лет</span>${label(a.p10)}</div>
-      </div>`;
+      <div class="asset-cat">${unit}${cat} · <span class="nm">${a.name.toUpperCase()}</span>${fresh}</div>
+      <div class="asset-name">${a.sub}</div>
+      <div class="asset-desc">${a.logic}</div>
+      ${body}`;
     card.onclick = () => openDetail(a);
     grid.appendChild(card);
   });
