@@ -2765,15 +2765,16 @@ function _buildAtlasBrief(payload, mode) {
   const topT=(G.pressure_transitions&&G.pressure_transitions[0])||null;
   if(topT) conclusion_week+=' Основное направление передачи давления — «'+(DL[topT.source]||topT.source)+'» → «'+(DL[topT.target]||topT.target)+'» (PTS '+topT.pts+').';
   conclusion_week+=' Сохраняется необходимость наблюдения за развитием ситуации.';
-  const brief={ scope:'global', countries_count:n,
-    changes:changes, lead_strategic:sl, lead_strategic_level:G.strat_level, lead_data:dld,
-    growth_domains:growth, next_pressure:np?{domain:np.domain,source:np.source,confidence:np.confidence}:null,
-    conclusion_day:conclusion_day, conclusion_week:conclusion_week };
-  if(mode!=='pro') return { locked_dynamics:true, brief:brief };
-  const byDomain=DOMS.map(d=>{ const s=(G.sfi||[]).find(x=>x.domain===d)||{}; const rr=(G.ranking||[]).find(r=>r.domain===d)||{}; return { domain:d, level:globalLevels[d], sis:rr.sis||0, now:s.now||0, d7:s.d7||0, d30:s.d30||0, status:s.status||'flat' }; }).sort((a,b)=>b.sis-a.sis);
+  const briefNext = np?{domain:np.domain,source:np.source,confidence:np.confidence}:null;
+  const briefFree={ scope:'global', countries_count:n, global_pressure:gGri, d7:gD7,
+    lead_strategic:sl, lead_strategic_level:G.strat_level, lead_data:dld,
+    summary:'Мировое стратегическое давление — '+gGri+'/100; за 7 дней '+(gD7>0?('повысилось на '+Math.abs(gD7)+' п.'):(gD7<0?('снизилось на '+Math.abs(gD7)+' п.'):'практически не изменилось'))+'. Ведущий стратегический домен — «'+(DL[sl]||sl)+'».' };
+  if(mode!=='pro') return { locked:true, brief_free:briefFree };
+  const briefFull={ changes:changes, growth_domains:growth, next_pressure:briefNext, conclusion_day:conclusion_day, conclusion_week:conclusion_week, forward:G.forward, trajectory:G.trajectory };
+  const byDomain=DOMS.map(d=>{ const s=(G.sfi||[]).find(x=>x.domain===d)||{}; const rr=(G.ranking||[]).find(r=>r.domain===d)||{}; return { domain:d, level:globalLevels[d], gsp:rr.sis||0, now:s.now||0, d7:s.d7||0, d30:s.d30||0, status:s.status||'flat' }; }).sort((a,b)=>b.gsp-a.gsp);
   const byRegion=Object.keys(regionAcc).map(r=>{ const o=regionAcc[r]; return { region:r, gri:Math.round(o.gri/o.n), delta:Math.round(o.d7/o.n), n:o.n }; }).sort((a,b)=>b.gri-a.gri);
-  const dynamics={ by_domain:byDomain, by_region:byRegion, global_sis:G.ranking, global_sfi:G.sfi, transitions:G.pressure_transitions, next_pressure:G.next_pressure, trajectory:G.trajectory };
-  return { locked_dynamics:false, brief:brief, dynamics:dynamics };
+  const dynamics={ by_domain:byDomain, by_region:byRegion, global_sfi:G.sfi, transitions:G.pressure_transitions, next_pressure:G.next_pressure, trajectory:G.trajectory };
+  return { locked:false, brief_free:briefFree, brief_full:briefFull, dynamics:dynamics };
 }
 
 async function handleAtlasBrief(request, env) {
