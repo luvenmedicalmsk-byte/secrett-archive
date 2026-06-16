@@ -8701,6 +8701,27 @@ window._atlasRender = function(bEl, mEl, dEl, d){
       return '<div class="sp-dyn"><span class="sp-dyn-d">'+esc(r.region)+'</span><span class="sp-dyn-v"><span style="color:#E8E0D0">'+r.gri+'</span> <span style="color:'+dc+';font-size:10px">'+(r.delta>0?'+':'')+r.delta+'</span></span></div>'; }).join('');
     var trHtml=(DY.transitions||[]).slice(0,5).map(function(t){ var col=t.band==='high'?'#ff7a00':(t.band==='medium'?'#eab308':'rgba(232,224,208,.5)');
       return '<div class="sp-dyn"><span class="sp-dyn-d" style="color:#E8E0D0">'+esc(dlc(t.source))+' → '+esc(dlc(t.target))+'</span><span class="sp-dyn-v" style="color:'+col+';font-weight:600">'+t.pts+'</span></div>'; }).join('');
+    var AR=d._archive||{};
+    var scenHtml='';
+    if(AR.scenarios && AR.scenarios.length){
+      scenHtml=AR.scenarios.slice(0,3).map(function(s){
+        var col=s.match_pct>=70?'#ff7a00':(s.match_pct>=45?'#eab308':'rgba(232,224,208,.6)');
+        var mh=(s.matching&&s.matching.length)?('<div style="font-size:10px;color:rgba(168,160,144,.78);margin-top:3px">Совпадает: '+esc(s.matching.join(', '))+'</div>'):'';
+        var dh=(s.differences&&s.differences.length)?('<div style="font-size:10px;color:rgba(168,160,144,.55);margin-top:1px">Отличия: '+esc(s.differences.join('; '))+'</div>'):'';
+        return '<div style="margin:0 0 11px"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;color:#E8E0D0">'+esc(s.name)+'</span><span style="font-size:13px;font-weight:700;color:'+col+'">'+s.match_pct+'%</span></div>'+mh+dh+'</div>';
+      }).join('')+'<p class="sp-note">'+esc(AR.scenario_disclaimer||'Сценарное соответствие отражает степень сходства с историческими паттернами и не является прогнозом вероятности событий.')+'</p>';
+    }
+    var synthHtml=(function(){
+      var sl=(d.brief_free&&d.brief_free.lead_strategic)||''; var np=(FB.next_pressure&&FB.next_pressure.domain)||'';
+      var tT=(DY.transitions&&DY.transitions[0])||null; var tR=(DY.by_region&&DY.by_region[0])||null; var tS=(AR.scenarios&&AR.scenarios[0])||null;
+      var P=[];
+      if(sl) P.push('Сейчас основное стратегическое давление формирует домен «'+esc(dlc(sl))+'» — это определяющий фактор текущей картины.');
+      if(np && np!==sl) P.push('Давление смещается в сторону домена «'+esc(dlc(np))+'»: именно он с наибольшей вероятностью станет следующим источником напряжения.');
+      if(tT) P.push('Распространение идёт по каналу «'+esc(dlc(tT.source))+'» → «'+esc(dlc(tT.target))+'»: усиление в первом домене переносится во второй.');
+      if(tR) P.push('Среди регионов давление концентрируется в зоне «'+esc(tR.region)+'»'+(((tR.delta||0)>0)?', где оно продолжает нарастать.':'.'));
+      if(tS) P.push('По совокупности признаков ситуация ближе всего к паттерну «'+esc(tS.name)+'» ('+tS.match_pct+'% сходства с историческим шаблоном).');
+      return P.slice(0,5).map(function(t){return '<p class="sp-p" style="margin:0 0 8px">'+t+'</p>';}).join('');
+    })();
     return '<div class="sp-section"><div class="sp-head"><span class="sp-badge">СТРАТЕГИЧЕСКАЯ АНАЛИТИКА · ATLAS</span></div><div class="sp-sub">'+esc(sub)+'</div><div class="sp-body"><div class="sp-blocks">'
       +blk('Изменения', changesHtml)
       +(focusHtml?blk('Стратегический фокус', focusHtml):'')
@@ -8709,6 +8730,8 @@ window._atlasRender = function(bEl, mEl, dEl, d){
       +blk('Глобальная динамика по доменам (GSP)', subLine('Среднее глобальное давление по стратегическим доменам')+domHtml+gspNote)
       +(regHtml?blk('Давление по регионам', subLine('Регионы с наибольшим стратегическим давлением')+regHtml):'')
       +(trHtml?blk('Передача давления между доменами', subLine('Наиболее вероятные направления передачи стратегического давления между доменами')+trHtml):'')
+      +(scenHtml?blk('Сценарное соответствие', scenHtml):'')
+      +(synthHtml?blk('Стратегический синтез', synthHtml):'')
       +'</div></div></div>';
   }
   if(isPro){
@@ -8766,7 +8789,7 @@ window.grdfRenderAtlas = function(){
   if(bEl.getAttribute('data-done')!=='1') bEl.innerHTML='<div class="sp-block" style="margin:0"><div class="sp-p" style="opacity:.5">Сборка стратегической сводки…</div></div>';
   fetch(base+'/api/atlas-brief',{method:'POST',headers:h,body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
-    .then(function(d){ var pro=!!(d&&d.brief_full); setAcl(pro); var mb=document.getElementById('grdf-model-block'); if(mb) mb.style.display=pro?'':'none'; if(pro){ try{ window._atlasAbout(d, countries.length, gc); }catch(_e){} } window._atlasRender(bEl,mEl,dEl,d); bEl.setAttribute('data-done','1'); })
+    .then(function(d){ var pro=!!(d&&d.brief_full); setAcl(pro); var mb=document.getElementById('grdf-model-block'); if(mb) mb.style.display=pro?'':'none'; if(pro){ try{ window._atlasAbout(d, countries.length, gc); }catch(_e){} } function fin(){ window._atlasRender(bEl,mEl,dEl,d); bEl.setAttribute('data-done','1'); } if(pro && d.dynamics && d.dynamics.by_domain && d.dynamics.by_domain.length){ var lv={}; d.dynamics.by_domain.forEach(function(x){ lv[x.domain]=x.gsp; }); fetch(base+'/api/archive-context',{method:'POST',headers:h,body:JSON.stringify({domain_levels:lv})}).then(function(r){return r.json();}).then(function(a){ d._archive=a; fin(); }).catch(fin); } else { fin(); } })
     .catch(function(){ bEl.innerHTML='<div class="sp-block" style="margin:0"><div class="sp-p" style="opacity:.5">Не удалось загрузить сводку.</div></div>'; });
 };
 
