@@ -8465,17 +8465,14 @@ window._renderCountryArchive = function(el, cc, cname, ds){
       var gname=GEN[cc]||(cname||cc);
       function plr(n,f){ n=Math.abs(n)%100; var n1=n%10; if(n>10&&n<20)return f[2]; if(n1>1&&n1<5)return f[1]; if(n1===1)return f[0]; return f[2]; }
       var total=a.archive_total||0;
-      var nScen=research.filter(function(m){return /сценари/i.test(m.title||'');}).length;
       var MO=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
       function ruDate(d){ if(!d)return ''; var p=String(d).split('-'); return p.length===3?(parseInt(p[2],10)+' '+MO[parseInt(p[1],10)-1]+' '+p[0]):d; }
       var dts=research.map(function(m){return m.date;}).filter(Boolean).sort();
       var lastUpd=dts.length?ruDate(dts[dts.length-1]):'';
-      var statRows=[['Материалов Архива',total],['Ключевых исследований',research.length],['Исторических параллелей',hist.length],['Сценарных материалов',nScen]]
-        .map(function(r){return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px"><span style="color:rgba(168,160,144,.85)">'+r[0]+'</span><span style="color:#D4AF5A;font-weight:600">'+r[1]+'</span></div>';}).join('');
       var fundCard='<div style="border:0.5px solid rgba(184,151,58,.25);border-radius:12px;padding:16px;margin-top:8px;background:linear-gradient(180deg,rgba(184,151,58,.06),rgba(184,151,58,.012))">'
         +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:600;color:#D4AF5A;line-height:1">'+total+' <span style="font-size:13px;font-family:inherit;color:rgba(168,160,144,.8);font-weight:400">'+plr(total,['материал','материала','материалов'])+'</span></div>'
         +(lastUpd?('<div style="font-size:10px;color:rgba(168,160,144,.6);margin-top:4px">Последнее обновление: '+lastUpd+'</div>'):'')
-        +'<div style="height:0.5px;background:rgba(184,151,58,.18);margin:12px 0"></div>'+statRows+'</div>';
+        +'<div style="height:0.5px;background:rgba(184,151,58,.18);margin:12px 0"></div><div style="font-size:11px;line-height:1.5;color:rgba(168,160,144,.82)">Собрание исследований, сценариев, исторических параллелей и аналитических материалов по '+esc(gname)+'.</div></div>';
       var DADJ={geopolitics:'геополитического',economy:'финансового',climate:'ресурсного',technology:'технологического',social:'социального'};
       var dlist=top.map(function(x){return DADJ[x.d];}).filter(Boolean);
       var conclusion='На фоне усиления '+(dlist.length?(dlist.slice(0,-1).join(', ')+(dlist.length>1?' и ':'')+dlist[dlist.length-1]):'системного')+' давления наибольшую устойчивость сохраняют реальные активы, критическая инфраструктура, энергия, вода и человеческий капитал.';
