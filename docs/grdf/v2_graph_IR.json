@@ -1,68 +1,68 @@
 {
   "country": "IR",
-  "date": "2026-06-15",
+  "date": "2026-06-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T22:18:45.099332+00:00",
+  "generated_at": "2026-06-16T03:47:59.768123+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 54,
+      "score": 58,
       "props": {
-        "risk_score": 54
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 26,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Цены_на_не",
+      "id": "SIGNAL-IR-Пока_мир_ж",
       "type": "Signal",
-      "label": "Цены на нефть падают, а акции демонстрир",
+      "label": "Пока мир ждет деталей соглашения между И",
+      "severity": 62,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-IR-Снижение_п",
+      "type": "Signal",
+      "label": "Снижение потребительских расходов в Кита",
+      "severity": 58,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-IR-Трамп_приз",
+      "type": "Signal",
+      "label": "Трамп признал поражение в войне с Ираном",
       "severity": 56,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Белый_дом:",
-      "type": "Signal",
-      "label": "Белый дом: США подписали меморандум о вз",
-      "severity": 55,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-США_и_Иран",
-      "type": "Signal",
-      "label": "США и Иран сообщили о предварительной до",
-      "severity": 55,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Цены_на_не",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Пока_мир_ж",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-IR-Снижение_п",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-IR-Трамп_приз",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-IR-Белый_дом:",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-IR-США_и_Иран",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55
     }
   ]
 }

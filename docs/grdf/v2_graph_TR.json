@@ -1,78 +1,68 @@
 {
   "country": "TR",
-  "date": "2026-06-15",
+  "date": "2026-06-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-15T22:18:45.093100+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-16T03:47:59.761748+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 22,
+      "score": 68,
       "props": {
-        "risk_score": 22
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 15,
-      "trend": "down"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 0,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-TR-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "DRIVER-TR-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "trend": "up"
     },
     {
       "id": "DRIVER-TR-Geopolitical",
@@ -80,11 +70,14 @@
       "label": "Geopolitical"
     },
     {
-      "id": "SIGNAL-TR-Зеленое_пр",
-      "type": "Signal",
-      "label": "Зеленое предупреждение о наводнении в Ту",
-      "severity": 22,
-      "domain": "climate"
+      "id": "DRIVER-TR-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "DRIVER-TR-Economic",
+      "type": "Driver",
+      "label": "Economic"
     }
   ],
   "edges": [
@@ -92,19 +85,19 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.0
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-TR",
@@ -116,13 +109,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-TR",
@@ -131,28 +124,43 @@
       "weight": 0.03
     },
     {
-      "from": "DRIVER-TR-Economic",
-      "to": "COUNTRY-TR",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-TR-Economic",
-      "to": "COUNTRY-TR",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-TR-Geopolitical",
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-TR-Зеленое_пр",
-      "to": "DOMAIN-TR-climate",
+      "from": "DRIVER-TR-Economic",
+      "to": "COUNTRY-TR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-TR-Economic",
+      "to": "COUNTRY-TR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.22
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
