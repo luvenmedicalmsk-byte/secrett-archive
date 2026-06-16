@@ -1765,6 +1765,11 @@ def process_events(raw_items):
         if ev.get('summary'):
             ev['summary'] = translated_summaries[i]
 
+    # Нормализация ВЕРХНЕГО регистра заголовков (russianmacro и пр. публикуют капсом)
+    for ev in top_events:
+        ev['title'] = _normalize_caps(ev.get('title',''))
+        if ev.get('summary'): ev['summary'] = _normalize_caps(ev['summary'])
+
     # S43: финальный гейт «сигнал/шум» + чистка TG-фрагментов на ПЕРЕВЕДЁННОМ тексте.
     _before_s43 = len(top_events)
     top_events = [e for e in top_events
@@ -5739,6 +5744,30 @@ def is_english(text):
     cyrillic = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
     latin = sum(1 for c in text if c.isalpha() and c.isascii())
     return cyrillic < len(text) * 0.15 and latin > len(text) * 0.3
+
+_CAPS_ACRONYMS = {'США','ЕС','РФ','ООН','НАТО','ВВП','ВНП','ЦБ','ФРС','МВФ','ВОЗ','ОПЕК','ЕАЭС','СНГ','ВТО','МИД','ВСУ','ПВО','БПЛА','НПЗ','ИИ','ЕЦБ','АЭС','ГЭС','ЧС','МЧС','ФБР','ЦРУ','АНБ','WSJ','FT','AI','EU','US','UN','GDP','IT','USA','OPEC','NATO','IMF','WHO','FED','UK','UAE','BRICS','БРИКС'}
+def _normalize_caps(title):
+    """Источники вроде russianmacro публикуют заголовки КАПСОМ. Приводим к sentence-case
+    с сохранением аббревиатур. Срабатывает только если >=70% букв -- заглавные."""
+    if not title: return title
+    import re as _re
+    letters=[c for c in title if c.isalpha()]
+    if not letters: return title
+    upp=sum(1 for c in letters if c.isupper())
+    if upp/len(letters) < 0.7 or len(letters) < 12: return title
+    def _fix(tok):
+        core=_re.sub(r'[^A-Za-zА-Яа-яЁё]','',tok)
+        if not core: return tok
+        if core.upper() in _CAPS_ACRONYMS: return tok
+        return tok.lower()
+    out=' '.join(_fix(t) for t in title.split(' '))
+    res=[]; cap=True
+    for ch in out:
+        if cap and ch.isalpha(): res.append(ch.upper()); cap=False
+        else: res.append(ch)
+        if ch in '.!?:\n': cap=True
+    return ''.join(res)
+
 
 def _risk_gate(events):
     """LLM-гейт риск/шум для пайплайна. Финальный отсев шума (реклама/культура/
