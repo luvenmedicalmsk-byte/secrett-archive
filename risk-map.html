@@ -8424,6 +8424,7 @@ window._spRenderCountryLocal = function(el, d, cname){
 
 window._renderCountryArchive = function(el, cc, cname, ds){
   if(!el || !cc) return;
+  if(!window._afL){ window._afL=1; window.addEventListener('message', function(ev){ try{ if(ev.data&&ev.data.type==='scenarios-height'){ var f=document.getElementById('grdf-assets-frame'); if(f&&ev.data.height>200) f.style.height=(ev.data.height+14)+'px'; } }catch(e){} }); }
   function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   var DLc=(window._rDL?window._rDL():{climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'});
   var DRV={geopolitics:'геополитическое положение и роль в региональном балансе',economy:'экономические зависимости и структура рынка',climate:'климатические и ресурсные ограничения',technology:'технологический уклад и зависимости',social:'социальная структура и внутренние противоречия'};
@@ -8464,7 +8465,7 @@ window._renderCountryArchive = function(el, cc, cname, ds){
         +'<div class="sp-sub">Почему формируется давление: '+esc(cname||cc)+(a.archive_total?(' · '+a.archive_total+' материалов в Архиве'):'')+'</div>'
         +'<div class="sp-body"><div class="sp-blocks">'+(ctxBody||'<div class="sp-p" style="opacity:.5">Недостаточно материалов по стране.</div>')+'</div></div>'
         +(arcBody?('<div class="sp-head" style="margin-top:16px"><span class="sp-badge">АРХИВНЫЙ КОНТЕКСТ</span></div><div class="sp-body"><div class="sp-blocks">'+arcBody+'</div></div>'):'')
-        +'<div class="sp-head" style="margin-top:16px"><span class="sp-badge">СТРАТЕГИЧЕСКИЕ АКТИВЫ 2026–2036</span></div><iframe src="scenarios.html?embed=1&v=21" loading="lazy" style="width:100%;height:520px;border:0.5px solid rgba(184,151,58,.2);border-radius:10px;margin-top:8px;background:#06050A" title="Стратегические активы 2026-2036"></iframe>'
+        +'<div class="sp-head" style="margin-top:16px"><span class="sp-badge">СТРАТЕГИЧЕСКИЕ АКТИВЫ 2026–2036</span></div><iframe id="grdf-assets-frame" src="scenarios.html?embed=1&v=22" loading="lazy" scrolling="no" style="width:100%;height:640px;border:0.5px solid rgba(184,151,58,.2);border-radius:10px;margin-top:8px;background:#06050A;overflow:hidden" title="Стратегические активы 2026-2036"></iframe>'
         +'</div>';
       box.innerHTML=html;
     })
