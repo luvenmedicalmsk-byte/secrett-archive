@@ -8675,11 +8675,21 @@ window._atlasRender = function(bEl, mEl, dEl, d){
   var isPro=!!d.brief_full;
   function renderFull(sub){
     var FB=d.brief_full, DY=d.dynamics||{}, ch=FB.changes||{};
-    var changesHtml='<div class="sp-dyn"><span class="sp-dyn-d">24 часа</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(ch.h24?ch.h24.text:'—')+'</span></div>'
-      +'<div class="sp-dyn"><span class="sp-dyn-d">7 дней</span><span class="sp-dyn-v" style="color:'+((ch.d7&&ch.d7.delta>0)?'#ff7a00':(ch.d7&&ch.d7.delta<0?'#22c55e':'#cbd5e1'))+'">'+esc(ch.d7?ch.d7.text:'—')+'</span></div>'
-      +'<div class="sp-dyn"><span class="sp-dyn-d">30 дней</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(ch.d30?ch.d30.text:'—')+'</span></div>';
-    var growthHtml=(FB.growth_domains&&FB.growth_domains.length)?('<div style="margin-top:6px;font-size:11px;color:rgba(232,224,208,.7)">Максимальный рост давления: '+FB.growth_domains.map(function(g){return esc(dlc(g.domain))+' (+'+g.delta+')';}).join(', ')+'</div>'):'';
+    function clip(t,maxS){ t=String(t==null?'':t); var p=t.match(/[^.!?]+[.!?]+/g)||[t]; return p.slice(0,maxS).join(' ').trim(); }
+    var h24r=(ch.h24&&typeof ch.h24.rate==='number')?ch.h24.rate:null;
+    var d7d=(ch.d7&&typeof ch.d7.delta==='number')?ch.d7.delta:null;
+    var d30p=(ch.d30&&typeof ch.d30.proj==='number')?ch.d30.proj:null;
+    var h24t=(h24r!=null)?((h24r>=0?'+':'')+h24r+' п./сутки'):(ch.h24?ch.h24.text:'—');
+    var d7t=(d7d!=null)?(d7d===0?'давление без изменений':((d7d>0?'+':'−')+Math.abs(d7d)+' п. за 7д')):(ch.d7?ch.d7.text:'—');
+    var d30t=(d30p!=null)?('прогноз '+d30p+'/100'):(ch.d30?ch.d30.text:'—');
+    var changesHtml='<div class="sp-dyn"><span class="sp-dyn-d">24ч</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(h24t)+'</span></div>'
+      +'<div class="sp-dyn"><span class="sp-dyn-d">7д</span><span class="sp-dyn-v" style="color:'+((d7d!=null&&d7d>0)?'#ff7a00':(d7d!=null&&d7d<0?'#22c55e':'#cbd5e1'))+'">'+esc(d7t)+'</span></div>'
+      +'<div class="sp-dyn"><span class="sp-dyn-d">30д</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(d30t)+'</span></div>';
+    var leadDom=(d.brief_free&&d.brief_free.lead_strategic)||'';
+    var leadHtml=leadDom?('<div class="sp-dyn"><span class="sp-dyn-d">Текущий ведущий домен</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(leadDom))+'</span></div>'):'';
     var nextHtml=(FB.next_pressure&&FB.next_pressure.domain)?('<div class="sp-dyn"><span class="sp-dyn-d">Следующий домен под давлением</span><span class="sp-dyn-v" style="color:#ff7a00">'+esc(dlc(FB.next_pressure.domain))+'</span></div>'):'';
+    var focusHtml=leadHtml+nextHtml;
+    function subLine(t){ return '<div style="font-size:11px;color:rgba(168,160,144,.7);margin:0 0 9px">'+esc(t)+'</div>'; }
     var domHtml=(DY.by_domain||[]).map(function(x){
       var moved=(x.d30!==x.now||x.d7!==x.now);
       var sfiLine=moved?('SFI: сейчас '+x.now+' · 7д '+x.d7+' · 30д '+x.d30):'проекция стабильна';
@@ -8692,13 +8702,13 @@ window._atlasRender = function(bEl, mEl, dEl, d){
     var trHtml=(DY.transitions||[]).slice(0,5).map(function(t){ var col=t.band==='high'?'#ff7a00':(t.band==='medium'?'#eab308':'rgba(232,224,208,.5)');
       return '<div class="sp-dyn"><span class="sp-dyn-d" style="color:#E8E0D0">'+esc(dlc(t.source))+' → '+esc(dlc(t.target))+'</span><span class="sp-dyn-v" style="color:'+col+';font-weight:600">'+t.pts+'</span></div>'; }).join('');
     return '<div class="sp-section"><div class="sp-head"><span class="sp-badge">СТРАТЕГИЧЕСКАЯ АНАЛИТИКА · ATLAS</span></div><div class="sp-sub">'+esc(sub)+'</div><div class="sp-body"><div class="sp-blocks">'
-      +blk('Изменения', changesHtml+growthHtml)
-      +(nextHtml?blk('Стратегический фокус', nextHtml):'')
-      +(FB.conclusion_day?blk('Главный вывод дня','<p class="sp-p sp-key">'+esc(FB.conclusion_day)+'</p>'):'')
-      +(FB.conclusion_week?blk('Главный вывод недели','<p class="sp-p sp-key">'+esc(FB.conclusion_week)+'</p>'):'')
-      +blk('Глобальная динамика по доменам (GSP)', domHtml+gspNote)
-      +(regHtml?blk('Давление по регионам', regHtml):'')
-      +(trHtml?blk('Передача давления между доменами', trHtml):'')
+      +blk('Изменения', changesHtml)
+      +(focusHtml?blk('Стратегический фокус', focusHtml):'')
+      +(FB.conclusion_day?blk('Главный вывод дня','<p class="sp-p sp-key">'+esc(clip(FB.conclusion_day,2))+'</p>'):'')
+      +(FB.conclusion_week?blk('Главный вывод недели','<p class="sp-p sp-key">'+esc(clip(FB.conclusion_week,2))+'</p>'):'')
+      +blk('Глобальная динамика по доменам (GSP)', subLine('Среднее глобальное давление по стратегическим доменам')+domHtml+gspNote)
+      +(regHtml?blk('Давление по регионам', subLine('Регионы с наибольшим стратегическим давлением')+regHtml):'')
+      +(trHtml?blk('Передача давления между доменами', subLine('Наиболее вероятные направления передачи стратегического давления между доменами')+trHtml):'')
       +'</div></div></div>';
   }
   if(isPro){
