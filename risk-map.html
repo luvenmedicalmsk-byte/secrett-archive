@@ -8705,9 +8705,44 @@ window._atlasRender = function(bEl, mEl, dEl, d){
   function lbadge(lv){return lv?(' <span style="font-size:9px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid '+lvlCol(lv)+';color:'+lvlCol(lv)+'">'+esc(lv)+'</span>'):'';}
   function arrow(st){return st==='up'?'<span style="color:#ff7a00">↑</span>':(st==='down'?'<span style="color:#22c55e">↓</span>':'<span style="color:rgba(232,224,208,.4)">→</span>');}
   if(!bEl) return;
-  if(!d){ bEl.innerHTML=''; if(mEl)mEl.innerHTML=''; if(dEl)dEl.innerHTML=''; return; }
+  if(mEl) mEl.innerHTML='';
+  if(!d){ bEl.innerHTML=''; if(dEl)dEl.innerHTML=''; return; }
+  var isPro=!!d.brief_full;
+  function renderFull(sub){
+    var FB=d.brief_full, DY=d.dynamics||{}, ch=FB.changes||{};
+    var changesHtml='<div class="sp-dyn"><span class="sp-dyn-d">24 часа</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(ch.h24?ch.h24.text:'—')+'</span></div>'
+      +'<div class="sp-dyn"><span class="sp-dyn-d">7 дней</span><span class="sp-dyn-v" style="color:'+((ch.d7&&ch.d7.delta>0)?'#ff7a00':(ch.d7&&ch.d7.delta<0?'#22c55e':'#cbd5e1'))+'">'+esc(ch.d7?ch.d7.text:'—')+'</span></div>'
+      +'<div class="sp-dyn"><span class="sp-dyn-d">30 дней</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(ch.d30?ch.d30.text:'—')+'</span></div>';
+    var growthHtml=(FB.growth_domains&&FB.growth_domains.length)?('<div style="margin-top:6px;font-size:11px;color:rgba(232,224,208,.7)">Максимальный рост давления: '+FB.growth_domains.map(function(g){return esc(dlc(g.domain))+' (+'+g.delta+')';}).join(', ')+'</div>'):'';
+    var nextHtml=(FB.next_pressure&&FB.next_pressure.domain)?('<div class="sp-dyn"><span class="sp-dyn-d">Следующий домен под давлением</span><span class="sp-dyn-v" style="color:#ff7a00">'+esc(dlc(FB.next_pressure.domain))+'</span></div>'):'';
+    var domHtml=(DY.by_domain||[]).map(function(x){
+      var moved=(x.d30!==x.now||x.d7!==x.now);
+      var sfiLine=moved?('SFI: сейчас '+x.now+' · 7д '+x.d7+' · 30д '+x.d30):'проекция стабильна';
+      return '<div style="margin:0 0 8px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#E8E0D0">'+esc(dlc(x.domain))+' '+arrow(x.status)+'</span><span style="font-size:11px;color:#D4AF5A;font-weight:600">GSP '+x.gsp+'</span></div>'
+        +'<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden"><div style="height:100%;width:'+Math.max(2,x.gsp)+'%;background:#D4AF5A;border-radius:3px"></div></div>'
+        +'<div style="font-size:10px;color:rgba(212,175,90,.55);margin-top:2px">'+sfiLine+'</div></div>'; }).join('');
+    var gspNote='<p class="sp-note">GSP — глобальное стратегическое давление домена (в среднем по миру). Не сопоставляется напрямую с SIS отдельной страны.</p>';
+    var regHtml=(DY.by_region||[]).slice(0,8).map(function(r){ var dc=r.delta>0?'#ff7a00':(r.delta<0?'#22c55e':'#cbd5e1');
+      return '<div class="sp-dyn"><span class="sp-dyn-d">'+esc(r.region)+'</span><span class="sp-dyn-v"><span style="color:#E8E0D0">'+r.gri+'</span> <span style="color:'+dc+';font-size:10px">'+(r.delta>0?'+':'')+r.delta+'</span></span></div>'; }).join('');
+    var trHtml=(DY.transitions||[]).slice(0,5).map(function(t){ var col=t.band==='high'?'#ff7a00':(t.band==='medium'?'#eab308':'rgba(232,224,208,.5)');
+      return '<div class="sp-dyn"><span class="sp-dyn-d" style="color:#E8E0D0">'+esc(dlc(t.source))+' → '+esc(dlc(t.target))+'</span><span class="sp-dyn-v" style="color:'+col+';font-weight:600">'+t.pts+'</span></div>'; }).join('');
+    return '<div class="sp-section"><div class="sp-head"><span class="sp-badge">СТРАТЕГИЧЕСКАЯ АНАЛИТИКА · ATLAS</span></div><div class="sp-sub">'+esc(sub)+'</div><div class="sp-body"><div class="sp-blocks">'
+      +blk('Изменения', changesHtml+growthHtml)
+      +(nextHtml?blk('Стратегический фокус', nextHtml):'')
+      +(FB.conclusion_day?blk('Главный вывод дня','<p class="sp-p sp-key">'+esc(FB.conclusion_day)+'</p>'):'')
+      +(FB.conclusion_week?blk('Главный вывод недели','<p class="sp-p sp-key">'+esc(FB.conclusion_week)+'</p>'):'')
+      +blk('Глобальная динамика по доменам (GSP)', domHtml+gspNote)
+      +(regHtml?blk('Давление по регионам', regHtml):'')
+      +(trHtml?blk('Передача давления между доменами', trHtml):'')
+      +'</div></div></div>';
+  }
+  if(isPro){
+    bEl.innerHTML=renderFull('Полная интерпретация · ваш доступ Signal Pro');
+    if(dEl) dEl.innerHTML='';
+    return;
+  }
+  // ===== FREE =====
   var BF=d.brief_free||null;
-  // ===== FREE: открытый обзор =====
   if(BF){
     var dirCol=BF.d7>0?'#ff7a00':(BF.d7<0?'#22c55e':'#cbd5e1');
     var dirTxt=BF.d7>0?('▲ +'+Math.abs(BF.d7)):(BF.d7<0?('▼ '+Math.abs(BF.d7)):'→ 0');
@@ -8719,44 +8754,9 @@ window._atlasRender = function(bEl, mEl, dEl, d){
       +(BF.summary?blk('Обзор','<p class="sp-p">'+esc(BF.summary)+'</p>'):'');
     bEl.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">ATLAS BRIEF · ОБЗОР</span></div><div class="sp-sub">Открытый уровень'+(BF.countries_count?(' · '+BF.countries_count+' стран'):'')+'</div><div class="sp-body"><div class="sp-blocks">'+freeBlocks+'</div></div></div>';
   } else bEl.innerHTML='';
-  // ===== МАРКЕТИНГ =====
-  if(mEl){
-    mEl.innerHTML='<div class="sp-section" style="margin-top:14px;background:rgba(184,151,58,.05);border:0.5px solid rgba(184,151,58,.22);border-radius:12px;padding:13px"><div class="sp-head"><span class="sp-badge">АРХИВ + SIGNAL PRO</span></div>'
-      +'<div class="sp-sub">Полный стратегический слой</div>'
-      +'<div class="sp-body"><p class="sp-p" style="margin-bottom:9px">Участники Архива получают всю глубокую аналитику: глобальную динамику, прогнозные траектории, карту передачи давления и стратегические выводы дня и недели.</p>'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.3);border-radius:8px;padding:9px 12px;margin-bottom:10px"><span style="font-size:11px;color:#B8973A;font-weight:600">Сигнал Про для участников</span><span style="font-size:15px;color:#f1f5f9;font-weight:700">0 ₽</span></div>'
-      +'<button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Получить доступ</button></div></div>';
-  }
-  // ===== ЗАКРЫТАЯ АНАЛИТИКА =====
-  if(!dEl) return;
-  if(d.locked || !d.brief_full){
+  if(dEl){
     dEl.innerHTML='<div class="sp-section" style="margin-top:14px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px"><div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO · СТРАТЕГИЧЕСКАЯ АНАЛИТИКА</span></div><div class="sp-sub">Закрытый уровень</div><div class="sp-body"><div class="sp-block"><ul class="sp-ul"><li>Полный Atlas Brief: изменения 24ч / 7д / 30д, выводы дня и недели</li><li>Глобальная динамика: GSP и SFI по доменам</li><li>Динамика по регионам мира</li><li>Карта передачи давления (PTS)</li><li>Прогнозные траектории и сравнение доменов</li></ul><div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Вся глубокая интерпретация, прогнозные траектории и глобальные взаимосвязи доступны в Signal Pro.</div><button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Открыть Signal Pro</button></div></div></div>';
-    return;
   }
-  var FB=d.brief_full, DY=d.dynamics||{}, ch=FB.changes||{};
-  var changesHtml='<div class="sp-dyn"><span class="sp-dyn-d">24 часа</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(ch.h24?ch.h24.text:'—')+'</span></div>'
-    +'<div class="sp-dyn"><span class="sp-dyn-d">7 дней</span><span class="sp-dyn-v" style="color:'+((ch.d7&&ch.d7.delta>0)?'#ff7a00':(ch.d7&&ch.d7.delta<0?'#22c55e':'#cbd5e1'))+'">'+esc(ch.d7?ch.d7.text:'—')+'</span></div>'
-    +'<div class="sp-dyn"><span class="sp-dyn-d">30 дней</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(ch.d30?ch.d30.text:'—')+'</span></div>';
-  var growthHtml=(FB.growth_domains&&FB.growth_domains.length)?('<div style="margin-top:6px;font-size:11px;color:rgba(232,224,208,.7)">Максимальный рост давления: '+FB.growth_domains.map(function(g){return esc(dlc(g.domain))+' (+'+g.delta+')';}).join(', ')+'</div>'):'';
-  var nextHtml=(FB.next_pressure&&FB.next_pressure.domain)?('<div class="sp-dyn"><span class="sp-dyn-d">Следующий домен под давлением</span><span class="sp-dyn-v" style="color:#ff7a00">'+esc(dlc(FB.next_pressure.domain))+'</span></div>'):'';
-  var domHtml=(DY.by_domain||[]).map(function(x){
-    return '<div style="margin:0 0 8px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#E8E0D0">'+esc(dlc(x.domain))+' '+arrow(x.status)+'</span><span style="font-size:11px;color:#D4AF5A;font-weight:600">GSP '+x.gsp+'</span></div>'
-      +'<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden"><div style="height:100%;width:'+Math.max(2,x.gsp)+'%;background:#D4AF5A;border-radius:3px"></div></div>'
-      +'<div style="font-size:10px;color:rgba(212,175,90,.55);margin-top:2px">SFI: сейчас '+x.now+' · 7д '+x.d7+' · 30д '+x.d30+'</div></div>'; }).join('');
-  var gspNote='<p class="sp-note">GSP — глобальное стратегическое давление домена (в среднем по миру). Не сопоставляется напрямую с SIS отдельной страны.</p>';
-  var regHtml=(DY.by_region||[]).slice(0,8).map(function(r){ var dc=r.delta>0?'#ff7a00':(r.delta<0?'#22c55e':'#cbd5e1');
-    return '<div class="sp-dyn"><span class="sp-dyn-d">'+esc(r.region)+'</span><span class="sp-dyn-v"><span style="color:#E8E0D0">'+r.gri+'</span> <span style="color:'+dc+';font-size:10px">'+(r.delta>0?'+':'')+r.delta+'</span></span></div>'; }).join('');
-  var trHtml=(DY.transitions||[]).slice(0,5).map(function(t){ var col=t.band==='high'?'#ff7a00':(t.band==='medium'?'#eab308':'rgba(232,224,208,.5)');
-    return '<div class="sp-dyn"><span class="sp-dyn-d" style="color:#E8E0D0">'+esc(dlc(t.source))+' → '+esc(dlc(t.target))+'</span><span class="sp-dyn-v" style="color:'+col+';font-weight:600">'+t.pts+'</span></div>'; }).join('');
-  dEl.innerHTML='<div class="sp-section" style="margin-top:14px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px"><div class="sp-head"><span class="sp-badge">SIGNAL PRO · СТРАТЕГИЧЕСКАЯ АНАЛИТИКА</span></div><div class="sp-sub">Закрытый уровень · полная интерпретация</div><div class="sp-body"><div class="sp-blocks">'
-    +blk('Изменения', changesHtml+growthHtml)
-    +(nextHtml?blk('Стратегический фокус', nextHtml):'')
-    +(FB.conclusion_day?blk('Главный вывод дня','<p class="sp-p sp-key">'+esc(FB.conclusion_day)+'</p>'):'')
-    +(FB.conclusion_week?blk('Главный вывод недели','<p class="sp-p sp-key">'+esc(FB.conclusion_week)+'</p>'):'')
-    +blk('Глобальная динамика по доменам (GSP)', domHtml+gspNote)
-    +(regHtml?blk('Давление по регионам', regHtml):'')
-    +(trHtml?blk('Передача давления между доменами', trHtml):'')
-    +'</div></div></div>';
 };
 window.grdfRenderAtlas = function(){
   var bEl=document.getElementById('grdf-atlas-brief'); var mEl=document.getElementById('grdf-atlas-market'); var dEl=document.getElementById('grdf-atlas-dynamics');
@@ -8770,10 +8770,11 @@ window.grdfRenderAtlas = function(){
   var tok=''; try{ tok=localStorage.getItem('cc_token')||''; }catch(e){}
   var base=(typeof API!=='undefined'&&API)?API:'https://archive-api.luven-medical-msk.workers.dev';
   var h={'Content-Type':'application/json'}; if(tok) h['X-Snapshot-Token']=tok;
+  function setAcl(pro){ try{ var acl=document.querySelector('#grdf-analytics-screen .grdf-acl'); if(acl) acl.style.display = pro ? 'none' : ''; }catch(e){} }
   if(bEl.getAttribute('data-done')!=='1') bEl.innerHTML='<div class="sp-block" style="margin:0"><div class="sp-p" style="opacity:.5">Сборка стратегической сводки…</div></div>';
   fetch(base+'/api/atlas-brief',{method:'POST',headers:h,body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
-    .then(function(d){ window._atlasRender(bEl,mEl,dEl,d); bEl.setAttribute('data-done','1'); })
+    .then(function(d){ setAcl(!!(d&&d.brief_full)); window._atlasRender(bEl,mEl,dEl,d); bEl.setAttribute('data-done','1'); })
     .catch(function(){ bEl.innerHTML='<div class="sp-block" style="margin:0"><div class="sp-p" style="opacity:.5">Не удалось загрузить сводку.</div></div>'; });
 };
 
