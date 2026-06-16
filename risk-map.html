@@ -7938,7 +7938,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
   if(reasons.length === 0) reasons.push('Профиль рисков в пределах нормы');
 
   out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
-  out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Основания оценки</div>';
+  out += '<div style="font-size:10px;color:#f1f5f9;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px">Основания оценки</div>';
   reasons.slice(0,5).forEach(function(r){
     out += '<div style="display:flex;align-items:flex-start;gap:7px;padding:3px 0;font-size:11px;color:#94a3b8">';
     out += '<span style="color:'+sCol+';font-weight:700;flex-shrink:0;margin-top:1px">·</span><span>'+r+'</span></div>';
@@ -7969,7 +7969,7 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
 
   if(trackItems.length > 0) {
     out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
-    out += '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Система отслеживает</div>';
+    out += '<div style="font-size:10px;color:#f1f5f9;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px">Система отслеживает</div>';
     trackItems.forEach(function(item){
       out += '<div style="display:flex;align-items:center;gap:7px;padding:2px 0;font-size:11px;color:#94a3b8">';
       out += '<span style="width:4px;height:4px;border-radius:50%;background:#3d5068;flex-shrink:0"></span><span>'+item+'</span></div>';
@@ -8144,7 +8144,7 @@ function _grdfContextHtml(c){
   if(!evs.length) return '';
   function card(label, inner){
     return '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">'
-      + '<div style="font-size:9px;color:#4a6380;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">'+label+'</div>'+inner+'</div>';
+      + '<div style="font-size:10px;color:#f1f5f9;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px">'+label+'</div>'+inner+'</div>';
   }
   var _AD=['climate','geopolitics','economy','technology','social'];
   var _ds=c.domain_scores||{};
@@ -8575,7 +8575,7 @@ function grdfRenderCountryPanel(cc) {
   function _miniDelta(v){ if(v==null) return '<div style="font-size:9px;color:#4a6380;margin-top:3px">накапл.</div>'; var cl=v>0?'#f97316':v<0?'#10b981':'#4a6380',ar=v>0?'▲':v<0?'▼':'→'; return '<div style="font-size:9px;color:'+cl+';margin-top:3px">'+ar+' '+(v>0?'+':'')+v+'</div>'; }
   var _adN=['climate','geopolitics','economy','technology','social'].filter(function(d){return ((c.domain_scores||{})[d]||0)>=60;}).length;
   var _miniCri='<div style="font-size:9px;color:#4a6380;margin-top:3px">'+_adN+'/5 доменов</div>';
-  html += '<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6a7d92;padding:0 14px;margin:0 0 7px">Текущая оценка риска</div>';
+  html += '<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#f1f5f9;padding:0 14px;margin:0 0 7px">Текущая оценка риска</div>';
   html += '<div class="grdf-metrics">';
   html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'GRI\')"><div class="grdf-metric-val" style="color:'+statusCol+'">'+gri+'</div><div class="grdf-metric-lbl">GRI <span class="grdf-idx-i">i</span></div>'+_miniDelta(c.gri_delta_7d)+'</div>';
   html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'EWS\')"><div class="grdf-metric-val" style="color:'+(ews>=80?'#ef4444':ews>=65?'#f97316':'#eab308')+'">'+ews+'</div><div class="grdf-metric-lbl">EWS <span class="grdf-idx-i">i</span></div>'+_miniDelta(c.ews_delta_7d)+'</div>';
