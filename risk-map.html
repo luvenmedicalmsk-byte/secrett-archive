@@ -8311,7 +8311,7 @@ function _grdfContextHtml(c){
 window._spRenderCountryLocal = function(el, d, cname){
   function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function ul(arr){ return '<ul class="sp-ul">'+(arr||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
-  function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,175,90,.7);margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
+  function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#f1f5f9;margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
   function blk(h,body){ return '<div class="sp-block"><div class="sp-block-h">'+esc(h)+'</div>'+body+'</div>'; }
   if(!el) return;
   if(d && d.locked){
@@ -8335,9 +8335,9 @@ window._spRenderCountryLocal = function(el, d, cname){
   function arr(st){ return st==='up'?'<span style="color:#ff7a00">↑</span>':(st==='down'?'<span style="color:#22c55e">↓</span>':'<span style="color:rgba(232,224,208,.4)">→</span>'); }
   var mixTag = L.mixed?(' <span style="font-size:9px;font-weight:600;letter-spacing:.03em;padding:1px 7px;border-radius:999px;border:1px solid #ff7a00;color:#ff7a00">смешанное</span>'):'';
   var focus=blk('Стратегический фокус',
-     '<div class="sp-dyn"><span class="sp-dyn-d">По объёму сигналов</span><span class="sp-dyn-v" style="color:#E8E0D0">'+esc(dlc(L.data_lead))+(L.data_score!=null?(' · '+L.data_score):'')+'</span></div>'
-    +'<div class="sp-dyn"><span class="sp-dyn-d">По стратегическому влиянию</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(L.strat_lead))+lbadge(L.strat_level)+mixTag+'</span></div>'
-    +(L.forward?('<div class="sp-dyn"><span class="sp-dyn-d">Прогнозный лидер (30 дней)</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(L.forward.forecast_lead))+'</span></div>'):'')
+     '<div class="sp-dyn"><span class="sp-dyn-d">По объёму сигналов</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(L.data_lead))+(L.data_score!=null?(' · '+L.data_score):'')+'</span></div>'
+    +'<div class="sp-dyn"><span class="sp-dyn-d">По стратегическому влиянию</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(L.strat_lead))+lbadge(L.strat_level)+mixTag+'</span></div>'
+    +(L.forward?('<div class="sp-dyn"><span class="sp-dyn-d">Прогнозный лидер (30 дней)</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(L.forward.forecast_lead))+'</span></div>'):'')
     +(L.forward&&L.forward.direction?('<div class="sp-dyn"><span class="sp-dyn-d">Направление</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(L.forward.direction)+'</span></div>'):'')
     +(L.watch_lead?('<div class="sp-dyn"><span class="sp-dyn-d">Под наблюдением</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(L.watch_lead))+lbadge(L.watch_level)+'</span></div>'):'')
     +(L.data_strategy_gap?('<div class="sp-dyn"><span class="sp-dyn-d">Расхождение данные/стратегия</span><span class="sp-dyn-v" style="color:'+gapCol(L.data_strategy_gap)+'">'+esc(L.data_strategy_gap)+'</span></div>'):'')
@@ -8348,9 +8348,9 @@ window._spRenderCountryLocal = function(el, d, cname){
     function cell(lab,dom,col){ return '<div style="flex:1"><div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(232,224,208,.45);margin-bottom:3px">'+esc(lab)+'</div><div style="font-size:12px;color:'+col+';font-weight:600">'+esc(dlc(dom))+'</div></div>'; }
     traj=blk('Траектория стратегического давления',
        '<div style="display:flex;justify-content:space-between;gap:6px;text-align:center;margin-bottom:6px">'
-      +cell('Сегодня',T.today,'#E8E0D0')+'<div style="align-self:center;color:rgba(212,175,90,.5)">→</div>'
-      +cell('7 дней',T.d7,'#E8E0D0')+'<div style="align-self:center;color:rgba(212,175,90,.5)">→</div>'
-      +cell('30 дней',T.d30,(T.shift?'#ff7a00':'#D4AF5A'))
+      +cell('Сегодня',T.today,'#cbd5e1')+'<div style="align-self:center;color:rgba(255,255,255,.3)">→</div>'
+      +cell('7 дней',T.d7,'#cbd5e1')+'<div style="align-self:center;color:rgba(255,255,255,.3)">→</div>'
+      +cell('30 дней',T.d30,(T.shift?'#ff7a00':'#cbd5e1'))
       +'</div>'
       +(T.confidence!=null?'<div class="sp-dyn"><span class="sp-dyn-d">Уверенность модели</span><span class="sp-dyn-v" style="color:#cbd5e1">'+T.confidence+'%</span></div>':'')
       +(T.shift_note?'<p class="sp-note">'+esc(T.shift_note)+'</p>':''));
@@ -8360,7 +8360,7 @@ window._spRenderCountryLocal = function(el, d, cname){
     var NP=L.next_pressure;
     nextp=blk('Следующий домен под давлением',
        '<div class="sp-dyn"><span class="sp-dyn-d">Домен</span><span class="sp-dyn-v" style="color:#ff7a00;font-weight:600">'+esc(dlc(NP.domain))+'</span></div>'
-      +'<div class="sp-dyn"><span class="sp-dyn-d">Источник давления</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(NP.source))+'</span></div>'
+      +'<div class="sp-dyn"><span class="sp-dyn-d">Источник давления</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(NP.source))+'</span></div>'
       +(NP.confidence!=null?'<div class="sp-dyn"><span class="sp-dyn-d">Уверенность</span><span class="sp-dyn-v" style="color:#cbd5e1">'+NP.confidence+'%</span></div>':'')
       +(NP.cause?'<p class="sp-note">'+esc(NP.cause)+'</p>':''));
   }
@@ -8373,7 +8373,7 @@ window._spRenderCountryLocal = function(el, d, cname){
     var tinner='';
     ['high','medium','low'].forEach(function(b){ if(!groups[b].length) return;
       tinner+='<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:'+bandCol(b)+';margin:8px 0 4px">'+bandLab(b)+'</div>';
-      tinner+=groups[b].map(function(x){ return '<div class="sp-dyn"><span class="sp-dyn-d" style="color:#E8E0D0">'+esc(dlc(x.source))+' → '+esc(dlc(x.target))+'</span><span class="sp-dyn-v" style="color:'+bandCol(x.band)+';font-weight:600">'+x.pts+'</span></div>'; }).join('');
+      tinner+=groups[b].map(function(x){ return '<div class="sp-dyn"><span class="sp-dyn-d" style="color:#cbd5e1">'+esc(dlc(x.source))+' → '+esc(dlc(x.target))+'</span><span class="sp-dyn-v" style="color:'+bandCol(x.band)+';font-weight:600">'+x.pts+'</span></div>'; }).join('');
     });
     trans=blk('Вероятные переходы давления', tinner);
   }
@@ -8382,9 +8382,9 @@ window._spRenderCountryLocal = function(el, d, cname){
   if(L.ranking&&L.ranking.length){
     rk=L.ranking.map(function(r){ var col=lvlCol(r.level); var sf=sfiMap[r.domain];
       return '<div style="margin:0 0 9px">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px;color:#E8E0D0">'+esc(dlc(r.domain))+(sf?(' '+arr(sf.status)):'')+'</span><span style="font-size:11px;color:'+col+';font-weight:600">'+r.sis+' · '+esc(r.level)+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px;color:#cbd5e1">'+esc(dlc(r.domain))+(sf?(' '+arr(sf.status)):'')+'</span><span style="font-size:11px;color:'+col+';font-weight:600">'+r.sis+' · '+esc(r.level)+'</span></div>'
         +'<div style="height:4px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden"><div style="height:100%;width:'+Math.max(2,r.sis)+'%;background:'+col+';border-radius:3px"></div></div>'
-        +(sf?'<div style="font-size:10px;color:rgba(212,175,90,.55);margin-top:3px">сейчас '+sf.now+' · 7д '+sf.d7+' · 30д '+sf.d30+'</div>':'')
+        +(sf?'<div style="font-size:10px;color:#94a3b8;margin-top:3px">сейчас '+sf.now+' · 7д '+sf.d7+' · 30д '+sf.d30+'</div>':'')
         +(r.reason&&r.reason.length?'<div style="font-size:10px;color:rgba(232,224,208,.5);margin-top:2px;line-height:1.4">'+esc(r.reason.join(' · '))+'</div>':'')
         +'</div>'; }).join('');
     rk=blk('Рейтинг стратегического влияния (0–100)', rk);
@@ -8393,7 +8393,7 @@ window._spRenderCountryLocal = function(el, d, cname){
   if(L.pressure_balance){
     var P=L.pressure_balance;
     function pbar(lab,val,col){ var v=Math.max(2,Math.min(100,val||0));
-      return '<div style="margin:0 0 9px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#E8E0D0">'+esc(lab)+'</span><span style="font-size:11px;color:'+col+';font-weight:600">'+Math.round(val||0)+'</span></div>'
+      return '<div style="margin:0 0 9px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#cbd5e1">'+esc(lab)+'</span><span style="font-size:11px;color:'+col+';font-weight:600">'+Math.round(val||0)+'</span></div>'
         +'<div style="height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden"><div style="height:100%;width:'+v+'%;background:'+col+';border-radius:3px"></div></div></div>'; }
     pb=blk('Баланс факторов давления',
        pbar('Фактическое давление', P.actual, '#1faacc')
@@ -8448,7 +8448,7 @@ window._renderCountryArchive = function(el, cc, cname, ds){
       function ul(arr){ return '<ul class="sp-ul">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
       var CURATED={"RU": {"research": [{"g": "2026", "items": [{"date": "2026-05-18", "title": "Валютная диверсификация по юрисдикциям", "domains": ["экономика", "геополитика"], "url": "https://t.me/c/1501982282/4120"}, {"date": "2026-05-11", "title": "Санкции как оружие двойного действия", "domains": ["экономика", "геополитика", "технологии"], "url": "https://t.me/c/1501982282/4100"}, {"date": "2026-05-11", "title": "Союзники: сильные на бумаге, ограниченные на практике", "domains": ["экономика", "геополитика", "технологии"], "url": "https://t.me/c/1501982282/4099"}, {"date": "2026-03-09", "title": "Системные риски для стран", "domains": ["экономика", "геополитика"], "url": "https://t.me/c/1501982282/3990"}, {"date": "2026-03-09", "title": "Кризис гегемонии", "domains": ["геополитика", "социум"], "url": "https://t.me/c/1501982282/3988"}, {"date": "2026-03-06", "title": "Протокол принятия решений", "domains": ["климат", "геополитика", "технологии", "социум"], "url": "https://t.me/c/1501982282/3927"}, {"date": "2026-02-05", "title": "Новые критерии ценности недвижимости", "domains": ["климат", "экономика", "социум"], "url": "https://t.me/c/1501982282/3931"}, {"date": "2026-01-29", "title": "Водные риски", "domains": ["климат", "экономика", "социум"], "url": "https://t.me/c/1501982282/3922"}, {"date": "2026-01-22", "title": "Социальные риски", "domains": ["технологии", "социум"], "url": "https://t.me/c/1501982282/3911"}, {"date": "2026-01-21", "title": "Региональные риски · миграция", "domains": ["климат", "экономика", "геополитика", "социум"], "url": "https://t.me/c/1501982282/3907"}, {"date": "2026-01-20", "title": "Региональные риски · безработица", "domains": ["экономика", "технологии", "социум"], "url": "https://t.me/c/1501982282/3905"}, {"date": "2026-01-08", "title": "12 технологических прогнозов на 2026 год", "domains": ["геополитика", "технологии", "социум"], "url": "https://t.me/c/1501982282/3877"}, {"date": "2026-01-06", "title": "Финансы под давлением", "domains": ["экономика", "геополитика", "технологии"], "url": "https://t.me/c/1501982282/3868"}, {"date": "2026-01-06", "title": "Новая эра", "domains": ["геополитика", "технологии", "социум"], "url": "https://t.me/c/1501982282/3867"}, {"date": "2026-01-06", "title": "Экономика всё чаще используется как инструмент выживания режима, а не роста", "domains": ["экономика", "геополитика", "технологии"], "url": "https://t.me/c/1501982282/3866"}, {"date": "2026-01-05", "title": "Глобальный прогноз 2026", "domains": ["климат", "экономика", "геополитика", "социум"], "url": "https://t.me/c/1501982282/3859"}, {"date": "2026-01-05", "title": "Как проявится?", "domains": ["климат", "экономика", "геополитика", "социум"], "url": "https://t.me/c/1501982282/3860"}]}, {"g": "Сценарии", "items": [{"date": "2026-05-19", "title": "Сценарий C — Системный кризис (~30–35%)", "domains": ["экономика", "геополитика"], "url": "https://t.me/c/1501982282/4135"}, {"date": "2026-05-19", "title": "Сценарий B — Фрагментированный (~50-55%)", "domains": ["экономика", "геополитика"], "url": "https://t.me/c/1501982282/4133"}, {"date": "2026-05-19", "title": "Сценарий A — Адаптивный (~15%)", "domains": ["экономика", "геополитика"], "url": "https://t.me/c/1501982282/4132"}, {"date": "2026-01-06", "title": "Сценарии", "domains": ["экономика", "геополитика", "технологии", "социум"], "url": "https://t.me/c/1501982282/3873"}, {"date": "", "title": "Сценарий 2030 года", "domains": [], "url": "https://t.me/c/1501982282/3756"}, {"date": "", "title": "Сценарий 2100 года", "domains": [], "url": "https://t.me/c/1501982282/3785"}]}, {"g": "План энергетической готовности", "items": [{"date": "", "title": "Что означает дефицит энергии в XXI?", "domains": [], "url": "https://t.me/c/1501982282/3824"}, {"date": "", "title": "Почему каждому нужен план энергетической готовности?", "domains": [], "url": "https://t.me/c/1501982282/3830"}, {"date": "", "title": "Энергетическая готовность — расширенный практический план", "domains": [], "url": "https://t.me/c/1501982282/3834"}]}, {"g": "Климат и будущее", "items": [{"date": "", "title": "Климат будущего", "domains": ["климат"], "url": "https://t.me/c/1501982282/2989"}, {"date": "", "title": "Критерии выбора безопасного места и стратегическое планирование", "domains": [], "url": "https://t.me/c/1501982282/2986"}, {"date": "", "title": "Аналитика катаболического коллапса", "domains": [], "url": "https://t.me/c/1501982282/3794"}, {"date": "", "title": "Оптимистичный и более напряжённый вектор будущего", "domains": [], "url": "https://t.me/c/1501982282/3802"}]}, {"g": "Обзоры по России", "items": [{"date": "", "title": "Россия", "domains": [], "url": "https://t.me/c/1501982282/2942"}, {"date": "", "title": "Россия", "domains": [], "url": "https://t.me/c/1501982282/3504"}]}]}};
       var top=Object.keys(ds||{}).map(function(d){return {d:d,s:parseFloat((ds||{})[d])||0};}).filter(function(x){return DLc[x.d];}).sort(function(p,q){return q.s-p.s;}).slice(0,3);
-      var risks=top.map(function(x){ return '<div class="sp-dyn"><span class="sp-dyn-d">'+esc(DLc[x.d])+'</span><span class="sp-dyn-v" style="color:#E8E0D0">'+Math.round(x.s)+'</span></div>'; }).join('');
+      var risks=top.map(function(x){ return '<div class="sp-dyn"><span class="sp-dyn-d">'+esc(DLc[x.d])+'</span><span class="sp-dyn-v" style="color:#cbd5e1">'+Math.round(x.s)+'</span></div>'; }).join('');
       var drivers=top.map(function(x){return DRV[x.d];}).filter(Boolean);
       var recent=(a.related||[]).slice().sort(function(p,q){return (q.date||'').localeCompare(p.date||'');}).slice(0,3);
       var ctxBody=
@@ -8756,9 +8756,9 @@ window._atlasRender = function(bEl, mEl, dEl, d){
     var d30t=(d30p!=null)?('прогноз '+d30p+'/100'):(ch.d30?ch.d30.text:'—');
     var changesHtml='<div class="sp-dyn"><span class="sp-dyn-d">24ч</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(h24t)+'</span></div>'
       +'<div class="sp-dyn"><span class="sp-dyn-d">7д</span><span class="sp-dyn-v" style="color:'+((d7d!=null&&d7d>0)?'#ff7a00':(d7d!=null&&d7d<0?'#22c55e':'#cbd5e1'))+'">'+esc(d7t)+'</span></div>'
-      +'<div class="sp-dyn"><span class="sp-dyn-d">30д</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(d30t)+'</span></div>';
+      +'<div class="sp-dyn"><span class="sp-dyn-d">30д</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(d30t)+'</span></div>';
     var leadDom=(d.brief_free&&d.brief_free.lead_strategic)||'';
-    var leadHtml=leadDom?('<div class="sp-dyn"><span class="sp-dyn-d">Текущий ведущий домен</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(leadDom))+'</span></div>'):'';
+    var leadHtml=leadDom?('<div class="sp-dyn"><span class="sp-dyn-d">Текущий ведущий домен</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(leadDom))+'</span></div>'):'';
     var nextHtml=(FB.next_pressure&&FB.next_pressure.domain)?('<div class="sp-dyn"><span class="sp-dyn-d">Следующий домен под давлением</span><span class="sp-dyn-v" style="color:#ff7a00">'+esc(dlc(FB.next_pressure.domain))+'</span></div>'):'';
     var focusHtml=leadHtml+nextHtml;
     function subLine(t){ return '<div style="font-size:11px;color:rgba(168,160,144,.7);margin:0 0 9px">'+esc(t)+'</div>'; }
@@ -8818,9 +8818,9 @@ window._atlasRender = function(bEl, mEl, dEl, d){
     var dirTxt=BF.d7>0?('▲ +'+Math.abs(BF.d7)):(BF.d7<0?('▼ '+Math.abs(BF.d7)):'→ 0');
     var freeBlocks=
        blk('Мир сейчас',
-          '<div class="sp-dyn"><span class="sp-dyn-d">Мировое стратегическое давление</span><span class="sp-dyn-v" style="color:#E8E0D0">'+(BF.global_pressure!=null?(BF.global_pressure+'/100'):'—')+'</span></div>'
+          '<div class="sp-dyn"><span class="sp-dyn-d">Мировое стратегическое давление</span><span class="sp-dyn-v" style="color:#cbd5e1">'+(BF.global_pressure!=null?(BF.global_pressure+'/100'):'—')+'</span></div>'
          +'<div class="sp-dyn"><span class="sp-dyn-d">Изменение за 7 дней</span><span class="sp-dyn-v" style="color:'+dirCol+'">'+dirTxt+' п.</span></div>'
-         +'<div class="sp-dyn"><span class="sp-dyn-d">Ведущий стратегический домен</span><span class="sp-dyn-v" style="color:#D4AF5A">'+esc(dlc(BF.lead_strategic))+lbadge(BF.lead_strategic_level)+'</span></div>')
+         +'<div class="sp-dyn"><span class="sp-dyn-d">Ведущий стратегический домен</span><span class="sp-dyn-v" style="color:#cbd5e1">'+esc(dlc(BF.lead_strategic))+lbadge(BF.lead_strategic_level)+'</span></div>')
       +(BF.summary?blk('Обзор','<p class="sp-p">'+esc(BF.summary)+'</p>'):'');
     bEl.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">ATLAS BRIEF · ОБЗОР</span></div><div class="sp-sub">Открытый уровень'+(BF.countries_count?(' · '+BF.countries_count+' стран'):'')+'</div><div class="sp-body"><div class="sp-blocks">'+freeBlocks+'</div></div></div>';
   } else bEl.innerHTML='';
@@ -9103,7 +9103,7 @@ window._spRender = function(el,d){
   function ul(arr){ return '<ul class="sp-ul">'+(arr||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
   function block(h,body){ return '<div class="sp-block"><div class="sp-block-h">'+esc(h)+'</div>'+body+'</div>'; }
   function badge(label){ var col=/Сильн|Высок/.test(label)?'#ef4444':(/Средн/.test(label)?'#eab308':'#22c55e'); return '<span style="font-size:9px;font-weight:600;letter-spacing:.04em;padding:1px 7px;border-radius:999px;border:1px solid '+col+';color:'+col+';margin-left:6px;white-space:nowrap">'+esc(label)+'</span>'; }
-  function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,175,90,.7);margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
+  function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#f1f5f9;margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
   if(d && d.locked){
     el.innerHTML='<div class="sp-section"><div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO</span></div>'
       +'<div class="sp-sub">Аналитическая интерпретация сигналов</div>'
