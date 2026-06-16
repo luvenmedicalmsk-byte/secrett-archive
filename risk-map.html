@@ -8164,7 +8164,7 @@ function _grdfContextHtml(c){
     else if(sum<=18){ st='Рост риска'; col='#f97316'; }
     else { st='Резкий рост'; col='#ef4444'; }
     function dt(v){ if(v==null) return '<span style="color:#4a6380">накапливается</span>'; var cl=v===0?'#4a6380':v>0?'#f97316':'#10b981',ar=v===0?'→':v>0?'▲':'▼'; return '<span style="color:'+cl+'">'+ar+' '+(v>0?'+':'')+v+'</span>'; }
-    H+=card('Risk Momentum · скорость изменения',
+    H+=card('Динамика изменений',
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">'
       +'<span style="width:10px;height:10px;border-radius:50%;background:'+col+'"></span>'
       +'<b style="color:'+col+';font-size:14px">'+st+'</b></div>'
@@ -8174,7 +8174,7 @@ function _grdfContextHtml(c){
   })();
 
   // ── 2. Динамика риска · график (history) ──
-  H+=card('Динамика риска · GRI/EWS/CRI', '<div id="grdf-hist" style="min-height:70px"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>');
+  H+=card('История индексов', '<div id="grdf-hist" style="min-height:70px"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>');
 
   // ── 3. Структура GRI · рейтинг доменов (полосы вместо радиала) ──
   (function(){
@@ -8188,7 +8188,7 @@ function _grdfContextHtml(c){
         +'<span style="width:56px;text-align:right;font-size:12px;color:#cbd5e1">'+o.v+' <span style="color:#4a6380;font-size:10px">'+pct+'%</span></span>'
         +'<span style="width:72px;text-align:right;font-size:10px;color:'+lv[1]+'">'+lv[0]+'</span></div>';
     }).join('');
-    H+=card('Структура GRI', rows+'<div style="font-size:9px;color:#4a6380;margin-top:7px">Уровень домена и его вклад в итоговый GRI.</div>');
+    H+=card('Источники давления', rows+'<div style="font-size:9px;color:#4a6380;margin-top:7px">Уровень домена и его вклад в итоговый GRI.</div>');
   })();
 
   // ── 5. Прогноз риска (линейная проекция + сценарии модели) ──
@@ -8215,7 +8215,7 @@ function _grdfContextHtml(c){
     var inner = _ph + proj
       + '<div style="font-size:10px;color:#4a6380;letter-spacing:.06em;text-transform:uppercase;margin:13px 0 6px">Сценарии модели · 30 дней</div>'
       + '<div id="grdf-scen"><div style="color:#4a6380;font-size:11px">загрузка…</div></div>';
-    H+=card('Прогноз риска и сценарии модели', inner);
+    H+=card('Траектория развития', inner);
   })();
   // ── 4. Главные драйверы риска ──
   var byDom={}; evs.forEach(function(e){ var dd=e.domain||'other'; (byDom[dd]=byDom[dd]||[]).push(e); });
@@ -8478,10 +8478,10 @@ window._renderCountryArchive = function(el, cc, cname, ds){
       var conclusion='На фоне усиления '+(dlist.length?(dlist.slice(0,-1).join(', ')+(dlist.length>1?' и ':'')+dlist[dlist.length-1]):'системного')+' давления наибольшую устойчивость сохраняют реальные активы, критическая инфраструктура, энергия, вода и человеческий капитал.';
       var keyDesc='<div style="font-size:10px;color:rgba(168,160,144,.6);margin:-1px 0 8px;line-height:1.4">Ручная выборка наиболее значимых материалов из архива исследований по '+esc(gname)+'.</div>';
       var html='<div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
-        +'<div class="sp-head"><span class="sp-badge">КОНТЕКСТ СТРАНЫ</span></div>'
+        +'<div class="sp-head"><span class="sp-badge">СТРАТЕГИЧЕСКИЙ КОНТЕКСТ</span></div>'
         +'<div class="sp-sub">Почему формируется давление: '+esc(cname||cc)+'</div>'
         +'<div class="sp-body"><div class="sp-blocks">'+(ctxBody||'<div class="sp-p" style="opacity:.5">Недостаточно материалов по стране.</div>')+'</div></div>'
-        +'<div class="sp-head" style="margin-top:20px"><span class="sp-badge">АРХИВ '+esc(gname.toUpperCase())+'</span></div>'
+        +'<div class="sp-head" style="margin-top:20px"><span class="sp-badge">МАТЕРИАЛЫ АРХИВА</span></div>'
         +'<div class="sp-body">'+fundCard
           +'<div class="sp-blocks" style="margin-top:14px">'
           +subL('Ключевые исследования', keyDesc+krStyle+krGroups())
@@ -8575,6 +8575,7 @@ function grdfRenderCountryPanel(cc) {
   function _miniDelta(v){ if(v==null) return '<div style="font-size:9px;color:#4a6380;margin-top:3px">накапл.</div>'; var cl=v>0?'#f97316':v<0?'#10b981':'#4a6380',ar=v>0?'▲':v<0?'▼':'→'; return '<div style="font-size:9px;color:'+cl+';margin-top:3px">'+ar+' '+(v>0?'+':'')+v+'</div>'; }
   var _adN=['climate','geopolitics','economy','technology','social'].filter(function(d){return ((c.domain_scores||{})[d]||0)>=60;}).length;
   var _miniCri='<div style="font-size:9px;color:#4a6380;margin-top:3px">'+_adN+'/5 доменов</div>';
+  html += '<div style="font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6a7d92;margin:0 0 7px">Текущая оценка риска</div>';
   html += '<div class="grdf-metrics">';
   html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'GRI\')"><div class="grdf-metric-val" style="color:'+statusCol+'">'+gri+'</div><div class="grdf-metric-lbl">GRI <span class="grdf-idx-i">i</span></div>'+_miniDelta(c.gri_delta_7d)+'</div>';
   html += '<div class="grdf-metric" onclick="_grdfIdxInfo(\'EWS\')"><div class="grdf-metric-val" style="color:'+(ews>=80?'#ef4444':ews>=65?'#f97316':'#eab308')+'">'+ews+'</div><div class="grdf-metric-lbl">EWS <span class="grdf-idx-i">i</span></div>'+_miniDelta(c.ews_delta_7d)+'</div>';
