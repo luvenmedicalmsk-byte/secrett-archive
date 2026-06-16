@@ -786,7 +786,7 @@ def fetch_newsapi(api_key):
         ("recession inflation oil gold sanctions trade war debt", 20,
          "reuters,bloomberg,cnbc,al-jazeera-english,yahoo-finance"),
         # Технологии -- кибер и AI
-        ("cyberattack AI risk semiconductor outage hacking breach", 15,
+        ("cyberattack data breach ransomware power grid blackout data center outage telecom semiconductor chip shortage AI model critical infrastructure payment outage", 15,
          "reuters,wired,techcrunch,the-verge"),
         # Социум -- миграция, здоровье, безработица
         ("refugee migration disease outbreak unemployment poverty", 15,
@@ -831,17 +831,28 @@ def fetch_newsapi(api_key):
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_gdelt():
     items = []
-    # Один широкий запрос раз в 2 часа -- соблюдаем лимит GDELT (1 запрос / 5 сек)
-    query = ('war OR conflict OR military OR invasion OR airstrike OR '
-             'protest OR riot OR coup OR unrest OR '
-             'recession OR inflation OR sanctions OR crisis OR '
-             'cyberattack OR ransomware OR hack OR breach OR '
-             'migration OR refugee OR displacement')
-    url = (f"https://api.gdeltproject.org/api/v2/doc/doc"
-           f"?query={urllib.parse.quote(query)}"
-           f"&mode=artlist&format=json&maxrecords=25&timespan=2h&sort=DateDesc")
-    data = fetch_url(url)
-    if data:
+    # Лимит GDELT: 1 запрос / 5 сек. Широкий запрос + выделенный техно-запрос (инфра/связь/платёжка/чипы/ИИ).
+    queries = [
+        ('war OR conflict OR military OR invasion OR airstrike OR '
+         'protest OR riot OR coup OR unrest OR '
+         'recession OR inflation OR sanctions OR crisis OR '
+         'cyberattack OR ransomware OR hack OR breach OR '
+         'migration OR refugee OR displacement'),
+        ('"power grid" OR blackout OR "power outage" OR substation OR '
+         '"data center outage" OR "cloud outage" OR "internet outage" OR '
+         '"fiber cut" OR "submarine cable" OR "telecom outage" OR '
+         '"payment system" OR "banking outage" OR "card network" OR '
+         'semiconductor OR "chip shortage" OR "export controls" OR '
+         '"AI model" OR "critical infrastructure" OR "data breach"'),
+    ]
+    for _qi, query in enumerate(queries):
+        if _qi:
+            time.sleep(5)
+        url = (f"https://api.gdeltproject.org/api/v2/doc/doc"
+               f"?query={urllib.parse.quote(query)}"
+               f"&mode=artlist&format=json&maxrecords=25&timespan=2h&sort=DateDesc")
+        data = fetch_url(url)
+        if not data: continue
         try:
             j = json.loads(data)
             for art in j.get('articles', []):
