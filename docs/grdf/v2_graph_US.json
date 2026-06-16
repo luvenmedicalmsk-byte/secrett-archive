@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-06-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-16T03:47:59.759028+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-16T09:26:33.610968+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 42,
+      "score": 48,
       "props": {
-        "risk_score": 42
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 18,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -80,11 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-США_сократ",
+      "id": "SIGNAL-US-Пожар_на_4",
       "type": "Signal",
-      "label": "США сократили обязательства перед НАТО, ",
-      "severity": 42,
-      "domain": "geopolitical"
+      "label": "Пожар на 4170 Туле Рд, Якима, Вашингтон",
+      "severity": 47,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-US-Пожар_в_ЮН",
+      "type": "Signal",
+      "label": "Пожар в ЮНИПЕР ДЮНС, Франклин, Вашингтон",
+      "severity": 47,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-US-Пожар_в_СН",
+      "type": "Signal",
+      "label": "Пожар в СНЕЙК РИВЕР, Уитман, Вашингтон",
+      "severity": 47,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -92,43 +106,43 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.05
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -149,10 +163,85 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-US-США_сократ",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-US-social",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Пожар_на_4",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-US-Пожар_в_ЮН",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-US-Пожар_в_СН",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }
