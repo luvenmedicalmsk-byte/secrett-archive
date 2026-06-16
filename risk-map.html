@@ -8456,16 +8456,43 @@ window._renderCountryArchive = function(el, cc, cname, ds){
         +subL('Исторически устойчивые драйверы', drivers.length?ul(drivers):'')
         +subL('Текущие риски (доменное давление)', risks)
         +subL('Временные всплески', mats(recent));
-      var arcBody=
-         subL('Связанные материалы', mats((CURATED[cc]&&CURATED[cc].length)?CURATED[cc]:(a.related||[]).slice(0,5)))
-        +subL('Исторические параллели', mats((a.historical||[]).slice(0,4)))
-        +subL('Рекомендуемые материалы', mats((a.recommended||[]).slice(0,4)));
+      var research=(CURATED[cc]&&CURATED[cc].length)?CURATED[cc]:(a.related||[]).slice(0,6);
+      var hist=(a.historical||[]).slice(0,4);
+      var GEN={US:'США',RU:'России',CN:'Китая',GB:'Великобритании',UA:'Украины',EU:'Евросоюза',FR:'Франции',TR:'Турции',DE:'Германии',IN:'Индии',JP:'Японии',IR:'Ирана',IL:'Израиля',BR:'Бразилии',PL:'Польши',SA:'Саудовской Аравии',TW:'Тайваня',KR:'Кореи',KP:'КНДР',CA:'Канады'};
+      var gname=GEN[cc]||(cname||cc);
+      function plr(n,f){ n=Math.abs(n)%100; var n1=n%10; if(n>10&&n<20)return f[2]; if(n1>1&&n1<5)return f[1]; if(n1===1)return f[0]; return f[2]; }
+      var total=a.archive_total||0;
+      var nScen=research.filter(function(m){return /сценари/i.test(m.title||'');}).length;
+      var MO=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+      function ruDate(d){ if(!d)return ''; var p=String(d).split('-'); return p.length===3?(parseInt(p[2],10)+' '+MO[parseInt(p[1],10)-1]+' '+p[0]):d; }
+      var dts=research.map(function(m){return m.date;}).filter(Boolean).sort();
+      var lastUpd=dts.length?ruDate(dts[dts.length-1]):'';
+      var statRows=[['Материалов Архива',total],['Ключевых исследований',research.length],['Исторических параллелей',hist.length],['Сценарных материалов',nScen]]
+        .map(function(r){return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px"><span style="color:rgba(168,160,144,.85)">'+r[0]+'</span><span style="color:#D4AF5A;font-weight:600">'+r[1]+'</span></div>';}).join('');
+      var fundCard='<div style="border:0.5px solid rgba(184,151,58,.25);border-radius:12px;padding:16px;margin-top:8px;background:linear-gradient(180deg,rgba(184,151,58,.06),rgba(184,151,58,.012))">'
+        +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:600;color:#D4AF5A;line-height:1">'+total+' <span style="font-size:13px;font-family:inherit;color:rgba(168,160,144,.8);font-weight:400">'+plr(total,['материал','материала','материалов'])+'</span></div>'
+        +(lastUpd?('<div style="font-size:10px;color:rgba(168,160,144,.6);margin-top:4px">Последнее обновление: '+lastUpd+'</div>'):'')
+        +'<div style="height:0.5px;background:rgba(184,151,58,.18);margin:12px 0"></div>'+statRows+'</div>';
+      var DADJ={geopolitics:'геополитического',economy:'финансового',climate:'ресурсного',technology:'технологического',social:'социального'};
+      var dlist=top.map(function(x){return DADJ[x.d];}).filter(Boolean);
+      var conclusion='На фоне усиления '+(dlist.length?(dlist.slice(0,-1).join(', ')+(dlist.length>1?' и ':'')+dlist[dlist.length-1]):'системного')+' давления наибольшую устойчивость сохраняют реальные активы, критическая инфраструктура, энергия, вода и человеческий капитал.';
+      var keyDesc='<div style="font-size:10px;color:rgba(168,160,144,.6);margin:-1px 0 8px;line-height:1.4">Ручная выборка наиболее значимых материалов из архива исследований по '+esc(gname)+'.</div>';
       var html='<div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
         +'<div class="sp-head"><span class="sp-badge">КОНТЕКСТ СТРАНЫ</span></div>'
-        +'<div class="sp-sub">Почему формируется давление: '+esc(cname||cc)+(a.archive_total?(' · '+a.archive_total+' материалов в Архиве'):'')+'</div>'
+        +'<div class="sp-sub">Почему формируется давление: '+esc(cname||cc)+'</div>'
         +'<div class="sp-body"><div class="sp-blocks">'+(ctxBody||'<div class="sp-p" style="opacity:.5">Недостаточно материалов по стране.</div>')+'</div></div>'
-        +(arcBody?('<div class="sp-head" style="margin-top:16px"><span class="sp-badge">АРХИВНЫЙ КОНТЕКСТ</span></div><div class="sp-body"><div class="sp-blocks">'+arcBody+'</div></div>'):'')
-        +'<div class="sp-head" style="margin-top:16px"><span class="sp-badge">СТРАТЕГИЧЕСКИЕ АКТИВЫ 2026–2036</span></div><iframe id="grdf-assets-frame" src="scenarios.html?embed=1&v=22" loading="lazy" scrolling="no" style="width:100%;height:640px;border:0.5px solid rgba(184,151,58,.2);border-radius:10px;margin-top:8px;background:#06050A;overflow:hidden" title="Стратегические активы 2026-2036"></iframe>'
+        +'<div class="sp-head" style="margin-top:20px"><span class="sp-badge">АРХИВ '+esc(gname.toUpperCase())+'</span></div>'
+        +'<div class="sp-body">'+fundCard
+          +'<div class="sp-blocks" style="margin-top:14px">'
+          +subL('Ключевые исследования', keyDesc+mats(research))
+          +(hist.length?subL('Исторические параллели', mats(hist)):'')
+          +'</div></div>'
+        +'<div class="sp-head" style="margin-top:20px"><span class="sp-badge">СТРАТЕГИЧЕСКИЙ ВЫВОД</span></div>'
+        +'<div class="sp-body"><div style="border-left:2px solid rgba(212,175,90,.55);padding:7px 0 7px 13px;font-size:13px;line-height:1.55;color:#E8E0D0">'+esc(conclusion)+'</div></div>'
+        +'<div class="sp-head" style="margin-top:20px"><span class="sp-badge">СТРАТЕГИЧЕСКИЕ АКТИВЫ 2026–2036</span></div>'
+        +'<div class="sp-sub">Активы, сохраняющие стратегическую ценность в условиях климатических, геополитических, экономических и технологических изменений.</div>'
+        +'<div style="font-size:10px;color:rgba(168,160,144,.5);margin:4px 0 0;font-style:italic">Основано на анализе глобальных трендов Atlas Intelligence и материалов Архива.</div>'
+        +'<iframe id="grdf-assets-frame" src="scenarios.html?embed=1&v=22" loading="lazy" scrolling="no" style="width:100%;height:640px;border:0.5px solid rgba(184,151,58,.2);border-radius:10px;margin-top:8px;background:#06050A;overflow:hidden" title="Стратегические активы 2026-2036"></iframe>'
         +'</div>';
       box.innerHTML=html;
     })
