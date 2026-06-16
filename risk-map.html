@@ -8422,6 +8422,50 @@ window._spRenderCountryLocal = function(el, d, cname){
     +'<div class="sp-body"><div class="sp-blocks">'+blocks+'</div></div></div></div>';
 };
 
+window._renderCountryArchive = function(el, cc, cname, ds){
+  if(!el || !cc) return;
+  function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var DLc=(window._rDL?window._rDL():{climate:'Климат',geopolitics:'Геополитика',economy:'Экономика',technology:'Технологии',social:'Социум'});
+  var DRV={geopolitics:'геополитическое положение и роль в региональном балансе',economy:'экономические зависимости и структура рынка',climate:'климатические и ресурсные ограничения',technology:'технологический уклад и зависимости',social:'социальная структура и внутренние противоречия'};
+  var box=document.createElement('div'); box.id='grdf-cc-archive'; box.style.cssText='margin:0 14px 10px';
+  box.innerHTML='<div class="sp-block" style="margin:0;opacity:.5"><div class="sp-p">Загрузка контекста страны…</div></div>';
+  el.appendChild(box);
+  var tok=''; try{ tok=localStorage.getItem('cc_token')||''; }catch(e){}
+  var base=(typeof API!=='undefined'&&API)?API:'https://archive-api.luven-medical-msk.workers.dev';
+  var h={'Content-Type':'application/json'}; if(tok) h['X-Snapshot-Token']=tok;
+  fetch(base+'/api/archive-context',{method:'POST',headers:h,body:JSON.stringify({country:cc, domain_levels:ds||{}})})
+    .then(function(r){return r.json();})
+    .then(function(a){
+      if(!a || a.locked){ if(box.parentNode) box.parentNode.removeChild(box); return; }
+      function subL(t,body){ return body?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(212,175,90,.7);margin:10px 0 4px">'+esc(t)+'</div>'+body):''; }
+      function mats(arr,withOpen){ arr=arr||[]; if(!arr.length) return ''; return arr.map(function(m){
+        var open=withOpen?(' · <a href="'+esc(m.link)+'" target="_blank" rel="noopener" style="color:#1faacc;text-decoration:none">Открыть в Архиве</a>'):'';
+        return '<div style="margin:0 0 9px"><div style="font-size:12px;color:#E8E0D0;line-height:1.3">'+esc(m.title)+'</div><div style="font-size:10px;color:rgba(168,160,144,.6)">'+esc(m.date)+open+'</div></div>'; }).join(''); }
+      function ul(arr){ return '<ul class="sp-ul">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
+      var top=Object.keys(ds||{}).map(function(d){return {d:d,s:parseFloat((ds||{})[d])||0};}).filter(function(x){return DLc[x.d];}).sort(function(p,q){return q.s-p.s;}).slice(0,3);
+      var risks=top.map(function(x){ return '<div class="sp-dyn"><span class="sp-dyn-d">'+esc(DLc[x.d])+'</span><span class="sp-dyn-v" style="color:#E8E0D0">'+Math.round(x.s)+'</span></div>'; }).join('');
+      var drivers=top.map(function(x){return DRV[x.d];}).filter(Boolean);
+      var recent=(a.related||[]).slice().sort(function(p,q){return (q.date||'').localeCompare(p.date||'');}).slice(0,3);
+      var ctxBody=
+         subL('Структурные уязвимости', mats((a.vulnerabilities||[]).slice(0,4), true))
+        +subL('Исторически устойчивые драйверы', drivers.length?ul(drivers):'')
+        +subL('Текущие риски (доменное давление)', risks)
+        +subL('Временные всплески', mats(recent, true));
+      var arcBody=
+         subL('Связанные материалы', mats((a.related||[]).slice(0,5), true))
+        +subL('Исторические параллели', mats((a.historical||[]).slice(0,4), true))
+        +subL('Рекомендуемые материалы', mats((a.recommended||[]).slice(0,4), true));
+      var html='<div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
+        +'<div class="sp-head"><span class="sp-badge">КОНТЕКСТ СТРАНЫ</span></div>'
+        +'<div class="sp-sub">Почему формируется давление: '+esc(cname||cc)+(a.archive_total?(' · '+a.archive_total+' материалов в Архиве'):'')+'</div>'
+        +'<div class="sp-body"><div class="sp-blocks">'+(ctxBody||'<div class="sp-p" style="opacity:.5">Недостаточно материалов по стране.</div>')+'</div></div>'
+        +(arcBody?('<div class="sp-head" style="margin-top:16px"><span class="sp-badge">АРХИВНЫЙ КОНТЕКСТ</span></div><div class="sp-body"><div class="sp-blocks">'+arcBody+'</div></div>'):'')
+        +'</div>';
+      box.innerHTML=html;
+    })
+    .catch(function(){ if(box.parentNode) box.parentNode.removeChild(box); });
+};
+
 window._renderCountryLocal = function(c){
   var el=document.getElementById('grdf-cc-local'); if(!el||!c) return;
   var DOMS=['climate','geopolitics','economy','technology','social'];
@@ -8441,7 +8485,7 @@ window._renderCountryLocal = function(c){
   el.innerHTML='<div style="margin:0 14px 8px"><div class="sp-block"><div class="sp-p" style="opacity:.5">Загрузка локальной аналитики…</div></div></div>';
   fetch(base+'/api/signal-pro',{method:'POST',headers:h,body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
-    .then(function(d){ window._spRenderCountryLocal(el,d,cname); })
+    .then(function(d){ window._spRenderCountryLocal(el,d,cname); try{ window._renderCountryArchive(el, cc, cname, ds); }catch(_e){} })
     .catch(function(){ window._spRenderCountryLocal(el,{locked:true},cname); });
 };
 function grdfRenderCountryPanel(cc) {
