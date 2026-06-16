@@ -8770,7 +8770,7 @@ window.grdfRenderAtlas = function(){
   var tok=''; try{ tok=localStorage.getItem('cc_token')||''; }catch(e){}
   var base=(typeof API!=='undefined'&&API)?API:'https://archive-api.luven-medical-msk.workers.dev';
   var h={'Content-Type':'application/json'}; if(tok) h['X-Snapshot-Token']=tok;
-  function setAcl(pro){ try{ var acl=document.querySelector('#grdf-analytics-screen .grdf-acl'); if(acl) acl.style.display = pro ? 'none' : ''; }catch(e){} }
+  function setAcl(pro){ try{ var scr=document.getElementById('grdf-analytics-screen'); if(!scr) return; ['.grdf-acl','.free-lock-block'].forEach(function(sel){ var el=scr.querySelector(sel); if(el) el.style.display = pro ? 'none' : ''; }); }catch(e){} }
   if(bEl.getAttribute('data-done')!=='1') bEl.innerHTML='<div class="sp-block" style="margin:0"><div class="sp-p" style="opacity:.5">Сборка стратегической сводки…</div></div>';
   fetch(base+'/api/atlas-brief',{method:'POST',headers:h,body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
