@@ -8472,7 +8472,7 @@ window._renderCountryArchive = function(el, cc, cname, ds){
       var fundCard='<div style="border:0.5px solid rgba(184,151,58,.25);border-radius:12px;padding:16px;margin-top:8px;background:linear-gradient(180deg,rgba(184,151,58,.06),rgba(184,151,58,.012))">'
         +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:600;color:#D4AF5A;line-height:1">'+total+' <span style="font-size:13px;font-family:inherit;color:rgba(168,160,144,.8);font-weight:400">'+plr(total,['материал','материала','материалов'])+'</span></div>'
         +(lastUpd?('<div style="font-size:10px;color:rgba(168,160,144,.6);margin-top:4px">Последнее обновление: '+lastUpd+'</div>'):'')
-        +'<div style="height:0.5px;background:rgba(184,151,58,.18);margin:12px 0"></div><div style="font-size:11px;line-height:1.5;color:rgba(168,160,144,.82)">Собрание исследований, сценариев, исторических параллелей и аналитических материалов по '+esc(gname)+'.</div></div>';
+        +'<div style="height:0.5px;background:rgba(184,151,58,.18);margin:12px 0"></div><div style="font-size:11px;line-height:1.5;color:rgba(168,160,144,.82)">Собрание исследований, сценариев, исторических параллелей и аналитических материалов по '+esc(gname)+'.</div><div style="font-size:10px;line-height:1.5;color:rgba(168,160,144,.6);margin-top:7px">Исследования Архива учитываются в сценариях и прогнозах для данной страны.</div></div>';
       var DADJ={geopolitics:'геополитического',economy:'финансового',climate:'ресурсного',technology:'технологического',social:'социального'};
       var dlist=top.map(function(x){return DADJ[x.d];}).filter(Boolean);
       var conclusion='На фоне усиления '+(dlist.length?(dlist.slice(0,-1).join(', ')+(dlist.length>1?' и ':'')+dlist[dlist.length-1]):'системного')+' давления наибольшую устойчивость сохраняют реальные активы, критическая инфраструктура, энергия, вода и человеческий капитал.';
@@ -8570,10 +8570,7 @@ function grdfRenderCountryPanel(cc) {
   })();
 
 
-  // Archive badge (country name/flag now in sticky header)
-  if(isSig){
-    html += '<div class="grdf-archive-badge"><span>⭐ Участник Архива</span><small> · Прогноз 7д включён</small></div>';
-  }
+  // Статусный бейдж убран — связь с Архивом показывается в разделе «Архив страны»
   // Metrics — tappable, each index explains its own meaning/origin
   function _miniDelta(v){ if(v==null) return '<div style="font-size:9px;color:#4a6380;margin-top:3px">накапл.</div>'; var cl=v>0?'#f97316':v<0?'#10b981':'#4a6380',ar=v>0?'▲':v<0?'▼':'→'; return '<div style="font-size:9px;color:'+cl+';margin-top:3px">'+ar+' '+(v>0?'+':'')+v+'</div>'; }
   var _adN=['climate','geopolitics','economy','technology','social'].filter(function(d){return ((c.domain_scores||{})[d]||0)>=60;}).length;
