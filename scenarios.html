@@ -166,7 +166,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Mo
   #detail.open{transform:translateY(0)}
 }
 </style>
-<style>html.embed #header,html.embed #intro h1,html.embed #cta-block{display:none!important}html.embed,html.embed body{min-height:0!important;height:auto!important}html.embed #main{padding:10px 20px 16px!important}html.embed #intro{padding-top:4px}html.embed body{padding-top:0}</style>
+<style>html.embed #header,html.embed #intro h1,html.embed #cta-block{display:none!important}html.embed #main{padding:10px 20px 16px!important}html.embed #intro{padding-top:4px}html.embed body{padding-top:0}</style>
 <script>try{if(new URLSearchParams(location.search).get("embed")==="1")document.documentElement.classList.add("embed");}catch(e){}</script>
 </head>
 <body>
@@ -383,7 +383,7 @@ renderGrid();
 </script>
 <script>(function(){
   if(!document.documentElement.classList.contains('embed'))return;
-  function postH(){try{var hgt=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);parent.postMessage({type:'scenarios-height',height:hgt},'*');}catch(e){}}
+  function postH(){try{var mn=document.getElementById('main');var hgt=mn?(mn.offsetTop+mn.offsetHeight+10):Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);if(hgt>150)parent.postMessage({type:'scenarios-height',height:hgt},'*');}catch(e){}}
   window.addEventListener('load',function(){postH();setTimeout(postH,300);setTimeout(postH,1200);});
   document.addEventListener('click',function(){setTimeout(postH,80);setTimeout(postH,350);});
   window.addEventListener('resize',postH);
