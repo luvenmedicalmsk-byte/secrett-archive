@@ -2,67 +2,67 @@
   "country": "JP",
   "date": "2026-06-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-16T16:47:31.087033+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-16T22:18:58.488074+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 44,
+      "score": 61,
       "props": {
-        "risk_score": 44
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -3,
-      "trend": "down"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 21,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-JP-Geopolitical",
@@ -78,6 +78,20 @@
       "id": "DRIVER-JP-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-JP-Танкерные_",
+      "type": "Signal",
+      "label": "Танкерные компании сообщают, что трафик ",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-JP-Землетрясе",
+      "type": "Signal",
+      "label": "Землетрясение M5.5 — 4 км к СЗ от Noda (",
+      "severity": 58,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,13 +99,13 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.03
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-JP",
@@ -109,19 +123,19 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.02
     },
     {
       "from": "DRIVER-JP-Geopolitical",
@@ -140,6 +154,39 @@
       "to": "COUNTRY-JP",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-JP-geopolitical",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-JP-Танкерные_",
+      "to": "DOMAIN-JP-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-JP-Землетрясе",
+      "to": "DOMAIN-JP-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     }
   ]
 }

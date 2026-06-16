@@ -2,67 +2,67 @@
   "country": "GR",
   "date": "2026-06-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-16T16:47:31.095600+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-16T22:18:58.500071+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 40,
+      "score": 48,
       "props": {
-        "risk_score": 40
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 16,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 28,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 26,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
-      "score": 30,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 28,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 24,
-      "trend": "down"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DRIVER-GR-geopolitical",
@@ -70,21 +70,14 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-GR-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-GR-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-GR-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-GR-Binance_го",
-      "type": "Signal",
-      "label": "Binance готовится к выходу из ЕС с местн",
-      "severity": 40,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -92,46 +85,52 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-economic",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-climate",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-technology",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-social",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-cyber",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.29
     },
     {
       "from": "DRIVER-GR-geopolitical",
+      "to": "COUNTRY-GR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-GR-economic",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -143,16 +142,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-climate",
-      "to": "COUNTRY-GR",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-GR-geopolitical",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-GR-Binance_го",
+      "from": "DOMAIN-GR-infrastructure",
       "to": "DOMAIN-GR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.4
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }

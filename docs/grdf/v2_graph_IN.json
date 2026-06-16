@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-06-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-16T16:47:31.086606+00:00",
+  "generated_at": "2026-06-16T22:18:58.487368+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 59,
+      "score": 60,
       "props": {
-        "risk_score": 59
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 59,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 26,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Танкерные_",
+      "type": "Signal",
+      "label": "Танкерные компании сообщают, что трафик ",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
       "label": "Наводнение в регионах Абруццо, Молизе и ",
@@ -92,13 +99,6 @@
       "label": "Лесной пожар в Гренландии",
       "severity": 60,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IN-Лесной_пож",
-      "type": "Signal",
-      "label": "Лесной пожар в Уэльве, Испания",
-      "severity": 60,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IN",
@@ -184,13 +184,55 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IN-Наводнение",
-      "to": "DOMAIN-IN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.6
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-IN-Лесной_пож",
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-IN-Танкерные_",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.6
