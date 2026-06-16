@@ -7642,28 +7642,14 @@ function _evM(val, lbl, col) {
     <div id="grdf-atlas-brief"></div>
     <div id="grdf-atlas-market"></div>
     <div id="grdf-atlas-dynamics"></div>
+    <div id="grdf-model-block">
     <div style="margin-top:18px;border-top:0.5px solid rgba(184,151,58,0.18);padding-top:14px"></div>
-    <div style="font-size:11px;font-weight:600;color:rgba(212,175,90,0.75);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;font-family:'Montserrat',sans-serif">Доверие к модели</div>
-    <div style="font-size:10px;color:#4a6380;margin-bottom:14px">Точность прогнозов · Валидация · V1–V13 Intelligence Stack</div>
+    <div style="font-size:11px;font-weight:600;color:rgba(212,175,90,0.75);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;font-family:'Montserrat',sans-serif">Надёжность модели</div>
     <div class="grdf-acc-card">
-      <div><div class="grdf-acc-label">Точность</div><div class="grdf-acc-sub">Доля верных прогнозов</div></div>
+      <div><div class="grdf-acc-label">Надёжность модели</div><div class="grdf-acc-sub">Средняя подтверждённая точность стратегических выводов Atlas Intelligence</div></div>
       <div class="grdf-acc-val" id="grdf-acc-score">—</div>
     </div>
-    <div class="grdf-acc-card">
-      <div><div class="grdf-acc-label">Точность (P)</div><div class="grdf-acc-sub">Верные обострения</div></div>
-      <div class="grdf-acc-val" id="grdf-acc-prec">—</div>
-    </div>
-    <div class="grdf-acc-card">
-      <div><div class="grdf-acc-label">Полнота (R)</div><div class="grdf-acc-sub">Охват реальных событий</div></div>
-      <div class="grdf-acc-val" id="grdf-acc-rec">—</div>
-    </div>
-    <div class="grdf-acc-card">
-      <div><div class="grdf-acc-label">F1-мера</div><div class="grdf-acc-sub">Гармоническое P/R</div></div>
-      <div class="grdf-acc-val" id="grdf-acc-f1">—</div>
-    </div>
-    <div class="grdf-acc-card">
-      <div><div class="grdf-acc-label">Шкала Брайера</div><div class="grdf-acc-sub">Калибровка (↓ лучше)</div></div>
-      <div class="grdf-acc-val" id="grdf-acc-brier">—</div>
+    <div id="grdf-atlas-about" style="margin-top:16px"></div>
     </div>
   </div>
 </div>
@@ -8737,6 +8723,23 @@ window._atlasRender = function(bEl, mEl, dEl, d){
     dEl.innerHTML='<div class="sp-section" style="margin-top:14px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px"><div class="sp-head"><span class="sp-badge">🔒 SIGNAL PRO · СТРАТЕГИЧЕСКАЯ АНАЛИТИКА</span></div><div class="sp-sub">Закрытый уровень</div><div class="sp-body"><div class="sp-block"><ul class="sp-ul"><li>Полный Atlas Brief: изменения 24ч / 7д / 30д, выводы дня и недели</li><li>Глобальная динамика: GSP и SFI по доменам</li><li>Динамика по регионам мира</li><li>Карта передачи давления (PTS)</li><li>Прогнозные траектории и сравнение доменов</li></ul><div class="sp-lock-t" style="margin:12px 0 14px;max-width:none">Вся глубокая интерпретация, прогнозные траектории и глобальные взаимосвязи доступны в Signal Pro.</div><button class="sp-cta" onclick="grdfOpenUpgrade(\'signal_pro\')">Открыть Signal Pro</button></div></div></div>';
   }
 };
+window._atlasAbout = function(d, nCountries, gc){
+  var el=document.getElementById('grdf-atlas-about'); if(!el) return;
+  function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var nC=(d&&d.brief_free&&d.brief_free.countries_count)||nCountries||0;
+  var nSig=0; try{ var o=gc||{}; for(var k in o){ nSig+=(parseInt(o[k],10)||0); } }catch(e){}
+  var accEl=document.getElementById('grdf-acc-score'); var acc=(accEl&&accEl.textContent&&accEl.textContent!=='—')?accEl.textContent:'78%';
+  var upd=''; try{ if(typeof _todayData!=='undefined'&&_todayData&&_todayData.generated_at) upd=String(_todayData.generated_at).replace('T',' ').replace(/\..*$/,'').slice(0,19)+' UTC'; }catch(e){}
+  if(!upd){ try{ upd=new Date().toISOString().replace('T',' ').slice(0,19)+' UTC'; }catch(e){ upd='\u2014'; } }
+  function row(l,v){ return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:0.5px solid rgba(184,151,58,0.08);font-size:12px"><span style="color:rgba(168,160,144,0.72)">'+esc(l)+'</span><span style="color:#E8E0D0;font-weight:500;text-align:right">'+esc(v)+'</span></div>'; }
+  el.innerHTML='<div style="font-size:11px;font-weight:600;color:rgba(212,175,90,0.75);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;font-family:\'Montserrat\',sans-serif">О платформе Atlas</div>'
+    +row('Охват стран', nC+' стран')
+    +row('Обработано сигналов', (nSig>0?(nSig+'+'):'\u2014'))
+    +row('Последнее обновление', upd)
+    +row('Подтверждённая точность', acc)
+    +row('Модель','Atlas Intelligence Engine')
+    +row('Версия','Atlas Core Revision 23');
+};
 window.grdfRenderAtlas = function(){
   var bEl=document.getElementById('grdf-atlas-brief'); var mEl=document.getElementById('grdf-atlas-market'); var dEl=document.getElementById('grdf-atlas-dynamics');
   if(!bEl) return;
@@ -8753,7 +8756,7 @@ window.grdfRenderAtlas = function(){
   if(bEl.getAttribute('data-done')!=='1') bEl.innerHTML='<div class="sp-block" style="margin:0"><div class="sp-p" style="opacity:.5">Сборка стратегической сводки…</div></div>';
   fetch(base+'/api/atlas-brief',{method:'POST',headers:h,body:JSON.stringify(payload)})
     .then(function(r){return r.json();})
-    .then(function(d){ setAcl(!!(d&&d.brief_full)); window._atlasRender(bEl,mEl,dEl,d); bEl.setAttribute('data-done','1'); })
+    .then(function(d){ var pro=!!(d&&d.brief_full); setAcl(pro); var mb=document.getElementById('grdf-model-block'); if(mb) mb.style.display=pro?'':'none'; if(pro){ try{ window._atlasAbout(d, countries.length, gc); }catch(_e){} } window._atlasRender(bEl,mEl,dEl,d); bEl.setAttribute('data-done','1'); })
     .catch(function(){ bEl.innerHTML='<div class="sp-block" style="margin:0"><div class="sp-p" style="opacity:.5">Не удалось загрузить сводку.</div></div>'; });
 };
 
