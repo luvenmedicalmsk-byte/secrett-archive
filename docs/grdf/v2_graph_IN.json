@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-06-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-17T03:41:12.197404+00:00",
+  "generated_at": "2026-06-17T06:02:30.599256+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 58,
+      "score": 64,
       "props": {
-        "risk_score": 58
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 58,
-      "trend": "down"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 35,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 33,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Наводнение",
+      "id": "SIGNAL-IN-Россия_нар",
       "type": "Signal",
-      "label": "Наводнение в регионах Абруццо, Молизе и ",
-      "severity": 60,
-      "domain": "climate"
+      "label": "Россия нарастила морской экспорт нефти д",
+      "severity": 67,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-IN-Лесной_пож",
+      "id": "SIGNAL-IN-VPN_в_Росс",
       "type": "Signal",
-      "label": "Лесной пожар в Гренландии",
-      "severity": 60,
-      "domain": "climate"
+      "label": "VPN в России начал ломаться по-новому\n\nV",
+      "severity": 65,
+      "domain": "technology"
     },
     {
-      "id": "SIGNAL-IN-Лесной_пож",
+      "id": "SIGNAL-IN-Лидеры_стр",
       "type": "Signal",
-      "label": "Лесной пожар в Уэльве, Испания",
-      "severity": 60,
-      "domain": "climate"
+      "label": "Лидеры стран «Группы семи» на саммите во",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-IN",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-IN",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IN",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-IN-geopolitical",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IN-Наводнение",
-      "to": "DOMAIN-IN-climate",
+      "from": "SIGNAL-IN-Россия_нар",
+      "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.67
     },
     {
-      "from": "SIGNAL-IN-Лесной_пож",
-      "to": "DOMAIN-IN-climate",
+      "from": "SIGNAL-IN-VPN_в_Росс",
+      "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.65
     },
     {
-      "from": "SIGNAL-IN-Лесной_пож",
-      "to": "DOMAIN-IN-climate",
+      "from": "SIGNAL-IN-Лидеры_стр",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.62
     }
   ]
 }
