@@ -2,39 +2,39 @@
   "country": "JP",
   "date": "2026-06-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-17T21:56:08.151185+00:00",
-  "node_count": 12,
-  "edge_count": 14,
+  "generated_at": "2026-06-17T23:25:52.581627+00:00",
+  "node_count": 13,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
-      "trend": "stable"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 37,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 21,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
@@ -85,6 +85,13 @@
       "label": "Зеленое землетрясение (магнитуда 5.5, гл",
       "severity": 53,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-JP-Япония_реи",
+      "type": "Signal",
+      "label": "Япония реинженерит свои разведывательные",
+      "severity": 53,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -92,19 +99,19 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-JP",
@@ -170,8 +177,56 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-JP-social",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-JP-Зеленое_зе",
       "to": "DOMAIN-JP-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-JP-Япония_реи",
+      "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
     }
