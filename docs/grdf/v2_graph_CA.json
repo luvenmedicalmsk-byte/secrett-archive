@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-06-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-17T10:28:08.867637+00:00",
+  "generated_at": "2026-06-17T14:11:30.268895+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 49,
+      "score": 54,
       "props": {
-        "risk_score": 49
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 17,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 23,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 13,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,10 +80,17 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Инструмент",
+      "id": "SIGNAL-CA-‘Никогда_н",
       "type": "Signal",
-      "label": "Инструмент Grok AI Маска помог направить",
-      "severity": 50,
+      "label": "‘Никогда не будем производить ядерное ор",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CA-Рекорд_вым",
+      "type": "Signal",
+      "label": "Рекорд вымогателей Максимальная сумма пе",
+      "severity": 52,
       "domain": "geopolitical"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Гондурас: Седеньо не исчезнет, он переме",
       "severity": 48,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Сделка_США",
-      "type": "Signal",
-      "label": "Сделка США и Ирана может стать 'игровым ",
-      "severity": 47,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Инструмент",
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-‘Никогда_н",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-CA-Рекорд_вым",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.52
     },
     {
       "from": "SIGNAL-CA-Гондурас:_",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-CA-Сделка_США",
-      "to": "DOMAIN-CA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
