@@ -3355,13 +3355,14 @@ def fetch_telegram():
                 'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist',
                 'ecotopor',
                 'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
-                'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru']
+                'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
+                'sterngang', 'Ateobreaking']
     TG_DISPLAY = {'ecotopor':'T Live','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
-                  'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT'}
+                  'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking'}
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
-                  'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography'}
+                  'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography', 'sterngang'}
     # одиночные стемы (специфичные) + пары стемов (оба слова где угодно — устойчиво к склонениям)
     SOCIAL_RISK_KW = ['вспышк','эпидеми','очаг заражен','забастовк','протест','митинг','убыль населен','демографическ кризис','голодовк','депопуляц','беспорядк']
     SOCIAL_RISK_PAIRS = [('сокращен','зарплат'),('задержк','зарплат'),('невыплат','зарплат'),('задолжен','зарплат'),
