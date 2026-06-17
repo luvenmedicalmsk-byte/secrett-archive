@@ -8161,7 +8161,7 @@ function _grdfContextHtml(c){
   function _cband(v){ if(v==null)return ''; if(v>=75)return 'системный'; if(v>=60)return 'междоменный'; if(v>=40)return 'ограниченный'; return 'локальный'; }
   function _next(g){ var ts=[40,60,75]; for(var i=0;i<ts.length;i++){ if(g<ts[i])return ts[i]; } return null; }
   var dc={}; evs.forEach(function(e){ var d=e.domain||'other'; dc[d]=(dc[d]||0)+1; });
-  function cardS(label, inner){ return '<div style="margin:0 14px 8px;padding:9px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px"><div style="font-size:9px;font-weight:600;color:#f1f5f9;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">'+label+'</div>'+inner+'</div>'; }
+  function cardS(label, inner){ if(label==='Обновлено'){ return '<div style="margin:0 14px 8px;padding:9px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px"><div style="font-size:9px;font-weight:600;color:#f1f5f9;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">'+label+'</div>'+inner+'</div>'; } return '<details class="grdf-acc" style="margin:0 14px 8px;padding:9px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px"><summary class="grdf-acc-h" style="font-size:9px;font-weight:600;color:#f1f5f9;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;cursor:pointer">'+label+'<span class="grdf-acc-cv">›</span></summary>'+inner+'</details>'; }
   var H='';
 
   // ── 1. Risk Momentum ──
