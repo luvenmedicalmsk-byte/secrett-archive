@@ -8264,7 +8264,7 @@ function _grdfContextHtml(c){
 
   // ── 7. Горячие регионы ──
   var rc={};
-  evs.forEach(function(e){ var r=String(e.region||'').replace(/,?\s*(Россия|Russia|Турция|Turkey)\s*$/i,'').trim(); if(r && r.toLowerCase()!==cnLc) rc[r]=(rc[r]||0)+1; });
+  evs.forEach(function(e){ var _raw=String(e.region||''); if(cnLc && _raw.toLowerCase().indexOf(cnLc)<0) return; var r=_raw.replace(/,?\s*(Россия|Russia|Турция|Turkey)\s*$/i,'').trim(); if(r && r.toLowerCase()!==cnLc) rc[r]=(rc[r]||0)+1; });
   var regs=Object.keys(rc).sort(function(a,b){ return rc[b]-rc[a]; }).slice(0,8);
   if(regs.length){
     var _mx=rc[regs[0]]||1;
