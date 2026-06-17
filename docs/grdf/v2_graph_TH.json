@@ -2,67 +2,67 @@
   "country": "TH",
   "date": "2026-06-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-17T17:33:16.308533+00:00",
+  "generated_at": "2026-06-17T19:46:02.154741+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 51,
+      "score": 52,
       "props": {
-        "risk_score": 51
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
-      "trend": "down"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
       "score": 36,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 33,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
-      "score": 38,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 36,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 31,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-TH-economic",
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-TH-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-TH-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-TH-climate",
-      "type": "Driver",
-      "label": "climate"
     },
     {
       "id": "SIGNAL-TH-Более_60_ч",
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-TH-Китайские_",
+      "type": "Signal",
+      "label": "Китайские камеры наблюдения стали огромн",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-TH-Когда_войн",
       "type": "Signal",
       "label": "Когда война с Ираном подходит к концу, С",
       "severity": 50,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TH-Может_ли_д",
-      "type": "Signal",
-      "label": "Может ли дипломатия хлебной корзины Кита",
-      "severity": 48,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-TH",
@@ -124,13 +124,13 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-technology",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-social",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-TH",
@@ -151,16 +151,37 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-TH-geopolitical",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-TH-social",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-climate",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-TH-geopolitical",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-TH-Более_60_ч",
@@ -169,16 +190,16 @@
       "weight": 0.56
     },
     {
+      "from": "SIGNAL-TH-Китайские_",
+      "to": "DOMAIN-TH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-TH-Когда_войн",
       "to": "DOMAIN-TH-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-TH-Может_ли_д",
-      "to": "DOMAIN-TH-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }

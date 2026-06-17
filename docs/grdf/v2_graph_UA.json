@@ -2,67 +2,67 @@
   "country": "UA",
   "date": "2026-06-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-17T17:33:16.298658+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-17T19:46:02.145159+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 47,
+      "score": 49,
       "props": {
-        "risk_score": 47
+        "risk_score": 49
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 18,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-UA-Geopolitical",
@@ -92,13 +92,6 @@
       "label": "Россия начнет импортировать топливо море",
       "severity": 44,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-UA-Уровень_бе",
-      "type": "Signal",
-      "label": "Уровень безработицы и его изменение в ст",
-      "severity": 42,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +99,43 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-UA-Geopolitical",
@@ -163,6 +156,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-Россия_эск",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +187,6 @@
       "to": "DOMAIN-UA-economic",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-UA-Уровень_бе",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.42
     }
   ]
 }
