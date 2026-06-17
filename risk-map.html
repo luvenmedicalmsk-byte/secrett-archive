@@ -8493,11 +8493,8 @@ window._renderCountryArchive = function(el, cc, cname, ds){
         +'<div class="sp-body">'+fundCard
           +'<div class="sp-blocks" style="margin-top:14px">'
           +subL('Ключевые исследования', keyDesc+krStyle+krGroups())
-          +(hist.length?subL('Исторические параллели', mats(hist)):'')
-          +'</div></div>'
-        +'<div class="sp-head" style="margin-top:20px"><span class="sp-badge">СТРАТЕГИЧЕСКИЙ ВЫВОД</span></div>'
-        +'<div class="sp-body"><div style="border-left:2px solid rgba(255,255,255,.18);padding:7px 0 7px 13px;font-size:13px;line-height:1.55;color:#cbd5e1">'+esc(conclusion)+'</div></div>'
-        +'<div class="sp-head" style="margin-top:20px"><span class="sp-badge">СТРАТЕГИЧЕСКИЕ АКТИВЫ</span></div>'
+          +((hist.length||conclusion)?subL('Исторические параллели', mats(hist)+(conclusion?'<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#f1f5f9;margin:12px 0 4px">Стратегический вывод</div><div style="border-left:2px solid rgba(255,255,255,.18);padding:7px 0 7px 13px;font-size:13px;line-height:1.55;color:#cbd5e1">'+esc(conclusion)+'</div>':'')):'')
+        +'<details class="grdf-acc" style="margin-top:20px"><summary class="grdf-acc-h" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer"><span class="sp-badge">СТРАТЕГИЧЕСКИЕ АКТИВЫ</span><span class="grdf-acc-cv">›</span></summary>'
         +'<div class="sp-sub" style="margin-bottom:10px">Активы, сохраняющие стратегическую ценность при различных сценариях.</div>'
         +(function(){
   function e(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -8579,7 +8576,7 @@ window._renderCountryArchive = function(el, cc, cname, ds){
   var pl={high:'Высокий',mid:'Средний',low:'Низкий'},pc={high:'#34d399',mid:'#eab308',low:'#64748b'};
   function bdg(y,p){return '<div style="flex:1;text-align:center;padding:5px 4px;border-radius:6px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.07)"><div style="font-size:7px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">'+y+'</div><div style="font-size:9px;font-weight:600;color:'+pc[p]+'">'+pl[p]+'</div></div>';}
   return A.map(function(a){var c=(cat[a.group[0]]||'Актив').toUpperCase();return '<div style="border:0.5px solid rgba(255,255,255,.07);border-radius:10px;padding:13px;margin-bottom:8px;background:rgba(255,255,255,.02)"><div style="font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:6px">'+e(c)+'</div><div style="font-family:\'Cormorant Garamond\',serif;font-size:19px;color:#e2e8f0;line-height:1.15">'+e(a.name)+'</div><div style="font-size:10px;color:#94a3b8;margin:2px 0 4px">'+e(a.sub)+'</div><div style="display:flex;gap:6px;margin:9px 0">'+bdg('2 года',a.p2)+bdg('5 лет',a.p5)+bdg('10 лет',a.p10)+'</div><div style="font-size:11.5px;line-height:1.5;color:#cbd5e1">'+e(a.logic)+'</div></div>';}).join('');
-})()
+})()+'</details>'
         
         +'</div>';
       box.innerHTML=html;
