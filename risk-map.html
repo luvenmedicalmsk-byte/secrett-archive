@@ -1607,7 +1607,6 @@ html,body{overscroll-behavior-y:contain}
   </div>
   <a id="risks-btn" href="risk-matrix.html">◆ Риски</a>
 
-<button id="ai-score-btn">◆ Анализ доменов</button>
 </div>
 
 <div id="sidebar"><button id="sb-x">✕</button><div id="ev-list"></div></div>
@@ -2254,8 +2253,7 @@ async function runAIScore() {
     const r = await fetch(API_BASE + '/api/score', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': 'archive2026'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ top: 5 }),
       signal: AbortSignal.timeout(30000)
@@ -2337,7 +2335,6 @@ function showAIPanel(data) {
   document.getElementById('ai-panel').classList.add('visible');
 }
 
-document.getElementById('ai-score-btn').onclick = runAIScore;
 document.getElementById('ai-panel-close').onclick = () => {
   document.getElementById('ai-panel').classList.remove('visible');
 };
