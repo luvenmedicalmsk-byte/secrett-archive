@@ -8473,12 +8473,13 @@ window._renderCountryArchive = function(el, cc, cname, ds){
       var gname=GEN[cc]||(cname||cc);
       function plr(n,f){ n=Math.abs(n)%100; var n1=n%10; if(n>10&&n<20)return f[2]; if(n1>1&&n1<5)return f[1]; if(n1===1)return f[0]; return f[2]; }
       var total=a.archive_total||0;
+      var ct=a.country_total||0;
       var MO=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
       function ruDate(d){ if(!d)return ''; var p=String(d).split('-'); return p.length===3?(parseInt(p[2],10)+' '+MO[parseInt(p[1],10)-1]+' '+p[0]):d; }
       var dts=research.map(function(m){return m.date;}).filter(Boolean).sort();
       var lastUpd=dts.length?ruDate(dts[dts.length-1]):'';
       var fundCard='<div style="border:0.5px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;margin-top:8px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.012))">'
-        +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:600;color:#e2e8f0;line-height:1">'+total+' <span style="font-size:13px;font-family:inherit;color:rgba(148,163,184,.8);font-weight:400">'+plr(total,['материал','материала','материалов'])+'</span></div>'
+        +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:30px;font-weight:600;color:#e2e8f0;line-height:1">'+total+' <span style="font-size:13px;font-family:inherit;color:rgba(148,163,184,.8);font-weight:400">'+plr(total,['материал','материала','материалов'])+'</span></div>'+((ct&&ct!==total)?('<div style="font-size:11px;color:rgba(184,151,58,.9);margin-top:3px;font-weight:500">из них '+plr(ct,['материал','материала','материалов'])+' по стране</div>'):'')
         +(lastUpd?('<div style="font-size:10px;color:rgba(148,163,184,.6);margin-top:4px">Последнее обновление: '+lastUpd+'</div>'):'')
         +'<div style="height:0.5px;background:rgba(255,255,255,.08);margin:12px 0"></div><div style="font-size:11px;line-height:1.5;color:rgba(148,163,184,.82)">Собрание исследований, сценариев, исторических параллелей и аналитических материалов по '+esc(gname)+'.</div><div style="font-size:10px;line-height:1.5;color:rgba(148,163,184,.6);margin-top:7px">Исследования Архива учитываются в сценариях и прогнозах для данной страны.</div></div>';
       var DADJ={geopolitics:'геополитического',economy:'финансового',climate:'ресурсного',technology:'технологического',social:'социального'};
