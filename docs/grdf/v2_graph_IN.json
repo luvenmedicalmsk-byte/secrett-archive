@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-06-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-17T06:26:55.686852+00:00",
+  "generated_at": "2026-06-17T10:28:08.869303+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -20,21 +20,21 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 63,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 34,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "down"
+      "score": 42,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-technology",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-IN-Лидеры_стр",
+      "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
-      "label": "Лидеры стран «Группы семи» на саммите во",
-      "severity": 62,
-      "domain": "geopolitical"
+      "label": "Наводнение в регионах Абруццо, Молизе и ",
+      "severity": 60,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-IN",
@@ -184,6 +184,48 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-IN-Россия_нар",
       "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-IN-Лидеры_стр",
-      "to": "DOMAIN-IN-geopolitical",
+      "from": "SIGNAL-IN-Наводнение",
+      "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.6
     }
   ]
 }
