@@ -7952,20 +7952,28 @@ function _grdfIntelHtml(c, gri, ews, delta, dom, top3, isSig, part) {
 
   // ── Section: Что отслеживает система (from active domains) ──────
   var DOMAIN_TRACKS = {
-    climate:    ['Экстремальные осадки','Температурные аномалии','Лесные пожары','Вулканическую активность','Наводнения и засухи'],
-    geopolitics:['Геополитические события','Дипломатические сигналы','Санкционные риски','Военные передвижения','Кризисы в пограничных зонах'],
+    climate:    ['Экстремальные осадки','Температурные аномалии','Лесные пожары','Сейсмическую активность','Наводнения и засухи','Вулканическую активность'],
+    geopolitics:['Геополитические события','Дипломатические сигналы','Санкционные риски'],
     economy:    ['Финансовую нестабильность','Валютные риски','Торговые ограничения','Долговую нагрузку','Инфляционные сигналы'],
-    technology: ['Кибератаки и уязвимости','Сбои инфраструктуры','Технологические эмбарго','Атаки на критические системы'],
-    social:     ['Социальные протесты','Демографическую напряжённость','Миграционные потоки','Политическую нестабильность'],
+    technology: ['Кибератаки и уязвимости','Утечки данных','Сбои инфраструктуры','Технологические эмбарго','Атаки на критические системы'],
+    social:     ['Социальные протесты','Демографическую напряжённость','Эпидемические вспышки','Кадровый дефицит в медицине','Миграционные потоки','Политическую нестабильность'],
   };
   var trackItems = [];
+  var _shownD = {};
   top3.forEach(function(r){
+    _shownD[r.d] = 1;
     var items = DOMAIN_TRACKS[r.d] || [];
     items.slice(0,3).forEach(function(item){
       if(trackItems.indexOf(item)===-1) trackItems.push(item);
     });
   });
-  trackItems = trackItems.slice(0,6);
+  ['climate','geopolitics','economy','technology','social'].forEach(function(d){
+    if(_shownD[d]) return;
+    (DOMAIN_TRACKS[d] || []).slice(0,2).forEach(function(item){
+      if(trackItems.indexOf(item)===-1) trackItems.push(item);
+    });
+  });
+  trackItems = trackItems.slice(0,12);
 
   if(trackItems.length > 0) {
     out += '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">';
