@@ -6205,6 +6205,12 @@ if __name__ == '__main__':
     # exit(1) causes continue-on-error:true in Actions to skip commit but not fail workflow.
     try:
         NEWS_API_KEY = get_env('NEWS_API_KEY')
+        # NewsAPI free = 100 req/сутки. Cron теперь каждые 30 мин, поэтому NewsAPI
+        # стреляет только в 4-часовом окне (~6 прогонов/сутки x6 запросов = 36/сутки).
+        _na_now = datetime.now(timezone.utc)
+        if NEWS_API_KEY and not (_na_now.hour % 4 == 0 and _na_now.minute < 30):
+            print('  NewsAPI: пропуск (throttle, вне 4ч-окна)', file=sys.stderr)
+            NEWS_API_KEY = ''
 
         print("Загружаю источники (параллельно, S36.4):", file=sys.stderr)
         # ВАЖНО: межфетчерных зависимостей нет — каждый просто аппендит в raw.
