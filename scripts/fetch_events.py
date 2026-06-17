@@ -837,20 +837,18 @@ def fetch_gdelt():
          'protest OR riot OR coup OR unrest OR '
          'recession OR inflation OR sanctions OR crisis OR '
          'cyberattack OR ransomware OR hack OR breach OR '
-         'migration OR refugee OR displacement'),
-        ('"power grid" OR blackout OR "power outage" OR substation OR '
-         '"data center outage" OR "cloud outage" OR "internet outage" OR '
-         '"fiber cut" OR "submarine cable" OR "telecom outage" OR '
-         '"payment system" OR "banking outage" OR "card network" OR '
-         'semiconductor OR "chip shortage" OR "export controls" OR '
-         '"AI model" OR "critical infrastructure" OR "data breach"'),
+         'migration OR refugee OR displacement', '2h', 25),
+        # Технологии: системные tech-события редки -> шире окно (3 дня) и больше записей
+        ('"power grid" OR blackout OR "data center" OR "cloud outage" OR '
+         '"submarine cable" OR "fiber cut" OR semiconductor OR "chip shortage" OR '
+         '"critical infrastructure" OR "data breach" OR ransomware OR "internet outage"', '3d', 50),
     ]
-    for _qi, query in enumerate(queries):
+    for _qi, (query, _ts, _mr) in enumerate(queries):
         if _qi:
             time.sleep(5)
         url = (f"https://api.gdeltproject.org/api/v2/doc/doc"
                f"?query={urllib.parse.quote(query)}"
-               f"&mode=artlist&format=json&maxrecords=25&timespan=2h&sort=DateDesc")
+               f"&mode=artlist&format=json&maxrecords={_mr}&timespan={_ts}&sort=DateDesc")
         data = fetch_url(url)
         if not data: continue
         try:
@@ -1829,7 +1827,7 @@ def process_events(raw_items):
     def _is_kev(e):
         return e.get('source') == 'CISA KEV' or str(e.get('title','')).startswith('Активно эксплуатируемая уязвимость')
     _kev = [e for e in top_events if _is_kev(e)]
-    _KEV_CAP = 2
+    _KEV_CAP = 3
     if len(_kev) > _KEV_CAP:
         _keep = set(id(e) for e in sorted(_kev, key=lambda e: ((e.get('severity',0) or 0), e.get('date','')), reverse=True)[:_KEV_CAP])
         top_events = [e for e in top_events if (not _is_kev(e)) or id(e) in _keep]
