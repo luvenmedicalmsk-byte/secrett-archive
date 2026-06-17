@@ -5843,9 +5843,12 @@ def _llm_extract_countries(events):
             e['country_code'] = ''; e['country_codes'] = []; e['region'] = '\u0413\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e'; glob += 1
         elif cc in CC:
             lat, lng, name = CC[cc]
-            e['country_code'] = cc; e['country_codes'] = [cc]; e['region'] = name
-            e['lat'] = round(lat + _rnd.uniform(-1.2, 1.2), 2)
-            e['lng'] = round(lng + _rnd.uniform(-1.2, 1.2), 2)
+            e['country_code'] = cc; e['country_codes'] = [cc]
+            _cur = str(e.get('region','') or '')
+            if name.lower() not in _cur.lower():   # регион не указывает на страну -> исправляем; иначе храним суб-регион
+                e['region'] = name
+                e['lat'] = round(lat + _rnd.uniform(-1.2, 1.2), 2)
+                e['lng'] = round(lng + _rnd.uniform(-1.2, 1.2), 2)
             fixed += 1
     print('  LLM-\u0441\u0442\u0440\u0430\u043d\u0430: \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u043e %d, \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 %d (\u0438\u0437 %d)' % (fixed, glob, len(events)), file=_sys.stderr)
     return events
