@@ -1903,6 +1903,7 @@ def save(events):
                 if _tt.startswith(_act): _e['region'] = _reg; break
         except Exception: pass
     _save_tr_disk()
+    events = _llm_extract_countries(events)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -5795,6 +5796,58 @@ def _normalize_caps(title):
         else: res.append(ch)
         if ch in '.!?:\n': cap=True
     return ''.join(res)
+
+
+def _llm_extract_countries(events):
+    """LLM-\u0430\u0442\u0440\u0438\u0431\u0443\u0446\u0438\u044f \u0441\u0442\u0440\u0430\u043d\u044b (ISO-3166 alpha-2) \u043f\u043e \u0441\u043c\u044b\u0441\u043b\u0443 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430.
+    \u0427\u0438\u043d\u0438\u0442 \u0441\u043b\u043e\u0432\u0430\u0440\u044c-\u043c\u0430\u0442\u0447\u0435\u0440 (\u043f\u0443\u0442\u0430\u0435\u0442 \u0432\u0435\u043d\u0434\u043e\u0440\u043e\u0432/\u0433\u043e\u0440\u043e\u0434\u0430). country_code/region/coords \u0438\u0437 CC; CISA KEV -> GLOBAL."""
+    import os as _os, sys as _sys, json as _json, urllib.request as _u, random as _rnd
+    key = _os.environ.get('OPENAI_API_KEY', '')
+    if not key or not events:
+        return events
+    def _is_kev(e):
+        return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('\u0410\u043a\u0442\u0438\u0432\u043d\u043e \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0438\u0440\u0443\u0435\u043c\u0430\u044f')
+    sys_p = ('\u0422\u044b \u0433\u0435\u043e-\u0430\u043d\u0430\u043b\u0438\u0442\u0438\u043a. \u0414\u043b\u044f \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430 \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0438 \u041e\u0414\u041d\u0423 \u0441\u0442\u0440\u0430\u043d\u0443, \u043a\u043e\u0442\u043e\u0440\u043e\u0439 \u043e\u043d '
+             '\u0421\u041e\u0414\u0415\u0420\u0416\u0410\u0422\u0415\u041b\u042c\u041d\u041e \u043a\u0430\u0441\u0430\u0435\u0442\u0441\u044f, \u0438 \u0432\u0435\u0440\u043d\u0438 \u0435\u0451 ISO-3166 alpha-2 \u043a\u043e\u0434 \u0437\u0430\u0433\u043b\u0430\u0432\u043d\u044b\u043c\u0438 (RU, US, CN, IR...). '
+             '\u0415\u0441\u043b\u0438 \u0441\u043e\u0431\u044b\u0442\u0438\u0435 \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e\u0435/\u043d\u0430\u0434\u043d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u0435 (\u0446\u0435\u043f\u043e\u0447\u043a\u0438 \u043f\u043e\u0441\u0442\u0430\u0432\u043e\u043a, \u0443\u044f\u0437\u0432\u0438\u043c\u043e\u0441\u0442\u044c \u0441\u043e\u0444\u0442\u0430/\u0432\u0435\u043d\u0434\u043e\u0440\u0430, '
+             '\u043c\u0438\u0440\u043e\u0432\u044b\u0435 \u0418\u0418-\u0440\u0438\u0441\u043a\u0438) \u043b\u0438\u0431\u043e \u0441\u0442\u0440\u0430\u043d\u0430 \u043d\u0435 \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u044f\u0435\u0442\u0441\u044f -- \u0432\u0435\u0440\u043d\u0438 "GLOBAL". '
+             '\u041d\u0415 \u043f\u0443\u0442\u0430\u0439 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0439 (Cisco, Microsoft, Oracle, Google) \u0441 \u0433\u0435\u043e\u0433\u0440\u0430\u0444\u0438\u0435\u0439. '
+             '\u041e\u0442\u0432\u0435\u0442 -- \u0421\u0422\u0420\u041e\u0413\u041e JSON-\u043e\u0431\u044a\u0435\u043a\u0442: \u043a\u043b\u044e\u0447 = i \u043a\u0430\u043a \u0441\u0442\u0440\u043e\u043a\u0430, \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 = ISO-\u043a\u043e\u0434 \u0438\u043b\u0438 "GLOBAL".')
+    todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
+    res = {}
+    B = 40
+    for s in range(0, len(todo), B):
+        chunk = todo[s:s + B]
+        payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
+        try:
+            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 1000, 'temperature': 0,
+                                'response_format': {'type': 'json_object'},
+                                'messages': [{'role': 'system', 'content': sys_p},
+                                             {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
+            r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
+                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
+            with _u.urlopen(r, timeout=45) as resp:
+                content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
+            for k, v in _json.loads(content).items():
+                try: res[int(k)] = str(v).upper().strip()
+                except Exception: pass
+        except Exception as _e:
+            print('  country-LLM batch fail: %s' % _e, file=_sys.stderr)
+    fixed = glob = 0
+    for i, e in enumerate(events):
+        cc = 'GLOBAL' if _is_kev(e) else res.get(i)
+        if not cc:
+            continue
+        if cc == 'GLOBAL':
+            e['country_code'] = ''; e['country_codes'] = []; e['region'] = '\u0413\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e'; glob += 1
+        elif cc in CC:
+            lat, lng, name = CC[cc]
+            e['country_code'] = cc; e['country_codes'] = [cc]; e['region'] = name
+            e['lat'] = round(lat + _rnd.uniform(-1.2, 1.2), 2)
+            e['lng'] = round(lng + _rnd.uniform(-1.2, 1.2), 2)
+            fixed += 1
+    print('  LLM-\u0441\u0442\u0440\u0430\u043d\u0430: \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u043e %d, \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 %d (\u0438\u0437 %d)' % (fixed, glob, len(events)), file=_sys.stderr)
+    return events
 
 
 def _risk_gate(events):
