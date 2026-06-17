@@ -8151,8 +8151,8 @@ function _grdfContextHtml(c){
   });
   if(!evs.length) return '';
   function card(label, inner){
-    return '<div style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">'
-      + '<div style="font-size:10px;color:#f1f5f9;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px">'+label+'</div>'+inner+'</div>';
+    return '<details class="grdf-acc" style="margin:0 14px 10px;padding:11px 12px;background:rgba(255,255,255,.03);border:0.5px solid rgba(255,255,255,.08);border-radius:9px">'
+      + '<summary class="grdf-acc-h" style="font-size:10px;color:#f1f5f9;font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;cursor:pointer">'+label+'<span class="grdf-acc-cv">›</span></summary>'+inner+'</details>';
   }
   var _AD=['climate','geopolitics','economy','technology','social'];
   var _ds=c.domain_scores||{};
@@ -8215,7 +8215,7 @@ function _grdfContextHtml(c){
     var proj = rows.length ? '<div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:#94a3b8;line-height:1.5">'+rows.map(function(x){return '<div>'+x+'</div>';}).join('')+'<div style="font-size:10px;color:#6f88ab;margin-top:3px">Линейная проекция по текущему темпу — не прогноз вероятности.</div></div>' : '';
     var g0=Math.round(parseFloat(c.risk_score)||0), dl0=c.gri_delta_7d||0;
     var _ph='<div style="margin-bottom:9px;padding-bottom:9px;border-bottom:0.5px solid rgba(255,255,255,.06)">'
-      +'<div style="font-size:10px;color:#6f88ab;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">Горизонт прогноза</div>'
+      
       +'<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#cbd5e1">'
       +'<span>24ч — GRI <b>'+Math.round(g0+dl0*0.15)+'</b></span>'
       +'<span>7д — GRI <b>'+Math.round(g0+dl0*1.0)+'</b></span>'
@@ -8223,7 +8223,7 @@ function _grdfContextHtml(c){
     var inner = _ph + proj
       + '<div style="font-size:10px;color:#6f88ab;letter-spacing:.06em;text-transform:uppercase;margin:13px 0 6px">Сценарии модели · 30 дней</div>'
       + '<div id="grdf-scen"><div style="color:#6f88ab;font-size:11px">загрузка…</div></div>';
-    H+=card('Траектория развития', inner);
+    H+=card('Горизонт прогноза', inner);
   })();
   // ── 4. Главные драйверы риска ──
   var byDom={}; evs.forEach(function(e){ var dd=e.domain||'other'; (byDom[dd]=byDom[dd]||[]).push(e); });
