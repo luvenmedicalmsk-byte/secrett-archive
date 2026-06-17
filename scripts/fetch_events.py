@@ -3351,7 +3351,13 @@ def fetch_telegram():
     import os, sys, time as _time
     channels = ['bbbreaking', 'novosti_efir', 'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                 'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography',
-                'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist']
+                'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist',
+                'ecotopor',
+                'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
+                'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru']
+    TG_DISPLAY = {'ecotopor':'T Live','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
+                  'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
+                  'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT'}
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                   'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography'}
@@ -3366,15 +3372,18 @@ def fetch_telegram():
                          ('долг','зарплат'),('рождаемост','упал'),('рождаемост','сниз'),('смертност','рекорд'),
                          ('естественн','убыл'),('сокращен','населен'),('карантин','школ'),('карантин','класс'),('карантин','детск')]
     # тех-источник: только инциденты/риски (как соц-фильтр), не пиар продуктов
-    TECH_SRC = set()   # сюда добавить хендл профильного тех-инцидентного канала, когда найдётся
+    TECH_SRC = {'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews', 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru'}   # сюда добавить хендл профильного тех-инцидентного канала, когда найдётся
     TECH_RISK_KW = ['кибератак','кибербез','взлом','шифровальщик','вымогател','фишинг','ддос','блэкаут',
-                    'глонасс','эквайринг','импортозамещ','санкц','блокировк','уязвим','дипфейк']
+                    'глонасс','эквайринг','импортозамещ','санкц','блокировк','уязвим','дипфейк',
+                    'вредонос','троян','эксплойт','ботнет','бэкдор','майнер','хакер','деанон','осинт',
+                    'брешь','компромет','фрод','скам','инцидент','спуфинг','слежк','вирус','малвар',
+                    'ransomware','malware','breach','exploit','phishing']
     TECH_RISK_PAIRS = [('утечк','данн'),('сбой','связ'),('перебои','связ'),('сбой','операт'),('отключен','интернет'),
                        ('дефицит','чип'),('дефицит','электрон'),('дефицит','полупровод'),('нехватк','чип'),('дефицит','кадр'),
                        ('сбой','цод'),('отказ','цод'),('сбой','облак'),('авари','энерг'),('отключен','электр'),
                        ('сбой','плат'),('сбой','банк'),('атак','инфраструктур'),('риск','ии'),('риск','искусственн')]
     # эконом-источник: аналитические каналы — только сигналы стресса/риска (раннее предупреждение)
-    ECON_SRC = {'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist'}
+    ECON_SRC = {'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist', 'ecotopor'}
     ECON_RISK_KW = ['банкротств','дефолт','девальвац','рецесси','стагфляц','неплатёжеспособн','просрочк','кассовый разрыв','секвестр','обвал']
     ECON_RISK_PAIRS = [('рост','инфляц'),('ускорен','инфляц'),('разгон','цен'),('рост','безработиц'),('рост','увольн'),
                        ('массов','увольн'),('сокращен','штат'),('падени','доход'),('сниж','доход'),('рост','просрочк'),
@@ -3406,7 +3415,7 @@ def fetch_telegram():
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
         return {'title': text[:240], 'desc': text[:1200], 'date': today,
-                'source': f'Telegram/{ch}', 'source_bias': 5, '_domain': _d}
+                'source': TG_DISPLAY.get(ch, f'Telegram/{ch}'), 'source_bias': 5, '_domain': _d}
 
     # --- Транспорт 1: MTProto через Telethon (надёжно, без троттлинга) ---
     if os.environ.get('TG_API_ID') and os.environ.get('TG_API_HASH') and os.environ.get('TG_SESSION'):
