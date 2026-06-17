@@ -8319,8 +8319,8 @@ function _grdfContextHtml(c){
 window._spRenderCountryLocal = function(el, d, cname){
   function esc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function ul(arr){ return '<ul class="sp-ul">'+(arr||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'; }
-  function subL(t,arr){ return (arr&&arr.length)?('<div style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#f1f5f9;margin:8px 0 4px">'+esc(t)+'</div>'+ul(arr)):''; }
-  function blk(h,body){ return '<div class="sp-block"><div class="sp-block-h">'+esc(h)+'</div>'+body+'</div>'; }
+  function subL(t,arr){ return (arr&&arr.length)?('<details class="grdf-acc" style="margin:6px 0 0"><summary class="grdf-acc-h" style="font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#f1f5f9;display:flex;align-items:center;justify-content:space-between;cursor:pointer">'+esc(t)+'<span class="grdf-acc-cv">›</span></summary>'+ul(arr)+'</details>'):''; }
+  function blk(h,body){ return '<details class="sp-block grdf-acc"><summary class="sp-block-h grdf-acc-h" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">'+esc(h)+'<span class="grdf-acc-cv">›</span></summary>'+body+'</details>'; }
   if(!el) return;
   if(d && d.locked){
     el.innerHTML='<div style="margin:0 14px 8px"><div class="sp-section" style="margin-top:4px;border-top:0.5px solid rgba(184,151,58,.18);padding-top:14px">'
