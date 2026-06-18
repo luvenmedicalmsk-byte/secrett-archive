@@ -552,7 +552,7 @@ def _region_in(region, text):
     'ural' в 'natural'); кириллические -- по подстроке (склонения: 'Росси' в 'России')."""
     if re.search(r'[a-z]', region):
         return re.search(r'\b' + re.escape(region) + r'\b', text) is not None
-    return region in text
+    return re.search(r'\b' + re.escape(region), text) is not None
 
 def detect_coords(title, desc):
     """Определяет координаты -- заголовок имеет приоритет над описанием"""
@@ -1088,7 +1088,7 @@ def ru_geo(s):
 
 _FLAG_RE = re.compile('[\U0001F1E6-\U0001F1FF]{2}')
 _LONE_RI_RE = re.compile('[\U0001F1E6-\U0001F1FF]')
-_EMOJI_RE = re.compile('[\U0001F300-\U0001FAFF\U0001F000-\U0001F0FF\u2600-\u27BF\u2190-\u21FF\u2B00-\u2BFF\u2300-\u23FF\u2500-\u259F\u25A0-\u25FF\u2049\u203C\u2122\u2139\u20E3\u200D\uFE0E\uFE0F\uFFFC\uFFFD]')
+_EMOJI_RE = re.compile('[\U0001F300-\U0001FAFF\U0001F000-\U0001F0FF\U0001F100-\U0001F1E5\U0001F200-\U0001F2FF\u2600-\u27BF\u2190-\u21FF\u2B00-\u2BFF\u2300-\u23FF\u2500-\u259F\u25A0-\u25FF\u2049\u203C\u2122\u2139\u20E3\u200D\uFE0E\uFE0F\uFFFC\uFFFD]')
 def strip_non_flag_emoji(s):
     """Убирает эмодзи/символы/квадраты, СОХРАНЯЯ флаги стран (пары региональных индикаторов)."""
     if not s or not isinstance(s, str): return s
@@ -1706,8 +1706,8 @@ def process_events(raw_items):
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     DOMAIN_QUOTA = {
         'climate':     60,
-        'geopolitics': 90,
-        'economy':     45,
+        'geopolitics': 120,
+        'economy':     70,
         'technology':  40,
         'social':      45,
     }
