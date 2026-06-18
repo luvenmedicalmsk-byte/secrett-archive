@@ -1432,6 +1432,8 @@ def _recompute_severity(ev):
     b = ((ev.get('title') or '') + ' ' + (ev.get('summary') or '')).lower()
     dom = ev.get('domain') or ''
     sev = ev.get('severity', 45) or 45
+    if (ev.get('meta') or {}).get('verified'):
+        return max(12, min(100, int(round(sev))))
     _ROUTINE_WX = ('гроза','дожд','ливень','ветер','шквал','туман','гололёд','гололед','снегопад','метел','жара','высокая температура','пожарная опасность','прочие опасности','заморозк','сильный снег','осадк')
     _MAJOR_WX = ('наводнен','паводок','шторм','ураган','тайфун','циклон','цунами','землетряс','оползен','прорыв','эвакуир','погиб','жертв','разрушен','катастроф')
     # ПОНИЖЕНИЕ 1: рутинные погодные алерты -- локальные, не системные
@@ -1786,7 +1788,19 @@ def process_events(raw_items):
     # Пусть итог отражает реальную наполняемость доменов (цель brief'а: «меньше событий»).
     
     top_events = balanced[:MAX_EVENTS]
-    
+
+    try:
+        import collections as _c2
+        (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(json.dumps({
+            'ts': datetime.now(timezone.utc).isoformat(),
+            'loss': dict(_LOSS),
+            'raw_by_source': dict(_c2.Counter(i.get('source','') for i in raw_items)),
+            'built_by_source': dict(_c2.Counter(e.get('source','') for e in events)),
+            'exported_by_source': dict(_c2.Counter(e.get('source','') for e in top_events)),
+        }, ensure_ascii=False, indent=2), encoding='utf-8')
+    except Exception as _e:
+        print('  [WARN] loss debug:', _e, file=sys.stderr)
+
     # S36.4: статистика потерь по этапам
     try:
         import collections as _c
@@ -6102,7 +6116,8 @@ def _risk_gate(events):
         return events
     GATE_MAX = 62
     cand = [e for e in events
-            if isinstance(e.get('severity'), (int, float)) and e['severity'] < GATE_MAX][:120]
+            if isinstance(e.get('severity'), (int, float)) and e['severity'] < GATE_MAX
+            and not (e.get('meta') or {}).get('verified')][:120]
     if not cand:
         return events
     sys_p = ('Ты — фильтр платформы мониторинга СИСТЕМНЫХ РИСКОВ. Для каждого элемента входного '
