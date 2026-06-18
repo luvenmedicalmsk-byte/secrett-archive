@@ -4495,7 +4495,7 @@ def fetch_cloudflare_radar(token=None):
                 'source': 'Cloudflare Radar',
                 '_force_severity': sev, '_lat': lat, '_lng': lng,
                 '_region': cname,
-                '_domain': ('geopolitics' if (ot == 'NATIONWIDE' and cause in ('GOVERNMENT_DIRECTED', 'SHUTDOWN', 'MILITARY_ACTION', 'WAR')) else 'technology'),
+                '_domain': 'technology',
                 '_meta': {'kind': 'radar_outage', 'outage_type': ot, 'cause': cause, 'verified': True}
             })
             _n += 1
@@ -4728,11 +4728,11 @@ def fetch_netblocks_rss():
         if not geo: continue
         lat, lng, cname = geo
         if any(w in tl for w in ('social media', 'facebook', 'whatsapp', 'instagram', 'tiktok', 'twitter', ' x ', 'youtube', 'telegram', 'social network', 'social platform')):
-            kind = 'social_restriction'; sev = 60; dom = 'social'; head = '\u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435 \u0441\u043e\u0446\u0441\u0435\u0442\u0435\u0439'; ptype = '\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0441\u043e\u0446\u0441\u0435\u0442\u044f\u043c/\u043f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430\u043c'
+            kind = 'social_restriction'; sev = 60; dom = 'technology'; head = '\u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435 \u0441\u043e\u0446\u0441\u0435\u0442\u0435\u0439'; ptype = '\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0441\u043e\u0446\u0441\u0435\u0442\u044f\u043c/\u043f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430\u043c'
         elif any(w in tl for w in ('shut down', 'shutdown', 'blackout', 'nation-scale', 'nationwide', 'cut off', 'internet cut', 'total internet')):
-            kind = 'shutdown'; sev = 70; dom = 'geopolitics'; head = '\u041e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430'; ptype = '\u043e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430'
+            kind = 'shutdown'; sev = 70; dom = 'technology'; head = '\u041e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430'; ptype = '\u043e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430'
         else:
-            kind = 'disruption'; sev = 62; dom = 'geopolitics'; head = '\u0421\u0431\u043e\u0439 \u0441\u0432\u044f\u0437\u0438'; ptype = '\u043d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u0435 \u0441\u0432\u044f\u0437\u043d\u043e\u0441\u0442\u0438'
+            kind = 'disruption'; sev = 62; dom = 'technology'; head = '\u0421\u0431\u043e\u0439 \u0441\u0432\u044f\u0437\u0438'; ptype = '\u043d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u0435 \u0441\u0432\u044f\u0437\u043d\u043e\u0441\u0442\u0438'
         # лёгкий контекст-хинт (факт, не цитата)
         ctx = ''
         if any(w in tl for w in ('election', 'vote', 'poll')): ctx = ' \u043d\u0430 \u0444\u043e\u043d\u0435 \u0432\u044b\u0431\u043e\u0440\u043e\u0432'
