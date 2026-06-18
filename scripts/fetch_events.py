@@ -4494,7 +4494,8 @@ def fetch_cloudflare_radar(token=None):
                 'title': title, 'desc': desc, 'date': eff_date,
                 'source': 'Cloudflare Radar',
                 '_force_severity': sev, '_lat': lat, '_lng': lng,
-                '_region': cname, '_domain': 'technology',
+                '_region': cname,
+                '_domain': ('geopolitics' if (ot == 'NATIONWIDE' and cause in ('GOVERNMENT_DIRECTED', 'SHUTDOWN', 'MILITARY_ACTION', 'WAR')) else 'technology'),
                 '_meta': {'kind': 'radar_outage', 'outage_type': ot, 'cause': cause, 'verified': True}
             })
             _n += 1
