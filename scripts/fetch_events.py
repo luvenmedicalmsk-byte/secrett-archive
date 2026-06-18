@@ -135,7 +135,7 @@ def _clean_title(raw):
 
 
 OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
-MAX_EVENTS = 200
+MAX_EVENTS = 350
 SEVERITY_THRESHOLD = 45
 
 # ── S34B SOURCE GOVERNANCE ──────────────────────────────────────────────────
@@ -1705,16 +1705,12 @@ def process_events(raw_items):
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     DOMAIN_QUOTA = {
-        'climate':     int(MAX_EVENTS * 0.40),   # 80
-        'geopolitics': int(MAX_EVENTS * 0.25),   # 50
-        'economy':     int(MAX_EVENTS * 0.15),   # 30
-        'technology':  int(MAX_EVENTS * 0.125),  # 25
-        'social':      int(MAX_EVENTS * 0.10),   # 20
+        'climate':     60,
+        'geopolitics': 90,
+        'economy':     45,
+        'technology':  40,
+        'social':      45,
     }
-    # Корректируем если из-за округления сумма != MAX_EVENTS
-    _quota_sum = sum(DOMAIN_QUOTA.values())
-    if _quota_sum != MAX_EVENTS:
-        DOMAIN_QUOTA['climate'] += MAX_EVENTS - _quota_sum
     domain_counts = {d: 0 for d in DOMAIN_QUOTA}
     balanced = []
     overflow = []  # события сверх квоты -- добавим в конце если есть место
@@ -1860,7 +1856,7 @@ def process_events(raw_items):
         e['title'] = _soften_title(e.get('title','') or '')
         _cfm_n += 1
     print(f"  [S46/Этап8] подтверждённость скорректирована: {_cfm_n}", file=sys.stderr)
-    top_events = _topic_cap(top_events, 5)
+    top_events = _topic_cap(top_events, 10)
     print(f"  [Этап9] лимит на тему применён -> {len(top_events)}", file=sys.stderr)
     # Этап9b: кап на поток отдельных CISA KEV / CVE -- слишком гранулярно для систем-риск ленты
     def _is_kev(e):
