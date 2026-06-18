@@ -2,67 +2,67 @@
   "country": "UA",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T02:03:20.347970+00:00",
+  "generated_at": "2026-06-18T07:04:57.216188+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 47,
+      "score": 60,
       "props": {
-        "risk_score": 47
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-UA-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-UA-Россия_эск",
+      "id": "SIGNAL-UA-Одна_из_са",
       "type": "Signal",
-      "label": "Россия эскалирует войну против украинско",
-      "severity": 53,
+      "label": "Одна из самых массированных атак украинс",
+      "severity": 78,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-Россия_нач",
+      "id": "SIGNAL-UA-Москва_и_П",
       "type": "Signal",
-      "label": "Россия начнет импортировать топливо море",
-      "severity": 44,
-      "domain": "economic"
+      "label": "Москва и Подмосковье под обстрелом БПЛА.",
+      "severity": 78,
+      "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-Даже_после",
+      "id": "SIGNAL-UA-Дроны_атак",
       "type": "Signal",
-      "label": "Даже после получения кредита на 90 млрд ",
-      "severity": 42,
+      "label": "Дроны атакуют нефтеперерабатывающий заво",
+      "severity": 54,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "DRIVER-UA-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-UA-Россия_эск",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-UA-Россия_нач",
+      "from": "DOMAIN-UA-infrastructure",
       "to": "DOMAIN-UA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.72,
+      "lag_days": 14
     },
     {
-      "from": "SIGNAL-UA-Даже_после",
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-UA-Одна_из_са",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.78
+    },
+    {
+      "from": "SIGNAL-UA-Москва_и_П",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.78
+    },
+    {
+      "from": "SIGNAL-UA-Дроны_атак",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.54
     }
   ]
 }
