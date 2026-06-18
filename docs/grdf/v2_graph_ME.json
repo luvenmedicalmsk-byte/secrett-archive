@@ -2,67 +2,72 @@
   "country": "ME",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T11:23:45.465615+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-18T12:03:36.375518+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 45,
+      "score": 53,
       "props": {
-        "risk_score": 45
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-ME-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 8,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 40,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 31,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 29,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-social",
       "type": "Domain",
       "label": "social",
-      "score": 34,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 31,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 27,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-ME-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-ME-economic",
@@ -75,9 +80,18 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-ME-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-ME-Африкански",
+      "type": "Signal",
+      "label": "Африканский центр по контролю и профилак",
+      "severity": 58,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-ME-Армия_Ниде",
+      "type": "Signal",
+      "label": "Армия Нидерландов провела учения по разв",
+      "severity": 46,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -85,43 +99,49 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-economic",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-climate",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-technology",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-social",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-cyber",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.32
+    },
+    {
+      "from": "DRIVER-ME-geopolitical",
+      "to": "COUNTRY-ME",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-ME-economic",
@@ -136,10 +156,37 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ME-climate",
-      "to": "COUNTRY-ME",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-ME-geopolitical",
+      "to": "DOMAIN-ME-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ME-infrastructure",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ME-Африкански",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-ME-Армия_Ниде",
+      "to": "DOMAIN-ME-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
