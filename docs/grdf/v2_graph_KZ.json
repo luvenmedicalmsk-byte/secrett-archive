@@ -2,66 +2,66 @@
   "country": "KZ",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T11:09:01.185069+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-18T11:23:45.453993+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 58,
+      "score": 60,
       "props": {
-        "risk_score": 58
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 42,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 11,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 11,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 21,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 24,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -78,6 +78,20 @@
       "id": "DRIVER-KZ-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-KZ-Начислили_",
+      "type": "Signal",
+      "label": "Начислили «зарплату»: как группа Hive011",
+      "severity": 69,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-KZ-Премьер_Ла",
+      "type": "Signal",
+      "label": "Премьер Латвии призывает назначить предс",
+      "severity": 50,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -85,43 +99,43 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-climate",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-technology",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-social",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-KZ-Geopolitical",
@@ -140,6 +154,39 @@
       "to": "COUNTRY-KZ",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-KZ-Начислили_",
+      "to": "DOMAIN-KZ-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.69
+    },
+    {
+      "from": "SIGNAL-KZ-Премьер_Ла",
+      "to": "DOMAIN-KZ-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }

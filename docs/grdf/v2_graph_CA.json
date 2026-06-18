@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T11:09:01.185639+00:00",
+  "generated_at": "2026-06-18T11:23:45.455242+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 54,
+      "score": 64,
       "props": {
-        "risk_score": 54
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 22,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "stable"
+      "score": 3,
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Выезд_из_Я",
+      "id": "SIGNAL-CA-Хакеры_из_",
       "type": "Signal",
-      "label": "Выезд из Ярославля в сторону Москвы пере",
-      "severity": 58,
+      "label": "Хакеры из BO TEAM заявили о взломе Оренб",
+      "severity": 69,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-CA-Более_15_с",
+      "type": "Signal",
+      "label": "Более 15 стран, включая Японию, Канаду, ",
+      "severity": 65,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CA-Рекорд_вым",
+      "id": "SIGNAL-CA-Движение_в",
       "type": "Signal",
-      "label": "Рекорд вымогателей Максимальная сумма пе",
-      "severity": 52,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Гондурас:_",
-      "type": "Signal",
-      "label": "Гондурас: Седеньо не исчезнет, он переед",
-      "severity": 48,
+      "label": "Движение в московской Капотне перекрыто ",
+      "severity": 64,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-CA-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Выезд_из_Я",
-      "to": "DOMAIN-CA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.58
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-CA-Рекорд_вым",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.72,
+      "lag_days": 14
     },
     {
-      "from": "SIGNAL-CA-Гондурас:_",
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-Хакеры_из_",
+      "to": "DOMAIN-CA-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.69
+    },
+    {
+      "from": "SIGNAL-CA-Более_15_с",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-CA-Движение_в",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
     }
   ]
 }
