@@ -3481,7 +3481,7 @@ def fetch_telegram():
                 for ch in channels:
                     nraw = 0
                     try:
-                        for msg in client.iter_messages(ch, limit=30):
+                        for msg in client.iter_messages(ch, limit=200):
                             nraw += 1
                             it = _build(ch, msg.message or '')
                             if it: items.append(it)
