@@ -2,66 +2,66 @@
   "country": "MX",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T17:43:51.198791+00:00",
+  "generated_at": "2026-06-18T20:12:38.357974+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 56,
+      "score": 58,
       "props": {
-        "risk_score": 56
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 56,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-MX-Организато",
+      "type": "Signal",
+      "label": "Организатором атаки БПЛА на Белый дом в ",
+      "severity": 58,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-MX-Тропически",
       "type": "Signal",
       "label": "Тропический шторм Артур образовался у по",
@@ -92,13 +99,6 @@
       "label": "Вредоносное ПО для банков скрывается в т",
       "severity": 55,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-MX-Зеленое_пр",
-      "type": "Signal",
-      "label": "Зеленое предупреждение о наводнении в Ме",
-      "severity": 54,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-MX",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-MX",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-MX-Geopolitical",
@@ -184,6 +184,54 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-MX-Организато",
+      "to": "DOMAIN-MX-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-MX-Тропически",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
@@ -194,12 +242,6 @@
       "to": "DOMAIN-MX-technology",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-MX-Зеленое_пр",
-      "to": "DOMAIN-MX-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
