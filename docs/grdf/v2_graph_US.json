@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T09:59:54.014431+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-18T10:10:22.006739+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 62,
+      "score": 48,
       "props": {
-        "risk_score": 62
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 48,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 37,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "stable"
+      "score": 7,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 19,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 21,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -80,11 +80,18 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-Детали_сог",
+      "id": "SIGNAL-US-Пожар_Карт",
       "type": "Signal",
-      "label": "Детали соглашения США-Иран раскрыты: Тег",
-      "severity": 62,
-      "domain": "geopolitical"
+      "label": "Пожар Картар, Оканоган, Вашингтон",
+      "severity": 47,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-US-Пожар_на_д",
+      "type": "Signal",
+      "label": "Пожар на дороге к озеру Омак, Оканоган, ",
+      "severity": 47,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -92,19 +99,19 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-US",
@@ -116,19 +123,19 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -149,10 +156,37 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-US-Детали_сог",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Пожар_Карт",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-US-Пожар_на_д",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.47
     }
   ]
 }
