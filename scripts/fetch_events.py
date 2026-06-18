@@ -4553,6 +4553,87 @@ def fetch_cloudflare_radar(token=None):
     return items
 
 
+def fetch_ioda():
+    """IODA (Georgia Tech) -- макроскопические падения интернет-связности по странам. Без токена.
+    GET /v2/outages/events/country?from&until&format=codf -> [{entity,start,duration,score,...}]."""
+    CC = {
+        'US':(38.9,-77.0,'США'),'CA':(45.4,-75.7,'Канада'),'MX':(19.4,-99.1,'Мексика'),'BR':(-15.8,-47.9,'Бразилия'),
+        'AR':(-34.6,-58.4,'Аргентина'),'CL':(-33.4,-70.7,'Чили'),'CO':(4.7,-74.1,'Колумбия'),'VE':(10.5,-66.9,'Венесуэла'),
+        'PE':(-12.0,-77.0,'Перу'),'EC':(-0.2,-78.5,'Эквадор'),'BO':(-16.5,-68.1,'Боливия'),'CU':(23.1,-82.4,'Куба'),
+        'GB':(51.5,-0.1,'Великобритания'),'IE':(53.3,-6.3,'Ирландия'),'FR':(48.9,2.3,'Франция'),'DE':(52.5,13.4,'Германия'),
+        'ES':(40.4,-3.7,'Испания'),'PT':(38.7,-9.1,'Португалия'),'IT':(41.9,12.5,'Италия'),'NL':(52.4,4.9,'Нидерланды'),
+        'BE':(50.8,4.4,'Бельгия'),'CH':(46.9,7.4,'Швейцария'),'AT':(48.2,16.4,'Австрия'),'SE':(59.3,18.1,'Швеция'),
+        'NO':(59.9,10.7,'Норвегия'),'FI':(60.2,24.9,'Финляндия'),'DK':(55.7,12.6,'Дания'),'PL':(52.2,21.0,'Польша'),
+        'CZ':(50.1,14.4,'Чехия'),'RO':(44.4,26.1,'Румыния'),'BG':(42.7,23.3,'Болгария'),'GR':(38.0,23.7,'Греция'),
+        'RS':(44.8,20.5,'Сербия'),'UA':(50.4,30.5,'Украина'),'BY':(53.9,27.6,'Беларусь'),'MD':(47.0,28.9,'Молдова'),
+        'RU':(55.75,37.6,'Россия'),'TR':(39.9,32.9,'Турция'),'GE':(41.7,44.8,'Грузия'),'AM':(40.2,44.5,'Армения'),
+        'AZ':(40.4,49.9,'Азербайджан'),'IL':(31.8,35.2,'Израиль'),'PS':(31.9,35.2,'Палестина'),'LB':(33.9,35.5,'Ливан'),
+        'SY':(33.5,36.3,'Сирия'),'IQ':(33.3,44.4,'Ирак'),'IR':(35.7,51.4,'Иран'),'SA':(24.7,46.7,'Саудовская Аравия'),
+        'AE':(24.5,54.4,'ОАЭ'),'QA':(25.3,51.5,'Катар'),'KW':(29.4,47.9,'Кувейт'),'YE':(15.4,44.2,'Йемен'),
+        'JO':(31.9,35.9,'Иордания'),'OM':(23.6,58.5,'Оман'),'EG':(30.0,31.2,'Египет'),'LY':(32.9,13.2,'Ливия'),
+        'TN':(36.8,10.2,'Тунис'),'DZ':(36.8,3.1,'Алжир'),'MA':(34.0,-6.8,'Марокко'),'SD':(15.5,32.5,'Судан'),
+        'SS':(4.85,31.6,'Южный Судан'),'ET':(9.0,38.7,'Эфиопия'),'KE':(-1.3,36.8,'Кения'),'NG':(9.1,7.5,'Нигерия'),
+        'GH':(5.6,-0.2,'Гана'),'ZA':(-25.7,28.2,'ЮАР'),'TZ':(-6.2,35.7,'Танзания'),'UG':(0.3,32.6,'Уганда'),
+        'CD':(-4.3,15.3,'ДР Конго'),'CM':(3.9,11.5,'Камерун'),'SN':(14.7,-17.5,'Сенегал'),'ML':(12.6,-8.0,'Мали'),
+        'BF':(12.4,-1.5,'Буркина-Фасо'),'NE':(13.5,2.1,'Нигер'),'ZW':(-17.8,31.0,'Зимбабве'),'MZ':(-25.9,32.6,'Мозамбик'),
+        'IN':(28.6,77.2,'Индия'),'PK':(33.7,73.1,'Пакистан'),'BD':(23.8,90.4,'Бангладеш'),'LK':(6.9,79.9,'Шри-Ланка'),
+        'NP':(27.7,85.3,'Непал'),'AF':(34.5,69.2,'Афганистан'),'CN':(39.9,116.4,'Китай'),'HK':(22.3,114.2,'Гонконг'),
+        'TW':(25.0,121.5,'Тайвань'),'JP':(35.7,139.7,'Япония'),'KR':(37.6,126.9,'Южная Корея'),'KP':(39.0,125.8,'КНДР'),
+        'MN':(47.9,106.9,'Монголия'),'TH':(13.8,100.5,'Таиланд'),'VN':(21.0,105.8,'Вьетнам'),'MM':(16.8,96.2,'Мьянма'),
+        'KH':(11.6,104.9,'Камбоджа'),'MY':(3.1,101.7,'Малайзия'),'SG':(1.3,103.8,'Сингапур'),'ID':(-6.2,106.8,'Индонезия'),
+        'PH':(14.6,121.0,'Филиппины'),'KZ':(51.2,71.4,'Казахстан'),'UZ':(41.3,69.2,'Узбекистан'),'TM':(37.95,58.4,'Туркменистан'),
+        'KG':(42.9,74.6,'Киргизия'),'TJ':(38.6,68.8,'Таджикистан'),'AU':(-35.3,149.1,'Австралия'),'NZ':(-41.3,174.8,'Новая Зеландия'),
+    }
+    until = int(time.time()); frm = until - 7*86400
+    url = ("https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events/country"
+           "?from=%d&until=%d&format=codf" % (frm, until))
+    try:
+        rq = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0', 'Accept': 'application/json'})
+        with urllib.request.urlopen(rq, timeout=25) as r:
+            d = json.loads(r.read())
+    except Exception as e:
+        print("  [WARN] IODA: %s" % e, file=sys.stderr); return []
+    rows = d.get('data') if isinstance(d, dict) else d
+    rows = rows or []
+    if rows:
+        print("  IODA debug: %d событий, поля[0]=%s" % (len(rows), list(rows[0].keys())), file=sys.stderr)
+    best = {}
+    for ev in rows:
+        ent = ev.get('entity') if isinstance(ev, dict) else None
+        if isinstance(ent, dict):
+            code = str(ent.get('code') or '').upper(); name = ent.get('name')
+            if ent.get('type') and ent.get('type') != 'country': continue
+        else:
+            code = str(ent or '').upper(); name = None
+        if not code: continue
+        score = ev.get('score') or 0
+        dur = ev.get('duration') or 0
+        if dur < 3600: continue                      # < 1 ч -- транзиентный всплеск, шум
+        if code not in best or score > best[code]['score']:
+            best[code] = {'score': score, 'dur': dur, 'name': name}
+    today_s = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    ranked = sorted(best.items(), key=lambda kv: -(kv[1]['score'] or 0))[:15]
+    items = []; _n = 0
+    for code, info in ranked:
+        geo = CC.get(code)
+        if not geo: continue
+        lat, lng, cname = geo
+        dur = info['dur']; hrs = int(round(dur / 3600))
+        sev = 72 if dur >= 86400 else (64 if dur >= 21600 else 56)
+        title = "Падение интернет-связности: %s" % cname
+        desc = ("IODA (Georgia Tech): зафиксировано макроскопическое падение интернет-связности на уровне страны"
+                + (" (длительность ~%d ч)" % hrs if hrs else "")
+                + ". Источники: активное зондирование, маршрутизация BGP, фоновый трафик.")
+        items.append({
+            'title': title, 'desc': desc, 'date': today_s, 'source': 'IODA',
+            '_force_severity': sev, '_lat': lat, '_lng': lng, '_region': cname, '_domain': 'technology',
+            '_meta': {'kind': 'ioda_outage', 'score': int(info['score'] or 0), 'duration_h': hrs, 'verified': True}
+        })
+        _n += 1
+    print("  IODA: %d страновых падений связности" % _n, file=sys.stderr)
+    return items
+
+
 def fetch_nasa_firms(api_key=None):
     """NASA FIRMS -- спутниковые пожары каждые 3 часа"""
     items = []
@@ -6352,6 +6433,7 @@ if __name__ == '__main__':
             ('copernicus_sentinel', lambda: fetch_copernicus_sentinel(get_env('COPERNICUS_KEY'))),
             ('nasa_firms',         lambda: fetch_nasa_firms(get_env('FIRMS_API_KEY'))),
             ('cloudflare_radar',   lambda: fetch_cloudflare_radar(get_env('CF_RADAR_TOKEN'))),
+            ('ioda',               fetch_ioda),
             ('forest_watch',       fetch_global_forest_watch),
             ('flood_observatory',  fetch_flood_observatory),
             ('regional',           fetch_regional),
