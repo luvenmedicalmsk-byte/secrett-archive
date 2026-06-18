@@ -2,67 +2,67 @@
   "country": "MX",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T10:10:22.019634+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-06-18T10:33:19.121865+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 56,
-      "trend": "down"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 22,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -85,13 +85,6 @@
       "label": "Тропический шторм Артур образовался у по",
       "severity": 57,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-Зеленое_пр",
-      "type": "Signal",
-      "label": "Зеленое предупреждение о наводнении в Ме",
-      "severity": 54,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -99,19 +92,19 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-MX",
@@ -135,7 +128,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-MX-Geopolitical",
@@ -177,16 +170,52 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MX-social",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-MX-Тропически",
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.57
-    },
-    {
-      "from": "SIGNAL-MX-Зеленое_пр",
-      "to": "DOMAIN-MX-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.54
     }
   ]
 }
