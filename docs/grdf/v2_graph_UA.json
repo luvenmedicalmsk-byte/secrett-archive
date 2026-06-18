@@ -2,32 +2,32 @@
   "country": "UA",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T10:33:19.114804+00:00",
+  "generated_at": "2026-06-18T10:57:33.429905+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 58,
+      "score": 59,
       "props": {
-        "risk_score": 58
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 27,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
@@ -54,8 +54,8 @@
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-ВС_РФ_нане",
+      "id": "SIGNAL-UA-Как_Украин",
       "type": "Signal",
-      "label": "ВС РФ нанесли групповой удар по объектам",
-      "severity": 55,
+      "label": "Как Украина бьет дронами по Москве. С 20",
+      "severity": 71,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-UA",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-UA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-Одна_из_са",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.78
     },
     {
-      "from": "SIGNAL-UA-ВС_РФ_нане",
+      "from": "SIGNAL-UA-Как_Украин",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.55
+      "weight": 0.71
     }
   ]
 }

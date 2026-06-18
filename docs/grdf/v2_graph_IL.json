@@ -2,45 +2,45 @@
   "country": "IL",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T10:33:19.118243+00:00",
+  "generated_at": "2026-06-18T10:57:33.433129+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 59,
+      "score": 60,
       "props": {
-        "risk_score": 59
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
       "score": 30,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
+      "score": 8,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
+      "score": 8,
       "trend": "stable"
     },
     {
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-IL-Катар_впер",
+      "type": "Signal",
+      "label": "Катар впервые с начала войны возвращает ",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Ливан:_Изр",
       "type": "Signal",
       "label": "Ливан: Израиль радикально расширяет испо",
       "severity": 57,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Резервный_",
-      "type": "Signal",
-      "label": "Резервный солдат ЦАХАЛа убит, 7 ранены в",
-      "severity": 53,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-IL",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IL",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IL-Ливан:_12_",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
+      "from": "SIGNAL-IL-Катар_впер",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-IL-Ливан:_Изр",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.57
-    },
-    {
-      "from": "SIGNAL-IL-Резервный_",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
