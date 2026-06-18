@@ -1789,18 +1789,6 @@ def process_events(raw_items):
     
     top_events = balanced[:MAX_EVENTS]
 
-    try:
-        import collections as _c2
-        (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(json.dumps({
-            'ts': datetime.now(timezone.utc).isoformat(),
-            'loss': dict(_LOSS),
-            'raw_by_source': dict(_c2.Counter(i.get('source','') for i in raw_items)),
-            'built_by_source': dict(_c2.Counter(e.get('source','') for e in events)),
-            'exported_by_source': dict(_c2.Counter(e.get('source','') for e in top_events)),
-        }, ensure_ascii=False, indent=2), encoding='utf-8')
-    except Exception as _e:
-        print('  [WARN] loss debug:', _e, file=sys.stderr)
-
     # S36.4: статистика потерь по этапам
     try:
         import collections as _c
@@ -1833,9 +1821,10 @@ def process_events(raw_items):
     # S43: финальный гейт «сигнал/шум» + чистка TG-фрагментов на ПЕРЕВЕДЁННОМ тексте.
     _before_s43 = len(top_events)
     top_events = [e for e in top_events
-                  if not _is_news_not_signal(e.get('title',''), e.get('summary',''), e.get('domain',''))
+                  if (e.get('meta') or {}).get('verified')
+                  or (not _is_news_not_signal(e.get('title',''), e.get('summary',''), e.get('domain',''))
                   and not _is_broken_fragment(e.get('title',''), e.get('summary',''))
-                  and len(re.findall(r'[іїєґІЇЄҐ]', (e.get('title') or '') + (e.get('summary') or ''))) < 3]
+                  and len(re.findall(r'[іїєґІЇЄҐ]', (e.get('title') or '') + (e.get('summary') or ''))) < 3)]
     # S44: домен по содержанию -- переназначаем неверно-доменные сигналы (политика из экономики и т.п.)
     _moved = 0
     for e in top_events:
@@ -1889,6 +1878,18 @@ def process_events(raw_items):
             if _e.get('summary'): _e['summary'] = strip_non_flag_emoji(_e['summary'])
             _e['region'] = ru_geo(_e.get('region','') or '')
         except Exception: pass
+    try:
+        import collections as _c2
+        (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(json.dumps({
+            'ts': datetime.now(timezone.utc).isoformat(),
+            'loss': dict(_LOSS),
+            'raw_by_source': dict(_c2.Counter(i.get('source','') for i in raw_items)),
+            'built_by_source': dict(_c2.Counter(e.get('source','') for e in events)),
+            'final_by_source': dict(_c2.Counter(e.get('source','') for e in top_events)),
+            'final_outage': dict(_c2.Counter(str((e.get('meta') or {}).get('kind','')) for e in top_events if str((e.get('meta') or {}).get('kind','')).startswith(('ioda','radar','netblocks')))),
+        }, ensure_ascii=False, indent=2), encoding='utf-8')
+    except Exception as _e:
+        print('  [WARN] loss debug:', _e, file=sys.stderr)
     _save_tr_disk()
     return top_events
 
