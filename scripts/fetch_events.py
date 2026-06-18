@@ -4585,15 +4585,37 @@ def fetch_ioda():
         'KG':(42.9,74.6,'Киргизия'),'TJ':(38.6,68.8,'Таджикистан'),'AU':(-35.3,149.1,'Австралия'),'NZ':(-41.3,174.8,'Новая Зеландия'),
     }
     until = int(time.time()); frm = until - 7*86400
-    url = ("https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events/country"
-           "?from=%d&until=%d&format=codf" % (frm, until))
+    UA = 'Mozilla/5.0 (compatible; ArchiveBot/2.0; +https://a-atlas.com)'
+    _base = "https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events"
+    _cand = [
+        "%s/country?from=%d&until=%d&format=codf" % (_base, frm, until),
+        "%s/country/?from=%d&until=%d&format=codf" % (_base, frm, until),
+        "%s?entityType=country&from=%d&until=%d&format=codf" % (_base, frm, until),
+    ]
+    rows = []; _attempts = []
+    for _u in _cand:
+        _rec = {'url': _u}
+        try:
+            _rq = urllib.request.Request(_u, headers={'User-Agent': UA, 'Accept': 'application/json'})
+            with urllib.request.urlopen(_rq, timeout=25) as r:
+                _body = r.read().decode('utf-8', 'replace'); _rec['http'] = r.getcode()
+            try: _dd = json.loads(_body)
+            except Exception: _dd = None
+            _rr = (_dd.get('data') if isinstance(_dd, dict) else _dd) if _dd is not None else None
+            _rec['count'] = (len(_rr) if isinstance(_rr, list) else None)
+            _rec['keys'] = (list(_dd.keys()) if isinstance(_dd, dict) else None)
+            _rec['snippet'] = _body[:400]
+            if isinstance(_rr, list) and _rr:
+                rows = _rr; _attempts.append(_rec); break
+        except Exception as e:
+            _rec['error'] = str(e)
+        _attempts.append(_rec)
     try:
-        rq = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0', 'Accept': 'application/json'})
-        with urllib.request.urlopen(rq, timeout=25) as r:
-            d = json.loads(r.read())
-    except Exception as e:
-        print("  [WARN] IODA: %s" % e, file=sys.stderr); return []
-    rows = d.get('data') if isinstance(d, dict) else d
+        _dbg = {'ts': datetime.now(timezone.utc).isoformat(), 'picked': len(rows),
+                'sample': (rows[0] if rows else None), 'attempts': _attempts}
+        (OUTPUT_PATH.parent / '_ioda_debug.json').write_text(json.dumps(_dbg, ensure_ascii=False, indent=2), encoding='utf-8')
+    except Exception as _e:
+        print("  [WARN] IODA debug write: %s" % _e, file=sys.stderr)
     rows = rows or []
     if rows:
         print("  IODA debug: %d событий, поля[0]=%s" % (len(rows), list(rows[0].keys())), file=sys.stderr)
