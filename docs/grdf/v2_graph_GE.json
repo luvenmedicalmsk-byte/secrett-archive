@@ -2,67 +2,67 @@
   "country": "GE",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T15:17:52.779584+00:00",
-  "node_count": 14,
-  "edge_count": 16,
+  "generated_at": "2026-06-18T15:30:39.098607+00:00",
+  "node_count": 13,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-GE",
       "type": "Country",
       "label": "GE",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-GE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
-      "trend": "down"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
-      "trend": "down"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 33,
-      "trend": "down"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-social",
       "type": "Domain",
       "label": "social",
-      "score": 42,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 39,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 34,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GE-geopolitical",
@@ -82,22 +82,15 @@
     {
       "id": "SIGNAL-GE-Падение_ин",
       "type": "Signal",
-      "label": "Падение интернет-связности: Ирак",
+      "label": "Падение интернет-связи: Ирак",
       "severity": 56,
       "domain": "technology"
     },
     {
       "id": "SIGNAL-GE-Падение_ин",
       "type": "Signal",
-      "label": "Падение интернет-связности: Зимбабве",
+      "label": "Падение интернет-связи: Зимбабве",
       "severity": 56,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GE-Волны_ботн",
-      "type": "Signal",
-      "label": "Волны ботнетов могут начать утихать благ",
-      "severity": 52,
       "domain": "technology"
     }
   ],
@@ -106,37 +99,37 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-technology",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-social",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-GE",
@@ -184,10 +177,46 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-GE-Падение_ин",
-      "to": "DOMAIN-GE-technology",
+      "from": "DOMAIN-GE-climate",
+      "to": "DOMAIN-GE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GE-infrastructure",
+      "to": "DOMAIN-GE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GE-climate",
+      "to": "DOMAIN-GE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GE-social",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-GE-Падение_ин",
@@ -196,10 +225,10 @@
       "weight": 0.56
     },
     {
-      "from": "SIGNAL-GE-Волны_ботн",
+      "from": "SIGNAL-GE-Падение_ин",
       "to": "DOMAIN-GE-technology",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.56
     }
   ]
 }
