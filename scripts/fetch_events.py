@@ -1373,7 +1373,7 @@ _DOMAIN_VOCAB = {
 }
 
 # === Этап 8: уровень подтверждённости геосигналов (зеркало воркера) ===
-_CFM_EXPECT = ('ожида','планир','может привести','не исключен','рассматрива','предполага','прогнозир')
+_CFM_EXPECT = ('ожида','планир','может привести','не исключен','рассматрива','предполага','прогнозир','по оценк','оценивается в','оценил в','оцениваются в','предположительно','ориентировочно','по предварительн','по разным оценк','может быть заблокир','может быть затрон','может быть заморож','могут быть заблокир','может составить','может достигнуть')
 _CFM_NEGOT = ('переговор','обсужда','ведут диалог','консультаци по','раунд перегов','готовят соглаш','на стадии согласов')
 _CFM_PRELIM = ('предварительн','проект соглаш','меморандум','рамочн','договорённост о намерени','договоренност о намерени','согласова рамк','близки к соглаш','приблизились к соглаш')
 _CFM_STATE = ('призва','пригроз','предлож','предупрежда','предостерег','выразил готовность','выступил с инициатив','пообещ','заявил о намерени','заявил о готовн','сообщил о намерени','грозит')
@@ -1384,6 +1384,25 @@ def _cfm_grand(b):
     if 'пролив' in b and ('открыт' in b or 'возобновл' in b): return True
     if 'ормуз' in b and ('открыт' in b or 'возобновл' in b): return True
     return False
+_TG_SRC = {'IT','AM Live','Cyber','Cybersecurity','Lab News','Engineering','R Osint','Cybersec','Xakep IT','Data D','A breaking','T Live'}
+_RU_MONTHS = {'январ':1,'феврал':2,'март':3,'апрел':4,'мая':5,'май':5,'мае':5,'июн':6,'июл':7,'август':8,'сентябр':9,'октябр':10,'ноябр':11,'декабр':12}
+def _text_latest_date(text):
+    """Самая поздняя явная дата (DD месяца) в тексте. None если дат нет. Для отсева TG-репостов о старье."""
+    if not text: return None
+    from datetime import date as _d
+    today = datetime.now(timezone.utc).date(); found = []
+    for mt in re.finditer(r'(\d{1,2})\s+(январ\w*|феврал\w*|март\w*|апрел\w*|ма[йяе]\w*|июн\w*|июл\w*|август\w*|сентябр\w*|октябр\w*|ноябр\w*|декабр\w*)', text.lower()):
+        dd = int(mt.group(1)); w = mt.group(2); mo = None
+        for k, v in _RU_MONTHS.items():
+            if w.startswith(k): mo = v; break
+        if not mo or not (1 <= dd <= 31): continue
+        try:
+            dt = _d(today.year, mo, dd)
+            if (dt - today).days > 2: dt = _d(today.year - 1, mo, dd)
+            found.append(dt)
+        except Exception: pass
+    return max(found) if found else None
+
 def _confirm_level(text):
     b = (text or '').lower()
     if any(w in b for w in _CFM_EXPECT): return 'expectation'
@@ -1567,6 +1586,11 @@ def process_events(raw_items):
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
         if item.get('date','') < cutoff: _LOSS['old']+=1; continue
+        _src0 = item.get('source','')
+        if _src0.startswith('Telegram/') or _src0 in _TG_SRC:
+            _ld = _text_latest_date((item.get('title','') or '') + ' ' + (item.get('desc','') or ''))
+            if _ld is not None and (datetime.now(timezone.utc).date() - _ld).days > 14:
+                _LOSS['old']+=1; continue
 
         title_low = (item.get('title','') or '').lower()
         desc_low = (item.get('desc','') or '').lower()
