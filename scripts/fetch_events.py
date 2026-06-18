@@ -4656,6 +4656,103 @@ def fetch_ioda():
     return items
 
 
+def fetch_netblocks_rss():
+    """NetBlocks -- шатдауны / ограничения соцсетей / сбои связи (RSS отчётов, без токена).
+    Заголовок генерируется в нашем стиле; источник 'NetBlocks'; ссылка и тело отчёта НЕ сохраняются."""
+    NBCC = {
+        'iran':(35.7,51.4,'Иран'),'russia':(55.75,37.6,'Россия'),'belarus':(53.9,27.6,'Беларусь'),
+        'ukraine':(50.4,30.5,'Украина'),'turkey':(39.9,32.9,'Турция'),'turkiye':(39.9,32.9,'Турция'),
+        'iraq':(33.3,44.4,'Ирак'),'syria':(33.5,36.3,'Сирия'),'lebanon':(33.9,35.5,'Ливан'),
+        'yemen':(15.4,44.2,'Йемен'),'jordan':(31.9,35.9,'Иордания'),'israel':(31.8,35.2,'Израиль'),
+        'palestine':(31.9,35.2,'Палестина'),'gaza':(31.5,34.45,'Газа'),'egypt':(30.0,31.2,'Египет'),
+        'libya':(32.9,13.2,'Ливия'),'tunisia':(36.8,10.2,'Тунис'),'algeria':(36.8,3.1,'Алжир'),
+        'morocco':(34.0,-6.8,'Марокко'),'south sudan':(4.85,31.6,'Южный Судан'),'sudan':(15.5,32.5,'Судан'),
+        'ethiopia':(9.0,38.7,'Эфиопия'),'kenya':(-1.3,36.8,'Кения'),'nigeria':(9.1,7.5,'Нигерия'),
+        'ghana':(5.6,-0.2,'Гана'),'tanzania':(-6.2,35.7,'Танзания'),'uganda':(0.3,32.6,'Уганда'),
+        'dr congo':(-4.3,15.3,'ДР Конго'),'democratic republic of congo':(-4.3,15.3,'ДР Конго'),
+        'cameroon':(3.9,11.5,'Камерун'),'senegal':(14.7,-17.5,'Сенегал'),'mali':(12.6,-8.0,'Мали'),
+        'burkina faso':(12.4,-1.5,'Буркина-Фасо'),'niger':(13.5,2.1,'Нигер'),'chad':(12.1,15.0,'Чад'),
+        'mauritania':(18.1,-15.9,'Мавритания'),'guinea-bissau':(11.9,-15.6,'Гвинея-Бисау'),
+        'equatorial guinea':(3.75,8.78,'Экв. Гвинея'),'guinea':(9.6,-13.6,'Гвинея'),'gabon':(0.39,9.45,'Габон'),
+        'zimbabwe':(-17.8,31.0,'Зимбабве'),'mozambique':(-25.9,32.6,'Мозамбик'),'zambia':(-15.4,28.3,'Замбия'),
+        'south africa':(-25.7,28.2,'ЮАР'),'venezuela':(10.5,-66.9,'Венесуэла'),'cuba':(23.1,-82.4,'Куба'),
+        'colombia':(4.7,-74.1,'Колумбия'),'ecuador':(-0.2,-78.5,'Эквадор'),'bolivia':(-16.5,-68.1,'Боливия'),
+        'peru':(-12.0,-77.0,'Перу'),'brazil':(-15.8,-47.9,'Бразилия'),'mexico':(19.4,-99.1,'Мексика'),
+        'haiti':(18.5,-72.3,'Гаити'),'pakistan':(33.7,73.1,'Пакистан'),'india':(28.6,77.2,'Индия'),
+        'bangladesh':(23.8,90.4,'Бангладеш'),'sri lanka':(6.9,79.9,'Шри-Ланка'),'nepal':(27.7,85.3,'Непал'),
+        'afghanistan':(34.5,69.2,'Афганистан'),'myanmar':(16.8,96.2,'Мьянма'),'burma':(16.8,96.2,'Мьянма'),
+        'cambodia':(11.6,104.9,'Камбоджа'),'vietnam':(21.0,105.8,'Вьетнам'),'thailand':(13.8,100.5,'Таиланд'),
+        'indonesia':(-6.2,106.8,'Индонезия'),'philippines':(14.6,121.0,'Филиппины'),'malaysia':(3.1,101.7,'Малайзия'),
+        'china':(39.9,116.4,'Китай'),'kazakhstan':(51.2,71.4,'Казахстан'),'uzbekistan':(41.3,69.2,'Узбекистан'),
+        'kyrgyzstan':(42.9,74.6,'Киргизия'),'tajikistan':(38.6,68.8,'Таджикистан'),'turkmenistan':(37.95,58.4,'Туркменистан'),
+        'azerbaijan':(40.4,49.9,'Азербайджан'),'armenia':(40.2,44.5,'Армения'),'georgia':(41.7,44.8,'Грузия'),
+        'united states':(38.9,-77.0,'США'),'united kingdom':(51.5,-0.1,'Великобритания'),'france':(48.9,2.3,'Франция'),
+        'germany':(52.5,13.4,'Германия'),'spain':(40.4,-3.7,'Испания'),'italy':(41.9,12.5,'Италия'),
+        'poland':(52.2,21.0,'Польша'),'serbia':(44.8,20.5,'Сербия'),'saudi arabia':(24.7,46.7,'Саудовская Аравия'),
+    }
+    _ORDER = sorted(NBCC.items(), key=lambda kv: -len(kv[0]))
+    feeds = ["https://netblocks.org/feed/", "https://netblocks.org/reports/feed/"]
+    UA = 'Mozilla/5.0 (compatible; ArchiveBot/2.0; +https://a-atlas.com)'
+    rows = []; _attempts = []
+    for _url in feeds:
+        _rec = {'url': _url}
+        data = fetch_url(_url, timeout=20, headers={'User-Agent': UA})
+        if not data:
+            _rec['error'] = 'empty'; _attempts.append(_rec); continue
+        try:
+            root = ET.fromstring(data)
+            its = root.findall('.//item')
+            _rec['items'] = len(its)
+            if its:
+                rows = [ (i.findtext('title') or '').strip() + '\u0001' + (i.findtext('pubDate') or '').strip() for i in its ]
+                _attempts.append(_rec); break
+        except Exception as e:
+            _rec['error'] = str(e)[:150]
+        _attempts.append(_rec)
+    try:
+        (OUTPUT_PATH.parent / '_netblocks_debug.json').write_text(
+            json.dumps({'ts': datetime.now(timezone.utc).isoformat(), 'attempts': _attempts,
+                        'sample_titles': [r.split('\u0001')[0] for r in rows[:6]]}, ensure_ascii=False, indent=2), encoding='utf-8')
+    except Exception as _e:
+        print("  [WARN] NetBlocks debug write: %s" % _e, file=sys.stderr)
+    def _country(tl):
+        for nm, geo in _ORDER:
+            if nm in tl: return geo
+        return None
+    items = []; seen = set(); _n = 0
+    for r in rows:
+        title = r.split('\u0001')[0]; pub = r.split('\u0001')[1] if '\u0001' in r else ''
+        if not title: continue
+        tl = ' ' + title.lower() + ' '
+        geo = _country(tl)
+        if not geo: continue
+        lat, lng, cname = geo
+        if any(w in tl for w in ('social media', 'facebook', 'whatsapp', 'instagram', 'tiktok', 'twitter', ' x ', 'youtube', 'telegram', 'social network', 'social platform')):
+            kind = 'social_restriction'; sev = 60; dom = 'social'; head = '\u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435 \u0441\u043e\u0446\u0441\u0435\u0442\u0435\u0439'; ptype = '\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0441\u043e\u0446\u0441\u0435\u0442\u044f\u043c/\u043f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430\u043c'
+        elif any(w in tl for w in ('shut down', 'shutdown', 'blackout', 'nation-scale', 'nationwide', 'cut off', 'internet cut', 'total internet')):
+            kind = 'shutdown'; sev = 70; dom = 'geopolitics'; head = '\u041e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430'; ptype = '\u043e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430'
+        else:
+            kind = 'disruption'; sev = 62; dom = 'geopolitics'; head = '\u0421\u0431\u043e\u0439 \u0441\u0432\u044f\u0437\u0438'; ptype = '\u043d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u0435 \u0441\u0432\u044f\u0437\u043d\u043e\u0441\u0442\u0438'
+        # лёгкий контекст-хинт (факт, не цитата)
+        ctx = ''
+        if any(w in tl for w in ('election', 'vote', 'poll')): ctx = ' \u043d\u0430 \u0444\u043e\u043d\u0435 \u0432\u044b\u0431\u043e\u0440\u043e\u0432'
+        elif 'protest' in tl or 'unrest' in tl: ctx = ' \u043d\u0430 \u0444\u043e\u043d\u0435 \u043f\u0440\u043e\u0442\u0435\u0441\u0442\u043e\u0432'
+        elif 'exam' in tl: ctx = ' \u0432 \u043f\u0435\u0440\u0438\u043e\u0434 \u044d\u043a\u0437\u0430\u043c\u0435\u043d\u043e\u0432'
+        _k = (cname, kind)
+        if _k in seen: continue
+        seen.add(_k)
+        items.append({
+            'title': '%s: %s' % (head, cname),
+            'desc': 'NetBlocks: \u0437\u0430\u0444\u0438\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u043d\u043e %s \u2014 %s%s.' % (ptype, cname, ctx),
+            'date': parse_date(pub), 'source': 'NetBlocks',
+            '_force_severity': sev, '_lat': lat, '_lng': lng, '_region': cname, '_domain': dom,
+            '_meta': {'kind': 'netblocks_' + kind, 'verified': True}
+        })
+        _n += 1
+    print("  NetBlocks: %d \u0441\u043e\u0431\u044b\u0442\u0438\u0439" % _n, file=sys.stderr)
+    return items
+
+
 def fetch_nasa_firms(api_key=None):
     """NASA FIRMS -- спутниковые пожары каждые 3 часа"""
     items = []
@@ -6456,6 +6553,7 @@ if __name__ == '__main__':
             ('nasa_firms',         lambda: fetch_nasa_firms(get_env('FIRMS_API_KEY'))),
             ('cloudflare_radar',   lambda: fetch_cloudflare_radar(get_env('CF_RADAR_TOKEN'))),
             ('ioda',               fetch_ioda),
+            ('netblocks',          fetch_netblocks_rss),
             ('forest_watch',       fetch_global_forest_watch),
             ('flood_observatory',  fetch_flood_observatory),
             ('regional',           fetch_regional),
