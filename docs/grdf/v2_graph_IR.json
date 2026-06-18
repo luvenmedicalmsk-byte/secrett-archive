@@ -1,33 +1,33 @@
 {
   "country": "IR",
-  "date": "2026-06-17",
+  "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-17T23:25:52.584312+00:00",
+  "generated_at": "2026-06-18T02:03:20.352173+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 60,
+      "score": 62,
       "props": {
-        "risk_score": 60
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 28,
-      "trend": "stable"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -48,20 +48,20 @@
       "type": "Domain",
       "label": "social",
       "score": 14,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -94,9 +94,9 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Ежедневная",
+      "id": "SIGNAL-IR-Газовоз_на",
       "type": "Signal",
-      "label": "Ежедневная записка: Сомнения в ядерных о",
+      "label": "Газовоз направляется к Ормузскому пролив",
       "severity": 62,
       "domain": "geopolitical"
     }
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-IR",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-IR-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-Трамп_гово",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -175,7 +196,7 @@
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-IR-Ежедневная",
+      "from": "SIGNAL-IR-Газовоз_на",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
