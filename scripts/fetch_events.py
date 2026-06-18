@@ -4588,9 +4588,8 @@ def fetch_ioda():
     UA = 'Mozilla/5.0 (compatible; ArchiveBot/2.0; +https://a-atlas.com)'
     _base = "https://api.ioda.inetintel.cc.gatech.edu/v2/outages/events"
     _cand = [
-        "%s/country?from=%d&until=%d&format=codf" % (_base, frm, until),
-        "%s/country/?from=%d&until=%d&format=codf" % (_base, frm, until),
         "%s?entityType=country&from=%d&until=%d&format=codf" % (_base, frm, until),
+        "%s/country?from=%d&until=%d&format=codf" % (_base, frm, until),
     ]
     rows = []; _attempts = []
     for _u in _cand:
@@ -4621,20 +4620,21 @@ def fetch_ioda():
         print("  IODA debug: %d событий, поля[0]=%s" % (len(rows), list(rows[0].keys())), file=sys.stderr)
     best = {}
     for ev in rows:
-        ent = ev.get('entity') if isinstance(ev, dict) else None
-        if isinstance(ent, dict):
-            code = str(ent.get('code') or '').upper(); name = ent.get('name')
-            if ent.get('type') and ent.get('type') != 'country': continue
+        if not isinstance(ev, dict): continue
+        loc = str(ev.get('location') or '')          # напр. "country/GI"
+        if loc:
+            _p = loc.split('/'); etype = (_p[0] if len(_p) > 1 else 'country'); code = (_p[-1] or '').upper()
         else:
-            code = str(ent or '').upper(); name = None
+            ent = ev.get('entity') or {}; etype = ent.get('type') or 'country'; code = str(ent.get('code') or '').upper()
+        if etype and etype != 'country': continue
         if not code: continue
         score = ev.get('score') or 0
         dur = ev.get('duration') or 0
         if dur < 3600: continue                      # < 1 ч -- транзиентный всплеск, шум
         if code not in best or score > best[code]['score']:
-            best[code] = {'score': score, 'dur': dur, 'name': name}
+            best[code] = {'score': score, 'dur': dur}
     today_s = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    ranked = sorted(best.items(), key=lambda kv: -(kv[1]['score'] or 0))[:15]
+    ranked = sorted([(k, v) for k, v in best.items() if k in CC], key=lambda kv: -(kv[1]['score'] or 0))[:15]
     items = []; _n = 0
     for code, info in ranked:
         geo = CC.get(code)
