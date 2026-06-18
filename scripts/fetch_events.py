@@ -1384,7 +1384,7 @@ def _cfm_grand(b):
     if 'пролив' in b and ('открыт' in b or 'возобновл' in b): return True
     if 'ормуз' in b and ('открыт' in b or 'возобновл' in b): return True
     return False
-_TG_SRC = {'IT','AM Live','Cyber','Cybersecurity','Lab News','Engineering','R Osint','Cybersec','Xakep IT','Data D','A breaking','T Live'}
+_TG_SRC = {'IT','AM Live','Cyber','Cybersecurity','Lab News','Engineering','R Osint','Cybersec','Xakep IT','Data D','A breaking','T Live','Downdetector','Dciber','Cyber Threat','THN','Cyber SN'}
 _RU_MONTHS = {'январ':1,'феврал':2,'март':3,'апрел':4,'мая':5,'май':5,'мае':5,'июн':6,'июл':7,'август':8,'сентябр':9,'октябр':10,'ноябр':11,'декабр':12}
 def _text_latest_date(text):
     """Самая поздняя явная дата (DD месяца) в тексте. None если дат нет. Для отсева TG-репостов о старье."""
@@ -3442,10 +3442,12 @@ def fetch_telegram():
                 'ecotopor',
                 'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
                 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
-                'sterngang', 'Ateobreaking']
+                'sterngang', 'Ateobreaking',
+                'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
     TG_DISPLAY = {'ecotopor':'T Live','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
-                  'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking'}
+                  'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
+                  'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN'}
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                   'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography', 'sterngang'}
@@ -3460,12 +3462,15 @@ def fetch_telegram():
                          ('долг','зарплат'),('рождаемост','упал'),('рождаемост','сниз'),('смертност','рекорд'),
                          ('естественн','убыл'),('сокращен','населен'),('карантин','школ'),('карантин','класс'),('карантин','детск')]
     # тех-источник: только инциденты/риски (как соц-фильтр), не пиар продуктов
-    TECH_SRC = {'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews', 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru'}   # сюда добавить хендл профильного тех-инцидентного канала, когда найдётся
+    TECH_SRC = {'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews', 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru', 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel'}   # сюда добавить хендл профильного тех-инцидентного канала, когда найдётся
     TECH_RISK_KW = ['кибератак','кибербез','взлом','шифровальщик','вымогател','фишинг','ддос','блэкаут',
                     'глонасс','эквайринг','импортозамещ','санкц','блокировк','уязвим','дипфейк',
                     'вредонос','троян','эксплойт','ботнет','бэкдор','майнер','хакер','деанон','осинт',
                     'брешь','компромет','фрод','скам','инцидент','спуфинг','слежк','вирус','малвар',
-                    'ransomware','malware','breach','exploit','phishing']
+                    'ransomware','malware','breach','exploit','phishing',
+                    'outage','offline','downtime','disruption','vulnerability','zero-day','cyberattack','data breach','threat actor','spyware','botnet',
+                    'caída','caida','interrupción','interrupcion','fuera de servicio','no funciona','ataque','vulnerabilidad','filtración','hackeo',
+                    'queda','fora do ar','indisponível','indisponivel','interrupção','vazamento','invasão','vulnerabilidade','falha']
     TECH_RISK_PAIRS = [('утечк','данн'),('сбой','связ'),('перебои','связ'),('сбой','операт'),('отключен','интернет'),
                        ('дефицит','чип'),('дефицит','электрон'),('дефицит','полупровод'),('нехватк','чип'),('дефицит','кадр'),
                        ('сбой','цод'),('отказ','цод'),('сбой','облак'),('авари','энерг'),('отключен','электр'),
