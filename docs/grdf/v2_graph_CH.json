@@ -2,67 +2,67 @@
   "country": "CH",
   "date": "2026-06-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T07:04:57.223200+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-18T08:06:47.320692+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 32,
+      "score": 58,
       "props": {
-        "risk_score": 32
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 28,
-      "trend": "stable"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -75,9 +75,23 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CH-Economic",
+      "id": "DRIVER-CH-Social",
       "type": "Driver",
-      "label": "Economic"
+      "label": "Social"
+    },
+    {
+      "id": "SIGNAL-CH-ВОЗ_выпуск",
+      "type": "Signal",
+      "label": "ВОЗ выпускает комплексные рекомендации п",
+      "severity": 58,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-CH-Швейцария_",
+      "type": "Signal",
+      "label": "Швейцария и ПРООН запускают партнерство ",
+      "severity": 57,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -85,43 +99,43 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-CH-Geopolitical",
@@ -136,10 +150,43 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CH-Economic",
+      "from": "DRIVER-CH-Social",
       "to": "COUNTRY-CH",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CH-geopolitical",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CH-ВОЗ_выпуск",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-CH-Швейцария_",
+      "to": "DOMAIN-CH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.57
     }
   ]
 }
