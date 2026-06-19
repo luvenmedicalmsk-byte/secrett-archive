@@ -3519,7 +3519,9 @@ def fetch_telegram():
         text = (text or '').strip()
         if len(text) < 20: return None
         tl = text[:200].lower()
-        if ch in DD_SRC and any(w in tl for w in DD_BLOCK): return None   # Downdetector: блок игр/стримов/VK-видео
+        if ch in DD_SRC:
+            if any(w in tl for w in DD_BLOCK): return None   # блок игр/стримов/VK-видео
+            if any(w in tl for w in ('в норме','восстановлен','работают штатно','работает штатно','устранен','нормализова','всё работает','все работает','сбой устранён','проблема решена')): return None   # recovery -- не активный сбой
         is_srisk = any(k in tl for k in SOCIAL_RISK_KW) or any(a in tl and b in tl for a,b in SOCIAL_RISK_PAIRS)
         if ch in SOCIAL_SRC:
             if not is_srisk: return None
@@ -3535,8 +3537,12 @@ def fetch_telegram():
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
-        return {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
+        _out = {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
                 'source': TG_DISPLAY.get(ch, f'Telegram/{ch}'), 'source_bias': 5, '_domain': _d}
+        if ch in DD_SRC:
+            _DD_HI = ('сбер','втб','тинькофф','т-банк','альфа-банк','газпромбанк','райффайзен','совкомбанк','госуслуг','есиа','налог','сбп','мир pay','эквайр','мтс','мегафон','билайн','теле2','tele2','ростелеком','госуд','цб рф','банк россии','аэрофлот','ржд')
+            _out['_force_severity'] = 60 if any(w in tl for w in _DD_HI) else 46   # банки/госуслуги/телеком выше; минуем S42
+        return _out
 
     # --- Транспорт 1: MTProto через Telethon (надёжно, без троттлинга) ---
     if os.environ.get('TG_API_ID') and os.environ.get('TG_API_HASH') and os.environ.get('TG_SESSION'):
