@@ -6125,53 +6125,91 @@ def _normalize_caps(title):
 
 
 def _llm_extract_impact(events):
-    """Изолированный fail-safe проход: для каждого события определяет
-    event_country (где ФИЗИЧЕСКИ произошло) и impact_countries (на кого ВЛИЯЕТ + тип влияния).
-    НЕ трогает country_code/country_codes/region. При сбое поля просто не добавляются."""
-    import os as _os, sys as _sys, json as _json, urllib.request as _u, re as _re
+    """Изолированный fail-safe проход: event_country (где ФИЗИЧЕСКИ произошло) +
+    impact_countries[{cc,type}] (на кого ВЛИЯЕТ). НЕ трогает country_code/region.
+    Пишет docs/_impact_debug.json для диагностики."""
+    import os as _os, sys as _sys, json as _json, urllib.request as _u, urllib.error as _ue, re as _re, time as _time
     key = _os.environ.get('OPENAI_API_KEY', '')
+    dbg = {'key': bool(key), 'events_total': len(events), 'todo': 0, 'batches': [], 'res_size': 0, 'tagged': 0, 'sample': {}}
+    def _dump():
+        try:
+            _p = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), 'docs', '_impact_debug.json')
+            with open(_p, 'w', encoding='utf-8') as _f:
+                _json.dump(dbg, _f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
     if not key or not events:
-        return events
+        _dump(); return events
     def _is_kev(e):
         return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('Активно эксплуатируемая')
     def _ok(x):
         return bool(_re.match(r'^[A-Z]{2}$', x or ''))
     sys_p = (
-        'Ты гео-аналитик рисков. Для каждого заголовка верни СТРОГО:\n'
-        '- "event": ISO-3166 alpha-2 страны, где событие ФИЗИЧЕСКИ произошло (место события, '
-        'НЕ упоминание/влияние). Если место не определяется или событие глобальное -- "GLOBAL".\n'
-        '- "impact": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, '
-        'КРОМЕ страны события. Если значимого внешнего влияния нет -- пустой массив [].\n'
-        '- "type": один тип влияния: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
-        'РАЗЛИЧАЙ место и влияние. Примеры: японский УЦ отзывает сертификаты российских сайтов -> '
+        'Ты гео-аналитик рисков. Для каждого объекта (по ключу i) верни СТРОГО:\n'
+        '- "event": ISO-3166 alpha-2 страны, где событие ФИЗИЧЕСКИ произошло (место, НЕ упоминание). '
+        'Если место не ясно или глобальное -- "GLOBAL".\n'
+        '- "impact": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, КРОМЕ страны события. '
+        'Нет влияния -- [].\n'
+        '- "type": один из: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
+        'РАЗЛИЧАЙ место и влияние. Японский УЦ отзывает сертификаты российских сайтов -> '
         '{"event":"JP","impact":["RU"],"type":"internet"}. Санкции США против Ирана -> '
-        '{"event":"US","impact":["IR"],"type":"economy"}. Засуха в Китае -> '
-        '{"event":"CN","impact":[],"type":"climate"}.\n'
-        'Ответ -- СТРОГО JSON-объект: ключ = i (строкой), значение = объект {"event","impact","type"}. '
-        'Без markdown и пояснений.')
+        '{"event":"US","impact":["IR"],"type":"economy"}.\n'
+        'Верни JSON-объект ВЕРХНЕГО УРОВНЯ, где КАЖДЫЙ ключ -- это i (строкой), а значение -- '
+        '{"event":..,"impact":[..],"type":..}. Без обёрток, без markdown, без пояснений.')
     todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
+    dbg['todo'] = len(todo)
     res = {}
-    B = 30
+    B = 20
     for s in range(0, len(todo), B):
         chunk = todo[s:s + B]
         payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
-        try:
-            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 1600, 'temperature': 0,
-                                'response_format': {'type': 'json_object'},
-                                'messages': [{'role': 'system', 'content': sys_p},
-                                             {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
-            r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
-            with _u.urlopen(r, timeout=45) as resp:
-                content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
-            for k, v in _json.loads(content).items():
-                try:
-                    if isinstance(v, dict):
-                        res[int(k)] = v
-                except Exception:
-                    pass
-        except Exception as _e:
-            print('  impact-LLM batch fail: %s' % _e, file=_sys.stderr)
+        binfo = {'n': len(chunk), 'ok': False, 'keys': 0, 'err': ''}
+        for attempt in range(2):
+            try:
+                body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 2500, 'temperature': 0,
+                                    'response_format': {'type': 'json_object'},
+                                    'messages': [{'role': 'system', 'content': sys_p},
+                                                 {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
+                r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
+                               headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
+                with _u.urlopen(r, timeout=60) as resp:
+                    content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
+                parsed = _json.loads(content)
+                # развернуть обёртки: {"results":{...}} или {"data":[...]}
+                if isinstance(parsed, dict) and len(parsed) == 1:
+                    only = list(parsed.values())[0]
+                    if isinstance(only, dict):
+                        parsed = only
+                    elif isinstance(only, list):
+                        tmp = {}
+                        for ob in only:
+                            if isinstance(ob, dict) and 'i' in ob:
+                                tmp[str(ob['i'])] = ob
+                        if tmp:
+                            parsed = tmp
+                if isinstance(parsed, list):
+                    tmp = {}
+                    for ob in parsed:
+                        if isinstance(ob, dict) and 'i' in ob:
+                            tmp[str(ob['i'])] = ob
+                    parsed = tmp
+                cnt = 0
+                for k, v in parsed.items():
+                    try:
+                        if isinstance(v, dict):
+                            res[int(k)] = v; cnt += 1
+                    except Exception:
+                        pass
+                binfo['ok'] = True; binfo['keys'] = cnt
+                break
+            except Exception as _e:
+                binfo['err'] = str(_e)[:120]
+                if attempt == 0:
+                    _time.sleep(2); continue
+                print('  impact-LLM batch fail: %s' % _e, file=_sys.stderr)
+        dbg['batches'].append(binfo)
+    dbg['res_size'] = len(res)
+    dbg['sample'] = {str(k): res[k] for k in list(res)[:5]}
     _VALID = {'infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none'}
     tagged = 0
     for i, e in enumerate(events):
@@ -6195,6 +6233,8 @@ def _llm_extract_impact(events):
             e['impact_countries'] = impact_list
         if e.get('event_country') or impact_list:
             tagged += 1
+    dbg['tagged'] = tagged
+    _dump()
     print('  LLM-impact: размечено %d из %d' % (tagged, len(events)), file=_sys.stderr)
     return events
 
