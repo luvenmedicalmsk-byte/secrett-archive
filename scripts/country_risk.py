@@ -114,13 +114,21 @@ def _match_events(events: list[dict], iso3: str) -> list[dict]:
     kw = meta["kw"]
     matched = []
     for ev in events:
-        text = (
-            (ev.get("title") or "") + " " +
-            (ev.get("region") or "") + " " +
-            (ev.get("summary") or "")
-        ).lower()
-        if any(k in text for k in kw):
-            matched.append(ev)
+        title = (ev.get("title") or "").lower()
+        region = (ev.get("region") or "").lower()
+        summary = (ev.get("summary") or "").lower()
+        if not any(k in (title + " " + region + " " + summary) for k in kw):
+            continue
+        # Причина попадания: где именно совпала страна
+        if any(k in region for k in kw):
+            reason = "location"   # регион указывает на страну -> событие произошло здесь
+        elif any(k in title for k in kw):
+            reason = "direct"     # страна прямо в заголовке -> прямо затрагивает
+        else:
+            reason = "context"    # только в тексте -> косвенное упоминание
+        e2 = dict(ev)
+        e2["_match_reason"] = reason
+        matched.append(e2)
     return matched
 
 
@@ -350,6 +358,7 @@ def build_country_profile(
                 "trend_direction":  e.get("trend_direction", ""),
                 "forecast_7d":      e.get("forecast_7d"),
                 "fingerprint":      e.get("fingerprint", ""),
+                "match_reason":     e.get("_match_reason", ""),
             }
             for e in hotspots
         ],
@@ -359,6 +368,7 @@ def build_country_profile(
                 "domain":  e.get("domain", ""),
                 "horizon": e.get("horizon", "долгосрочный"),
                 "score":   e.get("escalation_score", e.get("severity", 0)),
+                "match_reason": e.get("_match_reason", ""),
             }
             for e in struct_risks[:5]
         ],
