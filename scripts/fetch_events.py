@@ -3463,6 +3463,7 @@ def fetch_telegram():
                          ('естественн','убыл'),('сокращен','населен'),('карантин','школ'),('карантин','класс'),('карантин','детск')]
     # тех-источник: только инциденты/риски (как соц-фильтр), не пиар продуктов
     TECH_SRC = {'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews', 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru', 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel'}   # сюда добавить хендл профильного тех-инцидентного канала, когда найдётся
+    TECH_PURE = {'alertasdowndetector', 'dciber', 'ctinow'}   # тематически чистые: байпас риск-фильтра
     TECH_RISK_KW = ['кибератак','кибербез','взлом','шифровальщик','вымогател','фишинг','ддос','блэкаут',
                     'глонасс','эквайринг','импортозамещ','санкц','блокировк','уязвим','дипфейк',
                     'вредонос','троян','эксплойт','ботнет','бэкдор','майнер','хакер','деанон','осинт',
@@ -3470,7 +3471,7 @@ def fetch_telegram():
                     'ransomware','malware','breach','exploit','phishing',
                     'outage','offline','downtime','disruption','vulnerability','zero-day','cyberattack','data breach','threat actor','spyware','botnet',
                     'caída','caida','interrupción','interrupcion','fuera de servicio','no funciona','ataque','vulnerabilidad','filtración','hackeo',
-                    'queda','fora do ar','indisponível','indisponivel','interrupção','vazamento','invasão','vulnerabilidade','falha']
+                    'queda','fora do ar','indisponível','indisponivel','interrupção','vazamento','invasão','vulnerabilidade','falha','instabilidade','problemas','relatos','lentidão','caiu','golpe','fraude','brecha']
     TECH_RISK_PAIRS = [('утечк','данн'),('сбой','связ'),('перебои','связ'),('сбой','операт'),('отключен','интернет'),
                        ('дефицит','чип'),('дефицит','электрон'),('дефицит','полупровод'),('нехватк','чип'),('дефицит','кадр'),
                        ('сбой','цод'),('отказ','цод'),('сбой','облак'),('авари','энерг'),('отключен','электр'),
@@ -3498,7 +3499,7 @@ def fetch_telegram():
             _d = 'social'
         elif ch in TECH_SRC:
             is_trisk = any(k in tl for k in TECH_RISK_KW) or any(a in tl and b in tl for a,b in TECH_RISK_PAIRS)
-            if not is_trisk: return None        # тех-источник: только риск/инцидент, пиар отсекаем
+            if ch not in TECH_PURE and not is_trisk: return None        # тех-источник: только риск/инцидент (чистые каналы — байпас)
             _d = 'social' if is_srisk else 'technology'
         elif ch in ECON_SRC:
             is_erisk = any(k in tl for k in ECON_RISK_KW) or any(a in tl and b in tl for a,b in ECON_RISK_PAIRS)
