@@ -1810,6 +1810,26 @@ def process_events(raw_items):
         domain_counts[ev['domain']] = domain_counts.get(ev['domain'], 0) + 1
         _flood_added += 1
 
+    # S36.5b: резерв слотов под сбои сети/сервисов (Downdetector/IODA/Radar/NetBlocks) -- иначе тонут в tech-квоте за cyber-новостями
+    OUTAGE_RESERVE = 8
+    _outage_added = 0
+    def _is_outage(ev):
+        if ev.get('source') in ('Downdetector RU', 'Downdetector'): return True
+        _k = (ev.get('meta') or ev.get('_meta') or {}).get('kind', '')
+        return _k in ('ioda_outage', 'radar_anomaly', 'netblocks_outage', 'netblocks_throttle', 'netblocks_social')
+    for ev in events:  # отсортированы по severity desc -- берём топ-сбои (банки/госуслуги/телеком sev60 первыми)
+        if _outage_added >= OUTAGE_RESERVE: break
+        if ev['id'] in _flood_reserved: continue
+        if not _is_outage(ev): continue
+        try:
+            _ed = _date0.fromisoformat(ev.get('date','')[:10])
+            if (today - _ed).days > 14: continue
+        except: continue
+        balanced.append(ev)
+        _flood_reserved.add(ev['id'])
+        domain_counts[ev['domain']] = domain_counts.get(ev['domain'], 0) + 1
+        _outage_added += 1
+
     for ev in events:
         ev_date_str = ev.get('date', '')[:10]
         if not ev_date_str:
