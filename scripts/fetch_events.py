@@ -1912,6 +1912,7 @@ def process_events(raw_items):
         e['title'] = _soften_title(e.get('title','') or '')
         _cfm_n += 1
     print(f"  [S46/Этап8] подтверждённость скорректирована: {_cfm_n}", file=sys.stderr)
+    top_events = _llm_dedup(top_events, keep=3)
     top_events = _topic_cap(top_events, 6)
     print(f"  [Этап9] лимит на тему применён -> {len(top_events)}", file=sys.stderr)
     # Этап9b: кап на поток отдельных CISA KEV / CVE -- слишком гранулярно для систем-риск ленты
@@ -6167,6 +6168,58 @@ def _llm_extract_countries(events):
             fixed += 1
     print('  LLM-\u0441\u0442\u0440\u0430\u043d\u0430: \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u043e %d, \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 %d (\u0438\u0437 %d)' % (fixed, glob, len(events)), file=_sys.stderr)
     return events
+
+
+def _llm_dedup(events, keep=3):
+    """LLM-кластеризация одинаковых происшествий: одно реальное событие, размазанное
+    на много карточек, схлопывается до top-N по severity. Внутри домена. Fallback: без изменений."""
+    import os as _os, sys as _sys, json as _json, urllib.request as _u
+    from collections import defaultdict as _dd
+    key = _os.environ.get('OPENAI_API_KEY', '')
+    if not key or len(events) < 12:
+        return events
+    sys_p = ('Ты редактор новостной ленты. Сгруппируй заголовки по тому, описывают ли они ОДНО И ТО ЖЕ '
+             'конкретное происшествие (один инцидент/атака/удар/событие в одном месте и времени), даже если '
+             'формулировки, цифры и источники разные. Разные аспекты одного инцидента -> один кластер. '
+             'Разные события (даже в рамках одной темы или войны) -> РАЗНЫЕ кластеры. Если сомневаешься -- '
+             'считай события разными. Ответ -- СТРОГО JSON-объект: ключ = i как строка, значение = номер '
+             'кластера (целое). Уникальным событиям -- уникальные номера.')
+    by_dom = _dd(list)
+    for i, e in enumerate(events):
+        by_dom[e.get('domain') or ''].append(i)
+    drop = set()
+    for dom, idxs in by_dom.items():
+        if len(idxs) < 12:
+            continue
+        idxs = sorted(idxs, key=lambda i: -(events[i].get('severity') or 0))[:100]
+        payload = [{'i': i, 't': (events[i].get('title', '') or '')[:160]} for i in idxs]
+        clusters = {}
+        try:
+            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 1800, 'temperature': 0,
+                                'response_format': {'type': 'json_object'},
+                                'messages': [{'role': 'system', 'content': sys_p},
+                                             {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
+            r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
+                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
+            with _u.urlopen(r, timeout=60) as resp:
+                content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
+            for k, v in _json.loads(content).items():
+                try: clusters[int(k)] = int(v)
+                except Exception: pass
+        except Exception as _e:
+            print('  dedup-LLM fail (%s): %s' % (dom, _e), file=_sys.stderr); continue
+        members = _dd(list)
+        for i in idxs:
+            members[clusters.get(i, 'u%d' % i)].append(i)   # без метки -> свой уникальный
+        for cid, mem in members.items():
+            if len(mem) <= keep:
+                continue
+            mem.sort(key=lambda i: -(events[i].get('severity') or 0))
+            for i in mem[keep:]:
+                drop.add(i)
+    if drop:
+        print('  [Этап8.5] LLM-дедуп: схлопнуто %d дублей' % len(drop), file=sys.stderr)
+    return [e for i, e in enumerate(events) if i not in drop]
 
 
 def _risk_gate(events):
