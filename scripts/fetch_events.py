@@ -6171,19 +6171,24 @@ def _llm_extract_countries(events):
 
 
 def _llm_dedup(events, keep=3):
-    """LLM-кластеризация одинаковых происшествий: одно реальное событие, размазанное
-    на много карточек, схлопывается до top-N по severity. Внутри домена. Fallback: без изменений."""
+    """LLM-кластеризация одинаковых происшествий: одно событие, размазанное на много
+    карточек, схлопывается до top-N по severity. Внутри домена. Пишет docs/_dedup_debug.json."""
     import os as _os, sys as _sys, json as _json, urllib.request as _u
     from collections import defaultdict as _dd
     key = _os.environ.get('OPENAI_API_KEY', '')
+    dbg = {'key': bool(key), 'domains': {}}
     if not key or len(events) < 12:
+        dbg['skipped'] = 'no_key' if not key else 'too_few'
+        try: open('docs/_dedup_debug.json','w',encoding='utf-8').write(_json.dumps(dbg,ensure_ascii=False))
+        except Exception: pass
         return events
-    sys_p = ('Ты редактор новостной ленты. Сгруппируй заголовки по тому, описывают ли они ОДНО И ТО ЖЕ '
-             'конкретное происшествие (один инцидент/атака/удар/событие в одном месте и времени), даже если '
-             'формулировки, цифры и источники разные. Разные аспекты одного инцидента -> один кластер. '
-             'Разные события (даже в рамках одной темы или войны) -> РАЗНЫЕ кластеры. Если сомневаешься -- '
-             'считай события разными. Ответ -- СТРОГО JSON-объект: ключ = i как строка, значение = номер '
-             'кластера (целое). Уникальным событиям -- уникальные номера.')
+    sys_p = ('Ты редактор новостной ленты, убираешь повторы. Объедини в ОДИН кластер заголовки, которые '
+             'описывают одно и то же происшествие: та же атака/удар/инцидент в том же месте примерно в '
+             'то же время, даже если цифры, ракурс и источник разные (напр. «массированная атака дронов на '
+             'Москву», «Москва под обстрелом БПЛА», «137 дронов сбито над Москвой» -- ОДИН кластер). '
+             'Разные локации, разные объекты или разные дни -- РАЗНЫЕ кластеры. '
+             'Ответ -- СТРОГО JSON-объект: ключ = i (строка), значение = номер кластера (целое). '
+             'Одиночным уникальным событиям дай свой номер.')
     by_dom = _dd(list)
     for i, e in enumerate(events):
         by_dom[e.get('domain') or ''].append(i)
@@ -6193,34 +6198,40 @@ def _llm_dedup(events, keep=3):
             continue
         idxs = sorted(idxs, key=lambda i: -(events[i].get('severity') or 0))[:100]
         payload = [{'i': i, 't': (events[i].get('title', '') or '')[:160]} for i in idxs]
-        clusters = {}
+        clusters = {}; raw = ''
         try:
-            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 1800, 'temperature': 0,
+            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 4000, 'temperature': 0,
                                 'response_format': {'type': 'json_object'},
                                 'messages': [{'role': 'system', 'content': sys_p},
                                              {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
             r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
-            with _u.urlopen(r, timeout=60) as resp:
-                content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
-            for k, v in _json.loads(content).items():
+            with _u.urlopen(r, timeout=70) as resp:
+                raw = _json.loads(resp.read().decode())['choices'][0]['message']['content']
+            for k, v in _json.loads(raw).items():
                 try: clusters[int(k)] = int(v)
                 except Exception: pass
         except Exception as _e:
+            dbg['domains'][dom] = {'n': len(idxs), 'error': str(_e)[:120]}
             print('  dedup-LLM fail (%s): %s' % (dom, _e), file=_sys.stderr); continue
         members = _dd(list)
         for i in idxs:
-            members[clusters.get(i, 'u%d' % i)].append(i)   # без метки -> свой уникальный
+            members[clusters.get(i, 'u%d' % i)].append(i)
+        cut = 0
         for cid, mem in members.items():
-            if len(mem) <= keep:
-                continue
+            if len(mem) <= keep: continue
             mem.sort(key=lambda i: -(events[i].get('severity') or 0))
             for i in mem[keep:]:
-                drop.add(i)
+                drop.add(i); cut += 1
+        big = sorted([(len(v),k) for k,v in members.items()], reverse=True)[:5]
+        dbg['domains'][dom] = {'n': len(idxs), 'n_clusters': len(set(clusters.values())) if clusters else 0,
+                               'parsed': len(clusters), 'cut': cut, 'top_clusters': big}
     if drop:
-        print('  [Этап8.5] LLM-дедуп: схлопнуто %d дублей' % len(drop), file=sys.stderr)
+        print('  [Этап8.5] LLM-дедуп: схлопнуто %d' % len(drop), file=sys.stderr)
+    dbg['total_cut'] = len(drop)
+    try: open('docs/_dedup_debug.json','w',encoding='utf-8').write(_json.dumps(dbg,ensure_ascii=False))
+    except Exception: pass
     return [e for i, e in enumerate(events) if i not in drop]
-
 
 def _risk_gate(events):
     """LLM-гейт риск/шум для пайплайна. Финальный отсев шума (реклама/культура/
