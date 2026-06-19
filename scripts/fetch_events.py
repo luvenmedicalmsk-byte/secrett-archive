@@ -1654,7 +1654,7 @@ def process_events(raw_items):
                 # S36.6: не в океан, а на страну-«дом» источника / Россию для Telegram
                 _src = item.get('source', '')
                 _home = _source_home(_src, item.get('title', ''))
-                if str(_src).startswith('Telegram'):
+                if str(_src).startswith('Telegram') or _src == 'Downdetector RU':
                     lat, lng, region = _ru_default(item['title']); _LOSS['global_marker']+=1
                 elif _home:
                     lat, lng, region = _home; _LOSS['global_marker']+=1
