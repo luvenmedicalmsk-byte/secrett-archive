@@ -2,60 +2,60 @@
   "country": "IR",
   "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-19T16:38:13.574822+00:00",
+  "generated_at": "2026-06-19T18:19:07.533941+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 58,
+      "score": 59,
       "props": {
-        "risk_score": 58
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 30,
-      "trend": "down"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 34,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 9,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 9,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,9 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Министр_ин",
+      "id": "SIGNAL-IR-Трамп_заяв",
       "type": "Signal",
-      "label": "Министр иностранных дел Франции: Париж п",
+      "label": "Трамп заявил, что разочаровался в Мелони",
       "severity": 62,
       "domain": "geopolitical"
     },
@@ -94,9 +94,9 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-IR-Как_14-пун",
+      "id": "SIGNAL-IR-Трафик_суд",
       "type": "Signal",
-      "label": "Как 14-пунктовая сделка Трампа с Ираном ",
+      "label": "Трафик судов в Ормузе растет после согла",
       "severity": 55,
       "domain": "geopolitical"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-IR",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IR",
@@ -163,7 +163,28 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Министр_ин",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Трамп_заяв",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
@@ -175,7 +196,7 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-IR-Как_14-пун",
+      "from": "SIGNAL-IR-Трафик_суд",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.55
