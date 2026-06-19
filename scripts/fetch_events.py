@@ -538,11 +538,21 @@ def fetch_url(url, timeout=20, headers=None, retries=1):
 
 def parse_date(s):
     if not s: return datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    for fmt in ['%a, %d %b %Y %H:%M:%S %z','%a, %d %b %Y %H:%M:%S %Z',
-                '%Y-%m-%dT%H:%M:%SZ','%Y-%m-%dT%H:%M:%S%z','%Y-%m-%d']:
+    s = str(s).strip()
+    if s.isdigit():                                   # эпоха (сек или мс)
         try:
-            return datetime.strptime(s.strip(), fmt).strftime('%Y-%m-%d')
+            v = int(s); v = v/1000.0 if v > 1e11 else float(v)
+            return datetime.fromtimestamp(v, timezone.utc).strftime('%Y-%m-%d')
         except: pass
+    for fmt in ['%a, %d %b %Y %H:%M:%S %z','%a, %d %b %Y %H:%M:%S %Z',
+                '%Y-%m-%dT%H:%M:%S.%f%z','%Y-%m-%dT%H:%M:%S.%fZ',
+                '%Y-%m-%dT%H:%M:%S%z','%Y-%m-%dT%H:%M:%SZ','%Y-%m-%d']:
+        try:
+            return datetime.strptime(s, fmt).strftime('%Y-%m-%d')
+        except: pass
+    try:                                              # общий ISO-фолбэк (Z -> +00:00)
+        return datetime.fromisoformat(s.replace('Z','+00:00')).strftime('%Y-%m-%d')
+    except: pass
     return datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
 
