@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-19T09:16:53.608450+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-19T09:29:49.152119+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 55,
+      "score": 57,
       "props": {
-        "risk_score": 55
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -78,6 +78,27 @@
       "id": "DRIVER-IN-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-IN-Лесной_пож",
+      "type": "Signal",
+      "label": "Лесной пожар в Гренландии",
+      "severity": 64,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IN-Российские",
+      "type": "Signal",
+      "label": "Российские средства ПВО сбили 8 крылатых",
+      "severity": 60,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IN-Китайская_",
+      "type": "Signal",
+      "label": "Китайская экономика: В промышленности вс",
+      "severity": 44,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -85,19 +106,19 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-IN",
@@ -109,13 +130,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IN",
@@ -140,6 +161,87 @@
       "to": "COUNTRY-IN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-IN-Лесной_пож",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-IN-Российские",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-IN-Китайская_",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.44
     }
   ]
 }
