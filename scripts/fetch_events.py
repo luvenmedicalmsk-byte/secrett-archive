@@ -3535,10 +3535,8 @@ def fetch_telegram():
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
-        _out = {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
+        return {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
                 'source': TG_DISPLAY.get(ch, f'Telegram/{ch}'), 'source_bias': 5, '_domain': _d}
-        if ch in DD_SRC: _out['_force_severity'] = 42   # Downdetector: пред-отфильтрован, минуем S42
-        return _out
 
     # --- Транспорт 1: MTProto через Telethon (надёжно, без троттлинга) ---
     if os.environ.get('TG_API_ID') and os.environ.get('TG_API_HASH') and os.environ.get('TG_SESSION'):
