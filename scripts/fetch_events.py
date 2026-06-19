@@ -1912,7 +1912,7 @@ def process_events(raw_items):
         e['title'] = _soften_title(e.get('title','') or '')
         _cfm_n += 1
     print(f"  [S46/Этап8] подтверждённость скорректирована: {_cfm_n}", file=sys.stderr)
-    top_events = _topic_cap(top_events, 10)
+    top_events = _topic_cap(top_events, 6)
     print(f"  [Этап9] лимит на тему применён -> {len(top_events)}", file=sys.stderr)
     # Этап9b: кап на поток отдельных CISA KEV / CVE -- слишком гранулярно для систем-риск ленты
     def _is_kev(e):
@@ -1989,7 +1989,7 @@ def _ndup_collapse(events):
             if k['dom']!=(e.get('domain') or ''): continue
             if et is not None and k['t'] is not None and abs(et-k['t'])>3: continue
             inter,ratio=_ndup_ovl(ew,k['words'])
-            if inter>=4 and ratio>=0.6: dup=idx; break
+            if inter>=3 and ratio>=0.55: dup=idx; break
         if dup<0:
             kept.append({'dom':(e.get('domain') or ''),'t':et,'words':ew,'idx':len(out)}); out.append(e)
         else:
