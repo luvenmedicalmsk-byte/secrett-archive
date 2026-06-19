@@ -2,67 +2,67 @@
   "country": "BY",
   "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-19T21:44:03.190466+00:00",
+  "generated_at": "2026-06-19T22:46:21.024185+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-BY",
       "type": "Country",
       "label": "BY",
-      "score": 48,
+      "score": 51,
       "props": {
-        "risk_score": 48
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-BY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-BY-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-BY-Зеленский_",
+      "type": "Signal",
+      "label": "Зеленский угрожает нанести удары по Бела",
+      "severity": 55,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-BY-Темпы_рост",
       "type": "Signal",
       "label": "Темпы роста розничных цен на бензин АИ-9",
       "severity": 42,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-BY-У_Лукашенк",
-      "type": "Signal",
-      "label": "У Лукашенко есть неделя вывести технику ",
-      "severity": 42,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-BY",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-BY",
@@ -163,20 +163,41 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-BY-geopolitical",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-BY-Во_Франции",
       "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-BY-Темпы_рост",
-      "to": "DOMAIN-BY-economic",
+      "from": "SIGNAL-BY-Зеленский_",
+      "to": "DOMAIN-BY-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.55
     },
     {
-      "from": "SIGNAL-BY-У_Лукашенк",
-      "to": "DOMAIN-BY-geopolitical",
+      "from": "SIGNAL-BY-Темпы_рост",
+      "to": "DOMAIN-BY-economic",
       "type": "AMPLIFIES",
       "weight": 0.42
     }
