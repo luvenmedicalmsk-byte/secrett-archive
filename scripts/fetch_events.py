@@ -6264,7 +6264,8 @@ def _risk_gate(events):
     GATE_MAX = 62
     cand = [e for e in events
             if isinstance(e.get('severity'), (int, float)) and e['severity'] < GATE_MAX
-            and not (e.get('meta') or {}).get('verified')][:120]
+            and not (e.get('meta') or {}).get('verified')
+            and e.get('_force_severity') is None][:120]
     if not cand:
         return events
     sys_p = ('Ты — фильтр платформы мониторинга СИСТЕМНЫХ РИСКОВ. Для каждого элемента входного '
