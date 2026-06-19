@@ -6236,7 +6236,7 @@ def _llm_dedup(events, keep=3):
             mem.sort(key=lambda i: -(events[i].get('severity') or 0))
             for i in mem[keep:]:
                 drop.add(i); cut += 1
-        big = sorted([(len(v),k) for k,v in members.items()], reverse=True)[:5]
+        big = sorted([[len(v), str(k)] for k, v in members.items()], key=lambda x: -x[0])[:5]
         dbg['domains'][dom] = {'n': len(idxs), 'n_clusters': len(set(clusters.values())) if clusters else 0,
                                'parsed': len(clusters), 'cut': cut, 'top_clusters': big}
     if drop:
