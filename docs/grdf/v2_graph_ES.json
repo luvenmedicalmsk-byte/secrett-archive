@@ -2,77 +2,67 @@
   "country": "ES",
   "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-19T08:38:15.018999+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-19T09:16:53.613142+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 22,
+      "score": 50,
       "props": {
-        "risk_score": 22
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 15,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "down"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": -32,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-ES-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "DRIVER-ES-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ES-Geopolitical",
@@ -80,11 +70,14 @@
       "label": "Geopolitical"
     },
     {
-      "id": "SIGNAL-ES-Зеленый_ур",
-      "type": "Signal",
-      "label": "Зеленый уровень угрозы наводнения в Испа",
-      "severity": 22,
-      "domain": "climate"
+      "id": "DRIVER-ES-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "DRIVER-ES-Economic",
+      "type": "Driver",
+      "label": "Economic"
     }
   ],
   "edges": [
@@ -92,19 +85,19 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": -0.32
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-ES",
@@ -116,13 +109,13 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-ES",
@@ -131,28 +124,43 @@
       "weight": 0.03
     },
     {
-      "from": "DRIVER-ES-Economic",
-      "to": "COUNTRY-ES",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-ES-Economic",
-      "to": "COUNTRY-ES",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-ES-Geopolitical",
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-ES-Зеленый_ур",
-      "to": "DOMAIN-ES-climate",
+      "from": "DRIVER-ES-Economic",
+      "to": "COUNTRY-ES",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-ES-Economic",
+      "to": "COUNTRY-ES",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.22
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
