@@ -2010,6 +2010,7 @@ def save(events):
         except Exception: pass
     _save_tr_disk()
     events = _llm_extract_countries(events)
+    events = _llm_extract_impact(events)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -6121,6 +6122,81 @@ def _normalize_caps(title):
         else: res.append(ch)
         if ch in '.!?:\n': cap=True
     return ''.join(res)
+
+
+def _llm_extract_impact(events):
+    """Изолированный fail-safe проход: для каждого события определяет
+    event_country (где ФИЗИЧЕСКИ произошло) и impact_countries (на кого ВЛИЯЕТ + тип влияния).
+    НЕ трогает country_code/country_codes/region. При сбое поля просто не добавляются."""
+    import os as _os, sys as _sys, json as _json, urllib.request as _u, re as _re
+    key = _os.environ.get('OPENAI_API_KEY', '')
+    if not key or not events:
+        return events
+    def _is_kev(e):
+        return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('Активно эксплуатируемая')
+    def _ok(x):
+        return bool(_re.match(r'^[A-Z]{2}$', x or ''))
+    sys_p = (
+        'Ты гео-аналитик рисков. Для каждого заголовка верни СТРОГО:\n'
+        '- "event": ISO-3166 alpha-2 страны, где событие ФИЗИЧЕСКИ произошло (место события, '
+        'НЕ упоминание/влияние). Если место не определяется или событие глобальное -- "GLOBAL".\n'
+        '- "impact": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, '
+        'КРОМЕ страны события. Если значимого внешнего влияния нет -- пустой массив [].\n'
+        '- "type": один тип влияния: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
+        'РАЗЛИЧАЙ место и влияние. Примеры: японский УЦ отзывает сертификаты российских сайтов -> '
+        '{"event":"JP","impact":["RU"],"type":"internet"}. Санкции США против Ирана -> '
+        '{"event":"US","impact":["IR"],"type":"economy"}. Засуха в Китае -> '
+        '{"event":"CN","impact":[],"type":"climate"}.\n'
+        'Ответ -- СТРОГО JSON-объект: ключ = i (строкой), значение = объект {"event","impact","type"}. '
+        'Без markdown и пояснений.')
+    todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
+    res = {}
+    B = 30
+    for s in range(0, len(todo), B):
+        chunk = todo[s:s + B]
+        payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
+        try:
+            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 1600, 'temperature': 0,
+                                'response_format': {'type': 'json_object'},
+                                'messages': [{'role': 'system', 'content': sys_p},
+                                             {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
+            r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
+                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
+            with _u.urlopen(r, timeout=45) as resp:
+                content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
+            for k, v in _json.loads(content).items():
+                try:
+                    if isinstance(v, dict):
+                        res[int(k)] = v
+                except Exception:
+                    pass
+        except Exception as _e:
+            print('  impact-LLM batch fail: %s' % _e, file=_sys.stderr)
+    _VALID = {'infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none'}
+    tagged = 0
+    for i, e in enumerate(events):
+        v = res.get(i)
+        if not isinstance(v, dict):
+            continue
+        ev_cc = str(v.get('event', '') or '').upper().strip()
+        typ = str(v.get('type', '') or '').lower().strip()
+        if typ not in _VALID:
+            typ = 'none'
+        if ev_cc == 'GLOBAL' or _ok(ev_cc):
+            e['event_country'] = ev_cc
+        impact_list = []
+        imp = v.get('impact') or []
+        if isinstance(imp, list):
+            for cc2 in imp[:3]:
+                cc2 = str(cc2).upper().strip()
+                if _ok(cc2) and cc2 != e.get('event_country'):
+                    impact_list.append({'cc': cc2, 'type': typ})
+        if impact_list:
+            e['impact_countries'] = impact_list
+        if e.get('event_country') or impact_list:
+            tagged += 1
+    print('  LLM-impact: размечено %d из %d' % (tagged, len(events)), file=_sys.stderr)
+    return events
 
 
 def _llm_extract_countries(events):
