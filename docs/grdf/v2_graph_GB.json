@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-19T12:59:38.118783+00:00",
+  "generated_at": "2026-06-19T13:56:45.856715+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 52,
+      "score": 56,
       "props": {
-        "risk_score": 52
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-В_Великобр",
+      "type": "Signal",
+      "label": "В Великобритании происходит дворцовый пе",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-Америка,_н",
       "type": "Signal",
       "label": "Америка, не такая великая снова: Эта вой",
@@ -92,13 +99,6 @@
       "label": "Великобритания закупит для Украины до ко",
       "severity": 54,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GB-Сообщается",
-      "type": "Signal",
-      "label": "Сообщается о взрывах и продолжительной с",
-      "severity": 50,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-GB",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-В_Великобр",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-GB-Америка,_н",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-GB-Сообщается",
-      "to": "DOMAIN-GB-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }

@@ -2,9 +2,9 @@
   "country": "IN",
   "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-19T12:59:38.123039+00:00",
+  "generated_at": "2026-06-19T13:56:45.861515+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "down"
+      "score": 40,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IN-Российские",
+      "id": "SIGNAL-IN-Не_менее_2",
       "type": "Signal",
-      "label": "Российские средства ПВО сбили 8 крылатых",
-      "severity": 60,
+      "label": "Не менее 24 человек погибли в Кашмире в ",
+      "severity": 58,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IN-Лесной_пож",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-IN-Российские",
+      "from": "SIGNAL-IN-Не_менее_2",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.58
     }
   ]
 }
