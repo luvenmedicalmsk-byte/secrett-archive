@@ -3553,11 +3553,11 @@ def fetch_telegram():
             from telethon.sessions import StringSession
             api_id = int(os.environ['TG_API_ID']); api_hash = os.environ['TG_API_HASH']
             _raw = {}
-            with TelegramClient(StringSession(os.environ['TG_SESSION']), api_id, api_hash) as client:
+            with TelegramClient(StringSession(os.environ['TG_SESSION']), api_id, api_hash, flood_sleep_threshold=20) as client:
                 for ch in channels:
                     nraw = 0
                     try:
-                        for msg in client.iter_messages(ch, limit=200):
+                        for msg in client.iter_messages(ch, limit=60):
                             nraw += 1
                             it = _build(ch, msg.message or '', getattr(msg, 'date', None))
                             if it: items.append(it)
