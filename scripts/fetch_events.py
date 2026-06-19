@@ -6190,9 +6190,14 @@ def _llm_dedup(events, keep=3):
              'Ответ -- СТРОГО JSON-объект: ключ = i (строка), значение = номер кластера (целое). '
              'Одиночным уникальным событиям дай свой номер.')
     _PROT_SRC = {'CISA KEV','IODA','Cloudflare Radar','Copernicus EMS','USGS','GDACS/UN','NetBlocks','EMSC','NASA EONET','Росгидромет CAP'}
+    _PROT_TITLE = ('Падение интернет-связи','Аномалия трафика','Активно эксплуатируемая','Уязвимость промышленной','Землетрясение M','Пожарная опасность','Очень высокая температура','Наводнение:','Сильный ветер','Метель','Заморозк','CISA KEV','Отключение интернета','Ограничение соцсетей')
     def _prot(e):
-        mt = e.get('meta') or {}
-        return bool(mt.get('verified')) or mt.get('kind') in ('ioda_outage','radar_anomaly','cems','rosgidromet_cap','netblocks_outage','netblocks_throttle','netblocks_social','kev') or e.get('source') in _PROT_SRC
+        mt = e.get('meta') or e.get('_meta') or {}
+        if mt.get('verified') or mt.get('kind') in ('ioda_outage','radar_anomaly','cems','rosgidromet_cap','netblocks_outage','netblocks_throttle','netblocks_social','kev'):
+            return True
+        if e.get('source') in _PROT_SRC or e.get('_force_severity') is not None:
+            return True
+        return (e.get('title') or '').startswith(_PROT_TITLE)
     by_dom = _dd(list)
     for i, e in enumerate(events):
         if _prot(e):
