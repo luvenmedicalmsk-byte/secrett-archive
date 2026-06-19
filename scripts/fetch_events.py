@@ -1337,7 +1337,7 @@ _SIG_RE = re.compile(
     r'спутник|глонасс|gps|нейросет|блэкаут|энергосет|подстанц|телеком|платёжн|'
     r'шатдаун|shutdown|связност|outage|connectivity|throttl|telecom|telecom disrupt|national outage|social media restrict|'
     r'отключ\w* (?:интернет|связ|сет|электро)|блокир\w* (?:соцсет|интернет|telegram|youtube|whatsapp|инстаграм|мессендж)|'
-    r'ограничен\w* соцсет|сбой свя|сбой сет|сбой интернет|перебо\w* (?:со связ|связ|с интернет|интернет)|обрыв кабел|замедлен\w* интернет|веерн\w* отключ|'
+    r'ограничен\w* соцсет|сбой свя|сбой сет|сбой интернет|проблемы в работе|возможны проблемы|сообщают о проблем|сообщают о сбо|перебои в работе|недоступ|не работает у|перебо\w* (?:со связ|связ|с интернет|интернет)|обрыв кабел|замедлен\w* интернет|веерн\w* отключ|'
     r'погиб|жертв|killed|dead|пострадал|эвакуац|чрезвычайн|режим чс|разрушен|обрушен|катастроф|disaster|'
     r'наводнен|землетряс|ураган|цунами|радиац|nuclear|пожар|шторм',
     re.IGNORECASE)
@@ -6189,8 +6189,14 @@ def _llm_dedup(events, keep=3):
              'Разные локации, разные объекты или разные дни -- РАЗНЫЕ кластеры. '
              'Ответ -- СТРОГО JSON-объект: ключ = i (строка), значение = номер кластера (целое). '
              'Одиночным уникальным событиям дай свой номер.')
+    _PROT_SRC = {'CISA KEV','IODA','Cloudflare Radar','Copernicus EMS','USGS','GDACS/UN','NetBlocks','EMSC','NASA EONET','Росгидромет CAP'}
+    def _prot(e):
+        mt = e.get('meta') or {}
+        return bool(mt.get('verified')) or mt.get('kind') in ('ioda_outage','radar_anomaly','cems','rosgidromet_cap','netblocks_outage','netblocks_throttle','netblocks_social','kev') or e.get('source') in _PROT_SRC
     by_dom = _dd(list)
     for i, e in enumerate(events):
+        if _prot(e):
+            continue   # машинные/структурные сигналы (по стране/CVE) -- НЕ дедупим, это разные события
         by_dom[e.get('domain') or ''].append(i)
     drop = set()
     for dom, idxs in by_dom.items():
