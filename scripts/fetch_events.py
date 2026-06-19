@@ -1939,6 +1939,8 @@ def process_events(raw_items):
             'raw_by_source': dict(_c2.Counter(i.get('source','') for i in raw_items)),
             'built_by_source': dict(_c2.Counter(e.get('source','') for e in events)),
             'final_by_source': dict(_c2.Counter(e.get('source','') for e in top_events)),
+            'dd_dates': dict(_c2.Counter(i.get('date','') for i in raw_items if i.get('source')=='Downdetector RU')),
+            'dd_titles': [i.get('title','')[:60] for i in raw_items if i.get('source')=='Downdetector RU'][:8],
             'final_outage': dict(_c2.Counter(str((e.get('meta') or {}).get('kind','')) for e in top_events if str((e.get('meta') or {}).get('kind','')).startswith(('ioda','radar','netblocks')))),
         }, ensure_ascii=False, indent=2), encoding='utf-8')
     except Exception as _e:
