@@ -5,6 +5,10 @@ on:
     - cron: '*/30 * * * *'   # каждые 30 минут
   workflow_dispatch:
 
+concurrency:
+  group: update-events-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   update-events:
     runs-on: ubuntu-latest
@@ -97,7 +101,7 @@ jobs:
             COUNT=${{ steps.healthcheck.outputs.events_count }}
             git commit -m "Карта сигналов · $TIMESTAMP · ${COUNT} событий"
             git pull --rebase origin main
-            git push
+            git push || (sleep 3 && git pull --rebase origin main && git push) || (sleep 6 && git pull --rebase origin main && git push)
           fi
 
       - name: Telegram alert
