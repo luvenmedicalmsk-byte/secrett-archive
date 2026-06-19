@@ -1992,7 +1992,7 @@ def _ndup_collapse(events):
             if k['dom']!=(e.get('domain') or ''): continue
             if et is not None and k['t'] is not None and abs(et-k['t'])>3: continue
             inter,ratio=_ndup_ovl(ew,k['words'])
-            if inter>=3 and ratio>=0.55: dup=idx; break
+            if inter>=4 and ratio>=0.6: dup=idx; break
         if dup<0:
             kept.append({'dom':(e.get('domain') or ''),'t':et,'words':ew,'idx':len(out)}); out.append(e)
         else:
