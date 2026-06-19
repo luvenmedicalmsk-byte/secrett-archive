@@ -1,61 +1,61 @@
 {
   "country": "IR",
-  "date": "2026-06-18",
+  "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-18T22:31:32.291929+00:00",
+  "generated_at": "2026-06-19T00:12:28.675399+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 61,
+      "score": 60,
       "props": {
-        "risk_score": 61
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "up"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 34,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-SSL_по_сан",
-      "type": "Signal",
-      "label": "SSL по санкционному списку: Let’s Encryp",
-      "severity": 65,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IR-Более_15_с",
       "type": "Signal",
       "label": "Более 15 стран, включая Японию, Канаду, ",
@@ -99,6 +92,13 @@
       "label": "Хакеры, связанные с Ираном, взломали лич",
       "severity": 65,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-IR-Филиппинск",
+      "type": "Signal",
+      "label": "Филиппинские и тайские доходы: Юго-Восто",
+      "severity": 62,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IR",
@@ -163,33 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-IR-geopolitical",
-      "to": "DOMAIN-IR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IR-infrastructure",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IR-economic",
-      "to": "DOMAIN-IR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-IR-SSL_по_сан",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.65
-    },
-    {
       "from": "SIGNAL-IR-Более_15_с",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -200,6 +173,12 @@
       "to": "DOMAIN-IR-technology",
       "type": "AMPLIFIES",
       "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-IR-Филиппинск",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
