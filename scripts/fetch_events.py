@@ -3535,8 +3535,10 @@ def fetch_telegram():
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
-        return {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
+        _out = {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
                 'source': TG_DISPLAY.get(ch, f'Telegram/{ch}'), 'source_bias': 5, '_domain': _d}
+        if ch in DD_SRC: _out['_force_severity'] = 42   # Downdetector: пред-отфильтрован, минуем S42
+        return _out
 
     # --- Транспорт 1: MTProto через Telethon (надёжно, без троттлинга) ---
     if os.environ.get('TG_API_ID') and os.environ.get('TG_API_HASH') and os.environ.get('TG_SESSION'):
@@ -6205,6 +6207,8 @@ def _llm_dedup(events, keep=3):
         by_dom[e.get('domain') or ''].append(i)
     drop = set()
     for dom, idxs in by_dom.items():
+        if dom in ('climate', 'technology'):
+            continue   # структурные домены (погода/квейки/KEV/IODA per-страна/CVE) -- НИКОГДА не дедупим
         if len(idxs) < 12:
             continue
         idxs = sorted(idxs, key=lambda i: -(events[i].get('severity') or 0))[:100]
