@@ -6213,7 +6213,7 @@ def _llm_dedup(events, keep=3):
         by_dom[e.get('domain') or ''].append(i)
     drop = set()
     for dom, idxs in by_dom.items():
-        if dom in ('climate', 'technology'):
+        if dom == 'climate':
             continue   # структурные домены (погода/квейки/KEV/IODA per-страна/CVE) -- НИКОГДА не дедупим
         if len(idxs) < 12:
             continue
