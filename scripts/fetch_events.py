@@ -2942,7 +2942,13 @@ def fetch_copernicus_ems():
             n_aois = int(a.get('n_aois') or 0)
             n_products = int(a.get('n_products') or 0)
             # Дата -- самая свежая из доступных (продолжающиеся активации не выпадают из окна 14 дней)
-            d = parse_date(a.get('lastUpdate') or a.get('activationTime') or a.get('eventTime') or '')
+            d = parse_date(a.get('activationTime') or a.get('eventTime') or a.get('lastUpdate') or '')
+            try:
+                _age = (datetime.now(timezone.utc).date() - datetime.fromisoformat((d or '')[:10]).date()).days
+            except Exception:
+                _age = 0
+            if (closed and _age > 10) or _age > 30:
+                continue   # архив: закрытые старше 10 дней / любые старше 30 дней -- не текущий сигнал
 
             # Severity: официальная активация = подтверждённое крупное бедствие.
             sev = 60
@@ -3489,7 +3495,7 @@ def fetch_telegram():
     _tg_err = None
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
-    def _build(ch, text):
+    def _build(ch, text, msg_date=None):
         text = (text or '').strip()
         if len(text) < 20: return None
         tl = text[:200].lower()
@@ -3508,7 +3514,7 @@ def fetch_telegram():
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
-        return {'title': text[:240], 'desc': text[:1200], 'date': today,
+        return {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
                 'source': TG_DISPLAY.get(ch, f'Telegram/{ch}'), 'source_bias': 5, '_domain': _d}
 
     # --- Транспорт 1: MTProto через Telethon (надёжно, без троттлинга) ---
@@ -3524,7 +3530,7 @@ def fetch_telegram():
                     try:
                         for msg in client.iter_messages(ch, limit=200):
                             nraw += 1
-                            it = _build(ch, msg.message or '')
+                            it = _build(ch, msg.message or '', getattr(msg, 'date', None))
                             if it: items.append(it)
                         _raw[ch] = {'raw': nraw}
                     except Exception as e:
