@@ -3466,11 +3466,11 @@ def fetch_telegram():
                 'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
                 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
                 'sterngang', 'Ateobreaking',
-                'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
+                'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel', 'ru_downdetector_su']
     TG_DISPLAY = {'ecotopor':'T Live','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
-                  'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN'}
+                  'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU'}
     # соц-источники: пропускаем ТОЛЬКО риск-сигналы (пиар/нейтральное отсекаем)
     SOCIAL_SRC = {'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                   'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography', 'sterngang'}
@@ -3485,8 +3485,10 @@ def fetch_telegram():
                          ('долг','зарплат'),('рождаемост','упал'),('рождаемост','сниз'),('смертност','рекорд'),
                          ('естественн','убыл'),('сокращен','населен'),('карантин','школ'),('карантин','класс'),('карантин','детск')]
     # тех-источник: только инциденты/риски (как соц-фильтр), не пиар продуктов
-    TECH_SRC = {'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews', 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru', 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel'}   # сюда добавить хендл профильного тех-инцидентного канала, когда найдётся
-    TECH_PURE = {'alertasdowndetector', 'dciber', 'ctinow'}   # тематически чистые: байпас риск-фильтра
+    TECH_SRC = {'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews', 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru', 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel', 'ru_downdetector_su'}   # сюда добавить хендл профильного тех-инцидентного канала, когда найдётся
+    TECH_PURE = {'alertasdowndetector', 'dciber', 'ctinow', 'ru_downdetector_su'}   # тематически чистые: байпас риск-фильтра
+    DD_SRC = {'ru_downdetector_su', 'alertasdowndetector'}   # Downdetector: чистые сбои, но режем игры/стримы/развлечения
+    DD_BLOCK = ('steam','roblox','fortnite','minecraft','genshin','counter-strike','cs2','dota','playstation','xbox','epic games','battle.net','warface','world of tanks','warzone','valorant','гейм','game','игра','игры','игров','vk видео','вк видео','vk-видео','rutube','рутуб','twitch','твич','кинопоиск','okko','окко','netflix','нетфликс','spotify','спотифай','discord','дискорд','tiktok','тикток','музык','стрим','развлек')
     TECH_RISK_KW = ['кибератак','кибербез','взлом','шифровальщик','вымогател','фишинг','ддос','блэкаут',
                     'глонасс','эквайринг','импортозамещ','санкц','блокировк','уязвим','дипфейк',
                     'вредонос','троян','эксплойт','ботнет','бэкдор','майнер','хакер','деанон','осинт',
@@ -3516,6 +3518,7 @@ def fetch_telegram():
         text = (text or '').strip()
         if len(text) < 20: return None
         tl = text[:200].lower()
+        if ch in DD_SRC and any(w in tl for w in DD_BLOCK): return None   # Downdetector: блок игр/стримов/VK-видео
         is_srisk = any(k in tl for k in SOCIAL_RISK_KW) or any(a in tl and b in tl for a,b in SOCIAL_RISK_PAIRS)
         if ch in SOCIAL_SRC:
             if not is_srisk: return None
