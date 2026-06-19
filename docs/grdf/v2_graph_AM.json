@@ -2,31 +2,31 @@
   "country": "AM",
   "date": "2026-06-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-19T09:48:17.818439+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-19T10:14:03.391353+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-AM",
       "type": "Country",
       "label": "AM",
-      "score": 41,
+      "score": 42,
       "props": {
-        "risk_score": 41
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-AM-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
+      "score": 40,
       "trend": "up"
     },
     {
       "id": "DOMAIN-AM-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 48,
+      "score": 36,
       "trend": "up"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-AM-social",
       "type": "Domain",
       "label": "social",
-      "score": 31,
+      "score": 32,
       "trend": "up"
     },
     {
@@ -65,14 +65,14 @@
       "trend": "up"
     },
     {
-      "id": "DRIVER-AM-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-AM-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-AM-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "DRIVER-AM-social",
@@ -85,13 +85,6 @@
       "label": "Ограничения на экспорт армянской продукц",
       "severity": 42,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-AM-Транспортн",
-      "type": "Signal",
-      "label": "Транспортное сообщение с Крымом и Арабат",
-      "severity": 38,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -99,13 +92,13 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-economic",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-AM",
@@ -123,7 +116,7 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-social",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-AM",
@@ -138,13 +131,13 @@
       "weight": 0.25
     },
     {
-      "from": "DRIVER-AM-economic",
+      "from": "DRIVER-AM-geopolitical",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AM-geopolitical",
+      "from": "DRIVER-AM-economic",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
@@ -156,16 +149,31 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-AM-geopolitical",
+      "to": "DOMAIN-AM-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AM-infrastructure",
+      "to": "DOMAIN-AM-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AM-economic",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-AM-Ограничени",
       "to": "DOMAIN-AM-economic",
       "type": "AMPLIFIES",
       "weight": 0.42
-    },
-    {
-      "from": "SIGNAL-AM-Транспортн",
-      "to": "DOMAIN-AM-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.38
     }
   ]
 }
