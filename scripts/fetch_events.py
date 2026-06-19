@@ -3489,7 +3489,7 @@ def fetch_telegram():
                 'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
                 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
                 'sterngang', 'Ateobreaking',
-                'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel', 'ru_downdetector_su']
+                'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
     TG_DISPLAY = {'ecotopor':'T Live','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
