@@ -4048,6 +4048,7 @@ def fetch_copernicus_floods():
                 if 'красн' in _tl or 'red alert' in _tl or 'red flood' in _tl: _alert = 'red'
                 elif 'оранжев' in _tl or 'orange alert' in _tl or 'orange flood' in _tl: _alert = 'orange'
                 elif 'зелен' in _tl or 'зелён' in _tl or 'green alert' in _tl or 'green flood' in _tl: _alert = 'green'
+                if _alert == 'green': continue   # зелёный = низший информац. уровень -> не сигнал
                 _pop = 0
                 _pm = re.search(r'(\d[\d,\.]*)\s*(million|млн|people|человек|населе)', _tl)
                 if _pm:
