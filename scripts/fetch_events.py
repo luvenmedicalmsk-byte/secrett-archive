@@ -2318,6 +2318,7 @@ def fetch_gdacs():
             severity_el = item.find('{http://www.gdacs.org}severity')
             alert_el = item.find('{http://www.gdacs.org}alertlevel')
             alert = alert_el.text if alert_el is not None else ''
+            if alert == 'Green': continue   # зелёный = низший информац. уровень -> не сигнал
             
             # Определяем bias по уровню алерта
             bias = {'Red': 20, 'Orange': 12, 'Green': 5}.get(alert, 8)
