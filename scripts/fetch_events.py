@@ -6259,8 +6259,7 @@ def _llm_extract_countries(events):
              '"imp": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, КРОМЕ страны места. Нет влияния -- [].\n'
              '"ty": тип влияния -- один из: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
              'Различай место и влияние: японский УЦ отзывает сертификаты российских сайтов -> c=RU, e=JP, imp=["RU"], ty=internet.\n'
-             'Ответ -- СТРОГО JSON-объект: ключ = i как строка, значение = {"c":..,"e":..,"imp":[..],"ty":..}. Без markdown.\n'
-             'Образец ответа: {"0":{"c":"RU","e":"JP","imp":["RU"],"ty":"internet"},"1":{"c":"US","e":"US","imp":["IR"],"ty":"economy"}}')
+             'Верни объект {"items":[...]}, по одному элементу на каждый i: {"i":номер, "c":.., "e":.., "imp":[..], "ty":..}.')
     todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
     dbg['todo'] = len(todo)
     dbg['reached'] = 'before_loop'; _dump()
@@ -6368,30 +6367,42 @@ def _llm_extract_countries(events):
     for s in range(0, len(todo), B):
         chunk = todo[s:s + B]
         payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
-        try:
-            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 1000, 'temperature': 0,
-                                'response_format': {'type': 'json_object'},
+        _schema = {'type': 'object', 'additionalProperties': False, 'required': ['items'],
+                   'properties': {'items': {'type': 'array', 'items': {
+                       'type': 'object', 'additionalProperties': False, 'required': ['i', 'c', 'e', 'imp', 'ty'],
+                       'properties': {'i': {'type': 'integer'}, 'c': {'type': 'string'}, 'e': {'type': 'string'},
+                                      'imp': {'type': 'array', 'items': {'type': 'string'}},
+                                      'ty': {'type': 'string', 'enum': ['infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none']}}}}}}
+        def _call(rf):
+            body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 3000, 'temperature': 0,
+                                'response_format': rf,
                                 'messages': [{'role': 'system', 'content': sys_p},
                                              {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
             r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
-            with _u.urlopen(r, timeout=45) as resp:
-                content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
-            parsed = _json.loads(content)
-            if isinstance(parsed, dict) and len(parsed) == 1:
-                _only = list(parsed.values())[0]
-                if isinstance(_only, dict) and _only and all(isinstance(_x, dict) for _x in _only.values()):
-                    parsed = _only
-            for k, v in parsed.items():
-                try:
-                    _ki = int(k)
-                    if isinstance(v, dict):
-                        res[_ki] = str(v.get('c', '') or '').upper().strip()
-                        _imp_res[_ki] = (str(v.get('e', '') or '').upper().strip(), v.get('imp') or [], str(v.get('ty', '') or '').lower().strip())
-                    else:
-                        res[_ki] = str(v).upper().strip()
-                except Exception:
-                    pass
+            with _u.urlopen(r, timeout=60) as resp:
+                return _json.loads(resp.read().decode())['choices'][0]['message']['content']
+        try:
+            try:
+                content = _call({'type': 'json_schema', 'json_schema': {'name': 'geo', 'strict': True, 'schema': _schema}})
+                items = (_json.loads(content) or {}).get('items') or []
+                for it in items:
+                    try:
+                        _ki = int(it['i'])
+                        res[_ki] = str(it.get('c', '') or '').upper().strip()
+                        _imp_res[_ki] = (str(it.get('e', '') or '').upper().strip(), it.get('imp') or [], str(it.get('ty', '') or '').lower().strip())
+                    except Exception:
+                        pass
+            except Exception:
+                content = _call({'type': 'json_object'})
+                parsed = _json.loads(content)
+                if isinstance(parsed, dict) and len(parsed) == 1 and isinstance(list(parsed.values())[0], dict):
+                    parsed = list(parsed.values())[0]
+                for k, v in parsed.items():
+                    try:
+                        res[int(k)] = (str(v.get('c', '') or '') if isinstance(v, dict) else str(v)).upper().strip()
+                    except Exception:
+                        pass
         except Exception as _e:
             print('  country-LLM batch fail: %s' % _e, file=_sys.stderr)
     fixed = glob = 0
