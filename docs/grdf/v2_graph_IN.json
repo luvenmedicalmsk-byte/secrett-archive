@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-06-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-20T22:02:03.221664+00:00",
+  "generated_at": "2026-06-20T23:17:09.867085+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 52,
+      "score": 56,
       "props": {
-        "risk_score": 52
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 22,
-      "trend": "down"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "down"
+      "score": 26,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,10 +80,10 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Не_менее_2",
+      "id": "SIGNAL-IN-Российские",
       "type": "Signal",
-      "label": "Не менее 24 человек погибли в Кашмире в ",
-      "severity": 58,
+      "label": "Российские средства ПВО сбили 8 крылатых",
+      "severity": 60,
       "domain": "geopolitical"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IN-Франция_и_",
+      "id": "SIGNAL-IN-Positive_T",
       "type": "Signal",
-      "label": "Франция и Нидерланды больше всех препятс",
-      "severity": 42,
-      "domain": "geopolitical"
+      "label": "Positive Technologies выпустила ИИ-помощ",
+      "severity": 52,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IN",
@@ -163,10 +163,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IN-Не_менее_2",
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-Российские",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.6
     },
     {
       "from": "SIGNAL-IN-Германия_в",
@@ -175,10 +196,10 @@
       "weight": 0.54
     },
     {
-      "from": "SIGNAL-IN-Франция_и_",
-      "to": "DOMAIN-IN-geopolitical",
+      "from": "SIGNAL-IN-Positive_T",
+      "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.52
     }
   ]
 }
