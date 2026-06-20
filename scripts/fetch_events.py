@@ -6250,6 +6250,109 @@ def _llm_extract_countries(events):
         return events
     def _is_kev(e):
         return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('\u0410\u043a\u0442\u0438\u0432\u043d\u043e \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0438\u0440\u0443\u0435\u043c\u0430\u044f')
+    sys_p = ('Ты гео-аналитик. Для каждого заголовка (ключ i) верни объект с полями:\n'
+             '"c": ISO-3166 alpha-2 код страны, которой заголовок СОДЕРЖАТЕЛЬНО касается, заглавными (RU, US, CN, IR...). '
+             'Если событие глобальное/наднациональное (цепочки поставок, уязвимость софта/вендора, мировые ИИ-риски) '
+             'либо страна не определяется -- "GLOBAL". НЕ путай названия компаний (Cisco, Microsoft, Oracle, Google) с географией.\n'
+             '"e": ISO alpha-2 страны, где событие ФИЗИЧЕСКИ ПРОИЗОШЛО (место события, не упоминание). Если не ясно/глобально -- "GLOBAL".\n'
+             '"imp": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, КРОМЕ страны места. Нет влияния -- [].\n'
+             '"ty": тип влияния -- один из: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
+             'Различай место и влияние: японский УЦ отзывает сертификаты российских сайтов -> c=RU, e=JP, imp=["RU"], ty=internet.\n'
+             'Ответ -- СТРОГО JSON-объект: ключ = i как строка, значение = {"c":..,"e":..,"imp":[..],"ty":..}. Без markdown.')
+    todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
+    dbg['todo'] = len(todo)
+    dbg['reached'] = 'before_loop'; _dump()
+    res = {}
+    B = 20
+    for s in range(0, len(todo), B):
+        chunk = todo[s:s + B]
+        payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
+        binfo = {'n': len(chunk), 'ok': False, 'keys': 0, 'err': ''}
+        for attempt in range(2):
+            try:
+                body = _json.dumps({'model': 'gpt-4o-mini', 'max_tokens': 2500, 'temperature': 0,
+                                    'response_format': {'type': 'json_object'},
+                                    'messages': [{'role': 'system', 'content': sys_p},
+                                                 {'role': 'user', 'content': _json.dumps(payload, ensure_ascii=False)}]}).encode()
+                r = _u.Request('https://api.openai.com/v1/chat/completions', data=body,
+                               headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
+                with _u.urlopen(r, timeout=60) as resp:
+                    content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
+                parsed = _json.loads(content)
+                # развернуть обёртки: {"results":{...}} или {"data":[...]}
+                if isinstance(parsed, dict) and len(parsed) == 1:
+                    only = list(parsed.values())[0]
+                    if isinstance(only, dict):
+                        parsed = only
+                    elif isinstance(only, list):
+                        tmp = {}
+                        for ob in only:
+                            if isinstance(ob, dict) and 'i' in ob:
+                                tmp[str(ob['i'])] = ob
+                        if tmp:
+                            parsed = tmp
+                if isinstance(parsed, list):
+                    tmp = {}
+                    for ob in parsed:
+                        if isinstance(ob, dict) and 'i' in ob:
+                            tmp[str(ob['i'])] = ob
+                    parsed = tmp
+                cnt = 0
+                for k, v in parsed.items():
+                    try:
+                        if isinstance(v, dict):
+                            res[int(k)] = v; cnt += 1
+                    except Exception:
+                        pass
+                binfo['ok'] = True; binfo['keys'] = cnt
+                break
+            except Exception as _e:
+                binfo['err'] = str(_e)[:120]
+                if attempt == 0:
+                    _time.sleep(2); continue
+                print('  impact-LLM batch fail: %s' % _e, file=_sys.stderr)
+        dbg['batches'].append(binfo)
+    dbg['reached'] = 'after_loop'
+    dbg['res_size'] = len(res); _dump()
+    dbg['sample'] = {str(k): res[k] for k in list(res)[:5]}
+    _VALID = {'infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none'}
+    tagged = 0
+    for i, e in enumerate(events):
+        v = res.get(i)
+        if not isinstance(v, dict):
+            continue
+        ev_cc = str(v.get('event', '') or '').upper().strip()
+        typ = str(v.get('type', '') or '').lower().strip()
+        if typ not in _VALID:
+            typ = 'none'
+        if ev_cc == 'GLOBAL' or _ok(ev_cc):
+            e['event_country'] = ev_cc
+        impact_list = []
+        imp = v.get('impact') or []
+        if isinstance(imp, list):
+            for cc2 in imp[:3]:
+                cc2 = str(cc2).upper().strip()
+                if _ok(cc2) and cc2 != e.get('event_country'):
+                    impact_list.append({'cc': cc2, 'type': typ})
+        if impact_list:
+            e['impact_countries'] = impact_list
+        if e.get('event_country') or impact_list:
+            tagged += 1
+    dbg['tagged'] = tagged
+    _dump()
+    print('  LLM-impact: размечено %d из %d' % (tagged, len(events)), file=_sys.stderr)
+    return events
+
+
+def _llm_extract_countries(events):
+    """LLM-\u0430\u0442\u0440\u0438\u0431\u0443\u0446\u0438\u044f \u0441\u0442\u0440\u0430\u043d\u044b (ISO-3166 alpha-2) \u043f\u043e \u0441\u043c\u044b\u0441\u043b\u0443 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430.
+    \u0427\u0438\u043d\u0438\u0442 \u0441\u043b\u043e\u0432\u0430\u0440\u044c-\u043c\u0430\u0442\u0447\u0435\u0440 (\u043f\u0443\u0442\u0430\u0435\u0442 \u0432\u0435\u043d\u0434\u043e\u0440\u043e\u0432/\u0433\u043e\u0440\u043e\u0434\u0430). country_code/region/coords \u0438\u0437 CC; CISA KEV -> GLOBAL."""
+    import os as _os, sys as _sys, json as _json, urllib.request as _u, random as _rnd
+    key = _os.environ.get('OPENAI_API_KEY', '')
+    if not key or not events:
+        return events
+    def _is_kev(e):
+        return e.get('source') == 'CISA KEV' or str(e.get('title', '')).startswith('\u0410\u043a\u0442\u0438\u0432\u043d\u043e \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0438\u0440\u0443\u0435\u043c\u0430\u044f')
     sys_p = ('\u0422\u044b \u0433\u0435\u043e-\u0430\u043d\u0430\u043b\u0438\u0442\u0438\u043a. \u0414\u043b\u044f \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430 \u043e\u043f\u0440\u0435\u0434\u0435\u043b\u0438 \u041e\u0414\u041d\u0423 \u0441\u0442\u0440\u0430\u043d\u0443, \u043a\u043e\u0442\u043e\u0440\u043e\u0439 \u043e\u043d '
              '\u0421\u041e\u0414\u0415\u0420\u0416\u0410\u0422\u0415\u041b\u042c\u041d\u041e \u043a\u0430\u0441\u0430\u0435\u0442\u0441\u044f, \u0438 \u0432\u0435\u0440\u043d\u0438 \u0435\u0451 ISO-3166 alpha-2 \u043a\u043e\u0434 \u0437\u0430\u0433\u043b\u0430\u0432\u043d\u044b\u043c\u0438 (RU, US, CN, IR...). '
              '\u0415\u0441\u043b\u0438 \u0441\u043e\u0431\u044b\u0442\u0438\u0435 \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e\u0435/\u043d\u0430\u0434\u043d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u0435 (\u0446\u0435\u043f\u043e\u0447\u043a\u0438 \u043f\u043e\u0441\u0442\u0430\u0432\u043e\u043a, \u0443\u044f\u0437\u0432\u0438\u043c\u043e\u0441\u0442\u044c \u0441\u043e\u0444\u0442\u0430/\u0432\u0435\u043d\u0434\u043e\u0440\u0430, '
@@ -6258,7 +6361,8 @@ def _llm_extract_countries(events):
              '\u041e\u0442\u0432\u0435\u0442 -- \u0421\u0422\u0420\u041e\u0413\u041e JSON-\u043e\u0431\u044a\u0435\u043a\u0442: \u043a\u043b\u044e\u0447 = i \u043a\u0430\u043a \u0441\u0442\u0440\u043e\u043a\u0430, \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435 = ISO-\u043a\u043e\u0434 \u0438\u043b\u0438 "GLOBAL".')
     todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
     res = {}
-    B = 40
+    _imp_res = {}
+    B = 25
     for s in range(0, len(todo), B):
         chunk = todo[s:s + B]
         payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
@@ -6271,14 +6375,41 @@ def _llm_extract_countries(events):
                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key}, method='POST')
             with _u.urlopen(r, timeout=45) as resp:
                 content = _json.loads(resp.read().decode())['choices'][0]['message']['content']
-            for k, v in _json.loads(content).items():
-                try: res[int(k)] = str(v).upper().strip()
-                except Exception: pass
+            parsed = _json.loads(content)
+            if isinstance(parsed, dict) and len(parsed) == 1:
+                _only = list(parsed.values())[0]
+                if isinstance(_only, dict) and _only and all(isinstance(_x, dict) for _x in _only.values()):
+                    parsed = _only
+            for k, v in parsed.items():
+                try:
+                    _ki = int(k)
+                    if isinstance(v, dict):
+                        res[_ki] = str(v.get('c', '') or '').upper().strip()
+                        _imp_res[_ki] = (str(v.get('e', '') or '').upper().strip(), v.get('imp') or [], str(v.get('ty', '') or '').lower().strip())
+                    else:
+                        res[_ki] = str(v).upper().strip()
+                except Exception:
+                    pass
         except Exception as _e:
             print('  country-LLM batch fail: %s' % _e, file=_sys.stderr)
     fixed = glob = 0
     for i, e in enumerate(events):
         cc = 'GLOBAL' if _is_kev(e) else res.get(i)
+        _ir = _imp_res.get(i)
+        if _ir:
+            _ec, _imp, _ty = _ir
+            if _ec == 'GLOBAL' or (len(_ec) == 2 and _ec.isalpha()):
+                e['event_country'] = _ec
+            if _ty not in ('infra','internet','economy','supply','energy','geo','cyber','climate','social','none'):
+                _ty = 'none'
+            _il = []
+            if isinstance(_imp, list):
+                for _c2 in _imp[:3]:
+                    _c2 = str(_c2).upper().strip()
+                    if len(_c2) == 2 and _c2.isalpha() and _c2 != e.get('event_country'):
+                        _il.append({'cc': _c2, 'type': _ty})
+            if _il:
+                e['impact_countries'] = _il
         if not cc:
             continue
         if cc == 'GLOBAL':
