@@ -974,7 +974,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     )
     snap["_seismic_risk"] = _hazard_climate_risk(matched)
     snap["_econ_risk"] = _economy_authority_risk(matched)
-    snap["domain_scores"] = _reloc_domain_scores(iso2, snap)
+    snap["domain_scores"] = _reloc_domain_scores(iso2, snap, matched)
     snap["ews_score"] = compute_ews(matched)   # реальный EWS из данных
     snap["cri_score"] = compute_cri(matched)   # реальный CRI из данных
     snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
@@ -8688,7 +8688,76 @@ def _hazard_climate_risk(matched: list) -> int:
             sev.append(float(e["severity"]))
     return int(max(sev)) if sev else 0
 
-def _reloc_domain_scores(cc: str, snap: dict) -> dict:
+
+# ── Live Domain Pressure (Event Severity Multiplier + временное затухание) ──
+_URGENCY_RULES = [
+    (r'ядерн|nuclear', 8.0),
+    (r'удар.{0,15}москв|москв.{0,15}(атак|удар|обстрел)|атак.{0,15}москв|по столиц', 6.0),
+    (r'военн.{0,10}удар|ракетн.{0,10}удар|авиауд|массированн.{0,12}(атак|удар)|вторжени|наступлени', 5.0),
+    (r'эскалац|escalation|боев.{0,8}действи', 5.0),
+    (r'киберата|кибернетическ|ransomware|вредоносн|критическ.{0,14}инфраструктур', 4.0),
+    (r'санкци|sanction|эмбарго|заморозк.{0,10}актив', 3.0),
+    (r'\bбпла|\bдрон|\bdrone|обстрел|\bракет|missile|\bstrike|взрыв', 3.0),
+    (r'дипломатическ|переговор|заявлени|демарш|нот[аы].{0,4}протест', 1.5),
+]
+def _event_severity_multiplier(e: dict) -> float:
+    t = (str(e.get("title", "")) + " " + str(e.get("summary", ""))).lower()
+    m = 1.0
+    for pat, mult in _URGENCY_RULES:
+        if re.search(pat, t):
+            if mult > m:
+                m = mult
+    return min(m, 8.0)
+
+def _recency_decay(e: dict, now) -> float:
+    d = e.get("date") or e.get("published") or ""
+    try:
+        dt = datetime.fromisoformat(str(d)[:19])
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        hrs = (now - dt).total_seconds() / 3600.0
+    except Exception:
+        return 0.5
+    if hrs <= 24:  return 1.0
+    if hrs <= 72:  return 0.8
+    if hrs <= 168: return 0.5
+    if hrs <= 720: return 0.25
+    return 0.1
+
+def _live_domain_pressure(matched: list, domain: str):
+    """0-100 из живой ленты: severity, взвешенная по срочности и свежести.
+    Сильные/свежие события тянут балл вверх; max-bound 95."""
+    if not matched:
+        return None
+    evs = [e for e in matched if (e.get("domain") or "other") == domain]
+    if not evs:
+        return None
+    now = datetime.now(timezone.utc)
+    num = 0.0; den = 0.0; acute = 0
+    for e in evs:
+        try:
+            sev = float(e.get("severity", 50) or 50)
+        except Exception:
+            sev = 50.0
+        if sev <= 0:
+            continue
+        mult  = _event_severity_multiplier(e)
+        decay = _recency_decay(e, now)
+        w = mult * decay
+        if w <= 0:
+            continue
+        num += sev * w
+        den += w
+        if mult >= 3.0 and decay >= 0.5:
+            acute += 1
+    if den <= 0:
+        return None
+    weighted_sev = num / den
+    score = weighted_sev + min(acute * 2, 12)
+    return int(max(5, min(95, round(score))))
+
+
+def _reloc_domain_scores(cc: str, snap: dict, matched: list = None) -> dict:
     """Flat domain risk scores {climate,geopolitics,economy,technology,social: 0-100} for snapshot consumers (Relocation layer)."""
     try:
         full = _get_domain_scores(cc, snap)
@@ -8725,7 +8794,23 @@ def _reloc_domain_scores(cc: str, snap: dict) -> dict:
     econ = snap.pop("_econ_risk", 0) or 0
     if econ:
         out["economy"] = max(out.get("economy", 0) or 0, econ)
+    # ── Live Domain Pressure: свежая лента поднимает домен (только max, не опускает) ──
+    if matched:
+        for _d in ("climate", "geopolitics", "economy", "technology", "social"):
+            _lp = _live_domain_pressure(matched, _d)
+            if _lp is not None:
+                out[_d] = max(out.get(_d, 0) or 0, _lp)
+    if cc == "RU" and matched:
+        for _d in ("climate", "geopolitics", "economy", "technology", "social"):
+            _evs = [e for e in matched if (e.get("domain") or "other") == _d]
+            _sv  = [float(e.get("severity", 50) or 50) for e in _evs]
+            _ac  = sum(1 for e in _evs if _event_severity_multiplier(e) >= 3.0)
+            _avg = (sum(_sv) / len(_sv)) if _sv else 0
+            print(f"[DOMAIN-DEBUG RU] {_d:11} n={len(_evs):2} avg={_avg:.0f} "
+                  f"max={(max(_sv) if _sv else 0):.0f} acute={_ac} "
+                  f"live={_live_domain_pressure(matched, _d)} final={out.get(_d)}", file=sys.stderr)
     return out
+
 
 
 def _get_domain_scores(cc: str, snap: dict) -> dict[str, dict]:
