@@ -298,37 +298,63 @@ def _tag_event_countries(events: list[dict]) -> None:
     global _CC_TOKENS
     if _CC_TOKENS is None:
         _CC_TOKENS = {iso: _country_match_tokens(meta.get("kw", [])) for iso, meta in COUNTRIES.items()}
-        # Доп. токены: русские формы и прилагательные (US был недопривязан -- нет "сша/пентагон/конгресс")
+        # Русские формы + города/орг-маркеры (US недопривязан; РФ-города не ловились стеммом)
         _EXTRA = {
             "US": ["сша", "америк", "пентагон", "конгресс", "штаты"],
-            "JP": ["японск"], "CN": ["китайск"], "RU": ["российск"],
-            "UA": ["украинск"], "IR": ["иранск"], "IL": ["израильск"],
-            "DE": ["немецк", "германск"], "FR": ["французск"], "GB": ["британск"],
+            "RU": ["российск", "московск", "подмосков", "петербург", "белгород", "курск",
+                   "воронеж", "ростов", "краснодар", "крым", "татарстан", "сибир",
+                   "росавиаци", "мосбирж", "госдум", "кремл", "минобороны", "путин", "кронштадт", "рф"],
+            "JP": ["японск"], "CN": ["китайск"], "UA": ["украинск"], "IR": ["иранск"],
+            "IL": ["израильск"], "DE": ["немецк", "германск"], "FR": ["французск"], "GB": ["британск"],
         }
         for _iso, _ex in _EXTRA.items():
             if _iso in _CC_TOKENS:
                 _CC_TOKENS[_iso].extend(_ex)
+    # Маркеры глобальных тем (ИИ/крипто/кибер) -> кандидаты в GLOBAL
+    _GLOBAL_MARKERS = ("openai", "anthropic", "claude", " gpt", "gemini", "nvidia", "zcash",
+                       "bitcoin", "ethereum", "blockchain", "блокчейн", "криптовалют", "cve-")
 
     def _hits(s_):
         return [iso for iso, toks in _CC_TOKENS.items() if any(re.search(r'\b' + re.escape(t), s_) for t in toks)]
 
     for ev in events:
         title = str(ev.get("title", "")); summary = str(ev.get("summary", "")); region = str(ev.get("region", ""))
-        full = (title + " " + summary + " " + region).lower()
-        ccs = _hits(full)                 # все упоминания стран
-        reg_cc = _hits(region.lower())    # страна региона = место события
-        llm_primary = ev.get("country_code") or ""   # aboutness (основной объект) ДО перезаписи
-        # === 4 поля архитектуры привязки сигнал->страна ===
-        ev["mentioned_countries"] = ccs
-        ev["event_country"] = reg_cc[0] if reg_cc else ""
-        ev["primary_country"] = llm_primary or (ccs[0] if ccs else "")
-        ev["impact_countries"] = [c for c in ccs if c != ev["event_country"]]
-        # === обратная совместимость со старым фронтом ===
-        ev["country_codes"] = ccs
-        if ccs:
-            ev["country_code"] = ccs[0]
-        elif "country_code" not in ev:
+        content = (title + " " + summary).lower()
+        content_cc = _hits(content)                 # страны, реально упомянутые в тексте
+        region_cc = _hits(region.lower())           # страна из поля region
+        # НЕДОВЕРИЕ к region=Россия без российских геомаркеров в тексте (русскоязычный источник != событие в РФ)
+        if region_cc and region_cc[0] == "RU" and "RU" not in content_cc:
+            region_cc = []
+        ccs = list(dict.fromkeys(content_cc + region_cc))
+        is_global = (not ccs) and any(g in content for g in _GLOBAL_MARKERS)
+        llm_primary = ev.get("country_code") or ""
+        if is_global:
+            # === GLOBAL: нет надёжной гео-привязки, международная/tech/AI/crypto тема ===
+            ev["is_global"] = True
+            ev["event_country"] = "GLOBAL"
+            ev["primary_country"] = "GLOBAL"
+            ev["mentioned_countries"] = []
+            ev["impact_countries"] = []
+            ev["country_codes"] = []
             ev["country_code"] = ""
+            ev["region"] = "Глобально"
+        else:
+            ev["is_global"] = False
+            event_c = region_cc[0] if region_cc else (content_cc[0] if content_cc else "")
+            # === 4 поля архитектуры привязки ===
+            ev["event_country"] = event_c
+            ev["mentioned_countries"] = ccs
+            ev["primary_country"] = llm_primary if (llm_primary in ccs) else (ccs[0] if ccs else "")
+            ev["impact_countries"] = [c for c in ccs if c != event_c]
+            # === обратная совместимость ===
+            ev["country_codes"] = ccs
+            if ccs:
+                ev["country_code"] = ccs[0]
+            elif "country_code" not in ev:
+                ev["country_code"] = ""
+            # Ложный region='Россия' снят -> не оставлять его (иначе фронт ловит карточку РФ по имени)
+            if region.strip().lower() == "россия" and "RU" not in ccs:
+                ev["region"] = COUNTRIES[event_c].get("name_ru", "Глобально") if (event_c and event_c in COUNTRIES) else "Глобально"
 
 def _persist_tagged_events(events: list[dict]) -> None:
     """Re-write docs/events.json with country tags (preserve wrapper keys)."""
