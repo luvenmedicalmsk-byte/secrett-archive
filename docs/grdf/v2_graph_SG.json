@@ -2,67 +2,72 @@
   "country": "SG",
   "date": "2026-06-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-20T00:01:53.222940+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-20T03:35:06.986253+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-SG",
       "type": "Country",
       "label": "SG",
-      "score": 48,
+      "score": 50,
       "props": {
-        "risk_score": 48
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-SG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 43,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 31,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-social",
       "type": "Domain",
       "label": "social",
-      "score": 36,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 34,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 29,
-      "trend": "down"
+      "score": 30,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-SG-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-SG-economic",
@@ -75,9 +80,11 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-SG-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-SG-Google_уст",
+      "type": "Signal",
+      "label": "Google устанавливает сроки для обязатель",
+      "severity": 50,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-SG-Агентства_",
@@ -92,43 +99,49 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-social",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-cyber",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.3
+    },
+    {
+      "from": "DRIVER-SG-geopolitical",
+      "to": "COUNTRY-SG",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-SG-economic",
@@ -143,10 +156,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-climate",
-      "to": "COUNTRY-SG",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-SG-geopolitical",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-SG-Google_уст",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-SG-Агентства_",
