@@ -6364,6 +6364,7 @@ def _llm_extract_countries(events):
     res = {}
     _imp_res = {}
     B = 25
+    _cdbg = {'schema_ok': 0, 'fallback': 0, 'err': '', 'model': 'gpt-4o-mini'}
     for s in range(0, len(todo), B):
         chunk = todo[s:s + B]
         payload = [{'i': i, 't': (e.get('title', '') or '')[:200]} for i, e in chunk]
@@ -6393,7 +6394,16 @@ def _llm_extract_countries(events):
                         _imp_res[_ki] = (str(it.get('e', '') or '').upper().strip(), it.get('imp') or [], str(it.get('ty', '') or '').lower().strip())
                     except Exception:
                         pass
-            except Exception:
+                _cdbg['schema_ok'] += 1
+                _cdbg['last_items'] = len(items)
+            except Exception as _es:
+                _cdbg['fallback'] += 1
+                if not _cdbg['err']:
+                    _cdbg['err'] = str(_es)[:400]
+                    try:
+                        _cdbg['body'] = _es.read().decode()[:400]
+                    except Exception:
+                        pass
                 content = _call({'type': 'json_object'})
                 parsed = _json.loads(content)
                 if isinstance(parsed, dict) and len(parsed) == 1 and isinstance(list(parsed.values())[0], dict):
@@ -6405,6 +6415,12 @@ def _llm_extract_countries(events):
                         pass
         except Exception as _e:
             print('  country-LLM batch fail: %s' % _e, file=_sys.stderr)
+    try:
+        import os as __o
+        __p = __o.path.join(__o.path.dirname(__o.path.dirname(__o.path.abspath(__file__))), 'docs', '_impact_debug.json')
+        open(__p, 'w', encoding='utf-8').write(_json.dumps(_cdbg, ensure_ascii=False))
+    except Exception:
+        pass
     fixed = glob = 0
     for i, e in enumerate(events):
         cc = 'GLOBAL' if _is_kev(e) else res.get(i)
