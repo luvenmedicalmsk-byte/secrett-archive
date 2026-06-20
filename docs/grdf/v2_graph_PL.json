@@ -2,60 +2,60 @@
   "country": "PL",
   "date": "2026-06-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-20T12:16:50.204343+00:00",
+  "generated_at": "2026-06-20T14:41:13.200012+00:00",
   "node_count": 12,
-  "edge_count": 11,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 46,
+      "score": 48,
       "props": {
-        "risk_score": 46
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-cyber",
@@ -80,10 +80,10 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-PL-Президент_",
+      "id": "SIGNAL-PL-Польша_лиш",
       "type": "Signal",
-      "label": "Президент Польши лишил Зеленского высшей",
-      "severity": 46,
+      "label": "Польша лишила Зеленского высшей государс",
+      "severity": 48,
       "domain": "geopolitical"
     }
   ],
@@ -92,7 +92,7 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-PL",
@@ -149,10 +149,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-PL-Президент_",
+      "from": "DOMAIN-PL-geopolitical",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PL-Польша_лиш",
       "to": "DOMAIN-PL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.48
     }
   ]
 }
