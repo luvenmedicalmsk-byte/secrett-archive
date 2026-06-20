@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-06-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-20T09:09:45.667911+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-20T09:20:18.536807+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 35,
+      "score": 52,
       "props": {
-        "risk_score": 35
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -4,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -78,13 +78,6 @@
       "id": "DRIVER-US-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-US-Когда_США_",
-      "type": "Signal",
-      "label": "Когда США придут за Кубой, что может сде",
-      "severity": 35,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -92,13 +85,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.04
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-US",
@@ -116,7 +109,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-US",
@@ -149,10 +142,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-US-Когда_США_",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
-      "weight": 0.35
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
