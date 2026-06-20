@@ -6158,6 +6158,7 @@ def _llm_extract_impact(events):
         '{"event":..,"impact":[..],"type":..}. Без обёрток, без markdown, без пояснений.')
     todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
     dbg['todo'] = len(todo)
+    dbg['reached'] = 'before_loop'; _dump()
     res = {}
     B = 20
     for s in range(0, len(todo), B):
@@ -6208,7 +6209,8 @@ def _llm_extract_impact(events):
                     _time.sleep(2); continue
                 print('  impact-LLM batch fail: %s' % _e, file=_sys.stderr)
         dbg['batches'].append(binfo)
-    dbg['res_size'] = len(res)
+    dbg['reached'] = 'after_loop'
+    dbg['res_size'] = len(res); _dump()
     dbg['sample'] = {str(k): res[k] for k in list(res)[:5]}
     _VALID = {'infra', 'internet', 'economy', 'supply', 'energy', 'geo', 'cyber', 'climate', 'social', 'none'}
     tagged = 0
