@@ -298,13 +298,32 @@ def _tag_event_countries(events: list[dict]) -> None:
     global _CC_TOKENS
     if _CC_TOKENS is None:
         _CC_TOKENS = {iso: _country_match_tokens(meta.get("kw", [])) for iso, meta in COUNTRIES.items()}
+        # Доп. токены: русские формы и прилагательные (US был недопривязан -- нет "сша/пентагон/конгресс")
+        _EXTRA = {
+            "US": ["сша", "америк", "пентагон", "конгресс", "штаты"],
+            "JP": ["японск"], "CN": ["китайск"], "RU": ["российск"],
+            "UA": ["украинск"], "IR": ["иранск"], "IL": ["израильск"],
+            "DE": ["немецк", "германск"], "FR": ["французск"], "GB": ["британск"],
+        }
+        for _iso, _ex in _EXTRA.items():
+            if _iso in _CC_TOKENS:
+                _CC_TOKENS[_iso].extend(_ex)
+
+    def _hits(s_):
+        return [iso for iso, toks in _CC_TOKENS.items() if any(re.search(r'\b' + re.escape(t), s_) for t in toks)]
+
     for ev in events:
-        text = " ".join([
-            str(ev.get("title", "")),
-            str(ev.get("summary", "")),
-            str(ev.get("region", "")),
-        ]).lower()
-        ccs = [iso for iso, toks in _CC_TOKENS.items() if any(re.search(r'\b' + re.escape(t), text) for t in toks)]
+        title = str(ev.get("title", "")); summary = str(ev.get("summary", "")); region = str(ev.get("region", ""))
+        full = (title + " " + summary + " " + region).lower()
+        ccs = _hits(full)                 # все упоминания стран
+        reg_cc = _hits(region.lower())    # страна региона = место события
+        llm_primary = ev.get("country_code") or ""   # aboutness (основной объект) ДО перезаписи
+        # === 4 поля архитектуры привязки сигнал->страна ===
+        ev["mentioned_countries"] = ccs
+        ev["event_country"] = reg_cc[0] if reg_cc else ""
+        ev["primary_country"] = llm_primary or (ccs[0] if ccs else "")
+        ev["impact_countries"] = [c for c in ccs if c != ev["event_country"]]
+        # === обратная совместимость со старым фронтом ===
         ev["country_codes"] = ccs
         if ccs:
             ev["country_code"] = ccs[0]
