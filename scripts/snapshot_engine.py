@@ -8733,7 +8733,7 @@ def _live_domain_pressure(matched: list, domain: str):
     if not evs:
         return None
     now = datetime.now(timezone.utc)
-    num = 0.0; den = 0.0; acute = 0
+    num = 0.0; den = 0.0; acute = 0; peak = 0.0
     for e in evs:
         try:
             sev = float(e.get("severity", 50) or 50)
@@ -8748,12 +8748,16 @@ def _live_domain_pressure(matched: list, domain: str):
             continue
         num += sev * w
         den += w
+        if decay >= 0.5:
+            _pk = sev * (1.0 if mult < 3.0 else 1.06)
+            if _pk > peak:
+                peak = min(100.0, _pk)
         if mult >= 3.0 and decay >= 0.5:
             acute += 1
     if den <= 0:
         return None
-    weighted_sev = num / den
-    score = weighted_sev + min(acute * 2, 12)
+    wavg = num / den
+    score = 0.55 * peak + 0.30 * wavg + min(acute * 1.5, 12)
     return int(max(5, min(95, round(score))))
 
 
