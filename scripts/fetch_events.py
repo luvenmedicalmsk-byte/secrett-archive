@@ -6258,7 +6258,8 @@ def _llm_extract_countries(events):
              '"imp": массив до 3 стран (ISO alpha-2), на которые событие реально ВЛИЯЕТ, КРОМЕ страны места. Нет влияния -- [].\n'
              '"ty": тип влияния -- один из: infra, internet, economy, supply, energy, geo, cyber, climate, social, none.\n'
              'Различай место и влияние: японский УЦ отзывает сертификаты российских сайтов -> c=RU, e=JP, imp=["RU"], ty=internet.\n'
-             'Ответ -- СТРОГО JSON-объект: ключ = i как строка, значение = {"c":..,"e":..,"imp":[..],"ty":..}. Без markdown.')
+             'Ответ -- СТРОГО JSON-объект: ключ = i как строка, значение = {"c":..,"e":..,"imp":[..],"ty":..}. Без markdown.'
+             'Образец ответа: {"0":{"c":"RU","e":"JP","imp":["RU"],"ty":"internet"},"1":{"c":"US","e":"US","imp":["IR"],"ty":"economy"}}')
     todo = [(i, e) for i, e in enumerate(events) if not _is_kev(e)]
     dbg['todo'] = len(todo)
     dbg['reached'] = 'before_loop'; _dump()
