@@ -2010,7 +2010,6 @@ def save(events):
         except Exception: pass
     _save_tr_disk()
     events = _llm_extract_countries(events)
-    events = _llm_extract_impact(events)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
