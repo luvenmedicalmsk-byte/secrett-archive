@@ -2,67 +2,67 @@
   "country": "AE",
   "date": "2026-06-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-20T16:14:13.901151+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-20T18:02:15.835714+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-AE",
       "type": "Country",
       "label": "AE",
-      "score": 45,
+      "score": 42,
       "props": {
-        "risk_score": 45
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 42,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "stable"
+      "score": 22,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AE-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "stable"
+      "score": 18,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 21,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AE-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DRIVER-AE-Geopolitical",
@@ -78,6 +78,13 @@
       "id": "DRIVER-AE-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-AE-Армянский_",
+      "type": "Signal",
+      "label": "Армянский экспорт уже достиг широкого кр",
+      "severity": 42,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -85,43 +92,43 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-AE-Geopolitical",
@@ -140,6 +147,33 @@
       "to": "COUNTRY-AE",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-AE-geopolitical",
+      "to": "DOMAIN-AE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AE-infrastructure",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-Армянский_",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.42
     }
   ]
 }
