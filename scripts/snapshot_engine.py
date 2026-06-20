@@ -9,6 +9,7 @@ Reads events.json → computes scores → saves JSON files to docs/snapshots/
 import json
 import os
 import sys
+import re
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -303,7 +304,7 @@ def _tag_event_countries(events: list[dict]) -> None:
             str(ev.get("summary", "")),
             str(ev.get("region", "")),
         ]).lower()
-        ccs = [iso for iso, toks in _CC_TOKENS.items() if any(t in text for t in toks)]
+        ccs = [iso for iso, toks in _CC_TOKENS.items() if any(re.search(r'\b' + re.escape(t), text) for t in toks)]
         ev["country_codes"] = ccs
         if ccs:
             ev["country_code"] = ccs[0]
