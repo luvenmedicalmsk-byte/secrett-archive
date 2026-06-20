@@ -313,6 +313,12 @@ def _tag_event_countries(events: list[dict]) -> None:
     # Маркеры глобальных тем (ИИ/крипто/кибер) -> кандидаты в GLOBAL
     _GLOBAL_MARKERS = ("openai", "anthropic", "claude", " gpt", "gemini", "nvidia", "zcash",
                        "bitcoin", "ethereum", "blockchain", "блокчейн", "криптовалют", "cve-")
+    _HIGH_GEO = ("белгород","воронеж","ростов","краснодар","кронштадт","москв","петербург",
+                 "подмосков","крым","татарстан","сибир","курск","казан","новосиб","екатеринб",
+                 "самар","челябинск"," область"," област"," край "," штат ","провинци")
+    _MED_ORG = ("мосбирж","росавиаци","госдум","минобороны","кремл","центробанк"," цб ","газпром",
+                "роснефт"," ржд","сбербанк","аэрофлот","роскосмос","минфин","минцифры","минздрав",
+                "минэнерго"," цик ","прокуратур","совбез","пентагон","конгресс","еврокомисс")
 
     def _hits(s_):
         return [iso for iso, toks in _CC_TOKENS.items() if any(re.search(r'\b' + re.escape(t), s_) for t in toks)]
@@ -355,6 +361,17 @@ def _tag_event_countries(events: list[dict]) -> None:
             # Ложный region='Россия' снят -> не оставлять его (иначе фронт ловит карточку РФ по имени)
             if region.strip().lower() == "россия" and "RU" not in ccs:
                 ev["region"] = COUNTRIES[event_c].get("name_ru", "Глобально") if (event_c and event_c in COUNTRIES) else "Глобально"
+        # === уровень доверия к страновой атрибуции ===
+        if ev.get("is_global"):
+            ev["attribution_confidence"] = "global"
+        else:
+            _cblob = (title + " " + summary + " " + str(ev.get("region", ""))).lower()
+            if any(h in _cblob for h in _HIGH_GEO):
+                ev["attribution_confidence"] = "high"      # город/регион/прямая гео
+            elif any(o in _cblob for o in _MED_ORG):
+                ev["attribution_confidence"] = "medium"    # нацорган/компания/инфраструктура
+            else:
+                ev["attribution_confidence"] = "low"       # упоминание/влияние/международное
 
 def _persist_tagged_events(events: list[dict]) -> None:
     """Re-write docs/events.json with country tags (preserve wrapper keys)."""
