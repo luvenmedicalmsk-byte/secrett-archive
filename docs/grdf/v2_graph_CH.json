@@ -2,67 +2,67 @@
   "country": "CH",
   "date": "2026-06-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-21T06:47:04.357010+00:00",
+  "generated_at": "2026-06-21T07:41:38.051874+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 49,
+      "score": 52,
       "props": {
-        "risk_score": 49
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -87,17 +87,17 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-CH-Иран_сообщ",
+      "id": "SIGNAL-CH-Ближний_Во",
       "type": "Signal",
-      "label": "Иран сообщает, что Ормузский пролив снов",
+      "label": "Ближний Восток в прямом эфире: вице-през",
       "severity": 50,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CH-Швейцарски",
+      "id": "SIGNAL-CH-Иран_заяви",
       "type": "Signal",
-      "label": "Швейцарские избиратели, по предварительн",
-      "severity": 44,
+      "label": "Иран заявил о закрытии Ормузского пролив",
+      "severity": 50,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-CH",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-CH",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CH-geopolitical",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CH-ВОЗ_выпуск",
       "to": "DOMAIN-CH-social",
       "type": "AMPLIFIES",
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-CH-Иран_сообщ",
+      "from": "SIGNAL-CH-Ближний_Во",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-CH-Швейцарски",
+      "from": "SIGNAL-CH-Иран_заяви",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.5
     }
   ]
 }
