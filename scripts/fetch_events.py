@@ -2054,6 +2054,19 @@ def _infra_anchor(events):
         else:
             by[key] = len(out); out.append(e)
     return out
+_DIG_RE = re.compile(r'vpn|впн|блокир\w* (?:сервис|сайт|youtube|telegram|соцсет|интернет|vpn)|ограничен\w* доступ\w* к (?:интернет|сайт|сервис)|интернет-?регулир|цифров\w* регулир|интернет-?цензур|требован\w* к (?:платформ|ит-)|контрол\w* трафик|закон\w* о (?:интернет|связи|vpn)', re.IGNORECASE)
+_PROT_RE = re.compile(r'протест|митинг|демонстрац|забастовк|массов\w* беспорядк', re.IGNORECASE)
+_PROT_KEEP_RE = re.compile(r'войн|военн|мобилизац|\bтцк\b|тцкшник|оккупир|оккупац|санкц|дипломат|переговор|международн|свержени|госперевор|границ|режим прекращ', re.IGNORECASE)
+def _domain_fix(events):
+    """S46.2 точечные доменные корректировки: VPN/цифр.регулирование -> technology;
+    немилитаризированные протесты -> social. severity/индексы не трогает."""
+    for e in events:
+        t = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+        if e.get('domain') in ('economy', 'geopolitics') and _DIG_RE.search(t):
+            e['domain'] = 'technology'
+        elif e.get('domain') == 'geopolitics' and _PROT_RE.search(t) and not _PROT_KEEP_RE.search(t):
+            e['domain'] = 'social'
+    return events
 def _ndup_collapse(events):
     """Near-dup collapse (паритет с C2 Событий): перефраз. репосты, тот же домен, дата +-3д, оставляем макс. риск."""
     kept=[]; out=[]
@@ -6952,6 +6965,7 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception: pass
             for _e in enriched["events"]:
                 _fix_trivia_title(_e)
+            enriched["events"] = _domain_fix(enriched["events"])
             enriched["events"] = _infra_anchor(enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["count"] = len(enriched["events"])
