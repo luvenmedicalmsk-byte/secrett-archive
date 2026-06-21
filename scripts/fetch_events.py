@@ -1997,11 +1997,12 @@ def _fix_trivia_title(e):
     except Exception:
         pass
     return e
+_NDUP_ACR = {'нпз','всу','гэс','аэс','тэц','лэп','гтс','пво'}
 def _ndup_stems(t):
     out=[]; sn=set()
     for w in re.sub(r'[^0-9a-zа-яё ]',' ',(t or '').lower()).split():
-        if len(w)>=4:
-            p=w[:4]
+        if len(w)>=4 or w in _NDUP_ACR:
+            p=w if w in _NDUP_ACR else w[:4]
             if p not in sn: sn.add(p); out.append(p)
     return out
 def _ndup_ovl(a,b):
@@ -2015,6 +2016,42 @@ def _ndup_day(s):
 def _ndup_sev(e):
     try: return float(e.get('severity') or 0)
     except Exception: return 0.0
+_INFRA_PATS = [
+    (r'([а-яё]{3,}ск\w+)\s+нпз', 'нпз'),
+    (r'нпз\s+(?:в|под|около|вблизи)\s+([а-яё]{4,})', 'нпз'),
+    (r'(крымск\w+|керченск\w+)\s+мост', 'мост'),
+    (r'(ормузск\w+|керченск\w+|малаккск\w+)\s+пролив', 'пролив'),
+    (r'([а-яё]{3,}ск\w+)\s+(?:аэс|гэс|тэц)', 'станция'),
+    (r'нефтебаз\w+\s+(?:в|под|около|вблизи)\s+([а-яё]{4,})', 'нефтебаза'),
+    (r'подстанц\w+\s+(?:в|под|около|вблизи)\s+([а-яё]{4,})', 'подстанция'),
+    (r'(северн\w+ поток|турецк\w+ поток|сил\w+ сибири)', 'труба'),
+]
+def _infra_key(title):
+    t = (title or '').lower()
+    for pat, name in _INFRA_PATS:
+        mm = re.search(pat, t)
+        if mm:
+            g = [x for x in mm.groups() if x]
+            qual = g[0] if g else ''
+            if len(qual) < 4:
+                continue
+            return name + ':' + qual[:6]
+    return None
+def _infra_anchor(events):
+    by = {}; out = []
+    for e in events:
+        k = _infra_key(e.get('title'))
+        if not k:
+            out.append(e); continue
+        day = _ndup_day(e.get('date'))
+        key = (k, day, e.get('domain') or '')
+        if key in by:
+            pi = by[key]
+            if (e.get('severity') or 0) > (out[pi].get('severity') or 0):
+                out[pi] = e
+        else:
+            by[key] = len(out); out.append(e)
+    return out
 def _ndup_collapse(events):
     """Near-dup collapse (паритет с C2 Событий): перефраз. репосты, тот же домен, дата +-3д, оставляем макс. риск."""
     kept=[]; out=[]
@@ -6913,6 +6950,7 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception: pass
             for _e in enriched["events"]:
                 _fix_trivia_title(_e)
+            enriched["events"] = _infra_anchor(enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
