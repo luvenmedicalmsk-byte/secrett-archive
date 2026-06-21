@@ -1315,6 +1315,11 @@ _NOISE_WORDS = [
     'документального киноцикл','киноцикл','режиссёр','режиссер','кинофестивал',
     'премьера фильма','сериал про','фильм про','новый сезон сериал','forbes talk',
 ]
+_VIRAL_RE = re.compile(
+    r'на видео|видео дня|трогательн|до сл[её]з|растрога|умилительн|умилил|'
+    r'реакц\w* (?:муж|жен|отц|матер|сын|доч|реб[её]н|мальчик|девочк)|'
+    r'мил\w* видео|забавн\w* видео|курь[её]з|неожиданн\w* реакц',
+    re.IGNORECASE)
 def _is_noise(title):
     """S37: низкосигнальный шум (речи/PR/интервью/опросы/лайфстайл) -- по заголовку."""
     t = (title or '').lower()
@@ -1714,6 +1719,11 @@ def process_events(raw_items):
         if item.get('_force_severity') is None and not _sys and severity < _thr: _LOSS['sev']+=1; continue
         # S37: контент-фильтр низкосигнального шума (порог severity <46, реальные события не трогаем)
         if item.get('_force_severity') is None and not _sys and severity < 46 and _is_noise(item.get('title','')):
+            _LOSS['sev']+=1; continue
+        # S43: виральный/человеческий шум -- виральная подача + НИ ОДНОГО риск-маркера в заголовке = новость.
+        if (item.get('_force_severity') is None and not _sys
+                and _VIRAL_RE.search(item.get('title',''))
+                and not _SIG_RE.search(item.get('title',''))):
             _LOSS['sev']+=1; continue
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
         if (item.get('_force_severity') is None and not _sys
@@ -6236,6 +6246,16 @@ def _llm_extract_impact(events):
             e['impact_countries'] = impact_list
         if e.get('event_country') or impact_list:
             tagged += 1
+    _RU_MARK = ('росси','москв','подмосков','петербург','тюмен','камчатк','южурал','южноурал',
+                'краснодар','крым','курск','белгород','воронеж','казан','новосибирск','екатеринбург','владивосток')
+    for _e in events:
+        if _e.get('is_global') or _e.get('event_country'):
+            continue
+        _t = ((_e.get('title') or '') + ' ' + (_e.get('region') or '')).lower()
+        if any(_mk in _t for _mk in _RU_MARK):
+            _e['event_country'] = 'RU'
+            if (_e.get('region') or '') in ('', 'Глобально'):
+                _e['region'] = 'Россия'
     dbg['tagged'] = tagged
     _dump()
     print('  LLM-impact: размечено %d из %d' % (tagged, len(events)), file=_sys.stderr)
