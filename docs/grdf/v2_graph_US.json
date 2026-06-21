@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-06-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-21T01:47:58.564216+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-21T06:47:04.344219+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 53,
+      "score": 61,
       "props": {
-        "risk_score": 53
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 23,
-      "trend": "down"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 24,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -85,20 +85,6 @@
       "label": "Великобритания проводит испытания новых ",
       "severity": 61,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-Бизнес-имп",
-      "type": "Signal",
-      "label": "Бизнес-империя иранских гвардейцев получ",
-      "severity": 51,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-Кросс-гран",
-      "type": "Signal",
-      "label": "Кросс-граничные биотехнологические сделк",
-      "severity": 44,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +92,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-US",
@@ -136,7 +122,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +149,31 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Великобрит",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.61
-    },
-    {
-      "from": "SIGNAL-US-Бизнес-имп",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.51
-    },
-    {
-      "from": "SIGNAL-US-Кросс-гран",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
