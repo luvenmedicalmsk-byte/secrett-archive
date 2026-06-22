@@ -2,32 +2,32 @@
   "country": "RU",
   "date": "2026-06-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-22T00:21:45.765387+00:00",
+  "generated_at": "2026-06-22T05:49:24.646758+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 62,
+      "score": 63,
       "props": {
-        "risk_score": 62
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-RU-Наводнение",
+      "id": "SIGNAL-RU-Полтора_су",
       "type": "Signal",
-      "label": "Наводнение: Томская обл. (Россия)",
+      "label": "Полтора суток с момента удара по Москве",
       "severity": 74,
-      "domain": "climate"
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-RU",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-RU-Наводнение",
-      "to": "DOMAIN-RU-climate",
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-RU-Наводнение",
@@ -177,6 +192,12 @@
     {
       "from": "SIGNAL-RU-Наводнение",
       "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-RU-Полтора_су",
+      "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.74
     }
