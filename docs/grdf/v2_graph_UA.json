@@ -2,32 +2,32 @@
   "country": "UA",
   "date": "2026-06-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-22T19:56:25.869635+00:00",
+  "generated_at": "2026-06-22T21:58:53.140949+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 60,
+      "score": 61,
       "props": {
-        "risk_score": 60
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 28,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-Совет_Безо",
+      "type": "Signal",
+      "label": "Совет Безопасности ООН В ЖИВОМ ЭФИРЕ: Пр",
+      "severity": 78,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-Множество_",
       "type": "Signal",
       "label": "Множество дронов нацеливаются на Москву,",
@@ -92,13 +99,6 @@
       "label": "Украинские БПЛА нанесли террористическую",
       "severity": 65,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-Украинские",
-      "type": "Signal",
-      "label": "Украинские беспилотники попытались атако",
-      "severity": 64,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-UA",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-UA-Совет_Безо",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.78
+    },
+    {
       "from": "SIGNAL-UA-Множество_",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-UA-Украинские",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
     }
   ]
 }

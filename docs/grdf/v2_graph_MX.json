@@ -2,31 +2,31 @@
   "country": "MX",
   "date": "2026-06-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-22T19:56:25.876313+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-22T21:58:53.147846+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 49,
+      "score": 46,
       "props": {
-        "risk_score": 49
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
+      "score": 46,
       "trend": "down"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 23,
       "trend": "down"
     },
     {
@@ -62,7 +62,7 @@
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -80,16 +80,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-Полиция_на",
-      "type": "Signal",
-      "label": "Полиция назвала имя подростка-зрителя, п",
-      "severity": 50,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-MX-Мексика_пр",
       "type": "Signal",
-      "label": "Мексика предлагает 6,3 миллиарда долларо",
+      "label": "Мексика привлекла 6,3 миллиарда долларов",
       "severity": 46,
       "domain": "economic"
     }
@@ -99,13 +92,13 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-MX",
@@ -156,10 +149,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-MX-Полиция_на",
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
       "to": "DOMAIN-MX-social",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-MX-Мексика_пр",
