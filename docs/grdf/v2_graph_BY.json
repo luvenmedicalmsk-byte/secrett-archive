@@ -2,32 +2,32 @@
   "country": "BY",
   "date": "2026-06-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-22T11:35:50.766478+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-22T16:29:25.091652+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-BY",
       "type": "Country",
       "label": "BY",
-      "score": 42,
+      "score": 43,
       "props": {
-        "risk_score": 42
+        "risk_score": 43
       }
     },
     {
       "id": "DOMAIN-BY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-BY-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 21,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-BY-Темпы_рост",
+      "type": "Signal",
+      "label": "Темпы роста розничных цен на бензин АИ-9",
+      "severity": 42,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-BY-У_Лукашенк",
       "type": "Signal",
       "label": "У Лукашенко есть неделя вывести технику ",
@@ -92,7 +99,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-BY",
@@ -116,7 +123,7 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-BY",
@@ -147,6 +154,33 @@
       "to": "COUNTRY-BY",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-BY-geopolitical",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-BY-Темпы_рост",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.42
     },
     {
       "from": "SIGNAL-BY-У_Лукашенк",
