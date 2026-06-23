@@ -34,11 +34,20 @@ jobs:
         run: |
           python scripts/audit_engine_review.py
 
+      - name: Аудит границ Signals/Signal Pro/Архив (4.1)
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          AUDIT_CHAT_ID: '350205607'
+        run: |
+          python scripts/audit_boundaries.py
+
       - name: Коммит лога ревью
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add docs/_audit_engine_review.json 2>/dev/null || true
+          git add docs/_audit_engine_review.json docs/_audit_boundaries.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else

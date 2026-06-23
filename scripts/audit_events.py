@@ -557,6 +557,22 @@ def long_term_score(e):
     return _clamp(b)
 
 
+# AUDIT 4.1 — граница Архива: острые одноразовые события важны «сейчас», но не
+# имеют долгосрочной исследовательской ценности → не архивные кандидаты.
+ACUTE_EVENT = re.compile(
+    r"\b(землетрясен|взрыв|\bудар|атак|авари|пожар|обстрел|крушени|обрушени|"
+    r"наводнен|ураган|тайфун|цунами|оползен|шторм|ливн|сход\s+лавин)", re.I)
+STRUCTURAL_MARK = re.compile(
+    r"\b(санкц|политик|реформ|соглашен|договор|стратег|закон|регулир|доктрин|"
+    r"альянс|структурн|долгосрочн|режим|институт|переговор|бюллетен|уязвим|"
+    r"программ|курс|тренд|систем)", re.I)
+
+
+def _is_acute_only(e):
+    t = _txt(e)
+    return bool(ACUTE_EVENT.search(t)) and not bool(STRUCTURAL_MARK.search(t))
+
+
 def archive_value_score(e, impact, lt):
     a = 0.45 * lt + 0.35 * impact
     if e.get("phase") == "chronic":
@@ -583,7 +599,7 @@ def compute_significance(events, noise_map):
         arch = archive_value_score(e, imp, lt)
         value = _clamp(0.32 * imp + 0.13 * cross + 0.15 * cas + 0.20 * lt + 0.20 * arch)
         _, cat = strategic_signal(e, imp, rel)
-        archive_cand = arch >= 60
+        archive_cand = (arch >= 60) and not _is_acute_only(e)
         # Atlas Signal Pyramid (5 уровней)
         if ns >= NOISE_THRESHOLD:
             level = 1
