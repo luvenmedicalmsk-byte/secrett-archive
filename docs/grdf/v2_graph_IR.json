@@ -2,60 +2,60 @@
   "country": "IR",
   "date": "2026-06-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-23T20:55:05.497744+00:00",
+  "generated_at": "2026-06-23T21:15:20.370664+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 57,
+      "score": 60,
       "props": {
-        "risk_score": 57
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Рубио_заяв",
+      "type": "Signal",
+      "label": "Рубио заявляет, что США не примут иранск",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IR-11_судов,_",
       "type": "Signal",
       "label": "11 судов, принадлежащих Турции, покинули",
@@ -92,13 +99,6 @@
       "label": "Трамп допустил, что Вашингтон в будущем ",
       "severity": 62,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IR-Взрыв_на_г",
-      "type": "Signal",
-      "label": "Взрыв на газовом объекте в Катаре унес ж",
-      "severity": 60,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IR",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Рубио_заяв",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-IR-11_судов,_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-IR-Взрыв_на_г",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }
