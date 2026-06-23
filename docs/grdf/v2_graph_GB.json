@@ -2,32 +2,32 @@
   "country": "GB",
   "date": "2026-06-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-23T14:27:46.902162+00:00",
+  "generated_at": "2026-06-23T16:50:45.322734+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 60,
+      "score": 61,
       "props": {
-        "risk_score": 60
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-GB-Трамп_утве",
-      "type": "Signal",
-      "label": "Трамп утверждает, что через Ормузский пр",
-      "severity": 62,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-GB-P&G_разрыв",
       "type": "Signal",
       "label": "P&G разрывает связи с Imedi TV, попавшим",
       "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GB-Великобрит",
+      "type": "Signal",
+      "label": "Великобритания проводит испытания новых ",
+      "severity": 61,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-GB",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-89_человек",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.7
     },
     {
-      "from": "SIGNAL-GB-Трамп_утве",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
       "from": "SIGNAL-GB-P&G_разрыв",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-GB-Великобрит",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.61
     }
   ]
 }
