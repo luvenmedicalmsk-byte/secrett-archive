@@ -2182,6 +2182,28 @@ def geo_audit(events):
         ok, fixed, review, len(held), no_ec, share*100, ' ⚠ПОРОГ' if emergency else ''), file=sys.stderr)
     return published
 
+# --- Софт-кап единичного банкротства компании (не системный риск → контекстный фон) ---
+_BANKRUPT_RE = re.compile(r'обанкрот|банкротств|объявлен\\w* банкрот|призна\\w* банкрот|bankrupt|несостоятельн', re.I)
+_FIRM_RE = re.compile(r'\\bGmbH\\b|\\bAG\\b|& ?Co\\b|\\bInc\\b|\\bLtd\\b|\\bLLC\\b|\\bООО\\b|\\bОАО\\b|\\bПАО\\b|\\bЗАО\\b|\\bАО \\b|пивоварн|пивзавод|\\bзавод\\b|фабрик|ритейлер|авиакомпани|компани[яию]\\b|фирм[аеуы]\\b', re.I)
+_SECTOR_WAVE_RE = re.compile(r'массов\\w* банкрот|волн\\w* банкрот|сери\\w* банкрот|по всей стран|целы\\w* сектор|отрасл\\w* кризис|банковск\\w* кризис|систем\\w* кризис|цепочк\\w* банкрот|десятк\\w* компан|сотн\\w* компан', re.I)
+
+def _softcap_firm_bankruptcy(events, cap=48):
+    """Единичное банкротство компании — не системный риск. Понижаем severity до cap,
+    оставляя событие в ленте (макроконтекст сохраняется). Волна/сектор банкротств — не трогаем."""
+    n = 0
+    for e in events:
+        sev = e.get('severity')
+        if not isinstance(sev, (int, float)) or sev <= cap:
+            continue
+        text = (e.get('title', '') or '') + ' ' + (e.get('summary', '') or '')
+        if _BANKRUPT_RE.search(text) and _FIRM_RE.search(text) and not _SECTOR_WAVE_RE.search(text):
+            e['severity'] = cap
+            e['_softcap'] = 'single_firm_bankruptcy'
+            n += 1
+    if n:
+        print('  SOFTCAP: единичных банкротств понижено до %d: %d' % (cap, n), file=sys.stderr)
+    return events
+
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -2193,6 +2215,7 @@ def save(events):
         except Exception: pass
     _save_tr_disk()
     events = _llm_extract_countries(events)
+    events = _softcap_firm_bankruptcy(events)
     events = geo_audit(events)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
