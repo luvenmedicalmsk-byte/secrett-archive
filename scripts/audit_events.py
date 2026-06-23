@@ -491,7 +491,7 @@ STRATEGIC_CATS = [
 def strategic_signal(e, impact, relevance):
     text = _txt(e)
     for name, rx in STRATEGIC_CATS:
-        if rx.search(text) and impact >= 60 and relevance >= 60:
+        if rx.search(text) and impact >= 60 and relevance >= 64:  # калибровка AUDIT 3.0
             return True, name
     return False, None
 

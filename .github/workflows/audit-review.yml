@@ -1,0 +1,47 @@
+name: Audit Engine Review (мета-аудит 3.0)
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # ежедневно 06:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: audit-review-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Клонирование репозитория
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Настройка Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Мета-аудит Audit Engine (FP/FN/калибровка/философия → Telegram)
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          AUDIT_CHAT_ID: '350205607'
+        run: |
+          python scripts/audit_engine_review.py
+
+      - name: Коммит лога ревью
+        run: |
+          git config user.name "archive-bot"
+          git config user.email "bot@secrett-archive.com"
+          git add docs/_audit_engine_review.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "Нет изменений"
+          else
+            git commit -m "Audit Engine Review · $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git pull --rebase origin main && git push || (sleep 5 && git pull --rebase origin main && git push)
+          fi
