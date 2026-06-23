@@ -123,6 +123,29 @@ jobs:
             git push || (sleep 3 && git pull --rebase origin main && git push) || (sleep 6 && git pull --rebase origin main && git push)
           fi
 
+      - name: Контроль публикации (AUDIT 4.6)
+        if: always()
+        run: |
+          echo "=== PUBLISH CHECK (AUDIT 4.6) ==="
+          SHA=$(git rev-parse HEAD)
+          echo "Commit: $SHA"
+          AGE=$(python3 -c "import json,datetime as dt; d=json.load(open('docs/events.json')); t=dt.datetime.fromisoformat(d.get('updated','').replace('Z','+00:00')); print(int((dt.datetime.now(dt.timezone.utc)-t).total_seconds()//60))" 2>/dev/null || echo "?")
+          echo "events.json возраст: ${AGE} мин"
+          COUNT="${{ steps.healthcheck.outputs.events_count }}"
+          if git diff --quiet HEAD~1 HEAD -- docs/events.json 2>/dev/null; then
+            echo "events.json updated: NO"
+            if [ "${COUNT:-0}" -gt 100 ]; then
+              echo "::error::PIPELINE STALLED — парсер обработал ${COUNT} событий, но новый events.json НЕ опубликован"
+            else
+              echo "(новых данных не было — это норма)"
+            fi
+          else
+            echo "events.json updated: YES — опубликован ✓"
+          fi
+          if [ "$AGE" != "?" ] && [ "$AGE" -gt 60 ]; then
+            echo "::error::STALE DATA — возраст production events.json ${AGE} мин (>60)"
+          fi
+
       - name: Telegram alert
         if: failure()
         env:
