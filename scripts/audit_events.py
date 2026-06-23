@@ -693,6 +693,58 @@ def _persist_events(events, path):
         print("[audit] persist events fail: %s" % _e)
 
 
+try:
+    import geo_resolver as _geo_res
+except Exception:
+    _geo_res = None
+
+_GEO46_COUNTRIES = {
+    "литв": "Литва", "герман": "Германия", "франци": "Франция", "итали": "Италия",
+    "сша": "США", "китай": "Китай", "иран": "Иран", "казахстан": "Казахстан",
+    "беларус": "Беларусь", "украин": "Украина", "польш": "Польша", "грузи": "Грузия",
+    "армени": "Армения", "латви": "Латвия", "эстони": "Эстония", "азербайджан": "Азербайджан",
+}
+
+
+def geo_integrity_check(events):
+    """AUDIT 4.6 — ищет события с явным гео-признаком, но без страны (region=Глобально / country_code пуст)."""
+    correct = 0
+    errors = []
+    for e in events:
+        cc = str(e.get("country_code") or e.get("event_country") or "").strip()
+        region = str(e.get("region") or "")
+        is_bad_geo = (region == "Глобально") or (not cc)
+        if cc and region != "Глобально":
+            correct += 1
+            continue
+        text = (str(e.get("title", "")) + " " + str(e.get("summary", ""))).lower()
+        subj = _geo_res.ru_subject(text) if _geo_res else None
+        ctry = None
+        for k, v in _GEO46_COUNTRIES.items():
+            if k in text:
+                ctry = v
+                break
+        if subj and is_bad_geo:
+            errors.append({"title": str(e.get("title", ""))[:70],
+                           "reason": "субъект РФ (%s), но country_code пуст / region=Глобально" % subj})
+        elif ctry and is_bad_geo:
+            errors.append({"title": str(e.get("title", ""))[:70],
+                           "reason": "страна в тексте (%s), но region=Глобально" % ctry})
+        else:
+            correct += 1  # глобальное событие без гео-признаков — это норма
+    return correct, errors
+
+
+def _geo46_age_minutes(meta):
+    try:
+        from datetime import datetime, timezone
+        u = str((meta or {}).get("updated") or "")
+        t = datetime.fromisoformat(u.replace("Z", "+00:00"))
+        return int((datetime.now(timezone.utc) - t).total_seconds() // 60)
+    except Exception:
+        return None
+
+
 def build_report(events, meta, res):
     total = len(events)
     noise_n = len(res["noise"])
@@ -797,6 +849,28 @@ def build_report(events, meta, res):
         for _r in ga2.get("examples", [])[:6]:
             if _r.get("kind") in ("изменено", "потеря"):
                 L.append("  %s: %s -> %s [%s]" % ((_r.get("title", "") or "")[:42], _r.get("from", "-"), _r.get("to", "-"), _r.get("kind", "")))
+
+    # ── AUDIT 4.6 — GEO INTEGRITY & PUBLISH CONTROL ──
+    _gc_correct, _gc_errors = geo_integrity_check(events)
+    _ga2 = _load_geo_authority() or {}
+    _fixed46 = _ga2.get("filled", 0)
+    L.append("")
+    L.append("ГЕОГРАФИЧЕСКИЙ КОНТРОЛЬ (4.6)")
+    L.append("С корректной географией: %d / Исправлено: %d / С ошибкой географии: %d" % (
+        _gc_correct, _fixed46, len(_gc_errors)))
+    _age46 = _geo46_age_minutes(meta)
+    if _age46 is not None and _age46 > 60:
+        L.append("\u274c STALE DATA — возраст events.json %d мин (>60)" % _age46)
+    if _fixed46 > 0 and _gc_errors:
+        L.append("\u274c GEO DESYNC — snapshot исправил %d, но осталось ошибок: %d (исправления не дошли)" % (
+            _fixed46, len(_gc_errors)))
+    if _gc_errors:
+        L.append("GEO ERRORS:")
+        for _er in _gc_errors[:8]:
+            L.append("  \u2022 %s" % (_er.get("title", "") or "")[:48])
+            L.append("    Причина: %s" % _er.get("reason", ""))
+    else:
+        L.append("GEO ERRORS: нет \u2713")
 
     _df = res.get("domain_fixed", [])
     if _df:
