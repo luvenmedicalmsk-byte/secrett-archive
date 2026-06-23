@@ -2,67 +2,67 @@
   "country": "IR",
   "date": "2026-06-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-23T09:01:32.136101+00:00",
+  "generated_at": "2026-06-23T11:59:18.427442+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 55,
+      "score": 56,
       "props": {
-        "risk_score": 55
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 27,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Анализ_-_Р",
-      "type": "Signal",
-      "label": "Анализ - Разобрать 'запутанное гнездо' с",
-      "severity": 62,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IR-Трамп_допу",
       "type": "Signal",
       "label": "Трамп допустил, что Вашингтон в будущем ",
@@ -99,6 +92,13 @@
       "label": "Взрыв на газовом объекте в Катаре унес ж",
       "severity": 60,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-США_сняли_",
+      "type": "Signal",
+      "label": "США сняли на 60 дней санкции на иранскую",
+      "severity": 55,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-IR",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Анализ_-_Р",
-      "to": "DOMAIN-IR-geopolitical",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IR-Трамп_допу",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-IR-США_сняли_",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55
     }
   ]
 }
