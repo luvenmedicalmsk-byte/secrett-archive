@@ -2124,6 +2124,64 @@ def _ndup_collapse(events):
             pi=kept[dup]['idx']
             if _ndup_sev(e)>_ndup_sev(out[pi]): out[pi]=e; kept[dup]['words']=ew
     return out
+GEO_NOCOUNTRY_THRESHOLD = 0.05  # аварийный порог доли событий без страны
+_GEO_VAGUE_RE = re.compile(r'север\\w* стран|приграничн|неназван|неустановл|неуказан|в одной из стран|unnamed region|border area', re.I)
+
+def geo_audit(events):
+    """AUDIT 4.4 — Geographic Integrity Engine: статусы GEO_OK/GEO_FIXED/GEO_REVIEW,
+    QC-метрики, аварийное правило. Пишет _geo_audit.json и _geo_review.json.
+    Неразрешимые (вагусные) события придерживаются от публикации."""
+    ok = fixed = review = 0
+    fixed_ex = []; review_ex = []; held = []; published = []
+    for e in events:
+        ec = (e.get('event_country') or '').strip()
+        if e.get('geo_fix'):
+            e['geo_status'] = 'GEO_FIXED'; fixed += 1
+            gf = e['geo_fix']
+            if len(fixed_ex) < 15:
+                fixed_ex.append({'subject': gf.get('subject',''), 'from': gf.get('from','Глобально'),
+                                 'to': gf.get('to','Россия'), 'title': (e.get('title','') or '')[:80]})
+            published.append(e)
+        elif ec and ec != 'GLOBAL':
+            e['geo_status'] = 'GEO_OK'; ok += 1; published.append(e)
+        else:
+            e['geo_status'] = 'GEO_REVIEW'; review += 1
+            _txt = (e.get('title','') or '') + ' ' + (e.get('summary','') or '')
+            _vague = bool(_GEO_VAGUE_RE.search(_txt))
+            if len(review_ex) < 15:
+                review_ex.append({'title': (e.get('title','') or '')[:80],
+                                  'reason': ('невозможно определить государство' if _vague else 'страна не выставлена при разметке'),
+                                  'region': e.get('region','')})
+            if _vague:
+                e['geo_hold'] = True; held.append(e)
+            else:
+                published.append(e)
+    total = len(events)
+    no_ec = sum(1 for e in published if not (e.get('event_country') or '').strip())
+    no_cc = sum(1 for e in published if not (e.get('country_code') or '').strip())
+    glob  = sum(1 for e in published if (e.get('region') or '') == 'Глобально')
+    empty_geo = sum(1 for e in published if not (e.get('event_country') or '').strip() and (e.get('region') or '') in ('', 'Глобально'))
+    share = (no_ec / len(published)) if published else 0.0
+    emergency = share > GEO_NOCOUNTRY_THRESHOLD
+    audit = {'updated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+             'total_in': total, 'published': len(published), 'held_for_review': len(held),
+             'geo_ok': ok, 'geo_fixed': fixed, 'geo_review': review,
+             'qc': {'no_event_country': no_ec, 'no_country_code': no_cc, 'region_global': glob, 'empty_geo': empty_geo},
+             'emergency': {'tripped': emergency, 'threshold_pct': GEO_NOCOUNTRY_THRESHOLD*100,
+                           'no_country': no_ec, 'no_country_pct': round(share*100, 1)},
+             'fixed_examples': fixed_ex, 'review_examples': review_ex}
+    try:
+        (OUTPUT_PATH.parent / '_geo_audit.json').write_text(json.dumps(audit, ensure_ascii=False, indent=2), encoding='utf-8')
+        (OUTPUT_PATH.parent / '_geo_review.json').write_text(json.dumps(
+            {'updated': audit['updated'],
+             'held': [{'title': e.get('title',''), 'region': e.get('region','')} for e in held],
+             'review': review_ex}, ensure_ascii=False, indent=2), encoding='utf-8')
+    except Exception as _e:
+        print('  [WARN] geo_audit write: %s' % _e, file=sys.stderr)
+    print('  ГЕО-АУДИТ: OK=%d FIXED=%d REVIEW=%d (held %d) | без страны %d (%.1f%%)%s' % (
+        ok, fixed, review, len(held), no_ec, share*100, ' ⚠ПОРОГ' if emergency else ''), file=sys.stderr)
+    return published
+
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -2135,6 +2193,7 @@ def save(events):
         except Exception: pass
     _save_tr_disk()
     events = _llm_extract_countries(events)
+    events = geo_audit(events)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -6582,6 +6641,7 @@ def _llm_extract_countries(events):
                 _la, _ln, _ = CC.get('RU', (61.5, 105.0, 'Россия'))
                 e['country_code'] = 'RU'; e['country_codes'] = ['RU']; e['event_country'] = 'RU'
                 e['region'] = 'Россия, ' + _subj
+                e['geo_fix'] = {'subject': _subj, 'from': 'Глобально', 'to': 'Россия, ' + _subj}
                 e['lat'] = round(_la + _rnd.uniform(-4, 4), 2); e['lng'] = round(_ln + _rnd.uniform(-12, 12), 2)
                 fixed += 1
                 continue
