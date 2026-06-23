@@ -670,6 +670,21 @@ def _load_geo_audit(path="docs/_geo_audit.json"):
         return None
 
 
+def _persist_events(events, path):
+    """Сохранить исправленные события обратно в events.json (минимальный diff)."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            data["events"] = events; data["count"] = len(events)
+        else:
+            data = events
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as _e:
+        print("[audit] persist events fail: %s" % _e)
+
+
 def build_report(events, meta, res):
     total = len(events)
     noise_n = len(res["noise"])
@@ -763,19 +778,12 @@ def build_report(events, meta, res):
         L.append("QC: без event_country %d \u00b7 без country_code %d \u00b7 region=Глобально %d \u00b7 пустая гео %d" % (
             _qc.get("no_event_country", 0), _qc.get("no_country_code", 0), _qc.get("region_global", 0), _qc.get("empty_geo", 0)))
 
-    L.append("")
-    L.append("ПОДОЗРИТЕЛЬНЫЕ СОБЫТИЯ")
-    if res["noise"]:
-        for n in res["noise"][:8]:
-            t = (n["title"] or "")[:70]
-            L.append("• %s — %s [%s]" % (t, ", ".join(n["reasons"][:2]), n["recommendation"]))
-    else:
-        L.append("• нет")
 
-    if res["domain"]:
+    _df = res.get("domain_fixed", [])
+    if _df:
         L.append("")
-        L.append("ВОЗМОЖНО ОШИБОЧНЫЙ ДОМЕН")
-        for d in res["domain"][:5]:
+        L.append("ДОМЕН ИСПРАВЛЕН")
+        for d in _df[:8]:
             L.append("• %s: %s → %s (%.0f%%)" % (
                 (d["title"] or "")[:55], DOMAIN_RU.get(d["current"], d["current"]),
                 DOMAIN_RU.get(d["recommended"], d["recommended"]), d.get("confidence", 0) * 100))
@@ -873,6 +881,20 @@ def main():
         "noisy_channels": noisy_channels,
         "verdict": heuristic_verdict(noise_map),
     }
+
+    # AUDIT: применяем исправление ошибочного домена (не только сообщаем) + пишем в events.json
+    _dom_fixed = []
+    _by_id = {e.get("id"): e for e in events}
+    for _d in res["domain"]:
+        if _d.get("recommended") and _d.get("confidence", 0) >= 0.7:
+            _e = _by_id.get(_d.get("id"))
+            if _e is not None and _e.get("domain") != _d["recommended"]:
+                _e["domain"] = _d["recommended"]
+                _dom_fixed.append(_d)
+    res["domain_fixed"] = _dom_fixed
+    if _dom_fixed and not args.dry_run:
+        _persist_events(events, path)
+        print("[audit] Исправлено доменов: %d -> %s" % (len(_dom_fixed), path))
     # Блок 9 (опционально): уточнить вердикт LLM по подозрительным
     suspects = [e for e in events if e.get("id") in noise_ids]
     llm = llm_quality(suspects)
