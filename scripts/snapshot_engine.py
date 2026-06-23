@@ -13917,7 +13917,7 @@ def _save_v8_dashboard(snapshots: list,
     national_playbooks = [
         {"country":pb["country"],"priority_bucket":pb["priority_bucket"],
          "immediate_n":len(pb.get("playbook",{}).get("immediate",[])),
-         "top_immediate":pb.get("playbook",{}).get("immediate",[{}])[0].get("label","none")}
+         "top_immediate":(pb.get("playbook",{}).get("immediate") or [{}])[0].get("label","none")}
         for pb in all_pb
     ]
 
