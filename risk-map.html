@@ -1853,7 +1853,7 @@ function renderMarkers() {
 }
 
 // ── СТАТИСТИКА И СПИСОК ──────────────────────────────────────────────────────
-function sc(s){ return s>=85?'#C0392B':s>=70?'#D35400':'#2980B9' }
+function sc(s){ return s>=90?'#cc5a3a':s>=75?'#cf9a3a':s>=60?'#b8973a':s>=40?'#9a9a52':'#7d8a6a' }
 function fd(iso){ return new Date(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'long'}) }
 
 function updateStats() {
@@ -1906,6 +1906,7 @@ function showDetail(ev) {
   document.getElementById('dt-title').textContent = ev.title;
   document.getElementById('dt-region').textContent = ev.region;
   document.getElementById('dt-sv').textContent = ev.severity + ' / 100';
+  document.getElementById('dt-sv').style.color = sc(ev.severity);
   document.getElementById('dt-sfill').style.cssText = `width:${ev.severity}%;background:${sc(ev.severity)}`;
   // Берём только первый абзац summary, убираем мусор
   const rawSummary = (ev.summary || '');
