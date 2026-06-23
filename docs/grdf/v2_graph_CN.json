@@ -1,33 +1,33 @@
 {
   "country": "CN",
-  "date": "2026-06-22",
+  "date": "2026-06-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-22T23:14:50.093607+00:00",
+  "generated_at": "2026-06-23T01:32:05.422047+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CN-Запугивани",
-      "type": "Signal",
-      "label": "Запугивание Тайваня со стороны Пекина уг",
-      "severity": 53,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-CN-Хакерская_",
       "type": "Signal",
       "label": "Хакерская группа, связанная с Китаем, ск",
       "severity": 55,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-CN-Китайский_",
+      "type": "Signal",
+      "label": "Китайский город Ухань оказался затоплен ",
+      "severity": 49,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-CN",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-О_чём_гово",
       "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-CN-Запугивани",
-      "to": "DOMAIN-CN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
-    },
-    {
       "from": "SIGNAL-CN-Хакерская_",
       "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.55
+    },
+    {
+      "from": "SIGNAL-CN-Китайский_",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.49
     }
   ]
 }
