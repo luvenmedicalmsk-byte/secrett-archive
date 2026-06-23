@@ -392,6 +392,191 @@ def pct(n, total):
     return round(100 * n / total, 1) if total else 0.0
 
 
+# ═════════════════════════════════════════════════════════════════════════════
+# ATLAS QUALITY ENGINE 2.0 — системная значимость (блоки 11–16)
+# ═════════════════════════════════════════════════════════════════════════════
+
+def _clamp(x):
+    return max(0, min(100, int(round(x))))
+
+
+def _txt(e):
+    return str(e.get("title", "")) + " " + str(e.get("summary", ""))
+
+
+# Блок 11. System Impact Audit -------------------------------------------------
+
+HIGH_IMPACT = re.compile(
+    r"\b(войн|конфликт|вторжен|ракет|обстрел|наступлен|боев|санкци|эмбарго|"
+    r"энергокризис|блэкаут|отключени\w*\s+(?:энерг|электро)|АЭС|реактор|"
+    r"трубопровод|инфраструктур|наводнен|засух|ураган|тайфун|землетряс|цунами|"
+    r"катастроф|стихийн|правительств|президент|парламент|указ|госдума|"
+    r"кибератак|критическ\w+\s+сбой|дефолт|рецесс)", re.I)
+
+GLOBAL_REGIONS = ("глобально", "global", "мир", "евросоюз", "нато")
+
+
+def impact_score(e, noise):
+    sev = e.get("severity") or 0
+    esc = e.get("escalation_score") or 0
+    base = sev + 0.25 * esc
+    reasons = []
+    if HIGH_IMPACT.search(_txt(e)):
+        base += 15
+        reasons.append("системные маркеры")
+    region = (e.get("region") or "").lower()
+    if any(g in region for g in GLOBAL_REGIONS):
+        base += 8
+        reasons.append("глобальный охват")
+    if noise >= NOISE_THRESHOLD:
+        base = min(base, 30)
+        reasons.append("шум → влияние ограничено")
+    score = _clamp(base)
+    level = "High" if score >= 70 else ("Medium" if score >= 40 else "Low")
+    if not reasons:
+        reasons.append("severity %d" % int(sev))
+    return score, level, reasons
+
+
+# Блок 12. Cascade Impact Score ------------------------------------------------
+
+def cascade_score(e):
+    text = _txt(e)
+    doms = set()
+    for d, rx in DOMAIN_KEYWORDS.items():
+        if rx.search(text):
+            doms.add(d)
+    own = e.get("domain")
+    if own in VALID_DOMAINS:
+        doms.add(own)
+    nvec = len(e.get("vectors") or [])
+    sev = e.get("severity") or 0
+    score = _clamp(22 * len(doms) + 9 * nvec + 0.2 * sev)
+    return score, sorted(doms)
+
+
+# Блок 13. Atlas Relevance Score -----------------------------------------------
+
+def relevance_score(e, impact, cascade, noise):
+    rel = 0.5 * impact + 0.3 * cascade + (15 if e.get("domain") in VALID_DOMAINS else 0)
+    if noise >= NOISE_THRESHOLD:
+        rel *= 0.4
+    return _clamp(rel)
+
+
+def relevance_tier(score):
+    if score >= 90:
+        return "ключевой системный сигнал"
+    if score >= 70:
+        return "значимый сигнал"
+    if score >= 50:
+        return "вторичный сигнал"
+    return "низкая ценность"
+
+
+# Блок 16. Strategic Signal Audit ----------------------------------------------
+# («эскалация» под редакторским запретом → «обострение»)
+
+STRATEGIC_CATS = [
+    ("Геополитическое обострение", re.compile(r"\b(войн|конфликт|удар|ракет|вторжен|войск|боев|обстрел|границ|переговор|НАТО|перемири|оборон)", re.I)),
+    ("Энергетические риски",       re.compile(r"\b(нефт|газ|энерг|АЭС|реактор|блэкаут|электро|ОПЕК|трубопровод|топлив)", re.I)),
+    ("Финансовая нестабильность",  re.compile(r"\b(инфляц|банк|рынок|акци|валют|дефолт|рецесс|долг|бирж|ставк|кризис|обвал)", re.I)),
+    ("Климатические угрозы",       re.compile(r"\b(наводнен|засух|жар|пожар|ураган|тайфун|землетряс|климат|выброс|стихийн|циклон)", re.I)),
+    ("Ресурсные ограничения",      re.compile(r"\b(дефицит|нехватк|продовольств|зерно|урожай|ресурс|поставк|вода|редкоземель)", re.I)),
+    ("Технологические сбои",       re.compile(r"\b(кибератак|ransomware|сбой|отказ|уязвим|взлом|утечк|вредонос)", re.I)),
+    ("Социальная нестабильность",  re.compile(r"\b(протест|беспорядк|забастов|мигра|восстан|демонстрац|неравенств)", re.I)),
+]
+
+
+def strategic_signal(e, impact, relevance):
+    text = _txt(e)
+    for name, rx in STRATEGIC_CATS:
+        if rx.search(text) and impact >= 60 and relevance >= 60:
+            return True, name
+    return False, None
+
+
+# Блок 14. Topic Saturation Audit ----------------------------------------------
+# Перегрузка ленты одной персоной / делом / сюжетом. Исключаем крупных акторов —
+# их частота это тема, а не насыщение.
+
+MAJOR_ACTORS = set("""россия сша китай украина москва европа евросоюз нато израиль
+иран индия турция германия франция британия японии корея газа киев вашингтон
+кремль пекин лондон тегеран брюссель""".split())
+
+
+def topic_saturation(events, total):
+    cap = re.compile(r"\b([А-ЯЁ][а-яё]{3,})\b")
+    idx = defaultdict(set)
+    for e in events:
+        title = str(e.get("title", ""))
+        words = cap.findall(title)
+        for w in words[1:]:  # пропускаем первое слово (обычно начало предложения)
+            lw = w.lower()
+            if lw in MAJOR_ACTORS or lw in STOP:
+                continue
+            idx[w].add(e.get("id"))
+    thr = max(4, int(0.05 * total))
+    warnings = []
+    for tok, ids in sorted(idx.items(), key=lambda kv: -len(kv[1])):
+        if len(ids) >= thr:
+            warnings.append({
+                "topic": tok, "count": len(ids),
+                "share_pct": round(100 * len(ids) / total, 1),
+                "recommendation": "снизить вес темы / сгруппировать",
+            })
+    return warnings[:5]
+
+
+# Блок 15. Atlas Relevance Index -----------------------------------------------
+
+def relevance_index(snr, avg_rel, avg_cas, domain_acc, dup_rate):
+    idx = (0.30 * snr + 0.25 * avg_rel + 0.15 * avg_cas +
+           0.15 * domain_acc + 0.15 * (100 - dup_rate))
+    return _clamp(idx)
+
+
+def compute_significance(events, noise_map):
+    """Прогоняет блоки 11–13, 16 по каждому событию, возвращает агрегаты."""
+    per = {}
+    strategic = []
+    sum_imp = sum_cas = sum_rel = 0
+    high_impact = low_priority = 0
+    for e in events:
+        ns = noise_map.get(e.get("id"), 0)
+        imp, lvl, why = impact_score(e, ns)
+        cas, doms = cascade_score(e)
+        rel = relevance_score(e, imp, cas, ns)
+        is_strat, cat = strategic_signal(e, imp, rel)
+        per[e.get("id")] = {
+            "impact_score": imp, "impact_level": lvl, "impact_reason": why,
+            "cascade_score": cas, "cascade_domains": doms,
+            "relevance_score": rel, "relevance_tier": relevance_tier(rel),
+            "strategic_signal": is_strat, "strategic_category": cat,
+        }
+        sum_imp += imp
+        sum_cas += cas
+        sum_rel += rel
+        if lvl == "High":
+            high_impact += 1
+        if rel < 50:
+            low_priority += 1
+        if is_strat:
+            strategic.append({"id": e.get("id"), "title": e.get("title"),
+                              "category": cat, "impact": imp, "relevance": rel})
+    n = max(1, len(events))
+    strategic.sort(key=lambda s: -s["relevance"])
+    return {
+        "per": per,
+        "avg_impact": round(sum_imp / n),
+        "avg_cascade": round(sum_cas / n),
+        "avg_relevance": round(sum_rel / n),
+        "high_impact": high_impact,
+        "low_priority": low_priority,
+        "strategic": strategic,
+    }
+
+
 def build_report(events, meta, res):
     total = len(events)
     noise_n = len(res["noise"])
@@ -402,7 +587,8 @@ def build_report(events, meta, res):
     risk_n = len(res["riskscore"])
     snr = round(100 * (1 - noise_n / total), 1) if total else 100.0
     feed_quality = snr  # качество ленты ≈ доля сигналов
-    now = dt.datetime.now(UTC).strftime("%Y-%m-%d %H")
+    now = dt.datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
+    sig = res.get("significance", {})
 
     L = []
     L.append("ATLAS EVENTS AUDIT")
@@ -415,6 +601,12 @@ def build_report(events, meta, res):
     L.append("Ошибки перевода: %d" % tr_n)
     L.append("Подозрительные risk_score: %d" % risk_n)
     L.append("Качество ленты: %d%%" % round(feed_quality))
+    L.append("Atlas Relevance Index: %d%%" % res.get("relevance_index", 0))
+    L.append("Средний Impact Score: %d" % sig.get("avg_impact", 0))
+    L.append("Средний Cascade Score: %d" % sig.get("avg_cascade", 0))
+    L.append("Системно значимых: %d" % sig.get("high_impact", 0))
+    L.append("Низкоприоритетных: %d" % sig.get("low_priority", 0))
+    L.append("Стратегических сигналов: %d" % len(sig.get("strategic", [])))
 
     # KPI-светофор
     L.append("")
@@ -449,6 +641,23 @@ def build_report(events, meta, res):
             L.append("• %s: %s → %s (%.0f%%)" % (
                 (d["title"] or "")[:55], DOMAIN_RU.get(d["current"], d["current"]),
                 DOMAIN_RU.get(d["recommended"], d["recommended"]), d.get("confidence", 0) * 100))
+
+    L.append("")
+    L.append("ТОП СТРАТЕГИЧЕСКИХ СИГНАЛОВ")
+    strat = sig.get("strategic", [])
+    if strat:
+        for sg in strat[:8]:
+            L.append("• [%s] %s (impact %d, релевантность %d)" % (
+                sg["category"], (sg["title"] or "")[:55], sg["impact"], sg["relevance"]))
+    else:
+        L.append("• нет")
+
+    if res.get("saturation"):
+        L.append("")
+        L.append("TOPIC SATURATION WARNING")
+        for w in res["saturation"]:
+            L.append("• «%s» — %d событий (%.1f%% ленты), %s" % (
+                w["topic"], w["count"], w["share_pct"], w["recommendation"]))
 
     L.append("")
     L.append("ШУМНЫЕ TELEGRAM-КАНАЛЫ")
@@ -524,6 +733,15 @@ def main():
         res["verdict"].update(llm)
         res["llm_checked"] = len(llm)
 
+    # Блоки 11–16: системная значимость
+    sig = compute_significance(events, noise_map)
+    res["significance"] = sig
+    res["saturation"] = topic_saturation(events, len(events))
+    _snr = round(100 * (1 - len(noise) / max(1, len(events))), 1)
+    _domacc = 100 - pct(len(res["domain"]), len(events))
+    _duprate = pct(sum(g["size"] for g in res["duplicates"]), len(events))
+    res["relevance_index"] = relevance_index(_snr, sig["avg_relevance"], sig["avg_cascade"], _domacc, _duprate)
+
     summary = {
         "noise": len(noise), "domain": len(res["domain"]),
         "country": len(res["country"]),
@@ -532,7 +750,7 @@ def main():
         "riskscore": len(res["riskscore"]),
     }
     # отпечаток профиля качества — чтобы не слать одинаковый отчёт каждые 30 мин
-    fp = "%(noise)d-%(domain)d-%(country)d-%(duplicates)d-%(translation)d-%(riskscore)d" % summary
+    fp = "%(noise)d-%(domain)d-%(country)d-%(duplicates)d-%(translation)d-%(riskscore)d" % summary + "-s%d" % len(res["saturation"])
     prev_fp = None
     try:
         with open("docs/_audit_events.json", "r", encoding="utf-8") as f:
@@ -549,7 +767,16 @@ def main():
             json.dump({
                 "generated_at": dt.datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "total": len(events), "fingerprint": fp, "summary": summary,
-                "channels": channels_all, "details": res,
+                "relevance_index": res["relevance_index"],
+                "avg_impact": res["significance"]["avg_impact"],
+                "avg_cascade": res["significance"]["avg_cascade"],
+                "high_impact": res["significance"]["high_impact"],
+                "low_priority": res["significance"]["low_priority"],
+                "strategic": res["significance"]["strategic"],
+                "saturation": res["saturation"],
+                "channels": channels_all,
+                "noise": res["noise"], "domain": res["domain"],
+                "duplicates": res["duplicates"], "translation": res["translation"],
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
