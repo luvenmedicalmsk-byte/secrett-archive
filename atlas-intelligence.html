@@ -77,10 +77,11 @@
 
 <script>
 const BANDS = [
-  {min:75, name:'Критический', cls:'lvl-3'},
-  {min:60, name:'Высокий',     cls:'lvl-2'},
-  {min:40, name:'Повышенный',  cls:'lvl-1'},
-  {min:0,  name:'Спокойный',   cls:'lvl-0'}
+  {min:90, name:'Международный риск', col:'#cc5a3a'},
+  {min:75, name:'Национальный риск',  col:'#cf9a3a'},
+  {min:60, name:'Системный риск',     col:'#b8973a'},
+  {min:40, name:'Региональный риск',  col:'#9a9a52'},
+  {min:0,  name:'Локальное событие',  col:'#7d8a6a'}
 ];
 const DOM = {
   climate:{l:'Климат',c:'#38bdf8'}, geopolitics:{l:'Геополитика',c:'#f87171'},
@@ -91,7 +92,7 @@ const DOM_ORDER = ['climate','geopolitics','economy','technology','social'];
 const ELEV = 60; // порог "домен в зоне повышенного риска"
 
 function band(v){ for(const b of BANDS){ if(v>=b.min) return b; } return BANDS[BANDS.length-1]; }
-function nextThreshold(v){ const ts=[40,60,75]; for(const t of ts){ if(v<t) return t; } return null; }
+function nextThreshold(v){ const ts=[40,60,75,90]; for(const t of ts){ if(v<t) return t; } return null; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
 
 function deltaHtml(v){
@@ -195,8 +196,8 @@ function render(idx){
     const csi=csiExperimental(c), cb=csiBand(csi);
     table += '<tr>'+
       '<td><span class="cc">'+esc(c.country_name||c.country)+'</span></td>'+
-      '<td class="num">'+c.risk_score+'</td>'+
-      '<td class="'+b.cls+'">'+b.name+'</td>'+
+      '<td class="num" style="color:'+b.col+'">'+c.risk_score+'</td>'+
+      '<td style="color:'+b.col+'">'+b.name+'</td>'+
       '<td>'+deltaHtml(c.gri_delta_7d)+'</td>'+
       '<td><span class="num">'+(c.cri_score!=null?c.cri_score:'—')+'</span> '+deltaHtml(c.cri_delta_7d)+'</td>'+
       '<td>'+domDots(c.domain_scores)+' <span class="small">'+activeDomains(c.domain_scores).length+'/5</span></td>'+
