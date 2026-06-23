@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-06-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-23T05:41:35.034249+00:00",
+  "generated_at": "2026-06-23T07:42:26.882909+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 61,
+      "score": 62,
       "props": {
-        "risk_score": 61
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 29,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-US-Анализ_-_Р",
+      "type": "Signal",
+      "label": "Анализ - Разобрать 'запутанное гнездо' с",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-US-Трамп_допу",
       "type": "Signal",
       "label": "Трамп допустил, что Вашингтон в будущем ",
       "severity": 62,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-US-Великобрит",
-      "type": "Signal",
-      "label": "Великобритания проводит испытания новых ",
-      "severity": 61,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-US",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Ботнет_Ary",
       "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
       "weight": 0.76
     },
     {
-      "from": "SIGNAL-US-Трамп_допу",
-      "to": "DOMAIN-US-economic",
+      "from": "SIGNAL-US-Анализ_-_Р",
+      "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-US-Великобрит",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "SIGNAL-US-Трамп_допу",
+      "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
-      "weight": 0.61
+      "weight": 0.62
     }
   ]
 }

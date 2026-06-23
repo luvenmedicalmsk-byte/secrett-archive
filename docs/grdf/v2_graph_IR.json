@@ -2,60 +2,60 @@
   "country": "IR",
   "date": "2026-06-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-23T05:41:35.043322+00:00",
+  "generated_at": "2026-06-23T07:42:26.892919+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 59,
+      "score": 58,
       "props": {
-        "risk_score": 59
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
-      "trend": "up"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 34,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "up"
+      "score": 8,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "up"
+      "score": 8,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Анализ_-_Р",
+      "type": "Signal",
+      "label": "Анализ - Разобрать 'запутанное гнездо' с",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IR-Нефть_пада",
       "type": "Signal",
       "label": "Нефть падает, так как США отменяют иранс",
@@ -92,13 +99,6 @@
       "label": "США временно приостанавливают санкции пр",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Трамп_допу",
-      "type": "Signal",
-      "label": "Трамп допустил, что Вашингтон в будущем ",
-      "severity": 62,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IR",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IR",
@@ -163,25 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-IR-geopolitical",
-      "to": "DOMAIN-IR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IR-infrastructure",
-      "to": "DOMAIN-IR-economic",
+      "from": "SIGNAL-IR-Анализ_-_Р",
+      "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IR-economic",
-      "to": "DOMAIN-IR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.62
     },
     {
       "from": "SIGNAL-IR-Нефть_пада",
@@ -192,12 +177,6 @@
     {
       "from": "SIGNAL-IR-США_времен",
       "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-IR-Трамп_допу",
-      "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
