@@ -32344,40 +32344,47 @@ def main():
     save_explainability()
     save_alerts()
     save_alert_rankings(snapshots)
-    save_grdf(snapshots)
-    save_grdf_v2(snapshots)
-    save_grdf_v3(snapshots)
-    save_grdf_v4(snapshots)
-    save_grdf_v5(snapshots)
-    save_grdf_v6(snapshots)
-    save_grdf_v7(snapshots)
-    save_grdf_v8(snapshots)
-    save_grdf_v9(snapshots)
-    save_grdf_v10(snapshots)
-    save_grdf_v11(snapshots)
-    save_grdf_v12(snapshots)
-    save_grdf_v13(snapshots)
-    save_grdf_hardening(snapshots)
-    save_grdf_production(snapshots)
-    save_grdf_final_certification(snapshots)
-    save_grdf_baseline(snapshots)
-    save_grdf_change_control(snapshots)
-    save_grdf_historical_validation(snapshots)
-    save_grdf_live_operations(snapshots)
-    save_grdf_accuracy(snapshots)
-    save_grdf_improvement(snapshots)
-    save_grdf_governance(snapshots)
-    save_grdf_operations(snapshots)
-    save_grdf_impact(snapshots)
-    save_grdf_sustainability(snapshots)
-    save_grdf_feed(snapshots)
-    save_grdf_ews(snapshots)
-    save_grdf_commercial(snapshots)
-    save_grdf_mobile_ux_audit(snapshots)
-    save_grdf_country_intel(snapshots)
-    save_grdf_launch_sprint(snapshots)
-    save_grdf_alert_map_v2(snapshots)
-    save_grdf_command(snapshots)
+    # AUDIT: экспериментальные дашборды изолированы — их крах не блокирует публикацию
+    for _grdf_fn in (
+        save_grdf,
+        save_grdf_v2,
+        save_grdf_v3,
+        save_grdf_v4,
+        save_grdf_v5,
+        save_grdf_v6,
+        save_grdf_v7,
+        save_grdf_v8,
+        save_grdf_v9,
+        save_grdf_v10,
+        save_grdf_v11,
+        save_grdf_v12,
+        save_grdf_v13,
+        save_grdf_hardening,
+        save_grdf_production,
+        save_grdf_final_certification,
+        save_grdf_baseline,
+        save_grdf_change_control,
+        save_grdf_historical_validation,
+        save_grdf_live_operations,
+        save_grdf_accuracy,
+        save_grdf_improvement,
+        save_grdf_governance,
+        save_grdf_operations,
+        save_grdf_impact,
+        save_grdf_sustainability,
+        save_grdf_feed,
+        save_grdf_ews,
+        save_grdf_commercial,
+        save_grdf_mobile_ux_audit,
+        save_grdf_country_intel,
+        save_grdf_launch_sprint,
+        save_grdf_alert_map_v2,
+        save_grdf_command,
+    ):
+        try:
+            _grdf_fn(snapshots)
+        except Exception as _grdf_e:
+            print("[GRDF] %s SKIPPED (некритично): %s" % (getattr(_grdf_fn, "__name__", "?"), _grdf_e), file=sys.stderr)
 
     scores = [s["risk_score"] for s in snapshots]
     print(
