@@ -2184,8 +2184,14 @@ def save(events):
         except Exception: pass
     _save_tr_disk()
     events = _llm_extract_countries(events)
-    events = _softcap_firm_bankruptcy(events)
-    events = geo_audit(events)
+    try:
+        events = _softcap_firm_bankruptcy(events)
+    except Exception as _e45:
+        print('  [WARN] softcap fail: %s' % _e45, file=sys.stderr)
+    try:
+        events = geo_audit(events)
+    except Exception as _e45:
+        print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
