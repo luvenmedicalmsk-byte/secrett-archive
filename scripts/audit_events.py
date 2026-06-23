@@ -653,6 +653,15 @@ def compute_significance(events, noise_map):
     }
 
 
+def _load_filter_log(path="docs/_filter_noise.json"):
+    """Лог авто-очистки от filter_noise.py (AUDIT 4.2). Нет файла → None."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
 def build_report(events, meta, res):
     total = len(events)
     noise_n = len(res["noise"])
@@ -705,6 +714,24 @@ def build_report(events, meta, res):
     if res["dates"]["future"] or res["dates"]["empty"]:
         L.append("  Даты: пустых %d, будущих %d" % (
             len(res["dates"]["empty"]), len(res["dates"]["future"])))
+
+    # ── AUDIT 4.2 — авто-очистка ленты (источник: filter_noise.py) ──
+    fn = _load_filter_log()
+    if fn:
+        L.append("")
+        L.append("АВТО-ОЧИСТКА ЛЕНТЫ (Noise Filter 4.2)")
+        L.append("Всего найдено %d / Опубликовано %d / Удалено как шум %d / На проверку %d" % (
+            fn.get("total_in", 0), fn.get("published", 0),
+            fn.get("removed_count", 0), fn.get("review_count", 0)))
+        if fn.get("guard", {}).get("tripped"):
+            L.append("⚠ ПРЕДОХРАНИТЕЛЬ СРАБОТАЛ — лента не изменена (>%.0f%% под удаление)" %
+                     (fn.get("guard", {}).get("max_fraction", 0.15) * 100))
+        for r in fn.get("removed", []):
+            L.append("ШУМ УДАЛЁН • %s — Причина: %s" % (
+                (r.get("title") or "")[:70], ", ".join(r.get("reasons", []))))
+        for r in fn.get("review", []):
+            L.append("НА ПРОВЕРКУ • %s — %s" % (
+                (r.get("title") or "")[:70], ", ".join(r.get("reasons", []))))
 
     L.append("")
     L.append("ПОДОЗРИТЕЛЬНЫЕ СОБЫТИЯ")
