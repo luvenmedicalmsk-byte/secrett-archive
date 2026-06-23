@@ -662,6 +662,14 @@ def _load_filter_log(path="docs/_filter_noise.json"):
         return None
 
 
+def _load_geo_authority(path="docs/_geo_authority.json"):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
 def _load_geo_audit(path="docs/_geo_audit.json"):
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -778,6 +786,17 @@ def build_report(events, meta, res):
         L.append("QC: без event_country %d \u00b7 без country_code %d \u00b7 region=Глобально %d \u00b7 пустая гео %d" % (
             _qc.get("no_event_country", 0), _qc.get("no_country_code", 0), _qc.get("region_global", 0), _qc.get("empty_geo", 0)))
 
+
+    ga2 = _load_geo_authority()
+    if ga2:
+        L.append("")
+        L.append("ГЕОГРАФИЧЕСКИЙ КОНТРОЛЬ (Authority 4.5)")
+        L.append("Событий с потерей географии: %d" % ga2.get("lost", 0))
+        L.append("Событий дозаполнено/исправлено: %d" % ga2.get("filled", 0))
+        L.append("Событий изменено после snapshot: %d" % ga2.get("changed", 0))
+        for _r in ga2.get("examples", [])[:6]:
+            if _r.get("kind") in ("изменено", "потеря"):
+                L.append("  %s: %s -> %s [%s]" % ((_r.get("title", "") or "")[:42], _r.get("from", "-"), _r.get("to", "-"), _r.get("kind", "")))
 
     _df = res.get("domain_fixed", [])
     if _df:
