@@ -292,6 +292,10 @@ def _country_match_tokens(kw_list):
     return toks
 
 _CC_TOKENS = None
+from geo_resolver import RU_COUNTRY_TOKENS, ru_subject  # AUDIT 4.5: единый гео-модуль
+from datetime import datetime as _dt45, timezone as _tz45
+
+
 def _tag_event_countries(events: list[dict]) -> None:
     """Annotate each event with country_codes (all matches) + primary country_code.
     Powers per-country signals. Stem-based so RU declensions match."""
@@ -301,10 +305,7 @@ def _tag_event_countries(events: list[dict]) -> None:
         # Русские формы + города/орг-маркеры (US недопривязан; РФ-города не ловились стеммом)
         _EXTRA = {
             "US": ["сша", "америк", "пентагон", "конгресс", "штаты"],
-            "RU": ["российск", "московск", "подмосков", "петербург", "белгород", "курск",
-                   "воронеж", "ростов", "краснодар", "крым", "татарстан", "сибир",
-                   "росавиаци", "мосбирж", "госдум", "кремл", "минобороны", "путин", "кронштадт", "рф",
-                   "вологодск", "тверск", "тюменск", "орловск", "амурск", "липецк", "саратовск", "новосибирск", "ленинградск", "ленобласт", "свердловск", "томск", "омск", "иркутск", "кемеровск", "нижегородск", "самарск", "ярославск", "владимирск", "калужск", "рязанск", "тульск", "пензенск", "ульяновск", "кировск", "костромск", "ивановск", "смоленск", "брянск", "псковск", "новгородск", "мурманск", "архангельск", "астраханск", "волгоградск", "оренбургск", "магаданск", "сахалинск", "калининградск", "забайкальск", "камчатск", "пермск", "приморск", "ставропольск", "хабаровск", "алтайск", "красноярск", "башкорт", "удмурт", "чуваш", "мордови", "карели", "калмыки", "буряти", "хакаси", "дагестан", "чечн", "ингушет", "якути", "ямал", "ханты", "чукот", "севастопол", "кызыл"],
+            "RU": list(RU_COUNTRY_TOKENS),
             "JP": ["японск"], "CN": ["китайск"], "UA": ["украинск"], "IR": ["иранск"],
             "IL": ["израильск"], "DE": ["немецк", "германск"], "FR": ["французск"], "GB": ["британск"],
         }
@@ -396,6 +397,32 @@ def _persist_tagged_events(events: list[dict]) -> None:
         print(f"[SNAP] WARN: could not persist tagged events: {e}", file=sys.stderr)
 
 
+def _log_geo_authority(events) -> None:
+    """AUDIT 4.5: фиксируем все изменения географии после snapshot_engine."""
+    lost = changed = filled = kept = 0
+    ex = []
+    for e in events:
+        before = e.pop("_parser_ec", "") or ""
+        after = (e.get("event_country") or "")
+        if before and not after:
+            kind = "потеря"; lost += 1
+        elif before and after and before != after and after != "GLOBAL":
+            kind = "изменено"; changed += 1
+        elif (not before) and after:
+            kind = "дозаполнено"; filled += 1
+        else:
+            kept += 1; continue
+        if len(ex) < 15:
+            ex.append({"title": (e.get("title", "") or "")[:70], "from": before or "-", "to": after or "-", "kind": kind})
+    log = {"updated": _dt45.now(_tz45.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+           "lost": lost, "changed": changed, "filled": filled, "kept": kept, "examples": ex}
+    try:
+        (DOCS_DIR / "_geo_authority.json").write_text(__import__("json").dumps(log, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as _e:
+        print(f"[SNAP] geo_authority log fail: {_e}", file=sys.stderr)
+    print(f"[SNAP] ГЕО-АВТОРИТЕТ: потеря={lost} изменено={changed} дозаполнено={filled} (без изм.={kept})", file=sys.stderr)
+
+
 def load_events() -> list[dict]:
     """Load events from docs/events.json"""
     path = DOCS_DIR / "events.json"
@@ -405,7 +432,10 @@ def load_events() -> list[dict]:
     with open(path) as f:
         d = json.load(f)
     evs = d.get("events", [])
+    for _e in evs:
+        _e["_parser_ec"] = _e.get("event_country") or ""
     _tag_event_countries(evs)
+    _log_geo_authority(evs)
     return evs
 
 
