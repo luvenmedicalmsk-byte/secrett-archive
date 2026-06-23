@@ -662,6 +662,14 @@ def _load_filter_log(path="docs/_filter_noise.json"):
         return None
 
 
+def _load_geo_audit(path="docs/_geo_audit.json"):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
 def build_report(events, meta, res):
     total = len(events)
     noise_n = len(res["noise"])
@@ -732,6 +740,28 @@ def build_report(events, meta, res):
         for r in fn.get("review", []):
             L.append("НА ПРОВЕРКУ • %s — %s" % (
                 (r.get("title") or "")[:70], ", ".join(r.get("reasons", []))))
+
+    ga = _load_geo_audit()
+    if ga:
+        L.append("")
+        L.append("ГЕОГРАФИЧЕСКИЙ АУДИТ")
+        L.append("Определено корректно: %d / Исправлено автоматически: %d / Отправлено на проверку: %d" % (
+            ga.get("geo_ok", 0), ga.get("geo_fixed", 0), ga.get("geo_review", 0)))
+        _em = ga.get("emergency", {})
+        if _em.get("tripped"):
+            L.append("\u26a0 Географическая атрибуция ухудшилась — без страны: %d (%.0f%%), порог %.0f%%. Требуется проверка пайплайна." % (
+                _em.get("no_country", 0), _em.get("no_country_pct", 0), _em.get("threshold_pct", 5)))
+        if ga.get("fixed_examples"):
+            L.append("ИСПРАВЛЕНА ГЕОГРАФИЯ:")
+            for _r in ga["fixed_examples"][:8]:
+                L.append("  %s: %s \u2192 %s" % (_r.get("subject") or (_r.get("title", "")[:40]), _r.get("from", "Глобально"), _r.get("to", "Россия")))
+        if ga.get("review_examples"):
+            L.append("ТРЕБУЕТ ПРОВЕРКИ:")
+            for _r in ga["review_examples"][:8]:
+                L.append("  %s — Причина: %s" % ((_r.get("title", "") or "")[:50], _r.get("reason", "")))
+        _qc = ga.get("qc", {})
+        L.append("QC: без event_country %d \u00b7 без country_code %d \u00b7 region=Глобально %d \u00b7 пустая гео %d" % (
+            _qc.get("no_event_country", 0), _qc.get("no_country_code", 0), _qc.get("region_global", 0), _qc.get("empty_geo", 0)))
 
     L.append("")
     L.append("ПОДОЗРИТЕЛЬНЫЕ СОБЫТИЯ")
