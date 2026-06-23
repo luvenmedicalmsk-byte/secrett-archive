@@ -491,7 +491,7 @@ STRATEGIC_CATS = [
 def strategic_signal(e, impact, relevance):
     text = _txt(e)
     for name, rx in STRATEGIC_CATS:
-        if rx.search(text) and impact >= 60 and relevance >= 64:  # калибровка AUDIT 3.0
+        if rx.search(text):
             return True, name
     return False, None
 
@@ -536,44 +536,104 @@ def relevance_index(snr, avg_rel, avg_cas, domain_acc, dup_rate):
     return _clamp(idx)
 
 
+# Блок (AUDIT 4.0) Atlas Judge — долгосрочность, архивная ценность, пирамида сигналов
+
+PYRAMID_NAMES = {1: "Noise", 2: "Operational", 3: "Important", 4: "Strategic", 5: "Archive"}
+
+
+def long_term_score(e):
+    b = {"chronic": 30, "active": 12, "emerging": 8, "de-escalating": 4}.get(e.get("phase"), 8)
+    h = str(e.get("horizon", ""))
+    if "долгосроч" in h:
+        b += 25
+    elif "среднесроч" in h:
+        b += 12
+    b += 0.25 * (e.get("forecast_30d") or 0)
+    st = e.get("signal_type")
+    if st == "escalation":
+        b += 10
+    elif st == "anomaly":
+        b += 6
+    return _clamp(b)
+
+
+def archive_value_score(e, impact, lt):
+    a = 0.45 * lt + 0.35 * impact
+    if e.get("phase") == "chronic":
+        a += 10
+    return _clamp(a)
+
+
 def compute_significance(events, noise_map):
-    """Прогоняет блоки 11–13, 16 по каждому событию, возвращает агрегаты."""
+    """Блоки 11–16 + Atlas Judge (4.0): значимость, ценность, пирамида сигналов."""
     per = {}
     strategic = []
-    sum_imp = sum_cas = sum_rel = 0
+    archive = []
+    sum_imp = sum_cas = sum_rel = sum_val = 0
     high_impact = low_priority = 0
+    pyramid = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
     for e in events:
-        ns = noise_map.get(e.get("id"), 0)
+        eid = e.get("id")
+        ns = noise_map.get(eid, 0)
         imp, lvl, why = impact_score(e, ns)
         cas, doms = cascade_score(e)
         rel = relevance_score(e, imp, cas, ns)
-        is_strat, cat = strategic_signal(e, imp, rel)
-        per[e.get("id")] = {
+        cross = min(100, 22 * len(doms))
+        lt = long_term_score(e)
+        arch = archive_value_score(e, imp, lt)
+        value = _clamp(0.32 * imp + 0.13 * cross + 0.15 * cas + 0.20 * lt + 0.20 * arch)
+        _, cat = strategic_signal(e, imp, rel)
+        archive_cand = arch >= 60
+        # Atlas Signal Pyramid (5 уровней)
+        if ns >= NOISE_THRESHOLD:
+            level = 1
+        elif archive_cand:
+            level = 5
+        elif value >= 54:
+            level = 4
+        elif value >= 42:
+            level = 3
+        else:
+            level = 2
+        is_strat = level >= 4  # стратегический = верх пирамиды (4.0)
+        per[eid] = {
             "impact_score": imp, "impact_level": lvl, "impact_reason": why,
-            "cascade_score": cas, "cascade_domains": doms,
+            "cascade_score": cas, "cascade_domains": doms, "cross_domain": cross,
             "relevance_score": rel, "relevance_tier": relevance_tier(rel),
+            "long_term": lt, "archive_value": arch, "atlas_value": value,
+            "archive_candidate": archive_cand,
+            "level": level, "level_name": PYRAMID_NAMES[level],
             "strategic_signal": is_strat, "strategic_category": cat,
         }
+        pyramid[level] += 1
         sum_imp += imp
         sum_cas += cas
         sum_rel += rel
+        sum_val += value
         if lvl == "High":
             high_impact += 1
         if rel < 50:
             low_priority += 1
         if is_strat:
-            strategic.append({"id": e.get("id"), "title": e.get("title"),
-                              "category": cat, "impact": imp, "relevance": rel})
+            strategic.append({"id": eid, "title": e.get("title"), "category": cat or "—",
+                              "impact": imp, "relevance": rel, "value": value, "level": level})
+        if archive_cand:
+            archive.append({"id": eid, "title": e.get("title"),
+                            "archive_value": arch, "long_term": lt, "value": value})
     n = max(1, len(events))
-    strategic.sort(key=lambda s: -s["relevance"])
+    strategic.sort(key=lambda x: -x["value"])
+    archive.sort(key=lambda x: -x["archive_value"])
     return {
         "per": per,
         "avg_impact": round(sum_imp / n),
         "avg_cascade": round(sum_cas / n),
         "avg_relevance": round(sum_rel / n),
+        "avg_value": round(sum_val / n),
         "high_impact": high_impact,
         "low_priority": low_priority,
         "strategic": strategic,
+        "archive": archive,
+        "pyramid": pyramid,
     }
 
 
@@ -607,6 +667,11 @@ def build_report(events, meta, res):
     L.append("Системно значимых: %d" % sig.get("high_impact", 0))
     L.append("Низкоприоритетных: %d" % sig.get("low_priority", 0))
     L.append("Стратегических сигналов: %d" % len(sig.get("strategic", [])))
+    L.append("Atlas Value Index: %d" % sig.get("avg_value", 0))
+    L.append("Архивных кандидатов: %d" % len(sig.get("archive", [])))
+    py = sig.get("pyramid", {})
+    L.append("Пирамида: L1·%d L2·%d L3·%d L4·%d L5·%d" % (
+        py.get(1, 0), py.get(2, 0), py.get(3, 0), py.get(4, 0), py.get(5, 0)))
 
     # KPI-светофор
     L.append("")
@@ -647,10 +712,19 @@ def build_report(events, meta, res):
     strat = sig.get("strategic", [])
     if strat:
         for sg in strat[:8]:
-            L.append("• [%s] %s (impact %d, релевантность %d)" % (
-                sg["category"], (sg["title"] or "")[:55], sg["impact"], sg["relevance"]))
+            L.append("• [%s] %s (value %d, impact %d, %s)" % (
+                sg["category"], (sg["title"] or "")[:50], sg["value"], sg["impact"],
+                PYRAMID_NAMES.get(sg["level"], "")))
     else:
         L.append("• нет")
+
+    arch = sig.get("archive", [])
+    if arch:
+        L.append("")
+        L.append("АРХИВНЫЕ КАНДИДАТЫ (1–3 года)")
+        for a in arch[:6]:
+            L.append("• %s (архив %d, долгосроч %d)" % (
+                (a["title"] or "")[:55], a["archive_value"], a["long_term"]))
 
     if res.get("saturation"):
         L.append("")
@@ -772,7 +846,10 @@ def main():
                 "avg_cascade": res["significance"]["avg_cascade"],
                 "high_impact": res["significance"]["high_impact"],
                 "low_priority": res["significance"]["low_priority"],
+                "avg_value": res["significance"]["avg_value"],
+                "pyramid": res["significance"]["pyramid"],
                 "strategic": res["significance"]["strategic"],
+                "archive_candidates": res["significance"]["archive"],
                 "saturation": res["saturation"],
                 "channels": channels_all,
                 "noise": res["noise"], "domain": res["domain"],

@@ -114,10 +114,10 @@ def fn_audit(events, A):
     # strategic-FN: высокий impact (>=72), но не отнесено к стратегическим
     for e in events:
         p = per.get(e.get("id"), {})
-        if p.get("impact_score", 0) >= 72 and not p.get("strategic_signal"):
+        if p.get("impact_score", 0) >= 75 and p.get("level", 0) == 3:
             fn["strategic"].append({"id": e.get("id"), "title": e.get("title"),
                                     "impact": p["impact_score"],
-                                    "why": "высокое влияние, но нет стратегической категории"})
+                                    "why": "очень высокий impact, но только уровень Important"})
     # noise-FN: не помечено шумом, но низкие impact+relevance и мягкие маркеры
     for e in events:
         if e.get("id") in A["noise_ids"]:
@@ -172,9 +172,9 @@ def strategic_calibration(events, A):
     ratio = round(100 * len(strat) / total, 1) if total else 0
     # какой порог релевантности даёт ~25% стратегических
     rels = sorted((s["relevance"] for s in strat), reverse=True)
-    target_n = int(0.25 * total)
+    target_n = int(0.10 * total)
     suggested_rel = rels[target_n] if 0 < target_n < len(rels) else 65
-    verdict = "слишком широкий" if ratio > 30 else ("в норме" if ratio >= 12 else "узкий")
+    verdict = "слишком широкий" if ratio > 15 else ("в норме" if ratio >= 5 else "узкий")
     return {
         "ratio_pct": ratio, "count": len(strat), "verdict": verdict,
         "avg_impact": round(sum(s["impact"] for s in strat) / max(1, len(strat))),
@@ -384,7 +384,7 @@ def build_review(events, A, fp, fp_rate, fn, fn_rate, cal, imp, cas, low, sat, s
     L.append("КАЛИБРОВКА СТРАТЕГИЧЕСКИХ: %d/%d = %.1f%% (%s)" % (
         cal["count"], total, cal["ratio_pct"], cal["verdict"]))
     if cal["verdict"] == "слишком широкий":
-        L.append("  рекомендуемый порог relevance ≈ %d (даст ~25%%)" % cal["suggested_relevance_threshold"])
+        L.append("  рекомендуемый порог value ≈ %d (цель ~10%%)" % cal["suggested_relevance_threshold"])
 
     L.append("")
     L.append("IMPACT (топ-%d): завышено ~%d, занижено ~%d" % (
