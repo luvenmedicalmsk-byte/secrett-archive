@@ -292,7 +292,7 @@ def _country_match_tokens(kw_list):
     return toks
 
 _CC_TOKENS = None
-from geo_resolver import RU_COUNTRY_TOKENS, ru_subject, foreign_country  # AUDIT 4.5 + V6.5: единый гео-модуль
+from geo_resolver import RU_COUNTRY_TOKENS, ru_subject, foreign_country, FOREIGN_COUNTRIES  # AUDIT 4.5 + V6.5: единый гео-модуль
 from datetime import datetime as _dt45, timezone as _tz45
 
 
@@ -312,6 +312,13 @@ def _tag_event_countries(events: list[dict]) -> None:
         for _iso, _ex in _EXTRA.items():
             if _iso in _CC_TOKENS:
                 _CC_TOKENS[_iso].extend(_ex)
+        # V6.5 КОНСОЛИДАЦИЯ: матчер покрывает ВСЕ страны geo_resolver (единый источник),
+        # а не только страны из локального COUNTRIES. Это устраняет архитектурную причину
+        # 'Литва/Азербайджан -> Глобально' -- снапшот больше не зависит от полноты COUNTRIES.
+        for _stem, (_fcc, _fname) in FOREIGN_COUNTRIES.items():
+            _CC_TOKENS.setdefault(_fcc, [])
+            if _stem not in _CC_TOKENS[_fcc]:
+                _CC_TOKENS[_fcc].append(_stem)
     # Маркеры глобальных тем (ИИ/крипто/кибер) -> кандидаты в GLOBAL
     _GLOBAL_MARKERS = ("openai", "anthropic", "claude", " gpt", "gemini", "nvidia", "zcash",
                        "bitcoin", "ethereum", "blockchain", "блокчейн", "криптовалют", "cve-")
