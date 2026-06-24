@@ -292,7 +292,7 @@ def _country_match_tokens(kw_list):
     return toks
 
 _CC_TOKENS = None
-from geo_resolver import RU_COUNTRY_TOKENS, ru_subject  # AUDIT 4.5: единый гео-модуль
+from geo_resolver import RU_COUNTRY_TOKENS, ru_subject, foreign_country  # AUDIT 4.5 + V6.5: единый гео-модуль
 from datetime import datetime as _dt45, timezone as _tz45
 
 
@@ -334,6 +334,14 @@ def _tag_event_countries(events: list[dict]) -> None:
         if region_cc and region_cc[0] == "RU" and "RU" not in content_cc:
             region_cc = []
         ccs = list(dict.fromkeys(content_cc + region_cc))
+        # V6.5: детерминированный резолвер иностранных стран (единый geo_resolver).
+        # Snapshot COUNTRIES не знает ряд стран (Литва/Азербайджан/...) -> добавляем здесь,
+        # ДО решения is_global, чтобы страна из текста не уходила в Глобально.
+        if not ccs:
+            _ffc, _ffn = foreign_country(content)
+            if _ffc:
+                ccs = [_ffc]
+                ev["_geo_v65"] = {"cc": _ffc, "name": _ffn}
         is_global = (not ccs) and any(g in content for g in _GLOBAL_MARKERS)
         llm_primary = ev.get("country_code") or ""
         if is_global:
@@ -362,6 +370,9 @@ def _tag_event_countries(events: list[dict]) -> None:
                 ev["country_code"] = ""
             if event_c == "RU" and region.strip().lower() in ("", "глобально"):
                 ev["region"] = "Россия"
+            # V6.5: проставить region иностранной страны, если он пуст/Глобально
+            elif ev.get("_geo_v65") and region.strip().lower() in ("", "глобально"):
+                ev["region"] = ev["_geo_v65"]["name"]
             # Ложный region='Россия' снят -> не оставлять его (иначе фронт ловит карточку РФ по имени)
             if region.strip().lower() == "россия" and "RU" not in ccs:
                 ev["region"] = COUNTRIES[event_c].get("name_ru", "Глобально") if (event_c and event_c in COUNTRIES) else "Глобально"
