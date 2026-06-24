@@ -937,33 +937,47 @@ def build_channel_table(rows):
 # Отправка / сохранение
 # ─────────────────────────────────────────────────────────────────────────────
 
-def send_telegram(text):
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    if not token:
-        print("[audit] TELEGRAM_BOT_TOKEN не задан — отчёт только в лог.")
-        return False
+def _tg_send_chunk(token, text):
     data = urllib.parse.urlencode({
         "chat_id": AUDIT_CHAT_ID, "text": text, "disable_web_page_preview": "true",
     }).encode()
     url = "https://api.telegram.org/bot%s/sendMessage" % token
     try:
         with urllib.request.urlopen(urllib.request.Request(url, data=data), timeout=20) as r:
-            ok = json.loads(r.read().decode()).get("ok", False)
-        print("[audit] Telegram-отчёт отправлен:", ok)
-        return ok
+            return json.loads(r.read().decode()).get("ok", False)
     except Exception as ex:
-        print("[audit] Ошибка отправки в Telegram:", ex)
+        print("[audit] Ошибка отправки чанка в Telegram:", str(ex)[:200])
         return False
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# AUDIT 4.7 — PRODUCTION REALITY CHECK
-# Сверяет географию в published events.json с тем, что реально отдаёт live API
-# (api.a-atlas.com/api/events) — то, что видит пользователь в ленте Atlas Signals.
-# Зелёный аудит данных != корректный production, если API отдаёт region=Глобально
-# там, где в данных есть субъект РФ / страна.
-# ─────────────────────────────────────────────────────────────────────────────
-PROD_API_EVENTS = "https://api.a-atlas.com/api/events?limit=300&sort=date&order=desc"
+def send_telegram(text):
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    if not token:
+        print("[audit] TELEGRAM_BOT_TOKEN не задан — отчёт только в лог.")
+        return False
+    # Telegram лимит 4096 символов -> бьём на части по строкам (запас до 3900).
+    LIMIT = 3900
+    chunks = []
+    cur = ""
+    for line in text.split("\n"):
+        if len(cur) + len(line) + 1 > LIMIT:
+            if cur:
+                chunks.append(cur)
+            # одиночная строка длиннее лимита -> жёстко режем
+            while len(line) > LIMIT:
+                chunks.append(line[:LIMIT]); line = line[LIMIT:]
+            cur = line
+        else:
+            cur = (cur + "\n" + line) if cur else line
+    if cur:
+        chunks.append(cur)
+    total = len(chunks)
+    all_ok = True
+    for idx, ch in enumerate(chunks, 1):
+        prefix = ("(%d/%d)\n" % (idx, total)) if total > 1 else ""
+        ok = _tg_send_chunk(token, prefix + ch)
+        all_ok = all_ok and ok
+    print("[audit] Telegram-отчёт отправлен: %s (частей: %d)" % (all_ok, total))
+    return all_ok
 
 def _fetch_production_events(timeout=15):
     """Тянет ленту из live API ровно тем же запросом, что и фронт index.html."""
