@@ -2,60 +2,60 @@
   "country": "CA",
   "date": "2026-06-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-24T11:07:28.712140+00:00",
+  "generated_at": "2026-06-24T12:09:42.014944+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
+      "score": 8,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
+      "score": 8,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-Канадская_",
+      "type": "Signal",
+      "label": "Канадская компания AtkinsRealis ищет одо",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CA-Страны_Евр",
       "type": "Signal",
       "label": "Страны Европы пока не дошли до того, что",
@@ -92,13 +99,6 @@
       "label": "Разведывательная служба Канады получила ",
       "severity": 55,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-CA-В_ближайши",
-      "type": "Signal",
-      "label": "В ближайшие месяцы ИИ-модели будут спосо",
-      "severity": 52,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-CA",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-Канадская_",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-CA-Страны_Евр",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-CA-technology",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-CA-В_ближайши",
-      "to": "DOMAIN-CA-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
