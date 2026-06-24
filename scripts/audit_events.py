@@ -1223,6 +1223,123 @@ def audit_self_validation(events, pc):
     return false_positives
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# V6.6 DOMAIN QUALITY (4.9): домен-ошибки, шум, спорная гео, аномалии impact.
+# ─────────────────────────────────────────────────────────────────────────────
+import re as _re_dq
+from collections import Counter as _Counter_dq
+
+# слова-маркеры доменов для проверки соответствия
+_DQ_DOMAIN_MARKERS = {
+    "climate": ["наводнен", "землетряс", "ураган", "тайфун", "засух", "паводок",
+                "циклон", "шторм", "жара", "температур", "вулкан", "цунами", "пожар"],
+    "economy": ["биржа", "акци", "инфляц", "ввп", "фондов", "капитализац",
+                "обвал рынка", "цена нефти", "налог", "ипотек", "топлив", "азс"],
+    "geopolitics": ["удар", "бпла", "ракет", "войн", "санкци", "переговор", "конфликт",
+                    "атак", "наступлен", "обстрел", "военн"],
+    "technology": ["кибер", "интернет-связ", "взлом", "хакер", "vpn", "цифров",
+                   "chrome", "браузер", "сайт", "домен ru", "блокировк", "по к 2031"],
+    "social": ["митинг", "протест", "забастовк", "активист", "правозащит", "беженц"],
+}
+# маркеры шума -- локальные/персональные кейсы без системного сигнала
+_DQ_NOISE_MARKERS = [
+    "повешен", "найден мёртв", "найден мертв", "покончил", "самоуб",
+    "пенсионер", "пожилой мужчина", "пожилая женщина", "местный житель",
+    "в квартире", "бытов", "сожитель", "собутыльник",
+]
+# домен-ошибки: явный физический инцидент (катастрофа техники) помеченный climate
+_DQ_TECHNO_INCIDENT = ["вертол", "самолёт упал", "самолет упал", "разбился", "крушение",
+                       "авиакатастроф", "поезд сошёл", "поезд сошел"]
+
+def detect_domain_quality(events):
+    """V6.6 4.9: ищет домен-ошибки, шум, аномалии impact. Возвращает структуру отчёта."""
+    domain_errors = []
+    noise_events = []
+    impact_anomalies = []
+    geo_choice_issues = []
+
+    for e in events:
+        title = str(e.get("title", ""))
+        summ = str(e.get("summary", "") or "")
+        text = (title + " " + summ).lower()
+        dom = str(e.get("domain", ""))
+
+        # 1) ШУМ -- локальный/персональный кейс
+        nm = [m for m in _DQ_NOISE_MARKERS if m in text]
+        if nm:
+            noise_events.append({"title": title[:60], "domain": dom, "marker": nm[0]})
+
+        # 2) ДОМЕН-ОШИБКА: техно-инцидент (вертолёт/крушение) помечен climate
+        if dom == "climate" and any(w in text for w in _DQ_TECHNO_INCIDENT):
+            domain_errors.append({"title": title[:60], "got": dom,
+                                  "issue": "техногенный инцидент в climate"})
+        # домен-ошибка: маркеры другого домена доминируют над присвоенным
+        else:
+            assigned_hits = sum(1 for w in _DQ_DOMAIN_MARKERS.get(dom, []) if w in text)
+            best_dom, best_hits = dom, assigned_hits
+            for d2, markers in _DQ_DOMAIN_MARKERS.items():
+                if d2 == dom:
+                    continue
+                h = sum(1 for w in markers if w in text)
+                if h > best_hits + 2:  # другой домен СИЛЬНО сильнее (порог 3)
+                    best_dom, best_hits = d2, h
+            if best_dom != dom and best_hits >= 2:
+                domain_errors.append({"title": title[:60], "got": dom,
+                                      "expected": best_dom, "issue": "маркеры другого домена сильнее"})
+
+    # 3) АНОМАЛИЯ impact: одна страна в impact у подозрительно многих событий
+    imp_counter = _Counter_dq()
+    imp_by_country = {}
+    for e in events:
+        imp = e.get("impact_countries") or []
+        seen = set()
+        for c in (imp if isinstance(imp, list) else []):
+            cc = c if isinstance(c, str) else (c.get("cc") if isinstance(c, dict) else None)
+            if cc and cc not in seen:
+                imp_counter[cc] += 1
+                imp_by_country.setdefault(cc, []).append(str(e.get("title", ""))[:40])
+                seen.add(cc)
+    # ЗАЛИПАНИЕ: страна в impact у >=4 событий, но в их ТЕКСТЕ её нет (приклейка-фантом).
+    # Отличает реальное влияние (страна упомянута) от залипшего артефакта (страны в тексте нет).
+    try:
+        from geo_resolver import FOREIGN_COUNTRIES as _FC_dq
+        _iso2names = {}
+        for _stem, (_cc, _nm) in _FC_dq.items():
+            _iso2names.setdefault(_cc, set()).add(_nm.lower())
+            _iso2names[_cc].add(_stem)
+    except Exception:
+        _iso2names = {}
+    for cc, cnt in imp_counter.items():
+        if cnt < 4 or cc == "RU":  # RU исключён: рос.органы/субъекты часто без слова "Россия"
+            continue
+        phantom = 0  # событий, где страна в impact, но её НЕТ в тексте
+        ex_phantom = []
+        for e in events:
+            imp = [(_c if isinstance(_c, str) else (_c.get("cc") if isinstance(_c, dict) else None))
+                   for _c in (e.get("impact_countries") or [])]
+            if cc not in imp:
+                continue
+            text = (str(e.get("title", "")) + " " + str(e.get("summary", "") or "")).lower()
+            names = _iso2names.get(cc, set())
+            in_text = any(nm in text for nm in names) if names else False
+            if not in_text:
+                phantom += 1
+                if len(ex_phantom) < 3:
+                    ex_phantom.append(str(e.get("title", ""))[:40])
+        # залипание: страна-фантом в impact у >=4 событий, где её нет в тексте
+        if phantom >= 4:
+            impact_anomalies.append({"country": cc, "count": cnt, "phantom": phantom,
+                                     "examples": ex_phantom})
+
+    return {
+        "domain_errors": domain_errors,
+        "noise_events": noise_events,
+        "impact_anomalies": impact_anomalies,
+        "geo_choice_issues": geo_choice_issues,
+        "checked": len(events),
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1366,6 +1483,34 @@ def main():
         if len(_allc) >= 2:
             _multi.append(_e)
     res["multi_country_events"] = len(_multi)
+
+    # V6.6 DOMAIN QUALITY (4.9)
+    _dq = detect_domain_quality(events)
+    res["dq_domain_errors"] = len(_dq["domain_errors"])
+    res["dq_noise_events"] = len(_dq["noise_events"])
+    res["dq_impact_anomalies"] = len(_dq["impact_anomalies"])
+    report += "\n\nDOMAIN QUALITY (4.9)"
+    report += "\n  Проверено: %d" % _dq["checked"]
+    report += "\n  Ошибок домена: %d" % len(_dq["domain_errors"])
+    report += "\n  Шумовых событий: %d" % len(_dq["noise_events"])
+    report += "\n  Залипшая impact-страна: %d" % len(_dq["impact_anomalies"])
+    if _dq["domain_errors"]:
+        report += "\n\nTOP DOMAIN ISSUES:"
+        for _d in _dq["domain_errors"][:5]:
+            report += "\n  \u2022 [%s->%s] %s" % (_d.get("got"), _d.get("expected", "?"), _d["title"])
+        print("::warning::DOMAIN QUALITY -- %d домен-ошибок" % len(_dq["domain_errors"]))
+    if _dq["noise_events"]:
+        report += "\n\nTOP NOISE ISSUES:"
+        for _nz in _dq["noise_events"][:5]:
+            report += "\n  \u2022 [%s] %s" % (_nz["domain"], _nz["title"])
+        print("::warning::DOMAIN QUALITY -- %d шумовых событий" % len(_dq["noise_events"]))
+    if _dq["impact_anomalies"]:
+        report += "\n\nTOP GEO CHOICE ISSUES (залипшая страна в impact):"
+        for _a in _dq["impact_anomalies"][:5]:
+            report += "\n  \u2022 %s: фантом в %d событиях (нет в тексте) -- %s" % (
+                _a["country"], _a.get("phantom", _a["count"]), ", ".join(_a["examples"][:2]))
+        print("::warning::DOMAIN QUALITY -- залипшая impact-страна: %s" % (
+            ", ".join("%s(%d)" % (_a["country"], _a.get("phantom", 0)) for _a in _dq["impact_anomalies"])))
     report += "\n\nAUDIT VALIDATION CONFIRMATION"
     report += "\n  многострановых событий: %d" % len(_multi)
     report += "\n  ложных тревог (FP): %d" % len(_fp)
@@ -1419,6 +1564,9 @@ def main():
                 "audit_false_positives": res.get("audit_false_positives", 0),
                 "real_country_errors": res.get("real_country_errors", 0),
                 "multi_country_events": res.get("multi_country_events", 0),
+                "dq_domain_errors": res.get("dq_domain_errors", 0),
+                "dq_noise_events": res.get("dq_noise_events", 0),
+                "dq_impact_anomalies": res.get("dq_impact_anomalies", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
