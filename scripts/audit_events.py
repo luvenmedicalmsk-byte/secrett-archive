@@ -1340,6 +1340,70 @@ def detect_domain_quality(events):
     }
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# V6.5 ADDENDUM: GEO CHOICE AUDIT -- правильно ли выбрана ОСНОВНАЯ страна события.
+# Существующие аудиты проверяют "есть ли гео", этот -- "верно ли выбрано место".
+# ─────────────────────────────────────────────────────────────────────────────
+import re as _re_gc
+
+def _gc_iso_names(cc):
+    """Имена/стемы страны по ISO из geo_resolver."""
+    s = set()
+    try:
+        for stem, (c, nm) in _geo_res.FOREIGN_COUNTRIES.items():
+            if c == cc:
+                s.add(nm.lower()); s.add(stem)
+    except Exception:
+        pass
+    if cc == "RU":
+        s |= {"росси", "москв", "россия"}
+    return s
+
+def geo_choice_audit(events):
+    """GEO CHOICE: место события (локатив 'в Стране' в заголовке) должно быть event_country.
+    WARNING -- место != event_country. REAL ERROR -- место вообще не учтено (ни impact/mentioned).
+    Требование 4: страна в impact/mentioned -> многострановое, НЕ ошибка."""
+    warnings = []
+    real_errors = []
+    if not _geo_res:
+        return {"warnings": warnings, "real_errors": real_errors, "checked": len(events)}
+    try:
+        FC = _geo_res.FOREIGN_COUNTRIES
+    except Exception:
+        return {"warnings": warnings, "real_errors": real_errors, "checked": len(events)}
+
+    for e in events:
+        title = str(e.get("title", ""))
+        tl = title.lower()
+        ec = str(e.get("event_country") or "")
+        imp = [c if isinstance(c, str) else (c.get("cc") if isinstance(c, dict) else None)
+               for c in (e.get("impact_countries") or [])]
+        ment = e.get("mentioned_countries") or []
+        # ищем локатив "в/во [ДР ]Страна" в заголовке -> место события
+        for stem, (fcc, fname) in FC.items():
+            # допускаем "в Конго" и "в ДР Конго"
+            if _re_gc.search(r'(?:^|\s)(?:в|во)\s+(?:[А-Яа-яёA-Z]{1,4}\s+)?' + _re_gc.escape(stem), tl):
+                if fcc == ec:
+                    break  # место совпадает с event_country -- корректно
+                # event_country тоже место в тексте? (тогда это другое событие, не ошибка)
+                ec_names = _gc_iso_names(ec)
+                ec_is_place = any(_re_gc.search(r'(?:^|\s)(?:в|во)\s+' + _re_gc.escape(n), tl)
+                                  for n in ec_names)
+                if ec_is_place:
+                    break
+                # место fcc != event_country и event_country не место -> неверный выбор
+                rec = {"title": title[:56], "ec": ec, "place": fname, "fcc": fcc,
+                       "impact": [c for c in imp if c], "mentioned": list(ment)}
+                # Требование 4: страна-место учтена в impact/mentioned -> WARNING (не real)
+                if fcc in imp or fcc in ment:
+                    warnings.append(rec)
+                else:
+                    rec["reason"] = "место события '%s' в заголовке, но event_country=%s и страна не учтена" % (fname, ec)
+                    real_errors.append(rec)
+                break
+    return {"warnings": warnings, "real_errors": real_errors, "checked": len(events)}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1489,6 +1553,23 @@ def main():
     res["dq_domain_errors"] = len(_dq["domain_errors"])
     res["dq_noise_events"] = len(_dq["noise_events"])
     res["dq_impact_anomalies"] = len(_dq["impact_anomalies"])
+
+    # V6.5 ADDENDUM: GEO CHOICE AUDIT -- правильность выбора основной страны
+    _gc = geo_choice_audit(events)
+    res["geo_choice_warnings"] = len(_gc["warnings"])
+    res["geo_choice_real_errors"] = len(_gc["real_errors"])
+    report += "\n\nGEO CHOICE VALIDATION"
+    report += "\n  Проверено: %d" % _gc["checked"]
+    report += "\n  GEO CHOICE WARNINGS: %d" % len(_gc["warnings"])
+    report += "\n  Ложных тревог (учтено в impact/mentioned): %d" % len(_gc["warnings"])
+    report += "\n  REAL GEO CHOICE ERRORS: %d" % len(_gc["real_errors"])
+    if _gc["real_errors"]:
+        report += "\n\nTOP GEO CHOICE ISSUES:"
+        for _g in _gc["real_errors"][:5]:
+            report += "\n  \u2022 «%s» | event_country=%s, место=%s, impact=%s, mentioned=%s" % (
+                _g["title"], _g["ec"], _g["place"], _g.get("impact"), _g.get("mentioned"))
+        print("::error::GEO CHOICE -- %d реальных ошибок выбора страны" % len(_gc["real_errors"]))
+        report = report.replace("GEO CHOICE VALIDATION", "\u26a0 GEO CHOICE VALIDATION")
     report += "\n\nDOMAIN QUALITY (4.9)"
     report += "\n  Проверено: %d" % _dq["checked"]
     report += "\n  Ошибок домена: %d" % len(_dq["domain_errors"])
@@ -1567,6 +1648,8 @@ def main():
                 "dq_domain_errors": res.get("dq_domain_errors", 0),
                 "dq_noise_events": res.get("dq_noise_events", 0),
                 "dq_impact_anomalies": res.get("dq_impact_anomalies", 0),
+                "geo_choice_warnings": res.get("geo_choice_warnings", 0),
+                "geo_choice_real_errors": res.get("geo_choice_real_errors", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
