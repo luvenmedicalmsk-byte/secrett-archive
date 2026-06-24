@@ -2,9 +2,9 @@
   "country": "IR",
   "date": "2026-06-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-24T19:12:02.630918+00:00",
+  "generated_at": "2026-06-24T19:27:28.414227+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-IR",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 40,
-      "trend": "up"
+      "score": 37,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "up"
+      "score": 34,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "up"
+      "score": 17,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "up"
+      "score": 19,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Цена_на_не",
+      "type": "Signal",
+      "label": "Цена на нефть марки Brent упала ниже $75",
+      "severity": 56,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IR-США_сняли_",
       "type": "Signal",
       "label": "США сняли на 60 дней санкции на иранскую",
@@ -92,13 +99,6 @@
       "label": "США выиграли войну с Ираном",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Тегеран_со",
-      "type": "Signal",
-      "label": "Тегеран сообщил Вашингтону, что «не взим",
-      "severity": 50,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-IR",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IR",
@@ -163,25 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-IR-geopolitical",
-      "to": "DOMAIN-IR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IR-infrastructure",
-      "to": "DOMAIN-IR-economic",
+      "from": "SIGNAL-IR-Цена_на_не",
+      "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IR-economic",
-      "to": "DOMAIN-IR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.56
     },
     {
       "from": "SIGNAL-IR-США_сняли_",
@@ -194,12 +179,6 @@
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-IR-Тегеран_со",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
