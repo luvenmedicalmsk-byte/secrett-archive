@@ -368,16 +368,14 @@ def _tag_event_countries(events: list[dict]) -> None:
                 ev["country_code"] = ccs[0]
             elif "country_code" not in ev:
                 ev["country_code"] = ""
-            ev["_region_in"] = region  # DEBUG V6.5
-            if event_c == "RU" and region.strip().lower() in ("", "глобально"):
-                ev["region"] = "Россия"; ev["_region_path"] = "RU"
-            # V6.5: проставить region иностранной страны, если он пуст/Глобально
-            elif ev.get("_geo_v65") and region.strip().lower() in ("", "глобально"):
-                ev["region"] = ev["_geo_v65"]["name"]; ev["_region_path"] = "V65"
-            elif ev.get("_geo_v65"):
-                ev["_region_path"] = "V65_SKIP_region=" + repr(region)[:30]
+            # V6.5: иностранная страна (_geo_v65) имеет ПРИОРИТЕТ -- перетирает любой
+            # ложный region (в т.ч. ошибочно проставленную 'Россия' от русскоязычного источника).
+            if ev.get("_geo_v65"):
+                ev["region"] = ev["_geo_v65"]["name"]
+            elif event_c == "RU" and region.strip().lower() in ("", "глобально"):
+                ev["region"] = "Россия"
             # Ложный region='Россия' снят -> не оставлять его (иначе фронт ловит карточку РФ по имени)
-            if region.strip().lower() == "россия" and "RU" not in ccs:
+            if (not ev.get("_geo_v65")) and region.strip().lower() == "россия" and "RU" not in ccs:
                 ev["region"] = COUNTRIES[event_c].get("name_ru", "Глобально") if (event_c and event_c in COUNTRIES) else "Глобально"
         # === уровень доверия к страновой атрибуции ===
         if ev.get("is_global"):
@@ -390,6 +388,7 @@ def _tag_event_countries(events: list[dict]) -> None:
                 ev["attribution_confidence"] = "medium"    # нацорган/компания/инфраструктура
             else:
                 ev["attribution_confidence"] = "low"       # упоминание/влияние/международное
+        ev.pop("_geo_v65", None)  # V6.5: служебное поле не публикуем
 
 def _persist_tagged_events(events: list[dict]) -> None:
     """Re-write docs/events.json with country tags (preserve wrapper keys)."""
