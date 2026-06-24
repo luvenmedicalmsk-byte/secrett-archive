@@ -1577,6 +1577,70 @@ def baseline_validity_audit(events):
             "distortion": distortion}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTRY MODEL 5.3.4 -- BASELINE GOVERNANCE + HISTORY MATURITY.
+# Предохранитель: пока история < 90 дней, любые авто-изменения baseline запрещены.
+# ─────────────────────────────────────────────────────────────────────────────
+import os as _os_gv, json as _json_gv, glob as _glob_gv
+
+# Стратегические страны -- baseline только MANUAL REVIEW (5.3.2)
+_GV_STRATEGIC = {"RU", "UA", "BY", "PL", "TR", "IR", "IL", "KZ", "SA", "CN", "US"}
+_GV_MIN_DAYS = 90  # минимальный горизонт для baseline-решений
+
+def _gv_history_horizon():
+    """Возвращает (days, min_date, max_date, set(cc_с_историей))."""
+    dates = set(); cc_have = set()
+    for base in ("docs/alerts/history", "alerts/history", "../docs/alerts/history"):
+        if _os_gv.path.isdir(base):
+            for f in _glob_gv.glob(_os_gv.path.join(base, "*", "*.json")):
+                parts = f.replace("\\", "/").split("/")
+                if len(parts) >= 2:
+                    cc_have.add(parts[-2])
+                    dates.add(parts[-1].replace(".json", ""))
+            break
+    ad = sorted(dates)
+    return len(ad), (ad[0] if ad else None), (ad[-1] if ad else None), cc_have
+
+def baseline_governance_audit(events):
+    """5.3.4: HISTORY MATURITY + статусы AUTO REDUCE/HOLD/MANUAL/LOCKED для baseline."""
+    days, dmin, dmax, cc_have = _gv_history_horizon()
+    maturity = round(100 * days / _GV_MIN_DAYS) if _GV_MIN_DAYS else 0
+    mature = maturity >= 100
+    states = _cm_load_states()
+    baselines = _bv_load_baselines()
+    rows = []
+    for st in states:
+        cc = st.get("country")
+        bl = baselines.get(cc, 50)
+        has_hist = cc in cc_have
+        # ELIGIBILITY RULE -> статус + причина
+        if cc in _GV_STRATEGIC:
+            status, reason = "MANUAL", "strategic country"
+        elif not mature:
+            # глобальный предохранитель: maturity<100% -> LOCKED для всех нестратегических
+            if not has_hist:
+                status, reason = "LOCKED", "no history"
+            else:
+                status, reason = "LOCKED", "история недостаточна: %d из %d дней" % (days, _GV_MIN_DAYS)
+        else:
+            # maturity>=100% -- полная ELIGIBILITY RULE (станет доступно при росте истории)
+            gri = st.get("gri", 0) or 0
+            casc = st.get("cascade_exposure", 0) or 0
+            if gri >= 50:
+                status, reason = "HOLD", "high GRI"
+            elif casc >= 40:
+                status, reason = "HOLD", "high cascade exposure"
+            else:
+                status, reason = "AUTO REDUCE", "eligible: 90d low activity, non-strategic"
+        rows.append({"cc": cc, "name": st.get("country_name"), "baseline": bl,
+                     "status": status, "reason": reason})
+    from collections import Counter as _C
+    counts = _C(r["status"] for r in rows)
+    return {"days": days, "min_date": dmin, "max_date": dmax, "maturity": maturity,
+            "mature": mature, "rows": rows, "counts": dict(counts),
+            "checked": len(states)}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1746,6 +1810,27 @@ def main():
     res["bv_zero_event_high"] = len(_bv["zero_event_high"])
     res["bv_cri_gri_conflict"] = len(_bv["cri_gri_conflict"])
     res["bv_recalibration"] = len(_bv["recalibration"])
+
+    # COUNTRY MODEL 5.3.4 -- BASELINE GOVERNANCE + HISTORY MATURITY
+    _gv = baseline_governance_audit(events)
+    res["gv_history_days"] = _gv["days"]
+    res["gv_maturity"] = _gv["maturity"]
+    res["gv_locked"] = _gv["counts"].get("LOCKED", 0)
+    res["gv_manual"] = _gv["counts"].get("MANUAL", 0)
+    res["gv_auto_reduce"] = _gv["counts"].get("AUTO REDUCE", 0)
+    report += "\n\nHISTORY MATURITY"
+    report += "\n  History Horizon: %dd" % _gv["days"]
+    report += "\n  History Maturity: %d%%" % _gv["maturity"]
+    report += "\n  Baseline Decisions: %s" % ("РАЗРЕШЕНЫ (ELIGIBILITY RULE)" if _gv["mature"] else "LOCKED")
+    if not _gv["mature"]:
+        report += "\n  Причина: история недостаточна -- %d из %d дней" % (_gv["days"], 90)
+    report += "\n\nBASELINE GOVERNANCE"
+    report += "\n  AUTO REDUCE: %d" % _gv["counts"].get("AUTO REDUCE", 0)
+    report += "\n  HOLD: %d" % _gv["counts"].get("HOLD", 0)
+    report += "\n  MANUAL REVIEW: %d" % _gv["counts"].get("MANUAL", 0)
+    report += "\n  LOCKED: %d" % _gv["counts"].get("LOCKED", 0)
+    if not _gv["mature"]:
+        print("::warning::BASELINE GOVERNANCE -- maturity %d%% (<100%%), все авто-решения по baseline ЗАПРЕЩЕНЫ" % _gv["maturity"])
     if _bv["checked"]:
         report += "\n\nCOUNTRY MODEL AUDIT 5.2 (BASELINE VALIDITY)"
         report += "\n  Проверено стран: %d (медиана GRI=%g)" % (_bv["checked"], _bv["median_gri"])
@@ -1884,6 +1969,11 @@ def main():
                 "bv_zero_event_high": res.get("bv_zero_event_high", 0),
                 "bv_cri_gri_conflict": res.get("bv_cri_gri_conflict", 0),
                 "bv_recalibration": res.get("bv_recalibration", 0),
+                "gv_history_days": res.get("gv_history_days", 0),
+                "gv_maturity": res.get("gv_maturity", 0),
+                "gv_locked": res.get("gv_locked", 0),
+                "gv_manual": res.get("gv_manual", 0),
+                "gv_auto_reduce": res.get("gv_auto_reduce", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
