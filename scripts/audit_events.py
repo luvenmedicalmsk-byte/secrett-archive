@@ -1199,7 +1199,13 @@ def audit_self_validation(events, pc):
         if not iso:
             return False
         ment = e.get("mentioned_countries") or []
-        imp = [x.get("cc") for x in (e.get("impact_countries") or []) if isinstance(x, dict)]
+        # impact_countries: реальный формат -- список строк (ISO) ЛИБО список dict {cc:...}
+        imp = []
+        for x in (e.get("impact_countries") or []):
+            if isinstance(x, dict):
+                imp.append(x.get("cc"))
+            elif isinstance(x, str):
+                imp.append(x)
         return (iso in ment) or (iso in imp) or (iso == str(e.get("event_country") or ""))
 
     # проверяем country_errors из production_reality_check
@@ -1345,6 +1351,34 @@ def main():
         report += "\n  -> реальных COUNTRY ERROR после валидации: %d" % _real_country_err
     res["real_country_errors"] = _real_country_err
 
+    # AUDIT VALIDATION CONFIRMATION (Требование 5): подтверждение на многострановых событиях
+    _multi = []
+    for _e in events:
+        _ment = _e.get("mentioned_countries") or []
+        _imp = []
+        for _x in (_e.get("impact_countries") or []):
+            _imp.append(_x.get("cc") if isinstance(_x, dict) else _x)
+        _allc = set(_ment) | set(_imp)
+        _ec = str(_e.get("event_country") or "")
+        if _ec:
+            _allc.add(_ec)
+        _allc.discard("")
+        if len(_allc) >= 2:
+            _multi.append(_e)
+    res["multi_country_events"] = len(_multi)
+    report += "\n\nAUDIT VALIDATION CONFIRMATION"
+    report += "\n  многострановых событий: %d" % len(_multi)
+    report += "\n  ложных тревог (FP): %d" % len(_fp)
+    report += "\n  скорректировано самовалидацией: %d" % len(_fp)
+    report += "\n  осталось реальных ошибок: %d" % _real_country_err
+    # FAILURE POLICY
+    if len(_pc.get("country_errors", [])) > 0 and len(_fp) == 0:
+        report += "\n  \u2139 country_errors_raw>0 при FP=0 -> события требуют доп.проверки"
+        print("::warning::AUDIT -- country_errors без false-positive: проверить вручную")
+    if _real_country_err > 0:
+        report += "\n\n\u26a0 REAL GEO ERROR: %d (подтверждённая потеря географии)" % _real_country_err
+        print("::error::REAL GEO ERROR -- %d событий с реальной потерей географии" % _real_country_err)
+
     # GEO WARNING -- агрегированный статус (после самовалидации: только РЕАЛЬНЫЕ ошибки)
     _geo_bad = (_real_country_err > 0 or _pc.get("lost_display", 0) > 0
                 or len(_leaks) > 0 or len(_ga_viol) > 0)
@@ -1384,6 +1418,7 @@ def main():
                 "geo_consistency_issues": res.get("geo_consistency_issues", 0),
                 "audit_false_positives": res.get("audit_false_positives", 0),
                 "real_country_errors": res.get("real_country_errors", 0),
+                "multi_country_events": res.get("multi_country_events", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
