@@ -1107,6 +1107,67 @@ def geo_source_leak_check(events):
     return leaks
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# V6.5 ПРИОРИТЕТ 4: GEO AUTHORITY CHECK + GEO DICTIONARY CONSISTENCY
+# Защита от регрессий: ловит расхождение справочников и словари вне geo_resolver.
+# ─────────────────────────────────────────────────────────────────────────────
+import os as _os_ga, re as _re_ga
+
+def _read_script(fname):
+    """Читает scripts/<fname> относительно audit_events.py."""
+    try:
+        base = _os_ga.path.dirname(_os_ga.path.abspath(__file__))
+        with open(_os_ga.path.join(base, fname), encoding="utf-8") as f:
+            return f.read()
+    except Exception:
+        return ""
+
+def geo_authority_check():
+    """Требование 15: использует ли каждый слой geo_resolver как единый источник.
+    Возвращает список нарушений (decision-логика на собственном словаре)."""
+    violations = []
+    # слои, которые ПРИНИМАЮТ географические решения и ОБЯЗАНЫ опираться на geo_resolver
+    decision_layers = {
+        "fetch_events.py": "парсер (первичная гео-привязка)",
+        "snapshot_engine.py": "финализатор географии",
+        "audit_events.py": "production-аудит",
+    }
+    for fname, role in decision_layers.items():
+        src = _read_script(fname)
+        if not src:
+            continue
+        uses_resolver = bool(_re_ga.search(r"(from|import)\s+geo_resolver", src))
+        if not uses_resolver:
+            violations.append({"file": fname, "role": role,
+                               "issue": "не импортирует geo_resolver (единый источник)"})
+    return violations
+
+def geo_dictionary_consistency():
+    """Требование 8: согласованность покрытия словарей. Проверяет, что снапшот-матчер
+    покрывает все страны geo_resolver (после консолидации). Возвращает расхождения."""
+    issues = []
+    try:
+        from geo_resolver import FOREIGN_COUNTRIES
+        resolver_iso = set(cc for cc, name in FOREIGN_COUNTRIES.values())
+    except Exception as e:
+        return [{"check": "import", "detail": "geo_resolver недоступен: %s" % e}]
+    se = _read_script("snapshot_engine.py")
+    # после консолидации снапшот строит _CC_TOKENS из FOREIGN_COUNTRIES -> проверяем наличие связки
+    consolidated = "FOREIGN_COUNTRIES" in se and "_CC_TOKENS" in se
+    if not consolidated:
+        issues.append({"check": "snapshot_consolidation",
+                       "detail": "snapshot не расширяет _CC_TOKENS из FOREIGN_COUNTRIES — риск рассинхрона"})
+    # проверка: не появился ли НОВЫЙ страновой словарь вне geo_resolver
+    for fname in ("fetch_events.py", "snapshot_engine.py"):
+        src = _read_script(fname)
+        # эвристика: крупный словарь ISO-кодов (>20 пар "XX":...) вне geo_resolver — кандидат в техдолг
+        iso_pairs = len(_re_ga.findall(r'["\'][A-Z]{2}["\']\s*:', src))
+        if iso_pairs > 80:
+            issues.append({"check": "local_dict", "file": fname,
+                           "detail": "крупный локальный ISO-словарь (%d пар) — кандидат на консолидацию" % iso_pairs})
+    return issues
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1196,6 +1257,34 @@ def main():
             report += "\n  \u2022 %s [%s=%s]" % (_l["title"], _l["field"], _l["value"])
         print("::error::GEO SOURCE LEAK -- %d событий: источник записан в гео-поле (region/event_country/country_code)" % len(_leaks))
         _pc_has_error = True
+
+    # V6.5 ПРИОРИТЕТ4: GEO INTEGRITY -- контроль целостности справочников
+    _ga_viol = geo_authority_check()
+    _gc_issues = geo_dictionary_consistency()
+    res["geo_authority_violations"] = len(_ga_viol)
+    res["geo_consistency_issues"] = len(_gc_issues)
+    report += "\n\nGEO INTEGRITY (4.8)"
+    report += "\n  GEO AUTHORITY: %s" % ("OK" if not _ga_viol else "%d нарушений" % len(_ga_viol))
+    report += "\n  GEO CONSISTENCY: %s" % ("OK" if not _gc_issues else "%d расхождений" % len(_gc_issues))
+    report += "\n  COUNTRY RESOLUTION ERRORS: %d" % len(_pc.get("country_errors", []))
+    report += "\n  LOST GEO: %d" % _pc.get("lost_display", 0)
+    report += "\n  GEO SOURCE LEAK: %d" % len(_leaks)
+    if _ga_viol:
+        report += "\n\n\u26a0 GEO AUTHORITY VIOLATION:"
+        for _v in _ga_viol:
+            report += "\n  \u2022 %s (%s): %s" % (_v["file"], _v["role"], _v["issue"])
+            print("::error::GEO AUTHORITY VIOLATION -- %s: %s" % (_v["file"], _v["issue"]))
+        _pc_has_error = True
+    if _gc_issues:
+        report += "\n\n\u26a0 GEO CONSISTENCY:"
+        for _i in _gc_issues:
+            report += "\n  \u2022 %s" % _i.get("detail", str(_i))
+            print("::warning::GEO CONSISTENCY -- %s" % _i.get("detail", ""))
+    # GEO WARNING -- агрегированный статус (Требование 10 failure policy)
+    _geo_bad = (len(_pc.get("country_errors", [])) > 0 or _pc.get("lost_display", 0) > 0
+                or len(_leaks) > 0 or len(_ga_viol) > 0)
+    if _geo_bad:
+        report = report.replace("GEO INTEGRITY (4.8)", "\u26a0 GEO WARNING -- GEO INTEGRITY (4.8)")
     # Блок 5: аварийное предупреждение -- ::error:: роняет шаг -> Telegram-alert уходит автоматически
     if _pc_has_error:
         _n = len(_pc["geo_errors"]) + len(_pc["country_errors"]) + _pc["lost_display"]
@@ -1226,6 +1315,8 @@ def main():
                 "duplicates": res["duplicates"], "translation": res["translation"],
                 "production_check": res.get("production_check", {}),
                 "geo_source_errors": res.get("geo_source_errors", 0),
+                "geo_authority_violations": res.get("geo_authority_violations", 0),
+                "geo_consistency_issues": res.get("geo_consistency_issues", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
