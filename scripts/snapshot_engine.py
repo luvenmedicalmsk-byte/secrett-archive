@@ -347,8 +347,7 @@ def _tag_event_countries(events: list[dict]) -> None:
         if not content_cc and not region_cc:
             _ffc, _ffn = foreign_country(content)
             if _ffc:
-                content_cc = [_ffc]
-                ev["_geo_v65"] = {"cc": _ffc, "name": _ffn}
+                content_cc = [_ffc]  # V6.5 резерв: страна из geo_resolver, если матчер не нашёл
         ccs = list(dict.fromkeys(content_cc + region_cc))
         is_global = (not ccs) and any(g in content for g in _GLOBAL_MARKERS)
         llm_primary = ev.get("country_code") or ""
@@ -401,7 +400,6 @@ def _tag_event_countries(events: list[dict]) -> None:
                 ev["attribution_confidence"] = "medium"    # нацорган/компания/инфраструктура
             else:
                 ev["attribution_confidence"] = "low"       # упоминание/влияние/международное
-        ev.pop("_geo_v65", None)  # V6.5: служебное поле не публикуем
 
 def _persist_tagged_events(events: list[dict]) -> None:
     """Re-write docs/events.json with country tags (preserve wrapper keys)."""
