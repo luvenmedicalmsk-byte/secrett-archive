@@ -1168,6 +1168,55 @@ def geo_dictionary_consistency():
     return issues
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# AUDIT VALIDATION LAYER: мета-проверка качества самих аудитов.
+# Ловит ложные тревоги: аудит счёл гео потерянной, но impact/mentioned подтверждают.
+# ─────────────────────────────────────────────────────────────────────────────
+def audit_self_validation(events, pc):
+    """Требование 4: анализирует результаты GEO-аудитов на ложные срабатывания.
+    Если проверка пометила событие как гео-ошибку, но страна/субъект корректно
+    учтены в impact_countries/mentioned_countries -> AUDIT FALSE POSITIVE."""
+    false_positives = []
+    # индекс событий по усечённому заголовку (как в country_errors)
+    by_title = {}
+    for e in events:
+        by_title[str(e.get("title", ""))[:64]] = e
+        by_title[str(e.get("title", ""))[:48]] = e
+
+    def _country_handled(e, ctry_name):
+        """Страна (рус.имя) учтена в mentioned/impact/event_country?"""
+        if not _geo_res:
+            return False
+        # рус.имя -> ISO через FOREIGN_COUNTRIES
+        iso = None
+        try:
+            for stem, (cc, name) in _geo_res.FOREIGN_COUNTRIES.items():
+                if name == ctry_name:
+                    iso = cc
+                    break
+        except Exception:
+            return False
+        if not iso:
+            return False
+        ment = e.get("mentioned_countries") or []
+        imp = [x.get("cc") for x in (e.get("impact_countries") or []) if isinstance(x, dict)]
+        return (iso in ment) or (iso in imp) or (iso == str(e.get("event_country") or ""))
+
+    # проверяем country_errors из production_reality_check
+    for ce in pc.get("country_errors", []):
+        ttl = ce.get("title", "")
+        ctry = ce.get("country", "")
+        e = by_title.get(ttl) or by_title.get(ttl[:48])
+        if e and _country_handled(e, ctry):
+            false_positives.append({
+                "check": "COUNTRY_RESOLUTION/FOREIGN_LOST",
+                "title": ttl[:48],
+                "country": ctry,
+                "reason": "страна учтена в impact/mentioned -> многострановое, не потеря",
+            })
+    return false_positives
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1280,8 +1329,24 @@ def main():
         for _i in _gc_issues:
             report += "\n  \u2022 %s" % _i.get("detail", str(_i))
             print("::warning::GEO CONSISTENCY -- %s" % _i.get("detail", ""))
-    # GEO WARNING -- агрегированный статус (Требование 10 failure policy)
-    _geo_bad = (len(_pc.get("country_errors", [])) > 0 or _pc.get("lost_display", 0) > 0
+    # AUDIT VALIDATION LAYER: самопроверка аудитов на ложные тревоги
+    _fp = audit_self_validation(events, _pc)
+    res["audit_false_positives"] = len(_fp)
+    # реальные ошибки = найденные минус подтверждённые ложные
+    _real_country_err = max(0, len(_pc.get("country_errors", [])) - len(_fp))
+    report += "\n\nAUDIT QUALITY (self-validation)"
+    report += "\n  False Positives: %d" % len(_fp)
+    report += "\n  Validation Warnings: %d" % len(_fp)
+    if _fp:
+        report += "\n\n\u26a0 AUDIT FALSE POSITIVE (%d):" % len(_fp)
+        for _f in _fp[:8]:
+            report += "\n  \u2022 [%s] %s -- %s" % (_f["check"], _f["title"], _f["reason"])
+        print("::warning::AUDIT FALSE POSITIVE -- %d ложных гео-тревог (учтены impact/mentioned)" % len(_fp))
+        report += "\n  -> реальных COUNTRY ERROR после валидации: %d" % _real_country_err
+    res["real_country_errors"] = _real_country_err
+
+    # GEO WARNING -- агрегированный статус (после самовалидации: только РЕАЛЬНЫЕ ошибки)
+    _geo_bad = (_real_country_err > 0 or _pc.get("lost_display", 0) > 0
                 or len(_leaks) > 0 or len(_ga_viol) > 0)
     if _geo_bad:
         report = report.replace("GEO INTEGRITY (4.8)", "\u26a0 GEO WARNING -- GEO INTEGRITY (4.8)")
@@ -1317,6 +1382,8 @@ def main():
                 "geo_source_errors": res.get("geo_source_errors", 0),
                 "geo_authority_violations": res.get("geo_authority_violations", 0),
                 "geo_consistency_issues": res.get("geo_consistency_issues", 0),
+                "audit_false_positives": res.get("audit_false_positives", 0),
+                "real_country_errors": res.get("real_country_errors", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
