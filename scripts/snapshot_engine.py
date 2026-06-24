@@ -333,15 +333,15 @@ def _tag_event_countries(events: list[dict]) -> None:
         # НЕДОВЕРИЕ к region=Россия без российских геомаркеров в тексте (русскоязычный источник != событие в РФ)
         if region_cc and region_cc[0] == "RU" and "RU" not in content_cc:
             region_cc = []
-        ccs = list(dict.fromkeys(content_cc + region_cc))
         # V6.5: детерминированный резолвер иностранных стран (единый geo_resolver).
-        # Snapshot COUNTRIES не знает ряд стран (Литва/Азербайджан/...) -> добавляем здесь,
-        # ДО решения is_global, чтобы страна из текста не уходила в Глобально.
-        if not ccs:
+        # Snapshot COUNTRIES не знает ряд стран (Литва/Азербайджан/...) -> добавляем в content_cc,
+        # чтобы страна прошла через ВСЮ цепочку (event_c/region/country_code), а не уходила в Глобально.
+        if not content_cc and not region_cc:
             _ffc, _ffn = foreign_country(content)
             if _ffc:
-                ccs = [_ffc]
+                content_cc = [_ffc]
                 ev["_geo_v65"] = {"cc": _ffc, "name": _ffn}
+        ccs = list(dict.fromkeys(content_cc + region_cc))
         is_global = (not ccs) and any(g in content for g in _GLOBAL_MARKERS)
         llm_primary = ev.get("country_code") or ""
         if is_global:
