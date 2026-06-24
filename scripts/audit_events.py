@@ -949,6 +949,112 @@ def send_telegram(text):
         return False
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# AUDIT 4.7 — PRODUCTION REALITY CHECK
+# Сверяет географию в published events.json с тем, что реально отдаёт live API
+# (api.a-atlas.com/api/events) — то, что видит пользователь в ленте Atlas Signals.
+# Зелёный аудит данных != корректный production, если API отдаёт region=Глобально
+# там, где в данных есть субъект РФ / страна.
+# ─────────────────────────────────────────────────────────────────────────────
+PROD_API_EVENTS = "https://api.a-atlas.com/api/events?limit=300&sort=date&order=desc"
+
+def _fetch_production_events(timeout=15):
+    """Тянет ленту из live API ровно тем же запросом, что и фронт index.html."""
+    try:
+        req = urllib.request.Request(PROD_API_EVENTS, headers={"User-Agent": "atlas-audit-4.7"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = json.loads(r.read().decode("utf-8", errors="ignore"))
+    except Exception as ex:
+        return None, "API недоступен: %s" % ex
+    # формат может быть {"events":[...]} или [...]
+    evs = data.get("events") if isinstance(data, dict) else data
+    if not isinstance(evs, list):
+        return None, "неожиданный формат ответа API"
+    return evs, None
+
+def _geo_label(e):
+    """Что реально показывается как гео: region (фронт рисует 'Глобально' если region=='глобально')."""
+    return str(e.get("region") or "").strip()
+
+def _has_geo_marker(e):
+    """Есть ли в тексте события надёжный гео-признак (субъект РФ или страна из списка 4.7)."""
+    text = (str(e.get("title", "")) + " " + str(e.get("summary", ""))).lower()
+    subj = _geo_res.ru_subject(text) if _geo_res else None
+    ctry = None
+    for k, v in _GEO46_COUNTRIES.items():
+        if k in text:
+            ctry = v; break
+    return subj, ctry
+
+def production_reality_check(local_events):
+    """AUDIT 4.7. Возвращает dict с результатами сверки данные<->production."""
+    out = {"available": False, "checked": 0, "geo_errors": [], "country_errors": [],
+           "lost_display": 0, "geo_in_data": 0, "geo_in_prod": 0, "api_error": None}
+    prod, err = _fetch_production_events()
+    if err:
+        out["api_error"] = err
+        return out
+    out["available"] = True
+    prod_by_id = {str(e.get("id")): e for e in prod}
+
+    # гео в данных vs гео в production (по совпадающим id)
+    for le in local_events:
+        eid = str(le.get("id"))
+        data_region = str(le.get("region") or "").strip()
+        if data_region and data_region != "Глобально":
+            out["geo_in_data"] += 1
+        pe = prod_by_id.get(eid)
+        if pe is None:
+            continue
+        out["checked"] += 1
+        prod_region = _geo_label(pe)
+        if prod_region and prod_region != "Глобально":
+            out["geo_in_prod"] += 1
+        # потеря при отображении: в данных гео было, в production — Глобально
+        if data_region and data_region != "Глобально" and prod_region == "Глобально":
+            out["lost_display"] += 1
+
+    # БЛОК 1+2: субъект РФ / страна есть, но production показывает Глобально
+    for pe in prod:
+        if _geo_label(pe) != "Глобально":
+            continue
+        subj, ctry = _has_geo_marker(pe)
+        ttl = str(pe.get("title", ""))[:64]
+        if subj:
+            out["geo_errors"].append({"title": ttl, "subject": subj})
+        elif ctry:
+            out["country_errors"].append({"title": ttl, "country": ctry})
+    return out
+
+def render_production_check(pc):
+    """Блок 4 отчёта: PRODUCTION VALIDATION (AUDIT 4.7)."""
+    L = ["", "PRODUCTION VALIDATION (4.7)"]
+    if pc.get("api_error"):
+        L.append("\u26a0 API недоступен — проверка пропущена: %s" % pc["api_error"])
+        return L, False
+    if not pc.get("available"):
+        L.append("\u26a0 production-данные не получены")
+        return L, False
+    n_geo = len(pc["geo_errors"]); n_ctry = len(pc["country_errors"]); n_lost = pc["lost_display"]
+    L.append("Карточек проверено: %d" % pc["checked"])
+    L.append("Гео в данных: %d / Гео в production: %d / Потеряно при отображении: %d" % (
+        pc["geo_in_data"], pc["geo_in_prod"], n_lost))
+    L.append("Ошибок географии (субъект РФ -> Глобально): %d" % n_geo)
+    L.append("Ошибок стран (страна -> Глобально): %d" % n_ctry)
+    has_error = (n_geo > 0 or n_ctry > 0 or n_lost > 0)
+    if n_geo:
+        L.append("\u274c PRODUCTION GEO ERROR:")
+        for e in pc["geo_errors"][:6]:
+            L.append("  \u2022 %s [%s -> Глобально]" % (e["title"], e["subject"]))
+    if n_ctry:
+        L.append("\u274c COUNTRY RESOLUTION ERROR:")
+        for e in pc["country_errors"][:6]:
+            L.append("  \u2022 %s [%s -> Глобально]" % (e["title"], e["country"]))
+    if not has_error:
+        L.append("\u2713 production-география совпадает с данными")
+    return L, has_error
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1021,6 +1127,20 @@ def main():
         pass
 
     report = build_report(events, meta, res)
+
+    # ── AUDIT 4.7 — PRODUCTION REALITY CHECK ──
+    # Проверяем не данные, а то, что реально отдаёт live API (что видит пользователь).
+    _pc = production_reality_check(events)
+    _pc_lines, _pc_has_error = render_production_check(_pc)
+    report = report + "\n" + "\n".join(_pc_lines)
+    res["production_check"] = _pc
+    # Блок 5: аварийное предупреждение -- ::error:: роняет шаг -> Telegram-alert уходит автоматически
+    if _pc_has_error:
+        _n = len(_pc["geo_errors"]) + len(_pc["country_errors"]) + _pc["lost_display"]
+        print("::error::PRODUCTION DATA MISMATCH -- %d событий с расхождением гео (данные есть, production показывает Глобально)" % _n)
+        for _e in (_pc["geo_errors"] + _pc["country_errors"])[:8]:
+            print("::warning::  PROD GEO: %s" % (_e.get("title","")))
+
     print("\n" + report + "\n")
 
     try:
@@ -1042,6 +1162,7 @@ def main():
                 "channels": channels_all,
                 "noise": res["noise"], "domain": res["domain"],
                 "duplicates": res["duplicates"], "translation": res["translation"],
+                "production_check": res.get("production_check", {}),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
