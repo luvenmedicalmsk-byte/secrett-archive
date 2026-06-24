@@ -1404,6 +1404,81 @@ def geo_choice_audit(events):
     return {"warnings": warnings, "real_errors": real_errors, "checked": len(events)}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTRY MODEL AUDIT 5.0 -- BLOCK 10: GRI EXPLAINABILITY.
+# Раскладывает GRI стран TOP-20 на компоненты. >80% не объяснено -> UNEXPLAINABLE GRI.
+# Страна в TOP без источников рейтинга -> COUNTRY MODEL ERROR.
+# ─────────────────────────────────────────────────────────────────────────────
+import os as _os_cm, json as _json_cm, glob as _glob_cm
+from collections import Counter as _Counter_cm
+
+def _cm_load_states():
+    """Читает docs/grdf/v6_country_state_*.json."""
+    states = []
+    for base in ("docs/grdf", "grdf", "../docs/grdf"):
+        paths = _glob_cm.glob(_os_cm.path.join(base, "v6_country_state_*.json"))
+        if paths:
+            for p in paths:
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        states.append(_json_cm.load(f))
+                except Exception:
+                    pass
+            break
+    return states
+
+def _cm_explain_gri(st, n_events, sevs):
+    """BLOCK 10: разложение GRI на компоненты (сходится к GRI; baseline = остаток).
+    Компоненты: Baseline, Structural Risk, Event Pressure, Cascade Exposure, Resilience Adjustment."""
+    gri = float(st.get("gri", 0) or 0)
+    resil = st.get("resilience", 50) or 50
+    casc = st.get("cascade_exposure", 0) or 0
+    vuln = st.get("vulnerability", 0) or 0
+    event_pressure = round((sum(sevs) / len(sevs) - 50) * 0.4, 1) if sevs else 0.0
+    cascade = round(casc * 0.15, 1)
+    resilience_adj = round(-(resil - 50) * 0.12, 1)
+    structural = round(vuln * 0.12, 1)
+    # Baseline = остаток (базовый риск страны без свежих событий -- ВАЛИДНАЯ компонента)
+    baseline = round(gri - event_pressure - cascade - resilience_adj - structural, 1)
+    total = baseline + event_pressure + cascade + resilience_adj + structural
+    explained_pct = round(100 * min(total, gri) / max(1, gri)) if gri > 0 else 100
+    # UNEXPLAINABLE: разложение не сходится -- baseline отрицательный или неадекватно раздут
+    unexplainable = (baseline < -2) or (baseline > gri * 1.3) or (explained_pct < 80)
+    return {
+        "cc": st.get("country"), "name": st.get("country_name"), "gri": gri,
+        "baseline": baseline, "structural": structural, "event": event_pressure,
+        "cascade": cascade, "resilience_adj": resilience_adj,
+        "events": n_events, "explained_pct": explained_pct, "unexplainable": unexplainable,
+    }
+
+def country_model_audit(events):
+    """BLOCK 10 + TOP COUNTRIES: объяснимость GRI стран в TOP-20."""
+    states = _cm_load_states()
+    if not states:
+        return {"checked": 0, "rows": [], "unexplainable": [], "model_errors": []}
+    ev_by_cc = _Counter_cm(e.get("event_country") for e in events if e.get("event_country"))
+    sev_by_cc = {}
+    for e in events:
+        cc = e.get("event_country")
+        if cc:
+            sev_by_cc.setdefault(cc, []).append(e.get("severity", 50) or 50)
+    rows = []
+    for st in states:
+        cc = st.get("country")
+        rows.append(_cm_explain_gri(st, ev_by_cc.get(cc, 0), sev_by_cc.get(cc, [])))
+    rows.sort(key=lambda r: -r["gri"])
+    top20 = rows[:20]
+    unexpl = [r for r in top20 if r["unexplainable"]]
+    # COUNTRY MODEL ERROR: страна в TOP, но GRI > 0 и НЕТ ни одной объясняющей компоненты
+    model_errors = []
+    for r in top20:
+        comps = abs(r["baseline"]) + abs(r["structural"]) + abs(r["event"]) + abs(r["cascade"])
+        if r["gri"] > 30 and comps < 1:  # высокий GRI, но компоненты пустые -> источник неизвестен
+            model_errors.append(r)
+    return {"checked": len(states), "rows": rows, "top20": top20,
+            "unexplainable": unexpl, "model_errors": model_errors}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1558,6 +1633,33 @@ def main():
     _gc = geo_choice_audit(events)
     res["geo_choice_warnings"] = len(_gc["warnings"])
     res["geo_choice_real_errors"] = len(_gc["real_errors"])
+
+    # COUNTRY MODEL AUDIT 5.0 -- BLOCK 10: GRI explainability
+    _cm = country_model_audit(events)
+    res["cm_checked"] = _cm["checked"]
+    res["cm_unexplainable"] = len(_cm["unexplainable"])
+    res["cm_model_errors"] = len(_cm["model_errors"])
+    if _cm["checked"]:
+        report += "\n\nCOUNTRY MODEL AUDIT 5.0"
+        report += "\n  Проверено стран: %d" % _cm["checked"]
+        report += "\n  UNEXPLAINABLE GRI: %d" % len(_cm["unexplainable"])
+        report += "\n  COUNTRY MODEL ERRORS: %d" % len(_cm["model_errors"])
+        report += "\n\nGRI EXPLAINABILITY (TOP-10):"
+        for _r in _cm.get("top20", [])[:10]:
+            _fl = " \u26a0" if _r["unexplainable"] else ""
+            report += ("\n  %s GRI=%g | base=%g struct=%g event=%g casc=%g rezAdj=%g | соб=%d expl=%d%%%s" % (
+                _r["cc"], _r["gri"], _r["baseline"], _r["structural"], _r["event"],
+                _r["cascade"], _r["resilience_adj"], _r["events"], _r["explained_pct"], _fl))
+        if _cm["unexplainable"]:
+            report += "\n\nTOP PROBLEM COUNTRIES:"
+            for _r in _cm["unexplainable"][:5]:
+                report += "\n  \u26a0 %s GRI=%g -- разложение не сходится (baseline=%g, expl=%d%%)" % (
+                    _r["cc"], _r["gri"], _r["baseline"], _r["explained_pct"])
+            print("::warning::COUNTRY MODEL -- %d UNEXPLAINABLE GRI" % len(_cm["unexplainable"]))
+        if _cm["model_errors"]:
+            for _r in _cm["model_errors"][:5]:
+                report += "\n  \u26a0 COUNTRY MODEL ERROR: %s в TOP, но источники рейтинга не определены" % _r["cc"]
+            print("::error::COUNTRY MODEL ERROR -- %d стран без источников рейтинга" % len(_cm["model_errors"]))
     report += "\n\nGEO CHOICE VALIDATION"
     report += "\n  Проверено: %d" % _gc["checked"]
     report += "\n  GEO CHOICE WARNINGS: %d" % len(_gc["warnings"])
@@ -1650,6 +1752,9 @@ def main():
                 "dq_impact_anomalies": res.get("dq_impact_anomalies", 0),
                 "geo_choice_warnings": res.get("geo_choice_warnings", 0),
                 "geo_choice_real_errors": res.get("geo_choice_real_errors", 0),
+                "cm_checked": res.get("cm_checked", 0),
+                "cm_unexplainable": res.get("cm_unexplainable", 0),
+                "cm_model_errors": res.get("cm_model_errors", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
