@@ -2,66 +2,66 @@
   "country": "CA",
   "date": "2026-06-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-24T17:53:47.031668+00:00",
+  "generated_at": "2026-06-24T18:34:13.194006+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 52,
+      "score": 55,
       "props": {
-        "risk_score": 52
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CA-В_ближайши",
+      "id": "SIGNAL-CA-Лагерь_Мис",
       "type": "Signal",
-      "label": "В ближайшие месяцы ИИ-модели будут спосо",
-      "severity": 52,
-      "domain": "technology"
+      "label": "Лагерь Мистик подал заявление о банкротс",
+      "severity": 54,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-CA",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-CA-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CA-Страны_Евр",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.55
     },
     {
-      "from": "SIGNAL-CA-В_ближайши",
-      "to": "DOMAIN-CA-technology",
+      "from": "SIGNAL-CA-Лагерь_Мис",
+      "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.54
     }
   ]
 }
