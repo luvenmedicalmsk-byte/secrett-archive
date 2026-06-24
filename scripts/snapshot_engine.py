@@ -293,6 +293,7 @@ def _country_match_tokens(kw_list):
 
 _CC_TOKENS = None
 from geo_resolver import RU_COUNTRY_TOKENS, ru_subject, foreign_country, FOREIGN_COUNTRIES  # AUDIT 4.5 + V6.5: единый гео-модуль
+_FC_NAME = {cc: name for stem, (cc, name) in FOREIGN_COUNTRIES.items()}  # V6.5: ISO->рус.имя из единого источника
 from datetime import datetime as _dt45, timezone as _tz45
 
 
@@ -375,15 +376,20 @@ def _tag_event_countries(events: list[dict]) -> None:
                 ev["country_code"] = ccs[0]
             elif "country_code" not in ev:
                 ev["country_code"] = ""
-            # V6.5: иностранная страна (_geo_v65) имеет ПРИОРИТЕТ -- перетирает любой
-            # ложный region (в т.ч. ошибочно проставленную 'Россия' от русскоязычного источника).
-            if ev.get("_geo_v65"):
-                ev["region"] = ev["_geo_v65"]["name"]
-            elif event_c == "RU" and region.strip().lower() in ("", "глобально"):
-                ev["region"] = "Россия"
-            # Ложный region='Россия' снят -> не оставлять его (иначе фронт ловит карточку РФ по имени)
-            if (not ev.get("_geo_v65")) and region.strip().lower() == "россия" and "RU" not in ccs:
-                ev["region"] = COUNTRIES[event_c].get("name_ru", "Глобально") if (event_c and event_c in COUNTRIES) else "Глобально"
+            # V6.5 ЕДИНАЯ ЛОГИКА region (единый источник): имя страны берём из COUNTRIES
+            # (метаданные) ЛИБО из geo_resolver FOREIGN_COUNTRIES -- снапшот покрывает все страны.
+            _name_for = lambda c: (COUNTRIES[c]["name_ru"] if (c and c in COUNTRIES)
+                                   else _FC_NAME.get(c, ""))
+            _rl = region.strip().lower()
+            if event_c == "RU":
+                if _rl in ("", "глобально"):
+                    ev["region"] = "Россия"
+            elif event_c:
+                # иностранная страна: ставим имя, если region пуст/Глобально/ложная-Россия
+                if _rl in ("", "глобально") or (_rl == "россия" and "RU" not in ccs):
+                    _nm = _name_for(event_c)
+                    if _nm:
+                        ev["region"] = _nm
         # === уровень доверия к страновой атрибуции ===
         if ev.get("is_global"):
             ev["attribution_confidence"] = "global"
