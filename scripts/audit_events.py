@@ -1655,6 +1655,85 @@ def baseline_governance_audit(events):
             "checked": len(states)}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTRY MODEL 6.0 -- EXPLAINABILITY & RANKING AUDIT.
+# Объяснимость рейтинга для ПОЛЬЗОВАТЕЛЯ: разложение, корреляции, ranking issues.
+# ─────────────────────────────────────────────────────────────────────────────
+from collections import Counter as _Counter_v6
+
+def _v6_pearson(xs, ys):
+    n = len(xs)
+    if n < 2:
+        return 0.0
+    mx = sum(xs) / n; my = sum(ys) / n
+    num = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
+    dx = sum((x - mx) ** 2 for x in xs) ** 0.5
+    dy = sum((y - my) ** 2 for y in ys) ** 0.5
+    return round(num / (dx * dy), 3) if dx * dy > 0 else 0.0
+
+def country_model_6_audit(events):
+    """6.0: explainability рейтинга для пользователя + корреляции + ranking issues."""
+    states = _cm_load_states()
+    baselines = _bv_load_baselines()
+    if not states:
+        return {"checked": 0, "rows": [], "issues": [], "correlations": {},
+                "in_development_top": []}
+    _, _, _, cc_have = _gv_history_horizon()  # страны с историей -> READY
+    ev_by_cc = _Counter_v6(e.get("event_country") for e in events if e.get("event_country"))
+
+    rows = []
+    for st in states:
+        cc = st.get("country")
+        rows.append({
+            "cc": cc, "name": st.get("country_name"), "gri": st.get("gri", 0) or 0,
+            "cri": st.get("cascade_exposure", 0) or 0, "ews": st.get("uro_score", 0) or 0,
+            "casc": st.get("cascade_exposure", 0) or 0, "vuln": st.get("vulnerability", 0) or 0,
+            "resil": st.get("resilience", 50) or 50, "nev": ev_by_cc.get(cc, 0),
+            "baseline": baselines.get(cc, 50), "has_hist": cc in cc_have,
+        })
+    rows.sort(key=lambda r: -r["gri"])
+    for i, r in enumerate(rows, 1):
+        r["pos"] = i
+
+    # Требование 1: разложение GRI (сходится к GRI)
+    for r in rows:
+        gri = r["gri"]
+        ev_c = min(gri, r["nev"] * 0.5) if r["nev"] else 0
+        casc_c = round(r["casc"] * 0.15, 1)
+        resil_c = round(-(r["resil"] - 50) * 0.12, 1)
+        vuln_c = round(r["vuln"] * 0.12, 1)
+        base_c = round(gri - ev_c - casc_c - resil_c - vuln_c, 1)
+        r["decomp"] = {"baseline": base_c, "events": round(ev_c, 1), "cascade": casc_c,
+                       "vulnerability": vuln_c, "resilience": resil_c}
+        r["status"] = "READY" if r["has_hist"] else "IN DEVELOPMENT"
+
+    # Требование 4: корреляции
+    g = [r["gri"] for r in rows]; e = [r["ews"] for r in rows]
+    c = [r["cri"] for r in rows]; n = [r["nev"] for r in rows]
+    correlations = {
+        "gri_ews": _v6_pearson(g, e), "gri_cri": _v6_pearson(g, c),
+        "gri_events": _v6_pearson(g, n), "ews_events": _v6_pearson(e, n),
+    }
+
+    # Требование 3+6: RANKING EXPLANATION ISSUES
+    issues = []
+    # страна с максимумом событий (для сравнения "0 событий выше активной")
+    most_active = max(rows, key=lambda r: r["nev"]) if rows else None
+    top20 = rows[:20]
+    for r in top20:
+        if most_active and r["nev"] == 0 and r["pos"] < most_active["pos"] and most_active["nev"] > 10:
+            issues.append({
+                "cc": r["cc"],
+                "issue": "GRI выше %s (%d событий) при 0 событий" % (most_active["name"], most_active["nev"]),
+                "explanation": "Высокий baseline и структурные факторы доминируют над событийной активностью",
+            })
+    # Требование 7: IN DEVELOPMENT в TOP-20
+    in_dev_top = [r["cc"] for r in top20 if r["status"] == "IN DEVELOPMENT"]
+
+    return {"checked": len(states), "rows": rows, "top20": top20, "issues": issues,
+            "correlations": correlations, "in_development_top": in_dev_top}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1832,6 +1911,40 @@ def main():
     res["gv_locked"] = _gv["counts"].get("LOCKED", 0)
     res["gv_manual"] = _gv["counts"].get("MANUAL", 0)
     res["gv_auto_reduce"] = _gv["counts"].get("AUTO REDUCE", 0)
+
+    # COUNTRY MODEL 6.0 -- EXPLAINABILITY & RANKING AUDIT
+    _v6 = country_model_6_audit(events)
+    res["v6_checked"] = _v6["checked"]
+    res["v6_ranking_issues"] = len(_v6["issues"])
+    res["v6_in_development_top"] = len(_v6["in_development_top"])
+    res["v6_correlations"] = _v6["correlations"]
+    if _v6["checked"]:
+        _co = _v6["correlations"]
+        report += "\n\nCOUNTRY MODEL 6.0 (EXPLAINABILITY & RANKING)"
+        report += "\n  Проверено стран: %d" % _v6["checked"]
+        report += "\n  Корреляции:"
+        report += "\n    GRI<->события: %.3f" % _co["gri_events"]
+        report += "\n    GRI<->CRI: %.3f" % _co["gri_cri"]
+        report += "\n    GRI<->EWS: %.3f" % _co["gri_ews"]
+        report += "\n    EWS<->события: %.3f" % _co["ews_events"]
+        if _co["gri_events"] < 0.2:
+            report += "\n    \u26a0 GRI почти не зависит от событий (для пользователя -- 'чёрный ящик')"
+        report += "\n  RANKING EXPLANATION ISSUES: %d" % len(_v6["issues"])
+        report += "\n  IN DEVELOPMENT в TOP-20: %d" % len(_v6["in_development_top"])
+        # TOP-10 разложение с статусом
+        report += "\n\nTOP-10 РЕЙТИНГ (разложение + статус):"
+        for _r in _v6["top20"][:10]:
+            _d = _r["decomp"]
+            report += "\n  #%d %s GRI=%g | base=%g ev=%g casc=%g vuln=%g rez=%g | соб=%d CRI=%d [%s]" % (
+                _r["pos"], _r["cc"], _r["gri"], _d["baseline"], _d["events"], _d["cascade"],
+                _d["vulnerability"], _d["resilience"], _r["nev"], _r["cri"], _r["status"])
+        if _v6["issues"]:
+            report += "\n\nRANKING EXPLANATION ISSUES:"
+            for _is in _v6["issues"][:6]:
+                report += "\n  %s: %s" % (_is["cc"], _is["issue"])
+                report += "\n    -> %s" % _is["explanation"]
+            print("::warning::COUNTRY MODEL 6.0 -- %d ranking issues, %d IN DEVELOPMENT в TOP" % (
+                len(_v6["issues"]), len(_v6["in_development_top"])))
     report += "\n\nHISTORY MATURITY"
     report += "\n  History Horizon: %dd" % _gv["days"]
     report += "\n  History Maturity: %d%%" % _gv["maturity"]
@@ -1988,6 +2101,10 @@ def main():
                 "gv_locked": res.get("gv_locked", 0),
                 "gv_manual": res.get("gv_manual", 0),
                 "gv_auto_reduce": res.get("gv_auto_reduce", 0),
+                "v6_checked": res.get("v6_checked", 0),
+                "v6_ranking_issues": res.get("v6_ranking_issues", 0),
+                "v6_in_development_top": res.get("v6_in_development_top", 0),
+                "v6_correlations": res.get("v6_correlations", {}),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
