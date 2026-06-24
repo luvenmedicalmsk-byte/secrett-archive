@@ -411,10 +411,13 @@ def _tag_event_countries(events: list[dict]) -> None:
                         _subj2 = ru_subject(_ftxt.lower())
                         ev["region"] = _subj2 if _subj2 else "Россия"
             elif event_c:
-                # иностранная страна: ставим имя, если region пуст/Глобально/ложная-Россия
-                if _rl in ("", "глобально") or (_rl == "россия" and "RU" not in ccs):
-                    _nm = _name_for(event_c)
-                    if _nm:
+                # иностранная страна: ставим имя страны, если region не отражает event_c.
+                # (V6.6: после правила приоритета event_c может стать иностранной, а region
+                #  остаться 'Россия' с RU в ccs как impact -> всё равно обновляем на страну.)
+                _nm = _name_for(event_c)
+                if _nm and (_rl in ("", "глобально") or _nm.lower() not in _rl):
+                    # не трогаем, если region -- валидный РФ-субъект/город (реальная под-гео)
+                    if not (ru_subject(_rl) and event_c != "RU"):
                         ev["region"] = _nm
         # === уровень доверия к страновой атрибуции ===
         if ev.get("is_global"):
