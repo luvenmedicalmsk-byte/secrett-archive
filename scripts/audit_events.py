@@ -1077,6 +1077,36 @@ def render_production_check(pc):
     return L, has_error
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# V6.4 — GEO SOURCE LEAK: region/event_country/country_code не должны быть источником
+# ─────────────────────────────────────────────────────────────────────────────
+_SOURCE_SLUGS = {
+    "bbbreaking","breaking","rian_ru","rbc_news","forbesrussia","mchs_official",
+    "readovkanews","mash","bazabazon","novosti_efir","rbc","rian","readovka",
+    "mchs","tlive","t live","baza","efir","forbes","telegram",
+    # отображаемые имена
+    "Breaking","РБК","РИА Новости","Readovka","Mash","Baza","Efir","МЧС","Forbes Russia",
+}
+def _norm_src(v):
+    return str(v or "").strip().lower().lstrip("@").replace("telegram/", "")
+
+def geo_source_leak_check(events):
+    """V6.4 треб.6: ищет события, где в гео-поле затесался источник/Telegram-канал."""
+    leaks = []
+    src_norm = {_norm_src(s) for s in _SOURCE_SLUGS}
+    for e in events:
+        for fld in ("region", "event_country", "country_code"):
+            val = e.get(fld)
+            nv = _norm_src(val)
+            if not nv:
+                continue
+            if nv in src_norm or str(val).lower().startswith("telegram/"):
+                leaks.append({"title": str(e.get("title", ""))[:64],
+                              "field": fld, "value": str(val)})
+                break
+    return leaks
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1156,6 +1186,16 @@ def main():
     _pc_lines, _pc_has_error = render_production_check(_pc)
     report = report + "\n" + "\n".join(_pc_lines)
     res["production_check"] = _pc
+
+    # V6.4 GEO SOURCE LEAK
+    _leaks = geo_source_leak_check(events)
+    res["geo_source_errors"] = len(_leaks)
+    if _leaks:
+        report += "\n\nGEO SOURCE LEAK (источник в гео-поле): %d" % len(_leaks)
+        for _l in _leaks[:8]:
+            report += "\n  \u2022 %s [%s=%s]" % (_l["title"], _l["field"], _l["value"])
+        print("::error::GEO SOURCE LEAK -- %d событий: источник записан в гео-поле (region/event_country/country_code)" % len(_leaks))
+        _pc_has_error = True
     # Блок 5: аварийное предупреждение -- ::error:: роняет шаг -> Telegram-alert уходит автоматически
     if _pc_has_error:
         _n = len(_pc["geo_errors"]) + len(_pc["country_errors"]) + _pc["lost_display"]
@@ -1185,6 +1225,7 @@ def main():
                 "noise": res["noise"], "domain": res["domain"],
                 "duplicates": res["duplicates"], "translation": res["translation"],
                 "production_check": res.get("production_check", {}),
+                "geo_source_errors": res.get("geo_source_errors", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
