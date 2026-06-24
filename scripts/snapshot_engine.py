@@ -369,13 +369,18 @@ def _tag_event_countries(events: list[dict]) -> None:
             ev["region"] = "Глобально"
         else:
             ev["is_global"] = False
-            # V6.6 ПРИОРИТЕТ ГЕО: рос.наблюдатель + событие за рубежом -> основная страна = заграница.
-            # Если content_cc=[RU, X_иностр] и текст это "РФ-орган следит за событием в X" -> X вперёд.
-            if len(content_cc) >= 2 and content_cc[0] == "RU":
-                _foreign = [c for c in content_cc[1:] if c != "RU"]
-                if _foreign and any(_m in content for _m in _RU_OBSERVER):
-                    content_cc = _foreign + ["RU"]  # заграница становится основной, РФ -> impact
             event_c = region_cc[0] if region_cc else (content_cc[0] if content_cc else "")
+            # V6.6 ПРИОРИТЕТ ГЕО: рос.наблюдатель + событие за рубежом -> основная страна = заграница.
+            # Если итоговая event_c=RU, но в тексте observer-маркер И есть иностранная страна
+            # (в content_cc/foreign_country) -> заграница становится основной, РФ -> impact.
+            if event_c == "RU" and any(_m in content for _m in _RU_OBSERVER):
+                _fc_obs, _fn_obs = foreign_country(content)
+                if _fc_obs and _fc_obs != "RU":
+                    event_c = _fc_obs
+                    # перестроим ccs: иностранная вперёд, RU в хвост
+                    ccs = [_fc_obs] + [c for c in ccs if c != _fc_obs]
+                    if "RU" not in ccs:
+                        ccs.append("RU")
             # === 4 поля архитектуры привязки ===
             ev["event_country"] = event_c
             ev["mentioned_countries"] = ccs
