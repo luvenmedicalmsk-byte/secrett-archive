@@ -2184,6 +2184,7 @@ def save(events):
         except Exception: pass
     _save_tr_disk()
     events = _llm_extract_countries(events)
+    events = _foreign_geo_fallback(events)
     try:
         events = _softcap_firm_bankruptcy(events)
     except Exception as _e45:
@@ -6644,22 +6645,6 @@ def _llm_extract_countries(events):
                 e['lat'] = round(_la + _rnd.uniform(-4, 4), 2); e['lng'] = round(_ln + _rnd.uniform(-12, 12), 2)
                 fixed += 1
                 continue
-        # V6.5: LLM не дал страну -> детерминированный резолвер ИНОСТРАННЫХ стран
-        # (РФ уже обработана выше через ru_subject_in). Чиним данные ДО публикации.
-        if (not _is_kev(e)) and ((not cc) or cc == 'GLOBAL'):
-            _fcc, _fname = _foreign_country((e.get('title','') or '') + ' ' + (e.get('summary','') or ''))
-            if _fcc:
-                e['country_code'] = _fcc; e['country_codes'] = [_fcc]; e['event_country'] = _fcc
-                _curr = str(e.get('region','') or '')
-                if _fname.lower() not in _curr.lower() or _curr == '\u0413\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e':
-                    e['region'] = _fname
-                    if _fcc in CC:
-                        _fla, _fln, _ = CC[_fcc]
-                        e['lat'] = round(_fla + _rnd.uniform(-1.2, 1.2), 2)
-                        e['lng'] = round(_fln + _rnd.uniform(-1.2, 1.2), 2)
-                e['geo_fix'] = {'foreign': _fname, 'cc': _fcc, 'from': 'Глобально/пусто', 'to': _fname}
-                fixed += 1
-                continue
         if not cc:
             continue
         if cc == 'GLOBAL':
@@ -6674,6 +6659,43 @@ def _llm_extract_countries(events):
                 e['lng'] = round(lng + _rnd.uniform(-1.2, 1.2), 2)
             fixed += 1
     print('  LLM-\u0441\u0442\u0440\u0430\u043d\u0430: \u0443\u0442\u043e\u0447\u043d\u0435\u043d\u043e %d, \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 %d (\u0438\u0437 %d)' % (fixed, glob, len(events)), file=_sys.stderr)
+    return events
+
+
+def _foreign_geo_fallback(events):
+    """V6.5 Блок2: детерминированный резолвер иностранных стран. Работает БЕЗУСЛОВНО
+    (не зависит от OPENAI_API_KEY). РФ -- ru_subject_in; заграница -- foreign_country.
+    Чинит данные ДО публикации events.json."""
+    fixed = 0
+    GLOB = '\u0413\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e'
+    for e in events:
+        try:
+            if _is_kev(e):
+                continue
+            cc = str(e.get('country_code') or '').strip()
+            reg = str(e.get('region') or '')
+            if cc and reg and reg != GLOB:
+                continue
+            txt = (e.get('title', '') or '') + ' ' + (e.get('summary', '') or '')
+            if ru_subject_in(txt):
+                continue
+            _fcc, _fname = _foreign_country(txt)
+            if _fcc:
+                e['country_code'] = _fcc
+                e['country_codes'] = [_fcc]
+                e['event_country'] = _fcc
+                _curr = str(e.get('region', '') or '')
+                if (_fname.lower() not in _curr.lower()) or _curr == GLOB or not _curr:
+                    e['region'] = _fname
+                    if _fcc in CC:
+                        _fla, _fln, _ = CC[_fcc]
+                        e['lat'] = round(_fla + _rnd.uniform(-1.2, 1.2), 2)
+                        e['lng'] = round(_fln + _rnd.uniform(-1.2, 1.2), 2)
+                e['geo_fix'] = {'foreign': _fname, 'cc': _fcc, 'from': 'Глобально/пусто', 'to': _fname}
+                fixed += 1
+        except Exception:
+            continue
+    print('  [V6.5] foreign-резолвер: проставлено стран %d' % fixed, file=sys.stderr)
     return events
 
 
