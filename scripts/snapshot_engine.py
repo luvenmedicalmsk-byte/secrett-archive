@@ -344,6 +344,14 @@ def _tag_event_countries(events: list[dict]) -> None:
         content = (title + " " + summary).lower()
         content_cc = _hits(content)                 # страны, реально упомянутые в тексте
         region_cc = _hits(region.lower())           # страна из поля region
+        # V6.6 IODA-override: у падений интернет-связности страна ТОЧНО известна (region),
+        # LLM country_code часто галлюцинирует (FR/GE-приклейка). Доверяем только region.
+        _meta_kind = str((ev.get("meta") or {}).get("kind", ""))
+        if _meta_kind == "ioda_outage":
+            if region_cc:
+                content_cc = region_cc[:1]
+                ev["country_code"] = region_cc[0]   # стираем галлюцинированный llm-primary
+            ev.pop("_llm_done", None)
         # НЕДОВЕРИЕ к region=Россия без российских геомаркеров в тексте (русскоязычный источник != событие в РФ)
         if region_cc and region_cc[0] == "RU" and "RU" not in content_cc:
             region_cc = []
