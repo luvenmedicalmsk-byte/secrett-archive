@@ -1734,6 +1734,49 @@ def country_model_6_audit(events):
             "correlations": correlations, "in_development_top": in_dev_top}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTRY MODEL 6.1 -- PRODUCTION READINESS AUDIT.
+# Соответствует ли главная страница фактической зрелости аналитики по странам.
+# ─────────────────────────────────────────────────────────────────────────────
+def country_model_61_audit(events):
+    """6.1: доля READY в TOP, readiness score, симуляция вариантов A/B/C."""
+    v6 = country_model_6_audit(events)
+    if not v6["checked"]:
+        return {"checked": 0}
+    rows = v6["rows"]  # уже отсортированы по GRI, со status READY/IN DEVELOPMENT
+    days, _, _, _ = _gv_history_horizon()
+    maturity = days / 90.0
+
+    top10 = rows[:10]; top20 = rows[:20]
+    ready_all = [r for r in rows if r["status"] == "READY"]
+    dev_all = [r for r in rows if r["status"] == "IN DEVELOPMENT"]
+    r10 = sum(1 for r in top10 if r["status"] == "READY")
+    r20 = sum(1 for r in top20 if r["status"] == "READY")
+    share10 = round(100 * r10 / max(1, len(top10)))
+    share20 = round(100 * r20 / max(1, len(top20)))
+
+    # PRODUCTION READINESS SCORE: композит
+    score = round(100 * (0.5 * (r20 / 20.0) + 0.3 * (r10 / 10.0) + 0.2 * maturity))
+
+    # рекомендация по варианту отображения
+    if share10 == 0 and maturity < 1.0:
+        recommendation = "B"  # все топ -- IN DEVELOPMENT, история не зрела -> раздельно
+        rec_text = "Вариант B: показывать READY и IN DEVELOPMENT раздельно (с пометкой зрелости)"
+    elif share10 >= 70:
+        recommendation = "A"
+        rec_text = "Вариант A: показывать только READY -- топ уже зрелый"
+    else:
+        recommendation = "B"
+        rec_text = "Вариант B: раздельное отображение"
+
+    return {"checked": v6["checked"], "ready_total": len(ready_all),
+            "dev_total": len(dev_all), "share10": share10, "share20": share20,
+            "score": score, "maturity_pct": round(maturity * 100),
+            "recommendation": recommendation, "rec_text": rec_text,
+            "ready_top": [r["cc"] for r in ready_all[:10]],
+            "dev_in_top": [r["cc"] for r in top20 if r["status"] == "IN DEVELOPMENT"]}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1917,6 +1960,23 @@ def main():
     res["v6_checked"] = _v6["checked"]
     res["v6_ranking_issues"] = len(_v6["issues"])
     res["v6_in_development_top"] = len(_v6["in_development_top"])
+
+    # COUNTRY MODEL 6.1 -- PRODUCTION READINESS
+    _v61 = country_model_61_audit(events)
+    if _v61.get("checked"):
+        res["v61_score"] = _v61["score"]
+        res["v61_share10"] = _v61["share10"]
+        res["v61_share20"] = _v61["share20"]
+        res["v61_recommendation"] = _v61["recommendation"]
+        report += "\n\nCOUNTRY MODEL 6.1 (PRODUCTION READINESS)"
+        report += "\n  READY стран: %d | IN DEVELOPMENT: %d" % (_v61["ready_total"], _v61["dev_total"])
+        report += "\n  TOP-10 READY SHARE: %d%%" % _v61["share10"]
+        report += "\n  TOP-20 READY SHARE: %d%%" % _v61["share20"]
+        report += "\n  PRODUCTION READINESS SCORE: %d/100" % _v61["score"]
+        report += "\n  RECOMMENDATION: %s" % _v61["rec_text"]
+        if _v61["share10"] == 0:
+            report += "\n  \u26a0 TOP-10 на 100%% состоит из IN DEVELOPMENT -- риск ложного впечатления готовой аналитики"
+            print("::warning::6.1 PRODUCTION READINESS -- TOP-10 READY share 0%%, score %d/100" % _v61["score"])
     res["v6_correlations"] = _v6["correlations"]
     if _v6["checked"]:
         _co = _v6["correlations"]
@@ -2104,6 +2164,10 @@ def main():
                 "v6_checked": res.get("v6_checked", 0),
                 "v6_ranking_issues": res.get("v6_ranking_issues", 0),
                 "v6_in_development_top": res.get("v6_in_development_top", 0),
+                "v61_score": res.get("v61_score", 0),
+                "v61_share10": res.get("v61_share10", 0),
+                "v61_share20": res.get("v61_share20", 0),
+                "v61_recommendation": res.get("v61_recommendation", ""),
                 "v6_correlations": res.get("v6_correlations", {}),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
