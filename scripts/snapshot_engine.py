@@ -295,6 +295,11 @@ _CC_TOKENS = None
 from geo_resolver import RU_COUNTRY_TOKENS, ru_subject, foreign_country, FOREIGN_COUNTRIES  # AUDIT 4.5 + V6.5: единый гео-модуль
 _FC_NAME = {cc: name for stem, (cc, name) in FOREIGN_COUNTRIES.items()}  # V6.5: ISO->рус.имя из единого источника
 _RU_GEO_OK = ("байкал", "урал", "сибир", "кавказ", "поволж", "крым", "росси")  # РФ-география (не субъекты)
+# V6.6: маркеры "российский наблюдатель" -- РФ-орган следит за событием ЗА РУБЕЖОМ.
+# В таких событиях основная гео = место события (заграница), РФ -> impact.
+_RU_OBSERVER = ("роспотребнадзор", "роспотреб", "минздрав", "держит на контроле",
+                "на контроле сообщения", "следит за", "мониторит ситуацию",
+                "сообщения о вспышке", "по имеющейся информации")
 from datetime import datetime as _dt45, timezone as _tz45
 
 
@@ -364,6 +369,12 @@ def _tag_event_countries(events: list[dict]) -> None:
             ev["region"] = "Глобально"
         else:
             ev["is_global"] = False
+            # V6.6 ПРИОРИТЕТ ГЕО: рос.наблюдатель + событие за рубежом -> основная страна = заграница.
+            # Если content_cc=[RU, X_иностр] и текст это "РФ-орган следит за событием в X" -> X вперёд.
+            if len(content_cc) >= 2 and content_cc[0] == "RU":
+                _foreign = [c for c in content_cc[1:] if c != "RU"]
+                if _foreign and any(_m in content for _m in _RU_OBSERVER):
+                    content_cc = _foreign + ["RU"]  # заграница становится основной, РФ -> impact
             event_c = region_cc[0] if region_cc else (content_cc[0] if content_cc else "")
             # === 4 поля архитектуры привязки ===
             ev["event_country"] = event_c
