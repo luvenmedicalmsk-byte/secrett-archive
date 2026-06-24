@@ -368,11 +368,14 @@ def _tag_event_countries(events: list[dict]) -> None:
                 ev["country_code"] = ccs[0]
             elif "country_code" not in ev:
                 ev["country_code"] = ""
+            ev["_region_in"] = region  # DEBUG V6.5
             if event_c == "RU" and region.strip().lower() in ("", "глобально"):
-                ev["region"] = "Россия"
+                ev["region"] = "Россия"; ev["_region_path"] = "RU"
             # V6.5: проставить region иностранной страны, если он пуст/Глобально
             elif ev.get("_geo_v65") and region.strip().lower() in ("", "глобально"):
-                ev["region"] = ev["_geo_v65"]["name"]
+                ev["region"] = ev["_geo_v65"]["name"]; ev["_region_path"] = "V65"
+            elif ev.get("_geo_v65"):
+                ev["_region_path"] = "V65_SKIP_region=" + repr(region)[:30]
             # Ложный region='Россия' снят -> не оставлять его (иначе фронт ловит карточку РФ по имени)
             if region.strip().lower() == "россия" and "RU" not in ccs:
                 ev["region"] = COUNTRIES[event_c].get("name_ru", "Глобально") if (event_c and event_c in COUNTRIES) else "Глобально"
