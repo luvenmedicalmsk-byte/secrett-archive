@@ -705,6 +705,17 @@ _GEO46_COUNTRIES = {
     "армени": "Армения", "латви": "Латвия", "эстони": "Эстония", "азербайджан": "Азербайджан",
 }
 
+def _country_in_text(text):
+    """AUDIT 4.6/4.7: страна по _GEO46_COUNTRIES, матч ТОЛЬКО по началу слова.
+    Стем должен стоять на границе слова (исключает 'капитал-ИТАЛИ-зация' -> Италия).
+    Возвращает каноничное имя страны или None."""
+    t = (text or "").lower()
+    for k, v in _GEO46_COUNTRIES.items():
+        if re.search(r'(?<![а-яёa-z])' + re.escape(k), t):
+            return v
+    return None
+
+
 
 def geo_integrity_check(events):
     """AUDIT 4.6 — ищет события с явным гео-признаком, но без страны (region=Глобально / country_code пуст)."""
@@ -719,11 +730,7 @@ def geo_integrity_check(events):
             continue
         text = (str(e.get("title", "")) + " " + str(e.get("summary", ""))).lower()
         subj = _geo_res.ru_subject(text) if _geo_res else None
-        ctry = None
-        for k, v in _GEO46_COUNTRIES.items():
-            if k in text:
-                ctry = v
-                break
+        ctry = _country_in_text(text)
         if subj and is_bad_geo:
             errors.append({"title": str(e.get("title", ""))[:70],
                            "reason": "субъект РФ (%s), но country_code пуст / region=Глобально" % subj})
@@ -980,16 +987,13 @@ def _has_geo_marker(e):
     """Есть ли в тексте события надёжный гео-признак (субъект РФ или страна из списка 4.7)."""
     text = (str(e.get("title", "")) + " " + str(e.get("summary", ""))).lower()
     subj = _geo_res.ru_subject(text) if _geo_res else None
-    ctry = None
-    for k, v in _GEO46_COUNTRIES.items():
-        if k in text:
-            ctry = v; break
+    ctry = _country_in_text(text)
     return subj, ctry
 
 def production_reality_check(local_events):
     """AUDIT 4.7. Возвращает dict с результатами сверки данные<->production."""
     out = {"available": False, "checked": 0, "geo_errors": [], "country_errors": [],
-           "lost_display": 0, "geo_in_data": 0, "geo_in_prod": 0, "api_error": None}
+           "lost_display": 0, "lost_detail": [], "geo_in_data": 0, "geo_in_prod": 0, "api_error": None}
     prod, err = _fetch_production_events()
     if err:
         out["api_error"] = err
@@ -1010,9 +1014,21 @@ def production_reality_check(local_events):
         prod_region = _geo_label(pe)
         if prod_region and prod_region != "Глобально":
             out["geo_in_prod"] += 1
-        # потеря при отображении: в данных гео было, в production — Глобально
-        if data_region and data_region != "Глобально" and prod_region == "Глобально":
+        # потеря при отображении: в данных гео было, в production — Глобально/пусто
+        data_ec = str(le.get("event_country") or "").strip()
+        prod_ec = str(pe.get("event_country") or "").strip()
+        prod_has_geo = bool(prod_region and prod_region != "Глобально")
+        data_has_geo = bool(data_region and data_region != "Глобально")
+        if data_has_geo and not prod_has_geo:
             out["lost_display"] += 1
+            out["lost_detail"].append({
+                "id": eid,
+                "title": str(le.get("title", ""))[:70],
+                "data_region": data_region or "-",
+                "data_event_country": data_ec or "-",
+                "api_region": prod_region or "(нет)",
+                "api_event_country": prod_ec or "-",
+            })
 
     # БЛОК 1+2: субъект РФ / страна есть, но production показывает Глобально
     for pe in prod:
@@ -1042,6 +1058,12 @@ def render_production_check(pc):
     L.append("Ошибок географии (субъект РФ -> Глобально): %d" % n_geo)
     L.append("Ошибок стран (страна -> Глобально): %d" % n_ctry)
     has_error = (n_geo > 0 or n_ctry > 0 or n_lost > 0)
+    if pc.get("lost_detail"):
+        L.append("LOST GEO (география есть в данных, в production потеряна):")
+        for it in pc["lost_detail"][:15]:
+            L.append("  \u2022 %s" % it["title"])
+            L.append("    Данные: region=%s / event_country=%s" % (it["data_region"], it["data_event_country"]))
+            L.append("    API:    region=%s / event_country=%s" % (it["api_region"], it["api_event_country"]))
     if n_geo:
         L.append("\u274c PRODUCTION GEO ERROR:")
         for e in pc["geo_errors"][:6]:
