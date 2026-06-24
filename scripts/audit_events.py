@@ -1777,6 +1777,50 @@ def country_model_61_audit(events):
             "dev_in_top": [r["cc"] for r in top20 if r["status"] == "IN DEVELOPMENT"]}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTRY MODEL 6.1A -- READINESS DEFINITION AUDIT.
+# Многомерная готовность: DATA / MODEL / SIGNAL / CONTENT / INTELLIGENCE.
+# ─────────────────────────────────────────────────────────────────────────────
+import os as _os_ra, glob as _glob_ra
+from collections import Counter as _Counter_ra
+
+def _ra_data_days(cc):
+    for base in ("docs/alerts/history", "alerts/history", "../docs/alerts/history"):
+        d = _os_ra.path.join(base, cc)
+        if _os_ra.path.isdir(d):
+            return len(_glob_ra.glob(_os_ra.path.join(d, "*.json")))
+    return 0
+
+def country_model_61a_audit(events):
+    """6.1A: матрица готовности по 5 измерениям + leaderboard eligibility."""
+    states = _cm_load_states()
+    if not states:
+        return {"checked": 0, "matrix": []}
+    ev_by_cc = _Counter_ra(e.get("event_country") for e in events if e.get("event_country"))
+    matrix = []
+    for st in states:
+        cc = st.get("country")
+        dd = _ra_data_days(cc)
+        nev = ev_by_cc.get(cc, 0)
+        data = dd >= 7
+        model = True  # GRI/CRI посчитаны у всех
+        signal = nev > 0 or dd >= 7
+        content = nev > 0  # реальные события для наполнения карточки
+        intel = False  # v5_intelligence содержит лишь метрики, не нарратив -> CONTENT не готов
+        full_ready = data and signal and content
+        matrix.append({"cc": cc, "name": st.get("country_name"), "gri": st.get("gri", 0) or 0,
+                       "data": data, "model": model, "signal": signal, "content": content,
+                       "intel": intel, "days": dd, "nev": nev, "ready": full_ready})
+    matrix.sort(key=lambda r: -r["gri"])
+    dims = {d: sum(1 for r in matrix if r[d]) for d in ("data", "model", "signal", "content", "intel")}
+    full = sum(1 for r in matrix if r["ready"])
+    # leaderboard eligibility: страна eligible если ready (data+signal+content)
+    top20 = matrix[:20]
+    eligible_top = sum(1 for r in top20 if r["ready"])
+    return {"checked": len(matrix), "matrix": matrix, "dims": dims, "full_ready": full,
+            "eligible_top20": eligible_top, "top20": top20}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1968,6 +2012,28 @@ def main():
         res["v61_share10"] = _v61["share10"]
         res["v61_share20"] = _v61["share20"]
         res["v61_recommendation"] = _v61["recommendation"]
+
+    # COUNTRY MODEL 6.1A -- READINESS DEFINITION (многомерная готовность)
+    _ra = country_model_61a_audit(events)
+    if _ra.get("checked"):
+        res["ra_full_ready"] = _ra["full_ready"]
+        res["ra_dims"] = _ra["dims"]
+        res["ra_eligible_top20"] = _ra["eligible_top20"]
+        _d = _ra["dims"]
+        report += "\n\nCOUNTRY MODEL 6.1A (READINESS DEFINITION)"
+        report += "\n  DATA: %d/37 | MODEL: %d/37 | SIGNAL: %d/37 | CONTENT: %d/37 | INTELLIGENCE: %d/37" % (
+            _d["data"], _d["model"], _d["signal"], _d["content"], _d["intel"])
+        report += "\n  ПОЛНОСТЬЮ READY (data+signal+content): %d/37" % _ra["full_ready"]
+        report += "\n  Eligible в TOP-20: %d/20" % _ra["eligible_top20"]
+        report += "\n  \u26a0 INTELLIGENCE готов у 0/37 -- модель считает GRI, но нарративной аналитики для пользователя нет"
+        # матрица TOP-10
+        report += "\n\nREADINESS MATRIX (TOP-10):"
+        for _r in _ra["top20"][:10]:
+            _f = lambda b: "\u2713" if b else "\u2717"
+            report += "\n  %s GRI=%g | DATA%s MODEL%s SIGNAL%s CONTENT%s | %s" % (
+                _r["cc"], _r["gri"], _f(_r["data"]), _f(_r["model"]), _f(_r["signal"]),
+                _f(_r["content"]), "READY" if _r["ready"] else "IN DEV")
+        print("::warning::6.1A READINESS -- INTELLIGENCE 0/37, полностью READY %d/37" % _ra["full_ready"])
         report += "\n\nCOUNTRY MODEL 6.1 (PRODUCTION READINESS)"
         report += "\n  READY стран: %d | IN DEVELOPMENT: %d" % (_v61["ready_total"], _v61["dev_total"])
         report += "\n  TOP-10 READY SHARE: %d%%" % _v61["share10"]
@@ -2168,6 +2234,9 @@ def main():
                 "v61_share10": res.get("v61_share10", 0),
                 "v61_share20": res.get("v61_share20", 0),
                 "v61_recommendation": res.get("v61_recommendation", ""),
+                "ra_full_ready": res.get("ra_full_ready", 0),
+                "ra_dims": res.get("ra_dims", {}),
+                "ra_eligible_top20": res.get("ra_eligible_top20", 0),
                 "v6_correlations": res.get("v6_correlations", {}),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
