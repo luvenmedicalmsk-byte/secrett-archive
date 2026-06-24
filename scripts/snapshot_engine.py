@@ -294,6 +294,7 @@ def _country_match_tokens(kw_list):
 _CC_TOKENS = None
 from geo_resolver import RU_COUNTRY_TOKENS, ru_subject, foreign_country, FOREIGN_COUNTRIES  # AUDIT 4.5 + V6.5: единый гео-модуль
 _FC_NAME = {cc: name for stem, (cc, name) in FOREIGN_COUNTRIES.items()}  # V6.5: ISO->рус.имя из единого источника
+_RU_GEO_OK = ("байкал", "урал", "сибир", "кавказ", "поволж", "крым", "росси")  # РФ-география (не субъекты)
 from datetime import datetime as _dt45, timezone as _tz45
 
 
@@ -381,8 +382,18 @@ def _tag_event_countries(events: list[dict]) -> None:
                                    else _FC_NAME.get(c, ""))
             _rl = region.strip().lower()
             if event_c == "RU":
+                # region уже РФ (субъект/РФ-география)?
+                _ru_ok = bool(ru_subject(_rl)) or any(_x in _rl for _x in _RU_GEO_OK)
                 if _rl in ("", "глобально"):
                     ev["region"] = "Россия"
+                elif not _ru_ok:
+                    # region иностранный при cc=RU. Если этой страны НЕТ в тексте -> грязный region
+                    # из источника: нормализуем на субъект РФ из текста или 'Россия'.
+                    _ftxt = (title + " " + summary)
+                    _fcc2, _fname2 = foreign_country(_ftxt)
+                    if not (_fcc2 and _fname2.lower() in _rl):
+                        _subj2 = ru_subject(_ftxt.lower())
+                        ev["region"] = _subj2 if _subj2 else "Россия"
             elif event_c:
                 # иностранная страна: ставим имя, если region пуст/Глобально/ложная-Россия
                 if _rl in ("", "глобально") or (_rl == "россия" and "RU" not in ccs):
