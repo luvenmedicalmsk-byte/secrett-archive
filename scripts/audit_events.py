@@ -1479,6 +1479,104 @@ def country_model_audit(events):
             "unexplainable": unexpl, "model_errors": model_errors}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTRY MODEL AUDIT 5.2 -- BASELINE VALIDITY & LEADERBOARD REALITY.
+# Проверяет долю baseline в GRI, искажение лидерборда, zero-event high risk.
+# ─────────────────────────────────────────────────────────────────────────────
+import os as _os_bv, json as _json_bv, glob as _glob_bv, re as _re_bv
+from collections import Counter as _Counter_bv
+
+def _bv_load_baselines():
+    """Читает baseline-константы стран из snapshot_engine.py COUNTRIES."""
+    bl = {}
+    for base in ("scripts/snapshot_engine.py", "snapshot_engine.py", "../scripts/snapshot_engine.py"):
+        if _os_bv.path.exists(base):
+            try:
+                src = open(base, "r", encoding="utf-8").read()
+                i = src.find("COUNTRIES = {")
+                if i < 0:
+                    continue
+                s = src.find("{", i); depth = 0; e = len(src)
+                for p in range(s, len(src)):
+                    if src[p] == "{": depth += 1
+                    elif src[p] == "}":
+                        depth -= 1
+                        if depth == 0: e = p + 1; break
+                for m in _re_bv.finditer(r'"([A-Z]{2})":\s*\{[^}]*?"baseline":\s*(\d+)', src[s:e], _re_bv.S):
+                    bl[m.group(1)] = int(m.group(2))
+            except Exception:
+                pass
+            break
+    return bl
+
+def baseline_validity_audit(events):
+    """5.2: BASELINE INVENTORY + DOMINANCE + LEADERBOARD REALITY + ZERO EVENT + recalibration."""
+    states = _cm_load_states()  # переиспользуем загрузчик из 5.0
+    baselines = _bv_load_baselines()
+    if not states:
+        return {"checked": 0, "rows": [], "dominated": [], "zero_event_high": [],
+                "cri_gri_conflict": [], "recalibration": [], "distortion": []}
+    ev_by_cc = _Counter_bv(e.get("event_country") for e in events if e.get("event_country"))
+    hi_by_cc = _Counter_bv(e.get("event_country") for e in events
+                           if (e.get("severity", 0) or 0) >= 70)
+    sev_by_cc = {}
+    for e in events:
+        cc = e.get("event_country")
+        if cc:
+            sev_by_cc.setdefault(cc, []).append(e.get("severity", 50) or 50)
+
+    rows = []
+    for st in states:
+        cc = st.get("country")
+        gri = float(st.get("gri", 0) or 0)
+        bl = baselines.get(cc, 50)
+        nev = ev_by_cc.get(cc, 0)
+        nhi = hi_by_cc.get(cc, 0)
+        cri = st.get("cascade_exposure", 0) or 0  # прокси CRI из state
+        sevs = sev_by_cc.get(cc, [])
+        # БЛОК 2: Baseline Share -- доля GRI на baseline (без событий = 100%)
+        if gri <= 0:
+            base_share = 0; ev_share = 0
+        elif nev == 0:
+            base_share = 100; ev_share = 0
+        else:
+            ev_level = sum(sevs) / len(sevs) if sevs else 0
+            ev_contribution = min(gri, ev_level * 0.5 + nev * 0.5)
+            ev_share = round(100 * ev_contribution / gri)
+            base_share = max(0, 100 - ev_share)
+        rows.append({"cc": cc, "name": st.get("country_name"), "gri": gri, "cri": cri,
+                     "baseline": bl, "nev": nev, "nhi": nhi, "base_share": base_share,
+                     "ev_share": ev_share, "dom": st.get("dominant_domain")})
+    rows.sort(key=lambda r: -r["gri"])
+
+    # медиана GRI для ZERO EVENT HIGH RISK (БЛОК 4)
+    gris = sorted(r["gri"] for r in rows)
+    med = gris[len(gris) // 2] if gris else 0
+    top20 = rows[:20]
+
+    dominated, zero_event_high, cri_gri_conflict, recalibration, distortion = [], [], [], [], []
+    for r in top20:
+        # БЛОК 2: BASELINE DOMINATED -- доля baseline >=90% и почти нет событий
+        if r["base_share"] >= 90 and r["nev"] <= 1:
+            dominated.append(r)
+        # БЛОК 3: LEADERBOARD DISTORTION -- в TOP исключительно за счёт baseline
+        if r["base_share"] >= 90 and r["nev"] == 0 and r["nhi"] == 0:
+            distortion.append(r)
+        # БЛОК 4: ZERO EVENT HIGH RISK -- 0 событий, GRI выше медианы
+        if r["nev"] == 0 and r["gri"] > med:
+            zero_event_high.append(r)
+        # БЛОК 5: CRI/GRI CONFLICT -- высокий GRI + низкий CRI (или наоборот)
+        if (r["gri"] >= 40 and r["cri"] < 15) or (r["cri"] >= 50 and r["gri"] < 20):
+            cri_gri_conflict.append(r)
+        # БЛОК 6: RECALIBRATION CANDIDATES -- baseline-доминирование + 0 событий
+        if r["base_share"] >= 90 and r["nev"] == 0:
+            recalibration.append(r)
+    return {"checked": len(states), "rows": rows, "top20": top20, "median_gri": med,
+            "dominated": dominated, "zero_event_high": zero_event_high,
+            "cri_gri_conflict": cri_gri_conflict, "recalibration": recalibration,
+            "distortion": distortion}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -1639,6 +1737,31 @@ def main():
     res["cm_checked"] = _cm["checked"]
     res["cm_unexplainable"] = len(_cm["unexplainable"])
     res["cm_model_errors"] = len(_cm["model_errors"])
+
+    # COUNTRY MODEL AUDIT 5.2 -- BASELINE VALIDITY & LEADERBOARD REALITY
+    _bv = baseline_validity_audit(events)
+    res["bv_checked"] = _bv["checked"]
+    res["bv_dominated"] = len(_bv["dominated"])
+    res["bv_distortion"] = len(_bv["distortion"])
+    res["bv_zero_event_high"] = len(_bv["zero_event_high"])
+    res["bv_cri_gri_conflict"] = len(_bv["cri_gri_conflict"])
+    res["bv_recalibration"] = len(_bv["recalibration"])
+    if _bv["checked"]:
+        report += "\n\nCOUNTRY MODEL AUDIT 5.2 (BASELINE VALIDITY)"
+        report += "\n  Проверено стран: %d (медиана GRI=%g)" % (_bv["checked"], _bv["median_gri"])
+        report += "\n  BASELINE DOMINATED: %d" % len(_bv["dominated"])
+        report += "\n  LEADERBOARD DISTORTION: %d" % len(_bv["distortion"])
+        report += "\n  ZERO EVENT HIGH RISK: %d" % len(_bv["zero_event_high"])
+        report += "\n  CRI/GRI CONFLICT: %d" % len(_bv["cri_gri_conflict"])
+        report += "\n  RECALIBRATION CANDIDATES: %d" % len(_bv["recalibration"])
+        if _bv["recalibration"]:
+            report += "\n\nTOP MODEL ISSUES (baseline требует пересмотра):"
+            for _r in _bv["recalibration"][:8]:
+                report += "\n  \u26a0 %s GRI=%g CRI=%g baseline=%d событий=%d -- лидерборд держится на baseline" % (
+                    _r["cc"], _r["gri"], _r["cri"], _r["baseline"], _r["nev"])
+            print("::warning::BASELINE -- %d стран на пересмотр (baseline-доминирование)" % len(_bv["recalibration"]))
+        if _bv["distortion"]:
+            print("::warning::LEADERBOARD DISTORTION -- %d стран в TOP только за счёт baseline" % len(_bv["distortion"]))
     if _cm["checked"]:
         report += "\n\nCOUNTRY MODEL AUDIT 5.0"
         report += "\n  Проверено стран: %d" % _cm["checked"]
@@ -1755,6 +1878,12 @@ def main():
                 "cm_checked": res.get("cm_checked", 0),
                 "cm_unexplainable": res.get("cm_unexplainable", 0),
                 "cm_model_errors": res.get("cm_model_errors", 0),
+                "bv_checked": res.get("bv_checked", 0),
+                "bv_dominated": res.get("bv_dominated", 0),
+                "bv_distortion": res.get("bv_distortion", 0),
+                "bv_zero_event_high": res.get("bv_zero_event_high", 0),
+                "bv_cri_gri_conflict": res.get("bv_cri_gri_conflict", 0),
+                "bv_recalibration": res.get("bv_recalibration", 0),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
     except Exception as ex:
