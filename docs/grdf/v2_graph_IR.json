@@ -2,32 +2,32 @@
   "country": "IR",
   "date": "2026-06-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-24T12:09:42.018651+00:00",
+  "generated_at": "2026-06-24T12:25:05.882998+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 61,
+      "score": 60,
       "props": {
-        "risk_score": 61
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 37,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Мировые_но",
-      "type": "Signal",
-      "label": "Мировые новости в кратком изложении: ООН",
-      "severity": 62,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IR-Трамп_хвал",
       "type": "Signal",
       "label": "Трамп хвалится падением цен на бензин на",
@@ -99,6 +92,13 @@
       "label": "Отчет иностранной разведки, как сообщает",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-11_судов,_",
+      "type": "Signal",
+      "label": "11 судов, принадлежащих Турции, покинули",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IR",
@@ -163,33 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-IR-geopolitical",
-      "to": "DOMAIN-IR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IR-infrastructure",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IR-economic",
-      "to": "DOMAIN-IR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-IR-Мировые_но",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
       "from": "SIGNAL-IR-Трамп_хвал",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -197,6 +170,12 @@
     },
     {
       "from": "SIGNAL-IR-Отчет_инос",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-IR-11_судов,_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
