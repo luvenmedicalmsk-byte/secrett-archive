@@ -36,6 +36,12 @@ import urllib.parse
 from collections import defaultdict, Counter
 
 AUDIT_CHAT_ID = os.environ.get("AUDIT_CHAT_ID", "350205607")
+# Bug 4.7 fix: production events endpoint -- тот же запрос, что и фронт index.html (L2020).
+# Override через env PROD_API_EVENTS при необходимости.
+PROD_API_EVENTS = os.environ.get(
+    "PROD_API_EVENTS",
+    "https://api.a-atlas.com/api/events?limit=300&sort=date&order=desc",
+)
 VALID_DOMAINS = {"geopolitics", "economy", "climate", "technology", "social"}
 DOMAIN_RU = {
     "geopolitics": "Геополитика", "economy": "Экономика", "climate": "Климат",
