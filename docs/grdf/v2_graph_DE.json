@@ -2,32 +2,32 @@
   "country": "DE",
   "date": "2026-06-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-25T06:43:42.317417+00:00",
+  "generated_at": "2026-06-25T10:15:49.083154+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 49,
+      "score": 51,
       "props": {
-        "risk_score": 49
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 28,
-      "trend": "stable"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
@@ -48,20 +48,20 @@
       "type": "Domain",
       "label": "social",
       "score": 14,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-DE-Расходы_По",
-      "type": "Signal",
-      "label": "Расходы Польши на закупку оружия и на об",
-      "severity": 42,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-DE-Одна_из_ст",
       "type": "Signal",
       "label": "Одна из старейших пивоварен Германии Hof",
       "severity": 42,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-DE-Посольство",
+      "type": "Signal",
+      "label": "Посольство Израиля на Украине возмутилос",
+      "severity": 42,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-DE",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-DE-Geopolitical",
@@ -163,20 +163,41 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-DE-Трое_судей",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-DE-Расходы_По",
-      "to": "DOMAIN-DE-geopolitical",
+      "from": "SIGNAL-DE-Одна_из_ст",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
       "weight": 0.42
     },
     {
-      "from": "SIGNAL-DE-Одна_из_ст",
-      "to": "DOMAIN-DE-economic",
+      "from": "SIGNAL-DE-Посольство",
+      "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.42
     }
