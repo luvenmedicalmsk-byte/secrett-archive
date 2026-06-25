@@ -2067,11 +2067,17 @@ def _infra_anchor(events):
 _DIG_RE = re.compile(r'vpn|впн|блокир\w* (?:сервис|сайт|youtube|telegram|соцсет|интернет|vpn)|ограничен\w* доступ\w* к (?:интернет|сайт|сервис)|интернет-?регулир|цифров\w* регулир|интернет-?цензур|требован\w* к (?:платформ|ит-)|контрол\w* трафик|закон\w* о (?:интернет|связи|vpn)', re.IGNORECASE)
 _PROT_RE = re.compile(r'протест|митинг|демонстрац|забастовк|массов\w* беспорядк', re.IGNORECASE)
 _PROT_KEEP_RE = re.compile(r'войн|военн|мобилизац|\bтцк\b|тцкшник|оккупир|оккупац|санкц|дипломат|переговор|международн|свержени|госперевор|границ|режим прекращ', re.IGNORECASE)
+_NAT_RE = re.compile(r'землетрясени|афтершок|цунами|наводнени|паводок|ураган|тайфун|\bшторм|циклон|изверже|вулкан|оползен|сел[ьи]\b|лавин|засух|сейсм', re.IGNORECASE)
 def _domain_fix(events):
     """S46.2 точечные доменные корректировки: VPN/цифр.регулирование -> technology;
     немилитаризированные протесты -> social. severity/индексы не трогает."""
     for e in events:
         t = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+        # Природные события (землетрясения, цунами, наводнения и т.п.) -> climate,
+        # даже если LLM ошибочно отнёс их к geopolitics/economy («ударили по...»).
+        if e.get('domain') in ('geopolitics', 'economy', 'social') and _NAT_RE.search(t):
+            e['domain'] = 'climate'
+            continue
         if e.get('domain') in ('economy', 'geopolitics') and _DIG_RE.search(t):
             e['domain'] = 'technology'
         elif e.get('domain') == 'geopolitics' and _PROT_RE.search(t) and not _PROT_KEEP_RE.search(t):
