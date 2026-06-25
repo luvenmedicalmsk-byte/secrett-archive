@@ -2,9 +2,9 @@
   "country": "UA",
   "date": "2026-06-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-25T10:15:49.087428+00:00",
+  "generated_at": "2026-06-25T12:29:41.397502+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-UA",
@@ -19,43 +19,43 @@
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 49,
-      "trend": "up"
+      "score": 39,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 33,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-Западные_с",
+      "type": "Signal",
+      "label": "Западные страны используют лазейку в кон",
+      "severity": 65,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-Киев_на_фо",
       "type": "Signal",
       "label": "Киев на фоне ухудшения ситуации на фронт",
@@ -92,13 +99,6 @@
       "label": "Почти 300 украинских дронов атаковали ре",
       "severity": 65,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-Московский",
-      "type": "Signal",
-      "label": "Московский НПЗ будет выведен из строя ка",
-      "severity": 64,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-UA",
@@ -163,25 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-UA-geopolitical",
-      "to": "DOMAIN-UA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-UA-infrastructure",
-      "to": "DOMAIN-UA-economic",
+      "from": "SIGNAL-UA-Западные_с",
+      "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-UA-economic",
-      "to": "DOMAIN-UA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.65
     },
     {
       "from": "SIGNAL-UA-Киев_на_фо",
@@ -194,12 +179,6 @@
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-UA-Московский",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
     }
   ]
 }

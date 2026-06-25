@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-06-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-25T10:15:49.081962+00:00",
+  "generated_at": "2026-06-25T12:29:41.391592+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 48,
+      "score": 53,
       "props": {
-        "risk_score": 48
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "down"
+      "score": 22,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Цена_нефти",
+      "type": "Signal",
+      "label": "Цена нефти вернулась к довоенным уровням",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-US-Тегеран_со",
       "type": "Signal",
       "label": "Тегеран сообщил Вашингтону, что «не взим",
@@ -87,17 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-US-Рубио_пыта",
+      "id": "SIGNAL-US-Трамп_наме",
       "type": "Signal",
-      "label": "Рубио пытается успокоить государства Пер",
-      "severity": 46,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-США_обещаю",
-      "type": "Signal",
-      "label": "США обещают защищать интересы государств",
-      "severity": 46,
+      "label": "Трамп намекает на прогресс с F-35 для Tü",
+      "severity": 44,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Цена_нефти",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-US-Тегеран_со",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-US-Рубио_пыта",
+      "from": "SIGNAL-US-Трамп_наме",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-US-США_обещаю",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.44
     }
   ]
 }
