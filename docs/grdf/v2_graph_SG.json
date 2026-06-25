@@ -2,67 +2,72 @@
   "country": "SG",
   "date": "2026-06-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-25T20:32:44.370014+00:00",
+  "generated_at": "2026-06-25T22:04:39.778060+00:00",
   "node_count": 12,
-  "edge_count": 11,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-SG",
       "type": "Country",
       "label": "SG",
-      "score": 55,
+      "score": 56,
       "props": {
-        "risk_score": 55
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-SG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
       "score": 50,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 36,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-social",
       "type": "Domain",
       "label": "social",
-      "score": 41,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 38,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 33,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-SG-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-SG-economic",
@@ -75,16 +80,11 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-SG-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-SG-Грузовое_с",
+      "id": "SIGNAL-SG-Канал_SecA",
       "type": "Signal",
-      "label": "Грузовое судно под флагом Сингапура было",
-      "severity": 55,
-      "domain": "geopolitical"
+      "label": "Канал SecAtor пишет интересное",
+      "severity": 56,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -92,7 +92,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-SG",
@@ -104,31 +104,37 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-social",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-cyber",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.34
+    },
+    {
+      "from": "DRIVER-SG-geopolitical",
+      "to": "COUNTRY-SG",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-SG-economic",
@@ -143,16 +149,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-climate",
-      "to": "COUNTRY-SG",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-SG-geopolitical",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-SG-Грузовое_с",
-      "to": "DOMAIN-SG-geopolitical",
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
-      "weight": 0.55
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-SG-Канал_SecA",
+      "to": "DOMAIN-SG-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
