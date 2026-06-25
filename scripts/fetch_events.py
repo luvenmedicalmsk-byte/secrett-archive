@@ -3723,7 +3723,7 @@ def fetch_telegram():
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
-        _out = {'title': text[:240], 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
+        _out = {'title': _smart_truncate(text, 150), 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
                 'source': TG_DISPLAY.get(ch, f'Telegram/{ch}'), 'source_bias': 5, '_domain': _d}
         if ch in DD_SRC:
             _DD_HI = ('сбер','втб','тинькофф','т-банк','альфа-банк','газпромбанк','райффайзен','совкомбанк','госуслуг','есиа','налог','сбп','мир pay','эквайр','мтс','мегафон','билайн','теле2','tele2','ростелеком','госуд','цб рф','банк россии','аэрофлот','ржд')
