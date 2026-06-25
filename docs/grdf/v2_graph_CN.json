@@ -2,31 +2,31 @@
   "country": "CN",
   "date": "2026-06-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-25T00:01:59.438258+00:00",
+  "generated_at": "2026-06-25T02:45:18.006588+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 55,
+      "score": 50,
       "props": {
-        "risk_score": 55
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
+      "score": 50,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
+      "score": 33,
       "trend": "down"
     },
     {
@@ -34,27 +34,27 @@
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 26,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
+      "score": 17,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
+      "score": 19,
       "trend": "down"
     },
     {
@@ -62,7 +62,7 @@
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CN-О_чём_гово",
-      "type": "Signal",
-      "label": "О чём говорили на пленарном заседании «А",
-      "severity": 65,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-CN-Хакерская_",
       "type": "Signal",
       "label": "Хакерская группа, связанная с Китаем, ск",
@@ -96,9 +89,16 @@
     {
       "id": "SIGNAL-CN-Jinko_Sola",
       "type": "Signal",
-      "label": "Jinko Solar рассчитывает на безубыточнос",
+      "label": "Jinko Solar нацелена на безубыточность в",
       "severity": 47,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CN-На_Тайване",
+      "type": "Signal",
+      "label": "На Тайване начались пятидневные учения д",
+      "severity": 46,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-CN",
@@ -124,19 +124,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-CN",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CN-О_чём_гово",
-      "to": "DOMAIN-CN-geopolitical",
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CN-Хакерская_",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
       "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-CN-На_Тайване",
+      "to": "DOMAIN-CN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     }
   ]
 }
