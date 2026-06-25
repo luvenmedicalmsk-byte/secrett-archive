@@ -2,59 +2,59 @@
   "country": "IN",
   "date": "2026-06-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-25T02:45:18.012096+00:00",
+  "generated_at": "2026-06-25T05:39:20.170231+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 52,
+      "score": 51,
       "props": {
-        "risk_score": 52
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
+      "score": 51,
       "trend": "down"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
+      "score": 36,
       "trend": "down"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
+      "score": 9,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 32,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
+      "score": 18,
       "trend": "down"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
+      "score": 20,
       "trend": "down"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Обрушение_",
-      "type": "Signal",
-      "label": "Обрушение склада в Калькутте: среди смер",
-      "severity": 63,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IN-В_ближайши",
       "type": "Signal",
       "label": "В ближайшие месяцы ИИ-модели будут спосо",
@@ -94,11 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-IN-Губернатор",
+      "id": "SIGNAL-IN-Positive_T",
       "type": "Signal",
-      "label": "Губернатор Самарской области Вячеслав Фе",
-      "severity": 49,
-      "domain": "economic"
+      "label": "Positive Technologies выпустила ИИ-помощ",
+      "severity": 52,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-IN-Восемь_авт",
+      "type": "Signal",
+      "label": "Восемь автомобилей повреждены при обруше",
+      "severity": 50,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IN",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IN-Обрушение_",
-      "to": "DOMAIN-IN-geopolitical",
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.63
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IN-В_ближайши",
@@ -175,10 +190,16 @@
       "weight": 0.52
     },
     {
-      "from": "SIGNAL-IN-Губернатор",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-Positive_T",
+      "to": "DOMAIN-IN-technology",
       "type": "AMPLIFIES",
-      "weight": 0.49
+      "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-IN-Восемь_авт",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
