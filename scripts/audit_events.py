@@ -1821,6 +1821,51 @@ def country_model_61a_audit(events):
             "eligible_top20": eligible_top, "top20": top20}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COUNTRY DISPLAY ELIGIBILITY AUDIT 6.2 -- продуктовый аудит отображения.
+# Главный вопрос: откроет страну -> получит ли пользователь ПОЛЬЗУ?
+# Статусы: DISPLAY READY / LIMITED READY / EXPERIMENTAL / HIDDEN.
+# ─────────────────────────────────────────────────────────────────────────────
+from collections import Counter as _Counter_de
+
+def country_display_eligibility_audit(events):
+    """6.2: display-готовность. CONTENT = модель отвечает на 5 вопросов (нарратив НЕ обязателен)."""
+    states = _cm_load_states()
+    if not states:
+        return {"checked": 0, "rows": [], "counts": {}}
+    ev_by_cc = _Counter_de(e.get("event_country") for e in events if e.get("event_country"))
+    rows = []
+    for st in states:
+        cc = st.get("country")
+        gri = st.get("gri", 0) or 0
+        nev = ev_by_cc.get(cc, 0)
+        dd = _ra_data_days(cc)
+        dom = st.get("dominant_domain")
+        casc = st.get("cascade_exposure", 0) or 0
+        vuln = st.get("vulnerability", 0) or 0
+        # MODEL ELIGIBLE: GRI/CRI/dominant есть
+        model = (gri is not None) and (dom is not None)
+        # SIGNAL ELIGIBLE: события или история
+        signal = nev > 0 or dd >= 5
+        # CONTENT ELIGIBLE (6.2): модель отвечает на что/почему/домены/риск/влияет (нарратив НЕ нужен)
+        content = model and (dom is not None) and (casc > 0 or vuln > 0)
+        # DISPLAY STATUS
+        if model and signal and nev > 0:
+            status, limit = "DISPLAY READY", "-"
+        elif model and content and (nev > 0 or dd >= 5):
+            status, limit = "LIMITED READY", ("нет свежих событий" if nev == 0 else "мало истории")
+        elif model and content:
+            status, limit = "EXPERIMENTAL", "только модельная оценка, нет активности"
+        else:
+            status, limit = "HIDDEN", "недостаточно данных модели"
+        rows.append({"cc": cc, "name": st.get("country_name"), "gri": gri, "nev": nev,
+                     "dd": dd, "dom": dom, "model": model, "signal": signal,
+                     "content": content, "status": status, "limit": limit})
+    rows.sort(key=lambda r: -r["gri"])
+    counts = dict(_Counter_de(r["status"] for r in rows))
+    return {"checked": len(rows), "rows": rows, "counts": counts, "top20": rows[:20]}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="не отправлять, только печать")
@@ -2019,6 +2064,28 @@ def main():
         res["ra_full_ready"] = _ra["full_ready"]
         res["ra_dims"] = _ra["dims"]
         res["ra_eligible_top20"] = _ra["eligible_top20"]
+
+    # COUNTRY DISPLAY ELIGIBILITY AUDIT 6.2
+    _de = country_display_eligibility_audit(events)
+    if _de.get("checked"):
+        _c = _de["counts"]
+        res["de_display_ready"] = _c.get("DISPLAY READY", 0)
+        res["de_limited"] = _c.get("LIMITED READY", 0)
+        res["de_experimental"] = _c.get("EXPERIMENTAL", 0)
+        res["de_hidden"] = _c.get("HIDDEN", 0)
+        report += "\n\nDISPLAY ELIGIBILITY 6.2"
+        report += "\n  DISPLAY READY: %d | LIMITED: %d | EXPERIMENTAL: %d | HIDDEN: %d" % (
+            _c.get("DISPLAY READY", 0), _c.get("LIMITED READY", 0),
+            _c.get("EXPERIMENTAL", 0), _c.get("HIDDEN", 0))
+        report += "\n  Можно показывать (READY+LIMITED): %d/37" % (
+            _c.get("DISPLAY READY", 0) + _c.get("LIMITED READY", 0))
+        report += "\n\nDISPLAY MATRIX (TOP-10):"
+        for _r in _de["top20"][:10]:
+            report += "\n  %s GRI=%g соб=%d [%s]%s" % (
+                _r["cc"], _r["gri"], _r["nev"], _r["status"],
+                "" if _r["limit"] == "-" else " -- " + _r["limit"])
+        print("::warning::DISPLAY 6.2 -- DISPLAY READY %d, LIMITED %d, EXPERIMENTAL %d" % (
+            _c.get("DISPLAY READY", 0), _c.get("LIMITED READY", 0), _c.get("EXPERIMENTAL", 0)))
         _d = _ra["dims"]
         report += "\n\nCOUNTRY MODEL 6.1A (READINESS DEFINITION)"
         report += "\n  DATA: %d/37 | MODEL: %d/37 | SIGNAL: %d/37 | CONTENT: %d/37 | INTELLIGENCE: %d/37" % (
@@ -2237,6 +2304,10 @@ def main():
                 "ra_full_ready": res.get("ra_full_ready", 0),
                 "ra_dims": res.get("ra_dims", {}),
                 "ra_eligible_top20": res.get("ra_eligible_top20", 0),
+                "de_display_ready": res.get("de_display_ready", 0),
+                "de_limited": res.get("de_limited", 0),
+                "de_experimental": res.get("de_experimental", 0),
+                "de_hidden": res.get("de_hidden", 0),
                 "v6_correlations": res.get("v6_correlations", {}),
             }, f, ensure_ascii=False, indent=1)
         print("[audit] Лог: docs/_audit_events.json")
