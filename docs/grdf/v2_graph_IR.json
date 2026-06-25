@@ -2,32 +2,32 @@
   "country": "IR",
   "date": "2026-06-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-25T22:04:39.770707+00:00",
+  "generated_at": "2026-06-25T23:24:38.151349+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Трафик_в_О",
+      "id": "SIGNAL-IR-США_стремя",
       "type": "Signal",
-      "label": "Трафик в Ормузе восстанавливается, возвр",
+      "label": "США стремятся к сделке с Ираном, но 'не ",
       "severity": 62,
-      "domain": "economic"
+      "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Пополнение",
+      "id": "SIGNAL-IR-Эвакуация_",
       "type": "Signal",
-      "label": "Пополнение запасов Пентагона",
-      "severity": 53,
+      "label": "Эвакуация из Ормузского пролива приостан",
+      "severity": 62,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-Трамп_заяв",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-IR-Трафик_в_О",
-      "to": "DOMAIN-IR-economic",
+      "from": "SIGNAL-IR-США_стремя",
+      "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-IR-Пополнение",
+      "from": "SIGNAL-IR-Эвакуация_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.62
     }
   ]
 }
