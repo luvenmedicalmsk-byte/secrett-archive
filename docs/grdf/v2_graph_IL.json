@@ -2,59 +2,59 @@
   "country": "IL",
   "date": "2026-06-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-26T15:13:31.539347+00:00",
+  "generated_at": "2026-06-26T17:17:18.012915+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 46,
+      "score": 49,
       "props": {
-        "risk_score": 46
+        "risk_score": 49
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
+      "score": 48,
       "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 32,
       "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
+      "score": 16,
       "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
+      "score": 18,
       "trend": "up"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IL-Правозащит",
+      "type": "Signal",
+      "label": "Правозащитные группы подали жалобу проти",
+      "severity": 56,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Десятки_пр",
       "type": "Signal",
       "label": "Десятки протестующих блокируют дорогу в ",
@@ -92,13 +99,6 @@
       "label": "4 солдата ЦАХАЛа получили ранения в стол",
       "severity": 46,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-Посольство",
-      "type": "Signal",
-      "label": "Посольство Израиля на Украине возмутилос",
-      "severity": 42,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IL",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IL-Правозащит",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-IL-Десятки_пр",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-IL-Посольство",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.42
     }
   ]
 }
