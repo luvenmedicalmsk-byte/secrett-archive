@@ -2,67 +2,67 @@
   "country": "ME",
   "date": "2026-06-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-26T06:05:53.570647+00:00",
+  "generated_at": "2026-06-26T09:37:31.623131+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-ME",
       "type": "Country",
       "label": "ME",
-      "score": 51,
+      "score": 54,
       "props": {
-        "risk_score": 51
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-ME-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
-      "trend": "down"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 33,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-social",
       "type": "Domain",
       "label": "social",
-      "score": 38,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 36,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ME-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 31,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DRIVER-ME-economic",
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-ME-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-ME-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-ME-climate",
-      "type": "Driver",
-      "label": "climate"
     },
     {
       "id": "SIGNAL-ME-«Крымэнерг",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-ME-Мировые_но",
+      "type": "Signal",
+      "label": "Мировые новости в кратком изложении: про",
+      "severity": 58,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-ME-ЕС_предупр",
       "type": "Signal",
       "label": "ЕС предупреждает Турцию о 'неприемлемом'",
       "severity": 46,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-ME-Эпоха_един",
-      "type": "Signal",
-      "label": "Эпоха единой глобальной международной пл",
-      "severity": 42,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,46 +106,52 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-technology",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-social",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-cyber",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "DRIVER-ME-economic",
+      "to": "COUNTRY-ME",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-ME-geopolitical",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ME-climate",
-      "to": "COUNTRY-ME",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-ME-geopolitical",
+      "to": "DOMAIN-ME-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ME-infrastructure",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-ME-«Крымэнерг",
@@ -169,16 +190,16 @@
       "weight": 0.62
     },
     {
+      "from": "SIGNAL-ME-Мировые_но",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
       "from": "SIGNAL-ME-ЕС_предупр",
       "to": "DOMAIN-ME-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-ME-Эпоха_един",
-      "to": "DOMAIN-ME-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.42
     }
   ]
 }
