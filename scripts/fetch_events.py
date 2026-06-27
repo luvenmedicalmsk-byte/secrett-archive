@@ -2214,6 +2214,28 @@ def _p10_drop_quake_cards(events):
         return events
 
 
+def _drop_noise_cards(events):
+    """Убирает шум из ленты «События»: редакционный юмор/ирония (Анекдот дня и т.п.)
+    и coverage-мета (новости про публикацию кадров/видео, а не про само событие)."""
+    try:
+        import re as _re_n
+        _humor = _re_n.compile(r'анекдот дня|^\s*анекдот\b|шутка дня|курьёз дня|мем дня', _re_n.I)
+        _meta = _re_n.compile(r'СМИ публикуют|публикуют кадры|публикуют видео|опубликован\w* кадр|появились кадры|появилось видео|показали кадры|распространяют кадр|распространяют видео|в сети появил\w* (?:видео|кадр)', _re_n.I)
+        out = []
+        for e in events:
+            t = str(e.get('title') or '')
+            if _humor.search(t) or _meta.search(t):
+                continue
+            out.append(e)
+        n = len(events) - len(out)
+        if n:
+            print('  NOISE: убрано шумовых карточек (юмор/coverage-мета): %d' % n, file=sys.stderr)
+        return out
+    except Exception as _en:
+        print('  [WARN] noise-filter fail: %s' % _en, file=sys.stderr)
+        return events
+
+
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -2234,7 +2256,7 @@ def save(events):
         events = geo_audit(events)
     except Exception as _e45:
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
-    events = _p10_drop_quake_cards(events)
+    events = _drop_noise_cards(_p10_drop_quake_cards(events))
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -7158,7 +7180,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _domain_fix(enriched["events"])
             enriched["events"] = _infra_anchor(enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
-            enriched["events"] = _p10_drop_quake_cards(enriched["events"])
+            enriched["events"] = _drop_noise_cards(_p10_drop_quake_cards(enriched["events"]))
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
