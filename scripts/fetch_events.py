@@ -1664,6 +1664,10 @@ def process_events(raw_items):
 
         # S34B governance: REMOVE-источники отбрасываем до обработки
         _gov = SOURCE_GOVERNANCE.get(item.get('source',''), {})
+        # D7 (Pre-Release Window): Telegram-агрегаторы весят ниже официальных/научных
+        # источников. Безопасная калибровка, расширяемая через SOURCE_GOVERNANCE.
+        if not _gov and str(item.get('source','')).startswith('Telegram/'):
+            _gov = {'weight': 0.85, 'tier': 'aggregator'}
         if _gov.get('action') == 'REMOVE':
             _LOSS['gov']+=1; continue
 
