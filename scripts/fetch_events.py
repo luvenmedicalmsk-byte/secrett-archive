@@ -1803,6 +1803,13 @@ def process_events(raw_items):
             "date": item['date']
         }
         if item.get('_meta'): _ev["meta"] = item['_meta']
+        # D4 (Pre-Release Window): event_kind отделяет геофизику от метеоклимата.
+        # Домен climate НЕ меняется и новый домен НЕ вводится (только тег).
+        if domain == 'climate':
+            _bk = ((item.get('title') or '') + ' ' + (item.get('desc') or item.get('summary') or '')).lower()
+            _ev["event_kind"] = 'geophysical' if any(w in _bk for w in (
+                'землетряс','earthquake','quake','магнитуд','сейсм','seismic','афтершок','aftershock',
+                'вулкан','volcano','извержен','eruption','цунами','tsunami','оползен','landslide','сель ')) else 'meteorological'
         events.append(_ev)
 
     # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
