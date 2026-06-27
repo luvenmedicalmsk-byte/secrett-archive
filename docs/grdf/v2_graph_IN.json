@@ -2,67 +2,67 @@
   "country": "IN",
   "date": "2026-06-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-27T12:53:40.813535+00:00",
-  "node_count": 14,
-  "edge_count": 16,
+  "generated_at": "2026-06-27T14:33:34.679728+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 49,
+      "score": 60,
       "props": {
-        "risk_score": 49
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 49,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 21,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "down"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -85,20 +85,6 @@
       "label": "Лесной пожар в Арагоне, Испания",
       "severity": 60,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IN-OpenAI_пре",
-      "type": "Signal",
-      "label": "OpenAI представила GPT 5.6, пишет портал",
-      "severity": 42,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IN-Apple_повы",
-      "type": "Signal",
-      "label": "Apple повысила цены на компьютеры Mac и ",
-      "severity": 42,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,43 +92,43 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-IN-Geopolitical",
@@ -161,6 +147,48 @@
       "to": "COUNTRY-IN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-IN-geopolitical",
@@ -188,18 +216,6 @@
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-IN-OpenAI_пре",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.42
-    },
-    {
-      "from": "SIGNAL-IN-Apple_повы",
-      "to": "DOMAIN-IN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.42
     }
   ]
 }
