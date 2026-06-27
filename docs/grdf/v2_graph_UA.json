@@ -2,32 +2,32 @@
   "country": "UA",
   "date": "2026-06-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-27T17:58:44.826950+00:00",
+  "generated_at": "2026-06-27T19:06:11.767330+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 26,
-      "trend": "down"
+      "score": 27,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 13,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 15,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-cyber",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-UA-Группа_Tur",
+      "id": "SIGNAL-UA-Россия_и_У",
       "type": "Signal",
-      "label": "Группа Turla добавляет больше вредоносно",
-      "severity": 50,
-      "domain": "technology"
+      "label": "Россия и Украина обменялись 160 военнопл",
+      "severity": 42,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.27
     },
     {
       "from": "COUNTRY-UA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-UA-За_неделю_",
       "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.66
     },
     {
-      "from": "SIGNAL-UA-Группа_Tur",
-      "to": "DOMAIN-UA-technology",
+      "from": "SIGNAL-UA-Россия_и_У",
+      "to": "DOMAIN-UA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.42
     }
   ]
 }
