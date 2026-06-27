@@ -1688,6 +1688,11 @@ def process_events(raw_items):
                 # S36.6: не в океан, а на страну-«дом» источника / Россию для Telegram
                 _src = item.get('source', '')
                 _home = _source_home(_src, item.get('title', ''))
+                # D1 (Release Override 2026-06-27): явная иностранная страна без точных
+                # координат -> НЕ подставлять РФ-точку (Москва ±3°). Уводим в no_geo;
+                # корректная страновая привязка восстанавливается в D2 (Snapshot, пост-релиз).
+                if _foreign_country(((item.get('title','') or '') + ' ' + (item.get('desc','') or '')))[0]:
+                    _LOSS['no_geo'] += 1; continue
                 if str(_src).startswith('Telegram') or _src == 'Downdetector RU':
                     lat, lng, region = _ru_default(item['title']); _LOSS['global_marker']+=1
                 elif _home:
