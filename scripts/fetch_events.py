@@ -2217,6 +2217,19 @@ def save(events):
         events = geo_audit(events)
     except Exception as _e45:
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
+    # P10: технические карточки землетрясений (USGS/EMSC, вид «Землетрясение M5.4 — …»)
+    # убраны из общей ленты «События». Сейсмика целиком в «Риски → Землетрясения» (живой USGS).
+    # Консеквенс-события (цунами, разрушения, жертвы, режим ЧС, спасоперации) остаются.
+    try:
+        import re as _re_q
+        _QUAKE_CARD = _re_q.compile(r'^\s*Землетрясение\s+M\s*\d', _re_q.I)
+        _before_q = len(events)
+        events = [e for e in events if not _QUAKE_CARD.match(str(e.get('title') or ''))]
+        _removed_q = _before_q - len(events)
+        if _removed_q:
+            print('  P10: убрано технических карточек землетрясений из ленты: %d' % _removed_q, file=sys.stderr)
+    except Exception as _eq:
+        print('  [WARN] P10 quake-filter fail: %s' % _eq, file=sys.stderr)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
