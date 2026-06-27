@@ -2,45 +2,45 @@
   "country": "IR",
   "date": "2026-06-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-27T17:40:24.871384+00:00",
+  "generated_at": "2026-06-27T17:58:44.830733+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 63,
+      "score": 65,
       "props": {
-        "risk_score": 63
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
+      "score": 8,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
+      "score": 8,
       "trend": "stable"
     },
     {
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Иранские_д",
-      "type": "Signal",
-      "label": "Иранские дроны атакуют Бахрейн и судно п",
-      "severity": 78,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IR-Центрально",
       "type": "Signal",
       "label": "Центральное командование США официально ",
@@ -99,6 +92,13 @@
       "label": "Перемирие между США и Ираном подвергнуто",
       "severity": 73,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-США_нанесл",
+      "type": "Signal",
+      "label": "США нанесли удары по Ирану, сообщили в C",
+      "severity": 71,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IR",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Иранские_д",
-      "to": "DOMAIN-IR-geopolitical",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.78
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IR-Центрально",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.73
+    },
+    {
+      "from": "SIGNAL-IR-США_нанесл",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.71
     }
   ]
 }
