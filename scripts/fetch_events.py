@@ -2197,6 +2197,23 @@ def _softcap_firm_bankruptcy(events, cap=48):
         print('  SOFTCAP: единичных банкротств понижено до %d: %d' % (cap, n), file=sys.stderr)
     return events
 
+def _p10_drop_quake_cards(events):
+    """P10: убирает технические карточки землетрясений (USGS/EMSC, «Землетрясение M5.4 — …»)
+    из общей ленты «События». Сейсмика целиком в «Риски → Землетрясения» (живой USGS).
+    Консеквенс-события (цунами/разрушения/жертвы/ЧС/спасоперации) остаются."""
+    try:
+        import re as _re_q
+        _rx = _re_q.compile(r'^\s*Землетрясение\s+M\s*\d', _re_q.I)
+        _out = [e for e in events if not _rx.match(str(e.get('title') or ''))]
+        _n = len(events) - len(_out)
+        if _n:
+            print('  P10: убрано технических карточек землетрясений: %d' % _n, file=sys.stderr)
+        return _out
+    except Exception as _eq:
+        print('  [WARN] P10 quake-filter fail: %s' % _eq, file=sys.stderr)
+        return events
+
+
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -2217,19 +2234,7 @@ def save(events):
         events = geo_audit(events)
     except Exception as _e45:
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
-    # P10: технические карточки землетрясений (USGS/EMSC, вид «Землетрясение M5.4 — …»)
-    # убраны из общей ленты «События». Сейсмика целиком в «Риски → Землетрясения» (живой USGS).
-    # Консеквенс-события (цунами, разрушения, жертвы, режим ЧС, спасоперации) остаются.
-    try:
-        import re as _re_q
-        _QUAKE_CARD = _re_q.compile(r'^\s*Землетрясение\s+M\s*\d', _re_q.I)
-        _before_q = len(events)
-        events = [e for e in events if not _QUAKE_CARD.match(str(e.get('title') or ''))]
-        _removed_q = _before_q - len(events)
-        if _removed_q:
-            print('  P10: убрано технических карточек землетрясений из ленты: %d' % _removed_q, file=sys.stderr)
-    except Exception as _eq:
-        print('  [WARN] P10 quake-filter fail: %s' % _eq, file=sys.stderr)
+    events = _p10_drop_quake_cards(events)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -7153,6 +7158,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _domain_fix(enriched["events"])
             enriched["events"] = _infra_anchor(enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
+            enriched["events"] = _p10_drop_quake_cards(enriched["events"])
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
