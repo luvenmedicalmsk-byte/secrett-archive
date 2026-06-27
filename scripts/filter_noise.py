@@ -85,20 +85,26 @@ def main():
                  if REVIEW_THRESHOLD <= (f.get("noise_score") or 0) < AUTO_DELETE_THRESHOLD]
 
     remove_ids = {f.get("id") for f in to_remove}
+    review_ids = {f.get("id") for f in to_review}
     removed_fraction = (len(remove_ids) / total_in) if total_in else 0.0
 
-    # 3) Предохранитель
+    # 3) Предохранитель (на авто-удаление; семантика прежняя — без регресса по жёсткому шуму)
     guard_tripped = removed_fraction > MAX_REMOVE_FRACTION
     if guard_tripped:
-        # Откат: ничего не удаляем
+        # Откат: ничего не удаляем и не карантиним (аномалия — лучше шум, чем массовое выпиливание)
         kept = events
         applied_removed = []
+        review_quarantined = []
         print(f"::warning::Noise filter: предохранитель сработал — "
               f"{len(remove_ids)}/{total_in} ({removed_fraction:.0%}) > "
               f"{MAX_REMOVE_FRACTION:.0%}. ОТКАТ, лента не изменена.")
     else:
-        kept = [e for e in events if e.get("id") not in remove_ids]
+        # D8 (Pre-Release Window): review/borderline -> карантин (не публикуется,
+        # не на карте, не в аналитике). Авто-удаление жёсткого шума — как прежде.
+        quarantine_ids = remove_ids | review_ids
+        kept = [e for e in events if e.get("id") not in quarantine_ids]
         applied_removed = [_slim(f) for f in to_remove]
+        review_quarantined = [_slim(f) for f in to_review]
 
     published = len(kept)
 
@@ -116,8 +122,9 @@ def main():
         "published": published,
         "removed_count": len(applied_removed),
         "review_count": len(to_review),
+        "review_quarantined": (not guard_tripped),
         "removed": applied_removed,
-        "review": [_slim(f) for f in to_review],
+        "review": review_quarantined if not guard_tripped else [_slim(f) for f in to_review],
         "fingerprint": _fingerprint(applied_removed),
     }
 
@@ -145,7 +152,7 @@ def main():
         json.dump(log, f, ensure_ascii=False, indent=2)
 
     print(f"Noise filter: {total_in} → {published} "
-          f"(удалено {len(applied_removed)}, на проверку {len(to_review)})"
+          f"(удалено {len(applied_removed)}, карантин review {len(review_quarantined)})"
           f"{' [ОТКАТ предохранителя]' if guard_tripped else ''}")
 
 
