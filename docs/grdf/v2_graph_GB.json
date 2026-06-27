@@ -2,60 +2,60 @@
   "country": "GB",
   "date": "2026-06-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-27T09:14:10.753561+00:00",
+  "generated_at": "2026-06-27T09:32:41.543287+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 52,
+      "score": 54,
       "props": {
-        "risk_score": 52
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-GB-Заявления_",
+      "id": "SIGNAL-GB-Канал_SecA",
       "type": "Signal",
-      "label": "Заявления о ‘конституционном перевороте’",
-      "severity": 50,
-      "domain": "geopolitical"
+      "label": "Канал SecAtor пишет интересное",
+      "severity": 56,
+      "domain": "technology"
     },
     {
-      "id": "SIGNAL-GB-Аэропортам",
+      "id": "SIGNAL-GB-WhatsApp_и",
       "type": "Signal",
-      "label": "Аэропортам Рима придется отключить новую",
-      "severity": 44,
-      "domain": "economic"
+      "label": "WhatsApp используют для установки удалён",
+      "severity": 52,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-GB",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-ДРК:_Власт",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-GB-Заявления_",
-      "to": "DOMAIN-GB-geopolitical",
+      "from": "SIGNAL-GB-Канал_SecA",
+      "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.56
     },
     {
-      "from": "SIGNAL-GB-Аэропортам",
-      "to": "DOMAIN-GB-economic",
+      "from": "SIGNAL-GB-WhatsApp_и",
+      "to": "DOMAIN-GB-technology",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.52
     }
   ]
 }

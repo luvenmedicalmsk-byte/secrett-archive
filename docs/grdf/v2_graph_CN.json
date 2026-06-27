@@ -2,31 +2,31 @@
   "country": "CN",
   "date": "2026-06-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-27T09:14:10.752485+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-27T09:32:41.542100+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 50,
+      "score": 53,
       "props": {
-        "risk_score": 50
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
+      "score": 53,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 34,
       "trend": "up"
     },
     {
@@ -34,34 +34,34 @@
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
+      "score": 17,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
+      "score": 19,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,18 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Канал_SecA",
+      "type": "Signal",
+      "label": "Канал SecAtor пишет интересное",
+      "severity": 56,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-CN-WhatsApp_и",
+      "type": "Signal",
+      "label": "WhatsApp используют для установки удалён",
+      "severity": 52,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-CN-В_самый_вы",
       "type": "Signal",
       "label": "В самый высокий небоскреб Пекина врезалс",
       "severity": 50,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CN-Китайский_",
-      "type": "Signal",
-      "label": "Китайский город Хуанши, в котором прожив",
-      "severity": 49,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -99,13 +106,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-CN",
@@ -117,25 +124,25 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-CN-Geopolitical",
@@ -156,16 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CN-Канал_SecA",
+      "to": "DOMAIN-CN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-CN-WhatsApp_и",
+      "to": "DOMAIN-CN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
       "from": "SIGNAL-CN-В_самый_вы",
       "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-CN-Китайский_",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.49
     }
   ]
 }
