@@ -2,60 +2,60 @@
   "country": "IN",
   "date": "2026-06-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-26T22:45:43.489297+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-06-26T23:58:51.929091+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 59,
+      "score": 61,
       "props": {
-        "risk_score": 59
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 59,
-      "trend": "stable"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "stable"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -87,11 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-OpenAI_пре",
+      "id": "SIGNAL-IN-Эдмонтонцы",
       "type": "Signal",
-      "label": "OpenAI представила GPT 5.6, пишет портал",
-      "severity": 42,
-      "domain": "economic"
+      "label": "Эдмонтонцы помогают в усилиях по оказани",
+      "severity": 63,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IN-Мировые_но",
+      "type": "Signal",
+      "label": "Мировые новости в кратком изложении: про",
+      "severity": 58,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -99,37 +106,37 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-IN",
@@ -156,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-IN-geopolitical",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
@@ -177,16 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-IN-Лесной_пож",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-IN-OpenAI_пре",
-      "to": "DOMAIN-IN-economic",
+      "from": "SIGNAL-IN-Эдмонтонцы",
+      "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.63
+    },
+    {
+      "from": "SIGNAL-IN-Мировые_но",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     }
   ]
 }

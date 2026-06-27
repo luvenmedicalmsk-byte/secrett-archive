@@ -2,60 +2,60 @@
   "country": "CA",
   "date": "2026-06-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-26T22:45:43.487598+00:00",
+  "generated_at": "2026-06-26T23:58:51.927365+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 61,
+      "score": 63,
       "props": {
-        "risk_score": 61
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "down"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "down"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-CA-Минцифры_о",
+      "type": "Signal",
+      "label": "Минцифры обратилось в Федеральную антимо",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CA-США_принял",
       "type": "Signal",
       "label": "США приняли сторону Украины",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Группы-вым",
-      "type": "Signal",
-      "label": "Группы-вымогатели находят слабое звено Е",
-      "severity": 58,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-CA",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CA-Центрально",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.77
     },
     {
-      "from": "SIGNAL-CA-США_принял",
+      "from": "SIGNAL-CA-Минцифры_о",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-CA-Группы-вым",
-      "to": "DOMAIN-CA-technology",
+      "from": "SIGNAL-CA-США_принял",
+      "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.62
     }
   ]
 }
