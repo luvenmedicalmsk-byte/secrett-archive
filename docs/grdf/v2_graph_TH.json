@@ -2,67 +2,72 @@
   "country": "TH",
   "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T20:20:11.400650+00:00",
-  "node_count": 14,
-  "edge_count": 16,
+  "generated_at": "2026-06-28T21:39:38.681294+00:00",
+  "node_count": 13,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 51,
+      "score": 59,
       "props": {
-        "risk_score": 51
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 48,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
-      "trend": "down"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 20,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 33,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
-      "score": 38,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 36,
-      "trend": "down"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 31,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-TH-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-TH-geopolitical",
@@ -73,11 +78,6 @@
       "id": "DRIVER-TH-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "DRIVER-TH-social",
-      "type": "Driver",
-      "label": "social"
     },
     {
       "id": "SIGNAL-TH-Маловодье:",
@@ -92,13 +92,6 @@
       "label": "Компании Nissan, Honda и Mitsubishi дого",
       "severity": 42,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-TH-Как_Китай_",
-      "type": "Signal",
-      "label": "Как Китай формирует свои позиции в глоба",
-      "severity": 35,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +99,49 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-technology",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-social",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-cyber",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.35
+    },
+    {
+      "from": "DRIVER-TH-climate",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-TH-geopolitical",
@@ -157,10 +156,46 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-social",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TH-climate",
+      "to": "DOMAIN-TH-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TH-social",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-TH-geopolitical",
@@ -194,12 +229,6 @@
       "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
       "weight": 0.42
-    },
-    {
-      "from": "SIGNAL-TH-Как_Китай_",
-      "to": "DOMAIN-TH-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.35
     }
   ]
 }

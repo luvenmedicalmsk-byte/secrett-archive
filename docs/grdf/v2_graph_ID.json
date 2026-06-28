@@ -2,67 +2,67 @@
   "country": "ID",
   "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T20:20:11.396958+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-28T21:39:38.677775+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 55,
       "props": {
-        "risk_score": 52
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 26,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 38,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -78,6 +78,20 @@
       "id": "DRIVER-ID-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-ID-Роспотребн",
+      "type": "Signal",
+      "label": "Роспотребнадзор держит на контроле ситуа",
+      "severity": 58,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-ID-Неизвестны",
+      "type": "Signal",
+      "label": "Неизвестные хакеры используют новый дроп",
+      "severity": 50,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -85,13 +99,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-ID",
@@ -109,19 +123,19 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-ID-Geopolitical",
@@ -140,6 +154,39 @@
       "to": "COUNTRY-ID",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ID-Роспотребн",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-ID-Неизвестны",
+      "to": "DOMAIN-ID-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
