@@ -1,68 +1,68 @@
 {
   "country": "IT",
-  "date": "2026-06-27",
+  "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-27T23:56:35.203896+00:00",
+  "generated_at": "2026-06-28T02:18:13.304213+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 57,
+      "score": 59,
       "props": {
-        "risk_score": 57
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 27,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IT-Канал_SecA",
+      "id": "SIGNAL-IT-При_опреде",
       "type": "Signal",
-      "label": "Канал SecAtor пишет интересное",
-      "severity": 56,
-      "domain": "technology"
+      "label": "При определении целей ударов по Ирану бы",
+      "severity": 61,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IT",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IT",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IT-За_неделю_",
       "to": "DOMAIN-IT-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-IT-Канал_SecA",
-      "to": "DOMAIN-IT-technology",
+      "from": "SIGNAL-IT-При_опреде",
+      "to": "DOMAIN-IT-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.61
     }
   ]
 }

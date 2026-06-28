@@ -1,68 +1,73 @@
 {
   "country": "PT",
-  "date": "2026-06-27",
+  "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-27T23:56:35.210748+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-06-28T02:18:13.310994+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 47,
+      "score": 51,
       "props": {
-        "risk_score": 47
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 42,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 33,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 31,
-      "trend": "stable"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
-      "score": 35,
-      "trend": "stable"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 33,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 28,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-PT-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-PT-economic",
@@ -75,9 +80,11 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-PT-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "id": "SIGNAL-PT-Мы_запусти",
+      "type": "Signal",
+      "label": "Мы запустили баллистические ракеты и БПЛ",
+      "severity": 54,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-PT-Рекордный_",
@@ -92,43 +99,49 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-technology",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-social",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-cyber",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.31
+    },
+    {
+      "from": "DRIVER-PT-geopolitical",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-PT-economic",
@@ -143,10 +156,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-PT-geopolitical",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PT-Мы_запусти",
+      "to": "DOMAIN-PT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.54
     },
     {
       "from": "SIGNAL-PT-Рекордный_",
