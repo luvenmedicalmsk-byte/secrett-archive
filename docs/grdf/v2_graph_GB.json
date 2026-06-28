@@ -2,32 +2,32 @@
   "country": "GB",
   "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T02:18:13.295591+00:00",
+  "generated_at": "2026-06-28T06:45:57.766414+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 54,
+      "score": 55,
       "props": {
-        "risk_score": 54
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-GB-Канал_SecA",
+      "type": "Signal",
+      "label": "Канал SecAtor пишет интересное",
+      "severity": 56,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-GB-Заявления_",
       "type": "Signal",
       "label": "Заявления о ‘конституционном перевороте’",
       "severity": 50,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GB-Аэропортам",
-      "type": "Signal",
-      "label": "Аэропортам Рима придется отключить новую",
-      "severity": 44,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-GB",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-GB",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-ДРК:_Власт",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.64
     },
     {
+      "from": "SIGNAL-GB-Канал_SecA",
+      "to": "DOMAIN-GB-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-GB-Заявления_",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-GB-Аэропортам",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
