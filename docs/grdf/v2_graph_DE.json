@@ -2,60 +2,60 @@
   "country": "DE",
   "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T09:56:56.873812+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-06-28T11:44:52.581491+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 57,
+      "score": 60,
       "props": {
-        "risk_score": 57
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 57,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
@@ -85,13 +85,6 @@
       "label": "Лесной пожар в Рейнланд-Пфальце, Германи",
       "severity": 60,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-DE-Германия_з",
-      "type": "Signal",
-      "label": "Германия зафиксировала исторический макс",
-      "severity": 53,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -99,19 +92,19 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-DE",
@@ -123,13 +116,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-DE",
@@ -177,16 +170,52 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-DE-Лесной_пож",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-DE-Германия_з",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
