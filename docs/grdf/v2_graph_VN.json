@@ -2,72 +2,72 @@
   "country": "VN",
   "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T16:17:05.733975+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-06-28T17:51:45.068197+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 45,
+      "score": 56,
       "props": {
-        "risk_score": 45
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 40,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 31,
-      "trend": "stable"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 29,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
-      "score": 34,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 31,
-      "trend": "stable"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 27,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
-      "id": "DRIVER-VN-economic",
+      "id": "DRIVER-VN-technology",
       "type": "Driver",
-      "label": "economic"
+      "label": "technology"
     },
     {
       "id": "DRIVER-VN-geopolitical",
@@ -75,9 +75,16 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-VN-social",
+      "id": "DRIVER-VN-economic",
       "type": "Driver",
-      "label": "social"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-VN-Канал_SecA",
+      "type": "Signal",
+      "label": "Канал SecAtor пишет интересное",
+      "severity": 56,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -85,46 +92,46 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-climate",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-technology",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-social",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-cyber",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.34
     },
     {
-      "from": "DRIVER-VN-economic",
+      "from": "DRIVER-VN-technology",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -136,10 +143,37 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-social",
+      "from": "DRIVER-VN-economic",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-VN-Канал_SecA",
+      "to": "DOMAIN-VN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
