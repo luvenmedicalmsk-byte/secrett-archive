@@ -2,24 +2,24 @@
   "country": "ES",
   "date": "2026-06-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T11:44:52.591981+00:00",
-  "node_count": 13,
-  "edge_count": 21,
+  "generated_at": "2026-06-28T13:15:15.425395+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 59,
+      "score": 60,
       "props": {
-        "risk_score": 59
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 59,
+      "score": 60,
       "trend": "up"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 51,
+      "score": 41,
       "trend": "up"
     },
     {
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ES-social",
@@ -61,8 +61,8 @@
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
-      "trend": "up"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-ES-Geopolitical",
@@ -85,13 +85,6 @@
       "label": "Лесной пожар в Арагоне, Испания",
       "severity": 60,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Канал_SecA",
-      "type": "Signal",
-      "label": "Канал SecAtor пишет интересное",
-      "severity": 56,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -99,7 +92,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-ES",
@@ -111,7 +104,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-ES",
@@ -135,7 +128,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-ES-Geopolitical",
@@ -154,6 +147,27 @@
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-ES-climate",
@@ -198,37 +212,10 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-ES-geopolitical",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "SIGNAL-ES-Лесной_пож",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-ES-Канал_SecA",
-      "to": "DOMAIN-ES-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
