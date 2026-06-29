@@ -37,6 +37,22 @@ GeoContract {
 2. **SINGLE SOURCE OF TRUTH** — в системе один объект географии — `GeoContract`; все компоненты используют исключительно его.
 3. **SINGLE RESOLVER** — разрешён один алгоритм — `resolve_geo()`. Как самостоятельные вычислители ЗАПРЕЩЕНЫ `detect_coords()`, `foreign_country()`, `ru_subject()`, frontend geo-resolver, любые локальные geo-helper'ы — только как внутренние части `resolve_geo()`.
 4. **NO RECALCULATION** — после создания контракта повторное определение `country/region/координат/impact_countries` любым модулем = архитектурная ошибка.
+5. **GEO CONTRACT OWNERSHIP** — `GeoContract` — единственный владелец гео-информации. Запрещено: изменять его, создавать альтернативную географию, хранить вторую версию гео-данных, переопределять поля. Любой новый модуль получает географию только из контракта.
+
+
+## Архитектурная схема
+```
+RAW DATA
+   ↓
+resolve_geo()
+   ↓
+GeoContract            (immutable, single source)
+   ↓  читают (никто не пересчитывает):
+   ├ FREE / Signal / Strategic(🔒) / Elite(🔒)
+   ├ Карта / События / Карточки / Попапы / Риски / Связи / Аналитика стран
+   └ API / Worker / Snapshot Engine
+```
+Независимо от тарифа — один и тот же `GeoContract`. Ни один компонент не вычисляет географию повторно.
 
 ## resolve_geo(title, summary, raw_coords=None) → GeoContract
 Переносит уже доказанную priority-логику фронтового `_geoResolve` (в RCA: 0 нарушений «координаты вне страны»). Порядок правил: actor-detect → STATEMENT → OBJECT-BOUND → DIRECTION → KINETIC-TARGET → bad_spans → NATURAL → OUTAGE → CURRENCY → NO-GEO гейт → LOCATIVE → SINGLE → null.
