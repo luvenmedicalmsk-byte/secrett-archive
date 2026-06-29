@@ -31,6 +31,13 @@ GeoContract {
 - **SINGLE SOURCE** — единственный алгоритм — `resolve_geo()`. Как самостоятельные источники ЗАПРЕЩЕНЫ: `detect_coords()`, `foreign_country()`, `ru_subject()` (в роли геокодера), frontend-резолвер, любые локальные вычисления. Допустимы только ВНУТРИ `resolve_geo()`.
 - **IMMUTABILITY** — контракт read-only. Любая запись в поля после создания = архитектурная ошибка. (Python: `@dataclass(frozen=True)`; frontend: `ev.geo` не мутируется.)
 
+
+## Четыре принципа (канон)
+1. **GEO AUTHORITY** — `GeoContract` создаётся один раз; после этого `country/region/lat/lng/impact_countries/actor_country` нигде не пересчитываются. Модули только читают.
+2. **SINGLE SOURCE OF TRUTH** — в системе один объект географии — `GeoContract`; все компоненты используют исключительно его.
+3. **SINGLE RESOLVER** — разрешён один алгоритм — `resolve_geo()`. Как самостоятельные вычислители ЗАПРЕЩЕНЫ `detect_coords()`, `foreign_country()`, `ru_subject()`, frontend geo-resolver, любые локальные geo-helper'ы — только как внутренние части `resolve_geo()`.
+4. **NO RECALCULATION** — после создания контракта повторное определение `country/region/координат/impact_countries` любым модулем = архитектурная ошибка.
+
 ## resolve_geo(title, summary, raw_coords=None) → GeoContract
 Переносит уже доказанную priority-логику фронтового `_geoResolve` (в RCA: 0 нарушений «координаты вне страны»). Порядок правил: actor-detect → STATEMENT → OBJECT-BOUND → DIRECTION → KINETIC-TARGET → bad_spans → NATURAL → OUTAGE → CURRENCY → NO-GEO гейт → LOCATIVE → SINGLE → null.
 
