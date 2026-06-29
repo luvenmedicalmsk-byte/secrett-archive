@@ -2,32 +2,32 @@
   "country": "CA",
   "date": "2026-06-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-29T00:04:05.734026+00:00",
+  "generated_at": "2026-06-29T03:59:35.989142+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 60,
+      "score": 59,
       "props": {
-        "risk_score": 60
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 59,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 28,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-climate",
@@ -40,28 +40,28 @@
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
       "score": 14,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CA-Вице-прези",
+      "id": "SIGNAL-CA-Взлом_стор",
       "type": "Signal",
-      "label": "Вице-президент США Джей Ди Вэнс заявил, ",
-      "severity": 53,
-      "domain": "geopolitical"
+      "label": "Взлом сторонней компании привел к краже ",
+      "severity": 52,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-CA",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-CA",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-CA-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CA-Центрально",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-CA-Вице-прези",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "SIGNAL-CA-Взлом_стор",
+      "to": "DOMAIN-CA-technology",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.52
     }
   ]
 }
