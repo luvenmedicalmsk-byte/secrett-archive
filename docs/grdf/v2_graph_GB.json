@@ -1,32 +1,32 @@
 {
   "country": "GB",
-  "date": "2026-06-28",
+  "date": "2026-06-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T22:57:05.957111+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-29T00:04:05.731103+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 54,
+      "score": 51,
       "props": {
-        "risk_score": 54
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 27,
+      "score": 51,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
+      "score": 33,
       "trend": "down"
     },
     {
@@ -40,21 +40,21 @@
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
+      "score": 25,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
+      "score": 16,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
+      "score": 19,
       "trend": "down"
     },
     {
@@ -80,18 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-GB-ДРК:_Власт",
+      "id": "SIGNAL-GB-Канал_SecA",
       "type": "Signal",
-      "label": "ДРК: Власти должны прекратить поддержку ",
-      "severity": 64,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GB-Заявления_",
-      "type": "Signal",
-      "label": "Заявления о ‘конституционном перевороте’",
-      "severity": 50,
-      "domain": "geopolitical"
+      "label": "Канал SecAtor пишет интересное",
+      "severity": 56,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-GB-Аэропортам",
@@ -106,13 +99,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-GB",
@@ -124,19 +117,19 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-GB",
@@ -163,16 +156,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-GB-ДРК:_Власт",
-      "to": "DOMAIN-GB-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-GB-Заявления_",
-      "to": "DOMAIN-GB-geopolitical",
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-Канал_SecA",
+      "to": "DOMAIN-GB-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     },
     {
       "from": "SIGNAL-GB-Аэропортам",

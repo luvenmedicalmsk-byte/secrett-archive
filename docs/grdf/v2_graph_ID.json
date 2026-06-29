@@ -1,68 +1,68 @@
 {
   "country": "ID",
-  "date": "2026-06-28",
+  "date": "2026-06-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-28T22:57:05.966958+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-06-29T00:04:05.741658+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 55,
+      "score": 58,
       "props": {
-        "risk_score": 55
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -85,13 +85,6 @@
       "label": "Роспотребнадзор держит на контроле ситуа",
       "severity": 58,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-ID-Неизвестны",
-      "type": "Signal",
-      "label": "Неизвестные хакеры используют новый дроп",
-      "severity": 50,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -99,13 +92,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-ID",
@@ -123,13 +116,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-ID",
@@ -156,16 +149,31 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-ID-Роспотребн",
       "to": "DOMAIN-ID-social",
       "type": "AMPLIFIES",
       "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-ID-Неизвестны",
-      "to": "DOMAIN-ID-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
