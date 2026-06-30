@@ -7289,6 +7289,12 @@ def _signal_quality_pass(events):
                         if re.search(r'(?<![а-яёa-z])' + re.escape(_st), _gt):
                             if e.get('primary_country') != _cc:
                                 e['primary_country'] = _cc
+                                e['event_country'] = _cc
+                                e['country_code'] = _cc
+                                e['country_codes'] = [_cc]
+                                e['impact_countries'] = [_cc]
+                                e['mentioned_countries'] = [_cc]
+                                e['region'] = _nm
                                 _PC = {'MC':(43.7384,7.4246),'LI':(47.16,9.55),'SM':(43.94,12.46),'AD':(42.51,1.52),'VA':(41.90,12.45),'LU':(49.61,6.13),'MT':(35.9,14.5),'IS':(64.96,-19.02)}
                                 if _cc in _PC:
                                     e['lat'], e['lng'] = _PC[_cc]
