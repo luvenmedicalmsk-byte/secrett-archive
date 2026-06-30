@@ -1,48 +1,48 @@
 {
-  "generated_at": "2026-06-30T19:31:38.513077+00:00",
+  "generated_at": "2026-06-30T21:16:28.541118+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 23.14,
-    "rmse": 25.05,
-    "bias": -23.11,
+    "mae": 23.17,
+    "rmse": 25.08,
+    "bias": -23.14,
     "accuracy_pct": 69.1
   },
   "2_scenario_accuracy": {
     "n": 75,
-    "hit_rate": 0.0
+    "hit_rate": 1.3
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": 0.034,
+    "pearson_r": 0.026,
     "r_squared": 0.001,
     "interpretation": "weak"
   },
   "4_5_6_classification": {
-    "TP": 10,
+    "TP": 8,
     "FP": 3,
     "TN": 11,
-    "FN": 69,
-    "precision_pct": 76.9,
-    "recall_pct": 12.7,
+    "FN": 71,
+    "precision_pct": 72.7,
+    "recall_pct": 10.1,
     "fpr_pct": 21.4,
-    "fnr_pct": 87.3,
-    "f1_score_pct": 21.7,
-    "accuracy_pct": 22.6,
+    "fnr_pct": 89.9,
+    "f1_score_pct": 17.8,
+    "accuracy_pct": 20.4,
     "signal_threshold": 60,
     "severity_threshold": 70
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.2266,
-    "brier_skill_score": -0.772,
+    "brier_score": 0.2268,
+    "brier_skill_score": -0.774,
     "interpretation": "poor"
   },
   "8_calibration_error": {
-    "ece": 0.311,
+    "ece": 0.3113,
     "n_bins_populated": 3,
     "calibration_curve": [
       {
@@ -50,7 +50,7 @@
         "mean_pred": 0.481,
         "mean_actual": 0.812,
         "n": 16,
-        "error": 0.331
+        "error": 0.332
       },
       {
         "bin_center": 0.55,
@@ -147,7 +147,7 @@
       },
       "IT": {
         "n_events": 2,
-        "mae": 17.5,
+        "mae": 18.5,
         "classification_accuracy_pct": 0.0,
         "n_hits": 0,
         "event_ids": [
@@ -157,9 +157,9 @@
       },
       "UA": {
         "n_events": 2,
-        "mae": 34.0,
-        "classification_accuracy_pct": 100.0,
-        "n_hits": 2,
+        "mae": 35.0,
+        "classification_accuracy_pct": 0.0,
+        "n_hits": 0,
         "event_ids": [
           "E2014-001",
           "E2022-001"
@@ -229,7 +229,7 @@
       },
       "IN": {
         "n_events": 2,
-        "mae": 25.0,
+        "mae": 24.0,
         "classification_accuracy_pct": 0.0,
         "n_hits": 0,
         "event_ids": [
@@ -299,10 +299,6 @@
         "accuracy": 100.0
       },
       {
-        "country": "UA",
-        "accuracy": 100.0
-      },
-      {
         "country": "KZ",
         "accuracy": 100.0
       },
@@ -313,6 +309,10 @@
       {
         "country": "BY",
         "accuracy": 50.0
+      },
+      {
+        "country": "DE",
+        "accuracy": 33.3
       }
     ],
     "bottom5": [
@@ -345,7 +345,7 @@
       {
         "type": "threshold_adjust",
         "action": "lower_signal_threshold",
-        "detail": "Recall 12.7% → missing events. Lower threshold to 55.",
+        "detail": "Recall 10.1% → missing events. Lower threshold to 55.",
         "priority": "HIGH",
         "param": "signal_threshold",
         "current": 60,
@@ -354,7 +354,7 @@
       {
         "type": "bias_correction",
         "action": "increase_base_pressure",
-        "detail": "Systematic underestimation bias -23.11pt. Increase sensitivity.",
+        "detail": "Systematic underestimation bias -23.14pt. Increase sensitivity.",
         "priority": "MEDIUM"
       },
       {
@@ -372,13 +372,13 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=0.034 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=0.026 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.772 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.774 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
