@@ -7255,6 +7255,51 @@ def _build_history_map(cache):
     return history_map
 
 
+_SQ_DEESCAL = re.compile(r'заверш|закончил|перемири|прекращени\w* огня|соглашени|вывод войск|деэскал|мирн\w* (?:договор|соглашени)', re.I)
+_SQ_OPINION = {'Foreign Policy','Foreign Affairs','The Economist','The Diplomat','Project Syndicate','War on the Rocks','Carnegie','Atlantic Council','Bloomberg Opinion'}
+_SQ_NONSYS = re.compile(r'дерево упал|перформанс|арт-акци|выпал из окна|школьн\w*\s+\w*автобус|упал\w*\s+на\s+\w*автобус', re.I)
+
+def _signal_quality_pass(events):
+    """Пост-проход качества сигнала (fail-safe, консервативный):
+    1) деэскалация: signal_type=escalation на тексте про завершение/перемирие/соглашение -> de-escalation (релейбл, не дроп)
+    2) аналитика/мнения (Foreign Policy и т.п.): down-weight severity, метка analysis (не дроп)
+    3) локальные не-системные (дерево/перформанс): дроп ТОЛЬКО для social + escalation_level none + sev<62
+    Предохранитель: не дропать > 15% событий."""
+    try:
+        out = []; dropped = 0
+        for e in events:
+            try:
+                tl = (e.get('title') or '').lower()
+                if e.get('signal_type') == 'escalation' and _SQ_DEESCAL.search(tl):
+                    e['signal_type'] = 'de-escalation'
+                    if isinstance(e.get('escalation_score'), (int, float)):
+                        e['escalation_score'] = min(e['escalation_score'], 5)
+                    e['escalation_level'] = 'none'
+                if e.get('source') in _SQ_OPINION:
+                    e['analysis'] = True
+                    if isinstance(e.get('severity'), (int, float)):
+                        e['severity'] = int(e['severity'] * 0.85)
+                    if e.get('signal_type') == 'baseline':
+                        e['signal_type'] = 'analysis'
+                if (e.get('domain') == 'social'
+                        and str(e.get('escalation_level', 'none')).lower() == 'none'
+                        and (e.get('severity') or 0) < 62
+                        and _SQ_NONSYS.search(tl)):
+                    dropped += 1
+                    continue
+                out.append(e)
+            except Exception:
+                out.append(e)
+        if events and dropped > 0.15 * len(events):
+            print(f"  [signal_quality] предохранитель: дроп {dropped} > 15%, дропы отменены (релейблы оставлены)", file=sys.stderr)
+            return events
+        print(f"  [signal_quality] деэскалация/аналитика переразмечены, не-системных дропнуто: {dropped}", file=sys.stderr)
+        return out
+    except Exception as ex:
+        print(f"  [WARN] signal_quality_pass: {ex}", file=sys.stderr)
+        return events
+
+
 def save_enriched(events, previous_snapshot=None):
     """
     Сохраняет events.json c signal taxonomy + escalation engine.
@@ -7296,6 +7341,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _infra_anchor(enriched["events"])
             enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["events"] = _drop_noise_cards(_p10_drop_quake_cards(enriched["events"]))
+            enriched["events"] = _signal_quality_pass(enriched["events"])
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
