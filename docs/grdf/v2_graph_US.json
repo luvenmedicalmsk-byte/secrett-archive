@@ -2,66 +2,66 @@
   "country": "US",
   "date": "2026-06-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-30T13:18:44.039869+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-06-30T15:13:55.587125+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 51,
+      "score": 54,
       "props": {
-        "risk_score": 51
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 35,
-      "trend": "stable"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,17 +87,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-US-Взлом_стор",
+      "id": "SIGNAL-US-Вице-прези",
       "type": "Signal",
-      "label": "Взлом сторонней компании привел к краже ",
-      "severity": 52,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-US-Трамп_гово",
-      "type": "Signal",
-      "label": "Трамп говорит, что встреча с Ираном назн",
-      "severity": 44,
+      "label": "Вице-президент США Джей Ди Вэнс заявил, ",
+      "severity": 53,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +99,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-US",
@@ -130,19 +123,19 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,22 +156,37 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Вице-прези",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
     },
     {
-      "from": "SIGNAL-US-Взлом_стор",
-      "to": "DOMAIN-US-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
-      "from": "SIGNAL-US-Трамп_гово",
+      "from": "SIGNAL-US-Вице-прези",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.53
     }
   ]
 }
