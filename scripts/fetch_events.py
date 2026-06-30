@@ -1081,7 +1081,7 @@ def fetch_nsidc_seaice():
     for hemi, region_ru, plat, plng, pref in POLES:
         try:
             url = ("https://noaadata.apps.nsidc.org/NOAA/G02135/" + hemi +
-                   "/daily/data/" + pref + "_seaice_extent_daily_v3.0.csv")
+                   "/daily/data/" + pref + "_seaice_extent_daily_v4.0.csv")
             data = fetch_url(url, timeout=25)
             if not data:
                 continue
@@ -1120,12 +1120,14 @@ def fetch_nsidc_seaice():
             if mean <= 0:
                 continue
             anom = (lext - mean) / mean * 100.0
-            if abs(anom) < 4:
-                continue
-            sign = 'ниже нормы' if anom < 0 else 'выше нормы'
+            if abs(anom) < 2:
+                _title = ("Морской лёд: %s %.2f млн км² (в норме)" % (region_ru, lext))
+            else:
+                sign = 'ниже нормы' if anom < 0 else 'выше нормы'
+                _title = ("Морской лёд: %s %.0f%% %s (%.2f млн км²)" % (region_ru, abs(anom), sign, lext))
             bias = min(18, 8 + int(abs(anom)))
             items.append({
-                'title': ("Морской лёд: %s %.0f%% %s (%.2f млн км²)" % (region_ru, abs(anom), sign, lext)),
+                'title': _title,
                 'desc': ("Аномалия площади морского льда к норме дня года. NSIDC Sea Ice Index."),
                 'date': _today,
                 'source': 'NSIDC Sea Ice',
