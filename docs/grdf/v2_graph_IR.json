@@ -2,66 +2,66 @@
   "country": "IR",
   "date": "2026-06-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-30T04:46:28.826283+00:00",
+  "generated_at": "2026-06-30T06:37:17.008273+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 59,
+      "score": 63,
       "props": {
-        "risk_score": 59
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 23,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Нефть_гото",
+      "type": "Signal",
+      "label": "Нефть готовится к квартальному падению, ",
+      "severity": 76,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-IR-Трамп_заяв",
       "type": "Signal",
       "label": "Трамп заявил, что американская авиация н",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Восстановл",
+      "id": "SIGNAL-IR-Трехкратны",
       "type": "Signal",
-      "label": "Восстановление базы США в Бахрейне после",
-      "severity": 63,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Оман_преду",
-      "type": "Signal",
-      "label": "Оман предупредил Европу о вероятном введ",
-      "severity": 62,
-      "domain": "economic"
+      "label": "Трехкратный рост интенсивности кибератак",
+      "severity": 65,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-IR-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Нефть_гото",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
       "from": "SIGNAL-IR-Трамп_заяв",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-IR-Восстановл",
-      "to": "DOMAIN-IR-geopolitical",
+      "from": "SIGNAL-IR-Трехкратны",
+      "to": "DOMAIN-IR-technology",
       "type": "AMPLIFIES",
-      "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-IR-Оман_преду",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.65
     }
   ]
 }
