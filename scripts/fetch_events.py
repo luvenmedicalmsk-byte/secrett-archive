@@ -1027,6 +1027,119 @@ def fetch_nasa_eonet():
     return items
 
 
+def fetch_eonet_ice():
+    """EONET Sea and Lake Ice — отдельный запрос (status=all, days=365), чтобы ловить
+    долгоживущие айсберги (A23a/A68/D-серия), которые status=open&days=30 отсекает.
+    Аддитивно и изолировано: падение не валит пайплайн. Дата = сегодня (текущее состояние)."""
+    items = []
+    try:
+        _today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        url = "https://eonet.gsfc.nasa.gov/api/v3/events?category=seaLakeIce&status=all&days=365&limit=50"
+        data = fetch_url(url, timeout=20)
+        if not data:
+            print("  NASA EONET Ice: нет данных", file=sys.stderr)
+            return items
+        j = json.loads(data)
+        for ev in j.get('events', []):
+            try:
+                geo = ev.get('geometry', [])
+                if not geo:
+                    continue
+                last_geo = geo[-1]
+                coords = last_geo.get('coordinates', [])
+                if not coords or len(coords) < 2:
+                    continue
+                lng, lat = float(coords[0]), float(coords[1])
+                title = ev.get('title', 'Айсберг')
+                _big = bool(re.search(r'\b[A-D]\d{2}[a-z]?\b', title))
+                bias = 16 if _big else 11
+                region = detect_region_by_coords(lat, lng)
+                items.append({
+                    'title': "Айсберг/морской лёд: " + title,
+                    'desc': "Ледяной покров. Sea and Lake Ice (EONET).",
+                    'date': _today,
+                    'source': 'NASA EONET Ice',
+                    'source_bias': bias,
+                    '_lat': lat, '_lng': lng, '_region': region,
+                    '_domain': 'climate'
+                })
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"  [WARN] NASA EONET Ice: {e}", file=sys.stderr)
+    print(f"  NASA EONET Ice: {len(items)} событий", file=sys.stderr)
+    return items
+
+
+def fetch_nsidc_seaice():
+    """NSIDC Sea Ice Index — суточная площадь морского льда (Арктика+Антарктика).
+    Сигнал «аномалия площади» = отклонение от климат-нормы того же дня года (± 3 дня),
+    рассчитанной из самого CSV. Аддитивно, изолировано, дата = сегодня."""
+    items = []
+    _today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    POLES = [('north', 'Арктика', 80.0, 0.0, 'N'), ('south', 'Антарктика', -75.0, 0.0, 'S')]
+    for hemi, region_ru, plat, plng, pref in POLES:
+        try:
+            url = ("https://noaadata.apps.nsidc.org/NOAA/G02135/" + hemi +
+                   "/daily/data/" + pref + "_seaice_extent_daily_v3.0.csv")
+            data = fetch_url(url, timeout=25)
+            if not data:
+                continue
+            rows = []
+            for ln in data.splitlines():
+                p = [x.strip() for x in ln.split(',')]
+                if len(p) < 4:
+                    continue
+                try:
+                    y = int(p[0]); m = int(p[1]); dd = int(p[2]); ext = float(p[3])
+                except (ValueError, IndexError):
+                    continue
+                if ext > 0:
+                    rows.append((y, m, dd, ext))
+            if len(rows) < 30:
+                continue
+            rows.sort()
+            ly, lm, ld, lext = rows[-1]
+            try:
+                doy = datetime(ly, lm, ld).timetuple().tm_yday
+            except ValueError:
+                continue
+            hist = []
+            for (y, m, dd, ext) in rows:
+                if y == ly:
+                    continue
+                try:
+                    d2 = datetime(y, m, dd).timetuple().tm_yday
+                except ValueError:
+                    continue
+                if abs(d2 - doy) <= 3:
+                    hist.append(ext)
+            if len(hist) < 5:
+                continue
+            mean = sum(hist) / len(hist)
+            if mean <= 0:
+                continue
+            anom = (lext - mean) / mean * 100.0
+            if abs(anom) < 4:
+                continue
+            sign = 'ниже нормы' if anom < 0 else 'выше нормы'
+            bias = min(18, 8 + int(abs(anom)))
+            items.append({
+                'title': ("Морской лёд: %s %.0f%% %s (%.2f млн км²)" % (region_ru, abs(anom), sign, lext)),
+                'desc': ("Аномалия площади морского льда к норме дня года. NSIDC Sea Ice Index."),
+                'date': _today,
+                'source': 'NSIDC Sea Ice',
+                'source_bias': bias,
+                '_lat': plat, '_lng': plng, '_region': region_ru,
+                '_domain': 'climate'
+            })
+        except Exception as e:
+            print(f"  [WARN] NSIDC {hemi}: {e}", file=sys.stderr)
+    print(f"  NSIDC Sea Ice: {len(items)} событий", file=sys.stderr)
+    return items
+
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # ЭТАП 2: Словарная русификация географии (страны / штаты США / стороны света)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -7278,6 +7391,8 @@ if __name__ == '__main__':
             ('reliefweb',          fetch_reliefweb),
             ('reliefweb_v2',       fetch_reliefweb_v2),
             ('nasa_eonet',         fetch_nasa_eonet),
+            ('eonet_ice',          fetch_eonet_ice),
+            ('nsidc_seaice',       fetch_nsidc_seaice),
             ('gdacs',              fetch_gdacs),
             ('usgs',               fetch_usgs_earthquakes),
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
