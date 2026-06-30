@@ -1608,6 +1608,11 @@ def _reclass_domain(title, summary, current):
         return 'social'
     if current == 'economy' and any(w in b for w in ('чёрный дождь','черный дождь','град','снегопад','заморозк','паводок','ливень')):
         return 'climate'
+    # климат: жара / экология / загрязнение -> climate (морфолог.-устойчиво; не трогает геополитику и метафоры)
+    _clim_heat = any(w in b for w in (' жара',' жары',' жаре',' жарой',' жару','зной','heatwave','аномальн жар','тепловая волна','волна жары','засух'))
+    _clim_eco = (('токсичн' in b or 'загрязн' in b or 'разлив' in b) and ('рек' in b or 'вод' in b or 'нефт' in b or 'воздух' in b or 'почв' in b)) or 'экологическ катастроф' in b or 'экологическ бедств' in b
+    if current in ('geopolitics','economy','social') and (_clim_heat or _clim_eco) and not any(w in b for w in ('война','войну','ракетн','санкц','удар по','спецоперац','госпереворот','боевик','наступлени')):
+        return 'climate'
     scores = {d: sum(1 for w in ws if w in b) for d, ws in _DOMAIN_VOCAB.items()}
     best = max(scores, key=scores.get)
     if best != current and scores[best] >= 1 and scores[best] > scores.get(current, 0):

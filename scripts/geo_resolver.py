@@ -127,12 +127,22 @@ _FC_GUARD = {
     'судан': ('суданов',),  # судановый краситель != Судан
 }
 
+_PRIORITY_GEO = {
+    'монако': ('MC', 'Монако'), 'лихтенштейн': ('LI', 'Лихтенштейн'),
+    'сан-марино': ('SM', 'Сан-Марино'), 'андорр': ('AD', 'Андорра'), 'ватикан': ('VA', 'Ватикан'),
+    'люксембург': ('LU', 'Люксембург'), 'мальт': ('MT', 'Мальта'), 'исланди': ('IS', 'Исландия'),
+    'флорид': ('US', 'США'), 'техас': ('US', 'США'), 'калифорни': ('US', 'США'),
+}
+
 def foreign_country(text):
     """V6.5: (ISO2, рус.имя) иностранного государства по тексту, матч по началу слова.
     Возвращает (cc, name) или (None, None). РФ здесь НЕ резолвится (см. ru_subject)."""
     if not text or not isinstance(text, str):
         return (None, None)
     low = text.lower()
+    for stem, (cc, name) in _PRIORITY_GEO.items():
+        if _re.search(r'(?<![а-яёa-z])' + _re.escape(stem), low):
+            return (cc, name)
     for stem, (cc, name) in FOREIGN_COUNTRIES.items():
         # матч только в начале слова: граница слева
         if _re.search(r'(?<![а-яёa-z])' + _re.escape(stem), low):
