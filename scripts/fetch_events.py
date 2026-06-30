@@ -7274,6 +7274,20 @@ def _signal_quality_pass(events):
         for e in events:
             try:
                 tl = (e.get('title') or '').lower()
+                if e.get('source')=='NASA EONET Ice' or tl.startswith('айсберг'):
+                    dropped += 1; continue
+                # убрать собственное имя источника из текста сигнала (источник — только в поле source)
+                _src = (e.get('source') or '').strip()
+                if _src and len(_src) >= 3:
+                    _esc = re.escape(_src)
+                    for _f in ('title', 'summary'):
+                        _v = e.get(_f)
+                        if not _v or _src not in _v:
+                            continue
+                        _v = re.sub(r'\s*[·—–\-(]?\s*Источник:\s*' + _esc + r'\.?\)?', '', _v)
+                        _v = re.sub(r'(^|:\s*)' + _esc + r'\s*:\s*', r'\1', _v)
+                        _v = re.sub(r'\s*[·—–-]\s*' + _esc + r'\s*$', '', _v)
+                        e[_f] = re.sub(r'\s{2,}', ' ', _v).strip()
                 if e.get('signal_type') == 'escalation' and _SQ_DEESCAL.search(tl):
                     e['signal_type'] = 'de-escalation'
                     if isinstance(e.get('escalation_score'), (int, float)):
@@ -7443,7 +7457,7 @@ if __name__ == '__main__':
             ('reliefweb',          fetch_reliefweb),
             ('reliefweb_v2',       fetch_reliefweb_v2),
             ('nasa_eonet',         fetch_nasa_eonet),
-            ('eonet_ice',          fetch_eonet_ice),
+            # ('eonet_ice', fetch_eonet_ice),  # айсберги живут в крио-вкладке (EONET напрямую), из общей ленты убраны
             ('nsidc_seaice',       fetch_nsidc_seaice),
             ('gdacs',              fetch_gdacs),
             ('usgs',               fetch_usgs_earthquakes),
