@@ -1211,6 +1211,7 @@ _GEO_SORTED = sorted(_GEO_MERGED.items(), key=lambda kv: -len(kv[0]))
 
 # --- Гео: единый источник истины (AUDIT 4.5) ---
 from geo_resolver import ru_subject as ru_subject_in, RU_SUBJECTS as _RU_SUBJECTS, foreign_country as _foreign_country
+from geo_resolver import _PRIORITY_GEO as _PRIO_GEO
 
 def ru_geo(s):
     """Замена известных стран/штатов на RU по словесной границе (RU-текст не трогает)."""
@@ -7281,6 +7282,19 @@ def _signal_quality_pass(events):
                 tl = (e.get('title') or '').lower()
                 if e.get('source')=='NASA EONET Ice' or tl.startswith('айсберг'):
                     dropped += 1; continue
+                # ретро-override приоритетного гео (Монако/микрогос./штаты США) — фикс уже сохранённых событий
+                try:
+                    _gt = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+                    for _st, (_cc, _nm) in _PRIO_GEO.items():
+                        if re.search(r'(?<![а-яёa-z])' + re.escape(_st), _gt):
+                            if e.get('primary_country') != _cc:
+                                e['primary_country'] = _cc
+                                _PC = {'MC':(43.7384,7.4246),'LI':(47.16,9.55),'SM':(43.94,12.46),'AD':(42.51,1.52),'VA':(41.90,12.45),'LU':(49.61,6.13),'MT':(35.9,14.5),'IS':(64.96,-19.02)}
+                                if _cc in _PC:
+                                    e['lat'], e['lng'] = _PC[_cc]
+                            break
+                except Exception:
+                    pass
                 # убрать собственное имя источника из текста сигнала (источник — только в поле source)
                 _src = (e.get('source') or '').strip()
                 if _src and len(_src) >= 3:
