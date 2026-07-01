@@ -1622,6 +1622,63 @@ def _reclass_domain(title, summary, current):
 
 
 # S45: severity = масштаб риска, а не громкость события. Пересчёт до сортировки/квот.
+# === Количественный масштаб бедствия -> пол индекса (аудит калибровки, числа читаются как масштаб) ===
+_DS_NUM_RE = re.compile(r'(\d[\d\u00a0\u202f ]*\d|\d)(?:[.,](\d+))?\s*(млрд|миллиард|млн|миллион|тыс\.?|тысяч[аи]?)?(?![\d])', re.I)
+_DS_PHRASE = {'сотни тысяч':300000,'десятки тысяч':50000,'сотни миллионов':300000000,'миллионы':2000000,'тысячи':3000}
+_DS_KW = {
+ 'deaths':['погиб','жертв','смерт','унесл','погибш','killed','death','мёртв','тел найд'],
+ 'bld':['зданий','здани','домов','дома','строени','сооружени','разрушен','повреждён','повреждены','повреждено','жилых','destroyed','buildings','homes'],
+ 'inj':['пострадав','раненых','ранены','ранено','травмиров','injured'],
+ 'evac':['эвакуир','беженц','бездомн','перемещённ','перемещенн','переселенц','без крова','displaced','evacuat','homeless'],
+ 'pop':['в зоне','затронул','затронут','подтоплен','млн человек','миллион человек','населени','people affected'],
+}
+_DS_FLOORS = {
+ 'deaths':[(5000,93),(1000,87),(200,80),(50,72),(10,65)],
+ 'bld':[(50000,84),(10000,79),(1000,73),(200,66)],
+ 'inj':[(50000,81),(10000,75),(1000,68)],
+ 'evac':[(500000,85),(100000,79),(10000,71),(1000,63)],
+ 'pop':[(5000000,86),(1000000,81),(100000,72)],
+}
+def _ds_numbers(text):
+    out=[]
+    for m in _DS_NUM_RE.finditer(text):
+        ip=re.sub(r'\D','',m.group(1) or '')
+        if not ip: continue
+        n=float(ip)
+        if m.group(2): n=float(ip+'.'+m.group(2))
+        mu=(m.group(3) or '')
+        if mu.startswith(('млрд','миллиард')): n*=1e9
+        elif mu.startswith(('млн','миллион')): n*=1e6
+        elif mu.startswith(('тыс','тысяч')): n*=1e3
+        out.append((int(n), m.start(), m.end()))
+    return out
+def _disaster_scale_floor(text):
+    """Пол индекса по количественному масштабу катастрофы (0 = нет данных о масштабе)."""
+    low=text.lower()
+    nums=_ds_numbers(low)
+    kw_pos={mt:[(km.start(),km.end()) for k in ks for km in re.finditer(re.escape(k),low)] for mt,ks in _DS_KW.items()}
+    metrics={mt:0 for mt in _DS_KW}
+    for (n,ns,ne) in nums:
+        best_mt=None; best_d=25
+        for mt,pos in kw_pos.items():
+            for (ks,ke) in pos:
+                d=(ns-ke) if ks<ns else (ks-ne)
+                if abs(d)<best_d: best_d=abs(d); best_mt=mt
+        if best_mt: metrics[best_mt]=max(metrics[best_mt],n)
+    for ph,val in _DS_PHRASE.items():
+        for pm in re.finditer(re.escape(ph),low):
+            best_mt=None; best_d=17
+            for mt,pos in kw_pos.items():
+                for (ks,ke) in pos:
+                    if ks>=pm.end() and (ks-pm.end())<best_d: best_d=ks-pm.end(); best_mt=mt
+            if best_mt: metrics[best_mt]=max(metrics[best_mt],val)
+    floor=0
+    for mt,val in metrics.items():
+        for thr,fl in _DS_FLOORS[mt]:
+            if val>=thr: floor=max(floor,fl); break
+    return floor
+
+
 def _recompute_severity(ev):
     b = ((ev.get('title') or '') + ' ' + (ev.get('summary') or '')).lower()
     dom = ev.get('domain') or ''
@@ -1639,8 +1696,11 @@ def _recompute_severity(ev):
     # -> регионально-системная полоса (<=60), а не флэт 76. Национальные/международные остаются высоко.
     _disaster = any(w in b for w in ('наводнен','паводок','циклон','тайфун','ураган','шторм','оползен','землетряс','лесной пожар','сель'))
     _natscale = any(w in b for w in ('вся страна','по всей стране','национальн','столиц','чрезвычайн положени','несколько стран','десятки тысяч','сотни погиб','тысяч эвакуир','государственн бедств','штатов'))
-    if dom == 'climate' and _disaster and not _natscale:
+    _scale_fl = _disaster_scale_floor(b)
+    if dom == 'climate' and _disaster and not _natscale and _scale_fl < 60:
         sev = min(sev, 60)
+    if _scale_fl:                      # количественный масштаб задаёт нижний пол индекса
+        sev = max(sev, _scale_fl)
     # D3 (Pre-Release Window): verified пропускает редакционные/денайл/CVE-понижения,
     # но НЕ обходит климатические кэпы выше (рутинная погода <=38, региональная катастрофа <=60).
     if (ev.get('meta') or {}).get('verified'):
@@ -7282,6 +7342,16 @@ def _signal_quality_pass(events):
                 tl = (e.get('title') or '').lower()
                 if e.get('source')=='NASA EONET Ice' or tl.startswith('айсберг'):
                     dropped += 1; continue
+                # пере-скоринг сохранённых катастроф по количественному масштабу (аудит калибровки)
+                try:
+                    _dm = e.get('domain') or ''
+                    _bt = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+                    if _dm in ('climate','social','technology') and any(_w in _bt for _w in ('землетряс','наводнен','паводок','циклон','тайфун','ураган','шторм','цунами','оползен','сель','извержен','вулкан','катастроф','бедств','разрушен','погиб','эвакуир','пострадав')):
+                        _fl = _disaster_scale_floor(_bt)
+                        if _fl and _fl > (e.get('severity') or 0):
+                            e['severity'] = _fl
+                except Exception:
+                    pass
                 # ретро-override приоритетного гео (Монако/микрогос./штаты США) — фикс уже сохранённых событий
                 try:
                     _gt = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
