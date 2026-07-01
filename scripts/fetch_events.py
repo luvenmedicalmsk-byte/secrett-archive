@@ -7621,6 +7621,15 @@ def save_enriched(events, previous_snapshot=None):
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
 
+            # ATLAS V2 Phase 1 (shadow): параллельный signals.json — сворачивает
+            # статьи в процессы (кластеризация + Priority). Аддитивно, events.json не трогает.
+            try:
+                from signal_engine import write_signals_json as _write_signals
+                _sig_n = _write_signals(enriched["events"], str(OUTPUT_PATH.parent / "signals.json"))
+                print(f"  ✓ signals (process-view): {_sig_n} процессов -> signals.json", file=sys.stderr)
+            except Exception as _se:
+                print(f"  [WARN] signals.json shadow build failed: {_se}", file=sys.stderr)
+
             evs    = enriched["events"]
             types  = Counter(e.get("signal_type", "?") for e in evs)
             phases = Counter(e.get("phase", "?") for e in evs)
