@@ -223,6 +223,166 @@ def _process_name(evs, domains, place):
     top=max(evs,key=lambda x:x.get('severity',0))
     return top.get('title','')
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Signal Engine v1.3 — Process Intelligence: живой процесс во времени
+# Персистенция между прогонами по стабильному signal_id + история/дельты/эволюция.
+# ══════════════════════════════════════════════════════════════════════════════
+_HIST_CAP = 60
+
+def _now_iso():
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+def _hours(a, b):
+    try:
+        fa=datetime.strptime(a[:19],'%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+        fb=datetime.strptime(b[:19],'%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
+        return max(0.0,(fb-fa).total_seconds()/3600)
+    except Exception: return 0.0
+
+_CONF_RANK={'stale':0,'unconfirmed':1,'single':2,'confirmed':3,'high':4}
+def _evolve_confidence(all_roles, all_sources_n, first_seen, now):
+    """Confidence по НАКОПЛЕННЫМ источникам/ролям (согласовано с build_signals) + затухание Telegram-only."""
+    roles=set(all_roles); nontg={r for r in roles if r!='telegram'}
+    if roles & {'measurement','state','intl'}: return 'high'
+    if all_sources_n>=2 and nontg: return 'confirmed'
+    if nontg: return 'single'
+    if roles=={'telegram'} and _hours(first_seen, now)>=48: return 'stale'  # 48ч без подтверждения
+    return 'unconfirmed'
+
+_PHASE_ORDER=['emerging','growing','active','escalating','stabilizing','de-escalating','dormant','archived']
+def _evolve_phase_hist(evidence_total, rising, falling, sev_delta, hours_idle, base_phase):
+    """Фаза по ИСТОРИИ процесса: число свидетельств во времени + активность + тренд."""
+    if hours_idle>=720: return 'archived'          # 30 дней без обновлений
+    if hours_idle>=168: return 'dormant'           # 7 дней
+    if falling or base_phase=='de-escalating': return 'de-escalating'
+    if rising and (sev_delta or 0)>0 and evidence_total>=6: return 'escalating'
+    if rising and (sev_delta or 0)>0: return 'growing' if evidence_total<6 else 'escalating'
+    if hours_idle>=48: return 'stabilizing'        # активность спала
+    if evidence_total>=12: return 'escalating'
+    if evidence_total>=5: return 'active'
+    if evidence_total>=2: return 'growing'
+    return base_phase if base_phase in ('active','emerging') else 'emerging'
+
+def _health(severity, phase, hours_idle, rising):
+    if phase=='archived': return 'Archived'
+    if phase=='dormant' or hours_idle>=168: return 'Dormant'
+    if severity>=80 and (phase=='escalating' or rising): return 'Critical'
+    if phase=='escalating' or rising: return 'Escalating'
+    if phase in ('stabilizing','de-escalating'): return 'Stable'
+    return 'Healthy'   # активно отслеживается, свежий
+
+def _seed_history(sig, now):
+    sig['first_seen']=sig.get('first_seen') or now
+    sig['last_seen']=now; sig['update_count']=1
+    sig['severity_history']=[{'t':now,'v':sig['severity']}]
+    sig['priority_history']=[{'t':now,'v':sig['priority']}]
+    sig['phase_history']=[{'t':now,'phase':sig['phase']}]
+    sig['evidence_history']=[{'t':now,'count':sig['evidence_count']}]
+    sig['confidence_history']=[{'t':now,'v':sig['confidence']}]
+    sig['timeline']=[{'t':now,'event':'первое появление','detail':sig['title']}]
+    sig['delta']={'severity':0,'priority':0,'new_sources':[],'new_countries':[],'new_connections':[],'first_time':True}
+    sig['status']='active'
+    rising=str(sig.get('trend','')).lower() in ('rising','accelerating','up','escalating')
+    sig['health']=_health(sig['severity'], sig['phase'], 0, rising)
+    sig['_all_sources']=sorted(set(e['source'] for e in sig['evidence']))
+    sig['_all_roles']=sorted(set(e['role'] for e in sig['evidence']))
+    sig['audit']=[{'t':now,'change':'created','reason':'новый процесс','rule':'new_signal_id','fields':['*']}]
+    return sig
+
+def _cap(lst): return lst[-_HIST_CAP:]
+
+def _evolve_one(cur, prev, now):
+    """Process Evolution: текущий снапшот cur обновляет накопленное состояние prev."""
+    cur['first_seen']=prev.get('first_seen', now)
+    cur['last_seen']=now
+    prev_sources=set(prev.get('_all_sources',[])); prev_roles=set(prev.get('_all_roles',[]))
+    cur_sources=set(e['source'] for e in cur['evidence']); cur_roles=set(e['role'] for e in cur['evidence'])
+    all_sources=sorted(prev_sources|cur_sources); all_roles=sorted(prev_roles|cur_roles)
+    new_sources=sorted(cur_sources-prev_sources)
+    new_countries=sorted(set(cur['countries'])-set(prev.get('countries',[])))
+    new_conn=sorted(set(cur['connectivity'])-set(prev.get('connectivity',[])))
+    # Delta Engine
+    dsev=cur['severity']-prev.get('severity',cur['severity'])
+    dpri=cur['priority']-prev.get('priority',cur['priority'])
+    was_dormant = prev.get('status') in ('dormant','archived','fading')
+    changed = bool(new_sources or new_countries or new_conn or dsev!=0 or cur['evidence_count']!=prev.get('evidence_count') or was_dormant)
+    # Confidence Evolution (по накопленным ролям)
+    conf=_evolve_confidence(all_roles, len(all_sources), cur['first_seen'], now)
+    # Phase Evolution (по истории)
+    ev_total=max(cur['evidence_count'], len(prev.get('evidence_history',[])) + (1 if changed else 0), prev.get('update_count',1))
+    rising=str(cur.get('trend','')).lower() in ('rising','accelerating','up','escalating')
+    falling=str(cur.get('trend','')).lower() in ('falling','down','de-escalating','decelerating')
+    hours_idle=0.0 if changed else _hours(prev.get('last_seen',now), now)
+    phase=_evolve_phase_hist(ev_total, rising, falling, dsev, hours_idle, cur.get('phase','active'))
+    # histories
+    sh=_cap(prev.get('severity_history',[])+([{'t':now,'v':cur['severity']}] if dsev!=0 else []))
+    ph=_cap(prev.get('priority_history',[])+([{'t':now,'v':cur['priority']}] if dpri!=0 else []))
+    phh=prev.get('phase_history',[]); 
+    if not phh or phh[-1]['phase']!=phase: phh=_cap(phh+[{'t':now,'phase':phase}])
+    eh=_cap(prev.get('evidence_history',[])+([{'t':now,'count':cur['evidence_count']}] if cur['evidence_count']!=prev.get('evidence_count') else []))
+    chh=prev.get('confidence_history',[])
+    if not chh or chh[-1]['v']!=conf: chh=_cap(chh+[{'t':now,'v':conf}])
+    # Timeline + Audit
+    tl=prev.get('timeline',[])[:]; audit=prev.get('audit',[])[-30:]
+    def log(ev,detail='',rule='',fields=None):
+        tl.append({'t':now,'event':ev,'detail':detail})
+        audit.append({'t':now,'change':ev,'reason':detail,'rule':rule,'fields':fields or []})
+    if was_dormant and changed: log('реактивация','новое свидетельство','reactivation',['status','phase'])
+    if dsev>=8: log('рост риска','severity +%d'%dsev,'delta_severity',['severity'])
+    elif dsev<=-8: log('снижение риска','severity %d'%dsev,'delta_severity',['severity'])
+    if new_sources: log('новый источник',', '.join(new_sources[:3]),'new_source',['confidence'])
+    if new_countries: log('новая страна',', '.join(new_countries[:3]),'new_country',['countries'])
+    if conf!=prev.get('confidence'): log('доверие: %s→%s'%(prev.get('confidence'),conf),'','confidence_evolution',['confidence'])
+    if phase!=prev.get('phase'): log('фаза: %s→%s'%(prev.get('phase'),phase),'','phase_evolution',['phase'])
+    tl=_cap(tl); audit=_cap(audit)
+    health=_health(cur['severity'], phase, hours_idle, rising)
+    cur.update({'phase':phase,'confidence':conf,'status':'active' if changed else 'active',
+        'update_count':prev.get('update_count',1)+(1 if changed else 0),
+        'severity_history':sh,'priority_history':ph,'phase_history':phh,'evidence_history':eh,'confidence_history':chh,
+        'timeline':tl,'audit':audit,'health':health,
+        'delta':{'severity':dsev,'priority':dpri,'new_sources':new_sources,'new_countries':new_countries,
+                 'new_connections':new_conn,'first_time':False,'reactivated':bool(was_dormant and changed)},
+        '_all_sources':all_sources,'_all_roles':all_roles})
+    return cur
+
+def _decay_absent(prev, now):
+    """Process Decay: prev-сигнал без нового свидетельства в этом прогоне -> затухание, НЕ удаление."""
+    hi=_hours(prev.get('last_seen',now), now)
+    factor=1.0; status='active'
+    if hi>=720: status='archived'
+    elif hi>=168: status='dormant'; factor=0.6
+    elif hi>=48: status='fading'; factor=0.82
+    rising=False
+    phase=_evolve_phase_hist(prev.get('update_count',1), False, False, 0, hi, prev.get('phase','active'))
+    conf=prev.get('confidence')
+    if prev.get('_all_roles')==['telegram'] and hi>=48: conf='stale'
+    npri=int(round(prev.get('priority',0)*factor))
+    audit=prev.get('audit',[])[-30:]
+    if status!='active':
+        audit=_cap(audit+[{'t':now,'change':'decay→%s'%status,'reason':'нет обновлений %dч'%int(hi),
+                           'rule':'process_decay','fields':['priority','status','phase','confidence']}])
+    prev.update({'priority':npri,'status':status,'phase':phase,'confidence':conf,
+        'health':_health(prev.get('severity',0),phase,hi,rising),'audit':audit,'last_seen':prev.get('last_seen',now)})
+    return prev
+
+def evolve_signals(current, previous, now=None):
+    """Главная функция v1.3: сшивает текущий снапшот с накопленной историей."""
+    now=now or _now_iso()
+    prev_by_id={s['signal_id']:s for s in (previous or [])}
+    seen=set(); out=[]
+    for cur in current:
+        sid=cur['signal_id']; seen.add(sid)
+        if sid in prev_by_id: out.append(_evolve_one(cur, prev_by_id[sid], now))
+        else: out.append(_seed_history(cur, now))
+    # Decay + Reactivation-ready: прежние процессы без обновления сохраняем (не удаляем)
+    for sid,prev in prev_by_id.items():
+        if sid in seen: continue
+        d=_decay_absent(prev, now)
+        if d.get('status')!='archived' or _hours(d.get('last_seen',now),now)<2160:  # держим до 90д
+            out.append(d)
+    out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s['priority']))
+    return out
+
+
 def _rising(trend):
     t=str(trend or '').lower()
     if t in ('rising','accelerating','up','escalating'): return 1.0
@@ -320,11 +480,20 @@ def build_signals(events):
     return signals
 
 def write_signals_json(events, path):
-    sigs=build_signals(events)
-    out={'updated':datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),'count':len(sigs),'schema':'process-signal-v1.1','signals':sigs}
-    import os; os.makedirs(os.path.dirname(path),exist_ok=True)
+    import os
+    now=_now_iso()
+    previous=[]
+    try:
+        if os.path.exists(path):
+            previous=json.load(open(path,encoding='utf-8')).get('signals',[])
+    except Exception:
+        previous=[]
+    current=build_signals(events)
+    evolved=evolve_signals(current, previous, now)          # v1.3: живой процесс во времени
+    out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.3','signals':evolved}
+    os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path,'w',encoding='utf-8') as f: json.dump(out,f,ensure_ascii=False,indent=2)
-    return len(sigs)
+    return len(evolved)
 
 if __name__=='__main__':
     d=json.load(open('/tmp/AUD.json')); ev=d['events']
