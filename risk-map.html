@@ -10029,6 +10029,11 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   var CONF_RU={single:'одиночное',confirmed:'подтверждён',high:'высокое',unconfirmed:'неподтверждён',stale:'устаревшее',verified:'верифицирован'};
   var DOM_RU={climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function cleanSrc(src){ if(!src) return ''; src=String(src).replace(/^\s*(telegram|tg)\s*\/\s*/i,'');
+    var l=src.toLowerCase().replace(/[^a-zа-яё0-9]/g,'');
+    var map={bbbreaking:'Breaking',breaking:'Breaking'};
+    if(map[l]) return map[l];
+    return src.charAt(0).toUpperCase()+src.slice(1); }
   function scol(v){ try{ if(window._sevColor) return window._sevColor(v); }catch(e){} v=+v||0; return v>=90?'#E24A3B':v>=75?'#FFD700':v>=60?'#FFA07A':v>=40?'#A89150':'#D8D8D8'; }
   function hcol(h){ return {Critical:'#E24A3B',Escalating:'#FFD700',Healthy:'#FFA07A',Stable:'#A89150',Dormant:'#6b7280',Archived:'#6b7280'}[h]||'#A89150'; }
   function isPro(){ try{ var t=(window.CC&&CC.tier&&CC.tier())||'free'; return !!(t&&t!=='free'); }catch(e){ return false; } }
@@ -10223,7 +10228,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +s.timeline.slice().reverse().map(function(t){ return '<div class="gd-ti"><div class="e">'+esc(t.event)+'</div>'+(t.detail?'<div class="dt">'+esc(t.detail)+'</div>':'')+'<div class="t">'+esc((t.t||'').replace('T',' ').slice(0,16))+'</div></div>'; }).join('')+'</div></div>'; }
     // Свидетельства
     H+='<div class="gd-sec"><div class="gd-sh">Свидетельства · '+(s.evidence_count||0)+'</div>'
-      +(s.evidence||[]).map(function(e){ return '<div class="gd-ev"><div><div class="t">'+esc(e.title)+'</div><div class="m">'+esc(e.source)+' · '+esc(ROLE_RU[e.role]||e.role)+' · '+esc(e.date)+(e.match?' · '+esc(e.match):'')+'</div></div><div class="s" style="color:'+scol(e.severity)+'">'+(e.severity||'')+'</div></div>'; }).join('')+'</div>';
+      +(s.evidence||[]).map(function(e){ var _p=[]; var _s=cleanSrc(e.source); if(_s)_p.push(esc(_s)); if(e.role&&e.role!=='telegram')_p.push(esc(ROLE_RU[e.role]||e.role)); if(e.date)_p.push(esc(e.date)); if(e.match)_p.push(esc(e.match)); return '<div class="gd-ev"><div><div class="t">'+esc(e.title)+'</div><div class="m">'+_p.join(' · ')+'</div></div><div class="s" style="color:'+scol(e.severity)+'">'+(e.severity||'')+'</div></div>'; }).join('')+'</div>';
     // Связи
     var conns=connG('Причина для',s.causes)+connG('Следствие',s.caused_by)+connG('Усиливает',s.amplifies)+connG('Подавляет',s.suppresses)+connG('Связанные',s.related);
     if(conns) H+='<div class="gd-sec"><div class="gd-sh">Связи</div>'+conns+'</div>';
