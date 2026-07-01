@@ -7419,10 +7419,13 @@ def _signal_quality_pass(events):
                     if (e.get('domain')=='climate') and re.search(r'в европе|по европе|европейск\w* жар|жар\w* в европе|страны европы|вся европа|евросоюз|across europe', _et) and 'европейской части' not in _et and 'европейскую часть' not in _et and 'европейская часть' not in _et:
                         _EU = ['DE','FR','IT','ES','PL','NL','GB','CZ','AT','BE']
                         e['impact_countries'] = sorted(set((e.get('impact_countries') or []) + _EU))
-                        e['country_codes'] = sorted(set((e.get('country_codes') or []) + _EU))
-                        if (e.get('primary_country') or '') in ('US','CA','CN','IN','BR','AU') and 'сша' not in _et and 'америк' not in _et:
-                            e['primary_country'] = ''; e['event_country'] = ''; e['country_code'] = ''
-                            e['region'] = 'Европа'
+                        # убрать не-европейские (ошибочные US/RU и пр.) из кодов стран, добавить Европу
+                        e['country_codes'] = sorted(set([_x for _x in (e.get('country_codes') or []) if _x not in ('US','RU','CA','CN','IN','BR','AU','TR')] + _EU))
+                        # пан-европейское событие не имеет одной страны-происхождения
+                        e['primary_country'] = ''; e['event_country'] = ''; e['country_code'] = ''
+                        e['region'] = 'Европа'
+                        # координаты -> центр Европы (иначе маркер/ярлык падает в РФ/США)
+                        e['lat'] = 50.1; e['lon'] = 9.9
                 except Exception:
                     pass
                 # пере-скоринг сохранённых катастроф по количественному масштабу (аудит калибровки)
