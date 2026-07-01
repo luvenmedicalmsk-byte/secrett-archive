@@ -838,6 +838,12 @@ def enrich_v15(signals, prev_global=None):
 def _build_one_signal(evs):
     top=max(evs,key=lambda x:x.get('severity',0))
     sev=max((x.get('severity',0) for x in evs), default=0)
+    # Поправка на корроборацию: множество независимых подтверждений повышают оценку
+    # значимости развивающегося процесса (breadth). Потолок +8, слабее для чисто-Telegram.
+    if len(evs)>=3:
+        _rl=set(_role(x.get('source')) for x in evs)
+        _qf=1.0 if (_rl-{'telegram'}) else 0.65
+        sev=min(100, sev+min(8, round(2.4*math.log(len(evs))*_qf)))
     roles=set(_role(x.get('source')) for x in evs); srcs=set(str(x.get('source','')) for x in evs)
     if roles & {'measurement','state','intl'}: conf,conf_f='high',1.0
     elif len(srcs)>=2 and (roles-{'telegram'}): conf,conf_f='confirmed',0.92
