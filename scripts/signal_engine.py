@@ -451,7 +451,8 @@ def _lifecycle_stage(sig, hours_idle, now=None):
     if st=='archived': return 'Завершён'
     if stale is not None and stale>=10: return 'Завершён'
     if ph=='dormant': return 'Ослабление'
-    if stale is not None and stale>=4 and not rising: return 'Ослабление'
+    _real_rising = dsev>0 or vel>0.05 or new_conn>0        # реальный импульс, не ярлык фазы
+    if stale is not None and stale>=4 and not _real_rising: return 'Ослабление'
     # ── точная динамика при наличии истории ──
     if has_hist:
         if falling and not rising: return 'Ослабление'
