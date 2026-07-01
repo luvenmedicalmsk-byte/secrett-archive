@@ -106,6 +106,15 @@ _PROC_TYPE=[(r'продаж|ритейл|розничн|магазин|диви�
  (r'топлив|бензин|нефтебаз|горюч|дизел|солярк','Топливный рынок'),(r'рубл|валют|доллар|обменн курс','Валютный рынок'),
  (r'инфляц','Инфляция'),(r'мигра|миграцион','Миграционная политика'),(r'лихорадк|заболеван|эпидеми|вспышк\w* (инфекц|вирус|болезн)|инфекц|пандеми|вирус\w* угроз','Эпидемиологический риск'),
  (r'кокаин|наркот|контрабанд','Наркотрафик'),(r'дрон.{0,15}завод|производств дрон','Оборонное производство')]
+_TYPE_DOMAIN={
+ 'Тепловая волна':'climate','Пожарная активность':'climate','Наводнение':'climate','Водный дефицит':'climate',
+ 'Сейсмическая активность':'climate','Климатическая политика':'climate','Климатический сигнал':'climate',
+ 'Топливный рынок':'economy','Валютный рынок':'economy','Инфляция':'economy','Розничная торговля':'economy','Экономический сигнал':'economy',
+ 'Военные удары':'geopolitics','Покушение':'geopolitics','Санкционное давление':'geopolitics','Визовые ограничения':'geopolitics',
+ 'Оборонное производство':'geopolitics','Геополитический процесс':'geopolitics',
+ 'Отключение интернета':'technology','Уязвимость ПО':'technology','Киберугроза':'technology','Фишинговая кампания':'technology',
+ 'Авиационный инцидент':'technology','Технологический сигнал':'technology',
+ 'Эпидемиологический риск':'social','Миграционная политика':'social','Наркотрафик':'social','Социальный процесс':'social'}
 _DOM_DEFAULT={'climate':'Климатический сигнал','economy':'Экономический сигнал','geopolitics':'Геополитический процесс','technology':'Технологический сигнал','social':'Социальный процесс'}
 def _process_name_v2(evs, domain, place):
     blob=' '.join((x.get('title','')+' '+(x.get('summary','') or '')[:60]) for x in evs).lower()
@@ -866,6 +875,11 @@ def _build_one_signal(evs, meta=None):
         place=macro; place_iso=None            # многоместное явление одной макрозоны -> имя по региону
     actor,target=_actor_target(evs)
     ptype=_process_type(evs, domains[0])
+    # домен процесса следует ТИПУ, а не объединению возможно-мисклассифицированных событий
+    from collections import Counter as _Ctr
+    _domvote=_Ctr(x.get('domain','') for x in evs if x.get('domain'))
+    primary_domain=_TYPE_DOMAIN.get(ptype) or (_domvote.most_common(1)[0][0] if _domvote else (domains[0] if domains else ''))
+    domains=[primary_domain]+[d for d in domains if d and d!=primary_domain]  # primary первым
     name=f'{ptype} — {place}' if place and place!='Глобально' else ptype
     key_entity=actor or target or ''
     # Task 1: СТАБИЛЬНЫЙ signal_id (тип+место+сущность), не зависит от текста
@@ -892,7 +906,7 @@ def _build_one_signal(evs, meta=None):
     return {'signal_id':signal_id,'title':name,'process_type':ptype,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
         'affected_regions':affected,'included_places':included_places,'included_processes':(meta or {}).get('included_processes',[]),'merged_count':(meta or {}).get('merged_count',1),
-        'domains':domains,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
+        'domains':domains,'primary_domain':primary_domain,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
         'trend':trend,'phase':sig_phase,
         'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
         'persistence':persist,'confidence':conf,'connectivity':conn,'evidence_count':len(evs),
