@@ -1622,26 +1622,34 @@ def _reclass_domain(title, summary, current):
 
 
 # S45: severity = масштаб риска, а не громкость события. Пересчёт до сортировки/квот.
-# === Количественный масштаб бедствия -> пол индекса (аудит калибровки, числа читаются как масштаб) ===
-_DS_NUM_RE = re.compile(r'(\d[\d\u00a0\u202f ]*\d|\d)(?:[.,](\d+))?\s*(млрд|миллиард|млн|миллион|тыс\.?|тысяч[аи]?)?(?![\d])', re.I)
-_DS_PHRASE = {'сотни тысяч':300000,'десятки тысяч':50000,'сотни миллионов':300000000,'миллионы':2000000,'тысячи':3000}
-_DS_KW = {
+# === Количественная калибровка масштаба катастроф v2 (сила явления + площадь + инфраструктура + комбинация) ===
+import re
+
+_DIS_CTX = ('землетряс','наводнен','паводок','подтопл','циклон','тайфун','ураган','шторм','цунами',
+            'оползен','сель','извержен','вулкан','пожар','засух','жара','зной','бедств','катастроф','стихи','смерч','торнадо','ливень')
+
+_NUM_RE = re.compile(r'(\d[\d\u00a0\u202f ]*\d|\d)(?:[.,](\d+))?\s*(млрд|миллиард|млн|миллион|тыс\.?|тысяч[аи]?)?(?![\d])', re.I)
+_PHRASE = {'сотни тысяч':300000,'десятки тысяч':50000,'сотни миллионов':300000000,'миллионы':2000000,'тысячи':3000}
+_KW = {
  'deaths':['погиб','жертв','смерт','унесл','погибш','killed','death','мёртв','тел найд'],
- 'bld':['зданий','здани','домов','дома','строени','сооружени','разрушен','повреждён','повреждены','повреждено','жилых','destroyed','buildings','homes'],
+ 'bld':['зданий','здани','домов','дома','строени','сооружени','разрушен','повреждён','повреждены','повреждено','жилых','сгорел','снесен','destroyed','homes'],
  'inj':['пострадав','раненых','ранены','ранено','травмиров','injured'],
  'evac':['эвакуир','беженц','бездомн','перемещённ','перемещенн','переселенц','без крова','displaced','evacuat','homeless'],
- 'pop':['в зоне','затронул','затронут','подтоплен','млн человек','миллион человек','населени','people affected'],
+ 'pop':['в зоне','затронул','затронут','человек в зоне','млн человек','миллион человек','населени','people affected'],
+ 'infra':['без электричеств','без света','обесточен','отключение электроэнерг','остались без связи','без водоснабж','без отоплен'],
 }
-_DS_FLOORS = {
+_FLOORS = {
  'deaths':[(5000,93),(1000,87),(200,80),(50,72),(10,65)],
  'bld':[(50000,84),(10000,79),(1000,73),(200,66)],
  'inj':[(50000,81),(10000,75),(1000,68)],
  'evac':[(500000,85),(100000,79),(10000,71),(1000,63)],
  'pop':[(5000000,86),(1000000,81),(100000,72)],
+ 'infra':[(1000000,77),(100000,70),(10000,62)],
 }
-def _ds_numbers(text):
+
+def _numbers(text):
     out=[]
-    for m in _DS_NUM_RE.finditer(text):
+    for m in _NUM_RE.finditer(text):
         ip=re.sub(r'\D','',m.group(1) or '')
         if not ip: continue
         n=float(ip)
@@ -1650,33 +1658,84 @@ def _ds_numbers(text):
         if mu.startswith(('млрд','миллиард')): n*=1e9
         elif mu.startswith(('млн','миллион')): n*=1e6
         elif mu.startswith(('тыс','тысяч')): n*=1e3
-        out.append((int(n), m.start(), m.end()))
+        out.append((int(n),m.start(),m.end()))
     return out
-def _disaster_scale_floor(text):
-    """Пол индекса по количественному масштабу катастрофы (0 = нет данных о масштабе)."""
-    low=text.lower()
-    nums=_ds_numbers(low)
-    kw_pos={mt:[(km.start(),km.end()) for k in ks for km in re.finditer(re.escape(k),low)] for mt,ks in _DS_KW.items()}
-    metrics={mt:0 for mt in _DS_KW}
+
+def _metric_floors(low):
+    nums=_numbers(low)
+    kw_pos={mt:[(km.start(),km.end()) for k in ks for km in re.finditer(re.escape(k),low)] for mt,ks in _KW.items()}
+    metrics={mt:0 for mt in _KW}
+    _area_unit=re.compile(r'^\s*(?:кв\.?\s*км|км²|км2|квадратн|гектар|га\b)')
     for (n,ns,ne) in nums:
+        if _area_unit.match(low[ne:ne+14]):   # число площади -> не метрика человеч. потерь
+            continue
         best_mt=None; best_d=25
         for mt,pos in kw_pos.items():
             for (ks,ke) in pos:
-                d=(ns-ke) if ks<ns else (ks-ne)
-                if abs(d)<best_d: best_d=abs(d); best_mt=mt
+                d=abs((ns-ke) if ks<ns else (ks-ne))
+                if d<best_d: best_d=d; best_mt=mt
         if best_mt: metrics[best_mt]=max(metrics[best_mt],n)
-    for ph,val in _DS_PHRASE.items():
+    for ph,val in _PHRASE.items():
         for pm in re.finditer(re.escape(ph),low):
             best_mt=None; best_d=17
             for mt,pos in kw_pos.items():
                 for (ks,ke) in pos:
                     if ks>=pm.end() and (ks-pm.end())<best_d: best_d=ks-pm.end(); best_mt=mt
             if best_mt: metrics[best_mt]=max(metrics[best_mt],val)
-    floor=0
+    out=[]
     for mt,val in metrics.items():
-        for thr,fl in _DS_FLOORS[mt]:
-            if val>=thr: floor=max(floor,fl); break
-    return floor
+        for thr,fl in _FLOORS[mt]:
+            if val>=thr: out.append(fl); break
+    return out
+
+def _intensity_floor(low):
+    fl=0
+    mags=[]
+    for mm in re.finditer(r'магнитуд\w*\s*([4-9](?:[.,]\d)?)', low): mags.append(float(mm.group(1).replace(',','.')))
+    for mm in re.finditer(r'\bm\s?([4-9](?:[.,]\d)?)\b', low): mags.append(float(mm.group(1).replace(',','.')))
+    for mm in re.finditer(r'([4-9](?:[.,]\d))\s*балл', low): mags.append(float(mm.group(1).replace(',','.')))
+    if mags:
+        M=max(mags)
+        fl=max(fl, 80 if M>=8 else 72 if M>=7 else 58 if M>=6 else 46)
+    cats=[]
+    for mm in re.finditer(r'категори\w*\s*([1-5])', low): cats.append(int(mm.group(1)))
+    for mm in re.finditer(r'([1-5])\s*категори', low): cats.append(int(mm.group(1)))
+    if cats and any(w in low for w in ('ураган','тайфун','циклон','шторм')):
+        C=max(cats)
+        fl=max(fl, 76 if C>=5 else 70 if C==4 else 62 if C==3 else 50)
+    if 'цунами' in low and any(w in low for w in ('угроз','предупрежд','объявлен','опасност')):
+        fl=max(fl,68)
+    if 'изверж' in low:
+        fl=max(fl,55)
+    return fl
+
+def _area_floor(low):
+    best=0
+    for mm in re.finditer(r'(\d[\d\u00a0\u202f ]*\d|\d)\s*(?:кв\.?\s*км|км²|км2|квадратн\w* километр)', low):
+        best=max(best,int(re.sub(r'\D','',mm.group(1))))
+    for mm in re.finditer(r'(\d[\d\u00a0\u202f ]*\d|\d)\s*(?:гектар|га\b)', low):
+        best=max(best,int(re.sub(r'\D','',mm.group(1)))//100)
+    return 78 if best>=50000 else 70 if best>=5000 else 60 if best>=500 else 48 if best>=50 else 0
+
+_NEG=('жертв нет','без жертв','обошлось без жертв','погибших нет','пострадавших нет','повреждений нет','разрушений нет','никто не пострадал','жертв и разрушений нет')
+def _disaster_scale_floor(text):
+    low=text.lower()
+    if not any(w in low for w in _DIS_CTX): return 0
+    mf=_metric_floors(low)
+    inten=_intensity_floor(low); area=_area_floor(low)
+    floors=list(mf)
+    if inten: floors.append(inten)
+    if area: floors.append(area)
+    if not floors: return 0
+    # гард: явно нет ущерба и нет человеч. метрик -> слабое явление не поднимаем выше умеренного
+    if any(g in low for g in _NEG) and not mf and inten < 70 and area < 60:
+        return min(max(floors), 50)
+    base=max(floors)
+    sig=[f for f in floors if f>=60]
+    if len(sig)>=3: base=min(96, base+9)
+    elif len(sig)>=2: base=min(94, base+5)
+    return base
+
 
 
 def _recompute_severity(ev):
