@@ -847,6 +847,11 @@ def _build_one_signal(evs):
         _p=_process_place(x); k=_p['place']; _pp_votes[k]=(_pp_votes.get(k,(0,_p))[0]+1,_p)
     _pp=sorted(_pp_votes.values(),key=lambda kv:-kv[0])[0][1]
     place=_pp['place']; place_iso=_pp['iso']; macro=_pp['macro']
+    _distinct=[k for k in _pp_votes if k not in ('Глобально','')]
+    _macros=set(v[1]['macro'] for v in _pp_votes.values() if v[1]['macro'])
+    included_places=sorted(_distinct)
+    if len(_distinct)>=2 and len(_macros)==1 and macro and macro!='Глобально':
+        place=macro; place_iso=None            # многоместное явление одной макрозоны -> имя по региону
     actor,target=_actor_target(evs)
     ptype=_process_type(evs, domains[0])
     name=f'{ptype} — {place}' if place and place!='Глобально' else ptype
@@ -874,7 +879,7 @@ def _build_one_signal(evs):
     geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
     return {'signal_id':signal_id,'title':name,'process_type':ptype,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
-        'affected_regions':affected,
+        'affected_regions':affected,'included_places':included_places,
         'domains':domains,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
         'trend':trend,'phase':sig_phase,
         'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
@@ -884,14 +889,57 @@ def _build_one_signal(evs):
         'geo_consistent':geo_ok,'geo_issues':geo_issues,
         'first_seen':_first,'last_update':_last}
 
-def build_signals(events):
-    signals=[]
-    for evs in _cluster(events):
-        parts=_split_check(evs)                    # Task 4: защита от ошибочного объединения
-        if parts and len(parts)>1:
-            for g in parts: signals.append(_build_one_signal(g))
+# ── ВТОРОЙ УРОВЕНЬ КЛАСТЕРИЗАЦИИ: макропроцесс ─────────────────────────────────
+# Объединяет связанные процессы одного типа в единой макро-зоне при временной
+# близости. Разные макрозоны НЕ сливаются (Венесуэла/Танзания/Ирак = 3 процесса).
+_SPREADING={'Тепловая волна','Пожарная активность','Наводнение','Водный дефицит',
+ 'Военные удары','Сейсмическая активность','Похолодание','Санкционное давление'}
+
+def _cluster_place(evs):
+    votes={}
+    for x in evs:
+        p=_process_place(x); k=p['place']; votes[k]=(votes.get(k,(0,p))[0]+1,p)
+    return sorted(votes.values(),key=lambda kv:-kv[0])[0][1]
+
+def _dates_close(evs, days):
+    ds=sorted(x.get('date','') for x in evs if x.get('date'))
+    if len(ds)<2: return True
+    try:
+        a=datetime.strptime(ds[0][:10],'%Y-%m-%d'); b=datetime.strptime(ds[-1][:10],'%Y-%m-%d')
+        return (b-a).days<=days
+    except Exception: return True
+
+def _macro_merge_clusters(clusters):
+    """Группировка кластеров-событий: тип+макрозона (для распространяющихся явлений)
+    или тип+место (для локальных). Слияние только при >=2 кластерах И временной близости."""
+    groups={}
+    for evs in clusters:
+        if not evs: continue
+        dom=sorted(set(e.get('domain','') for e in evs))[0]
+        typ=_process_type(evs, dom); pp=_cluster_place(evs)
+        if typ in _SPREADING and pp['macro'] and pp['macro']!='Глобально':
+            key=('M',typ,pp['macro'])       # макро-уровень: явление в регионе
         else:
-            signals.append(_build_one_signal(evs))
+            key=('P',typ,pp['place'])       # место-уровень: тот же тип в том же месте
+        groups.setdefault(key,[]).append(evs)
+    out=[]
+    for key,grp in groups.items():
+        if len(grp)>=2:
+            combined=[e for evs in grp for e in evs]
+            win=14 if key[0]=='M' else 30
+            if _dates_close(combined, win):
+                out.append(combined); continue
+        out.extend(grp)
+    return out
+
+def build_signals(events):
+    clusters=[]
+    for evs in _cluster(events):
+        parts=_split_check(evs)                    # защита от ошибочного объединения
+        if parts and len(parts)>1: clusters.extend(parts)
+        else: clusters.append(evs)
+    clusters=_macro_merge_clusters(clusters)       # ВТОРОЙ УРОВЕНЬ: макропроцессы
+    signals=[_build_one_signal(evs) for evs in clusters]
     signals.sort(key=lambda s:-s['priority'])
     return signals
 
