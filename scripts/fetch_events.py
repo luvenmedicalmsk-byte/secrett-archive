@@ -1614,6 +1614,9 @@ def _reclass_domain(title, summary, current):
     _clim_eco = (('токсичн' in b or 'загрязн' in b or 'разлив' in b) and ('рек' in b or 'вод' in b or 'нефт' in b or 'воздух' in b or 'почв' in b)) or 'экологическ катастроф' in b or 'экологическ бедств' in b
     if current in ('geopolitics','economy','social') and (_clim_heat or _clim_eco) and not any(w in b for w in ('война','войну','ракетн','санкц','удар по','спецоперац','госпереворот','боевик','наступлени')):
         return 'climate'
+    _natdis = any(w in b for w in ('землетрясен','землетряс','наводнен','паводок','цунами','извержен','вулкан','оползен','сель сош','ураган','тайфун','циклон','торнадо','смерч'))
+    if current in ('geopolitics','economy','social') and _natdis and not any(w in b for w in ('ракетн','ракету','удар по','обстрел','спецоперац','наступлени','боевик','санкц','госпереворот','теракт','диверси','взрыв заложен','политическ землетряс')):
+        return 'climate'
     scores = {d: sum(1 for w in ws if w in b) for d, ws in _DOMAIN_VOCAB.items()}
     best = max(scores, key=scores.get)
     if best != current and scores[best] >= 1 and scores[best] > scores.get(current, 0):
@@ -1663,6 +1666,13 @@ def _numbers(text):
 
 def _metric_floors(low):
     nums=_numbers(low)
+    _death_extra=0
+    for _m in re.finditer(r'(?:жертв|погибш\w*|погибл\w*)[^.]{0,50}?(?:возрос\w*|достиг\w*|увеличил\w*|поднял\w*|составил\w*|превысил\w*|вырос\w*)\D{0,14}(\d[\d\u00a0\u202f ]*\d|\d)\s*(тыс\.?|тысяч|млн|миллион)?', low):
+        _n=int(re.sub(r'\D','',_m.group(1)))
+        _mu=_m.group(2) or ''
+        if _mu.startswith('тыс'): _n*=1000
+        elif _mu.startswith(('млн','миллион')): _n*=1000000
+        _death_extra=max(_death_extra,_n)
     kw_pos={mt:[(km.start(),km.end()) for k in ks for km in re.finditer(re.escape(k),low)] for mt,ks in _KW.items()}
     metrics={mt:0 for mt in _KW}
     _area_unit=re.compile(r'^\s*(?:кв\.?\s*км|км²|км2|квадратн|гектар|га\b)')
@@ -1682,6 +1692,8 @@ def _metric_floors(low):
                 for (ks,ke) in pos:
                     if ks>=pm.end() and (ks-pm.end())<best_d: best_d=ks-pm.end(); best_mt=mt
             if best_mt: metrics[best_mt]=max(metrics[best_mt],val)
+    if _death_extra > metrics.get('deaths',0):
+        metrics['deaths']=_death_extra
     out=[]
     for mt,val in metrics.items():
         for thr,fl in _FLOORS[mt]:
@@ -7405,7 +7417,7 @@ def _signal_quality_pass(events):
                 try:
                     _dm = e.get('domain') or ''
                     _bt = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
-                    if _dm in ('climate','social','technology') and any(_w in _bt for _w in ('землетряс','наводнен','паводок','циклон','тайфун','ураган','шторм','цунами','оползен','сель','извержен','вулкан','катастроф','бедств','разрушен','погиб','эвакуир','пострадав')):
+                    if _dm in ('climate','social','technology','geopolitics') and any(_w in _bt for _w in ('землетряс','наводнен','паводок','циклон','тайфун','ураган','шторм','цунами','оползен','сель','извержен','вулкан','катастроф','бедств','разрушен','погиб','эвакуир','пострадав')):
                         _fl = _disaster_scale_floor(_bt)
                         if _fl and _fl > (e.get('severity') or 0):
                             e['severity'] = _fl
