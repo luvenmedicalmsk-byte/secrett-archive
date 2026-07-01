@@ -10023,8 +10023,8 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   if(window.__grdfProcInit) return; window.__grdfProcInit=true;
   var SIG_URL='https://raw.githubusercontent.com/luvenmedicalmsk-byte/secrett-archive/main/docs/signals.json';
   var _data=null,_loaded=false,_mode='events',_byId={},_explEl=null;
-  var PHASE_RU={emerging:'Зарождение',growing:'Рост',active:'Активный',escalating:'Эскалация',stabilizing:'Стабилизация','de-escalating':'Деэскалация',dormant:'Спящий',archived:'Архив'};
-  var HEALTH_RU={Healthy:'Здоровый',Stable:'Стабильный',Escalating:'Эскалация',Critical:'Критический',Dormant:'Спящий',Archived:'Архив'};
+  var PHASE_RU={emerging:'Зарождение',growing:'Рост',active:'Активный',escalating:'Усиление',stabilizing:'Стабилизация','de-escalating':'Деэскалация',dormant:'Спящий',archived:'Архив'};
+  var HEALTH_RU={Healthy:'Здоровый',Stable:'Стабильный',Escalating:'Усиление',Critical:'Критический',Dormant:'Спящий',Archived:'Архив'};
   var ROLE_RU={measurement:'Измерительный',state:'Государственный',intl:'Междунар. орг.',science:'Научный',financial:'Финансовый',agency:'Агентство',osint:'OSINT',telegram:'Telegram'};
   var CONF_RU={single:'одиночное',confirmed:'подтверждён',high:'высокое',unconfirmed:'неподтверждён',stale:'устаревшее',verified:'верифицирован'};
   var DOM_RU={climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
@@ -10037,12 +10037,12 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   function scol(v){ try{ if(window._sevColor) return window._sevColor(v); }catch(e){} v=+v||0; return v>=90?'#E24A3B':v>=75?'#FFD700':v>=60?'#FFA07A':v>=40?'#A89150':'#D8D8D8'; }
   function procState(s){ var h=s.health,ph=s.phase,st=s.status;
     if(h==='Critical') return 'Критический';
-    if(h==='Escalating'||ph==='escalating') return 'Эскалация';
+    if(h==='Escalating'||ph==='escalating') return 'Усиление';
     if(ph==='growing') return 'Рост';
     if(ph==='de-escalating') return 'Ослабление';
     if(st==='dormant'||st==='fading'||st==='archived'||h==='Dormant'||h==='Archived'||ph==='dormant'||ph==='archived') return 'Затухание';
     return 'Стабильный'; }
-  function stColor(x){ return {'Критический':'#E24A3B','Эскалация':'#FFD700','Рост':'#FFA07A','Ослабление':'#A89150','Затухание':'#6b7280','Стабильный':'#A89150'}[x]||'#A89150'; }
+  function stColor(x){ return {'Критический':'#E24A3B','Усиление':'#FFD700','Рост':'#FFA07A','Ослабление':'#A89150','Затухание':'#6b7280','Стабильный':'#A89150'}[x]||'#A89150'; }
   function hcol(h){ return {Critical:'#E24A3B',Escalating:'#FFD700',Healthy:'#FFA07A',Stable:'#A89150',Dormant:'#6b7280',Archived:'#6b7280'}[h]||'#A89150'; }
   function isPro(){ try{ var t=(window.CC&&CC.tier&&CC.tier())||'free'; return !!(t&&t!=='free'); }catch(e){ return false; } }
   function ago(iso){ if(!iso) return '—'; var d=(Date.now()-new Date(iso).getTime())/1000; if(d<0) return 'только что'; if(d<3600) return Math.max(1,Math.round(d/60))+' мин назад'; if(d<86400) return Math.round(d/3600)+' ч назад'; return Math.round(d/86400)+' дн назад'; }
@@ -10171,7 +10171,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       dash='<div style="display:flex;gap:0;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.12);flex-wrap:wrap">'
         +gcell('Давление',Math.round(g.global_pressure),scol(g.global_pressure),pc!=null?(pc>=0?'▲ +'+pc+'%':'▼ '+pc+'%'):'')
         +gcell('Активные',g.active_processes||0,'#e8e4dc','')
-        +gcell('Эскалация',g.escalating_processes||0,g.escalating_processes?'#FFD700':'#e8e4dc','')
+        +gcell('Усиление',g.escalating_processes||0,g.escalating_processes?'#FFD700':'#e8e4dc','')
         +gcell('Критические',g.critical_processes||0,g.critical_processes?'#E24A3B':'#e8e4dc','')
         +gcell('Наблюдение',g.watchlist_count||0,g.watchlist_count?'#B8973A':'#e8e4dc','')
         +'</div>';
@@ -10229,7 +10229,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="c"><div class="k">Ускорение</div><div class="v">'+((s.acceleration>0?'+':'')+(s.acceleration||0))+'</div></div>'
       +'<div class="c"><div class="k">Состояние</div><div class="v" style="font-size:14px;color:'+stColor(procState(s))+'">'+procState(s)+'</div></div></div>'
       +'<div class="gd-cl">Прогноз следующего шага</div>'
-      +[['Эскалация',fc.escalation,'#FFD700'],['Стабилизация',fc.stabilization,'#1faacc'],['Распад',fc.decay,'#6b7280']].map(function(f){ return '<div class="gd-fb"><span class="l">'+f[0]+'</span><span class="t"><i style="width:'+Math.round((f[1]||0)*100)+'%;background:'+f[2]+'"></i></span><span class="v">'+Math.round((f[1]||0)*100)+'%</span></div>'; }).join('')
+      +[['Усиление',fc.escalation,'#FFD700'],['Стабилизация',fc.stabilization,'#1faacc'],['Распад',fc.decay,'#6b7280']].map(function(f){ return '<div class="gd-fb"><span class="l">'+f[0]+'</span><span class="t"><i style="width:'+Math.round((f[1]||0)*100)+'%;background:'+f[2]+'"></i></span><span class="v">'+Math.round((f[1]||0)*100)+'%</span></div>'; }).join('')
       +(s.critical_transition?'<p style="color:#FFD700;font-size:11px;margin-top:8px">⚠ Признаки критического перехода</p>':'')+'</div>';
     // Хроника
     if(s.timeline&&s.timeline.length){ H+='<div class="gd-sec"><div class="gd-sh">Хроника</div><div class="gd-tl">'
