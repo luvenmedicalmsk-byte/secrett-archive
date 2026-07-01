@@ -10172,7 +10172,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     return '<div class="gpc" data-id="'+esc(s.signal_id)+'">'
       +'<div class="gpc-edge" style="background:'+hcol(s.health)+'"></div>'
       +(s.watchlist?'<div class="gpc-watch">◆ НАБЛЮДЕНИЕ</div>':'')
-      +'<div class="gpc-type"><span>'+esc(s.process_type||(s.domains||[]).map(function(d){return DOM_RU[d]||d;}).join('/'))+'</span></div>'
+      +'<div class="gpc-type"><span>'+esc((s.domains||[]).map(function(d){return DOM_RU[d]||d;}).join(' · ')||'—')+'</span></div>'
       +'<div class="gpc-title">'+esc(s.title)+'</div>'
       +'<div class="gpc-place">'+esc(s.process_place||'—')+(s.actor?' · '+esc(s.actor)+(s.target?' → '+esc(s.target):''):'')+'</div>'
       +'<div class="gpc-m">'+mi('Приоритет',pr)+mi('Тяжесть',sv)+mi('Давление',pe)+'</div>'
@@ -10198,7 +10198,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     var g=s.dna||{}, fc=s.forecast||{}, v=s.velocity||{}, ce=s.confidence_evolution||{}, ex=s.explain||{};
     var am=s.atlas_memory, rec=s.recurrence, sim=s.similar_processes||[];
     var H='<div class="gd-head"><div class="gd-x" onclick="grdfProcCloseDetail()">✕</div>'
-      +'<div class="gd-type">'+esc(s.process_type||'')+(s.watchlist?' · ◆ наблюдение':'')+'</div>'
+      +'<div class="gd-type">'+esc((s.domains||[]).map(function(d){return DOM_RU[d]||d;}).join(' · ')||'—')+(s.watchlist?' · ◆ наблюдение':'')+'</div>'
       +'<h2>'+esc(s.title)+'</h2><div class="gd-place">'+esc(s.process_place||'')+'</div></div>';
     // Сводка
     H+='<div class="gd-sec"><div class="gd-sh">Сводка</div>'
