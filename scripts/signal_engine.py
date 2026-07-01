@@ -6,6 +6,139 @@ import json, re, math, hashlib
 from collections import Counter
 from datetime import datetime, timezone
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Signal Engine v1.2 — семантическая модель процесса
+# ══════════════════════════════════════════════════════════════════════════════
+import re as _re
+
+# газетир: стем -> (каноническое имя, ISO|None, макрорегион)
+_GAZ = {
+ 'монако':('Монако',None,'Европа'),'бахрейн':('Бахрейн','BH','Персидский залив'),
+ 'катар':('Катар','QA','Персидский залив'),'персидск':('Персидский залив',None,'Персидский залив'),
+ 'калифорнийск зал':('Калифорнийский залив','MX','Северная Америка'),
+ 'москв':('Москва','RU','Европа'),'петербург':('Санкт-Петербург','RU','Европа'),'киев':('Киев','UA','Европа'),
+ 'екатеринбург':('Екатеринбург','RU','Азия'),'красноярск':('Красноярск','RU','Азия'),'калининград':('Калининградская область','RU','Европа'),
+ 'славянск':('Славянск','UA','Европа'),'штаде':('Штаде','DE','Европа'),'бийск':('Бийск','RU','Азия'),
+ 'россия':('Россия','RU','Европа'),'украин':('Украина','UA','Европа'),'сша':('США','US','Северная Америка'),
+ 'иран':('Иран','IR','Ближний Восток'),'израил':('Израиль','IL','Ближний Восток'),'германи':('Германия','DE','Европа'),
+ 'франци':('Франция','FR','Европа'),'турци':('Турция','TR','Ближний Восток'),'инди':('Индия','IN','Южная Азия'),
+ 'китай':('Китай','CN','Восточная Азия'),'япони':('Япония','JP','Восточная Азия'),'венесуэл':('Венесуэла','VE','Южная Америка'),
+ 'танзани':('Танзания','TZ','Африка'),'ирак':('Ирак','IQ','Ближний Восток'),'судан':('Судан','SD','Африка'),
+ 'мексик':('Мексика','MX','Северная Америка'),'пакистан':('Пакистан','PK','Южная Азия'),'мьянм':('Мьянма','MM','Юго-Восточная Азия'),
+ 'грузи':('Грузия','GE','Ближний Восток'),'армени':('Армения','AM','Ближний Восток'),'черногори':('Черногория','ME','Европа'),
+ 'латви':('Латвия','LV','Европа'),'канад':('Канада','CA','Северная Америка'),'испани':('Испания','ES','Европа'),
+ 'португали':('Португалия','PT','Европа'),'швейцари':('Швейцария','CH','Европа'),'великобритани':('Великобритания','GB','Европа'),
+ 'флорид':('Флорида','US','Северная Америка'),'техас':('Техас','US','Северная Америка'),'бельги':('Бельгия','BE','Европа'),
+ 'европ':('Европа',None,'Европа'),'арктик':('Арктика',None,'Арктика'),'антарктик':('Антарктика',None,'Антарктика'),
+ 'алтайск':('Алтайский край','RU','Азия'),'краснодарск':('Краснодарский край','RU','Европа'),'туапс':('Туапсе','RU','Европа'),
+}
+_ISO_COUNTRY = {'RU':'Россия','US':'США','GB':'Великобритания','UA':'Украина','IR':'Иран','IL':'Израиль',
+ 'DE':'Германия','FR':'Франция','TR':'Турция','IN':'Индия','CN':'Китай','JP':'Япония','VE':'Венесуэла',
+ 'TZ':'Танзания','IQ':'Ирак','SD':'Судан','MX':'Мексика','PK':'Пакистан','MM':'Мьянма','GE':'Грузия',
+ 'AM':'Армения','ME':'Черногория','LV':'Латвия','CA':'Канада','ES':'Испания','PT':'Португалия',
+ 'CH':'Швейцария','BH':'Бахрейн','QA':'Катар','KP':'КНДР','BY':'Беларусь','CY':'Кипр','ID':'Индонезия','CD':'ДР Конго'}
+_ISO_RU = _ISO_COUNTRY
+_ISO_MACRO = {v[1]:v[2] for v in _GAZ.values() if v[1]}
+
+def _gaz_lookup(word):
+    w=word.lower()
+    for stem,(ru,iso,macro) in _GAZ.items():
+        if w.startswith(stem[:6]) or stem.split()[0] in w: return (ru,iso,macro)
+    return None
+
+# Task 2: канонический process_place — по МЕСТУ процесса (локатив), не по актору/цели
+_LOCATIVE = _re.compile(r'(?:^|\s)(?:[Вв]о?|[Нн]а|[Уу] берегов|[Уу] побережья|[Бб]лиз)\s+([А-ЯЁ][а-яёА-ЯЁ\- ]{2,20}?)(?=[\s,\.\)]|$)')
+def _process_place(e):
+    title=(e.get('title') or '')
+    # 1) место события — первый локатив, разрешимый в газетире
+    for m in _LOCATIVE.finditer(title):
+        cand=m.group(1).strip()
+        for token in [cand]+cand.split():
+            hit=_gaz_lookup(token)
+            if hit: return {'place':hit[0],'iso':hit[1],'macro':hit[2],'via':'locative'}
+    # 2) область/специфичное место из региона (штат/город) — приоритет выше страны (Флорида > США)
+    reg=(e.get('region') or '').strip()
+    if reg and reg not in ('Глобально',''):
+        hit=_gaz_lookup(reg.split(',')[0].split('(')[0].strip())
+        if hit and hit[1]:  # разрешилось в конкретное место
+            return {'place':hit[0],'iso':hit[1],'macro':hit[2],'via':'region-area'}
+    # 3) event_country (физическая страна события)
+    ec=e.get('event_country')
+    if ec and ec in _ISO_RU: return {'place':_ISO_RU[ec],'iso':ec,'macro':_ISO_MACRO.get(ec,''),'via':'event_country'}
+    # 4) регион-макро
+    if reg and reg not in ('Глобально',''):
+        return {'place':reg.split('(')[0].strip(),'iso':None,'macro':reg,'via':'region'}
+    # 5) primary_country
+    pc=e.get('primary_country')
+    if pc and pc in _ISO_RU: return {'place':_ISO_RU[pc],'iso':pc,'macro':_ISO_MACRO.get(pc,''),'via':'primary'}
+    return {'place':'Глобально','iso':None,'macro':'Глобально','via':'global'}
+
+# Task 1: actor / target (эвристика по действию)
+_W=r'([А-ЯЁ][а-яёА-ЯЁ]+)'
+_ACTOR_PAT=[_re.compile(r'удар\w*\s+(?:со стороны\s+)?'+_W),_re.compile(r'атак\w*\s+'+_W),
+ _re.compile(_W+r'\s+(?:нанесл?а?|атаков|ударил|обстрел|вторгл)'),_re.compile(r'со стороны\s+'+_W)]
+_TARGET_PAT=[_re.compile(r'(?:удар\w*|атак\w*)\s+по\s+'+_W),_re.compile(r'против\s+'+_W),
+ _re.compile(r'баз\w*\s+'+_W),_re.compile(r'на\s+'+_W+r'\s+(?:напал|обрушил)')]
+def _extract_role(title, pats):
+    for p in pats:
+        m=p.search(title)
+        if m:
+            hit=_gaz_lookup(m.group(1))
+            if hit: return hit[0]
+    return None
+def _actor_target(evs):
+    for e in sorted(evs,key=lambda x:-x.get('severity',0)):
+        t=e.get('title') or ''
+        a=_extract_role(t,_ACTOR_PAT); tg=_extract_role(t,_TARGET_PAT)
+        if a or tg: return a, tg
+    return None, None
+
+# Task 3: аналитическое имя процесса = {тип процесса} — {process_place}
+_PROC_TYPE=[(r'продаж|ритейл|розничн|магазин|дивиденд','Розничная торговля'),
+ (r'закон|нулев\w+ выброс|климатическ политик','Климатическая политика'),
+ (r'самолет|самолёт|авиа|беспилотник.{0,20}посад','Авиационный инцидент'),
+ (r'землетряс|магнитуд|сейсм','Сейсмическая активность'),(r'пожар|возгоран|очаг','Пожарная активность'),
+ (r'наводн|паводок|разлив рек','Наводнение'),(r'жара|тепловой удар|тепловая волна','Тепловая волна'),
+ (r'маловод|засух','Водный дефицит'),(r'отключен\w* интернет|падение интернет|аномалия трафик','Отключение интернета'),
+ (r'уязвим|\bcve\b','Уязвимость ПО'),(r'фишинг','Фишинговая кампания'),(r'кибератак|хакер|вредонос|киберпреступ','Киберугроза'),
+ (r'покушени|подрыв','Покушение'),(r'удар\w* по|обстрел|ракет|бпла|пво|боевы','Военные удары'),
+ (r'санкц','Санкционное давление'),(r'\bвиз\b|въезд в европ|запрет на выдач','Визовые ограничения'),
+ (r'топлив|бензин|нефтебаз','Топливный рынок'),(r'рубл|валют|доллар|обменн курс','Валютный рынок'),
+ (r'инфляц','Инфляция'),(r'мигра|миграцион','Миграционная политика'),(r'лихорадк|заболеван|эпидем|воз ','Эпидемиологический риск'),
+ (r'кокаин|наркот|контрабанд','Наркотрафик'),(r'дрон.{0,15}завод|производств дрон','Оборонное производство')]
+_DOM_DEFAULT={'climate':'Климатический сигнал','economy':'Экономический сигнал','geopolitics':'Геополитический процесс','technology':'Технологический сигнал','social':'Социальный процесс'}
+def _process_name_v2(evs, domain, place):
+    blob=' '.join((x.get('title','')+' '+(x.get('summary','') or '')[:60]) for x in evs).lower()
+    ptype=None
+    for pat,name in _PROC_TYPE:
+        if _re.search(pat,blob): ptype=name; break
+    if not ptype: ptype=_DOM_DEFAULT.get(domain,'Сигнал')
+    return f'{ptype} — {place}' if place and place!='Глобально' else ptype
+
+# Task 4: phase на уровне процесса (не из статьи)
+def _signal_phase(evidence_count, first_seen, last_update, sev_delta, trend, count_7d, base_phase='active'):
+    """Фаза на уровне процесса: динамика (тренд/дельта/подтверждения/устойчивость)
+    поверх базовой фазы статьи. Лайфцикл: emerging->growing->active->escalating->stabilizing->de-escalating."""
+    tr=str(trend or '').lower(); bp=str(base_phase or '').lower()
+    rising = tr in ('rising','accelerating','up','escalating')
+    falling= tr in ('falling','down','de-escalating','decelerating')
+    persist = max(count_7d or 0, evidence_count)
+    if rising and (sev_delta or 0)>0:        return 'escalating'     # растёт + severity вверх
+    if falling or bp=='de-escalating':        return 'de-escalating'  # гаснет
+    if persist>=5 or bp=='chronic':           return 'active'         # устойчивый/хронический процесс
+    if not rising and (sev_delta or 0)<0 and persist>=2: return 'stabilizing'
+    if evidence_count>=2:                      return 'growing'        # набирает подтверждения
+    if bp=='active':                           return 'active'
+    return 'emerging'
+
+# Task 5: гео-согласованность
+def _geo_consistent(place_iso, country_codes, macro, regions):
+    issues=[]
+    if place_iso and country_codes and place_iso not in country_codes and len(country_codes)==1:
+        issues.append(f'process_place ISO {place_iso} не входит в country_codes {country_codes}')
+    return (len(issues)==0), issues
+
+
 _ROLE = {'measurement':['USGS','EMSC','NASA FIRMS','NSIDC','Open-Meteo','GDACS','Copernicus','GLOFAS','IODA','Cloudflare Radar'],
  'state':['Банк России','Росгидромет','CISA','Роспотребнадзор','MGM','CBRT'],'intl':['UN News','WHO','ReliefWeb','WFP'],
  'science':['Inside Climate','Sentinel'],'financial':['Bloomberg','T Live'],
@@ -149,8 +282,16 @@ def build_signals(events):
         np_=min(1.0, math.log1p(persist)/math.log1p(10)); nc_=min(1.0, len(conn)/3.0)
         priority=int(max(0,min(100,round(sev*(1+0.15*_rising(trend)+0.10*np_+0.12*nc_)*conf_f))))
         domains=sorted(set(x.get('domain','') for x in evs))
-        place=_primary_place(evs)
-        name=_process_name(evs, domains, place)
+        # v1.2: семантика процесса — process_place по МЕСТУ (локатив), actor/target раздельно
+        _lead=max(evs,key=lambda x:x.get('severity',0))
+        _pp_votes={}
+        for x in evs:
+            _p=_process_place(x); _pp_votes[_p['place']]=_pp_votes.get(_p['place'],(0,_p))
+            _pp_votes[_p['place']]=(_pp_votes[_p['place']][0]+1,_p)
+        _pp=sorted(_pp_votes.values(),key=lambda kv:-kv[0])[0][1]
+        place=_pp['place']; place_iso=_pp['iso']; macro=_pp['macro']
+        actor,target=_actor_target(evs)
+        name=_process_name_v2(evs, domains[0], place)
         # PROCESS-ID: вокруг процесса (домен:локация:топик), НЕ вокруг текста
         topic_stems=[w for w,_ in Counter(sum((list(_stems(x)) for x in evs),[])).most_common(3)]
         pid_raw=f"{domains[0]}:{place or 'global'}:{'_'.join(sorted(topic_stems))}"
@@ -161,13 +302,20 @@ def build_signals(events):
         evidence=[{'title':x.get('title',''),'source':x.get('source',''),'role':_role(x.get('source')),
                    'date':x.get('date',''),'severity':x.get('severity',0),'is_trigger':_role(x.get('source'))=='telegram'}
                   for x in sorted(evs,key=lambda x:-x.get('severity',0))]
-        signals.append({'signal_id':signal_id,'title':name,'process_place':place,
+        _first=dates[0] if dates else ''; _last=dates[-1] if dates else ''
+        sig_phase=_signal_phase(len(evs), _first, _last, top.get('severity_delta',0), trend, persist, top.get('phase','active'))
+        affected=sorted(set([macro]+[r for r in regions if r])-{''}) if macro else regions
+        geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
+        signals.append({'signal_id':signal_id,'title':name,
+            'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
+            'affected_regions':affected,
             'domains':domains,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
-            'trend':trend,'phase':top.get('phase','active'),
+            'trend':trend,'phase':sig_phase,
             'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
             'persistence':persist,'confidence':conf,'connectivity':conn,'evidence_count':len(evs),
             'evidence':evidence,'history':{'severity_delta':top.get('severity_delta',0)},
-            'first_seen':dates[0] if dates else '','last_update':dates[-1] if dates else ''})
+            'geo_consistent':geo_ok,'geo_issues':geo_issues,
+            'first_seen':_first,'last_update':_last})
     signals.sort(key=lambda s:-s['priority'])
     return signals
 
