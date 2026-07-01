@@ -2,32 +2,32 @@
   "country": "IN",
   "date": "2026-07-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-01T00:07:52.266657+00:00",
+  "generated_at": "2026-07-01T02:58:23.283682+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 57,
+      "score": 58,
       "props": {
-        "risk_score": 57
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 33,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -80,18 +80,18 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Армия_созд",
+      "id": "SIGNAL-IN-Напряженно",
       "type": "Signal",
-      "label": "Армия создает специализированные 'Бааз б",
-      "severity": 62,
+      "label": "Напряженность на границе Манипура, когда",
+      "severity": 64,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IN-Война_в_За",
+      "id": "SIGNAL-IN-Премьер-ми",
       "type": "Signal",
-      "label": "Война в Западной Азии в прямом эфире: Ир",
-      "severity": 56,
-      "domain": "geopolitical"
+      "label": "Премьер-министр Великобритании Киир Стар",
+      "severity": 57,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-IN-Власти_Нью",
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IN",
@@ -163,16 +163,37 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IN-Армия_созд",
-      "to": "DOMAIN-IN-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IN-Война_в_За",
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-Напряженно",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-IN-Премьер-ми",
+      "to": "DOMAIN-IN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.57
     },
     {
       "from": "SIGNAL-IN-Власти_Нью",
