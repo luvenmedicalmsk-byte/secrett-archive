@@ -2,60 +2,60 @@
   "country": "IN",
   "date": "2026-07-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-01T07:25:20.920584+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-07-01T07:57:05.807861+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 49,
+      "score": 52,
       "props": {
-        "risk_score": 49
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 20,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Продажи_Pr",
+      "type": "Signal",
+      "label": "Продажи Primark падают, так как AB Foods",
+      "severity": 53,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-IN-Власти_Нью",
       "type": "Signal",
       "label": "Власти Нью-Дели повысили уровень безопас",
@@ -92,13 +99,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IN",
@@ -147,6 +154,33 @@
       "to": "COUNTRY-IN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-Продажи_Pr",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-IN-Власти_Нью",
