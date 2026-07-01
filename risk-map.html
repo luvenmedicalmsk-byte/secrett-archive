@@ -10035,14 +10035,8 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     if(map[l]) return map[l];
     return src.charAt(0).toUpperCase()+src.slice(1); }
   function scol(v){ try{ if(window._sevColor) return window._sevColor(v); }catch(e){} v=+v||0; return v>=90?'#E24A3B':v>=75?'#FFD700':v>=60?'#FFA07A':v>=40?'#A89150':'#D8D8D8'; }
-  function procState(s){ var h=s.health,ph=s.phase,st=s.status;
-    if(h==='Critical') return 'Критический';
-    if(h==='Escalating'||ph==='escalating') return 'Усиление';
-    if(ph==='growing') return 'Рост';
-    if(ph==='de-escalating') return 'Ослабление';
-    if(st==='dormant'||st==='fading'||st==='archived'||h==='Dormant'||h==='Archived'||ph==='dormant'||ph==='archived') return 'Затухание';
-    return 'Стабильный'; }
-  function stColor(x){ return {'Критический':'#E24A3B','Усиление':'#FFD700','Рост':'#FFA07A','Ослабление':'#A89150','Затухание':'#6b7280','Стабильный':'#A89150'}[x]||'#A89150'; }
+  function lcColor(x){ return {'Обнаружение':'#6b9bb3','Развитие':'#FFA07A','Пик':'#E24A3B','Стабилизация':'#D4AF5A','Ослабление':'#A89150','Завершён':'#6b7280'}[x]||'#A89150'; }
+  function lcStage(s){ return s.lifecycle_stage||'—'; }
   function hcol(h){ return {Critical:'#E24A3B',Escalating:'#FFD700',Healthy:'#FFA07A',Stable:'#A89150',Dormant:'#6b7280',Archived:'#6b7280'}[h]||'#A89150'; }
   function isPro(){ try{ var t=(window.CC&&CC.tier&&CC.tier())||'free'; return !!(t&&t!=='free'); }catch(e){ return false; } }
   function _pl(n,f){ n=Math.abs(n|0); var d=n%10,h=n%100; if(d===1&&h!==11)return f[0]; if(d>=2&&d<=4&&!(h>=12&&h<=14))return f[1]; return f[2]; }
@@ -10192,7 +10186,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   function card(s){
     var pr=s.priority||0, sv=s.severity||0, pe=s.pressure||0;
     return '<div class="gpc" data-id="'+esc(s.signal_id)+'">'
-      +(function(){window.__ps=procState(s);window.__pc=stColor(window.__ps);return '<div class="gpc-edge" style="background:'+window.__pc+'"></div>';})()
+      +(function(){window.__ps=lcStage(s);window.__pc=lcColor(window.__ps);return '<div class="gpc-edge" style="background:'+window.__pc+'"></div>';})()
       +(s.watchlist?'<div class="gpc-watch">◆ НАБЛЮДЕНИЕ</div>':'')
       +'<div class="gpc-type"><span>'+esc(DOM_RU[s.primary_domain]||((s.domains||[])[0]&&DOM_RU[(s.domains||[])[0]])||(s.domains||[])[0]||'—')+'</span></div>'
       +'<div class="gpc-title">'+esc(s.title)+'</div>'
@@ -10226,7 +10220,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     H+='<div class="gd-sec"><div class="gd-sh">Сводка</div>'
       +'<p class="gd-note" style="margin-bottom:11px">'+esc(ex.why_exists||'')+'</p>'
       +'<div class="gd-kv"><div class="k">Тип</div><div class="v">'+esc(s.process_type||'—')+'</div>'
-      +'<div class="k">Состояние процесса</div><div class="v">'+procState(s)+'</div>'
+      +'<div class="k">Стадия</div><div class="v" style="color:'+lcColor(lcStage(s))+'">'+esc(lcStage(s))+'</div>'
       +'<div class="k">Первое обнаружение</div><div class="v">'+humanAge(s.first_seen)+'</div>'
       +'<div class="k">Обновление</div><div class="v">'+ago(s.last_seen||s.last_update)+'</div></div></div>';
     // Состав процесса (только если объединены >1)
@@ -10244,7 +10238,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="c"><div class="k">Тяжесть</div><div class="v" style="color:'+scol(s.severity)+'">'+(s.severity||0)+'</div></div>'
       +'<div class="c"><div class="k">Скорость</div><div class="v" style="font-size:13px;color:rgba(148,163,184,0.85)">'+(((v.severity_per_h||0)>0.05)?'развивается':'без изменений')+'</div></div>'
       +'<div class="c"><div class="k">Ускорение</div><div class="v" style="font-size:13px;color:rgba(148,163,184,0.85)">'+(s.acceleration>0.02?'ускоряется':(s.acceleration<-0.02?'замедляется':'без изменений'))+'</div></div>'
-      +'<div class="c"><div class="k">Состояние</div><div class="v" style="font-size:14px;color:'+stColor(procState(s))+'">'+procState(s)+'</div></div></div>'
+      +'<div class="c"><div class="k">Стадия</div><div class="v" style="font-size:14px;color:'+lcColor(lcStage(s))+'">'+esc(lcStage(s))+'</div></div></div>'
       +'<div class="gd-cl">Прогноз следующего шага</div>'
       +[['Усиление',fc.escalation,'#FFD700'],['Стабилизация',fc.stabilization,'#1faacc'],['Распад',fc.decay,'#6b7280']].map(function(f){ return '<div class="gd-fb"><span class="l">'+f[0]+'</span><span class="t"><i style="width:'+Math.round((f[1]||0)*100)+'%;background:'+f[2]+'"></i></span><span class="v">'+Math.round((f[1]||0)*100)+'%</span></div>'; }).join('')
       +(s.critical_transition?'<p style="color:#FFD700;font-size:11px;margin-top:8px">⚠ Признаки критического перехода</p>':'')+'</div>';

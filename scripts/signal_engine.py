@@ -416,6 +416,35 @@ def _health(severity, phase, hours_idle, rising):
     if phase in ('stabilizing','de-escalating'): return 'Stable'
     return 'Healthy'   # активно отслеживается, свежий
 
+# ── Phase 3: ЖИЗНЕННЫЙ ЦИКЛ ПРОЦЕССА ────────────────────────────────────────────
+_STAGE_MSG={'Обнаружение':'Процесс впервые обнаружен','Развитие':'Процесс перешёл в стадию развития',
+ 'Пик':'Зафиксирован пик активности','Стабилизация':'Началась стабилизация',
+ 'Ослабление':'Активность процесса снижается','Завершён':'Процесс завершён'}
+
+def _lifecycle_stage(sig, hours_idle):
+    """Аналитическая стадия по совокупности факторов (расчёт движком, не фронтом)."""
+    st=sig.get('status'); ph=sig.get('phase','')
+    dsev=(sig.get('delta',{}) or {}).get('severity',0) or 0
+    vel=(sig.get('velocity',{}) or {}).get('severity_per_h',0) or 0
+    accel=sig.get('acceleration',0) or 0
+    pres=sig.get('pressure',0) or 0; sev=sig.get('severity',0) or 0
+    n=sig.get('evidence_count',0) or 0
+    new_conn=len((sig.get('delta',{}) or {}).get('new_connections',[]) or [])
+    has_hist=sig.get('update_count',1)>1 or len(sig.get('severity_history',[]))>1
+    rising=dsev>0 or vel>0.05 or new_conn>0 or ph in ('growing','escalating')
+    falling=dsev<0 or vel<-0.05 or ph=='de-escalating'
+    high=pres>=60 or sev>=78
+    if st=='archived': return 'Завершён'
+    if hours_idle>=24*7: return 'Завершён'
+    if ph=='dormant' or (hours_idle>=24*3 and not rising): return 'Ослабление'
+    if has_hist and falling and not rising: return 'Ослабление'
+    if has_hist and high and not rising and (accel<=0 or abs(vel)<0.05): return 'Пик'
+    if has_hist and rising: return 'Развитие'
+    if has_hist and (ph in ('stabilizing','active') or (abs(vel)<0.05 and dsev==0)): return 'Стабилизация'
+    if n<=1 and not high: return 'Обнаружение'
+    if high or n>=3: return 'Развитие'
+    return 'Обнаружение'
+
 def _seed_history(sig, now):
     sig['first_seen']=sig.get('first_seen') or now
     sig['last_seen']=now; sig['update_count']=1
@@ -424,9 +453,9 @@ def _seed_history(sig, now):
     sig['phase_history']=[{'t':now,'phase':sig['phase']}]
     sig['evidence_history']=[{'t':now,'count':sig['evidence_count']}]
     sig['confidence_history']=[{'t':now,'v':sig['confidence']}]
-    _tl=[{'t':now,'event':'первое обнаружение','detail':sig['title']}]
+    sig['lifecycle_stage']=_lifecycle_stage(sig, 0.0)
+    _tl=[{'t':now,'event':_STAGE_MSG.get(sig['lifecycle_stage'],'первое обнаружение'),'detail':sig['title']}]
     if sig['evidence_count']>1: _tl.append({'t':now,'event':'подтверждения собраны','detail':'%d %s'%(sig['evidence_count'],_plural_svid(sig['evidence_count']))})
-    _tl.append({'t':now,'event':'текущая стадия','detail':_PHASE_SHORT.get(sig['phase'],sig['phase'])})
     sig['timeline']=_tl
     sig['delta']={'severity':0,'priority':0,'new_sources':[],'new_countries':[],'new_connections':[],'first_time':True}
     sig['status']='active'
@@ -482,12 +511,17 @@ def _evolve_one(cur, prev, now):
     if new_countries: log('новая страна',', '.join(new_countries[:3]),'new_country',['countries'])
     if conf!=prev.get('confidence'): log('уровень доверия обновлён','','confidence_evolution',['confidence'])
     if phase!=prev.get('phase'): log('смена стадии',_PHASE_SHORT.get(phase,phase),'phase_evolution',['phase'])
+    # Phase 3: пересчёт стадии жизненного цикла + запись при смене
+    cur['phase']=phase; cur['status']='active' if changed else prev.get('status','active')
+    stage=_lifecycle_stage(cur, hours_idle)
+    if stage!=prev.get('lifecycle_stage'):
+        log(_STAGE_MSG.get(stage,'смена стадии'),'','lifecycle_stage',['lifecycle_stage'])
     tl=_cap(tl); audit=_cap(audit)
     health=_health(cur['severity'], phase, hours_idle, rising)
     cur.update({'phase':phase,'confidence':conf,'status':'active' if changed else 'active',
         'update_count':prev.get('update_count',1)+(1 if changed else 0),
         'severity_history':sh,'priority_history':ph,'phase_history':phh,'evidence_history':eh,'confidence_history':chh,
-        'timeline':tl,'audit':audit,'health':health,
+        'timeline':tl,'audit':audit,'health':health,'lifecycle_stage':stage,
         'delta':{'severity':dsev,'priority':dpri,'new_sources':new_sources,'new_countries':new_countries,
                  'new_connections':new_conn,'first_time':False,'reactivated':bool(was_dormant and changed)},
         '_all_sources':all_sources,'_all_roles':all_roles})
