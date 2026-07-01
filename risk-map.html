@@ -10170,10 +10170,10 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       var pc=g.pressure_change_pct;
       dash='<div style="display:flex;gap:0;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.12);flex-wrap:wrap">'
         +gcell('Давление',Math.round(g.global_pressure),scol(g.global_pressure),pc!=null?(pc>=0?'▲ +'+pc+'%':'▼ '+pc+'%'):'')
-        +gcell('Температура',Math.round(g.system_temperature||0),scol(g.system_temperature),'')
         +gcell('Активные',g.active_processes||0,'#e8e4dc','')
+        +gcell('Эскалация',g.escalating_processes||0,g.escalating_processes?'#FFD700':'#e8e4dc','')
         +gcell('Критические',g.critical_processes||0,g.critical_processes?'#E24A3B':'#e8e4dc','')
-        +gcell('Наблюдение',g.watchlist_count||0,'#e8e4dc','')
+        +gcell('Наблюдение',g.watchlist_count||0,g.watchlist_count?'#B8973A':'#e8e4dc','')
         +'</div>';
     }
     pf.innerHTML=dash+list.slice(0,200).map(card).join('');
