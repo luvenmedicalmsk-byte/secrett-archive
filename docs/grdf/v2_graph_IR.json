@@ -2,9 +2,9 @@
   "country": "IR",
   "date": "2026-07-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-01T10:17:01.094954+00:00",
+  "generated_at": "2026-07-01T11:02:41.975681+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
@@ -19,43 +19,43 @@
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-IR-Восстановл",
-      "type": "Signal",
-      "label": "Восстановление базы США в Бахрейне после",
-      "severity": 63,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-IR-Индийские_",
       "type": "Signal",
       "label": "Индийские моряки боятся возвращаться в П",
       "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Война_в_За",
+      "type": "Signal",
+      "label": "Война в Западной Азии в прямом эфире: Ир",
+      "severity": 56,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-Трехкратны",
       "to": "DOMAIN-IR-technology",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
-      "from": "SIGNAL-IR-Восстановл",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.63
-    },
-    {
       "from": "SIGNAL-IR-Индийские_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-IR-Война_в_За",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
