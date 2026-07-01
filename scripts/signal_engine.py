@@ -469,7 +469,7 @@ def _decay_absent(prev, now):
         'health':_health(prev.get('severity',0),phase,hi,rising),'audit':audit,'last_seen':prev.get('last_seen',now)})
     return prev
 
-def evolve_signals(current, previous, now=None, want_report=False):
+def evolve_signals(current, previous, now=None, want_report=False, prev_global=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
     prev_by_id={s['signal_id']:s for s in (previous or [])}
@@ -495,13 +495,16 @@ def evolve_signals(current, previous, now=None, want_report=False):
         d=_decay_absent(prev, now)
         if d.get('status')!='archived' or _hours(d.get('last_seen',now),now)<2160:
             out.append(d)
-    # Task 7: Explainability на каждый сигнал
+    # Task 7: Explainability
     for s in out:
         s['explain']=_explain(s, s.get('process_type', s.get('title','').split(' — ')[0]))
-    out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s['priority']))
+    # v1.5: связи, давление, скорость/ускорение, прогноз, критические переходы, глобальное здоровье
+    out, global_health = enrich_v15(out, prev_global)
+    out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s.get('pressure',s['priority'])))
     merges=sum(1 for s in out if s.get('evidence_count',1)>1)
     report=signal_engine_report(out, len(previous or []), n_created, n_matched, merges, 0, match_scores, now)
-    if want_report: return out, report
+    report['global_health']=global_health
+    if want_report: return out, report, global_health
     return out
 
 
@@ -547,6 +550,131 @@ def _cluster(events):
     groups={}
     for i in range(n): groups.setdefault(find(i),[]).append(events[i])
     return list(groups.values())
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Signal Engine v1.5 — Process Intelligence: связи, динамика, давление, прогноз
+# ══════════════════════════════════════════════════════════════════════════════
+def _norm(v, cap): return max(0.0, min(1.0, (v or 0)/cap))
+
+# Module 4: Velocity — скорость изменения по истории
+def _series_vel(hist, per_hours=1.0):
+    if not hist or len(hist)<2: return 0.0
+    a,b=hist[-2],hist[-1]; dt=_hours(a.get('t',''),b.get('t',''))
+    if dt<=0: return 0.0
+    return round((b.get('v',0)-a.get('v',0))/(dt/per_hours),3)
+def _vel_category(vph):
+    if vph>=1.5: return 'растёт быстро'
+    if vph>0.15: return 'растёт медленно'
+    if vph<=-0.4: return 'затухает'
+    return 'стабилен'
+# Module 5: Acceleration — вторая производная
+def _series_accel(hist):
+    if not hist or len(hist)<3: return 0.0
+    d1=hist[-2].get('v',0)-hist[-3].get('v',0); d2=hist[-1].get('v',0)-hist[-2].get('v',0)
+    return round(d2-d1,2)
+
+# Module 3: Pressure Index — накопленное давление процесса
+def _pressure(sig, sev_vel):
+    sev=sig.get('severity',0); persist=sig.get('persistence',0)
+    conn=len(sig.get('connectivity',[])); ew=sig.get('evidence_weight',0)
+    dsev=max(0,(sig.get('delta',{}) or {}).get('severity',0))
+    p=(0.40*sev + 0.15*_norm(persist,10)*100 + 0.15*_norm(abs(sev_vel),3)*100
+       + 0.12*_norm(conn,3)*100 + 0.10*_norm(ew,5)*100 + 0.08*_norm(dsev,20)*100)
+    return int(max(0,min(100,round(p))))
+
+# Module 6: Forecast Layer — правило-основанные вероятности следующего шага
+def _forecast(sig, sev_vel, accel):
+    pr=sig.get('pressure',0); persist=sig.get('persistence',0); st=sig.get('status','active')
+    esc = 0.15 + 0.45*_norm(pr,100) + 0.20*(1 if sev_vel>0 else 0) + 0.20*(1 if accel>0 else 0)
+    stab= 0.30 + 0.35*(1 if abs(sev_vel)<0.3 else 0) + 0.20*_norm(persist,10)
+    dec = 0.15 + 0.40*(1 if sev_vel<0 else 0) + 0.25*(1 if st in ('fading','dormant','archived') else 0)
+    tot=esc+stab+dec or 1
+    return {'escalation':round(esc/tot,2),'stabilization':round(stab/tot,2),'decay':round(dec/tot,2)}
+
+# Module 7: Critical Transition Detector
+def _critical(sig, sev_vel):
+    multi=len(set(sig.get('domains',[]))|set(sig.get('connectivity',[])))>=2
+    return bool(sig.get('pressure',0)>=70 and sev_vel>0
+                and sig.get('confidence') in ('high','confirmed') and multi)
+
+# Module 1: Process Relations Engine — граф причинно-следственных связей
+def _build_relations(signals):
+    for S in signals:
+        S['causes']=[]; S['caused_by']=[]; S['related']=[]; S['amplifies']=[]; S['suppresses']=[]
+    def geoset(s): return (set(s.get('affected_regions',[]))|{s.get('process_place')})-{'',None}
+    for S in signals:
+        gs=geoset(S); sdom=(S.get('domains') or [''])[0]
+        for T in signals:
+            if S['signal_id']==T['signal_id']: continue
+            tdom=(T.get('domains') or [''])[0]
+            overlap=bool(gs & geoset(T)) or 'Глобально' in gs or 'Глобально' in geoset(T)
+            if not overlap: continue
+            # причинность: домен T — среди каскадных доменов S, и S не позже T
+            if tdom in (S.get('connectivity') or []) and S.get('first_seen','') <= T.get('first_seen',''):
+                if T['signal_id'] not in S['causes']:
+                    S['causes'].append(T['signal_id']); T['caused_by'].append(S['signal_id'])
+                    if _rising(S.get('trend')) and _rising(T.get('trend')): S['amplifies'].append(T['signal_id'])
+                    if str(S.get('trend','')).lower() in ('falling','de-escalating','down'): S['suppresses'].append(T['signal_id'])
+            elif sdom==tdom and S.get('process_place')==T.get('process_place') and S['signal_id']<T['signal_id']:
+                S['related'].append(T['signal_id']); T['related'].append(S['signal_id'])
+    # кап на топ-6 связей каждого типа
+    for S in signals:
+        for k in ('causes','caused_by','related','amplifies','suppresses'):
+            S[k]=sorted(set(S[k]))[:6]
+    return signals
+
+# Module 2: Cascading Engine — давление источника поднимает давление получателей
+def _cascade_pressure(signals):
+    id2={s['signal_id']:s for s in signals}
+    for S in signals:
+        boost=0.0
+        for cid in S.get('caused_by',[]):
+            C=id2.get(cid)
+            if C and _rising(C.get('trend')): boost+=0.10*C.get('pressure',0)
+        if boost:
+            S['pressure']=int(min(100, S.get('pressure',0)+min(15,boost)))
+            S['pressure_from_cascade']=round(min(15,boost),1)
+    return signals
+
+# Module 8: Global System Health
+def _global_health(signals, prev_global=None):
+    active=[s for s in signals if s.get('status')=='active']
+    gp=round(sum(s.get('pressure',0) for s in active)/max(1,len(active)),1)
+    edges=sum(len(s.get('causes',[]))+len(s.get('related',[])) for s in signals)
+    gc=round(edges/max(1,len(signals)),2)
+    esc=sum(1 for s in signals if s.get('phase')=='escalating')
+    dorm=sum(1 for s in signals if s.get('status') in ('dormant','fading'))
+    crit=sum(1 for s in signals if s.get('critical_transition'))
+    temp=round(min(100, 0.5*gp + 3*esc + 6*crit),1)
+    out={'global_pressure':gp,'global_connectivity':gc,'escalating_processes':esc,
+         'dormant_processes':dorm,'critical_processes':crit,'active_processes':len(active),
+         'system_temperature':temp}
+    if prev_global and prev_global.get('global_pressure'):
+        out['pressure_change_pct']=round(100*(gp-prev_global['global_pressure'])/max(1,prev_global['global_pressure']),1)
+    return out
+
+def enrich_v15(signals, prev_global=None):
+    watch=[]
+    for s in signals:
+        sv=_series_vel(s.get('severity_history',[]))
+        pv=_series_vel(s.get('priority_history',[]), per_hours=24)   # /day
+        ev=_series_vel(s.get('evidence_history',[]), per_hours=24)   # /day
+        acc=_series_accel(s.get('severity_history',[]))
+        s['velocity']={'severity_per_h':sv,'priority_per_day':pv,'evidence_per_day':ev,'category':_vel_category(sv)}
+        s['acceleration']=acc
+        s['pressure']=_pressure(s, sv)
+    _build_relations(signals)
+    _cascade_pressure(signals)
+    for s in signals:
+        sv=s['velocity']['severity_per_h']; acc=s['acceleration']
+        s['forecast']=_forecast(s, sv, acc)
+        s['critical_transition']=_critical(s, sv)
+        # ускорение экспоненциальное -> группа наблюдения
+        if acc>=6 and sv>0: s['watchlist']=True; watch.append(s['signal_id'])
+        else: s['watchlist']=False
+    gh=_global_health(signals, prev_global)
+    gh['watchlist_count']=len(watch)
+    return signals, gh
 
 def _build_one_signal(evs):
     top=max(evs,key=lambda x:x.get('severity',0))
@@ -623,9 +751,14 @@ def write_signals_json(events, path):
             previous=json.load(open(path,encoding='utf-8')).get('signals',[])
     except Exception:
         previous=[]
+    prev_global=None
+    try:
+        if os.path.exists(path):
+            prev_global=json.load(open(path,encoding='utf-8')).get('global_health')
+    except Exception: prev_global=None
     current=build_signals(events)
-    evolved,report=evolve_signals(current, previous, now, want_report=True)   # v1.4: continuity + метрики
-    out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.4','report':report,'signals':evolved}
+    evolved,report,global_health=evolve_signals(current, previous, now, want_report=True, prev_global=prev_global)
+    out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.5','global_health':global_health,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path,'w',encoding='utf-8') as f: json.dump(out,f,ensure_ascii=False,indent=2)
     try:
