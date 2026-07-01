@@ -1051,12 +1051,27 @@ def _macro_merge_clusters(clusters):
             out.append((sub, {'merged_count':1,'included_processes':[_cluster_label(sub)]}))
     return out
 
+# ── Фильтр шума: изолированные криминальные инциденты против частных лиц ────────
+_NOISE_CRIME=re.compile(r'покушени\w*\s+на|киллер|заказн\w*\s+убийств|криминальн\w*\s+разборк|кол[-\s]?центр|мошенническ\w*|застрел\w*|зарезал|поножовщин|разборк\w*\s+из-за',re.I)
+_NOISE_TARGET=re.compile(r'бизнесмен\w*|миллиардер\w*|миллионер\w*|предпринимател\w*|коммерсант\w*|блогер\w*|авторитет\w*|застройщик\w*',re.I)
+_SYSTEMIC_KEEP=re.compile(r'президент\w*|премьер|министр\w*|депутат\w*|лидер\w*|глава\s+государств|канцлер|сенатор\w*|губернатор\w*|посол|дипломат|оппозиц|массов\w*|десятк\w*\s+погиб|сотн\w*\s+погиб|теракт|террорист',re.I)
+
+_LOCAL_CRIME=re.compile(r'криминальн\w*\s+разборк|разборк\w*\s+из-за\s+мошен|мошенническ\w*\s+кол[-\s]?центр|наркоразборк|бандитск\w*\s+разборк|передел\w*\s+сфер',re.I)
+def _is_noise_cluster(evs):
+    """True, если кластер — изолированный криминальный инцидент (частное лицо/оргпреступность), не системный."""
+    txt=' '.join(((e.get('title') or '')+' '+(e.get('summary') or '')) for e in evs).lower()
+    if _SYSTEMIC_KEEP.search(txt): return False                       # системно значимое — не шум
+    if _NOISE_CRIME.search(txt) and _NOISE_TARGET.search(txt): return True  # покушение на частное лицо
+    if _LOCAL_CRIME.search(txt): return True                          # локальные криминальные разборки
+    return False
+
 def build_signals(events):
     clusters=[]
     for evs in _cluster(events):
         parts=_split_check(evs)                    # защита от ошибочного объединения
         if parts and len(parts)>1: clusters.extend(parts)
         else: clusters.append(evs)
+    clusters=[c for c in clusters if not _is_noise_cluster(c)]   # фильтр шума (крим. инциденты против частных лиц)
     merged=_macro_merge_clusters(clusters)         # ВТОРОЙ УРОВЕНЬ: макропроцессы
     signals=[_build_one_signal(evs, meta) for evs,meta in merged]
     signals.sort(key=lambda s:-s['priority'])
