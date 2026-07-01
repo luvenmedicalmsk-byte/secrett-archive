@@ -1629,7 +1629,7 @@ def _reclass_domain(title, summary, current):
 import re
 
 _DIS_CTX = ('землетряс','наводнен','паводок','подтопл','циклон','тайфун','ураган','шторм','цунами',
-            'оползен','сель','извержен','вулкан','пожар','засух','жара','зной','бедств','катастроф','стихи','смерч','торнадо','ливень')
+            'оползен','сель','извержен','вулкан','пожар','засух','жар','зной','бедств','катастроф','стихи','смерч','торнадо','ливень')
 
 _NUM_RE = re.compile(r'(\d[\d\u00a0\u202f ]*\d|\d)(?:[.,](\d+))?\s*(млрд|миллиард|млн|миллион|тыс\.?|тысяч[аи]?)?(?![\d])', re.I)
 _PHRASE = {'сотни тысяч':300000,'десятки тысяч':50000,'сотни миллионов':300000000,'миллионы':2000000,'тысячи':3000}
@@ -2492,36 +2492,6 @@ def _drop_noise_cards(events):
         return events
 
 
-def _final_geo_enrich(events):
-    """Финальная гео-донастройка ПОСЛЕ всех резолверов (llm/fallback/audit) — не перезаписывается."""
-    _EU = ['DE','FR','IT','ES','PL','NL','GB','CZ','AT','BE']
-    try:
-        from geo_resolver import _PRIORITY_GEO as _PG
-    except Exception:
-        _PG = {}
-    _PC = {'MC':(43.7384,7.4246),'LI':(47.16,9.55),'SM':(43.94,12.46),'AD':(42.51,1.52),'VA':(41.90,12.45),'LU':(49.61,6.13),'MT':(35.9,14.5),'IS':(64.96,-19.02)}
-    for e in events:
-        try:
-            et = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
-            # 1) пан-европейское климат-событие -> импакт на страны Европы (драйверы каждой)
-            if e.get('domain')=='climate' and re.search(r'в европе|по европе|европейск\w* жар|жар\w* в европе|страны европы|вся европа|евросоюз', et) and 'европейской части' not in et and 'европейскую часть' not in et and 'европейская часть' not in et:
-                e['impact_countries'] = sorted(set((e.get('impact_countries') or []) + _EU))
-                e['country_codes'] = sorted(set((e.get('country_codes') or []) + _EU))
-                if (e.get('primary_country') or '') in ('US','CA','CN','IN','BR','AU') and 'сша' not in et and 'америк' not in et:
-                    e['primary_country']=''; e['event_country']=''; e['country_code']=''; e['region']='Европа'
-            # 2) приоритетное гео (Монако/микрогос./штаты США) -> все поля согласованно
-            for _st,(_cc,_nm) in _PG.items():
-                if re.search(r'(?<![а-яёa-z])' + re.escape(_st), et):
-                    if e.get('primary_country') != _cc:
-                        e['primary_country']=_cc; e['event_country']=_cc; e['country_code']=_cc
-                        e['country_codes']=[_cc]; e['impact_countries']=[_cc]; e['mentioned_countries']=[_cc]; e['region']=_nm
-                        if _cc in _PC: e['lat'],e['lng']=_PC[_cc]
-                    break
-        except Exception:
-            pass
-    return events
-
-
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -2543,7 +2513,6 @@ def save(events):
     except Exception as _e45:
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
     events = _drop_noise_cards(_p10_drop_quake_cards(events))
-    events = _final_geo_enrich(events)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
@@ -7569,7 +7538,6 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["events"] = _drop_noise_cards(_p10_drop_quake_cards(enriched["events"]))
             enriched["events"] = _signal_quality_pass(enriched["events"])
-            enriched["events"] = _final_geo_enrich(enriched["events"])
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
