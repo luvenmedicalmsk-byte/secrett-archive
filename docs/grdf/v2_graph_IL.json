@@ -2,60 +2,60 @@
   "country": "IL",
   "date": "2026-07-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-01T07:03:04.515269+00:00",
+  "generated_at": "2026-07-01T07:25:20.923028+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 53,
+      "score": 55,
       "props": {
-        "risk_score": 53
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-IL-ООН_сообща",
+      "type": "Signal",
+      "label": "ООН сообщает, что один миллион человек о",
+      "severity": 60,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IL-Иран_готов",
       "type": "Signal",
       "label": "Иран готовит грандиозные похороны для по",
       "severity": 55,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IL-Война_прот",
-      "type": "Signal",
-      "label": "Война против Ирана, ХАМАС и «Хезболлы» н",
-      "severity": 53,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-IL",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IL",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IL-Трехкратны",
       "to": "DOMAIN-IL-technology",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
+      "from": "SIGNAL-IL-ООН_сообща",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-IL-Иран_готов",
       "to": "DOMAIN-IL-climate",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-IL-Война_прот",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
