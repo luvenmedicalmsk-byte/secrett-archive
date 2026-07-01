@@ -7457,6 +7457,19 @@ def _signal_quality_pass(events):
                             break
                 except Exception:
                     pass
+                # Калифорнийский залив / у берегов Мексики -> MX (перебивает ошибочный штат Калифорния=US)
+                try:
+                    _mt = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+                    if ('калифорнийск' in _mt and ('залив' in _mt or 'мексик' in _mt)) or (re.search(r'(?<![а-яёa-z])мексик', _mt) and 'калифорни' in _mt) or 'у берегов мексики' in _mt or 'мексиканск' in _mt:
+                        if e.get('primary_country') != 'MX':
+                            e['primary_country'] = 'MX'; e['event_country'] = 'MX'; e['country_code'] = 'MX'
+                            e['country_codes'] = sorted(set((e.get('country_codes') or []) + ['MX']))
+                            if 'US' in (e.get('country_codes') or []) and 'сша' not in _mt and 'калифорни, сша' not in _mt:
+                                e['country_codes'] = [x for x in e['country_codes'] if x != 'US']
+                            e['region'] = 'Мексика'
+                            e['lat'] = 24.5; e['lng'] = -110.0
+                except Exception:
+                    pass
                 # убрать собственное имя источника из текста сигнала (источник — только в поле source)
                 _src = (e.get('source') or '').strip()
                 if _src and len(_src) >= 3:

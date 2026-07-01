@@ -140,6 +140,11 @@ def foreign_country(text):
     if not text or not isinstance(text, str):
         return (None, None)
     low = text.lower()
+    # Калифорнийский залив = мексиканские воды (не штат Калифорния); явное упоминание Мексики приоритетно
+    if 'калифорнийск' in low and ('залив' in low or 'мексик' in low):
+        return ('MX', 'Мексика')
+    if _re.search(r'(?<![а-яёa-z])мексик', low) and _re.search(r'(?<![а-яёa-z])калифорни', low):
+        return ('MX', 'Мексика')
     for stem, (cc, name) in _PRIORITY_GEO.items():
         if _re.search(r'(?<![а-яёa-z])' + _re.escape(stem), low):
             return (cc, name)
