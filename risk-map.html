@@ -10022,7 +10022,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
 (function(){
   if(window.__grdfProcInit) return; window.__grdfProcInit=true;
   var SIG_URL='https://raw.githubusercontent.com/luvenmedicalmsk-byte/secrett-archive/main/docs/signals.json';
-  var _data=null,_loaded=false,_mode='events',_byId={};
+  var _data=null,_loaded=false,_mode='events',_byId={},_explEl=null;
   var PHASE_RU={emerging:'Зарождение',growing:'Рост',active:'Активный',escalating:'Эскалация',stabilizing:'Стабилизация','de-escalating':'Деэскалация',dormant:'Спящий',archived:'Архив'};
   var HEALTH_RU={Healthy:'Здоровый',Stable:'Стабильный',Escalating:'Эскалация',Critical:'Критический',Dormant:'Спящий',Archived:'Архив'};
   var ROLE_RU={measurement:'Измерительный',state:'Государственный',intl:'Междунар. орг.',science:'Научный',financial:'Финансовый',agency:'Агентство',osint:'OSINT',telegram:'Telegram'};
@@ -10097,9 +10097,17 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     var head=screen.querySelector('.grdf-screen-head');
     if(head && !document.getElementById('grdf-mode-toggle')){
       var tg=document.createElement('div'); tg.id='grdf-mode-toggle';
-      tg.innerHTML='<button class="gproc-mb active" data-mode="events" onclick="grdfSetMode(\'events\')">События</button>'
+      tg.innerHTML='<button class="gproc-mb active" data-mode="events" onclick="grdfSetMode(\'events\')">Хронология</button>'
                   +'<button class="gproc-mb" data-mode="processes" onclick="grdfSetMode(\'processes\')">Процессы</button>';
       head.insertAdjacentElement('afterend', tg);
+    }
+    if(!document.getElementById('grdf-proc-desc')){
+      var expl=null; Array.prototype.forEach.call(screen.children,function(c){ if(!expl && c.textContent && c.textContent.indexOf('Индекс риска')>=0 && !c.classList.contains('grdf-screen-head')) expl=c; });
+      var pd=document.createElement('div'); pd.id='grdf-proc-desc';
+      pd.style.cssText='padding:6px 16px 11px;font-size:10.5px;line-height:1.5;color:rgba(148,163,184,0.85);font-family:Montserrat,sans-serif;display:none';
+      pd.textContent='Atlas объединяет связанные события в единые процессы, отображая их развитие, динамику и накопление риска во времени.';
+      if(expl){ expl.insertAdjacentElement('afterend', pd); _explEl=expl; }
+      else if(head){ head.insertAdjacentElement('afterend', pd); }
     }
     var feed=document.getElementById('grdf-sig-feed');
     if(feed && !document.getElementById('grdf-proc-feed')){
@@ -10126,6 +10134,8 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     if(f) f.style.display=ev?'':'none';
     if(fil) fil.style.display=ev?'':'none';
     if(pf) pf.style.display=ev?'none':'';
+    if(_explEl) _explEl.style.display=ev?'':'none';
+    var _pd=document.getElementById('grdf-proc-desc'); if(_pd) _pd.style.display=ev?'none':'';
     if(!ev) loadProc(); else { var c=document.getElementById('grdf-sig-count'); if(c&&window.renderList){ try{renderList();}catch(_){} } }
   };
   function loadProc(){
