@@ -133,11 +133,11 @@ header{border-bottom:1px solid var(--line);padding:22px 0 18px;position:sticky;t
     <input class="search" id="q" placeholder="Поиск процесса, места, актора…">
     <span class="lbl">Домен</span><select id="f-domain"></select>
     <span class="lbl">Фаза</span><select id="f-phase"></select>
-    <span class="lbl">Health</span><select id="f-health"></select>
+    <span class="lbl">Здоровье</span><select id="f-health"></select>
     <span class="lbl">Доверие</span><select id="f-conf"></select>
     <span class="lbl">Сорт.</span><select id="sort">
-      <option value="priority">Priority</option><option value="pressure">Pressure</option>
-      <option value="severity">Severity</option><option value="age">Возраст</option>
+      <option value="priority">Приоритет</option><option value="pressure">Давление</option>
+      <option value="severity">Тяжесть</option><option value="age">Возраст</option>
       <option value="update">Обновление</option><option value="evidence">Подтверждения</option>
     </select>
   </div>
@@ -151,6 +151,7 @@ header{border-bottom:1px solid var(--line);padding:22px 0 18px;position:sticky;t
 const DOM_RU={climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
 const PHASE_RU={emerging:'Зарождение',growing:'Рост',active:'Активный',escalating:'Эскалация',stabilizing:'Стабилизация','de-escalating':'Деэскалация',dormant:'Спящий',archived:'Архив'};
 const HEALTH_RU={Healthy:'Здоровый',Stable:'Стабильный',Escalating:'Эскалация',Critical:'Критический',Dormant:'Спящий',Archived:'Архив'};
+const CONF_RU={single:'одиночное',confirmed:'подтверждён',high:'высокое',unconfirmed:'неподтверждён',stale:'устаревшее',verified:'верифицирован'};
 const ROLE_RU={measurement:'Измерительный',state:'Государственный',intl:'Междунар. орг.',science:'Научный',financial:'Финансовый',agency:'Агентство',osint:'OSINT',telegram:'Telegram'};
 let SIGNALS=[], BYID={};
 
@@ -176,17 +177,17 @@ fetch('./docs/signals.json',{cache:'no-store'}).then(r=>r.json()).then(data=>{
 function renderDash(g){
   const pc=g.pressure_change_pct;
   const cells=[
-    ['Global Pressure',Math.round(g.global_pressure||0), pc!=null?(pc>=0?'▲ +'+pc+'%':'▼ '+pc+'%'):'', pc>=0?'up':'down'],
-    ['System Temp',Math.round(g.system_temperature||0),'',''],
+    ['Глоб. давление',Math.round(g.global_pressure||0), pc!=null?(pc>=0?'▲ +'+pc+'%':'▼ '+pc+'%'):'', pc>=0?'up':'down'],
+    ['Темп. системы',Math.round(g.system_temperature||0),'',''],
     ['Активные',g.active_processes||0,'',''],
     ['Критические',g.critical_processes||0,'',''],
     ['Эскалация',g.escalating_processes||0,'',''],
     ['Спящие',g.dormant_processes||0,'',''],
     ['Связность',g.global_connectivity||0,'',''],
-    ['Watchlist',g.watchlist_count||0,'',''],
+    ['Наблюдение',g.watchlist_count||0,'',''],
   ];
   document.getElementById('dash').innerHTML=cells.map(c=>
-    `<div class="cell"><div class="k">${c[0]}</div><div class="v" style="color:${c[0].match(/Pressure|Temp/)?scale(c[1]):'var(--ink)'}">${c[1]}</div><div class="d ${c[3]}">${c[2]}</div></div>`).join('');
+    `<div class="cell"><div class="k">${c[0]}</div><div class="v" style="color:${c[0].match(/давление|Темп/)?scale(c[1]):'var(--ink)'}">${c[1]}</div><div class="d ${c[3]}">${c[2]}</div></div>`).join('');
 }
 function renderPatterns(p){
   if(!p||!p.length){document.getElementById('patterns').innerHTML='';return;}
@@ -225,15 +226,15 @@ function cardHTML(s){
   const pr=s.priority||0, sv=s.severity||0, pe=s.pressure||0;
   return `<div class="card" data-id="${esc(s.signal_id)}">
     <div class="edge" style="background:${healthColor(s.health)}"></div>
-    ${s.watchlist?'<div class="watch">◆ WATCHLIST</div>':''}
+    ${s.watchlist?'<div class="watch">◆ НАБЛЮДЕНИЕ</div>':''}
     <div class="type"><span>${esc(s.process_type||(s.domains||[]).map(d=>DOM_RU[d]||d).join('/'))}</span></div>
     <h3>${esc(s.title)}</h3>
     <div class="place">${esc(s.process_place||'—')}${s.actor?' · '+esc(s.actor)+(s.target?' → '+esc(s.target):''):''}</div>
-    <div class="metrics">${metric('Priority',pr)}${metric('Severity',sv)}${metric('Pressure',pe)}</div>
+    <div class="metrics">${metric('Приоритет',pr)}${metric('Тяжесть',sv)}${metric('Давление',pe)}</div>
     <div class="chips">
       <span class="chip hl">${PHASE_RU[s.phase]||s.phase}</span>
       <span class="chip" style="color:${healthColor(s.health)};border-color:${healthColor(s.health)}44">${HEALTH_RU[s.health]||s.health}</span>
-      <span class="chip">${esc(s.confidence)}</span>
+      <span class="chip">${esc(CONF_RU[s.confidence]||s.confidence)}</span>
       ${s.velocity&&s.velocity.category?`<span class="chip">${esc(s.velocity.category)}</span>`:''}
     </div>
     <div class="foot"><span class="ev">${s.evidence_count||0} подтв. · ${esc(s.age||'—')}</span><span>${ago(s.last_seen||s.last_update)}</span></div>
@@ -257,7 +258,7 @@ function connGroup(label,ids){
 function dossierHTML(s){
   const g=s.dna||{}, fc=s.forecast||{}, v=s.velocity||{}, ce=s.confidence_evolution||{};
   const ex=s.explain||{}, am=s.atlas_memory, rec=s.recurrence, sim=s.similar_processes||[];
-  const secSummary=`<div class="sec"><div class="sh">Summary</div>
+  const secSummary=`<div class="sec"><div class="sh">Сводка</div>
     <p style="font-family:var(--serif);font-size:16px;line-height:1.5;color:var(--ink);margin-bottom:12px">${esc(ex.why_exists||'')}</p>
     <div class="kv">
       <div class="k">Тип процесса</div><div class="v">${esc(s.process_type||'—')}</div>
@@ -266,14 +267,14 @@ function dossierHTML(s){
       <div class="k">Возраст</div><div class="v">${esc(s.age||'—')}</div>
       <div class="k">Последнее обновление</div><div class="v">${ago(s.last_seen||s.last_update)}</div>
     </div></div>`;
-  const secDyn=`<div class="sec"><div class="sh">Dynamics</div>
+  const secDyn=`<div class="sec"><div class="sh">Динамика</div>
     <div class="dmetrics" style="margin-bottom:14px">
-      <div class="dm"><div class="k">Pressure</div><div class="v" style="color:${scale(s.pressure)}">${s.pressure||0}</div>${s.pressure_from_cascade?`<div class="s">+${s.pressure_from_cascade} каскад</div>`:''}</div>
-      <div class="dm"><div class="k">Priority</div><div class="v" style="color:${scale(s.priority)}">${s.priority||0}</div></div>
-      <div class="dm"><div class="k">Severity</div><div class="v" style="color:${scale(s.severity)}">${s.severity||0}</div></div>
-      <div class="dm"><div class="k">Velocity /ч</div><div class="v">${v.severity_per_h>0?'+':''}${v.severity_per_h||0}</div><div class="s">${esc(v.category||'')}</div></div>
-      <div class="dm"><div class="k">Acceleration</div><div class="v">${s.acceleration>0?'+':''}${s.acceleration||0}</div></div>
-      <div class="dm"><div class="k">Health</div><div class="v" style="font-size:15px;color:${healthColor(s.health)}">${HEALTH_RU[s.health]||s.health}</div></div>
+      <div class="dm"><div class="k">Давление</div><div class="v" style="color:${scale(s.pressure)}">${s.pressure||0}</div>${s.pressure_from_cascade?`<div class="s">+${s.pressure_from_cascade} каскад</div>`:''}</div>
+      <div class="dm"><div class="k">Приоритет</div><div class="v" style="color:${scale(s.priority)}">${s.priority||0}</div></div>
+      <div class="dm"><div class="k">Тяжесть</div><div class="v" style="color:${scale(s.severity)}">${s.severity||0}</div></div>
+      <div class="dm"><div class="k">Скорость /ч</div><div class="v">${v.severity_per_h>0?'+':''}${v.severity_per_h||0}</div><div class="s">${esc(v.category||'')}</div></div>
+      <div class="dm"><div class="k">Ускорение</div><div class="v">${s.acceleration>0?'+':''}${s.acceleration||0}</div></div>
+      <div class="dm"><div class="k">Здоровье</div><div class="v" style="font-size:15px;color:${healthColor(s.health)}">${HEALTH_RU[s.health]||s.health}</div></div>
     </div>
     <div class="cl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Прогноз следующего шага</div>
     <div class="forecast-bars">
@@ -282,14 +283,14 @@ function dossierHTML(s){
     </div>
     ${s.critical_transition?'<p style="color:var(--gold2);font-size:12px;margin-top:12px;letter-spacing:.05em">⚠ Признаки критического перехода системы</p>':''}
   </div>`;
-  const secTL=(s.timeline&&s.timeline.length)?`<div class="sec"><div class="sh">Timeline</div><div class="tl">
+  const secTL=(s.timeline&&s.timeline.length)?`<div class="sec"><div class="sh">Хроника</div><div class="tl">
     ${s.timeline.slice().reverse().map(t=>`<div class="ti"><div class="te">${esc(t.event)}</div>${t.detail?`<div class="td">${esc(t.detail)}</div>`:''}<div class="tt">${esc((t.t||'').replace('T',' ').slice(0,16))}</div></div>`).join('')}
   </div></div>`:'';
-  const secEv=`<div class="sec"><div class="sh">Evidence · ${s.evidence_count||0}</div>
+  const secEv=`<div class="sec"><div class="sh">Свидетельства · ${s.evidence_count||0}</div>
     ${(s.evidence||[]).map(e=>`<div class="ev-item"><div><div class="et">${esc(e.title)}</div><div class="em">${esc(e.source)} · ${esc(ROLE_RU[e.role]||e.quality||e.role)} · ${esc(e.date)}${e.match?' · '+esc(e.match):''}</div></div><div class="es" style="color:${scale(e.severity)}">${e.severity||''}</div></div>`).join('')}</div>`;
   const conns=connGroup('Причина для',s.causes)+connGroup('Следствие',s.caused_by)+connGroup('Усиливает',s.amplifies)+connGroup('Подавляет',s.suppresses)+connGroup('Связанные',s.related);
-  const secConn=conns?`<div class="sec"><div class="sh">Connections</div>${conns}</div>`:'';
-  const secGeo=`<div class="sec"><div class="sh">Geography</div><div class="kv">
+  const secConn=conns?`<div class="sec"><div class="sh">Связи</div>${conns}</div>`:'';
+  const secGeo=`<div class="sec"><div class="sh">География</div><div class="kv">
     <div class="k">Место процесса</div><div class="v">${esc(s.process_place||'—')}</div>
     ${s.actor?`<div class="k">Актор</div><div class="v">${esc(s.actor)}</div>`:''}
     ${s.target?`<div class="k">Объект</div><div class="v">${esc(s.target)}</div>`:''}
@@ -300,7 +301,7 @@ function dossierHTML(s){
   if(g.escalation_pattern)memBits.push(['Паттерн развития (DNA)',g.escalation_pattern]);
   if(g.average_growth_rate!=null)memBits.push(['Средний рост','severity '+(g.average_growth_rate>0?'+':'')+g.average_growth_rate+'/день']);
   if(g.historical_max_pressure)memBits.push(['Историч. макс. давление',g.historical_max_pressure]);
-  const secMem=`<div class="sec"><div class="sh">Memory · опыт Atlas</div>
+  const secMem=`<div class="sec"><div class="sh">Память · опыт Atlas</div>
     ${(s.expected_next&&s.expected_next.length)?`<div style="margin-bottom:12px"><div class="cl" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Что обычно происходит дальше</div>${s.expected_next.map(x=>`<span class="pill" style="color:var(--gold2);border-color:var(--line)">${esc(x)}</span>`).join('')}</div>`:''}
     ${am?`<p class="mem-note">${esc(am.note)}</p>`:''}
     ${rec?`<p class="mem-note" style="margin-top:8px">Циклический процесс: ${esc(rec.label)} (${rec.occurrences} повторений)</p>`:''}
@@ -308,13 +309,13 @@ function dossierHTML(s){
     ${memBits.length?`<div class="kv" style="margin-top:12px">${memBits.map(b=>`<div class="k">${b[0]}</div><div class="v">${esc(b[1])}</div>`).join('')}</div>`:''}
     ${(!am&&!rec&&!sim.length)?'<p class="mem-empty">Недостаточно накопленной истории.</p>':''}
   </div>`;
-  const secExp=`<div class="sec"><div class="sh">Explainability</div>
-    ${[['Почему создан процесс',ex.why_exists],['Почему такой Priority',ex.why_priority],['Почему такая Phase',ex.why_phase],['Почему такой Confidence',ex.why_confidence]]
+  const secExp=`<div class="sec"><div class="sh">Объяснение</div>
+    ${[['Почему создан процесс',ex.why_exists],['Почему такой Приоритет',ex.why_priority],['Почему такая Фаза',ex.why_phase],['Почему такое Доверие',ex.why_confidence]]
       .filter(x=>x[1]).map(x=>`<div class="exp-item"><div class="eq">${x[0]}</div><div class="ea">${esc(x[1])}</div></div>`).join('')}
-    ${ce.progression?`<div class="exp-item"><div class="eq">Эволюция доверия</div><div class="ea">${esc(ce.progression)}${ce.tier==='verified'?' · <b style="color:var(--gold2)">verified</b>':''}</div></div>`:''}
+    ${ce.progression?`<div class="exp-item"><div class="eq">Эволюция доверия</div><div class="ea">${esc((ce.progression||'').split('→').map(x=>CONF_RU[x]||x).join(' → '))}${ce.tier==='verified'?' · <b style="color:var(--gold2)">verified</b>':''}</div></div>`:''}
   </div>`;
   return `<div class="dhead"><div class="dclose" onclick="closeD()">✕</div>
-    <div class="dtype">${esc(s.process_type||'')} ${s.watchlist?' · ◆ watchlist':''}</div>
+    <div class="dtype">${esc(s.process_type||'')} ${s.watchlist?' · ◆ наблюдение':''}</div>
     <h2>${esc(s.title)}</h2><div class="dplace">${esc(s.process_place||'')}</div></div>
     ${secSummary}${secDyn}${secTL}${secEv}${secConn}${secGeo}${secMem}${secExp}`;
 }
