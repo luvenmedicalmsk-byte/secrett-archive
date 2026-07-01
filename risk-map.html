@@ -10035,6 +10035,14 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     if(map[l]) return map[l];
     return src.charAt(0).toUpperCase()+src.slice(1); }
   function scol(v){ try{ if(window._sevColor) return window._sevColor(v); }catch(e){} v=+v||0; return v>=90?'#E24A3B':v>=75?'#FFD700':v>=60?'#FFA07A':v>=40?'#A89150':'#D8D8D8'; }
+  function procState(s){ var h=s.health,ph=s.phase,st=s.status;
+    if(h==='Critical') return 'Критический';
+    if(h==='Escalating'||ph==='escalating') return 'Эскалация';
+    if(ph==='growing') return 'Рост';
+    if(ph==='de-escalating') return 'Ослабление';
+    if(st==='dormant'||st==='fading'||st==='archived'||h==='Dormant'||h==='Archived'||ph==='dormant'||ph==='archived') return 'Затухание';
+    return 'Стабильный'; }
+  function stColor(x){ return {'Критический':'#E24A3B','Эскалация':'#FFD700','Рост':'#FFA07A','Ослабление':'#A89150','Затухание':'#6b7280','Стабильный':'#A89150'}[x]||'#A89150'; }
   function hcol(h){ return {Critical:'#E24A3B',Escalating:'#FFD700',Healthy:'#FFA07A',Stable:'#A89150',Dormant:'#6b7280',Archived:'#6b7280'}[h]||'#A89150'; }
   function isPro(){ try{ var t=(window.CC&&CC.tier&&CC.tier())||'free'; return !!(t&&t!=='free'); }catch(e){ return false; } }
   function ago(iso){ if(!iso) return '—'; var d=(Date.now()-new Date(iso).getTime())/1000; if(d<0) return 'только что'; if(d<3600) return Math.max(1,Math.round(d/60))+' мин назад'; if(d<86400) return Math.round(d/3600)+' ч назад'; return Math.round(d/86400)+' дн назад'; }
@@ -10048,7 +10056,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
    +'.gpc .gpc-edge{position:absolute;left:0;top:0;bottom:0;width:3px}'
    +'.gpc .gpc-type{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(148,163,184,0.6);font-weight:500;display:flex;justify-content:space-between}'
    +'.gpc .gpc-title{font-family:"Cormorant Garamond",serif;font-size:19px;font-weight:600;color:#e8e4dc;line-height:1.15;margin:4px 0 2px}'
-   +'.gpc .gpc-place{font-size:11px;color:#1faacc;margin-bottom:9px}'
+   +'.gpc .gpc-place{font-size:11px;color:#cbd5e1;margin-bottom:9px}'
    +'.gpc .gpc-m{display:flex;gap:14px;margin-bottom:9px}'
    +'.gpc .gpc-mi{display:flex;flex-direction:column;gap:2px}'
    +'.gpc .gpc-mk{font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(148,163,184,0.5)}'
@@ -10067,7 +10075,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
    +'#gproc-d .gd-x{position:absolute;top:18px;right:20px;font-size:20px;color:rgba(148,163,184,0.6);cursor:pointer;line-height:1}'
    +'#gproc-d .gd-type{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(148,163,184,0.6);font-weight:500}'
    +'#gproc-d h2{font-family:"Cormorant Garamond",serif;font-size:27px;font-weight:600;color:#e8e4dc;margin:5px 0 2px;line-height:1.1}'
-   +'#gproc-d .gd-place{color:#1faacc;font-size:12px}'
+   +'#gproc-d .gd-place{color:#cbd5e1;font-size:12px}'
    +'.gd-sec{padding:17px 22px;border-bottom:0.5px solid rgba(255,255,255,0.05)}'
    +'.gd-sh{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#D4AF5A;font-weight:600;margin-bottom:11px;display:flex;align-items:center;gap:8px}'
    +'.gd-sh::after{content:"";flex:1;height:1px;background:rgba(255,255,255,0.06)}'
@@ -10175,14 +10183,14 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   function card(s){
     var pr=s.priority||0, sv=s.severity||0, pe=s.pressure||0;
     return '<div class="gpc" data-id="'+esc(s.signal_id)+'">'
-      +'<div class="gpc-edge" style="background:'+hcol(s.health)+'"></div>'
+      +(function(){window.__ps=procState(s);window.__pc=stColor(window.__ps);return '<div class="gpc-edge" style="background:'+window.__pc+'"></div>';})()
       +(s.watchlist?'<div class="gpc-watch">◆ НАБЛЮДЕНИЕ</div>':'')
       +'<div class="gpc-type"><span>'+esc((s.domains||[]).map(function(d){return DOM_RU[d]||d;}).join(' · ')||'—')+'</span></div>'
       +'<div class="gpc-title">'+esc(s.title)+'</div>'
       +'<div class="gpc-place">'+esc(s.process_place||'—')+(s.actor?' · '+esc(s.actor)+(s.target?' → '+esc(s.target):''):'')+'</div>'
       +'<div class="gpc-m">'+mi('Приоритет',pr)+mi('Тяжесть',sv)+mi('Давление',pe)+'</div>'
       +'<div class="gpc-chips"><span class="gpc-ch hl">'+(PHASE_RU[s.phase]||s.phase)+'</span>'
-        +'<span class="gpc-ch" style="color:'+hcol(s.health)+';border-color:'+hcol(s.health)+'44">'+(HEALTH_RU[s.health]||s.health)+'</span>'
+        +'<span class="gpc-ch" style="color:'+window.__pc+';border-color:'+window.__pc+'44">'+window.__ps+'</span>'
         +'<span class="gpc-ch">'+esc(CONF_RU[s.confidence]||s.confidence)+'</span>'
         +(s.velocity&&s.velocity.category?'<span class="gpc-ch">'+esc(s.velocity.category)+'</span>':'')+'</div>'
       +'<div class="gpc-foot"><span>'+(s.evidence_count||0)+' подтв. · '+esc(s.age||'—')+'</span><span>'+ago(s.last_seen||s.last_update)+'</span></div>'
@@ -10209,7 +10217,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     H+='<div class="gd-sec"><div class="gd-sh">Сводка</div>'
       +'<p class="gd-note" style="margin-bottom:11px">'+esc(ex.why_exists||'')+'</p>'
       +'<div class="gd-kv"><div class="k">Тип</div><div class="v">'+esc(s.process_type||'—')+'</div>'
-      +'<div class="k">Состояние</div><div class="v">'+(PHASE_RU[s.phase]||s.phase)+' · '+(HEALTH_RU[s.health]||s.health)+'</div>'
+      +'<div class="k">Состояние процесса</div><div class="v">'+procState(s)+'</div>'
       +'<div class="k">Возраст</div><div class="v">'+esc(s.age||'—')+'</div>'
       +'<div class="k">Обновление</div><div class="v">'+ago(s.last_seen||s.last_update)+'</div></div></div>';
     // Динамика
@@ -10219,7 +10227,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="c"><div class="k">Тяжесть</div><div class="v" style="color:'+scol(s.severity)+'">'+(s.severity||0)+'</div></div>'
       +'<div class="c"><div class="k">Скорость/ч</div><div class="v">'+((v.severity_per_h>0?'+':'')+(v.severity_per_h||0))+'</div><div class="s">'+esc(v.category||'')+'</div></div>'
       +'<div class="c"><div class="k">Ускорение</div><div class="v">'+((s.acceleration>0?'+':'')+(s.acceleration||0))+'</div></div>'
-      +'<div class="c"><div class="k">Здоровье</div><div class="v" style="font-size:14px;color:'+hcol(s.health)+'">'+(HEALTH_RU[s.health]||s.health)+'</div></div></div>'
+      +'<div class="c"><div class="k">Состояние</div><div class="v" style="font-size:14px;color:'+stColor(procState(s))+'">'+procState(s)+'</div></div></div>'
       +'<div class="gd-cl">Прогноз следующего шага</div>'
       +[['Эскалация',fc.escalation,'#FFD700'],['Стабилизация',fc.stabilization,'#1faacc'],['Распад',fc.decay,'#6b7280']].map(function(f){ return '<div class="gd-fb"><span class="l">'+f[0]+'</span><span class="t"><i style="width:'+Math.round((f[1]||0)*100)+'%;background:'+f[2]+'"></i></span><span class="v">'+Math.round((f[1]||0)*100)+'%</span></div>'; }).join('')
       +(s.critical_transition?'<p style="color:#FFD700;font-size:11px;margin-top:8px">⚠ Признаки критического перехода</p>':'')+'</div>';

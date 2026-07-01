@@ -291,6 +291,12 @@ def _split_check(evs):
         return list(groups.values())
     return None
 
+def _plural_svid(n):
+    n=abs(int(n)); n10=n%10; n100=n%100
+    if n10==1 and n100!=11: return 'связанное свидетельство'
+    if 2<=n10<=4 and not 12<=n100<=14: return 'связанных свидетельства'
+    return 'связанных свидетельств'
+
 # Task 7: Signal Explainability
 def _explain(sig, ptype):
     ev=sig.get('evidence',[])
@@ -302,7 +308,7 @@ def _explain(sig, ptype):
     if sig.get('connectivity'): why_pri.append('связность %d домен(ов)'%len(sig['connectivity']))
     ph=[p['phase'] for p in sig.get('phase_history',[])]
     return {
-      'why_exists':'Процесс «%s» в «%s»: %d свидетельств от %s'%(ptype,sig.get('process_place'),sig.get('evidence_count',0),', '.join(_ROLE_TIER.get(r,r) for r in roles)),
+      'why_exists':'Процесс объединяет %d %s и отражает развитие ситуации во времени: %s — %s.'%(sig.get('evidence_count',0),_plural_svid(sig.get('evidence_count',0)),ptype,sig.get('process_place')),
       'formed_by':[e['title'] for e in ev[:3]],
       'why_priority':'; '.join(why_pri) or 'базовая severity процесса',
       'why_phase':(' → '.join(ph[-3:]) if len(ph)>1 else sig.get('phase','')),
