@@ -100,10 +100,10 @@ _PROC_TYPE=[(r'продаж|ритейл|розничн|магазин|диви�
  (r'землетряс|магнитуд|сейсм','Сейсмическая активность'),(r'пожар|возгоран|очаг','Пожарная активность'),
  (r'наводн|паводок|разлив рек','Наводнение'),(r'жара|тепловой удар|тепловая волна','Тепловая волна'),
  (r'маловод|засух','Водный дефицит'),(r'отключен\w* интернет|падение интернет|аномалия трафик','Отключение интернета'),
- (r'уязвим|\bcve\b','Уязвимость ПО'),(r'фишинг','Фишинговая кампания'),(r'кибератак|хакер|вредонос|киберпреступ','Киберугроза'),
+ (r'уязвим|\bcve\b','Уязвимость ПО'),(r'фишинг','Фишинговая кампания'),(r'кибератак|хакер|вредонос|киберпреступ|взлом|malware','Киберугроза'),
  (r'покушени|подрыв','Покушение'),(r'удар\w* по|обстрел|ракет|бпла|пво|боевы','Военные удары'),
  (r'санкц','Санкционное давление'),(r'\bвиз\b|въезд в европ|запрет на выдач','Визовые ограничения'),
- (r'топлив|бензин|нефтебаз','Топливный рынок'),(r'рубл|валют|доллар|обменн курс','Валютный рынок'),
+ (r'топлив|бензин|нефтебаз|горюч|дизел|солярк','Топливный рынок'),(r'рубл|валют|доллар|обменн курс','Валютный рынок'),
  (r'инфляц','Инфляция'),(r'мигра|миграцион','Миграционная политика'),(r'лихорадк|заболеван|эпидем|воз ','Эпидемиологический риск'),
  (r'кокаин|наркот|контрабанд','Наркотрафик'),(r'дрон.{0,15}завод|производств дрон','Оборонное производство')]
 _DOM_DEFAULT={'climate':'Климатический сигнал','economy':'Экономический сигнал','geopolitics':'Геополитический процесс','technology':'Технологический сигнал','social':'Социальный процесс'}
@@ -222,6 +222,111 @@ def _process_name(evs, domains, place):
     # fallback: ведущее (по severity) свидетельство, очищенное
     top=max(evs,key=lambda x:x.get('severity',0))
     return top.get('title','')
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Signal Engine v1.4 — Process Identity & Continuity
+# ══════════════════════════════════════════════════════════════════════════════
+# Task 6: качество Evidence по роли источника
+_ROLE_WEIGHT={'measurement':1.0,'state':1.0,'intl':0.95,'science':0.9,'financial':0.85,'agency':0.7,'osint':0.7,'telegram':0.35}
+_ROLE_TIER={'measurement':'первичный/измерительный','state':'государственный','intl':'международная орг.',
+ 'science':'научный','financial':'финансовый','agency':'агентство','osint':'OSINT','telegram':'Telegram'}
+
+# Task 1: тип процесса (детерминирован) — основа стабильного ID
+def _process_type(evs, domain):
+    """Тип процесса по SCORING (побеждает тип с макс. числом совпадений в ЗАГОЛОВКАХ),
+    устойчив к смешанным кластерам. Заголовки весомее summary."""
+    titles=' '.join(x.get('title','') for x in evs).lower()
+    summ=' '.join((x.get('summary','') or '')[:60] for x in evs).lower()
+    best=None; best_sc=0
+    for pat,name in _PROC_TYPE:
+        sc=2*len(_re.findall(pat,titles))+len(_re.findall(pat,summ))
+        if sc>best_sc: best_sc=sc; best=name
+    return best or _DOM_DEFAULT.get(domain,'Сигнал')
+
+def _slug(s):
+    import re as _r
+    return _r.sub(r'[^a-zа-яё0-9]','',(s or '').lower())[:14]
+
+# Task 1: СТАБИЛЬНЫЙ signal_id — только идентичность процесса (тип+место+ключевая сущность),
+# НЕ зависит от заголовка/источника/формулировки/порядка слов.
+def _stable_id(domain, ptype, place, key_entity):
+    base=f"{domain}|{ptype}|{place}|{key_entity or ''}"
+    return f"{_slug(domain)[:4]}-{_slug(ptype)[:10]}-{_slug(place)[:8]}" + (f"-{_slug(key_entity)[:6]}" if key_entity else "") + f"-{hashlib.md5(base.encode()).hexdigest()[:4]}"
+
+# Task 5: Confidence Match — насколько свидетельство принадлежит процессу
+def _confidence_match(ev, ptype, place):
+    et=_process_type([ev], ev.get('domain','')); ep=_process_place(ev)['place']
+    type_ok=(et==ptype); place_ok=(ep==place)
+    if type_ok and place_ok: return 'Exact', 1.0
+    if type_ok or (place_ok and place not in ('Глобально','')): return 'Strong', 0.8
+    if place_ok: return 'Medium', 0.55
+    return 'Weak', 0.3
+
+# Task 3: Merge Audit — почему свидетельства объединены
+def _merge_audit(evs, place, ptype):
+    if len(evs)<2: return None
+    matched=[]; coeff=[]
+    places=set(_process_place(e)['place'] for e in evs)
+    types=set(_process_type([e], e.get('domain','')) for e in evs)
+    if len(places)==1: matched.append('единое место: %s'%place)
+    if len(types)==1: matched.append('единый тип: %s'%ptype)
+    # общие редкие сущности
+    from collections import Counter as _C
+    allst=_C(sum((list(_stems(e)) for e in evs),[]))
+    shared=[w for w,cnt in allst.items() if cnt==len(evs)]
+    if shared: matched.append('общие признаки: %s'%', '.join(sorted(shared)[:4]))
+    not_matched=[]
+    if len(places)>1: not_matched.append('разные места: %s'%', '.join(sorted(places)))
+    conf_lvl='Exact' if (len(places)==1 and len(types)==1) else ('Strong' if len(types)==1 else 'Medium')
+    return {'evidence_merged':len(evs),'match_level':conf_lvl,'matched':matched,'not_matched':not_matched}
+
+# Task 4: Process Split — если внутри Signal >=2 независимых места процесса, разделить
+def _split_check(evs):
+    groups={}
+    for e in evs:
+        p=_process_place(e)['place']; groups.setdefault(p,[]).append(e)
+    real=[g for g in groups.values() if g]
+    if len(groups)>=2 and all(len(g)>=1 for g in groups.values()) and len(groups)==len([p for p in groups if p not in ('Глобально','')]):
+        # два+ конкретных места -> независимые процессы
+        return list(groups.values())
+    return None
+
+# Task 7: Signal Explainability
+def _explain(sig, ptype):
+    ev=sig.get('evidence',[])
+    roles=sorted(set(e['role'] for e in ev))
+    d=sig.get('delta',{})
+    why_pri=[]
+    if d.get('severity'): why_pri.append('severity %+d'%d['severity'])
+    if str(sig.get('trend','')).lower() in ('rising','accelerating','up','escalating'): why_pri.append('растущий тренд')
+    if sig.get('connectivity'): why_pri.append('связность %d домен(ов)'%len(sig['connectivity']))
+    ph=[p['phase'] for p in sig.get('phase_history',[])]
+    return {
+      'why_exists':'Процесс «%s» в «%s»: %d свидетельств от %s'%(ptype,sig.get('process_place'),sig.get('evidence_count',0),', '.join(_ROLE_TIER.get(r,r) for r in roles)),
+      'formed_by':[e['title'] for e in ev[:3]],
+      'why_priority':'; '.join(why_pri) or 'базовая severity процесса',
+      'why_phase':(' → '.join(ph[-3:]) if len(ph)>1 else sig.get('phase','')),
+      'why_confidence':'уровень %s по источникам: %s'%(sig.get('confidence'),', '.join(_ROLE_TIER.get(r,r) for r in roles)),
+    }
+
+# Task 2+8: метрики Continuity + технический отчёт прогона
+def signal_engine_report(evolved, n_prev, n_new_created, n_matched, merges, splits, match_scores, now):
+    upd=sum(1 for s in evolved if s.get('update_count',1)>1 and s.get('status')=='active')
+    react=sum(1 for s in evolved if s.get('delta',{}).get('reactivated'))
+    arch=sum(1 for s in evolved if s.get('status')=='archived')
+    dorm=sum(1 for s in evolved if s.get('status') in ('dormant','fading'))
+    no_upd=sum(1 for s in evolved if s.get('status')!='active')
+    avg_match=round(sum(match_scores)/len(match_scores),3) if match_scores else 1.0
+    total=len(evolved)
+    return {
+      'timestamp':now,'signals_total':total,
+      'continuity':{'matched_existing':n_matched,'created_new':n_new_created,
+                    'continuity_rate':round(n_matched/max(1,n_matched+n_new_created),3)},
+      'processes':{'updated':upd,'reactivated':react,'archived':arch,'dormant':dorm,'without_updates':no_upd},
+      'merges':merges,'splits':splits,
+      'avg_confidence_match':avg_match,
+      'pct_without_updates':round(100*no_upd/max(1,total),1),
+    }
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Signal Engine v1.3 — Process Intelligence: живой процесс во времени
@@ -364,22 +469,39 @@ def _decay_absent(prev, now):
         'health':_health(prev.get('severity',0),phase,hi,rising),'audit':audit,'last_seen':prev.get('last_seen',now)})
     return prev
 
-def evolve_signals(current, previous, now=None):
-    """Главная функция v1.3: сшивает текущий снапшот с накопленной историей."""
+def evolve_signals(current, previous, now=None, want_report=False):
+    """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
     prev_by_id={s['signal_id']:s for s in (previous or [])}
     seen=set(); out=[]
+    n_matched=0; n_created=0; match_scores=[]
     for cur in current:
         sid=cur['signal_id']; seen.add(sid)
-        if sid in prev_by_id: out.append(_evolve_one(cur, prev_by_id[sid], now))
-        else: out.append(_seed_history(cur, now))
-    # Decay + Reactivation-ready: прежние процессы без обновления сохраняем (не удаляем)
+        # средний confidence-match свидетельств процесса
+        for e in cur.get('evidence',[]): match_scores.append(e.get('match_score',1.0))
+        if sid in prev_by_id:
+            n_matched+=1
+            s=_evolve_one(cur, prev_by_id[sid], now)
+            # Continuity: зафиксировать решение
+            s['continuity']={'decision':'matched_existing','reason':'совпал стабильный signal_id (тип+место+сущность)'}
+        else:
+            n_created+=1
+            s=_seed_history(cur, now)
+            s['continuity']={'decision':'created_new','reason':'нет процесса с таким signal_id'}
+        out.append(s)
+    # Decay + Reactivation
     for sid,prev in prev_by_id.items():
         if sid in seen: continue
         d=_decay_absent(prev, now)
-        if d.get('status')!='archived' or _hours(d.get('last_seen',now),now)<2160:  # держим до 90д
+        if d.get('status')!='archived' or _hours(d.get('last_seen',now),now)<2160:
             out.append(d)
+    # Task 7: Explainability на каждый сигнал
+    for s in out:
+        s['explain']=_explain(s, s.get('process_type', s.get('title','').split(' — ')[0]))
     out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s['priority']))
+    merges=sum(1 for s in out if s.get('evidence_count',1)>1)
+    report=signal_engine_report(out, len(previous or []), n_created, n_matched, merges, 0, match_scores, now)
+    if want_report: return out, report
     return out
 
 
@@ -426,56 +548,69 @@ def _cluster(events):
     for i in range(n): groups.setdefault(find(i),[]).append(events[i])
     return list(groups.values())
 
+def _build_one_signal(evs):
+    top=max(evs,key=lambda x:x.get('severity',0))
+    sev=max((x.get('severity',0) for x in evs), default=0)
+    roles=set(_role(x.get('source')) for x in evs); srcs=set(str(x.get('source','')) for x in evs)
+    if roles & {'measurement','state','intl'}: conf,conf_f='high',1.0
+    elif len(srcs)>=2 and (roles-{'telegram'}): conf,conf_f='confirmed',0.92
+    elif roles=={'telegram'}: conf,conf_f='unconfirmed',0.72
+    else: conf,conf_f='single',0.82
+    persist=max((x.get('count_7d',0) for x in evs), default=0) or len(evs)
+    conn=sorted(set(sum((x.get('cascade') or [] for x in evs),[])))
+    trend=top.get('trend_direction') or top.get('forecast_trend') or 'flat'
+    domains=sorted(set(x.get('domain','') for x in evs))
+    # v1.2 семантика
+    _pp_votes={}
+    for x in evs:
+        _p=_process_place(x); k=_p['place']; _pp_votes[k]=(_pp_votes.get(k,(0,_p))[0]+1,_p)
+    _pp=sorted(_pp_votes.values(),key=lambda kv:-kv[0])[0][1]
+    place=_pp['place']; place_iso=_pp['iso']; macro=_pp['macro']
+    actor,target=_actor_target(evs)
+    ptype=_process_type(evs, domains[0])
+    name=f'{ptype} — {place}' if place and place!='Глобально' else ptype
+    key_entity=actor or target or ''
+    # Task 1: СТАБИЛЬНЫЙ signal_id (тип+место+сущность), не зависит от текста
+    signal_id=_stable_id(domains[0], ptype, place, key_entity)
+    # Task 5+6: качество и confidence-match каждого evidence
+    evidence=[]
+    for x in sorted(evs,key=lambda x:-x.get('severity',0)):
+        r=_role(x.get('source')); ml,ms=_confidence_match(x, ptype, place)
+        evidence.append({'title':x.get('title',''),'source':x.get('source',''),'role':r,
+            'quality':_ROLE_TIER.get(r,r),'weight':_ROLE_WEIGHT.get(r,0.5),'match':ml,'match_score':ms,
+            'date':x.get('date',''),'severity':x.get('severity',0),'is_trigger':r=='telegram'})
+    ev_weight=round(sum(e['weight'] for e in evidence),2)      # взвешенное число свидетельств
+    # priority с учётом качества (не только количества)
+    np_=min(1.0, math.log1p(persist)/math.log1p(10)); nc_=min(1.0, len(conn)/3.0)
+    qbonus=min(0.08, 0.02*ev_weight)
+    priority=int(max(0,min(100,round(sev*(1+0.15*_rising(trend)+0.10*np_+0.12*nc_+qbonus)*conf_f))))
+    countries=sorted(set(sum((x.get('country_codes') or [] for x in evs),[])+sum((x.get('impact_countries') or [] for x in evs),[])))
+    regions=sorted(set(x.get('region','') for x in evs if x.get('region')))
+    dates=sorted(x.get('date','') for x in evs if x.get('date'))
+    _first=dates[0] if dates else ''; _last=dates[-1] if dates else ''
+    sig_phase=_signal_phase(len(evs), _first, _last, top.get('severity_delta',0), trend, persist, top.get('phase','active'))
+    affected=sorted(set([macro]+[r for r in regions if r])-{''}) if macro else regions
+    geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
+    return {'signal_id':signal_id,'title':name,'process_type':ptype,
+        'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
+        'affected_regions':affected,
+        'domains':domains,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
+        'trend':trend,'phase':sig_phase,
+        'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
+        'persistence':persist,'confidence':conf,'connectivity':conn,'evidence_count':len(evs),
+        'evidence_weight':ev_weight,'evidence':evidence,'merge_audit':_merge_audit(evs, place, ptype),
+        'history':{'severity_delta':top.get('severity_delta',0)},
+        'geo_consistent':geo_ok,'geo_issues':geo_issues,
+        'first_seen':_first,'last_update':_last}
+
 def build_signals(events):
     signals=[]
     for evs in _cluster(events):
-        top=max(evs,key=lambda x:x.get('severity',0))
-        sev=max((x.get('severity',0) for x in evs), default=0)
-        roles=set(_role(x.get('source')) for x in evs); srcs=set(str(x.get('source','')) for x in evs)
-        if roles & {'measurement','state','intl'}: conf,conf_f='high',1.0
-        elif len(srcs)>=2 and (roles-{'telegram'}): conf,conf_f='confirmed',0.92
-        elif roles=={'telegram'}: conf,conf_f='unconfirmed',0.72
-        else: conf,conf_f='single',0.82
-        persist=max((x.get('count_7d',0) for x in evs), default=0) or len(evs)
-        conn=sorted(set(sum((x.get('cascade') or [] for x in evs),[])))
-        trend=top.get('trend_direction') or top.get('forecast_trend') or 'flat'
-        np_=min(1.0, math.log1p(persist)/math.log1p(10)); nc_=min(1.0, len(conn)/3.0)
-        priority=int(max(0,min(100,round(sev*(1+0.15*_rising(trend)+0.10*np_+0.12*nc_)*conf_f))))
-        domains=sorted(set(x.get('domain','') for x in evs))
-        # v1.2: семантика процесса — process_place по МЕСТУ (локатив), actor/target раздельно
-        _lead=max(evs,key=lambda x:x.get('severity',0))
-        _pp_votes={}
-        for x in evs:
-            _p=_process_place(x); _pp_votes[_p['place']]=_pp_votes.get(_p['place'],(0,_p))
-            _pp_votes[_p['place']]=(_pp_votes[_p['place']][0]+1,_p)
-        _pp=sorted(_pp_votes.values(),key=lambda kv:-kv[0])[0][1]
-        place=_pp['place']; place_iso=_pp['iso']; macro=_pp['macro']
-        actor,target=_actor_target(evs)
-        name=_process_name_v2(evs, domains[0], place)
-        # PROCESS-ID: вокруг процесса (домен:локация:топик), НЕ вокруг текста
-        topic_stems=[w for w,_ in Counter(sum((list(_stems(x)) for x in evs),[])).most_common(3)]
-        pid_raw=f"{domains[0]}:{place or 'global'}:{'_'.join(sorted(topic_stems))}"
-        signal_id=f"{domains[0][:4]}-{re.sub(r'[^a-zа-яё0-9]','',(place or 'glob'))[:10]}-{hashlib.md5(pid_raw.encode()).hexdigest()[:6]}"
-        countries=sorted(set(sum((x.get('country_codes') or [] for x in evs),[])+sum((x.get('impact_countries') or [] for x in evs),[])))
-        regions=sorted(set(x.get('region','') for x in evs if x.get('region')))
-        dates=sorted(x.get('date','') for x in evs if x.get('date'))
-        evidence=[{'title':x.get('title',''),'source':x.get('source',''),'role':_role(x.get('source')),
-                   'date':x.get('date',''),'severity':x.get('severity',0),'is_trigger':_role(x.get('source'))=='telegram'}
-                  for x in sorted(evs,key=lambda x:-x.get('severity',0))]
-        _first=dates[0] if dates else ''; _last=dates[-1] if dates else ''
-        sig_phase=_signal_phase(len(evs), _first, _last, top.get('severity_delta',0), trend, persist, top.get('phase','active'))
-        affected=sorted(set([macro]+[r for r in regions if r])-{''}) if macro else regions
-        geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
-        signals.append({'signal_id':signal_id,'title':name,
-            'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
-            'affected_regions':affected,
-            'domains':domains,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
-            'trend':trend,'phase':sig_phase,
-            'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
-            'persistence':persist,'confidence':conf,'connectivity':conn,'evidence_count':len(evs),
-            'evidence':evidence,'history':{'severity_delta':top.get('severity_delta',0)},
-            'geo_consistent':geo_ok,'geo_issues':geo_issues,
-            'first_seen':_first,'last_update':_last})
+        parts=_split_check(evs)                    # Task 4: защита от ошибочного объединения
+        if parts and len(parts)>1:
+            for g in parts: signals.append(_build_one_signal(g))
+        else:
+            signals.append(_build_one_signal(evs))
     signals.sort(key=lambda s:-s['priority'])
     return signals
 
@@ -489,10 +624,14 @@ def write_signals_json(events, path):
     except Exception:
         previous=[]
     current=build_signals(events)
-    evolved=evolve_signals(current, previous, now)          # v1.3: живой процесс во времени
-    out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.3','signals':evolved}
+    evolved,report=evolve_signals(current, previous, now, want_report=True)   # v1.4: continuity + метрики
+    out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.4','report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path,'w',encoding='utf-8') as f: json.dump(out,f,ensure_ascii=False,indent=2)
+    try:
+        rp=os.path.join(os.path.dirname(path),'_signal_engine_report.json')
+        json.dump(report, open(rp,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
+    except Exception: pass
     return len(evolved)
 
 if __name__=='__main__':
