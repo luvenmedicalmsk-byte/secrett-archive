@@ -2897,38 +2897,92 @@ def fetch_reliefweb_v2():
 # ══════════════════════════════════════════════════════════════════════════════
 # ИСТОЧНИК 7: USGS Earthquakes (глобальные землетрясения)
 # ══════════════════════════════════════════════════════════════════════════════
+# --- USGS: резолв страны землетрясения (place + координаты) для попадания в аналитику стран ---
+_EN_ISO = {
+ 'chile':'CL','japan':'JP','indonesia':'ID','mexico':'MX','turkey':'TR','turkiye':'TR','iran':'IR',
+ 'peru':'PE','philippines':'PH','greece':'GR','italy':'IT','china':'CN','papua new guinea':'PG',
+ 'new zealand':'NZ','afghanistan':'AF','pakistan':'PK','india':'IN','nepal':'NP','taiwan':'TW',
+ 'russia':'RU','colombia':'CO','ecuador':'EC','argentina':'AR','guatemala':'GT','el salvador':'SV',
+ 'nicaragua':'NI','costa rica':'CR','panama':'PA','vanuatu':'VU','fiji':'FJ','tonga':'TO',
+ 'solomon islands':'SB','puerto rico':'PR','tajikistan':'TJ','kyrgyzstan':'KG','myanmar':'MM',
+ 'morocco':'MA','algeria':'DZ','iceland':'IS','tanzania':'TZ','ethiopia':'ET','dominican republic':'DO',
+ 'haiti':'HT','venezuela':'VE','bolivia':'BO','honduras':'HN','azerbaijan':'AZ','kazakhstan':'KZ',
+ 'mongolia':'MN','bangladesh':'BD','malaysia':'MY','spain':'ES','portugal':'PT','romania':'RO',
+ 'albania':'AL','croatia':'HR','cyprus':'CY','yemen':'YE','oman':'OM','egypt':'EG','united states':'US','usa':'US',
+}
+_QUAKE_OFFSHORE = {'gulf of california':('MX','Мексика'),'gulf of alaska':('US','США')}
+_QUAKE_CENTROID = {'CL':(-35,-71),'JP':(36,138),'ID':(-2,118),'MX':(23,-102),'TR':(39,35),'IR':(32,53),
+ 'PE':(-10,-76),'PH':(13,122),'GR':(39,22),'IT':(42,13),'PG':(-6,147),'NZ':(-41,174),'AF':(34,66),
+ 'PK':(30,70),'IN':(22,79),'NP':(28,84),'TW':(24,121),'RU':(62,94),'CO':(4,-73),'EC':(-1,-78),
+ 'AR':(-38,-63),'GT':(15,-90),'US':(39,-98),'IS':(65,-18),'VU':(-16,167),'FJ':(-17,178),'TO':(-21,-175),'SB':(-9,160)}
+_QUAKE_RU = {'CL':'Чили','JP':'Япония','ID':'Индонезия','MX':'Мексика','TR':'Турция','IR':'Иран','PE':'Перу',
+ 'PH':'Филиппины','GR':'Греция','IT':'Италия','PG':'Папуа — Новая Гвинея','NZ':'Новая Зеландия','AF':'Афганистан',
+ 'PK':'Пакистан','IN':'Индия','NP':'Непал','TW':'Тайвань','RU':'Россия','CO':'Колумбия','EC':'Эквадор',
+ 'AR':'Аргентина','GT':'Гватемала','US':'США','IS':'Исландия','VU':'Вануату','FJ':'Фиджи','TO':'Тонга','SB':'Соломоновы Острова'}
+def _usgs_country(place, lat, lng):
+    p = (place or '').strip(); low = p.lower()
+    for k,(cc,ru) in _QUAKE_OFFSHORE.items():
+        if k in low: return (cc,ru)
+    if 'калифорнийск' in low and 'залив' in low: return ('MX','Мексика')
+    if ',' in p:
+        reg = p.rsplit(',',1)[1].strip()
+        if reg == 'Georgia':
+            return ('GE','Грузия') if (lng is not None and lng > 25) else ('US','США')
+        if reg in US_STATES_RU or reg == 'CA': return ('US','США')
+        cc = _EN_ISO.get(reg.lower())
+        if cc: return (cc, COUNTRY_RU.get(reg, reg))
+    cc = _EN_ISO.get(low)
+    if cc: return (cc, COUNTRY_RU.get(p.title(), p))
+    if lat is not None and lng is not None:
+        best=None; bd=12.0
+        for cc,(cla,clo) in _QUAKE_CENTROID.items():
+            d=((lat-cla)**2+(lng-clo)**2)**0.5
+            if d<bd: bd=d; best=cc
+        if best: return (best, _QUAKE_RU.get(best,best))
+    return ('','')
+
+
 def fetch_usgs_earthquakes():
     items = []
     # Землетрясения магнитудой 5.0+ за последние 7 дней
-    url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson"
+    # только мощные землетрясения (M6.0+) за последние 30 дней -> единый авторитетный источник
+    url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson"
     data = fetch_url(url)
     if data:
         try:
-            # Убираем BOM и лишние символы
             data_clean = data.strip().lstrip('\ufeff')
-            # Проверяем что это JSON, а не HTML-ошибка
             if not data_clean.startswith('{'):
                 raise ValueError(f"Unexpected response (not JSON): {data_clean[:80]}")
             j = json.loads(data_clean)
-            for feat in j.get('features', [])[:20]:
+            feats = [f for f in j.get('features', []) if (f.get('properties', {}).get('mag') or 0) >= 6.0]
+            feats.sort(key=lambda f: -(f.get('properties', {}).get('time') or 0))
+            for feat in feats[:30]:
                 props = feat.get('properties', {})
                 coords = feat.get('geometry', {}).get('coordinates', [])
                 if not coords or len(coords) < 2: continue
                 lng, lat = float(coords[0]), float(coords[1])
                 mag = props.get('mag', 0)
+                if mag < 6.0: continue
                 place = props.get('place', '')
                 ru_place = ru_usgs_place(place)
-                title = f"Землетрясение M{mag} — {ru_place}"
-                items.append({
+                _cc, _ccru = _usgs_country(place, lat, lng)
+                _region = _ccru if _ccru else detect_region_by_coords(lat, lng)
+                # страна в заголовке/тексте -> резолвер и метамодель страны её увидят
+                _tail = f" ({_ccru})" if _ccru and _ccru not in ru_place else ""
+                title = f"Землетрясение M{mag} — {ru_place}{_tail}"
+                _it = {
                     'title': title,
-                    'desc': f"Магнитуда {mag}. {ru_place}",
+                    'desc': f"Магнитуда {mag}. {ru_place}{_tail}",
                     'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                     'source': 'USGS',
                     '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': (coords[2] if len(coords) > 2 else None)}),
                     '_lat': lat, '_lng': lng,
-                    '_region': detect_region_by_coords(lat, lng),
+                    '_region': _region,
                     '_domain': 'climate'
-                })
+                }
+                if _cc:
+                    _it['_country_code'] = _cc
+                items.append(_it)
         except Exception as e:
             print(f"  [WARN] USGS: {e}", file=sys.stderr)
     print(f"  USGS Earthquakes: {len(items)} событий", file=sys.stderr)
@@ -7413,6 +7467,14 @@ def _signal_quality_pass(events):
                 tl = (e.get('title') or '').lower()
                 if e.get('source')=='NASA EONET Ice' or tl.startswith('айсберг'):
                     dropped += 1; continue
+                # землетрясения в ленте — только из USGS (M6+); новостные/прочие не пускаем
+                try:
+                    _qb = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+                    _is_quake = (('землетряс' in _qb or 'афтершок' in _qb or re.search(r'магнитуд\w*\s*\d', _qb)) and 'политическ' not in _qb)
+                    if _is_quake and (e.get('source') or '') != 'USGS':
+                        dropped += 1; continue
+                except Exception:
+                    pass
                 # пан-европейское климатическое событие -> импакт на ключевые страны Европы (драйверы каждой)
                 try:
                     _et = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
