@@ -1,68 +1,73 @@
 {
   "country": "TH",
-  "date": "2026-06-30",
+  "date": "2026-07-01",
   "grdf_version": "2.0",
-  "generated_at": "2026-06-30T22:52:12.936620+00:00",
+  "generated_at": "2026-07-01T00:07:52.275977+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 52,
+      "score": 54,
       "props": {
-        "risk_score": 52
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 34,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
-      "score": 39,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 36,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 31,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-TH-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-TH-economic",
@@ -75,11 +80,6 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-TH-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
       "id": "SIGNAL-TH-Маловодье:",
       "type": "Signal",
       "label": "Маловодье: Алтайский край (Россия)",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TH-Суд_присуд",
+      "id": "SIGNAL-TH-В_Республи",
       "type": "Signal",
-      "label": "Суд присудил 4,9 миллиона батов семье за",
-      "severity": 48,
-      "domain": "geopolitical"
+      "label": "В Республике Алтай ввели ограничения на ",
+      "severity": 42,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-TH-Награда_по",
+      "id": "SIGNAL-TH-Компании_N",
       "type": "Signal",
-      "label": "Награда по арбитражу в Южно-Китайском мо",
-      "severity": 45,
-      "domain": "geopolitical"
+      "label": "Компании Nissan, Honda и Mitsubishi дого",
+      "severity": 42,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,43 +106,49 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-technology",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-social",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-cyber",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
+    },
+    {
+      "from": "DRIVER-TH-geopolitical",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-TH-economic",
@@ -157,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-climate",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-TH-geopolitical",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-TH-Маловодье:",
@@ -169,16 +190,16 @@
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-TH-Суд_присуд",
-      "to": "DOMAIN-TH-geopolitical",
+      "from": "SIGNAL-TH-В_Республи",
+      "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.42
     },
     {
-      "from": "SIGNAL-TH-Награда_по",
-      "to": "DOMAIN-TH-geopolitical",
+      "from": "SIGNAL-TH-Компании_N",
+      "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.42
     }
   ]
 }
