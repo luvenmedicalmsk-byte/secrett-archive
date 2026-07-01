@@ -10017,5 +10017,230 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   window._dnOpenLb=function(list,i){ list=(list||[]).filter(function(s){return s&&(s.img||s.video);}); if(!list.length)return; ensure(); gal=list; idx=Math.min(i||0,gal.length-1); render(); lb.classList.add('open'); document.body.style.overflow='hidden'; };
 })();
 </script>
+<!-- ═══ ATLAS Phase 2: режим «Процессы» внутри вкладки «События» (аддитивно, Signal Pro) ═══ -->
+<script>
+(function(){
+  if(window.__grdfProcInit) return; window.__grdfProcInit=true;
+  var SIG_URL='https://raw.githubusercontent.com/luvenmedicalmsk-byte/secrett-archive/main/docs/signals.json';
+  var _data=null,_loaded=false,_mode='events',_byId={};
+  var PHASE_RU={emerging:'Зарождение',growing:'Рост',active:'Активный',escalating:'Эскалация',stabilizing:'Стабилизация','de-escalating':'Деэскалация',dormant:'Спящий',archived:'Архив'};
+  var HEALTH_RU={Healthy:'Здоровый',Stable:'Стабильный',Escalating:'Эскалация',Critical:'Критический',Dormant:'Спящий',Archived:'Архив'};
+  var ROLE_RU={measurement:'Измерительный',state:'Государственный',intl:'Междунар. орг.',science:'Научный',financial:'Финансовый',agency:'Агентство',osint:'OSINT',telegram:'Telegram'};
+  var CONF_RU={single:'одиночное',confirmed:'подтверждён',high:'высокое',unconfirmed:'неподтверждён',stale:'устаревшее',verified:'верифицирован'};
+  var DOM_RU={climate:'Климат',economy:'Экономика',geopolitics:'Геополитика',technology:'Технологии',social:'Социум'};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function scol(v){ try{ if(window._sevColor) return window._sevColor(v); }catch(e){} v=+v||0; return v>=90?'#E24A3B':v>=75?'#FFD700':v>=60?'#FFA07A':v>=40?'#A89150':'#D8D8D8'; }
+  function hcol(h){ return {Critical:'#E24A3B',Escalating:'#FFD700',Healthy:'#FFA07A',Stable:'#A89150',Dormant:'#6b7280',Archived:'#6b7280'}[h]||'#A89150'; }
+  function isPro(){ try{ var t=(window.CC&&CC.tier&&CC.tier())||'free'; return !!(t&&t!=='free'); }catch(e){ return false; } }
+  function ago(iso){ if(!iso) return '—'; var d=(Date.now()-new Date(iso).getTime())/1000; if(d<0) return 'только что'; if(d<3600) return Math.max(1,Math.round(d/60))+' мин назад'; if(d<86400) return Math.round(d/3600)+' ч назад'; return Math.round(d/86400)+' дн назад'; }
+
+  // ── стили (namespaced gproc-) ──
+  var css='#grdf-mode-toggle{display:flex;gap:6px;padding:2px 16px 10px}'
+   +'.gproc-mb{flex:1;background:transparent;border:0.5px solid rgba(184,151,58,0.3);color:rgba(148,163,184,0.75);font-family:Montserrat,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.06em;padding:8px 6px;border-radius:6px;cursor:pointer;transition:.15s}'
+   +'.gproc-mb.active{background:rgba(184,151,58,0.14);border-color:#D4AF5A;color:#D4AF5A}'
+   +'#grdf-proc-feed .gpc{position:relative;padding:13px 14px 12px 17px;border-bottom:0.5px solid rgba(184,151,58,0.1);cursor:pointer}'
+   +'#grdf-proc-feed .gpc:active{background:rgba(184,151,58,0.05)}'
+   +'.gpc .gpc-edge{position:absolute;left:0;top:0;bottom:0;width:3px}'
+   +'.gpc .gpc-type{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(148,163,184,0.6);font-weight:500;display:flex;justify-content:space-between}'
+   +'.gpc .gpc-title{font-family:"Cormorant Garamond",serif;font-size:19px;font-weight:600;color:#e8e4dc;line-height:1.15;margin:4px 0 2px}'
+   +'.gpc .gpc-place{font-size:11px;color:#1faacc;margin-bottom:9px}'
+   +'.gpc .gpc-m{display:flex;gap:14px;margin-bottom:9px}'
+   +'.gpc .gpc-mi{display:flex;flex-direction:column;gap:2px}'
+   +'.gpc .gpc-mk{font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(148,163,184,0.5)}'
+   +'.gpc .gpc-mv{font-family:"Cormorant Garamond",serif;font-size:17px;font-weight:600;line-height:1}'
+   +'.gpc .gpc-chips{display:flex;gap:6px;flex-wrap:wrap}'
+   +'.gpc .gpc-ch{font-size:9px;letter-spacing:0.04em;padding:2px 8px;border-radius:20px;border:0.5px solid rgba(148,163,184,0.25);color:rgba(148,163,184,0.8);text-transform:uppercase}'
+   +'.gpc .gpc-ch.hl{border-color:rgba(184,151,58,0.5);color:#D4AF5A}'
+   +'.gpc .gpc-foot{display:flex;justify-content:space-between;font-size:9.5px;color:rgba(148,163,184,0.5);margin-top:9px}'
+   +'.gpc .gpc-watch{position:absolute;top:11px;right:14px;font-size:8px;color:#D4AF5A;letter-spacing:0.1em}'
+   /* detail overlay */
+   +'#gproc-ov{position:fixed;inset:0;background:rgba(4,3,7,.7);backdrop-filter:blur(3px);z-index:9998;display:none}'
+   +'#gproc-ov.on{display:block}'
+   +'#gproc-d{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:#0c0a12;border-left:0.5px solid rgba(184,151,58,0.25);z-index:9999;transform:translateX(100%);transition:.25s cubic-bezier(.4,0,.2,1);overflow-y:auto;-webkit-overflow-scrolling:touch}'
+   +'#gproc-d.on{transform:translateX(0)}'
+   +'#gproc-d .gd-head{padding:20px 22px 16px;border-bottom:0.5px solid rgba(184,151,58,0.2);position:sticky;top:0;background:#0c0a12;z-index:5}'
+   +'#gproc-d .gd-x{position:absolute;top:18px;right:20px;font-size:20px;color:rgba(148,163,184,0.6);cursor:pointer;line-height:1}'
+   +'#gproc-d .gd-type{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(148,163,184,0.6);font-weight:500}'
+   +'#gproc-d h2{font-family:"Cormorant Garamond",serif;font-size:27px;font-weight:600;color:#e8e4dc;margin:5px 0 2px;line-height:1.1}'
+   +'#gproc-d .gd-place{color:#1faacc;font-size:12px}'
+   +'.gd-sec{padding:17px 22px;border-bottom:0.5px solid rgba(255,255,255,0.05)}'
+   +'.gd-sh{font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#D4AF5A;font-weight:600;margin-bottom:11px;display:flex;align-items:center;gap:8px}'
+   +'.gd-sh::after{content:"";flex:1;height:1px;background:rgba(255,255,255,0.06)}'
+   +'.gd-kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12.5px}'
+   +'.gd-kv .k{color:rgba(148,163,184,0.7)} .gd-kv .v{color:#e8e4dc;text-align:right}'
+   +'.gd-dm{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}'
+   +'.gd-dm .c{background:#100d18;border:0.5px solid rgba(255,255,255,0.06);border-radius:7px;padding:9px 10px}'
+   +'.gd-dm .k{font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(148,163,184,0.5)}'
+   +'.gd-dm .v{font-family:"Cormorant Garamond",serif;font-size:20px;font-weight:600;margin-top:2px}'
+   +'.gd-dm .s{font-size:9px;color:rgba(148,163,184,0.6)}'
+   +'.gd-tl{position:relative;padding-left:16px}'
+   +'.gd-tl::before{content:"";position:absolute;left:3px;top:3px;bottom:3px;width:1px;background:rgba(184,151,58,0.3)}'
+   +'.gd-ti{position:relative;padding:0 0 12px 4px}'
+   +'.gd-ti::before{content:"";position:absolute;left:-16px;top:4px;width:6px;height:6px;border-radius:50%;background:#B8973A;box-shadow:0 0 0 3px #0c0a12}'
+   +'.gd-ti .e{font-size:12px;color:#e8e4dc} .gd-ti .dt{font-size:10.5px;color:rgba(148,163,184,0.7)} .gd-ti .t{font-size:9px;color:rgba(148,163,184,0.45)}'
+   +'.gd-ev{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,0.05)}'
+   +'.gd-ev:last-child{border:0} .gd-ev .t{font-size:12px;color:#e8e4dc;line-height:1.3} .gd-ev .m{font-size:10px;color:rgba(148,163,184,0.6);margin-top:2px} .gd-ev .s{font-family:"Cormorant Garamond",serif;font-size:15px;font-weight:600;flex-shrink:0}'
+   +'.gd-conn{display:inline-flex;align-items:center;background:#100d18;border:0.5px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 9px;margin:0 5px 5px 0;font-size:11.5px;color:#cbd5e1;cursor:pointer}'
+   +'.gd-conn:active{border-color:#D4AF5A;color:#D4AF5A}'
+   +'.gd-cl{font-size:10px;color:rgba(148,163,184,0.6);text-transform:uppercase;letter-spacing:0.07em;margin:0 0 5px}'
+   +'.gd-pill{display:inline-block;font-size:10.5px;padding:3px 8px;border-radius:5px;border:0.5px solid rgba(255,255,255,0.08);color:rgba(148,163,184,0.8);margin:0 5px 5px 0}'
+   +'.gd-note{font-family:"Cormorant Garamond",serif;font-size:14px;color:#e8e4dc;line-height:1.5}'
+   +'.gd-empty{font-size:12px;color:rgba(148,163,184,0.45);font-style:italic}'
+   +'.gd-fb{display:flex;align-items:center;gap:9px;font-size:11.5px;margin-bottom:7px}'
+   +'.gd-fb .l{width:100px;color:rgba(148,163,184,0.7)} .gd-fb .t{flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden} .gd-fb .t i{display:block;height:100%} .gd-fb .v{width:36px;text-align:right;color:#e8e4dc}'
+   +'.gd-exp{margin-bottom:10px} .gd-exp .q{font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:#D4AF5A;margin-bottom:3px} .gd-exp .a{font-size:12.5px;color:#e8e4dc;line-height:1.4}';
+  var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+
+  // ── инъекция переключателя + панели процессов + оверлея ──
+  function inject(){
+    var screen=document.getElementById('grdf-signals-screen'); if(!screen) return;
+    var head=screen.querySelector('.grdf-screen-head');
+    if(head && !document.getElementById('grdf-mode-toggle')){
+      var tg=document.createElement('div'); tg.id='grdf-mode-toggle';
+      tg.innerHTML='<button class="gproc-mb active" data-mode="events" onclick="grdfSetMode(\'events\')">События</button>'
+                  +'<button class="gproc-mb" data-mode="processes" onclick="grdfSetMode(\'processes\')">Процессы</button>';
+      head.insertAdjacentElement('afterend', tg);
+    }
+    var feed=document.getElementById('grdf-sig-feed');
+    if(feed && !document.getElementById('grdf-proc-feed')){
+      var pf=document.createElement('div'); pf.id='grdf-proc-feed'; pf.style.display='none';
+      feed.insertAdjacentElement('afterend', pf);
+    }
+    if(!document.getElementById('gproc-ov')){
+      var ov=document.createElement('div'); ov.id='gproc-ov'; ov.onclick=closeDetail; document.body.appendChild(ov);
+      var d=document.createElement('div'); d.id='gproc-d'; document.body.appendChild(d);
+    }
+  }
+  if(document.readyState!=='loading') inject(); else document.addEventListener('DOMContentLoaded', inject);
+
+  window.grdfSetMode=function(mode){
+    inject();
+    if(mode==='processes' && !isPro()){
+      try{ window.grdfOpenUpgrade && grdfOpenUpgrade('processes'); }catch(e){}
+      return; // остаёмся на «События»
+    }
+    _mode=mode;
+    document.querySelectorAll('#grdf-mode-toggle .gproc-mb').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode')===mode); });
+    var ev=(mode==='events');
+    var f=document.getElementById('grdf-sig-feed'), pf=document.getElementById('grdf-proc-feed'), fil=document.getElementById('grdf-sig-filters');
+    if(f) f.style.display=ev?'':'none';
+    if(fil) fil.style.display=ev?'':'none';
+    if(pf) pf.style.display=ev?'none':'';
+    if(!ev) loadProc(); else { var c=document.getElementById('grdf-sig-count'); if(c&&window.renderList){ try{renderList();}catch(_){} } }
+  };
+  function loadProc(){
+    var pf=document.getElementById('grdf-proc-feed'); if(!pf) return;
+    if(_loaded){ renderProc(); return; }
+    pf.innerHTML='<div style="padding:26px 14px;font-size:11px;color:rgba(148,163,184,0.5);text-align:center">Загрузка процессов…</div>';
+    fetch(SIG_URL+'?v='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+      _data=d; _loaded=true; (d.signals||[]).forEach(function(s){_byId[s.signal_id]=s;}); renderProc();
+    }).catch(function(){ pf.innerHTML='<div style="padding:26px 14px;font-size:11px;color:rgba(148,163,184,0.5);text-align:center">Не удалось загрузить процессы</div>'; });
+  }
+  function mi(k,v){ return '<div class="gpc-mi"><span class="gpc-mk">'+k+'</span><span class="gpc-mv" style="color:'+scol(v)+'">'+(v||0)+'</span></div>'; }
+  function renderProc(){
+    var pf=document.getElementById('grdf-proc-feed'); if(!pf||!_data) return;
+    var list=(_data.signals||[]).filter(function(s){return s.status!=='archived';}).sort(function(a,b){return (b.pressure||b.priority||0)-(a.pressure||a.priority||0);});
+    var c=document.getElementById('grdf-sig-count'); if(c) c.textContent=list.length+' процессов';
+    var g=_data.global_health||{};
+    var dash='';
+    if(g&&g.global_pressure!=null){
+      var pc=g.pressure_change_pct;
+      dash='<div style="display:flex;gap:0;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.12);flex-wrap:wrap">'
+        +gcell('Давление',Math.round(g.global_pressure),scol(g.global_pressure),pc!=null?(pc>=0?'▲ +'+pc+'%':'▼ '+pc+'%'):'')
+        +gcell('Температура',Math.round(g.system_temperature||0),scol(g.system_temperature),'')
+        +gcell('Активные',g.active_processes||0,'#e8e4dc','')
+        +gcell('Критические',g.critical_processes||0,g.critical_processes?'#E24A3B':'#e8e4dc','')
+        +gcell('Наблюдение',g.watchlist_count||0,'#e8e4dc','')
+        +'</div>';
+    }
+    pf.innerHTML=dash+list.slice(0,200).map(card).join('');
+    Array.prototype.forEach.call(pf.querySelectorAll('.gpc'),function(el){ el.onclick=function(){ openDetail(el.getAttribute('data-id')); }; });
+  }
+  function gcell(k,v,col,d){ return '<div style="flex:1;min-width:64px;display:flex;flex-direction:column;gap:3px"><span style="font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(148,163,184,0.55)">'+k+'</span><span style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:700;line-height:1;color:'+col+'">'+v+'</span><span style="font-size:9px;color:'+(String(d).indexOf('▲')>=0?'#D4AF5A':'#1faacc')+'">'+d+'</span></div>'; }
+  function card(s){
+    var pr=s.priority||0, sv=s.severity||0, pe=s.pressure||0;
+    return '<div class="gpc" data-id="'+esc(s.signal_id)+'">'
+      +'<div class="gpc-edge" style="background:'+hcol(s.health)+'"></div>'
+      +(s.watchlist?'<div class="gpc-watch">◆ НАБЛЮДЕНИЕ</div>':'')
+      +'<div class="gpc-type"><span>'+esc(s.process_type||(s.domains||[]).map(function(d){return DOM_RU[d]||d;}).join('/'))+'</span></div>'
+      +'<div class="gpc-title">'+esc(s.title)+'</div>'
+      +'<div class="gpc-place">'+esc(s.process_place||'—')+(s.actor?' · '+esc(s.actor)+(s.target?' → '+esc(s.target):''):'')+'</div>'
+      +'<div class="gpc-m">'+mi('Приоритет',pr)+mi('Тяжесть',sv)+mi('Давление',pe)+'</div>'
+      +'<div class="gpc-chips"><span class="gpc-ch hl">'+(PHASE_RU[s.phase]||s.phase)+'</span>'
+        +'<span class="gpc-ch" style="color:'+hcol(s.health)+';border-color:'+hcol(s.health)+'44">'+(HEALTH_RU[s.health]||s.health)+'</span>'
+        +'<span class="gpc-ch">'+esc(CONF_RU[s.confidence]||s.confidence)+'</span>'
+        +(s.velocity&&s.velocity.category?'<span class="gpc-ch">'+esc(s.velocity.category)+'</span>':'')+'</div>'
+      +'<div class="gpc-foot"><span>'+(s.evidence_count||0)+' подтв. · '+esc(s.age||'—')+'</span><span>'+ago(s.last_seen||s.last_update)+'</span></div>'
+    +'</div>';
+  }
+  // ── детальное досье ──
+  function closeDetail(){ document.getElementById('gproc-d').classList.remove('on'); document.getElementById('gproc-ov').classList.remove('on'); }
+  window.grdfProcCloseDetail=closeDetail;
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeDetail(); });
+  function connG(label,ids){ ids=(ids||[]).filter(function(i){return _byId[i];}); if(!ids.length) return ''; return '<div style="margin-bottom:10px"><div class="gd-cl">'+label+'</div>'+ids.map(function(i){return '<span class="gd-conn" data-id="'+esc(i)+'">'+esc(_byId[i].title)+'</span>';}).join('')+'</div>'; }
+  function openDetail(id){
+    var s=_byId[id]; if(!s) return;
+    var d=document.getElementById('gproc-d'); d.innerHTML=detailHTML(s);
+    d.classList.add('on'); document.getElementById('gproc-ov').classList.add('on'); d.scrollTop=0;
+    Array.prototype.forEach.call(d.querySelectorAll('.gd-conn'),function(el){ el.onclick=function(){ openDetail(el.getAttribute('data-id')); }; });
+  }
+  function detailHTML(s){
+    var g=s.dna||{}, fc=s.forecast||{}, v=s.velocity||{}, ce=s.confidence_evolution||{}, ex=s.explain||{};
+    var am=s.atlas_memory, rec=s.recurrence, sim=s.similar_processes||[];
+    var H='<div class="gd-head"><div class="gd-x" onclick="grdfProcCloseDetail()">✕</div>'
+      +'<div class="gd-type">'+esc(s.process_type||'')+(s.watchlist?' · ◆ наблюдение':'')+'</div>'
+      +'<h2>'+esc(s.title)+'</h2><div class="gd-place">'+esc(s.process_place||'')+'</div></div>';
+    // Сводка
+    H+='<div class="gd-sec"><div class="gd-sh">Сводка</div>'
+      +'<p class="gd-note" style="margin-bottom:11px">'+esc(ex.why_exists||'')+'</p>'
+      +'<div class="gd-kv"><div class="k">Тип</div><div class="v">'+esc(s.process_type||'—')+'</div>'
+      +'<div class="k">Состояние</div><div class="v">'+(PHASE_RU[s.phase]||s.phase)+' · '+(HEALTH_RU[s.health]||s.health)+'</div>'
+      +'<div class="k">Возраст</div><div class="v">'+esc(s.age||'—')+'</div>'
+      +'<div class="k">Обновление</div><div class="v">'+ago(s.last_seen||s.last_update)+'</div></div></div>';
+    // Динамика
+    H+='<div class="gd-sec"><div class="gd-sh">Динамика</div><div class="gd-dm">'
+      +'<div class="c"><div class="k">Давление</div><div class="v" style="color:'+scol(s.pressure)+'">'+(s.pressure||0)+'</div></div>'
+      +'<div class="c"><div class="k">Приоритет</div><div class="v" style="color:'+scol(s.priority)+'">'+(s.priority||0)+'</div></div>'
+      +'<div class="c"><div class="k">Тяжесть</div><div class="v" style="color:'+scol(s.severity)+'">'+(s.severity||0)+'</div></div>'
+      +'<div class="c"><div class="k">Скорость/ч</div><div class="v">'+((v.severity_per_h>0?'+':'')+(v.severity_per_h||0))+'</div><div class="s">'+esc(v.category||'')+'</div></div>'
+      +'<div class="c"><div class="k">Ускорение</div><div class="v">'+((s.acceleration>0?'+':'')+(s.acceleration||0))+'</div></div>'
+      +'<div class="c"><div class="k">Здоровье</div><div class="v" style="font-size:14px;color:'+hcol(s.health)+'">'+(HEALTH_RU[s.health]||s.health)+'</div></div></div>'
+      +'<div class="gd-cl">Прогноз следующего шага</div>'
+      +[['Эскалация',fc.escalation,'#FFD700'],['Стабилизация',fc.stabilization,'#1faacc'],['Распад',fc.decay,'#6b7280']].map(function(f){ return '<div class="gd-fb"><span class="l">'+f[0]+'</span><span class="t"><i style="width:'+Math.round((f[1]||0)*100)+'%;background:'+f[2]+'"></i></span><span class="v">'+Math.round((f[1]||0)*100)+'%</span></div>'; }).join('')
+      +(s.critical_transition?'<p style="color:#FFD700;font-size:11px;margin-top:8px">⚠ Признаки критического перехода</p>':'')+'</div>';
+    // Хроника
+    if(s.timeline&&s.timeline.length){ H+='<div class="gd-sec"><div class="gd-sh">Хроника</div><div class="gd-tl">'
+      +s.timeline.slice().reverse().map(function(t){ return '<div class="gd-ti"><div class="e">'+esc(t.event)+'</div>'+(t.detail?'<div class="dt">'+esc(t.detail)+'</div>':'')+'<div class="t">'+esc((t.t||'').replace('T',' ').slice(0,16))+'</div></div>'; }).join('')+'</div></div>'; }
+    // Свидетельства
+    H+='<div class="gd-sec"><div class="gd-sh">Свидетельства · '+(s.evidence_count||0)+'</div>'
+      +(s.evidence||[]).map(function(e){ return '<div class="gd-ev"><div><div class="t">'+esc(e.title)+'</div><div class="m">'+esc(e.source)+' · '+esc(ROLE_RU[e.role]||e.role)+' · '+esc(e.date)+(e.match?' · '+esc(e.match):'')+'</div></div><div class="s" style="color:'+scol(e.severity)+'">'+(e.severity||'')+'</div></div>'; }).join('')+'</div>';
+    // Связи
+    var conns=connG('Причина для',s.causes)+connG('Следствие',s.caused_by)+connG('Усиливает',s.amplifies)+connG('Подавляет',s.suppresses)+connG('Связанные',s.related);
+    if(conns) H+='<div class="gd-sec"><div class="gd-sh">Связи</div>'+conns+'</div>';
+    // География
+    H+='<div class="gd-sec"><div class="gd-sh">География</div><div class="gd-kv">'
+      +'<div class="k">Место</div><div class="v">'+esc(s.process_place||'—')+'</div>'
+      +(s.actor?'<div class="k">Актор</div><div class="v">'+esc(s.actor)+'</div>':'')
+      +(s.target?'<div class="k">Объект</div><div class="v">'+esc(s.target)+'</div>':'')
+      +'<div class="k">Страны</div><div class="v">'+((s.countries||[]).join(', ')||'—')+'</div>'
+      +'<div class="k">Затронуто</div><div class="v">'+((s.affected_regions||[]).join(', ')||'—')+'</div></div></div>';
+    // Память
+    var mem='';
+    if(s.expected_next&&s.expected_next.length) mem+='<div style="margin-bottom:10px"><div class="gd-cl">Что обычно дальше</div>'+s.expected_next.map(function(x){return '<span class="gd-pill" style="color:#D4AF5A;border-color:rgba(184,151,58,0.35)">'+esc(x)+'</span>';}).join('')+'</div>';
+    if(am&&am.note) mem+='<p class="gd-note">'+esc(am.note)+'</p>';
+    if(rec&&rec.label) mem+='<p class="gd-note" style="margin-top:7px">Циклический: '+esc(rec.label)+' ('+rec.occurrences+' повт.)</p>';
+    if(sim.length) mem+='<div style="margin-top:10px"><div class="gd-cl">Похожие процессы</div>'+sim.map(function(x){return '<span class="gd-pill">'+esc((x.signature||'').split('|')[1]||x.signature)+(x.typical_outcome?' → '+esc(x.typical_outcome):'')+'</span>';}).join('')+'</div>';
+    H+='<div class="gd-sec"><div class="gd-sh">Память · опыт Atlas</div>'+(mem||'<p class="gd-empty">Недостаточно накопленной истории.</p>')+'</div>';
+    // Объяснение
+    H+='<div class="gd-sec"><div class="gd-sh">Объяснение</div>'
+      +[['Почему создан',ex.why_exists],['Почему такой Приоритет',ex.why_priority],['Почему такая Фаза',ex.why_phase],['Почему такое Доверие',ex.why_confidence]].filter(function(x){return x[1];}).map(function(x){return '<div class="gd-exp"><div class="q">'+x[0]+'</div><div class="a">'+esc(x[1])+'</div></div>';}).join('')
+      +(ce.progression?'<div class="gd-exp"><div class="q">Эволюция доверия</div><div class="a">'+esc((ce.progression||'').split('→').map(function(x){return CONF_RU[x]||x;}).join(' → '))+(ce.tier==='verified'?' · <b style="color:#D4AF5A">verified</b>':'')+'</div></div>':'')
+      +'</div>';
+    return H;
+  }
+})();
+</script>
+<!-- ═══ /ATLAS Phase 2 ═══ -->
+
 </body>
 </html>
