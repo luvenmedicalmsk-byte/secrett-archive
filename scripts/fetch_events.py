@@ -7569,6 +7569,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["events"] = _drop_noise_cards(_p10_drop_quake_cards(enriched["events"]))
             enriched["events"] = _signal_quality_pass(enriched["events"])
+            enriched["events"] = _final_geo_enrich(enriched["events"])
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
