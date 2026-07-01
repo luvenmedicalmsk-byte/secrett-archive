@@ -835,7 +835,7 @@ def enrich_v15(signals, prev_global=None):
     gh['watchlist_count']=len(watch)
     return signals, gh
 
-def _build_one_signal(evs):
+def _build_one_signal(evs, meta=None):
     top=max(evs,key=lambda x:x.get('severity',0))
     sev=max((x.get('severity',0) for x in evs), default=0)
     # Поправка на корроборацию: множество независимых подтверждений повышают оценку
@@ -891,7 +891,7 @@ def _build_one_signal(evs):
     geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
     return {'signal_id':signal_id,'title':name,'process_type':ptype,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
-        'affected_regions':affected,'included_places':included_places,
+        'affected_regions':affected,'included_places':included_places,'included_processes':(meta or {}).get('included_processes',[]),'merged_count':(meta or {}).get('merged_count',1),
         'domains':domains,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
         'trend':trend,'phase':sig_phase,
         'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
@@ -921,9 +921,15 @@ def _dates_close(evs, days):
         return (b-a).days<=days
     except Exception: return True
 
+def _cluster_label(evs):
+    dom=sorted(set(e.get('domain','') for e in evs))[0] if evs else ''
+    typ=_process_type(evs, dom); pp=_cluster_place(evs)
+    return ('%s — %s'%(typ, pp['place'])) if pp['place'] and pp['place']!='Глобально' else typ
+
 def _macro_merge_clusters(clusters):
-    """Группировка кластеров-событий: тип+макрозона (для распространяющихся явлений)
-    или тип+место (для локальных). Слияние только при >=2 кластерах И временной близости."""
+    """Группировка кластеров-событий: тип+макрозона (распространяющиеся явления)
+    или тип+место (локальные). Слияние только при >=2 кластерах И временной близости.
+    Возвращает [(events, meta)], где meta несёт состав макропроцесса."""
     groups={}
     for evs in clusters:
         if not evs: continue
@@ -937,11 +943,14 @@ def _macro_merge_clusters(clusters):
     out=[]
     for key,grp in groups.items():
         if len(grp)>=2:
-            combined=[e for evs in grp for e in evs]
+            combined=[e for sub in grp for e in sub]
             win=14 if key[0]=='M' else 30
             if _dates_close(combined, win):
-                out.append(combined); continue
-        out.extend(grp)
+                labels=sorted(set(_cluster_label(sub) for sub in grp))
+                out.append((combined, {'merged_count':len(grp),'included_processes':labels}))
+                continue
+        for sub in grp:
+            out.append((sub, {'merged_count':1,'included_processes':[_cluster_label(sub)]}))
     return out
 
 def build_signals(events):
@@ -950,8 +959,8 @@ def build_signals(events):
         parts=_split_check(evs)                    # защита от ошибочного объединения
         if parts and len(parts)>1: clusters.extend(parts)
         else: clusters.append(evs)
-    clusters=_macro_merge_clusters(clusters)       # ВТОРОЙ УРОВЕНЬ: макропроцессы
-    signals=[_build_one_signal(evs) for evs in clusters]
+    merged=_macro_merge_clusters(clusters)         # ВТОРОЙ УРОВЕНЬ: макропроцессы
+    signals=[_build_one_signal(evs, meta) for evs,meta in merged]
     signals.sort(key=lambda s:-s['priority'])
     return signals
 

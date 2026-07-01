@@ -10220,6 +10220,14 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="k">Состояние процесса</div><div class="v">'+procState(s)+'</div>'
       +'<div class="k">Возраст</div><div class="v">'+esc(s.age||'—')+'</div>'
       +'<div class="k">Обновление</div><div class="v">'+ago(s.last_seen||s.last_update)+'</div></div></div>';
+    // Состав макропроцесса (только если объединены >1)
+    if(s.merged_count>1){
+      H+='<div class="gd-sec"><div class="gd-sh">Состав макропроцесса</div>'
+        +'<p class="gd-note" style="margin-bottom:9px">Объединяет '+s.merged_count+' связанных процессов и '+(s.evidence_count||0)+' свидетельств в единый макропроцесс.</p>'
+        +((s.included_places&&s.included_places.length)?'<div class="gd-cl">Затронутые территории</div>'+s.included_places.map(function(x){return '<span class="gd-pill">'+esc(x)+'</span>';}).join(''):'')
+        +((s.included_processes&&s.included_processes.length>1)?'<div class="gd-cl" style="margin-top:8px">Входящие процессы</div>'+s.included_processes.map(function(x){return '<span class="gd-pill">'+esc(x)+'</span>';}).join(''):'')
+        +'</div>';
+    }
     // Динамика
     H+='<div class="gd-sec"><div class="gd-sh">Динамика</div><div class="gd-dm">'
       +'<div class="c"><div class="k">Давление</div><div class="v" style="color:'+scol(s.pressure)+'">'+(s.pressure||0)+'</div></div>'
