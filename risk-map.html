@@ -10049,9 +10049,9 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   var _CN={RU:'Россия',US:'США',IN:'Индия',CN:'Китай',UA:'Украина',BY:'Беларусь',KZ:'Казахстан',GE:'Грузия',AM:'Армения',AZ:'Азербайджан',TR:'Турция',IR:'Иран',IQ:'Ирак',IL:'Израиль',SY:'Сирия',SA:'Саудовская Аравия',AE:'ОАЭ',EG:'Египет',DE:'Германия',FR:'Франция',GB:'Великобритания',IT:'Италия',ES:'Испания',PL:'Польша',NL:'Нидерланды',BE:'Бельгия',SE:'Швеция',NO:'Норвегия',FI:'Финляндия',GR:'Греция',PT:'Португалия',AT:'Австрия',CH:'Швейцария',CZ:'Чехия',RO:'Румыния',HU:'Венгрия',RS:'Сербия',JP:'Япония',KR:'Южная Корея',KP:'Северная Корея',IN2:'Индия',PK:'Пакистан',AF:'Афганистан',TH:'Таиланд',VN:'Вьетнам',ID:'Индонезия',PH:'Филиппины',MY:'Малайзия',SG:'Сингапур',AU:'Австралия',NZ:'Новая Зеландия',CA:'Канада',MX:'Мексика',BR:'Бразилия',AR:'Аргентина',VE:'Венесуэла',CO:'Колумбия',CL:'Чили',PE:'Перу',ZA:'ЮАР',NG:'Нигерия',KE:'Кения',TZ:'Танзания',ET:'Эфиопия',MA:'Марокко',DZ:'Алжир',LY:'Ливия',SD:'Судан'};
   function cn(c){ c=String(c||'').toUpperCase(); return (window._CNRU&&window._CNRU[c])||_CN[c]||c; }
   function humanAge(iso){ if(!iso) return '—'; var ms=Date.now()-new Date(iso).getTime(); if(ms<60000) return 'только что';
-    var m=ms/60000; if(m<60){var x=Math.round(m); return x+' '+_pl(x,['минута','минуты','минут']);}
-    var h=m/60; if(h<24){var x=Math.round(h); return x+' '+_pl(x,['час','часа','часов']);}
-    var dd=Math.round(h/24); return dd+' '+_pl(dd,['день','дня','дней']); }
+    var m=ms/60000; if(m<60){var x=Math.round(m); return x+' '+_pl(x,['минута','минуты','минут'])+' назад';}
+    var h=m/60; if(h<24){var x=Math.round(h); return x+' '+_pl(x,['час','часа','часов'])+' назад';}
+    var dd=Math.round(h/24); if(dd===1) return 'вчера'; return dd+' '+_pl(dd,['день','дня','дней'])+' назад'; }
   function plProc(n){ return _pl(n,['связанный процесс','связанных процесса','связанных процессов']); }
   function plSvid(n){ return _pl(n,['свидетельство','свидетельства','свидетельств']); }
   function ago(iso){ if(!iso) return '—'; var d=(Date.now()-new Date(iso).getTime())/1000; if(d<0) return 'только что'; if(d<3600) return Math.max(1,Math.round(d/60))+' мин назад'; if(d<86400) return Math.round(d/3600)+' ч назад'; return Math.round(d/86400)+' дн назад'; }
@@ -10227,7 +10227,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<p class="gd-note" style="margin-bottom:11px">'+esc(ex.why_exists||'')+'</p>'
       +'<div class="gd-kv"><div class="k">Тип</div><div class="v">'+esc(s.process_type||'—')+'</div>'
       +'<div class="k">Состояние процесса</div><div class="v">'+procState(s)+'</div>'
-      +'<div class="k">Возраст</div><div class="v">'+humanAge(s.first_seen)+'</div>'
+      +'<div class="k">Первое обнаружение</div><div class="v">'+humanAge(s.first_seen)+'</div>'
       +'<div class="k">Обновление</div><div class="v">'+ago(s.last_seen||s.last_update)+'</div></div></div>';
     // Состав процесса (только если объединены >1)
     if(s.merged_count>1){
@@ -10242,8 +10242,8 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="c"><div class="k">Давление</div><div class="v" style="color:'+scol(s.pressure)+'">'+(s.pressure||0)+'</div></div>'
       +'<div class="c"><div class="k">Приоритет</div><div class="v" style="color:'+scol(s.priority)+'">'+(s.priority||0)+'</div></div>'
       +'<div class="c"><div class="k">Тяжесть</div><div class="v" style="color:'+scol(s.severity)+'">'+(s.severity||0)+'</div></div>'
-      +'<div class="c"><div class="k">Скорость</div>'+(Math.abs(v.severity_per_h||0)<0.05?'<div class="v" style="font-size:13px;color:rgba(148,163,184,0.8)">стабилен</div>':'<div class="v">'+((v.severity_per_h>0?'+':'')+v.severity_per_h+'/ч')+'</div><div class="s">'+esc(v.category||'')+'</div>')+'</div>'
-      +'<div class="c"><div class="k">Ускорение</div>'+(!s.acceleration?'<div class="v" style="font-size:13px;color:rgba(148,163,184,0.8)">без изменений</div>':'<div class="v">'+((s.acceleration>0?'+':'')+s.acceleration)+'</div>')+'</div>'
+      +'<div class="c"><div class="k">Скорость</div><div class="v" style="font-size:13px;color:rgba(148,163,184,0.85)">'+(((v.severity_per_h||0)>0.05)?'развивается':'без изменений')+'</div></div>'
+      +'<div class="c"><div class="k">Ускорение</div><div class="v" style="font-size:13px;color:rgba(148,163,184,0.85)">'+(s.acceleration>0.02?'ускоряется':(s.acceleration<-0.02?'замедляется':'без изменений'))+'</div></div>'
       +'<div class="c"><div class="k">Состояние</div><div class="v" style="font-size:14px;color:'+stColor(procState(s))+'">'+procState(s)+'</div></div></div>'
       +'<div class="gd-cl">Прогноз следующего шага</div>'
       +[['Усиление',fc.escalation,'#FFD700'],['Стабилизация',fc.stabilization,'#1faacc'],['Распад',fc.decay,'#6b7280']].map(function(f){ return '<div class="gd-fb"><span class="l">'+f[0]+'</span><span class="t"><i style="width:'+Math.round((f[1]||0)*100)+'%;background:'+f[2]+'"></i></span><span class="v">'+Math.round((f[1]||0)*100)+'%</span></div>'; }).join('')
@@ -10253,7 +10253,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +s.timeline.slice().reverse().map(function(t){ return '<div class="gd-ti"><div class="e">'+esc(t.event)+'</div>'+(t.detail?'<div class="dt">'+esc(t.detail)+'</div>':'')+'<div class="t">'+esc((t.t||'').replace('T',' ').slice(0,16))+'</div></div>'; }).join('')+'</div></div>'; }
     // Свидетельства
     H+='<div class="gd-sec"><div class="gd-sh">Свидетельства · '+(s.evidence_count||0)+'</div>'
-      +(s.evidence||[]).map(function(e){ var _p=[]; var _s=cleanSrc(e.source); if(_s)_p.push(esc(_s)); if(e.role&&e.role!=='telegram')_p.push(esc(ROLE_RU[e.role]||e.role)); if(e.date)_p.push(esc(e.date)); if(e.match)_p.push(esc(e.match)); return '<div class="gd-ev"><div><div class="t">'+esc(e.title)+'</div><div class="m">'+_p.join(' · ')+'</div></div><div class="s" style="color:'+scol(e.severity)+'">'+(e.severity||'')+'</div></div>'; }).join('')+'</div>';
+      +(s.evidence||[]).map(function(e){ var _p=[]; var _s=cleanSrc(e.source); if(_s)_p.push(esc(_s)); if(e.role&&e.role!=='telegram')_p.push(esc(ROLE_RU[e.role]||e.role)); if(e.date)_p.push(esc(e.date)); return '<div class="gd-ev"><div><div class="t">'+esc(e.title)+'</div><div class="m">'+_p.join(' · ')+'</div></div><div class="s" style="color:'+scol(e.severity)+'">'+(e.severity||'')+'</div></div>'; }).join('')+'</div>';
     // Связи
     var conns=connG('Причина для',s.causes)+connG('Следствие',s.caused_by)+connG('Усиливает',s.amplifies)+connG('Подавляет',s.suppresses)+connG('Связанные',s.related);
     if(conns) H+='<div class="gd-sec"><div class="gd-sh">Связи</div>'+conns+'</div>';
@@ -10270,7 +10270,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     if(am&&am.note) mem+='<p class="gd-note">'+esc(am.note)+'</p>';
     if(rec&&rec.label) mem+='<p class="gd-note" style="margin-top:7px">Циклический: '+esc(rec.label)+' ('+rec.occurrences+' повт.)</p>';
     if(sim.length) mem+='<div style="margin-top:10px"><div class="gd-cl">Похожие процессы</div>'+sim.map(function(x){return '<span class="gd-pill">'+esc((x.signature||'').split('|')[1]||x.signature)+(x.typical_outcome?' → '+esc(x.typical_outcome):'')+'</span>';}).join('')+'</div>';
-    H+='<div class="gd-sec"><div class="gd-sh">Память · опыт Atlas</div>'+(mem||'<p class="gd-empty">Недостаточно накопленной истории.</p>')+'</div>';
+    H+='<div class="gd-sec"><div class="gd-sh">Наиболее вероятное развитие</div>'+(mem||'<p class="gd-empty">Недостаточно накопленной истории.</p>')+'</div>';
     // Объяснение
     H+='<div class="gd-sec"><div class="gd-sh">Объяснение</div>'
       +[['Почему создан',ex.why_exists],['Почему такой Приоритет',ex.why_priority],['Почему такая Фаза',ex.why_phase],['Почему такое Доверие',ex.why_confidence]].filter(function(x){return x[1];}).map(function(x){return '<div class="gd-exp"><div class="q">'+x[0]+'</div><div class="a">'+esc(x[1])+'</div></div>';}).join('')

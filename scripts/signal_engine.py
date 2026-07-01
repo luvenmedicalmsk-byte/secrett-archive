@@ -300,6 +300,12 @@ def _split_check(evs):
         return list(groups.values())
     return None
 
+_PHASE_SHORT={'emerging':'зарождение','growing':'рост','active':'активная фаза','escalating':'усиление',
+ 'stabilizing':'стабилизация','de-escalating':'ослабление','dormant':'затухание','archived':'архив'}
+def _srcname(s):
+    s=str(s or ''); s=re.sub(r'^\\s*(telegram|tg)\\s*/\\s*','',s,flags=re.I)
+    low=re.sub(r'[^a-zа-я]','',s.lower())
+    return {'bbbreaking':'Breaking','breaking':'Breaking'}.get(low, (s[:1].upper()+s[1:]) if s else s)
 def _plural_svid(n):
     n=abs(int(n)); n10=n%10; n100=n%100
     if n10==1 and n100!=11: return 'связанное свидетельство'
@@ -331,13 +337,13 @@ def _explain(sig, ptype):
     why_phase=_phnl.get(sig.get('phase',''),'Процесс развивается.')
     # Доверие — естественным языком, без внутренних статусов и названий источников
     if roles & {'measurement','state','intl'}:
-        why_confidence='Высокий уровень доверия: подтверждён официальными и измерительными источниками.'
+        why_confidence='Высокий уровень доверия — доверие основано на нескольких независимых подтверждениях и качестве использованных источников.'
     elif len(roles-{'telegram'})>=1:
-        why_confidence='Средний уровень доверия: есть подтверждение из независимых источников.'
+        why_confidence='Средний уровень доверия — есть независимые подтверждения; часть источников требует проверки.'
     else:
-        why_confidence='Предварительный уровень: требуется подтверждение из дополнительных источников.'
+        why_confidence='Предварительный уровень доверия — требуются дополнительные независимые подтверждения.'
     return {
-      'why_exists':'Процесс объединяет %d %s и отражает развитие ситуации во времени: %s — %s.'%(sig.get('evidence_count',0),_plural_svid(sig.get('evidence_count',0)),ptype,sig.get('process_place')),
+      'why_exists':'Процесс сформирован системой: несколько взаимосвязанных событий указывают на развитие одной общей ситуации.',
       'formed_by':[e.get('title','') for e in ev[:3]],
       'why_priority':why_priority,
       'why_phase':why_phase,
@@ -418,7 +424,10 @@ def _seed_history(sig, now):
     sig['phase_history']=[{'t':now,'phase':sig['phase']}]
     sig['evidence_history']=[{'t':now,'count':sig['evidence_count']}]
     sig['confidence_history']=[{'t':now,'v':sig['confidence']}]
-    sig['timeline']=[{'t':now,'event':'первое появление','detail':sig['title']}]
+    _tl=[{'t':now,'event':'первое обнаружение','detail':sig['title']}]
+    if sig['evidence_count']>1: _tl.append({'t':now,'event':'подтверждения собраны','detail':'%d %s'%(sig['evidence_count'],_plural_svid(sig['evidence_count']))})
+    _tl.append({'t':now,'event':'текущая стадия','detail':_PHASE_SHORT.get(sig['phase'],sig['phase'])})
+    sig['timeline']=_tl
     sig['delta']={'severity':0,'priority':0,'new_sources':[],'new_countries':[],'new_connections':[],'first_time':True}
     sig['status']='active'
     rising=str(sig.get('trend','')).lower() in ('rising','accelerating','up','escalating')
@@ -467,12 +476,12 @@ def _evolve_one(cur, prev, now):
         tl.append({'t':now,'event':ev,'detail':detail})
         audit.append({'t':now,'change':ev,'reason':detail,'rule':rule,'fields':fields or []})
     if was_dormant and changed: log('реактивация','новое свидетельство','reactivation',['status','phase'])
-    if dsev>=8: log('рост риска','severity +%d'%dsev,'delta_severity',['severity'])
-    elif dsev<=-8: log('снижение риска','severity %d'%dsev,'delta_severity',['severity'])
-    if new_sources: log('новый источник',', '.join(new_sources[:3]),'new_source',['confidence'])
+    if dsev>=8: log('усиление процесса','тяжесть выросла','delta_severity',['severity'])
+    elif dsev<=-8: log('ослабление процесса','тяжесть снизилась','delta_severity',['severity'])
+    if new_sources: log('новое подтверждение',', '.join(_srcname(x) for x in new_sources[:3]),'new_source',['confidence'])
     if new_countries: log('новая страна',', '.join(new_countries[:3]),'new_country',['countries'])
-    if conf!=prev.get('confidence'): log('доверие: %s→%s'%(prev.get('confidence'),conf),'','confidence_evolution',['confidence'])
-    if phase!=prev.get('phase'): log('фаза: %s→%s'%(prev.get('phase'),phase),'','phase_evolution',['phase'])
+    if conf!=prev.get('confidence'): log('уровень доверия обновлён','','confidence_evolution',['confidence'])
+    if phase!=prev.get('phase'): log('смена стадии',_PHASE_SHORT.get(phase,phase),'phase_evolution',['phase'])
     tl=_cap(tl); audit=_cap(audit)
     health=_health(cur['severity'], phase, hours_idle, rising)
     cur.update({'phase':phase,'confidence':conf,'status':'active' if changed else 'active',
