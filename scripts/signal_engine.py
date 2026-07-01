@@ -469,7 +469,7 @@ def _decay_absent(prev, now):
         'health':_health(prev.get('severity',0),phase,hi,rising),'audit':audit,'last_seen':prev.get('last_seen',now)})
     return prev
 
-def evolve_signals(current, previous, now=None, want_report=False, prev_global=None):
+def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
     prev_by_id={s['signal_id']:s for s in (previous or [])}
@@ -498,13 +498,16 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     # Task 7: Explainability
     for s in out:
         s['explain']=_explain(s, s.get('process_type', s.get('title','').split(' — ')[0]))
-    # v1.5: связи, давление, скорость/ускорение, прогноз, критические переходы, глобальное здоровье
+    # v1.5: связи, давление, динамика, прогноз, критические переходы, глобальное здоровье
     out, global_health = enrich_v15(out, prev_global)
+    # v1.6: память, DNA, паттерны, ожидаемый шаг, возраст, recurrence, Atlas Memory
+    out, memory_updated, patterns = enrich_v16(out, memory, now)
     out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s.get('pressure',s['priority'])))
     merges=sum(1 for s in out if s.get('evidence_count',1)>1)
     report=signal_engine_report(out, len(previous or []), n_created, n_matched, merges, 0, match_scores, now)
     report['global_health']=global_health
-    if want_report: return out, report, global_health
+    report['patterns_detected']=patterns
+    if want_report: return out, report, global_health, memory_updated, patterns
     return out
 
 
@@ -550,6 +553,156 @@ def _cluster(events):
     groups={}
     for i in range(n): groups.setdefault(find(i),[]).append(events[i])
     return list(groups.values())
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Signal Engine v1.6 — Process Memory & Pattern Engine: опыт и паттерны
+# ══════════════════════════════════════════════════════════════════════════════
+from collections import Counter as _Counter
+
+# Module 4/3: база знаний ожидаемого развития и известных паттернов (правила, не ML)
+_EXPECTED_NEXT={
+ 'Тепловая волна':['Водный дефицит','Пожарная активность','Перегрузка энергосети'],
+ 'Водный дефицит':['Продовольственный риск','Социальная напряжённость'],
+ 'Пожарная активность':['Ухудшение качества воздуха','Экономический ущерб'],
+ 'Отключение интернета':['Социальная напряжённость','Экономический ущерб'],
+ 'Топливный рынок':['Инфляция','Социальная напряжённость'],
+ 'Валютный рынок':['Инфляция','Отток капитала'],
+ 'Военные удары':['Гуманитарный кризис','Миграционная волна','Энергетический дефицит'],
+ 'Санкционное давление':['Валютный рынок','Инфляция'],
+ 'Эпидемиологический риск':['Ограничения','Нагрузка на здравоохранение'],
+ 'Киберугроза':['Сбой инфраструктуры','Утечка данных'],
+ 'Сейсмическая активность':['Гуманитарный кризис','Разрушение инфраструктуры'],
+}
+_KNOWN_PATTERNS=[
+ ('Климат→Энергетика→Экономика',['climate','technology','economy']),
+ ('Жара→Пожары→Экономика',['climate','climate','economy']),
+ ('Конфликт→Гуманитарный→Миграция',['geopolitics','social','social']),
+ ('Кибер→Инфраструктура→Экономика',['technology','technology','economy']),
+ ('Экономика→Социум→Политика',['economy','social','geopolitics']),
+]
+
+def _age_str(first, now):
+    h=_hours(first, now)
+    if h<48: return '%d ч' % int(h)
+    d=h/24
+    if d<60: return '%d дн' % int(d)
+    if d<730: return '%d мес' % int(d/30)
+    return '%.1f г' % (d/365)
+
+def _sig_key(s): return '%s|%s' % (s.get('process_type',''), s.get('process_place',''))
+
+# Module 1: Process DNA — «паспорт характера» процесса
+def _dna(sig, memrec):
+    sh=sig.get('severity_history',[])
+    growth=round((sh[-1]['v']-sh[0]['v'])/max(1,(_hours(sh[0]['t'],sh[-1]['t'])/24) or 1),2) if len(sh)>1 else 0.0
+    phases=[p['phase'] for p in sig.get('phase_history',[])] or [sig.get('phase','')]
+    hist_max=max([sig.get('pressure',0)]+((memrec or {}).get('max_pressures',[]) or [0]))
+    return {
+      'typical_duration_h': (memrec or {}).get('avg_duration_h'),
+      'average_growth_rate': growth,                 # severity/день
+      'normal_sources': sig.get('_all_roles', sorted(set(e.get('role') for e in sig.get('evidence',[])))),
+      'escalation_pattern': '→'.join(dict.fromkeys(phases)),
+      'historical_max_pressure': hist_max,
+    }
+
+# Module 5: Confidence Evolution — прогрессия + tier 'verified'
+def _conf_evolution(sig):
+    ch=[c['v'] for c in sig.get('confidence_history',[])] or [sig.get('confidence')]
+    roles=set(sig.get('_all_roles',[]))
+    verified = sig.get('confidence')=='high' and len({r for r in roles if r in ('measurement','state','intl')})>=2
+    return {'progression':'→'.join(dict.fromkeys(ch)),'tier':'verified' if verified else sig.get('confidence')}
+
+# Memory catalog: накопление опыта по сигнатуре процесса между прогонами
+def update_memory(memory, signals, now):
+    mem=memory or {'signatures':{},'patterns_seen':{}}
+    sigs=mem.setdefault('signatures',{})
+    for s in signals:
+        k=_sig_key(s); rec=sigs.setdefault(k,{'type':s.get('process_type'),'place':s.get('process_place'),
+            'occurrences':{},'max_pressures':[],'outcomes':{}})
+        occ=rec['occurrences'].setdefault(s['signal_id'],
+            {'first_seen':s.get('first_seen'),'last_seen':now,'max_pressure':0,'final_phase':None})
+        occ['last_seen']=now; occ['max_pressure']=max(occ['max_pressure'], s.get('pressure',0))
+        if s.get('status')=='archived':
+            occ['final_phase']=s.get('phase'); rec['outcomes'][s.get('phase','archived')]=rec['outcomes'].get(s.get('phase','archived'),0)+1
+    # агрегаты
+    for k,rec in sigs.items():
+        occs=list(rec['occurrences'].values())
+        durs=[_hours(o['first_seen'],o['last_seen']) for o in occs if o.get('first_seen')]
+        rec['count']=len(occs)
+        rec['avg_duration_h']=round(sum(durs)/len(durs),1) if durs else None
+        rec['max_pressures']=sorted((o['max_pressure'] for o in occs),reverse=True)[:10]
+    mem['updated']=now
+    return mem
+
+# Module 2: Similar Process Search
+def _similar(sig, memory):
+    if not memory: return []
+    out=[]
+    for k,rec in memory.get('signatures',{}).items():
+        if rec.get('type')==sig.get('process_type') and rec.get('place')!=sig.get('process_place'):
+            out.append({'signature':k,'place':rec.get('place'),'occurrences':rec.get('count',0),
+                        'typical_outcome':(_Counter(rec.get('outcomes',{})).most_common(1)[0][0] if rec.get('outcomes') else None)})
+    return sorted(out,key=lambda x:-x['occurrences'])[:5]
+
+# Module 6/7: возраст + recurrence
+def _recurrence(sig, memory):
+    if not memory: return None
+    rec=memory.get('signatures',{}).get(_sig_key(sig))
+    if not rec or rec.get('count',0)<2: return None
+    firsts=sorted(o['first_seen'] for o in rec['occurrences'].values() if o.get('first_seen'))
+    if len(firsts)<2: return None
+    gaps=[_hours(firsts[i],firsts[i+1])/24 for i in range(len(firsts)-1)]
+    avg=sum(gaps)/len(gaps)
+    period='каждые %d дн' % int(avg) if avg<300 else 'раз в год' if avg<450 else 'реже раза в год'
+    return {'recurs':True,'avg_gap_days':round(avg,1),'label':period,'occurrences':rec['count']}
+
+# Module 8: Atlas Memory — накопленный опыт по процессу
+def _atlas_memory(sig, memory):
+    if not memory: return None
+    rec=memory.get('signatures',{}).get(_sig_key(sig))
+    if not rec or rec.get('count',0)<2: return None
+    outc=_Counter(rec.get('outcomes',{}))
+    total=sum(outc.values())
+    if total==0: return {'similar_count':rec['count'],'note':'история накапливается'}
+    top,tn=outc.most_common(1)[0]
+    return {'similar_count':rec['count'],'resolved':total,'typical_outcome':top,
+            'note':'из %d завершённых аналогичных процессов %d закончились как «%s»' % (total,tn,top)}
+
+# Module 3: Pattern Recognition (по графу связей текущих процессов)
+def _detect_patterns(signals):
+    id2={s['signal_id']:s for s in signals}
+    found=[]
+    for s in signals:
+        for cid in s.get('causes',[]):
+            c=id2.get(cid)
+            if not c: continue
+            for cid2 in c.get('causes',[]):
+                c2=id2.get(cid2)
+                if not c2: continue
+                chain_dom=[(s.get('domains') or [''])[0],(c.get('domains') or [''])[0],(c2.get('domains') or [''])[0]]
+                for name,patt in _KNOWN_PATTERNS:
+                    if chain_dom==patt:
+                        found.append({'pattern':name,'chain':[s['title'],c['title'],c2['title']]})
+    # уникальные
+    seen=set(); uniq=[]
+    for f in found:
+        key=f['pattern']+'|'+f['chain'][0]
+        if key not in seen: seen.add(key); uniq.append(f)
+    return uniq[:10]
+
+def enrich_v16(signals, memory, now):
+    mem=update_memory(memory, signals, now)
+    for s in signals:
+        memrec=mem['signatures'].get(_sig_key(s))
+        s['age']=_age_str(s.get('first_seen',now), now)
+        s['dna']=_dna(s, memrec)
+        s['confidence_evolution']=_conf_evolution(s)
+        s['expected_next']=_EXPECTED_NEXT.get(s.get('process_type'),[])[:3]
+        s['similar_processes']=_similar(s, memory)     # ищем в ПРОШЛОЙ памяти
+        s['recurrence']=_recurrence(s, memory)
+        s['atlas_memory']=_atlas_memory(s, memory)
+    patterns=_detect_patterns(signals)
+    return signals, mem, patterns
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Signal Engine v1.5 — Process Intelligence: связи, динамика, давление, прогноз
@@ -756,14 +909,21 @@ def write_signals_json(events, path):
         if os.path.exists(path):
             prev_global=json.load(open(path,encoding='utf-8')).get('global_health')
     except Exception: prev_global=None
+    mem_path=os.path.join(os.path.dirname(path),'signal_memory.json')
+    memory=None
+    try:
+        if os.path.exists(mem_path): memory=json.load(open(mem_path,encoding='utf-8'))
+    except Exception: memory=None
     current=build_signals(events)
-    evolved,report,global_health=evolve_signals(current, previous, now, want_report=True, prev_global=prev_global)
-    out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.5','global_health':global_health,'report':report,'signals':evolved}
+    evolved,report,global_health,memory_updated,patterns=evolve_signals(
+        current, previous, now, want_report=True, prev_global=prev_global, memory=memory)
+    out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
+         'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path,'w',encoding='utf-8') as f: json.dump(out,f,ensure_ascii=False,indent=2)
     try:
-        rp=os.path.join(os.path.dirname(path),'_signal_engine_report.json')
-        json.dump(report, open(rp,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
+        json.dump(memory_updated, open(mem_path,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
+        json.dump(report, open(os.path.join(os.path.dirname(path),'_signal_engine_report.json'),'w',encoding='utf-8'), ensure_ascii=False, indent=2)
     except Exception: pass
     return len(evolved)
 
