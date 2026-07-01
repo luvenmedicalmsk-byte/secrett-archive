@@ -1610,7 +1610,7 @@ def _reclass_domain(title, summary, current):
     if current == 'economy' and any(w in b for w in ('чёрный дождь','черный дождь','град','снегопад','заморозк','паводок','ливень')):
         return 'climate'
     # климат: жара / экология / загрязнение -> climate (морфолог.-устойчиво; не трогает геополитику и метафоры)
-    _clim_heat = any(w in b for w in (' жара',' жары',' жаре',' жарой',' жару','зной','heatwave','аномальн жар','тепловая волна','волна жары','засух'))
+    _clim_heat = any(w in b for w in (' жара',' жары',' жаре',' жарой',' жару','зной','heatwave','аномальн жар','тепловая волна','волна жары','тепловой удар','теплового удара','тепловые удары','засух'))
     _clim_eco = (('токсичн' in b or 'загрязн' in b or 'разлив' in b) and ('рек' in b or 'вод' in b or 'нефт' in b or 'воздух' in b or 'почв' in b)) or 'экологическ катастроф' in b or 'экологическ бедств' in b
     if current in ('geopolitics','economy','social') and (_clim_heat or _clim_eco) and not any(w in b for w in ('война','войну','ракетн','санкц','удар по','спецоперац','госпереворот','боевик','наступлени')):
         return 'climate'
@@ -7413,6 +7413,18 @@ def _signal_quality_pass(events):
                 tl = (e.get('title') or '').lower()
                 if e.get('source')=='NASA EONET Ice' or tl.startswith('айсберг'):
                     dropped += 1; continue
+                # пан-европейское климатическое событие -> импакт на ключевые страны Европы (драйверы каждой)
+                try:
+                    _et = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+                    if (e.get('domain')=='climate') and re.search(r'в европе|по европе|европейск\w* жар|жар\w* в европе|страны европы|вся европа|евросоюз|across europe', _et) and 'европейской части' not in _et and 'европейскую часть' not in _et and 'европейская часть' not in _et:
+                        _EU = ['DE','FR','IT','ES','PL','NL','GB','CZ','AT','BE']
+                        e['impact_countries'] = sorted(set((e.get('impact_countries') or []) + _EU))
+                        e['country_codes'] = sorted(set((e.get('country_codes') or []) + _EU))
+                        if (e.get('primary_country') or '') in ('US','CA','CN','IN','BR','AU') and 'сша' not in _et and 'америк' not in _et:
+                            e['primary_country'] = ''; e['event_country'] = ''; e['country_code'] = ''
+                            e['region'] = 'Европа'
+                except Exception:
+                    pass
                 # пере-скоринг сохранённых катастроф по количественному масштабу (аудит калибровки)
                 try:
                     _dm = e.get('domain') or ''
