@@ -10046,6 +10046,12 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   function hcol(h){ return {Critical:'#E24A3B',Escalating:'#FFD700',Healthy:'#FFA07A',Stable:'#A89150',Dormant:'#6b7280',Archived:'#6b7280'}[h]||'#A89150'; }
   function isPro(){ try{ var t=(window.CC&&CC.tier&&CC.tier())||'free'; return !!(t&&t!=='free'); }catch(e){ return false; } }
   function _pl(n,f){ n=Math.abs(n|0); var d=n%10,h=n%100; if(d===1&&h!==11)return f[0]; if(d>=2&&d<=4&&!(h>=12&&h<=14))return f[1]; return f[2]; }
+  var _CN={RU:'Россия',US:'США',IN:'Индия',CN:'Китай',UA:'Украина',BY:'Беларусь',KZ:'Казахстан',GE:'Грузия',AM:'Армения',AZ:'Азербайджан',TR:'Турция',IR:'Иран',IQ:'Ирак',IL:'Израиль',SY:'Сирия',SA:'Саудовская Аравия',AE:'ОАЭ',EG:'Египет',DE:'Германия',FR:'Франция',GB:'Великобритания',IT:'Италия',ES:'Испания',PL:'Польша',NL:'Нидерланды',BE:'Бельгия',SE:'Швеция',NO:'Норвегия',FI:'Финляндия',GR:'Греция',PT:'Португалия',AT:'Австрия',CH:'Швейцария',CZ:'Чехия',RO:'Румыния',HU:'Венгрия',RS:'Сербия',JP:'Япония',KR:'Южная Корея',KP:'Северная Корея',IN2:'Индия',PK:'Пакистан',AF:'Афганистан',TH:'Таиланд',VN:'Вьетнам',ID:'Индонезия',PH:'Филиппины',MY:'Малайзия',SG:'Сингапур',AU:'Австралия',NZ:'Новая Зеландия',CA:'Канада',MX:'Мексика',BR:'Бразилия',AR:'Аргентина',VE:'Венесуэла',CO:'Колумбия',CL:'Чили',PE:'Перу',ZA:'ЮАР',NG:'Нигерия',KE:'Кения',TZ:'Танзания',ET:'Эфиопия',MA:'Марокко',DZ:'Алжир',LY:'Ливия',SD:'Судан'};
+  function cn(c){ c=String(c||'').toUpperCase(); return (window._CNRU&&window._CNRU[c])||_CN[c]||c; }
+  function humanAge(iso){ if(!iso) return '—'; var ms=Date.now()-new Date(iso).getTime(); if(ms<60000) return 'только что';
+    var m=ms/60000; if(m<60){var x=Math.round(m); return x+' '+_pl(x,['минута','минуты','минут']);}
+    var h=m/60; if(h<24){var x=Math.round(h); return x+' '+_pl(x,['час','часа','часов']);}
+    var dd=Math.round(h/24); return dd+' '+_pl(dd,['день','дня','дней']); }
   function plProc(n){ return _pl(n,['связанный процесс','связанных процесса','связанных процессов']); }
   function plSvid(n){ return _pl(n,['свидетельство','свидетельства','свидетельств']); }
   function ago(iso){ if(!iso) return '—'; var d=(Date.now()-new Date(iso).getTime())/1000; if(d<0) return 'только что'; if(d<3600) return Math.max(1,Math.round(d/60))+' мин назад'; if(d<86400) return Math.round(d/3600)+' ч назад'; return Math.round(d/86400)+' дн назад'; }
@@ -10196,7 +10202,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
         +'<span class="gpc-ch" style="color:'+window.__pc+';border-color:'+window.__pc+'44">'+window.__ps+'</span>'
         +'<span class="gpc-ch">'+esc(CONF_RU[s.confidence]||s.confidence)+'</span>'
         +(s.velocity&&s.velocity.category?'<span class="gpc-ch">'+esc(s.velocity.category)+'</span>':'')+'</div>'
-      +'<div class="gpc-foot"><span>'+(s.evidence_count||0)+' подтв. · '+esc(s.age||'—')+'</span><span>'+ago(s.last_seen||s.last_update)+'</span></div>'
+      +'<div class="gpc-foot"><span>'+(s.evidence_count||0)+' подтв. · '+humanAge(s.first_seen)+'</span><span>'+ago(s.last_seen||s.last_update)+'</span></div>'
     +'</div>';
   }
   // ── детальное досье ──
@@ -10221,7 +10227,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<p class="gd-note" style="margin-bottom:11px">'+esc(ex.why_exists||'')+'</p>'
       +'<div class="gd-kv"><div class="k">Тип</div><div class="v">'+esc(s.process_type||'—')+'</div>'
       +'<div class="k">Состояние процесса</div><div class="v">'+procState(s)+'</div>'
-      +'<div class="k">Возраст</div><div class="v">'+esc(s.age||'—')+'</div>'
+      +'<div class="k">Возраст</div><div class="v">'+humanAge(s.first_seen)+'</div>'
       +'<div class="k">Обновление</div><div class="v">'+ago(s.last_seen||s.last_update)+'</div></div></div>';
     // Состав процесса (только если объединены >1)
     if(s.merged_count>1){
@@ -10236,8 +10242,8 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="c"><div class="k">Давление</div><div class="v" style="color:'+scol(s.pressure)+'">'+(s.pressure||0)+'</div></div>'
       +'<div class="c"><div class="k">Приоритет</div><div class="v" style="color:'+scol(s.priority)+'">'+(s.priority||0)+'</div></div>'
       +'<div class="c"><div class="k">Тяжесть</div><div class="v" style="color:'+scol(s.severity)+'">'+(s.severity||0)+'</div></div>'
-      +'<div class="c"><div class="k">Скорость/ч</div><div class="v">'+((v.severity_per_h>0?'+':'')+(v.severity_per_h||0))+'</div><div class="s">'+esc(v.category||'')+'</div></div>'
-      +'<div class="c"><div class="k">Ускорение</div><div class="v">'+((s.acceleration>0?'+':'')+(s.acceleration||0))+'</div></div>'
+      +'<div class="c"><div class="k">Скорость</div>'+(Math.abs(v.severity_per_h||0)<0.05?'<div class="v" style="font-size:13px;color:rgba(148,163,184,0.8)">стабилен</div>':'<div class="v">'+((v.severity_per_h>0?'+':'')+v.severity_per_h+'/ч')+'</div><div class="s">'+esc(v.category||'')+'</div>')+'</div>'
+      +'<div class="c"><div class="k">Ускорение</div>'+(!s.acceleration?'<div class="v" style="font-size:13px;color:rgba(148,163,184,0.8)">без изменений</div>':'<div class="v">'+((s.acceleration>0?'+':'')+s.acceleration)+'</div>')+'</div>'
       +'<div class="c"><div class="k">Состояние</div><div class="v" style="font-size:14px;color:'+stColor(procState(s))+'">'+procState(s)+'</div></div></div>'
       +'<div class="gd-cl">Прогноз следующего шага</div>'
       +[['Усиление',fc.escalation,'#FFD700'],['Стабилизация',fc.stabilization,'#1faacc'],['Распад',fc.decay,'#6b7280']].map(function(f){ return '<div class="gd-fb"><span class="l">'+f[0]+'</span><span class="t"><i style="width:'+Math.round((f[1]||0)*100)+'%;background:'+f[2]+'"></i></span><span class="v">'+Math.round((f[1]||0)*100)+'%</span></div>'; }).join('')
@@ -10256,11 +10262,11 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="k">Место</div><div class="v">'+esc(s.process_place||'—')+'</div>'
       +(s.actor?'<div class="k">Актор</div><div class="v">'+esc(s.actor)+'</div>':'')
       +(s.target?'<div class="k">Объект</div><div class="v">'+esc(s.target)+'</div>':'')
-      +'<div class="k">Страны</div><div class="v">'+((s.countries||[]).join(', ')||'—')+'</div>'
+      +'<div class="k">Страны</div><div class="v">'+((s.countries||[]).map(cn).join(', ')||'—')+'</div>'
       +'<div class="k">Затронуто</div><div class="v">'+((s.affected_regions||[]).join(', ')||'—')+'</div></div></div>';
     // Память
     var mem='';
-    if(s.expected_next&&s.expected_next.length) mem+='<div style="margin-bottom:10px"><div class="gd-cl">Что обычно дальше</div>'+s.expected_next.map(function(x){return '<span class="gd-pill" style="color:#D4AF5A;border-color:rgba(184,151,58,0.35)">'+esc(x)+'</span>';}).join('')+'</div>';
+    if(s.expected_next&&s.expected_next.length) mem+='<p class="gd-note" style="font-size:12.5px;margin-bottom:8px">На основе накопленного опыта аналогичных процессов система ожидает наиболее вероятное развитие:</p><div style="margin-bottom:10px"><div class="gd-cl">Наиболее вероятные последствия</div>'+s.expected_next.map(function(x){return '<span class="gd-pill" style="color:#D4AF5A;border-color:rgba(184,151,58,0.35)">'+esc(x)+'</span>';}).join('')+'</div>';
     if(am&&am.note) mem+='<p class="gd-note">'+esc(am.note)+'</p>';
     if(rec&&rec.label) mem+='<p class="gd-note" style="margin-top:7px">Циклический: '+esc(rec.label)+' ('+rec.occurrences+' повт.)</p>';
     if(sim.length) mem+='<div style="margin-top:10px"><div class="gd-cl">Похожие процессы</div>'+sim.map(function(x){return '<span class="gd-pill">'+esc((x.signature||'').split('|')[1]||x.signature)+(x.typical_outcome?' → '+esc(x.typical_outcome):'')+'</span>';}).join('')+'</div>';
@@ -10268,7 +10274,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     // Объяснение
     H+='<div class="gd-sec"><div class="gd-sh">Объяснение</div>'
       +[['Почему создан',ex.why_exists],['Почему такой Приоритет',ex.why_priority],['Почему такая Фаза',ex.why_phase],['Почему такое Доверие',ex.why_confidence]].filter(function(x){return x[1];}).map(function(x){return '<div class="gd-exp"><div class="q">'+x[0]+'</div><div class="a">'+esc(x[1])+'</div></div>';}).join('')
-      +(ce.progression?'<div class="gd-exp"><div class="q">Эволюция доверия</div><div class="a">'+esc((ce.progression||'').split('→').map(function(x){return CONF_RU[x]||x;}).join(' → '))+(ce.tier==='verified'?' · <b style="color:#D4AF5A">verified</b>':'')+'</div></div>':'')
+      
       +'</div>';
     return H;
   }

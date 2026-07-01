@@ -309,19 +309,39 @@ def _plural_svid(n):
 # Task 7: Signal Explainability
 def _explain(sig, ptype):
     ev=sig.get('evidence',[])
-    roles=sorted(set(e['role'] for e in ev))
-    d=sig.get('delta',{})
-    why_pri=[]
-    if d.get('severity'): why_pri.append('severity %+d'%d['severity'])
-    if str(sig.get('trend','')).lower() in ('rising','accelerating','up','escalating'): why_pri.append('растущий тренд')
-    if sig.get('connectivity'): why_pri.append('связность %d домен(ов)'%len(sig['connectivity']))
-    ph=[p['phase'] for p in sig.get('phase_history',[])]
+    roles=set(e.get('role') for e in ev)
+    d=sig.get('delta',{}) or {}
+    tr=str(sig.get('trend','')).lower()
+    # Приоритет — естественным языком
+    pri=[]
+    if (d.get('severity') or 0)>0: pri.append('рост тяжести процесса')
+    if tr in ('rising','accelerating','up','escalating'): pri.append('растущая динамика')
+    if len(sig.get('connectivity',[]))>0: pri.append('влияние на смежные домены')
+    if sig.get('evidence_count',0)>=3: pri.append('подтверждение несколькими свидетельствами')
+    why_priority=('Приоритет обусловлен: '+', '.join(pri)+'.') if pri else 'Приоритет отражает текущую тяжесть процесса.'
+    # Фаза — естественным языком
+    _phnl={'emerging':'Процесс на ранней стадии — появились первые сигналы.',
+      'growing':'Процесс в стадии роста — набирает свидетельства и тяжесть.',
+      'active':'Процесс активен и устойчиво развивается.',
+      'escalating':'Процесс усиливается — тяжесть и динамика нарастают.',
+      'stabilizing':'Процесс стабилизируется — активность снижается.',
+      'de-escalating':'Процесс ослабевает — уровень риска снижается.',
+      'dormant':'Процесс затих — новых свидетельств давно не поступало.',
+      'archived':'Процесс завершён.'}
+    why_phase=_phnl.get(sig.get('phase',''),'Процесс развивается.')
+    # Доверие — естественным языком, без внутренних статусов и названий источников
+    if roles & {'measurement','state','intl'}:
+        why_confidence='Высокий уровень доверия: подтверждён официальными и измерительными источниками.'
+    elif len(roles-{'telegram'})>=1:
+        why_confidence='Средний уровень доверия: есть подтверждение из независимых источников.'
+    else:
+        why_confidence='Предварительный уровень: требуется подтверждение из дополнительных источников.'
     return {
       'why_exists':'Процесс объединяет %d %s и отражает развитие ситуации во времени: %s — %s.'%(sig.get('evidence_count',0),_plural_svid(sig.get('evidence_count',0)),ptype,sig.get('process_place')),
-      'formed_by':[e['title'] for e in ev[:3]],
-      'why_priority':'; '.join(why_pri) or 'базовая severity процесса',
-      'why_phase':(' → '.join(ph[-3:]) if len(ph)>1 else sig.get('phase','')),
-      'why_confidence':'уровень %s по источникам: %s'%(sig.get('confidence'),', '.join(_ROLE_TIER.get(r,r) for r in roles)),
+      'formed_by':[e.get('title','') for e in ev[:3]],
+      'why_priority':why_priority,
+      'why_phase':why_phase,
+      'why_confidence':why_confidence,
     }
 
 # Task 2+8: метрики Continuity + технический отчёт прогона
