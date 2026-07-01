@@ -421,8 +421,17 @@ _STAGE_MSG={'Обнаружение':'Процесс впервые обнару
  'Пик':'Зафиксирован пик активности','Стабилизация':'Началась стабилизация',
  'Ослабление':'Активность процесса снижается','Завершён':'Процесс завершён'}
 
-def _lifecycle_stage(sig, hours_idle):
-    """Аналитическая стадия по совокупности факторов (расчёт движком, не фронтом)."""
+def _days_since(ds, now):
+    if not ds: return None
+    try:
+        base=datetime.strptime(str(now)[:10],'%Y-%m-%d'); d=datetime.strptime(str(ds)[:10],'%Y-%m-%d')
+        return max(0,(base-d).days)
+    except Exception: return None
+
+def _lifecycle_stage(sig, hours_idle, now=None):
+    """Аналитическая стадия по совокупности факторов: возраст, свежесть данных,
+    динамика тяжести/давления, скорость, простой, связи, общая активность."""
+    now=now or _now_iso()
     st=sig.get('status'); ph=sig.get('phase','')
     dsev=(sig.get('delta',{}) or {}).get('severity',0) or 0
     vel=(sig.get('velocity',{}) or {}).get('severity_per_h',0) or 0
@@ -430,19 +439,30 @@ def _lifecycle_stage(sig, hours_idle):
     pres=sig.get('pressure',0) or 0; sev=sig.get('severity',0) or 0
     n=sig.get('evidence_count',0) or 0
     new_conn=len((sig.get('delta',{}) or {}).get('new_connections',[]) or [])
+    crit=bool(sig.get('critical_transition'))
     has_hist=sig.get('update_count',1)>1 or len(sig.get('severity_history',[]))>1
     rising=dsev>0 or vel>0.05 or new_conn>0 or ph in ('growing','escalating')
     falling=dsev<0 or vel<-0.05 or ph=='de-escalating'
     high=pres>=60 or sev>=78
+    age=_days_since(sig.get('first_seen'), now)
+    _evd=[e.get('date') for e in sig.get('evidence',[]) if e.get('date')]
+    stale=_days_since(max(_evd) if _evd else sig.get('last_seen'), now)
+    # ── терминальные/спадающие по свежести данных ──
     if st=='archived': return 'Завершён'
-    if hours_idle>=24*7: return 'Завершён'
-    if ph=='dormant' or (hours_idle>=24*3 and not rising): return 'Ослабление'
-    if has_hist and falling and not rising: return 'Ослабление'
-    if has_hist and high and not rising and (accel<=0 or abs(vel)<0.05): return 'Пик'
-    if has_hist and rising: return 'Развитие'
-    if has_hist and (ph in ('stabilizing','active') or (abs(vel)<0.05 and dsev==0)): return 'Стабилизация'
-    if n<=1 and not high: return 'Обнаружение'
-    if high or n>=3: return 'Развитие'
+    if stale is not None and stale>=10: return 'Завершён'
+    if ph=='dormant': return 'Ослабление'
+    if stale is not None and stale>=4 and not rising: return 'Ослабление'
+    # ── точная динамика при наличии истории ──
+    if has_hist:
+        if falling and not rising: return 'Ослабление'
+        if (high or crit) and not rising and (accel<=0 or abs(vel)<0.05): return 'Пик'
+        if rising: return 'Развитие'
+        return 'Стабилизация'
+    # ── посев/без истории обновлений — по возрасту, массе и свежести ──
+    if crit: return 'Пик'
+    if n>=3 or high: return 'Развитие'                              # набрал массу подтверждений
+    if age is not None and age<=1 and n<=2: return 'Обнаружение'    # свежий, только выявлен
+    if age is not None and age>=2: return 'Стабилизация'            # давно висит, данные свежие, без роста
     return 'Обнаружение'
 
 def _seed_history(sig, now):
@@ -453,7 +473,7 @@ def _seed_history(sig, now):
     sig['phase_history']=[{'t':now,'phase':sig['phase']}]
     sig['evidence_history']=[{'t':now,'count':sig['evidence_count']}]
     sig['confidence_history']=[{'t':now,'v':sig['confidence']}]
-    sig['lifecycle_stage']=_lifecycle_stage(sig, 0.0)
+    sig['lifecycle_stage']=_lifecycle_stage(sig, 0.0, now)
     _tl=[{'t':now,'event':_STAGE_MSG.get(sig['lifecycle_stage'],'первое обнаружение'),'detail':sig['title']}]
     if sig['evidence_count']>1: _tl.append({'t':now,'event':'подтверждения собраны','detail':'%d %s'%(sig['evidence_count'],_plural_svid(sig['evidence_count']))})
     sig['timeline']=_tl
@@ -513,7 +533,7 @@ def _evolve_one(cur, prev, now):
     if phase!=prev.get('phase'): log('смена стадии',_PHASE_SHORT.get(phase,phase),'phase_evolution',['phase'])
     # Phase 3: пересчёт стадии жизненного цикла + запись при смене
     cur['phase']=phase; cur['status']='active' if changed else prev.get('status','active')
-    stage=_lifecycle_stage(cur, hours_idle)
+    stage=_lifecycle_stage(cur, hours_idle, now)
     if stage!=prev.get('lifecycle_stage'):
         log(_STAGE_MSG.get(stage,'смена стадии'),'','lifecycle_stage',['lifecycle_stage'])
     tl=_cap(tl); audit=_cap(audit)
