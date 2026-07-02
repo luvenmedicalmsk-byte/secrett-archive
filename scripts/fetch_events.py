@@ -654,13 +654,18 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
                 'война','удар','обстрел','атак','бпла','беспилотник','дрон','ракет',
                 'наступлен','санкци','мобилизац','нпз','пво','взрыв','боеприпас']
     kw_conflict = sum(1 for s in conflict if s in text)
+    # Аудит п.6: масштаб операции — количество средств в массированных атаках/перехватах
+    mass = 0
+    for _n in re.findall(r'(\d{2,4})\s*(?:бпла|дрон\w*|беспилотник\w*|ракет\w*|авиабомб\w*|снаряд\w*)', text):
+        try: mass = max(mass, int(_n))
+        except Exception: pass
     casualties = 0
     for num_str, _ in re.findall(r'\b(\d[\d,]*)\s*(killed|dead|displaced|million|billion)', text):
         try: casualties = max(casualties, int(num_str.replace(',', '')))
         except Exception: pass
     return normalize_severity('news', {'kw_high': kw_high, 'kw_med': kw_med,
                                        'casualties': casualties, 'bias': bias, 'weight': weight,
-                                       'kw_conflict': kw_conflict})
+                                       'kw_conflict': kw_conflict, 'mass_scale': mass})
 
 
 def normalize_severity(source_type, m):
@@ -750,6 +755,12 @@ def normalize_severity(source_type, m):
         if kc:
             score += 6 * kc
             cap = max(cap, 78)
+        _ms = m.get('mass_scale') or 0               # п.6: масштаб массированной атаки/перехвата
+        if _ms >= 500:  score += 16
+        elif _ms >= 200: score += 12
+        elif _ms >= 100: score += 9
+        elif _ms >= 50:  score += 6
+        elif _ms >= 20:  score += 3
         score = min(cap, score)
         w = m.get('weight', 1.0) or 1.0              # source_weight: даунвейт медиа к полу 40
         score = 40 + (score - 40) * w
@@ -2616,6 +2627,25 @@ def _editorial_gate(events):
         except Exception:
             pass
         t = (e.get('title') or '') + ' ' + (e.get('summary') or '')[:200]
+        # п.7: маршрутизация — климат только для природных феноменов,
+        # криминальные грузы — не экономика
+        try:
+            _tl = t.lower()
+            if e.get('domain') == 'climate':
+                # техногенная инфраструктура — не климат, даже при слове «пожар»
+                if re.search(r'подстанц|обесточ|без электрич|электроснабжени', _tl):
+                    e['domain'] = 'social'
+                elif not re.search(
+                        r'землетряс|наводнен|паводок|засух|маловод|ураган|тайфун|циклон|пожар|оползен|цунами|изверж|вулкан|шторм|градус|жар[аыу]|зной|температур|осадк|гроз|ливн|снег|лед|лёд|мороз|климат|погод|метео|аномаль', _tl):
+                    if re.search(r'топлив|бензин|азс|нефтепродукт', _tl):
+                        e['domain'] = 'economy'
+                    elif re.search(r'эвакуир|эвакуац', _tl):
+                        e['domain'] = 'social'
+            if e.get('domain') == 'economy' and re.search(
+                    r'кокаин|наркотик|героин|контрабанд\w+ (?:нарко|оруж)', _tl):
+                e['domain'] = 'social'
+        except Exception:
+            pass
         if _PR_DROP_RX.search(t):
             dropped += 1
             continue
