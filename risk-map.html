@@ -10038,7 +10038,7 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   function lcColor(x){ return {'Обнаружение':'#6b9bb3','Развитие':'#FFA07A','Пик':'#E24A3B','Стабилизация':'#D4AF5A','Ослабление':'#A89150','Завершён':'#6b7280'}[x]||'#A89150'; }
   function lcStage(s){ return s.lifecycle_stage||'—'; }
   function hcol(h){ return {Critical:'#E24A3B',Escalating:'#FFD700',Healthy:'#FFA07A',Stable:'#A89150',Dormant:'#6b7280',Archived:'#6b7280'}[h]||'#A89150'; }
-  function isPro(){ try{ var t=(window.CC&&CC.tier&&CC.tier())||'free'; return !!(t&&t!=='free'); }catch(e){ return false; } }
+  function isPro(){ try{ return (typeof _tierRank==='function'?_tierRank((window.CC&&CC.tier&&CC.tier())||'free'):0)>=1; }catch(e){ return false; } }
   function _pl(n,f){ n=Math.abs(n|0); var d=n%10,h=n%100; if(d===1&&h!==11)return f[0]; if(d>=2&&d<=4&&!(h>=12&&h<=14))return f[1]; return f[2]; }
   var _CN={RU:'Россия',US:'США',IN:'Индия',CN:'Китай',UA:'Украина',BY:'Беларусь',KZ:'Казахстан',GE:'Грузия',AM:'Армения',AZ:'Азербайджан',TR:'Турция',IR:'Иран',IQ:'Ирак',IL:'Израиль',SY:'Сирия',SA:'Саудовская Аравия',AE:'ОАЭ',EG:'Египет',DE:'Германия',FR:'Франция',GB:'Великобритания',IT:'Италия',ES:'Испания',PL:'Польша',NL:'Нидерланды',BE:'Бельгия',SE:'Швеция',NO:'Норвегия',FI:'Финляндия',GR:'Греция',PT:'Португалия',AT:'Австрия',CH:'Швейцария',CZ:'Чехия',RO:'Румыния',HU:'Венгрия',RS:'Сербия',JP:'Япония',KR:'Южная Корея',KP:'Северная Корея',IN2:'Индия',PK:'Пакистан',AF:'Афганистан',TH:'Таиланд',VN:'Вьетнам',ID:'Индонезия',PH:'Филиппины',MY:'Малайзия',SG:'Сингапур',AU:'Австралия',NZ:'Новая Зеландия',CA:'Канада',MX:'Мексика',BR:'Бразилия',AR:'Аргентина',VE:'Венесуэла',CO:'Колумбия',CL:'Чили',PE:'Перу',ZA:'ЮАР',NG:'Нигерия',KE:'Кения',TZ:'Танзания',ET:'Эфиопия',MA:'Марокко',DZ:'Алжир',LY:'Ливия',SD:'Судан'};
   function cn(c){ c=String(c||'').toUpperCase(); return (window._CNRU&&window._CNRU[c])||_CN[c]||c; }
@@ -10167,7 +10167,14 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     var c=document.getElementById('grdf-sig-count'); if(c) c.textContent=list.length+' процессов';
     var g=_data.global_health||{};
     var dash='';
-    if(g&&g.global_pressure!=null){
+    if(!isPro()){
+      // FREE: витрина — счётчик наблюдения вместо дашборда системных метрик
+      dash='<div style="padding:12px 16px;border-bottom:0.5px solid rgba(184,151,58,0.12)">'
+        +'<div style="font-size:10px;font-weight:600;font-family:Montserrat,sans-serif;color:#b8973a;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Atlas отслеживает</div>'
+        +'<div style="font-size:12.5px;color:#dbe3ec;line-height:1.5">'+list.length+' активных процессов в пяти доменах. По каждому выполнен полный анализ.</div>'
+        +'</div>';
+    }
+    else if(g&&g.global_pressure!=null){
       var pc=g.pressure_change_pct;
       dash='<div style="display:flex;gap:0;padding:11px 14px;border-bottom:0.5px solid rgba(184,151,58,0.12);flex-wrap:wrap">'
         +gcell('Давление',Math.round(g.global_pressure),scol(g.global_pressure),pc!=null?(pc>=0?'▲ +'+pc+'%':'▼ '+pc+'%'):'')
@@ -10189,11 +10196,11 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
       +'<div class="gpc-type"><span>'+esc(DOM_RU[s.primary_domain]||((s.domains||[])[0]&&DOM_RU[(s.domains||[])[0]])||(s.domains||[])[0]||'—')+'</span></div>'
       +'<div class="gpc-title">'+esc(s.title)+'</div>'
       +'<div class="gpc-place">'+esc(s.process_place||'—')+(s.actor?' · '+esc(s.actor)+(s.target?' → '+esc(s.target):''):'')+'</div>'
-      +'<div class="gpc-m">'+mi('Приоритет',pr)+mi('Тяжесть',sv)+mi('Давление',pe)+'</div>'
+      +(isPro()?'<div class="gpc-m">'+mi('Приоритет',pr)+mi('Тяжесть',sv)+mi('Давление',pe)+'</div>':'')
       +'<div class="gpc-chips"><span class="gpc-ch hl">'+(PHASE_RU[s.phase]||s.phase)+'</span>'
         +'<span class="gpc-ch" style="color:'+window.__pc+';border-color:'+window.__pc+'44">'+window.__ps+'</span>'
         +'<span class="gpc-ch">'+esc(CONF_RU[s.confidence]||s.confidence)+'</span>'
-        +(s.velocity&&s.velocity.category?'<span class="gpc-ch">'+esc(s.velocity.category)+'</span>':'')+'</div>'
+        +(isPro()&&s.velocity&&s.velocity.category?'<span class="gpc-ch">'+esc(s.velocity.category)+'</span>':'')+'</div>'
       +'<div class="gpc-foot"><span>'+(s.evidence_count||0)+' подтв. · '+humanAge(s.first_seen)+'</span><span>'+ago(s.last_seen||s.last_update)+'</span></div>'
     +'</div>';
   }
