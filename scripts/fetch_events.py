@@ -730,10 +730,15 @@ def normalize_severity(source_type, m):
 
     # --- S34A-4: News -- база 40, потолки аналитика 65 / подтверждённый ущерб 75, source_weight ---
     if st == 'news':
+        cas = m.get('casualties') or 0
+        # Аудит качества: серые события (ни одного содержательного фактора) не должны
+        # скапливаться на плато 42 — им фоновая полка 32-38, лента различает важное/фон
+        _factors = (m.get('kw_high') or 0) + (m.get('kw_med') or 0) + (m.get('kw_conflict') or 0) + (1 if cas else 0)
+        if not _factors:
+            return int(max(30, min(38, 32 + min(6, (m.get('bias') or 0) // 2))))
         score = 40
         score += 7 * (m.get('kw_high') or 0)
         score += 4 * (m.get('kw_med') or 0)
-        cas = m.get('casualties') or 0
         confirmed = cas > 0
         if cas >= 1000000:  score += 18
         elif cas >= 100000: score += 13
@@ -2522,6 +2527,35 @@ def _drop_noise_cards(events):
         return events
 
 
+_PR_DROP_RX = re.compile(r"(подвел[аи]?\s+итоги\s+.{0,45}преми|канал\s+\S+\s+пишет|^новые законы вступил[аи] в силу)", re.I)
+_PR_SOFT_RX = re.compile(r"(раскрыл[аи]?\s+(?:список|рейтинг)|может представить|представит (?:элементы )?стратеги|итоги (?:опроса|исследования)|опрос показал|доверие\s+.{0,35}(?:выросло|снизилось)|вошл[иа] в (?:топ|рейтинг)|заняла?\s+\d+-?е место)", re.I)
+_RETRO_RX = re.compile(r"(годовщин|исполняется\s+\d+|отмеча(?:ют|ется)\s+\d+\s*-?(?:ю|летие)|\d+\s+лет назад в этот день)", re.I)
+
+
+def _editorial_gate(events):
+    """Аудит качества ленты: Atlas — система сигналов, не агрегатор.
+    - корпоративный PR/мусорные заголовки — удаляются;
+    - «раскрыл список»/соцопросы/корпоративные планы — фон (severity<=34);
+    - чистая ретроспектива (годовщины/юбилеи без нового факта) — штраф -15."""
+    kept, dropped, soft, retro = [], 0, 0, 0
+    for e in events:
+        t = (e.get('title') or '') + ' ' + (e.get('summary') or '')[:200]
+        if _PR_DROP_RX.search(t):
+            dropped += 1
+            continue
+        if _PR_SOFT_RX.search(t):
+            soft += 1
+            e['severity'] = min(int(e.get('severity') or 34), 34)
+        if _RETRO_RX.search(t):
+            retro += 1
+            e['severity'] = max(30, int(e.get('severity') or 45) - 15)
+        kept.append(e)
+    if dropped or soft or retro:
+        print('  [EDITORIAL] удалено %d · PR/регуляторика в фон %d · ретро-штраф %d'
+              % (dropped, soft, retro), file=sys.stderr)
+    return kept
+
+
 def _apply_geo_contract(events):
     """GEO CONTRACT Phase 2 (docs/GEO_CONTRACT.md): авторитетная география платформы.
     resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
@@ -2661,6 +2695,10 @@ def save(events):
     except Exception as _e45:
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
     events = _drop_noise_cards(_p10_drop_quake_cards(events))
+    try:
+        events = _editorial_gate(events)
+    except Exception as _e48:
+        print('  [WARN] editorial gate fail: %s' % _e48, file=sys.stderr)
     try:
         _apply_geo_contract(events)         # GEO CONTRACT Phase 2 — и в fallback-пути
     except Exception as _e47:
@@ -7808,6 +7846,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _signal_quality_pass(enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             enriched["count"] = len(enriched["events"])
+            enriched["events"] = _editorial_gate(enriched["events"])   # аудит качества: шум/PR/ретро
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
