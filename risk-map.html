@@ -3583,7 +3583,7 @@ window.CC = {
 };
 function _tierRank(t){ return ({free:0,signal:1,strategic:2,elite:3})[t]||0; }
 // Никогда не понижаем тариф из ответов отдельных эндпоинтов — только повышаем.
-function _applyTier(t){ if(t && _tierRank(t) >= _tierRank(_clientCaps.tier)) _clientCaps=_getClientCaps(t); }
+function _applyTier(t){ if(t && _tierRank(t) >= _tierRank(_clientCaps.tier)){ _clientCaps=_getClientCaps(t); try{ if(window.__grdfProcTierRefresh) window.__grdfProcTierRefresh(); }catch(e){} } }
 // Авторитетный тариф из сессии — не зависит от того, какой эндпоинт ответил первым.
 async function _ccEstablishTier(){ if(!_clientToken) return; try{ var r=await fetch(API+'/api/auth/me',{headers:{'X-Snapshot-Token':_clientToken}}); if(r.ok){ var d=await r.json(); if(d&&d.tier) _applyTier(d.tier); } }catch(e){} }
 try{ _ccEstablishTier(); }catch(e){}
@@ -10141,6 +10141,9 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     inject();
     // FREE проходит в режим «Процессы»: лента — демонстрация выполненного анализа,
     // монетизация — в карточке процесса (freeDetailHTML), старый апселл убран
+    if(mode==='processes'){
+      try{ if(!isPro() && localStorage.getItem('cc_token') && typeof _ccEstablishTier==='function'){ Promise.resolve(_ccEstablishTier()).then(function(){ try{ if(window.__grdfProcTierRefresh) window.__grdfProcTierRefresh(); }catch(e){} }); } }catch(e){}
+    }
     _mode=mode;
     document.querySelectorAll('#grdf-mode-toggle .gproc-mb').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode')===mode); });
     var ev=(mode==='events');
@@ -10209,8 +10212,9 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
   window.grdfProcCloseDetail=closeDetail;
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeDetail(); });
   function connG(label,ids){ ids=(ids||[]).filter(function(i){return _byId[i];}); if(!ids.length) return ''; return '<div style="margin-bottom:10px"><div class="gd-cl">'+label+'</div>'+ids.map(function(i){return '<span class="gd-conn" data-id="'+esc(i)+'">'+esc(_byId[i].title)+'</span>';}).join('')+'</div>'; }
+  window.__grdfProcTierRefresh=function(){ try{ if(_loaded) renderProc(); var d=document.getElementById('gproc-d'); if(d&&d.classList.contains('on')&&window.__grdfLastProcId) openDetail(window.__grdfLastProcId); }catch(e){} };
   function openDetail(id){
-    var s=_byId[id]; if(!s) return;
+    var s=_byId[id]; if(!s) return; window.__grdfLastProcId=id;
     var d=document.getElementById('gproc-d'); d.innerHTML=detailHTML(s);
     d.classList.add('on'); document.getElementById('gproc-ov').classList.add('on'); d.scrollTop=0;
     Array.prototype.forEach.call(d.querySelectorAll('.gd-conn'),function(el){ el.onclick=function(){ openDetail(el.getAttribute('data-id')); }; });
