@@ -428,7 +428,20 @@ def _days_since(ds, now):
         return max(0,(base-d).days)
     except Exception: return None
 
-def _lifecycle_stage(sig, hours_idle, now=None):
+def _gate_transition(prev, raw, rising, n, stale):
+    """Гейт переходов: запрещает нелогичные скачки между стадиями."""
+    if not prev or prev==raw: return raw
+    if prev=='Завершён':                                   # возобновление только при реальном импульсе
+        return 'Развитие' if rising else 'Завершён'
+    if prev=='Обнаружение' and raw=='Ослабление':          # нельзя миновать Развитие
+        return 'Завершён' if (stale or 0)>=10 else 'Обнаружение'
+    if prev in ('Развитие','Пик','Стабилизация') and raw=='Завершён':
+        return 'Ослабление'                                # завершение только через период снижения
+    if raw=='Пик' and not (prev in ('Развитие','Пик') and n>=3):
+        return 'Развитие' if prev in ('Обнаружение','Ослабление','Стабилизация') else prev
+    return raw
+
+def _lifecycle_stage(sig, hours_idle, now=None, prev_stage=None):
     """Аналитическая стадия по совокупности факторов: возраст, свежесть данных,
     динамика тяжести/давления, скорость, простой, связи, общая активность."""
     now=now or _now_iso()
@@ -447,24 +460,26 @@ def _lifecycle_stage(sig, hours_idle, now=None):
     age=_days_since(sig.get('first_seen'), now)
     _evd=[e.get('date') for e in sig.get('evidence',[]) if e.get('date')]
     stale=_days_since(max(_evd) if _evd else sig.get('last_seen'), now)
-    # ── терминальные/спадающие по свежести данных ──
-    if st=='archived': return 'Завершён'
-    if stale is not None and stale>=10: return 'Завершён'
-    if ph=='dormant': return 'Ослабление'
     _real_rising = dsev>0 or vel>0.05 or new_conn>0        # реальный импульс, не ярлык фазы
-    if stale is not None and stale>=4 and not _real_rising: return 'Ослабление'
-    # ── точная динамика при наличии истории ──
-    if has_hist:
-        if falling and not rising: return 'Ослабление'
-        if (high or crit) and not rising and (accel<=0 or abs(vel)<0.05): return 'Пик'
-        if rising: return 'Развитие'
-        return 'Стабилизация'
-    # ── посев/без истории обновлений — по возрасту, массе и свежести ──
-    if crit: return 'Пик'
-    if n>=3 or high: return 'Развитие'                              # набрал массу подтверждений
-    if age is not None and age<=1 and n<=2: return 'Обнаружение'    # свежий, только выявлен
-    if age is not None and age>=2: return 'Стабилизация'            # давно висит, данные свежие, без роста
-    return 'Обнаружение'
+    def _raw():
+        # ── терминальные/спадающие по свежести данных ──
+        if st=='archived': return 'Завершён'
+        if stale is not None and stale>=10: return 'Завершён'
+        if ph=='dormant': return 'Ослабление'
+        if stale is not None and stale>=4 and not _real_rising: return 'Ослабление'
+        # ── точная динамика при наличии истории ──
+        if has_hist:
+            if falling and not rising: return 'Ослабление'
+            if (high or crit) and not rising and (accel<=0 or abs(vel)<0.05): return 'Пик'
+            if rising: return 'Развитие'
+            return 'Стабилизация'
+        # ── посев/без истории обновлений — по возрасту, массе и свежести ──
+        if crit: return 'Пик'
+        if n>=3 or high: return 'Развитие'                              # набрал массу подтверждений
+        if age is not None and age<=1 and n<=2: return 'Обнаружение'    # свежий, только выявлен
+        if age is not None and age>=2: return 'Стабилизация'            # давно висит, данные свежие, без роста
+        return 'Обнаружение'
+    return _gate_transition(prev_stage, _raw(), _real_rising, n, stale)
 
 def _seed_history(sig, now):
     sig['first_seen']=sig.get('first_seen') or now
@@ -534,7 +549,7 @@ def _evolve_one(cur, prev, now):
     if phase!=prev.get('phase'): log('смена стадии',_PHASE_SHORT.get(phase,phase),'phase_evolution',['phase'])
     # Phase 3: пересчёт стадии жизненного цикла + запись при смене
     cur['phase']=phase; cur['status']='active' if changed else prev.get('status','active')
-    stage=_lifecycle_stage(cur, hours_idle, now)
+    stage=_lifecycle_stage(cur, hours_idle, now, prev_stage=prev.get('lifecycle_stage'))
     if stage!=prev.get('lifecycle_stage'):
         log(_STAGE_MSG.get(stage,'смена стадии'),'','lifecycle_stage',['lifecycle_stage'])
     tl=_cap(tl); audit=_cap(audit)
