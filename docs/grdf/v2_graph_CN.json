@@ -2,59 +2,59 @@
   "country": "CN",
   "date": "2026-07-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-02T15:42:23.715936+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-07-02T17:29:03.768350+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 45,
+      "score": 48,
       "props": {
-        "risk_score": 45
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
+      "score": 48,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 48,
+      "score": 34,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
+      "score": 48,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
+      "score": 8,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
+      "score": 17,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
+      "score": 19,
       "trend": "up"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Оранжевое_",
+      "type": "Signal",
+      "label": "Оранжевое уведомление о тропическом цикл",
+      "severity": 52,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Запрет_США",
       "type": "Signal",
       "label": "Запрет США на китайские инверторы навред",
@@ -99,37 +106,37 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-CN",
@@ -156,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-CN-geopolitical",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
@@ -175,6 +224,12 @@
       "type": "AMPLIFIES",
       "weight": 0.6,
       "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CN-Оранжевое_",
+      "to": "DOMAIN-CN-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
     },
     {
       "from": "SIGNAL-CN-Запрет_США",
