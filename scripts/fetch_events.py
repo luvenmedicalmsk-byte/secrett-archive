@@ -7748,6 +7748,22 @@ def save_enriched(events, previous_snapshot=None):
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
 
+            # GEO CONTRACT Phase 0 (shadow) — боевой путь публикации идёт здесь,
+            # а не через save(); контракт считается по финальным enriched-событиям
+            try:
+                _geo_shadow_report(enriched["events"])
+            except Exception as _e46:
+                print('  [WARN] geo shadow fail: %s' % _e46, file=sys.stderr)
+                try:
+                    import traceback as _tb
+                    (OUTPUT_PATH.parent / '_geo_shadow.json').write_text(json.dumps(
+                        {'phase': 'shadow', 'status': 'ERROR', 'error': str(_e46),
+                         'trace': _tb.format_exc()[-1500:],
+                         'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')},
+                        ensure_ascii=False, indent=2), encoding='utf-8')
+                except Exception:
+                    pass
+
             # ATLAS V2 Phase 1 (shadow): параллельный signals.json — сворачивает
             # статьи в процессы (кластеризация + Priority). Аддитивно, events.json не трогает.
             try:
