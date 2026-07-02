@@ -2522,6 +2522,57 @@ def _drop_noise_cards(events):
         return events
 
 
+def _geo_shadow_report(events):
+    """GEO CONTRACT Phase 0 (SHADOW): параллельный расчёт GeoContract без влияния
+    на прод (спека docs/GEO_CONTRACT.md). Паритет со старым пайплайном и
+    validate_geo() → docs/_geo_shadow.json. События НЕ мутируются."""
+    from geo_contract import resolve_geo, validate_geo, in_bbox
+    rep = {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+           'phase': 'shadow', 'total': len(events), 'resolved': 0, 'null_geo': 0,
+           'validate_pass': 0, 'validate_fail': 0,
+           'country_match': 0, 'country_diff': 0, 'legacy_only': 0, 'shadow_only': 0,
+           'legacy_coords_outside_shadow_country': 0,
+           'rules': {}, 'fail_samples': [], 'diff_samples': []}
+    for e in events:
+        lat, lng = e.get('lat'), e.get('lng')
+        rc = (lat, lng) if isinstance(lat, (int, float)) and isinstance(lng, (int, float)) else None
+        gc = resolve_geo(e.get('title', ''), e.get('summary', '') or e.get('description', ''), raw_coords=rc)
+        ok, errs = validate_geo(gc)
+        rep['rules'][gc.source] = rep['rules'].get(gc.source, 0) + 1
+        if gc.country is None:
+            rep['null_geo'] += 1
+        else:
+            rep['resolved'] += 1
+        if ok:
+            rep['validate_pass'] += 1
+        else:
+            rep['validate_fail'] += 1
+            if len(rep['fail_samples']) < 25:
+                rep['fail_samples'].append({'title': (e.get('title') or '')[:90],
+                                            'errors': errs, 'geo': gc.as_dict()})
+        legacy = (e.get('primary_country') or e.get('country_code') or '').upper() or None
+        if gc.country and legacy:
+            if gc.country == legacy:
+                rep['country_match'] += 1
+            else:
+                rep['country_diff'] += 1
+                if len(rep['diff_samples']) < 40:
+                    rep['diff_samples'].append({'title': (e.get('title') or '')[:90],
+                                                'legacy': legacy, 'shadow': gc.country,
+                                                'rule': gc.source, 'legacy_coords': [lat, lng]})
+        elif gc.country:
+            rep['shadow_only'] += 1
+        elif legacy:
+            rep['legacy_only'] += 1
+        if gc.country and rc and not in_bbox(gc.country, rc[0], rc[1], margin=1.5):
+            rep['legacy_coords_outside_shadow_country'] += 1
+    (OUTPUT_PATH.parent / '_geo_shadow.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [GEO-SHADOW] resolved %d/%d · validate PASS %d / FAIL %d · country match %d / diff %d'
+          % (rep['resolved'], rep['total'], rep['validate_pass'], rep['validate_fail'],
+             rep['country_match'], rep['country_diff']), file=sys.stderr)
+
+
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -2543,6 +2594,10 @@ def save(events):
     except Exception as _e45:
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
     events = _drop_noise_cards(_p10_drop_quake_cards(events))
+    try:
+        _geo_shadow_report(events)          # GEO CONTRACT Phase 0 — shadow, прод не трогает
+    except Exception as _e46:
+        print('  [WARN] geo shadow fail: %s' % _e46, file=sys.stderr)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
