@@ -1683,7 +1683,7 @@ def _numbers(text):
         out.append((int(n),m.start(),m.end()))
     return out
 
-def _metric_floors(low):
+def _metric_floors(low, return_metrics=False):
     nums=_numbers(low)
     _death_extra=0
     for _m in re.finditer(r'(?:жертв|погибш\w*|погибл\w*)[^.]{0,50}?(?:возрос\w*|достиг\w*|увеличил\w*|поднял\w*|составил\w*|превысил\w*|вырос\w*)\D{0,14}(\d[\d\u00a0\u202f ]*\d|\d)\s*(тыс\.?|тысяч|млн|миллион)?', low):
@@ -1722,6 +1722,7 @@ def _metric_floors(low):
         else:
             for thr,fl in _FLOORS[mt]:
                 if val>=thr: out.append(fl); break
+    if return_metrics: return out, metrics
     return out
 
 def _intensity_floor(low):
@@ -1796,6 +1797,11 @@ def _recompute_severity(ev):
         sev = min(sev, 60)
     if _scale_fl:                      # количественный масштаб задаёт нижний пол индекса
         sev = max(sev, _scale_fl)
+        try:
+            _fl2, _mx = _metric_floors(b, return_metrics=True)
+            if (_mx.get('deaths') or 0) >= 100:
+                sev = _scale_fl        # массовые жертвы: индекс следует числу погибших (авторитетно, вверх и вниз)
+        except Exception: pass
     # D3 (Pre-Release Window): verified пропускает редакционные/денайл/CVE-понижения,
     # но НЕ обходит климатические кэпы выше (рутинная погода <=38, региональная катастрофа <=60).
     if (ev.get('meta') or {}).get('verified'):
@@ -7598,6 +7604,31 @@ def _signal_quality_pass(events):
         return events
 
 
+def _retain_critical(evs, prev):
+    """Критические события (sev>=85, не старше 7 дней) не выпадают из ленты,
+    пока актуальны, даже если источник перестал их отдавать."""
+    try:
+        pevs=(prev or {}).get('events') or []
+        if not pevs: return evs
+        have={(e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]) for e in evs}
+        have_t={(e.get('title') or '')[:60] for e in evs}
+        from datetime import datetime as _dt, timezone as _tz
+        _now=_dt.now(_tz.utc); kept=[]
+        for e in pevs:
+            if (e.get('severity') or 0) < 85: continue
+            key=e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]
+            if key in have or (e.get('title') or '')[:60] in have_t: continue
+            try:
+                d=_dt.strptime((e.get('date') or '')[:10],'%Y-%m-%d').replace(tzinfo=_tz.utc)
+                if (_now-d).days>7: continue
+            except Exception: continue
+            m=dict(e.get('meta') or {}); m['retained']=True; e['meta']=m
+            kept.append(e)
+        if kept: print(f"  ✓ retention: удержано критических событий {len(kept)}", file=sys.stderr)
+        return evs+kept
+    except Exception:
+        return evs
+
 def save_enriched(events, previous_snapshot=None):
     """
     Сохраняет events.json c signal taxonomy + escalation engine.
@@ -7640,6 +7671,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _ndup_collapse(enriched["events"])
             enriched["events"] = _drop_noise_cards(_p10_drop_quake_cards(enriched["events"]))
             enriched["events"] = _signal_quality_pass(enriched["events"])
+            enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             enriched["count"] = len(enriched["events"])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
