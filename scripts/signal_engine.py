@@ -428,16 +428,39 @@ def _days_since(ds, now):
         return max(0,(base-d).days)
     except Exception: return None
 
-def _gate_transition(prev, raw, rising, n, stale):
+# ── Адаптивный жизненный цикл: профиль темпа по типу процесса ───────────────────
+# fade — дней тишины до Ослабления; done — до Завершён; fresh — окно «Обнаружения»;
+# peak_n — подтверждений для Пика. Темп отражает природу явления, не только интенсивность.
+_LC_PROFILES={
+ 'flash':dict(fade=2, done=5,  fresh=1, peak_n=2),   # часы-дни (землетрясение, отключение сети)
+ 'fast':  dict(fade=3, done=8,  fresh=1, peak_n=3),   # дни-недели (жара, пожары, наводнение, кибер)
+ 'medium':dict(fade=5, done=14, fresh=2, peak_n=3),   # недели (рынки, эпидриск, миграция)
+ 'slow':  dict(fade=8, done=30, fresh=3, peak_n=4),   # месяцы (санкции, конфликт, засуха, инфляция)
+}
+_TYPE_TEMPO={
+ 'Сейсмическая активность':'flash','Отключение интернета':'flash','Покушение':'flash','Авиационный инцидент':'flash',
+ 'Тепловая волна':'fast','Пожарная активность':'fast','Наводнение':'fast','Похолодание':'fast',
+ 'Уязвимость ПО':'fast','Фишинговая кампания':'fast','Киберугроза':'fast','Технологический сигнал':'fast',
+ 'Топливный рынок':'medium','Валютный рынок':'medium','Розничная торговля':'medium','Экономический сигнал':'medium',
+ 'Эпидемиологический риск':'medium','Миграционная политика':'medium','Наркотрафик':'medium','Социальный процесс':'medium',
+ 'Климатическая политика':'slow','Водный дефицит':'slow','Санкционное давление':'slow','Военные удары':'slow',
+ 'Инфляция':'slow','Геополитический процесс':'slow','Визовые ограничения':'slow','Оборонное производство':'slow',
+}
+_DOMAIN_TEMPO={'climate':'fast','technology':'fast','economy':'medium','geopolitics':'slow','social':'medium'}
+def _lc_profile(sig):
+    tempo=_TYPE_TEMPO.get(sig.get('process_type')) or _DOMAIN_TEMPO.get(sig.get('primary_domain'),'medium')
+    return _LC_PROFILES[tempo], tempo
+
+def _gate_transition(prev, raw, rising, n, stale, peak_n=3):
     """Гейт переходов: запрещает нелогичные скачки между стадиями."""
     if not prev or prev==raw: return raw
     if prev=='Завершён':                                   # возобновление только при реальном импульсе
         return 'Развитие' if rising else 'Завершён'
     if prev=='Обнаружение' and raw=='Ослабление':          # нельзя миновать Развитие
-        return 'Завершён' if (stale or 0)>=10 else 'Обнаружение'
+        return raw if raw=='Завершён' else 'Обнаружение'
     if prev in ('Развитие','Пик','Стабилизация') and raw=='Завершён':
         return 'Ослабление'                                # завершение только через период снижения
-    if raw=='Пик' and not (prev in ('Развитие','Пик') and n>=3):
+    if raw=='Пик' and not (prev in ('Развитие','Пик') and n>=peak_n):
         return 'Развитие' if prev in ('Обнаружение','Ослабление','Стабилизация') else prev
     return raw
 
@@ -461,12 +484,13 @@ def _lifecycle_stage(sig, hours_idle, now=None, prev_stage=None):
     _evd=[e.get('date') for e in sig.get('evidence',[]) if e.get('date')]
     stale=_days_since(max(_evd) if _evd else sig.get('last_seen'), now)
     _real_rising = dsev>0 or vel>0.05 or new_conn>0        # реальный импульс, не ярлык фазы
+    prof,_tempo=_lc_profile(sig); sig['lifecycle_tempo']=_tempo
     def _raw():
-        # ── терминальные/спадающие по свежести данных ──
+        # ── терминальные/спадающие по свежести данных (пороги — по темпу типа процесса) ──
         if st=='archived': return 'Завершён'
-        if stale is not None and stale>=10: return 'Завершён'
+        if stale is not None and stale>=prof['done']: return 'Завершён'
         if ph=='dormant': return 'Ослабление'
-        if stale is not None and stale>=4 and not _real_rising: return 'Ослабление'
+        if stale is not None and stale>=prof['fade'] and not _real_rising: return 'Ослабление'
         # ── точная динамика при наличии истории ──
         if has_hist:
             if falling and not rising: return 'Ослабление'
@@ -476,10 +500,10 @@ def _lifecycle_stage(sig, hours_idle, now=None, prev_stage=None):
         # ── посев/без истории обновлений — по возрасту, массе и свежести ──
         if crit: return 'Пик'
         if n>=3 or high: return 'Развитие'                              # набрал массу подтверждений
-        if age is not None and age<=1 and n<=2: return 'Обнаружение'    # свежий, только выявлен
-        if age is not None and age>=2: return 'Стабилизация'            # давно висит, данные свежие, без роста
+        if age is not None and age<=prof['fresh'] and n<=2: return 'Обнаружение'    # свежий, только выявлен
+        if age is not None and age>prof['fresh']: return 'Стабилизация'             # давно висит, данные свежие, без роста
         return 'Обнаружение'
-    return _gate_transition(prev_stage, _raw(), _real_rising, n, stale)
+    return _gate_transition(prev_stage, _raw(), _real_rising, n, stale, peak_n=prof['peak_n'])
 
 def _seed_history(sig, now):
     sig['first_seen']=sig.get('first_seen') or now
