@@ -10210,7 +10210,75 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
     d.classList.add('on'); document.getElementById('gproc-ov').classList.add('on'); d.scrollTop=0;
     Array.prototype.forEach.call(d.querySelectorAll('.gd-conn'),function(el){ el.onclick=function(){ openDetail(el.getAttribute('data-id')); }; });
   }
+  // ── FREE: демонстрация выполненного анализа (Atlas style), Pro видит полное досье ──
+  function _fLock(t){ return '<div style="display:flex;align-items:center;gap:9px;padding:7px 0;color:rgba(148,163,184,0.45)"><span style="font-size:12px;flex-shrink:0">🔒</span><span style="font-size:12.5px;line-height:1.45">'+t+'</span></div>'; }
+  function _fCheck(t,dim){ return '<div style="display:flex;align-items:flex-start;gap:9px;padding:6px 0"><span style="color:#D4AF5A;font-size:12px;flex-shrink:0;line-height:1.5">✓</span><span style="font-size:12.5px;line-height:1.5;color:'+(dim?'rgba(148,163,184,0.75)':'#e8e4dc')+'">'+t+'</span></div>'; }
+  function _fCard(h,inner){ return '<div style="border:0.5px solid rgba(184,151,58,.28);border-radius:10px;padding:15px 16px;margin:0 0 6px;background:linear-gradient(180deg,rgba(184,151,58,.07),rgba(184,151,58,.02))">'
+    +'<div style="font-size:10px;font-weight:600;font-family:Montserrat,sans-serif;color:#b8973a;letter-spacing:.1em;text-transform:uppercase;line-height:1.35;margin-bottom:10px">'+h+'</div>'+inner+'</div>'; }
+  function _fCTA(){ return '<button onclick="openAccess()" style="display:block;-webkit-appearance:none;appearance:none;outline:none;box-sizing:border-box;width:100%;text-align:center;font-size:13.5px;font-weight:700;color:#E3B23C;background:transparent;border:1px solid #E3B23C;border-radius:26px;padding:15px 24px;cursor:pointer;font-family:Montserrat,sans-serif;transition:background .25s" onmouseover="this.style.background=\'rgba(227,178,60,.08)\'" onmouseout="this.style.background=\'transparent\'">Открыть полный анализ процесса →</button>'; }
+  function freeDetailHTML(s){
+    var ex=s.explain||{};
+    var H='<div class="gd-head"><div class="gd-x" onclick="grdfProcCloseDetail()">✕</div>'
+      +'<div class="gd-type">'+esc(DOM_RU[s.primary_domain]||((s.domains||[])[0]&&DOM_RU[(s.domains||[])[0]])||(s.domains||[])[0]||'—')+'</div>'
+      +'<h2>'+esc(s.title)+'</h2><div class="gd-place">'+esc(s.process_place||'')+'</div></div>';
+    // ── Блок 1: Atlas обнаружил развитие процесса ──
+    var intro=ex.why_exists?esc(ex.why_exists):('Atlas зафиксировал развитие процесса'+(s.process_place?' — '+esc(s.process_place):'')+' и объединил независимые свидетельства в единую аналитическую картину.');
+    intro+=' Система определила текущую стадию развития и ведёт непрерывное наблюдение'+(s.first_seen?' с момента первого обнаружения — '+humanAge(s.first_seen):'')+'.';
+    H+='<div class="gd-sec"><div class="gd-sh">Atlas обнаружил развитие процесса</div>'
+      +'<p class="gd-note" style="font-size:12.5px;line-height:1.6;color:#dbe3ec">'+intro+'</p></div>';
+    // ── Блок 2: Что уже определено системой ──
+    var det='';
+    if((s.evidence_count||0)>=2||/confirmed|high|verified/.test(String(s.confidence))) det+=_fCheck('процесс подтверждён несколькими независимыми свидетельствами');
+    if((s.merged_count||0)>1||(s.evidence_count||0)>1) det+=_fCheck('объединено несколько событий в один процесс');
+    if(s.process_place) det+=_fCheck('определено место процесса');
+    if(s.lifecycle_stage) det+=_fCheck('рассчитана текущая стадия развития');
+    if(((s.causes||[]).length+(s.caused_by||[]).length+(s.related||[]).length+(s.amplifies||[]).length)>0) det+=_fCheck('обнаружены связанные процессы');
+    if((s.timeline||[]).length>2) det+=_fCheck('накоплена история наблюдения');
+    if(!det) det=_fCheck('процесс поставлен на наблюдение');
+    H+='<div class="gd-sec"><div class="gd-sh">Что уже определено системой</div>'+det+'</div>';
+    // ── Блок 3: Atlas уже выполнил анализ (карточка Atlas, частично под замком) ──
+    H+='<div class="gd-sec">'+_fCard('Atlas уже выполнил анализ',
+      _fCheck('определено направление развития')
+      +_fCheck('рассчитаны вероятные последствия')
+      +_fLock('найдены скрытые связи между процессами')
+      +_fLock('определено влияние на другие процессы')
+      +_fLock('оценены системные риски'))+'</div>';
+    // ── Блок 4: Прогноз процесса (карточка Atlas Intelligence, под замком) ──
+    H+='<div class="gd-sec">'+_fCard('Прогноз процесса',
+      _fLock('следующий этап развития')
+      +_fLock('вероятные сценарии')
+      +_fLock('точки усиления')
+      +_fLock('ожидаемые последствия')
+      +_fLock('влияние на другие процессы'))+'</div>';
+    // ── Блок 5: История процесса ──
+    if(s.timeline&&s.timeline.length){
+      var hist=s.timeline.map(function(t,i){
+        return (i?'<div style="color:rgba(184,151,58,.5);font-size:11px;padding:1px 0 1px 3px;line-height:1">↓</div>':'')
+          +'<div style="display:flex;align-items:baseline;gap:10px;padding:2px 0"><span style="color:#D4AF5A;font-size:9px;flex-shrink:0">•</span>'
+          +'<span style="font-size:12.5px;color:#e8e4dc;line-height:1.5;flex:1">'+esc(t.event)+'</span>'
+          +'<span style="font-size:9.5px;color:rgba(148,163,184,0.5);flex-shrink:0">'+esc((t.t||'').slice(0,10))+'</span></div>';
+      }).join('');
+      H+='<div class="gd-sec"><div class="gd-sh">История процесса</div>'+hist+'</div>';
+    }
+    // ── Блок 6: Источники анализа ──
+    H+='<div class="gd-sec"><div class="gd-sh">Источники анализа · '+(s.evidence_count||0)+'</div>'
+      +(s.evidence||[]).map(function(e){ var _p=[]; var _s=cleanSrc(e.source); if(_s)_p.push(esc(_s)); if(e.role&&e.role!=='telegram')_p.push(esc(ROLE_RU[e.role]||e.role)); if(e.date)_p.push(esc(e.date)); return '<div class="gd-ev"><div><div class="t">'+esc(e.title)+'</div><div class="m">'+_p.join(' · ')+'</div></div><div class="s" style="color:'+scol(e.severity)+'">'+(e.severity||'')+'</div></div>'; }).join('')+'</div>';
+    // ── Блок 7: финальный блок Atlas Intelligence + CTA ──
+    H+='<div class="gd-sec"><div style="border:0.5px solid rgba(184,151,58,.28);border-radius:10px;padding:18px 17px 16px;background:linear-gradient(180deg,rgba(184,151,58,.07),rgba(184,151,58,.02))">'
+      +'<div style="font-size:10px;font-weight:600;font-family:Montserrat,sans-serif;color:#b8973a;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px">Atlas Intelligence</div>'
+      +'<div style="font-family:\'Cormorant Garamond\',serif;font-size:21px;font-weight:600;color:#e8e4dc;line-height:1.2;margin-bottom:6px">Atlas Intelligence завершил стратегический анализ процесса</div>'
+      +'<div style="font-size:11.5px;color:rgba(203,213,225,.78);line-height:1.55;margin-bottom:13px">На основе междоменного анализа, каскадных связей и сценарного моделирования.</div>'
+      +'<div style="font-size:10px;font-weight:600;font-family:Montserrat,sans-serif;color:rgba(148,163,184,0.6);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Рассчитаны</div>'
+      +['вероятные сценарии развития','скрытые связи между процессами','точки усиления риска','вероятные переходы стадии','стратегические последствия','формирующиеся тенденции'].map(function(x){return '<div style="display:flex;gap:9px;padding:3px 0"><span style="color:rgba(184,151,58,.6);font-size:9px;line-height:1.7">•</span><span style="font-size:12px;color:rgba(203,213,225,.85);line-height:1.5">'+x+'</span></div>';}).join('')
+      +'<div style="font-size:10px;font-weight:600;font-family:Montserrat,sans-serif;color:rgba(148,163,184,0.6);letter-spacing:.08em;text-transform:uppercase;margin:12px 0 5px">Система определила</div>'
+      +['главный источник давления','критические изменения','наиболее вероятные последствия','направление распространения процесса','прогноз развития ситуации'].map(function(x){return _fCheck(x,true);}).join('')
+      +'<div style="font-size:12px;color:#dbe3ec;line-height:1.55;margin:13px 0 14px;border-top:0.5px solid rgba(184,151,58,.22);padding-top:12px">Полный анализ процесса уже рассчитан системой. Доступ к нему открывается участникам Архива.</div>'
+      +_fCTA()
+      +'</div></div>';
+    return H;
+  }
   function detailHTML(s){
+    if(!isPro()) return freeDetailHTML(s);   // FREE — демонстрация выполненного анализа
     var g=s.dna||{}, fc=s.forecast||{}, v=s.velocity||{}, ce=s.confidence_evolution||{}, ex=s.explain||{};
     var am=s.atlas_memory, rec=s.recurrence, sim=s.similar_processes||[];
     var H='<div class="gd-head"><div class="gd-x" onclick="grdfProcCloseDetail()">✕</div>'
