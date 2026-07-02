@@ -2532,6 +2532,75 @@ _PR_SOFT_RX = re.compile(r"(раскрыл[аи]?\s+(?:список|рейтин
 _RETRO_RX = re.compile(r"(годовщин|исполняется\s+\d+|отмеча(?:ют|ется)\s+\d+\s*-?(?:ю|летие)|\d+\s+лет назад в этот день)", re.I)
 
 
+_ATTR_TAIL_RX = re.compile(r"\s*[—,–-]{1,2}\s*(?:сообщает|сообщил[аи]?|пишет|передает|передаёт|заявил[аи]?|по данным|по информации|со ссылкой на|агентство|телеканал|газета)\s+[^,.!?]{2,45}\.?$", re.I)
+_WX_CITY_RX = re.compile(r"^([А-ЯЁ][а-яё\-]{2,20}):\s*опасные осадки", re.I)
+_CVE_RX = re.compile(r"^(?:Активно эксплуатируемая уязвимость|Уязвимость промышленной системы):\s*(.{3,90})", re.I)
+_CONN_RX = re.compile(r"^(?:Отключение интернета \((?:страновое|региональное)\)|Аномалия трафика):\s*([А-ЯЁ][а-яё\- ]{2,30})", re.I)
+_STORY_SERIES = [
+    (re.compile(r"топлив|бензин|азс|нефтепродукт|дизел", re.I), 'economy', 'Топливный кризис в России'),
+]
+
+
+def _aggregate_series(events):
+    """Аудит качества, п.4: серийные однотипные карточки сворачиваются в сводные —
+    лента короче без потери информации. Движок процессов не затрагивается
+    (агрегация только представления ленты)."""
+    def _mk_summary(items):
+        return ' · '.join((e.get('title') or '')[:90] for e in items[:8])
+    out, used = [], set()
+    # A) метео-серия «Город: опасные осадки/гроза»
+    wx = [e for e in events if _WX_CITY_RX.match(e.get('title') or '')]
+    if len(wx) >= 2:
+        cities = [_WX_CITY_RX.match(e['title']).group(1) for e in wx]
+        lead = max(wx, key=lambda e: e.get('severity') or 0)
+        lead = dict(lead)
+        lead['title'] = 'Опасные метеоявления в России: ' + ', '.join(cities[:5]) + (' и ещё %d' % (len(cities)-5) if len(cities) > 5 else '')
+        lead['summary'] = 'Штормовые предупреждения (осадки/гроза): ' + ', '.join(cities) + '.'
+        lead['series_count'] = len(wx)
+        out.append(lead); used |= {id(e) for e in wx}
+    # B) CVE-дайджест
+    cve = [e for e in events if _CVE_RX.match(e.get('title') or '')]
+    if len(cve) >= 2:
+        lead = dict(max(cve, key=lambda e: e.get('severity') or 0))
+        lead['title'] = 'Активно эксплуатируемые уязвимости: %d за сутки' % len(cve)
+        lead['summary'] = _mk_summary(cve)
+        lead['series_count'] = len(cve)
+        out.append(lead); used |= {id(e) for e in cve}
+    # C) связность одной страны (страновое/региональное/аномалия → одна карточка)
+    conn = {}
+    for e in events:
+        m = _CONN_RX.match(e.get('title') or '')
+        if m: conn.setdefault(m.group(1).strip(), []).append(e)
+    for cn, items in conn.items():
+        if len(items) >= 2:
+            lead = dict(max(items, key=lambda e: e.get('severity') or 0))
+            lead['title'] = 'Деградация связности: %s' % cn
+            lead['summary'] = _mk_summary(items)
+            lead['series_count'] = len(items)
+            out.append(lead); used |= {id(e) for e in items}
+    # D) тематические сюжеты: топ-2 самостоятельных + сводная по остальным
+    for rx, dom, name in _STORY_SERIES:
+        story = [e for e in events if id(e) not in used and e.get('domain') == dom
+                 and rx.search((e.get('title') or '') + ' ' + (e.get('summary') or '')[:120])]
+        if len(story) >= 4:
+            story.sort(key=lambda e: -(e.get('severity') or 0))
+            keep, rest = story[:2], story[2:]
+            lead = dict(rest[0])
+            lead['title'] = '%s: сводка (%d сообщений)' % (name, len(rest))
+            lead['summary'] = _mk_summary(rest)
+            lead['series_count'] = len(rest)
+            out.append(lead)
+            used |= {id(e) for e in rest}
+    for e in events:
+        if id(e) not in used:
+            out.append(e)
+    merged = sum((e.get('series_count') or 1) - 1 for e in out if e.get('series_count'))
+    if merged:
+        print('  [SERIES] свёрнуто карточек: %d (лента %d → %d)'
+              % (merged, len(events), len(out)), file=sys.stderr)
+    return out
+
+
 def _editorial_gate(events):
     """Аудит качества ленты: Atlas — система сигналов, не агрегатор.
     - корпоративный PR/мусорные заголовки — удаляются;
@@ -2539,6 +2608,13 @@ def _editorial_gate(events):
     - чистая ретроспектива (годовщины/юбилеи без нового факта) — штраф -15."""
     kept, dropped, soft, retro = [], 0, 0, 0
     for e in events:
+        try:  # п.5: язык сигнала, не RSS — хвосты-атрибуции уходят в источники
+            _t0 = e.get('title') or ''
+            _t1 = _ATTR_TAIL_RX.sub('', _t0).rstrip(' ,—–-')
+            if len(_t1) >= 24:
+                e['title'] = _t1
+        except Exception:
+            pass
         t = (e.get('title') or '') + ' ' + (e.get('summary') or '')[:200]
         if _PR_DROP_RX.search(t):
             dropped += 1
@@ -2696,7 +2772,7 @@ def save(events):
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
     events = _drop_noise_cards(_p10_drop_quake_cards(events))
     try:
-        events = _editorial_gate(events)
+        events = _aggregate_series(_editorial_gate(events))
     except Exception as _e48:
         print('  [WARN] editorial gate fail: %s' % _e48, file=sys.stderr)
     try:
@@ -7846,7 +7922,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _signal_quality_pass(enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             enriched["count"] = len(enriched["events"])
-            enriched["events"] = _editorial_gate(enriched["events"])   # аудит качества: шум/PR/ретро
+            enriched["events"] = _aggregate_series(_editorial_gate(enriched["events"]))   # аудит качества: шум/PR/ретро + серии
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
