@@ -1,15 +1,43 @@
 {
   "country": "CH",
   "country_name": "Швейцария",
-  "date": "2026-07-01",
-  "generated_at": "2026-07-01T11:02:41.065189+00:00",
-  "optimization_score": 38,
-  "grade": "F",
-  "grade_ru": "Требует рекалибровки",
-  "decision_score_base": 18,
-  "predicted_next_score": 13,
-  "optimization_gain": -5.0,
-  "high_alpha_actions": [],
+  "date": "2026-07-02",
+  "generated_at": "2026-07-02T09:07:30.991304+00:00",
+  "optimization_score": 53,
+  "grade": "D",
+  "grade_ru": "Слабая",
+  "decision_score_base": 30,
+  "predicted_next_score": -6,
+  "optimization_gain": -36.2,
+  "high_alpha_actions": [
+    {
+      "action_id": "CA-01",
+      "sample_count": 1,
+      "win_rate": 100.0,
+      "avg_alpha": 30.0,
+      "avg_efficiency": 83.0,
+      "action_score": 157,
+      "recommendation": "increase_weight"
+    },
+    {
+      "action_id": "CA-02",
+      "sample_count": 1,
+      "win_rate": 100.0,
+      "avg_alpha": 30.0,
+      "avg_efficiency": 83.0,
+      "action_score": 157,
+      "recommendation": "increase_weight"
+    },
+    {
+      "action_id": "CA-03",
+      "sample_count": 1,
+      "win_rate": 100.0,
+      "avg_alpha": 30.0,
+      "avg_efficiency": 83.0,
+      "action_score": 157,
+      "recommendation": "increase_weight"
+    }
+  ],
   "underperforming": [
     {
       "action_id": "S-01",
@@ -53,16 +81,58 @@
         "adjustment": "reduce",
         "factor": 0.7,
         "reason": "низкий effectiveness (16); отрицательная альфа (-17.50); win_rate 25.0%"
+      },
+      {
+        "action_id": "CA-01",
+        "adjustment": "boost",
+        "factor": 1.2,
+        "reason": "high alpha +30.00, win 100%"
+      },
+      {
+        "action_id": "CA-02",
+        "adjustment": "boost",
+        "factor": 1.2,
+        "reason": "high alpha +30.00, win 100%"
+      },
+      {
+        "action_id": "CA-03",
+        "adjustment": "boost",
+        "factor": 1.2,
+        "reason": "high alpha +30.00, win 100%"
       }
     ],
     "bias_penalty": 6.0,
     "confidence_recal": 0,
     "urgency_adjustment": "increase",
     "urgency_factor": 1.1,
-    "n_boosted": 0,
+    "n_boosted": 3,
     "n_reduced": 2
   },
   "adjusted_actions": [
+    {
+      "action_id": "CA-01",
+      "original_score": 157,
+      "adjusted_score": 100,
+      "factor": 1.2,
+      "win_rate": 100.0,
+      "avg_alpha": 30.0
+    },
+    {
+      "action_id": "CA-02",
+      "original_score": 157,
+      "adjusted_score": 100,
+      "factor": 1.2,
+      "win_rate": 100.0,
+      "avg_alpha": 30.0
+    },
+    {
+      "action_id": "CA-03",
+      "original_score": 157,
+      "adjusted_score": 100,
+      "factor": 1.2,
+      "win_rate": 100.0,
+      "avg_alpha": 30.0
+    },
     {
       "action_id": "S-01",
       "original_score": 16,
@@ -82,35 +152,41 @@
   ],
   "confidence_target": 65,
   "urgency_adjustment": "increase",
-  "stability_index": 71,
+  "stability_index": 70,
   "alpha_score": 50,
-  "win_rate": 25.0,
-  "rr_score": 12,
-  "opp_score": 50,
+  "win_rate": 40.0,
+  "rr_score": 30,
+  "opp_score": 100,
   "diagnostics": [
+    {
+      "type": "overfitting_risk",
+      "label": "Риск переобучения",
+      "severity": "medium",
+      "detail": "3 boost с малой выборкой (n<5) — нестабильная оценка"
+    },
     {
       "type": "strategy_decay",
       "label": "Деградация стратегии",
       "severity": "high",
-      "detail": "Feedback success rate 25% — стратегия деградирует"
+      "detail": "Feedback success rate 20% — стратегия деградирует"
     }
   ],
-  "diagnostic_count": 1,
+  "diagnostic_count": 2,
   "conf_drift": 0,
   "fb_grade": "unreliable",
   "hv_score": 50,
-  "n_actions": 2,
-  "history_depth": 34,
+  "n_actions": 5,
+  "history_depth": 35,
   "evolution_record": {
-    "date": "2026-07-01",
-    "optimization_score": 38,
-    "grade": "F",
-    "decision_score": 18,
-    "opt_gain": -5.0,
-    "alpha_mean": -17.5,
-    "win_rate": 25.0,
-    "stability": 71,
-    "n_boosted": 0,
+    "date": "2026-07-02",
+    "optimization_score": 53,
+    "grade": "D",
+    "decision_score": 30,
+    "opt_gain": -36.2,
+    "alpha_mean": -8.0,
+    "win_rate": 40.0,
+    "stability": 70,
+    "n_boosted": 3,
     "n_reduced": 2,
     "bias_count": 1
   }
