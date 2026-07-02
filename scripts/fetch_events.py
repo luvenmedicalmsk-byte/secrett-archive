@@ -2605,6 +2605,15 @@ def save(events):
         _geo_shadow_report(events)          # GEO CONTRACT Phase 0 — shadow, прод не трогает
     except Exception as _e46:
         print('  [WARN] geo shadow fail: %s' % _e46, file=sys.stderr)
+        try:                                # самодиагностика: причина падения — в отчёт
+            import traceback as _tb
+            (OUTPUT_PATH.parent / '_geo_shadow.json').write_text(json.dumps(
+                {'phase': 'shadow', 'status': 'ERROR', 'error': str(_e46),
+                 'trace': _tb.format_exc()[-1500:],
+                 'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')},
+                ensure_ascii=False, indent=2), encoding='utf-8')
+        except Exception:
+            pass
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
