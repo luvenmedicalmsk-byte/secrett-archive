@@ -2536,13 +2536,20 @@ def _geo_shadow_report(events):
     for e in events:
         lat, lng = e.get('lat'), e.get('lng')
         rc = (lat, lng) if isinstance(lat, (int, float)) and isinstance(lng, (int, float)) else None
-        gc = resolve_geo(e.get('title', ''), e.get('summary', '') or e.get('description', ''), raw_coords=rc)
+        gc = resolve_geo(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
+                         raw_coords=rc, domain=e.get('domain'))
         ok, errs = validate_geo(gc)
         rep['rules'][gc.source] = rep['rules'].get(gc.source, 0) + 1
-        if gc.country is None:
-            rep['null_geo'] += 1
-        else:
+        _ppt = gc.process_place_type or 'null'
+        rep.setdefault('place_types', {})[_ppt] = rep.setdefault('place_types', {}).get(_ppt, 0) + 1
+        if gc.zone_id:
+            rep.setdefault('zones', {})[gc.zone_id] = rep.setdefault('zones', {}).get(gc.zone_id, 0) + 1
+        if gc.country is not None:
             rep['resolved'] += 1
+        elif gc.process_place_type in ('zone', 'global'):
+            rep['resolved_zone'] = rep.get('resolved_zone', 0) + 1
+        else:
+            rep['null_geo'] += 1
         if ok:
             rep['validate_pass'] += 1
         else:

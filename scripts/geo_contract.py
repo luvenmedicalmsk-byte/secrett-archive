@@ -71,8 +71,6 @@ GAZ = {
     'кувейт': ('KW', 'Кувейт', 29.37, 47.98), 'оман': ('OM', 'Оман', 23.6, 58.5),
     'эмират': ('AE', 'ОАЭ', 24.47, 54.37), 'оаэ': ('AE', 'ОАЭ', 24.47, 54.37),
     'саудов': ('SA', 'Саудовская Аравия', 24.7, 46.7),
-    'ормуз': ('OM', 'Ормузский пролив', 26.57, 56.25),
-    'персидск': ('SA', 'Персидский залив', 26.0, 51.0),
     # 'газ' у донора ловил «газопровод/газовый» → ложный PS; только явные формы:
     'сектор газа': ('PS', 'Газа', 31.5, 34.47), 'газа': ('PS', 'Газа', 31.5, 34.47),
     'газе': ('PS', 'Газа', 31.5, 34.47), 'палестин': ('PS', 'Палестина', 31.9, 35.2),
@@ -194,6 +192,81 @@ BBOX = {
     'MK': (40, 43, 20, 24), 'XK': (41, 44, 20, 22),
 }
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ZONE LAYER — географические зоны без принадлежности государству.
+# zone_id → (имя_ru, тип, lat, lng, bbox). Часть единого GeoContract.
+# Типы: sea | gulf | strait | ocean | international_waters | polar | airspace | global
+# ══════════════════════════════════════════════════════════════════════════════
+ZONES = {
+    'persian_gulf':      ('Персидский залив', 'gulf', 26.0, 51.0, (23.5, 30.5, 47, 57)),
+    'hormuz_strait':     ('Ормузский пролив', 'strait', 26.57, 56.25, (25.5, 27.5, 55, 58)),
+    'gulf_of_aden':      ('Аденский залив', 'gulf', 12.5, 47.5, (10, 15, 43, 52)),
+    'bab_el_mandeb':     ('Баб-эль-Мандебский пролив', 'strait', 12.6, 43.4, (11.5, 14, 42.5, 44.5)),
+    'red_sea':           ('Красное море', 'sea', 20.0, 38.5, (12, 30, 32, 44)),
+    'black_sea':         ('Чёрное море', 'sea', 43.4, 34.3, (40.5, 47.5, 27, 42)),
+    'azov_sea':          ('Азовское море', 'sea', 46.0, 36.5, (45, 47.5, 34, 39.5)),
+    'mediterranean':     ('Средиземное море', 'sea', 35.0, 18.0, (30, 46, -6, 37)),
+    'aegean_sea':        ('Эгейское море', 'sea', 38.5, 25.0, (35, 41, 22.5, 28)),
+    'caspian_sea':       ('Каспийское море', 'sea', 41.5, 50.5, (36, 47.5, 46, 55)),
+    'baltic_sea':        ('Балтийское море', 'sea', 58.0, 19.5, (53, 66, 9, 30)),
+    'arabian_sea':       ('Аравийское море', 'sea', 15.0, 64.0, (5, 25, 50, 78)),
+    'bengal_bay':        ('Бенгальский залив', 'gulf', 14.0, 89.0, (5, 24, 79, 100)),
+    'south_china_sea':   ('Южно-Китайское море', 'sea', 13.0, 113.0, (3, 23, 105, 120)),
+    'east_china_sea':    ('Восточно-Китайское море', 'sea', 29.0, 124.0, (25, 33, 120, 128)),
+    'japan_sea':         ('Японское море', 'sea', 42.0, 134.0, (34, 52, 128, 141)),
+    'philippine_sea':    ('Филиппинское море', 'sea', 17.0, 135.0, (5, 30, 127, 145)),
+    'caribbean_sea':     ('Карибское море', 'sea', 15.0, -75.0, (9, 23, -88, -60)),
+    'gulf_of_mexico':    ('Мексиканский залив', 'gulf', 25.0, -90.0, (18, 31, -98, -80)),
+    'pacific_ocean':     ('Тихий океан', 'ocean', 10.0, -160.0, (-60, 60, 141, 290)),
+    'atlantic_ocean':    ('Атлантический океан', 'ocean', 25.0, -40.0, (-60, 66, -70, -12)),
+    'indian_ocean':      ('Индийский океан', 'ocean', -20.0, 75.0, (-40, 5, 40, 100)),
+    'arctic_ocean':      ('Северный Ледовитый океан', 'polar', 78.0, 0.0, (66, 90, -180, 180)),
+    'antarctic':         ('Антарктика', 'polar', -75.0, 0.0, (-90, -60, -180, 180)),
+    'international_waters': ('Международные воды', 'international_waters', None, None, None),
+    'intl_airspace':     ('Международное воздушное пространство', 'airspace', None, None, None),
+    'world_ocean':       ('Мировой океан', 'global', None, None, None),
+    'global':            ('Глобально', 'global', None, None, None),
+}
+
+# Текстовый газеттир зон: regex → zone_id (только явные упоминания как места процесса)
+_ZONE_GAZ = [
+    (re.compile(r'персидск\w* залив', re.I), 'persian_gulf'),
+    (re.compile(r'ормузск|(?:^|[^а-яё])ормуз(?![а-яё])', re.I), 'hormuz_strait'),
+    (re.compile(r'аденск\w* залив', re.I), 'gulf_of_aden'),
+    (re.compile(r'баб-эль-мандеб', re.I), 'bab_el_mandeb'),
+    (re.compile(r'красн\w{0,3} мор', re.I), 'red_sea'),
+    (re.compile(r'ч[её]рн\w{0,3} мор', re.I), 'black_sea'),
+    (re.compile(r'азовск\w* мор', re.I), 'azov_sea'),
+    (re.compile(r'средиземн', re.I), 'mediterranean'),
+    (re.compile(r'эгейск', re.I), 'aegean_sea'),
+    (re.compile(r'каспийск', re.I), 'caspian_sea'),
+    (re.compile(r'балтийск\w* мор|над балтик', re.I), 'baltic_sea'),
+    (re.compile(r'аравийск\w* мор', re.I), 'arabian_sea'),
+    (re.compile(r'бенгальск\w* залив', re.I), 'bengal_bay'),
+    (re.compile(r'южно-китайск', re.I), 'south_china_sea'),
+    (re.compile(r'восточно-китайск', re.I), 'east_china_sea'),
+    (re.compile(r'японск\w* мор', re.I), 'japan_sea'),
+    (re.compile(r'филиппинск\w* мор', re.I), 'philippine_sea'),
+    (re.compile(r'карибск\w* мор', re.I), 'caribbean_sea'),
+    (re.compile(r'мексиканск\w* залив', re.I), 'gulf_of_mexico'),
+    (re.compile(r'тих\w{0,3} океан|тихоокеанск\w* (?:акватори|шторм|циклон|тайфун)', re.I), 'pacific_ocean'),
+    (re.compile(r'атлантическ\w* океан|(?:^|[^а-яё])атлантик', re.I), 'atlantic_ocean'),
+    (re.compile(r'индийск\w* океан', re.I), 'indian_ocean'),
+    (re.compile(r'северн\w* ледовит|арктическ\w* (?:океан|льд|лед|акватори)|(?:^|[^а-яё])заполярь', re.I), 'arctic_ocean'),
+    (re.compile(r'антаркти[кд]', re.I), 'antarctic'),
+    (re.compile(r'международн\w* воздушн\w* пространств|нейтральн\w* воздушн', re.I), 'intl_airspace'),
+    (re.compile(r'международн\w{0,3} вод|нейтральн\w{0,3} вод', re.I), 'international_waters'),
+    (re.compile(r'мирово\w{0,3} океан', re.I), 'world_ocean'),
+]
+_GLOBAL_RX = re.compile(r'глобальн\w* (?:потеплени|климат|температур)|по всему миру|планетарн\w* масштаб|мирово\w{0,3} океан', re.I)
+
+# coord-бассейны для координатного фолбэка (только природные процессы над водой)
+_BASIN_IDS = ('philippine_sea', 'east_china_sea', 'south_china_sea', 'japan_sea',
+              'bengal_bay', 'arabian_sea', 'indian_ocean', 'black_sea', 'mediterranean',
+              'caribbean_sea', 'gulf_of_mexico', 'red_sea', 'persian_gulf',
+              'atlantic_ocean', 'pacific_ocean', 'arctic_ocean', 'antarctic')
+
 VALID_PRECISION = ('exact', 'centroid', 'none')
 
 
@@ -212,16 +285,38 @@ class GeoContract:
     precision: str = 'none'                   # exact | centroid | none
     confidence: float = 0.0                   # 0..1
     source: str = 'null'                      # правило-резолвер
+    process_place_type: Optional[str] = None  # country | zone | global | None(нет места)
+    zone_id: Optional[str] = None             # для zone/global
+    zone_type: Optional[str] = None           # sea|gulf|strait|ocean|international_waters|polar|airspace|global
 
     def as_dict(self):
         return {'country': self.country, 'country_ru': self.country_ru,
                 'region': self.region, 'lat': self.lat, 'lng': self.lng,
                 'impact_countries': list(self.impact_countries),
                 'actor_country': self.actor_country, 'precision': self.precision,
-                'confidence': self.confidence, 'source': self.source}
+                'confidence': self.confidence, 'source': self.source,
+                'process_place_type': self.process_place_type,
+                'zone_id': self.zone_id, 'zone_type': self.zone_type}
 
 
 _NULL = GeoContract(None, None, None, None, None, (), None, 'none', 0.0, 'null')
+
+
+def _mk_zone(zone_id, rule, blob, actor, raw_coords, conf=0.85):
+    """Контракт зоны: process_place_type='zone'/'global', страна отсутствует."""
+    name, ztype, zlat, zlng, zbox = ZONES[zone_id]
+    ppt = 'global' if ztype == 'global' else 'zone'
+    lat, lng, prec = zlat, zlng, ('centroid' if zlat is not None else 'none')
+    if raw_coords and zbox:
+        try:
+            rla, rln = float(raw_coords[0]), float(raw_coords[1])
+            if zbox[0] <= rla <= zbox[1] and zbox[2] <= rln <= zbox[3]:
+                lat, lng, prec = rla, rln, 'exact'
+        except (TypeError, ValueError):
+            pass
+    impact = tuple(x[1][0] for x in _places_in(blob, excl=actor))
+    return GeoContract(None, None, name, lat, lng, impact, actor, prec, conf, rule,
+                       process_place_type=ppt, zone_id=zone_id, zone_type=ztype)
 
 # ── правила (порт _geoResolve; семантика 1:1) ────────────────────────────────
 _OPINION_T = re.compile(r'^(?:кто |почему |зачем |является ли |стоит ли |что значит |что означает |чем грозит )')
@@ -311,10 +406,10 @@ def _mk(g, rule, blob, actor, raw_coords):
     else:  # основная страна первой
         impact = (cc,) + tuple(c for c in impact if c != cc)
     return GeoContract(cc, name, region, lat, lng, impact, actor,
-                       prec, _CONF.get(rule, 0.8), rule)
+                       prec, _CONF.get(rule, 0.8), rule, process_place_type='country')
 
 
-def resolve_geo(title, summary='', raw_coords=None):
+def resolve_geo(title, summary='', raw_coords=None, domain=None):
     """ЕДИНСТВЕННЫЙ алгоритм гео-резолва (SINGLE SOURCE). → GeoContract."""
     try:
         t = str(title or '').strip().lower()
@@ -355,6 +450,14 @@ def resolve_geo(title, summary='', raw_coords=None):
                 p = _place_at(parts[-1]) or _place_at(parts[0])
                 if p and p[0] != actor:
                     return _mk(p, 'kinetic_target', blob, actor, raw_coords)
+        # ZONE-EXPLICIT: акватория/пролив/полярная зона/возд.пространство названы местом
+        # процесса → зона, НЕ ближайшее государство (Zone Layer)
+        for rx, zid in _ZONE_GAZ:
+            if rx.search(blob):
+                return _mk_zone(zid, 'zone', blob, actor, raw_coords)
+        # GLOBAL: планетарные процессы без территории
+        if _GLOBAL_RX.search(blob):
+            return _mk_zone('global', 'global', blob, actor, raw_coords, conf=0.8)
         # bad spans: «по военным…» и атрибутивные прилагательные («российский дрон»)
         bad = [(m.start(), m.end()) for m in _NONP.finditer(blob)]
         bad += [(m.start(), m.end()) for m in _ATTADJ.finditer(blob)]
@@ -393,6 +496,17 @@ def resolve_geo(title, summary='', raw_coords=None):
         pl = _places_in(blob, excl=actor, bad=bad)
         if len(pl) == 1:
             return _mk(pl[0][1], 'single', blob, actor, raw_coords)
+        # ZONE-COORDS: природный процесс без страны, координаты над известным
+        # бассейном → зона по координатам (порт _seaBasin; не привязываем к суше)
+        if raw_coords and (_NAT.search(blob) or domain == 'climate'):
+            try:
+                rla, rln = float(raw_coords[0]), float(raw_coords[1])
+                for zid in _BASIN_IDS:
+                    zbox = ZONES[zid][4]
+                    if zbox and zbox[0] <= rla <= zbox[1] and zbox[2] <= rln <= zbox[3]:
+                        return _mk_zone(zid, 'zone_coords', blob, actor, (rla, rln), conf=0.75)
+            except (TypeError, ValueError):
+                pass
         return _NULL
     except Exception:
         return _NULL
@@ -410,6 +524,27 @@ def validate_geo(gc):
         errs.append('bad_precision:%s' % gc.precision)
     if not (0.0 <= (gc.confidence or 0.0) <= 1.0):
         errs.append('bad_confidence:%s' % gc.confidence)
+    if gc.process_place_type not in (None, 'country', 'zone', 'global'):
+        errs.append('bad_place_type:%s' % gc.process_place_type)
+    if gc.process_place_type in ('zone', 'global'):
+        # зона: страна отсутствует, zone_id валиден, координаты внутри границ зоны
+        if gc.country is not None:
+            errs.append('zone_with_country')
+        if gc.zone_id not in ZONES:
+            errs.append('unknown_zone:%s' % gc.zone_id)
+        else:
+            _n, _zt, _zla, _zln, _zbox = ZONES[gc.zone_id]
+            if gc.zone_type != _zt:
+                errs.append('zone_type_mismatch')
+            if gc.lat is not None and _zbox and not (
+                    _zbox[0] - 1.5 <= gc.lat <= _zbox[1] + 1.5 and
+                    _zbox[2] - 1.5 <= gc.lng <= _zbox[3] + 1.5):
+                errs.append('coords_outside_zone')
+            if not gc.region:
+                errs.append('empty_region')
+        return (not errs), errs
+    if gc.process_place_type == 'country' and gc.country is None:
+        errs.append('country_type_without_country')
     if gc.country is None:
         if gc.lat is not None or gc.lng is not None:
             errs.append('coords_without_country')
