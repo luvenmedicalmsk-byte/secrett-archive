@@ -10139,10 +10139,8 @@ window.cabAccess=function(){ var b=document.getElementById('cab-access-blk'); if
 
   window.grdfSetMode=function(mode){
     inject();
-    if(mode==='processes' && !isPro()){
-      try{ window.grdfOpenUpgrade && grdfOpenUpgrade('processes'); }catch(e){}
-      return; // остаёмся на «События»
-    }
+    // FREE проходит в режим «Процессы»: лента — демонстрация выполненного анализа,
+    // монетизация — в карточке процесса (freeDetailHTML), старый апселл убран
     _mode=mode;
     document.querySelectorAll('#grdf-mode-toggle .gproc-mb').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-mode')===mode); });
     var ev=(mode==='events');
