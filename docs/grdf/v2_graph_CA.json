@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-07-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-02T09:26:38.233980+00:00",
+  "generated_at": "2026-07-02T09:41:51.267634+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 52,
+      "score": 46,
       "props": {
-        "risk_score": 52
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 46,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 30,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 8,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 22,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Мировые_но",
-      "type": "Signal",
-      "label": "Мировые новости в кратком изложении: рис",
-      "severity": 65,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-CA-Разведыват",
       "type": "Signal",
       "label": "Разведывательная служба Канады получила ",
@@ -99,6 +92,13 @@
       "label": "PlayStation сообщила, что с января 2028 ",
       "severity": 42,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CA-МИД_Ирана_",
+      "type": "Signal",
+      "label": "МИД Ирана опроверг информацию о проведен",
+      "severity": 38,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-CA",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Мировые_но",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Разведыват",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
       "weight": 0.42
+    },
+    {
+      "from": "SIGNAL-CA-МИД_Ирана_",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.38
     }
   ]
 }
