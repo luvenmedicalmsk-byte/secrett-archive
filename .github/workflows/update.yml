@@ -112,6 +112,7 @@ jobs:
           git config user.email "bot@secrett-archive.com"
           git add docs/_filter_noise.json docs/_dedup_debug.json docs/_pipeline_loss.json docs/_netblocks_debug.json docs/_ioda_debug.json docs/_tg_debug.json docs/coverage_totals.json docs/sources_health.json docs/_audit_events.json scripts/firms_persist.json docs/climate/ docs/events.json docs/snapshots/ docs/intelligence/ docs/alerts/ docs/alerts/rankings/ grivl.html docs/grdf/ docs/timelines/ docs/scenarios/ docs/correlations/ docs/propagation/ docs/systemic/ docs/early-warning/ docs/decision-support/ docs/resilience/ docs/calibration/ docs/strategy/ docs/strategy-history/ docs/strategy-feedback/ docs/validation/ docs/explanations/ docs/dashboard/ docs/decision-quality/ docs/decision-ranking/ docs/strategy-optimization/ docs/strategy-evolution/ docs/recommendations/ docs/executive-summary/ docs/scenario-evolution/ docs/scenario-pathways/ docs/scenario-tree/ docs/global-risks/ docs/risk-ranking/ docs/risk-hierarchy/ docs/risk-acceleration/ docs/validation-external/ docs/track-record/ docs/model-history.json docs/validation/ 2>/dev/null || true
           git add docs/_geo_audit.json docs/_geo_review.json docs/_geo_authority.json 2>/dev/null || true
+          git add docs/signals.json docs/signal_memory.json docs/_geo_shadow.json 2>/dev/null || true
           git add docs/_impact_debug.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "Нет изменений"
@@ -119,8 +120,8 @@ jobs:
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
             COUNT=${{ steps.healthcheck.outputs.events_count }}
             git commit -m "Карта сигналов · $TIMESTAMP · ${COUNT} событий"
-            git pull --rebase origin main
-            git push || (sleep 3 && git pull --rebase origin main && git push) || (sleep 6 && git pull --rebase origin main && git push)
+            git pull --rebase --autostash origin main
+            git push || (sleep 3 && git pull --rebase --autostash origin main && git push) || (sleep 6 && git pull --rebase --autostash origin main && git push)
           fi
 
       - name: Контроль публикации (AUDIT 4.6)
