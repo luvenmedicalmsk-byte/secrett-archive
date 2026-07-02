@@ -421,6 +421,18 @@ def _mk(g, rule, blob, actor, raw_coords):
                        prec, _CONF.get(rule, 0.8), rule, process_place_type='country')
 
 
+def _null_mentions(blob, actor):
+    """Контракт «без места»: страны, упомянутые в тексте, — тематическая атрибуция
+    (mentioned), НЕ геолокация: координат нет, на карте не отображается."""
+    try:
+        ment = tuple(x[1][0] for x in _places_in(blob))[:4]
+    except Exception:
+        ment = ()
+    if not ment and not actor:
+        return _NULL
+    return GeoContract(None, None, None, None, None, ment, actor, 'none', 0.0, 'null')
+
+
 def resolve_geo(title, summary='', raw_coords=None, domain=None):
     """ЕДИНСТВЕННЫЙ алгоритм гео-резолва (SINGLE SOURCE). → GeoContract."""
     try:
@@ -440,9 +452,9 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
             _defensive = re.search(r'(сбил|сбит|перехват|отразил|отбил)', t[:90])
             if ap and _KIN.search(t[:90]) and not _defensive:
                 actor = ap[0]
-        # STATEMENT: заявление без кинетики/природы → нет точки
+        # STATEMENT: заявление без кинетики/природы → нет точки (упоминания сохраняем)
         if _STMT.search(t) and not _KIN.search(blob) and not _NAT.search(blob):
-            return _NULL
+            return _null_mentions(blob, actor)
         # OBJECT-BOUND: «объект … в X»
         for m in re.finditer(_OBJ + r'[^.]{0,30}?(?:^|[^а-яё])(?:в|во|на)\s+([а-яё\-]+)', blob, re.I):
             p = _place_at(m.group(1))
@@ -486,9 +498,9 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
         # CURRENCY (рубль → RU)
         if _CURR.search(t):
             return _mk(GAZ['росс'], 'currency', blob, actor, raw_coords)
-        # NO-GEO гейт
+        # NO-GEO гейт (упоминания сохраняем)
         if _NOGEO.search(blob) and not _KIN.search(blob):
-            return _NULL
+            return _null_mentions(blob, actor)
         # LOCATIVE: ближайший к якорю (объект/кинетика/природа)
         anchors = [m.start() for rx in (re.compile(_OBJ, re.I), _KIN, _NAT)
                    for m in rx.finditer(blob)]
@@ -533,7 +545,7 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
                         return _mk_zone(zid, 'zone_coords', blob, actor, (rla, rln), conf=0.75)
             except (TypeError, ValueError):
                 pass
-        return _NULL
+        return _null_mentions(blob, actor)
     except Exception:
         return _NULL
 

@@ -2566,7 +2566,10 @@ def _apply_geo_contract(events):
             st['none'] += 1
             e['lat'] = None; e['lng'] = None; e['region'] = ''
             e['event_country'] = ''; e['primary_country'] = ''; e['country_code'] = ''
-            e['impact_countries'] = []; e['mentioned_countries'] = []; e['country_codes'] = []
+            e['impact_countries'] = []
+            # тематическая атрибуция без геолокации: упоминания из контракта —
+            # питает страновые снапшоты и движок процессов, карту не трогает
+            e['mentioned_countries'] = _imp; e['country_codes'] = _imp
             e['is_global'] = False
     try:
         (OUTPUT_PATH.parent / '_geo_authority.json').write_text(json.dumps(

@@ -49,29 +49,26 @@ def _gaz_lookup(word):
 # Task 2: канонический process_place — по МЕСТУ процесса (локатив), не по актору/цели
 _LOCATIVE = _re.compile(r'(?:^|\s)(?:[Вв]о?|[Нн]а|[Уу] берегов|[Уу] побережья|[Бб]лиз)\s+([А-ЯЁ][а-яёА-ЯЁ\- ]{2,20}?)(?=[\s,\.\)]|$)')
 def _process_place(e):
-    title=(e.get('title') or '')
-    # 1) место события — первый локатив, разрешимый в газетире
-    for m in _LOCATIVE.finditer(title):
-        cand=m.group(1).strip()
-        for token in [cand]+cand.split():
-            hit=_gaz_lookup(token)
-            if hit: return {'place':hit[0],'iso':hit[1],'macro':hit[2],'via':'locative'}
-    # 2) область/специфичное место из региона (штат/город) — приоритет выше страны (Флорида > США)
-    reg=(e.get('region') or '').strip()
-    if reg and reg not in ('Глобально',''):
-        hit=_gaz_lookup(reg.split(',')[0].split('(')[0].strip())
-        if hit and hit[1]:  # разрешилось в конкретное место
-            return {'place':hit[0],'iso':hit[1],'macro':hit[2],'via':'region-area'}
-    # 3) event_country (физическая страна события)
-    ec=e.get('event_country')
-    if ec and ec in _ISO_RU: return {'place':_ISO_RU[ec],'iso':ec,'macro':_ISO_MACRO.get(ec,''),'via':'event_country'}
-    # 4) регион-макро
-    if reg and reg not in ('Глобально',''):
-        return {'place':reg.split('(')[0].strip(),'iso':None,'macro':reg,'via':'region'}
-    # 5) primary_country
-    pc=e.get('primary_country')
-    if pc and pc in _ISO_RU: return {'place':_ISO_RU[pc],'iso':pc,'macro':_ISO_MACRO.get(pc,''),'via':'primary'}
-    return {'place':'Глобально','iso':None,'macro':'Глобально','via':'global'}
+    """GEO CONTRACT: место процесса читается из контракта (GEO AUTHORITY, NO RECALCULATION).
+    country → регион/страна контракта; zone → имя акватории; global → Глобально;
+    без места → тематическая привязка по mentioned (упоминания стран из контракта),
+    иначе Глобально. Собственный локатив-парсер удалён."""
+    g = e.get('geo') or {}
+    ppt = g.get('process_place_type')
+    if ppt == 'country' and g.get('country'):
+        iso = g['country']
+        place = g.get('region') or g.get('country_ru') or _ISO_RU.get(iso, iso)
+        return {'place': place, 'iso': iso, 'macro': _ISO_MACRO.get(iso, ''), 'via': 'geo_contract'}
+    if ppt == 'zone':
+        zn = g.get('region') or 'Акватория'
+        return {'place': zn, 'iso': None, 'macro': zn, 'via': 'geo_zone'}
+    if ppt == 'global':
+        return {'place': 'Глобально', 'iso': None, 'macro': 'Глобально', 'via': 'geo_global'}
+    ment = [c for c in (e.get('mentioned_countries') or []) if c and c in _ISO_RU]
+    if ment:
+        iso = ment[0]
+        return {'place': _ISO_RU[iso], 'iso': iso, 'macro': _ISO_MACRO.get(iso, ''), 'via': 'mentioned'}
+    return {'place': 'Глобально', 'iso': None, 'macro': 'Глобально', 'via': 'global'}
 
 # Task 1: actor / target (эвристика по действию)
 _W=r'([А-ЯЁ][а-яёА-ЯЁ]+)'
