@@ -2,32 +2,32 @@
   "country": "IN",
   "date": "2026-07-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-02T09:41:51.269249+00:00",
+  "generated_at": "2026-07-02T11:36:48.584564+00:00",
   "node_count": 13,
-  "edge_count": 12,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -80,10 +80,10 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-7_человек_",
+      "id": "SIGNAL-IN-ВМС_предот",
       "type": "Signal",
-      "label": "7 человек погибли, 6 получили ранения, к",
-      "severity": 61,
+      "label": "ВМС предотвратили попытку пиратства в Ад",
+      "severity": 62,
       "domain": "geopolitical"
     },
     {
@@ -99,7 +99,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IN",
@@ -156,10 +156,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IN-7_человек_",
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-ВМС_предот",
       "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.61
+      "weight": 0.62
     },
     {
       "from": "SIGNAL-IN-В_Крыму_ре",
