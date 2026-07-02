@@ -304,140 +304,30 @@ from datetime import datetime as _dt45, timezone as _tz45
 
 
 def _tag_event_countries(events: list[dict]) -> None:
-    """Annotate each event with country_codes (all matches) + primary country_code.
-    Powers per-country signals. Stem-based so RU declensions match."""
-    global _CC_TOKENS
-    if _CC_TOKENS is None:
-        _CC_TOKENS = {iso: _country_match_tokens(meta.get("kw", [])) for iso, meta in COUNTRIES.items()}
-        # Русские формы + города/орг-маркеры (US недопривязан; РФ-города не ловились стеммом)
-        _EXTRA = {
-            "US": ["сша", "америк", "пентагон", "конгресс", "штаты"],
-            "RU": list(RU_COUNTRY_TOKENS),
-            "JP": ["японск"], "CN": ["китайск"], "UA": ["украинск"], "IR": ["иранск"],
-            "IL": ["израильск"], "DE": ["немецк", "германск"], "FR": ["французск"], "GB": ["британск"],
-        }
-        for _iso, _ex in _EXTRA.items():
-            if _iso in _CC_TOKENS:
-                _CC_TOKENS[_iso].extend(_ex)
-        # V6.5 КОНСОЛИДАЦИЯ: матчер покрывает ВСЕ страны geo_resolver (единый источник),
-        # а не только страны из локального COUNTRIES. Это устраняет архитектурную причину
-        # 'Литва/Азербайджан -> Глобально' -- снапшот больше не зависит от полноты COUNTRIES.
-        for _stem, (_fcc, _fname) in FOREIGN_COUNTRIES.items():
-            _CC_TOKENS.setdefault(_fcc, [])
-            if _stem not in _CC_TOKENS[_fcc]:
-                _CC_TOKENS[_fcc].append(_stem)
-    # Маркеры глобальных тем (ИИ/крипто/кибер) -> кандидаты в GLOBAL
-    _GLOBAL_MARKERS = ("openai", "anthropic", "claude", " gpt", "gemini", "nvidia", "zcash",
-                       "bitcoin", "ethereum", "blockchain", "блокчейн", "криптовалют", "cve-")
-    _HIGH_GEO = ("белгород","воронеж","ростов","краснодар","кронштадт","москв","петербург",
-                 "подмосков","крым","татарстан","сибир","курск","казан","новосиб","екатеринб",
-                 "самар","челябинск"," область"," област"," край "," штат ","провинци")
-    _MED_ORG = ("мосбирж","росавиаци","госдум","минобороны","кремл","центробанк"," цб ","газпром",
-                "роснефт"," ржд","сбербанк","аэрофлот","роскосмос","минфин","минцифры","минздрав",
-                "минэнерго"," цик ","прокуратур","совбез","пентагон","конгресс","еврокомисс")
-
-    def _hits(s_):
-        return [iso for iso, toks in _CC_TOKENS.items() if any(re.search(r'\b' + re.escape(t), s_) for t in toks)]
-
+    """GEO CONTRACT Phase 2: страновая атрибуция читается из готового контракта
+    (гео-поля события — производные resolve_geo() в пайплайне). Текст-матчеры,
+    RU-observer эвристики и повторные вычисления удалены (NO RECALCULATION,
+    SINGLE SOURCE). Страна-актор (geo.actor_country) добавляется в атрибуцию
+    страновой аналитики (страна вовлечена), но не является местом процесса."""
     for ev in events:
-        title = str(ev.get("title", "")); summary = str(ev.get("summary", "")); region = str(ev.get("region", ""))
-        content = (title + " " + summary).lower()
-        content_cc = _hits(content)                 # страны, реально упомянутые в тексте
-        region_cc = _hits(region.lower())           # страна из поля region
-        # V6.6 IODA-override: у падений интернет-связности страна ТОЧНО известна (region),
-        # LLM country_code часто галлюцинирует (FR/GE-приклейка). Доверяем только region.
-        _meta_kind = str((ev.get("meta") or {}).get("kind", ""))
-        if _meta_kind == "ioda_outage":
-            if region_cc:
-                content_cc = region_cc[:1]
-                ev["country_code"] = region_cc[0]   # стираем галлюцинированный llm-primary
-            ev.pop("_llm_done", None)
-        # НЕДОВЕРИЕ к region=Россия без российских геомаркеров в тексте (русскоязычный источник != событие в РФ)
-        if region_cc and region_cc[0] == "RU" and "RU" not in content_cc:
-            region_cc = []
-        # V6.5: детерминированный резолвер иностранных стран (единый geo_resolver).
-        # Snapshot COUNTRIES не знает ряд стран (Литва/Азербайджан/...) -> добавляем в content_cc,
-        # чтобы страна прошла через ВСЮ цепочку (event_c/region/country_code), а не уходила в Глобально.
-        if not content_cc and not region_cc:
-            _ffc, _ffn = foreign_country(content)
-            if _ffc:
-                content_cc = [_ffc]  # V6.5 резерв: страна из geo_resolver, если матчер не нашёл
-        ccs = list(dict.fromkeys(content_cc + region_cc))
-        is_global = (not ccs) and any(g in content for g in _GLOBAL_MARKERS)
-        llm_primary = ev.get("country_code") or ""
-        if is_global:
-            # === GLOBAL: нет надёжной гео-привязки, международная/tech/AI/crypto тема ===
-            ev["is_global"] = True
-            ev["event_country"] = "GLOBAL"
-            ev["primary_country"] = "GLOBAL"
-            ev["mentioned_countries"] = []
-            ev["impact_countries"] = []
-            ev["country_codes"] = []
-            ev["country_code"] = ""
-            ev["region"] = "Глобально"
-        else:
-            ev["is_global"] = False
-            event_c = region_cc[0] if region_cc else (content_cc[0] if content_cc else "")
-            # V6.6 ПРИОРИТЕТ ГЕО: рос.наблюдатель + событие за рубежом -> основная страна = заграница.
-            # Если итоговая event_c=RU, но в тексте observer-маркер И есть иностранная страна
-            # (в content_cc/foreign_country) -> заграница становится основной, РФ -> impact.
-            if event_c == "RU" and any(_m in content for _m in _RU_OBSERVER):
-                _fc_obs, _fn_obs = foreign_country(content)
-                if _fc_obs and _fc_obs != "RU":
-                    event_c = _fc_obs
-                    # перестроим ccs: иностранная вперёд, RU в хвост
-                    ccs = [_fc_obs] + [c for c in ccs if c != _fc_obs]
-                    if "RU" not in ccs:
-                        ccs.append("RU")
-            # === 4 поля архитектуры привязки ===
-            ev["event_country"] = event_c
-            ev["mentioned_countries"] = ccs
-            ev["primary_country"] = llm_primary if (llm_primary in ccs) else (ccs[0] if ccs else "")
-            ev["impact_countries"] = [c for c in ccs if c != event_c]
-            # === обратная совместимость ===
-            ev["country_codes"] = ccs
-            if ccs:
-                ev["country_code"] = ccs[0]
-            elif "country_code" not in ev:
-                ev["country_code"] = ""
-            # V6.5 ЕДИНАЯ ЛОГИКА region (единый источник): имя страны берём из COUNTRIES
-            # (метаданные) ЛИБО из geo_resolver FOREIGN_COUNTRIES -- снапшот покрывает все страны.
-            _name_for = lambda c: (COUNTRIES[c]["name_ru"] if (c and c in COUNTRIES)
-                                   else _FC_NAME.get(c, ""))
-            _rl = region.strip().lower()
-            if event_c == "RU":
-                # region уже РФ (субъект/РФ-география)?
-                _ru_ok = bool(ru_subject(_rl)) or any(_x in _rl for _x in _RU_GEO_OK)
-                if _rl in ("", "глобально"):
-                    ev["region"] = "Россия"
-                elif not _ru_ok:
-                    # region иностранный при cc=RU. Если этой страны НЕТ в тексте -> грязный region
-                    # из источника: нормализуем на субъект РФ из текста или 'Россия'.
-                    _ftxt = (title + " " + summary)
-                    _fcc2, _fname2 = foreign_country(_ftxt)
-                    if not (_fcc2 and _fname2.lower() in _rl):
-                        _subj2 = ru_subject(_ftxt.lower())
-                        ev["region"] = _subj2 if _subj2 else "Россия"
-            elif event_c:
-                # иностранная страна: ставим имя страны, если region не отражает event_c.
-                # (V6.6: после правила приоритета event_c может стать иностранной, а region
-                #  остаться 'Россия' с RU в ccs как impact -> всё равно обновляем на страну.)
-                _nm = _name_for(event_c)
-                if _nm and (_rl in ("", "глобально") or _nm.lower() not in _rl):
-                    # не трогаем, если region -- валидный РФ-субъект/город (реальная под-гео)
-                    if not (ru_subject(_rl) and event_c != "RU"):
-                        ev["region"] = _nm
-        # === уровень доверия к страновой атрибуции ===
-        if ev.get("is_global"):
-            ev["attribution_confidence"] = "global"
-        else:
-            _cblob = (title + " " + summary + " " + str(ev.get("region", ""))).lower()
-            if any(h in _cblob for h in _HIGH_GEO):
-                ev["attribution_confidence"] = "high"      # город/регион/прямая гео
-            elif any(o in _cblob for o in _MED_ORG):
-                ev["attribution_confidence"] = "medium"    # нацорган/компания/инфраструктура
-            else:
-                ev["attribution_confidence"] = "low"       # упоминание/влияние/международное
+        gc = ev.get("geo") or {}
+        if gc:
+            actor = gc.get("actor_country") or ""
+            if actor:
+                for k in ("mentioned_countries", "country_codes"):
+                    lst = list(ev.get(k) or [])
+                    if actor not in lst:
+                        lst.append(actor)
+                    ev[k] = lst
+            if "is_global" not in ev:
+                ev["is_global"] = (gc.get("process_place_type") == "global")
+            continue
+        # событие без контракта (старый кэш) — без страновой атрибуции
+        ev.setdefault("is_global", False)
+        for k in ("event_country", "primary_country", "country_code"):
+            ev.setdefault(k, "")
+        for k in ("mentioned_countries", "impact_countries", "country_codes"):
+            ev.setdefault(k, [])
 
 def _persist_tagged_events(events: list[dict]) -> None:
     """Re-write docs/events.json with country tags (preserve wrapper keys)."""
@@ -502,16 +392,17 @@ def load_events() -> list[dict]:
 
 
 def match_events(events: list[dict], iso2: str) -> list[dict]:
-    """Return events relevant to this country by keyword matching."""
-    kws = _country_match_tokens(COUNTRIES[iso2]["kw"])  # стемы: ловим падежи (Россия/России/Россией)
+    """GEO CONTRACT Phase 2: события страны отбираются по контрактной атрибуции
+    (primary/mentioned/impact — производные resolve_geo), а не keyword-матчингом
+    по тексту (NO RECALCULATION)."""
+    iso2 = (iso2 or "").upper()
     matched = []
     for ev in events:
-        text = " ".join([
-            str(ev.get("title", "")),
-            str(ev.get("summary", "")),
-            str(ev.get("region", "")),
-        ]).lower()
-        if any(kw in text for kw in kws):
+        ccs = set(ev.get("country_codes") or []) | set(ev.get("mentioned_countries") or []) \
+              | set(ev.get("impact_countries") or [])
+        if ev.get("primary_country"):
+            ccs.add(ev["primary_country"])
+        if iso2 in ccs:
             matched.append(ev)
     return matched
 

@@ -2522,6 +2522,63 @@ def _drop_noise_cards(events):
         return events
 
 
+def _apply_geo_contract(events):
+    """GEO CONTRACT Phase 2 (docs/GEO_CONTRACT.md): авторитетная география платформы.
+    resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
+    контракта; ни один компонент ниже по потоку (карта, лента, процессы, снапшоты,
+    Worker, API) географию не пересчитывает (NO RECALCULATION)."""
+    from geo_contract import resolve_geo, validate_geo
+    st = {'country': 0, 'zone': 0, 'global': 0, 'none': 0, 'validate_fail': 0,
+          'exact': 0, 'centroid': 0}
+    for e in events:
+        lat, lng = e.get('lat'), e.get('lng')
+        rc = (lat, lng) if isinstance(lat, (int, float)) and isinstance(lng, (int, float)) else None
+        gc = resolve_geo(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
+                         raw_coords=rc, domain=e.get('domain'))
+        ok, _errs = validate_geo(gc)
+        if not ok:
+            st['validate_fail'] += 1
+            gc = type(gc)(None, None, None, None, None, (), None, 'none', 0.0, 'gate_fail')
+        e['geo'] = gc.as_dict()
+        ppt = gc.process_place_type
+        _imp = [c for c in (gc.impact_countries or ()) if c]
+        if ppt == 'country':
+            st['country'] += 1; st[gc.precision] = st.get(gc.precision, 0) + 1
+            e['lat'], e['lng'] = gc.lat, gc.lng
+            e['region'] = gc.region or gc.country_ru
+            e['event_country'] = gc.country_ru
+            e['primary_country'] = gc.country; e['country_code'] = gc.country
+            e['impact_countries'] = [c for c in _imp if c != gc.country]
+            e['mentioned_countries'] = _imp; e['country_codes'] = _imp
+            e['is_global'] = False
+        elif ppt in ('zone', 'global'):
+            st['zone' if ppt == 'zone' else 'global'] += 1
+            e['lat'], e['lng'] = gc.lat, gc.lng
+            e['region'] = gc.region
+            if ppt == 'global':
+                e['event_country'] = 'GLOBAL'; e['primary_country'] = 'GLOBAL'
+            else:
+                e['event_country'] = gc.region; e['primary_country'] = ''
+            e['country_code'] = ''
+            e['impact_countries'] = _imp; e['mentioned_countries'] = _imp; e['country_codes'] = _imp
+            e['is_global'] = (ppt == 'global')
+        else:
+            st['none'] += 1
+            e['lat'] = None; e['lng'] = None; e['region'] = ''
+            e['event_country'] = ''; e['primary_country'] = ''; e['country_code'] = ''
+            e['impact_countries'] = []; e['mentioned_countries'] = []; e['country_codes'] = []
+            e['is_global'] = False
+    try:
+        (OUTPUT_PATH.parent / '_geo_authority.json').write_text(json.dumps(
+            {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+             'phase': 'authority', 'total': len(events), 'stats': st},
+            ensure_ascii=False, indent=2), encoding='utf-8')
+    except Exception:
+        pass
+    print('  [GEO-AUTHORITY] country %(country)d · zone %(zone)d · global %(global)d · '
+          'без места %(none)d · gate_fail %(validate_fail)d' % st, file=sys.stderr)
+
+
 def _geo_shadow_report(events):
     """GEO CONTRACT Phase 0 (SHADOW): параллельный расчёт GeoContract без влияния
     на прод (спека docs/GEO_CONTRACT.md). Паритет со старым пайплайном и
@@ -2591,7 +2648,7 @@ def save(events):
         except Exception: pass
     _save_tr_disk()
     events = _llm_extract_countries(events)
-    events = _foreign_geo_fallback(events)
+    # GEO CONTRACT Phase 3: _foreign_geo_fallback удалён из потока — географию присваивает только контракт
     try:
         events = _softcap_firm_bankruptcy(events)
     except Exception as _e45:
@@ -2602,7 +2659,11 @@ def save(events):
         print('  [WARN] geo_audit fail: %s' % _e45, file=sys.stderr)
     events = _drop_noise_cards(_p10_drop_quake_cards(events))
     try:
-        _geo_shadow_report(events)          # GEO CONTRACT Phase 0 — shadow, прод не трогает
+        _apply_geo_contract(events)         # GEO CONTRACT Phase 2 — и в fallback-пути
+    except Exception as _e47:
+        print('  [WARN] geo authority fail: %s' % _e47, file=sys.stderr)
+    try:
+        _geo_shadow_report(events)          # регрессионный отчёт (паритет теперь = контракт)
     except Exception as _e46:
         print('  [WARN] geo shadow fail: %s' % _e46, file=sys.stderr)
         try:                                # самодиагностика: причина падения — в отчёт
@@ -7744,6 +7805,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["events"] = _signal_quality_pass(enriched["events"])
             enriched["events"] = _retain_critical(enriched["events"], previous_snapshot)
             enriched["count"] = len(enriched["events"])
+            _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
