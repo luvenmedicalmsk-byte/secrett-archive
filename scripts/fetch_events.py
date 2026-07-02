@@ -2546,7 +2546,7 @@ def _apply_geo_contract(events):
             st['country'] += 1; st[gc.precision] = st.get(gc.precision, 0) + 1
             e['lat'], e['lng'] = gc.lat, gc.lng
             e['region'] = gc.region or gc.country_ru
-            e['event_country'] = gc.country_ru
+            e['event_country'] = gc.country      # ISO: фронт локализует через _CNRU
             e['primary_country'] = gc.country; e['country_code'] = gc.country
             e['impact_countries'] = [c for c in _imp if c != gc.country]
             e['mentioned_countries'] = _imp; e['country_codes'] = _imp

@@ -48,7 +48,8 @@ GAZ = {
     'калининград': ('RU', 'Россия', 54.7, 20.5), 'иркутск': ('RU', 'Россия', 52.3, 104.3),
     'курган': ('RU', 'Россия', 55.4, 65.3), 'рязан': ('RU', 'Россия', 54.6, 39.7),
     'самар': ('RU', 'Россия', 53.2, 50.1), 'петербург': ('RU', 'Россия', 59.94, 30.31),
-    'белгород': ('RU', 'Россия', 50.6, 36.6), 'воронеж': ('RU', 'Россия', 51.66, 39.2),
+    'белгород': ('RU', 'Россия', 50.6, 36.6), 'брянск': ('RU', 'Россия', 53.2, 34.4),
+    'владивосток': ('RU', 'Россия', 43.1, 131.9), 'воронеж': ('RU', 'Россия', 51.66, 39.2),
     # Украина
     'украин': ('UA', 'Украина', 50.45, 30.52), 'киев': ('UA', 'Украина', 50.45, 30.52),
     'кременчуг': ('UA', 'Украина', 49.07, 33.4), 'харьков': ('UA', 'Украина', 50.0, 36.23),
@@ -137,7 +138,9 @@ GAZ = {
     'кени': ('KE', 'Кения', -0.02, 37.9), 'судан': ('SD', 'Судан', 12.86, 30.2),
     'ливи': ('LY', 'Ливия', 26.3, 17.2), 'алжир': ('DZ', 'Алжир', 28.0, 1.66),
     'марокк': ('MA', 'Марокко', 31.8, -7.1), 'тунис': ('TN', 'Тунис', 33.9, 9.5),
-    'уганд': ('UG', 'Уганда', 1.37, 32.3), 'замби': ('ZM', 'Замбия', -13.13, 27.85),
+    'уганд': ('UG', 'Уганда', 1.37, 32.3),
+    'кот-д’ивуар': ('CI', 'Кот-д’Ивуар', 7.5, -5.5), "кот-д'ивуар": ('CI', 'Кот-д’Ивуар', 7.5, -5.5),
+    'гана': ('GH', 'Гана', 7.95, -1.0), 'гане': ('GH', 'Гана', 7.95, -1.0), 'ганы': ('GH', 'Гана', 7.95, -1.0), 'замби': ('ZM', 'Замбия', -13.13, 27.85),
     'зимбабве': ('ZW', 'Зимбабве', -17.8, 31.0), 'юар': ('ZA', 'ЮАР', -30.6, 22.9),
     # Латинская Америка
     'венесуэл': ('VE', 'Венесуэла', 10.5, -66.9), 'аргентин': ('AR', 'Аргентина', -34.6, -58.4),
@@ -186,7 +189,7 @@ BBOX = {
     'VE': (0, 13, -74, -59), 'AR': (-56, -21, -74, -53), 'BR': (-34, 6, -74, -34),
     'CO': (-5, 13, -80, -66), 'PE': (-19, 0, -82, -68), 'CL': (-56, -17, -76, -66),
     'BO': (-23, -9, -70, -57), 'EC': (-5, 2, -92, -75), 'PY': (-28, -19, -63, -54),
-    'UY': (-35, -30, -59, -53),
+    'UY': (-35, -30, -59, -53), 'CI': (4, 11, -9, -2), 'GH': (4, 12, -4, 2),
     'MC': (43.5, 44, 7.2, 7.6), 'ME': (41, 44, 18, 21), 'AL': (39, 43, 19, 22),
     'BA': (42, 46, 15, 20), 'HR': (42, 47, 13, 20), 'SI': (45, 47, 13, 17),
     'MK': (40, 43, 20, 24), 'XK': (41, 44, 20, 22),
@@ -256,7 +259,7 @@ _ZONE_GAZ = [
     (re.compile(r'северн\w* ледовит|арктическ\w* (?:океан|льд|лед|акватори)|(?:^|[^а-яё])заполярь', re.I), 'arctic_ocean'),
     (re.compile(r'антаркти[кд]', re.I), 'antarctic'),
     (re.compile(r'международн\w* воздушн\w* пространств|нейтральн\w* воздушн', re.I), 'intl_airspace'),
-    (re.compile(r'международн\w{0,3} вод|нейтральн\w{0,3} вод', re.I), 'international_waters'),
+    (re.compile(r'международн\w{0,3} вод|нейтральн\w{0,3} вод|открыт\w{0,3} мор', re.I), 'international_waters'),
     (re.compile(r'мирово\w{0,3} океан', re.I), 'world_ocean'),
 ]
 _GLOBAL_RX = re.compile(r'глобальн\w* (?:потеплени|климат|температур)|по всему миру|планетарн\w* масштаб|мирово\w{0,3} океан', re.I)
@@ -302,6 +305,15 @@ class GeoContract:
 _NULL = GeoContract(None, None, None, None, None, (), None, 'none', 0.0, 'null')
 
 
+def _zone_contains(zbox, lat, lng):
+    """Границы зоны с учётом антимеридиана (lng_max > 180 — тихоокеанский бокс)."""
+    if not zbox or lat is None or lng is None:
+        return False
+    la0, la1, lo0, lo1 = zbox
+    ln = lng + 360 if (lo1 > 180 and lng < 0) else lng
+    return la0 <= lat <= la1 and lo0 <= ln <= lo1
+
+
 def _mk_zone(zone_id, rule, blob, actor, raw_coords, conf=0.85):
     """Контракт зоны: process_place_type='zone'/'global', страна отсутствует."""
     name, ztype, zlat, zlng, zbox = ZONES[zone_id]
@@ -310,7 +322,7 @@ def _mk_zone(zone_id, rule, blob, actor, raw_coords, conf=0.85):
     if raw_coords and zbox:
         try:
             rla, rln = float(raw_coords[0]), float(raw_coords[1])
-            if zbox[0] <= rla <= zbox[1] and zbox[2] <= rln <= zbox[3]:
+            if _zone_contains(zbox, rla, rln):
                 lat, lng, prec = rla, rln, 'exact'
         except (TypeError, ValueError):
             pass
@@ -333,7 +345,7 @@ _OUTAGE = re.compile(r'(отключение интернет|падение и�
 _CURR = re.compile(r'(рубль|рубл[яеь])\s+(?:ослаб|укреп|упал|пада|вырос|раст|обвал|подеш|подорож|рухн|просел|на бирж)', re.I)
 
 _CONF = {'object': 0.92, 'kinetic_target': 0.9, 'currency': 0.9, 'locative': 0.88,
-         'direction': 0.85, 'natural': 0.85, 'outage': 0.85, 'single': 0.7}
+         'direction': 0.85, 'natural': 0.85, 'outage': 0.85, 'single': 0.7, 'adj_locative': 0.8}
 
 
 _GAZ_GUARD = {'газе': r'(?!т)'}   # «газета/газете» — не Газа
@@ -492,6 +504,20 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
         if cand:
             cand.sort(key=lambda x: (x[0], x[1]))
             return _mk(cand[0][2], 'locative', blob, actor, raw_coords)
+        # ADJ-LOCATIVE: «в немецком Штаде» — национальное прилагательное задаёт страну
+        _ADJ_CC = {'немецк': 'герман', 'германск': 'герман', 'французск': 'франци',
+                   'итальянск': 'итали', 'испанск': 'испани', 'американск': 'сша',
+                   'британск': 'британ', 'польск': 'польш', 'турецк': 'турци',
+                   'японск': 'япони', 'китайск': 'китай', 'индийск': 'инди',
+                   'украинск': 'украин', 'российск': 'росс', 'иранск': 'иран',
+                   'израильск': 'израил', 'чешск': 'чехи', 'австрийск': 'австри',
+                   'швейцарск': 'швейцари', 'бельгийск': 'бельги', 'шведск': 'швеци',
+                   'норвежск': 'норвеги', 'финск': 'финлянд', 'греческ': 'греци'}
+        m_adj = re.search(r'(?:^|[^а-яё])(?:в|во|на)\s+([а-яё]+)(?:ом|ой|ом)\s+[а-яё\-]', blob)
+        if m_adj:
+            for _adj, _stem in _ADJ_CC.items():
+                if m_adj.group(1).startswith(_adj):
+                    return _mk(GAZ[_stem], 'adj_locative', blob, actor, raw_coords)
         # SINGLE: единственное место в тексте
         pl = _places_in(blob, excl=actor, bad=bad)
         if len(pl) == 1:
@@ -503,7 +529,7 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
                 rla, rln = float(raw_coords[0]), float(raw_coords[1])
                 for zid in _BASIN_IDS:
                     zbox = ZONES[zid][4]
-                    if zbox and zbox[0] <= rla <= zbox[1] and zbox[2] <= rln <= zbox[3]:
+                    if _zone_contains(zbox, rla, rln):
                         return _mk_zone(zid, 'zone_coords', blob, actor, (rla, rln), conf=0.75)
             except (TypeError, ValueError):
                 pass
@@ -536,9 +562,9 @@ def validate_geo(gc):
             _n, _zt, _zla, _zln, _zbox = ZONES[gc.zone_id]
             if gc.zone_type != _zt:
                 errs.append('zone_type_mismatch')
-            if gc.lat is not None and _zbox and not (
-                    _zbox[0] - 1.5 <= gc.lat <= _zbox[1] + 1.5 and
-                    _zbox[2] - 1.5 <= gc.lng <= _zbox[3] + 1.5):
+            if gc.lat is not None and _zbox and not _zone_contains(
+                    (_zbox[0] - 1.5, _zbox[1] + 1.5, _zbox[2] - 1.5, _zbox[3] + 1.5),
+                    gc.lat, gc.lng):
                 errs.append('coords_outside_zone')
             if not gc.region:
                 errs.append('empty_region')
