@@ -2326,10 +2326,15 @@ def process_events(raw_items):
         try:  # PIPELINE LOSS AUDIT: публикуемая карта воронки (statistics, не догадки)
             _loss_report = dict(_LOSS)
             _loss_report.update({'built': len(events), 'exported': len(top_events),
-                'sev_sample': _SEV_SAMPLE,
                 'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')})
             (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(
                 json.dumps(_loss_report, ensure_ascii=False, indent=2), encoding='utf-8')
+            # ADMISSION AUDIT: сэмпл low_significance в ОТДЕЛЬНЫЙ файл (не перезатирается)
+            (OUTPUT_PATH.parent / '_admission_sample.json').write_text(json.dumps(
+                {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                 'sev_threshold_total': _LOSS.get('sev_threshold', 0),
+                 'admitted': _LOSS.get('analytic_layer', 0),
+                 'sample': _SEV_SAMPLE}, ensure_ascii=False, indent=2), encoding='utf-8')
         except Exception:
             pass
         print("  [DOMAINS] " + ' '.join(f"{k}={_fd.get(k,0)}" for k in ('climate','geopolitics','economy','technology','social')), file=sys.stderr)
