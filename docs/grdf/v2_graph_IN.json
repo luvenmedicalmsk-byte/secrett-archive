@@ -2,72 +2,67 @@
   "country": "IN",
   "date": "2026-07-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-03T15:37:01.863949+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-07-03T16:10:55.944189+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 44,
+      "score": 55,
       "props": {
-        "risk_score": 44
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "down"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 11,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-IN-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "score": 3,
+      "trend": "up"
     },
     {
       "id": "DRIVER-IN-Geopolitical",
@@ -80,11 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-На_фоне_де",
-      "type": "Signal",
-      "label": "На фоне дефицита топлива Россия планируе",
-      "severity": 44,
-      "domain": "economic"
+      "id": "DRIVER-IN-Economic",
+      "type": "Driver",
+      "label": "Economic"
     }
   ],
   "edges": [
@@ -92,49 +85,43 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
-    },
-    {
-      "from": "DRIVER-IN-Economic",
-      "to": "COUNTRY-IN",
-      "type": "CAUSES",
-      "weight": 0.8
+      "weight": 0.03
     },
     {
       "from": "DRIVER-IN-Geopolitical",
@@ -149,10 +136,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IN-На_фоне_де",
+      "from": "DRIVER-IN-Economic",
+      "to": "COUNTRY-IN",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
       "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
