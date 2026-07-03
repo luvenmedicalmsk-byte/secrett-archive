@@ -2060,9 +2060,9 @@ def process_events(raw_items):
             _m = _kw_overlap + 2 * _cc_overlap
             if _m > _best:
                 _best = _m
-        if _best >= 4:
+        if _best >= 3:
             score += 2.5; why.append('process_confirm')
-        elif _best >= 2:
+        elif _best >= 1:
             score += 1.5; why.append('process_touch')
         # 3) CROSS-DOMAIN — событие тянет несколько доменов (энергетика→эконом→геополит)
         _dh = 0
