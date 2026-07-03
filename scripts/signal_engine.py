@@ -402,9 +402,52 @@ def _stable_id(domain, ptype, place, key_entity):
 # используется identity_key — инвариант к переименованию типа. Так процесс переживает
 # любую эволюцию модели: v2→v3→v4, новые origin (space/water/food), смену правил.
 # ══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# STABLE ENTITY RESOLUTION CONTRACT. Entity — не строка, а КАНОНИЧЕСКАЯ сущность
+# со стабильным ID. Все алиасы (НПЗ / нефтеперерабатывающий завод / oil refinery /
+# refinery) → один ENTITY_REFINERY. Identity строится из canonical entity, не из текста.
+# Эволюция Resolver (новые алиасы) не меняет Identity существующих процессов.
+# ══════════════════════════════════════════════════════════════════════════════
+# (regex-паттерн, ENTITY_ID, человекочитаемое имя). Порядок = приоритет.
+_ENTITY_CANON=[
+ (r'нпз|нефтеперераб|oil refinery|\brefinery\b|нефтезавод',            'ENTITY_REFINERY','НПЗ'),
+ (r'газопровод|нефтепровод|трубопровод|pipeline',                      'ENTITY_PIPELINE','Трубопровод'),
+ (r'энергосистем|энергосет|power grid|электросет|энергетическ\w* инфраструктур|лэп\b|подстанц','ENTITY_POWER_GRID','Энергосистема'),
+ (r'электростанц|аэс\b|тэц\b|гэс\b|power plant|энергоблок',            'ENTITY_POWER_PLANT','Электростанция'),
+ (r'нефтебаз|топливн\w* терминал|нефтехранилищ|fuel depot',            'ENTITY_FUEL_DEPOT','Нефтебаза'),
+ (r'порт\b|гаван|harbor|seaport|морск\w* терминал',                    'ENTITY_PORT','Порт'),
+ (r'аэропорт|airport|авиабаз|аэродром',                                'ENTITY_AIRPORT','Аэропорт'),
+ (r'дата-центр|цод\b|data center|дата центр',                          'ENTITY_DATACENTER','Дата-центр'),
+ (r'водоканал|водоснабжен|water grid|дамб|плотин|водохранилищ',        'ENTITY_WATER_SYSTEM','Водная система'),
+ (r'ж/д|железн\w* дорог|railway|железнодорожн',                        'ENTITY_RAILWAY','Железная дорога'),
+ (r'донбасс|донецк|луганск|donbas',                                    'ENTITY_DONBASS','Донбасс'),
+ (r'красн\w* мор|red sea|баб-эль-мандеб',                              'ENTITY_RED_SEA','Красное море'),
+ (r'чёрн\w* мор|черн\w* мор|black sea',                                'ENTITY_BLACK_SEA','Чёрное море'),
+ (r'ормузск|hormuz|персидск\w* залив',                                 'ENTITY_HORMUZ','Ормузский пролив'),
+ (r'тайваньск\w* пролив|taiwan strait',                                'ENTITY_TAIWAN_STRAIT','Тайваньский пролив'),
+ (r'зернов\w* коридор|grain corridor|зернов\w* сделк',                 'ENTITY_GRAIN_CORRIDOR','Зерновой коридор'),
+ (r'банковск\w* сектор|banking sector|финансов\w* сектор',            'ENTITY_BANKING','Банковский сектор'),
+ (r'фондов\w* рынок|биржа|stock market|фондов\w* индекс',              'ENTITY_STOCK_MARKET','Фондовый рынок'),
+ (r'нац\w* валют|курс рубл|валютн\w* рынок|currency',                  'ENTITY_CURRENCY','Валютный рынок'),
+]
+def _resolve_entity(raw, evs=None):
+    """Entity Resolver: строка/событие → (canonical_id, canonical_name, reason).
+    Каноническая сущность стабильна к переформулировкам. Возвращает ('','','') если
+    сущность не распознана (тогда identity падает на место — тоже стабильно)."""
+    txt=(raw or '')
+    if evs:
+        txt=txt+' '+' '.join((e.get('title','') or '') for e in evs[:3])
+    low=txt.lower()
+    for pat,eid,name in _ENTITY_CANON:
+        _m=re.search(pat,low)
+        if _m:
+            return eid,name,('алиас «%s» → %s' % (_m.group(0), name))
+    return '','',''
+
 def _identity_key(domain, place, key_entity):
-    """Инвариантное ядро идентичности — БЕЗ process_type/origin/любой классификации.
-    Меняется только при смене реальной сущности процесса (домен/место/субъект)."""
+    """Инвариантное ядро идентичности — БЕЗ process_type/origin/классификации.
+    key_entity здесь — уже КАНОНИЧЕСКАЯ сущность (ENTITY_*), не сырой текст.
+    Меняется только при смене реальной сущности процесса (домен/место/canonical entity)."""
     base=f"{domain}|{place}|{key_entity or ''}"
     return hashlib.md5(base.encode()).hexdigest()[:8]
 
@@ -792,11 +835,17 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     prev_by_id={s['signal_id']:s for s in (previous or [])}
     # IDENTITY CONTRACT: индекс по инвариантному ядру — процесс находит свою историю
     # даже если signal_id изменился из-за эволюции классификации (переименование ptype и т.п.)
+    # ВАЖНО: пересчитываем identity_key prev через ТЕКУЩИЙ Entity Resolver, чтобы старые
+    # процессы (с сырым entity) и новые (canonical) индексировались единообразно.
     prev_by_identity={}
     for s in (previous or []):
-        ik=s.get('identity_key') or _identity_key((s.get('domains') or [''])[0],
-                                                   s.get('process_place',''),
-                                                   s.get('actor') or s.get('target') or '')
+        _dom=(s.get('domains') or [''])[0] or s.get('primary_domain','')
+        _raw_ent=s.get('actor') or s.get('target') or ''
+        _ceid=s.get('canonical_entity')
+        if not _ceid:
+            _ceid=_resolve_entity(_raw_ent, s.get('evidence',[]))[0]
+        ik=_identity_key(_dom, s.get('process_place',''), _ceid or _raw_ent)
+        s['identity_key']=ik   # канонизируем на месте, чтобы rescue/dedup видели единый ключ
         prev_by_identity.setdefault(ik, s)
     seen=set(); out=[]
     n_matched=0; n_created=0; match_scores=[]; n_identity_rescued=0
@@ -872,9 +921,11 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                or (_o in ('military','kinetic') and bool(_cc & _CONFLICT_CC_BF)))
         s['access_tier']='pro' if _sens else 'free'
         s['sensitivity']='high' if _sens else ('medium' if _pd=='geopolitics' else 'normal')
-        if not s.get('identity_key'):  # IDENTITY CONTRACT backfill
-            s['identity_key']=_identity_key(_pd, s.get('process_place',''),
-                                            s.get('actor') or s.get('target') or '')
+        if not s.get('identity_key') or not s.get('canonical_entity'):  # IDENTITY+ENTITY backfill
+            _raw_ent=s.get('actor') or s.get('target') or ''
+            _ceid,_cename,_crea=_resolve_entity(_raw_ent, s.get('evidence',[]))
+            s['entity']=_raw_ent; s['canonical_entity']=_ceid; s['entity_name']=_cename; s['entity_reason']=_crea
+            s['identity_key']=_identity_key(_pd, s.get('process_place',''), _ceid or _raw_ent)
         if not s.get('free_title'):
             s['free_title']='Геополитическая динамика' if _sens else s.get('title','')
     # CONTINUITY DEDUP: смена id-схемы (origin убран из id) оставила дубли —
@@ -1307,6 +1358,9 @@ def _build_one_signal(evs, meta=None):
     domains=[primary_domain]+[d for d in domains if d and d!=primary_domain]  # primary первым
     name=f'{ptype} — {place}' if place and place!='Глобально' else ptype
     key_entity=actor or target or ''
+    # ENTITY RESOLVER: канонизируем сущность процесса (стабильна к переформулировкам).
+    # Identity строится по canonical entity (ENTITY_*), не по сырой строке actor/target.
+    canonical_entity,entity_name,entity_reason=_resolve_entity(key_entity, evs)
     # ORIGIN ENGINE v2: единая причинная классификация процесса (для timeline/графа/
     # объяснимости/прогноза). Агрегируем по evidence с учётом confidence.
     from collections import Counter as _OCtr
@@ -1329,8 +1383,10 @@ def _build_one_signal(evs, meta=None):
     # но не его идентичность. Иначе смена/уточнение origin рвёт историю и плодит дубли.
     # Разделение по origin обеспечивает origin-гейт в _cluster (на уровне событий), а не id.
     signal_id=_stable_id(domains[0], ptype, place, key_entity)
-    # IDENTITY CONTRACT: инвариантное ядро идентичности (не зависит от классификации).
-    identity_key=_identity_key(domains[0], place, key_entity)
+    # IDENTITY CONTRACT: инвариантное ядро — по КАНОНИЧЕСКОЙ сущности, не по тексту.
+    # canonical_entity стабилен к переформулировкам (НПЗ=refinery=oil refinery).
+    # Fallback на сырой key_entity только если сущность не канонизирована.
+    identity_key=_identity_key(domains[0], place, canonical_entity or key_entity)
     # Task 5+6: качество и confidence-match каждого evidence
     evidence=[]
     for x in sorted(evs,key=lambda x:-x.get('severity',0)):
@@ -1366,7 +1422,9 @@ def _build_one_signal(evs, meta=None):
     sensitivity='high' if _sensitive else ('medium' if primary_domain=='geopolitics' else 'normal')
     # обобщённая карточка для FREE (без раскрытия деталей чувствительного процесса)
     free_title=('Геополитическая динамика' if _sensitive else name)
-    return {'signal_id':signal_id,'identity_key':identity_key,'title':name,'process_type':ptype,'origin':process_origin,
+    return {'signal_id':signal_id,'identity_key':identity_key,
+            'entity':key_entity,'canonical_entity':canonical_entity,'entity_name':entity_name,'entity_reason':entity_reason,
+            'title':name,'process_type':ptype,'origin':process_origin,
             'origin_confidence':origin_conf,'origin_reasons':origin_reasons,'origin_chain':origin_chain,
             'access_tier':access_tier,'sensitivity':sensitivity,'free_title':free_title,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
