@@ -2185,8 +2185,10 @@ def process_events(raw_items):
                 r'\bhope[s]?\b|\bcould\b|\bwill\b|editorial|inside story|the birthplace|'
                 r'национальн\w* парк|\bpark\b|estate|celebrates|game\b)', _tl, re.I))
             # структурные метки платформы (мониторинг) — всегда валидны
-            _is_struct = bool(re.search(r'(морской лёд|iceberg|typhoon|tropical storm|лесн\w* пожар|'
-                r'паводк|сезон \w+ пожар|вулкан|усиление блокировок|перебои|деградац)', _tl, re.I))
+            _is_struct = bool(re.search(r'(морской лёд|iceberg|typhoon|tropical storm|лесн\w* пожар|wildfire|'
+                r'паводк|сезон \w+ пожар|вулкан|volcan|усиление блокировок|перебои|деградац|'
+                r'засух|аномальн\w* жар|температурн\w* рекорд|temperature record|heat wave kills|'
+                r'землетрясен|earthquake|terremoto|цунами|наводнен|tremor)', _tl, re.I))
             # явный кибер/утечка/арест/банкротство — сигнал даже без EVENT_RX-глагола
             _is_hard = bool(re.search(
                 r'(утечк\w* данных|взлом|скомпрометир|вредоносн|malware|фишинг|ddos|'
