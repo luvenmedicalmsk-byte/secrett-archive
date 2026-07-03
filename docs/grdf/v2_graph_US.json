@@ -2,60 +2,60 @@
   "country": "US",
   "date": "2026-07-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-03T08:50:31.561465+00:00",
+  "generated_at": "2026-07-03T09:05:18.760861+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 57,
+      "score": 60,
       "props": {
-        "risk_score": 57
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 33,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -80,23 +80,23 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Пассажирск",
+      "type": "Signal",
+      "label": "Пассажирский самолет столкнулся с беспил",
+      "severity": 67,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-US-Стратегиче",
+      "type": "Signal",
+      "label": "Стратегические бомбардировщики ВВС США B",
+      "severity": 64,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-US-Цены_на_пр",
       "type": "Signal",
       "label": "Цены на продукты снижаются в июне, так к",
-      "severity": 62,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-Министерст",
-      "type": "Signal",
-      "label": "Министерство финансов США и UIF Мексики ",
-      "severity": 62,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-Фидан_гово",
-      "type": "Signal",
-      "label": "Фидан говорит, что Турция и США работают",
       "severity": 62,
       "domain": "geopolitical"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-US",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-US",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Пассажирск",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.67
+    },
+    {
+      "from": "SIGNAL-US-Стратегиче",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
       "from": "SIGNAL-US-Цены_на_пр",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-US-Министерст",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-US-Фидан_гово",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
