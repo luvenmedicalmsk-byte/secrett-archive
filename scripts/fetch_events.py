@@ -2175,7 +2175,12 @@ def process_events(raw_items):
         if _below_feed:
             _has_sig = bool(_SIG_RE.search(_blob))
             _has_place = (region and region not in ('', 'Глобально')) or lat is not None
-            if not (_has_sig or _has_place):
+            _adm = 'ADMIT' if (_has_sig or _has_place) else 'REJECT'
+            if len(_SEV_SAMPLE) < 300:
+                _SEV_SAMPLE.append({'t': item.get('title','')[:130], 'd': domain,
+                    's': severity, 'sig': _has_sig, 'place': bool(_has_place),
+                    'adm': _adm, 'src': str(item.get('source',''))[:24]})
+            if _adm == 'REJECT':
                 _LOSS['sev'] += 1; continue   # ни сигнатуры, ни места — не аналитично
 
         ev_id = make_id(item['title'], item['date'])
