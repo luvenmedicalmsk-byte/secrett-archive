@@ -1378,6 +1378,9 @@ def _cascade_pressure(signals):
 
 # Module 8: Global System Health
 def _global_health(signals, prev_global=None):
+    # Макропроцессы (Б) — зонтики над под-процессами, НЕ отдельный источник давления.
+    # Исключаем их из агрегатов, иначе под-процессы считаются дважды (в макро + сами).
+    signals=[s for s in signals if not s.get('is_macro')]
     active=[s for s in signals if s.get('status')=='active']
     gp=round(sum(s.get('pressure',0) for s in active)/max(1,len(active)),1)
     edges=sum(len(s.get('causes',[]))+len(s.get('related',[])) for s in signals)
