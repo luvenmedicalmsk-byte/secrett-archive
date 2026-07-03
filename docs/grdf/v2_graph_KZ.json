@@ -2,31 +2,31 @@
   "country": "KZ",
   "date": "2026-07-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-03T13:12:22.216442+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-07-03T13:24:12.086097+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 44,
+      "score": 58,
       "props": {
-        "risk_score": 44
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
+      "score": 60,
       "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 60,
+      "score": 28,
       "trend": "up"
     },
     {
@@ -61,13 +61,8 @@
       "id": "DOMAIN-KZ-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 3,
       "trend": "up"
-    },
-    {
-      "id": "DRIVER-KZ-Economic",
-      "type": "Driver",
-      "label": "Economic"
     },
     {
       "id": "DRIVER-KZ-Geopolitical",
@@ -80,11 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-KZ-Топливный_",
-      "type": "Signal",
-      "label": "Топливный кризис в России: сводка (9 соо",
-      "severity": 44,
-      "domain": "economic"
+      "id": "DRIVER-KZ-Economic",
+      "type": "Driver",
+      "label": "Economic"
     }
   ],
   "edges": [
@@ -92,13 +85,13 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-KZ",
@@ -128,13 +121,7 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
-    },
-    {
-      "from": "DRIVER-KZ-Economic",
-      "to": "COUNTRY-KZ",
-      "type": "CAUSES",
-      "weight": 0.8
+      "weight": 0.03
     },
     {
       "from": "DRIVER-KZ-Geopolitical",
@@ -149,10 +136,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-KZ-Топливный_",
+      "from": "DRIVER-KZ-Economic",
+      "to": "COUNTRY-KZ",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
       "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
