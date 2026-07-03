@@ -2,72 +2,67 @@
   "country": "IT",
   "date": "2026-07-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-03T09:05:18.770030+00:00",
+  "generated_at": "2026-07-03T09:45:31.867880+00:00",
   "node_count": 12,
-  "edge_count": 11,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 34,
+      "score": 37,
       "props": {
-        "risk_score": 34
+        "risk_score": 37
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 22,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-IT-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -80,10 +75,15 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IT-Страны_НАТ",
+      "id": "DRIVER-IT-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-IT-Итальянска",
       "type": "Signal",
-      "label": "Страны НАТО в ходе подготовки к предстоя",
-      "severity": 34,
+      "label": "Итальянская стратегия Индо-Тихоокеанског",
+      "severity": 37,
       "domain": "geopolitical"
     }
   ],
@@ -92,49 +92,43 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-cyber",
       "type": "CORRELATES",
       "weight": 0.04
-    },
-    {
-      "from": "DRIVER-IT-Economic",
-      "to": "COUNTRY-IT",
-      "type": "CAUSES",
-      "weight": 0.8
     },
     {
       "from": "DRIVER-IT-Geopolitical",
@@ -149,10 +143,37 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IT-Страны_НАТ",
+      "from": "DRIVER-IT-Economic",
+      "to": "COUNTRY-IT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Итальянска",
       "to": "DOMAIN-IT-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.37
     }
   ]
 }
