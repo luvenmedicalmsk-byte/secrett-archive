@@ -2002,6 +2002,7 @@ def process_events(raw_items):
     _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
              'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0,
              'nogeo_valid': 0, 'nogeo_noise': 0}
+    _SEV_SAMPLE = []
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
     # Фильтр провокационных и ангажированных новостей
@@ -2102,10 +2103,10 @@ def process_events(raw_items):
         # само событие приходит нормальным сигналом из профильных источников
         _ttl0 = str(item.get('title','')).strip().lower()
         if _ttl0.startswith(('смотрите','смотри:','видео:','watch:','смотреть','фото:')):
-            _LOSS['sev']+=1; continue
+            _LOSS['sev']+=1; _LOSS['sev_teaser']=_LOSS.get('sev_teaser',0)+1; continue
         # S40: бюрократические сводки/отчёты о ситуации -- не сигнал, убираем безусловно
         if any(k in _ttl0 for k in ('отчет о ситуации','отчёт о ситуации','situation report','sitrep','период отчетности','reporting period','cluster report')):
-            _LOSS['sev']+=1; continue
+            _LOSS['sev']+=1; _LOSS['sev_sitrep']=_LOSS.get('sev_sitrep',0)+1; continue
         # S41: безусловный дроп не-сигналов. Развлечения/спорт/селебрити/лайфстайл/колонки --
         # никогда не сигнал. Аварии/взрывы дропаем, если НЕ боевого происхождения (узкий _combat).
         _blob = _ttl0 + ' ' + str(item.get('desc','')).lower()
@@ -2132,7 +2133,7 @@ def process_events(raw_items):
         # 4) бытовые взрывы газа (если не боевые)
         _gas = ('взрыв' in _blob and any(w in _blob for w in ('газа','бытов','в жилом','в квартир','в доме','котельн','газовый баллон','газового баллон')))
         if _fluff or _local or ((_accident or _gas) and not _combat):
-            _LOSS['sev']+=1; continue
+            _LOSS['sev']+=1; _LOSS['sev_content']=_LOSS.get('sev_content',0)+1; continue
         # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
         _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
         if _sys:
@@ -2141,25 +2142,31 @@ def process_events(raw_items):
             domain = 'climate'  # S40: стихия -- только климат, независимо от источника
         _is_tg = str(item.get('source','')).startswith('Telegram')
         _thr = 0 if _is_tg else (35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD)
-        if item.get('_force_severity') is None and not _sys and severity < _thr: _LOSS['sev']+=1; continue
+        if item.get('_force_severity') is None and not _sys and severity < _thr:
+            _LOSS['sev']+=1; _LOSS['sev_threshold']=_LOSS.get('sev_threshold',0)+1
+            # ADMISSION AUDIT: сэмпл того, что режется ЧИСТО по порогу severity
+            if len(_SEV_SAMPLE) < 120:
+                _SEV_SAMPLE.append({'title': item.get('title','')[:120], 'domain': domain,
+                    'severity': severity, 'source': str(item.get('source',''))[:30]})
+            continue
         # S37: контент-фильтр низкосигнального шума (порог severity <46, реальные события не трогаем)
         if item.get('_force_severity') is None and not _sys and severity < 46 and _is_noise(item.get('title','')):
-            _LOSS['sev']+=1; continue
+            _LOSS['sev']+=1; _LOSS['sev_noise']=_LOSS.get('sev_noise',0)+1; continue
         # S43: виральный/человеческий шум -- виральная подача + НИ ОДНОГО риск-маркера в заголовке = новость.
         if (item.get('_force_severity') is None and not _sys
                 and _VIRAL_RE.search(item.get('title',''))
                 and not _SIG_RE.search(item.get('title',''))):
-            _LOSS['sev']+=1; continue
+            _LOSS['sev']+=1; _LOSS['sev_viral']=_LOSS.get('sev_viral',0)+1; continue
         # S44: бытовой криминал / частные суды / блогеры / локальные ЧП -- без системного маркера = шум.
         if (item.get('_force_severity') is None and not _sys
                 and _CRIME_NOISE_RE.search(item.get('title',''))
                 and not _SYS_PROTECT_RE.search(item.get('title',''))):
-            _LOSS['sev']+=1; continue
+            _LOSS['sev']+=1; _LOSS['sev_crime']=_LOSS.get('sev_crime',0)+1; continue
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
         if (item.get('_force_severity') is None and not _sys
                 and domain in ('geopolitics','economy','social','technology')
                 and not _SIG_RE.search(_blob)):
-            _LOSS['sev']+=1; continue
+            _LOSS['sev']+=1; _LOSS['sev_nomarker']=_LOSS.get('sev_nomarker',0)+1; continue
 
         ev_id = make_id(item['title'], item['date'])
         if ev_id in seen_ids: _LOSS['dup']+=1; continue
@@ -2296,6 +2303,7 @@ def process_events(raw_items):
         try:  # PIPELINE LOSS AUDIT: публикуемая карта воронки (statistics, не догадки)
             _loss_report = dict(_LOSS)
             _loss_report.update({'built': len(events), 'exported': len(top_events),
+                'sev_sample': _SEV_SAMPLE,
                 'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')})
             (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(
                 json.dumps(_loss_report, ensure_ascii=False, indent=2), encoding='utf-8')
