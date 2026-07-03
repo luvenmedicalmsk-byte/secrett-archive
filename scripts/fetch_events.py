@@ -2173,15 +2173,35 @@ def process_events(raw_items):
         # ленты и вне аналитики. Ценность = риск-сигнатура (для Pressure/Radar) ИЛИ явная
         # страна+домен (для Country Analytics). Так шум не растёт, а слабые сигналы копятся.
         if _below_feed:
+            _tl = (item.get('title') or '')
             _has_sig = bool(_SIG_RE.search(_blob))
             _has_place = (region and region not in ('', 'Глобально')) or lat is not None
-            _adm = 'ADMIT' if (_has_sig or _has_place) else 'REJECT'
+            # событийность: реальный инцидент/процесс, а не обзор/заявление/эссе.
+            # Переиспользуем классификаторы VALID_NO_GEO (единый критерий аналитичности).
+            _is_event = bool(_NOGEO_EVENT_RX.search(_tl))
+            _is_talk = bool(_NOGEO_FP_RX.search(_tl)) and not _is_event
+            _is_digest = bool(re.search(
+                r'(briefed|briefing|q&a|media reaction|analysis:|cropped|weekly|обзор|дайджест|'
+                r'\bhope[s]?\b|\bcould\b|\bwill\b|editorial|inside story|the birthplace|'
+                r'национальн\w* парк|\bpark\b|estate|celebrates|game\b)', _tl, re.I))
+            # структурные метки платформы (мониторинг) — всегда валидны
+            _is_struct = bool(re.search(r'(морской лёд|iceberg|typhoon|tropical storm|лесн\w* пожар|'
+                r'паводк|сезон \w+ пожар|вулкан|усиление блокировок|перебои|деградац)', _tl, re.I))
+            # явный кибер/утечка/арест/банкротство — сигнал даже без EVENT_RX-глагола
+            _is_hard = bool(re.search(
+                r'(утечк\w* данных|взлом|скомпрометир|вредоносн|malware|фишинг|ddos|'
+                r'арестова|задержан|обанкрот|банкрот|дефолт|санкц|эмбарго|'
+                r'отключен|перебо\w* (?:с элект|электро)|блокир\w* vpn|импорт\w* (?:бензин|нефт|топлив))',
+                _tl, re.I))
+            _adm = 'ADMIT' if (_is_struct or _is_hard or (_is_event and (_has_sig or _has_place))) else 'REJECT'
+            if _is_talk or _is_digest:
+                _adm = 'REJECT'
             if len(_SEV_SAMPLE) < 300:
                 _SEV_SAMPLE.append({'t': item.get('title','')[:130], 'd': domain,
                     's': severity, 'sig': _has_sig, 'place': bool(_has_place),
                     'adm': _adm, 'src': str(item.get('source',''))[:24]})
             if _adm == 'REJECT':
-                _LOSS['sev'] += 1; continue   # ни сигнатуры, ни места — не аналитично
+                _LOSS['sev'] += 1; continue
 
         ev_id = make_id(item['title'], item['date'])
         if ev_id in seen_ids: _LOSS['dup']+=1; continue
