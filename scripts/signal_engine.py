@@ -1296,8 +1296,27 @@ def _build_one_signal(evs, meta=None):
     sig_phase=_signal_phase(len(evs), _first, _last, top.get('severity_delta',0), trend, persist, top.get('phase','active'))
     affected=sorted(set([macro]+[r for r in regions if r])-{''}) if macro else regions
     geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
+    # ACCESS TIER (presentation-layer): чувствительные геополитические процессы → Signal Pro.
+    # Классификация по domain+origin+зоны конфликтов. НЕ влияет на аналитику — только на
+    # отображение в FREE (внутри Process Engine/Radar/Pressure используется полный набор).
+    _CONFLICT_CC={'RU','UA','IL','IR','PS','SY','LB','YE','SD'}
+    _is_climate_type=bool(re.search(r'пожарн|климат|погод|метео|сейсм|наводнен|засух|шторм',
+                                    (ptype or '').lower()))
+    _sensitive=(not _is_climate_type) and (
+        # военная геополитика — всегда Pro
+        (primary_domain=='geopolitics' and process_origin in ('military','kinetic'))
+        # военные процессы в конфликтных зонах — Pro
+        or (process_origin in ('military','kinetic') and bool(set(countries) & _CONFLICT_CC))
+        # ЛЮБОЙ геополитический процесс вокруг зон вооружённых конфликтов — Pro
+        or (primary_domain=='geopolitics' and bool(set(countries) & _CONFLICT_CC))
+    )
+    access_tier='pro' if _sensitive else 'free'
+    sensitivity='high' if _sensitive else ('medium' if primary_domain=='geopolitics' else 'normal')
+    # обобщённая карточка для FREE (без раскрытия деталей чувствительного процесса)
+    free_title=('Геополитическая динамика' if _sensitive else name)
     return {'signal_id':signal_id,'title':name,'process_type':ptype,'origin':process_origin,
             'origin_confidence':origin_conf,'origin_reasons':origin_reasons,'origin_chain':origin_chain,
+            'access_tier':access_tier,'sensitivity':sensitivity,'free_title':free_title,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
         'affected_regions':affected,'included_places':included_places,'included_processes':(meta or {}).get('included_processes',[]),'merged_count':(meta or {}).get('merged_count',1),
         'domains':domains,'primary_domain':primary_domain,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
