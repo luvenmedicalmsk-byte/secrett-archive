@@ -2210,6 +2210,14 @@ def process_events(raw_items):
         import collections as _c
         _fd = _c.Counter(e['domain'] for e in top_events)
         print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} ad={_LOSS['ad']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} exported={len(top_events)}", file=sys.stderr)
+        try:  # PIPELINE LOSS AUDIT: публикуемая карта воронки (statistics, не догадки)
+            _loss_report = dict(_LOSS)
+            _loss_report.update({'built': len(events), 'exported': len(top_events),
+                'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')})
+            (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(
+                json.dumps(_loss_report, ensure_ascii=False, indent=2), encoding='utf-8')
+        except Exception:
+            pass
         print("  [DOMAINS] " + ' '.join(f"{k}={_fd.get(k,0)}" for k in ('climate','geopolitics','economy','technology','social')), file=sys.stderr)
     except Exception as _e:
         print("  [LOSS] err", _e, file=sys.stderr)
