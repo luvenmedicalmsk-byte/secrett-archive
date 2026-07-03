@@ -349,7 +349,7 @@ _OUTAGE = re.compile(r'(отключение интернет|падение и�
 _CURR = re.compile(r'(рубль|рубл[яеь])\s+(?:ослаб|укреп|упал|пада|вырос|раст|обвал|подеш|подорож|рухн|просел|на бирж)', re.I)
 
 _CONF = {'object': 0.92, 'kinetic_target': 0.9, 'currency': 0.9, 'locative': 0.88,
-         'direction': 0.85, 'natural': 0.85, 'outage': 0.85, 'single': 0.7, 'adj_locative': 0.8}
+         'direction': 0.85, 'natural': 0.85, 'outage': 0.85, 'single': 0.7, 'adj_locative': 0.8, 'subject': 0.75}
 
 
 _GAZ_GUARD = {'газе': r'(?!т)', 'рим': r'(?!ск)', 'мали': r'(?!н)', 'нигер': r'(?!и)'}
@@ -416,11 +416,15 @@ def _mk(g, rule, blob, actor, raw_coords):
                 lat, lng, prec = rla, rln, 'exact'
         except (TypeError, ValueError):
             pass
-    impact = tuple(x[1][0] for x in _places_in(blob, excl=actor)) or (cc,)
-    if cc not in impact:
-        impact = (cc,) + impact
-    else:  # основная страна первой
-        impact = (cc,) + tuple(c for c in impact if c != cc)
+    # impact = реальное воздействие, не список упоминаний (ТЗ 3.0).
+    # Для кинетических/трансграничных правил — страна процесса + вторая сторона;
+    # для остальных (locative/single/currency/outage/direction) — только страна процесса.
+    _CROSS = ('kinetic_target', 'object')
+    if rule in _CROSS:
+        others = tuple(x[1][0] for x in _places_in(blob, excl=actor) if x[1][0] != cc)[:2]
+        impact = (cc,) + others
+    else:
+        impact = (cc,)
     return GeoContract(cc, name, region, lat, lng, impact, actor,
                        prec, _CONF.get(rule, 0.8), rule, process_place_type='country')
 
@@ -429,7 +433,7 @@ def _null_mentions(blob, actor):
     """Контракт «без места»: страны, упомянутые в тексте, — тематическая атрибуция
     (mentioned), НЕ геолокация: координат нет, на карте не отображается."""
     try:
-        ment = tuple(x[1][0] for x in _places_in(blob, excl=actor))[:4]
+        ment = tuple(x[1][0] for x in _places_in(blob, excl=actor))[:3]
     except Exception:
         ment = ()
     if not ment and not actor:
@@ -454,8 +458,17 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
             # оборонительная кинетика («сбил/перехватил/отразил») = событие у себя,
             # первое слово — место процесса, а не актор
             _defensive = re.search(r'(сбил|сбит|перехват|отразил|отбил)', t[:90])
-            if ap and _KIN.search(t[:90]) and not _defensive:
+            # субъектное действие: «Страна + глагол» в начале — подлежащее является
+            # актором, а не местом (место придёт из локатива дальше по тексту)
+            _subj_verb = re.match(r'\s*[а-яё\-]+\s+(?:начал|нач[аёе]|заявил|обвин|отказал|идентифиц|прекрат|потребова|пригроз|объявил|решил|ввел|ввёл|закупа|планир|namерен|намерен)', t)
+            if ap and (_KIN.search(t[:90]) or _subj_verb) and not _defensive:
                 actor = ap[0]
+                # субъектное действие: если в ЗАГОЛОВКЕ нет локатива «в X» (места-цели),
+                # процесс происходит у субъекта — он и место, актора нет
+                if _subj_verb and not re.search(r'(?:^|[^а-яё])(?:в|во|на)\s+[а-яё]', t):
+                    _sp = _place_at(mm.group(1))
+                    if _sp:
+                        return _mk(_sp, 'subject', blob, None, raw_coords)
         # STATEMENT: заявление/цитата без кинетики/природы → нет точки (упоминания сохраняем)
         if _STMT.search(t) and not _KIN.search(blob) and not _NAT.search(blob):
             return _null_mentions(blob, actor)
