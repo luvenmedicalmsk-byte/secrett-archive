@@ -2,66 +2,66 @@
   "country": "PL",
   "date": "2026-07-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-03T14:08:01.131673+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-07-03T15:37:01.866239+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 44,
+      "score": 46,
       "props": {
-        "risk_score": 44
+        "risk_score": 46
       }
     },
     {
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 37,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Туск_призы",
+      "type": "Signal",
+      "label": "Туск призывает Украину сделать свою част",
+      "severity": 46,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-PL-США_предуп",
       "type": "Signal",
       "label": "США предупредили Польшу, что Россия може",
@@ -92,13 +99,13 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-economic",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-PL",
@@ -122,13 +129,13 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-PL-Geopolitical",
@@ -147,6 +154,33 @@
       "to": "COUNTRY-PL",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-PL-geopolitical",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PL-Туск_призы",
+      "to": "DOMAIN-PL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.46
     },
     {
       "from": "SIGNAL-PL-США_предуп",
