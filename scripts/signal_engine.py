@@ -825,6 +825,40 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 _ov=_type_origin_fallback(s)
             s['origin']=_ov['origin']; s['origin_confidence']=_ov['confidence']
             s['origin_reasons']=_ov['reasons']; s['origin_chain']=_ov['chain']
+    # CONTINUITY DEDUP: смена id-схемы (origin убран из id) оставила дубли —
+    # один тип+место+сущность как несколько процессов (origin был в хеше id).
+    # Дедуп по СЕМАНТИЧЕСКОМУ ключу (не по id, т.к. хеши различаются из-за старого origin).
+    # Сливаем в САМЫЙ СТАРЫЙ (сохраняем историю), объединяя evidence и метрики.
+    _by_key={}
+    _merged_dups=0
+    def _sem_key(s):
+        return (s.get('process_type',''), s.get('process_place',''),
+                s.get('actor') or '', s.get('target') or '')
+    for s in out:
+        k=_sem_key(s)
+        if k in _by_key:
+            _keep=_by_key[k]
+            if s.get('first_seen','9999') < _keep.get('first_seen','9999'):
+                _keep, s = s, _keep
+                _by_key[k]=_keep
+            _seen_ev={e.get('title') for e in _keep.get('evidence',[])}
+            for e in s.get('evidence',[]):
+                if e.get('title') not in _seen_ev:
+                    _keep.setdefault('evidence',[]).append(e)
+            _keep['evidence_count']=len(_keep.get('evidence',[]))
+            _keep['severity']=max(_keep.get('severity',0), s.get('severity',0))
+            _keep['priority']=max(_keep.get('priority',0), s.get('priority',0))
+            for _h in ('severity_history','priority_history','phase_history','timeline'):
+                if len(s.get(_h,[]))>len(_keep.get(_h,[])): _keep[_h]=s[_h]
+            _keep['update_count']=max(_keep.get('update_count',1), s.get('update_count',1))
+            # origin: берём более уверенный (не unknown/legacy)
+            if (s.get('origin_confidence',0) or 0) > (_keep.get('origin_confidence',0) or 0):
+                for _of in ('origin','origin_confidence','origin_reasons','origin_chain'):
+                    if _of in s: _keep[_of]=s[_of]
+            _merged_dups+=1
+        else:
+            _by_key[k]=s
+    out=list(_by_key.values())
     # Task 7: Explainability
     for s in out:
         s['explain']=_explain(s, s.get('process_type', s.get('title','').split(' — ')[0]))
@@ -1239,7 +1273,10 @@ def _build_one_signal(evs, meta=None):
     else:
         process_origin='unknown'; origin_conf=0.2; origin_reasons=[]; origin_chain=[]
     # Task 1: СТАБИЛЬНЫЙ signal_id (тип+origin+место+сущность)
-    signal_id=_stable_id(domains[0], ptype+'|'+process_origin, place, key_entity)
+    # CONTINUITY: signal_id НЕ включает origin — origin меняет КЛАССИФИКАЦИЮ процесса,
+    # но не его идентичность. Иначе смена/уточнение origin рвёт историю и плодит дубли.
+    # Разделение по origin обеспечивает origin-гейт в _cluster (на уровне событий), а не id.
+    signal_id=_stable_id(domains[0], ptype, place, key_entity)
     # Task 5+6: качество и confidence-match каждого evidence
     evidence=[]
     for x in sorted(evs,key=lambda x:-x.get('severity',0)):
