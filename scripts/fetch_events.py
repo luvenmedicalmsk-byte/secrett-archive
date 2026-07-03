@@ -2357,6 +2357,55 @@ def process_events(raw_items):
                  'sev_threshold_total': _LOSS.get('sev_threshold', 0),
                  'admitted': _LOSS.get('analytic_layer', 0),
                  'sample': _SEV_SAMPLE}, ensure_ascii=False, indent=2), encoding='utf-8')
+            # ADMISSION STABILITY: per-run метрики в rolling-историю (кольцо 30 прогонов).
+            # Ground-truth-прокси: событие ценно, если несёт СИЛЬНЫЙ аналитический признак
+            # (struct/hard/явное событие с сигнатурой), шум — talk/digest/чистый обзор.
+            try:
+                import re as _re_m
+                _DOMS = ('climate', 'geopolitics', 'economy', 'technology', 'social')
+                _cm = {d: {'TP': 0, 'FP': 0, 'FN': 0, 'TN': 0} for d in _DOMS}
+                _digest_rx = _re_m.compile(r'(briefed|briefing|q&a|media reaction|analysis:|cropped|'
+                    r'weekly|обзор|дайджест|editorial|inside story|birthplace|\bpark\b|estate|'
+                    r'celebrates|game\b|broils|bakes|monthly operational|access constraint|'
+                    r'registrations open|doesn.t need|hope[s]? for)', _re_m.I)
+                _strong_rx = _re_m.compile(r'(утечк|взлом|скомпрометир|вредоносн|malware|фишинг|'
+                    r'арестова|задержан|банкрот|дефолт|санкц|отключен|блокир|импорт\w* (?:бензин|нефт|топлив)|'
+                    r'поставил|отправ\w* \d+ тыс|закупк|погранпереход|погиб|crash|kills|'
+                    r'iceberg|typhoon|tropical storm|wildfire|вулкан|volcan|засух|температурн\w* рекорд|'
+                    r'землетрясен|earthquake|цунами|наводнен|tremor|морской лёд|лесн\w* пожар|паводк)', _re_m.I)
+                for _s in _SEV_SAMPLE:
+                    _d = _s.get('d', '')
+                    if _d not in _cm:
+                        continue
+                    _t = _s.get('t', '')
+                    _admitted = (_s.get('adm') == 'ADMIT')
+                    # ground-truth: сильный сигнал = ценный; digest/talk без сильного = шум
+                    _valuable = bool(_strong_rx.search(_t)) and not _digest_rx.search(_t)
+                    if _admitted and _valuable: _cm[_d]['TP'] += 1
+                    elif _admitted and not _valuable: _cm[_d]['FP'] += 1
+                    elif not _admitted and _valuable: _cm[_d]['FN'] += 1
+                    else: _cm[_d]['TN'] += 1
+                _tot = {'TP': sum(_cm[d]['TP'] for d in _DOMS), 'FP': sum(_cm[d]['FP'] for d in _DOMS),
+                        'FN': sum(_cm[d]['FN'] for d in _DOMS), 'TN': sum(_cm[d]['TN'] for d in _DOMS)}
+                _P = _tot['TP'] / (_tot['TP'] + _tot['FP']) if (_tot['TP'] + _tot['FP']) else 0.0
+                _R = _tot['TP'] / (_tot['TP'] + _tot['FN']) if (_tot['TP'] + _tot['FN']) else 0.0
+                _F = 2 * _P * _R / (_P + _R) if (_P + _R) else 0.0
+                _entry = {'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    'sample_n': len(_SEV_SAMPLE), 'admitted': _tot['TP'] + _tot['FP'],
+                    'confusion': _tot, 'precision': round(_P, 3), 'recall': round(_R, 3),
+                    'f1': round(_F, 3), 'by_domain': _cm}
+                _hist_path = OUTPUT_PATH.parent / '_admission_history.json'
+                _hist = []
+                try:
+                    if _hist_path.exists():
+                        _hist = json.loads(_hist_path.read_text(encoding='utf-8')).get('runs', [])
+                except Exception:
+                    _hist = []
+                _hist.append(_entry)
+                _hist = _hist[-30:]   # кольцевой буфер
+                _hist_path.write_text(json.dumps({'runs': _hist}, ensure_ascii=False, indent=2), encoding='utf-8')
+            except Exception:
+                pass
         except Exception:
             pass
         print("  [DOMAINS] " + ' '.join(f"{k}={_fd.get(k,0)}" for k in ('climate','geopolitics','economy','technology','social')), file=sys.stderr)
