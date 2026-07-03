@@ -2142,13 +2142,13 @@ def process_events(raw_items):
             domain = 'climate'  # S40: стихия -- только климат, независимо от источника
         _is_tg = str(item.get('source','')).startswith('Telegram')
         _thr = 0 if _is_tg else (35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD)
+        # ANALYTIC LAYER: событие ниже порога ленты, но прошедшее шум-фильтры S39-S44 ниже,
+        # — это слабый/ранний сигнал. Не дропаем: помечаем feed_visible=False (в ленту не идёт,
+        # но кормит Process Engine / Radar / Country Analytics / Pressure Index).
+        _below_feed = False
         if item.get('_force_severity') is None and not _sys and severity < _thr:
-            _LOSS['sev']+=1; _LOSS['sev_threshold']=_LOSS.get('sev_threshold',0)+1
-            # ADMISSION AUDIT: сэмпл того, что режется ЧИСТО по порогу severity
-            if len(_SEV_SAMPLE) < 120:
-                _SEV_SAMPLE.append({'title': item.get('title','')[:120], 'domain': domain,
-                    'severity': severity, 'source': str(item.get('source',''))[:30]})
-            continue
+            _LOSS['sev_threshold'] = _LOSS.get('sev_threshold', 0) + 1
+            _below_feed = True
         # S37: контент-фильтр низкосигнального шума (порог severity <46, реальные события не трогаем)
         if item.get('_force_severity') is None and not _sys and severity < 46 and _is_noise(item.get('title','')):
             _LOSS['sev']+=1; _LOSS['sev_noise']=_LOSS.get('sev_noise',0)+1; continue
@@ -2167,6 +2167,16 @@ def process_events(raw_items):
                 and domain in ('geopolitics','economy','social','technology')
                 and not _SIG_RE.search(_blob)):
             _LOSS['sev']+=1; _LOSS['sev_nomarker']=_LOSS.get('sev_nomarker',0)+1; continue
+
+        # ANALYTIC ADMISSION: слабый сигнал (ниже порога ленты) допускается в аналитический
+        # слой ТОЛЬКО при аналитической ценности — иначе даже пройдя шум-фильтры остаётся вне
+        # ленты и вне аналитики. Ценность = риск-сигнатура (для Pressure/Radar) ИЛИ явная
+        # страна+домен (для Country Analytics). Так шум не растёт, а слабые сигналы копятся.
+        if _below_feed:
+            _has_sig = bool(_SIG_RE.search(_blob))
+            _has_place = (region and region not in ('', 'Глобально')) or lat is not None
+            if not (_has_sig or _has_place):
+                _LOSS['sev'] += 1; continue   # ни сигнатуры, ни места — не аналитично
 
         ev_id = make_id(item['title'], item['date'])
         if ev_id in seen_ids: _LOSS['dup']+=1; continue
@@ -2196,7 +2206,8 @@ def process_events(raw_items):
             "summary": summary or _clean_title(item['title']),
             "source": item['source'],
             "source_weight": _gov.get('weight', 1.0),
-            "date": item['date']
+            "date": item['date'],
+            "feed_visible": not _below_feed,   # FREE-лента: только сильные; аналитика: все
         }
         if item.get('_meta'): _ev["meta"] = item['_meta']
         # D4 (Pre-Release Window): event_kind отделяет геофизику от метеоклимата.
@@ -2282,24 +2293,31 @@ def process_events(raw_items):
             continue
         if ev['id'] in _flood_reserved: continue  # уже зарезервировано как наводнение
         d = ev['domain']
+        # ANALYTIC LAYER: события ниже порога ленты (feed_visible=False) не квотируются —
+        # они не отображаются в FREE, но кормят аналитический контур. Квота — только для ленты.
+        if ev.get('feed_visible') is False:
+            balanced.append(ev)
+            continue
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
         if domain_counts.get(d, 0) < quota:
             balanced.append(ev)
             domain_counts[d] = domain_counts.get(d, 0) + 1
         else:
             overflow.append(ev)
-    
-    # MAX_EVENTS -- это КАП, не цель: overflow до 200 НЕ добираем, иначе освободившиеся
-    # слоты заливаются высоко-severity климатом, а число пиннится на 200.
-    # Пусть итог отражает реальную наполняемость доменов (цель brief'а: «меньше событий»).
-    
-    top_events = balanced[:MAX_EVENTS]
+
+    # MAX_EVENTS -- КАП для FEED-слоя (ленты). Analytic-события (feed_visible=False) идут
+    # в поток сверх капа: их не видит FREE, но видят Process Engine / Radar / Pressure.
+    _feed = [e for e in balanced if e.get('feed_visible') is not False][:MAX_EVENTS]
+    _analytic = [e for e in balanced if e.get('feed_visible') is False]
+    top_events = _feed + _analytic
+    _LOSS['feed_layer'] = len(_feed)
+    _LOSS['analytic_layer'] = len(_analytic)
 
     # S36.4: статистика потерь по этапам
     try:
         import collections as _c
         _fd = _c.Counter(e['domain'] for e in top_events)
-        print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} ad={_LOSS['ad']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} nogeo_valid={_LOSS.get('nogeo_valid',0)} nogeo_noise={_LOSS.get('nogeo_noise',0)} exported={len(top_events)}", file=sys.stderr)
+        print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} ad={_LOSS['ad']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} nogeo_valid={_LOSS.get('nogeo_valid',0)} nogeo_noise={_LOSS.get('nogeo_noise',0)} feed_layer={_LOSS.get('feed_layer',0)} analytic_layer={_LOSS.get('analytic_layer',0)} exported={len(top_events)}", file=sys.stderr)
         try:  # PIPELINE LOSS AUDIT: публикуемая карта воронки (statistics, не догадки)
             _loss_report = dict(_LOSS)
             _loss_report.update({'built': len(events), 'exported': len(top_events),
