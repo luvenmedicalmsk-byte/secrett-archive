@@ -394,6 +394,20 @@ def _stable_id(domain, ptype, place, key_entity):
     base=f"{domain}|{ptype}|{place}|{key_entity or ''}"
     return f"{_slug(domain)[:4]}-{_slug(ptype)[:10]}-{_slug(place)[:8]}" + (f"-{_slug(key_entity)[:6]}" if key_entity else "") + f"-{hashlib.md5(base.encode()).hexdigest()[:4]}"
 
+# ══════════════════════════════════════════════════════════════════════════════
+# IDENTITY CONTRACT (стресс-тест-safe). Process Identity НИКОГДА не зависит от
+# классификации (origin/confidence/cascade/severity_model/explainability).
+# Identity = устойчивое ядро процесса: домен + пространство + ключевая сущность.
+# process_type входит в signal_id ИСТОРИЧЕСКИ (для читаемости), но при матчинге
+# используется identity_key — инвариант к переименованию типа. Так процесс переживает
+# любую эволюцию модели: v2→v3→v4, новые origin (space/water/food), смену правил.
+# ══════════════════════════════════════════════════════════════════════════════
+def _identity_key(domain, place, key_entity):
+    """Инвариантное ядро идентичности — БЕЗ process_type/origin/любой классификации.
+    Меняется только при смене реальной сущности процесса (домен/место/субъект)."""
+    base=f"{domain}|{place}|{key_entity or ''}"
+    return hashlib.md5(base.encode()).hexdigest()[:8]
+
 # Task 5: Confidence Match — насколько свидетельство принадлежит процессу
 def _confidence_match(ev, ptype, place):
     et=_process_type([ev], ev.get('domain','')); ep=_process_place(ev)['place']
@@ -776,8 +790,16 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
     prev_by_id={s['signal_id']:s for s in (previous or [])}
+    # IDENTITY CONTRACT: индекс по инвариантному ядру — процесс находит свою историю
+    # даже если signal_id изменился из-за эволюции классификации (переименование ptype и т.п.)
+    prev_by_identity={}
+    for s in (previous or []):
+        ik=s.get('identity_key') or _identity_key((s.get('domains') or [''])[0],
+                                                   s.get('process_place',''),
+                                                   s.get('actor') or s.get('target') or '')
+        prev_by_identity.setdefault(ik, s)
     seen=set(); out=[]
-    n_matched=0; n_created=0; match_scores=[]
+    n_matched=0; n_created=0; match_scores=[]; n_identity_rescued=0
     for cur in current:
         sid=cur['signal_id']; seen.add(sid)
         # средний confidence-match свидетельств процесса
@@ -785,12 +807,25 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         if sid in prev_by_id:
             n_matched+=1
             s=_evolve_one(cur, prev_by_id[sid], now)
-            # Continuity: зафиксировать решение
             s['continuity']={'decision':'matched_existing','reason':'совпал стабильный signal_id (тип+место+сущность)'}
         else:
-            n_created+=1
-            s=_seed_history(cur, now)
-            s['continuity']={'decision':'created_new','reason':'нет процесса с таким signal_id'}
+            # IDENTITY RESCUE: signal_id не совпал — ищем по инвариантному ядру.
+            # Классификация (ptype/origin) могла измениться, но идентичность та же.
+            _ik=cur.get('identity_key') or _identity_key((cur.get('domains') or [''])[0],
+                                                          cur.get('process_place',''),
+                                                          cur.get('actor') or cur.get('target') or '')
+            _prev_same=prev_by_identity.get(_ik)
+            if _prev_same and _prev_same['signal_id'] not in seen:
+                n_matched+=1; n_identity_rescued+=1
+                # наследуем СТАРЫЙ signal_id — identity побеждает изменение классификации
+                cur['signal_id']=_prev_same['signal_id']; seen.add(_prev_same['signal_id'])
+                s=_evolve_one(cur, _prev_same, now)
+                s['continuity']={'decision':'matched_by_identity',
+                    'reason':'signal_id изменился (эволюция классификации), но identity_key совпал — история сохранена'}
+            else:
+                n_created+=1
+                s=_seed_history(cur, now)
+                s['continuity']={'decision':'created_new','reason':'нет процесса с таким identity_key'}
         out.append(s)
     # Decay + Reactivation
     for sid,prev in prev_by_id.items():
@@ -837,6 +872,9 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                or (_o in ('military','kinetic') and bool(_cc & _CONFLICT_CC_BF)))
         s['access_tier']='pro' if _sens else 'free'
         s['sensitivity']='high' if _sens else ('medium' if _pd=='geopolitics' else 'normal')
+        if not s.get('identity_key'):  # IDENTITY CONTRACT backfill
+            s['identity_key']=_identity_key(_pd, s.get('process_place',''),
+                                            s.get('actor') or s.get('target') or '')
         if not s.get('free_title'):
             s['free_title']='Геополитическая динамика' if _sens else s.get('title','')
     # CONTINUITY DEDUP: смена id-схемы (origin убран из id) оставила дубли —
@@ -1291,6 +1329,8 @@ def _build_one_signal(evs, meta=None):
     # но не его идентичность. Иначе смена/уточнение origin рвёт историю и плодит дубли.
     # Разделение по origin обеспечивает origin-гейт в _cluster (на уровне событий), а не id.
     signal_id=_stable_id(domains[0], ptype, place, key_entity)
+    # IDENTITY CONTRACT: инвариантное ядро идентичности (не зависит от классификации).
+    identity_key=_identity_key(domains[0], place, key_entity)
     # Task 5+6: качество и confidence-match каждого evidence
     evidence=[]
     for x in sorted(evs,key=lambda x:-x.get('severity',0)):
@@ -1326,7 +1366,7 @@ def _build_one_signal(evs, meta=None):
     sensitivity='high' if _sensitive else ('medium' if primary_domain=='geopolitics' else 'normal')
     # обобщённая карточка для FREE (без раскрытия деталей чувствительного процесса)
     free_title=('Геополитическая динамика' if _sensitive else name)
-    return {'signal_id':signal_id,'title':name,'process_type':ptype,'origin':process_origin,
+    return {'signal_id':signal_id,'identity_key':identity_key,'title':name,'process_type':ptype,'origin':process_origin,
             'origin_confidence':origin_conf,'origin_reasons':origin_reasons,'origin_chain':origin_chain,
             'access_tier':access_tier,'sensitivity':sensitivity,'free_title':free_title,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
