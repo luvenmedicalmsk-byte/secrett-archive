@@ -825,6 +825,20 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 _ov=_type_origin_fallback(s)
             s['origin']=_ov['origin']; s['origin_confidence']=_ov['confidence']
             s['origin_reasons']=_ov['reasons']; s['origin_chain']=_ov['chain']
+    # ACCESS TIER BACKFILL: ВСЕ процессы (в т.ч. carried-forward) получают access_tier,
+    # иначе старые геополитические процессы без tier просочатся в FREE.
+    _CONFLICT_CC_BF={'RU','UA','IL','IR','PS','SY','LB','YE','SD'}
+    for s in out:
+        _pt=(s.get('process_type','') or '').lower()
+        _is_clim=bool(re.search(r'пожарн|климат|погод|метео|сейсм|наводнен|засух|шторм',_pt))
+        _pd=s.get('primary_domain','') or (s.get('domains') or [''])[0]
+        _o=s.get('origin',''); _cc=set(s.get('countries',[]) or [])
+        _sens=(not _is_clim) and ((_pd=='geopolitics')
+               or (_o in ('military','kinetic') and bool(_cc & _CONFLICT_CC_BF)))
+        s['access_tier']='pro' if _sens else 'free'
+        s['sensitivity']='high' if _sens else ('medium' if _pd=='geopolitics' else 'normal')
+        if not s.get('free_title'):
+            s['free_title']='Геополитическая динамика' if _sens else s.get('title','')
     # CONTINUITY DEDUP: смена id-схемы (origin убран из id) оставила дубли —
     # один тип+место+сущность как несколько процессов (origin был в хеше id).
     # Дедуп по СЕМАНТИЧЕСКОМУ ключу (не по id, т.к. хеши различаются из-за старого origin).
@@ -1303,12 +1317,10 @@ def _build_one_signal(evs, meta=None):
     _is_climate_type=bool(re.search(r'пожарн|климат|погод|метео|сейсм|наводнен|засух|шторм',
                                     (ptype or '').lower()))
     _sensitive=(not _is_climate_type) and (
-        # военная геополитика — всегда Pro
-        (primary_domain=='geopolitics' and process_origin in ('military','kinetic'))
-        # военные процессы в конфликтных зонах — Pro
+        # ВСЯ геополитика — Signal Pro (FREE демонстрирует климат/эконом/энерго/кибер/соц)
+        (primary_domain=='geopolitics')
+        # военные процессы в конфликтных зонах в любом домене — Pro
         or (process_origin in ('military','kinetic') and bool(set(countries) & _CONFLICT_CC))
-        # ЛЮБОЙ геополитический процесс вокруг зон вооружённых конфликтов — Pro
-        or (primary_domain=='geopolitics' and bool(set(countries) & _CONFLICT_CC))
     )
     access_tier='pro' if _sensitive else 'free'
     sensitivity='high' if _sensitive else ('medium' if primary_domain=='geopolitics' else 'normal')
