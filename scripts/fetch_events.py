@@ -2552,6 +2552,70 @@ _STORY_SERIES = [
 ]
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# SIGNAL GATE 1.0 — фильтр значимости ДО географической атрибуции.
+# Принцип: GeoContract/impact/severity считаются только для аналитических сигналов.
+# Разделяем: сигнал (меняет состояние процесса) / новость / информационный шум.
+# Работает до _apply_geo_contract → гео не тратится на мусор, ложные гео-ошибки
+# на шумовых карточках исчезают вместе с самими карточками.
+# ══════════════════════════════════════════════════════════════════════════════
+_GATE_DROP_RX = re.compile(
+    r'(благотворительн|пожертвова|донат|шоу-бизнес|шоубизнес|звезда|знаменитост|актрис|актёр|актер|'
+    r'певиц|певец|музыкант|рэпер|блогер|инфлюенсер|тиктокер|ютубер|сериал|премьер\w* фильм|кинопремьер|'
+    r'на благотворительн|концерт|гастрол|альбом|клип|голливуд|болливуд|фестивал\w* кино|'
+    r'гороскоп|астролог|нумеролог|знак\w* зодиак|карты таро|'
+    r'похуден|диет\w+|рецепт|как приготовить|рацион питан|'
+    r'подарить|что подарить|гид по подарк|распродаж|чёрн\w* пятниц|'
+    r'звёздн\w* пар|развод\w* звезд|свадьб\w* звезд|роман с)', re.I)
+_GATE_CRIME_LOCAL_RX = re.compile(
+    r'(изнасилов|педофил|маньяк|растлен|развратн\w* действ|'
+    r'бытов\w* убийств|убил жену|убил мужа|зарезал|поножовщин|пьян\w* дебош|'
+    r'ограбил квартир|обокрал|карманник|мошенник\w* обманул\w* пенсионер|'
+    r'наркопритон|закладк\w* наркотик|сбыт наркотик)', re.I)
+_GATE_PERSONNEL_RX = re.compile(
+    r'(назначен\w* (?:на пост|директор|главой|руководител|заместител)|'
+    r'ушёл в отставку|подал в отставку|покинул пост|сменил\w* на посту|'
+    r'новый глава|новым главой|возглавил\w* (?:департамент|управлен|ведомств|компани))', re.I)
+# «спасатели» сигнала — если есть системная сигнатура, не режем даже при шумовом слове
+_GATE_RESCUE_RX = re.compile(
+    r'(санкц|эмбарго|войн|военн|ракет|дрон|бпла|обстрел|теракт|взрыв\w* на (?:газопровод|нпз|электро)|'
+    r'эпидеми|пандеми|вспышк|инфляц|дефолт|обвал|блэкаут|отключен\w* (?:интернет|электро|связ)|'
+    r'кибератак|утечк\w* данных|уязвим|наводнен|землетряс|засух|ураган|пожар\w* охватил|извержен)', re.I)
+
+
+def _signal_gate(events):
+    """SIGNAL GATE 1.0: пропускает только аналитические сигналы. Возвращает
+    (signals, gate_report). Шум отсекается ДО гео/impact/severity-переоценки."""
+    kept, rej = [], collections.Counter()
+    for e in events:
+        if e.get('structural') or e.get('_force_severity') is not None:
+            kept.append(e); continue
+        t = (e.get('title') or '')
+        s = (e.get('summary') or '')[:300]
+        blob = (t + ' ' + s)
+        low = blob.lower()
+        dom = e.get('domain', '')
+        rescue = bool(_GATE_RESCUE_RX.search(low))
+        # 1) развлечения/лайфстайл/благотворительность/шоу-бизнес — всегда шум
+        if _GATE_DROP_RX.search(low) and not rescue:
+            rej['шоу-бизнес/лайфстайл'] += 1; continue
+        # 2) бытовая криминальная хроника
+        if _GATE_CRIME_LOCAL_RX.search(low) and not rescue:
+            rej['бытовой криминал'] += 1; continue
+        # 3) кадровые перестановки без системного эффекта
+        if _GATE_PERSONNEL_RX.search(low) and not rescue:
+            rej['кадровые перестановки'] += 1; continue
+        # 4) уже существующая логика «новость, не сигнал» (S43) + шум-заголовки (S37)
+        if _is_news_not_signal(t, s, dom):
+            rej['новость без сигнала'] += 1; continue
+        kept.append(e)
+    if sum(rej.values()):
+        parts = ' · '.join('%s %d' % (k, v) for k, v in rej.most_common())
+        print('  [SIGNAL-GATE] %d → %d (отсеяно %d: %s)'
+              % (len(events), len(kept), sum(rej.values()), parts), file=sys.stderr)
+    return kept, dict(rej)
+
+
 def _aggregate_series(events):
     """Аудит качества, п.4: серийные однотипные карточки сворачиваются в сводные —
     лента короче без потери информации. Движок процессов не затрагивается
@@ -8168,8 +8232,16 @@ if __name__ == '__main__':
 
         # На карту идут только новостные события
         # Структурные риски живут в risk-matrix.html отдельно
-        events = news_events
-        print(f"  Итого на карте: {len(news_events)} новостных событий", file=sys.stderr)
+        events, _gate_rej = _signal_gate(news_events)   # SIGNAL GATE 1.0 — до гео/impact
+        try:
+            (OUTPUT_PATH.parent / '_signal_gate.json').write_text(json.dumps(
+                {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                 'input': len(news_events), 'signals': len(events),
+                 'rejected': sum(_gate_rej.values()), 'by_reason': _gate_rej},
+                ensure_ascii=False, indent=2), encoding='utf-8')
+        except Exception:
+            pass
+        print(f"  Итого сигналов на карте: {len(events)} (из {len(news_events)} новостных)", file=sys.stderr)
 
         _prev_snapshot = _load_previous_snapshot()  # загружаем ДО записи
         save_enriched(events, _prev_snapshot)         # enriched save
