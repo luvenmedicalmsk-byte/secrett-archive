@@ -2005,6 +2005,94 @@ def process_events(raw_items):
     _SEV_SAMPLE = []
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
+    # ADMISSION 3.0: активные процессы прошлого прогона — база для Process Impact и
+    # Confirmation Value (событие оценивается по влиянию на наблюдаемую картину, не по словам).
+    _ACTIVE_PROC = []
+    try:
+        import os as _os
+        _sp = _os.path.join(_os.path.dirname(str(OUTPUT_PATH)), 'signals.json')
+        if _os.path.exists(_sp):
+            _pd = json.load(open(_sp, encoding='utf-8')).get('signals', [])
+            for _p in _pd:
+                if _p.get('status') == 'closed':
+                    continue
+                _kw = set()
+                for _w in re.findall(r'[а-яёa-z]{4,}', (_p.get('title', '') or '').lower()):
+                    _kw.add(_w)
+                _ACTIVE_PROC.append({
+                    'kw': _kw,
+                    'countries': set(_p.get('countries', []) or []),
+                    'domain': _p.get('primary_domain', '') or (_p.get('domains', [''])[:1] or [''])[0],
+                    'sev': _p.get('severity', 0)})
+    except Exception:
+        _ACTIVE_PROC = []
+
+    def _admission_score(title, desc, domain, severity, region, lat, has_sig, source):
+        """ADMISSION 3.0 — семантическая значимость вместо keyword-only.
+        Возвращает (score, reasons). Событие входит в аналитику, если оно МЕНЯЕТ
+        наблюдаемую картину: процесс / структуру / географию / несёт подтверждение."""
+        t = (title or ''); low = (t + ' ' + (desc or '')[:200]).lower()
+        score = 0.0; why = []
+        # 1) STRUCTURAL IMPACT — меняет структуру системы (закон/граница/санкции/инфраструктура)
+        if re.search(r'(закрыл\w* (?:границ|погранпереход)|ввел\w* (?:санкц|эмбарго|пошлин)|'
+                r'ввёл\w* (?:санкц|эмбарго|пошлин)|принят\w* закон|подписал\w* указ|'
+                r'экспортн\w* (?:контрол|запрет|ограничен)|разрушен\w* (?:инфраструктур|объект|нпз|подстанц)|'
+                r'уничтож\w* (?:завод|нпз|склад|аэродром)|отключен\w* (?:интернет|электро)|'
+                r'национализир|приватизир|дефолт|мобилизац)', low):
+            score += 3.0; why.append('structural')
+        # CONFIRMATION VALUE: явное подтверждение процесса (даже слабое событие)
+        if re.search(r'(подтвержд|новое свидетельств|очередн\w* (?:удар|атак|случа)|'
+                r'third|третий|четвертый|пятый|ещё один|еще один|продолжа\w*|вновь|снова)', low):
+            score += 1.5; why.append('confirmation')
+        # 2) PROCESS IMPACT + CONFIRMATION — пересечение с активным процессом
+        _tkw = set(re.findall(r'[а-яёa-z]{4,}', low))
+        _tcc = set()
+        try:
+            _tcc = set(_foreign_country(t)[1] or []) if '_foreign_country' in globals() else set()
+        except Exception:
+            _tcc = set()
+        _best = 0
+        for _p in _ACTIVE_PROC:
+            if _p['domain'] and domain and _p['domain'] != domain:
+                continue
+            _kw_overlap = len(_tkw & _p['kw'])
+            _cc_overlap = len(_tcc & _p['countries']) if _tcc else 0
+            _m = _kw_overlap + 2 * _cc_overlap
+            if _m > _best:
+                _best = _m
+        if _best >= 4:
+            score += 2.5; why.append('process_confirm')
+        elif _best >= 2:
+            score += 1.5; why.append('process_touch')
+        # 3) CROSS-DOMAIN — событие тянет несколько доменов (энергетика→эконом→геополит)
+        _dh = 0
+        for _rx in (r'энергет|нефт\b|газ\b|электро|топлив', r'санкц|пошлин|экспорт|эконом|рубл|инфляц|цепочк',
+                    r'войн|военн|удар|границ|дипломат|переговор', r'кибер|malware|утечк|инфраструктур',
+                    r'жар|засух|пожар|наводнен|урожай|продовольств|сельхоз'):
+            if re.search(_rx, low):
+                _dh += 1
+        # явные каскады (climate→agri, energy→econ→geo) — сильный cross-domain сигнал
+        _cascade = bool(re.search(r'(жар\w*.{0,30}пожар|пожар.{0,30}урожай|засух.{0,30}(?:урожай|продовольств)|'
+                r'энергет.{0,30}(?:эконом|рубл|цен)|санкц.{0,30}(?:рубл|экспорт|цен)|нефт.{0,30}(?:рубл|бюджет|эконом))', low))
+        if _dh >= 3 or _cascade:
+            score += 2.0; why.append('cross_domain')
+        elif _dh >= 2:
+            score += 1.0; why.append('cross_domain_weak')
+        # 4) GEOGRAPHIC EXPANSION — привязка к стране/региону/объекту
+        if (region and region not in ('', 'Глобально')) or lat is not None or _tcc:
+            score += 1.0; why.append('geo')
+        # 5) SEVERITY (нормированная)
+        score += min(2.0, (severity or 0) / 25.0)
+        # 6) SOURCE RELIABILITY
+        _src = str(source or '')
+        if any(_s in _src for _s in ('USGS', 'GDACS', 'NASA', 'CISA', 'NVD', 'Reuters',
+                                     'ECB', 'NOAA', 'Frankfurter', 'GDELT')):
+            score += 1.0; why.append('src_reliable')
+        # 7) базовая риск-сигнатура (совместимо с прежним keyword-слоем, но не единственный критерий)
+        if has_sig:
+            score += 0.5
+        return score, why
+
     # Фильтр провокационных и ангажированных новостей
     RUSSIA_FILTER = [
         'russia weak', 'russia losing', 'russia collapse', 'russia failing',
@@ -2216,14 +2304,27 @@ def process_events(raw_items):
                 r'представил\w* (?:новинк|устройств|гаджет)|вышл\w* (?:новинк|обновлен)|'
                 r'программ\w* слежки за (?:своими )?сотрудник|не захотел\w* провер|'
                 r'сравнял\w* с передов|получил\w* доступ к \w+ верси)', _tl, re.I))
-            _adm = 'ADMIT' if (_is_struct or _is_hard or _is_policy
-                               or (_is_event and (_has_sig or _has_place))) else 'REJECT'
-            if _is_talk or _is_digest or _tech_noise:
+            # ADMISSION 3.0: семантический Score поверх keyword-слоя.
+            # Быстрые сигналы (struct/hard/policy) и явный talk/шум решают сразу;
+            # серая зона — по AdmissionScore («меняет ли событие картину»).
+            _score, _why = _admission_score(_tl, item.get('desc', ''), domain,
+                                            severity, region, lat, _has_sig, item.get('source'))
+            _fast_admit = _is_struct or _is_hard or _is_policy
+            _fast_reject = _is_talk or _is_digest or _tech_noise
+            if _fast_reject:
                 _adm = 'REJECT'
+            elif _fast_admit:
+                _adm = 'ADMIT'
+            elif _is_event and (_has_sig or _has_place):
+                _adm = 'ADMIT'
+            else:
+                # ключевых слов нет — решаем по аналитической значимости
+                _adm = 'ADMIT' if _score >= 4.0 else 'REJECT'
             if len(_SEV_SAMPLE) < 300:
                 _SEV_SAMPLE.append({'t': item.get('title','')[:130], 'd': domain,
                     's': severity, 'sig': _has_sig, 'place': bool(_has_place),
-                    'adm': _adm, 'src': str(item.get('source',''))[:24]})
+                    'adm': _adm, 'score': round(_score, 1), 'why': _why,
+                    'src': str(item.get('source',''))[:24]})
             if _adm == 'REJECT':
                 _LOSS['sev'] += 1; continue
 
