@@ -739,6 +739,39 @@ def _decay_absent(prev, now):
         'health':_health(prev.get('severity',0),phase,hi,rising),'audit':audit,'last_seen':prev.get('last_seen',now)})
     return prev
 
+# тип процесса → origin (fallback, когда evidence-правила не сработали).
+# Использует уже готовую классификацию Process Engine — не выдумывает, а переносит.
+_PTYPE_ORIGIN=[
+ (r'военн\w* удар|ракетн|обстрел|бомбардир|удар\w* бпла',  'military'),
+ (r'киберугроз|кибератак|утечк|malware',                   'cyber'),
+ (r'санкцион|санкц\w* давлен',                              'policy'),
+ (r'топливн\w* рынок|энергетическ\w* дефицит|нефтегаз',     'energy'),
+ (r'валютн\w* рынок|финансов\w* рынок|фондов',              'financial'),
+ (r'экономическ|инфляц|торгов\w* войн',                     'economic'),
+ (r'тепловая волна|водн\w* дефицит|засух|климатическ|маловод','natural'),
+ (r'пожарн\w* активн',                                      'natural'),
+ (r'сейсмическ|землетряс|вулкан',                           'natural'),
+ (r'эпидемиолог|вспышк|санитар',                            'health'),
+ (r'социальн\w* напряж|протест|миграцион',                  'social'),
+ (r'сбой инфраструктур|отключен\w* интернет|энергосет',     'infrastructure'),
+]
+def _type_origin_fallback(s):
+    """Origin по типу процесса (fallback). Возвращает origin-dict как _origin_v2."""
+    _pt=(s.get('process_type','') or '').lower()
+    for _pat,_o in _PTYPE_ORIGIN:
+        if re.search(_pat,_pt):
+            return {'origin':_o,'confidence':0.6,
+                    'reasons':['тип процесса: %s'%s.get('process_type','')],
+                    'chain':[_o]+_ORIGIN_CASCADE.get(_o,[])[:2]}
+    # последний резерв — по домену
+    _dom=(s.get('domains') or [''])[0]
+    _dm={'climate':'natural','geopolitics':'policy','economy':'economic',
+         'technology':'cyber','social':'social'}
+    if _dom in _dm:
+        return {'origin':_dm[_dom],'confidence':0.3,
+                'reasons':['домен без явного механизма: %s'%_dom],'chain':[_dm[_dom]]}
+    return {'origin':'unknown','confidence':0.2,'reasons':[],'chain':[]}
+
 def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
@@ -765,6 +798,29 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         d=_decay_absent(prev, now)
         if d.get('status')!='archived' or _hours(d.get('last_seen',now),now)<2160:
             out.append(d)
+    # ORIGIN BACKFILL: carried-forward процессы прошлых версий могли не иметь origin.
+    # Единый Origin Engine (Task 10): восстанавливаем origin по EVIDENCE (реальным
+    # событиям процесса), а не по обобщённому title, чтобы классификация была точной.
+    for s in out:
+        if not s.get('origin'):
+            _evs=s.get('evidence',[]) or []
+            if _evs:
+                # агрегируем origin по всем evidence, побеждает уверенное большинство
+                from collections import Counter as _BFC
+                _bc=_BFC(); _brs={}
+                for _e in _evs[:8]:
+                    _o=_origin_v2({'title':_e.get('title',''),'domain':(s.get('domains') or [''])[0]})
+                    if _o['origin']!='unknown':
+                        _bc[_o['origin']]+=_o['confidence']
+                        _brs.setdefault(_o['origin'],_o)
+                if _bc:
+                    _top=_bc.most_common(1)[0][0]; _ov=_brs[_top]
+                else:
+                    _ov=_type_origin_fallback(s)
+            else:
+                _ov=_type_origin_fallback(s)
+            s['origin']=_ov['origin']; s['origin_confidence']=_ov['confidence']
+            s['origin_reasons']=_ov['reasons']; s['origin_chain']=_ov['chain']
     # Task 7: Explainability
     for s in out:
         s['explain']=_explain(s, s.get('process_type', s.get('title','').split(' — ')[0]))
