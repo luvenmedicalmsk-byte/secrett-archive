@@ -2001,7 +2001,7 @@ def process_events(raw_items):
     seen_ids = set()
     _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
              'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0,
-             'nogeo_valid': 0, 'nogeo_noise': 0}
+             'nogeo_valid': 0, 'nogeo_noise': 0, 'proc_only': 0}
     _SEV_SAMPLE = []
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
@@ -2311,6 +2311,12 @@ def process_events(raw_items):
                                             severity, region, lat, _has_sig, item.get('source'))
             _fast_admit = _is_struct or _is_hard or _is_policy
             _fast_reject = _is_talk or _is_digest or _tech_noise
+            # FEEDBACK LOOP AUDIT: shadow Score БЕЗ Process Impact (Mode B) —
+            # проверяем, изменил бы отсутствие процесса-совпадения исход.
+            _proc_bonus = 0.0
+            if 'process_confirm' in _why: _proc_bonus = 2.5
+            elif 'process_touch' in _why: _proc_bonus = 1.5
+            _score_noproc = _score - _proc_bonus
             if _fast_reject:
                 _adm = 'REJECT'
             elif _fast_admit:
@@ -2318,15 +2324,38 @@ def process_events(raw_items):
             elif _is_event and (_has_sig or _has_place):
                 _adm = 'ADMIT'
             else:
-                # ключевых слов нет — решаем по аналитической значимости
                 _adm = 'ADMIT' if _score >= 4.0 else 'REJECT'
+            # решение в Mode B (Process Impact отключён)
+            if _fast_reject:
+                _adm_b = 'REJECT'
+            elif _fast_admit or (_is_event and (_has_sig or _has_place)):
+                _adm_b = 'ADMIT'
+            else:
+                _adm_b = 'ADMIT' if _score_noproc >= 4.0 else 'REJECT'
+            # событие держится ТОЛЬКО на Process Impact, если A=ADMIT, B=REJECT
+            _proc_dependent = (_adm == 'ADMIT' and _adm_b == 'REJECT' and _proc_bonus > 0)
+            if _proc_dependent:
+                _LOSS['proc_only'] = _LOSS.get('proc_only', 0) + 1
+            # объяснимость Admission — человекочитаемая причина
+            _reason_map = {'structural': 'меняет структуру системы',
+                'process_confirm': 'подтверждает существующий процесс',
+                'process_touch': 'связан с наблюдаемым процессом',
+                'confirmation': 'независимое подтверждение',
+                'cross_domain': 'влияет на несколько доменов',
+                'cross_domain_weak': 'межотраслевой эффект',
+                'geo': 'расширяет географию', 'src_reliable': 'надёжный источник'}
             if len(_SEV_SAMPLE) < 300:
                 _SEV_SAMPLE.append({'t': item.get('title','')[:130], 'd': domain,
                     's': severity, 'sig': _has_sig, 'place': bool(_has_place),
-                    'adm': _adm, 'score': round(_score, 1), 'why': _why,
-                    'src': str(item.get('source',''))[:24]})
+                    'adm': _adm, 'adm_b': _adm_b, 'proc_only': _proc_dependent,
+                    'score': round(_score, 1), 'score_b': round(_score_noproc, 1),
+                    'why': _why, 'src': str(item.get('source',''))[:24]})
             if _adm == 'REJECT':
                 _LOSS['sev'] += 1; continue
+            # сохранить объяснимость в само событие (для аналитики/UI)
+            item['admission_reason'] = [_reason_map.get(w, w) for w in _why]
+            item['admission_score'] = round(_score, 1)
+            item['admission_proc_dependent'] = _proc_dependent
 
         ev_id = make_id(item['title'], item['date'])
         if ev_id in seen_ids: _LOSS['dup']+=1; continue
@@ -2479,6 +2508,11 @@ def process_events(raw_items):
                 {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                  'sev_threshold_total': _LOSS.get('sev_threshold', 0),
                  'admitted': _LOSS.get('analytic_layer', 0),
+                 'feedback_audit': {
+                     'proc_only': _LOSS.get('proc_only', 0),
+                     'admit_A': sum(1 for _s in _SEV_SAMPLE if _s.get('adm')=='ADMIT'),
+                     'admit_B_noproc': sum(1 for _s in _SEV_SAMPLE if _s.get('adm_b')=='ADMIT'),
+                     'proc_dependent': sum(1 for _s in _SEV_SAMPLE if _s.get('proc_only'))},
                  'sample': _SEV_SAMPLE}, ensure_ascii=False, indent=2), encoding='utf-8')
             # ADMISSION STABILITY: per-run метрики в rolling-историю (кольцо 30 прогонов).
             # Ground-truth-прокси: событие ценно, если несёт СИЛЬНЫЙ аналитический признак
