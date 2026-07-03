@@ -2596,7 +2596,8 @@ _GATE_ANALYSIS_RX = re.compile(
 def _signal_gate(events):
     """SIGNAL GATE 1.0: пропускает только аналитические сигналы. Возвращает
     (signals, gate_report). Шум отсекается ДО гео/impact/severity-переоценки."""
-    kept, rej = [], collections.Counter()
+    import collections as _co
+    kept, rej = [], _co.Counter()
     for e in events:
         if e.get('structural') or e.get('_force_severity') is not None:
             kept.append(e); continue
@@ -2605,7 +2606,7 @@ def _signal_gate(events):
         blob = (t + ' ' + s)
         low = blob.lower()
         dom = e.get('domain', '')
-        rescue = bool(_GATE_RESCUE_RX.search(low))
+        rescue = bool(_GATE_RESCUE_RX.search(t.lower()))   # суть — в заголовке, не в упоминаниях summary
         # 1) развлечения/лайфстайл/благотворительность/шоу-бизнес — всегда шум
         if _GATE_DROP_RX.search(low) and not rescue:
             rej['шоу-бизнес/лайфстайл'] += 1; continue
@@ -2618,6 +2619,12 @@ def _signal_gate(events):
         # 3b) аналитические эссе/разборы — не сигнал (это интерпретация, не событие)
         if _GATE_ANALYSIS_RX.search(low) and not rescue:
             rej['аналитическое эссе'] += 1; continue
+        # 3d) образование/культура/риторические обвинения без последствий
+        if not rescue and re.search(
+                r'(редакци\w* учебник|в учебник\w*|школьн\w* программ|описание отношений|'
+                r'обвиня\w* \w+ (?:министр|политик|чиновник|депутат)\w* в|'
+                r'\bза слова о\b|назвал\w* \w+ (?:высказыван|заявлен)|раскритиков\w* заявлен)', low):
+            rej['заявление/риторика без последствий'] += 1; continue
         # 3c) корпоративный PR / регуляторика / соцопросы без системного эффекта
         if not rescue and re.search(
                 r'(раскрыл\w* (?:список|рейтинг)|может представить|представит \w* стратеги|'
@@ -8252,12 +8259,19 @@ if __name__ == '__main__':
 
         # На карту идут только новостные события
         # Структурные риски живут в risk-matrix.html отдельно
-        events, _gate_rej = _signal_gate(news_events)   # SIGNAL GATE 1.0 — до гео/impact
+        try:
+            events, _gate_rej = _signal_gate(news_events)   # SIGNAL GATE 1.0 — до гео/impact
+        except Exception as _sge:
+            import traceback as _sgt
+            print('  [SIGNAL-GATE] ОШИБКА, поток без фильтра: %s' % _sge, file=sys.stderr)
+            _sgt.print_exc()
+            events, _gate_rej = news_events, {'gate_error': str(_sge)}
         try:
             (OUTPUT_PATH.parent / '_signal_gate.json').write_text(json.dumps(
                 {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                  'input': len(news_events), 'signals': len(events),
-                 'rejected': sum(_gate_rej.values()), 'by_reason': _gate_rej},
+                 'rejected': sum(v for v in _gate_rej.values() if isinstance(v, int)),
+                 'by_reason': _gate_rej},
                 ensure_ascii=False, indent=2), encoding='utf-8')
         except Exception:
             pass
