@@ -63,6 +63,9 @@ def strip_html(text):
     text = re.sub(r'<[^>]+>', ' ', text)
     text = html.unescape(text)              # &#036;->$, &amp;->&, &#8217;->’, &nbsp; и т.д.
     text = text.replace('\xa0', ' ')
+    # Флаги-эмодзи (пары regional indicator symbols) — убираем из ТЕКСТА сигнала.
+    # Страны показываются во вкладке «Страны», не в заголовке/описании (intelligence-тон).
+    text = re.sub(r'[\U0001F1E6-\U0001F1FF]', '', text)
     text = re.sub(r'\s+', ' ', text).strip()
     # Убираем мусорные разделители
     text = text.split('|||')[0].split(' | ')[0].strip()
