@@ -838,6 +838,8 @@ def make_id(title, date):
     return 'e' + hashlib.md5(f"{title}{date}".encode()).hexdigest()[:8]
 
 def coord_to_svg(lat, lng, vw=1000, vh=500):
+    if lat is None or lng is None:   # VALID_NO_GEO: событие без места на карту не проецируется
+        return None, None
     x = round(((lng + 180) / 360) * vw, 1)
     r = math.pi / 180
     y_val = math.log(math.tan(math.pi/4 + (lat * r) / 2))
@@ -1528,6 +1530,35 @@ _SIG_RE = re.compile(
     re.IGNORECASE)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# VALID_NO_GEO RECOVERY — сигналы без физического места (кибер/эконом/техно/санкции).
+# Разделяем no_geo на: VALID (процесс без места → в ленту без карты),
+# INVALID (ошибка извлечения → чинит GeoContract), NOISE (шум → drop).
+# ══════════════════════════════════════════════════════════════════════════════
+_NOGEO_VALID_RX = re.compile(
+    r'(кибератак|хакер|взлом|утечк\w* данных|уязвим|cve|ddos|вредоносн|malware|шпионск\w* по|'
+    r'троян|эксплойт|вымогател|ransomware|ботнет|фишинг|дата-центр|цод|облачн\w* сервис|'
+    r'санкц|эмбарго|пошлин|тариф|экспортн\w* контрол|заморозк\w* активов|'
+    r'инфляц|дефолт|дефляц|рецесс|ставк\w* (?:цб|фрс|ецб)|ключев\w* ставк|обвал\w* (?:рынк|индекс|валют)|'
+    r'криптовалют|биткоин|стейблкоин|цифров\w* (?:рубл|валют|актив)|'
+    r'цепочк\w* поставок|дефицит\w* (?:чип|полупровод|редкоземель)|'
+    r'нейросет|искусственн\w* интеллект|\bии\b|llm|квантов\w* (?:вычислен|компьютер)|'
+    r'спутник\w* (?:связ|группировк)|глонасс|gps-?спуфинг|подмен\w* сигнал)', re.I)
+
+
+def _classify_no_geo(title, desc, domain):
+    """→ 'VALID' | 'NOISE'. INVALID (ошибки GAZ/парсинга) чинится в GeoContract на
+    этапе _apply_geo_contract, здесь отделяем аналитический сигнал от шума."""
+    blob = ((title or '') + ' ' + (desc or '')[:200])
+    # системная сигнатура без места = валидный сигнал (кибер/эконом/техно/санкции)
+    if _NOGEO_VALID_RX.search(blob):
+        return 'VALID'
+    # домены без географии по природе + широкая риск-сигнатура
+    if domain in ('technology', 'economy') and _SIG_RE.search(blob):
+        return 'VALID'
+    return 'NOISE'
+
+
 def _is_news_not_signal(title, summary, domain):
     """S43: «сигнал или шум» на финальном (русском) тексте. True = новость, не сигнал.
     Дубль логики S41/S42, но на переведённом тексте -- ловит мусор из англоязычных
@@ -1929,7 +1960,8 @@ def process_events(raw_items):
     events = []
     seen_ids = set()
     _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
-             'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0}
+             'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0,
+             'nogeo_valid': 0, 'nogeo_noise': 0}
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
     # Фильтр провокационных и ангажированных новостей
@@ -1999,15 +2031,26 @@ def process_events(raw_items):
                 # D1 (Release Override 2026-06-27): явная иностранная страна без точных
                 # координат -> НЕ подставлять РФ-точку (Москва ±3°). Уводим в no_geo;
                 # корректная страновая привязка восстанавливается в D2 (Snapshot, пост-релиз).
-                if _foreign_country(((item.get('title','') or '') + ' ' + (item.get('desc','') or '')))[0]:
-                    _LOSS['no_geo'] += 1; continue
+                _foreign = _foreign_country(((item.get('title','') or '') + ' ' + (item.get('desc','') or '')))[0]
                 if str(_src).startswith('Telegram') or _src == 'Downdetector RU':
                     lat, lng, region = _ru_default(item['title']); _LOSS['global_marker']+=1
+                elif _foreign:
+                    # иностранное место без координат: снапшот восстановит страну (D2).
+                    # Публикуем в ленте без карты, метка страны придёт из GeoContract.
+                    lat, lng, region = None, None, ''
+                    item['map_visible'] = False; _LOSS['nogeo_valid'] += 1
                 elif _home:
                     lat, lng, region = _home; _LOSS['global_marker']+=1
                 else:
-                    # S36.6: больше НЕ кладём в океан -- неизвестная геопозиция => без точки (drop)
-                    _LOSS['no_geo']+=1; continue
+                    # VALID_NO_GEO RECOVERY: процесс без физического места.
+                    # Аналитический сигнал (кибер/эконом/техно/санкции) → в ленту без карты;
+                    # шум → drop. GeoContract присвоит process_place_type=null.
+                    _cls = _classify_no_geo(item.get('title',''), item.get('desc',''), domain)
+                    if _cls == 'VALID':
+                        lat, lng, region = None, None, ''
+                        item['map_visible'] = False; _LOSS['nogeo_valid'] += 1
+                    else:
+                        _LOSS['nogeo_noise'] += 1; continue
             else:
                 lat, lng, region = geo
             severity = _severity_for(item, _gov.get('weight', 1.0))
@@ -2209,7 +2252,7 @@ def process_events(raw_items):
     try:
         import collections as _c
         _fd = _c.Counter(e['domain'] for e in top_events)
-        print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} ad={_LOSS['ad']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} exported={len(top_events)}", file=sys.stderr)
+        print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} ad={_LOSS['ad']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} nogeo_valid={_LOSS.get('nogeo_valid',0)} nogeo_noise={_LOSS.get('nogeo_noise',0)} exported={len(top_events)}", file=sys.stderr)
         try:  # PIPELINE LOSS AUDIT: публикуемая карта воронки (statistics, не догадки)
             _loss_report = dict(_LOSS)
             _loss_report.update({'built': len(events), 'exported': len(top_events),
@@ -2808,6 +2851,8 @@ def _apply_geo_contract(events):
             e['impact_countries'] = [c for c in _imp if c != gc.country]
             e['mentioned_countries'] = _imp; e['country_codes'] = _imp
             e['is_global'] = False
+            e['map_visible'] = e.get('lat') is not None
+            e['map_visible'] = False   # VALID_NO_GEO: в ленте есть, на карте нет
         elif ppt in ('zone', 'global'):
             st['zone' if ppt == 'zone' else 'global'] += 1
             e['lat'], e['lng'] = gc.lat, gc.lng
@@ -2828,6 +2873,7 @@ def _apply_geo_contract(events):
             # питает страновые снапшоты и движок процессов, карту не трогает
             e['mentioned_countries'] = _imp; e['country_codes'] = _imp
             e['is_global'] = False
+            e['map_visible'] = False   # VALID_NO_GEO: в ленте есть, на карте нет
     try:
         (OUTPUT_PATH.parent / '_geo_authority.json').write_text(json.dumps(
             {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
