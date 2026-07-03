@@ -849,6 +849,77 @@ def _type_origin_fallback(s):
                 'reasons':['домен без явного механизма: %s'%_dom],'chain':[_dm[_dom]]}
     return {'origin':'unknown','confidence':0.2,'reasons':[],'chain':[]}
 
+def _reconstruct_macro(signals, now):
+    """Б: РЕКОНСТРУКЦИЯ СИСТЕМНОГО ПРОЦЕССА. Собирает региональные процессы одной темы+страны
+    в макропроцесс-зонтик с географической траекторией и кросс-доменным каскадом.
+    Под-процессы НЕ удаляются (разрешающая способность сохранена) — макро ссылается на них.
+    Макро появляется при >=3 региональных процессах одного типа в одной стране."""
+    from collections import defaultdict, Counter as _MCtr
+    # группируем по (process_type, страна) — кандидаты в макропроцесс
+    groups=defaultdict(list)
+    for s in signals:
+        if s.get('is_macro'): continue
+        ptype=s.get('process_type','')
+        # страна процесса: из countries (доминирующая) или macro-региона
+        cc=s.get('countries',[]) or []
+        country=None
+        if cc:
+            country=_MCtr(cc).most_common(1)[0][0]
+        if ptype and country:
+            groups[(ptype, country)].append(s)
+    macro_out=[]
+    for (ptype, country), members in groups.items():
+        if len(members) < 3: continue           # макро только для разворачивающегося процесса
+        # география траектории: регионы/места под-процессов, по времени появления
+        members_sorted=sorted(members, key=lambda s: s.get('first_seen','') or '9999')
+        regions=[]
+        _country_names={'Россия','США','Украина','Китай','Израиль','Иран','ЕС','Великобритания','Индия','Киргизия'}
+        for m in members_sorted:
+            pl=m.get('process_place','')
+            # в траекторию — только конкретные регионы, не страна-зонтик и не Глобально
+            if pl and pl not in ('Глобально',) and pl not in _country_names and pl not in regions:
+                regions.append(pl)
+        if len(regions) < 2: continue            # нужна реальная география распространения
+        # кросс-доменный каскад: объединяем origin_chain всех под-процессов
+        _chain=[]
+        for m in members:
+            for o in (m.get('origin_chain') or []):
+                if o not in _chain: _chain.append(o)
+        _domains=sorted(set(m.get('primary_domain','') for m in members if m.get('primary_domain')))
+        # severity макро = максимум под-процессов (кризис силён как его пик)
+        _sev=max((m.get('severity',0) for m in members), default=0)
+        _pressure=max((m.get('pressure',0) or 0 for m in members), default=0)
+        _ev_total=sum(m.get('evidence_count',1) for m in members)
+        _first=min((m.get('first_seen','') for m in members if m.get('first_seen')), default=now)
+        _last=max((m.get('last_seen','') or m.get('last_update','') for m in members), default=now)
+        # стабильный macro-id (тип+страна, инвариант к регионам)
+        _mid=_stable_id(_domains[0] if _domains else 'economy', 'MACRO|'+ptype, country, '')
+        _country_ru={'RU':'Россия','US':'США','UA':'Украина','CN':'Китай','IL':'Израиль',
+                     'IR':'Иран','EU':'ЕС','GB':'Великобритания','IN':'Индия'}.get(country, country)
+        macro={
+            'signal_id':_mid, 'is_macro':True,
+            'title':'%s — %s (системный процесс)' % (ptype, _country_ru),
+            'process_type':ptype, 'primary_domain':_domains[0] if _domains else 'economy',
+            'domains':_domains, 'process_place':_country_ru, 'countries':[country],
+            'severity':_sev, 'priority':_sev, 'pressure':_pressure,
+            'origin':members[0].get('origin','unknown'), 'origin_chain':_chain[:6],
+            'evidence_count':_ev_total, 'first_seen':_first, 'last_seen':_last,
+            # ТРАЕКТОРИЯ распространения: регионы в порядке появления
+            'geo_spread':regions, 'geo_spread_count':len(regions),
+            'included_processes':[m.get('signal_id') for m in members],
+            'included_regions':regions,
+            'lifecycle_stage':'Развитие' if len(regions)>=3 else 'Обнаружение',
+            'macro_reason':'%d региональных процессов, распространение: %s' % (
+                len(members), ' → '.join(regions[:6])),
+            'access_tier':'pro' if _domains and _domains[0]=='geopolitics' else 'free',
+            'status':'active',
+        }
+        # пометить под-процессы принадлежностью к макро
+        for m in members:
+            m['parent_macro']=_mid
+        macro_out.append(macro)
+    return signals + macro_out
+
 def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
@@ -989,6 +1060,11 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     out, global_health = enrich_v15(out, prev_global)
     # v1.6: память, DNA, паттерны, ожидаемый шаг, возраст, recurrence, Atlas Memory
     out, memory_updated, patterns = enrich_v16(out, memory, now)
+    # v1.7: РЕКОНСТРУКЦИЯ СИСТЕМНОГО ПРОЦЕССА (Б) — макропроцессы-зонтики над региональными.
+    # Один разворачивающийся кризис (топливо по регионам РФ) собирается в макропроцесс
+    # с географической траекторией и кросс-доменным каскадом. Под-процессы сохраняются
+    # (разрешающая способность из А не теряется). Intelligence-платформа: и лес, и деревья.
+    out = _reconstruct_macro(out, now)
     out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s.get('pressure',s['priority'])))
     merges=sum(1 for s in out if s.get('evidence_count',1)>1)
     report=signal_engine_report(out, len(previous or []), n_created, n_matched, merges, 0, match_scores, now)
