@@ -172,6 +172,34 @@ def _loc_tmpl(e):
     for name,pat in _LOC_TEMPLATE:
         if re.search(pat,t): return name
     return None
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ORIGIN DETECTION — причинная природа события (что ПОРОДИЛО сигнал), не тема.
+# Один тип-шаблон (пожар/отключение/взрыв) может иметь РАЗНЫЙ генезис → это РАЗНЫЕ
+# процессы. Origin — измерение кластеризации: события с разным Origin не объединяются.
+# ══════════════════════════════════════════════════════════════════════════════
+_ORIGIN_RULES=[
+ ('kinetic', r'(обстрел|удар\w*|атак\w*|бомбардир|ракет\w*|дрон\w*|бпла|беспилотник|'
+             r'диверси|теракт|взорв|подрыв|снаряд|авиауд|артудар|пораж\w* цел|уничтож\w* (?:завод|нпз|склад|объект))'),
+ ('cyber',   r'(кибератак|взлом|хакер|malware|вредоносн|ddos|шифровальщ|вымогател|ransomware|'
+             r'утечк\w* данн|эксплойт|фишинг|троян|ботнет|скомпрометир)'),
+ ('policy',  r'(санкц|эмбарго|пошлин|закон\w*|указ\w*|запрет\w*|разрешил|постановлен|'
+             r'экспортн\w* контрол|национализ|мобилизац|погранпереход|визов\w* режим)'),
+ ('economic',r'(дефолт|банкрот|обвал\w*|инфляц|дефицит|подорожан|биржев|валютн|'
+             r'ключев\w* ставк|санкционн\w* давлен|отток капитал|рецесс)'),
+ ('natural', r'(\bжар\w*|засух|наводнен|паводок|землетряс|цунами|ураган|тайфун|циклон|'
+             r'вулкан|изверж|оползен|\bсель\b|лавин|\bград\b|заморозк|аномальн\w* (?:жар|холод|осадк)|'
+             r'лесн\w* пожар|природн\w* пожар|торфян\w* пожар|тайг\w* пожар|степн\w* пожар|стих\w* бедств)'),
+ ('social',  r'(протест|митинг|забастовк|беспорядк|погром|мятеж|восстан|демонстрац|'
+             r'эпидеми|вспышк\w* (?:заболев|инфекц|вирус)|голод|миграцион)'),
+]
+def _origin(e):
+    """Причинная природа: kinetic/cyber/policy/economic/natural/social. По ЗАГОЛОВКУ
+    (суть события), приоритет — намеренное воздействие над природным (обстрел > пожар)."""
+    t=((e.get('title') or '')+' '+(e.get('summary') or '')[:60]).lower()
+    for name,pat in _ORIGIN_RULES:
+        if re.search(pat,t): return name
+    return 'unknown'
 def _is_entity_tmpl(e):
     t=(e.get('title') or '').lower()
     return any(re.search(p,t) for p in _ENTITY_TEMPLATE)
@@ -656,6 +684,7 @@ def _rising(trend):
 def _cluster(events):
     n=len(events); TK=[_stems(e) for e in events]; LOC=[_loc_set(e)[0] for e in events]
     DOM=[e.get('domain','') for e in events]; LT=[_loc_tmpl(e) for e in events]; ENT=[_is_entity_tmpl(e) for e in events]
+    ORG=[_origin(e) for e in events]
     df=Counter()
     for s in TK:
         for w in s: df[w]+=1
@@ -673,6 +702,10 @@ def _cluster(events):
             if not a or not b: continue
             # сущность-шаблон (CISA-уязвимости, CVE): каждый продукт = свой процесс, НЕ объединяем
             if ENT[i] or ENT[j]: continue
+            # ORIGIN-ГЕЙТ: разная причинная природа = разные процессы, даже при совпадении
+            # места и тип-шаблона (пожар от жары ≠ пожар от обстрела; отключение из-за
+            # атаки ≠ из-за политики). unknown не блокирует (нет данных о генезисе).
+            if ORG[i]!='unknown' and ORG[j]!='unknown' and ORG[i]!=ORG[j]: continue
             # ЛОКАЦИЯ-ГЕЙТ: объединяем только при совпадении места
             li,lj=LOC[i],LOC[j]
             geo_ok = bool(li & lj) or (not li and not lj)
@@ -1002,8 +1035,13 @@ def _build_one_signal(evs, meta=None):
     domains=[primary_domain]+[d for d in domains if d and d!=primary_domain]  # primary первым
     name=f'{ptype} — {place}' if place and place!='Глобально' else ptype
     key_entity=actor or target or ''
+    # ORIGIN процесса: доминирующая причинная природа evidence (для timeline/графа/объяснимости)
+    from collections import Counter as _OCtr
+    _ovote=_OCtr(_origin(x) for x in evs)
+    _ovote.pop('unknown', None)
+    process_origin=(_ovote.most_common(1)[0][0] if _ovote else 'unknown')
     # Task 1: СТАБИЛЬНЫЙ signal_id (тип+место+сущность), не зависит от текста
-    signal_id=_stable_id(domains[0], ptype, place, key_entity)
+    signal_id=_stable_id(domains[0], ptype+'|'+process_origin, place, key_entity)
     # Task 5+6: качество и confidence-match каждого evidence
     evidence=[]
     for x in sorted(evs,key=lambda x:-x.get('severity',0)):
@@ -1023,7 +1061,7 @@ def _build_one_signal(evs, meta=None):
     sig_phase=_signal_phase(len(evs), _first, _last, top.get('severity_delta',0), trend, persist, top.get('phase','active'))
     affected=sorted(set([macro]+[r for r in regions if r])-{''}) if macro else regions
     geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
-    return {'signal_id':signal_id,'title':name,'process_type':ptype,
+    return {'signal_id':signal_id,'title':name,'process_type':ptype,'origin':process_origin,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
         'affected_regions':affected,'included_places':included_places,'included_processes':(meta or {}).get('included_processes',[]),'merged_count':(meta or {}).get('merged_count',1),
         'domains':domains,'primary_domain':primary_domain,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
