@@ -760,20 +760,24 @@ def _evolve_one(cur, prev, now):
     if new_countries: log('новая страна',', '.join(new_countries[:3]),'new_country',['countries'])
     if conf!=prev.get('confidence'): log('уровень доверия обновлён','','confidence_evolution',['confidence'])
     if phase!=prev.get('phase'): log('смена стадии',_PHASE_SHORT.get(phase,phase),'phase_evolution',['phase'])
-    # Phase 3: пересчёт стадии жизненного цикла + запись при смене
+    # Phase 3: сначала сшиваем ФИНАЛЬНОЕ состояние процесса, потом считаем стадию.
     cur['phase']=phase; cur['status']='active' if changed else prev.get('status','active')
-    stage=_lifecycle_stage(cur, hours_idle, now, prev_stage=prev.get('lifecycle_stage'))
-    if stage!=prev.get('lifecycle_stage'):
-        log(_STAGE_MSG.get(stage,'смена стадии'),'','lifecycle_stage',['lifecycle_stage'])
     tl=_cap(tl); audit=_cap(audit)
     health=_health(cur['severity'], phase, hours_idle, rising)
     cur.update({'phase':phase,'confidence':conf,'status':'active' if changed else 'active',
         'update_count':prev.get('update_count',1)+(1 if changed else 0),
         'severity_history':sh,'priority_history':ph,'phase_history':phh,'evidence_history':eh,'confidence_history':chh,
-        'timeline':tl,'audit':audit,'health':health,'lifecycle_stage':stage,
+        'timeline':tl,'audit':audit,'health':health,
         'delta':{'severity':dsev,'priority':dpri,'new_sources':new_sources,'new_countries':new_countries,
                  'new_connections':new_conn,'first_time':False,'reactivated':bool(was_dormant and changed)},
         '_all_sources':all_sources,'_all_roles':all_roles})
+    # LIFECYCLE POLICY: стадия вычисляется на ФИНАЛЬНОМ состоянии (severity_history/delta/
+    # velocity/update_count уже сшиты). Восходящий переход легитимен — есть новое событие (evolve).
+    stage=_lifecycle_stage(cur, hours_idle, now, prev_stage=prev.get('lifecycle_stage'))
+    if stage!=prev.get('lifecycle_stage'):
+        _tl2=cur.get('timeline',[]); _tl2.append({'t':now,'event':_STAGE_MSG.get(stage,'смена стадии'),'detail':''})
+        cur['timeline']=_cap(_tl2)
+    cur['lifecycle_stage']=stage
     return cur
 
 def _decay_absent(prev, now):
@@ -794,6 +798,22 @@ def _decay_absent(prev, now):
                            'rule':'process_decay','fields':['priority','status','phase','confidence']}])
     prev.update({'priority':npri,'status':status,'phase':phase,'confidence':conf,
         'health':_health(prev.get('severity',0),phase,hi,rising),'audit':audit,'last_seen':prev.get('last_seen',now)})
+    # LIFECYCLE POLICY (decay): нет нового события → разрешены ТОЛЬКО нисходящие переходы
+    # по времени (Development/Stabilization → Ослабление, Ослабление → Завершён).
+    # Восходящие переходы (→ Развитие/Пик) ЗАПРЕЩЕНЫ без нового события: эскалация требует
+    # доказательств, затухание следует из тишины. Математика _lifecycle_stage не меняется —
+    # берём её результат, но применяем только если он ведёт ВНИЗ.
+    _prev_stage=prev.get('lifecycle_stage')
+    _RANK={'Обнаружение':0,'Развитие':2,'Пик':3,'Стабилизация':1,'Ослабление':-1,'Завершён':-2}
+    _computed=_lifecycle_stage(prev, hi, now, prev_stage=_prev_stage)
+    # применяем только нисходящий/терминальный переход (по staleness/timeout)
+    if _computed in ('Ослабление','Завершён') and _RANK.get(_computed,0) < _RANK.get(_prev_stage,0):
+        if _computed!=_prev_stage:
+            _tl=prev.get('timeline',[]); _tl.append({'t':now,'event':_STAGE_MSG.get(_computed,'смена стадии'),
+                'detail':'затухание: нет новых подтверждений'})
+            prev['timeline']=_cap(_tl)
+        prev['lifecycle_stage']=_computed
+    # иначе стадия сохраняется прежней (восходящий переход без события не допускается)
     return prev
 
 # тип процесса → origin (fallback, когда evidence-правила не сработали).
