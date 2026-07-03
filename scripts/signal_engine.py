@@ -178,28 +178,135 @@ def _loc_tmpl(e):
 # Один тип-шаблон (пожар/отключение/взрыв) может иметь РАЗНЫЙ генезис → это РАЗНЫЕ
 # процессы. Origin — измерение кластеризации: события с разным Origin не объединяются.
 # ══════════════════════════════════════════════════════════════════════════════
-_ORIGIN_RULES=[
- ('kinetic', r'(обстрел|удар\w*|атак\w*|бомбардир|ракет\w*|дрон\w*|бпла|беспилотник|'
-             r'диверси|теракт|взорв|подрыв|снаряд|авиауд|артудар|пораж\w* цел|уничтож\w* (?:завод|нпз|склад|объект))'),
- ('cyber',   r'(кибератак|взлом|хакер|malware|вредоносн|ddos|шифровальщ|вымогател|ransomware|'
-             r'утечк\w* данн|эксплойт|фишинг|троян|ботнет|скомпрометир)'),
- ('policy',  r'(санкц|эмбарго|пошлин|закон\w*|указ\w*|запрет\w*|разрешил|постановлен|'
-             r'экспортн\w* контрол|национализ|мобилизац|погранпереход|визов\w* режим)'),
- ('economic',r'(дефолт|банкрот|обвал\w*|инфляц|дефицит|подорожан|биржев|валютн|'
-             r'ключев\w* ставк|санкционн\w* давлен|отток капитал|рецесс)'),
- ('natural', r'(\bжар\w*|засух|наводнен|паводок|землетряс|цунами|ураган|тайфун|циклон|'
-             r'вулкан|изверж|оползен|\bсель\b|лавин|\bград\b|заморозк|аномальн\w* (?:жар|холод|осадк)|'
-             r'лесн\w* пожар|природн\w* пожар|торфян\w* пожар|тайг\w* пожар|степн\w* пожар|стих\w* бедств)'),
- ('social',  r'(протест|митинг|забастовк|беспорядк|погром|мятеж|восстан|демонстрац|'
-             r'эпидеми|вспышк\w* (?:заболев|инфекц|вирус)|голод|миграцион)'),
-]
+# ══════════════════════════════════════════════════════════════════════════════
+# ORIGIN ENGINE v2 — единый источник причинной классификации (Phase 2).
+# Origin = механизм возникновения, вычисляется ОДИН раз, используется всеми модулями.
+# 15 origins, confidence, explainability, multi-origin цепочки.
+# ══════════════════════════════════════════════════════════════════════════════
+# Каждое правило: (origin, [ (вес, регекс, метка-объяснение), ... ]).
+# Порядок доменов причинности: намеренное > техногенное > природное (обстрел>авария>жара).
+_ORIGIN_V2={
+ 'military':     [(3,r'обстрел|бомбардир|артудар|авиауд',   'обстрел/бомбардировка'),
+                  (3,r'ракет\w* удар|ракетн\w* атак',        'ракетный удар'),
+                  (3,r'дрон\w*|бпла|беспилотник',            'удар БПЛА'),
+                  (2,r'\bудар\w* по\b|нанесл\w* удар',       'военный удар'),
+                  (2,r'диверси|теракт|подрыв|снаряд|боеприпас','диверсия/боеприпасы'),
+                  (2,r'\bвсу\b|\bвс рф\b|\bпво\b|уничтож\w* цел','военная сторона')],
+ 'cyber':        [(3,r'кибератак|кибернападен',              'кибератака'),
+                  (3,r'\bвзлом|хакер|скомпрометир',          'взлом'),
+                  (3,r'malware|вредоносн|троян|ботнет|ransomware|вымогател','вредоносное ПО'),
+                  (2,r'утечк\w* данн|утекл\w* данн',         'утечка данных'),
+                  (2,r'ddos|эксплойт|фишинг|уязвим',         'эксплуатация уязвимости')],
+ 'policy':       [(3,r'ввел\w* санкц|ввёл\w* санкц|санкцион\w* пакет','санкции'),
+                  (3,r'закрыл\w* границ|закрыл\w* погранпереход','закрытие границ'),
+                  (2,r'принят\w* закон|подписал\w* указ|постановлен','закон/указ'),
+                  (2,r'эмбарго|пошлин|экспортн\w* контрол|запрет\w* ввоз','торговый режим'),
+                  (2,r'мобилизац|призыв\w* резерв',          'мобилизация')],
+ 'financial':    [(3,r'дефолт|банкрот',                      'дефолт/банкротство'),
+                  (3,r'обвал\w* (?:рынк|индекс|валют|бирж|рубл|курс)',  'обвал рынка/валюты'),
+                  (2,r'ключев\w* ставк|ставк\w* цб|ставк\w* фрс','ставка ЦБ'),
+                  (2,r'отток капитал|дефолт\w* облигац',      'отток капитала')],
+ 'economic':     [(2,r'инфляц|дефляц|рецесс|стагфляц',       'инфляция/рецессия'),
+                  (2,r'дефицит (?:товар|бензин|топлив|продукт)','дефицит товаров'),
+                  (2,r'подорожан|рост цен|цен\w* на (?:нефт|газ|бензин)','рост цен'),
+                  (2,r'цепочк\w* поставок|экспорт\w* (?:нефт|газ|зерн)','цепочки поставок')],
+ 'energy':       [(3,r'\bнпз\b|нефтебаз|нефтеперераб|топливн\w* терминал','НПЗ/нефтебаза'),
+                  (2,r'газопровод|нефтепровод|трубопровод|лэп\b','энергетическая инфраструктура'),
+                  (2,r'электростанц|аэс\b|тэц\b|гэс\b|энергоблок','электростанция'),
+                  (2,r'энергодефицит|отключен\w* электро|блэкаут','энергодефицит')],
+ 'infrastructure':[(3,r'подстанц|электросет|водоканал|водоснабжен','сеть/подстанция'),
+                  (2,r'мост\b|дамб|плотин|туннел|дорожн\w* полотн','транспортный объект'),
+                  (2,r'отключен\w* (?:интернет|связ|воды)|перебо\w* (?:с водой|электро)','сбой ЖКХ/связи'),
+                  (2,r'обрушен|коллапс сет|аварийн\w* отключен','обрушение/коллапс')],
+ 'industrial':   [(3,r'авари\w* на (?:завод|производств|предприят|шахт)','промышленная авария'),
+                  (3,r'взрыв на (?:завод|производств|предприят|заводе)','взрыв на производстве'),
+                  (2,r'разлив (?:нефт|хим|мазут)|выброс (?:газ|хим|аммиак)','промышленный выброс'),
+                  (2,r'отказ оборудован|износ оборудован|поломк\w* агрегат','отказ оборудования')],
+ 'technogenic':  [(2,r'крушени\w* (?:поезд|самолёт|самолет|судн)|сход с рельс','транспортная авария'),
+                  (2,r'пожар в (?:тц|торгов|жил|доме|здани)|бытов\w* взрыв','бытовая техно-авария'),
+                  (2,r'утечк\w* газа|прорыв (?:труб|теплотрасс)',  'коммунальная авария')],
+ 'natural':      [(3,r'землетряс|цунами|вулкан|изверж|афтершок','сейсмика/вулкан'),
+                  (3,r'наводнен|паводок|половодь|подтоплен',  'наводнение'),
+                  (2,r'\bжар\w*|засух|аномальн\w* жар|тепловая волна','жара/засуха'),
+                  (2,r'ураган|тайфун|циклон|шторм|смерч|торнадо','шторм/ураган'),
+                  (2,r'лесн\w* пожар|природн\w* пожар|торфян\w* пожар|тайг\w* пожар','природный пожар'),
+                  (2,r'оползен|\bсель\b|лавин|\bград\b|заморозк','оползень/лавина')],
+ 'climate':      [(2,r'изменени\w* климат|глобальн\w* потеплен|climate','климатический тренд'),
+                  (2,r'таяни\w* (?:ледник|вечн\w* мерзлот)|уровен\w* мор','таяние/уровень моря'),
+                  (2,r'рекордн\w* (?:температур|жар|засух)|аномали\w* температур','климатическая аномалия')],
+ 'environmental':[(2,r'загрязнен\w* (?:воздух|воды|почв)|экологическ\w* катастроф','загрязнение'),
+                  (2,r'вырубк\w* лес|обезлесен|деградац\w* почв','деградация экосистемы'),
+                  (2,r'гибель (?:рыб|животн|птиц)|замор рыб',   'гибель биоты')],
+ 'health':       [(3,r'эпидеми|пандеми|вспышк\w* (?:заболев|инфекц|вирус|лихорадк|денге|сальмонелл|хантавирус|холер|оспа)','эпидемия/вспышка'),
+                  (2,r'массов\w* отравлен|отравлен\w* (?:десятк|сотн|людей)','массовое отравление'),
+                  (2,r'нагрузк\w* на здравоохран|дефицит (?:лекарств|коек)','нагрузка на здравоохранение')],
+ 'social':       [(3,r'протест|митинг|демонстрац|беспорядк|погром|мятеж|восстан','протест/беспорядки'),
+                  (2,r'забастовк|стачк|голодовк',             'забастовка'),
+                  (2,r'миграцион\w* (?:волн|кризис)|беженц\w* поток','миграционная волна'),
+                  (2,r'межэтническ|межрелигиозн\w* конфликт',  'межэтнический конфликт')],
+}
+# Причинные цепочки (multi-origin): какой origin во что каскадирует
+_ORIGIN_CASCADE={
+ 'military':      ['energy','infrastructure'],       # удар по НПЗ → энергетика
+ 'energy':        ['economic','financial'],          # энергодефицит → рынок
+ 'natural':       ['infrastructure','health','economic'],  # стихия → инфраструктура/здоровье
+ 'climate':       ['natural'],                        # климат → природные явления
+ 'industrial':    ['environmental','energy'],
+ 'cyber':         ['infrastructure','financial'],
+ 'policy':        ['economic','financial'],
+ 'financial':     ['economic','social'],
+ 'economic':      ['social'],
+ 'health':        ['social'],
+ 'infrastructure':['economic','social'],
+ 'environmental': ['health'],
+}
+# домен → приоритетные origins (контекст для разрешения неоднозначности)
+_DOMAIN_ORIGIN_HINT={
+ 'climate':['natural','climate','environmental'],
+ 'geopolitics':['military','policy','social'],
+ 'economy':['financial','economic','energy','policy'],
+ 'technology':['cyber','infrastructure'],
+ 'social':['social','health'],
+}
+
+def _origin_v2(e):
+    """ЕДИНЫЙ Origin Engine. Возвращает dict:
+      {origin, confidence, reasons[], chain[], scores{}}.
+    Origin по совокупности факторов (не одно слово): вес правил + доменный контекст.
+    Причинный приоритет: намеренное(military/cyber/policy) > техногенное(industrial/
+    infrastructure/energy) > природное(natural/climate). unknown при низкой уверенности."""
+    t=((e.get('title') or '')+' '+(e.get('summary') or '')[:80]).lower()
+    dom=e.get('domain','')
+    scores={}; reasons={}
+    for origin,rules in _ORIGIN_V2.items():
+        sc=0; rs=[]
+        for w,pat,label in rules:
+            if re.search(pat,t):
+                sc+=w; rs.append(label)
+        if sc>0:
+            scores[origin]=sc; reasons[origin]=rs
+    if not scores:
+        return {'origin':'unknown','confidence':0.2,'reasons':[],'chain':[],'scores':{}}
+    # доменный контекст: +1 к origins, ожидаемым в домене (разрешение неоднозначности)
+    for _o in _DOMAIN_ORIGIN_HINT.get(dom,[]):
+        if _o in scores: scores[_o]+=1
+    # приоритет намеренного над природным при близких весах (обстрел+пожар → military)
+    _INTENT=('military','cyber','policy')
+    _best=max(scores, key=lambda o:(scores[o], o in _INTENT))
+    total=sum(scores.values())
+    conf=round(min(0.98, scores[_best]/max(1,total) * (0.6+0.1*scores[_best])), 2)
+    conf=min(conf,0.98)
+    # multi-origin цепочка: primary + каскадные origins, реально присутствующие или ожидаемые
+    chain=[_best]
+    for _nxt in _ORIGIN_CASCADE.get(_best,[]):
+        if _nxt in scores or _nxt in _DOMAIN_ORIGIN_HINT.get(dom,[]):
+            chain.append(_nxt)
+    return {'origin':_best,'confidence':conf,'reasons':reasons.get(_best,[]),
+            'chain':chain[:4],'scores':scores}
+
 def _origin(e):
-    """Причинная природа: kinetic/cyber/policy/economic/natural/social. По ЗАГОЛОВКУ
-    (суть события), приоритет — намеренное воздействие над природным (обстрел > пожар)."""
-    t=((e.get('title') or '')+' '+(e.get('summary') or '')[:60]).lower()
-    for name,pat in _ORIGIN_RULES:
-        if re.search(pat,t): return name
-    return 'unknown'
+    """Обратная совместимость (Phase 1): только имя origin из единого движка."""
+    return _origin_v2(e)['origin']
 def _is_entity_tmpl(e):
     t=(e.get('title') or '').lower()
     return any(re.search(p,t) for p in _ENTITY_TEMPLATE)
@@ -684,7 +791,8 @@ def _rising(trend):
 def _cluster(events):
     n=len(events); TK=[_stems(e) for e in events]; LOC=[_loc_set(e)[0] for e in events]
     DOM=[e.get('domain','') for e in events]; LT=[_loc_tmpl(e) for e in events]; ENT=[_is_entity_tmpl(e) for e in events]
-    ORG=[_origin(e) for e in events]
+    ORG=[_origin_v2(e) for e in events]
+    OGN=[o['origin'] for o in ORG]; OCF=[o['confidence'] for o in ORG]
     df=Counter()
     for s in TK:
         for w in s: df[w]+=1
@@ -705,7 +813,11 @@ def _cluster(events):
             # ORIGIN-ГЕЙТ: разная причинная природа = разные процессы, даже при совпадении
             # места и тип-шаблона (пожар от жары ≠ пожар от обстрела; отключение из-за
             # атаки ≠ из-за политики). unknown не блокирует (нет данных о генезисе).
-            if ORG[i]!='unknown' and ORG[j]!='unknown' and ORG[i]!=ORG[j]: continue
+            # ORIGIN-ГЕЙТ v2: разная причинная природа = разные процессы, НО только при
+            # достаточной уверенности (conf>=0.5). Низкоуверенный origin не блокирует
+            # объединение (не выдумываем разделение на слабых основаниях).
+            if (OGN[i]!='unknown' and OGN[j]!='unknown' and OGN[i]!=OGN[j]
+                    and OCF[i]>=0.5 and OCF[j]>=0.5): continue
             # ЛОКАЦИЯ-ГЕЙТ: объединяем только при совпадении места
             li,lj=LOC[i],LOC[j]
             geo_ok = bool(li & lj) or (not li and not lj)
@@ -714,10 +826,16 @@ def _cluster(events):
             if LT[i] and LT[i]==LT[j]: union(i,j); continue
             inter=a&b; jac=len(inter)/len(a|b)
             vrare=[w for w in inter if df[w]<=3]
+            # Task 6: единый УВЕРЕННЫЙ origin + одно место = один процесс, даже при разной
+            # лексике заголовков (ракетный удар/удар БПЛА/артудар — один военный процесс).
+            _same_origin=(OGN[i]==OGN[j] and OGN[i]!='unknown' and OCF[i]>=0.5 and OCF[j]>=0.5)
+            if _same_origin and (li & lj):
+                union(i,j); continue
             if not li and not lj:
                 if jac>=0.6: union(i,j)
             else:
                 if (jac>=0.35 and len(inter)>=2) or len(vrare)>=2: union(i,j)
+                elif _same_origin and (jac>=0.15 or len(inter)>=1): union(i,j)
     groups={}
     for i in range(n): groups.setdefault(find(i),[]).append(events[i])
     return list(groups.values())
@@ -930,10 +1048,18 @@ def _build_relations(signals):
             tdom=(T.get('domains') or [''])[0]
             overlap=bool(gs & geoset(T)) or 'Глобально' in gs or 'Глобально' in geoset(T)
             if not overlap: continue
+            # причинность по ORIGIN-каскаду (Task 5): origin T — в causal-цепочке origin S.
+            # Origin — базовый уровень графа связей (military→energy→economic→financial).
+            _so=S.get('origin','unknown'); _to=T.get('origin','unknown')
+            _origin_causal=(_to!='unknown' and _to in (_ORIGIN_CASCADE.get(_so,[]) or [])
+                            and S.get('first_seen','') <= T.get('first_seen',''))
             # причинность: домен T — среди каскадных доменов S, и S не позже T
-            if tdom in (S.get('connectivity') or []) and S.get('first_seen','') <= T.get('first_seen',''):
+            if (_origin_causal or (tdom in (S.get('connectivity') or [])
+                    and S.get('first_seen','') <= T.get('first_seen',''))):
                 if T['signal_id'] not in S['causes']:
                     S['causes'].append(T['signal_id']); T['caused_by'].append(S['signal_id'])
+                    if _origin_causal: S.setdefault('causal_origin_links',[]).append(
+                        {'to':T['signal_id'],'via':'%s→%s'%(_so,_to)})
                     if _rising(S.get('trend')) and _rising(T.get('trend')): S['amplifies'].append(T['signal_id'])
                     if str(S.get('trend','')).lower() in ('falling','de-escalating','down'): S['suppresses'].append(T['signal_id'])
             elif sdom==tdom and S.get('process_place')==T.get('process_place') and S['signal_id']<T['signal_id']:
@@ -1035,12 +1161,24 @@ def _build_one_signal(evs, meta=None):
     domains=[primary_domain]+[d for d in domains if d and d!=primary_domain]  # primary первым
     name=f'{ptype} — {place}' if place and place!='Глобально' else ptype
     key_entity=actor or target or ''
-    # ORIGIN процесса: доминирующая причинная природа evidence (для timeline/графа/объяснимости)
+    # ORIGIN ENGINE v2: единая причинная классификация процесса (для timeline/графа/
+    # объяснимости/прогноза). Агрегируем по evidence с учётом confidence.
     from collections import Counter as _OCtr
-    _ovote=_OCtr(_origin(x) for x in evs)
-    _ovote.pop('unknown', None)
-    process_origin=(_ovote.most_common(1)[0][0] if _ovote else 'unknown')
-    # Task 1: СТАБИЛЬНЫЙ signal_id (тип+место+сущность), не зависит от текста
+    _ovs=[_origin_v2(x) for x in evs]
+    _owt=_OCtr()
+    for _o in _ovs:
+        if _o['origin']!='unknown':
+            _owt[_o['origin']]+=_o['confidence']
+    if _owt:
+        process_origin=_owt.most_common(1)[0][0]
+        _match=[o for o in _ovs if o['origin']==process_origin]
+        origin_conf=round(sum(o['confidence'] for o in _match)/max(1,len(_match)),2)
+        origin_reasons=sorted(set(sum((o['reasons'] for o in _match),[])))[:5]
+        # multi-origin цепочка процесса: наиболее полная из evidence
+        origin_chain=max((o['chain'] for o in _match), key=len) if _match else [process_origin]
+    else:
+        process_origin='unknown'; origin_conf=0.2; origin_reasons=[]; origin_chain=[]
+    # Task 1: СТАБИЛЬНЫЙ signal_id (тип+origin+место+сущность)
     signal_id=_stable_id(domains[0], ptype+'|'+process_origin, place, key_entity)
     # Task 5+6: качество и confidence-match каждого evidence
     evidence=[]
@@ -1062,6 +1200,7 @@ def _build_one_signal(evs, meta=None):
     affected=sorted(set([macro]+[r for r in regions if r])-{''}) if macro else regions
     geo_ok,geo_issues=_geo_consistent(place_iso, countries, macro, regions)
     return {'signal_id':signal_id,'title':name,'process_type':ptype,'origin':process_origin,
+            'origin_confidence':origin_conf,'origin_reasons':origin_reasons,'origin_chain':origin_chain,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
         'affected_regions':affected,'included_places':included_places,'included_processes':(meta or {}).get('included_processes',[]),'merged_count':(meta or {}).get('merged_count',1),
         'domains':domains,'primary_domain':primary_domain,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
