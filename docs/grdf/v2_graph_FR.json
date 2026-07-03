@@ -2,67 +2,67 @@
   "country": "FR",
   "date": "2026-07-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-03T19:04:07.827803+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-07-03T19:56:24.527727+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-FR",
       "type": "Country",
       "label": "FR",
-      "score": 50,
+      "score": 93,
       "props": {
-        "risk_score": 50
+        "risk_score": 93
       }
     },
     {
       "id": "DOMAIN-FR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 93,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 36,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-FR-Geopolitical",
@@ -78,6 +78,13 @@
       "id": "DRIVER-FR-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-FR-Июньская_ж",
+      "type": "Signal",
+      "label": "Июньская жара привела к избыточной смерт",
+      "severity": 93,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,7 +92,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.93
     },
     {
       "from": "COUNTRY-FR",
@@ -97,7 +104,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-FR",
@@ -115,7 +122,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-FR",
@@ -140,6 +147,75 @@
       "to": "COUNTRY-FR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-FR-social",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-FR-geopolitical",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-FR-Июньская_ж",
+      "to": "DOMAIN-FR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.93
     }
   ]
 }
