@@ -801,8 +801,12 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     # ORIGIN BACKFILL: carried-forward процессы прошлых версий могли не иметь origin.
     # Единый Origin Engine (Task 10): восстанавливаем origin по EVIDENCE (реальным
     # событиям процесса), а не по обобщённому title, чтобы классификация была точной.
+    _PHASE1={'kinetic','economic'}  # старая таксономия → пересчёт единым движком
     for s in out:
-        if not s.get('origin'):
+        _cur_o=s.get('origin')
+        _needs=(not _cur_o) or (_cur_o in _PHASE1) or ('origin_confidence' not in s) \
+               or (_cur_o=='unknown' and (s.get('evidence') or s.get('process_type')))
+        if _needs:
             _evs=s.get('evidence',[]) or []
             if _evs:
                 # агрегируем origin по всем evidence, побеждает уверенное большинство
