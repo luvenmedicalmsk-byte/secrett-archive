@@ -3056,19 +3056,34 @@ def _aggregate_series(events):
             lead['summary'] = _mk_summary(items)
             lead['series_count'] = len(items)
             out.append(lead); used |= {id(e) for e in items}
-    # D) тематические сюжеты: топ-2 самостоятельных + сводная по остальным
+    # D) тематические сюжеты: значимые сигналы остаются АТОМАРНЫМИ (разрешающая способность),
+    # в сводку схлопываются только фоновые/дублирующие. Для systemic risk platform острый
+    # локальный сигнал («бензина нет в Новороссийске») важнее компактности ленты.
     for rx, dom, name in _STORY_SERIES:
         story = [e for e in events if id(e) not in used and e.get('domain') == dom
                  and rx.search((e.get('title') or '') + ' ' + (e.get('summary') or '')[:120])]
         if len(story) >= 4:
             story.sort(key=lambda e: -(e.get('severity') or 0))
-            keep, rest = story[:2], story[2:]
-            lead = dict(rest[0])
-            lead['title'] = '%s: сводка (%d сообщений)' % (name, len(rest))
-            lead['summary'] = _mk_summary(rest)
-            lead['series_count'] = len(rest)
-            out.append(lead)
-            used |= {id(e) for e in rest}
+            # атомарными остаются: (1) severity>=50 значимые, (2) с УНИКАЛЬНЫМ местом
+            # (страна+регион не повторяется), (3) первые 2 по severity — как якорь темы.
+            _seen_place=set(); keep=[]; rest=[]
+            for i, e in enumerate(story):
+                _pl=(tuple(sorted(e.get('country_codes') or [])), (e.get('region') or '').strip())
+                _significant = (e.get('severity') or 0) >= 50
+                _new_place = _pl not in _seen_place and (_pl[0] or _pl[1])
+                if i < 2 or _significant or _new_place:
+                    keep.append(e); _seen_place.add(_pl)
+                else:
+                    rest.append(e)
+            # сводку делаем ТОЛЬКО если действительно есть фоновый хвост (>=3 дубля)
+            if len(rest) >= 3:
+                lead = dict(rest[0])
+                lead['title'] = '%s: фоновые сообщения (%d)' % (name, len(rest))
+                lead['summary'] = _mk_summary(rest)
+                lead['series_count'] = len(rest)
+                out.append(lead)
+                used |= {id(e) for e in rest}
+            # keep-сигналы НЕ поглощаются — остаются атомарными (пойдут в общий поток ниже)
     for e in events:
         if id(e) not in used:
             out.append(e)
