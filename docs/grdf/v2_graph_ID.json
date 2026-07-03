@@ -2,67 +2,67 @@
   "country": "ID",
   "date": "2026-07-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-03T10:09:13.009304+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-07-03T10:21:25.648116+00:00",
+  "node_count": 14,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 36,
+      "score": 42,
       "props": {
-        "risk_score": 36
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 30,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "stable"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -78,6 +78,13 @@
       "id": "DRIVER-ID-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-ID-Возможный_",
+      "type": "Signal",
+      "label": "Возможный сильный Эль-Ниньо вызывает опа",
+      "severity": 53,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-ID-Индонезия_",
@@ -99,37 +106,37 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-ID",
@@ -154,6 +161,75 @@
       "to": "COUNTRY-ID",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-ID-Возможный_",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-ID-Индонезия_",
