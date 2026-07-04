@@ -906,6 +906,9 @@ def _reconstruct_macro(signals, now):
             _spread=[]
             for m in members_sorted:
                 for c in (m.get('countries') or []):
+                    # только страны ЭТОГО макрорегиона (европейская жара — без US/RU-примесей)
+                    if _MACROREGION.get(c) != area:
+                        continue
                     nm=_cru.get(c, c)
                     if nm not in _spread: _spread.append(nm)
             regions=_spread or regions
