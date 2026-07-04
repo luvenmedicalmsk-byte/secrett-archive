@@ -527,7 +527,21 @@ def detect_domain(title, desc):
     
     if max(scores.values(), default=0) == 0:
         return None
-    return max(scores, key=scores.get)
+    _winner = max(scores, key=scores.get)
+    # ДОМЕН-ГАРД: военная атака / жертвы перевешивают экономический контекст.
+    # «БПЛА атаковали нефтяной терминал», «взрыв, погибли 5» — это geopolitics/military,
+    # а не economy, даже если в тексте «нефть/терминал/танкер». Суть события — удар, не рынок.
+    # Тот же класс «контекст перевешивает суть» (нефтяные слова тянули военное в economy).
+    if _winner in ('economy',):
+        _mil = re.search(r'(бпла|беспилотник|дрон|ракет|обстрел|авиауд|удар\w* по|'
+                         r'атаковал|взрыв прогрем|подорвал|теракт|боевик|корвет|'
+                         r'военн\w* корабл|снаряд|погибл\w+|получили ранени|убит\w+)', text)
+        if _mil:
+            # жертвы без военного актора → social (теракт/ЧП), иначе geopolitics
+            if re.search(r'(войн|военн|бпла|ракет|обстрел|корвет|всу|армия|войск)', text):
+                return 'geopolitics'
+            return 'social'
+    return _winner
 
 def get_env(key, default=""):
     return os.environ.get(key, default)
@@ -2342,7 +2356,11 @@ def process_events(raw_items):
                 r'(предлага\w* возможност|поможет \w+ (?:находить|быстрее|легко)|'
                 r'открыва\w* новые горизонт|решени\w* для вашего|специальн\w* предложен|'
                 r'идёт \w+ на пользу|надо просто потерпеть|всё будет нормально|'
-                r'не так страшн|эксперт\w* советует не паников)', _tl, re.I))
+                r'не так страшн|эксперт\w* советует не паников|'
+                # бытовые курьёзы и мнение-статьи — не systemic risk
+                r'подобрал\w* по ошибке|выброшенн\w* картин|'
+                r'не отнимут работу|научиться ими пользоват|'
+                r'как \w+ сэконом|лайфхак|топ-\d+ способ)', _tl, re.I))
             _score, _why = _admission_score(_tl, item.get('desc', ''), domain,
                                             severity, region, lat, _has_sig, item.get('source'))
             _fast_admit = _is_struct or _is_hard or _is_policy
