@@ -530,21 +530,15 @@ def _semantic_validation(item):
     _opinion=re.search(r'(не отнимут работу|научиться ими пользоват|считает,? что|по мнению эксперт|как \w+ сэконом|лайфхак|подобрал\w* по ошибке|выброшенн\w* картин)', text)
     _real_risk=re.search(r'(удар|обстрел|санкц|войн|погиб|убит|атак|взрыв|эвакуац|эпидеми|вспышк|теракт|захват|катастроф|радиац)', text)
 
-    # ── ПРОВЕРКА 1: военный механизм vs экономический/иной домен ──
-    # военная атака/жертвы первичны над контекстом (нефть/терминал/рынок)
+    # ── ПРОВЕРКА 1 ПЕРЕНЕСЕНА → Domain Engine (detect_domain: ДОМЕН-ГАРД) ──
+    # military_over_economy отвечает на вопрос «Что это?» (определяет domain), значит принадлежит
+    # Domain Engine, а не валидатору. Здесь слой только СВЕРЯЕТ результат: если военная атака/
+    # жертвы всё же остались в economy (гард пропустил) — флаг рассогласования, без коррекции.
     _violent=_mil_actor or _attack or _terror or (_casualties and re.search(r'взрыв|подорв|обрушен', text))
-    if _violent and (_casualties or _attack or _terror):
-        if domain=='economy':
-            new_dom='geopolitics' if _mil_actor else 'social'
-            corrections['domain']=new_dom
-            flags.append('military_over_economy')
-            reasons.append('Военная атака/жертвы имеют семантический приоритет над экономическим контекстом. Domain %s → %s.' % (domain, new_dom))
-            score-=0.5
-        elif domain=='climate' and _mil_actor:
-            corrections['domain']='geopolitics'
-            flags.append('military_over_climate')
-            reasons.append('Военный механизм первичен над природным контекстом. Domain climate → geopolitics.')
-            score-=0.5
+    if _violent and (_casualties or _attack or _terror) and domain=='economy':
+        flags.append('military_economy_inconsistency')
+        reasons.append('Военная атака/жертвы в domain=economy — Domain Engine должен был исправить. Рассогласование, снижено доверие.')
+        score-=0.3       # только сигнал рассогласования, коррекцию делает Domain Engine
 
     # ── ПРОВЕРКА 2: церемония с высокой severity ──
     # официальный жест без реального события не может нести высокий риск
@@ -563,11 +557,14 @@ def _semantic_validation(item):
             reasons.append('Профилактическое предупреждение о бытовом риске — фон, не системный инцидент. Severity %d → 32.' % severity)
             score-=0.35
 
-    # ── ПРОВЕРКА 4: мнение/курьёз как аналитический сигнал ──
+    # ── ПРОВЕРКА 4 ПЕРЕНЕСЕНА → Admission Engine (_promo_noise) ──
+    # opinion_or_trivia отвечает на вопрос «Пускать ли событие?» — это решение Admission,
+    # не проверка согласованности. Здесь слой только СВЕРЯЕТ: если мнение/курьёз всё же
+    # прошло Admission — флаг, без reject (решение об отклонении принимает Admission).
     if _opinion and not _real_risk:
-        flags.append('opinion_or_trivia')
-        reasons.append('Мнение/бытовой курьёз — не аналитический сигнал systemic risk. Кандидат на отклонение.')
-        corrections['reject']=True
+        flags.append('opinion_passed_admission')
+        reasons.append('Мнение/курьёз прошло Admission — вероятная ошибка допуска. Рассогласование, снижено доверие.')
+        score-=0.3       # только сигнал; reject делает Admission (_promo_noise)
         score-=0.5
 
     # ── ПРОВЕРКА 5: origin vs domain согласованность (без изменения origin) ──
@@ -639,6 +636,10 @@ def detect_domain(title, desc):
             if re.search(r'(войн|военн|бпла|ракет|обстрел|корвет|всу|армия|войск)', text):
                 return 'geopolitics'
             return 'social'
+    # военный актор в climate-домене → geopolitics (перенесено из Semantic Layer: Owner=Domain)
+    if _winner == 'climate' and re.search(r'(бпла|ракет|обстрел|авиауд|военн\w* корабл|всу|армия|войск)', text) \
+       and re.search(r'(удар\w* по|атаковал|обстрел|поражен)', text):
+        return 'geopolitics'
     return _winner
 
 def get_env(key, default=""):
