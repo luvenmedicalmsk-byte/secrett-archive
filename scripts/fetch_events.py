@@ -503,6 +503,104 @@ DOMAIN_RULES = {
     }
 }
 
+def _semantic_validation(item):
+    """SEMANTIC VALIDATION LAYER (единая смысловая проверка перед публикацией).
+    НЕ классифицирует заново — проверяет согласованность УЖЕ вычисленных признаков
+    (domain/origin/severity/type/country) с реальным смыслом события.
+    Заменяет разрозненные guard'ы единой моделью. Возвращает dict с:
+    semantic_validation ('ok'/'corrected'/'review'), semantic_score, semantic_confidence,
+    semantic_flags[], semantic_reason[]. Может: подтвердить, предложить исправление
+    (domain/severity), понизить доверие, отправить в review. НЕ трогает Origin без причины.
+    """
+    title=(item.get('title','') or '').lower()
+    desc=(item.get('desc','') or '')[:200].lower()
+    text=title+' '+desc
+    domain=item.get('domain'); severity=item.get('severity',0) or 0
+    origin=item.get('origin',''); etype=item.get('event_type','')
+    flags=[]; reasons=[]; corrections={}
+    score=1.0                       # согласованность 0..1 (1 = полностью консистентно)
+
+    # семантические маркеры (смысл события, не отдельные слова)
+    _mil_actor=re.search(r'(бпла|беспилотник|дрон|ракет|обстрел|авиауд|всу|армия|войск|корвет|военн\w* корабл|снаряд|пво)', text)
+    _attack=re.search(r'(удар\w* по|атаковал|взрыв прогрем|подорвал|обстрел|поражен|уничтож\w* удар)', text)
+    _casualties=re.search(r'(погиб\w+|получили ранени|убит\w+|жертв\w+|пострадавш)', text)
+    _terror=re.search(r'(теракт|подрыв|заминир|смертник|боевик)', text)
+    _ceremonial=re.search(r'(поздрав\w+|по случаю (?:дня|праздник|годовщин)|день независимост|национальн\w* праздник|соболезнован|пожелал\w* (?:успех|процветан|здоровь))', text)
+    _advisory=re.search(r'(предупредил\w* о мошенничеств|предостерег\w*|напомнил\w* о (?:рисках|необходимост)|призвал\w* быть бдительн|мошенничеств\w* с (?:платн|подписк|картам|звонк)|телефонн\w* мошенн)', text)
+    _opinion=re.search(r'(не отнимут работу|научиться ими пользоват|считает,? что|по мнению эксперт|как \w+ сэконом|лайфхак|подобрал\w* по ошибке|выброшенн\w* картин)', text)
+    _real_risk=re.search(r'(удар|обстрел|санкц|войн|погиб|убит|атак|взрыв|эвакуац|эпидеми|вспышк|теракт|захват|катастроф|радиац)', text)
+
+    # ── ПРОВЕРКА 1: военный механизм vs экономический/иной домен ──
+    # военная атака/жертвы первичны над контекстом (нефть/терминал/рынок)
+    _violent=_mil_actor or _attack or _terror or (_casualties and re.search(r'взрыв|подорв|обрушен', text))
+    if _violent and (_casualties or _attack or _terror):
+        if domain=='economy':
+            new_dom='geopolitics' if _mil_actor else 'social'
+            corrections['domain']=new_dom
+            flags.append('military_over_economy')
+            reasons.append('Военная атака/жертвы имеют семантический приоритет над экономическим контекстом. Domain %s → %s.' % (domain, new_dom))
+            score-=0.5
+        elif domain=='climate' and _mil_actor:
+            corrections['domain']='geopolitics'
+            flags.append('military_over_climate')
+            reasons.append('Военный механизм первичен над природным контекстом. Domain climate → geopolitics.')
+            score-=0.5
+
+    # ── ПРОВЕРКА 2: церемония с высокой severity ──
+    # официальный жест без реального события не может нести высокий риск
+    if _ceremonial and not _real_risk:
+        if severity>30:
+            corrections['severity']=min(severity,30)
+            flags.append('ceremonial_high_severity')
+            reasons.append('Церемониальный жест (поздравление/соболезнование) — де-эскалационный фон. Severity %d → 30 (высокая severity недопустима без реального события).' % severity)
+            score-=0.4
+
+    # ── ПРОВЕРКА 3: профилактическое заявление с весом инцидента ──
+    if _advisory and not re.search(r'(атак|удар|эвакуац|эпидеми|вспышк|теракт|захват|погиб|взрыв|обстрел|катастроф|радиац)', text):
+        if severity>32:
+            corrections['severity']=min(severity,32)
+            flags.append('advisory_as_incident')
+            reasons.append('Профилактическое предупреждение о бытовом риске — фон, не системный инцидент. Severity %d → 32.' % severity)
+            score-=0.35
+
+    # ── ПРОВЕРКА 4: мнение/курьёз как аналитический сигнал ──
+    if _opinion and not _real_risk:
+        flags.append('opinion_or_trivia')
+        reasons.append('Мнение/бытовой курьёз — не аналитический сигнал systemic risk. Кандидат на отклонение.')
+        corrections['reject']=True
+        score-=0.5
+
+    # ── ПРОВЕРКА 5: origin vs domain согласованность (без изменения origin) ──
+    _dom_origin_ok={
+        'geopolitics':('military','policy','cyber',''), 'economy':('economic','financial','energy',''),
+        'climate':('natural','climate','environmental',''), 'technology':('cyber','infrastructure','industrial','technogenic',''),
+        'social':('social','health',''),
+    }
+    if domain in _dom_origin_ok and origin and origin not in _dom_origin_ok[domain]:
+        # не исправляем, только флагим и понижаем доверие (origin трогать без причины нельзя)
+        flags.append('origin_domain_mismatch')
+        reasons.append('Origin «%s» не типичен для domain «%s» — снижено доверие, требует проверки.' % (origin, domain))
+        score-=0.2
+
+    # итоговый вердикт
+    score=max(0.0, min(1.0, score))
+    if corrections.get('reject'):
+        verdict='review'
+    elif corrections:
+        verdict='corrected'
+    elif score<0.7:
+        verdict='review'
+    else:
+        verdict='ok'
+    return {
+        'semantic_validation':verdict,
+        'semantic_score':round(score,2),
+        'semantic_confidence':round(score,2),
+        'semantic_flags':flags,
+        'semantic_reason':reasons,
+        '_corrections':corrections,
+    }
+
 def detect_domain(title, desc):
     """Определяет домен по ключевым словам WEF-методологии с учётом исключений"""
     text = (title + ' ' + desc).lower()
@@ -2245,35 +2343,17 @@ def process_events(raw_items):
             domain = _sys[0]; severity = max(severity, _sys[1])
         elif item.get('_force_severity') is None and _is_nat_hazard(item.get('title',''), item.get('desc','')):
             domain = 'climate'  # S40: стихия -- только климат, независимо от источника
-        # ДИПЛОМАТИЯ-ГАРД: церемониальные жесты (поздравления, соболезнования, праздники) —
-        # де-эскалационный фон, не риск. Их severity завышается контекст-словами в тексте
-        # («поздравил ... несмотря на санкции»). Потолок severity для ЦЕРЕМОНИАЛЬНЫХ событий.
-        # Субстантивную дипломатию (соглашение/санкции/удар по переговорщикам) НЕ трогаем.
+        # ══ SEMANTIC VALIDATION LAYER ══ единая смысловая проверка вместо разрозненных
+        # guard'ов (дипломатия/заявление/домен-военное). Проверяет согласованность готовых
+        # признаков и применяет объяснимые коррекции. Заменяет частные исключения одной моделью.
         if item.get('_force_severity') is None and not _sys:
-            _tl_dip=(item.get('title','') or '').lower()
-            _ceremonial=re.search(
-                r'(поздрав\w+|по случаю (?:дня|праздник|годовщин)|день независимост|'
-                r'национальн\w* праздник|соболезнован|направил\w* телеграмм\w* поздравл|'
-                r'пожелал\w* (?:успех|процветан|здоровь))', _tl_dip)
-            # только если это ЧИСТО церемония — в заголовке нет реального риск-маркера
-            _has_risk=re.search(r'(удар|обстрел|санкц|войн|погиб|убит|атак|взрыв|разрыв|'
-                                r'ультиматум|угроз|разорв|денонс)', _tl_dip)
-            if _ceremonial and not _has_risk:
-                severity=min(severity, 30)       # церемония → фон (наблюдение, не риск)
-        # ЗАЯВЛЕНИЕ-ГАРД: профилактические предупреждения госорганов о бытовых рисках
-        # (мошенничество с подписками, телефонные аферы, «будьте бдительны») — это фон,
-        # не системный инцидент. severity завышается тревожными словами без реального ущерба.
-        # НЕ трогаем предупреждения о СЕРЬЁЗНЫХ угрозах (атака/эвакуация/эпидемия) и события с ущербом.
-        if item.get('_force_severity') is None and not _sys:
-            _tl_st=(item.get('title','') or '').lower()
-            _advisory=re.search(
-                r'(предупредил\w* о мошенничеств|предостерег\w*|напомнил\w* о (?:рисках|необходимост)|'
-                r'призвал\w* быть бдительн|рекомендовал\w* не |совет\w* (?:гражданам|потребител)|'
-                r'мошенничеств\w* с (?:платн|подписк|картам|звонк)|телефонн\w* мошенн)', _tl_st)
-            _serious=re.search(r'(атак|удар|эвакуац|эпидеми|вспышк|теракт|захват|погиб|'
-                               r'взрыв|обстрел|катастроф|радиац|утечк\w* (?:газ|хим|радиа))', _tl_st)
-            if _advisory and not _serious:
-                severity=min(severity, 32)       # профилактическое заявление → фон
+            item['domain']=domain; item['severity']=severity
+            _sv=_semantic_validation(item)
+            _corr=_sv.pop('_corrections',{})
+            if 'domain' in _corr: domain=_corr['domain']
+            if 'severity' in _corr: severity=_corr['severity']
+            if _corr.get('reject'): item['_semantic_reject']=True
+            item.update(_sv)          # semantic_validation/score/confidence/flags/reason
         _is_tg = str(item.get('source','')).startswith('Telegram')
         _thr = 0 if _is_tg else (35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD)
         # ANALYTIC LAYER: событие ниже порога ленты, но прошедшее шум-фильтры S39-S44 ниже,
@@ -2364,7 +2444,7 @@ def process_events(raw_items):
             _score, _why = _admission_score(_tl, item.get('desc', ''), domain,
                                             severity, region, lat, _has_sig, item.get('source'))
             _fast_admit = _is_struct or _is_hard or _is_policy
-            _fast_reject = _is_talk or _is_digest or _tech_noise or _promo_noise
+            _fast_reject = _is_talk or _is_digest or _tech_noise or _promo_noise or item.get('_semantic_reject')
             # FEEDBACK LOOP AUDIT: shadow Score БЕЗ Process Impact (Mode B) —
             # проверяем, изменил бы отсутствие процесса-совпадения исход.
             _proc_bonus = 0.0
