@@ -2,32 +2,32 @@
   "country": "RU",
   "date": "2026-07-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-04T12:05:18.280032+00:00",
+  "generated_at": "2026-07-04T13:11:02.634187+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 62,
+      "score": 63,
       "props": {
-        "risk_score": 62
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 29,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-RU-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "stable"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -87,16 +87,16 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-RU-Маловодье:",
+      "type": "Signal",
+      "label": "Маловодье: Алтайский край (Россия)",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-Нефтяной_т",
       "type": "Signal",
       "label": "Нефтяной терминал атакован в Санкт-Петер",
-      "severity": 72,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-В_Белгород",
-      "type": "Signal",
-      "label": "В Белгороде нарушена подача электроэнерг",
       "severity": 72,
       "domain": "geopolitical"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-RU",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-RU",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-RU-По_данным_",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.78
     },
     {
-      "from": "SIGNAL-RU-Нефтяной_т",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "SIGNAL-RU-Маловодье:",
+      "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.74
     },
     {
-      "from": "SIGNAL-RU-В_Белгород",
+      "from": "SIGNAL-RU-Нефтяной_т",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.72
