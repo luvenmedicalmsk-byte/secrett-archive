@@ -914,6 +914,11 @@ def normalize_severity(source_type, m):
         if m.get('kev'):            sev += 10   # CISA KEV
         if m.get('critical_infra'): sev += 10   # критическая инфраструктура
         if m.get('ransomware'):     sev += 8    # вовлечён ransomware
+        if m.get('nation_state'):   sev += 12   # атрибуция state-актора / APT
+        _bs = m.get('breach_scale') or 0        # масштаб утечки (число записей объективно)
+        if _bs >= 1000000:  sev += 12
+        elif _bs >= 100000: sev += 8
+        elif _bs >= 10000:  sev += 4
         return int(max(30, min(95, round(sev))))
 
     return None
@@ -950,6 +955,21 @@ def cyber_metrics(source, title, desc):
         ['critical infrastructure', 'scada', ' ics ', 'power grid', 'energy grid',
          'hospital', 'критическ инфраструктур', 'энергосист', 'водоснаб'])
     m['ransomware'] = any(k in t for k in ['ransomware', 'ransom', 'вымогател'])
+    # Cyber Severity Calibration: объективные детерминированные маркеры масштаба.
+    # По ЗАГОЛОВКУ (hl) — устойчиво к тангенциальным упоминаниям в теле.
+    hl = (title or '').lower()
+    m['nation_state'] = bool(re.search(
+        r'nation-state|state-sponsored|\bapt\b|кибервойн|госхакер|'
+        r'(?:про(?:украинск|китайск|российск))\w*\s+(?:хакер|группировк)|'
+        r'(?:китай|росси|иран|кндр|сша|израил|украин)\w*.{0,25}(?:собрал|создал|стоит за|рой)', hl))
+    m['critical_infra'] = m['critical_infra'] or bool(re.search(
+        r'национальн\w*\s+систем|систем\w*\s+оповещ|стран\w*\s+отключ|страновое|'
+        r'деградац\w*\s+связн|национальн\w*\s+инфраструктур|госуслуг', hl))
+    _bs = 0
+    for _n in re.findall(r'(\d[\d\s\u00a0]{2,})\s*(?:парол|записей|пользовател|аккаунт|records|credentials|клиент)', t):
+        try: _bs = max(_bs, int(re.sub(r'[\s\u00a0]', '', _n)))
+        except Exception: pass
+    m['breach_scale'] = _bs
     return m
 
 
