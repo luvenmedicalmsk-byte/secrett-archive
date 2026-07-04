@@ -620,23 +620,25 @@ def detect_domain(title, desc):
         score = (hits - excludes * 0.5) * rule['weight']
         scores[domain] = max(0, score)
     
+    # ДОМЕН-ГАРД (первичная классификация, Owner=Domain): военная атака / жертвы —
+    # это geopolitics/social ДАЖЕ если keyword-score нулевой или economy перевесил.
+    # Проверяется ДО возврата None, чтобы Domain Engine решал сам, без опоры на Semantic Layer.
+    _mil_attack = re.search(r'(бпла|беспилотник|дрон|ракет|обстрел|авиауд|удар\w* по|'
+                            r'атаковал|взрыв прогрем|подорвал|теракт|боевик|корвет|'
+                            r'военн\w* корабл|снаряд)', text)
+    _casualty = re.search(r'(погибл\w+|получили ранени|убит\w+|жертв\w+|пострадавш)', text)
+    _mil_actor = re.search(r'(войн|военн|бпла|беспилотник|дрон|ракет|обстрел|корвет|всу|армия|войск|снаряд)', text)
+    if (_mil_attack or (_casualty and re.search(r'взрыв|подорв|обрушен|теракт', text))):
+        # военный актор → geopolitics; жертвы/теракт без актора → social
+        if _mil_actor and _mil_attack:
+            return 'geopolitics'
+        if _casualty:
+            return 'social'
+
     if max(scores.values(), default=0) == 0:
         return None
     _winner = max(scores, key=scores.get)
-    # ДОМЕН-ГАРД: военная атака / жертвы перевешивают экономический контекст.
-    # «БПЛА атаковали нефтяной терминал», «взрыв, погибли 5» — это geopolitics/military,
-    # а не economy, даже если в тексте «нефть/терминал/танкер». Суть события — удар, не рынок.
-    # Тот же класс «контекст перевешивает суть» (нефтяные слова тянули военное в economy).
-    if _winner in ('economy',):
-        _mil = re.search(r'(бпла|беспилотник|дрон|ракет|обстрел|авиауд|удар\w* по|'
-                         r'атаковал|взрыв прогрем|подорвал|теракт|боевик|корвет|'
-                         r'военн\w* корабл|снаряд|погибл\w+|получили ранени|убит\w+)', text)
-        if _mil:
-            # жертвы без военного актора → social (теракт/ЧП), иначе geopolitics
-            if re.search(r'(войн|военн|бпла|ракет|обстрел|корвет|всу|армия|войск)', text):
-                return 'geopolitics'
-            return 'social'
-    # военный актор в climate-домене → geopolitics (перенесено из Semantic Layer: Owner=Domain)
+    # военный актор в climate-домене → geopolitics (Owner=Domain: удар по объекту, не стихия)
     if _winner == 'climate' and re.search(r'(бпла|ракет|обстрел|авиауд|военн\w* корабл|всу|армия|войск)', text) \
        and re.search(r'(удар\w* по|атаковал|обстрел|поражен)', text):
         return 'geopolitics'
