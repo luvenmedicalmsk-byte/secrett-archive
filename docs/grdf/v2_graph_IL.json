@@ -2,32 +2,32 @@
   "country": "IL",
   "date": "2026-07-04",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-04T22:29:58.775205+00:00",
+  "generated_at": "2026-07-04T23:38:36.851155+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-IL-Израильска",
+      "type": "Signal",
+      "label": "Израильская НПО предупреждает, что жизнь",
+      "severity": 56,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-IL-Ливан/Изра",
       "type": "Signal",
       "label": "Ливан/Израиль: Рамочное соглашение преда",
       "severity": 55,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IL-США_заплат",
-      "type": "Signal",
-      "label": "США заплатили Израилю за участок земли д",
-      "severity": 53,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IL",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IL-Трехкратны",
       "to": "DOMAIN-IL-technology",
       "type": "AMPLIFIES",
       "weight": 0.65
     },
     {
+      "from": "SIGNAL-IL-Израильска",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-IL-Ливан/Изра",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.55
-    },
-    {
-      "from": "SIGNAL-IL-США_заплат",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
