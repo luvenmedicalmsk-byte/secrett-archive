@@ -5437,7 +5437,7 @@ def fetch_russia_climate():
             count = 0
             for item in root.findall('.//item'):
                 title = item.findtext('title','').strip()
-                desc = (item.findtext('description','') or '').strip()[:300]
+                desc = strip_html(item.findtext('description','') or '')[:300]  # L0-fix: strip ДО обрезки (иначе [:300] режет <img> до '>')
                 pub_date = item.findtext('pubDate','')
                 if not title or count >= 15: continue
                 
@@ -7403,7 +7403,7 @@ def fetch_regional():
             count = 0
             for item in root.findall('.//item'):
                 title = item.findtext('title','').strip()
-                desc = (item.findtext('description','') or '').strip()[:300]
+                desc = strip_html(item.findtext('description','') or '')[:300]  # L0-fix: strip ДО обрезки (иначе [:300] режет <img> до '>')
                 pub_date = item.findtext('pubDate','') or item.findtext('updated','')
                 if not title or count >= 8: continue
                 items.append({
@@ -7460,7 +7460,7 @@ def fetch_mideast_asia():
             count = 0
             for item in root.findall('.//item'):
                 title = item.findtext('title','').strip()
-                desc = (item.findtext('description','') or '').strip()[:300]
+                desc = strip_html(item.findtext('description','') or '')[:300]  # L0-fix: strip ДО обрезки (иначе [:300] режет <img> до '>')
                 pub_date = item.findtext('pubDate','') or item.findtext('updated','')
                 if not title or count >= 8: continue
                 items.append({
@@ -7514,7 +7514,7 @@ def fetch_uk_canada_nordic():
             count = 0
             for item in root.findall('.//item'):
                 title = item.findtext('title','').strip()
-                desc = (item.findtext('description','') or '').strip()[:300]
+                desc = strip_html(item.findtext('description','') or '')[:300]  # L0-fix: strip ДО обрезки (иначе [:300] режет <img> до '>')
                 pub_date = item.findtext('pubDate','') or item.findtext('updated','')
                 if not title or count >= 8: continue
                 items.append({
@@ -7573,7 +7573,7 @@ def fetch_europe_latam():
             count = 0
             for item in root.findall('.//item'):
                 title = item.findtext('title','').strip()
-                desc = (item.findtext('description','') or '').strip()[:300]
+                desc = strip_html(item.findtext('description','') or '')[:300]  # L0-fix: strip ДО обрезки (иначе [:300] режет <img> до '>')
                 pub_date = item.findtext('pubDate','') or item.findtext('updated','')
                 if not title or count >= 8: continue
                 items.append({
