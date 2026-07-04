@@ -2231,6 +2231,21 @@ def process_events(raw_items):
             domain = _sys[0]; severity = max(severity, _sys[1])
         elif item.get('_force_severity') is None and _is_nat_hazard(item.get('title',''), item.get('desc','')):
             domain = 'climate'  # S40: стихия -- только климат, независимо от источника
+        # ДИПЛОМАТИЯ-ГАРД: церемониальные жесты (поздравления, соболезнования, праздники) —
+        # де-эскалационный фон, не риск. Их severity завышается контекст-словами в тексте
+        # («поздравил ... несмотря на санкции»). Потолок severity для ЦЕРЕМОНИАЛЬНЫХ событий.
+        # Субстантивную дипломатию (соглашение/санкции/удар по переговорщикам) НЕ трогаем.
+        if item.get('_force_severity') is None and not _sys:
+            _tl_dip=(item.get('title','') or '').lower()
+            _ceremonial=re.search(
+                r'(поздрав\w+|по случаю (?:дня|праздник|годовщин)|день независимост|'
+                r'национальн\w* праздник|соболезнован|направил\w* телеграмм\w* поздравл|'
+                r'пожелал\w* (?:успех|процветан|здоровь))', _tl_dip)
+            # только если это ЧИСТО церемония — в заголовке нет реального риск-маркера
+            _has_risk=re.search(r'(удар|обстрел|санкц|войн|погиб|убит|атак|взрыв|разрыв|'
+                                r'ультиматум|угроз|разорв|денонс)', _tl_dip)
+            if _ceremonial and not _has_risk:
+                severity=min(severity, 30)       # церемония → фон (наблюдение, не риск)
         _is_tg = str(item.get('source','')).startswith('Telegram')
         _thr = 0 if _is_tg else (35 if domain in ('economy', 'social') else SEVERITY_THRESHOLD)
         # ANALYTIC LAYER: событие ниже порога ленты, но прошедшее шум-фильтры S39-S44 ниже,
