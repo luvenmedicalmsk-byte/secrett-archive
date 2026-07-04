@@ -5069,6 +5069,18 @@ def fetch_telegram():
         else:
             _d = _tg_classify(text) or 'geopolitics'
             if is_srisk: _d = 'social'
+            # PRECISION GUARD (зеркало Domain-гарда detect_domain): _tg_classify по
+            # инерции присваивает economy общим каналам (ничьи/раздутый economy-LEX).
+            # Военная атака/взрыв/жертвы в ЗАГОЛОВКЕ — не экономика. Гейт строго
+            # _d=='economy', чтобы править ТОЛЬКО ложные economy, не трогая остальное.
+            if _d == 'economy':
+                _hl = (text or '')[:150].lower()
+                if re.search(r'бпла|беспилотник|бомб\w|взрыв|подорв|обстрел|ракет|'
+                             r'атаков|корвет|военн\w* корабл|снаряд|авиауд|удар\w* по|'
+                             r'теракт|диверси', _hl):
+                    _d = 'geopolitics'
+                elif re.search(r'погиб|ранен\w|жертв|пострадавш|убит\w', _hl):
+                    _d = 'social'
         _out = {'title': _smart_truncate(text, 150), 'desc': text[:1200], 'date': (msg_date.strftime('%Y-%m-%d') if msg_date else today),
                 'source': TG_DISPLAY.get(ch, f'Telegram/{ch}'), 'source_bias': 5, '_domain': _d}
         if ch in DD_SRC:
