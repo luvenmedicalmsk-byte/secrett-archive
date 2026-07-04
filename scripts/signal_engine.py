@@ -855,22 +855,38 @@ def _reconstruct_macro(signals, now):
     Под-процессы НЕ удаляются (разрешающая способность сохранена) — макро ссылается на них.
     Макро появляется при >=3 региональных процессах одного типа в одной стране."""
     from collections import defaultdict, Counter as _MCtr
-    # группируем по (process_type, страна) — кандидаты в макропроцесс
-    groups=defaultdict(list)
+    # макрорегионы для трансграничных процессов (европейская тепловая волна через FR/DE/SK/...)
+    _MACROREGION={
+        'FR':'Европа','DE':'Европа','SK':'Европа','BE':'Европа','EU':'Европа','ES':'Европа',
+        'IT':'Европа','PL':'Европа','NL':'Европа','AT':'Европа','CZ':'Европа','PT':'Европа',
+        'GR':'Европа','RO':'Европа','HU':'Европа','CH':'Европа','SE':'Европа','GB':'Европа',
+        'SY':'Ближний Восток','IL':'Ближний Восток','IR':'Ближний Восток','LB':'Ближний Восток',
+        'YE':'Ближний Восток','SA':'Ближний Восток','IQ':'Ближний Восток',
+    }
+    # группируем по (process_type, страна) И по (process_type, макрорегион) — два уровня.
+    groups=defaultdict(list)          # страновой уровень (Россия → регионы)
+    region_groups=defaultdict(list)   # макрорегиональный (Европа → страны) для трансграничных
     for s in signals:
         if s.get('is_macro'): continue
         ptype=s.get('process_type','')
-        # страна процесса: из countries (доминирующая) или macro-региона
         cc=s.get('countries',[]) or []
         country=None
         if cc:
             country=_MCtr(cc).most_common(1)[0][0]
         if ptype and country:
             groups[(ptype, country)].append(s)
-    macro_out=[]
-    for (ptype, country), members in groups.items():
-        if len(members) < 3: continue           # макро только для разворачивающегося процесса
-        # география траектории: регионы/места под-процессов, по времени появления
+            _mr=_MACROREGION.get(country)
+            if _mr:
+                region_groups[(ptype, _mr)].append(s)
+    macro_out=[]; _covered=set()
+    # СНАЧАЛА трансграничные макрорегионы (европейская жара приоритетнее странового дробления)
+    _all_groups=[('region',k,v) for k,v in region_groups.items()] + \
+                [('country',k,v) for k,v in groups.items()]
+    for _lvl, (ptype, area), members in _all_groups:
+        if len(members) < 3: continue
+        # не дублируем: процесс уже покрыт трансграничным макро — не строим страновой
+        _mids={id(m) for m in members}
+        if _lvl=='country' and _mids & _covered: continue
         members_sorted=sorted(members, key=lambda s: s.get('first_seen','') or '9999')
         regions=[]
         _country_names={'Россия','США','Украина','Китай','Израиль','Иран','ЕС','Великобритания','Индия','Киргизия'}
@@ -879,6 +895,20 @@ def _reconstruct_macro(signals, now):
             # в траекторию — только конкретные регионы, не страна-зонтик и не Глобально
             if pl and pl not in ('Глобально',) and pl not in _country_names and pl not in regions:
                 regions.append(pl)
+        # траектория: для странового макро — регионы; для трансграничного — страны
+        if _lvl=='region':
+            _cru={'RU':'Россия','US':'США','UA':'Украина','CN':'Китай','IL':'Израиль','IR':'Иран',
+                  'EU':'ЕС','GB':'Великобритания','FR':'Франция','DE':'Германия','SK':'Словакия',
+                  'BE':'Бельгия','ES':'Испания','IT':'Италия','PL':'Польша','SY':'Сирия','LB':'Ливан',
+                  'MX':'Мексика','MC':'Монако','SA':'Саудовская Аравия','IQ':'Ирак','YE':'Йемен',
+                  'NL':'Нидерланды','AT':'Австрия','CZ':'Чехия','PT':'Португалия','GR':'Греция',
+                  'RO':'Румыния','HU':'Венгрия','CH':'Швейцария','SE':'Швеция','IN':'Индия'}
+            _spread=[]
+            for m in members_sorted:
+                for c in (m.get('countries') or []):
+                    nm=_cru.get(c, c)
+                    if nm not in _spread: _spread.append(nm)
+            regions=_spread or regions
         if len(regions) < 2: continue            # нужна реальная география распространения
         # кросс-доменный каскад: объединяем origin_chain всех под-процессов
         _chain=[]
@@ -886,43 +916,44 @@ def _reconstruct_macro(signals, now):
             for o in (m.get('origin_chain') or []):
                 if o not in _chain: _chain.append(o)
         _domains=sorted(set(m.get('primary_domain','') for m in members if m.get('primary_domain')))
-        # severity макро = максимум под-процессов (кризис силён как его пик)
         _sev=max((m.get('severity',0) for m in members), default=0)
         _pressure=max((m.get('pressure',0) or 0 for m in members), default=0)
         _ev_total=sum(m.get('evidence_count',1) for m in members)
         _first=min((m.get('first_seen','') for m in members if m.get('first_seen')), default=now)
         _last=max((m.get('last_seen','') or m.get('last_update','') for m in members), default=now)
-        # стабильный macro-id (тип+страна, инвариант к регионам)
-        _mid=_stable_id(_domains[0] if _domains else 'economy', 'MACRO|'+ptype, country, '')
-        _country_ru={'RU':'Россия','US':'США','UA':'Украина','CN':'Китай','IL':'Израиль',
-                     'IR':'Иран','EU':'ЕС','GB':'Великобритания','IN':'Индия'}.get(country, country)
+        _mid=_stable_id(_domains[0] if _domains else 'economy', 'MACRO|'+ptype, area, '')
+        _area_ru={'RU':'Россия','US':'США','UA':'Украина','CN':'Китай','IL':'Израиль',
+                  'IR':'Иран','EU':'ЕС','GB':'Великобритания','IN':'Индия'}.get(area, area)
         macro={
-            'signal_id':_mid, 'is_macro':True,
-            'title':'%s — %s (системный процесс)' % (ptype, _country_ru),
+            'signal_id':_mid, 'is_macro':True, 'macro_level':_lvl,
+            'title':'%s — %s (системный процесс)' % (ptype, _area_ru),
             'process_type':ptype, 'primary_domain':_domains[0] if _domains else 'economy',
-            'domains':_domains, 'process_place':_country_ru, 'countries':[country],
+            'domains':_domains, 'process_place':_area_ru,
+            'countries':sorted(set(c for m in members for c in (m.get('countries') or []))),
             'severity':_sev, 'priority':_sev, 'pressure':_pressure,
             'origin':members[0].get('origin','unknown'), 'origin_chain':_chain[:6],
             'evidence_count':_ev_total, 'first_seen':_first, 'last_seen':_last,
-            # ТРАЕКТОРИЯ распространения: регионы в порядке появления
             'geo_spread':regions, 'geo_spread_count':len(regions),
             'included_processes':[m.get('signal_id') for m in members],
             'included_regions':regions,
             'lifecycle_stage':'Развитие' if len(regions)>=3 else 'Обнаружение',
-            'macro_reason':'%d региональных процессов, распространение: %s' % (
+            'macro_reason':'%d процессов, распространение: %s' % (
                 len(members), ' → '.join(regions[:6])),
             'access_tier':'pro' if _domains and _domains[0]=='geopolitics' else 'free',
             'status':'active',
         }
-        # пометить под-процессы принадлежностью к макро
         for m in members:
             m['parent_macro']=_mid
+            _covered.add(id(m))
         macro_out.append(macro)
     return signals + macro_out
 
 def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
+    # Макропроцессы (Б) — производные, строятся заново каждый прогон из под-процессов.
+    # Не переносим их из previous, иначе накапливаются дубли.
+    previous=[s for s in (previous or []) if not s.get('is_macro')]
     prev_by_id={s['signal_id']:s for s in (previous or [])}
     # IDENTITY CONTRACT: индекс по инвариантному ядру — процесс находит свою историю
     # даже если signal_id изменился из-за эволюции классификации (переименование ptype и т.п.)
