@@ -373,7 +373,9 @@ DOMAIN_RULES = {
             "climate change","global warming","arctic","antarctic","ozone",
             "resource shortage","energy crisis","oil spill","chemical leak",
             "засуха","наводнение","пожар","ураган","землетрясение","цунами",
-            "климат","экология","природные ресурсы","биоразнообразие"
+            "климат","экология","природные ресурсы","биоразнообразие",
+            # --- EN target-stream expansion (Domain Coverage Audit, post-FREEZE) ---
+            "heat wave","heatwaves","storm risk"
         ],
         "weight": 1.0,
         # Слова которые НЕ должны попасть в климат
@@ -393,7 +395,9 @@ DOMAIN_RULES = {
             "trade war","tariff","export ban","import restriction","sanctions economy",
             "energy prices","oil price","food prices","cost of living",
             "рецессия","инфляция","долг","безработица","экономический кризис",
-            "финансовый кризис","цепочки поставок","стагфляция"
+            "финансовый кризис","цепочки поставок","стагфляция",
+            # --- EN target-stream expansion (Domain Coverage Audit, post-FREEZE) ---
+            "crude","refining","oil glut"
         ],
         "weight": 1.3,
         "exclude": ["military","armed","weapon","flood","wildfire","earthquake","hack",
@@ -420,7 +424,9 @@ DOMAIN_RULES = {
             "strike","strikes","airstrike","air strike","attack","attacks","killed",
             "bombing","shelling","offensive","raid","militant","militants","gaza","israeli",
             "drone strike","artillery","death toll","clashes","gunmen","shelled","besieged",
-            "удары","ударов","жертв","штурм","боевик","боевики","сектор газа","обстреляли"
+            "удары","ударов","жертв","штурм","боевик","боевики","сектор газа","обстреляли",
+            # --- EN target-stream expansion (Domain Coverage Audit, post-FREEZE) ---
+            "mobilisation","crimes against humanity","defense industry","funeral of","state funeral"
         ],
         "weight": 1.5,
         "exclude": ["flood","wildfire","earthquake","inflation","recession","hack","cyber"]
@@ -467,7 +473,9 @@ DOMAIN_RULES = {
             "сбой облак","облачн сервис","сбой хостинг","недоступн сервис",
             "нейросет","дипфейк","генеративн","языков модел",
             "ддос","ddos-атак","утечка данных","взлом систем","атака на кии",
-            "искусственн","deepseek","openai","chatgpt","ии-стартап"
+            "искусственн","deepseek","openai","chatgpt","ии-стартап",
+            # --- EN target-stream expansion (Domain Coverage Audit, post-FREEZE) ---
+            "hackers","cybercrime","vulnerabilities","zero-day","kernel flaw","proxy network","malicious packages","encryption","quantum","data breach"
         ],
         "weight": 1.3,
         "exclude": ["flood","wildfire","earthquake","military ground","armed conflict",
@@ -490,7 +498,9 @@ DOMAIN_RULES = {
             "protest","civil unrest","strike","demonstration","riot",
             "corruption","institutional failure","governance crisis",
             "неравенство","миграция","беженцы","здоровье","бедность",
-            "поляризация","социальный кризис","протест","права человека"
+            "поляризация","социальный кризис","протест","права человека",
+            # --- EN target-stream expansion (Domain Coverage Audit, post-FREEZE) ---
+            "refugees","asylum","outbreak","repression","rally against","rally in support"
         ],
         "weight": 1.2,
         "exclude": ["military","armed conflict","war","airstrike","cyberattack",
