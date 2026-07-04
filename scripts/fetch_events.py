@@ -2237,6 +2237,13 @@ def process_events(raw_items):
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
         if item.get('date','') < cutoff: _LOSS['old']+=1; continue
+        # --- Ingestion Cleanup (VNext L0): нормализуем desc ДО классификации ---
+        # HTML-теги/entities/пробелы чистятся один раз здесь, чтобы detect_domain,
+        # RUSSIA_FILTER, _is_ad, гео и severity читали plain text. Иначе разметка вида
+        # '<div><img src=...>' отравляет текст, который видит классификатор.
+        # title НЕ трогаем: _clean_title сплитит по \n ДО strip_html (ранняя очистка сломала бы).
+        if item.get('desc'):
+            item['desc'] = strip_html(item['desc'])
         _src0 = item.get('source','')
         if _src0.startswith('Telegram/') or _src0 in _TG_SRC:
             _ld = _text_latest_date((item.get('title','') or '') + ' ' + (item.get('desc','') or ''))
