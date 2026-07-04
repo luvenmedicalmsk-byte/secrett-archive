@@ -2307,13 +2307,17 @@ def process_events(raw_items):
                 r'представил\w* (?:новинк|устройств|гаджет)|вышл\w* (?:новинк|обновлен)|'
                 r'программ\w* слежки за (?:своими )?сотрудник|не захотел\w* провер|'
                 r'сравнял\w* с передов|получил\w* доступ к \w+ верси)', _tl, re.I))
-            # ADMISSION 3.0: семантический Score поверх keyword-слоя.
-            # Быстрые сигналы (struct/hard/policy) и явный talk/шум решают сразу;
-            # серая зона — по AdmissionScore («меняет ли событие картину»).
+            # PROMO/РИТОРИКА-шум: маркетинговый язык и оценочные мнения — не факт-сигнал.
+            # Узко: ловит промо-обороты и «X считает/на пользу/надо потерпеть» без факта.
+            _promo_noise = bool(re.search(
+                r'(предлага\w* возможност|поможет \w+ (?:находить|быстрее|легко)|'
+                r'открыва\w* новые горизонт|решени\w* для вашего|специальн\w* предложен|'
+                r'идёт \w+ на пользу|надо просто потерпеть|всё будет нормально|'
+                r'не так страшн|эксперт\w* советует не паников)', _tl, re.I))
             _score, _why = _admission_score(_tl, item.get('desc', ''), domain,
                                             severity, region, lat, _has_sig, item.get('source'))
             _fast_admit = _is_struct or _is_hard or _is_policy
-            _fast_reject = _is_talk or _is_digest or _tech_noise
+            _fast_reject = _is_talk or _is_digest or _tech_noise or _promo_noise
             # FEEDBACK LOOP AUDIT: shadow Score БЕЗ Process Impact (Mode B) —
             # проверяем, изменил бы отсутствие процесса-совпадения исход.
             _proc_bonus = 0.0
