@@ -1,9 +1,9 @@
 {
   "country": "FR",
   "country_name": "Франция",
-  "date": "2026-07-03",
-  "generated_at": "2026-07-03T23:59:40.385434+00:00",
-  "evolution_score": 64,
+  "date": "2026-07-04",
+  "generated_at": "2026-07-04T01:54:19.689614+00:00",
+  "evolution_score": 71,
   "grade": "B",
   "grade_ru": "Стабильная эволюция",
   "active_scenarios": [
@@ -75,21 +75,18 @@
       "status": "active"
     },
     {
-      "id": "ASE-CRIT-WORST",
-      "type": "critical_branch",
-      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
-      "trigger": "Критический уровень риска: 93",
-      "score": 97,
-      "probability": 12,
-      "confidence": 60,
-      "trend_strength": 80,
+      "id": "ASE-ESC-DETE",
+      "type": "escalation_branch",
+      "name": "Ветвь эскалации: deteriorating",
+      "trigger": "Тренд: нарастание давления",
+      "score": 95,
+      "probability": 18,
+      "confidence": 50,
+      "trend_strength": 65,
       "status": "emerging",
-      "source": "critical_risk",
+      "source": "recommendation_shift",
       "domain": "climate"
-    }
-  ],
-  "active_count": 2,
-  "emerging_scenarios": [
+    },
     {
       "id": "ASE-CRIT-WORST",
       "type": "critical_branch",
@@ -104,53 +101,106 @@
       "domain": "climate"
     }
   ],
-  "convergences": [],
+  "active_count": 3,
+  "emerging_scenarios": [
+    {
+      "id": "ASE-ESC-DETE",
+      "type": "escalation_branch",
+      "name": "Ветвь эскалации: deteriorating",
+      "trigger": "Тренд: нарастание давления",
+      "score": 95,
+      "probability": 18,
+      "confidence": 50,
+      "trend_strength": 65,
+      "status": "emerging",
+      "source": "recommendation_shift",
+      "domain": "climate"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 93",
+      "score": 97,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "climate"
+    }
+  ],
+  "convergences": [
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 2,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    }
+  ],
   "divergences": [],
   "ranked_pathways": [
+    {
+      "id": "ASE-CRIT-WORST",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "probability": 20.0,
+      "score": 97,
+      "confidence": 60,
+      "trend_strength": 80,
+      "scenario_score": 58
+    },
     {
       "id": "worst",
       "name": "Worst Case",
       "type": "worst",
       "status": "active",
-      "probability": 71.4,
+      "probability": 50.0,
       "score": 95,
       "confidence": 30.0,
       "trend_strength": 50,
-      "scenario_score": 62
+      "scenario_score": 56
     },
     {
-      "id": "ASE-CRIT-WORST",
-      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
-      "type": "critical_branch",
+      "id": "ASE-ESC-DETE",
+      "name": "Ветвь эскалации: deteriorating",
+      "type": "escalation_branch",
       "status": "emerging",
-      "probability": 28.6,
-      "score": 97,
-      "confidence": 60,
-      "trend_strength": 80,
-      "scenario_score": 61
+      "probability": 30.0,
+      "score": 95,
+      "confidence": 50,
+      "trend_strength": 65,
+      "scenario_score": 56
     }
   ],
-  "pathway_count": 2,
+  "pathway_count": 3,
   "future_landscape": {
-    "dominant_pathway": "Worst Case",
-    "dominant_prob": 71.4,
-    "dominant_score": 95,
+    "dominant_pathway": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+    "dominant_prob": 20.0,
+    "dominant_score": 97,
     "outlook": "deteriorating",
-    "narrative": "Доминирующий сценарий 'Worst Case' (71%) указывает на ухудшение — скор 95. Риск системной эскалации.",
-    "n_convergences": 0,
+    "narrative": "Доминирующий сценарий 'Критический каскад (ветвь КРИТИЧЕСКИХ рисков)' (20%) указывает на ухудшение — скор 97. Риск системной эскалации.",
+    "n_convergences": 1,
     "n_divergences": 0,
-    "landscape_complexity": 20
+    "landscape_complexity": 30
   },
   "diagnostics": [
+    {
+      "type": "narrative_collapse",
+      "label": "Распад нарратива",
+      "detail": "Доминирующий сценарий набирает лишь 20% — нарратив раздроблен"
+    },
     {
       "type": "future_blind_spot",
       "label": "Слепое пятно будущего",
       "detail": "Нет положительных сценариев в активном наборе — потенциал улучшения не отражён"
     }
   ],
-  "diagnostic_count": 1,
+  "diagnostic_count": 2,
   "scenario_diversity_index": 4,
-  "future_stability_index": 100,
+  "future_stability_index": 40,
   "retired_scenarios": [
     {
       "type": "best",
@@ -349,9 +399,9 @@
   "retired_count": 3,
   "sub_scores": {
     "fc_acc": 50,
-    "sc_val": 50,
+    "sc_val": 67,
     "prob_cal": 100,
-    "adapt": 65,
+    "adapt": 80,
     "stability": 64
   },
   "history_depth": 4,
