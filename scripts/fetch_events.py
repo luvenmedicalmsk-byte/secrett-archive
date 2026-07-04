@@ -2120,6 +2120,7 @@ def process_events(raw_items):
     _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
              'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0,
              'nogeo_valid': 0, 'nogeo_noise': 0, 'proc_only': 0}
+    _NO_DOMAIN_SHADOW = []      # Domain Coverage Audit: отброшенные без домена
     _SEV_SAMPLE = []
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
 
@@ -2266,7 +2267,16 @@ def process_events(raw_items):
             # S36.4: домен ленты в приоритете (оба ключа), иначе по ключевым словам
             domain = item.get('_domain') or item.get('domain') or detect_domain(item['title'], item.get('desc',''))
             if not domain:
-                _LOSS['no_domain']+=1; continue
+                _LOSS['no_domain']+=1
+                # SHADOW-ЛОГ для Domain Coverage Audit: сохраняем отброшенные без домена,
+                # чтобы анализировать потерю recall (не меняет поведение — событие всё равно дропается)
+                try:
+                    if len(_NO_DOMAIN_SHADOW) < 120:
+                        _NO_DOMAIN_SHADOW.append({'title':item.get('title','')[:160],
+                            'desc':(item.get('desc','') or '')[:160],'source':str(item.get('source',''))[:30]})
+                except NameError:
+                    pass
+                continue
             # Сначала пробуем российские координаты
             geo = detect_russia_coords(item['title'], item.get('desc',''))
             if not geo:
@@ -2640,6 +2650,11 @@ def process_events(raw_items):
                 'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')})
             (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(
                 json.dumps(_loss_report, ensure_ascii=False, indent=2), encoding='utf-8')
+            # DOMAIN COVERAGE AUDIT: отброшенные без домена — для анализа recall
+            (OUTPUT_PATH.parent / '_no_domain.json').write_text(json.dumps(
+                {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                 'total_no_domain': _LOSS.get('no_domain', 0),
+                 'sample': _NO_DOMAIN_SHADOW}, ensure_ascii=False, indent=2), encoding='utf-8')
             # ADMISSION AUDIT: сэмпл low_significance в ОТДЕЛЬНЫЙ файл (не перезатирается)
             (OUTPUT_PATH.parent / '_admission_sample.json').write_text(json.dumps(
                 {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
