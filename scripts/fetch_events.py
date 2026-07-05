@@ -929,6 +929,12 @@ CYBER_SOURCES = {
     'CISA KEV', 'CISA Advisory', 'BleepingComputer', 'The Record', 'CyberScoop',
     'Help Net Security', 'Dark Reading', 'Krebs Security', 'Krebs on Security',
     'AlienVault OTX', 'Cyber Intel', 'Industrial Cyber',
+    # Variant A (Cyber Routing): профильные cyber Telegram/RSS, ранее шедшие через
+    # news severity — теперь через cyber_metrics (CVSS/флаги). Только маршрутизация,
+    # модель severity не тронута. Имена = точные source-строки из реестра (_TG_SRC).
+    'THN', 'IT', 'Cyber', 'Cyber SN', 'Cyber Threat', 'Cybersecurity', 'Cybersec',
+    'Lab News', 'Xakep IT', 'R Osint', 'Dciber', 'Engineering', 'AM Live',
+    'Hacker News Security',
 }
 
 
