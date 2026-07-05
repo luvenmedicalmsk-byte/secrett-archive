@@ -2,102 +2,102 @@
   "country": "DE",
   "country_name": "Германия",
   "date": "2026-07-05",
-  "generated_at": "2026-07-05T17:59:51.820739+00:00",
-  "strategy_score": 21,
+  "generated_at": "2026-07-05T19:04:55.803761+00:00",
+  "strategy_score": 10,
   "strategy_confidence": 79,
-  "urgency_level": "moderate",
-  "urgency_level_ru": "Умеренная",
-  "urgency_color": "#fbbf24",
-  "preparedness_level": "enhanced",
-  "preparedness_level_ru": "Повышенная готовность",
-  "monitoring_priority": 2,
-  "monitoring_ru": "Дважды в сутки",
+  "urgency_level": "low",
+  "urgency_level_ru": "Низкая",
+  "urgency_color": "#22c55e",
+  "preparedness_level": "routine",
+  "preparedness_level_ru": "Плановый режим",
+  "monitoring_priority": 1,
+  "monitoring_ru": "Ежедневно",
   "actions": [
     {
-      "id": "C-01",
+      "id": "S-01",
       "priority": 1,
-      "action": "Ожидать деэскалации",
-      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
-      "trigger": "contained + best dominant",
-      "expiry": "state change or prob_best < 25%",
-      "confidence": 83,
+      "action": "Мониторинговый режим",
+      "detail": "Поддерживать стандартный цикл наблюдения, отклонений не выявлено",
+      "trigger": "risk_score < 40 AND dominant = best",
+      "expiry": "risk_score > 45 OR delta > 3",
+      "confidence": 82,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "C-02",
+      "id": "S-02",
       "priority": 2,
-      "action": "Подготовить план выхода из контролируемой фазы",
-      "detail": "Определить индикаторы для перевода в мониторинговый режим",
-      "trigger": "contained > 5d",
-      "expiry": "stabilization transition",
-      "confidence": 83,
+      "action": "Обновить базовые прогнозы",
+      "detail": "Благоприятный период для актуализации долгосрочных прогнозов",
+      "trigger": "stabilization state > 7d",
+      "expiry": "state transition",
+      "confidence": 82,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "contained",
+  "state": "stabilization",
   "dominant_scenario": "best",
-  "scenario_score": 18,
-  "instability": 8,
+  "scenario_score": 20,
+  "instability": 12,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 61 (+8pt)",
-      "leads_to": "escalating",
-      "probability": 14
+      "condition": "risk_score ≥ 60 (+8pt)",
+      "leads_to": "contained",
+      "probability": 15
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "escalating",
-      "probability": 5
+      "leads_to": "contained",
+      "probability": 6
     },
     {
-      "condition": "Worst-case 30d ≥ 64",
-      "leads_to": "escalating",
-      "probability": 16
+      "condition": "Worst-case 30d ≥ 57",
+      "leads_to": "contained",
+      "probability": 18
     },
     {
       "condition": "Новый критический драйвер в geopolitics",
-      "leads_to": "escalating",
-      "probability": 16
+      "leads_to": "contained",
+      "probability": 17
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 47,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 40,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "90 дней",
-      "score": 42,
+      "score": 36,
       "state": "stabilization",
       "urgency": "low",
       "preparedness": "routine"
     },
     {
       "horizon": "180 дней",
-      "score": 38,
+      "score": 32,
       "state": "stabilization",
       "urgency": "low",
       "preparedness": "routine"
     },
     {
       "horizon": "365 дней",
-      "score": 34,
+      "score": 29,
       "state": "stabilization",
       "urgency": "low",
       "preparedness": "routine"
     }
   ],
   "probabilities": {
-    "worst": 16,
-    "stress": 20,
-    "base": 29,
-    "best": 35
+    "worst": 18,
+    "stress": 21,
+    "base": 27,
+    "best": 34
   }
 }
