@@ -337,6 +337,48 @@ def _tag_event_countries(events: list[dict]) -> None:
         for k in ("mentioned_countries", "impact_countries", "country_codes"):
             ev.setdefault(k, [])
 
+def _enrich_lifecycle(events: list[dict]) -> None:
+    """Event Lifecycle: стабильный first_seen (реестр по fingerprint), last_update,
+    lifecycle_stage. Возраст события считается от ПЕРВОГО появления, а не от date
+    (которую синтетические/мониторинговые сигналы переписывают на сегодня каждый
+    прогон). Ranking свежести на фронте должен использовать first_seen, не date.
+    Классы: разовое (news) — date=реальная; процесс/состояние (GDACS/Sea Ice/Fire) —
+    date может быть сегодня, но first_seen стабилен → корректное старение."""
+    from datetime import date as _ld, timedelta as _ltd
+    reg_path = DOCS_DIR / "_lifecycle.json"
+    try:
+        reg = json.loads(reg_path.read_text()).get("registry", {})
+    except Exception:
+        reg = {}
+    today = TODAY
+    def _key(e):
+        return e.get("fingerprint") or e.get("id") or (e.get("title") or "")[:80]
+    seen_now = set()
+    for e in events:
+        k = _key(e)
+        if not k:
+            continue
+        seen_now.add(k)
+        rec = reg.get(k)
+        first_seen = rec["first_seen"] if (rec and rec.get("first_seen")) else today
+        reg[k] = {"first_seen": first_seen, "last_update": today}
+        e["first_seen"] = first_seen
+        e["last_update"] = today
+        try:
+            age = (_ld.fromisoformat(today) - _ld.fromisoformat(first_seen)).days
+        except Exception:
+            age = 0
+        e["lifecycle_stage"] = "active" if age <= 2 else ("aging" if age <= 7 else "archived")
+    # prune: записи, не встреченные 30+ дней, выбрасываем из реестра
+    cutoff = (_ld.fromisoformat(today) - _ltd(days=30)).isoformat()
+    reg = {k: v for k, v in reg.items() if k in seen_now or (v.get("last_update") or "") >= cutoff}
+    try:
+        reg_path.write_text(json.dumps({"updated": today, "registry": reg},
+                            ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as _e:
+        print(f"[SNAP] lifecycle registry write fail: {_e}", file=sys.stderr)
+
+
 def _persist_tagged_events(events: list[dict]) -> None:
     """Re-write docs/events.json with country tags (preserve wrapper keys)."""
     path = DOCS_DIR / "events.json"
@@ -347,6 +389,7 @@ def _persist_tagged_events(events: list[dict]) -> None:
         d = {}
     if not isinstance(d, dict):
         d = {"events": events}
+    _enrich_lifecycle(events)   # Lifecycle: first_seen/last_update/lifecycle_stage
     d["events"] = events
     d["count"] = len(events)
     try:
