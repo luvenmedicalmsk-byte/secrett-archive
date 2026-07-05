@@ -309,7 +309,15 @@ def _tag_event_countries(events: list[dict]) -> None:
     RU-observer эвристики и повторные вычисления удалены (NO RECALCULATION,
     SINGLE SOURCE). Страна-актор (geo.actor_country) добавляется в атрибуцию
     страновой аналитики (страна вовлечена), но не является местом процесса."""
+    _NON_COUNTRY = {"EU", "UN"}  # GEO-fix: блоки/организации — не страны, из атрибуции исключаются
     for ev in events:
+        for _k in ("mentioned_countries", "impact_countries", "country_codes"):
+            if ev.get(_k):
+                ev[_k] = [c for c in ev[_k] if c not in _NON_COUNTRY]
+        if ev.get("primary_country") in _NON_COUNTRY:
+            ev["primary_country"] = ""
+        if ev.get("event_country") in _NON_COUNTRY:
+            ev["event_country"] = ""
         gc = ev.get("geo") or {}
         if gc:
             actor = gc.get("actor_country") or ""
@@ -9031,7 +9039,14 @@ def _save_grdf_all(uros: list[dict]) -> None:
 
 def _save_grdf_signals(all_signals: list[dict]) -> None:
     """Global signal registry across all countries."""
-    sig_sorted = sorted(all_signals, key=lambda s: -s["severity"])
+    # GEO-fix: дедуп по заголовку (одно трансграничное событие попадало под неск.
+    # стран как отдельные сигналы) — оставляем запись с макс. severity.
+    _seen: dict[str, dict] = {}
+    for s in all_signals:
+        _t = (s.get("title", "") or "").strip()
+        if _t and (_t not in _seen or (s.get("severity", 0) or 0) > (_seen[_t].get("severity", 0) or 0)):
+            _seen[_t] = s
+    sig_sorted = sorted(_seen.values(), key=lambda s: -s["severity"])
     with open(GRDF_DIR / "_signals.json","w") as f:
         json.dump({"date":TODAY,"generated_at":datetime.now(timezone.utc).isoformat(),
                    "total":len(sig_sorted),"signals":sig_sorted[:200]}, f, ensure_ascii=False, indent=2)
