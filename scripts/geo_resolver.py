@@ -76,6 +76,22 @@ def is_ru_text(text):
     low = text.lower()
     return any(tok in low for tok in RU_COUNTRY_TOKENS)
 
+# Бэйр-города РФ (именительный падеж), которых нет среди -ск стемов RU_SUBJECTS.
+_RU_BARE_CITIES = ('белгород', 'воронеж', 'ростов', 'краснодар')
+
+def ru_place_in_title(title):
+    """True, если в ЗАГОЛОВКЕ явный RU-топоним (субъект РФ или однозначный город).
+    Fallback: primary=RU, когда основной резолвер оставил primary пустым. RU-топоним —
+    всегда МЕСТО события, а не актор ("украинская ракета над Удмуртией" -> локация RU).
+    Проверяется только заголовок (не summary), чтобы упоминания вроде "москвичей" в
+    описании не давали ложную РФ-атрибуцию европейским событиям."""
+    if not title or not isinstance(title, str):
+        return False
+    low = title.lower()
+    if ru_subject(low):
+        return True
+    return any(c in low for c in _RU_BARE_CITIES)
+
 
 # ── Иностранные государства: стем → (ISO2, каноничное рус. имя) ──────────────────
 # ЕДИНЫЙ источник для детерминированного резолва заграницы (V6.5).

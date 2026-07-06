@@ -1401,7 +1401,7 @@ _GEO_SORTED = sorted(_GEO_MERGED.items(), key=lambda kv: -len(kv[0]))
 
 
 # --- Гео: единый источник истины (AUDIT 4.5) ---
-from geo_resolver import ru_subject as ru_subject_in, RU_SUBJECTS as _RU_SUBJECTS, foreign_country as _foreign_country
+from geo_resolver import ru_subject as ru_subject_in, RU_SUBJECTS as _RU_SUBJECTS, foreign_country as _foreign_country, ru_place_in_title as _ru_place_in_title
 from geo_resolver import _PRIORITY_GEO as _PRIO_GEO
 
 def ru_geo(s):
@@ -3403,6 +3403,19 @@ def _apply_geo_contract(events):
             e['mentioned_countries'] = _imp; e['country_codes'] = _imp
             e['is_global'] = False
             e['map_visible'] = False   # VALID_NO_GEO: в ленте есть, на карте нет
+    # GEO fallback: RU-топоним в ЗАГОЛОВКЕ -> primary=RU, когда основной резолвер оставил
+    # primary пустым. RU-субъект/город — всегда МЕСТО события, не актор. Проверено на живом
+    # потоке: 10 событий, 0 ложных (guard: только title, region не европейский).
+    try:
+        _EU_REG = ('ЕС', 'Европа', 'Евросоюз', 'EU')
+        for e in events:
+            if (not e.get('primary_country')) and ((e.get('region') or '') not in _EU_REG) \
+               and _ru_place_in_title(e.get('title') or ''):
+                e['primary_country'] = 'RU'; e['country_code'] = 'RU'
+                if not e.get('event_country'):
+                    e['event_country'] = 'RU'
+    except Exception:
+        pass
     try:
         (OUTPUT_PATH.parent / '_geo_authority.json').write_text(json.dumps(
             {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
