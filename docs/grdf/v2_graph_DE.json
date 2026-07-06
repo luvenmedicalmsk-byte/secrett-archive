@@ -2,60 +2,60 @@
   "country": "DE",
   "date": "2026-07-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-06T14:46:23.720944+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-07-06T17:38:58.000472+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 47,
+      "score": 50,
       "props": {
-        "risk_score": 47
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 28,
-      "trend": "stable"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "stable"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
@@ -80,11 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-DE-Пять_стран",
+      "type": "Signal",
+      "label": "Пять стран НАТО договорились о массовой ",
+      "severity": 55,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-DE-Министр_об",
       "type": "Signal",
       "label": "Министр обороны Германии Борис Писториус",
       "severity": 47,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-DE-Украинская",
+      "type": "Signal",
+      "label": "Украинская лапша привела к вспышке сальм",
+      "severity": 45,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -92,37 +106,37 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-DE",
@@ -149,10 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-DE-Пять_стран",
+      "to": "DOMAIN-DE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.55
+    },
+    {
       "from": "SIGNAL-DE-Министр_об",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.47
+    },
+    {
+      "from": "SIGNAL-DE-Украинская",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.45
     }
   ]
 }
