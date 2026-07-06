@@ -2591,6 +2591,17 @@ def process_events(raw_items):
                 _sp = _cut.rfind(' ')
                 summary = (_cut[:_sp] if _sp >= 140 else _cut).rstrip() + '…'
 
+        # Скрытие из ленты: локальная АВАРИЯ на ферме с гибелью скота (пожар/обрушение/взрыв)
+        # -- локальное происшествие, не systemic-сигнал. В данных/на карте остаётся,
+        # из ленты уходит (feed_visible=False). Болезни (АЧС/грипп/эпизоотия/падёж) и
+        # человеческие жертвы -> НЕ скрываются (systemic / люди).
+        _hl_txt = ((item.get('title') or '') + ' ' + (summary or '')).lower()
+        _hide_local = bool(
+            re.search(r'(?<![а-яё])(ферм[аеы]|свиноферм|птицефабрик|скотоферм|коровник|свинарник|птичник|животноводческ|свин|поросят|коров|быко|скот[аие]\b|поголов|курин|кур[аеыиц]|птиц|цыпл|овец|кролик|индюш)', _hl_txt)
+            and re.search(r'(пожар|сгорел|загорел|обрушен|взрыв|затопил|прорвало)', _hl_txt)
+            and not re.search(r'(человек|людей|жител|детей|погибших человек|пассажир|мужчин|женщин)', _hl_txt)
+            and not re.search(r'(грипп|ачс|чум[аы]|эпизоот|эпидеми|вспышк|зараз|инфекц|вирус|мор\b|пад[её]ж|карантин|штамм)', _hl_txt)
+        )
         _ev = {
             "id": ev_id,
             "title": _clean_title(item['title']) or _smart_truncate(_strip_promo(strip_html(item['title'])), 120),
@@ -2603,7 +2614,7 @@ def process_events(raw_items):
             "source": item['source'],
             "source_weight": _gov.get('weight', 1.0),
             "date": item['date'],
-            "feed_visible": not _below_feed,   # FREE-лента: только сильные; аналитика: все
+            "feed_visible": (not _below_feed) and not _hide_local,   # FREE-лента: только сильные; локальные ЧП на ферме скрыты
         }
         if item.get('_meta'): _ev["meta"] = item['_meta']
         # D4 (Pre-Release Window): event_kind отделяет геофизику от метеоклимата.
