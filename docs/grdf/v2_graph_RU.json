@@ -2,32 +2,32 @@
   "country": "RU",
   "date": "2026-07-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-06T19:43:38.719130+00:00",
+  "generated_at": "2026-07-06T21:25:10.349791+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 61,
+      "score": 62,
       "props": {
-        "risk_score": 61
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "down"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-RU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-cyber",
@@ -87,16 +87,16 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-RU-Маловодье:",
+      "id": "SIGNAL-RU-В_Белгород",
       "type": "Signal",
-      "label": "Маловодье: Кемеровская обл. (Россия)",
+      "label": "В Белгороде объявлена ракетная опасность",
       "severity": 74,
-      "domain": "climate"
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-RU-Маловодье:",
       "type": "Signal",
-      "label": "Маловодье: Алтайский край (Россия)",
+      "label": "Маловодье: Кемеровская обл. (Россия)",
       "severity": 74,
       "domain": "climate"
     }
@@ -106,13 +106,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-RU",
@@ -163,14 +163,35 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-RU-Погибших_и",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.75
     },
     {
-      "from": "SIGNAL-RU-Маловодье:",
-      "to": "DOMAIN-RU-climate",
+      "from": "SIGNAL-RU-В_Белгород",
+      "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
