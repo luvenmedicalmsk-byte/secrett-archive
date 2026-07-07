@@ -2,66 +2,66 @@
   "country": "TR",
   "date": "2026-07-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-07T12:47:28.610162+00:00",
+  "generated_at": "2026-07-07T14:58:48.327808+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 40,
+      "score": 45,
       "props": {
-        "risk_score": 40
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 28,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 2,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Трамп_гово",
+      "type": "Signal",
+      "label": "Трамп говорит, что снимет санкции с Турц",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-TR-В_Турции_п",
       "type": "Signal",
       "label": "В Турции перед саммитом НАТО прошли масс",
@@ -87,17 +94,10 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-TR-Гроза:_Тур",
+      "id": "SIGNAL-TR-В_США_не_у",
       "type": "Signal",
-      "label": "Гроза: Турция (уровень yellow)",
-      "severity": 38,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TR-Возобновле",
-      "type": "Signal",
-      "label": "Возобновление переговоров между Россией ",
-      "severity": 34,
+      "label": "В США не уверены в том, что предстоящий ",
+      "severity": 45,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "DRIVER-TR-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-TR-Трамп_гово",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-TR-В_Турции_п",
       "to": "DOMAIN-TR-social",
       "type": "AMPLIFIES",
       "weight": 0.46
     },
     {
-      "from": "SIGNAL-TR-Гроза:_Тур",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.38
-    },
-    {
-      "from": "SIGNAL-TR-Возобновле",
+      "from": "SIGNAL-TR-В_США_не_у",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.45
     }
   ]
 }
