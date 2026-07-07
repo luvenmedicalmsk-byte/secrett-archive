@@ -1778,6 +1778,23 @@ def write_signals_json(events, path):
     current=build_signals(events)
     evolved,report,global_health,memory_updated,patterns=evolve_signals(
         current, previous, now, want_report=True, prev_global=prev_global, memory=memory)
+    # ФИНАЛЬНЫЙ СКРАБ (catch-all перед записью): ловит шум и дубли независимо от того, как
+    # они попали — новые из build_signals ИЛИ перенесённые через evolve из прошлого снапшота
+    # (continuation-процессы тянут старые evidence/timeline до фикса). Гарантия чистого вывода.
+    _SCRUB=re.compile(r'бодяж|фуфло|туфта|брехн|пал[её]ва|галим|развалюх|обосра|зашкварн|'
+                      r'фонов\w* сообщени|сводка\s*\(\d+|дайджест\s*\(\d+|\(\d+\s*сообщени', re.I)
+    for s in evolved:
+        ev=s.get('evidence')
+        if isinstance(ev,list):
+            s['evidence']=[e for e in ev if not _SCRUB.search((e.get('title') or ''))]
+        tl=s.get('timeline')
+        if isinstance(tl,list):
+            s['timeline']=[t for t in tl if not _SCRUB.search((t.get('event') or ''))]
+            if isinstance(s.get('history'),list): s['history']=s['timeline']
+        # дедуп связей между блоками (обычные + макро): «связанные» без причины/следствия
+        _cc=set(s.get('causes') or [])|set(s.get('caused_by') or [])
+        if isinstance(s.get('related'),list):
+            s['related']=[x for x in s['related'] if x not in _cc]
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
