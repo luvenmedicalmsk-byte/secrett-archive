@@ -853,12 +853,21 @@ def _enrich_macro(macro, members, now):
     """Наполняет системный (макро) процесс содержимым из под-процессов: хроника-нарратив,
     события, прогноз, связи, объяснение, динамика. Без этого макро — пустая оболочка
     (агрегатные счётчики без timeline/forecast/explain), что и даёт пустую карточку."""
+    # ── ФИЛЬТР ШУМА хроники/свидетельств: провокационный сленг + агрегатные заглушки ──
+    # (а) провокация («бодяжить» — искажающая подача, не факт);
+    # (б) бандлы без содержания («фоновые сообщения (7)», «сводка (4 сообщений)») — не говорят
+    #     ЧТО произошло, мусор в нарративе. Только конкретные события идут в хронику.
+    def _is_noise(ttl):
+        t=(ttl or '').lower()
+        if re.search(r'бодяж|фуфло|туфта|брехн|пал[её]ва|галим|развалюх|обосра|зашкварн', t): return True
+        if re.search(r'фонов\w* сообщени|сводка\s*\(\d+|дайджест\s*\(\d+|сообщени[йя]\s*\(\d+|\(\d+\s*сообщени', t): return True
+        return False
     # ── TIMELINE: нарративная хронология каскада из событий под-процессов ──
     _tl=[]; _seen=set()
     for m in members:
         for e in (m.get('evidence') or []):
             ttl=(e.get('title') or '').strip()
-            if not ttl: continue
+            if not ttl or _is_noise(ttl): continue
             k=ttl[:50]
             if k in _seen: continue
             _seen.add(k)
@@ -867,12 +876,13 @@ def _enrich_macro(macro, members, now):
     _tl.sort(key=lambda x: x.get('t') or '')
     macro['timeline']=_tl[-18:] if len(_tl)>18 else _tl
     macro['history']=macro['timeline']
-    # ── EVIDENCE: объединение событий под-процессов (дедуп по заголовку) ──
+    # ── EVIDENCE: объединение событий под-процессов (дедуп по заголовку, без шума) ──
     _ev=[]; _se=set()
     for m in members:
         for e in (m.get('evidence') or []):
             t=(e.get('title') or '')[:60]
-            if t and t not in _se: _se.add(t); _ev.append(e)
+            if not t or _is_noise(t) or t in _se: continue
+            _se.add(t); _ev.append(e)
     macro['evidence']=_ev[:24]
     # ── FORECAST: усреднение прогнозов членов + ренормализация (было 0/0/0) ──
     _fs=[m.get('forecast') for m in members if isinstance(m.get('forecast'), dict)]
