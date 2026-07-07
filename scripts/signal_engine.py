@@ -178,7 +178,7 @@ def _loc_tmpl(e):
 _CLIM_PHEN=[('наводнение',r'наводн|паводок|разлив рек|подтоплен|половодь'),
             ('пожар',r'пожар|возгоран|\bочаг|задымлен'),
             ('засуха',r'маловод|засух|обмелен'),
-            ('жара',r'тепловая волна|тепловой удар|аномальн\w* жар|\bзной'),
+            ('жара',r'тепловая волна|тепловой удар|аномальн\w* жар|\bзной|высок\w* температ|очень жарк|аномальн\w* тепл'),
             ('сейсмика',r'землетряс|магнитуд|сейсм'),
             ('вулкан',r'вулкан|изверж|пепл'),
             ('шторм',r'ураган|\bшторм|смерч|шквал|тайфун|цунами')]
@@ -1816,6 +1816,20 @@ def write_signals_json(events, path):
         _cc=set(s.get('causes') or [])|set(s.get('caused_by') or [])
         if isinstance(s.get('related'),list):
             s['related']=[x for x in s['related'] if x not in _cc]
+        # ФЕНОМЕН-СКРАБ (climate): процесс «Наводнение» не должен содержать пожары/маловодье/
+        # вулкан в хронике и свидетельствах. Убираем чужие КЛИМАТИЧЕСКИЕ явления (None/generic
+        # оставляем — не факт, что чужие). Catch-all поверх клим-феномен-гейта кластеризации.
+        _pph={'Наводнение':'наводнение','Пожарная активность':'пожар','Водный дефицит':'засуха',
+              'Тепловая волна':'жара','Сейсмическая активность':'сейсмика'}.get(s.get('process_type'))
+        if _pph:
+            def _keep_phen(ttl):
+                p=_clim_phen({'title':ttl or ''})
+                return (p is None) or (p==_pph)
+            if isinstance(s.get('evidence'),list):
+                s['evidence']=[e for e in s['evidence'] if _keep_phen(e.get('title'))]
+            if isinstance(s.get('timeline'),list):
+                s['timeline']=[t for t in s['timeline'] if _keep_phen(t.get('event'))]
+                if isinstance(s.get('history'),list): s['history']=s['timeline']
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
