@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-07-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-07T10:12:13.787450+00:00",
+  "generated_at": "2026-07-07T12:47:28.609190+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 48,
+      "score": 54,
       "props": {
-        "risk_score": 48
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 23,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 19,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-GB-Попытки_Фр",
+      "type": "Signal",
+      "label": "Попытки Франции блокировать использовани",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-В_Великобр",
       "type": "Signal",
       "label": "В Великобритании на свалке нашли секретн",
       "severity": 45,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GB-Значительн",
-      "type": "Signal",
-      "label": "Значительная часть НАТО пока не может на",
-      "severity": 34,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-GB",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.03
     },
     {
       "from": "DRIVER-GB-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-Британия_в",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
+      "from": "SIGNAL-GB-Попытки_Фр",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-GB-В_Великобр",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.45
-    },
-    {
-      "from": "SIGNAL-GB-Значительн",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
