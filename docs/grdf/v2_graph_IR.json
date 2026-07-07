@@ -2,24 +2,24 @@
   "country": "IR",
   "date": "2026-07-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-07T20:17:14.832858+00:00",
+  "generated_at": "2026-07-07T21:11:40.910990+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 55,
+      "score": 53,
       "props": {
-        "risk_score": 55
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
+      "score": 53,
       "trend": "down"
     },
     {
@@ -34,20 +34,20 @@
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
+      "score": 16,
       "trend": "down"
     },
     {
@@ -80,10 +80,17 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-США_отменя",
+      "type": "Signal",
+      "label": "США отменяют освобождение, позволяющее п",
+      "severity": 62,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-IR-Три_танкер",
       "type": "Signal",
       "label": "Три танкера пострадали в последних атака",
-      "severity": 66,
+      "severity": 62,
       "domain": "geopolitical"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Иран безусловно будет взимать плату за п",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-США_отзыва",
-      "type": "Signal",
-      "label": "США отзывают лицензию на торговлю иранск",
-      "severity": 34,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-IR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-США_отменя",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-IR-Три_танкер",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.66
+      "weight": 0.62
     },
     {
       "from": "SIGNAL-IR-Иран_безус",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-IR-США_отзыва",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }

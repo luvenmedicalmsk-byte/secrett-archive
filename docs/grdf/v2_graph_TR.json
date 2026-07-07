@@ -2,31 +2,31 @@
   "country": "TR",
   "date": "2026-07-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-07T20:17:14.829642+00:00",
+  "generated_at": "2026-07-07T21:11:40.904388+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 47,
+      "score": 49,
       "props": {
-        "risk_score": 47
+        "risk_score": 49
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 42,
       "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 27,
+      "score": 29,
       "trend": "up"
     },
     {
@@ -54,14 +54,14 @@
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 15,
+      "score": 16,
       "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Нет_'волше",
+      "type": "Signal",
+      "label": "Нет 'волшебной палочки': Трамп сталкивае",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-TR-США_отменя",
       "type": "Signal",
       "label": "США отменят санкции против Турции",
@@ -92,13 +99,6 @@
       "label": "В Турции перед саммитом НАТО прошли масс",
       "severity": 46,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-TR-В_США_не_у",
-      "type": "Signal",
-      "label": "В США не уверены в том, что предстоящий ",
-      "severity": 45,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-TR",
@@ -136,13 +136,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-TR-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-TR-Нет_'волше",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-TR-США_отменя",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-TR-social",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-TR-В_США_не_у",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.45
     }
   ]
 }
