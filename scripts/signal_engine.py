@@ -922,6 +922,13 @@ def _reconstruct_macro(signals, now):
         _sev=max((m.get('severity',0) for m in members), default=0)
         _pressure=max((m.get('pressure',0) or 0 for m in members), default=0)
         _ev_total=sum(m.get('evidence_count',1) for m in members)
+        # СИСТЕМНЫЙ ВЕС: агрегат из N свёрнутых фрагментов весомее одиночного фрагмента.
+        # Ранее pressure=max(фрагменты) -> национальный/трансграничный процесс, покрывающий
+        # множество регионов, ранжировался КАК ОДИН РЕГИОН и тонул (топливо-РФ из 11 регионов
+        # стояло 24-м с pressure=54, как Новосибирск-одиночка). Бонус за широту охвата
+        # (число свёрнутых свидетельств) поднимает системный каскад над его фрагментами.
+        # Кап +28, потолок 100. Только для системных (макро) процессов; одиночные не тронуты.
+        _pressure = min(100, _pressure + min(28, 3*max(0, _ev_total-3)))
         _first=min((m.get('first_seen','') for m in members if m.get('first_seen')), default=now)
         _last=max((m.get('last_seen','') or m.get('last_update','') for m in members), default=now)
         _mid=_stable_id(_domains[0] if _domains else 'economy', 'MACRO|'+ptype, area, '')
