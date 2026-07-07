@@ -1487,6 +1487,11 @@ def _build_relations(signals):
     for S in signals:
         for k in ('causes','caused_by','related','amplifies','suppresses'):
             S[k]=sorted(set(S[k]))[:6]
+        # ДЕДУП МЕЖДУ БЛОКАМИ: одна связь показывается в одном разделе. Приоритет
+        # причина/следствие > связанные: убираем из «связанные» то, что уже причина/следствие
+        # (иначе процесс висит и как причина, и как «связанный» — визуальный дубль).
+        _cc=set(S['causes'])|set(S['caused_by'])
+        S['related']=[x for x in S['related'] if x not in _cc]
     return signals
 
 # Module 2: Cascading Engine — давление источника поднимает давление получателей
@@ -1616,14 +1621,19 @@ def _build_one_signal(evs, meta=None):
     evidence=[]
     for x in sorted(evs,key=lambda x:-x.get('severity',0)):
         r=_role(x.get('source')); ml,ms=_confidence_match(x, ptype, place)
-        # ПРОВОКАЦИЯ-ГАРД: заголовок с чистым оценочным сленгом («бодяжить»/«фуфло»/«туфта»)
-        # -- искажающая подача, не факт. Событие остаётся свидетельством, но НЕ становится
-        # триггером-якорем нарратива (intelligence-tone, не медийная сенсация). Список узкий:
-        # эти слова не встречаются в легитимных риск-сигналах (проверено на потоке).
-        _provoc=bool(re.search(r'бодяж|фуфло|туфта|брехн|пал[её]ва|галим|развалюх|обосра|зашкварн', (x.get('title') or '').lower()))
+        _ttl=(x.get('title') or '')
+        # ФИЛЬТР ШУМА свидетельств/хроники (все процессы, не только макро):
+        # (а) агрегатные заглушки («фоновые сообщения (N)», «сводка (N сообщений)») — бандлы
+        #     без содержания, не говорят ЧТО произошло;
+        # (б) провокационный сленг («бодяжить») — искажающая подача реального факта.
+        # В свидетельства идут только конкретные события (intelligence-tone).
+        if re.search(r'фонов\w* сообщени|сводка\s*\(\d+|дайджест\s*\(\d+|\(\d+\s*сообщени', _ttl.lower()):
+            continue
+        if re.search(r'бодяж|фуфло|туфта|брехн|пал[её]ва|галим|развалюх|обосра|зашкварн', _ttl.lower()):
+            continue
         evidence.append({'title':x.get('title',''),'source':x.get('source',''),'role':r,
             'quality':_ROLE_TIER.get(r,r),'weight':_ROLE_WEIGHT.get(r,0.5),'match':ml,'match_score':ms,
-            'date':x.get('date',''),'severity':x.get('severity',0),'is_trigger':(r=='telegram' and not _provoc)})
+            'date':x.get('date',''),'severity':x.get('severity',0),'is_trigger':(r=='telegram')})
     ev_weight=round(sum(e['weight'] for e in evidence),2)      # взвешенное число свидетельств
     # priority с учётом качества (не только количества)
     np_=min(1.0, math.log1p(persist)/math.log1p(10)); nc_=min(1.0, len(conn)/3.0)
