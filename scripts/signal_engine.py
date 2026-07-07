@@ -849,6 +849,80 @@ def _type_origin_fallback(s):
                 'reasons':['домен без явного механизма: %s'%_dom],'chain':[_dm[_dom]]}
     return {'origin':'unknown','confidence':0.2,'reasons':[],'chain':[]}
 
+def _enrich_macro(macro, members, now):
+    """Наполняет системный (макро) процесс содержимым из под-процессов: хроника-нарратив,
+    события, прогноз, связи, объяснение, динамика. Без этого макро — пустая оболочка
+    (агрегатные счётчики без timeline/forecast/explain), что и даёт пустую карточку."""
+    # ── TIMELINE: нарративная хронология каскада из событий под-процессов ──
+    _tl=[]; _seen=set()
+    for m in members:
+        for e in (m.get('evidence') or []):
+            ttl=(e.get('title') or '').strip()
+            if not ttl: continue
+            k=ttl[:50]
+            if k in _seen: continue
+            _seen.add(k)
+            _tl.append({'t':(e.get('date') or '')[:10], 'event':ttl[:140],
+                        'detail':e.get('source',''), 'severity':e.get('severity',0)})
+    _tl.sort(key=lambda x: x.get('t') or '')
+    macro['timeline']=_tl[-18:] if len(_tl)>18 else _tl
+    macro['history']=macro['timeline']
+    # ── EVIDENCE: объединение событий под-процессов (дедуп по заголовку) ──
+    _ev=[]; _se=set()
+    for m in members:
+        for e in (m.get('evidence') or []):
+            t=(e.get('title') or '')[:60]
+            if t and t not in _se: _se.add(t); _ev.append(e)
+    macro['evidence']=_ev[:24]
+    # ── FORECAST: усреднение прогнозов членов + ренормализация (было 0/0/0) ──
+    _fs=[m.get('forecast') for m in members if isinstance(m.get('forecast'), dict)]
+    if _fs:
+        _e=sum(f.get('escalation',0) for f in _fs)/len(_fs)
+        _s=sum(f.get('stabilization',0) for f in _fs)/len(_fs)
+        _d=sum(f.get('decay',0) for f in _fs)/len(_fs)
+        _t=(_e+_s+_d) or 1
+        macro['forecast']={'escalation':round(_e/_t,2),'stabilization':round(_s/_t,2),'decay':round(_d/_t,2)}
+    # ── PHASE: самая ОСТРАЯ стадия среди членов (по срочности, не по позиции в цикле) ──
+    _urg={'escalating':7,'growing':6,'active':5,'emerging':4,'stabilizing':3,'de-escalating':2,'dormant':1,'archived':0}
+    _ph=[m.get('phase') for m in members if m.get('phase')]
+    if _ph:
+        macro['phase']=max(_ph, key=lambda p:_urg.get(p,0))
+    macro.setdefault('phase_history',[{'t':now,'phase':macro.get('phase','active')}])
+    # ── CONFIDENCE: агрегат подтверждённости ──
+    _cf=[m.get('confidence') for m in members if m.get('confidence')]
+    macro['confidence']=('confirmed' if any('confirm' in str(c) for c in _cf)
+                         else (_cf[0] if _cf else 'unconfirmed'))
+    # ── VELOCITY/TREND/DELTA: агрегатная динамика ──
+    _vs=[m.get('velocity',{}).get('severity_per_h',0) for m in members if isinstance(m.get('velocity'),dict)]
+    _vmax=max(_vs, default=0)
+    macro['velocity']={'severity_per_h':_vmax,'category':('усиливается' if _vmax>0.5 else ('затухает' if _vmax<-0.5 else 'стабильно'))}
+    macro['trend']=('rising' if _vmax>0.5 else ('de-escalating' if _vmax<-0.5 else 'stable'))
+    macro['delta']={'severity':0,'priority':0,'new_sources':[],'new_countries':[],'new_connections':[]}
+    macro['acceleration']=0
+    # ── СВЯЗИ: объединение ВНЕШНИХ связей под-процессов (не сами члены) ──
+    _mids={m.get('signal_id') for m in members}
+    def _ext(field):
+        o=[]
+        for m in members:
+            for c in (m.get(field) or []):
+                if c and c not in _mids and c not in o: o.append(c)
+        return o[:8]
+    macro['causes']=_ext('causes'); macro['caused_by']=_ext('caused_by')
+    macro['related']=_ext('related'); macro['amplifies']=_ext('amplifies'); macro['suppresses']=_ext('suppresses')
+    macro['connectivity']=(macro['causes']+macro['caused_by']+macro['related'])[:10]
+    # ── EXPLAIN: объяснение из macro_reason + агрегата ──
+    _top=[m.get('title','') for m in sorted(members,key=lambda x:-(x.get('pressure',0) or 0))[:4]]
+    _n=len(members)
+    macro['explain']={
+        'why_exists':'Системный процесс объединяет %d связанных процессов, разворачивающихся в разных регионах и доменах как единый каскад риска.' % _n,
+        'formed_by':_top,
+        'why_priority':'Приоритет отражает широту охвата (%d проявлений) и совокупное давление каскада.' % _n,
+        'why_phase':'Стадия определяется по наиболее продвинутому из входящих процессов.',
+        'why_confidence':'Доверие агрегировано из подтверждённости входящих процессов.',
+    }
+    macro['why_exists']=macro['explain']['why_exists']
+    return macro
+
 def _reconstruct_macro(signals, now):
     """Б: РЕКОНСТРУКЦИЯ СИСТЕМНОГО ПРОЦЕССА. Собирает региональные процессы одной темы+страны
     в макропроцесс-зонтик с географической траекторией и кросс-доменным каскадом.
@@ -952,6 +1026,7 @@ def _reconstruct_macro(signals, now):
             'access_tier':'pro' if _domains and _domains[0]=='geopolitics' else 'free',
             'status':'active',
         }
+        _enrich_macro(macro, members, now)
         for m in members:
             m['parent_macro']=_mid
             _covered.add(id(m))
