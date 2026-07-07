@@ -868,6 +868,17 @@ def _enrich_macro(macro, members, now):
     """Наполняет системный (макро) процесс содержимым из под-процессов: хроника-нарратив,
     события, прогноз, связи, объяснение, динамика. Без этого макро — пустая оболочка
     (агрегатные счётчики без timeline/forecast/explain), что и даёт пустую карточку."""
+    # ═══ КОМПОНЕНТ B (ADR-004, PROC-8): нарратив ЖИВОГО макро — функция ЖИВЫХ членов ═══
+    # Замороженные (absent, _decay_absent) члены сохраняют своё последнее состояние
+    # (заморозка легитимна), но НЕ питают нарратив живого агрегата: иначе ошибки прошлых
+    # прогонов (чужой evidence в замороженном члене) бессмертно транслируются в макро.
+    # Живой член = обновлён в ЭТОМ цикле (last_seen==now). Охват/давление/included —
+    # по ВСЕМ членам (широта реальна); timeline/evidence/forecast/связи — по живым.
+    # Fallback: если живых нет (макро целиком из замороженных) — макро сам замирает:
+    # наследует нарратив от всех членов как последнее известное (заморозка агрегата).
+    _live=[m for m in members if m.get('last_seen')==now]
+    _nsrc=_live if _live else members
+    _frozen_macro=not _live
     # ── ФИЛЬТР ШУМА хроники/свидетельств: провокационный сленг + агрегатные заглушки ──
     # (а) провокация («бодяжить» — искажающая подача, не факт);
     # (б) бандлы без содержания («фоновые сообщения (7)», «сводка (4 сообщений)») — не говорят
@@ -879,7 +890,7 @@ def _enrich_macro(macro, members, now):
         return False
     # ── TIMELINE: нарративная хронология каскада из событий под-процессов ──
     _tl=[]; _seen=set()
-    for m in members:
+    for m in _nsrc:
         for e in (m.get('evidence') or []):
             ttl=(e.get('title') or '').strip()
             if not ttl or _is_noise(ttl): continue
@@ -893,14 +904,14 @@ def _enrich_macro(macro, members, now):
     macro['history']=macro['timeline']
     # ── EVIDENCE: объединение событий под-процессов (дедуп по заголовку, без шума) ──
     _ev=[]; _se=set()
-    for m in members:
+    for m in _nsrc:
         for e in (m.get('evidence') or []):
             t=(e.get('title') or '')[:60]
             if not t or _is_noise(t) or t in _se: continue
             _se.add(t); _ev.append(e)
     macro['evidence']=_ev[:24]
     # ── FORECAST: усреднение прогнозов членов + ренормализация (было 0/0/0) ──
-    _fs=[m.get('forecast') for m in members if isinstance(m.get('forecast'), dict)]
+    _fs=[m.get('forecast') for m in _nsrc if isinstance(m.get('forecast'), dict)]
     if _fs:
         _e=sum(f.get('escalation',0) for f in _fs)/len(_fs)
         _s=sum(f.get('stabilization',0) for f in _fs)/len(_fs)
@@ -909,16 +920,16 @@ def _enrich_macro(macro, members, now):
         macro['forecast']={'escalation':round(_e/_t,2),'stabilization':round(_s/_t,2),'decay':round(_d/_t,2)}
     # ── PHASE: самая ОСТРАЯ стадия среди членов (по срочности, не по позиции в цикле) ──
     _urg={'escalating':7,'growing':6,'active':5,'emerging':4,'stabilizing':3,'de-escalating':2,'dormant':1,'archived':0}
-    _ph=[m.get('phase') for m in members if m.get('phase')]
+    _ph=[m.get('phase') for m in _nsrc if m.get('phase')]
     if _ph:
         macro['phase']=max(_ph, key=lambda p:_urg.get(p,0))
     macro.setdefault('phase_history',[{'t':now,'phase':macro.get('phase','active')}])
     # ── CONFIDENCE: агрегат подтверждённости ──
-    _cf=[m.get('confidence') for m in members if m.get('confidence')]
+    _cf=[m.get('confidence') for m in _nsrc if m.get('confidence')]
     macro['confidence']=('confirmed' if any('confirm' in str(c) for c in _cf)
                          else (_cf[0] if _cf else 'unconfirmed'))
     # ── VELOCITY/TREND/DELTA: агрегатная динамика ──
-    _vs=[m.get('velocity',{}).get('severity_per_h',0) for m in members if isinstance(m.get('velocity'),dict)]
+    _vs=[m.get('velocity',{}).get('severity_per_h',0) for m in _nsrc if isinstance(m.get('velocity'),dict)]
     _vmax=max(_vs, default=0)
     macro['velocity']={'severity_per_h':_vmax,'category':('усиливается' if _vmax>0.5 else ('затухает' if _vmax<-0.5 else 'стабильно'))}
     macro['trend']=('rising' if _vmax>0.5 else ('de-escalating' if _vmax<-0.5 else 'stable'))
@@ -928,7 +939,7 @@ def _enrich_macro(macro, members, now):
     _mids={m.get('signal_id') for m in members}
     def _ext(field):
         o=[]
-        for m in members:
+        for m in _nsrc:
             for c in (m.get(field) or []):
                 if c and c not in _mids and c not in o: o.append(c)
         return o[:8]
