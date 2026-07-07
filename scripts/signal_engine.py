@@ -863,7 +863,7 @@ def _enrich_macro(macro, members, now):
             if k in _seen: continue
             _seen.add(k)
             _tl.append({'t':(e.get('date') or '')[:10], 'event':ttl[:140],
-                        'detail':e.get('source',''), 'severity':e.get('severity',0)})
+                        'detail':'', 'severity':e.get('severity',0)})
     _tl.sort(key=lambda x: x.get('t') or '')
     macro['timeline']=_tl[-18:] if len(_tl)>18 else _tl
     macro['history']=macro['timeline']
