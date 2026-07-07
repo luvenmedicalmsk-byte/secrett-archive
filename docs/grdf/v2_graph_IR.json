@@ -2,67 +2,67 @@
   "country": "IR",
   "date": "2026-07-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-07T15:41:09.850105+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-07-07T16:12:29.317419+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 49,
+      "score": 60,
       "props": {
-        "risk_score": 49
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 21,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 22,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Три_танкер",
+      "type": "Signal",
+      "label": "Три танкера пострадали в последних атака",
+      "severity": 66,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IR-Иран_безус",
       "type": "Signal",
       "label": "Иран безусловно будет взимать плату за п",
@@ -87,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Мировая_эк",
+      "id": "SIGNAL-IR-Иранский_р",
       "type": "Signal",
-      "label": "Мировая экономика столкнется с периодом ",
-      "severity": 34,
+      "label": "Иранский риал обвалился до нового миниму",
+      "severity": 60,
       "domain": "economic"
     }
   ],
@@ -99,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-IR",
@@ -156,16 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Три_танкер",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
       "from": "SIGNAL-IR-Иран_безус",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-IR-Мировая_эк",
+      "from": "SIGNAL-IR-Иранский_р",
       "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.6
     }
   ]
 }
