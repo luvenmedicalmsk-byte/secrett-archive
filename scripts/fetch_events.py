@@ -3498,6 +3498,123 @@ def _canon_shadow_report(events, outdir, SIG):
     return rep
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ADMISSION SHADOW v1 Phase 1 (ADR-008 Signal Purity Contract) — диагностический
+# контур. SH-A1: классифицирует по ФИНАЛЬНОМУ русскому тексту (после перевода/нормализ.),
+# не по языку исходника (иначе воспроизведёт AD1, нарушив SP-7). SH-A2: только читает
+# опубликованные данные, ничего не меняет (боевой путь побайтово неизменен). SH-A3:
+# Admission Purity и FP Rate НЕ публикуются как KPI (классификатор в калибровке) — только
+# FP Candidates. SH-A4: Unknown Flow — базовая доверенная метрика (canon-based, языко-честная).
+# Контракт: N1 событийность ∧ N2 риск-релевантность (изменение наблюдаемого процесса) ∧ N3 фактичность.
+# ══════════════════════════════════════════════════════════════════════════════
+_SHA_EVENT = re.compile(r'(удар|атак|обстрел|сбит|сбил|уничтож|разрушен|поврежд|взрыв|пожар|возгоран|'
+    r'наводн|паводок|подтопл|землетряс|шторм|ураган|тайфун|циклон|торнадо|засух|оползен|блэкаут|обесточ|'
+    r'отключ|падени\w* (?:интернет|связ)|деград\w* связ|обвал|рухнул|упал|дефолт|банкрот|вспышк|эпидеми|'
+    r'заражен|погиб|пострадал|жертв|введ\w* санкц|закрыл\w* границ|подписал\w* указ|принят\w* закон|'
+    r'национализир|мобилизац|эвакуир|захвач|взлом|утечк|кибератак|блокир|дрон|бпла|ракет|наступлен|прорыв|'
+    r'лихорадк|цунами|вулкан|извержен|\bсель\b|смерч|шквал|морск\w* л[её]д|уязвим|\bcve\b|вымогател|ransomware)', re.I)
+_SHA_STMT = re.compile(r'(заявил|заявля|обвин|предупре|пригроз|призва|призыва|осудил|настаива|потребова|'
+    r'выразил|считает|планир|рассматрива|обсужда|предлож|поручил|не введёт|не хотят|представит|требую|'
+    r'отмен\w* санкц|хочет|готов\w* к|по мнению|по словам|намерен(?!о))', re.I)
+_SHA_OPINION = re.compile(r'(\bмнени|колонк|рассужд|размышл|\bэссе|почему |\bкак \w+ (?:устроен|работа|находит|'
+    r'помога|влия)|что значит|что означает|стоит ли|\bобзор\b|лонгрид|интервью|объясня\w+, почему)', re.I)
+_SHA_NOISE = re.compile(r'(\bнба\b|\bnba\b|футбол|хоккей|\bматч|турнир|чемпионат|олимп|устанавлива\w* рекорд|'
+    r'пловц|ютубер|блогер|подписчик|гороскоп|астролог|таро|рецепт|похуден|подарк|распродаж|биохакер)', re.I)
+_SHA_ACT = re.compile(r'(введ\w* санкц|подписал\w* указ|принят\w* закон|закрыл\w* границ|национализир|объявил\w* мобилизац)', re.I)
+_SHA_DOMV = {
+    'geopolitics': r'войн|военн|ракет|дрон|бпла|санкц|нато|удар|обстрел|границ|теракт|оккупац|нпз|наступлен|пораж|взрыв|нападени|всу|пво',
+    'economy': r'инфляц|дефолт|банкрот|обвал|бирж|нефт|рубл|бензин|топлив|азс|ставк|рухнул|акци|котировк|фондов',
+    'technology': r'кибератак|хакер|взлом|утечк|уязвим|блэкаут|обесточ|дата-центр|спутник|отключ\w* интернет|падени\w* (?:интернет|связ)|деград\w* связ|cve|вымогател',
+    'social': r'эпидеми|вспышк|заболеван|вирус|инфекц|миграц|беженц|голод|лихорадк|пандеми',
+    'climate': r'наводн|паводок|землетряс|шторм|ураган|тайфун|засух|пожар|вулкан|цунами|оползен|циклон|торнадо|морск\w* л[её]д|подтопл|\bсель\b|деград\w* (?:каспи|мор|озер)|маловод|аномальн\w* (?:жар|температур)',
+}
+
+def _admission_contract_classify(title, domain):
+    """ADR-008 §2: N1 событийность ∧ N2 риск-релевантность ∧ N3 фактичность (по финальному тексту)."""
+    t = (title or '').lower()
+    if _SHA_NOISE.search(t):
+        return False, 'noise', 'N2'
+    n1 = bool(_SHA_EVENT.search(t)) and not bool(_SHA_OPINION.search(t))
+    is_act = bool(_SHA_ACT.search(t))
+    n3 = (not bool(_SHA_STMT.search(t))) or is_act
+    dv = _SHA_DOMV.get(domain or '', '')
+    n2 = bool(re.search(dv, t)) if dv else False
+    ok = n1 and n2 and n3
+    violated = None
+    if not ok:
+        violated = ','.join(x for x, v in (('N1', n1), ('N2', n2), ('N3', n3)) if not v) or None
+    return ok, 'N1=%d N2=%d N3=%d act=%d' % (int(n1), int(n2), int(n3), int(is_act)), violated
+
+def _admission_shadow_report(events, outdir):
+    from collections import Counter
+    N = max(1, len(events))
+    # SH-A4: Unknown Flow — доверенная метрика (canon-based, языко-честная)
+    unknown = [e for e in events if e.get('canon_type') == 'unknown']
+    unknown_flow = round(len(unknown) / N, 3)
+    # SH-A1: контрактная классификация по финальному русскому тексту (допущенные события)
+    fp_candidates = []
+    contract_signal = 0
+    for e in events:
+        dom = e.get('canon_domain') or e.get('domain') or ''
+        ok, why, violated = _admission_contract_classify(e.get('title', ''), dom)
+        if ok:
+            contract_signal += 1
+        else:
+            fp_candidates.append({
+                'title': (e.get('title') or '')[:120],
+                'admit_reason': e.get('admission_reason') or [],
+                'shadow_reason': why,
+                'violated': violated,          # нарушенный пункт ADR-008
+                'canon_type': e.get('canon_type'),
+            })
+    # причины/скор из опубликованного _admission_sample.json (решения admit/reject)
+    admit_reasons = Counter(); reject_reasons = Counter(); score_dist = Counter()
+    fn_candidates = []
+    admit_n = reject_n = 0
+    try:
+        smp = json.loads((outdir / '_admission_sample.json').read_text(encoding='utf-8')).get('sample', [])
+        for x in smp:
+            adm = x.get('adm'); sc = x.get('score')
+            bucket = ('<2' if (sc or 0) < 2 else '2-4' if (sc or 0) < 4 else '>=4')
+            score_dist[bucket] += 1
+            for w in (x.get('why') or ['(gate)']):
+                (admit_reasons if adm == 'ADMIT' else reject_reasons)[w] += 1
+            if adm == 'ADMIT': admit_n += 1
+            else:
+                reject_n += 1
+                # FN Candidate: legacy REJECT, но score высокий (>=3) — кандидат, НЕ метрика (SH-A1/язык)
+                if (sc or 0) >= 3:
+                    fn_candidates.append({'title': (x.get('t') or '')[:120], 'score': sc,
+                                          'why': x.get('why') or [], 'note': 'orig-язык, не нормализован'})
+    except Exception:
+        pass
+    rep = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'adr-008', 'phase': 'phase-1-diagnostic',
+        'events_admitted': len(events),
+        # SH-A4 доверенная метрика
+        'unknown_flow': {'unknown': len(unknown), 'admitted': len(events), 'rate': unknown_flow},
+        # SH-A3: Purity/FP как KPI НЕ публикуются — только диагностические кандидаты
+        'fp_candidates': {'count': len(fp_candidates), 'note': 'ДИАГНОСТИКА, не ошибки Admission; классификатор в калибровке',
+                          'items': fp_candidates[:60]},
+        'fn_candidates': {'status': 'Not Measured', 'note': 'нет сопоставимого нормализованного корпуса отклонённых (SH-A1)',
+                          'items': fn_candidates[:40]},
+        'admit_reason_dist': dict(admit_reasons.most_common()),
+        'reject_reason_dist': dict(reject_reasons.most_common()),
+        'admission_score_dist': dict(score_dist),
+        'admit_total': admit_n, 'reject_total': reject_n,
+        # диагностический контекст (НЕ KPI)
+        '_diagnostic_only': {'contract_signal_of_admitted': contract_signal,
+                             'note': 'Admission Purity НЕ KPI до Shadow Stable (SH-A3)'},
+    }
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'admission-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [ADMISSION-SHADOW] unknown_flow=%.1f%% fp_candidates=%d fn_candidates=%d (Purity НЕ KPI, phase-1)'
+          % (100 * unknown_flow, len(fp_candidates), len(fn_candidates)), file=sys.stderr)
+    return rep
+
+
 def _editorial_gate(events):
     """Аудит качества ленты: Atlas — система сигналов, не агрегатор.
     - корпоративный PR/мусорные заголовки — удаляются;
@@ -8901,6 +9018,13 @@ def save_enriched(events, previous_snapshot=None):
                 _canon_shadow_report(enriched["events"], OUTPUT_PATH.parent, _sig_ns)
             except Exception as _ce:
                 print('  [WARN] canon shadow fail: %s' % _ce, file=sys.stderr)
+            # ═══ ADMISSION SHADOW v1 Phase 1 (ADR-008): диагностический контур, боевой путь не трогает ═══
+            # SH-A1: классификация по ФИНАЛЬНОМУ нормализованному тексту (после перевода) — не язык
+            # исходника (иначе воспроизведём AD1, нарушив SP-7). SH-A2: только читает, ничего не меняет.
+            try:
+                _admission_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _ae:
+                print('  [WARN] admission shadow fail: %s' % _ae, file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
