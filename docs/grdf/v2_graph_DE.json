@@ -2,72 +2,67 @@
   "country": "DE",
   "date": "2026-07-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-08T07:28:05.763331+00:00",
+  "generated_at": "2026-07-08T07:54:43.269028+00:00",
   "node_count": 12,
-  "edge_count": 11,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 34,
+      "score": 55,
       "props": {
-        "risk_score": 34
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -10,
+      "score": 62,
       "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 29,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-DE-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-DE-Geopolitical",
@@ -75,16 +70,21 @@
       "label": "Geopolitical"
     },
     {
-      "id": "DRIVER-DE-Social",
+      "id": "DRIVER-DE-Economic",
       "type": "Driver",
-      "label": "Social"
+      "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-Количество",
+      "id": "DRIVER-DE-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-DE-Пять_стран",
       "type": "Signal",
-      "label": "Количество новорожденных в Германии на м",
-      "severity": 34,
-      "domain": "social"
+      "label": "Пять стран НАТО договорились о массовой ",
+      "severity": 55,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -92,49 +92,43 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.1
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
-    },
-    {
-      "from": "DRIVER-DE-Economic",
-      "to": "COUNTRY-DE",
-      "type": "CAUSES",
-      "weight": 0.8
+      "weight": 0.02
     },
     {
       "from": "DRIVER-DE-Geopolitical",
@@ -143,16 +137,43 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-DE-Social",
+      "from": "DRIVER-DE-Economic",
       "to": "COUNTRY-DE",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-DE-Количество",
+      "from": "DRIVER-DE-Economic",
+      "to": "COUNTRY-DE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
       "to": "DOMAIN-DE-social",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-DE-Пять_стран",
+      "to": "DOMAIN-DE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.55
     }
   ]
 }
