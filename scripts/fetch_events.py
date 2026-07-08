@@ -3352,15 +3352,60 @@ def _aggregate_series(events):
 # ══════════════════════════════════════════════════════════════════════════════
 _CANON_BUNDLE_RX = re.compile(r'фонов\w* сообщени|сводка\s*\(\d+|\(\d+\s*сообщени|дайджест', re.I)
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CANON-РЕЕСТР (canon-v2) — ОТДЕЛЬНЫЙ от legacy _PROC_TYPE. Развивается по SH-U
+# изолированно, legacy заморожен → боевой путь неизменен (SH-O1). После switch legacy
+# удаляется, canon-реестр становится единственным. Порядок: специфичное раньше общего
+# (штормы РАНЬШЕ Военных ударов → торнадо резолвится в Шторм, не в «ударил по»).
+# ══════════════════════════════════════════════════════════════════════════════
+_CANON_TYPE = [
+    (r'тайфун|циклон|ураган|торнадо|смерч|\bшторм|шквал|гроза', 'Шторм'),
+    (r'морск\w* л[её]д', 'Морской лёд'),
+    (r'оползен|\bсел[ья]\b|лавин', 'Оползень'),
+    (r'эль-ниньо|ла-нинья|климатическ\w* аномал|аномал\w* температур|рекордн\w* жар', 'Климатическая аномалия'),
+    (r'продаж|ритейл|розничн|магазин|дивиденд', 'Розничная торговля'),
+    (r'закон|нулев\w+ выброс|климатическ политик', 'Климатическая политика'),
+    (r'самолет|самолёт|авиа|беспилотник.{0,20}посад', 'Авиационный инцидент'),
+    (r'землетряс|магнитуд|сейсм', 'Сейсмическая активность'),
+    (r'пожар|возгоран|очаг', 'Пожарная активность'),
+    (r'наводн|паводок|паводк|разлив рек|подтоплен|половодь|затоплен', 'Наводнение'),
+    (r'(?<!по)жар|тепловой удар|тепловая волна|зной|аномальн\w* тепл', 'Тепловая волна'),
+    (r'маловод|засух', 'Водный дефицит'),
+    (r'отключен\w* интернет|падение интернет|аномалия трафик', 'Отключение интернета'),
+    (r'уязвим|\bcve\b', 'Уязвимость ПО'),
+    (r'фишинг', 'Фишинговая кампания'),
+    (r'кибератак|хакер|вредонос|киберпреступ|взлом|malware|вымогател|ransomware', 'Киберугроза'),
+    (r'блэкаут|обесточ|полн\w* отключен\w* электро', 'Энергоблэкаут'),
+    (r'покушени|подрыв', 'Покушение'),
+    (r'удар\w* по|обстрел|ракет|бпла|пво|боевы|\bатак|нападени|авиауд|прил[её]т|\bвзрыв|дрон', 'Военные удары'),
+    (r'санкц', 'Санкционное давление'),
+    (r'\bвиз\b|въезд в европ|запрет на выдач', 'Визовые ограничения'),
+    (r'топлив|бензин|нефтебаз|горюч|дизел|солярк|заправк|азс\b', 'Топливный рынок'),
+    (r'фондов|мосбирж|биржев\w* индекс|котировк|акци\w*.{0,40}(?:обвал|рухну|упал)|(?:обвал|рухну)\w*.{0,20}(?:акци|бирж|индекс)', 'Фондовый рынок'),
+    (r'рубл|валют|доллар|обменн курс', 'Валютный рынок'),
+    (r'инфляц', 'Инфляция'),
+    (r'мигра|миграцион', 'Миграционная политика'),
+    (r'лихорадк|заболеван|эпидеми|вспышк\w* (инфекц|вирус|болезн)|инфекц|пандеми|вирус\w* угроз', 'Эпидемиологический риск'),
+    (r'кокаин|наркот|контрабанд', 'Наркотрафик'),
+    (r'дрон.{0,15}завод|производств дрон', 'Оборонное производство'),
+]
+_CANON_TYPE_DOMAIN = {'Шторм': 'climate', 'Морской лёд': 'climate', 'Оползень': 'climate',
+    'Климатическая аномалия': 'climate', 'Энергоблэкаут': 'technology', 'Фондовый рынок': 'economy'}
+
+def _canon_type_of(title, summ):
+    best = None; bs = 0; br = None
+    for pat, name in _CANON_TYPE:
+        sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
+        if sc > bs: bs = sc; best = name; br = pat[:24]
+    return best, br
+
 def _canonize_event(e, SIG):
     title = (e.get('title') or '').lower(); summ = (e.get('summary') or '')[:60].lower()
     legacy_dom = (e.get('domain') or '')
-    best = None; best_sc = 0; best_reason = None
-    for pat, name in SIG._PROC_TYPE:
-        sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
-        if sc > best_sc: best_sc = sc; best = name; best_reason = pat[:24]
+    best, best_reason = _canon_type_of(title, summ)
     if best:
-        canon_type = best; canon_dom = SIG._TYPE_DOMAIN.get(best, legacy_dom)
+        canon_type = best
+        canon_dom = _CANON_TYPE_DOMAIN.get(best) or SIG._TYPE_DOMAIN.get(best) or legacy_dom
     else:
         canon_type = 'unknown'; canon_dom = legacy_dom or 'unknown'
     phen_hits = set(n for n, p in SIG._CLIM_PHEN if re.search(p, title))
@@ -3371,7 +3416,7 @@ def _canonize_event(e, SIG):
     e['canon_origin'] = SIG._origin_v2(e).get('origin', 'unknown')
     e['canon_atomicity'] = atom
     e['canon_reason'] = best_reason or 'domain-default'
-    e['canon_engine_ver'] = 'canon-v1'
+    e['canon_engine_ver'] = 'canon-v2'
     return e
 
 def _canon_shadow_pass(events):
@@ -3388,10 +3433,10 @@ def _canon_shadow_report(events, outdir, SIG):
     N = max(1, len(events))
     typed = sum(1 for e in events if e.get('canon_type') != 'unknown')
     dc = sum(1 for e in events if e.get('canon_type') == 'unknown'
-             or SIG._TYPE_DOMAIN.get(e.get('canon_type')) == e.get('canon_domain'))
+             or (_CANON_TYPE_DOMAIN.get(e.get('canon_type')) or SIG._TYPE_DOMAIN.get(e.get('canon_type'))) == e.get('canon_domain'))
     atom = Counter(e.get('canon_atomicity') for e in events)
     pconf = sum(1 for e in events if e.get('canon_phenomenon') and e.get('canon_type') != 'unknown'
-                and SIG._TYPE_DOMAIN.get(e.get('canon_type')) != 'climate')
+                and (_CANON_TYPE_DOMAIN.get(e.get('canon_type')) or SIG._TYPE_DOMAIN.get(e.get('canon_type'))) != 'climate')
     # disagreement: canon_type vs legacy single-event _process_type
     dis = 0; dis_samples = []
     for e in events:
