@@ -1497,7 +1497,14 @@ def _build_relations(signals):
         for T in signals:
             if S['signal_id']==T['signal_id']: continue
             tdom=(T.get('domains') or [''])[0]
-            overlap=bool(gs & geoset(T)) or 'Глобально' in gs or 'Глобально' in geoset(T)
+            # ═══ КОМПОНЕНТ C (ADR-004, Causal Graph §1): специфичная общность обязательна ═══
+            # «Глобально» — НЕ общность, а универсальный коннектор: давал 45% связей через
+            # 8% узлов (baseline). Ребро требует конкретной общей географии (без «Глобально»)
+            # ЛИБО общей конкретной сущности. Механизм причинности (origin-каскад/каскадный
+            # домен) проверяется ниже — общность лишь допускает пару к проверке механизма.
+            concrete_geo=bool((gs-{'Глобально'}) & (geoset(T)-{'Глобально'}))
+            shared_entity=bool(set(S.get('entities') or []) & set(T.get('entities') or []))
+            overlap=concrete_geo or shared_entity
             if not overlap: continue
             # причинность по ORIGIN-каскаду (Task 5): origin T — в causal-цепочке origin S.
             # Origin — базовый уровень графа связей (military→energy→economic→financial).
@@ -1513,7 +1520,7 @@ def _build_relations(signals):
                         {'to':T['signal_id'],'via':'%s→%s'%(_so,_to)})
                     if _rising(S.get('trend')) and _rising(T.get('trend')): S['amplifies'].append(T['signal_id'])
                     if str(S.get('trend','')).lower() in ('falling','de-escalating','down'): S['suppresses'].append(T['signal_id'])
-            elif sdom==tdom and S.get('process_place')==T.get('process_place') and S['signal_id']<T['signal_id']:
+            elif sdom==tdom and S.get('process_place')==T.get('process_place') and S.get('process_place')!='Глобально' and S['signal_id']<T['signal_id']:
                 S['related'].append(T['signal_id']); T['related'].append(S['signal_id'])
     # кап на топ-6 связей каждого типа
     for S in signals:
