@@ -3621,6 +3621,37 @@ def _admission_shadow_report(events, outdir):
     return rep
 
 
+def _canary_guard(prev_signals, sig_path, canary_domains):
+    """A2 Canary auto-rollback guard (ADR-005). Читает свежесобранный canary signals.json,
+    сравнивает canary-домен с предыдущим прогоном. Возвращает (ok, reason, stats).
+    Критерии отката: churn>20% ИЛИ born-anew>30% (необъяснимые новые процессы).
+    Остальные домены не проверяются (изоляция)."""
+    import os as _os
+    try:
+        new_signals = json.load(open(sig_path, encoding='utf-8')).get('signals', []) if _os.path.exists(sig_path) else []
+    except Exception:
+        return True, None, {'churn': 0.0, 'note': 'no new signals to check'}
+    _dom = lambda s: (s.get('domains') or [s.get('domain', '')])[0] if isinstance(s.get('domains'), list) else s.get('domain', '')
+    _in = lambda s: _dom(s) in canary_domains and s.get('status') != 'archived'
+    prev_c = {s.get('signal_id') for s in prev_signals if _in(s)}
+    new_c = [s for s in new_signals if _in(s)]
+    new_ids = {s.get('signal_id') for s in new_c}
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    lost = prev_c - new_ids
+    churn = round(100 * len(lost) / max(1, len(prev_c)), 1) if prev_c else 0.0
+    born = [s for s in new_c if s.get('signal_id') not in prev_c and (s.get('first_seen', '') or '')[:10] == today]
+    born_pct = round(100 * len(born) / max(1, len(new_c)), 1) if new_c else 0.0
+    stats = {'churn': churn, 'prev_canary': len(prev_c), 'new_canary': len(new_c),
+             'lost': len(lost), 'born_anew': len(born), 'born_anew_pct': born_pct}
+    if not prev_c:
+        return True, None, {**stats, 'note': 'baseline run (no prior canary-domain signals)'}
+    if churn > 20.0:
+        return False, 'canary churn %.1f%% > 20%%' % churn, stats
+    if born_pct > 30.0:
+        return False, 'born-anew %.1f%% > 30%%' % born_pct, stats
+    return True, None, stats
+
+
 def _editorial_gate(events):
     """Аудит качества ленты: Atlas — система сигналов, не агрегатор.
     - корпоративный PR/мусорные заголовки — удаляются;
@@ -9055,7 +9086,50 @@ def save_enriched(events, previous_snapshot=None):
             # статьи в процессы (кластеризация + Priority). Аддитивно, events.json не трогает.
             try:
                 from signal_engine import write_signals_json as _write_signals
-                _sig_n = _write_signals(enriched["events"], str(OUTPUT_PATH.parent / "signals.json"))
+                import signal_engine as _SE
+                _sig_path = str(OUTPUT_PATH.parent / "signals.json")
+                # ═══ A2 CANARY (ADR-005 Stage 1): climate читает canon; авто-rollback ═══
+                # Область: только домены из _CANARY_DOMAINS. Изоляция: остальные — legacy.
+                _CANARY_DOMAINS = {'climate'}
+                _prev_sig = []
+                try:
+                    import os as _os2
+                    if _os2.path.exists(_sig_path):
+                        _prev_sig = json.load(open(_sig_path, encoding='utf-8')).get('signals', [])
+                except Exception:
+                    _prev_sig = []
+                _canary_meta = {'domains': sorted(_CANARY_DOMAINS), 'active': False, 'rolled_back': False, 'reason': None}
+                if _CANARY_DOMAINS:
+                    # доменная коррекция ТОЛЬКО для canary-доменов (canon_domain -> domain)
+                    _saved_dom = {}
+                    for _i, _e in enumerate(enriched["events"]):
+                        _cd = _e.get('canon_domain')
+                        if _cd in _CANARY_DOMAINS and _e.get('domain') != _cd:
+                            _saved_dom[_i] = _e.get('domain'); _e['domain'] = _cd
+                    _SE.DOMAIN_CANARY = set(_CANARY_DOMAINS)
+                    _sig_n = _write_signals(enriched["events"], _sig_path)
+                    _SE.DOMAIN_CANARY = set()
+                    # GUARD: climate churn / born-anew / identity vs предыдущий прогон
+                    _ok, _reason, _stats = _canary_guard(_prev_sig, _sig_path, _CANARY_DOMAINS)
+                    if _ok:
+                        _canary_meta.update(active=True, stats=_stats)
+                        print(f"  ✓ CANARY[{','.join(sorted(_CANARY_DOMAINS))}] active: {_sig_n} процессов, churn={_stats.get('churn')}%", file=sys.stderr)
+                    else:
+                        # АВТО-ROLLBACK: восстановить domain, пересобрать legacy
+                        for _i, _d in _saved_dom.items():
+                            enriched["events"][_i]['domain'] = _d
+                        _SE.DOMAIN_CANARY = set()
+                        _sig_n = _write_signals(enriched["events"], _sig_path)
+                        _canary_meta.update(active=False, rolled_back=True, reason=_reason, stats=_stats)
+                        print(f"  ⚠ CANARY ROLLBACK[{','.join(sorted(_CANARY_DOMAINS))}]: {_reason} -> legacy пересобран ({_sig_n} процессов)", file=sys.stderr)
+                    try:
+                        (OUTPUT_PATH.parent / 'migration' / 'canary-status.json').write_text(
+                            json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), **_canary_meta},
+                                       ensure_ascii=False, indent=2), encoding='utf-8')
+                    except Exception:
+                        pass
+                else:
+                    _sig_n = _write_signals(enriched["events"], _sig_path)
                 print(f"  ✓ signals (process-view): {_sig_n} процессов -> signals.json", file=sys.stderr)
             except Exception as _se:
                 print(f"  [WARN] signals.json shadow build failed: {_se}", file=sys.stderr)

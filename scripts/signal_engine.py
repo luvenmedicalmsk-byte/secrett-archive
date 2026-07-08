@@ -388,9 +388,20 @@ _ROLE_TIER={'measurement':'первичный/измерительный','state
  'science':'научный','financial':'финансовый','agency':'агентство','osint':'OSINT','telegram':'Telegram'}
 
 # Task 1: тип процесса (детерминирован) — основа стабильного ID
+DOMAIN_CANARY = set()   # A2 Canary (ADR-005): домены, читающие canon_type вместо legacy.
+                        # Пустой = чистый legacy. Управляется fetch_events перед сборкой.
+                        # Изоляция: события НЕ в canary-домене классифицируются legacy без изменений.
+
 def _process_type(evs, domain):
     """Тип процесса по SCORING (побеждает тип с макс. числом совпадений в ЗАГОЛОВКАХ),
     устойчив к смешанным кластерам. Заголовки весомее summary."""
+    # A2 CANARY: для включённых доменов тип берётся из canon_type (не legacy scoring).
+    # Только события, чей canon_domain входит в canary-набор; остальное — legacy ниже.
+    if DOMAIN_CANARY:
+        _ct = [e.get('canon_type') for e in evs
+               if e.get('canon_domain') in DOMAIN_CANARY and e.get('canon_type') not in (None, 'unknown')]
+        if _ct:
+            return Counter(_ct).most_common(1)[0][0]
     titles=' '.join(x.get('title','') for x in evs).lower()
     summ=' '.join((x.get('summary','') or '')[:60] for x in evs).lower()
     best=None; best_sc=0
