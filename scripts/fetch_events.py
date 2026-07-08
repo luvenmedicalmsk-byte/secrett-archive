@@ -3342,6 +3342,114 @@ def _aggregate_series(events):
     return out
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# A2 CANONIZER — SHADOW (ADR-004/005, Shadow Test Spec). Пишет canon_* в события;
+# движок НЕ читает их в боевом пути (SH-O1: signals.json идентичен прогону без канона).
+# Единый реестр импортируется из signal_engine — канонизатор НЕ седьмой словарь, а
+# ЕДИНСТВЕННОЕ применение реестра к одному событию. canon_domain выводится из типа
+# (домен следует за типом, не наследует legacy). canon_type ограничен: если специфичный
+# тип не найден → 'unknown' (SH-U соберёт дыру), домен-дефолт применяется только на switch.
+# ══════════════════════════════════════════════════════════════════════════════
+_CANON_BUNDLE_RX = re.compile(r'фонов\w* сообщени|сводка\s*\(\d+|\(\d+\s*сообщени|дайджест', re.I)
+
+def _canonize_event(e, SIG):
+    title = (e.get('title') or '').lower(); summ = (e.get('summary') or '')[:60].lower()
+    legacy_dom = (e.get('domain') or '')
+    best = None; best_sc = 0; best_reason = None
+    for pat, name in SIG._PROC_TYPE:
+        sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
+        if sc > best_sc: best_sc = sc; best = name; best_reason = pat[:24]
+    if best:
+        canon_type = best; canon_dom = SIG._TYPE_DOMAIN.get(best, legacy_dom)
+    else:
+        canon_type = 'unknown'; canon_dom = legacy_dom or 'unknown'
+    phen_hits = set(n for n, p in SIG._CLIM_PHEN if re.search(p, title))
+    atom = 'bundle' if _CANON_BUNDLE_RX.search(title) else ('composite' if len(phen_hits) >= 2 else 'atomic')
+    e['canon_domain'] = canon_dom
+    e['canon_type'] = canon_type
+    e['canon_phenomenon'] = SIG._clim_phen(e)
+    e['canon_origin'] = SIG._origin_v2(e).get('origin', 'unknown')
+    e['canon_atomicity'] = atom
+    e['canon_reason'] = best_reason or 'domain-default'
+    e['canon_engine_ver'] = 'canon-v1'
+    return e
+
+def _canon_shadow_pass(events):
+    from signal_engine import _PROC_TYPE, _TYPE_DOMAIN, _CLIM_PHEN, _clim_phen, _origin_v2, _process_type
+    import types as _t
+    SIG = _t.SimpleNamespace(_PROC_TYPE=_PROC_TYPE, _TYPE_DOMAIN=_TYPE_DOMAIN, _CLIM_PHEN=_CLIM_PHEN,
+                             _clim_phen=_clim_phen, _origin_v2=_origin_v2, _process_type=_process_type)
+    for e in events:
+        _canonize_event(e, SIG)
+    return SIG
+
+def _canon_shadow_report(events, outdir, SIG):
+    from collections import Counter
+    N = max(1, len(events))
+    typed = sum(1 for e in events if e.get('canon_type') != 'unknown')
+    dc = sum(1 for e in events if e.get('canon_type') == 'unknown'
+             or SIG._TYPE_DOMAIN.get(e.get('canon_type')) == e.get('canon_domain'))
+    atom = Counter(e.get('canon_atomicity') for e in events)
+    pconf = sum(1 for e in events if e.get('canon_phenomenon') and e.get('canon_type') != 'unknown'
+                and SIG._TYPE_DOMAIN.get(e.get('canon_type')) != 'climate')
+    # disagreement: canon_type vs legacy single-event _process_type
+    dis = 0; dis_samples = []
+    for e in events:
+        lt = SIG._process_type([e], e.get('domain', ''))
+        ct = e.get('canon_type')
+        if ct != 'unknown' and ct != lt:
+            dis += 1
+            if len(dis_samples) < 20:
+                dis_samples.append({'title': (e.get('title') or '')[:70], 'legacy': lt,
+                                    'canon': ct, 'reason': e.get('canon_reason')})
+    # SH-U unknown registry (persistent accumulation)
+    reg_path = outdir / 'migration' / 'unknown-registry.json'
+    try:
+        reg = json.loads(reg_path.read_text(encoding='utf-8'))
+    except Exception:
+        reg = {}
+    _stems = None
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    for e in events:
+        if e.get('canon_type') != 'unknown':
+            continue
+        toks = re.sub(r'[^а-яёa-z0-9 ]', ' ', (e.get('title') or '').lower()).split()
+        sig = e.get('canon_domain', '') + '|' + ' '.join(sorted(set(w[:6] for w in toks if len(w) >= 4))[:3])
+        r = reg.get(sig, {'sig': sig, 'domain': e.get('canon_domain', ''), 'count': 0,
+                          'first_seen': now, 'samples': [], 'suggested_type': None})
+        r['count'] += 1; r['last_seen'] = now
+        if len(r['samples']) < 3 and (e.get('title') or '') not in r['samples']:
+            r['samples'].append((e.get('title') or '')[:80])
+        reg[sig] = r
+    # known cases
+    known = []
+    for e in events:
+        tl = (e.get('title') or '').lower()
+        if 'торнадо' in tl:
+            known.append({'case': 'торнадо', 'canon_type': e.get('canon_type'),
+                          'pass': e.get('canon_type') != 'Военные удары'})
+        if 'ransomware' in tl or 'вымогател' in tl:
+            known.append({'case': 'ransomware', 'canon_type': e.get('canon_type'),
+                          'pass': e.get('canon_type') == 'Киберугроза'})
+    rep = {'ts': now, 'engine_ver': 'canon-v1', 'events_total': len(events),
+           'coverage': {'typed': typed, 'unknown': len(events) - typed, 'rate': round(typed/N, 3)},
+           'domain_consistency': {'consistent': dc, 'rate': round(dc/N, 3)},
+           'atomicity': dict(atom),
+           'phenomenon_conflicts': pconf,
+           'disagreement': {'type': {'disagree': dis, 'rate': round(dis/N, 3), 'samples': dis_samples}},
+           'unknown_registry': {'signatures': len(reg), 'events': sum(1 for e in events if e.get('canon_type') == 'unknown')},
+           'known_cases': known,
+           'gate_status': {'coverage': typed/N >= 0.95, 'domain_consistency': dc == len(events),
+                           'phenomenon_conflicts': pconf == 0}}
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'shadow-report-latest.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    reg_path.write_text(json.dumps(reg, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [CANON-SHADOW] coverage=%.1f%% dom-consistency=%.1f%% disagree=%d unknown-sigs=%d'
+          % (100*typed/N, 100*dc/N, dis, len(reg)), file=sys.stderr)
+    return rep
+
+
 def _editorial_gate(events):
     """Аудит качества ленты: Atlas — система сигналов, не агрегатор.
     - корпоративный PR/мусорные заголовки — удаляются;
@@ -8739,6 +8847,12 @@ def save_enriched(events, previous_snapshot=None):
             enriched["count"] = len(enriched["events"])
             enriched["events"] = _aggregate_series(_editorial_gate(enriched["events"]))   # аудит качества: шум/PR/ретро + серии
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
+            # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
+            try:
+                _sig_ns = _canon_shadow_pass(enriched["events"])
+                _canon_shadow_report(enriched["events"], OUTPUT_PATH.parent, _sig_ns)
+            except Exception as _ce:
+                print('  [WARN] canon shadow fail: %s' % _ce, file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
