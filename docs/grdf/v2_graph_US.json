@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-07-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-08T20:18:37.404175+00:00",
+  "generated_at": "2026-07-08T20:55:09.150595+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "down"
+      "score": 44,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 22,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 12,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-US-В_США_экст",
+      "id": "SIGNAL-US-Цели_ударо",
       "type": "Signal",
-      "label": "В США экстрадирован 19-летний молодой че",
-      "severity": 65,
-      "domain": "technology"
+      "label": "Цели ударов включают прибрежные радары К",
+      "severity": 67,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Целями_уда",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.68
     },
     {
-      "from": "SIGNAL-US-В_США_экст",
-      "to": "DOMAIN-US-technology",
+      "from": "SIGNAL-US-Цели_ударо",
+      "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.67
     }
   ]
 }

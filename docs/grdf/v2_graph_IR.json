@@ -2,67 +2,67 @@
   "country": "IR",
   "date": "2026-07-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-08T20:18:37.413557+00:00",
+  "generated_at": "2026-07-08T20:55:09.159701+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 28,
-      "trend": "down"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 14,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Трамп_угро",
+      "id": "SIGNAL-IR-Иранский_р",
       "type": "Signal",
-      "label": "Трамп угрожает Ирану новыми ударами, но ",
-      "severity": 66,
-      "domain": "geopolitical"
+      "label": "Иранский риал обвалился до нового миниму",
+      "severity": 60,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-IR",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-IR-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-Целями_уда",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.68
     },
     {
-      "from": "SIGNAL-IR-Трамп_угро",
-      "to": "DOMAIN-IR-geopolitical",
+      "from": "SIGNAL-IR-Иранский_р",
+      "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.66
+      "weight": 0.6
     }
   ]
 }
