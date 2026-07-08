@@ -1,61 +1,50 @@
 {
   "country": "FR",
   "country_name": "Франция",
-  "date": "2026-07-07",
-  "generated_at": "2026-07-07T23:49:29.881092+00:00",
-  "strategy_score": 61,
+  "date": "2026-07-08",
+  "generated_at": "2026-07-08T01:32:37.010426+00:00",
+  "strategy_score": 49,
   "strategy_confidence": 60,
-  "urgency_level": "maximum",
-  "urgency_level_ru": "Максимальная",
-  "urgency_color": "#dc2626",
-  "preparedness_level": "maximum",
-  "preparedness_level_ru": "Максимальная готовность",
-  "monitoring_priority": 5,
-  "monitoring_ru": "Непрерывно",
+  "urgency_level": "critical",
+  "urgency_level_ru": "Критическая",
+  "urgency_color": "#ef4444",
+  "preparedness_level": "emergency",
+  "preparedness_level_ru": "Чрезвычайная готовность",
+  "monitoring_priority": 4,
+  "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "CA-01",
+      "id": "CR-01",
       "priority": 1,
-      "action": "КАСКАДНЫЙ КРИЗИС — МАКСИМАЛЬНАЯ ТРЕВОГА",
-      "detail": "Системный каскадный сбой. Все механизмы реагирования активированы немедленно",
-      "trigger": "cascade state",
-      "expiry": "cascade resolution",
+      "action": "Контролируемая деэскалация",
+      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
+      "trigger": "critical + best dominant",
+      "expiry": "state transition",
       "confidence": 62,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CA-02",
-      "priority": 1,
-      "action": "Полная активация антикризисного центра",
-      "detail": "Непрерывная работа антикризисного центра, координация всех задействованных сторон",
+      "id": "CR-02",
+      "priority": 2,
+      "action": "Защитить деэскалационные индикаторы",
+      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
       "trigger": "always",
-      "expiry": "cascade resolved",
-      "confidence": 62,
-      "domain_context": "climate",
-      "horizon_relevant": "30d"
-    },
-    {
-      "id": "CA-03",
-      "priority": 1,
-      "action": "Изоляция критических систем",
-      "detail": "Предотвратить дальнейшее распространение каскада на смежные домены",
-      "trigger": "systemic_combos > 2",
-      "expiry": "cascade isolated",
+      "expiry": "deescalation confirmed",
       "confidence": 62,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 3,
-  "state": "cascade",
+  "action_count": 2,
+  "state": "critical",
   "dominant_scenario": "best",
-  "scenario_score": 31,
+  "scenario_score": 30,
   "instability": 39,
   "calibration_grade": "fair",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 80 (+8pt)",
+      "condition": "risk_score ≥ 79 (+8pt)",
       "leads_to": "cascade",
       "probability": 23
     },
@@ -65,7 +54,7 @@
       "probability": 20
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
+      "condition": "Worst-case 30d ≥ 94",
       "leads_to": "cascade",
       "probability": 29
     },
@@ -78,31 +67,31 @@
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 89,
-      "state": "cascade",
-      "urgency": "maximum",
-      "preparedness": "maximum"
-    },
-    {
-      "horizon": "90 дней",
-      "score": 78,
+      "score": 77,
       "state": "critical",
       "urgency": "critical",
       "preparedness": "emergency"
     },
     {
+      "horizon": "90 дней",
+      "score": 68,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
+    },
+    {
       "horizon": "180 дней",
-      "score": 69,
+      "score": 60,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "365 дней",
-      "score": 61,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 53,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     }
   ],
   "probabilities": {
