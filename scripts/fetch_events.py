@@ -3412,7 +3412,10 @@ def _canonize_event(e, SIG):
     atom = 'bundle' if _CANON_BUNDLE_RX.search(title) else ('composite' if len(phen_hits) >= 2 else 'atomic')
     e['canon_domain'] = canon_dom
     e['canon_type'] = canon_type
-    e['canon_phenomenon'] = SIG._clim_phen(e)
+    # canon_phenomenon — климатическая под-классификация, применяется ТОЛЬКО к climate-событиям.
+    # У не-climate типа (напр. Военные удары, вызвавшие пожар) феномен=None: пожар/паводок как
+    # СЛЕДСТВИЕ удара — не климатическая природа события (устраняет phenomenon-conflict структурно).
+    e['canon_phenomenon'] = SIG._clim_phen(e) if canon_dom == 'climate' else None
     e['canon_origin'] = SIG._origin_v2(e).get('origin', 'unknown')
     e['canon_atomicity'] = atom
     e['canon_reason'] = best_reason or 'domain-default'
