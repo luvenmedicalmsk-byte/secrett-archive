@@ -2,32 +2,32 @@
   "country": "TR",
   "date": "2026-07-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-08T09:48:27.723422+00:00",
+  "generated_at": "2026-07-08T11:22:03.668609+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-TR-Украинский",
+      "id": "SIGNAL-TR-Соглашения",
       "type": "Signal",
-      "label": "Украинский президент Владимир Зеленский ",
-      "severity": 53,
+      "label": "Соглашения на $50 млрд подписаны на поля",
+      "severity": 54,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-TR",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-TR-Украина_ат",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-TR-Украинский",
+      "from": "SIGNAL-TR-Соглашения",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.54
     }
   ]
 }
