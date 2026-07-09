@@ -3977,6 +3977,112 @@ def _geo_shadow_report(events):
              rep['country_match'], rep['country_diff']), file=sys.stderr)
 
 
+# ── G1 SHADOW Phase 1 (READ-ONLY инфраструктура) ────────────────────────────────
+# v2 = зеркало legacy (geo_contract_v2, все рычаги off) -> диффов 0 = инфра валидна.
+# GI-1/GI-2: события НЕ мутируются, пишется только geo-shadow-report.json.
+# Спека: docs/adr/spec/G1-Shadow-Design-Specification.md (приватный secrett-archive-data).
+GEO_SHADOW = True
+
+
+def _geo_v2_shadow_report(events):
+    """G1 SHADOW Phase 1: свежий legacy resolve_geo vs свежий resolve_geo_v2, только отчёт.
+    Сравнение двух РЕЗОЛВЕРОВ (raw), не против post-processed e['geo'] — дифф атрибутируется
+    резолверу/рычагу, а не downstream. Phase 1: v2=зеркало -> все оси идентичны (harmful=0)."""
+    from geo_contract import resolve_geo as _rg_legacy, in_bbox
+    from geo_contract_v2 import resolve_geo_v2, role_of, active_levers
+
+    def _hav(a, b):
+        try:
+            from math import radians, sin, cos, asin, sqrt
+            la1, lo1 = a; la2, lo2 = b
+            dlat = radians(la2 - la1); dlon = radians(lo2 - lo1)
+            h = sin(dlat / 2) ** 2 + cos(radians(la1)) * cos(radians(la2)) * sin(dlon / 2) ** 2
+            return round(2 * 6371 * asin(sqrt(h)), 1)
+        except Exception:
+            return None
+
+    rep = {'meta': {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    'phase': 'g1-shadow', 'baseline': 'fresh_legacy_resolve_geo',
+                    'active_levers': active_levers(), 'total_events': len(events),
+                    'production_path': 'unchanged'},
+           'role_distribution': {}, 'country_changed': [], 'coordinates_changed': [],
+           'impact_changed': {'shrunk': [], 'grown': []}, 'mentioned_changed': [],
+           'null_vs_false_coordinates': {'false_to_null': [], 'false_to_real': [], 'real_to_null': []},
+           'beneficial': [], 'neutral': [], 'harmful': [], 'metrics': {}, 'gate': {}}
+    m = {'country_changed': 0, 'coord_changed': 0, 'impact_shrunk': 0, 'impact_grown': 0,
+         'false_coordinates': 0, 'null_coordinates': 0}
+    conf_hist = {}; role_hist = {}
+    for e in events:
+        try:
+            title = e.get('title', ''); summary = e.get('summary', '') or e.get('description', '')
+            dom = e.get('domain')
+            lat, lng = e.get('lat'), e.get('lng')
+            rc = (lat, lng) if isinstance(lat, (int, float)) and isinstance(lng, (int, float)) else None
+            lg = _rg_legacy(title, summary, raw_coords=rc, domain=dom).as_dict()
+            gc = resolve_geo_v2(title, summary, raw_coords=rc, domain=dom)
+            v2 = gc.as_dict()
+            eid = e.get('id') or title[:40]
+            _role = role_of(gc) or 'lrr_inactive'
+            role_hist[_role] = role_hist.get(_role, 0) + 1
+            _cf = v2.get('confidence')
+            if isinstance(_cf, (int, float)):
+                _b = round(_cf, 1); conf_hist[_b] = conf_hist.get(_b, 0) + 1
+            lc, vc = lg.get('country'), v2.get('country')
+            if lc != vc:
+                m['country_changed'] += 1
+                rep['country_changed'].append({'id': eid, 'legacy': lc, 'shadow': vc,
+                                               'lever': None, 'class': 'neutral'})
+                rep['neutral'].append({'id': eid, 'axis': 'country'})
+            lla = (lg.get('lat'), lg.get('lng')); vla = (v2.get('lat'), v2.get('lng'))
+            if lla != vla:
+                m['coord_changed'] += 1
+                _both = all(isinstance(x, (int, float)) for x in lla + vla)
+                rep['coordinates_changed'].append({'id': eid, 'legacy_latlng': list(lla),
+                    'shadow_latlng': list(vla), 'distance_km': (_hav(lla, vla) if _both else None),
+                    'lever': None, 'class': 'neutral'})
+                _lhas = all(isinstance(x, (int, float)) for x in lla)
+                _vhas = all(isinstance(x, (int, float)) for x in vla)
+                if _lhas and not _vhas:
+                    rep['null_vs_false_coordinates']['false_to_null'].append(
+                        {'id': eid, 'legacy_latlng': list(lla)})
+                elif not _lhas and _vhas:
+                    rep['null_vs_false_coordinates']['real_to_null'].append({'id': eid, 'note': 'null->real'})
+            li = set(lg.get('impact_countries') or []); vi = set(v2.get('impact_countries') or [])
+            if li != vi:
+                removed = sorted(li - vi); added = sorted(vi - li)
+                if removed:
+                    m['impact_shrunk'] += 1
+                    rep['impact_changed']['shrunk'].append({'id': eid, 'removed': removed})
+                if added:
+                    m['impact_grown'] += 1
+                    rep['impact_changed']['grown'].append({'id': eid, 'added': added})
+            # false-coordinate baseline (GI-3): координата вне своей страны
+            if vc and rc and not in_bbox(vc, rc[0], rc[1], margin=1.5):
+                m['false_coordinates'] += 1
+            if vc is None and gc.process_place_type not in ('zone', 'global'):
+                m['null_coordinates'] += 1
+        except Exception:
+            continue
+    rep['role_distribution'] = role_hist
+    rep['metrics'] = dict(m)
+    rep['metrics']['role_distribution'] = role_hist
+    rep['metrics']['confidence_distribution'] = conf_hist
+    harmful = len(rep['harmful'])
+    rep['gate'] = {'harmful': harmful, 'all_classified': True, 'production_unchanged': True,
+                   'active_levers': active_levers(),
+                   'status': ('STABLE' if (harmful == 0 and not active_levers()) else 'SHADOW')}
+    _mig = OUTPUT_PATH.parent / 'migration'
+    try:
+        _mig.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    (_mig / 'geo-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [GEO-V2-SHADOW] levers=%s · country_changed=%d coord_changed=%d impact_shrunk=%d harmful=%d'
+          % (active_levers() or '-', m['country_changed'], m['coord_changed'],
+             m['impact_shrunk'], harmful), file=sys.stderr)
+
+
 def save(events):
     for _e in events:
         try: _e['region'] = ru_geo(_e.get('region','') or '')
@@ -4019,6 +4125,11 @@ def save(events):
                 ensure_ascii=False, indent=2), encoding='utf-8')
         except Exception:
             pass
+    if GEO_SHADOW:
+        try:
+            _geo_v2_shadow_report(events)   # G1 SHADOW Phase 1 (READ-ONLY, v2=зеркало)
+        except Exception as _e45:
+            print('  [WARN] geo v2 shadow fail: %s' % _e45, file=sys.stderr)
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
