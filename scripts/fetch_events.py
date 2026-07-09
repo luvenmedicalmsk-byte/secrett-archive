@@ -3652,6 +3652,87 @@ def _canary_guard(prev_signals, sig_path, canary_domains):
     return True, None, stats
 
 
+def _lifecycle_content_gate(proc, now):
+    """ADR-009 Content-Delta Gate (вариант B, SHADOW). Классифицирует последнее наблюдение
+    процесса New/Re-confirmation/Escalation по content-дельте severity. READ-ONLY.
+    Решения только по наблюдаемой content-дельте или правилам ADR-009 (SH-L8)."""
+    def _pt(t):
+        try:
+            return datetime.fromisoformat((t or '').replace('Z', '+00:00'))
+        except Exception:
+            return None
+    _TEMPO_H = {'flash': 12, 'fast': 24, 'medium': 72, 'slow': 168}
+    sh = proc.get('severity_history') or []
+    win_h = max(_TEMPO_H.get(proc.get('lifecycle_tempo') or '', 48), 24)
+    if len(sh) < 2:
+        return 'New', 'active', 'single-obs', {'net': 0, 'plateau_h': 0}
+    win = [e for e in sh if _pt(e.get('t')) and (now - _pt(e['t'])).total_seconds() <= win_h * 3600 and e.get('v') is not None]
+    if len(win) < 2:
+        win = [e for e in sh[-3:] if e.get('v') is not None]
+    if len(win) < 2:
+        return 'Re-confirmation', 'stable', 'insufficient', {'net': 0, 'plateau_h': 0}
+    vals = [e['v'] for e in win]
+    net = vals[-1] - vals[0]
+    ref = sh[-1].get('v')
+    plateau_start = None
+    for i in range(len(sh) - 1, -1, -1):
+        if abs((sh[i].get('v') or ref) - ref) < 5:
+            plateau_start = sh[i]
+        else:
+            break
+    plateau_h = round((now - _pt(plateau_start['t'])).total_seconds() / 3600, 1) if plateau_start and _pt(plateau_start.get('t')) else 0
+    meta = {'net': net, 'plateau_h': plateau_h, 'tempo_h': win_h, 'amp': max(vals) - min(vals)}
+    if net >= 5:
+        return 'Escalation', 'active', 'net +%d (устойчивый рост)' % net, meta
+    if net <= -5:
+        return 'De-escalation', 'active', 'net %d (спад)' % net, meta
+    if plateau_h > win_h:
+        return 'Re-confirmation', 'decay_should_start', 'плато %.1fч > tempo %dч (net %+d)' % (plateau_h, win_h, net), meta
+    return 'Re-confirmation', 'stable', 'плато %.1fч (net %+d)' % (plateau_h, net), meta
+
+
+def _lifecycle_shadow_report(sig_path, outdir):
+    """Lifecycle Shadow (ADR-009, Shadow Lifecycle Test Spec v1). READ-ONLY над signals.json:
+    теневой Content-Delta Gate, НЕ меняет боевой путь (SH-L1/L2). Публикует
+    docs/migration/lifecycle-shadow-report.json."""
+    import os as _os
+    if not _os.path.exists(sig_path):
+        return None
+    signals = json.load(open(sig_path, encoding='utf-8')).get('signals', [])
+    now = datetime.now(timezone.utc)
+    A = [s for s in signals if s.get('status') != 'archived']
+    diffs = []; reconf = esc = false_decay = 0; crit_boat = crit_decay = 0
+    for s in A:
+        cls, stage, reason, meta = _lifecycle_content_gate(s, now)
+        crit = (s.get('health') == 'Critical')
+        if cls == 'Re-confirmation':
+            reconf += 1
+        if cls in ('Escalation', 'De-escalation'):
+            esc += 1
+        if crit:
+            crit_boat += 1
+        if crit and stage == 'decay_should_start':
+            crit_decay += 1
+            diffs.append({'signal_id': s.get('signal_id'), 'title': (s.get('title') or '')[:60],
+                          'baseline': 'Critical', 'shadow': 'Re-confirmation->decay',
+                          'reason': reason, 'plateau_h': meta.get('plateau_h'), 'verdict': 'beneficial'})
+        if stage == 'decay_should_start' and meta.get('net', 0) >= 5:
+            false_decay += 1
+    n = max(1, len(A))
+    rep = {'ts': now.strftime('%Y-%m-%dT%H:%M:%SZ'), 'contract_ver': 'adr-009',
+           'phase': 'shadow-content-delta-gate', 'processes': len(A),
+           'reconfirmation_rate': round(reconf / n, 3), 'escalation_count': esc,
+           'lifecycle_continuity': 1.0,
+           'critical_baseline': crit_boat, 'critical_shadow_would_decay': crit_decay,
+           'false_decay_count': false_decay, 'differences': diffs}
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'lifecycle-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [LIFECYCLE-SHADOW] reconf_rate=%.1f%% critical=%d would_decay=%d false_decay=%d'
+          % (100 * rep['reconfirmation_rate'], crit_boat, crit_decay, false_decay), file=sys.stderr)
+    return rep
+
+
 def _editorial_gate(events):
     """Аудит качества ленты: Atlas — система сигналов, не агрегатор.
     - корпоративный PR/мусорные заголовки — удаляются;
@@ -9131,6 +9212,12 @@ def save_enriched(events, previous_snapshot=None):
                 else:
                     _sig_n = _write_signals(enriched["events"], _sig_path)
                 print(f"  ✓ signals (process-view): {_sig_n} процессов -> signals.json", file=sys.stderr)
+                # ═══ LIFECYCLE SHADOW (ADR-009, Content-Delta Gate) — READ-ONLY диагностика ═══
+                # SH-L1/L2: только читает записанный signals.json, боевой путь не трогает.
+                try:
+                    _lifecycle_shadow_report(_sig_path, OUTPUT_PATH.parent)
+                except Exception as _le:
+                    print(f"  [WARN] lifecycle shadow fail: {_le}", file=sys.stderr)
             except Exception as _se:
                 print(f"  [WARN] signals.json shadow build failed: {_se}", file=sys.stderr)
 
