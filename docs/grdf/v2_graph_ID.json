@@ -2,67 +2,67 @@
   "country": "ID",
   "date": "2026-07-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-09T19:30:09.325973+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-07-09T21:04:41.628870+00:00",
+  "node_count": 14,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 43,
+      "score": 40,
       "props": {
-        "risk_score": 43
+        "risk_score": 40
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "stable"
+      "score": 40,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 37,
-      "trend": "stable"
+      "score": 21,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "stable"
+      "score": 17,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 20,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
-      "trend": "stable"
+      "score": 4,
+      "trend": "down"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -92,6 +92,13 @@
       "label": "Индия, Индонезия создают план для прочно",
       "severity": 42,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-ID-Индонезия_",
+      "type": "Signal",
+      "label": "Индонезия стала первой страной в мире, к",
+      "severity": 34,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -99,13 +106,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-ID",
@@ -123,19 +130,19 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-ID-Geopolitical",
@@ -156,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-ID-Премьер-ми",
       "to": "DOMAIN-ID-geopolitical",
       "type": "AMPLIFIES",
@@ -166,6 +194,12 @@
       "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
       "weight": 0.42
+    },
+    {
+      "from": "SIGNAL-ID-Индонезия_",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.34
     }
   ]
 }
