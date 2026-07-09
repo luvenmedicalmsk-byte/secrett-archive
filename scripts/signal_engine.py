@@ -392,6 +392,38 @@ DOMAIN_CANARY = set()   # A2 Canary (ADR-005): домены, читающие ca
                         # Пустой = чистый legacy. Управляется fetch_events перед сборкой.
                         # Изоляция: события НЕ в canary-домене классифицируются legacy без изменений.
 
+LIFECYCLE_CANARY = set()  # ADR-009 Lifecycle Canary: домены, где Content-Delta Gate управляет
+                          # затуханием. Пустой = legacy lifecycle. Управляется fetch_events.
+_LC_TEMPO_H = {'flash': 12, 'fast': 24, 'medium': 72, 'slow': 168}
+def _lc_content_gate(sig, now):
+    """ADR-009 Content-Delta Gate (боевой). По net-тренду severity_history: возвращает
+    (stage, net) где stage='decay_should_start' если плато > tempo и |net|<5 (переподтверждение
+    без эскалации), иначе None. Единообразное правило ADR-009, без спец-эвристик."""
+    sh = [e for e in (sig.get('severity_history') or []) if isinstance(e.get('v'), (int, float))]
+    if len(sh) < 2:
+        return None, 0
+    win_h = max(_LC_TEMPO_H.get(sig.get('lifecycle_tempo') or '', 48), 24)
+    win = [e for e in sh if _hours(e.get('t'), now) <= win_h]
+    if len(win) < 2:
+        win = sh[-3:]
+    if len(win) < 2:
+        return None, 0
+    vals = [e['v'] for e in win]
+    net = vals[-1] - vals[0]
+    ref = sh[-1].get('v')
+    plateau_start = None
+    for i in range(len(sh) - 1, -1, -1):
+        if abs((sh[i].get('v') or ref) - ref) < 5:
+            plateau_start = sh[i]
+        else:
+            break
+    plateau_h = _hours(plateau_start['t'], now) if plateau_start else 0
+    if abs(net) < 5 and plateau_h > win_h:
+        return 'decay_should_start', net
+    return None, net
+def _lc_domain(sig):
+    return sig.get('primary_domain') or (sig.get('domains') or [''])[0]
+
 def _process_type(evs, domain):
     """Тип процесса по SCORING (побеждает тип с макс. числом совпадений в ЗАГОЛОВКАХ),
     устойчив к смешанным кластерам. Заголовки весомее summary."""
@@ -766,6 +798,16 @@ def _evolve_one(cur, prev, now):
     falling=str(cur.get('trend','')).lower() in ('falling','down','de-escalating','decelerating')
     hours_idle=0.0 if changed else _hours(prev.get('last_seen',now), now)
     phase=_evolve_phase_hist(ev_total, rising, falling, dsev, hours_idle, cur.get('phase','active'))
+    # ── ADR-009 LIFECYCLE CANARY (Stage 1): frozen re-confirmation (плато severity > tempo,
+    # |net|<5) -> нисходящий phase, минуя ev_total-латч escalating. Выводит BAVI из Critical.
+    # Только для canary-доменов; правило ADR-009 единообразно, override ТОЛЬКО вниз.
+    if LIFECYCLE_CANARY and _lc_domain(cur) in LIFECYCLE_CANARY:
+        _probe = dict(cur)
+        _probe['severity_history'] = _cap(prev.get('severity_history',[]) + ([{'t':now,'v':cur['severity']}] if dsev!=0 else []))
+        _probe['lifecycle_tempo'] = cur.get('lifecycle_tempo') or prev.get('lifecycle_tempo')
+        _lc_stage, _lc_net = _lc_content_gate(_probe, now)
+        if _lc_stage == 'decay_should_start':
+            phase = 'de-escalating' if _lc_net <= -5 else 'stabilizing'
     # histories
     sh=_cap(prev.get('severity_history',[])+([{'t':now,'v':cur['severity']}] if dsev!=0 else []))
     ph=_cap(prev.get('priority_history',[])+([{'t':now,'v':cur['priority']}] if dpri!=0 else []))

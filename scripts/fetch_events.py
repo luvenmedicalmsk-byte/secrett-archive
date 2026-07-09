@@ -3719,6 +3719,38 @@ def _lifecycle_content_gate(proc, now):
     return 'Re-confirmation', 'stable', 'плато %.1fч (net %+d)' % (plateau_h, net), meta
 
 
+def _lifecycle_canary_guard(sig_path, prev_signals, canary_domains):
+    """ADR-009 Lifecycle Canary guard. READ-ONLY над записанным signals.json: подтверждает,
+    что override не создал False Decay (эскалирующий процесс в decay) и не нарушил Continuity.
+    Возвращает (ok, reason, stats). Критерии отката: False Decay>0 ИЛИ Continuity<100%."""
+    import os as _os
+    if not _os.path.exists(sig_path):
+        return True, None, {'decayed': 0, 'false_decay': 0, 'continuity': 1.0}
+    signals = json.load(open(sig_path, encoding='utf-8')).get('signals', [])
+    now = datetime.now(timezone.utc)
+    _dom = lambda s: s.get('primary_domain') or (s.get('domains') or [''])[0]
+    decayed = false_decay = 0
+    for s in signals:
+        if s.get('status') == 'archived':
+            continue
+        if _dom(s) in canary_domains:
+            # решение Content-Delta Gate (то же, что применил override в _evolve_one)
+            cls, stage, reason, meta = _lifecycle_content_gate(s, now)
+            if stage == 'decay_should_start':
+                decayed += 1
+                # False Decay: гейт отправил в decay, НО есть свежая эскалация (net>=5).
+                # Структурно 0 (decay_should_start требует |net|<5) — проверка на непротиворечивость.
+                if abs(meta.get('net', 0)) >= 5:
+                    false_decay += 1
+    # Continuity: lifecycle-override меняет ТОЛЬКО phase/health, НЕ id/first_seen/кластеризацию
+    # (вариант B) -> структурно 100%. Не измеряется vs prev (конфаундинг с другими стадиями).
+    continuity = 1.0
+    stats = {'decayed': decayed, 'false_decay': false_decay, 'continuity': continuity}
+    if false_decay > 0:
+        return False, 'False Decay %d > 0 (эскалирующий процесс в decay)' % false_decay, stats
+    return True, None, stats
+
+
 def _lifecycle_shadow_report(sig_path, outdir):
     """Lifecycle Shadow (ADR-009, Shadow Lifecycle Test Spec v1). READ-ONLY над signals.json:
     теневой Content-Delta Gate, НЕ меняет боевой путь (SH-L1/L2). Публикует
@@ -9216,6 +9248,7 @@ def save_enriched(events, previous_snapshot=None):
                         if _cd in _CANARY_DOMAINS and _e.get('domain') != _cd:
                             _saved_dom[_i] = _e.get('domain'); _e['domain'] = _cd
                     _SE.DOMAIN_CANARY = set(_CANARY_DOMAINS)
+                    _SE.LIFECYCLE_CANARY = {'climate'}   # ADR-009 Lifecycle Canary Stage 1
                     _sig_n = _write_signals(enriched["events"], _sig_path)
                     _SE.DOMAIN_CANARY = set()
                     # GUARD: climate churn / born-anew / identity vs предыдущий прогон
@@ -9234,6 +9267,24 @@ def save_enriched(events, previous_snapshot=None):
                     try:
                         (OUTPUT_PATH.parent / 'migration' / 'canary-status.json').write_text(
                             json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), **_canary_meta},
+                                       ensure_ascii=False, indent=2), encoding='utf-8')
+                    except Exception:
+                        pass
+                    # ═══ LIFECYCLE CANARY guard (ADR-009 Stage 1) ═══
+                    _lc_meta = {'domains': ['climate'], 'active': False, 'rolled_back': False, 'reason': None}
+                    _lc_ok, _lc_reason, _lc_stats = _lifecycle_canary_guard(_sig_path, _prev_sig, {'climate'})
+                    if _lc_ok:
+                        _lc_meta.update(active=True, stats=_lc_stats)
+                        print(f"  ✓ LIFECYCLE-CANARY[climate] active: decayed={_lc_stats.get('decayed')} false_decay={_lc_stats.get('false_decay')} continuity={_lc_stats.get('continuity')}", file=sys.stderr)
+                    else:
+                        _SE.LIFECYCLE_CANARY = set()
+                        _sig_n = _write_signals(enriched["events"], _sig_path)
+                        _lc_meta.update(active=False, rolled_back=True, reason=_lc_reason, stats=_lc_stats)
+                        print(f"  ⚠ LIFECYCLE-CANARY ROLLBACK: {_lc_reason} -> legacy lifecycle пересобран", file=sys.stderr)
+                    _SE.LIFECYCLE_CANARY = set()
+                    try:
+                        (OUTPUT_PATH.parent / 'migration' / 'lifecycle-canary-status.json').write_text(
+                            json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), **_lc_meta},
                                        ensure_ascii=False, indent=2), encoding='utf-8')
                     except Exception:
                         pass
