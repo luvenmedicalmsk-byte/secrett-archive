@@ -2,8 +2,8 @@
   "country": "US",
   "country_name": "США",
   "date": "2026-07-09",
-  "generated_at": "2026-07-09T00:04:28.821896+00:00",
-  "evolution_score": 64,
+  "generated_at": "2026-07-09T02:54:37.316697+00:00",
+  "evolution_score": 71,
   "grade": "B",
   "grade_ru": "Стабильная эволюция",
   "active_scenarios": [
@@ -12,17 +12,17 @@
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
       "probability": 30,
-      "score": 77,
-      "delta_from_current": 14,
-      "state": "critical",
-      "state_ru": "Критическая эскалация",
-      "impact": "severe",
-      "impact_ru": "Тяжёлый",
+      "score": 10,
+      "delta_from_current": -48,
+      "state": "stabilization",
+      "state_ru": "Стабилизация",
+      "impact": "minor",
+      "impact_ru": "Незначительный",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 404,
-      "future_pressure": 56,
-      "future_resilience": 52,
+      "recovery_days": 52,
+      "future_pressure": 0,
+      "future_resilience": 55,
       "future_probability": 30,
       "drivers": [
         {
@@ -35,34 +35,34 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 77,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 14
+          "score": 10,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -48
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 68,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": 5
+          "score": 10,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -48
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 60,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": -3
+          "score": 10,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -48
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 53,
-          "state": "contained",
-          "state_ru": "Контролируемо",
-          "delta_from_current": -10
+          "score": 10,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -48
         }
       ],
       "evolved_probability": 30.0,
@@ -71,11 +71,24 @@
       "status": "active"
     },
     {
+      "id": "ASE-ACC-5",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (deceleration)",
+      "trigger": "signal_acceleration Δ=-5",
+      "score": 43,
+      "probability": 18,
+      "confidence": 55,
+      "trend_strength": 50,
+      "status": "emerging",
+      "source": "signal_acceleration",
+      "domain": "geopolitics"
+    },
+    {
       "id": "ASE-ESC-DETE",
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 73,
+      "score": 68,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
@@ -84,14 +97,27 @@
       "domain": "geopolitics"
     }
   ],
-  "active_count": 2,
+  "active_count": 3,
   "emerging_scenarios": [
+    {
+      "id": "ASE-ACC-5",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (deceleration)",
+      "trigger": "signal_acceleration Δ=-5",
+      "score": 43,
+      "probability": 18,
+      "confidence": 55,
+      "trend_strength": 50,
+      "status": "emerging",
+      "source": "signal_acceleration",
+      "domain": "geopolitics"
+    },
     {
       "id": "ASE-ESC-DETE",
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 73,
+      "score": 68,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
@@ -101,64 +127,94 @@
     }
   ],
   "convergences": [],
-  "divergences": [],
+  "divergences": [
+    {
+      "scenario_a": "best",
+      "scenario_b": "acceleration",
+      "score_gap": 33,
+      "label": "Расхождение: Best Case ↔ Сценарий ускорения (deceleration)"
+    },
+    {
+      "scenario_a": "best",
+      "scenario_b": "escalation_branch",
+      "score_gap": 58,
+      "label": "Расхождение: Best Case ↔ Ветвь эскалации: deteriorating"
+    }
+  ],
   "ranked_pathways": [
     {
       "id": "best",
       "name": "Best Case",
       "type": "best",
       "status": "active",
-      "probability": 62.5,
-      "score": 77,
+      "probability": 45.5,
+      "score": 10,
       "confidence": 30.0,
       "trend_strength": 50,
-      "scenario_score": 51
+      "scenario_score": 52
     },
     {
       "id": "ASE-ESC-DETE",
       "name": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
       "status": "emerging",
-      "probability": 37.5,
-      "score": 73,
+      "probability": 27.3,
+      "score": 68,
       "confidence": 50,
       "trend_strength": 65,
-      "scenario_score": 48
+      "scenario_score": 42
+    },
+    {
+      "id": "ASE-ACC-5",
+      "name": "Сценарий ускорения (deceleration)",
+      "type": "acceleration",
+      "status": "emerging",
+      "probability": 27.3,
+      "score": 43,
+      "confidence": 55,
+      "trend_strength": 50,
+      "scenario_score": 35
     }
   ],
-  "pathway_count": 2,
+  "pathway_count": 3,
   "future_landscape": {
     "dominant_pathway": "Best Case",
-    "dominant_prob": 62.5,
-    "dominant_score": 77,
+    "dominant_prob": 45.5,
+    "dominant_score": 10,
     "outlook": "improving",
-    "narrative": "Доминирующий сценарий 'Best Case' (62%) указывает на улучшение — скор 77. Деэскалационный потенциал высок.",
+    "narrative": "Доминирующий сценарий 'Best Case' (46%) указывает на улучшение — скор 10. Деэскалационный потенциал высок.",
     "n_convergences": 0,
-    "n_divergences": 0,
-    "landscape_complexity": 20
+    "n_divergences": 2,
+    "landscape_complexity": 60
   },
-  "diagnostics": [],
-  "diagnostic_count": 0,
-  "scenario_diversity_index": 8,
-  "future_stability_index": 100,
+  "diagnostics": [
+    {
+      "type": "forecast_conflict",
+      "label": "Конфликт прогнозов",
+      "detail": "2 пар расходящихся сценариев — прогнозный консенсус нарушен"
+    }
+  ],
+  "diagnostic_count": 1,
+  "scenario_diversity_index": 100,
+  "future_stability_index": 78,
   "retired_scenarios": [
     {
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 21,
-      "score": 95,
-      "delta_from_current": 32,
-      "state": "cascade",
-      "state_ru": "Каскадный кризис",
-      "impact": "catastrophic",
-      "impact_ru": "Катастрофический",
+      "probability": 18,
+      "score": 29,
+      "delta_from_current": -29,
+      "state": "stabilization",
+      "state_ru": "Стабилизация",
+      "impact": "minor",
+      "impact_ru": "Незначительный",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 499,
-      "future_pressure": 75,
-      "future_resilience": 49,
-      "future_probability": 21,
+      "recovery_days": 150,
+      "future_pressure": 9,
+      "future_resilience": 51,
+      "future_probability": 18,
       "drivers": [
         {
           "driver": "Целями ударов США в Иране стали системы ПВО, ",
@@ -174,37 +230,37 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 29,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -29
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 16,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -42
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 10,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -48
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 10,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -48
         }
       ],
-      "evolved_probability": 21.0,
+      "evolved_probability": 18.0,
       "evolved_confidence": 25,
       "evolution_delta": 0.0,
       "status": "retiring"
@@ -213,19 +269,19 @@
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 24,
-      "score": 95,
-      "delta_from_current": 32,
-      "state": "cascade",
-      "state_ru": "Каскадный кризис",
-      "impact": "catastrophic",
-      "impact_ru": "Катастрофический",
+      "probability": 25,
+      "score": 39,
+      "delta_from_current": -19,
+      "state": "escalating",
+      "state_ru": "Эскалация",
+      "impact": "moderate",
+      "impact_ru": "Умеренный",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 499,
-      "future_pressure": 77,
-      "future_resilience": 45,
-      "future_probability": 24,
+      "recovery_days": 202,
+      "future_pressure": 20,
+      "future_resilience": 47,
+      "future_probability": 25,
       "drivers": [
         {
           "driver": "Целями ударов США в Иране стали системы ПВО, ",
@@ -245,37 +301,37 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 39,
+          "state": "stabilization",
+          "state_ru": "Стабилизация",
+          "delta_from_current": -19
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 43,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -15
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 47,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -11
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 51,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -7
         }
       ],
-      "evolved_probability": 24.0,
+      "evolved_probability": 25.0,
       "evolved_confidence": 25,
       "evolution_delta": 0.0,
       "status": "retiring"
@@ -284,19 +340,19 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 25,
-      "score": 95,
-      "delta_from_current": 32,
-      "state": "cascade",
-      "state_ru": "Каскадный кризис",
-      "impact": "catastrophic",
-      "impact_ru": "Катастрофический",
+      "probability": 27,
+      "score": 49,
+      "delta_from_current": -9,
+      "state": "critical",
+      "state_ru": "Критическая эскалация",
+      "impact": "moderate",
+      "impact_ru": "Умеренный",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 499,
-      "future_pressure": 80,
-      "future_resilience": 38,
-      "future_probability": 25,
+      "recovery_days": 254,
+      "future_pressure": 33,
+      "future_resilience": 39,
+      "future_probability": 27,
       "drivers": [
         {
           "driver": "Целями ударов США в Иране стали системы ПВО, ",
@@ -320,38 +376,38 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 49,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -9
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 54,
+          "state": "contained",
+          "state_ru": "Контролируемо",
+          "delta_from_current": -4
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 60,
+          "state": "escalating",
+          "state_ru": "Эскалация",
+          "delta_from_current": 2
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 95,
-          "state": "cascade",
-          "state_ru": "Каскадный кризис",
-          "delta_from_current": 32
+          "score": 66,
+          "state": "escalating",
+          "state_ru": "Эскалация",
+          "delta_from_current": 8
         }
       ],
-      "evolved_probability": 25.0,
-      "evolved_confidence": 25,
+      "evolved_probability": 27.0,
+      "evolved_confidence": 27.0,
       "evolution_delta": 0.0,
       "status": "retiring"
     }
@@ -359,13 +415,13 @@
   "retired_count": 3,
   "sub_scores": {
     "fc_acc": 50,
-    "sc_val": 50,
+    "sc_val": 67,
     "prob_cal": 100,
-    "adapt": 65,
+    "adapt": 80,
     "stability": 64
   },
   "history_depth": 4,
-  "risk_score": 63,
-  "delta": 4,
+  "risk_score": 58,
+  "delta": -5,
   "domain": "geopolitics"
 }
