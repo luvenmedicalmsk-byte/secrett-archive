@@ -1,68 +1,68 @@
 {
   "country": "IR",
-  "date": "2026-07-08",
+  "date": "2026-07-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-08T23:00:05.794733+00:00",
+  "generated_at": "2026-07-09T00:04:29.566620+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 57,
+      "score": 62,
       "props": {
-        "risk_score": 57
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 22,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 22,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Цены_на_не",
+      "id": "SIGNAL-IR-США_провод",
       "type": "Signal",
-      "label": "Цены на нефть стремительно растут, так к",
-      "severity": 60,
-      "domain": "economic"
+      "label": "США проводят новый раунд ударов по Ирану",
+      "severity": 66,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IR",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IR",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-Целями_уда",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.68
     },
     {
-      "from": "SIGNAL-IR-Цены_на_не",
-      "to": "DOMAIN-IR-economic",
+      "from": "SIGNAL-IR-США_провод",
+      "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.66
     }
   ]
 }
