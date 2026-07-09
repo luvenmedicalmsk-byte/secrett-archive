@@ -115,6 +115,7 @@ _EN_WX = {'heatwave':'аномальной жары','heat wave':'аномаль
 # Alert-вокабуляр GDACS/Copernicus (структурные уведомления, чтобы не оставлять смесь языков)
 _EN_ALERT = {'orange':'оранжевое','red':'красное','green':'зелёное','yellow':'жёлтое',
     'alert':'предупреждение','warning':'предупреждение','notice':'уведомление','advisory':'предупреждение',
+    'notification for':'уведомление о','notification':'уведомление',
     'cyclone':'циклон','tropical cyclone':'тропический циклон','wildfire alert':'предупреждение о пожаре'}
 # Гомоглифы: латинские буквы, визуально идентичные кириллическим (нормализуем ВНУТРИ кир-слов)
 _HOMOGLYPH = {'a':'а','e':'е','o':'о','c':'с','p':'р','x':'х','y':'у','H':'Н','T':'Т','B':'В',
@@ -2850,7 +2851,9 @@ def process_events(raw_items):
     titles = [e['title'] for e in top_events]
     translated_titles = translate_batch(titles)
     for i, ev in enumerate(top_events):
-        ev['title'] = translated_titles[i]
+        # _title_polish ПОСЛЕ перевода: чистит гомоглифы и остаточные англ-фрагменты,
+        # которые приходят из перевода (translate_batch иначе перезаписал бы полировку _clean_title)
+        ev['title'] = _title_polish(translated_titles[i])
 
     # Этап 3: перевод описаний/summary (не только заголовков)
     print(f"  Переводим описания...", file=sys.stderr)
