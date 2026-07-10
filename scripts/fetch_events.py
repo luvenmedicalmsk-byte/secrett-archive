@@ -9411,7 +9411,7 @@ def save_enriched(events, previous_snapshot=None):
                 _sig_path = str(OUTPUT_PATH.parent / "signals.json")
                 # ═══ A2 CANARY (ADR-005 Stage 1): climate читает canon; авто-rollback ═══
                 # Область: только домены из _CANARY_DOMAINS. Изоляция: остальные — legacy.
-                _CANARY_DOMAINS = {'climate', 'economy'}
+                _CANARY_DOMAINS = {'climate', 'economy', 'geopolitics'}
                 _prev_sig = []
                 try:
                     import os as _os2
