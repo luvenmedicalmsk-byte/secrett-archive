@@ -4130,6 +4130,19 @@ def save(events):
             _geo_v2_shadow_report(events)   # G1 SHADOW Phase 1 (READ-ONLY, v2=зеркало)
         except Exception as _e45:
             print('  [WARN] geo v2 shadow fail: %s' % _e45, file=sys.stderr)
+            try:                            # самодиагностика: причина падения — в отчёт (как Phase 0)
+                import traceback as _tb45
+                _migdir45 = OUTPUT_PATH.parent / 'migration'
+                _migdir45.mkdir(parents=True, exist_ok=True)
+                (_migdir45 / 'geo-shadow-report.json').write_text(json.dumps(
+                    {'meta': {'phase': 'g1-shadow', 'status': 'ERROR',
+                              'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')},
+                     'status': 'ERROR', 'error': str(_e45),
+                     'traceback': _tb45.format_exc()[-2000:],
+                     'gate': {'status': 'ERROR', 'production_unchanged': True}},
+                    ensure_ascii=False, indent=2), encoding='utf-8')
+            except Exception:
+                pass
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
