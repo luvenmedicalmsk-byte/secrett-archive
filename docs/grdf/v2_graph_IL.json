@@ -2,24 +2,24 @@
   "country": "IL",
   "date": "2026-07-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-10T11:56:40.874189+00:00",
+  "generated_at": "2026-07-10T14:00:22.652621+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 71,
+      "score": 66,
       "props": {
-        "risk_score": 71
+        "risk_score": 66
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
+      "score": 40,
       "trend": "down"
     },
     {
@@ -62,7 +62,7 @@
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IL-Израильска",
+      "id": "SIGNAL-IL-ВВС_Израил",
       "type": "Signal",
-      "label": "Израильская армия сообщает, что убила ко",
-      "severity": 70,
+      "label": "ВВС Израиля занимают 3-е место — глобаль",
+      "severity": 35,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IL",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IL-Трехкратны",
       "to": "DOMAIN-IL-technology",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.78
     },
     {
-      "from": "SIGNAL-IL-Израильска",
+      "from": "SIGNAL-IL-ВВС_Израил",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.7
+      "weight": 0.35
     }
   ]
 }
