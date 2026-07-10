@@ -3843,6 +3843,25 @@ def _editorial_gate(events):
     return kept
 
 
+def _delatinize_titles(events):
+    """Недоперевод title (OpenAI-fallback оставил латиницу): если summary — чистый
+    русский, заголовок берётся из первого предложения summary. Вызывается ПОСЛЕ
+    resolve_geo (гео зафиксировано на исходном тексте -> без гео-регрессии).
+    Post-make_id (id из сырого title) -> churn 0. Легитимные бренды/имена не трогает."""
+    for e in events:
+        _tt = e.get('title') or ''; _ss = e.get('summary') or ''
+        _lat_t = len(re.findall(r'[A-Za-z]', _tt)); _cyr_t = len(re.findall(r'[а-яёА-ЯЁ]', _tt))
+        if not (_lat_t > 5 and _lat_t >= _cyr_t):
+            continue
+        _cyr_s = len(re.findall(r'[а-яёА-ЯЁ]', _ss)); _lat_s = len(re.findall(r'[A-Za-z]', _ss))
+        if _cyr_s <= max(_lat_s, 10):
+            continue
+        _first = re.split(r'(?<=[.!?])\s+', _ss.strip())[0].strip()
+        _cand = _smart_truncate(_first if len(_first) >= 10 else _ss, 120)
+        if len(re.findall(r'[A-Za-z]', _cand)) <= 3:
+            e['title'] = _cand
+
+
 def _apply_geo_contract(events):
     """GEO CONTRACT Phase 2 (docs/GEO_CONTRACT.md): авторитетная география платформы.
     resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
@@ -4110,6 +4129,7 @@ def save(events):
         print('  [WARN] editorial gate fail: %s' % _e48, file=sys.stderr)
     try:
         _apply_geo_contract(events)         # GEO CONTRACT Phase 2 — и в fallback-пути
+        _delatinize_titles(events)          # чистка недопереведённых title ПОСЛЕ гео (0 churn)
     except Exception as _e47:
         print('  [WARN] geo authority fail: %s' % _e47, file=sys.stderr)
     try:
@@ -9314,6 +9334,7 @@ def save_enriched(events, previous_snapshot=None):
             enriched["count"] = len(enriched["events"])
             enriched["events"] = _aggregate_series(_editorial_gate(enriched["events"]))   # аудит качества: шум/PR/ретро + серии
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
+            _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
             # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
             try:
                 _sig_ns = _canon_shadow_pass(enriched["events"])
