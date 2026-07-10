@@ -2,67 +2,72 @@
   "country": "ID",
   "date": "2026-07-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-10T09:51:11.006213+00:00",
-  "node_count": 11,
-  "edge_count": 13,
+  "generated_at": "2026-07-10T10:05:50.846616+00:00",
+  "node_count": 12,
+  "edge_count": 11,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 34,
       "props": {
-        "risk_score": 52
+        "risk_score": 34
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
-      "trend": "up"
+      "score": 21,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "up"
+      "score": -7,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "up"
+      "score": 13,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-ID-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -75,9 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-ID-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-ID-Индонезия_",
+      "type": "Signal",
+      "label": "Индонезия стала первой страной в мире, к",
+      "severity": 34,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -85,13 +92,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": -0.07
     },
     {
       "from": "COUNTRY-ID",
@@ -115,13 +122,19 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-cyber",
       "type": "CORRELATES",
       "weight": 0.03
+    },
+    {
+      "from": "DRIVER-ID-Economic",
+      "to": "COUNTRY-ID",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-ID-Geopolitical",
@@ -136,31 +149,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ID-Economic",
-      "to": "COUNTRY-ID",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-ID-geopolitical",
-      "to": "DOMAIN-ID-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-ID-infrastructure",
+      "from": "SIGNAL-ID-Индонезия_",
       "to": "DOMAIN-ID-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ID-economic",
-      "to": "DOMAIN-ID-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.34
     }
   ]
 }
