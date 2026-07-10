@@ -2,32 +2,32 @@
   "country": "DE",
   "date": "2026-07-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-10T14:00:22.644650+00:00",
-  "node_count": 13,
-  "edge_count": 12,
+  "generated_at": "2026-07-10T16:18:59.791004+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 47,
+      "score": 48,
       "props": {
-        "risk_score": 47
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 27,
-      "trend": "stable"
+      "score": 28,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
+      "score": 14,
       "trend": "stable"
     },
     {
@@ -85,13 +85,6 @@
       "label": "США одобрили продажу ракет «Томагавк» Ге",
       "severity": 48,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-DE-Несколько_",
-      "type": "Signal",
-      "label": "Несколько человек пострадали при нападен",
-      "severity": 45,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -99,13 +92,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-DE",
@@ -123,7 +116,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-DE",
@@ -156,16 +149,31 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-DE-США_одобри",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.48
-    },
-    {
-      "from": "SIGNAL-DE-Несколько_",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.45
     }
   ]
 }
