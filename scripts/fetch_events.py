@@ -4047,25 +4047,39 @@ def _geo_v2_shadow_report(events):
             if isinstance(_cf, (int, float)):
                 _b = round(_cf, 1); conf_hist[_b] = conf_hist.get(_b, 0) + 1
             lc, vc = lg.get('country'), v2.get('country')
-            if lc != vc:
-                m['country_changed'] += 1
-                rep['country_changed'].append({'id': eid, 'legacy': lc, 'shadow': vc,
-                                               'lever': None, 'class': 'neutral'})
-                rep['neutral'].append({'id': eid, 'axis': 'country'})
             lla = (lg.get('lat'), lg.get('lng')); vla = (v2.get('lat'), v2.get('lng'))
-            if lla != vla:
-                m['coord_changed'] += 1
-                _both = all(isinstance(x, (int, float)) for x in lla + vla)
-                rep['coordinates_changed'].append({'id': eid, 'legacy_latlng': list(lla),
-                    'shadow_latlng': list(vla), 'distance_km': (_hav(lla, vla) if _both else None),
-                    'lever': None, 'class': 'neutral'})
-                _lhas = all(isinstance(x, (int, float)) for x in lla)
-                _vhas = all(isinstance(x, (int, float)) for x in vla)
-                if _lhas and not _vhas:
-                    rep['null_vs_false_coordinates']['false_to_null'].append(
-                        {'id': eid, 'legacy_latlng': list(lla)})
-                elif not _lhas and _vhas:
-                    rep['null_vs_false_coordinates']['real_to_null'].append({'id': eid, 'note': 'null->real'})
+            _country_diff = (lc != vc); _coord_diff = (lla != vla)
+            if _country_diff or _coord_diff:
+                _lever = 'A' if active_levers() else None
+                # Классификация. Lever A демотирует destination в пользу реального места
+                # события: legacy object/direction -> v2 иная страна = beneficial. Потеря
+                # гео (была страна, стала None) = harmful. Прочее = neutral.
+                if vc is None and lc is not None:
+                    _cls = 'harmful'
+                elif lg.get('source') in ('object', 'direction') and vc is not None and _country_diff:
+                    _cls = 'beneficial'
+                else:
+                    _cls = 'neutral'
+                if _country_diff:
+                    m['country_changed'] += 1
+                    rep['country_changed'].append({'id': eid, 'legacy': lc, 'shadow': vc,
+                        'legacy_source': lg.get('source'), 'shadow_source': v2.get('source'),
+                        'lever': _lever, 'class': _cls})
+                if _coord_diff:
+                    m['coord_changed'] += 1
+                    _both = all(isinstance(x, (int, float)) for x in lla + vla)
+                    rep['coordinates_changed'].append({'id': eid, 'legacy_latlng': list(lla),
+                        'shadow_latlng': list(vla), 'distance_km': (_hav(lla, vla) if _both else None),
+                        'lever': _lever, 'class': _cls})
+                    _lhas = all(isinstance(x, (int, float)) for x in lla)
+                    _vhas = all(isinstance(x, (int, float)) for x in vla)
+                    if _lhas and not _vhas:
+                        rep['null_vs_false_coordinates']['false_to_null'].append(
+                            {'id': eid, 'legacy_latlng': list(lla)})
+                    elif not _lhas and _vhas:
+                        rep['null_vs_false_coordinates']['real_to_null'].append({'id': eid, 'note': 'null->real'})
+                rep[_cls].append({'id': eid, 'lever': _lever, 'legacy': lc, 'shadow': vc,
+                                  'title': (title or '')[:80]})
             li = set(lg.get('impact_countries') or []); vi = set(v2.get('impact_countries') or [])
             if li != vi:
                 removed = sorted(li - vi); added = sorted(vi - li)
@@ -4087,9 +4101,11 @@ def _geo_v2_shadow_report(events):
     rep['metrics']['role_distribution'] = role_hist
     rep['metrics']['confidence_distribution'] = conf_hist
     harmful = len(rep['harmful'])
-    rep['gate'] = {'harmful': harmful, 'all_classified': True, 'production_unchanged': True,
-                   'active_levers': active_levers(),
-                   'status': ('STABLE' if (harmful == 0 and not active_levers()) else 'SHADOW')}
+    rep['gate'] = {'harmful': harmful, 'beneficial': len(rep['beneficial']),
+                   'neutral': len(rep['neutral']), 'all_classified': True,
+                   'production_unchanged': True, 'active_levers': active_levers(),
+                   'status': ('STABLE' if (harmful == 0 and not active_levers())
+                              else ('SHADOW_PASS' if harmful == 0 else 'SHADOW_FAIL'))}
     _mig = OUTPUT_PATH.parent / 'migration'
     try:
         _mig.mkdir(parents=True, exist_ok=True)
