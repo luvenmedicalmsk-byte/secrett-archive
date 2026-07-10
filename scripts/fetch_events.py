@@ -9347,6 +9347,25 @@ def save_enriched(events, previous_snapshot=None):
                 except Exception:
                     pass
 
+            if GEO_SHADOW:                  # G1 SHADOW Phase 1 — на БОЕВОМ пути публикации (как Phase 0)
+                try:
+                    _geo_v2_shadow_report(enriched["events"])
+                except Exception as _e45b:
+                    print('  [WARN] geo v2 shadow fail: %s' % _e45b, file=sys.stderr)
+                    try:
+                        import traceback as _tb45b
+                        _md45b = OUTPUT_PATH.parent / 'migration'
+                        _md45b.mkdir(parents=True, exist_ok=True)
+                        (_md45b / 'geo-shadow-report.json').write_text(json.dumps(
+                            {'meta': {'phase': 'g1-shadow', 'status': 'ERROR',
+                                      'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')},
+                             'status': 'ERROR', 'error': str(_e45b),
+                             'traceback': _tb45b.format_exc()[-2000:],
+                             'gate': {'status': 'ERROR', 'production_unchanged': True}},
+                            ensure_ascii=False, indent=2), encoding='utf-8')
+                    except Exception:
+                        pass
+
             # ATLAS V2 Phase 1 (shadow): параллельный signals.json — сворачивает
             # статьи в процессы (кластеризация + Priority). Аддитивно, events.json не трогает.
             try:
