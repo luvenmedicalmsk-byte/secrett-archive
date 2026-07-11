@@ -197,3 +197,96 @@ def _classify_lever_c(legacy_b, v2_b):
     if removed or added or (legacy_b.get('mentioned') or []) != (v2_b.get('mentioned') or []):
         return 'neutral'   # структурный dedup (country-self убран из impact) и пр.
     return 'neutral'
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Lever D — False Coordinate → NULL (GI-3). SHADOW, READ-ONLY.
+# GI-3: «ложная координата хуже отсутствующей». Ложная = фабрикованный стенд-ин,
+# не выведенный из события: zone-default центроид (статичный центр зоны) ИЛИ
+# координата вне bbox страны. НЕ трогает: exact (обоснованные raw_coords) и
+# country-центроид (событие РЕАЛЬНО в стране — честная country-level аппроксимация;
+# сброс таких = потеря реального места = harmful; вынесено на решение отдельно).
+# Спека: docs/adr/spec/Lever-D-*.md. resolve_geo/Lever A/Lever C НЕ тронуты.
+# ═══════════════════════════════════════════════════════════════════════════
+
+try:
+    from geo_contract import in_bbox as _in_bbox, BBOX as _BBOX
+except Exception:
+    _in_bbox = None
+    _BBOX = {}
+
+# zone_type, чей центроид = статичный стенд-ин (не координата конкретного события).
+_STANDIN_ZONE = {'ocean', 'sea', 'gulf', 'strait',
+                 'international_waters', 'polar', 'airspace', 'global'}
+
+
+def _coord_is_false(gc):
+    """Классификация координаты по GI-3. → 'zone_standin' | 'out_of_bbox' | None(обоснована)."""
+    lat = getattr(gc, 'lat', None)
+    lng = getattr(gc, 'lng', None)
+    if lat is None and lng is None:
+        return None  # координаты нет — нечего проверять
+    prec = getattr(gc, 'precision', 'none')
+    ptype = getattr(gc, 'process_place_type', None)
+    ztype = getattr(gc, 'zone_type', None)
+    country = getattr(gc, 'country', None)
+    # zone-default центроид: статичный центр зоны, одинаков для всех событий зоны
+    if prec == 'centroid' and ptype in ('zone', 'global') and ztype in _STANDIN_ZONE:
+        return 'zone_standin'
+    # координата вне bbox заявленной страны — фабрикованная/ошибочная
+    if country and _in_bbox and country in _BBOX and not _in_bbox(country, lat, lng, margin=1.5):
+        return 'out_of_bbox'
+    return None
+
+
+def lever_d_contract(gc):
+    """Lever D: ложная координата → NULL. READ-ONLY, не мутирует gc. → dict.
+    При LEVER_D=False возвращает legacy-эквивалент (нулевой дифф)."""
+    country = getattr(gc, 'country', None)
+    lat = getattr(gc, 'lat', None)
+    lng = getattr(gc, 'lng', None)
+    prec = getattr(gc, 'precision', 'none')
+    conf = getattr(gc, 'confidence', 0.0) or 0.0
+    region = getattr(gc, 'region', None)
+    out = {'country': country, 'lat': lat, 'lng': lng, 'precision': prec,
+           'confidence': conf, 'region': region, 'action': 'preserve'}
+    if not LEVER_D:
+        return out
+    kind = _coord_is_false(gc)
+    if kind == 'zone_standin':
+        # метку зоны (region) СОХРАНЯЕМ, ложную точку убираем
+        out.update({'lat': None, 'lng': None, 'precision': 'none',
+                    'confidence': min(conf, 0.3), 'action': 'zone_centroid_null'})
+    elif kind == 'out_of_bbox':
+        # координата не в стране — фабрикована → полный NULL
+        out.update({'country': None, 'lat': None, 'lng': None, 'precision': 'none',
+                    'confidence': 0.0, 'action': 'oob_null'})
+    return out
+
+
+def validate_lever_d(before, after):
+    """GI-3-инварианты перехода. → (ok, errors).
+    gi3_violation: ложная координата ОСТАЛАСЬ (не убрана). real_coord_lost:
+    обоснованная (exact) координата пропала."""
+    errs = []
+    b_lat, b_lng = before.get('lat'), before.get('lng')
+    a_lat, a_lng = after.get('lat'), after.get('lng')
+    # exact-координата не должна исчезать
+    if before.get('precision') == 'exact' and b_lat is not None and a_lat is None:
+        errs.append('real_coord_lost')
+    # after: если координата осталась — она не должна быть zone-стенд-ином/oob
+    #   (проверяется на уровне отчёта через _coord_is_false на after-контракте)
+    return (not errs), errs
+
+
+def classify_lever_d(before, after):
+    """beneficial/neutral/harmful для перехода координаты legacy→v2."""
+    b_lat = before.get('lat')
+    a_lat = after.get('lat')
+    b_prec = before.get('precision')
+    if b_lat is not None and a_lat is None:
+        # координата убрана: beneficial если была ложной, harmful если была exact
+        return 'harmful' if b_prec == 'exact' else 'beneficial'
+    if before.get('country') is not None and after.get('country') is None:
+        return 'beneficial'  # oob-страна снята
+    return 'neutral'
