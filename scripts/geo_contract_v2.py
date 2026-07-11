@@ -290,3 +290,57 @@ def classify_lever_d(before, after):
     if before.get('country') is not None and after.get('country') is None:
         return 'beneficial'  # oob-страна снята
     return 'neutral'
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Lever B — Gazetteer Data (Phase 1: US Ocean Zone Guard). SHADOW, READ-ONLY.
+# DATA-фикс, НЕ архитектура: US-суша, ошибочно зонированная как ocean (bbox
+# pacific_ocean через антимеридиан покрывает запад США), → страна US.
+# Координата exact сохраняется. resolve_geo/Lever A/C/D НЕ тронуты. LEVER_B=False.
+# ═══════════════════════════════════════════════════════════════════════════
+
+LEVER_B = False   # US Ocean Zone Guard (data-layer)
+
+# Континентальная суша США (CONUS): lat_min, lat_max, lng_min, lng_max.
+_US_CONTINENTAL = (24.0, 49.5, -125.0, -66.0)
+
+
+def _is_us_continental(lat, lng):
+    if lat is None or lng is None:
+        return False
+    a, b, c, d = _US_CONTINENTAL
+    return a <= lat <= b and c <= lng <= d
+
+
+def us_ocean_zone_guard(gc):
+    """Lever B Phase 1: ложная ocean-зона на US-суше → US. READ-ONLY, не мутирует gc.
+    При LEVER_B=False возвращает legacy-эквивалент (нулевой дифф)."""
+    country = getattr(gc, 'country', None)
+    lat = getattr(gc, 'lat', None)
+    lng = getattr(gc, 'lng', None)
+    ztype = getattr(gc, 'zone_type', None)
+    ptype = getattr(gc, 'process_place_type', None)
+    region = getattr(gc, 'region', None)
+    prec = getattr(gc, 'precision', 'none')
+    out = {'country': country, 'lat': lat, 'lng': lng, 'region': region,
+           'zone_type': ztype, 'process_place_type': ptype, 'precision': prec,
+           'action': 'preserve'}
+    if not LEVER_B:
+        return out
+    # ложная ocean/sea-зона, но координата — континентальная суша США
+    if ztype in ('ocean', 'sea') and ptype in ('zone', 'global') and _is_us_continental(lat, lng):
+        out.update({'country': 'US', 'region': 'США', 'zone_type': None,
+                    'process_place_type': 'country', 'action': 'us_ocean_to_land'})
+    return out
+
+
+def classify_lever_b(before, after):
+    """beneficial/neutral/harmful для US Ocean Zone Guard."""
+    if before.get('action') == after.get('action') == 'preserve':
+        return 'neutral'
+    if after.get('action') == 'us_ocean_to_land':
+        # координата сохранена, ложная океан-зона снята → beneficial
+        if after.get('lat') == before.get('lat') and after.get('lng') == before.get('lng'):
+            return 'beneficial'
+        return 'harmful'   # координата изменилась — не должно случаться
+    return 'neutral'
