@@ -2,9 +2,9 @@
   "country": "KZ",
   "date": "2026-07-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-11T08:46:55.203498+00:00",
+  "generated_at": "2026-07-11T10:13:39.621953+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
+      "score": 48,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
+      "score": 35,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-KZ-Суд_МФЦА_в",
+      "id": "SIGNAL-KZ-Национальн",
       "type": "Signal",
-      "label": "Суд МФЦА в Казахстане отменил ранее выне",
+      "label": "Национальный банк Казахстана планирует и",
       "severity": 34,
-      "domain": "geopolitical"
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-KZ",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-KZ-МВД_Казахс",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "AMPLIFIES",
@@ -175,8 +196,8 @@
       "weight": 0.53
     },
     {
-      "from": "SIGNAL-KZ-Суд_МФЦА_в",
-      "to": "DOMAIN-KZ-geopolitical",
+      "from": "SIGNAL-KZ-Национальн",
+      "to": "DOMAIN-KZ-economic",
       "type": "AMPLIFIES",
       "weight": 0.34
     }
