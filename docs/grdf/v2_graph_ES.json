@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-07-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-11T14:10:09.799074+00:00",
+  "generated_at": "2026-07-11T14:57:59.739012+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,16 +10,16 @@
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 64,
+      "score": 65,
       "props": {
-        "risk_score": 64
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 57,
+      "score": 50,
       "trend": "up"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 49,
+      "score": 43,
       "trend": "up"
     },
     {
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-ES-social",
@@ -87,17 +87,17 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-ES-Сотни_пожа",
+      "type": "Signal",
+      "label": "Сотни пожарных, при поддержке вертолетов",
+      "severity": 66,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ES-Экстренные",
       "type": "Signal",
       "label": "Экстренные службы и родственники работаю",
       "severity": 65,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ES-Лесной_пож",
-      "type": "Signal",
-      "label": "Лесной пожар в Андалусии, Испания",
-      "severity": 60,
       "domain": "climate"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-ES",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-ES",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-ES-social",
-      "to": "DOMAIN-ES-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-ES-climate",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -203,6 +182,27 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -232,16 +232,16 @@
       "weight": 0.73
     },
     {
+      "from": "SIGNAL-ES-Сотни_пожа",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
       "from": "SIGNAL-ES-Экстренные",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-ES-Лесной_пож",
-      "to": "DOMAIN-ES-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }

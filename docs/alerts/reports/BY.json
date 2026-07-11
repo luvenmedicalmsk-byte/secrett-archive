@@ -2,45 +2,52 @@
   "country": "BY",
   "country_name": "BY",
   "date": "2026-07-11",
-  "alert_level": "NONE",
-  "alert_score": 33,
-  "risk_score": 34,
-  "confidence": 32,
-  "signals": 1,
+  "alert_level": "WATCH",
+  "alert_score": 41,
+  "risk_score": 35,
+  "confidence": 33,
+  "signals": 2,
   "trend": "falling",
   "top_drivers": [
     "economy",
     "geopolitics",
     "finance"
   ],
-  "created_at": "2026-07-11T14:10:09.624052+00:00",
+  "created_at": "2026-07-11T14:57:59.540781+00:00",
   "triggered_rules": [
-    "A"
+    "A",
+    "B",
+    "C",
+    "E"
   ],
   "rules": {
     "A_velocity": {
       "rule": "A",
       "name": "velocity_spike",
       "triggered": true,
-      "change_7d": -27.7,
-      "change_30d": -51.4,
+      "change_7d": -25.5,
+      "change_30d": -50.0,
       "velocity_score": 100
     },
     "B_signal_expl": {
       "rule": "B",
       "name": "signal_explosion",
-      "triggered": false,
-      "current_signals": 1,
+      "triggered": true,
+      "current_signals": 2,
       "avg_90d": 0.8,
       "threshold": 1.2,
-      "explosion_ratio": 1.0
+      "explosion_ratio": 2.0
     },
     "C_multi_eng": {
       "rule": "C",
       "name": "multi_engine_confirmation",
-      "triggered": false,
-      "confirming_engines": [],
-      "engine_count": 0,
+      "triggered": true,
+      "confirming_engines": [
+        "economy",
+        "geopolitics",
+        "finance"
+      ],
+      "engine_count": 3,
       "threshold": 3
     },
     "D_emerging": {
@@ -53,26 +60,32 @@
     "E_confidence": {
       "rule": "E",
       "name": "confidence_escalation",
-      "triggered": false,
-      "current_confidence": 32,
+      "triggered": true,
+      "current_confidence": 33,
       "prev_confidence": 32,
-      "confidence_delta": 0,
-      "score_delta": 0
+      "confidence_delta": 1,
+      "score_delta": 1
     }
   },
   "sub_scores": {
     "velocity_component": 100,
-    "severity_component": 0,
-    "confidence_component": 11,
-    "signal_density": 3
+    "severity_component": 10,
+    "confidence_component": 12,
+    "signal_density": 27
   },
-  "escalation": null,
-  "is_escalation": false,
+  "escalation": {
+    "previous": "NONE",
+    "current": "WATCH",
+    "delta_score": 8,
+    "timestamp": "2026-07-11T14:57:59.540771+00:00",
+    "escalated": true
+  },
+  "is_escalation": true,
   "dominant_domain": "economy",
   "escalation_level": "stable",
-  "delta": -1,
+  "delta": 1,
   "engine_version": "ALERT_V1",
   "model_version": "GRIE_V1",
-  "generated_at": "2026-07-11T14:10:09.624052+00:00",
-  "hash": "5b52a8e2242ab639"
+  "generated_at": "2026-07-11T14:57:59.540781+00:00",
+  "hash": "781a8e6ae4c172a0"
 }
