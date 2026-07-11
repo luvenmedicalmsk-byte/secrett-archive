@@ -2,60 +2,60 @@
   "country": "KZ",
   "date": "2026-07-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-11T04:13:09.304778+00:00",
+  "generated_at": "2026-07-11T06:36:37.121189+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 45,
+      "score": 48,
       "props": {
-        "risk_score": 45
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "stable"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-cyber",
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-KZ-Национальн",
+      "id": "SIGNAL-KZ-Суд_МФЦА_в",
       "type": "Signal",
-      "label": "Национальный банк Казахстана планирует и",
+      "label": "Суд МФЦА в Казахстане отменил ранее выне",
       "severity": 34,
-      "domain": "economic"
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-KZ",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-KZ",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-KZ-МВД_Казахс",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "AMPLIFIES",
@@ -175,8 +196,8 @@
       "weight": 0.53
     },
     {
-      "from": "SIGNAL-KZ-Национальн",
-      "to": "DOMAIN-KZ-economic",
+      "from": "SIGNAL-KZ-Суд_МФЦА_в",
+      "to": "DOMAIN-KZ-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
     }
