@@ -2,67 +2,67 @@
   "country": "IT",
   "date": "2026-07-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-12T09:34:36.398646+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-07-12T11:01:35.131886+00:00",
+  "node_count": 11,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 34,
+      "score": 50,
       "props": {
-        "risk_score": 34
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -3,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -78,13 +78,6 @@
       "id": "DRIVER-IT-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-IT-Италия_выс",
-      "type": "Signal",
-      "label": "Италия высылает двух военных атташе посо",
-      "severity": 34,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -92,43 +85,43 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.03
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.02
     },
     {
       "from": "DRIVER-IT-Geopolitical",
@@ -149,10 +142,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IT-Италия_выс",
-      "to": "DOMAIN-IT-geopolitical",
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }

@@ -2,32 +2,32 @@
   "country": "IR",
   "date": "2026-07-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-12T09:34:36.398050+00:00",
+  "generated_at": "2026-07-12T11:01:35.131247+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 61,
+      "score": 64,
       "props": {
-        "risk_score": 61
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "down"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 13,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-США_нанесл",
+      "id": "SIGNAL-IR-Военные_Ку",
       "type": "Signal",
-      "label": "США нанесли удар по территории АЭС «Буше",
-      "severity": 71,
+      "label": "Военные Кувейта заявляют о реакции на во",
+      "severity": 76,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-США_нанесл",
+      "id": "SIGNAL-IR-Война_на_Б",
       "type": "Signal",
-      "label": "США нанесли удары по 140 военным объекта",
-      "severity": 69,
+      "label": "Война на Ближнем Востоке: советник Ирана",
+      "severity": 73,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-IR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-США_ввели_",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.76
     },
     {
-      "from": "SIGNAL-IR-США_нанесл",
+      "from": "SIGNAL-IR-Военные_Ку",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.71
+      "weight": 0.76
     },
     {
-      "from": "SIGNAL-IR-США_нанесл",
+      "from": "SIGNAL-IR-Война_на_Б",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.69
+      "weight": 0.73
     }
   ]
 }
