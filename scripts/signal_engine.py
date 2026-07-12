@@ -132,7 +132,7 @@ STAGE1_CHRONICLE = True
 # False = production (макро без собственной истории). True = сшивать 4 истории
 # (severity/pressure/member_count/geo_spread) по стабильному macro signal_id.
 # ТОЛЬКО хранение (change-triggered append + _cap). velocity/accel НЕ трогает (Stage 2.2).
-MACRO_HISTORY = False
+MACRO_HISTORY = True
 _MACRO_HIST_CAP = 24  # Stage 2.1: cap собственной истории макро (change-triggered, <1% размера)
 
 # ═══ Stage 2.2 Macro Velocity (dormant shadow flag) ═══
