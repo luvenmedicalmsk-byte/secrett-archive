@@ -1,8 +1,8 @@
 {
   "country": "GE",
-  "date": "2026-07-11",
+  "date": "2026-07-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-11T23:47:08.969718+00:00",
+  "generated_at": "2026-07-12T01:33:33.775357+00:00",
   "node_count": 11,
   "edge_count": 19,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-GE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 45,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-GE-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-GE-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-GE-climate",
-      "type": "Driver",
-      "label": "climate"
     }
   ],
   "edges": [
@@ -85,7 +85,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-GE",
@@ -130,16 +130,37 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-GE-geopolitical",
+      "to": "COUNTRY-GE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-GE-social",
       "to": "COUNTRY-GE",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GE-climate",
-      "to": "COUNTRY-GE",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-GE-geopolitical",
+      "to": "DOMAIN-GE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GE-infrastructure",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-GE-climate",
@@ -161,27 +182,6 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GE-infrastructure",
-      "to": "DOMAIN-GE-economic",
-      "type": "ESCALATES",
-      "weight": 0.78,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GE-economic",
-      "to": "DOMAIN-GE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 21
-    },
-    {
-      "from": "DOMAIN-GE-economic",
-      "to": "DOMAIN-GE-social",
-      "type": "CORRELATES",
-      "weight": 0.5,
-      "lag_days": 60
     },
     {
       "from": "DOMAIN-GE-climate",
