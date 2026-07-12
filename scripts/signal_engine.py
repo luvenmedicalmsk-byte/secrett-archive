@@ -126,7 +126,7 @@ def _process_name_v2(evs, domain, place):
 # False = production-поведение (хроника по живым членам, cap [:24], без unique_events).
 # True  = Stage 1: хроника по ВСЕМ членам, sort by date, cap [:3]+[-21:], + unique_events.
 # Затрагивает ТОЛЬКО блок evidence в _enrich_macro. Метрики/связи/pressure не меняются.
-STAGE1_CHRONICLE = False
+STAGE1_CHRONICLE = True
 
 def _signal_phase(evidence_count, first_seen, last_update, sev_delta, trend, count_7d, base_phase='active'):
     """Фаза на уровне процесса: динамика (тренд/дельта/подтверждения/устойчивость)
