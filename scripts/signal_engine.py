@@ -128,6 +128,13 @@ def _process_name_v2(evs, domain, place):
 # Затрагивает ТОЛЬКО блок evidence в _enrich_macro. Метрики/связи/pressure не меняются.
 STAGE1_CHRONICLE = True
 
+# ═══ Stage 2.1 Macro History (dormant shadow flag) ═══
+# False = production (макро без собственной истории). True = сшивать 4 истории
+# (severity/pressure/member_count/geo_spread) по стабильному macro signal_id.
+# ТОЛЬКО хранение (change-triggered append + _cap). velocity/accel НЕ трогает (Stage 2.2).
+MACRO_HISTORY = False
+_MACRO_HIST_CAP = 24  # Stage 2.1: cap собственной истории макро (change-triggered, <1% размера)
+
 def _signal_phase(evidence_count, first_seen, last_update, sev_delta, trend, count_7d, base_phase='active'):
     """Фаза на уровне процесса: динамика (тренд/дельта/подтверждения/устойчивость)
     поверх базовой фазы статьи. Лайфцикл: emerging->growing->active->escalating->stabilizing->de-escalating."""
@@ -1025,6 +1032,25 @@ def _enrich_macro(macro, members, now):
     macro['why_exists']=macro['explain']['why_exists']
     return macro
 
+def _thread_macro_history(macros, prev_macros, now):
+    """Stage 2.1: собственная история макро по стабильному signal_id.
+    Change-triggered append + _cap. ТОЛЬКО хранение — velocity/accel не вычисляет."""
+    _MH=[('severity_history','severity'),('pressure_history','pressure'),
+         ('member_count_history',None),('geo_spread_history','geo_spread_count')]
+    for m in macros:
+        if not m.get('is_macro'):
+            continue
+        prev=prev_macros.get(m.get('signal_id')) or {}
+        for hist_key, val_key in _MH:
+            cur_v = len(m.get('included_processes') or []) if val_key is None else m.get(val_key)
+            if cur_v is None:
+                continue
+            hist=list(prev.get(hist_key) or [])
+            if (not hist) or hist[-1].get('v')!=cur_v:
+                hist.append({'t':now,'v':cur_v})
+            m[hist_key]=hist[-_MACRO_HIST_CAP:]
+
+
 def _reconstruct_macro(signals, now):
     """Б: РЕКОНСТРУКЦИЯ СИСТЕМНОГО ПРОЦЕССА. Собирает региональные процессы одной темы+страны
     в макропроцесс-зонтик с географической траекторией и кросс-доменным каскадом.
@@ -1139,6 +1165,8 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
     # Макропроцессы (Б) — производные, строятся заново каждый прогон из под-процессов.
+    # Stage 2.1: до стрипа сохраняем prev-макро (read-only) для сшивки собственной истории.
+    _prev_macros={s['signal_id']:s for s in (previous or []) if s.get('is_macro')} if MACRO_HISTORY else {}
     # Не переносим их из previous, иначе накапливаются дубли.
     previous=[s for s in (previous or []) if not s.get('is_macro')]
     prev_by_id={s['signal_id']:s for s in (previous or [])}
@@ -1283,6 +1311,8 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     # с географической траекторией и кросс-доменным каскадом. Под-процессы сохраняются
     # (разрешающая способность из А не теряется). Intelligence-платформа: и лес, и деревья.
     out = _reconstruct_macro(out, now)
+    if MACRO_HISTORY:
+        _thread_macro_history(out, _prev_macros, now)
     out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s.get('pressure',s['priority'])))
     merges=sum(1 for s in out if s.get('evidence_count',1)>1)
     report=signal_engine_report(out, len(previous or []), n_created, n_matched, merges, 0, match_scores, now)
