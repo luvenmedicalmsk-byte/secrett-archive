@@ -135,6 +135,11 @@ STAGE1_CHRONICLE = True
 MACRO_HISTORY = False
 _MACRO_HIST_CAP = 24  # Stage 2.1: cap собственной истории макро (change-triggered, <1% размера)
 
+# ═══ Stage 2.2 Macro Velocity (dormant shadow flag) ═══
+# False = production (velocity=max(live-члены)). True = span pressure-velocity из
+# pressure_history (Stage 2.1). Требует MACRO_HISTORY. Меняет ТОЛЬКО velocity/trend/delta.
+MACRO_VELOCITY = False
+
 def _signal_phase(evidence_count, first_seen, last_update, sev_delta, trend, count_7d, base_phase='active'):
     """Фаза на уровне процесса: динамика (тренд/дельта/подтверждения/устойчивость)
     поверх базовой фазы статьи. Лайфцикл: emerging->growing->active->escalating->stabilizing->de-escalating."""
@@ -1032,6 +1037,42 @@ def _enrich_macro(macro, members, now):
     macro['why_exists']=macro['explain']['why_exists']
     return macro
 
+def _compute_macro_velocity(macros, now):
+    """Stage 2.2: span pressure-velocity из pressure_history (Stage 2.1).
+    Override live-модели при >=2 точках; cold-start (мало истории) -> оставить live-fallback.
+    Меняет ТОЛЬКО velocity/trend/delta. Объяснимость: одна причина (давление X->Y)."""
+    for m in macros:
+        if not m.get('is_macro'):
+            continue
+        ph = m.get('pressure_history') or []
+        if len(ph) < 2:
+            continue  # cold-start: оставить live-model velocity из _enrich_macro
+        dt = _hours(ph[0].get('t'), now)
+        if dt <= 0:
+            continue
+        p0 = ph[0].get('v', 0)
+        pcur = m.get('pressure', ph[-1].get('v', 0))
+        vel = round((pcur - p0) / dt, 3)
+        delta_p = ph[-1].get('v', 0) - ph[-2].get('v', 0)
+        if vel > 0.5:
+            trend, cat = 'Rapid Growth', 'усиливается'
+        elif vel > 0.15:
+            trend, cat = 'Growth', 'усиливается'
+        elif vel >= -0.15:
+            trend, cat = 'Stable', 'стабильно'
+        elif vel >= -0.5:
+            trend, cat = 'Weakening', 'затухает'
+        else:
+            trend, cat = 'Rapid Weakening', 'затухает'
+        _dir = 'выросло' if pcur > p0 else ('снизилось' if pcur < p0 else 'без изменений')
+        m['velocity'] = {'severity_per_h': vel, 'pressure_per_h': vel, 'category': cat,
+                         'basis': 'pressure',
+                         'explain': 'Давление процесса %s с %d до %d за %.0f ч.' % (_dir, p0, pcur, dt)}
+        m['trend'] = trend
+        m['delta'] = {'pressure': delta_p, 'severity': 0, 'priority': 0,
+                      'new_sources': [], 'new_countries': [], 'new_connections': []}
+
+
 def _thread_macro_history(macros, prev_macros, now):
     """Stage 2.1: собственная история макро по стабильному signal_id.
     Change-triggered append + _cap. ТОЛЬКО хранение — velocity/accel не вычисляет."""
@@ -1313,6 +1354,8 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     out = _reconstruct_macro(out, now)
     if MACRO_HISTORY:
         _thread_macro_history(out, _prev_macros, now)
+    if MACRO_VELOCITY:
+        _compute_macro_velocity(out, now)
     out.sort(key=lambda s:(-{'active':1,'fading':0.5,'dormant':0.2,'archived':0}.get(s.get('status','active'),1)*1000 - s.get('pressure',s['priority'])))
     merges=sum(1 for s in out if s.get('evidence_count',1)>1)
     report=signal_engine_report(out, len(previous or []), n_created, n_matched, merges, 0, match_scores, now)
