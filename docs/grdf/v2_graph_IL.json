@@ -2,60 +2,60 @@
   "country": "IL",
   "date": "2026-07-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-12T20:05:21.032298+00:00",
+  "generated_at": "2026-07-12T20:57:05.460538+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 58,
+      "score": 62,
       "props": {
-        "risk_score": 58
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-IL-Число_жерт",
+      "type": "Signal",
+      "label": "Число жертв в результате атак Израиля на",
+      "severity": 73,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-IL-Девочка,_9",
       "type": "Signal",
       "label": "Девочка, 9 лет, среди как минимум шести ",
       "severity": 60,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-IL-Сектор_Газ",
-      "type": "Signal",
-      "label": "Сектор Газа. Армия обороны Израиля нанес",
-      "severity": 55,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IL",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IL-Трехкратны",
       "to": "DOMAIN-IL-technology",
       "type": "AMPLIFIES",
       "weight": 0.83
     },
     {
+      "from": "SIGNAL-IL-Число_жерт",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.73
+    },
+    {
       "from": "SIGNAL-IL-Девочка,_9",
       "to": "DOMAIN-IL-social",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-IL-Сектор_Газ",
-      "to": "DOMAIN-IL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.55
     }
   ]
 }
