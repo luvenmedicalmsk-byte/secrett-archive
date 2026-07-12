@@ -122,6 +122,12 @@ def _process_name_v2(evs, domain, place):
     return f'{ptype} — {place}' if place and place!='Глобально' else ptype
 
 # Task 4: phase на уровне процесса (не из статьи)
+# ═══ Stage 1 Chronicle (dormant shadow flag) ═══
+# False = production-поведение (хроника по живым членам, cap [:24], без unique_events).
+# True  = Stage 1: хроника по ВСЕМ членам, sort by date, cap [:3]+[-21:], + unique_events.
+# Затрагивает ТОЛЬКО блок evidence в _enrich_macro. Метрики/связи/pressure не меняются.
+STAGE1_CHRONICLE = False
+
 def _signal_phase(evidence_count, first_seen, last_update, sev_delta, trend, count_7d, base_phase='active'):
     """Фаза на уровне процесса: динамика (тренд/дельта/подтверждения/устойчивость)
     поверх базовой фазы статьи. Лайфцикл: emerging->growing->active->escalating->stabilizing->de-escalating."""
@@ -956,13 +962,20 @@ def _enrich_macro(macro, members, now):
     macro['timeline']=_tl[-18:] if len(_tl)>18 else _tl
     macro['history']=macro['timeline']
     # ── EVIDENCE: объединение событий под-процессов (дедуп по заголовку, без шума) ──
+    # Stage 1: источник = ВСЕ члены (эволюция всего процесса), а не только живые.
     _ev=[]; _se=set()
-    for m in _nsrc:
+    _esrc = members if STAGE1_CHRONICLE else _nsrc
+    for m in _esrc:
         for e in (m.get('evidence') or []):
             t=(e.get('title') or '')[:60]
             if not t or _is_noise(t) or t in _se: continue
             _se.add(t); _ev.append(e)
-    macro['evidence']=_ev[:24]
+    if STAGE1_CHRONICLE:
+        _ev.sort(key=lambda e:(e.get('date') or ''))
+        macro['unique_events']=len(_se)
+        macro['evidence']=_ev if len(_ev)<=24 else _ev[:3]+_ev[-21:]
+    else:
+        macro['evidence']=_ev[:24]
     # ── FORECAST: усреднение прогнозов членов + ренормализация (было 0/0/0) ──
     _fs=[m.get('forecast') for m in _nsrc if isinstance(m.get('forecast'), dict)]
     if _fs:
