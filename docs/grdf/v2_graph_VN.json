@@ -2,67 +2,72 @@
   "country": "VN",
   "date": "2026-07-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-12T05:01:08.685948+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-07-12T07:29:15.586282+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 45,
+      "score": 50,
       "props": {
-        "risk_score": 45
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 16,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 40,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 31,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 29,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
-      "score": 34,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 31,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 27,
-      "trend": "down"
+      "score": 30,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-VN-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-VN-economic",
@@ -75,9 +80,11 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-VN-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-VN-Жители_Тир",
+      "type": "Signal",
+      "label": "Жители Тируччи среди погибших — авария с",
+      "severity": 50,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -85,43 +92,49 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-climate",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-technology",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-social",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-cyber",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.3
+    },
+    {
+      "from": "DRIVER-VN-geopolitical",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-VN-economic",
@@ -136,10 +149,31 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-climate",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-VN-Жители_Тир",
+      "to": "DOMAIN-VN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }

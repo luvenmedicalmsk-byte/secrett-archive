@@ -2,32 +2,32 @@
   "country": "CN",
   "date": "2026-07-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-12T05:01:08.671399+00:00",
+  "generated_at": "2026-07-12T07:29:15.570793+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 51,
+      "score": 52,
       "props": {
-        "risk_score": 51
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 23,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-CN-Китай_впер",
+      "id": "SIGNAL-CN-Моди_привл",
       "type": "Signal",
-      "label": "Китай впервые успешно вернул первую ступ",
-      "severity": 48,
+      "label": "Моди привлекает партнеров из Тихого океа",
+      "severity": 50,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Красное_ув",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-CN-Китай_впер",
+      "from": "SIGNAL-CN-Моди_привл",
       "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.5
     }
   ]
 }
