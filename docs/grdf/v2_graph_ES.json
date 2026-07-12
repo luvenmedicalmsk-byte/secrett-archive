@@ -2,60 +2,60 @@
   "country": "ES",
   "date": "2026-07-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-12T08:14:13.530886+00:00",
+  "generated_at": "2026-07-12T09:34:36.399936+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 61,
+      "score": 63,
       "props": {
-        "risk_score": 61
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
       "score": 17,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 19,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
@@ -87,17 +87,17 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Лесной_пож",
+      "id": "SIGNAL-ES-Пожарные,_",
       "type": "Signal",
-      "label": "Лесной пожар в Андалусии, Испания",
-      "severity": 60,
+      "label": "Пожарные, борющиеся с лесным пожаром на ",
+      "severity": 66,
       "domain": "climate"
     },
     {
       "id": "SIGNAL-ES-Лесной_пож",
       "type": "Signal",
-      "label": "Лесной пожар на юго-востоке Испании прив",
-      "severity": 53,
+      "label": "Лесной пожар в Андалусии, Испания",
+      "severity": 60,
       "domain": "climate"
     }
   ],
@@ -106,25 +106,25 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-ES",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-ES-geopolitical",
       "to": "DOMAIN-ES-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.66
     },
     {
-      "from": "SIGNAL-ES-Лесной_пож",
+      "from": "SIGNAL-ES-Пожарные,_",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.66
     },
     {
       "from": "SIGNAL-ES-Лесной_пож",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.6
     }
   ]
 }
