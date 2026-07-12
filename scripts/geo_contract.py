@@ -578,6 +578,11 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
         if raw_coords and (_NAT.search(blob) or domain == 'climate'):
             try:
                 rla, rln = float(raw_coords[0]), float(raw_coords[1])
+                # CONUS guard (Lever B, data): суша континентальных США не
+                # зонируется как океан/бассейн (bbox pacific_ocean через антимеридиан
+                # покрывает запад США) → резолвим в США с сохранением координаты.
+                if 24.0 <= rla <= 49.5 and -125.0 <= rln <= -66.0:
+                    return _mk(GAZ['сша'], 'natural', blob, actor, (rla, rln))
                 for zid in _BASIN_IDS:
                     zbox = ZONES[zid][4]
                     if _zone_contains(zbox, rla, rln):
