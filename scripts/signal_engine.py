@@ -1116,14 +1116,39 @@ def _reconstruct_macro(signals, now):
         'Польша':'PL','Норвегия':'NO','Словакия':'SK','Бельгия':'BE','Нидерланды':'NL','Австрия':'AT',
         'Чехия':'CZ','Португалия':'PT','Греция':'GR','Румыния':'RO','Венгрия':'HU','Швейцария':'CH'}
     _MACROREGION_NAMES=set(_MACROREGION.values())   # {'Европа','Ближний Восток'}
+    # CONFLICT CLUSTER (волна 1) — самостоятельная сущность конфликта поверх region/country.
+    # Каскад отображения: conflict_cluster → region → country. Кластер присваивается по
+    # критерию ОДНОЗНАЧНОСТИ: пара акторов ⊆ countries И место ∈ сигнатуре кластера, и
+    # ровно ОДИН кластер совпал. Несколько совпадений (многополярный, напр. Ближний Восток
+    # с IL+IR+US+PS) → None → регион. «Ближний Восток» намеренно НЕ входит ни в одну
+    # сигнатуру (многополярный театр); «Европа» входит в RU_UA (в Европе один конфликт) —
+    # это даёт stability: place — устойчивый якорь, countries-union волатилен (урок P0).
+    _CONFLICT_CLUSTERS=[
+        ('Россия — Украина',{'RU','UA'},{'Россия','Украина','Европа','Крым','Азовское море','Балтийское море','Глобально'}),
+        ('Израиль — Палестина',{'IL','PS'},{'Газа','Палестина','Израиль'}),
+        ('Израиль — Ливан',{'IL','LB'},{'Ливан','Израиль'}),
+        ('Индия — Пакистан',{'IN','PK'},{'Индия','Пакистан','Кашмир'}),
+        ('Китай — Тайвань',{'CN','TW'},{'Китай','Тайвань','Тайваньский пролив'}),
+    ]
+    def _assign_conflict_cluster(s):
+        _cc=set(s.get('countries') or []); _pp=(s.get('process_place') or '')
+        _m=[disp for disp,pair,places in _CONFLICT_CLUSTERS if pair<=_cc and _pp in places]
+        return _m[0] if len(_m)==1 else None   # ровно 1 → кластер; иначе None (fallback)
     # группируем по (process_type, страна) И по (process_type, макрорегион) — два уровня.
     groups=defaultdict(list)          # страновой уровень (Россия → регионы)
     region_groups=defaultdict(list)   # макрорегиональный (Европа → страны) для трансграничных
+    conflict_groups=defaultdict(list) # conflict_cluster (Россия — Украина) — приоритетный слой
     for s in signals:
         if s.get('is_macro'): continue
         ptype=s.get('process_type','')
         cc=s.get('countries',[]) or []
         pp=(s.get('process_place') or '')
+        # Военные удары: сначала пробуем conflict_cluster (эксклюзивно — не идёт в region/country)
+        if ptype=='Военные удары':
+            _clu=_assign_conflict_cluster(s)
+            if _clu:
+                conflict_groups[(ptype, _clu)].append(s)
+                continue
         # ЯКОРЬ = страна МЕСТА процесса (а не most_common дедуп-union: тот на равенстве
         # возвращал алфавитно-первую страну = ложная привязка). Если place — не страна и
         # стран несколько (нет явного большинства) — страну НЕ выбираем (country=None).
@@ -1141,7 +1166,8 @@ def _reconstruct_macro(signals, now):
             region_groups[(ptype, pp)].append(s)
     macro_out=[]; _covered=set()
     # СНАЧАЛА трансграничные макрорегионы (европейская жара приоритетнее странового дробления)
-    _all_groups=[('region',k,v) for k,v in region_groups.items()] + \
+    _all_groups=[('conflict',k,v) for k,v in conflict_groups.items()] + \
+                [('region',k,v) for k,v in region_groups.items()] + \
                 [('country',k,v) for k,v in groups.items()]
     for _lvl, (ptype, area), members in _all_groups:
         if len(members) < 3: continue
@@ -1157,17 +1183,21 @@ def _reconstruct_macro(signals, now):
             if pl and pl not in ('Глобально',) and pl not in _country_names and pl not in regions:
                 regions.append(pl)
         # траектория: для странового макро — регионы; для трансграничного — страны
-        if _lvl=='region':
+        if _lvl=='conflict':
+            # спред конфликта = участники диады (из имени кластера «Россия — Украина»),
+            # НЕ загрязнённый countries-union (там мешаются упомянутые страны — CN/DE и т.п.).
+            regions=[x.strip() for x in area.split('—') if x.strip()]
+        elif _lvl=='region':
             _cru={'RU':'Россия','US':'США','UA':'Украина','CN':'Китай','IL':'Израиль','IR':'Иран',
                   'EU':'ЕС','GB':'Великобритания','FR':'Франция','DE':'Германия','SK':'Словакия',
                   'BE':'Бельгия','ES':'Испания','IT':'Италия','PL':'Польша','SY':'Сирия','LB':'Ливан',
                   'MX':'Мексика','MC':'Монако','SA':'Саудовская Аравия','IQ':'Ирак','YE':'Йемен',
                   'NL':'Нидерланды','AT':'Австрия','CZ':'Чехия','PT':'Португалия','GR':'Греция',
-                  'RO':'Румыния','HU':'Венгрия','CH':'Швейцария','SE':'Швеция','IN':'Индия'}
+                  'RO':'Румыния','HU':'Венгрия','CH':'Швейцария','SE':'Швеция','IN':'Индия',
+                  'PS':'Палестина','PK':'Пакистан','TW':'Тайвань','TR':'Турция','JO':'Иордания'}
             _spread=[]
             for m in members_sorted:
                 for c in (m.get('countries') or []):
-                    # только страны ЭТОГО макрорегиона (европейская жара — без US/RU-примесей)
                     if _MACROREGION.get(c) != area:
                         continue
                     nm=_cru.get(c, c)
@@ -1195,9 +1225,13 @@ def _reconstruct_macro(signals, now):
         _mid=_stable_id(_domains[0] if _domains else 'economy', 'MACRO|'+ptype, area, '')
         _area_ru={'RU':'Россия','US':'США','UA':'Украина','CN':'Китай','IL':'Израиль',
                   'IR':'Иран','EU':'ЕС','GB':'Великобритания','IN':'Индия'}.get(area, area)
+        # DISPLAY-тип: «Военные удары» (хроника событий) → «Военный конфликт» на уровне
+        # процесса/макро (объединяет удары, ПВО, поставки, мобилизацию). process_type
+        # ВНУТРИ неизменен (identity/canon/_TYPE_DOMAIN/группировка не тронуты).
+        _disp_type='Военный конфликт' if ptype=='Военные удары' else ptype
         macro={
             'signal_id':_mid, 'is_macro':True, 'macro_level':_lvl,
-            'title':'%s — %s (системный процесс)' % (ptype, _area_ru),
+            'title':'%s — %s (системный процесс)' % (_disp_type, _area_ru),
             'process_type':ptype, 'primary_domain':_domains[0] if _domains else 'economy',
             'domains':_domains, 'process_place':_area_ru,
             'countries':sorted(set(c for m in members for c in (m.get('countries') or []))),
