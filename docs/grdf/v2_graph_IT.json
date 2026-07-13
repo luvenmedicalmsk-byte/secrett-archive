@@ -2,67 +2,67 @@
   "country": "IT",
   "date": "2026-07-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-13T21:54:31.833698+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-07-13T22:21:19.989790+00:00",
+  "node_count": 12,
+  "edge_count": 14,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 62,
       "props": {
-        "risk_score": 50
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -78,6 +78,13 @@
       "id": "DRIVER-IT-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-IT-Стоимость_",
+      "type": "Signal",
+      "label": "Стоимость страховки от дефолта пятилетни",
+      "severity": 62,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -85,13 +92,13 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-IT",
@@ -115,7 +122,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IT",
@@ -140,6 +147,33 @@
       "to": "COUNTRY-IT",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Стоимость_",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
