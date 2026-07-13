@@ -2,102 +2,113 @@
   "country": "KZ",
   "country_name": "Казахстан",
   "date": "2026-07-13",
-  "generated_at": "2026-07-13T05:11:39.946678+00:00",
-  "strategy_score": 21,
-  "strategy_confidence": 72,
-  "urgency_level": "moderate",
-  "urgency_level_ru": "Умеренная",
-  "urgency_color": "#fbbf24",
-  "preparedness_level": "enhanced",
-  "preparedness_level_ru": "Повышенная готовность",
-  "monitoring_priority": 2,
-  "monitoring_ru": "Дважды в сутки",
+  "generated_at": "2026-07-13T05:20:37.164436+00:00",
+  "strategy_score": 49,
+  "strategy_confidence": 71,
+  "urgency_level": "critical",
+  "urgency_level_ru": "Критическая",
+  "urgency_color": "#ef4444",
+  "preparedness_level": "emergency",
+  "preparedness_level_ru": "Чрезвычайная готовность",
+  "monitoring_priority": 4,
+  "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "C-01",
+      "id": "CR-09",
       "priority": 1,
-      "action": "Ожидать деэскалации",
-      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
-      "trigger": "contained + best dominant",
-      "expiry": "state change or prob_best < 25%",
-      "confidence": 79,
+      "action": "МАКСИМАЛЬНЫЙ УРОВЕНЬ ТРЕВОГИ",
+      "detail": "Критический риск с worst-case dominant: системный кризис в высокой готовности",
+      "trigger": "critical + worst dominant",
+      "expiry": "state resolution",
+      "confidence": 66,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     },
     {
-      "id": "C-02",
-      "priority": 2,
-      "action": "Подготовить план выхода из контролируемой фазы",
-      "detail": "Определить индикаторы для перевода в мониторинговый режим",
-      "trigger": "contained > 5d",
-      "expiry": "stabilization transition",
-      "confidence": 79,
+      "id": "CR-10",
+      "priority": 1,
+      "action": "Немедленная эвакуация уязвимых активов",
+      "detail": "Приоритетная защита критической инфраструктуры и цепочек поставок",
+      "trigger": "always",
+      "expiry": "assets secured",
+      "confidence": 66,
+      "domain_context": "economy",
+      "horizon_relevant": "30d"
+    },
+    {
+      "id": "CR-11",
+      "priority": 1,
+      "action": "Активировать высший уровень кризисного управления",
+      "detail": "Передать координацию реагирования на высший уровень принятия решений",
+      "trigger": "always",
+      "expiry": "crisis resolved",
+      "confidence": 66,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 2,
-  "state": "contained",
-  "dominant_scenario": "best",
-  "scenario_score": 18,
-  "instability": 8,
+  "action_count": 3,
+  "state": "critical",
+  "dominant_scenario": "worst",
+  "scenario_score": 31,
+  "instability": 47,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 61 (+8pt)",
-      "leads_to": "escalating",
-      "probability": 14
+      "condition": "risk_score ≥ 52 (+8pt)",
+      "leads_to": "cascade",
+      "probability": 24
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "escalating",
-      "probability": 5
+      "leads_to": "cascade",
+      "probability": 24
     },
     {
-      "condition": "Worst-case 30d ≥ 64",
-      "leads_to": "escalating",
-      "probability": 16
+      "condition": "Worst-case 30d ≥ 37",
+      "leads_to": "cascade",
+      "probability": 31
     },
     {
       "condition": "Новый критический драйвер в economy",
-      "leads_to": "escalating",
-      "probability": 16
+      "leads_to": "cascade",
+      "probability": 21
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 47,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 32,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "90 дней",
-      "score": 42,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 36,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "180 дней",
-      "score": 38,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 41,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "365 дней",
-      "score": 34,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 46,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     }
   ],
   "probabilities": {
-    "worst": 16,
-    "stress": 20,
-    "base": 29,
-    "best": 35
+    "worst": 31,
+    "stress": 26,
+    "base": 15,
+    "best": 28
   }
 }
