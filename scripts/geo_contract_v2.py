@@ -105,6 +105,23 @@ _AT_ADJ = _re2.compile(
 _AT_STRIKE = _re2.compile(r'(нанес\w*\s+удар|атаков\w+|обстрел\w+|порази\w+|ударил\w*|нанёс\w*\s+удар)', _re2.I)
 
 
+def _blank_cc(text, cc):
+    """Забланкить все упоминания страны cc в тексте (для A2 маскирования страйкера)."""
+    import geo_contract as _gc
+    if not text:
+        return text
+    out = text
+    for stem, g in _gc.GAZ.items():
+        if g[0] != cc:
+            continue
+        low = out.lower()
+        for mm in list(_gc._GAZ_RE[stem].finditer(' ' + low + ' ')):
+            a, b = mm.start() - 1, mm.end() - 1
+            if 0 <= a < len(out):
+                out = out[:a] + (' ' * (b - a)) + out[b:]
+    return out
+
+
 def _apply_at(gc, title, summary, raw_coords, domain):
     """Lever A A1/A2 post-processor. Работает поверх legacy, только когда legacy -> NULL."""
     if not LEVER_A_AT:
@@ -116,8 +133,10 @@ def _apply_at(gc, title, summary, raw_coords, domain):
     # A1: маскируем атрибутивное прилагательное первым словом -> локатив выигрывает
     if _AT_ADJ.match(tl):
         masked = _re2.sub(r'^\s*[а-яёА-ЯЁ\-]+\s+', ' ', t, count=1)
+        masked_s = _re2.sub(r'^\s*[а-яёА-ЯЁ\-]+\s+', ' ', summary or '', count=1) \
+            if (summary or '').lower().startswith(_AT_ADJ.match(tl).group(1)) else (summary or '')
         if masked != t:
-            g2 = _legacy_resolve_geo(masked, summary, raw_coords, domain)
+            g2 = _legacy_resolve_geo(masked, masked_s, raw_coords, domain)
             if getattr(g2, 'country', None) and getattr(g2, 'source', None) in (
                     _ROLE_EVENT | {'object'}):
                 return g2
@@ -134,16 +153,14 @@ def _apply_at(gc, title, summary, raw_coords, domain):
             before = [(pos, g) for pos, g in pls if pos < mv]
             if before:
                 spos, sg = max(before, key=lambda x: x[0])
-                # _places_in даёт позицию граничного символа -> сдвигаем на первую букву
-                while spos < len(tl) and not ('а' <= tl[spos] <= 'я' or tl[spos] == 'ё'):
-                    spos += 1
-                # маскируем слово-страйкер (до 14 симв. кириллицы)
-                mw = _re2.match(r'[а-яё\-]{1,14}', tl[spos:])
-                if mw:
-                    a, b = spos, spos + mw.end()
-                    masked = t[:a] + (' ' * (b - a)) + t[b:]
-                    g2 = _legacy_resolve_geo(masked, summary, raw_coords, domain)
-                    if getattr(g2, 'country', None) and g2.country != sg[0] \
+                striker_cc = sg[0]
+                # маскируем ВСЕ упоминания страны-страйкера в title И summary
+                # (summary часто дублирует title -> иначе страйкер возвращается)
+                mt = _blank_cc(t, striker_cc)
+                ms = _blank_cc(summary or '', striker_cc)
+                if mt != t or ms != (summary or ''):
+                    g2 = _legacy_resolve_geo(mt, ms, raw_coords, domain)
+                    if getattr(g2, 'country', None) and g2.country != striker_cc \
                             and getattr(g2, 'source', None) in (_ROLE_EVENT | {'object'}):
                         return g2
     return gc
