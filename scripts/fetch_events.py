@@ -9368,6 +9368,40 @@ _SIC_COMMENTARY = _re_sic.compile(r'\b('
   r'выборы|отставк|переговор|резолюц|контракт\w* (?:на|с)|импортёр|импортер)', _re_sic.I)
 
 
+# ── SIC v-final: слои поверх base (accomplished-guard + операц.алерт + аналит.предупреждение) ──
+_SIC_WARN = _re_sic.compile(
+    r'предупре[дж]\w*|предостерег\w*|допуска\w*|прогнозир\w*|ожида\w*|предвид\w*|'
+    r'оценива\w*\s+вероятн|счита\w*\s+возможн|заяв\w*\s+о\s+риск|'
+    r'\bвозможн\w*|\bвероятн\w*|по\s+оценк\w+|согласно\s+данны\w+|по\s+данны\w+\s+развед|'
+    r'развед\w*\s+(?:счита|полага|оцен|допуска|сообща)|'
+    r'\bсчита\w+\s+(?:что|вероятн|возможн)|полага\w+\s+что|оценива\w+\s+как|'
+    r'рекоменд\w+|призыва\w+\s+(?:воздержа|не\s|покинуть)|'
+    r'грозит\w*\s+(?:удар|атак|войн|конфликт|наступл|вторжен|расправ|местью|ответн|эскалац)|'
+    r'может\w*\s+(?:привести|начать|нанести|ударить|стать|перерасти|произойти|случиться|обостр|вспыхн)', _re_sic.I)
+_SIC_ACCOMPLISHED = _re_sic.compile(
+    r'нанёс|нанес(?:ён|ла|ли|)|наносят?\s+удар|наносит\s+удар|подтверд\w+[^.]{0,25}(?:удар|атак)|'
+    r'начал\w+[^.]{0,20}(?:удар|атак|операц|наступл|бомбард)|обмен\w+[^.]{0,15}(?:удар|атак|огн)|'
+    r'атаку[ею]т|обстрелива[ею]т|обстреля\w+|продолжа[ею]т\s+(?:обстрел|наступл|удар|бомбард|штурм|ата)|'
+    r'ведут?\s+(?:наступл|бои|огонь|обстрел)|наступа[ею]т|перехватыва[ею]т|перехватил\w+|'
+    r'отража[ею]т\s+(?:атак|наступл|удар|штурм)|отбива[ею]т|штурму[ею]т|бомб[ия]т|бомбардир\w+|'
+    r'уничтожа[ею]т|уничтож\w+|поража[ею]т|поврежд\w+|разрушен\w+|разрушил\w+|'
+    r'погиб\w+|жертв\w+|пострадав\w+|сбил\w+|сбит\w+|подорва\w+|взорва\w+|прогремел|поразил\w+|'
+    r'убит\w+|ранен\w+|разбил\w+|обрушил\w+|ударил\w+|захватил\w+|освобод\w+\s+насел|'
+    r'землетрясен\w+ произош|произош\w+ землетряс|вспыхнул\w+ пожар|пожар вспыхнул|'
+    r'возник\w+ пожар|загорел\w+|горит\b|затопил\w+|'
+    r'вышел\w*\s+из\s+строя|выведен\w*\s+из\s+строя|потерял\w*\s+ход|затонул\w+|сел\s+на\s+мель|'
+    r'признал\w+\s+(?:себя\s+)?виновн|приговор\w+|осуждён|осужден|задержан\w+|арестова\w+', _re_sic.I)
+_SIC_OPER_HAZARD = _re_sic.compile(
+    r'торнад|наводнени|паводок|половодь|затопл|шторм|ураган|тайфун|циклон|смерч|'
+    r'аномальн\w+\s+жар|\bжар[аеуы]\b|зной|тепловая\s+волна|цунами|tsunami|'
+    r'землетряс|сель\b|ополз|снегопад|метел|\bгроз[аеуы]|ливень|ливн\w+|'
+    r'мороз|заморозк|шквал|осадк\w+|\bград(?:а|е|у|ом|ин)?\b|метеопредупре|погодн\w+\s*предупре|штормов\w+\s*предупре|'
+    r'дожд\w+|непогод|пожарн\w+\s+опасн|пожароопасн|чрезвычайн\w+\s+ситуац|\bчс\b|'
+    r'эвакуац|мчс|метеослуж|гидрометцентр|росгидромет|штормовое|'
+    r'ракетн\w*\s+опасн|ракетн\w*\s+тревог|воздушн\w*\s+тревог|беспилотн\w*\s+опасн|'
+    r'бпла[\s-]опасн|опасность\s+бпла|опасность\s+(?:введена|объявлена|действует)|рсчс', _re_sic.I)
+
+
 def _sic_class(title, summary='', canon_type=None):
     """SIC-интент. READ-ONLY чистая функция. → EVENT|PROCESS|COMMENTARY|FEATURE|BACKGROUND."""
     low = ((title or '') + ' ' + (summary or '')).strip().lower()
@@ -9376,17 +9410,32 @@ def _sic_class(title, summary='', canon_type=None):
             return 'EVENT'
         if _SIC_SANCT_TALK.search(low) and not _SIC_SANCT_ACT.search(low):
             return 'COMMENTARY'
-    has_event = bool(_SIC_EVENT.search(low))
-    is_proc = bool(_SIC_PROCESS.search(low))
-    if canon_type in _SIC_MONITOR:              # мониторинг-феномен = событие по природе
-        return 'PROCESS' if is_proc else 'EVENT'
-    if _SIC_FEATURE.search(low) and not has_event:
-        return 'FEATURE'
-    if _SIC_BACKGROUND.search(low) and not has_event:
-        return 'BACKGROUND'
-    if has_event:                               # PROCESS только при явном продолжении
-        return 'PROCESS' if is_proc else 'EVENT'
-    return 'COMMENTARY'
+    def _base():
+        has_event = bool(_SIC_EVENT.search(low))
+        is_proc = bool(_SIC_PROCESS.search(low))
+        if canon_type in _SIC_MONITOR:          # мониторинг-феномен = событие по природе
+            return 'PROCESS' if is_proc else 'EVENT'
+        if _SIC_FEATURE.search(low) and not has_event:
+            return 'FEATURE'
+        if _SIC_BACKGROUND.search(low) and not has_event:
+            return 'BACKGROUND'
+        if has_event:                           # PROCESS только при явном продолжении
+            return 'PROCESS' if is_proc else 'EVENT'
+        return 'COMMENTARY'
+    # 1) accomplished-guard АБСОЛЮТЕН: реальное свершившееся/длящееся действие = событие.
+    #    Если база под-распознала (COMMENTARY/BACKGROUND) → форсируем EVENT; EVENT/PROCESS/FEATURE сохраняем.
+    if _SIC_ACCOMPLISHED.search(low):
+        b = _base()
+        return b if b in ('EVENT', 'PROCESS', 'FEATURE') else 'EVENT'
+    # 2) операционный алерт службы/природа/ЧС (шторм/цунами/торнадо/паводок/пожарная опасность/
+    #    эвакуация/ракетная опасность/воздушная тревога) = операционное событие — EVENT самостоятельно.
+    if _SIC_OPER_HAZARD.search(low) or canon_type in _SIC_MONITOR:
+        b = _base()
+        return b if b in ('EVENT', 'PROCESS') else 'EVENT'
+    # 3) аналитическое предупреждение о возможном будущем (нет accomplished, нет операц.алерта) → COMMENTARY.
+    if _SIC_WARN.search(low):
+        return 'COMMENTARY'
+    return _base()
 
 
 def _sic_shadow_pass(events):
