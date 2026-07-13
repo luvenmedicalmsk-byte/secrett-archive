@@ -25,6 +25,7 @@ from geo_contract import resolve_geo as _legacy_resolve_geo
 LEVER_A = True    # LRR (Location Role Resolution)
 LEVER_C = False   # GeoContract split (actor/impact/mentioned)
 LEVER_D = False   # false coordinate -> NULL
+LEVER_A_AT = False  # A1 attributive-actor + A2 sentence-lead target selection (dormant)
 
 # Контекст назначения (экспорт/движение) — только он разрешает демотирование accusative.
 _DEST_CTX = re.compile(
@@ -83,6 +84,68 @@ def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
             # Конкурирующий локатив дал иную непустую страну -> он и есть место события.
             if getattr(gc2, 'country', None) and gc2.country != gc.country:
                 return gc2
+    return _apply_at(gc, title, summary, raw_coords, domain)
+
+
+# ── Lever A (A1/A2): Actor vs Target Resolution ──────────────────────────────
+# A1: атрибутивное прилагательное-описатель первым словом («Московский НПЗ…»)
+#     ошибочно бралось legacy как актор -> локатив исключался. Маскируем прилаг.,
+#     ре-резолвим: событие получает локатив («в Капотне» -> RU).
+# A2: кинетика + 2 упомянутых места [цель, актор] + цель в начале предложения
+#     («Сектор Газа. …Израиль нанесла удар…») -> маскируем страйкера, цель резолвится.
+# Оба срабатывают ТОЛЬКО когда legacy вернул NULL (country пуст) -> не трогают
+# уже верно резолвнутые события (harmful-риск минимизирован).
+import re as _re2
+_AT_ADJ = _re2.compile(
+    r'^\s*(московск|российск|украинск|немецк|французск|британск|американск|иранск|'
+    r'израильск|турецк|польск|китайск|японск|индийск|сирийск|ливанск|египетск|саудовск|'
+    r'казахск|белорусск|грузинск|армянск|азербайджанск|финск|шведск|норвежск|испанск|'
+    r'итальянск|греческ|румынск|болгарск|сербск|чешск|венгерск|нидерландск|бельгийск)'
+    r'[а-яё]{1,4}\s+[а-яё]', _re2.I)
+_AT_STRIKE = _re2.compile(r'(нанес\w*\s+удар|атаков\w+|обстрел\w+|порази\w+|ударил\w*|нанёс\w*\s+удар)', _re2.I)
+
+
+def _apply_at(gc, title, summary, raw_coords, domain):
+    """Lever A A1/A2 post-processor. Работает поверх legacy, только когда legacy -> NULL."""
+    if not LEVER_A_AT:
+        return gc
+    if getattr(gc, 'country', None):
+        return gc  # legacy уже дал место -> не трогаем (0 harmful на резолвнутых)
+    t = title or ''
+    tl = t.lower()
+    # A1: маскируем атрибутивное прилагательное первым словом -> локатив выигрывает
+    if _AT_ADJ.match(tl):
+        masked = _re2.sub(r'^\s*[а-яёА-ЯЁ\-]+\s+', ' ', t, count=1)
+        if masked != t:
+            g2 = _legacy_resolve_geo(masked, summary, raw_coords, domain)
+            if getattr(g2, 'country', None) and getattr(g2, 'source', None) in (
+                    _ROLE_EVENT | {'object'}):
+                return g2
+    # A2: кинетика + ровно 2 места -> маскируем страйкера (место перед глаголом удара)
+    m = _AT_STRIKE.search(tl)
+    if m:
+        try:
+            from geo_contract import _places_in as _pin
+            pls = _pin(tl)
+        except Exception:
+            pls = []
+        if len(pls) == 2:
+            mv = m.start()
+            before = [(pos, g) for pos, g in pls if pos < mv]
+            if before:
+                spos, sg = max(before, key=lambda x: x[0])
+                # _places_in даёт позицию граничного символа -> сдвигаем на первую букву
+                while spos < len(tl) and not ('а' <= tl[spos] <= 'я' or tl[spos] == 'ё'):
+                    spos += 1
+                # маскируем слово-страйкер (до 14 симв. кириллицы)
+                mw = _re2.match(r'[а-яё\-]{1,14}', tl[spos:])
+                if mw:
+                    a, b = spos, spos + mw.end()
+                    masked = t[:a] + (' ' * (b - a)) + t[b:]
+                    g2 = _legacy_resolve_geo(masked, summary, raw_coords, domain)
+                    if getattr(g2, 'country', None) and g2.country != sg[0] \
+                            and getattr(g2, 'source', None) in (_ROLE_EVENT | {'object'}):
+                        return g2
     return gc
 
 
