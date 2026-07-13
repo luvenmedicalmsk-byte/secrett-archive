@@ -2,7 +2,7 @@
   "country": "JP",
   "date": "2026-07-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-13T18:31:30.908193+00:00",
+  "generated_at": "2026-07-13T20:01:07.528446+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,31 +10,31 @@
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 74,
+      "score": 73,
       "props": {
-        "risk_score": 74
+        "risk_score": 73
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 55,
-      "trend": "stable"
+      "score": 51,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
       "score": 28,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 46,
-      "trend": "stable"
+      "score": 43,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-technology",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-JP-cyber",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-JP-Администра",
+      "type": "Signal",
+      "label": "Администрация аварийной японской АЭС \"Фу",
+      "severity": 64,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-JP-В_США_экст",
       "type": "Signal",
       "label": "В США экстрадирован 19-летний молодой че",
       "severity": 65,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-JP-Красное_ув",
-      "type": "Signal",
-      "label": "Красное уведомление о тропический циклон",
-      "severity": 60,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-JP",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-JP",
@@ -164,6 +164,27 @@
     },
     {
       "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-JP-climate",
       "to": "DOMAIN-JP-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,43 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-JP-Красное_ув",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
       "weight": 0.95
     },
     {
+      "from": "SIGNAL-JP-Администра",
+      "to": "DOMAIN-JP-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
       "from": "SIGNAL-JP-В_США_экст",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-JP-Красное_ув",
-      "to": "DOMAIN-JP-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }
