@@ -33,44 +33,53 @@ ALPHA=0.4; STALE_AFTER_DAYS=62; STALE_CONF=0.7; HARD_DROP_DAYS=120
 # ── Ключевые слова (матч) + извлечение значения + диапазон вменяемости ──────
 # Каждый: список keyword-regex (любой матч), value-regex (группа 1 = число), (min,max)
 _NUM = r'(-?\d{1,3}(?:[.,]\d{1,2})?)'
+# Строго: значение ТЕСНО связано с индикатором (та же клауза, ед.изм. сразу), + neg-guard
+# (если в сообщении маркеры чужого контекста — пропускаем: лучше skip, чем ложь).
 RULES = {
- 'KEY_RATE':  dict(kw=[r'ключев\w*\s+ставк'], val=[r'ключев\w*\s+ставк\w*(?:[^%\d]{0,40}?)'+_NUM+r'\s*%',
-                                                    r'ставк\w*(?:[^%\d]{0,15}?)'+_NUM+r'\s*%\s*годов'], rng=(4,30)),
- 'H10':       dict(kw=[r'н1\.0', r'достаточност\w*\s+(?:базов\w*\s+|основн\w*\s+)?капитал'],
-                   val=[r'(?:н1\.0|достаточност\w*\s+\w*\s*капитал\w*)(?:[^%\d]{0,40}?)'+_NUM+r'\s*%'], rng=(5,25)),
- 'NPL':       dict(kw=[r'просроч\w*\s+(?:задолжен|кредит|ссуд)', r'проблемн\w*\s+(?:кредит|актив|ссуд)', r'\bnpl\b', r'дол\w*\s+просроч'],
-                   val=[r'(?:просроч\w*|проблемн\w*|npl)(?:[^%\d]{0,40}?)'+_NUM+r'\s*%'], rng=(0.5,30)),
- 'LIQ_N3':    dict(kw=[r'\bн3\b', r'норматив\w*\s+текущ\w*\s+ликвидн'],
-                   val=[r'(?:\bн3\b|текущ\w*\s+ликвидн\w*)(?:[^%\d]{0,40}?)'+_NUM+r'\s*%'], rng=(40,300)),
+ 'KEY_RATE':  dict(kw=[r'ключев\w*\s+ставк'],
+                   val=[r'ключев\w*\s+ставк\w*(?:\s+цб)?(?:\s+рф)?\s*(?:на\s+уровне\s+|составля\w*\s+|снизил\w*\s+до\s+|снижен\w*\s+до\s+|повысил\w*\s+до\s+|повышен\w*\s+до\s+|сохран\w*\s+(?:на\s+уровне\s+)?|оставил\w*\s+(?:на\s+уровне\s+)?|=\s*|:\s*|—\s*)?'+_NUM+r'\s*%'],
+                   neg=[r'вклад',r'\bофз\b',r'депозит',r'доходност',r'накоплен',r'ипотек',r'сберегат',r'облигац'], rng=(4,30)),
+ 'H10':       dict(kw=[r'н1\.0'],
+                   val=[r'н1\.0\s*(?:на\s+уровне\s+|составля\w*\s+|=\s*|:\s*|—\s*)?'+_NUM+r'\s*%'],
+                   neg=[], rng=(5,25)),
+ 'NPL':       dict(kw=[r'просроч\w*\s+задолжен', r'дол\w*\s+просроч', r'\bnpl\b'],
+                   val=[r'(?:просроч\w*\s+задолжен\w*|дол\w*\s+просроч\w*|npl)\s*(?:вырос\w*\s+до\s+|снизил\w*\s+до\s+|достигл\w*\s+|составля\w*\s+|на\s+уровне\s+|=\s*|:\s*|—\s*)?'+_NUM+r'\s*%'],
+                   neg=[], rng=(0.5,30)),
+ 'LIQ_N3':    dict(kw=[r'\bн3\b'],
+                   val=[r'\bн3\b\s*(?:на\s+уровне\s+|составля\w*\s+|=\s*|:\s*|—\s*)?'+_NUM+r'\s*%'],
+                   neg=[], rng=(40,300)),
  'BUD_DEF':   dict(kw=[r'дефицит\w*\s+(?:федеральн\w*\s+)?бюджет'],
-                   val=[r'дефицит\w*\s+(?:федеральн\w*\s+)?бюджет\w*(?:[^%\d]{0,60}?)'+_NUM+r'\s*%\s*ввп'], rng=(0,15)),
+                   val=[r'дефицит\w*\s+(?:федеральн\w*\s+)?бюджет\w*\s*(?:состав\w*\s+|достиг\w*\s+|на\s+уровне\s+|=\s*|:\s*|—\s*)?'+_NUM+r'\s*%\s*ввп'],
+                   neg=[], rng=(0,15)),
  'OILGAS_YOY':dict(kw=[r'нефтегазов\w*\s+доход'],
-                   val=[r'нефтегазов\w*\s+доход\w*(?:[^%\d]{0,60}?)(?:упал\w*|снизил\w*|сократил\w*|минус|-)\D{0,8}'+_NUM.replace('-?','')+r'\s*%',
-                        r'нефтегазов\w*\s+доход\w*(?:[^%\d]{0,60}?)(?:вырос\w*|прирос\w*|\+)\D{0,8}'+_NUM.replace('-?','')+r'\s*%'],
-                   rng=(-70,70), signed_kw=True),
- 'NWF_LIQ':   dict(kw=[r'\bфнб\b', r'фонд\w*\s+национальн\w*\s+благосостоян'],
-                   val=[r'ликвидн\w*\s+част\w*\s+фнб(?:[^\d]{0,30}?)'+_NUM.replace('-?','')+r'\s*трлн',
-                        r'(?:\bфнб\b|благосостоян\w*)(?:[^\d]{0,30}?)'+_NUM.replace('-?','')+r'\s*трлн'], rng=(0,25)),
- 'CORP_DEF':  dict(kw=[r'дефолт'], val=[r'(-?\d{1,3})\s*дефолт', r'дефолт\w*(?:[^%\d]{0,20}?)(\d{1,3})'], rng=(0,50)),
+                   val=[r'нефтегазов\w*\s+доход\w*(?:\s+\w+){0,4}?\s+(?:упал\w*|снизил\w*|сократил\w*|рухнул\w*)(?:\s+\w+){0,2}?\s+на\s+'+_NUM.replace('-?','')+r'\s*%',
+                        r'нефтегазов\w*\s+доход\w*(?:\s+\w+){0,4}?\s+(?:вырос\w*|прирос\w*|увеличил\w*)(?:\s+\w+){0,2}?\s+на\s+'+_NUM.replace('-?','')+r'\s*%'],
+                   neg=[], rng=(-70,70), signed_kw=True),
+ 'NWF_LIQ':   dict(kw=[r'ликвидн\w*\s+част\w*\s+фнб'],
+                   val=[r'ликвидн\w*\s+част\w*\s+фнб\w*\s*(?:состав\w*\s+|достиг\w*\s+|снизил\w*\s+до\s+|вырос\w*\s+до\s+|на\s+уровне\s+|=\s*|:\s*|—\s*)?'+_NUM.replace('-?','')+r'\s*трлн'],
+                   neg=[], rng=(0,25)),
+ 'CORP_DEF':  dict(kw=[r'дефолт'],
+                   val=[r'(\d{1,3})\s+(?:корпоративн\w*\s+)?дефолт'],
+                   neg=[], rng=(0,50)),
 }
 
 def _f(x): return float(x.replace(',','.'))
 def extract(feed, k):
-    r=RULES[k]; lo,hi=r['rng']
-    # свежие сначала
+    r=RULES[k]; lo,hi=r['rng']; neg=r.get('neg') or []
     def _dt(m):
         try: return m.get('date') or ''
         except: return ''
     for m in sorted(feed, key=_dt, reverse=True):
         t=(m.get('text') or '').lower()
         if not any(re.search(p,t) for p in r['kw']): continue
+        if neg and any(re.search(p,t) for p in neg): continue   # чужой контекст → пропуск
         for vp in r['val']:
             mm=re.search(vp,t)
             if mm:
                 try: v=_f(mm.group(1))
                 except: continue
-                if r.get('signed_kw') and 'вырос' in vp: v=abs(v)      # прирост → +
-                if r.get('signed_kw') and ('упал' in vp or 'снизил' in vp or 'сократил' in vp or 'минус' in vp): v=-abs(v)
+                if r.get('signed_kw') and 'вырос' in vp: v=abs(v)
+                if r.get('signed_kw') and ('упал' in vp or 'снизил' in vp or 'сократил' in vp or 'рухнул' in vp): v=-abs(v)
                 if lo<=v<=hi:
                     return v, (m.get('text') or '')[:140], m.get('ch','')
     return None, None, None
@@ -116,6 +125,8 @@ def run(mode=None):
     snapshot=[]; num=den=0.0; ok=stale=skip=0; diag={}
     for k,c in IND.items():
         prev=inds.get(k,{}); rec=dict(prev); value=snip=chan=None
+        try: diag[k]=_candidates(feed,k,3)      # кандидаты по всем индикаторам (калибровка)
+        except Exception: diag[k]=[]
         try: value,snip,chan=extract(feed,k)
         except Exception: value=None
         if value is not None:
@@ -129,7 +140,6 @@ def run(mode=None):
                 except: age=None
             if prev.get('ewma') is None:
                 rec['status']='skip'; skip+=1; conf=0.0
-                diag[k]=_candidates(feed,k)          # кандидаты для калибровки
             elif age is not None and age>HARD_DROP_DAYS:
                 rec['status']='dropped'; skip+=1; conf=0.0
             else:
