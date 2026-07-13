@@ -9307,6 +9307,133 @@ def _retain_critical(evs, prev):
     except Exception:
         return evs
 
+# ═══════════════════════════════════════════════════════════════════════════
+# SIC — Signal Intent Classification (Stage SIC-1 SHADOW, READ-ONLY, ADR-Atlas).
+# Ось ИНТЕНТА поверх Admission(сигнал?)+Canon(явление?)+Geo(где?): EVENT/PROCESS
+# (изменение состояния мира → опер.лента) vs COMMENTARY/FEATURE/BACKGROUND (контекст).
+# ИНВАРИАНТ: добавляет ТОЛЬКО e['sic_class']; feed_visible/canon/geo/risk/pressure/
+# severity/processes/macro/relations НЕ трогает. Опирается на canon_type (после canon-pass).
+import re as _re_sic
+_SIC_MONITOR = {
+  'Шторм','Наводнение','Пожарная активность','Тепловая волна','Морской лёд',
+  'Водный дефицит','Землетрясение','Оползень','Извержение','Отключение интернета',
+  'Энергоблэкаут','Климатическая аномалия','Метеорологическое явление','Засуха'}
+_SIC_EVENT = _re_sic.compile(r'('
+  r'удар|атак|обстрел|ракетн|баллистическ|бомбардир|авиауд|взрыв|подрыв|детонац|'
+  r'поражен|поражён|порази|запуст\w+ (?:\w+ )?(?:ракет|баллист)(?!\w*\s+производ)|'
+  r'пожар|возгоран|загорел|горит|полыха|наводнен|паводок|затопл|маловодь|обмелен|'
+  r'землетряс|цунами|ополз|сель|извержен|шторм|ураган|тайфун|торнад|циклон|смерч|'
+  r'засух|аномальн\w+ жар|осадк|гроза|ливень|град\b|снегопад|метел|'
+  r'сбил|сбит|перехвач|уничтож|поврежд|разрушен|обрушен|обесточ|'
+  r'отключ\w+ (?:электро|интернет|связ|газ|вод)|паден\w+ (?:интернет|связ|сет)|блэкаут|'
+  r'погиб|жертв|пострадав|ранен|эвакуац|эвакуир|крушен|авари|катастроф|столкновен|'
+  r'сход с рельс|вторжен|захват|наступлен|прорыв|штурм|выброс|разлив|'
+  r'утечк\w+ (?:нефт|газ|хими|радиа|топлив)|заражен|вспышк\w+ (?:боле|вир|инфек|холер|лихорад)|'
+  r'дефолт|обвал|крах|заморож\w+ актив)', _re_sic.I)
+_SIC_SANCT_ACT = _re_sic.compile(
+  r'(?:ввел|ввёл|введен|введён|введут|наложил|наложен|подписал|одобрил|принял|утвердил|'
+  r'объявил\w* о введен|вступил\w* в силу|начал\w* действ)\w*[^.]{0,30}санкц'
+  r'|санкц\w+[^.]{0,30}(?:введен|введён|наложен|подписан|вступил\w* в силу|начал\w* действ|одобрен|принят)', _re_sic.I)
+_SIC_SANCT_TALK = _re_sic.compile(
+  r'(?:обсужд\w+|рассматрива\w+|планир\w+|может\w*|мог\w+ бы|намерен\w*|готов\w+|грозит\w*|'
+  r'предлага\w+|рассмотр\w+|угрожа\w+)\w*[^.]{0,30}санкц'
+  r'|санкц\w+[^.]{0,30}(?:обсужд|рассматрива|планир|может|намерен|готов|предлага)', _re_sic.I)
+_SIC_PROCESS = _re_sic.compile(r'('
+  r'нов\w+ волн\w+ (?:удар|атак|обстрел|налёт|бомбард)|'
+  r'очередн\w+ (?:удар|серию?|серия|атак|волн|раунд|этап|налёт|обстрел)|завершил\w* очередн\w+ сери|'
+  r'ещё один (?:удар|обстрел|налёт|пуск|взрыв|ракетн)|ещё одну атак|'
+  r'повторн\w+ (?:удар|атак|обстрел|пуск|запуск|налёт)|сери[яию] (?:удар|атак|взрыв|обстрел|налёт)|'
+  r'\d+[-й]?\s*(?:день|дня|дней|сутки|неделю)\s+(?:тушен|эвакуац|боёв|боев|осад|блокад|наводнен|пожар)|'
+  r'продолжа\w+ (?:эвакуац|тушен|боев|боёв|наступлен|обстрел|операц|удар|осад|наводнен|гореть|полыха)|'
+  r'втор\w+ (?:волна|волну|отключен|раунд)|трет\w+ (?:волна|волну|день|раунд)|второе (?:общенац|отключен)|'
+  r'вновь (?:атаков|удар|обстрел|запуст|нанес)|снова (?:атаков|удар|обстрел|нанес)|'
+  r'наращива\w+ (?:удар|атак|обстрел|наступлен)|продлится (?:до|ещё))', _re_sic.I)
+_SIC_FEATURE = _re_sic.compile(r'('
+  r'книготорговец|восстанавлива\w+ (?:библио|храм|наслед)|библиотек|музе[йя]|галере|выставк|фестивал|концерт|'
+  r'заключённ\w+|заключенн\w+|хочет пасту|прос\w+ (?:готов|разреш)|повар|рецепт|кулинар|'
+  r'история (?:о|про|одного|жизни)|судьб\w+ (?:человека|семьи)|спас\w+ (?:животн|котёнк|собак|щенк)|'
+  r'волонтёр|благотворит|спортсмен|олимпи|знаменит|звезда|актёр|музыкант|художник|'
+  r'свадьб|юбилей|день рожден|медвед\w+ (?:нагад|зашёл|забрёл)|нагадил|пошутил|курьёз|забавн|берите пример)', _re_sic.I)
+_SIC_BACKGROUND = _re_sic.compile(r'('
+  r'расположен|находится под|под улицами|подземн\w+ город|как устроен|как работает|что такое|'
+  r'история (?:создан|появлен|стро)|секретно выпуска\w+|обзор|справк|энциклопед|путеводитель|рассекречен|'
+  r'построен\w+ в \d{4}|основан\w+ в \d{4}|в \d{4} году был|первый (?:неудавш|в истории)|'
+  r'достопримечательн|интересн\w+ факт|малоизвестн|тайн\w+ (?:истори|прошл)|нло\b)', _re_sic.I)
+_SIC_COMMENTARY = _re_sic.compile(r'\b('
+  r'заяв\w+|сообщ\w+|отмет\w+|подчеркн\w+|счита\w+|полага\w+|уверен|предупрежда\w+|предостерег\w+|'
+  r'по (?:словам|мнению|данным|оценк)|как (?:заявил|сообщил|отмет|утвержда)|эксперт\w*|аналитик\w*|'
+  r'обозреватель|коммент\w+|интервью|мнени|призыв\w+|призвал|обвин\w+|раскритикова|осуд\w+|похвал\w+|'
+  r'отреагир\w+|прогноз\w+|ожида\w+ что|намерен|планир\w+|рассматрива\w+|обсужд\w+|готов\w+ к|'
+  r'может стать|мог бы|вероятно|по всей видимости|предвосхит|появляется|появиться|'
+  r'выборы|отставк|переговор|резолюц|контракт\w* (?:на|с)|импортёр|импортер)', _re_sic.I)
+
+
+def _sic_class(title, summary='', canon_type=None):
+    """SIC-интент. READ-ONLY чистая функция. → EVENT|PROCESS|COMMENTARY|FEATURE|BACKGROUND."""
+    low = ((title or '') + ' ' + (summary or '')).strip().lower()
+    if 'санкц' in low:
+        if _SIC_SANCT_ACT.search(low) and not _SIC_SANCT_TALK.search(low):
+            return 'EVENT'
+        if _SIC_SANCT_TALK.search(low) and not _SIC_SANCT_ACT.search(low):
+            return 'COMMENTARY'
+    has_event = bool(_SIC_EVENT.search(low))
+    is_proc = bool(_SIC_PROCESS.search(low))
+    if canon_type in _SIC_MONITOR:              # мониторинг-феномен = событие по природе
+        return 'PROCESS' if is_proc else 'EVENT'
+    if _SIC_FEATURE.search(low) and not has_event:
+        return 'FEATURE'
+    if _SIC_BACKGROUND.search(low) and not has_event:
+        return 'BACKGROUND'
+    if has_event:                               # PROCESS только при явном продолжении
+        return 'PROCESS' if is_proc else 'EVENT'
+    return 'COMMENTARY'
+
+
+def _sic_shadow_pass(events):
+    """Добавляет e['sic_class'] каждому событию. Ничего больше не меняет (READ-ONLY инвариант)."""
+    for e in events:
+        e['sic_class'] = _sic_class(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
+                                    e.get('canon_type'))
+
+
+def _sic_shadow_report(events, outdir):
+    """SIC shadow-отчёт: распределение классов, Operational Density, Noise Reduction,
+    список спорных классификаций для ручного аудита. READ-ONLY."""
+    from collections import Counter
+    dist = Counter(e.get('sic_class') for e in events)
+    feed = [e for e in events if e.get('feed_visible')]
+    fn = max(1, len(feed))
+    oper = sum(1 for e in feed if e.get('sic_class') in ('EVENT', 'PROCESS'))
+    noise = sum(1 for e in feed if e.get('sic_class') in ('COMMENTARY', 'FEATURE', 'BACKGROUND'))
+    # спорные: canon кинетич/природа, но sic не EVENT/PROCESS (кандидат: мис-тип canon ИЛИ потеря)
+    _KIN = _SIC_MONITOR | {'Военные удары', 'Киберугроза', 'Авиационный инцидент'}
+    disputed = []
+    for e in events:
+        sc = e.get('sic_class'); ct = e.get('canon_type')
+        if ct in _KIN and sc not in ('EVENT', 'PROCESS'):
+            disputed.append({'title': (e.get('title') or '')[:120], 'canon_type': ct,
+                             'sic_class': sc, 'flag': 'kinetic_canon_not_event'})
+    rep = {
+        'meta': {'stage': 'SIC-1', 'mode': 'shadow_read_only',
+                 'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                 'total_events': len(events), 'feed_visible': len(feed)},
+        'class_distribution': {k: dist.get(k, 0) for k in
+                               ('EVENT', 'PROCESS', 'COMMENTARY', 'FEATURE', 'BACKGROUND')},
+        'operational_density': round(oper / fn, 3),      # (EVENT+PROCESS) / feed_visible
+        'noise_reduction': {'count': noise, 'ratio': round(noise / fn, 3)},
+        'disputed_count': len(disputed),
+        'disputed': disputed[:40],
+        'invariant': 'sic_class ONLY; feed_visible/canon/geo/risk/pressure/severity/processes/macro/relations untouched',
+    }
+    md = outdir / 'migration'
+    md.mkdir(parents=True, exist_ok=True)
+    (md / 'sic-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [SIC-SHADOW] E %(EVENT)d · P %(PROCESS)d · C %(COMMENTARY)d · F %(FEATURE)d · B %(BACKGROUND)d'
+          % rep['class_distribution'] + ' · opdens %.2f · noise %d' % (rep['operational_density'], noise),
+          file=sys.stderr)
+
+
 def save_enriched(events, previous_snapshot=None):
     """
     Сохраняет events.json c signal taxonomy + escalation engine.
@@ -9367,6 +9494,12 @@ def save_enriched(events, previous_snapshot=None):
                 _admission_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _ae:
                 print('  [WARN] admission shadow fail: %s' % _ae, file=sys.stderr)
+            # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
+            try:
+                _sic_shadow_pass(enriched["events"])
+                _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _se:
+                print('  [WARN] sic shadow fail: %s' % _se, file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
