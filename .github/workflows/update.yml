@@ -75,6 +75,14 @@ jobs:
             fi
           fi
 
+      - name: FSS ingestion (ADR-010, Финансовая устойчивость — SHADOW)
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          FSS_MODE: shadow
+        run: |
+          python scripts/fss_ingest.py shadow
+
       - name: Фильтр шума (AUDIT 4.2 — авто-очистка ленты)
         id: filter
         continue-on-error: true
