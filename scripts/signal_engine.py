@@ -1106,6 +1106,16 @@ def _reconstruct_macro(signals, now):
         'SY':'Ближний Восток','IL':'Ближний Восток','IR':'Ближний Восток','LB':'Ближний Восток',
         'YE':'Ближний Восток','SA':'Ближний Восток','IQ':'Ближний Восток',
     }
+    # place→страна: якорь берётся от МЕСТА процесса, не от дедуплицированного union упоминаний
+    # (union даёт tie → most_common возвращал алфавитно-первую страну = ложный якорь, напр. CN
+    #  для Россия-Украина процесса [CN,DE,LT,LV,RU,UA,US]).
+    _PLACE2CC={'Россия':'RU','США':'US','Украина':'UA','Китай':'CN','Израиль':'IL','Иран':'IR',
+        'ЕС':'EU','Великобритания':'GB','Индия':'IN','Германия':'DE','Франция':'FR','Иордания':'JO',
+        'Кувейт':'KW','Бахрейн':'BH','Палестина':'PS','Ливан':'LB','КНДР':'KP','Швеция':'SE',
+        'Сирия':'SY','Йемен':'YE','Саудовская Аравия':'SA','Ирак':'IQ','Испания':'ES','Италия':'IT',
+        'Польша':'PL','Норвегия':'NO','Словакия':'SK','Бельгия':'BE','Нидерланды':'NL','Австрия':'AT',
+        'Чехия':'CZ','Португалия':'PT','Греция':'GR','Румыния':'RO','Венгрия':'HU','Швейцария':'CH'}
+    _MACROREGION_NAMES=set(_MACROREGION.values())   # {'Европа','Ближний Восток'}
     # группируем по (process_type, страна) И по (process_type, макрорегион) — два уровня.
     groups=defaultdict(list)          # страновой уровень (Россия → регионы)
     region_groups=defaultdict(list)   # макрорегиональный (Европа → страны) для трансграничных
@@ -1113,14 +1123,22 @@ def _reconstruct_macro(signals, now):
         if s.get('is_macro'): continue
         ptype=s.get('process_type','')
         cc=s.get('countries',[]) or []
-        country=None
-        if cc:
-            country=_MCtr(cc).most_common(1)[0][0]
+        pp=(s.get('process_place') or '')
+        # ЯКОРЬ = страна МЕСТА процесса (а не most_common дедуп-union: тот на равенстве
+        # возвращал алфавитно-первую страну = ложная привязка). Если place — не страна и
+        # стран несколько (нет явного большинства) — страну НЕ выбираем (country=None).
+        country=_PLACE2CC.get(pp)
+        if not country and len(cc)==1:
+            country=cc[0]
         if ptype and country:
             groups[(ptype, country)].append(s)
             _mr=_MACROREGION.get(country)
             if _mr:
                 region_groups[(ptype, _mr)].append(s)
+        # place — сам макрорегион (Европа/Ближний Восток): прямая региональная группировка,
+        # чтобы трансграничный процесс (напр. Россия-Украина, place=Европа) не терялся.
+        if ptype and pp in _MACROREGION_NAMES:
+            region_groups[(ptype, pp)].append(s)
     macro_out=[]; _covered=set()
     # СНАЧАЛА трансграничные макрорегионы (европейская жара приоритетнее странового дробления)
     _all_groups=[('region',k,v) for k,v in region_groups.items()] + \
