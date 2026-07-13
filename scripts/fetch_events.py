@@ -3420,9 +3420,20 @@ _CANON_TYPE = [
 _CANON_TYPE_DOMAIN = {'Шторм': 'climate', 'Морской лёд': 'climate', 'Оползень': 'climate',
     'Климатическая аномалия': 'climate', 'Энергоблэкаут': 'technology', 'Фондовый рынок': 'economy'}
 
+# КАНОН-ОХРАНА: мемориально-исторический контекст (годовщина/минута молчания/память)
+# НЕ должен типизироваться как текущий военный удар. «Военные удары»/«Покушение» —
+# только про ТЕКУЩЕЕ событие. Guard срабатывает при маркере памяти И отсутствии
+# текущего ударного действия (напр. «в годовщину X ВСУ нанесли удар» — реальный удар,
+# guard не гасит). Пример: «минута молчания в память о теракте 2016» → не «Военные удары».
+_COMMEM_GUARD = re.compile(r'годовщин|минут\w*\s+молчани|в память|памяти\s+(?:жертв|погибш|павш)|почтил\w*\s+память|\bмемориал|\d+[-\s]*лети[еяю]\b')
+_PRESENT_STRIKE = re.compile(r'нанес\w*\s+удар|наносит удар|атаку(?:ет|ют)|обстрел(?:ял|ивает|яют)|нанесли|уничтожил|сбил[аи]?|поразил|прил[её]т|вторг')
+_MILITARY_CANON = {'Военные удары', 'Покушение'}
 def _canon_type_of(title, summ):
+    _txt = title + ' ' + summ
+    _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
     best = None; bs = 0; br = None
     for pat, name in _CANON_TYPE:
+        if _commem and name in _MILITARY_CANON: continue   # мемориал/годовщина → не текущий удар
         sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
         if sc > bs: bs = sc; best = name; br = pat[:24]
     return best, br
