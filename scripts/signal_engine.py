@@ -1211,6 +1211,9 @@ def _reconstruct_macro(signals, now):
                 if o not in _chain: _chain.append(o)
         _domains=sorted(set(m.get('primary_domain','') for m in members if m.get('primary_domain')))
         _sev=max((m.get('severity',0) for m in members), default=0)
+        # P2: priority независим от severity — агрегат priority членов (учитывает тренд/
+        # уверенность/decay через priority под-процессов, стр.1880/880), НЕ копия _sev.
+        _maxpri=max((m.get('priority',0) or 0 for m in members), default=0)
         _pressure=max((m.get('pressure',0) or 0 for m in members), default=0)
         _ev_total=sum(m.get('evidence_count',1) for m in members)
         # СИСТЕМНЫЙ ВЕС: агрегат из N свёрнутых фрагментов весомее одиночного фрагмента.
@@ -1235,7 +1238,7 @@ def _reconstruct_macro(signals, now):
             'process_type':ptype, 'primary_domain':_domains[0] if _domains else 'economy',
             'domains':_domains, 'process_place':_area_ru,
             'countries':sorted(set(c for m in members for c in (m.get('countries') or []))),
-            'severity':_sev, 'priority':_sev, 'pressure':_pressure,
+            'severity':_sev, 'priority':_maxpri, 'pressure':_pressure,
             'origin':members[0].get('origin','unknown'), 'origin_chain':_chain[:6],
             'evidence_count':_ev_total, 'first_seen':_first, 'last_seen':_last,
             'geo_spread':regions, 'geo_spread_count':len(regions),
