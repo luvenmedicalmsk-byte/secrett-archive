@@ -2,13 +2,13 @@
   "country": "KZ",
   "country_name": "Казахстан",
   "date": "2026-07-13",
-  "generated_at": "2026-07-13T15:06:02.830235+00:00",
-  "optimization_score": 84,
+  "generated_at": "2026-07-13T16:22:34.295445+00:00",
+  "optimization_score": 80,
   "grade": "A",
   "grade_ru": "Сильная",
-  "decision_score_base": 68,
-  "predicted_next_score": 68,
-  "optimization_gain": 0.1,
+  "decision_score_base": 64,
+  "predicted_next_score": 64,
+  "optimization_gain": -0.3,
   "high_alpha_actions": [
     {
       "action_id": "CA-01",
@@ -95,6 +95,34 @@
         "win_rate 0%"
       ],
       "recommendation": "reduce_weight"
+    },
+    {
+      "action_id": "S-01",
+      "sample_count": 2,
+      "win_rate": 0.0,
+      "avg_alpha": -3.0,
+      "avg_efficiency": 39.0,
+      "action_score": 8,
+      "reasons": [
+        "низкий effectiveness (8)",
+        "отрицательная альфа (-3.00)",
+        "win_rate 0%"
+      ],
+      "recommendation": "reduce_weight"
+    },
+    {
+      "action_id": "S-02",
+      "sample_count": 2,
+      "win_rate": 0.0,
+      "avg_alpha": -3.0,
+      "avg_efficiency": 39.0,
+      "action_score": 8,
+      "reasons": [
+        "низкий effectiveness (8)",
+        "отрицательная альфа (-3.00)",
+        "win_rate 0%"
+      ],
+      "recommendation": "reduce_weight"
     }
   ],
   "rebalance_plan": {
@@ -116,6 +144,18 @@
         "adjustment": "reduce",
         "factor": 0.7,
         "reason": "низкий effectiveness (9); win_rate 0%"
+      },
+      {
+        "action_id": "S-01",
+        "adjustment": "reduce",
+        "factor": 0.7,
+        "reason": "низкий effectiveness (8); отрицательная альфа (-3.00); win_rate 0%"
+      },
+      {
+        "action_id": "S-02",
+        "adjustment": "reduce",
+        "factor": 0.7,
+        "reason": "низкий effectiveness (8); отрицательная альфа (-3.00); win_rate 0%"
       },
       {
         "action_id": "CA-01",
@@ -153,7 +193,7 @@
     "urgency_adjustment": "neutral",
     "urgency_factor": 1.0,
     "n_boosted": 5,
-    "n_reduced": 3
+    "n_reduced": 5
   },
   "adjusted_actions": [
     {
@@ -197,22 +237,6 @@
       "avg_alpha": 12.08
     },
     {
-      "action_id": "S-01",
-      "original_score": 43,
-      "adjusted_score": 43,
-      "factor": 1.0,
-      "win_rate": 50.0,
-      "avg_alpha": 2.0
-    },
-    {
-      "action_id": "S-02",
-      "original_score": 43,
-      "adjusted_score": 43,
-      "factor": 1.0,
-      "win_rate": 50.0,
-      "avg_alpha": 2.0
-    },
-    {
       "action_id": "CR-09",
       "original_score": 9,
       "adjusted_score": 6,
@@ -235,14 +259,30 @@
       "factor": 0.7,
       "win_rate": 0.0,
       "avg_alpha": 0.0
+    },
+    {
+      "action_id": "S-01",
+      "original_score": 8,
+      "adjusted_score": 6,
+      "factor": 0.7,
+      "win_rate": 0.0,
+      "avg_alpha": -3.0
+    },
+    {
+      "action_id": "S-02",
+      "original_score": 8,
+      "adjusted_score": 6,
+      "factor": 0.7,
+      "win_rate": 0.0,
+      "avg_alpha": -3.0
     }
   ],
   "confidence_target": 65,
   "urgency_adjustment": "neutral",
-  "stability_index": 62,
+  "stability_index": 43,
   "alpha_score": 100,
-  "win_rate": 75.0,
-  "rr_score": 72,
+  "win_rate": 68.8,
+  "rr_score": 70,
   "opp_score": 100,
   "diagnostics": [
     {
@@ -252,13 +292,19 @@
       "detail": "3 boost с малой выборкой (n<5) — нестабильная оценка"
     },
     {
+      "type": "strategy_decay",
+      "label": "Деградация стратегии",
+      "severity": "high",
+      "detail": "Feedback success rate 38% — стратегия деградирует"
+    },
+    {
       "type": "optimization_instability",
       "label": "Нестабильность оптимизации",
       "severity": "medium",
-      "detail": "Одновременно 5 boost и 3 reduce — высокая волатильность весов"
+      "detail": "Одновременно 5 boost и 5 reduce — высокая волатильность весов"
     }
   ],
-  "diagnostic_count": 2,
+  "diagnostic_count": 3,
   "conf_drift": 0,
   "fb_grade": "poor",
   "hv_score": 50,
@@ -266,15 +312,15 @@
   "history_depth": 46,
   "evolution_record": {
     "date": "2026-07-13",
-    "optimization_score": 84,
+    "optimization_score": 80,
     "grade": "A",
-    "decision_score": 68,
-    "opt_gain": 0.1,
-    "alpha_mean": 10.0,
-    "win_rate": 75.0,
-    "stability": 62,
+    "decision_score": 64,
+    "opt_gain": -0.3,
+    "alpha_mean": 9.38,
+    "win_rate": 68.8,
+    "stability": 43,
     "n_boosted": 5,
-    "n_reduced": 3,
+    "n_reduced": 5,
     "bias_count": 0
   }
 }
