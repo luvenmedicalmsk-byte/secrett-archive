@@ -25,7 +25,7 @@ from geo_contract import resolve_geo as _legacy_resolve_geo
 LEVER_A = True    # LRR (Location Role Resolution)
 LEVER_C = False   # GeoContract split (actor/impact/mentioned)
 LEVER_D = False   # false coordinate -> NULL
-LEVER_A_AT = False  # A1 attributive-actor + A2 sentence-lead target selection (dormant)
+LEVER_A_AT = True  # A1 attributive-actor + A2 sentence-lead target selection (dormant)
 
 # Контекст назначения (экспорт/движение) — только он разрешает демотирование accusative.
 _DEST_CTX = re.compile(

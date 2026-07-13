@@ -3867,7 +3867,10 @@ def _apply_geo_contract(events):
     resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
     контракта; ни один компонент ниже по потоку (карта, лента, процессы, снапшоты,
     Worker, API) географию не пересчитывает (NO RECALCULATION)."""
-    from geo_contract import resolve_geo, validate_geo
+    from geo_contract import validate_geo
+    # CANARY: location-слой v2 (Lever A LRR + A1/A2). C/D выключены (не вызываются
+    # resolve_geo_v2). impact/карта/координаты — как legacy. Откат: вернуть импорт legacy.
+    from geo_contract_v2 import resolve_geo_v2 as resolve_geo
     st = {'country': 0, 'zone': 0, 'global': 0, 'none': 0, 'validate_fail': 0,
           'exact': 0, 'centroid': 0}
     for e in events:
