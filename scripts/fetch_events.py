@@ -5805,19 +5805,27 @@ def fetch_telegram():
             from telethon.sessions import StringSession
             api_id = int(os.environ['TG_API_ID']); api_hash = os.environ['TG_API_HASH']
             _raw = {}
+            _fss_feed = []; _FSS_FIN = {'russianmacro','spydell_finance','investfuture','banksta','bankerist','bbbreaking','novosti_efir'}
             with TelegramClient(StringSession(os.environ['TG_SESSION']), api_id, api_hash, flood_sleep_threshold=20) as client:
                 for ch in channels:
                     nraw = 0
                     try:
                         for msg in client.iter_messages(ch, limit=200):
                             nraw += 1
-                            it = _build(ch, msg.message or '', getattr(msg, 'date', None))
+                            _mt = msg.message or ''
+                            if ch in _FSS_FIN and _mt:
+                                _fss_feed.append({'ch': ch, 'text': _mt[:700], 'date': str(getattr(msg, 'date', ''))})
+                            it = _build(ch, _mt, getattr(msg, 'date', None))
                             if it: items.append(it)
                         _raw[ch] = {'raw': nraw}
                     except Exception as e:
                         _raw[ch] = {'err': repr(e)}
                         print(f"  [TG-MTProto] {ch}: {e}", file=sys.stderr)
             print(f"  Telegram(MTProto): {len(items)} постов", file=sys.stderr)
+            try:
+                import json as _jfss
+                with open('/tmp/fss_tg_feed.json', 'w', encoding='utf-8') as _ff: _jfss.dump(_fss_feed, _ff, ensure_ascii=False)
+            except Exception: pass
             _tg_write_debug("mtproto", items, None, _raw)
             return items
         except Exception as e:
