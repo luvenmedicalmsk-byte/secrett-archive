@@ -1062,6 +1062,21 @@ def _enrich_macro(macro, members, now):
         return o[:8]
     macro['causes']=_ext('causes'); macro['caused_by']=_ext('caused_by')
     macro['related']=_ext('related'); macro['amplifies']=_ext('amplifies'); macro['suppresses']=_ext('suppresses')
+    # п.14: макро наследует via-объяснения членов → каждый CAUSE макро объясним цепочкой.
+    # Без via (edge-case) → в related (не выдаём за причину). OFF → блок пропускается.
+    if CAUSAL_EXPLAIN_CANARY:
+        _seen=set(); _links=[]
+        for m in _nsrc:
+            for l in (m.get('causal_origin_links') or []):
+                t=l.get('to')
+                if t and t in macro['causes'] and t not in _seen: _seen.add(t); _links.append(l)
+        if _links: macro['causal_origin_links']=_links
+        _explained={l['to'] for l in _links}
+        _demote=[c for c in macro['causes'] if c not in _explained]
+        if _demote:
+            macro['causes']=[c for c in macro['causes'] if c in _explained]
+            for c in _demote:
+                if c not in macro['related']: macro['related'].append(c)
     macro['connectivity']=(macro['causes']+macro['caused_by']+macro['related'])[:10]
     # ── EXPLAIN: объяснение из macro_reason + агрегата ──
     _top=[m.get('title','') for m in sorted(members,key=lambda x:-(x.get('pressure',0) or 0))[:4]]
