@@ -55,7 +55,7 @@ def _gaz_lookup(word):
 GEO_MACRO_CANARY = True
 # CAUSAL-EXPLAIN CANARY (п.14): CAUSE только прямая объяснимая цепочка (origin-каскад с via);
 # косвенный domain-каскад (tdom in connectivity, без via) → RELATED. OFF → байт-идентично.
-CAUSAL_EXPLAIN_CANARY = False
+CAUSAL_EXPLAIN_CANARY = True
 _RU_REGION_MACRO = {
  'якут':'Дальний Восток','саха':'Дальний Восток','хабаров':'Дальний Восток','примор':'Дальний Восток',
  'камчат':'Дальний Восток','сахалин':'Дальний Восток','магадан':'Дальний Восток','амур':'Дальний Восток',
