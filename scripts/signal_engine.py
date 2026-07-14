@@ -87,8 +87,18 @@ _RU_REGION_MACRO = {
  'чуваш':'Европа','мордов':'Европа','марий':'Европа','дагестан':'Европа','чечн':'Европа','ингушет':'Европа',
  'осети':'Европа','кабард':'Европа','адыге':'Европа','калмык':'Европа','астрахан':'Европа','ставроп':'Европа',
 }
+RADAR_GEO_CANON = False  # Phase 2.1: radar-макрорегион из geo_canon. OFF → legacy словари.
 def _macro_for(place, iso):
-    """Макрорегион по РЕГИОНУ (canary) вместо ISO-last-wins. OFF → прежнее поведение."""
+    """Макрорегион по РЕГИОНУ (canary) вместо ISO-last-wins. OFF → прежнее поведение.
+    RADAR_GEO_CANON → источник geo_canon (radar_macro для ISO, ru_region для РФ)."""
+    if RADAR_GEO_CANON:
+        import geo_canon as _gcn
+        if GEO_MACRO_CANARY and iso == 'RU' and place:
+            pl = str(place).strip().lower()
+            if pl in ('россия', 'рф'): return 'Россия'
+            _rr = _gcn.ru_region(pl)
+            return _rr['macro'] if _rr else 'Россия'
+        return _gcn.radar_macro(iso)
     if GEO_MACRO_CANARY and iso=='RU' and place:
         pl=str(place).strip().lower()
         if pl in ('россия','рф'): return 'Россия'          # generic — не Европа-корзина
