@@ -59,6 +59,10 @@ CAUSAL_EXPLAIN_CANARY = True
 # CAUSAL-SEMANTIC CANARY (Вариант A): убрать семантически пустые рёбра economic→social,
 # financial→social из построения CAUSE (не origin-резолюция). OFF → байт-идентично.
 CAUSAL_SEMANTIC_CANARY = True
+# STAGE B — PROC-CANON-AUTHORITY: сильный geopolitics-канон-тип не даёт процессу стать economy
+# (geopolitics-инструмент нельзя переголосовать в экономику большинством). OFF → байт-идентично.
+PROC_CANON_AUTHORITY_CANARY = True
+_CANON_AUTHORITY = {'Военные удары','Санкционное давление','Оборонное производство','Покушение','Визовые ограничения'}
 _SEMANTIC_BLOCK = {('economic','social'), ('financial','social')}
 _RU_REGION_MACRO = {
  'якут':'Дальний Восток','саха':'Дальний Восток','хабаров':'Дальний Восток','примор':'Дальний Восток',
@@ -501,7 +505,13 @@ def _process_type(evs, domain):
         _ct = [e.get('canon_type') for e in evs
                if e.get('canon_domain') in DOMAIN_CANARY and e.get('canon_type') not in (None, 'unknown')]
         if _ct:
-            return Counter(_ct).most_common(1)[0][0]
+            _win = Counter(_ct).most_common(1)[0][0]
+            # STAGE B: canon-authority — geopolitics-инструмент не переголосовать в economy
+            if PROC_CANON_AUTHORITY_CANARY and _TYPE_DOMAIN.get(_win) == 'economy':
+                _auth = [c for c in _ct if c in _CANON_AUTHORITY]
+                if _auth:
+                    return Counter(_auth).most_common(1)[0][0]
+            return _win
     titles=' '.join(x.get('title','') for x in evs).lower()
     summ=' '.join((x.get('summary','') or '')[:60] for x in evs).lower()
     best=None; best_sc=0
