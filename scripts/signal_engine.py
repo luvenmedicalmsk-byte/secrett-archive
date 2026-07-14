@@ -61,8 +61,12 @@ CAUSAL_EXPLAIN_CANARY = True
 CAUSAL_SEMANTIC_CANARY = True
 # STAGE B — PROC-CANON-AUTHORITY: сильный geopolitics-канон-тип не даёт процессу стать economy
 # (geopolitics-инструмент нельзя переголосовать в экономику большинством). OFF → байт-идентично.
+# PHASE 1 (Cause over Effect): сильный канон авторитетнее ЛЮБОГО большинства (не только economy)
+# + Киберугроза. OFF → поведение Stage B. Порядок: Strong Canon → Weak Canon → Legacy.
 PROC_CANON_AUTHORITY_CANARY = True
+PROC_CANON_AUTHORITY_PHASE1 = False
 _CANON_AUTHORITY = {'Военные удары','Санкционное давление','Оборонное производство','Покушение','Визовые ограничения'}
+_STRONG_CANON = _CANON_AUTHORITY | {'Киберугроза'}
 _SEMANTIC_BLOCK = {('economic','social'), ('financial','social')}
 _RU_REGION_MACRO = {
  'якут':'Дальний Восток','саха':'Дальний Восток','хабаров':'Дальний Восток','примор':'Дальний Восток',
@@ -507,8 +511,15 @@ def _process_type(evs, domain):
         _ct = [e.get('canon_type') for e in evs
                if e.get('canon_domain') in DOMAIN_CANARY and e.get('canon_type') not in (None, 'unknown')]
         if _ct:
+            # PHASE 1 (Cause over Effect): сильный канонический тип авторитетнее ЛЮБОГО
+            # большинства. Порядок: Strong Canon → Weak Canon (майоритет канона) → Legacy.
+            if PROC_CANON_AUTHORITY_PHASE1:
+                _strong = [c for c in _ct if c in _STRONG_CANON]
+                if _strong:
+                    return Counter(_strong).most_common(1)[0][0]
+                return Counter(_ct).most_common(1)[0][0]
+            # STAGE B (fallback): canon-authority только когда большинство = economy.
             _win = Counter(_ct).most_common(1)[0][0]
-            # STAGE B: canon-authority — geopolitics-инструмент не переголосовать в economy
             if PROC_CANON_AUTHORITY_CANARY and _TYPE_DOMAIN.get(_win) == 'economy':
                 _auth = [c for c in _ct if c in _CANON_AUTHORITY]
                 if _auth:
