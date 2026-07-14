@@ -58,7 +58,7 @@ GEO_MACRO_CANARY = True
 CAUSAL_EXPLAIN_CANARY = True
 # CAUSAL-SEMANTIC CANARY (Вариант A): убрать семантически пустые рёбра economic→social,
 # financial→social из построения CAUSE (не origin-резолюция). OFF → байт-идентично.
-CAUSAL_SEMANTIC_CANARY = False
+CAUSAL_SEMANTIC_CANARY = True
 _SEMANTIC_BLOCK = {('economic','social'), ('financial','social')}
 _RU_REGION_MACRO = {
  'якут':'Дальний Восток','саха':'Дальний Восток','хабаров':'Дальний Восток','примор':'Дальний Восток',
