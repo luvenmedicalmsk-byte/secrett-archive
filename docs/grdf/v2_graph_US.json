@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-07-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-14T01:29:47.007634+00:00",
+  "generated_at": "2026-07-14T04:26:50.913381+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "down"
+      "score": 48,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 18,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 9,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 10,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-US-Что_извест",
+      "id": "SIGNAL-US-Война_в_За",
       "type": "Signal",
-      "label": "Что известно о новой волне ударов США по",
-      "severity": 72,
+      "label": "Война в Западной Азии: США наносят удары",
+      "severity": 76,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-США_и_союз",
       "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.78
     },
     {
-      "from": "SIGNAL-US-Что_извест",
+      "from": "SIGNAL-US-Война_в_За",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.76
     }
   ]
 }
