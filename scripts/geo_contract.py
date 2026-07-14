@@ -370,6 +370,7 @@ _NONP = re.compile(r'по\s+(?:[а-яё]+ск[а-яё]*\s+)?(?:военн|вой
 _OUTAGE = re.compile(r'(отключение интернет|падение интернет|интернет-связи|сбой интернет|аномали[яи] трафика|отключение электро|ограничени[яе] (?:электроснабжени|энергоснабжени)|отключение света|обесточ)', re.I)
 _CURR = re.compile(r'(рубль|рубл[яеь])\s+(?:ослаб|укреп|упал|пада|вырос|раст|обвал|подеш|подорож|рухн|просел|на бирж)', re.I)
 
+GEO_ACTOR_TARGET_CANARY = False  # kinetic-target: genitive-цель за bad-span object («по военным объектам Ирана»→IR)
 _CONF = {'object': 0.92, 'kinetic_target': 0.9, 'currency': 0.9, 'locative': 0.88,
          'direction': 0.85, 'natural': 0.85, 'outage': 0.85, 'single': 0.7, 'adj_locative': 0.8, 'subject': 0.75}
 
@@ -511,10 +512,19 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
                 return _mk(p, 'direction', blob, actor, raw_coords)
         # KINETIC-TARGET: «удар … по X» (кроме не-мест: «по военным объектам»)
         if _KIN.search(blob):
-            for m in re.finditer(r'(?:^|[^а-яё])по\s+([а-яё\-]+(?:\s+[а-яё\-]+)?)', blob, re.I):
-                if _NONP.search(m.group(0)):
-                    continue
+            _kt_re = (r'(?:^|[^а-яё])по\s+([а-яё\-]+(?:\s+[а-яё\-]+){0,2})'
+                      if GEO_ACTOR_TARGET_CANARY else
+                      r'(?:^|[^а-яё])по\s+([а-яё\-]+(?:\s+[а-яё\-]+)?)')
+            for m in re.finditer(_kt_re, blob, re.I):
                 parts = m.group(1).split()
+                if _NONP.search(m.group(0)):
+                    # ACTOR-TARGET: «по военным объектам X» — genitive-цель ПОСЛЕ объекта =
+                    # место удара (не страна-инициатор). Дотягиваемся до цели за bad-span.
+                    if GEO_ACTOR_TARGET_CANARY and len(parts) >= 2:
+                        p = _place_at(parts[-1])
+                        if p and p[0] != actor:
+                            return _mk(p, 'kinetic_target', blob, actor, raw_coords)
+                    continue
                 p = _place_at(parts[-1]) or _place_at(parts[0])
                 if p and p[0] != actor:
                     return _mk(p, 'kinetic_target', blob, actor, raw_coords)
