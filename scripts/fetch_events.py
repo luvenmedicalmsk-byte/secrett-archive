@@ -3428,6 +3428,13 @@ _CANON_TYPE_DOMAIN = {'Шторм': 'climate', 'Морской лёд': 'climate
 _COMMEM_GUARD = re.compile(r'годовщин|минут\w*\s+молчани|в память|памяти\s+(?:жертв|погибш|павш)|почтил\w*\s+память|\bмемориал|\d+[-\s]*лети[еяю]\b')
 _PRESENT_STRIKE = re.compile(r'нанес\w*\s+удар|наносит удар|атаку(?:ет|ют)|обстрел(?:ял|ивает|яют)|нанесли|уничтожил|сбил[аи]?|поразил|прил[её]т|вторг')
 _MILITARY_CANON = {'Военные удары', 'Покушение'}
+# DOMAIN-GEOECON CANARY: инструменты госполитики (санкции/эмбарго/тарифы/экспортконтроль/
+# торгограничения/заморозка активов/инвестограничения) — geopolitics, а не economy.
+# Чинит оба дефекта: tie-break (Retail@4 > Санкц@19) и покрытие (нет правил тариф/эмбарго/…).
+# Переопределяет ТОЛЬКО когда базовый тип экономический/unknown (военные/климат/кибер не трогает).
+DOMAIN_GEOECON_CANARY = False
+_GEOECON = re.compile(r'санкц|эмбарго|тариф|пошлин|экспортн\w*\s+контрол|контрол\w*\s+(?:над\s+)?экспорт|торгов\w*\s+войн|торгов\w*\s+ограничен|торгов\w*\s+барьер|инвестиц\w*\s+(?:ограничен|скрининг)|заморозк\w*\s+актив|запрет\w*\s+(?:на\s+)?(?:экспорт|импорт|поставк|ввоз|вывоз|транзит)')
+_GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономический сигнал','Валютный рынок','Топливный рынок','Инфляция','Фондовый рынок', None}
 def _canon_type_of(title, summ):
     _txt = title + ' ' + summ
     _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
@@ -3436,6 +3443,8 @@ def _canon_type_of(title, summ):
         if _commem and name in _MILITARY_CANON: continue   # мемориал/годовщина → не текущий удар
         sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
         if sc > bs: bs = sc; best = name; br = pat[:24]
+    if DOMAIN_GEOECON_CANARY and best in _GEOECON_OVERRIDE_FROM and _GEOECON.search(_txt):
+        return 'Санкционное давление', 'geoecon'   # госинструмент давления → geopolitics
     return best, br
 
 def _canonize_event(e, SIG):
