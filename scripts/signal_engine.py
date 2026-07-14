@@ -64,7 +64,7 @@ CAUSAL_SEMANTIC_CANARY = True
 # PHASE 1 (Cause over Effect): сильный канон авторитетнее ЛЮБОГО большинства (не только economy)
 # + Киберугроза. OFF → поведение Stage B. Порядок: Strong Canon → Weak Canon → Legacy.
 PROC_CANON_AUTHORITY_CANARY = True
-PROC_CANON_AUTHORITY_PHASE1 = False
+PROC_CANON_AUTHORITY_PHASE1 = True
 _CANON_AUTHORITY = {'Военные удары','Санкционное давление','Оборонное производство','Покушение','Визовые ограничения'}
 _STRONG_CANON = _CANON_AUTHORITY | {'Киберугроза'}
 _SEMANTIC_BLOCK = {('economic','social'), ('financial','social')}
