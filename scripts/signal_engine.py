@@ -56,6 +56,10 @@ GEO_MACRO_CANARY = True
 # CAUSAL-EXPLAIN CANARY (п.14): CAUSE только прямая объяснимая цепочка (origin-каскад с via);
 # косвенный domain-каскад (tdom in connectivity, без via) → RELATED. OFF → байт-идентично.
 CAUSAL_EXPLAIN_CANARY = True
+# CAUSAL-SEMANTIC CANARY (Вариант A): убрать семантически пустые рёбра economic→social,
+# financial→social из построения CAUSE (не origin-резолюция). OFF → байт-идентично.
+CAUSAL_SEMANTIC_CANARY = False
+_SEMANTIC_BLOCK = {('economic','social'), ('financial','social')}
 _RU_REGION_MACRO = {
  'якут':'Дальний Восток','саха':'Дальний Восток','хабаров':'Дальний Восток','примор':'Дальний Восток',
  'камчат':'Дальний Восток','сахалин':'Дальний Восток','магадан':'Дальний Восток','амур':'Дальний Восток',
@@ -332,6 +336,13 @@ _ORIGIN_CASCADE={
  'infrastructure':['economic','social'],
  'environmental': ['health'],
 }
+def _cascade_targets(origin):
+    # цели origin-каскада для построения CAUSE; под семантической канарейкой
+    # блокируются пустые рёбра economic/financial→social (гео-совпадение ≠ причина)
+    _t = _ORIGIN_CASCADE.get(origin, []) or []
+    if CAUSAL_SEMANTIC_CANARY:
+        _t = [x for x in _t if (origin, x) not in _SEMANTIC_BLOCK]
+    return _t
 # домен → приоритетные origins (контекст для разрешения неоднозначности)
 _DOMAIN_ORIGIN_HINT={
  'climate':['natural','climate','environmental'],
@@ -1766,7 +1777,7 @@ def _build_relations(signals):
             # причинность по ORIGIN-каскаду (Task 5): origin T — в causal-цепочке origin S.
             # Origin — базовый уровень графа связей (military→energy→economic→financial).
             _so=S.get('origin','unknown'); _to=T.get('origin','unknown')
-            _origin_causal=(_to!='unknown' and _to in (_ORIGIN_CASCADE.get(_so,[]) or [])
+            _origin_causal=(_to!='unknown' and _to in _cascade_targets(_so)
                             and S.get('first_seen','') <= T.get('first_seen',''))
             # domain-каскад: домен T — среди каскадных доменов S, S не позже T (косвенная, без via)
             _domain_cascade = (tdom in (S.get('connectivity') or [])
