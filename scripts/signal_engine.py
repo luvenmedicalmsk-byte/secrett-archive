@@ -87,7 +87,7 @@ _RU_REGION_MACRO = {
  'чуваш':'Европа','мордов':'Европа','марий':'Европа','дагестан':'Европа','чечн':'Европа','ингушет':'Европа',
  'осети':'Европа','кабард':'Европа','адыге':'Европа','калмык':'Европа','астрахан':'Европа','ставроп':'Европа',
 }
-RADAR_GEO_CANON = False  # Phase 2.1: radar-макрорегион из geo_canon. OFF → legacy словари.
+RADAR_GEO_CANON = True  # Phase 2.1: radar-макрорегион из geo_canon. OFF → legacy словари.
 def _macro_for(place, iso):
     """Макрорегион по РЕГИОНУ (canary) вместо ISO-last-wins. OFF → прежнее поведение.
     RADAR_GEO_CANON → источник geo_canon (radar_macro для ISO, ru_region для РФ)."""
