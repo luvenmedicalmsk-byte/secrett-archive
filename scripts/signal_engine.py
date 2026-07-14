@@ -53,6 +53,9 @@ def _gaz_lookup(word):
 # Инвариант: запрещено «не Европа → Россия»; generic RU без региона → 'Россия' (страновой),
 # азиатские регионы → 'Сибирь'/'Дальний Восток', НЕ в Европа-макро. Флаг OFF → байт-идентично.
 GEO_MACRO_CANARY = True
+# CAUSAL-EXPLAIN CANARY (п.14): CAUSE только прямая объяснимая цепочка (origin-каскад с via);
+# косвенный domain-каскад (tdom in connectivity, без via) → RELATED. OFF → байт-идентично.
+CAUSAL_EXPLAIN_CANARY = False
 _RU_REGION_MACRO = {
  'якут':'Дальний Восток','саха':'Дальний Восток','хабаров':'Дальний Восток','примор':'Дальний Восток',
  'камчат':'Дальний Восток','сахалин':'Дальний Восток','магадан':'Дальний Восток','амур':'Дальний Восток',
@@ -1750,15 +1753,20 @@ def _build_relations(signals):
             _so=S.get('origin','unknown'); _to=T.get('origin','unknown')
             _origin_causal=(_to!='unknown' and _to in (_ORIGIN_CASCADE.get(_so,[]) or [])
                             and S.get('first_seen','') <= T.get('first_seen',''))
-            # причинность: домен T — среди каскадных доменов S, и S не позже T
-            if (_origin_causal or (tdom in (S.get('connectivity') or [])
-                    and S.get('first_seen','') <= T.get('first_seen',''))):
+            # domain-каскад: домен T — среди каскадных доменов S, S не позже T (косвенная, без via)
+            _domain_cascade = (tdom in (S.get('connectivity') or [])
+                    and S.get('first_seen','') <= T.get('first_seen',''))
+            # CAUSE: origin-каскад (объяснимый via) ВСЕГДА; domain-каскад — CAUSE только при OFF-канарейке
+            if _origin_causal or (_domain_cascade and not CAUSAL_EXPLAIN_CANARY):
                 if T['signal_id'] not in S['causes']:
                     S['causes'].append(T['signal_id']); T['caused_by'].append(S['signal_id'])
                     if _origin_causal: S.setdefault('causal_origin_links',[]).append(
                         {'to':T['signal_id'],'via':'%s→%s'%(_so,_to)})
                     if _rising(S.get('trend')) and _rising(T.get('trend')): S['amplifies'].append(T['signal_id'])
                     if str(S.get('trend','')).lower() in ('falling','de-escalating','down'): S['suppresses'].append(T['signal_id'])
+            elif CAUSAL_EXPLAIN_CANARY and _domain_cascade and S['signal_id']<T['signal_id']:
+                # косвенная связь без цепочки → RELATED (не выдаём за причину)
+                S['related'].append(T['signal_id']); T['related'].append(S['signal_id'])
             elif sdom==tdom and S.get('process_place')==T.get('process_place') and S.get('process_place')!='Глобально' and S['signal_id']<T['signal_id']:
                 S['related'].append(T['signal_id']); T['related'].append(S['signal_id'])
     # кап на топ-6 связей каждого типа
