@@ -3435,6 +3435,10 @@ _MILITARY_CANON = {'Военные удары', 'Покушение'}
 DOMAIN_GEOECON_CANARY = False
 _GEOECON = re.compile(r'санкц|эмбарго|тариф|пошлин|экспортн\w*\s+контрол|контрол\w*\s+(?:над\s+)?экспорт|торгов\w*\s+войн|торгов\w*\s+ограничен|торгов\w*\s+барьер|инвестиц\w*\s+(?:ограничен|скрининг)|заморозк\w*\s+актив|запрет\w*\s+(?:на\s+)?(?:экспорт|импорт|поставк|ввоз|вывоз|транзит)')
 _GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономический сигнал','Валютный рынок','Топливный рынок','Инфляция','Фондовый рынок', None}
+# STAGE A — CANON COVERAGE (arms-sale): продажа/экспорт/поставка вооружений, военная помощь →
+# «Оборонное производство» (geopolitics). Закрывает canon_type=None, из-за которого Германия/
+# Сингапур сваливались в legacy Retail. Под тем же флагом DOMAIN_GEOECON_CANARY.
+_ARMS = re.compile(r'прода\w*\s+(?:ракет|оруж|вооружен|истребител|танк|боеприпас|снаряд|бпла|беспилотник|дрон|систем\w*\s+пво|комплекс\w*\s+с-\d|зенитн|patriot|пэтриот|томагавк|tomahawk|javelin|f-?16|ф-?16|himars|хаймарс)|экспорт\w*\s+(?:оруж|вооружен)|поставк\w*\s+(?:оруж|вооружен|ракет|истребител|танк|patriot|пэтриот|томагавк|tomahawk|f-?16)|военн\w*\s+помощ\w*|военн\w*\s+поставк')
 def _canon_type_of(title, summ):
     _txt = title + ' ' + summ
     _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
@@ -3443,8 +3447,11 @@ def _canon_type_of(title, summ):
         if _commem and name in _MILITARY_CANON: continue   # мемориал/годовщина → не текущий удар
         sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
         if sc > bs: bs = sc; best = name; br = pat[:24]
-    if DOMAIN_GEOECON_CANARY and best in _GEOECON_OVERRIDE_FROM and _GEOECON.search(_txt):
-        return 'Санкционное давление', 'geoecon'   # госинструмент давления → geopolitics
+    if DOMAIN_GEOECON_CANARY and best in _GEOECON_OVERRIDE_FROM:
+        if _GEOECON.search(_txt):
+            return 'Санкционное давление', 'geoecon'   # госинструмент давления → geopolitics
+        if _ARMS.search(_txt):
+            return 'Оборонное производство', 'arms'     # военные поставки → geopolitics
     return best, br
 
 def _canonize_event(e, SIG):
