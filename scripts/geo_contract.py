@@ -370,7 +370,7 @@ _NONP = re.compile(r'по\s+(?:[а-яё]+ск[а-яё]*\s+)?(?:военн|вой
 _OUTAGE = re.compile(r'(отключение интернет|падение интернет|интернет-связи|сбой интернет|аномали[яи] трафика|отключение электро|ограничени[яе] (?:электроснабжени|энергоснабжени)|отключение света|обесточ)', re.I)
 _CURR = re.compile(r'(рубль|рубл[яеь])\s+(?:ослаб|укреп|упал|пада|вырос|раст|обвал|подеш|подорож|рухн|просел|на бирж)', re.I)
 
-GEO_ACTOR_TARGET_CANARY = False  # kinetic-target: genitive-цель за bad-span object («по военным объектам Ирана»→IR)
+GEO_ACTOR_TARGET_CANARY = True  # kinetic-target: genitive-цель за bad-span object («по военным объектам Ирана»→IR)
 _CONF = {'object': 0.92, 'kinetic_target': 0.9, 'currency': 0.9, 'locative': 0.88,
          'direction': 0.85, 'natural': 0.85, 'outage': 0.85, 'single': 0.7, 'adj_locative': 0.8, 'subject': 0.75}
 
