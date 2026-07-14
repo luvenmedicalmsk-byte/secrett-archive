@@ -175,6 +175,17 @@ GAZ = {
     'парагва': ('PY', 'Парагвай', -23.4, -58.4), 'уругва': ('UY', 'Уругвай', -32.5, -55.8),
 }
 
+# ═══ GEO_RESOLVER_V3 Phase 2: GAZ выводится из geo_canon (единый источник истины) ═══
+# OFF → используется hardcoded GAZ выше (байт-идентично). ON → GAZ = canon.build_gaz(),
+# доказанно идентичен оригиналу (235/235, 0 mismatch по iso/имени/координатам). Откат = флаг False.
+GEO_CANON_SOURCE = False
+if GEO_CANON_SOURCE:
+    try:
+        import geo_canon as _canon
+        GAZ = _canon.build_gaz()
+    except Exception:
+        pass  # при сбое импорта — остаётся hardcoded GAZ (fail-safe)
+
 # bbox стран: ISO2 → (lat_min, lat_max, lng_min, lng_max), с запасом.
 # Используется validate_geo() и решением exact/centroid для raw_coords.
 BBOX = {
