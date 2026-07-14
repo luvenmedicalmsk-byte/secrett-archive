@@ -178,7 +178,7 @@ GAZ = {
 # ═══ GEO_RESOLVER_V3 Phase 2: GAZ выводится из geo_canon (единый источник истины) ═══
 # OFF → используется hardcoded GAZ выше (байт-идентично). ON → GAZ = canon.build_gaz(),
 # доказанно идентичен оригиналу (235/235, 0 mismatch по iso/имени/координатам). Откат = флаг False.
-GEO_CANON_SOURCE = False
+GEO_CANON_SOURCE = True
 if GEO_CANON_SOURCE:
     try:
         import geo_canon as _canon
