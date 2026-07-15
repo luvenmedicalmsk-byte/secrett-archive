@@ -449,7 +449,7 @@ def load_events() -> list[dict]:
 # Пример: у TR 18 процессов, топовый обновлён час назад, а карточка показывала 0.
 # FALLBACK-дизайн: процессы используются ТОЛЬКО когда события пусты → страны с плотным
 # потоком (RU/US/IR/DE) не затронуты. OFF → байт-идентично.
-COUNTRY_SIGNALS_FALLBACK = False
+COUNTRY_SIGNALS_FALLBACK = True
 _SIGNALS_CACHE: list = []
 
 # Фаза процесса → вклад в темп нарастания (EWS).
