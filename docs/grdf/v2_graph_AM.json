@@ -1,8 +1,8 @@
 {
   "country": "AM",
-  "date": "2026-07-14",
+  "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-14T23:29:47.468355+00:00",
+  "generated_at": "2026-07-15T00:16:50.889888+00:00",
   "node_count": 11,
   "edge_count": 19,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-AM-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 45,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-AM-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-AM-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-AM-climate",
-      "type": "Driver",
-      "label": "climate"
     }
   ],
   "edges": [
@@ -85,7 +85,7 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-AM",
@@ -130,16 +130,37 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-AM-geopolitical",
+      "to": "COUNTRY-AM",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-AM-social",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AM-climate",
-      "to": "COUNTRY-AM",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-AM-geopolitical",
+      "to": "DOMAIN-AM-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AM-infrastructure",
+      "to": "DOMAIN-AM-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AM-economic",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-AM-climate",
@@ -182,27 +203,6 @@
       "type": "CORRELATES",
       "weight": 0.5,
       "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-AM-climate",
-      "to": "DOMAIN-AM-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-AM-economic",
-      "to": "DOMAIN-AM-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-AM-social",
-      "to": "DOMAIN-AM-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     }
   ]
 }
