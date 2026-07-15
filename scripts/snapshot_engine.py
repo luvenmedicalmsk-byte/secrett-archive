@@ -457,7 +457,7 @@ COUNTRY_SIGNALS_FALLBACK = True
 # ③ dominant_domain при пустых данных падал в хардкод 'geopolitics', расходясь с domain_scores
 #    (ME: dominant=geopolitics, а max=climate 46; CY: climate 56; UZ: economy 47).
 #    Источник истины один — domain_scores. OFF → байт-идентично.
-COUNTRY_NULL_NO_DATA = False
+COUNTRY_NULL_NO_DATA = True
 _SIGNALS_CACHE: list = []
 
 # Фаза процесса → вклад в темп нарастания (EWS).
