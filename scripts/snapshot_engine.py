@@ -1171,15 +1171,16 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
                   f"EWS={_e} CRI={_c} dominant={_d}", file=sys.stderr)
     # ②+③ CANONICAL TRUTH: ни событий, ни процессов → честный null вместо ложного нуля,
     # dominant_domain — из domain_scores (единый источник), а не из хардкод-дефолта.
-    if COUNTRY_NULL_NO_DATA and not matched:
-        _has_proc = bool(snap.get("_source_layer") == "process")
-        if not _has_proc:
-            snap["ews_score"] = None          # ② «нет данных», а не «спокойно»
-            snap["cri_score"] = None
-            snap["_source_layer"] = "baseline"
-            snap["_gri_source"] = "baseline"  # GRI — оценка по базовому профилю, не по сигналам
+    # ВАЖНО: если процессы ЕСТЬ — Process Layer уже дал и метрики, и домен по реальному
+    # составу процессов; перезаписывать их из domain_scores нельзя (у TR: 17 процессов
+    # geopolitics, а domain_scores.climate=62 → домен уезжал в climate).
+    if COUNTRY_NULL_NO_DATA and not matched and snap.get("_source_layer") != "process":
+        snap["ews_score"] = None          # ② «нет данных», а не «спокойно»
+        snap["cri_score"] = None
+        snap["_source_layer"] = "baseline"
+        snap["_gri_source"] = "baseline"  # GRI — оценка по базовому профилю, не по сигналам
         _ds = snap.get("domain_scores") or {}
-        if _ds:                               # ③ единый источник домена
+        if _ds:                           # ③ единый источник домена
             _mx = max(_ds, key=lambda k: _ds.get(k) or 0)
             if _ds.get(_mx) and snap.get("dominant_domain") != _mx:
                 snap["dominant_domain"] = _mx
