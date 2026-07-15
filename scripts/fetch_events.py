@@ -186,6 +186,67 @@ def _clean_title(raw):
     return _title_polish(cand.strip())
 
 
+# ═══ PARSER VISIBILITY (Phase 0) ═══════════════════════════════════════════
+# Судьба сообщений ДО построения события. Была слепая зона: _LOSS считает только
+# построенное, raw_by_source — тоже (из raw_items), поэтому 73% входа (5378 из 7400
+# постов) не попадали ни в один отчёт. {канал: {причина: n}} / {канал: получено}.
+_PARSER_REJECT = {}
+_PARSER_RECV = {}
+
+
+def _parser_coverage_report(_c2, raw_items, events, top_events):
+    """PARSER COVERAGE REPORT (Phase 0) — полная воронка: пост → лента, по каждому каналу.
+    Только наблюдение: логика фильтрации не менялась. До Phase 0 путь «пост → raw_items»
+    был невидим — _LOSS и raw_by_source считают уже ПОСТРОЕННОЕ, поэтому 73% входа
+    (5378 из 7400 постов) не попадали ни в один отчёт."""
+    _TGD = {'ecotopor': 'T Live', 'NeKaspersky': 'IT', 'anti_malware': 'AM Live', 'trueosint': 'Cyber',
+            'f6_cybersecurity': 'Cybersecurity', 'SecLabNews': 'Lab News', 'Social_engineering': 'Engineering',
+            'Russian_OSINT': 'R Osint', 'alexmakus': 'Cybersec', 'xakep_ru': 'Xakep IT', 'sterngang': 'Data D',
+            'Ateobreaking': 'A breaking', 'alertasdowndetector': 'Downdetector', 'dciber': 'Dciber',
+            'ctinow': 'Cyber Threat', 'thehackernews': 'THN', 'Cyber_Security_Channel': 'Cyber SN'}
+    dsp = lambda c: _TGD.get(c, 'Telegram/' + c)
+    raw_by = _c2.Counter(i.get('source', '') for i in raw_items)
+    built_by = _c2.Counter(e.get('source', '') for e in events)
+    final_by = _c2.Counter(e.get('source', '') for e in top_events)
+    feed_by = _c2.Counter(e.get('source', '') for e in top_events if e.get('feed_visible'))
+    dom_by = {}
+    for e in top_events:
+        dom_by.setdefault(e.get('source', ''), _c2.Counter())[e.get('domain') or '—'] += 1
+    sev_by = {}
+    for e in top_events:
+        sev_by.setdefault(e.get('source', ''), []).append(float(e.get('severity') or 0))
+    by_source = {}
+    for ch, recv in _PARSER_RECV.items():
+        d = dsp(ch); rej = _PARSER_REJECT.get(ch, {}); nrej = sum(rej.values())
+        sv = sev_by.get(d, [])
+        by_source[ch] = {
+            'display': d, 'received': recv,
+            'parser_reject': nrej,
+            'parser_reject_pct': round(100.0 * nrej / recv, 1) if recv else 0,
+            'reject_reasons': rej,
+            'to_raw_items': raw_by.get(d, 0),
+            'built': built_by.get(d, 0),
+            'final': final_by.get(d, 0),
+            'feed': feed_by.get(d, 0),
+            'feed_pct': round(100.0 * feed_by.get(d, 0) / recv, 1) if recv else 0,
+            'avg_severity': round(sum(sv) / len(sv), 1) if sv else None,
+            'domains': dict(dom_by.get(d, {})),
+        }
+    reasons = _c2.Counter()
+    for r in _PARSER_REJECT.values():
+        for k, v in r.items(): reasons[k] += v
+    recv_tot = sum(_PARSER_RECV.values()); rej_tot = sum(reasons.values())
+    return {
+        'note': 'Phase 0 — только наблюдение; логика фильтрации не менялась',
+        'funnel': {'received': recv_tot, 'parser_reject': rej_tot,
+                   'to_raw_items': recv_tot - rej_tot, 'built': len(events),
+                   'exported': len(top_events),
+                   'feed': sum(1 for e in top_events if e.get('feed_visible'))},
+        'parser_reject_total': dict(reasons),
+        'text_truncated_cost': reasons.get('text_truncated', 0),
+        'by_source': by_source,
+    }
+
 OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
 MAX_EVENTS = 350
 SEVERITY_THRESHOLD = 45
@@ -2938,6 +2999,7 @@ def process_events(raw_items):
             'built_by_source': dict(_c2.Counter(e.get('source','') for e in events)),
             'final_by_source': dict(_c2.Counter(e.get('source','') for e in top_events)),
             'dd_dates': dict(_c2.Counter(i.get('date','') for i in raw_items if i.get('source')=='Downdetector RU')),
+            'parser_visibility': _parser_coverage_report(_c2, raw_items, events, top_events),
             'dd_titles': [i.get('title','')[:60] for i in raw_items if i.get('source')=='Downdetector RU'][:8],
             'final_outage': dict(_c2.Counter(str((e.get('meta') or {}).get('kind','')) for e in top_events if str((e.get('meta') or {}).get('kind','')).startswith(('ioda','radar','netblocks')))),
         }, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -5836,24 +5898,55 @@ def fetch_telegram():
     _tg_err = None
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
+    # ── PARSER VISIBILITY (Phase 0): телеметрия отказов, поведение не меняется ──
+    def _prej(ch, reason):
+        """Счётчик отказов парсера: канал × причина. Слепая зона до Phase 0."""
+        d = _PARSER_REJECT.setdefault(ch, {})
+        d[reason] = d.get(reason, 0) + 1
+
+    def _kw_hit(full_text, kw, pairs):
+        """Нашёлся бы ключ в ПОЛНОМ тексте? Отделяет text_truncated (ключ дальше 200
+        символов — цена ограничения tl=text[:200]) от keyword_missing (темы нет в словаре)."""
+        try:
+            return any(k in full_text for k in kw) or any(a in full_text and b in full_text for a, b in pairs)
+        except Exception:
+            return False
+
     def _build(ch, text, msg_date=None):
+        # ═══ PARSER VISIBILITY (Phase 0) — ТОЛЬКО НАБЛЮДЕНИЕ ═══
+        # Судьба каждого сообщения фиксируется с точной причиной отказа. Логика фильтрации
+        # НЕ меняется: ни одно решение return None не переставлено. Ранее эта зона была
+        # слепой — _LOSS считает только ПОСТРОЕННОЕ, raw_by_source тоже (из raw_items),
+        # поэтому 73% входа (5378 из 7400 постов) не попадали ни в один отчёт.
+        # text_truncated: ключ ЕСТЬ в тексте, но дальше 200 символов, а tl=text[:200] —
+        # измеряем цену ограничения длины, НЕ меняя его.
         text = (text or '').strip()
-        if len(text) < 20: return None
+        if len(text) < 20:
+            _prej(ch, 'malformed_short'); return None
         tl = text[:200].lower()
+        _tf = text.lower()                      # только для телеметрии, на решения не влияет
         if ch in DD_SRC:
-            if any(w in tl for w in DD_BLOCK): return None   # блок игр/стримов/VK-видео
-            if any(w in tl for w in ('в норме','восстановлен','работают штатно','работает штатно','устранен','нормализова','всё работает','все работает','сбой устранён','проблема решена')): return None   # recovery -- не активный сбой
+            if any(w in tl for w in DD_BLOCK):
+                _prej(ch, 'advertisement'); return None   # блок игр/стримов/VK-видео
+            if any(w in tl for w in ('в норме','восстановлен','работают штатно','работает штатно','устранен','нормализова','всё работает','все работает','сбой устранён','проблема решена')):
+                _prej(ch, 'recovery_not_incident'); return None   # recovery -- не активный сбой
         is_srisk = any(k in tl for k in SOCIAL_RISK_KW) or any(a in tl and b in tl for a,b in SOCIAL_RISK_PAIRS)
         if ch in SOCIAL_SRC:
-            if not is_srisk: return None
+            if not is_srisk:
+                _prej(ch, 'text_truncated' if _kw_hit(_tf, SOCIAL_RISK_KW, SOCIAL_RISK_PAIRS) else 'keyword_missing')
+                return None
             _d = 'social'
         elif ch in TECH_SRC:
             is_trisk = any(k in tl for k in TECH_RISK_KW) or any(a in tl and b in tl for a,b in TECH_RISK_PAIRS)
-            if ch not in TECH_PURE and not is_trisk: return None        # тех-источник: только риск/инцидент (чистые каналы — байпас)
+            if ch not in TECH_PURE and not is_trisk:
+                _prej(ch, 'text_truncated' if _kw_hit(_tf, TECH_RISK_KW, TECH_RISK_PAIRS) else 'keyword_missing')
+                return None        # тех-источник: только риск/инцидент (чистые каналы — байпас)
             _d = 'social' if is_srisk else 'technology'
         elif ch in ECON_SRC:
             is_erisk = any(k in tl for k in ECON_RISK_KW) or any(a in tl and b in tl for a,b in ECON_RISK_PAIRS)
-            if not is_erisk: return None        # только сигналы стресса/риска
+            if not is_erisk:
+                _prej(ch, 'text_truncated' if _kw_hit(_tf, ECON_RISK_KW, ECON_RISK_PAIRS) else 'keyword_missing')
+                return None        # только сигналы стресса/риска
             _d = 'economy'
         else:
             _d = _tg_classify(text) or 'geopolitics'
@@ -5897,6 +5990,7 @@ def fetch_telegram():
                             it = _build(ch, _mt, getattr(msg, 'date', None))
                             if it: items.append(it)
                         _raw[ch] = {'raw': nraw}
+                        _PARSER_RECV[ch] = _PARSER_RECV.get(ch, 0) + nraw   # Phase 0: получено ДО фильтра
                     except Exception as e:
                         _raw[ch] = {'err': repr(e)}
                         print(f"  [TG-MTProto] {ch}: {e}", file=sys.stderr)
