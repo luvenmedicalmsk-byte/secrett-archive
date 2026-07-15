@@ -463,7 +463,7 @@ COUNTRY_NULL_NO_DATA = True
 # описывают (у TR было CRI 13 из событий против 70 из 18 процессов). Берём максимум:
 # не занижаем риск и не теряем событийную свежесть. Атлас — платформа процессов,
 # Process Layer не должен проигрывать одному событию. OFF → байт-идентично.
-COUNTRY_PROCESS_PRIMARY = False
+COUNTRY_PROCESS_PRIMARY = True
 _SIGNALS_CACHE: list = []
 
 # Фаза процесса → вклад в темп нарастания (EWS).
