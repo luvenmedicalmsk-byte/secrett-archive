@@ -464,6 +464,10 @@ COUNTRY_NULL_NO_DATA = True
 # не занижаем риск и не теряем событийную свежесть. Атлас — платформа процессов,
 # Process Layer не должен проигрывать одному событию. OFF → байт-идентично.
 COUNTRY_PROCESS_PRIMARY = True
+# DRIVERS UNIFIED: «Главные драйверы риска» есть у ВСЕХ 37 стран и всегда релевантны.
+# Приоритет: произошло в стране → процессы по канон-месту → влияет на страну → базовый
+# профиль. mentioned не считается релевантностью. OFF → прежнее поведение.
+COUNTRY_DRIVERS_UNIFIED = False
 _SIGNALS_CACHE: list = []
 
 # Фаза процесса → вклад в темп нарастания (EWS).
@@ -646,6 +650,66 @@ def compute_drivers_from_signals(sigs: list[dict]) -> list[dict]:
         drivers.append({"name": (s.get("title") or "")[:120], "domain": domain,
                         "severity": sev, "impact": impact})
     return drivers
+
+
+def _drivers_from_domain_scores(snap: dict) -> list[dict]:
+    """Драйверы из базового профиля — для стран без событий и процессов (CH/ME/UZ/PT/CY).
+    Честно: это оценка по базовому профилю, а не по свежим сигналам."""
+    ds = snap.get("domain_scores") or {}
+    if not ds:
+        return []
+    _LBL = {"climate": "Климатическое давление", "geopolitics": "Геополитическое давление",
+            "economy": "Экономическое давление", "technology": "Технологическое давление",
+            "social": "Социальное давление"}
+    out = []
+    for d, v in sorted(ds.items(), key=lambda kv: -(kv[1] or 0))[:3]:
+        v = int(v or 0)
+        if v <= 0:
+            continue
+        out.append({"name": _LBL.get(d, d), "domain": d, "severity": v,
+                    "impact": f"Оценка по базовому профилю страны (уровень {v}/100) — "
+                              f"свежих сигналов в ленте нет"})
+    return out
+
+
+def compute_drivers_unified(iso2: str, matched: list[dict], sigs: list[dict],
+                            score: int) -> list[dict]:
+    """Главные драйверы риска — единый источник для ВСЕХ стран, всегда релевантные.
+
+    Приоритет (инвариант «страна = место или явное влияние»):
+      1) события, ПРОИЗОШЕДШИЕ в стране (event_country/primary_country);
+      2) процессы по каноническому месту (Aggregation Authority);
+      3) события, ВЛИЯЮЩИЕ на страну (impact_countries).
+    Если пусто — вызывающий добивает базовым профилем (_drivers_from_domain_scores),
+    т.к. domain_scores считается позже.
+    mentioned_countries НЕ используется: упоминание ≠ релевантность (Италия и Греция
+    получали драйвер «Стоимость страховки US Treasuries» просто за упоминание в тексте).
+    """
+    iso2 = (iso2 or "").upper()
+    out, seen = [], set()
+
+    def _add(items):
+        for d in items:
+            nm = (d.get("name") or "").strip()
+            if not nm or nm in seen:
+                continue
+            seen.add(nm)
+            out.append(d)
+            if len(out) >= 3:
+                return True
+        return False
+
+    own = [e for e in matched
+           if (e.get("event_country") or "").upper() == iso2
+           or (e.get("primary_country") or "").upper() == iso2]
+    if own and _add(compute_drivers(iso2, own, score)):
+        return out[:3]
+    if sigs and _add(compute_drivers_from_signals(sigs)):
+        return out[:3]
+    inf = [e for e in matched if iso2 in (e.get("impact_countries") or []) and e not in own]
+    if inf:
+        _add(compute_drivers(iso2, inf, score))
+    return out[:3]
 
 
 def compute_drivers(iso2: str, events: list[dict], score: int) -> list[dict]:
@@ -1138,7 +1202,7 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     # PROCESS LAYER: события могли выпасть из окна свежести (3 дня для geopolitics/
     # climate), но процессы живы → берём их как источник драйверов/метрик.
     _sigs_fb = []
-    if COUNTRY_SIGNALS_FALLBACK and not matched:
+    if COUNTRY_SIGNALS_FALLBACK or COUNTRY_PROCESS_PRIMARY:
         try:
             _sigs_fb = match_signals(_SIGNALS_CACHE, iso2)
         except Exception:
@@ -1148,9 +1212,15 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     delta    = compute_delta(iso2, score)
     level    = compute_escalation_level(score, delta)
     summary        = generate_summary(iso2, score, domain, matched, level)
-    drivers        = compute_drivers(iso2, matched, score)
-    if not drivers and _sigs_fb:
-        drivers = compute_drivers_from_signals(_sigs_fb)   # иначе карточка короткая
+    # ДРАЙВЕРЫ: единый приоритет для всех стран — произошло в стране → процессы по
+    # месту → влияет на страну. Раньше брались по match_events (mentioned) → Италия и
+    # Греция получали драйвер про US Treasuries за одно упоминание в тексте.
+    if COUNTRY_DRIVERS_UNIFIED:
+        drivers = compute_drivers_unified(iso2, matched, _sigs_fb, score)
+    else:
+        drivers = compute_drivers(iso2, matched, score)
+        if not drivers and _sigs_fb:
+            drivers = compute_drivers_from_signals(_sigs_fb)
     change_drivers = compute_change_attribution(iso2, drivers, delta)
     forecast_7d    = compute_forecast_7d(score, delta, drivers, change_drivers)
     forecast_30d   = compute_forecast_30d(score, delta, drivers, change_drivers, forecast_7d)
@@ -1180,6 +1250,13 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     snap["_seismic_risk"] = _hazard_climate_risk(matched)
     snap["_econ_risk"] = _economy_authority_risk(matched)
     snap["domain_scores"] = _reloc_domain_scores(iso2, snap, matched)
+    # СТАТИЧНАЯ КАРТОЧКА: блок «Главные драйверы риска» должен быть у каждой страны.
+    # Для стран без событий и процессов (CH/ME/UZ/PT/CY) — честный базовый профиль.
+    if COUNTRY_DRIVERS_UNIFIED and not snap.get("drivers"):
+        _bd = _drivers_from_domain_scores(snap)
+        if _bd:
+            snap["drivers"] = _bd
+            snap["change_drivers"] = compute_change_attribution(iso2, _bd, delta)
     snap["ews_score"] = compute_ews(matched)   # реальный EWS из данных
     snap["cri_score"] = compute_cri(matched)   # реальный CRI из данных
     # PROCESS LAYER FALLBACK: события выпали из окна свежести, но процессы живы →
