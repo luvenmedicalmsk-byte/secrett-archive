@@ -467,7 +467,7 @@ COUNTRY_PROCESS_PRIMARY = True
 # DRIVERS UNIFIED: «Главные драйверы риска» есть у ВСЕХ 37 стран и всегда релевантны.
 # Приоритет: произошло в стране → процессы по канон-месту → влияет на страну → базовый
 # профиль. mentioned не считается релевантностью. OFF → прежнее поведение.
-COUNTRY_DRIVERS_UNIFIED = False
+COUNTRY_DRIVERS_UNIFIED = True
 _SIGNALS_CACHE: list = []
 
 # Фаза процесса → вклад в темп нарастания (EWS).
