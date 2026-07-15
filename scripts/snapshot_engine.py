@@ -579,6 +579,44 @@ def compute_dominant_domain(events: list[dict]) -> str:
 
 
 
+def compute_drivers_from_signals(sigs: list[dict]) -> list[dict]:
+    """Топ-3 драйвера риска из ПРОЦЕССОВ (формат идентичен compute_drivers).
+    Нужен, когда события выпали из окна свежести, а процессы живы: без этого
+    карточка страны рендерилась короткой — блок «Топ драйверы» пуст (у TR: 18
+    процессов, drivers=[]). Процесс несёт severity/domain/why_exists напрямую."""
+    if not sigs:
+        return []
+    scored = []
+    seen = set()
+    for s in sigs:
+        title = (s.get("title") or "").strip()
+        if not title or title in seen:
+            continue
+        seen.add(title)
+        sev = float(s.get("severity") or 0)
+        # приоритет отражает текущую срочность (severity — пиковую магнитуду)
+        pri = float(s.get("priority") or 0)
+        scored.append((sev * 0.7 + pri * 0.3, s))
+    drivers = []
+    for weight, s in sorted(scored, key=lambda x: -x[0])[:3]:
+        sev = int(s.get("severity") or 0)
+        domain = s.get("primary_domain") or (s.get("domains") or ["geopolitics"])[0]
+        if sev >= 80:
+            pref = "Критический фактор"
+        elif sev >= 65:
+            pref = "Высокое влияние"
+        else:
+            pref = "Умеренное влияние"
+        why = (s.get("why_exists") or (s.get("explain") or {}).get("why_exists") or "").strip()
+        if why and len(why) > 30:
+            impact = f"{pref}: {why.split('.')[0].strip()[:120]}"
+        else:
+            impact = f"{pref} на индекс риска (severity {sev}/100)"
+        drivers.append({"name": (s.get("title") or "")[:120], "domain": domain,
+                        "severity": sev, "impact": impact})
+    return drivers
+
+
 def compute_drivers(iso2: str, events: list[dict], score: int) -> list[dict]:
     """
     Top Drivers Engine — extracts top 3 risk drivers from matched events.
@@ -1066,12 +1104,22 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     baseline = country["baseline"]
 
     matched  = match_events(events, iso2)
+    # PROCESS LAYER: события могли выпасть из окна свежести (3 дня для geopolitics/
+    # climate), но процессы живы → берём их как источник драйверов/метрик.
+    _sigs_fb = []
+    if COUNTRY_SIGNALS_FALLBACK and not matched:
+        try:
+            _sigs_fb = match_signals(_SIGNALS_CACHE, iso2)
+        except Exception:
+            _sigs_fb = []
     score    = compute_risk_score(matched, baseline)
     domain   = compute_dominant_domain(matched)
     delta    = compute_delta(iso2, score)
     level    = compute_escalation_level(score, delta)
     summary        = generate_summary(iso2, score, domain, matched, level)
     drivers        = compute_drivers(iso2, matched, score)
+    if not drivers and _sigs_fb:
+        drivers = compute_drivers_from_signals(_sigs_fb)   # иначе карточка короткая
     change_drivers = compute_change_attribution(iso2, drivers, delta)
     forecast_7d    = compute_forecast_7d(score, delta, drivers, change_drivers)
     forecast_30d   = compute_forecast_30d(score, delta, drivers, change_drivers, forecast_7d)
