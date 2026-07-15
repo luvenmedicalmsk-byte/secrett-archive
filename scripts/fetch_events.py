@@ -3469,7 +3469,8 @@ _CANON_TYPE_DOMAIN = {'Шторм': 'climate', 'Морской лёд': 'climate
     'Климатическая аномалия': 'climate', 'Энергоблэкаут': 'technology', 'Фондовый рынок': 'economy',
     'Государственный долг': 'economy', 'Банковская стабильность': 'economy', 'Экономический спад': 'economy',
     'Финансовый рынок': 'economy', 'Торговый баланс': 'economy', 'Государственные финансы': 'economy',
-    'Рынок труда': 'economy', 'Стратегические ресурсы': 'economy', 'Пузырь активов': 'economy'}
+    'Рынок труда': 'economy', 'Стратегические ресурсы': 'economy', 'Пузырь активов': 'economy',
+    'Финансовая устойчивость': 'economy'}
 
 # КАНОН-ОХРАНА: мемориально-исторический контекст (годовщина/минута молчания/память)
 # НЕ должен типизироваться как текущий военный удар. «Военные удары»/«Покушение» —
@@ -5883,7 +5884,7 @@ def fetch_telegram():
             from telethon.sessions import StringSession
             api_id = int(os.environ['TG_API_ID']); api_hash = os.environ['TG_API_HASH']
             _raw = {}
-            _fss_feed = []; _FSS_FIN = {'russianmacro','spydell_finance','investfuture','banksta','bankerist','bbbreaking','novosti_efir'}
+            _fss_feed = []; _FSS_FIN = {'russianmacro','spydell_finance','investfuture','banksta','bankerist','bbbreaking','novosti_efir','ecotopor'}
             with TelegramClient(StringSession(os.environ['TG_SESSION']), api_id, api_hash, flood_sleep_threshold=20) as client:
                 for ch in channels:
                     nraw = 0
@@ -9635,6 +9636,29 @@ def save_enriched(events, previous_snapshot=None):
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
                 print('  [WARN] sic shadow fail: %s' % _se, file=sys.stderr)
+            # ═══ FSS (ADR-010 / FS-4): Финансовая устойчивость — событие в поток ═══
+            # ВАЖНО: вливаем ДО записи events.json и ДО построения процессов ниже —
+            # оба берут enriched["events"]. Иначе событие попадёт в ленту, но процесс
+            # «Финансовая устойчивость» не родится. Process Engine НЕ меняется: событие
+            # стандартного формата с canon_type. Coverage guard внутри fss_ingest:
+            # при нехватке индикаторов событие не эмитится вовсе (лучше молчать, чем
+            # экстраполировать «коллапс» по трём показателям из восьми).
+            try:
+                if os.environ.get('FSS_MODE', 'shadow') == 'active':
+                    import fss_ingest as _fssm
+                    _fsr = _fssm.run('active')
+                    _fsev = _fsr.get('event')
+                    if _fsev:
+                        enriched["events"] = [e for e in enriched["events"] if e.get('id') != _fsev.get('id')]
+                        enriched["events"].append(_fsev)
+                        print(f"  [FSS] в потоке: severity={_fsev['severity']} "
+                              f"coverage={_fsev.get('fss_coverage')} conf={_fsev.get('fss_confidence')}",
+                              file=sys.stderr)
+                    else:
+                        print(f"  [FSS] не эмитировано: {(_fsr.get('report') or {}).get('gate_reason')}",
+                              file=sys.stderr)
+            except Exception as _fe:
+                print(f'  [FSS] skip: {_fe}', file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)

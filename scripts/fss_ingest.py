@@ -30,6 +30,34 @@ IND = {
 }
 ALPHA=0.4; STALE_AFTER_DAYS=62; STALE_CONF=0.7; HARD_DROP_DAYS=120
 
+# ═══ COVERAGE GUARD (ADR-010 Этап 5 · Failure Policy) ═══════════════════════
+# FSS — взвешенное среднее по ДОСТУПНЫМ индикаторам. При низком покрытии это
+# экстраполяция: 3 плохих индикатора из 8 давали FSS=97 («коллапс»), хотя капитал
+# (H10), просрочка (NPL) и ликвидность (N3) НЕИЗВЕСТНЫ. Это тот же дефект, что
+# ложный 0 в карточке страны, только опаснее — ложная тревога максимума в топе
+# риск-матрицы. Инвариант Canonical Truth: не выдавать частичное за полное.
+#   coverage < MIN → событие НЕ эмитится (данных недостаточно для суждения)
+#   coverage < FULL → severity сжимается к нейтрали пропорционально уверенности,
+#                     в summary явно указывается покрытие.
+FSS_MIN_COVERAGE = 0.375   # < 3/8 индикаторов → не судим вовсе
+FSS_FULL_COVERAGE = 0.75   # >= 6/8 → полное доверие, без сжатия
+FSS_NEUTRAL = 50.0         # нейтральная точка сжатия
+
+
+def confidence_adjust(fss, coverage):
+    """Сжатие FSS к нейтрали при неполном покрытии. Возвращает (severity, factor).
+    При полном покрытии — без изменений. Честнее, чем экстраполировать «коллапс»
+    по трём индикаторам."""
+    if coverage >= FSS_FULL_COVERAGE:
+        return int(round(max(0, min(100, fss)))), 1.0
+    # линейно от MIN..FULL → 0.45..1.0 (при пороге MIN доверие ~45%)
+    span = max(FSS_FULL_COVERAGE - FSS_MIN_COVERAGE, 1e-6)
+    f = 0.45 + 0.55 * max(0.0, (coverage - FSS_MIN_COVERAGE)) / span
+    f = max(0.0, min(1.0, f))
+    adj = FSS_NEUTRAL + (fss - FSS_NEUTRAL) * f
+    return int(round(max(0, min(100, adj)))), round(f, 3)
+
+
 # ── Ключевые слова (матч) + извлечение значения + диапазон вменяемости ──────
 # Каждый: список keyword-regex (любой матч), value-regex (группа 1 = число), (min,max)
 _NUM = r'(-?\d{1,3}(?:[.,]\d{1,2})?)'
@@ -50,11 +78,11 @@ RULES = {
                    neg=[], rng=(40,300)),
  'BUD_DEF':   dict(kw=[r'дефицит\w*\s+(?:федеральн\w*\s+)?бюджет'],
                    val=[r'дефицит\w*\s+(?:федеральн\w*\s+)?бюджет\w*\s*(?:состав\w*\s+|достиг\w*\s+|на\s+уровне\s+|=\s*|:\s*|—\s*)?'+_NUM+r'\s*%\s*ввп'],
-                   neg=[], rng=(0,15)),
+                   neg=[r'\bсша\b',r'американск',r'\bес\b',r'еврозон',r'кита[йя]',r'герман',r'франц',r'япони',r'британ'], rng=(0,15)),
  'OILGAS_YOY':dict(kw=[r'нефтегазов\w*\s+доход'],
                    val=[r'нефтегазов\w*\s+доход\w*(?:\s+\w+){0,4}?\s+(?:упал\w*|снизил\w*|сократил\w*|рухнул\w*)(?:\s+\w+){0,2}?\s+на\s+'+_NUM.replace('-?','')+r'\s*%',
                         r'нефтегазов\w*\s+доход\w*(?:\s+\w+){0,4}?\s+(?:вырос\w*|прирос\w*|увеличил\w*)(?:\s+\w+){0,2}?\s+на\s+'+_NUM.replace('-?','')+r'\s*%'],
-                   neg=[], rng=(-70,70), signed_kw=True),
+                   neg=[r'\bсша\b',r'американск',r'саудов',r'норвег',r'кита[йя]'], rng=(-70,70), signed_kw=True),
  'NWF_LIQ':   dict(kw=[r'ликвидн\w*\s+част\w*\s+фнб'],
                    val=[r'ликвидн\w*\s+част\w*\s+фнб\w*\s*(?:состав\w*\s+|достиг\w*\s+|снизил\w*\s+до\s+|вырос\w*\s+до\s+|на\s+уровне\s+|=\s*|:\s*|—\s*)?'+_NUM.replace('-?','')+r'\s*трлн'],
                    neg=[], rng=(0,25)),
@@ -152,30 +180,53 @@ def run(mode=None):
             ewma=round(ee,2) if ee is not None else None,status=rec.get('status'),
             channel=rec.get('channel'),snippet=rec.get('snippet')))
     fss=round(num/den,2) if den>0 else (prev_fss if prev_fss is not None else 0.0)
-    severity=int(round(max(0,min(100,fss)))); coverage=round(ok/len(IND),3)
+    coverage=round(ok/len(IND),3)
+    # COVERAGE GUARD: severity сжимается по уверенности; ниже MIN — не судим вовсе.
+    severity, conf_factor = confidence_adjust(fss, coverage)
+    raw_severity = int(round(max(0,min(100,fss))))
+    emit_ok = (den>0 and coverage >= FSS_MIN_COVERAGE)
+    gate_reason = None
+    if den<=0: gate_reason='no_data'
+    elif coverage < FSS_MIN_COVERAGE: gate_reason=f'low_coverage {coverage} < {FSS_MIN_COVERAGE}'
     inv=dict(fss_in_range=(0<=fss<=100),
              no_false_jump=(prev_fss is None or abs(fss-(prev_fss or 0))<=25 or ok>0),
-             engine_untouched=True)
+             engine_untouched=True,
+             coverage_guard=(emit_ok or gate_reason is not None))
     st.update(fss=fss,severity=severity,indicators=inds,updated=nowiso,coverage=coverage,
               counts=dict(ok=ok,stale=stale,skip=skip))
     _save(STATE_PATH,st)
-    event=build_event(fss,severity,snapshot,nowiso) if den>0 else None
+    event=build_event(fss,severity,snapshot,nowiso,coverage,conf_factor,raw_severity) if emit_ok else None
     report=dict(mode=mode,updated=nowiso,fss=fss,prev_fss=prev_fss,severity=severity,
+                raw_severity=raw_severity,conf_factor=conf_factor,emitted=bool(event and mode=='active'),
+                gate_reason=gate_reason,
                 coverage=coverage,counts=dict(ok=ok,stale=stale,skip=skip),
                 feed_size=len(feed),indicators=snapshot,invariants=inv,
                 diagnostics=diag,event_preview=event)
     _save(REPORT_PATH,report)
+    # ИНТЕГРАЦИЯ: событие возвращается наверх; в поток его вливает fetch_events ДО записи
+    # events.json и построения процессов (иначе процесс не родится). Здесь НЕ дописываем,
+    # чтобы не было двойной записи и двойного пересчёта EWMA.
     return dict(fss=fss,severity=severity,event=(event if mode=='active' else None),report=report)
 
-def build_event(fss,severity,snapshot,ts):
+
+def build_event(fss,severity,snapshot,ts,coverage=1.0,conf_factor=1.0,raw_severity=None):
     period=ts[:7]; live=[s for s in snapshot if s['status'] in ('ok','stale') and s.get('value') is not None]
     parts=[f"{s['indicator']} {s['value']}{s['unit']}" for s in live][:5]
-    summary="ФУ: FSS {} — {}".format(int(round(fss)),"; ".join(parts) if parts else "нет свежих индикаторов")
+    _ok=sum(1 for s in snapshot if s['status']=='ok'); _tot=len(snapshot)
+    # ЧЕСТНОСТЬ: покрытие указывается явно; при неполном — severity сжата к нейтрали,
+    # а в тексте видно, что оценка предварительная (Canonical Truth).
+    _cov=f"покрытие {_ok}/{_tot}"
+    _pre=" · оценка предварительная" if conf_factor < 1.0 else ""
+    summary="ФУ: FSS {} · {}{} — {}".format(int(round(fss)), _cov, _pre,
+                                            "; ".join(parts) if parts else "нет свежих индикаторов")
     return {'id':f'fss-{period}','domain':'economy','canon_domain':'economy',
             'canon_type':'Финансовая устойчивость','title':'Финансовая устойчивость — Россия',
-            'summary':summary,'region':'Россия','country':'RU','lat':55.75,'lng':37.62,
+            'summary':summary,'region':'Россия','country':'RU','country_code':'RU',
+            'primary_country':'RU','country_codes':['RU'],'event_country':'RU',
+            'lat':55.75,'lng':37.62,
             'severity':severity,'date':ts[:10],'timestamp':ts,'source':'Telegram/финканалы',
-            'feed_visible':True,'fss':fss,'sic_class':'PROCESS','indicators':snapshot}
+            'feed_visible':True,'fss':fss,'fss_coverage':coverage,'fss_confidence':conf_factor,
+            'fss_raw_severity':raw_severity,'sic_class':'PROCESS','indicators':snapshot}
 
 if __name__=='__main__':
     import sys

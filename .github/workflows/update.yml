@@ -35,6 +35,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 20
         env:
+          FSS_MODE: active
           NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
           FIRMS_API_KEY: ${{ secrets.FIRMS_API_KEY }}
           COPERNICUS_KEY: ${{ secrets.COPERNICUS_KEY }}
@@ -74,14 +75,6 @@ jobs:
               exit 1
             fi
           fi
-
-      - name: FSS ingestion (ADR-010, Финансовая устойчивость — SHADOW)
-        continue-on-error: true
-        timeout-minutes: 5
-        env:
-          FSS_MODE: shadow
-        run: |
-          python scripts/fss_ingest.py shadow
 
       - name: Фильтр шума (AUDIT 4.2 — авто-очистка ленты)
         id: filter
