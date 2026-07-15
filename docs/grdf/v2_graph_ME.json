@@ -2,9 +2,9 @@
   "country": "ME",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T07:14:53.028782+00:00",
+  "generated_at": "2026-07-15T07:58:57.338529+00:00",
   "node_count": 11,
-  "edge_count": 10,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-ME",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-ME-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
+      "score": 43,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-ME-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 31,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -65,19 +65,19 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-ME-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-ME-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-ME-social",
+      "id": "DRIVER-ME-economic",
       "type": "Driver",
-      "label": "social"
+      "label": "economic"
+    },
+    {
+      "id": "DRIVER-ME-climate",
+      "type": "Driver",
+      "label": "climate"
     }
   ],
   "edges": [
@@ -85,7 +85,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-ME",
@@ -97,7 +97,7 @@
       "from": "COUNTRY-ME",
       "to": "DOMAIN-ME-climate",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-ME",
@@ -124,22 +124,43 @@
       "weight": 0.27
     },
     {
-      "from": "DRIVER-ME-economic",
-      "to": "COUNTRY-ME",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-ME-geopolitical",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-ME-social",
+      "from": "DRIVER-ME-economic",
       "to": "COUNTRY-ME",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DRIVER-ME-climate",
+      "to": "COUNTRY-ME",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ME-geopolitical",
+      "to": "DOMAIN-ME-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ME-infrastructure",
+      "to": "DOMAIN-ME-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ME-economic",
+      "to": "DOMAIN-ME-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
