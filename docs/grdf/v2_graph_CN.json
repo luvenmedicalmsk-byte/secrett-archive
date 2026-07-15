@@ -2,60 +2,60 @@
   "country": "CN",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T18:37:45.911772+00:00",
+  "generated_at": "2026-07-15T20:06:09.429124+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 62,
+      "score": 64,
       "props": {
-        "risk_score": 62
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 25,
-      "trend": "down"
+      "score": 26,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
-      "trend": "down"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 13,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-CN-В_Китае_за",
+      "id": "SIGNAL-CN-Наводнение",
       "type": "Signal",
-      "label": "В Китае зафиксирован самый медленный рос",
-      "severity": 44,
-      "domain": "economic"
+      "label": "Наводнение — Китай",
+      "severity": 90,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-CN",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,69 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Оранжевое_",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -175,10 +238,10 @@
       "weight": 0.46
     },
     {
-      "from": "SIGNAL-CN-В_Китае_за",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Наводнение",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.9
     }
   ]
 }
