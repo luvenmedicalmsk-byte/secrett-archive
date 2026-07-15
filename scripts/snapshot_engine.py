@@ -458,6 +458,12 @@ COUNTRY_SIGNALS_FALLBACK = True
 #    (ME: dominant=geopolitics, а max=climate 46; CY: climate 56; UZ: economy 47).
 #    Источник истины один — domain_scores. OFF → байт-идентично.
 COUNTRY_NULL_NO_DATA = True
+# PROCESS PRIMARY: max(event, process) для EWS/CRI. Каскад — свойство ПРОЦЕССОВ
+# (мультидоменность, causes/related, geo_spread); одна-две свежие новости его не
+# описывают (у TR было CRI 13 из событий против 70 из 18 процессов). Берём максимум:
+# не занижаем риск и не теряем событийную свежесть. Атлас — платформа процессов,
+# Process Layer не должен проигрывать одному событию. OFF → байт-идентично.
+COUNTRY_PROCESS_PRIMARY = False
 _SIGNALS_CACHE: list = []
 
 # Фаза процесса → вклад в темп нарастания (EWS).
@@ -478,9 +484,34 @@ def load_signals() -> list[dict]:
 
 
 def match_signals(signals: list[dict], iso2: str) -> list[dict]:
-    """Процессы страны по countries (Process Layer, аналог match_events)."""
+    """Процессы страны по КАНОНИЧЕСКОМУ МЕСТУ (Aggregation Authority, geo_canon).
+
+    НЕ по countries: там смешаны место, актор и упоминание — Индия «наследовала» бы
+    каскад Ближнего Востока («Военные удары — Иран»), Франция — войну в Украине
+    («Военный конфликт — Россия — Украина», sev 99). Это конфляция осей.
+
+    Включаем процесс, если его process_place — это сама страна ИЛИ её макрорегион
+    (Турция ↔ «Ближний Восток» законно: это её регион; Индия ↔ «Ближний Восток» — нет,
+    её макрорегион «Южная Азия»). Инвариант: агрегация только по canonical location.
+    """
     iso2 = (iso2 or "").upper()
-    return [s for s in signals if iso2 in (s.get("countries") or [])]
+    try:
+        import geo_canon as _gc
+        rec = _gc.by_iso(iso2)
+    except Exception:
+        rec = None
+    if not rec:
+        return [s for s in signals if iso2 in (s.get("countries") or [])]
+    name = rec.get("name_ru")
+    macro = rec.get("macro_region")
+    out = []
+    for s in signals:
+        place = str(s.get("process_place") or "")
+        if name and name in place:
+            out.append(s)
+        elif macro and place == macro:
+            out.append(s)
+    return out
 
 
 def compute_ews_from_signals(sigs: list[dict]) -> int | None:
@@ -1169,6 +1200,26 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
             snap["_source_layer"] = "process"
             print(f"  [SNAP] {iso2}: process-layer fallback — {len(_sigs)} процессов, "
                   f"EWS={_e} CRI={_c} dominant={_d}", file=sys.stderr)
+    # PROCESS PRIMARY: события ЕСТЬ, но их 1-2, а процессов десятки. Каскад (CRI) —
+    # свойство процессов: они несут мультидоменность, causes/related, geo_spread. Пара
+    # свежих новостей не описывает каскад (у TR: CRI 13 из событий против 70 из 18
+    # процессов). Берём max — не занижаем риск и не теряем событийную свежесть.
+    # Атлас — платформа процессов; Process Layer не должен проигрывать одному событию.
+    if COUNTRY_PROCESS_PRIMARY and matched:
+        _sigs2 = match_signals(_SIGNALS_CACHE, iso2)
+        if _sigs2:
+            _pe = compute_ews_from_signals(_sigs2)
+            _pc = compute_cri_from_signals(_sigs2)
+            _oe, _oc = snap.get("ews_score"), snap.get("cri_score")
+            if _pe is not None and (_oe is None or _pe > _oe):
+                snap["ews_score"] = _pe
+            if _pc is not None and (_oc is None or _pc > _oc):
+                snap["cri_score"] = _pc
+            snap["process_count"] = len(_sigs2)
+            if (snap.get("ews_score") != _oe) or (snap.get("cri_score") != _oc):
+                snap["_source_layer"] = "event+process"
+                print(f"  [SNAP] {iso2}: process-primary — EWS {_oe}→{snap['ews_score']} "
+                      f"CRI {_oc}→{snap['cri_score']} ({len(_sigs2)} процессов)", file=sys.stderr)
     # ②+③ CANONICAL TRUTH: ни событий, ни процессов → честный null вместо ложного нуля,
     # dominant_domain — из domain_scores (единый источник), а не из хардкод-дефолта.
     # ВАЖНО: если процессы ЕСТЬ — Process Layer уже дал и метрики, и домен по реальному
@@ -32465,7 +32516,7 @@ def main():
         print("[SNAP] No events — using baselines for all countries", file=sys.stderr)
 
     global _SIGNALS_CACHE
-    if COUNTRY_SIGNALS_FALLBACK:
+    if COUNTRY_SIGNALS_FALLBACK or COUNTRY_PROCESS_PRIMARY:
         _SIGNALS_CACHE = load_signals()
         print(f"[SNAP] Process Layer: загружено {len(_SIGNALS_CACHE)} процессов", file=sys.stderr)
 
