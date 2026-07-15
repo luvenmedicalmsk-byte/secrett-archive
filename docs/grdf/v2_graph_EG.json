@@ -2,9 +2,9 @@
   "country": "EG",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T08:39:11.145796+00:00",
-  "node_count": 11,
-  "edge_count": 19,
+  "generated_at": "2026-07-15T09:02:17.287316+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-EG",
@@ -26,7 +26,7 @@
       "id": "DOMAIN-EG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 45,
+      "score": 35,
       "trend": "stable"
     },
     {
@@ -40,28 +40,28 @@
       "id": "DOMAIN-EG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 11,
+      "score": 9,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EG-social",
       "type": "Domain",
       "label": "social",
-      "score": 22,
+      "score": 17,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 25,
+      "score": 20,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 6,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -78,6 +78,13 @@
       "id": "DRIVER-EG-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "SIGNAL-EG-Отключение",
+      "type": "Signal",
+      "label": "Отключение интернета — Египет",
+      "severity": 64,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -91,7 +98,7 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-economic",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-EG",
@@ -103,25 +110,25 @@
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-technology",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-social",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-EG",
       "to": "DOMAIN-EG-cyber",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.04
     },
     {
       "from": "DRIVER-EG-Geopolitical",
@@ -163,6 +170,27 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-EG-climate",
+      "to": "DOMAIN-EG-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EG-economic",
+      "to": "DOMAIN-EG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-EG-social",
+      "to": "DOMAIN-EG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-EG-geopolitical",
       "to": "DOMAIN-EG-infrastructure",
       "type": "ESCALATES",
@@ -184,25 +212,10 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-EG-climate",
-      "to": "DOMAIN-EG-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-EG-economic",
-      "to": "DOMAIN-EG-social",
+      "from": "SIGNAL-EG-Отключение",
+      "to": "DOMAIN-EG-technology",
       "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-EG-social",
-      "to": "DOMAIN-EG-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "weight": 0.64
     }
   ]
 }
