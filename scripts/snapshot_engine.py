@@ -442,6 +442,87 @@ def load_events() -> list[dict]:
     return evs
 
 
+# ═══ COUNTRY PROCESS LAYER (Phase ①) ═══════════════════════════════════════
+# Карточка страны видит ПРОЦЕССЫ, а не только события окна свежести (3 дня для
+# geopolitics/climate). Страны с редким потоком (TR/EG/AM/SA/RS/ID/VN) при затишье
+# теряли все события → EWS/CRI=0 («спокойно»), хотя процессы живы (lifecycle до 168ч+).
+# Пример: у TR 18 процессов, топовый обновлён час назад, а карточка показывала 0.
+# FALLBACK-дизайн: процессы используются ТОЛЬКО когда события пусты → страны с плотным
+# потоком (RU/US/IR/DE) не затронуты. OFF → байт-идентично.
+COUNTRY_SIGNALS_FALLBACK = False
+_SIGNALS_CACHE: list = []
+
+# Фаза процесса → вклад в темп нарастания (EWS).
+_PHASE_EWS = {'escalating': 1.0, 'emerging': 0.75, 'active': 0.5, 'stable': 0.3,
+              'stabilizing': 0.2, 'decaying': 0.0, 'de-escalating': 0.0}
+
+
+def load_signals() -> list[dict]:
+    """Процессы из docs/signals.json (Process Layer — источник для карточки страны)."""
+    path = DOCS_DIR / "signals.json"
+    if not path.exists():
+        return []
+    try:
+        with open(path) as f:
+            return json.load(f).get("signals", [])
+    except Exception:
+        return []
+
+
+def match_signals(signals: list[dict], iso2: str) -> list[dict]:
+    """Процессы страны по countries (Process Layer, аналог match_events)."""
+    iso2 = (iso2 or "").upper()
+    return [s for s in signals if iso2 in (s.get("countries") or [])]
+
+
+def compute_ews_from_signals(sigs: list[dict]) -> int | None:
+    """EWS из процессов: forecast.escalation + phase + velocity + pressure.
+    Процессы несут темп напрямую (в отличие от событий, где он выводится)."""
+    if not sigs:
+        return None
+    n = len(sigs)
+    esc = sum((s.get("forecast") or {}).get("escalation", 0) or 0 for s in sigs) / n
+    ph = sum(_PHASE_EWS.get(str(s.get("phase", "")).lower(), 0.3) for s in sigs) / n
+    vel = sum((s.get("velocity") or {}).get("severity_per_h", 0) or 0 for s in sigs) / n
+    vel_n = max(-1.0, min(1.0, vel * 2))
+    pres = sum(s.get("pressure") or 0 for s in sigs) / n / 100.0
+    ews = esc * 34 + ph * 30 + max(0.0, vel_n) * 16 + pres * 20
+    return int(max(0, min(100, round(ews))))
+
+
+def compute_cri_from_signals(sigs: list[dict]) -> int | None:
+    """CRI из процессов: мультидоменность + причинные связи + geo_spread + origin_chain."""
+    if not sigs:
+        return None
+    n = len(sigs)
+    doms = set()
+    for s in sigs:
+        doms |= set(s.get("domains") or ([s.get("primary_domain")] if s.get("primary_domain") else []))
+    breadth = min(1.0, len(doms) / 5.0)
+    links = sum(len(s.get("causes") or []) + len(s.get("caused_by") or []) +
+                len(s.get("related") or []) + len(s.get("amplifies") or []) for s in sigs)
+    link_share = min(1.0, links / max(n, 1) / 3.0)
+    geo = sum(s.get("geo_spread_count") or 0 for s in sigs) / n
+    geo_n = min(1.0, geo / 5.0)
+    chain = sum(len(s.get("origin_chain") or []) for s in sigs) / n
+    chain_n = min(1.0, chain / 3.0)
+    cri = breadth * 42 + link_share * 28 + geo_n * 18 + chain_n * 12
+    return int(max(0, min(100, round(cri))))
+
+
+def compute_dominant_from_signals(sigs: list[dict]) -> str | None:
+    """Доминирующий домен из процессов (по сумме severity) — вместо хардкод-дефолта."""
+    if not sigs:
+        return None
+    acc: dict = {}
+    for s in sigs:
+        d = s.get("primary_domain") or (s.get("domains") or [None])[0]
+        if not d:
+            continue
+        acc[d] = acc.get(d, 0) + float(s.get("severity") or 0)
+    return max(acc, key=acc.get) if acc else None
+
+
 def match_events(events: list[dict], iso2: str) -> list[dict]:
     """GEO CONTRACT Phase 2: события страны отбираются по контрактной атрибуции
     (primary/mentioned/impact — производные resolve_geo), а не keyword-матчингом
@@ -1014,6 +1095,24 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
     snap["domain_scores"] = _reloc_domain_scores(iso2, snap, matched)
     snap["ews_score"] = compute_ews(matched)   # реальный EWS из данных
     snap["cri_score"] = compute_cri(matched)   # реальный CRI из данных
+    # PROCESS LAYER FALLBACK: события выпали из окна свежести, но процессы живы →
+    # считаем темп/каскад из процессов. Страны с событиями не затрагиваются.
+    if COUNTRY_SIGNALS_FALLBACK and not matched:
+        _sigs = match_signals(_SIGNALS_CACHE, iso2)
+        if _sigs:
+            _e = compute_ews_from_signals(_sigs)
+            _c = compute_cri_from_signals(_sigs)
+            _d = compute_dominant_from_signals(_sigs)
+            if _e is not None:
+                snap["ews_score"] = _e
+            if _c is not None:
+                snap["cri_score"] = _c
+            if _d:
+                snap["dominant_domain"] = _d
+            snap["process_count"] = len(_sigs)
+            snap["_source_layer"] = "process"
+            print(f"  [SNAP] {iso2}: process-layer fallback — {len(_sigs)} процессов, "
+                  f"EWS={_e} CRI={_c} dominant={_d}", file=sys.stderr)
     snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
     snap["ews_delta_7d"] = compute_delta_7d(iso2, "ews_score", snap["ews_score"])
     snap["cri_delta_7d"] = compute_delta_7d(iso2, "cri_score", snap["cri_score"])
@@ -32293,6 +32392,11 @@ def main():
     _persist_tagged_events(events)
     if not events:
         print("[SNAP] No events — using baselines for all countries", file=sys.stderr)
+
+    global _SIGNALS_CACHE
+    if COUNTRY_SIGNALS_FALLBACK:
+        _SIGNALS_CACHE = load_signals()
+        print(f"[SNAP] Process Layer: загружено {len(_SIGNALS_CACHE)} процессов", file=sys.stderr)
 
     snapshots = []
     for iso2 in COUNTRIES:
