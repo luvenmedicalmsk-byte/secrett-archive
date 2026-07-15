@@ -2,72 +2,67 @@
   "country": "CA",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T06:11:30.617933+00:00",
-  "node_count": 12,
-  "edge_count": 11,
+  "generated_at": "2026-07-15T07:14:53.018206+00:00",
+  "node_count": 11,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 32,
+      "score": 44,
       "props": {
-        "risk_score": 32
+        "risk_score": 44
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 28,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 28,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-CA-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,11 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Канада_дым",
-      "type": "Signal",
-      "label": "Канада дыма от пожаров накрывает небеса ",
-      "severity": 32,
-      "domain": "climate"
+      "id": "DRIVER-CA-Economic",
+      "type": "Driver",
+      "label": "Economic"
     }
   ],
   "edges": [
@@ -92,7 +85,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-CA",
@@ -104,7 +97,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CA",
@@ -131,12 +124,6 @@
       "weight": 0.04
     },
     {
-      "from": "DRIVER-CA-Economic",
-      "to": "COUNTRY-CA",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-CA-Geopolitical",
       "to": "COUNTRY-CA",
       "type": "CAUSES",
@@ -149,10 +136,73 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Канада_дым",
-      "to": "DOMAIN-CA-climate",
+      "from": "DRIVER-CA-Economic",
+      "to": "COUNTRY-CA",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     }
   ]
 }
