@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T14:23:52.728500+00:00",
+  "generated_at": "2026-07-15T15:47:12.398480+00:00",
   "node_count": 14,
   "edge_count": 13,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 33,
+      "score": 34,
       "props": {
-        "risk_score": 33
+        "risk_score": 34
       }
     },
     {
@@ -26,43 +26,48 @@
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 21,
+      "score": 34,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
+      "score": 33,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 9,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
+      "score": 19,
       "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 4,
       "trend": "stable"
+    },
+    {
+      "id": "DRIVER-CA-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -75,9 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CA-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-CA-При_таких_",
+      "type": "Signal",
+      "label": "При таких условиях здоровье каждого чело",
+      "severity": 35,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CA-Канада_дым",
@@ -92,13 +99,6 @@
       "label": "Сильный дым от нескольких крупных лесных",
       "severity": 32,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Киберугроз",
-      "type": "Signal",
-      "label": "Киберугроза — Канада",
-      "severity": 58,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,37 +112,43 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
+    },
+    {
+      "from": "DRIVER-CA-Economic",
+      "to": "COUNTRY-CA",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-CA-Geopolitical",
@@ -157,10 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CA-Economic",
-      "to": "COUNTRY-CA",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "SIGNAL-CA-При_таких_",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.35
     },
     {
       "from": "SIGNAL-CA-Канада_дым",
@@ -173,12 +179,6 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-CA-Киберугроз",
-      "to": "DOMAIN-CA-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     }
   ]
 }
