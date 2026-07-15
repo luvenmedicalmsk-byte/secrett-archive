@@ -2,9 +2,9 @@
   "country": "GE",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T07:58:57.337348+00:00",
+  "generated_at": "2026-07-15T08:39:11.151948+00:00",
   "node_count": 11,
-  "edge_count": 16,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-GE",
@@ -26,14 +26,14 @@
       "id": "DOMAIN-GE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 52,
+      "score": 39,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-GE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
+      "score": 41,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-GE-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-GE-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -78,6 +73,11 @@
       "id": "DRIVER-GE-social",
       "type": "Driver",
       "label": "social"
+    },
+    {
+      "id": "DRIVER-GE-climate",
+      "type": "Driver",
+      "label": "climate"
     }
   ],
   "edges": [
@@ -91,13 +91,13 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-economic",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-GE",
@@ -124,12 +124,6 @@
       "weight": 0.35
     },
     {
-      "from": "DRIVER-GE-economic",
-      "to": "COUNTRY-GE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-GE-geopolitical",
       "to": "COUNTRY-GE",
       "type": "CAUSES",
@@ -137,6 +131,12 @@
     },
     {
       "from": "DRIVER-GE-social",
+      "to": "COUNTRY-GE",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-GE-climate",
       "to": "COUNTRY-GE",
       "type": "CAUSES",
       "weight": 0.8
@@ -163,25 +163,46 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-GE-infrastructure",
+      "from": "DOMAIN-GE-climate",
       "to": "DOMAIN-GE-economic",
       "type": "ESCALATES",
-      "weight": 0.78,
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GE-social",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-GE-climate",
+      "to": "DOMAIN-GE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
       "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GE-infrastructure",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
     },
     {
       "from": "DOMAIN-GE-economic",
       "to": "DOMAIN-GE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 21
-    },
-    {
-      "from": "DOMAIN-GE-economic",
-      "to": "DOMAIN-GE-social",
-      "type": "CORRELATES",
-      "weight": 0.5,
-      "lag_days": 60
+      "weight": 0.55,
+      "lag_days": 30
     }
   ]
 }
