@@ -2,67 +2,72 @@
   "country": "CA",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T00:16:50.880836+00:00",
-  "node_count": 11,
-  "edge_count": 10,
+  "generated_at": "2026-07-15T03:47:55.848805+00:00",
+  "node_count": 12,
+  "edge_count": 11,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 44,
+      "score": 32,
       "props": {
-        "risk_score": 44
+        "risk_score": 32
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "stable"
+      "score": 28,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "stable"
+      "score": 4,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-CA-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -75,9 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CA-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-CA-Канада_дым",
+      "type": "Signal",
+      "label": "Канада дыма от пожаров накрывает небеса ",
+      "severity": 32,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,7 +92,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-CA",
@@ -97,7 +104,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-CA",
@@ -124,6 +131,12 @@
       "weight": 0.04
     },
     {
+      "from": "DRIVER-CA-Economic",
+      "to": "COUNTRY-CA",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-CA-Geopolitical",
       "to": "COUNTRY-CA",
       "type": "CAUSES",
@@ -136,10 +149,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CA-Economic",
-      "to": "COUNTRY-CA",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "SIGNAL-CA-Канада_дым",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
