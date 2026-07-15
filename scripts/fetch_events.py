@@ -192,6 +192,11 @@ def _clean_title(raw):
 # постов) не попадали ни в один отчёт. {канал: {причина: n}} / {канал: получено}.
 _PARSER_REJECT = {}
 _PARSER_RECV = {}
+# ═══ PHASE 0.5 SHADOW: цена окна анализа text[:200] ═══════════════════════════
+# Решение принимается ПО-ПРЕЖНЕМУ по text[:200]. Здесь только измеряем: на каком окне
+# ключ нашёлся бы. Телеметрия Phase 0 показала 857 потерь (11.6% входа) из-за длины —
+# нужно понять оптимум (200/400/600/full), а не менять вслепую. {канал: {окно: n}}
+_TRUNC_SHADOW = {}
 
 
 def _parser_coverage_report(_c2, raw_items, events, top_events):
@@ -244,7 +249,32 @@ def _parser_coverage_report(_c2, raw_items, events, top_events):
                    'feed': sum(1 for e in top_events if e.get('feed_visible'))},
         'parser_reject_total': dict(reasons),
         'text_truncated_cost': reasons.get('text_truncated', 0),
+        'text_window_shadow': _trunc_shadow_report(_c2),
         'by_source': by_source,
+    }
+
+
+def _trunc_shadow_report(_c2):
+    """PHASE 0.5 SHADOW: сколько СВЕРХ baseline даст каждое окно анализа.
+    Решение по-прежнему по text[:200]; здесь — цена ограничения по окнам."""
+    agg = _c2.Counter()
+    per = {}
+    for ch, d in _TRUNC_SHADOW.items():
+        per[ch] = dict(d)
+        for k, v in d.items(): agg[k] += v
+    w400 = agg.get('w400', 0); w600 = agg.get('w600', 0)
+    w1200 = agg.get('w1200', 0); wfull = agg.get('full', 0)
+    return {
+        'note': 'сообщения, где ключ ЕСТЬ, но дальше 200 символов — по минимальному окну',
+        'gain_by_window': {
+            'w200_baseline': 0,
+            'w400': w400,
+            'w600': w400 + w600,
+            'w1200': w400 + w600 + w1200,
+            'full': w400 + w600 + w1200 + wfull,
+        },
+        'raw_buckets': dict(agg),
+        'by_source': per,
     }
 
 OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
@@ -5904,6 +5934,24 @@ def fetch_telegram():
         d = _PARSER_REJECT.setdefault(ch, {})
         d[reason] = d.get(reason, 0) + 1
 
+    def _kw_window(full_text, kw, pairs, ch):
+        """SHADOW (Phase 0.5): минимальное окно, в котором ключ нашёлся бы. На решение НЕ
+        влияет — решение уже принято по text[:200]. Даёт таблицу 200/400/600/full."""
+        try:
+            n = len(full_text)
+            for w in (400, 600, 1200):
+                t = full_text[:w]
+                if any(k in t for k in kw) or any(a in t and b in t for a, b in pairs):
+                    d = _TRUNC_SHADOW.setdefault(ch, {})
+                    key = 'w%d' % w
+                    d[key] = d.get(key, 0) + 1
+                    return
+            if any(k in full_text for k in kw) or any(a in full_text and b in full_text for a, b in pairs):
+                d = _TRUNC_SHADOW.setdefault(ch, {})
+                d['full'] = d.get('full', 0) + 1
+        except Exception:
+            pass
+
     def _kw_hit(full_text, kw, pairs):
         """Нашёлся бы ключ в ПОЛНОМ тексте? Отделяет text_truncated (ключ дальше 200
         символов — цена ограничения tl=text[:200]) от keyword_missing (темы нет в словаре)."""
@@ -5934,18 +5982,21 @@ def fetch_telegram():
         if ch in SOCIAL_SRC:
             if not is_srisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, SOCIAL_RISK_KW, SOCIAL_RISK_PAIRS) else 'keyword_missing')
+                _kw_window(_tf, SOCIAL_RISK_KW, SOCIAL_RISK_PAIRS, ch)   # Phase 0.5 shadow
                 return None
             _d = 'social'
         elif ch in TECH_SRC:
             is_trisk = any(k in tl for k in TECH_RISK_KW) or any(a in tl and b in tl for a,b in TECH_RISK_PAIRS)
             if ch not in TECH_PURE and not is_trisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, TECH_RISK_KW, TECH_RISK_PAIRS) else 'keyword_missing')
+                _kw_window(_tf, TECH_RISK_KW, TECH_RISK_PAIRS, ch)       # Phase 0.5 shadow
                 return None        # тех-источник: только риск/инцидент (чистые каналы — байпас)
             _d = 'social' if is_srisk else 'technology'
         elif ch in ECON_SRC:
             is_erisk = any(k in tl for k in ECON_RISK_KW) or any(a in tl and b in tl for a,b in ECON_RISK_PAIRS)
             if not is_erisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, ECON_RISK_KW, ECON_RISK_PAIRS) else 'keyword_missing')
+                _kw_window(_tf, ECON_RISK_KW, ECON_RISK_PAIRS, ch)       # Phase 0.5 shadow
                 return None        # только сигналы стресса/риска
             _d = 'economy'
         else:
