@@ -450,6 +450,14 @@ def load_events() -> list[dict]:
 # FALLBACK-дизайн: процессы используются ТОЛЬКО когда события пусты → страны с плотным
 # потоком (RU/US/IR/DE) не затронуты. OFF → байт-идентично.
 COUNTRY_SIGNALS_FALLBACK = True
+# ②+③ CANONICAL TRUTH для карточки страны:
+# ② EWS/CRI=0 читается как «спокойно». При полном отсутствии данных это ложь — нужен null
+#    («нет данных»). Особенно рядом с GRI из статического baseline: CH GRI=32 при EWS=0 —
+#    пользователь видит «риск есть, динамики нет», хотя правда «свежих сигналов нет».
+# ③ dominant_domain при пустых данных падал в хардкод 'geopolitics', расходясь с domain_scores
+#    (ME: dominant=geopolitics, а max=climate 46; CY: climate 56; UZ: economy 47).
+#    Источник истины один — domain_scores. OFF → байт-идентично.
+COUNTRY_NULL_NO_DATA = False
 _SIGNALS_CACHE: list = []
 
 # Фаза процесса → вклад в темп нарастания (EWS).
@@ -1113,6 +1121,20 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
             snap["_source_layer"] = "process"
             print(f"  [SNAP] {iso2}: process-layer fallback — {len(_sigs)} процессов, "
                   f"EWS={_e} CRI={_c} dominant={_d}", file=sys.stderr)
+    # ②+③ CANONICAL TRUTH: ни событий, ни процессов → честный null вместо ложного нуля,
+    # dominant_domain — из domain_scores (единый источник), а не из хардкод-дефолта.
+    if COUNTRY_NULL_NO_DATA and not matched:
+        _has_proc = bool(snap.get("_source_layer") == "process")
+        if not _has_proc:
+            snap["ews_score"] = None          # ② «нет данных», а не «спокойно»
+            snap["cri_score"] = None
+            snap["_source_layer"] = "baseline"
+            snap["_gri_source"] = "baseline"  # GRI — оценка по базовому профилю, не по сигналам
+        _ds = snap.get("domain_scores") or {}
+        if _ds:                               # ③ единый источник домена
+            _mx = max(_ds, key=lambda k: _ds.get(k) or 0)
+            if _ds.get(_mx) and snap.get("dominant_domain") != _mx:
+                snap["dominant_domain"] = _mx
     snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
     snap["ews_delta_7d"] = compute_delta_7d(iso2, "ews_score", snap["ews_score"])
     snap["cri_delta_7d"] = compute_delta_7d(iso2, "cri_score", snap["cri_score"])
