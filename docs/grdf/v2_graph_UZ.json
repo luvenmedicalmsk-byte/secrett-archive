@@ -2,8 +2,8 @@
   "country": "UZ",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T10:10:12.573808+00:00",
-  "node_count": 11,
+  "generated_at": "2026-07-15T10:29:50.440992+00:00",
+  "node_count": 14,
   "edge_count": 13,
   "nodes": [
     {
@@ -19,14 +19,14 @@
       "id": "DOMAIN-UZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 49,
+      "score": 36,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-UZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 47,
       "trend": "stable"
     },
     {
@@ -65,9 +65,9 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-UZ-geopolitical",
+      "id": "DRIVER-UZ-economic",
       "type": "Driver",
-      "label": "geopolitical"
+      "label": "economic"
     },
     {
       "id": "DRIVER-UZ-social",
@@ -75,9 +75,30 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-UZ-economic",
+      "id": "DRIVER-UZ-geopolitical",
       "type": "Driver",
-      "label": "economic"
+      "label": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-UZ-Геополитич",
+      "type": "Signal",
+      "label": "Геополитическое давление",
+      "severity": 49,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-UZ-Социальное",
+      "type": "Signal",
+      "label": "Социальное давление",
+      "severity": 39,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-UZ-Климатичес",
+      "type": "Signal",
+      "label": "Климатическое давление",
+      "severity": 36,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -85,13 +106,13 @@
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-UZ",
@@ -124,7 +145,7 @@
       "weight": 0.31
     },
     {
-      "from": "DRIVER-UZ-geopolitical",
+      "from": "DRIVER-UZ-economic",
       "to": "COUNTRY-UZ",
       "type": "CAUSES",
       "weight": 0.8
@@ -136,31 +157,28 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-UZ-economic",
+      "from": "DRIVER-UZ-geopolitical",
       "to": "COUNTRY-UZ",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-UZ-geopolitical",
-      "to": "DOMAIN-UZ-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-UZ-infrastructure",
-      "to": "DOMAIN-UZ-economic",
+      "from": "SIGNAL-UZ-Геополитич",
+      "to": "DOMAIN-UZ-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "weight": 0.49
     },
     {
-      "from": "DOMAIN-UZ-economic",
+      "from": "SIGNAL-UZ-Социальное",
       "to": "DOMAIN-UZ-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.39
+    },
+    {
+      "from": "SIGNAL-UZ-Климатичес",
+      "to": "DOMAIN-UZ-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.36
     }
   ]
 }

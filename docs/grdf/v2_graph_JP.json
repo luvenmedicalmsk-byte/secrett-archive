@@ -2,7 +2,7 @@
   "country": "JP",
   "date": "2026-07-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-15T10:10:12.565169+00:00",
+  "generated_at": "2026-07-15T10:29:50.431846+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 28,
+      "score": 42,
       "trend": "stable"
     },
     {
@@ -40,28 +40,28 @@
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
+      "score": 11,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
+      "score": 21,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
+      "score": 23,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-JP-Красное_ув",
+      "id": "SIGNAL-JP-Технологич",
       "type": "Signal",
-      "label": "Красное уведомление о тропическом циклон",
-      "severity": 95,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-JP-В_США_экст",
-      "type": "Signal",
-      "label": "В США экстрадирован 19-летний молодой че",
-      "severity": 65,
+      "label": "Технологический сигнал — Япония",
+      "severity": 64,
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-JP-Красное_ув",
+      "id": "SIGNAL-JP-Геополитич",
       "type": "Signal",
-      "label": "Красное уведомление о тропический циклон",
-      "severity": 60,
-      "domain": "climate"
+      "label": "Геополитический процесс — Япония",
+      "severity": 46,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-JP-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Восточная Азия",
+      "severity": 53,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-JP",
@@ -124,25 +124,25 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "DRIVER-JP-Geopolitical",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-JP",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-JP-climate",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-JP-climate",
@@ -205,43 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-JP-climate",
-      "to": "DOMAIN-JP-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-JP-infrastructure",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-JP-economic",
-      "to": "DOMAIN-JP-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "SIGNAL-JP-Красное_ув",
-      "to": "DOMAIN-JP-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.95
-    },
-    {
-      "from": "SIGNAL-JP-В_США_экст",
+      "from": "SIGNAL-JP-Технологич",
       "to": "DOMAIN-JP-technology",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.64
     },
     {
-      "from": "SIGNAL-JP-Красное_ув",
-      "to": "DOMAIN-JP-climate",
+      "from": "SIGNAL-JP-Геополитич",
+      "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.46
+    },
+    {
+      "from": "SIGNAL-JP-Военные_уд",
+      "to": "DOMAIN-JP-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
