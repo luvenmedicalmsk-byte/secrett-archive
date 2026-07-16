@@ -9901,23 +9901,42 @@ def _adm_class(ev):
     return 'UNKNOWN'
 
 
+def _deny_severity_buckets(deny):
+    """SPEC-013 Phase 1.1: распределение DENY по severity — важнее общей цифры Deny Rate.
+    Показывает, кто теряет право: мелкие процессы или самые тяжёлые."""
+    b = {'0-30': 0, '31-50': 0, '51-70': 0, '71-90': 0, '91-100': 0}
+    for x in deny:
+        s = x.get('severity') or 0
+        if s <= 30: b['0-30'] += 1
+        elif s <= 50: b['31-50'] += 1
+        elif s <= 70: b['51-70'] += 1
+        elif s <= 90: b['71-90'] += 1
+        else: b['91-100'] += 1
+    return b
+
+
 def _admission_shadow(events, signals, outdir):
     """PHASE 1 SHADOW (SPEC-013 §8): альтернативная реальность правила Admission.
     Ничего не меняет: только считает, какое решение принял бы новый Admission."""
     from collections import Counter
     import json as _j
+    # PHASE 1.1 (Shadow Coverage Completion): класс берётся ИЗ EVIDENCE (sic_class сохранён
+    # в момент построения процесса), с fallback на сопоставление по title для процессов,
+    # построенных до Phase 1.1. Раньше сопоставление по title давало coverage 27%
+    # (132 из 492): события процесса давно вышли из окна ленты, сопоставлять не с чем.
     by_title = {}
     for e in events:
         by_title[(e.get('title') or '')[:60]] = e
-    _CREATE = {'FACT_EVENT'}
-    _BOOST = {'STATE_CONFIRMATION', 'REPORT'}
     cats = Counter(); domains = {}; deny = []; report_log = []; deltas = []
     for s in signals or []:
         dom = s.get('primary_domain') or (s.get('domains') or [''])[0] or '—'
         ev = s.get('evidence') or []
         cls = []
         for x in ev:
-            e = by_title.get((x.get('title') or '')[:60])
+            if x.get('sic_class'):                      # Phase 1.1: класс в самом evidence
+                cls.append(_adm_class(x))
+                continue
+            e = by_title.get((x.get('title') or '')[:60])   # fallback: старые процессы
             if e:
                 cls.append(_adm_class(e))
         d = domains.setdefault(dom, Counter())
@@ -9971,6 +9990,7 @@ def _admission_shadow(events, signals, outdir):
             'processes_total': len(signals or []),
             'matched': total,
             'unmatched': cats.get('UNMATCHED', 0),
+            'coverage_pct': round(100.0 * total / len(signals or [1]), 1),
             'admission_pass_rate': round(100.0 * npass / total, 1) if total else None,
             'admission_deny_rate': round(100.0 * ndeny / total, 1) if total else None,
             'processes_without_fact': ndeny,
@@ -9981,6 +10001,7 @@ def _admission_shadow(events, signals, outdir):
         'deny_impact': sorted(deny, key=lambda x: -(x['severity'] or 0))[:60],
         'report_log': report_log[:40],
         'severity_delta': deltas[:60],
+        'deny_by_severity': _deny_severity_buckets(deny),
     }
     try:
         (outdir / '_admission_shadow.json').write_text(

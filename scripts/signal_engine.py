@@ -1999,9 +1999,16 @@ def _build_one_signal(evs, meta=None):
             continue
         if re.search(r'бодяж|фуфло|туфта|брехн|пал[её]ва|галим|развалюх|обосра|зашкварн', _ttl.lower()):
             continue
+        # SPEC-013 Phase 1.1 (Shadow Coverage): sic_class сохраняется В EVIDENCE.
+        # Раньше Admission Shadow сопоставлял процессы с событиями по title[:60] и покрывал
+        # лишь 27% (132 из 492): процесс живёт неделями, а его события давно вышли из окна
+        # ленты — сопоставить их не с чем. Класс, зафиксированный в момент построения,
+        # остаётся с процессом навсегда. ОБОГАЩЕНИЕ ДАННЫХ: поведение Process Builder не
+        # меняется, sic_class ни на что не влияет (Admission не реализован).
         evidence.append({'title':x.get('title',''),'source':x.get('source',''),'role':r,
             'quality':_ROLE_TIER.get(r,r),'weight':_ROLE_WEIGHT.get(r,0.5),'match':ml,'match_score':ms,
-            'date':x.get('date',''),'severity':x.get('severity',0),'is_trigger':(r=='telegram')})
+            'date':x.get('date',''),'severity':x.get('severity',0),'is_trigger':(r=='telegram'),
+            'sic_class':x.get('sic_class')})
     ev_weight=round(sum(e['weight'] for e in evidence),2)      # взвешенное число свидетельств
     # priority с учётом качества (не только количества)
     np_=min(1.0, math.log1p(persist)/math.log1p(10)); nc_=min(1.0, len(conn)/3.0)
