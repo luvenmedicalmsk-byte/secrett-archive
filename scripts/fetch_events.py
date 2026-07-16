@@ -204,6 +204,19 @@ _TRUNC_SHADOW = {}
 # архива (лишнее, всё в old). Измеряем возраст постов по каждому каналу.
 # {канал: [возраст в днях, ...]}
 _AGE_SHADOW = {}
+# ═══ ADAPTIVE FETCH POLICY v1 — CANARY (SPEC: docs/adr/spec/Adaptive-Fetch-Policy-Spec-v1.md)
+# Phase 0.6 доказала: iter_messages(limit=200) читает ПО КОЛИЧЕСТВУ → две ошибки сразу.
+# Быстрые: bbbreaking/ctinow видят 2.6-2.7 дн при политике technology=14 → Fresh Coverage 19%.
+# Медленные: investfuture span 54.8 дн, russianmacro 39.3 → 73% Tier 1 старше 7 дней, всё в old.
+# МОДЕЛЬ (SPEC §3.1): окно принадлежит СОБЫТИЮ, не каналу — Fetch тянет MAX_WINDOW, домен
+# определяется по содержанию, max_days применяется на своём слое. Fetch обязан обеспечить
+# максимальное окно политики, иначе он ограничивает Domain Policy (инвариант Layer Sufficiency).
+# ОСТАНОВКА (SPEC §3.2): основная — по дате (msg.date < cutoff); limit — АВАРИЙНЫЙ
+# предохранитель (1500), в норме не срабатывает.
+FETCH_BY_DATE_CANARY = set()          # шаг 1: {'investfuture','russianmacro'}
+FETCH_MAX_WINDOW_DAYS = 14            # максимальное окно политики Atlas (technology/social)
+FETCH_LIMIT_EMERGENCY = 1500          # аварийный потолок, не рабочее ограничение
+_FETCH_STATS = {}                     # {канал: {'read':n,'stopped_by':'date'|'limit','oldest':дней}}
 # ═══ PHASE 0.5 CANARY: окно анализа whitelist ═════════════════════════════════
 # Shadow-замер (7400 сообщений) дал точку перегиба: 200→400 даёт +288 (144 события на
 # 100 симв), 400→600 ещё +169 (85/100), дальше отдача падает до 40 и 19. При 600 берём
@@ -296,16 +309,30 @@ def _freshness_report():
             elif x <= 14: buckets['d7_14'] += 1
             elif x <= 30: buckets['d14_30'] += 1
             else: buckets['d30plus'] += 1
+        # FRESH COVERAGE (SPEC §5.1): покрыли ли требуемое окно. Если самый старый прочитанный
+        # пост МЛАДШЕ окна — значит упёрлись в limit и окно не покрыто.
+        _cov = min(1.0, (a[-1] / FETCH_MAX_WINDOW_DAYS)) if FETCH_MAX_WINDOW_DAYS else 1.0
+        _fs = _FETCH_STATS.get(ch) or {}
         out[ch] = {
             'n': len(a),
-            'span_days': round(a[-1] - a[0], 1),   # период, покрытый 200 постами
+            'span_days': round(a[-1] - a[0], 1),
             'median_age': _pct(a, 0.5),
             'p90_age': _pct(a, 0.9),
-            'max_age': a[-1],
+            'p95_age': _pct(a, 0.95),     # SPEC §5.2: max убран — закреплённые посты его ломают
+            'fresh_coverage': round(_cov, 3),
             'fresh_3d_pct': round(100.0 * sum(1 for x in a if x <= 3) / len(a), 1),
+            'rate_per_day': round(len(a) / max(a[-1] - a[0], 0.01), 1),
+            'fetch_mode': 'by_date' if ch in FETCH_BY_DATE_CANARY else 'limit200',
+            'stopped_by': _fs.get('stopped_by'),
             'buckets': buckets,
         }
-    return {'note': 'Phase 0.6 — наблюдение; limit=200 по количеству, не по дате',
+    _covs = [v['fresh_coverage'] for v in out.values() if v.get('fresh_coverage') is not None]
+    return {'note': 'Fresh Coverage = покрытая глубина / MAX_WINDOW (SPEC §5.1); max_age убран (§5.2)',
+            'max_window_days': FETCH_MAX_WINDOW_DAYS,
+            'canary_channels': sorted(FETCH_BY_DATE_CANARY),
+            'avg_fresh_coverage': round(sum(_covs) / len(_covs), 3) if _covs else None,
+            'below_100_pct': sorted([ch for ch, v in out.items() if (v.get('fresh_coverage') or 1) < 1.0]),
+            'fetch_stats': _FETCH_STATS,
             'by_channel': out}
 
 
@@ -6086,13 +6113,24 @@ def fetch_telegram():
             _raw = {}
             _fss_feed = []; _FSS_FIN = {'russianmacro','spydell_finance','investfuture','banksta','bankerist','bbbreaking','novosti_efir','ecotopor'}
             with TelegramClient(StringSession(os.environ['TG_SESSION']), api_id, api_hash, flood_sleep_threshold=20) as client:
+                _cutoff = datetime.now(timezone.utc) - timedelta(days=FETCH_MAX_WINDOW_DAYS)
                 for ch in channels:
                     nraw = 0
+                    # ADAPTIVE FETCH: canary-каналы читаются ПО ДАТЕ (limit — аварийный),
+                    # остальные — прежним limit=200 (байт-идентично).
+                    _by_date = ch in FETCH_BY_DATE_CANARY
+                    _lim = FETCH_LIMIT_EMERGENCY if _by_date else 200
+                    _stop = 'limit'; _oldest = None
                     try:
-                        for msg in client.iter_messages(ch, limit=200):
+                        for msg in client.iter_messages(ch, limit=_lim):
+                            _md = getattr(msg, 'date', None)
+                            if _by_date and _md is not None:
+                                _mage = (datetime.now(timezone.utc) - _md).total_seconds() / 86400.0
+                                _oldest = round(_mage, 2)
+                                if _md < _cutoff:      # SPEC §3.2: основное условие остановки
+                                    _stop = 'date'; break
                             nraw += 1
                             try:  # PHASE 0.6: возраст поста (наблюдение, на решения не влияет)
-                                _md = getattr(msg, 'date', None)
                                 if _md:
                                     _age = (datetime.now(timezone.utc) - _md).total_seconds() / 86400.0
                                     _AGE_SHADOW.setdefault(ch, []).append(round(_age, 2))
@@ -6105,6 +6143,11 @@ def fetch_telegram():
                             if it: items.append(it)
                         _raw[ch] = {'raw': nraw}
                         _PARSER_RECV[ch] = _PARSER_RECV.get(ch, 0) + nraw   # Phase 0: получено ДО фильтра
+                        if _by_date:   # ADAPTIVE FETCH: как завершилось чтение
+                            _FETCH_STATS[ch] = {'read': nraw, 'stopped_by': _stop, 'oldest_age': _oldest,
+                                                'limit_used': _lim, 'window_days': FETCH_MAX_WINDOW_DAYS}
+                            print(f"  [FETCH] {ch}: прочитано {nraw}, стоп по {_stop}, "
+                                  f"глубина {_oldest} дн (окно {FETCH_MAX_WINDOW_DAYS})", file=sys.stderr)
                     except Exception as e:
                         _raw[ch] = {'err': repr(e)}
                         print(f"  [TG-MTProto] {ch}: {e}", file=sys.stderr)
