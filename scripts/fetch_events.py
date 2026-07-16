@@ -197,6 +197,13 @@ _PARSER_RECV = {}
 # ключ нашёлся бы. Телеметрия Phase 0 показала 857 потерь (11.6% входа) из-за длины —
 # нужно понять оптимум (200/400/600/full), а не менять вслепую. {канал: {окно: n}}
 _TRUNC_SHADOW = {}
+# ═══ PHASE 0.6: FRESHNESS AUDIT (только наблюдение) ═══════════════════════════
+# Canary [:600] вскрыл: +462 сообщения прошли парсер, но 98% съедено фильтром возраста
+# (old +366). Гипотеза: iter_messages(limit=200) читает ПО КОЛИЧЕСТВУ, а не по дате —
+# у быстрых каналов 200 постов = 1 день (недобор свежего), у аналитических = недели
+# архива (лишнее, всё в old). Измеряем возраст постов по каждому каналу.
+# {канал: [возраст в днях, ...]}
+_AGE_SHADOW = {}
 # ═══ PHASE 0.5 CANARY: окно анализа whitelist ═════════════════════════════════
 # Shadow-замер (7400 сообщений) дал точку перегиба: 200→400 даёт +288 (144 события на
 # 100 симв), 400→600 ещё +169 (85/100), дальше отдача падает до 40 и 19. При 600 берём
@@ -263,8 +270,43 @@ def _parser_coverage_report(_c2, raw_items, events, top_events):
         'parser_reject_total': dict(reasons),
         'text_truncated_cost': reasons.get('text_truncated', 0),
         'text_window_shadow': _trunc_shadow_report(_c2),
+        'freshness': _freshness_report(),
         'by_source': by_source,
     }
+
+
+def _freshness_report():
+    """PHASE 0.6 FRESHNESS AUDIT: возраст постов по каналам. Только наблюдение.
+    Гипотеза: iter_messages(limit=200) читает ПО КОЛИЧЕСТВУ — у быстрых каналов
+    200 постов = 1 день (недобираем свежее), у аналитических = недели архива
+    (всё уходит в old). Даёт span/median/p90/max и buckets возраста."""
+    def _pct(a, p):
+        if not a: return None
+        b = sorted(a); i = int(round((len(b) - 1) * p))
+        return b[i]
+    out = {}
+    for ch, ages in _AGE_SHADOW.items():
+        if not ages: continue
+        a = sorted(ages)
+        buckets = {'d0_1': 0, 'd1_3': 0, 'd3_7': 0, 'd7_14': 0, 'd14_30': 0, 'd30plus': 0}
+        for x in a:
+            if x <= 1: buckets['d0_1'] += 1
+            elif x <= 3: buckets['d1_3'] += 1
+            elif x <= 7: buckets['d3_7'] += 1
+            elif x <= 14: buckets['d7_14'] += 1
+            elif x <= 30: buckets['d14_30'] += 1
+            else: buckets['d30plus'] += 1
+        out[ch] = {
+            'n': len(a),
+            'span_days': round(a[-1] - a[0], 1),   # период, покрытый 200 постами
+            'median_age': _pct(a, 0.5),
+            'p90_age': _pct(a, 0.9),
+            'max_age': a[-1],
+            'fresh_3d_pct': round(100.0 * sum(1 for x in a if x <= 3) / len(a), 1),
+            'buckets': buckets,
+        }
+    return {'note': 'Phase 0.6 — наблюдение; limit=200 по количеству, не по дате',
+            'by_channel': out}
 
 
 def _trunc_shadow_report(_c2):
@@ -6049,6 +6091,13 @@ def fetch_telegram():
                     try:
                         for msg in client.iter_messages(ch, limit=200):
                             nraw += 1
+                            try:  # PHASE 0.6: возраст поста (наблюдение, на решения не влияет)
+                                _md = getattr(msg, 'date', None)
+                                if _md:
+                                    _age = (datetime.now(timezone.utc) - _md).total_seconds() / 86400.0
+                                    _AGE_SHADOW.setdefault(ch, []).append(round(_age, 2))
+                            except Exception:
+                                pass
                             _mt = msg.message or ''
                             if ch in _FSS_FIN and _mt:
                                 _fss_feed.append({'ch': ch, 'text': _mt[:700], 'date': str(getattr(msg, 'date', ''))})
