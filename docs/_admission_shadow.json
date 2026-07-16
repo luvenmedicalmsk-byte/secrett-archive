@@ -1,11 +1,11 @@
 {
-  "generated": "2026-07-16T16:37:05Z",
+  "generated": "2026-07-16T16:52:35Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 297,
+    "PASS_FACT": 296,
     "PASS_FACT_REPORT": 1,
-    "DENY_COMMENTARY": 195,
+    "DENY_COMMENTARY": 196,
     "DENY_FEATURE": 1,
     "UNMATCHED": 3,
     "DENY_BACKGROUND": 1,
@@ -17,34 +17,63 @@
     "unmatched": 3,
     "coverage_pct": 99.4,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 60.0,
-    "admission_deny_rate": 40.0,
-    "processes_without_fact": 199,
+    "admission_pass_rate": 59.8,
+    "admission_deny_rate": 40.2,
+    "processes_without_fact": 200,
     "report_evidence_count": 1,
     "reports_boosting": 1
   },
   "shadow_reliability": {
-    "note": "достоверность Shadow: сверка решения Admission (shadow vs эталонный sic_class)",
-    "sample": 186,
-    "agreement_pct": 96.2,
-    "decision_agreement_pct": 96.8,
-    "critical_errors": 6,
-    "error_matrix": {
-      "COMMENTARY→FEATURE": 1,
-      "FACT_EVENT→COMMENTARY": 5,
-      "COMMENTARY→FACT_EVENT": 1
+    "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
+    "operational": {
+      "processes": 212,
+      "sample": 299,
+      "agreement_pct": 96.3,
+      "decision_agreement_pct": 96.7,
+      "critical_errors": 10,
+      "truth_ratio_pct": 53.9,
+      "error_matrix": {
+        "FACT_EVENT→COMMENTARY": 9,
+        "COMMENTARY→FEATURE": 1,
+        "COMMENTARY→FACT_EVENT": 1
+      }
+    },
+    "historical": {
+      "processes": 500,
+      "sample": 299,
+      "agreement_pct": 96.3,
+      "decision_agreement_pct": 96.7,
+      "critical_errors": 10,
+      "error_matrix": {
+        "FACT_EVENT→COMMENTARY": 9,
+        "COMMENTARY→FEATURE": 1,
+        "COMMENTARY→FACT_EVENT": 1
+      }
+    },
+    "events_stream": {
+      "sample": 183,
+      "agreement_pct": 96.2,
+      "decision_agreement_pct": 96.7,
+      "critical_errors": 6,
+      "error_matrix": {
+        "COMMENTARY→FEATURE": 1,
+        "FACT_EVENT→COMMENTARY": 5,
+        "COMMENTARY→FACT_EVENT": 1
+      }
     },
     "gate": {
+      "scope": "operational (status=active)",
       "coverage_min": 95.0,
-      "decision_agreement_min": 97.0
+      "decision_agreement_min": 97.0,
+      "passed": false
     }
   },
   "class_source": {
-    "shadow_title_only": 608,
+    "shadow_title_only": 607,
     "evidence_sic": 299,
-    "event_sic": 47
+    "event_sic": 45
   },
-  "truth_ratio_pct": 36.3,
+  "truth_ratio_pct": 36.2,
   "domain_statistics": {
     "geopolitics": {
       "pass": 106,
@@ -56,8 +85,8 @@
       "unmatched": 1
     },
     "economy": {
-      "pass": 23,
-      "deny": 57,
+      "pass": 22,
+      "deny": 58,
       "unmatched": 2
     },
     "technology": {
@@ -90,12 +119,12 @@
       "title": "Экономический сигнал — Россия",
       "domain": "economy",
       "severity": 78,
-      "pressure": 57,
+      "pressure": 55,
       "first_seen": "2026-06-26",
-      "evidence_count": 4,
+      "evidence_count": 3,
       "evidence_classes": {
         "REPORT": 1,
-        "COMMENTARY": 3
+        "COMMENTARY": 2
       },
       "status": "active",
       "causal_links": 1,
@@ -995,13 +1024,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-россия-d74b",
-      "domain": "economy",
-      "legacy": 78,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-экономичес-глобальн-ec76",
       "domain": "economy",
       "legacy": 65,
@@ -1012,6 +1034,13 @@
       "signal_id": "econ-экономичес-сша-7b87",
       "domain": "economy",
       "legacy": 60,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-россия-d74b",
+      "domain": "economy",
+      "legacy": 78,
       "shadow": null,
       "delta": null
     },
@@ -1107,13 +1136,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-сша-7b87",
-      "domain": "economy",
-      "legacy": 34,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-геополитич-судан-769e",
       "domain": "geopolitics",
       "legacy": 55,
@@ -1157,6 +1179,13 @@
     },
     {
       "signal_id": "econ-топливныйр-крым-7bde",
+      "domain": "economy",
+      "legacy": 34,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-сша-7b87",
       "domain": "economy",
       "legacy": 34,
       "shadow": null,
@@ -1247,16 +1276,16 @@
       "delta": null
     },
     {
-      "signal_id": "soci-социальный-дрконго-5d2e",
+      "signal_id": "soci-социальный-украина-3d66",
       "domain": "social",
-      "legacy": 58,
+      "legacy": 46,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "soci-социальный-украина-3d66",
+      "signal_id": "soci-социальный-дрконго-5d2e",
       "domain": "social",
-      "legacy": 46,
+      "legacy": 58,
       "shadow": null,
       "delta": null
     },
@@ -1285,6 +1314,13 @@
       "signal_id": "tech-фишинговая-глобальн-3446",
       "domain": "technology",
       "legacy": 58,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-топливныйр-сша-8442",
+      "domain": "economy",
+      "legacy": 53,
       "shadow": null,
       "delta": null
     },
@@ -1399,19 +1435,12 @@
       "legacy": 38,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "tech-технологич-россия-62df",
-      "domain": "technology",
-      "legacy": 34,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 0,
     "31-50": 113,
-    "51-70": 81,
+    "51-70": 82,
     "71-90": 4,
     "91-100": 1
   }
