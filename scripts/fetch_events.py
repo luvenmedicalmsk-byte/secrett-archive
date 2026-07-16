@@ -10092,22 +10092,41 @@ def _sic_class(title, summary='', canon_type=None):
 # новое событие пройдёт как EVENT штатно.
 # OFF (UNVERIFIED_FEED_GATE=False) → байт-идентично.
 UNVERIFIED_FEED_GATE = True
+# Интервью/колонки/мнения — вне оперативной ленты (кейс: Михалков, severity 72 из-за
+# военных слов в цитате). Только если SIC уже отнёс к COMMENTARY/FEATURE/BACKGROUND —
+# факты, сообщённые в интервью, остаются EVENT (accomplished-guard) и не затрагиваются.
+OPINION_FEED_GATE = True
 
 
 def _unverified_feed_gate(events):
-    """Непроверенные сообщения — вне оперативной ленты. READ-ONLY для остальных."""
-    n = 0
+    """Непроверенные сообщения и интервью-рассуждения — вне оперативной ленты.
+    READ-ONLY для остальных: событие остаётся в данных, Archive и аналитическом контуре."""
+    n = nu = no = 0
     for e in events:
         low = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).strip().lower()
         if not low:
             continue
+        # ① НЕ ПОДТВЕРЖДЕНО официальными источниками («Взрывы слышны в Дубае»)
         if _SIC_UNVERIFIED.search(low) and not _SIC_VERIFIED.search(low):
             e['unverified'] = True
             if e.get('feed_visible') is not False:
-                e['feed_visible'] = False
-                n += 1
+                e['feed_visible'] = False; n += 1; nu += 1
+            continue
+        # ② ИНТЕРВЬЮ/КОЛОНКА/МНЕНИЕ — рассуждение О явлении, а не явление.
+        # «Никита Михалков в интервью News.ru: "Война ведь не просто стрельба, дроны,
+        # взрывы…"» — severity 72 из-за военной лексики ЦИТАТЫ. SIC_OPINION уже пометил
+        # его COMMENTARY, но из ленты не убрал (feed_visible ставится до SIC).
+        # Guard: accomplished-guard выше по стеку — «Зеленский в интервью заявил, что ВСУ
+        # нанесли удар» остаётся EVENT и сюда не попадает (sic != COMMENTARY).
+        # Аналитика/отчёты (OPEC-прогноз, «Рубль ослаб», КСИР-атаки) НЕ затрагиваются —
+        # у них нет маркера интервью. Замер: убирает 1 из 153, «Контекст» 66 → 65.
+        if (OPINION_FEED_GATE and _SIC_OPINION.search(low)
+                and e.get('sic_class') in ('COMMENTARY', 'FEATURE', 'BACKGROUND')):
+            e['opinion_format'] = True
+            if e.get('feed_visible') is not False:
+                e['feed_visible'] = False; n += 1; no += 1
     if n:
-        print(f'  [UNVERIFIED] скрыто из ленты (не подтверждено офиц. источниками): {n}',
+        print(f'  [FEED-GATE] скрыто из ленты: {n} (не подтверждено: {nu}, интервью/мнение: {no})',
               file=sys.stderr)
     return n
 
