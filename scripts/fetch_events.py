@@ -9928,30 +9928,45 @@ def _admission_shadow(events, signals, outdir):
     for e in events:
         by_title[(e.get('title') or '')[:60]] = e
     cats = Counter(); domains = {}; deny = []; report_log = []; deltas = []
+    src = Counter()   # Phase 1.2: откуда взят класс — истина или shadow-приближение
     for s in signals or []:
         dom = s.get('primary_domain') or (s.get('domains') or [''])[0] or '—'
         ev = s.get('evidence') or []
         cls = []
+        # ═══ SPEC-013 Phase 1.2: ИЕРАРХИЯ ИСТОЧНИКОВ КЛАССА ═══
+        # 1. evidence.sic_class      ← ИСТИНА (сохранён при построении процесса)
+        # 2. event.sic_class         ← ИСТИНА (событие ещё в окне ленты)
+        # 3. sic(title + summary)    ← SHADOW (приближение, вход как у настоящего SIC)
+        # 4. sic(title)              ← ПОСЛЕДНИЙ FALLBACK (Agreement 84.1%, все ошибки
+        #                              односторонние FACT→COMMENTARY — консервативно)
+        # Shadow-классификация НЕ является канонической и помечается в class_source.
         for x in ev:
-            if x.get('sic_class'):                      # 1) класс сохранён в evidence (Phase 1.1)
-                cls.append(_adm_class(x))
+            if x.get('sic_class'):                              # 1) истина из evidence
+                cls.append(_adm_class(x)); src['evidence_sic'] += 1
                 continue
             e = by_title.get((x.get('title') or '')[:60])
-            if e:                                       # 2) событие ещё в текущем окне
-                cls.append(_adm_class(e))
+            if e and e.get('sic_class'):                        # 2) истина из события
+                cls.append(_adm_class(e)); src['event_sic'] += 1
                 continue
-            # 3) PHASE 1.1b: evidence старого процесса — событие давно вышло из окна, а
-            # sic_class в нём не сохранён (evolve_signals переносит evidence без пересборки).
-            # Классифицируем ПО ЗАГОЛОВКУ: _sic_class работает на тексте. Точность ниже
-            # (нет summary), но это единственный способ поднять coverage с 26% до ~100%
-            # без ожидания 7 дней lifecycle. READ-ONLY: вычисление, поведение не меняется.
             _t = x.get('title') or ''
-            if _t:
-                try:
+            _sm = (x.get('summary') or '')[:200]
+            if not _t:
+                continue
+            # process_type — canon-тип процесса; настоящий SIC получает его третьим
+            # аргументом (_SIC_MONITOR: Шторм/Наводнение/Морской лёд → EVENT даже без
+            # глагола-действия). Без него shadow видел «Паводки: реки Урала» как описание.
+            _ct = s.get('process_type')
+            try:
+                if _sm:                                         # 3) shadow: title+summary+canon
+                    cls.append(_adm_class({'title': _t, 'summary': _sm,
+                                           'sic_class': _sic_class(_t, _sm, _ct)}))
+                    src['shadow_title_summary'] += 1
+                else:                                           # 4) shadow: title+canon
                     cls.append(_adm_class({'title': _t, 'summary': '',
-                                           'sic_class': _sic_class(_t, '', None)}))
-                except Exception:
-                    pass
+                                           'sic_class': _sic_class(_t, '', _ct)}))
+                    src['shadow_title_only'] += 1
+            except Exception:
+                pass
         d = domains.setdefault(dom, Counter())
         if not cls:
             cats['UNMATCHED'] += 1; d['unmatched'] += 1
@@ -10004,13 +10019,17 @@ def _admission_shadow(events, signals, outdir):
             'matched': total,
             'unmatched': cats.get('UNMATCHED', 0),
             'coverage_pct': round(100.0 * total / len(signals or [1]), 1),
-            'coverage_note': 'класс: 1) sic_class в evidence 2) событие в окне 3) вычислен по title',
+            'coverage_note': 'иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; '
+                             '3) sic(title+summary) 4) sic(title) — SHADOW-приближение',
             'admission_pass_rate': round(100.0 * npass / total, 1) if total else None,
             'admission_deny_rate': round(100.0 * ndeny / total, 1) if total else None,
             'processes_without_fact': ndeny,
             'report_evidence_count': sum(r['report_count'] for r in report_log),
             'reports_boosting': len(report_log),
         },
+        'class_source': dict(src),
+        'truth_ratio_pct': round(100.0 * (src.get('evidence_sic', 0) + src.get('event_sic', 0))
+                                 / max(sum(src.values()), 1), 1),
         'domain_statistics': {k: dict(v) for k, v in domains.items()},
         'deny_impact': sorted(deny, key=lambda x: -(x['severity'] or 0))[:60],
         'report_log': report_log[:40],
