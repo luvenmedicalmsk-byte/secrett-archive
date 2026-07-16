@@ -220,7 +220,7 @@ _AGE_SHADOW = {}
 # всё же пройдёт (напр. «санкции против банков»), домен определит Canon → Санкционное
 # давление → geopolitics. Whitelist решает «строить ли событие», Canon — «какой домен»
 # (инвариант Layer Sufficiency).
-ECON_WHITELIST_CANARY = set()     # шаг 1: {'investfuture','russianmacro'}
+ECON_WHITELIST_CANARY = {'investfuture', 'russianmacro'}     # шаг 1: {'investfuture','russianmacro'}
 _ECON_TOPIC_HIT = {}              # телеметрия: сколько допущено тематическим словарём
 ECON_TOPIC = [
  # T1 Денежно-кредитная политика
