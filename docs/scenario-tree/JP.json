@@ -10,17 +10,26 @@
       "depth": 0
     },
     {
+      "id": "stress",
+      "label": "Stress Case",
+      "type": "stress",
+      "status": "active",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 30.0
+    },
+    {
       "id": "worst",
       "label": "Worst Case",
       "type": "worst",
       "status": "active",
       "parent": "ROOT",
       "depth": 1,
-      "prob": 39.0
+      "prob": 40.0
     },
     {
       "id": "ASE-ACC-11",
-      "label": "Сценарий ускорения (deceleration)",
+      "label": "Сценарий ускорения (acceleration)",
       "type": "acceleration",
       "status": "emerging",
       "parent": "ROOT",
@@ -37,6 +46,15 @@
       "prob": 18
     },
     {
+      "id": "ASE-CRIT-WORST",
+      "label": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 12
+    },
+    {
       "id": "best-RET",
       "label": "Best Case [устарел]",
       "type": "retired",
@@ -51,39 +69,32 @@
       "parent": "ROOT",
       "depth": 2,
       "prob": 0
-    },
-    {
-      "id": "stress-RET",
-      "label": "Stress Case [устарел]",
-      "type": "retired",
-      "parent": "ROOT",
-      "depth": 2,
-      "prob": 0
     }
   ],
   "convergences": [
     {
-      "scenario_a": "worst",
+      "scenario_a": "stress",
       "scenario_b": "acceleration",
-      "score_gap": 1,
-      "prob_gap": 4.0,
-      "label": "Сближение: Worst Case ↔ Сценарий ускорения (deceleration)"
-    }
-  ],
-  "divergences": [
-    {
-      "scenario_a": "worst",
-      "scenario_b": "escalation_branch",
-      "score_gap": 44,
-      "label": "Расхождение: Worst Case ↔ Ветвь эскалации: deteriorating"
+      "score_gap": 0,
+      "prob_gap": 5.0,
+      "label": "Сближение: Stress Case ↔ Сценарий ускорения (acceleration)"
     },
     {
-      "scenario_a": "acceleration",
-      "scenario_b": "escalation_branch",
-      "score_gap": 43,
-      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь эскалации: deteriorating"
+      "scenario_a": "worst",
+      "scenario_b": "acceleration",
+      "score_gap": 0,
+      "prob_gap": 5.0,
+      "label": "Сближение: Worst Case ↔ Сценарий ускорения (acceleration)"
+    },
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 5,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
     }
   ],
-  "active_count": 3,
-  "retired_count": 3
+  "divergences": [],
+  "active_count": 5,
+  "retired_count": 2
 }
