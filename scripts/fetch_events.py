@@ -9956,7 +9956,12 @@ SIC_UNVERIFIED_CANARY = True
 _SIC_UNVERIFIED = _re_sic.compile(r'('
   r'сообщают очевидц|очевидц\w+ сообщ|по словам очевидц|со слов очевидц|'
   r'по неподтвержд\w+|не подтвержд\w+|неподтвержд\w+ информац|'
-  r'\bякобы\b|предварительн\w+ данн|появилась информац|циркулир\w+ информац|'
+  # «якобы» УБРАНО: даёт 3 ложных из 4 — относится к ЧАСТИ утверждения, а не ко всему
+  # событию («Минфин наложил санкции на VPN, который ЯКОБЫ использовался хакерами» —
+  # санкции факт). Тот же класс, что «рубл»/«ставк»/«санкц»: голый корень без контекста.
+  # Оставлено только в связке с атрибуцией слуха.
+  r'якобы\s+(?:поражён|поражен|уничтожен|сбит|взорван|атакован|нанесён)|'
+  r'предварительн\w+ данн|появилась информац|циркулир\w+ информац|'
   r'пишут телеграм|сообщают телеграм|соцсети сообщ|местные жители сообщ|'
   # «слышны» в ЛЮБОЙ позиции: «Взрывы слышны в центре Дубая» И «Три взрыва были слышны
   # в Конараке» — порядок слов в русском свободный, к позиции не привязываемся.
@@ -10074,6 +10079,37 @@ def _sic_class(title, summary='', canon_type=None):
     if SIC_UNVERIFIED_CANARY and _SIC_UNVERIFIED.search(low) and not _SIC_VERIFIED.search(low):
         return 'COMMENTARY'
     return _base()
+
+
+# ═══ UNVERIFIED FEED GATE ═════════════════════════════════════════════════════
+# «Взрывы слышны в центре Дубая, — сообщают очевидцы» — взрывы НЕ подтвердились
+# официальными источниками. SIC_UNVERIFIED уже перевёл его в COMMENTARY (severity 75→55),
+# но событие осталось в ЛЕНТЕ: feed_visible ставится в конструкторе, задолго до SIC.
+# Непроверенный слух в оперативной ленте — это дезинформация в продукте.
+# ТЕПЕРЬ: непроверенное сообщение уходит из ленты (feed_visible=False), но ОСТАЁТСЯ
+# в данных, в Archive и в аналитическом контуре — §0 SPEC-013: право быть сохранённым
+# ≠ право влиять на модель. Если позже придёт подтверждение (минобороны/власти/МЧС),
+# новое событие пройдёт как EVENT штатно.
+# OFF (UNVERIFIED_FEED_GATE=False) → байт-идентично.
+UNVERIFIED_FEED_GATE = False
+
+
+def _unverified_feed_gate(events):
+    """Непроверенные сообщения — вне оперативной ленты. READ-ONLY для остальных."""
+    n = 0
+    for e in events:
+        low = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).strip().lower()
+        if not low:
+            continue
+        if _SIC_UNVERIFIED.search(low) and not _SIC_VERIFIED.search(low):
+            e['unverified'] = True
+            if e.get('feed_visible') is not False:
+                e['feed_visible'] = False
+                n += 1
+    if n:
+        print(f'  [UNVERIFIED] скрыто из ленты (не подтверждено офиц. источниками): {n}',
+              file=sys.stderr)
+    return n
 
 
 def _sic_shadow_pass(events):
@@ -10482,6 +10518,8 @@ def save_enriched(events, previous_snapshot=None):
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
+                if UNVERIFIED_FEED_GATE:   # непроверенное — вне ленты (остаётся в данных)
+                    _unverified_feed_gate(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
                 print('  [WARN] sic shadow fail: %s' % _se, file=sys.stderr)

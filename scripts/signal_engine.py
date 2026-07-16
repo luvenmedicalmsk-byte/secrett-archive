@@ -1378,6 +1378,55 @@ def _reconstruct_macro(signals, now):
         macro_out.append(macro)
     return signals + macro_out
 
+# ═══ SPEC-013 ADMISSION CANARY (Phase 2) ══════════════════════════════════════
+# Реализует Architecture-Overview §7 (Fact over Interpretation) и SPEC-013 §3.
+# ГЛАВНЫЙ ИНВАРИАНТ: если удалить из процесса все COMMENTARY/BACKGROUND/FEATURE и не
+# останется ни одного FACT_EVENT — процесса существовать не должно.
+# ОБЛАСТЬ: только РОЖДЕНИЕ процесса (created_new). Существующие процессы не затрагиваются —
+# это отдельный вопрос (SPEC-013 §8.1: lifecycle-decay, не удаление).
+# ПРАВИЛО 2 (§3): FACT_EVENT — необходимое, но НЕ достаточное условие. Цепочка
+# Admission → Canon → Severity → Process сохраняется; здесь добавлено только новое
+# необходимое условие в её начало.
+# STATE_CONFIRMATION (§2.1): SIC-класс PROCESS = «состояние продолжается», НЕ факт —
+# подтверждает существующий процесс, но не рождает новый.
+# OFF (ADMISSION_CANARY=set()) → байт-идентично.
+ADMISSION_CANARY = set()          # Phase 2: {'economy'}
+_ADM_DENIED = []                  # телеметрия: кого не пустили
+_ADM_FACT = {'EVENT'}             # FACT_EVENT (PROCESS → STATE_CONFIRMATION, не факт)
+
+
+def _adm_classes(sig):
+    """Распределение SIC-классов в evidence процесса (для телеметрии отказа)."""
+    from collections import Counter
+    c = Counter()
+    for e in (sig.get('evidence') or []):
+        c[e.get('sic_class') or 'unknown'] += 1
+    return dict(c)
+
+
+def _has_fact_event(sig):
+    """Есть ли в evidence хотя бы один FACT_EVENT (SPEC-013 §3, правило 1).
+    Fail-open: если sic_class нет ни у одного evidence — считаем, что факт есть.
+    Классифицировать здесь нельзя (нет _sic_class в signal_engine), а блокировать
+    рождение из-за отсутствия разметки — значит наказывать процесс за пробел телеметрии."""
+    ev = sig.get('evidence') or []
+    if not ev:
+        return True                       # нет evidence — не наше решение
+    known = [e for e in ev if e.get('sic_class')]
+    if not known:
+        return True                       # разметки нет → fail-open, не блокируем
+    return any(e.get('sic_class') in _ADM_FACT for e in known)
+
+
+def admission_report():
+    """Отчёт Canary: кого не пустили и почему."""
+    from collections import Counter
+    return {'canary_domains': sorted(ADMISSION_CANARY),
+            'denied_total': len(_ADM_DENIED),
+            'denied_by_domain': dict(Counter(d['domain'] for d in _ADM_DENIED)),
+            'denied': _ADM_DENIED[:40]}
+
+
 def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
@@ -1426,6 +1475,24 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 s['continuity']={'decision':'matched_by_identity',
                     'reason':'signal_id изменился (эволюция классификации), но identity_key совпал — история сохранена'}
             else:
+                # ═══ SPEC-013 ADMISSION CANARY — ТОЛЬКО ПРИ РОЖДЕНИИ ═══
+                # Правило применяется ИСКЛЮЧИТЕЛЬНО к новым процессам: существующие не
+                # трогаются вовсе. Так проверяется ровно один вопрос — «не рождаются ли
+                # ложные процессы?», без смешивания с вопросом «удалять ли старые».
+                # Инвариант SPEC-013: нет FACT_EVENT в evidence → процесса быть не должно.
+                # Замер 16.07: DENY economy 72% · social 64% · technology 47% ·
+                # geopolitics 34% · climate 18%. Канарейка — economy (макс. эффект, мин.
+                # риск: не кинетический домен). Отклонённая группа НЕ исчезает: события
+                # остаются в потоке и в Archive (§0 — право сохранить ≠ право изменить модель).
+                if ADMISSION_CANARY:
+                    _dom = (cur.get('domains') or [''])[0] or cur.get('primary_domain') or ''
+                    if _dom in ADMISSION_CANARY and not _has_fact_event(cur):
+                        _ADM_DENIED.append({'signal_id': sid, 'domain': _dom,
+                                            'title': (cur.get('title') or '')[:70],
+                                            'severity': cur.get('severity'),
+                                            'evidence_n': len(cur.get('evidence') or []),
+                                            'classes': _adm_classes(cur)})
+                        continue          # процесс НЕ рождается
                 n_created+=1
                 s=_seed_history(cur, now)
                 s['continuity']={'decision':'created_new','reason':'нет процесса с таким identity_key'}
