@@ -2,96 +2,96 @@
   "country": "CN",
   "country_name": "Китай",
   "date": "2026-07-16",
-  "generated_at": "2026-07-16T13:23:54.637254+00:00",
-  "strategy_score": 48,
-  "strategy_confidence": 74,
-  "urgency_level": "critical",
-  "urgency_level_ru": "Критическая",
-  "urgency_color": "#ef4444",
-  "preparedness_level": "emergency",
-  "preparedness_level_ru": "Чрезвычайная готовность",
-  "monitoring_priority": 4,
-  "monitoring_ru": "Ежечасно",
+  "generated_at": "2026-07-16T13:34:43.801673+00:00",
+  "strategy_score": 23,
+  "strategy_confidence": 75,
+  "urgency_level": "moderate",
+  "urgency_level_ru": "Умеренная",
+  "urgency_color": "#fbbf24",
+  "preparedness_level": "enhanced",
+  "preparedness_level_ru": "Повышенная готовность",
+  "monitoring_priority": 2,
+  "monitoring_ru": "Дважды в сутки",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "C-01",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
-      "expiry": "state transition",
-      "confidence": 70,
+      "action": "Ожидать деэскалации",
+      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
+      "trigger": "contained + best dominant",
+      "expiry": "state change or prob_best < 25%",
+      "confidence": 71,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
+      "id": "C-02",
       "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
-      "trigger": "always",
-      "expiry": "deescalation confirmed",
-      "confidence": 70,
+      "action": "Подготовить план выхода из контролируемой фазы",
+      "detail": "Определить индикаторы для перевода в мониторинговый режим",
+      "trigger": "contained > 5d",
+      "expiry": "stabilization transition",
+      "confidence": 71,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "critical",
+  "state": "contained",
   "dominant_scenario": "best",
-  "scenario_score": 27,
-  "instability": 40,
+  "scenario_score": 26,
+  "instability": 39,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 70 (+8pt)",
-      "leads_to": "cascade",
+      "condition": "risk_score ≥ 68 (+8pt)",
+      "leads_to": "escalating",
       "probability": 22
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "cascade",
+      "leads_to": "escalating",
       "probability": 20
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
-      "leads_to": "cascade",
+      "condition": "Worst-case 30d ≥ 76",
+      "leads_to": "escalating",
       "probability": 29
     },
     {
       "condition": "Новый критический драйвер в geopolitics",
-      "leads_to": "cascade",
+      "leads_to": "escalating",
       "probability": 20
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 86,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 55,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "90 дней",
-      "score": 76,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 48,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "180 дней",
-      "score": 67,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 42,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "365 дней",
-      "score": 59,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 37,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     }
   ],
   "probabilities": {
