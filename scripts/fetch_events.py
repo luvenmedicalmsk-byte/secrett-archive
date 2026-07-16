@@ -197,6 +197,17 @@ _PARSER_RECV = {}
 # ключ нашёлся бы. Телеметрия Phase 0 показала 857 потерь (11.6% входа) из-за длины —
 # нужно понять оптимум (200/400/600/full), а не менять вслепую. {канал: {окно: n}}
 _TRUNC_SHADOW = {}
+# ═══ PHASE 0.5 CANARY: окно анализа whitelist ═════════════════════════════════
+# Shadow-замер (7400 сообщений) дал точку перегиба: 200→400 даёт +288 (144 события на
+# 100 симв), 400→600 ещё +169 (85/100), дальше отдача падает до 40 и 19. При 600 берём
+# 53% всего доступного выигрыша (+457 built, +70%), оставаясь близко к началу поста —
+# чем дальше, тем выше риск поймать ключ в чужом контексте (обзор дня, реклама в конце).
+# ВАЖНО: окно расширяется ТОЛЬКО для РАЗРЕШАЮЩИХ фильтров (whitelist SOCIAL/TECH/ECON).
+# БЛОКИРУЮЩИЕ (DD_BLOCK, recovery) остаются на 200 — их расширение = ужесточение, это
+# противоположный эффект, и смешивать их в одном эксперименте нельзя.
+# OFF → окно 200 → поведение байт-идентично.
+PARSER_TEXT600_CANARY = False
+_PARSER_TW = 600 if PARSER_TEXT600_CANARY else 200
 
 
 def _parser_coverage_report(_c2, raw_items, events, top_events):
@@ -242,7 +253,9 @@ def _parser_coverage_report(_c2, raw_items, events, top_events):
         for k, v in r.items(): reasons[k] += v
     recv_tot = sum(_PARSER_RECV.values()); rej_tot = sum(reasons.values())
     return {
-        'note': 'Phase 0 — только наблюдение; логика фильтрации не менялась',
+        'note': 'Phase 0 — наблюдение; Phase 0.5 — окно whitelist за флагом',
+        'text_window': _PARSER_TW,
+        'text600_canary': PARSER_TEXT600_CANARY,
         'funnel': {'received': recv_tot, 'parser_reject': rej_tot,
                    'to_raw_items': recv_tot - rej_tot, 'built': len(events),
                    'exported': len(top_events),
@@ -5971,14 +5984,15 @@ def fetch_telegram():
         text = (text or '').strip()
         if len(text) < 20:
             _prej(ch, 'malformed_short'); return None
-        tl = text[:200].lower()
+        tl = text[:200].lower()                 # БЛОКИРУЮЩИЕ фильтры (DD_BLOCK/recovery) — окно не меняем
+        tlw = text[:_PARSER_TW].lower()         # РАЗРЕШАЮЩИЕ (whitelist) — Phase 0.5 canary
         _tf = text.lower()                      # только для телеметрии, на решения не влияет
         if ch in DD_SRC:
             if any(w in tl for w in DD_BLOCK):
                 _prej(ch, 'advertisement'); return None   # блок игр/стримов/VK-видео
             if any(w in tl for w in ('в норме','восстановлен','работают штатно','работает штатно','устранен','нормализова','всё работает','все работает','сбой устранён','проблема решена')):
                 _prej(ch, 'recovery_not_incident'); return None   # recovery -- не активный сбой
-        is_srisk = any(k in tl for k in SOCIAL_RISK_KW) or any(a in tl and b in tl for a,b in SOCIAL_RISK_PAIRS)
+        is_srisk = any(k in tlw for k in SOCIAL_RISK_KW) or any(a in tlw and b in tlw for a,b in SOCIAL_RISK_PAIRS)
         if ch in SOCIAL_SRC:
             if not is_srisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, SOCIAL_RISK_KW, SOCIAL_RISK_PAIRS) else 'keyword_missing')
@@ -5986,14 +6000,14 @@ def fetch_telegram():
                 return None
             _d = 'social'
         elif ch in TECH_SRC:
-            is_trisk = any(k in tl for k in TECH_RISK_KW) or any(a in tl and b in tl for a,b in TECH_RISK_PAIRS)
+            is_trisk = any(k in tlw for k in TECH_RISK_KW) or any(a in tlw and b in tlw for a,b in TECH_RISK_PAIRS)
             if ch not in TECH_PURE and not is_trisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, TECH_RISK_KW, TECH_RISK_PAIRS) else 'keyword_missing')
                 _kw_window(_tf, TECH_RISK_KW, TECH_RISK_PAIRS, ch)       # Phase 0.5 shadow
                 return None        # тех-источник: только риск/инцидент (чистые каналы — байпас)
             _d = 'social' if is_srisk else 'technology'
         elif ch in ECON_SRC:
-            is_erisk = any(k in tl for k in ECON_RISK_KW) or any(a in tl and b in tl for a,b in ECON_RISK_PAIRS)
+            is_erisk = any(k in tlw for k in ECON_RISK_KW) or any(a in tlw and b in tlw for a,b in ECON_RISK_PAIRS)
             if not is_erisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, ECON_RISK_KW, ECON_RISK_PAIRS) else 'keyword_missing')
                 _kw_window(_tf, ECON_RISK_KW, ECON_RISK_PAIRS, ch)       # Phase 0.5 shadow
