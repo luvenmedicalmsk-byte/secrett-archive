@@ -2939,6 +2939,11 @@ def process_events(raw_items):
             "source": item['source'],
             "source_weight": _gov.get('weight', 1.0),
             "date": item['date'],
+            # SEVERITY_CANON_ROUTE: маркер маршрута severity. _severity_for ставит его в
+            # RAW item, а событие собирается в НОВЫЙ dict — без переноса маркер терялся
+            # (_sev_route=None у всех 181 событий) и recheck после canon не срабатывал.
+            "_sev_route": item.get('_sev_route'),
+            "source_bias": item.get('source_bias', 0),
             "feed_visible": (not _below_feed) and not _hide_local,   # FREE-лента: только сильные; локальные ЧП на ферме скрыты
         }
         if item.get('_meta'): _ev["meta"] = item['_meta']
