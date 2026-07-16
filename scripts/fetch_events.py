@@ -206,7 +206,7 @@ _TRUNC_SHADOW = {}
 # БЛОКИРУЮЩИЕ (DD_BLOCK, recovery) остаются на 200 — их расширение = ужесточение, это
 # противоположный эффект, и смешивать их в одном эксперименте нельзя.
 # OFF → окно 200 → поведение байт-идентично.
-PARSER_TEXT600_CANARY = False
+PARSER_TEXT600_CANARY = True
 _PARSER_TW = 600 if PARSER_TEXT600_CANARY else 200
 
 
