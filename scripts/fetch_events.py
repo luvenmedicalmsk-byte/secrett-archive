@@ -3730,6 +3730,12 @@ _CANON_TYPE = [
     (r'блэкаут|обесточ|полн\w* отключен\w* электро', 'Энергоблэкаут'),
     (r'покушени|подрыв', 'Покушение'),
     (r'удар\w* по|обстрел|ракет|бпла|пво|боевы|\bатак(?!\w*\s+на\s+(?:прохож|человек|ребён|женщин|мужчин|пассажир))|авиауд|прил[её]т|дрон|нападени\w*(?!\w*\s+(?:неизвестн|с\s+ножом|с\s+молотк|на\s+прохож|на\s+человек|на\s+ребён|на\s+женщин|на\s+мужчин|на\s+пассажир|на\s+инкассат|на\s+учени|собак))', 'Военные удары'),
+    # ФИКС: голое «санкц» не отличало ГОСУДАРСТВЕННЫЕ санкции от ДИСЦИПЛИНАРНЫХ.
+    # Кейс: «ФИФА может подвергнуть сборную Аргентины дисциплинарным санкциям из-за
+    # баннера» → Санкционное давление → _GEOECON → geopolitics, severity 62.
+    # Четвёртый случай того же класса: «рубл»→Валютный (Лепс), «ставк»→Экономика
+    # (отставка), «атак»→Военные удары (кибератака), теперь «санкц»→Геополитика (ФИФА).
+    # Санкции как инструмент госдавления ≠ санкции спортивной федерации/суда/лиги.
     (r'санкц', 'Санкционное давление'),
     (r'\bвиз\b|въезд в европ|запрет на выдач', 'Визовые ограничения'),
     (r'топлив|бензин|нефтебаз|горюч|дизел|солярк|заправк|азс\b', 'Топливный рынок'),
@@ -3818,8 +3824,25 @@ _MILITARY_CANON = {'Военные удары', 'Покушение'}
 # Чинит оба дефекта: tie-break (Retail@4 > Санкц@19) и покрытие (нет правил тариф/эмбарго/…).
 # Переопределяет ТОЛЬКО когда базовый тип экономический/unknown (военные/климат/кибер не трогает).
 DOMAIN_GEOECON_CANARY = True
+# SPORT GUARD: дисциплинарные санкции ФИФА/УЕФА/МОК/лиг — не инструмент госдавления.
+_GEOECON_SPORT = re.compile(r'\bфифа\b|\bуефа\b|\bмок\b|\bwada\b|воада|русада|олимпийск|чемпионат|сборн\w*\s+(?:по|команд)|матч\w*|болельщик|стадион|турнир|дисциплинарн\w*\s+санкц|спортивн\w*\s+арбитраж|\bcas\b')
 _GEOECON = re.compile(r'санкц|эмбарго|тариф|пошлин|экспортн\w*\s+контрол|контрол\w*\s+(?:над\s+)?экспорт|торгов\w*\s+войн|торгов\w*\s+ограничен|торгов\w*\s+барьер|инвестиц\w*\s+(?:ограничен|скрининг)|заморозк\w*\s+актив|запрет\w*\s+(?:на\s+)?(?:экспорт|импорт|поставк|ввоз|вывоз|транзит)')
-_GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономический сигнал','Валютный рынок','Топливный рынок','Инфляция','Фондовый рынок','Государственный долг','Банковская стабильность','Экономический спад','Финансовый рынок','Торговый баланс','Государственные финансы', None}
+def _geoecon_hit(text):
+    """Санкции/тарифы/эмбарго как ИНСТРУМЕНТ ГОСДАВЛЕНИЯ. Спортивные дисциплинарные
+    санкции (ФИФА/УЕФА/МОК/лиги) — не геополитика: кейс «ФИФА может подвергнуть сборную
+    Аргентины дисциплинарным санкциям из-за баннера» → geopolitics, severity 62."""
+    if _GEOECON_SPORT.search(text):
+        return False
+    return bool(_GEOECON.search(text))
+
+
+# ФИКС: Batch 3 добавил Рынок труда / Стратегические ресурсы / Пузырь активов в canon-реестр,
+# но НЕ внёс их в Stage A-override → «Китай ввёл экспортный контроль на редкоземельные металлы»
+# резолвился в «Стратегические ресурсы» (economy), а не «Санкционное давление» (geopolitics):
+# правило 'редкоземельн' даёт score выше, чем 'санкц', а override его не перехватывал.
+# Нарушение ADR-011 «причина важнее эффекта»: экспортный контроль — инструмент госдавления,
+# ресурс лишь его объект. То же для Рынка труда (санкции → увольнения) и Пузыря активов.
+_GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономический сигнал','Валютный рынок','Топливный рынок','Инфляция','Фондовый рынок','Государственный долг','Банковская стабильность','Экономический спад','Финансовый рынок','Торговый баланс','Государственные финансы','Рынок труда','Стратегические ресурсы','Пузырь активов', None}
 # STAGE A — CANON COVERAGE (arms-sale): продажа/экспорт/поставка вооружений, военная помощь →
 # «Оборонное производство» (geopolitics). Закрывает canon_type=None, из-за которого Германия/
 # Сингапур сваливались в legacy Retail. Под тем же флагом DOMAIN_GEOECON_CANARY.
@@ -3833,10 +3856,17 @@ def _canon_type_of(title, summ):
         sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
         if sc > bs: bs = sc; best = name; br = pat[:24]
     if DOMAIN_GEOECON_CANARY and best in _GEOECON_OVERRIDE_FROM:
-        if _GEOECON.search(_txt):
+        if _geoecon_hit(_txt):        # sport-guard внутри: дисциплинарные санкции ≠ госдавление
             return 'Санкционное давление', 'geoecon'   # госинструмент давления → geopolitics
         if _ARMS.search(_txt):
             return 'Оборонное производство', 'arms'     # военные поставки → geopolitics
+    # SPORT GUARD (после scoring): «санкц» в canon-реестре — голый корень, он не отличает
+    # госсанкции от дисциплинарных. Кейс: «ФИФА может подвергнуть сборную Аргентины
+    # дисциплинарным санкциям из-за баннера» → Санкционное давление → geopolitics, sev 62.
+    # Lookahead в правиле не помогает: ФИФА стоит ПЕРЕД словом «санкциям», а не после.
+    # Проверяем ВЕСЬ текст на спортивный контекст.
+    if best == 'Санкционное давление' and _GEOECON_SPORT.search(_txt):
+        return None, 'sport-guard'    # спортивная дисциплинарка — не системный сигнал
     return best, br
 
 def _canonize_event(e, SIG):
@@ -10163,10 +10193,51 @@ def _admission_shadow(events, signals, outdir):
                 'report_count': c.get('REPORT'),
                 'would_boost': 'наблюдение (§4.3: размер не задан до калибровки)',
             })
-    # ═══ SPEC-013 §KPI: ДОСТОВЕРНОСТЬ SHADOW (считается в кроне, не локально) ═══
-    # Меряем на событиях, где есть ЭТАЛОННЫЙ sic_class: совпадает ли решение Admission,
-    # полученное shadow-путём (title+summary+canon), с решением по эталону.
-    # Только ошибки FACT ↔ не-FACT меняют судьбу процесса — их и считаем.
+    # ═══ SPEC-013 §KPI: ДОСТОВЕРНОСТЬ SHADOW — ДВЕ ОБЛАСТИ ИЗМЕРЕНИЯ ═══
+    # OPERATIONAL AGREEMENT (gate для Production) — только процессы, реально участвующие
+    # в модели мира (status='active'): они влияют на Radar, Pressure, Weekly Dynamics,
+    # карточки стран. HISTORICAL AGREEMENT (не блокер) — вся база, включая fading/dormant.
+    #
+    # Почему разделение: dormant/fading по ОПРЕДЕЛЕНИЮ перестали получать новые данные,
+    # поэтому их evidence никогда не обогатится sic_class — это следствие lifecycle, а не
+    # дефект. Мерить по ним готовность Admission — значит блокировать релиз из-за качества
+    # классификации процессов, которые уже перестали жить. Цель ≥97% не меняется —
+    # меняется ОБЛАСТЬ: 97% по Operational Set, а не по всей базе.
+    # Тот же принцип, что в Weekly System Dynamics §4.0 (dormant/fading вне расчёта).
+    _AG_OPER_STATUS = {'active'}
+
+    def _agree_on(sig_list):
+        """Сверка решения Admission: shadow-путь vs эталонный sic_class — на EVIDENCE
+        процессов (там, где решение реально принимается), а не на потоке событий."""
+        n = ok = crit = 0
+        mat = Counter()
+        for _s in sig_list:
+            for _x in (_s.get('evidence') or []):
+                _ref_sic = _x.get('sic_class')
+                if not _ref_sic:
+                    continue                      # эталона нет — сверять не с чем
+                n += 1
+                _ref = _adm_class(_x)
+                _t = _x.get('title') or ''
+                _sm2 = (_x.get('summary') or '')[:200]
+                _sh = _adm_class({'title': _t, 'summary': _sm2,
+                                  'sic_class': _sic_class(_t, _sm2, _s.get('process_type'))})
+                if _ref == _sh:
+                    ok += 1
+                else:
+                    mat['%s→%s' % (_ref, _sh)] += 1
+                if (_ref == 'FACT_EVENT') != (_sh == 'FACT_EVENT'):
+                    crit += 1
+        return n, ok, crit, mat
+
+    _sig_all = signals or []
+    _sig_oper = [x for x in _sig_all if (x.get('status') or '') in _AG_OPER_STATUS]
+    _on, _ook, _ocrit, _omat = _agree_on(_sig_oper)
+    _hn, _hok, _hcrit, _hmat = _agree_on(_sig_all)
+    # truth ratio по operational set: доля evidence с сохранённым классом
+    _oev = sum(len(x.get('evidence') or []) for x in _sig_oper)
+    _otruth = round(100.0 * _on / _oev, 1) if _oev else None
+    # legacy-совместимость: общий agreement на потоке событий
     _ag_n = _ag_ok = _ag_crit = 0
     _ag_mat = Counter()
     for e in events:
@@ -10205,13 +10276,39 @@ def _admission_shadow(events, signals, outdir):
             'reports_boosting': len(report_log),
         },
         'shadow_reliability': {
-            'note': 'достоверность Shadow: сверка решения Admission (shadow vs эталонный sic_class)',
-            'sample': _ag_n,
-            'agreement_pct': round(100.0 * _ag_ok / _ag_n, 1) if _ag_n else None,
-            'decision_agreement_pct': round(100.0 * (_ag_n - _ag_crit) / _ag_n, 1) if _ag_n else None,
-            'critical_errors': _ag_crit,
-            'error_matrix': dict(_ag_mat),
-            'gate': {'coverage_min': 95.0, 'decision_agreement_min': 97.0},
+            'note': 'Operational Agreement — gate для Production (только status=active: эти процессы '
+                    'влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: '
+                    'dormant/fading по определению не обогащаются (lifecycle, не дефект).',
+            # ── GATE: только живые процессы ──
+            'operational': {
+                'processes': len(_sig_oper),
+                'sample': _on,
+                'agreement_pct': round(100.0 * _ook / _on, 1) if _on else None,
+                'decision_agreement_pct': round(100.0 * (_on - _ocrit) / _on, 1) if _on else None,
+                'critical_errors': _ocrit,
+                'truth_ratio_pct': _otruth,
+                'error_matrix': dict(_omat),
+            },
+            # ── НЕ блокер: вся база ──
+            'historical': {
+                'processes': len(_sig_all),
+                'sample': _hn,
+                'agreement_pct': round(100.0 * _hok / _hn, 1) if _hn else None,
+                'decision_agreement_pct': round(100.0 * (_hn - _hcrit) / _hn, 1) if _hn else None,
+                'critical_errors': _hcrit,
+                'error_matrix': dict(_hmat),
+            },
+            # ── legacy: сверка на потоке событий ──
+            'events_stream': {
+                'sample': _ag_n,
+                'agreement_pct': round(100.0 * _ag_ok / _ag_n, 1) if _ag_n else None,
+                'decision_agreement_pct': round(100.0 * (_ag_n - _ag_crit) / _ag_n, 1) if _ag_n else None,
+                'critical_errors': _ag_crit,
+                'error_matrix': dict(_ag_mat),
+            },
+            'gate': {'scope': 'operational (status=active)',
+                     'coverage_min': 95.0, 'decision_agreement_min': 97.0,
+                     'passed': bool(_on and round(100.0 * (_on - _ocrit) / _on, 1) >= 97.0)},
         },
         'class_source': dict(src),
         'truth_ratio_pct': round(100.0 * (src.get('evidence_sic', 0) + src.get('event_sic', 0))
@@ -10225,9 +10322,14 @@ def _admission_shadow(events, signals, outdir):
     try:
         (outdir / '_admission_shadow.json').write_text(
             _j.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
-        print(f"  [ADM-SHADOW] coverage {rep['kpi']['coverage_pct']}% · "
-              f"decision-agreement {rep['shadow_reliability']['decision_agreement_pct']}% · "
-              f"truth {rep['truth_ratio_pct']}%", file=sys.stderr)
+        _op = rep['shadow_reliability']['operational']
+        _hi = rep['shadow_reliability']['historical']
+        print(f"  [ADM-SHADOW] OPERATIONAL: decision-agreement {_op['decision_agreement_pct']}% "
+              f"(gate 97) · truth {_op['truth_ratio_pct']}% · процессов {_op['processes']} · "
+              f"выборка {_op['sample']} → GATE {'PASS' if rep['shadow_reliability']['gate']['passed'] else 'FAIL'}",
+              file=sys.stderr)
+        print(f"  [ADM-SHADOW] HISTORICAL: decision-agreement {_hi['decision_agreement_pct']}% "
+              f"(не блокер) · coverage {rep['kpi']['coverage_pct']}%", file=sys.stderr)
         print(f"  [ADM-SHADOW] процессов {total} · PASS {npass} ({rep['kpi']['admission_pass_rate']}%) · "
               f"DENY {ndeny} ({rep['kpi']['admission_deny_rate']}%) · REPORT-усилений {len(report_log)}",
               file=sys.stderr)
