@@ -204,6 +204,70 @@ _TRUNC_SHADOW = {}
 # архива (лишнее, всё в old). Измеряем возраст постов по каждому каналу.
 # {канал: [возраст в днях, ...]}
 _AGE_SHADOW = {}
+
+# ═══ ECONOMY WHITELIST v1 — CANARY (узкий эксперимент) ════════════════════════
+# Цепочка узких мест разматывалась по одному:
+#   ① text[:200] → [:600]  ✅ (parser_reject −462)
+#   ② limit=200 → по дате  ✅ (Fresh Coverage 99%, архив не тянется)
+#   ③ ECON_RISK_KW         ← ЭТОТ БАРЬЕР: шаг 1 Fetch дал economy РОВНО НОЛЬ новых событий
+#      (investfuture built 6→6, russianmacro 3→3) — свежие сообщения приходят, но словарь
+#      КРИЗИСНЫХ слов их не пропускает: решение ЦБ/бюджет/рынки для него не существуют.
+# ГИПОТЕЗА: заменить кризисный словарь тематическим → появятся реальные эконом-события.
+# ЧИСТОТА ЭКСПЕРИМЕНТА: Fetch уже доказан, каналы те же, Canon/Severity/Feed не меняются —
+# меняется РОВНО ОДИН барьер, поэтому эффект атрибутируется однозначно.
+# ГРАНИЦА (Stage A / ADR-011 «причина важнее эффекта»): война, санкции, эмбарго, тарифы,
+# экспортный контроль В СЛОВАРЬ НЕ ВХОДЯТ — их природа геополитическая. Если такое сообщение
+# всё же пройдёт (напр. «санкции против банков»), домен определит Canon → Санкционное
+# давление → geopolitics. Whitelist решает «строить ли событие», Canon — «какой домен»
+# (инвариант Layer Sufficiency).
+ECON_WHITELIST_CANARY = set()     # шаг 1: {'investfuture','russianmacro'}
+_ECON_TOPIC_HIT = {}              # телеметрия: сколько допущено тематическим словарём
+ECON_TOPIC = [
+ # T1 Денежно-кредитная политика
+ r'центральн\w*\s+банк|\bцб\b|банк\s+росси|\bфрс\b|\bецб\b|\becb\b|\bboe\b|\bboj\b',
+ r'ключев\w*\s+ставк|процентн\w*\s+ставк|учётн\w*\s+ставк|денежно-кредитн|дкп\b',
+ r'смягчени\w*\s+(?:дкп|政策|политик)|ужесточени\w*\s+(?:дкп|политик)',
+ # T2 Банковская система
+ # «банк» требует финансового контекста: одиночное \bбанк\b ловило «банка сгущёнки».
+ r'банковск\w*|\bбанк\w*\s+(?:росси|втб|сбер|цб|выдал|снизил|повысил|отчит|лиценз|кредит|вклад|депозит)|(?:цб|минфин|фрс|регулятор)\w*\s+.{0,30}\bбанк|\bбанк(?:ов|ам|и|у)\b',
+ r'ликвидност|капитализац|санаци|стресс-тест|отзыв\w*\s+лицензи|банкротств\w*\s+банк',
+ # T3 Государственные финансы
+ r'бюджет|дефицит\s+бюджет|профицит\s+бюджет|госдолг|государственн\w*\s+долг',
+ r'казначейств|\bофз\b|гособлигац|\btreasury\b|\bбонд\w*\b',
+ # T4 Финансовые рынки
+ r'\bиндекс\w*\s+(?:мосбирж|ртс|s&p|nasdaq|dow|ftse|nikkei|dax)|мосбирж|фондов\w*\s+(?:рынок|бирж|индекс)',
+ r'\bбирж\w*\b|\bnasdaq\b|s&p\s*500|\bdow\b|\betf\b|котировк|волатильност',
+ r'\bакци\w*\b(?!\w*\s*(?:протест|неповинов|солидарн|устрашен))',
+ # T5 Валюта
+ r'валютн\w*\s+рынок|девальвац|ревальвац|\bfx\b|курс\w*\s+(?:рубл|доллар|евро|юан|валют)',
+ r'(?:рубл|доллар|евро|юан)\w*\s+(?:упал|вырос|укрепил|ослаб|обвал|подорожал|подешевел)',
+ # T6 Макроэкономика
+ r'\bввп\b|инфляц|дефляц|рецесси|стагнац|стагфляц|безработиц|рынок\s+труда',
+ r'производительност\w*\s+труда|делов\w*\s+активност|\bpmi\b|макроэконом',
+ # T7 Налоги и регулирование
+ r'\bналог\w*\b|\bндс\b|\bндфл\b|акциз|\bпошлин\w*\b(?!\w)|таможн',
+ r'финансов\w*\s+регулирован|лицензирован\w*\s+(?:банк|финанс|бирж)',
+ # T8 Корпоративный сектор
+ r'дивиденд|выручк|чист\w*\s+прибыл|убыток|банкротств\w*\s+(?:компани|застройщик|перевозчик)',
+ r'реструктуризац|слияни\w*\s+и\s+поглощен|\bm&a\b|\bipo\b',
+ # T9 Сырьевые рынки
+ # «газ» одиночный УБРАН: ловил «Газы»/«Газе» (сектор Газа) — guard (?<!газа) не спасает,
+ # т.к. формы неразличимы по строке. Оставлены однозначные ресурсные формы.
+ r'\bнефт\w*\b|\bспг\b|\bгазов\w*\b|газпром|природн\w*\s+газ|\bлити[йя]\b|\bмед[ьи]\b|\bуран\w*\b',
+ r'редкоземельн|\bзерн\w*\b|\bметалл\w*\b|сырьев\w*\s+рынок',
+ # T10 Криптоэкономика
+ r'\bbitcoin\b|\bbtc\b|\bethereum\b|\beth\b|стейблкоин|майнинг|криптовалют|\bкрипт\w*\b|биткоин|эфириум',
+]
+_ECON_TOPIC_RX = [re.compile(p, re.I) for p in ECON_TOPIC]
+
+
+def _econ_topic_hit(text):
+    """ECONOMY WHITELIST v1: тематический словарь (10 тиров) вместо кризисного."""
+    for _rx in _ECON_TOPIC_RX:
+        if _rx.search(text):
+            return True
+    return False
+
 # ═══ ADAPTIVE FETCH POLICY v1 — CANARY (SPEC: docs/adr/spec/Adaptive-Fetch-Policy-Spec-v1.md)
 # Phase 0.6 доказала: iter_messages(limit=200) читает ПО КОЛИЧЕСТВУ → две ошибки сразу.
 # Быстрые: bbbreaking/ctinow видят 2.6-2.7 дн при политике technology=14 → Fresh Coverage 19%.
@@ -282,6 +346,7 @@ def _parser_coverage_report(_c2, raw_items, events, top_events):
                    'feed': sum(1 for e in top_events if e.get('feed_visible'))},
         'parser_reject_total': dict(reasons),
         'text_truncated_cost': reasons.get('text_truncated', 0),
+        'econ_whitelist_canary': {'channels': sorted(ECON_WHITELIST_CANARY), 'topic_hits': dict(_ECON_TOPIC_HIT)},
         'text_window_shadow': _trunc_shadow_report(_c2),
         'freshness': _freshness_report(),
         'by_source': by_source,
@@ -6077,6 +6142,11 @@ def fetch_telegram():
             _d = 'social' if is_srisk else 'technology'
         elif ch in ECON_SRC:
             is_erisk = any(k in tlw for k in ECON_RISK_KW) or any(a in tlw and b in tlw for a,b in ECON_RISK_PAIRS)
+            # ECONOMY WHITELIST v1 CANARY: для canary-каналов кризисный словарь дополняется
+            # тематическим (10 тиров). Прочие каналы — прежнее поведение, байт-идентично.
+            if not is_erisk and ch in ECON_WHITELIST_CANARY and _econ_topic_hit(tlw):
+                is_erisk = True
+                _ECON_TOPIC_HIT[ch] = _ECON_TOPIC_HIT.get(ch, 0) + 1
             if not is_erisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, ECON_RISK_KW, ECON_RISK_PAIRS) else 'keyword_missing')
                 _kw_window(_tf, ECON_RISK_KW, ECON_RISK_PAIRS, ch)       # Phase 0.5 shadow
