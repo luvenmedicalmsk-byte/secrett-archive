@@ -10191,7 +10191,7 @@ def save_enriched(events, previous_snapshot=None):
                     # Альтернативная реальность правила Admission по УЖЕ ПОСТРОЕННЫМ процессам.
                     # Ничего не меняет: Process Builder отработал как обычно.
                     try:
-                        _sg_now = json.loads(_sig_path.read_text(encoding='utf-8')).get('signals', [])
+                        _sg_now = json.load(open(_sig_path, encoding='utf-8')).get('signals', [])   # _sig_path — str, не Path
                         _admission_shadow(enriched["events"], _sg_now, OUTPUT_PATH.parent)
                     except Exception as _ase:
                         print(f"  [ADM-SHADOW] skip: {_ase}", file=sys.stderr)
