@@ -1,15 +1,34 @@
 {
   "country": "MY",
   "country_name": "Малайзия",
-  "date": "2026-07-15",
-  "generated_at": "2026-07-15T23:32:50.952525+00:00",
-  "optimization_score": 44,
-  "grade": "F",
-  "grade_ru": "Требует рекалибровки",
-  "decision_score_base": 45,
-  "predicted_next_score": 39,
-  "optimization_gain": -6.4,
-  "high_alpha_actions": [],
+  "date": "2026-07-16",
+  "generated_at": "2026-07-16T00:22:56.155532+00:00",
+  "optimization_score": 61,
+  "grade": "C",
+  "grade_ru": "Умеренная",
+  "decision_score_base": 49,
+  "predicted_next_score": 40,
+  "optimization_gain": -8.9,
+  "high_alpha_actions": [
+    {
+      "action_id": "C-01",
+      "sample_count": 1,
+      "win_rate": 100.0,
+      "avg_alpha": 15.0,
+      "avg_efficiency": 100.0,
+      "action_score": 115,
+      "recommendation": "increase_weight"
+    },
+    {
+      "action_id": "C-02",
+      "sample_count": 1,
+      "win_rate": 100.0,
+      "avg_alpha": 15.0,
+      "avg_efficiency": 100.0,
+      "action_score": 115,
+      "recommendation": "increase_weight"
+    }
+  ],
   "underperforming": [
     {
       "action_id": "S-01",
@@ -109,16 +128,44 @@
         "adjustment": "reduce",
         "factor": 0.7,
         "reason": "низкий effectiveness (0); отрицательная альфа (-21.00); win_rate 0%"
+      },
+      {
+        "action_id": "C-01",
+        "adjustment": "boost",
+        "factor": 1.2,
+        "reason": "high alpha +15.00, win 100%"
+      },
+      {
+        "action_id": "C-02",
+        "adjustment": "boost",
+        "factor": 1.2,
+        "reason": "high alpha +15.00, win 100%"
       }
     ],
     "bias_penalty": 0.0,
     "confidence_recal": 0,
     "urgency_adjustment": "neutral",
     "urgency_factor": 1.0,
-    "n_boosted": 0,
+    "n_boosted": 2,
     "n_reduced": 5
   },
   "adjusted_actions": [
+    {
+      "action_id": "C-01",
+      "original_score": 115,
+      "adjusted_score": 100,
+      "factor": 1.2,
+      "win_rate": 100.0,
+      "avg_alpha": 15.0
+    },
+    {
+      "action_id": "C-02",
+      "original_score": 115,
+      "adjusted_score": 100,
+      "factor": 1.2,
+      "win_rate": 100.0,
+      "avg_alpha": 15.0
+    },
     {
       "action_id": "S-01",
       "original_score": 53,
@@ -163,27 +210,40 @@
   "confidence_target": 65,
   "urgency_adjustment": "neutral",
   "stability_index": 100,
-  "alpha_score": 4,
-  "win_rate": 71.4,
-  "rr_score": 36,
-  "opp_score": 50,
-  "diagnostics": [],
-  "diagnostic_count": 0,
+  "alpha_score": 29,
+  "win_rate": 75.0,
+  "rr_score": 42,
+  "opp_score": 100,
+  "diagnostics": [
+    {
+      "type": "overfitting_risk",
+      "label": "Риск переобучения",
+      "severity": "medium",
+      "detail": "2 boost с малой выборкой (n<5) — нестабильная оценка"
+    },
+    {
+      "type": "strategy_decay",
+      "label": "Деградация стратегии",
+      "severity": "high",
+      "detail": "Feedback success rate 12% — стратегия деградирует"
+    }
+  ],
+  "diagnostic_count": 2,
   "conf_drift": 0,
   "fb_grade": "unreliable",
   "hv_score": 50,
-  "n_actions": 5,
-  "history_depth": 37,
+  "n_actions": 7,
+  "history_depth": 38,
   "evolution_record": {
-    "date": "2026-07-15",
-    "optimization_score": 44,
-    "grade": "F",
-    "decision_score": 45,
-    "opt_gain": -6.4,
-    "alpha_mean": -4.57,
-    "win_rate": 71.4,
+    "date": "2026-07-16",
+    "optimization_score": 61,
+    "grade": "C",
+    "decision_score": 49,
+    "opt_gain": -8.9,
+    "alpha_mean": -2.12,
+    "win_rate": 75.0,
     "stability": 100,
-    "n_boosted": 0,
+    "n_boosted": 2,
     "n_reduced": 5,
     "bias_count": 0
   }
