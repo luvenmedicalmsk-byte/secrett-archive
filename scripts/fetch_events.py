@@ -9853,6 +9853,146 @@ def _sic_shadow_pass(events):
                                     e.get('canon_type'))
 
 
+# ═══ SPEC-013 PHASE 1 — ADMISSION SHADOW (READ-ONLY) ══════════════════════════
+# Отвечает на один вопрос: ЧТО ИЗМЕНИЛОСЬ БЫ, если бы правило Admission уже
+# существовало? Process Builder НЕ меняется — считается альтернативная реальность.
+# Инвариант SPEC-013: если удалить из процесса все COMMENTARY/BACKGROUND/FEATURE и
+# не останется ни одного FACT_EVENT — процесса существовать не должно.
+# Таксономия (§2): FACT_EVENT создаёт · STATE_CONFIRMATION подтверждает ·
+# REPORT усиливает · COMMENTARY/BACKGROUND/FEATURE — только evidence.
+
+# REPORT определяется ПО СМЫСЛУ (§4.1): институциональная публикация о СОСТОЯНИИ
+# системы, а не новое наблюдаемое событие. Список организаций — иллюстрация, не критерий.
+# ВАЖНО (§4.1): институт должен быть СУБЪЕКТОМ публикации, а не упоминанием.
+# «ОПЕК понизила прогноз» → REPORT; «чиновник Всемирного банка предупреждает» → COMMENTARY
+# (мнение человека); «Пентагон заблокировал публикацию» → не REPORT (это действие).
+_REPORT_HUMAN = _re_sic.compile(
+    r'(?:чиновник|эксперт|представит|аналитик|экономист|глава|бывш\w*|источник|советник)\w*\s+'
+    r'(?:\w+\s+){0,2}(?:банк|фонд|мвф|опек|оэср|агентств)', _re_sic.I)
+_REPORT_RX = _re_sic.compile(
+    # 1) институт как субъект + действие публикации
+    r'(?:опек|opec|мэа|iea|мвф|imf|оэср|oecd|всемирн\w*\s+банк|world\s+bank|fitch|moody|s&p\s+global|'
+    r'росстат|цб|минфин|банк\s+росси)\w*\s+(?:\w+\s+){0,2}'
+    r'(?:понизил|повысил|снизил|улучшил|ухудшил|опубликов|сообщ|отч[ие]т|представил|оценил|прогнозир|подтвердил)'
+    # 2) заголовок-отчёт: «Отчёт МЭА», «Доклад МВФ», «Прогноз ОПЕК»
+    r'|(?:отч[её]т|доклад|обзор|бюллетень|исследовани)\w*\s+(?:опек|opec|мэа|iea|мвф|imf|оэср|oecd|'
+    r'всемирн|world|fitch|moody|росстат|цб|минфин|банк)'
+    # 3) прогноз института понижен/повышен
+    r'|(?:опек|opec|мэа|iea|мвф|imf)\w*[:\s].{0,30}(?:прогноз|оценк)'
+    r'|(?:прогноз|оценк)\w*\s+(?:спроса|роста|ввп|инфляц)\w*\s+(?:понижен|повышен|снижен)', _re_sic.I)
+
+
+def _adm_class(ev):
+    """SPEC-013 §2: класс материала по природе. READ-ONLY, на решения не влияет."""
+    sic = ev.get('sic_class')
+    if sic in ('COMMENTARY', 'BACKGROUND', 'FEATURE'):
+        _t = ((ev.get('title') or '') + ' ' + (ev.get('summary') or ''))[:240]
+        # REPORT выделяется из COMMENTARY/BACKGROUND (§2). Guard: мнение человека из
+        # института — это COMMENTARY, а не институциональная публикация.
+        if _REPORT_HUMAN.search(_t):
+            return sic
+        if _REPORT_RX.search(_t):
+            return 'REPORT'
+        return sic
+    if sic == 'PROCESS':
+        return 'STATE_CONFIRMATION'      # §2.1: НЕ факт — состояние продолжается
+    if sic == 'EVENT':
+        return 'FACT_EVENT'
+    return 'UNKNOWN'
+
+
+def _admission_shadow(events, signals, outdir):
+    """PHASE 1 SHADOW (SPEC-013 §8): альтернативная реальность правила Admission.
+    Ничего не меняет: только считает, какое решение принял бы новый Admission."""
+    from collections import Counter
+    import json as _j
+    by_title = {}
+    for e in events:
+        by_title[(e.get('title') or '')[:60]] = e
+    _CREATE = {'FACT_EVENT'}
+    _BOOST = {'STATE_CONFIRMATION', 'REPORT'}
+    cats = Counter(); domains = {}; deny = []; report_log = []; deltas = []
+    for s in signals or []:
+        dom = s.get('primary_domain') or (s.get('domains') or [''])[0] or '—'
+        ev = s.get('evidence') or []
+        cls = []
+        for x in ev:
+            e = by_title.get((x.get('title') or '')[:60])
+            if e:
+                cls.append(_adm_class(e))
+        d = domains.setdefault(dom, Counter())
+        if not cls:
+            cats['UNMATCHED'] += 1; d['unmatched'] += 1
+            continue
+        c = Counter(cls)
+        has_fact = bool(c.get('FACT_EVENT'))
+        has_rep = bool(c.get('REPORT'))
+        # ── решение Admission (§3, правило 1) ──
+        if has_fact:
+            cats['PASS_FACT_REPORT' if has_rep else 'PASS_FACT'] += 1
+            d['pass'] += 1
+        else:
+            d['deny'] += 1
+            only = ('REPORT' if has_rep and not (c.get('COMMENTARY') or c.get('BACKGROUND') or c.get('FEATURE'))
+                    else 'STATE_ONLY' if c.get('STATE_CONFIRMATION') and len(c) == 1
+                    else 'COMMENTARY' if c.get('COMMENTARY')
+                    else 'BACKGROUND' if c.get('BACKGROUND')
+                    else 'FEATURE' if c.get('FEATURE') else 'OTHER')
+            cats['DENY_%s' % only] += 1
+            # ── Impact Audit (§2): что именно перестало бы существовать ──
+            deny.append({
+                'signal_id': s.get('signal_id'), 'title': (s.get('title') or '')[:80],
+                'domain': dom, 'severity': s.get('severity'), 'pressure': s.get('pressure'),
+                'first_seen': s.get('first_seen'), 'evidence_count': len(ev),
+                'evidence_classes': dict(c), 'status': s.get('status'),
+                'causal_links': len(s.get('causes') or []) + len(s.get('caused_by') or []),
+                'reason': 'no FACT_EVENT in evidence',
+            })
+            # Severity Delta (§4): legacy → shadow (процесс не существовал бы)
+            deltas.append({'signal_id': s.get('signal_id'), 'domain': dom,
+                           'legacy': s.get('severity'), 'shadow': None, 'delta': None})
+        # ── REPORT Audit (§3): журнал усилений, БЕЗ изменения severity ──
+        if has_rep and has_fact:
+            report_log.append({
+                'signal_id': s.get('signal_id'), 'title': (s.get('title') or '')[:60],
+                'domain': dom, 'severity_now': s.get('severity'),
+                'report_count': c.get('REPORT'),
+                'would_boost': 'наблюдение (§4.3: размер не задан до калибровки)',
+            })
+    total = sum(v for k, v in cats.items() if k != 'UNMATCHED')
+    npass = cats.get('PASS_FACT', 0) + cats.get('PASS_FACT_REPORT', 0)
+    ndeny = total - npass
+    rep = {
+        'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'spec': 'SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось',
+        'invariant': 'нет FACT_EVENT → процесса существовать не должно',
+        'admission_audit': dict(cats),
+        'kpi': {
+            'processes_total': len(signals or []),
+            'matched': total,
+            'unmatched': cats.get('UNMATCHED', 0),
+            'admission_pass_rate': round(100.0 * npass / total, 1) if total else None,
+            'admission_deny_rate': round(100.0 * ndeny / total, 1) if total else None,
+            'processes_without_fact': ndeny,
+            'report_evidence_count': sum(r['report_count'] for r in report_log),
+            'reports_boosting': len(report_log),
+        },
+        'domain_statistics': {k: dict(v) for k, v in domains.items()},
+        'deny_impact': sorted(deny, key=lambda x: -(x['severity'] or 0))[:60],
+        'report_log': report_log[:40],
+        'severity_delta': deltas[:60],
+    }
+    try:
+        (outdir / '_admission_shadow.json').write_text(
+            _j.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(f"  [ADM-SHADOW] процессов {total} · PASS {npass} ({rep['kpi']['admission_pass_rate']}%) · "
+              f"DENY {ndeny} ({rep['kpi']['admission_deny_rate']}%) · REPORT-усилений {len(report_log)}",
+              file=sys.stderr)
+    except Exception as _e:
+        print(f"  [ADM-SHADOW] skip: {_e}", file=sys.stderr)
+    return rep
+
+
 def _sic_shadow_report(events, outdir):
     """SIC shadow-отчёт: распределение классов, Operational Density, Noise Reduction,
     список спорных классификаций для ручного аудита. READ-ONLY."""
@@ -10047,6 +10187,14 @@ def save_enriched(events, previous_snapshot=None):
                     _SE.LIFECYCLE_CANARY = {'climate'}   # ADR-009 Lifecycle Canary Stage 1
                     _sig_n = _write_signals(enriched["events"], _sig_path)
                     _SE.DOMAIN_CANARY = set()
+                    # ═══ SPEC-013 PHASE 1: ADMISSION SHADOW (READ-ONLY) ═══
+                    # Альтернативная реальность правила Admission по УЖЕ ПОСТРОЕННЫМ процессам.
+                    # Ничего не меняет: Process Builder отработал как обычно.
+                    try:
+                        _sg_now = json.loads(_sig_path.read_text(encoding='utf-8')).get('signals', [])
+                        _admission_shadow(enriched["events"], _sg_now, OUTPUT_PATH.parent)
+                    except Exception as _ase:
+                        print(f"  [ADM-SHADOW] skip: {_ase}", file=sys.stderr)
                     # GUARD: climate churn / born-anew / identity vs предыдущий прогон
                     _ok, _reason, _stats = _canary_guard(_prev_sig, _sig_path, _CANARY_DOMAINS)
                     if _ok:
