@@ -10091,7 +10091,7 @@ def _sic_class(title, summary='', canon_type=None):
 # ≠ право влиять на модель. Если позже придёт подтверждение (минобороны/власти/МЧС),
 # новое событие пройдёт как EVENT штатно.
 # OFF (UNVERIFIED_FEED_GATE=False) → байт-идентично.
-UNVERIFIED_FEED_GATE = False
+UNVERIFIED_FEED_GATE = True
 
 
 def _unverified_feed_gate(events):
