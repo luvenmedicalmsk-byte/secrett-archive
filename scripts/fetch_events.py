@@ -3534,6 +3534,14 @@ def _signal_gate(events):
     return kept, dict(rej)
 
 
+# ═══ WX ATOMIC CANARY ═════════════════════════════════════════════════════════
+# Метео-агрегат схлопывал N городов в одну карточку с гео лидера — остальные регионы
+# исчезали с карты, из карточек стран и из климат-процессов (дефект найден на вопросе
+# «почему нет наводнения в Сочи»: 4 региона → 1 карточка с координатами Новосибирска).
+# ON → сводка в ленте + атомарные события с собственной гео. OFF → прежнее поведение.
+WX_ATOMIC_CANARY = False
+
+
 def _aggregate_series(events):
     """Аудит качества, п.4: серийные однотипные карточки сворачиваются в сводные —
     лента короче без потери информации. Движок процессов не затрагивается
@@ -3542,6 +3550,16 @@ def _aggregate_series(events):
         return ' · '.join((e.get('title') or '')[:90] for e in items[:8])
     out, used = [], set()
     # A) метео-серия «Город: опасные осадки/гроза»
+    # ═══ ФИКС (Layer Sufficiency): агрегация — слой ПРЕДСТАВЛЕНИЯ, она не имеет права
+    # уничтожать данные, нужные другим слоям. Раньше N городов схлопывались в ОДНУ карточку
+    # с гео города-лидера: остальные регионы теряли координаты (не на карте), гео-привязку
+    # (не в карточке страны) и не порождали климат-процессы. При 4 городах в списке три
+    # региона исчезали из системы, оставаясь лишь текстом в чужом заголовке (да и то
+    # cities[:5] — шестой и дальше обрезались в «и ещё N»).
+    # ТЕПЕРЬ: сводка идёт в ленту (feed_visible=True, map_visible=False — её гео условно),
+    # а исходные события ОСТАЮТСЯ в потоке с собственной гео (feed_visible=False —
+    # не дублируют сводку; map_visible/процессы/страны работают как обычно).
+    # OFF (WX_ATOMIC_CANARY=False) → прежнее поведение.
     wx = [e for e in events if _WX_CITY_RX.match(e.get('title') or '')]
     if len(wx) >= 2:
         cities = [_WX_CITY_RX.match(e['title']).group(1) for e in wx]
@@ -3550,7 +3568,24 @@ def _aggregate_series(events):
         lead['title'] = 'Опасные метеоявления в России: ' + ', '.join(cities[:5]) + (' и ещё %d' % (len(cities)-5) if len(cities) > 5 else '')
         lead['summary'] = 'Штормовые предупреждения (осадки/гроза): ' + ', '.join(cities) + '.'
         lead['series_count'] = len(wx)
-        out.append(lead); used |= {id(e) for e in wx}
+        if WX_ATOMIC_CANARY:
+            # своднoй карточке — свой id (иначе совпадёт с событием-лидером) и признак сводки
+            try:
+                lead['id'] = make_id(lead['title'], lead.get('date', ''))
+            except Exception:
+                pass
+            lead['map_visible'] = False          # гео сводки — города-лидера, на карту не ставим
+            lead['feed_visible'] = True
+            lead['is_series_digest'] = True
+            out.append(lead)
+            for _e in wx:                        # атомарные события сохраняются
+                _a = dict(_e)
+                _a['feed_visible'] = False       # в ленте — сводка, не дубли
+                _a['aggregated_into'] = lead.get('id')
+                out.append(_a)
+        else:
+            out.append(lead)
+        used |= {id(e) for e in wx}
     # B) CVE-дайджест
     cve = [e for e in events if _CVE_RX.match(e.get('title') or '')]
     if len(cve) >= 2:
