@@ -9933,12 +9933,25 @@ def _admission_shadow(events, signals, outdir):
         ev = s.get('evidence') or []
         cls = []
         for x in ev:
-            if x.get('sic_class'):                      # Phase 1.1: класс в самом evidence
+            if x.get('sic_class'):                      # 1) класс сохранён в evidence (Phase 1.1)
                 cls.append(_adm_class(x))
                 continue
-            e = by_title.get((x.get('title') or '')[:60])   # fallback: старые процессы
-            if e:
+            e = by_title.get((x.get('title') or '')[:60])
+            if e:                                       # 2) событие ещё в текущем окне
                 cls.append(_adm_class(e))
+                continue
+            # 3) PHASE 1.1b: evidence старого процесса — событие давно вышло из окна, а
+            # sic_class в нём не сохранён (evolve_signals переносит evidence без пересборки).
+            # Классифицируем ПО ЗАГОЛОВКУ: _sic_class работает на тексте. Точность ниже
+            # (нет summary), но это единственный способ поднять coverage с 26% до ~100%
+            # без ожидания 7 дней lifecycle. READ-ONLY: вычисление, поведение не меняется.
+            _t = x.get('title') or ''
+            if _t:
+                try:
+                    cls.append(_adm_class({'title': _t, 'summary': '',
+                                           'sic_class': _sic_class(_t, '', None)}))
+                except Exception:
+                    pass
         d = domains.setdefault(dom, Counter())
         if not cls:
             cats['UNMATCHED'] += 1; d['unmatched'] += 1
@@ -9991,6 +10004,7 @@ def _admission_shadow(events, signals, outdir):
             'matched': total,
             'unmatched': cats.get('UNMATCHED', 0),
             'coverage_pct': round(100.0 * total / len(signals or [1]), 1),
+            'coverage_note': 'класс: 1) sic_class в evidence 2) событие в окне 3) вычислен по title',
             'admission_pass_rate': round(100.0 * npass / total, 1) if total else None,
             'admission_deny_rate': round(100.0 * ndeny / total, 1) if total else None,
             'processes_without_fact': ndeny,
