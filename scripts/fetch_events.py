@@ -9905,7 +9905,7 @@ _SIC_FEATURE = _re_sic.compile(r'('
 # OPINION стоит НИЖЕ accomplished-guard: «в интервью Х заявил, что войска нанесли удар»
 # останется EVENT — там есть реальное свершившееся действие.
 # За флагом SIC_OPINION_CANARY, OFF → байт-идентично.
-SIC_OPINION_CANARY = False
+SIC_OPINION_CANARY = True
 _SIC_OPINION = _re_sic.compile(r'('
   r'в интервью|дал\w* интервью|интервью\s+(?:изданию|газете|каналу|порталу|news|рбк|тасс|риа)|'
   r'в своей колонк|авторск\w+ колонк|\bколумнист|редакционн\w+ стать|'
