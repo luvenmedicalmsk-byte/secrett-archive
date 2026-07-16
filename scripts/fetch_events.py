@@ -213,7 +213,7 @@ _AGE_SHADOW = {}
 # максимальное окно политики, иначе он ограничивает Domain Policy (инвариант Layer Sufficiency).
 # ОСТАНОВКА (SPEC §3.2): основная — по дате (msg.date < cutoff); limit — АВАРИЙНЫЙ
 # предохранитель (1500), в норме не срабатывает.
-FETCH_BY_DATE_CANARY = set()          # шаг 1: {'investfuture','russianmacro'}
+FETCH_BY_DATE_CANARY = {'investfuture', 'russianmacro'}          # шаг 1: {'investfuture','russianmacro'}
 FETCH_MAX_WINDOW_DAYS = 14            # максимальное окно политики Atlas (technology/social)
 FETCH_LIMIT_EMERGENCY = 1500          # аварийный потолок, не рабочее ограничение
 _FETCH_STATS = {}                     # {канал: {'read':n,'stopped_by':'date'|'limit','oldest':дней}}
