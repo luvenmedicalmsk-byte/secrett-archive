@@ -1395,6 +1395,28 @@ _ADM_DENIED = []                  # телеметрия: кого не пуст
 _ADM_FACT = {'EVENT'}             # FACT_EVENT (PROCESS → STATE_CONFIRMATION, не факт)
 
 
+_BIRTH_STATS = {}                 # телеметрия: birth | return | rename | merge
+_BIRTH_SAMPLES = []               # примеры настоящих рождений
+
+
+def _birth_kind(sig, now):
+    """SPEC-013 §3.3: что на самом деле произошло, когда движок сказал created_new.
+    ТОЛЬКО НАБЛЮДЕНИЕ — на решения не влияет.
+      birth  — сущности не было · first_seen в текущем прогоне · первое накопление evidence
+      return — first_seen старше текущего прогона → возврат после decay/выпадения
+      merge  — процесс поглотил другой (update_count>1 при created_new)
+    RENAME здесь не встречается: он ловится раньше (continuity='matched_by_identity')."""
+    _fs = str(sig.get('first_seen') or '')[:10]
+    _now = str(now or '')[:10]
+    if _fs and _now and _fs != _now:
+        return 'return'
+    if (sig.get('update_count') or 1) > 1:
+        return 'merge'
+    if (sig.get('status') or 'active') != 'active':
+        return 'return'            # родился уже fading/dormant → не рождение
+    return 'birth'
+
+
 def _adm_classes(sig):
     """Распределение SIC-классов в evidence процесса (для телеметрии отказа)."""
     from collections import Counter
@@ -1416,6 +1438,17 @@ def _has_fact_event(sig):
     if not known:
         return True                       # разметки нет → fail-open, не блокируем
     return any(e.get('sic_class') in _ADM_FACT for e in known)
+
+
+def birth_report():
+    """Телеметрия Birth Semantics: сколько НАСТОЯЩИХ рождений против технических флагов."""
+    _t = sum(_BIRTH_STATS.values())
+    return {'note': 'created_new — техническое событие; birth — настоящее рождение (SPEC-013 §3.3)',
+            'by_kind': dict(_BIRTH_STATS),
+            'created_new_total': _t,
+            'real_births': _BIRTH_STATS.get('birth', 0),
+            'birth_ratio_pct': round(100.0 * _BIRTH_STATS.get('birth', 0) / _t, 1) if _t else None,
+            'birth_samples': _BIRTH_SAMPLES[:20]}
 
 
 def admission_report():
@@ -1496,6 +1529,22 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 n_created+=1
                 s=_seed_history(cur, now)
                 s['continuity']={'decision':'created_new','reason':'нет процесса с таким identity_key'}
+                # ═══ BIRTH SEMANTICS TELEMETRY (SPEC-013 §3.3) — ТОЛЬКО НАБЛЮДЕНИЕ ═══
+                # created_new — ТЕХНИЧЕСКОЕ событие («нет identity_key в previous»), а не
+                # рождение: замер 16.07 показал 46 из 49 «новых» со СТАРЫМ first_seen.
+                # Различаем четыре состояния, не меняя поведения (Overview §8: техническое
+                # состояние ≠ смысловое). Поле birth_kind аддитивно, движок его не читает.
+                try:
+                    s['birth_kind'] = _birth_kind(s, now)
+                    _BIRTH_STATS[s['birth_kind']] = _BIRTH_STATS.get(s['birth_kind'], 0) + 1
+                    if s['birth_kind'] == 'birth':
+                        _BIRTH_SAMPLES.append({'signal_id': s.get('signal_id'),
+                                               'title': (s.get('title') or '')[:60],
+                                               'domain': (s.get('domains') or [''])[0],
+                                               'severity': s.get('severity'),
+                                               'evidence_n': len(s.get('evidence') or [])})
+                except Exception:
+                    pass
         out.append(s)
     # Decay + Reactivation
     for sid,prev in prev_by_id.items():
@@ -2266,6 +2315,17 @@ def write_signals_json(events, path):
         json.dump(memory_updated, open(mem_path,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
         json.dump(report, open(os.path.join(os.path.dirname(path),'_signal_engine_report.json'),'w',encoding='utf-8'), ensure_ascii=False, indent=2)
     except Exception: pass
+    # BIRTH SEMANTICS + ADMISSION — телеметрия (SPEC-013 §3). Только наблюдение.
+    try:
+        _br = birth_report(); _ar = admission_report()
+        json.dump({'generated': now, 'birth_semantics': _br, 'admission': _ar},
+                  open(os.path.join(os.path.dirname(path), '_birth_semantics.json'), 'w', encoding='utf-8'),
+                  ensure_ascii=False, indent=2)
+        import sys as _s
+        print(f"  [BIRTH] created_new={_br['created_new_total']} → настоящих рождений "
+              f"{_br['real_births']} ({_br['birth_ratio_pct']}%) · {_br['by_kind']}", file=_s.stderr)
+    except Exception as _be:
+        print(f"  [BIRTH] skip: {_be}", file=__import__('sys').stderr)
     return len(evolved)
 
 if __name__=='__main__':
