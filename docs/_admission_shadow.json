@@ -1,11 +1,11 @@
 {
-  "generated": "2026-07-16T20:39:41Z",
+  "generated": "2026-07-16T21:08:45Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 296,
+    "PASS_FACT": 297,
+    "DENY_COMMENTARY": 195,
     "PASS_FACT_REPORT": 1,
-    "DENY_COMMENTARY": 196,
     "DENY_STATE_ONLY": 3,
     "DENY_FEATURE": 1,
     "UNMATCHED": 3,
@@ -17,21 +17,21 @@
     "unmatched": 3,
     "coverage_pct": 99.4,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 59.6,
-    "admission_deny_rate": 40.4,
-    "processes_without_fact": 201,
+    "admission_pass_rate": 59.8,
+    "admission_deny_rate": 40.2,
+    "processes_without_fact": 200,
     "report_evidence_count": 1,
     "reports_boosting": 1
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 212,
-      "sample": 305,
-      "agreement_pct": 96.4,
-      "decision_agreement_pct": 96.7,
+      "processes": 210,
+      "sample": 298,
+      "agreement_pct": 96.3,
+      "decision_agreement_pct": 96.6,
       "critical_errors": 10,
-      "truth_ratio_pct": 55.3,
+      "truth_ratio_pct": 55.8,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 9,
         "COMMENTARY→FEATURE": 1,
@@ -40,9 +40,9 @@
     },
     "historical": {
       "processes": 501,
-      "sample": 305,
-      "agreement_pct": 96.4,
-      "decision_agreement_pct": 96.7,
+      "sample": 298,
+      "agreement_pct": 96.3,
+      "decision_agreement_pct": 96.6,
       "critical_errors": 10,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 9,
@@ -51,13 +51,13 @@
       }
     },
     "events_stream": {
-      "sample": 183,
-      "agreement_pct": 96.7,
-      "decision_agreement_pct": 97.3,
-      "critical_errors": 5,
+      "sample": 176,
+      "agreement_pct": 96.0,
+      "decision_agreement_pct": 96.6,
+      "critical_errors": 6,
       "error_matrix": {
         "COMMENTARY→FEATURE": 1,
-        "FACT_EVENT→COMMENTARY": 4,
+        "FACT_EVENT→COMMENTARY": 5,
         "COMMENTARY→FACT_EVENT": 1
       }
     },
@@ -69,29 +69,29 @@
     }
   },
   "class_source": {
-    "shadow_title_only": 595,
-    "evidence_sic": 305,
-    "event_sic": 44
+    "shadow_title_only": 599,
+    "evidence_sic": 298,
+    "event_sic": 39
   },
-  "truth_ratio_pct": 37.0,
+  "truth_ratio_pct": 36.0,
   "domain_statistics": {
     "geopolitics": {
       "pass": 105,
       "deny": 55
     },
     "climate": {
-      "pass": 118,
-      "deny": 27,
+      "pass": 119,
+      "deny": 26,
       "unmatched": 1
-    },
-    "economy": {
-      "pass": 22,
-      "deny": 58,
-      "unmatched": 2
     },
     "technology": {
       "pass": 33,
       "deny": 30
+    },
+    "economy": {
+      "deny": 58,
+      "pass": 22,
+      "unmatched": 2
     },
     "social": {
       "pass": 19,
@@ -115,22 +115,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "econ-экономичес-россия-d74b",
-      "title": "Экономический сигнал — Россия",
-      "domain": "economy",
-      "severity": 78,
-      "pressure": 57,
-      "first_seen": "2026-06-26",
-      "evidence_count": 4,
-      "evidence_classes": {
-        "REPORT": 1,
-        "COMMENTARY": 3
-      },
-      "status": "active",
-      "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "econ-экономичес-япония-93c9",
       "title": "Экономический сигнал — Япония",
       "domain": "economy",
@@ -143,6 +127,22 @@
       },
       "status": "active",
       "causal_links": 4,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-экономичес-россия-d74b",
+      "title": "Экономический сигнал — Россия",
+      "domain": "economy",
+      "severity": 76,
+      "pressure": 39,
+      "first_seen": "2026-06-26",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "REPORT": 1,
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -230,7 +230,8 @@
       "first_seen": "2026-06-29",
       "evidence_count": 2,
       "evidence_classes": {
-        "COMMENTARY": 2
+        "COMMENTARY": 1,
+        "FEATURE": 1
       },
       "status": "active",
       "causal_links": 7,
@@ -305,8 +306,9 @@
       "first_seen": "2026-06-29",
       "evidence_count": 4,
       "evidence_classes": {
-        "COMMENTARY": 3,
-        "REPORT": 1
+        "COMMENTARY": 2,
+        "REPORT": 1,
+        "FEATURE": 1
       },
       "status": "active",
       "causal_links": 0,
@@ -332,7 +334,7 @@
       "title": "Киберугроза — Китай",
       "domain": "technology",
       "severity": 62,
-      "pressure": 50,
+      "pressure": 51,
       "first_seen": "2026-06-30",
       "evidence_count": 1,
       "evidence_classes": {
@@ -854,21 +856,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "clim-климатичес-глобальн-11a0",
-      "title": "Климатический сигнал",
-      "domain": "climate",
-      "severity": 56,
-      "pressure": 31,
-      "first_seen": "2026-07-01",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "geop-геополитич-аргентин-dcf6",
       "title": "Геополитический процесс — Аргентина",
       "domain": "geopolitics",
@@ -1002,6 +989,21 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-судан-769e",
+      "title": "Геополитический процесс — Судан",
+      "domain": "geopolitics",
+      "severity": 55,
+      "pressure": 30,
+      "first_seen": "2026-07-01",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 1,
+      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [
@@ -1009,7 +1011,7 @@
       "signal_id": "econ-macroэконо-ru-14d1",
       "title": "Экономический сигнал — Россия (системный процесс)",
       "domain": "economy",
-      "severity_now": 78,
+      "severity_now": 76,
       "report_count": 1,
       "would_boost": "наблюдение (§4.3: размер не задан до калибровки)"
     }
@@ -1019,13 +1021,6 @@
       "signal_id": "econ-валютныйры-россия-19f3",
       "domain": "economy",
       "legacy": 66,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-россия-d74b",
-      "domain": "economy",
-      "legacy": 78,
       "shadow": null,
       "delta": null
     },
@@ -1093,6 +1088,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-экономичес-россия-d74b",
+      "domain": "economy",
+      "legacy": 76,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-иран-7b7d",
       "domain": "economy",
       "legacy": 53,
@@ -1149,13 +1151,6 @@
       "delta": null
     },
     {
-      "signal_id": "soci-социальный-украина-3d66",
-      "domain": "social",
-      "legacy": 48,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-розничнаят-россия-e861",
       "domain": "economy",
       "legacy": 34,
@@ -1177,6 +1172,13 @@
       "delta": null
     },
     {
+      "signal_id": "soci-социальный-украина-3d66",
+      "domain": "social",
+      "legacy": 48,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-топливныйр-крым-7bde",
       "domain": "economy",
       "legacy": 34,
@@ -1194,13 +1196,6 @@
       "signal_id": "soci-социальный-россия-75a9",
       "domain": "social",
       "legacy": 34,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-глобальн-11a0",
-      "domain": "climate",
-      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1434,12 +1429,19 @@
       "legacy": 38,
       "shadow": null,
       "delta": null
+    },
+    {
+      "signal_id": "tech-технологич-россия-62df",
+      "domain": "technology",
+      "legacy": 34,
+      "shadow": null,
+      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 0,
     "31-50": 114,
-    "51-70": 82,
+    "51-70": 81,
     "71-90": 4,
     "91-100": 1
   }
