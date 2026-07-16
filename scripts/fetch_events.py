@@ -10006,6 +10006,26 @@ def _admission_shadow(events, signals, outdir):
                 'report_count': c.get('REPORT'),
                 'would_boost': 'наблюдение (§4.3: размер не задан до калибровки)',
             })
+    # ═══ SPEC-013 §KPI: ДОСТОВЕРНОСТЬ SHADOW (считается в кроне, не локально) ═══
+    # Меряем на событиях, где есть ЭТАЛОННЫЙ sic_class: совпадает ли решение Admission,
+    # полученное shadow-путём (title+summary+canon), с решением по эталону.
+    # Только ошибки FACT ↔ не-FACT меняют судьбу процесса — их и считаем.
+    _ag_n = _ag_ok = _ag_crit = 0
+    _ag_mat = Counter()
+    for e in events:
+        if not e.get('sic_class'):
+            continue
+        _ag_n += 1
+        _ref = _adm_class(e)
+        _sm = (e.get('summary') or e.get('description') or '')[:200]
+        _sh = _adm_class({'title': e.get('title', ''), 'summary': _sm,
+                          'sic_class': _sic_class(e.get('title', ''), _sm, e.get('canon_type'))})
+        if _ref == _sh:
+            _ag_ok += 1
+        else:
+            _ag_mat['%s→%s' % (_ref, _sh)] += 1
+        if (_ref == 'FACT_EVENT') != (_sh == 'FACT_EVENT'):
+            _ag_crit += 1
     total = sum(v for k, v in cats.items() if k != 'UNMATCHED')
     npass = cats.get('PASS_FACT', 0) + cats.get('PASS_FACT_REPORT', 0)
     ndeny = total - npass
@@ -10027,6 +10047,15 @@ def _admission_shadow(events, signals, outdir):
             'report_evidence_count': sum(r['report_count'] for r in report_log),
             'reports_boosting': len(report_log),
         },
+        'shadow_reliability': {
+            'note': 'достоверность Shadow: сверка решения Admission (shadow vs эталонный sic_class)',
+            'sample': _ag_n,
+            'agreement_pct': round(100.0 * _ag_ok / _ag_n, 1) if _ag_n else None,
+            'decision_agreement_pct': round(100.0 * (_ag_n - _ag_crit) / _ag_n, 1) if _ag_n else None,
+            'critical_errors': _ag_crit,
+            'error_matrix': dict(_ag_mat),
+            'gate': {'coverage_min': 95.0, 'decision_agreement_min': 97.0},
+        },
         'class_source': dict(src),
         'truth_ratio_pct': round(100.0 * (src.get('evidence_sic', 0) + src.get('event_sic', 0))
                                  / max(sum(src.values()), 1), 1),
@@ -10039,6 +10068,9 @@ def _admission_shadow(events, signals, outdir):
     try:
         (outdir / '_admission_shadow.json').write_text(
             _j.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(f"  [ADM-SHADOW] coverage {rep['kpi']['coverage_pct']}% · "
+              f"decision-agreement {rep['shadow_reliability']['decision_agreement_pct']}% · "
+              f"truth {rep['truth_ratio_pct']}%", file=sys.stderr)
         print(f"  [ADM-SHADOW] процессов {total} · PASS {npass} ({rep['kpi']['admission_pass_rate']}%) · "
               f"DENY {ndeny} ({rep['kpi']['admission_deny_rate']}%) · REPORT-усилений {len(report_log)}",
               file=sys.stderr)
