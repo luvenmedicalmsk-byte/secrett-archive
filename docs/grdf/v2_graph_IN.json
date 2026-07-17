@@ -2,66 +2,66 @@
   "country": "IN",
   "date": "2026-07-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-17T16:22:58.248173+00:00",
+  "generated_at": "2026-07-17T17:02:57.746518+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 61,
+      "score": 62,
       "props": {
-        "risk_score": 61
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "stable"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
+      "score": 9,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Водитель_т",
+      "type": "Signal",
+      "label": "Водитель такси в Дели погиб после того, ",
+      "severity": 63,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IN-Лесной_пож",
       "type": "Signal",
       "label": "Лесной пожар в Тинтвистле, Великобритани",
@@ -92,13 +99,6 @@
       "label": "Лесной пожар в Гленморе, Великобритания",
       "severity": 60,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IN-Наводнение",
-      "type": "Signal",
-      "label": "Наводнение — Индия",
-      "severity": 92,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.05
     },
     {
       "from": "DRIVER-IN-Geopolitical",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-IN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-IN-geopolitical",
@@ -184,10 +226,10 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IN-Лесной_пож",
-      "to": "DOMAIN-IN-climate",
+      "from": "SIGNAL-IN-Водитель_т",
+      "to": "DOMAIN-IN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.63
     },
     {
       "from": "SIGNAL-IN-Лесной_пож",
@@ -196,10 +238,10 @@
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-IN-Наводнение",
+      "from": "SIGNAL-IN-Лесной_пож",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.92
+      "weight": 0.6
     }
   ]
 }
