@@ -1552,6 +1552,17 @@ def fetch_nasa_eonet():
                 # координаты), но неотличимы. Добавляем регион: «Лесные пожары — Миннесота».
                 # События с собственным именем («Предписанный пожар RX в 24, Клей») не трогаем.
                 _t_clean = (title or '').strip().rstrip('.')
+                # ПЛАНОВЫЙ ОТЖИГ — НЕ РИСК. EONET шлёт «Prescribed Fire RX in 24, Clay,
+                # Minnesota»: prescribed burn = управляемое выжигание подлеска, которое
+                # лесники проводят НАМЕРЕННО, чтобы предотвратить крупный пожар. Спутник
+                # видит термоточку и не отличает её от бедствия.
+                # Это мера ПРОТИВ риска — в ленте системных рисков ей не место.
+                # («RX» = Rx «по предписанию», термин лесной службы США; «in 24» — номер
+                # участка. Отсюда и бессмысленный перевод «Предписанный пожар RX в 24».)
+                if re.search(r'prescribed\s+(?:fire|burn)|\brx\s+(?:fire|burn|in)\b|'
+                             r'controlled\s+burn|planned\s+burn|hazard\s+reduction\s+burn',
+                             (title or ''), re.I):
+                    continue
                 if _t_clean.lower() == cat_title.strip().rstrip('.').lower() and region:
                     title = f"{_t_clean} — {region}"
                 elif not _t_clean:
@@ -2955,7 +2966,20 @@ def process_events(raw_items):
             item['admission_score'] = round(_score, 1)
             item['admission_proc_dependent'] = _proc_dependent
 
-        ev_id = make_id(item['title'], item['date'])
+        # ID УНИКАЛЕН ПО МЕСТУ, а не только по тексту. Спутниковые источники дают
+        # десятки очагов с ОДИНАКОВЫМ заголовком: ближайший город у соседних кластеров
+        # совпадает («Пожарный сигнал — Онтарио · Тандер-Бей» ×10). make_id(title+date)
+        # схлопывал их в одно событие: FIRMS built 34 → в ленту 0, dup 31 → 144.
+        # Координаты в КЛЮЧЕ (не в заголовке) различают очаги, не портя карточку.
+        # Округление до 0.5° = сетка ~50 км: реальные дубли одного очага схлопнутся,
+        # разные очаги — нет.
+        _id_geo = ''
+        if item.get('_lat') is not None and item.get('_lng') is not None:
+            try:
+                _id_geo = f"|{round(float(item['_lat'])*2)/2},{round(float(item['_lng'])*2)/2}"
+            except Exception:
+                _id_geo = ''
+        ev_id = make_id(item['title'] + _id_geo, item['date'])
         if ev_id in seen_ids: _LOSS['dup']+=1; continue
         seen_ids.add(ev_id)
 
