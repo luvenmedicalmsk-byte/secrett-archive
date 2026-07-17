@@ -206,7 +206,11 @@ _CHAN_SIGNATURE = re.compile(
     r'больше\s+новостей\s+(?:в|на)|'
     r'источник:\s*@|'
     r'\bбот\s+для\s+связи|'
-    r'#(?:тюмень|красноярск|иркутск|новосибирск)\w*\s*$'
+    r'#(?:тюмень|красноярск|иркутск|новосибирск|екатеринбург|омск|екб|чп|происшеств)\w*|'
+    # РЕКЛАМА в футере региональных каналов
+    r'реклам\w*\s*[:.]|на\s+правах\s+реклам|erid\s*[:=]|'
+    r'\bпартн[её]рский\s+материал|промокод\b|скидк\w*\s+по\s+промокод|'
+    r'заказать\s+реклам|по\s+вопросам\s+реклам|сотрудничеств\w*\s*[:.]@'
     r')', re.I)
 
 _PARSER_REJECT = {}
@@ -6236,9 +6240,9 @@ def fetch_telegram():
                 'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
                 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
                 'sterngang', 'Ateobreaking',
-                'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54',
+                'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54', 'chp_ekb', 'chp_55',
                 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
-    TG_DISPLAY = {'ecotopor':'T Live','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
+    TG_DISPLAY = {'ecotopor':'T Live','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','chp_ekb':'Ekb News','chp_55':'Omsk News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
                   'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU'}
@@ -6285,7 +6289,7 @@ def fetch_telegram():
     # Все — один профиль: ценные природные/эко/техногенные события вперемешку с бытовым
     # шумом. Фильтр _ECO_RISK общий, канал-специфичных правил нет: структура явления
     # не зависит от региона (§10 Semantic Dominance).
-    ECO_SRC = {'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54'}
+    ECO_SRC = {'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54', 'chp_ekb', 'chp_55'}
     _ECO_RISK = re.compile(
         r'(?:гибел|гибн|погиб|мор\b|замор|падеж|вымира)\w*\s+(?:\w+\s+){0,3}(?:рыб|птиц|животн|скот|пч[её]л)|'
         r'(?:рыб|птиц|животн|скот|пч[её]л)\w*\s+(?:\w+\s+){0,3}(?:гибел|гибн|погиб|всплыл|вымира)|'
@@ -10184,6 +10188,30 @@ _SIC_INST_FACT = _re_sic.compile(
       r'возбужден\w*|возбужд[её]н\w*)\s+(?:\w+\s+){0,2}(?:дел|сделк|закон|указ|решени|лиценз|санкц)',
     _re_sic.I)
 # намерение ≠ факт: гасит оба правила
+# ═══ МАСШТАБ: институциональное действие ≠ автоматически системный сигнал ═══
+# Кейс: «Суд оштрафовал Бориса Надеждина* на 1 тыс. рублей» → FACT_MODEL_V2 увидел
+# институциональное действие («суд оштрафовал») → EVENT → economy, в ленте.
+# Действие института РЕАЛЬНОЕ, но масштаб — административный: 1000₽ штрафа частному лицу
+# не меняет состояние системы. Это регресс, который внёс сам FACT_MODEL_V2.
+# СТРУКТУРА (§10): не «есть ли слово штраф», а КАКОВ МАСШТАБ последствия.
+# Мелкий масштаб = сумма до 100 тыс ₽ ИЛИ административная статья против частного лица.
+# Крупный (Google 20 млрд, отзыв лицензии, уголовное дело) — остаётся EVENT.
+_SIC_PETTY = _re_sic.compile(
+    # штраф/взыскание с МЕЛКОЙ суммой: до 999 тыс. руб.
+    r'(?:оштрафовал|штраф\w*|взыскал|назначил\s+штраф)\w*\s+(?:\w+\s+){0,6}'
+    r'(?:на\s+)?\d{1,3}(?:[.,]\d+)?\s*(?:тыс(?:яч)?\.?|т\.?)\s*(?:рубл|руб)|'
+    r'(?:оштрафовал|штраф\w*)\w*\s+(?:\w+\s+){0,6}(?:на\s+)?\d{1,5}\s*(?:рубл|руб|₽)(?!\w)|'
+    # административная статья / мелкое правонарушение
+    r'административн\w*\s+(?:штраф|правонарушен|протокол|арест)|'
+    r'по\s+(?:статье|ст\.)\s*\d+\.\d+\s+коап|коап\b|'
+    r'(?:арестовал|задержал)\w*\s+(?:на\s+)?\d{1,2}\s+сут', _re_sic.I)
+# крупный масштаб — отменяет petty-guard
+_SIC_MAJOR = _re_sic.compile(
+    r'\d+(?:[.,]\d+)?\s*(?:млн|миллион|млрд|миллиард|трлн)\w*\s*(?:рубл|руб|₽|\$|доллар|евро)|'
+    r'уголовн\w*\s+дел|отзыв\w*\s+лицензи|лишил\w*\s+лицензи|признал\w*\s+банкрот|'
+    r'запрет\w*\s+деятельност|ликвидац|национализац|конфискац\w*\s+(?:актив|имуществ)|'
+    r'приговор\w*\s+к\s+\d+\s+(?:год|лет)|экстрадир', _re_sic.I)
+
 _SIC_INTENT = _re_sic.compile(
     # «может + ЛЮБОЙ инфинитив» — намерение/прогноз. Было `может (быть|принять|одобрить)` —
     # слишком узко: «рубль МОЖЕТ ослабнуть до 85» проходило как факт.
@@ -10358,8 +10386,13 @@ def _sic_class(title, summary='', canon_type=None):
         # ① финансовая кинетика: инструмент + изменение + ИЗМЕРЯЕМОЕ ЗНАЧЕНИЕ
         if _SIC_FIN_FACT.search(low):
             return 'EVENT'
-        # ② институциональное действие: субъект-институт + ЗАВЕРШЁННОЕ действие
+        # ② институциональное действие: субъект-институт + ЗАВЕРШЁННОЕ действие.
+        # МАСШТАБНЫЙ GUARD: административная мелочь («суд оштрафовал на 1 тыс. рублей»)
+        # — реальное действие института, но не системный сигнал. Крупный масштаб
+        # (млн/млрд, уголовное дело, отзыв лицензии, банкротство) guard отменяет.
         if _SIC_INST_FACT.search(low):
+            if _SIC_PETTY.search(low) and not _SIC_MAJOR.search(low):
+                return 'COMMENTARY'
             return 'EVENT'
     # 3.5) REPORT (SPEC-013 §4) — институциональная публикация о состоянии системы.
     # НИЖЕ FACT: «ЦБ понизил ставку» — действие института (EVENT), а не отчёт.
