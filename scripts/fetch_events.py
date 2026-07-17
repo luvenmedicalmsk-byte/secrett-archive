@@ -6216,9 +6216,10 @@ def fetch_telegram():
                 'ecotopor',
                 'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
                 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
-                'sterngang', 'Ateobreaking', 'Tyumen72chs',
+                'sterngang', 'Ateobreaking',
+                'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54',
                 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
-    TG_DISPLAY = {'ecotopor':'T Live','Tyumen72chs':'T news','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
+    TG_DISPLAY = {'ecotopor':'T Live','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
                   'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU'}
@@ -6261,7 +6262,11 @@ def fetch_telegram():
     # структуре (среда/биота + изменение состояния), а не по списку слов (§10).
     # Layer Sufficiency не нарушен: парсер не решает «важно ли», он отсекает то, что
     # заведомо вне профиля источника — как ECON_SRC/SOCIAL_SRC/TECH_SRC.
-    ECO_SRC = {'Tyumen72chs'}
+    # Региональные каналы ЧС: Тюмень · Красноярск · Иркутск · Новосибирск.
+    # Все — один профиль: ценные природные/эко/техногенные события вперемешку с бытовым
+    # шумом. Фильтр _ECO_RISK общий, канал-специфичных правил нет: структура явления
+    # не зависит от региона (§10 Semantic Dominance).
+    ECO_SRC = {'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54'}
     _ECO_RISK = re.compile(
         r'(?:гибел|гибн|погиб|мор\b|замор|падеж|вымира)\w*\s+(?:\w+\s+){0,3}(?:рыб|птиц|животн|скот|пч[её]л)|'
         r'(?:рыб|птиц|животн|скот|пч[её]л)\w*\s+(?:\w+\s+){0,3}(?:гибел|гибн|погиб|всплыл|вымира)|'
@@ -6271,6 +6276,14 @@ def fetch_telegram():
         r'превышени\w*\s+(?:\w+\s+){0,2}пдк|экологическ\w*|токсичн\w*|'
         r'запах\w*\s+(?:воды|в\s+воде|канализац|сероводород)|\bпробы\s+(?:воды|почвы|воздуха)|'
         r'росприроднадзор|цветени\w*\s+воды|'
+    # РЕГИОНАЛЬНАЯ СПЕЦИФИКА (найдено на контроле):
+    # «режим чёрного неба» — красноярский термин для смога/НМУ, системный эко-сигнал;
+    # биота Сибири/Байкала (нерпа, омуль) — тот же мор, но других видов;
+    # маловодье/сбросы ГЭС — гидрологический режим, влияет на биоту и водоснабжение.
+    r'ч[её]рн\w*\s+неб|режим\s+нму|неблагоприятн\w*\s+метеоусловия|смог\b|'
+    r'(?:гибел|гибн|погиб|мор\b|замор|вымира)\w*\s+(?:\w+\s+){0,3}(?:нерп|омул|тюлен|краб|устриц|мидий)|'
+    r'(?:нерп|омул|тюлен)\w*\s+(?:\w+\s+){0,3}(?:гибел|гибн|погиб|вымира)|'
+    r'маловод|обмелени|сброс\w*\s+(?:\w+\s+){0,2}гэс|уровень\s+воды\s+(?:упал|снизил|критич)|'
         r'наводнени\w*|паводок|паводк|подтоплени\w*|половодь|'
         r'лесн\w*\s+пожар|природн\w*\s+пожар|торфян\w*\s+пожар|крупн\w*\s+пожар|'
         r'ураган\w*|смерч|шторм\w*|аномальн\w*\s+(?:жар|холод|температур)|'
