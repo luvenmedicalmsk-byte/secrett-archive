@@ -1,7 +1,7 @@
 {
   "country": "FR",
   "country_name": "Франция",
-  "date": "2026-07-16",
+  "date": "2026-07-17",
   "nodes": [
     {
       "id": "ROOT",
@@ -10,13 +10,31 @@
       "depth": 0
     },
     {
-      "id": "best",
-      "label": "Best Case",
-      "type": "best",
+      "id": "stress",
+      "label": "Stress Case",
+      "type": "stress",
       "status": "active",
       "parent": "ROOT",
       "depth": 1,
-      "prob": 31.0
+      "prob": 30.0
+    },
+    {
+      "id": "worst",
+      "label": "Worst Case",
+      "type": "worst",
+      "status": "active",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 41.0
+    },
+    {
+      "id": "ASE-ACC-9",
+      "label": "Сценарий ускорения (deceleration)",
+      "type": "acceleration",
+      "status": "emerging",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 32
     },
     {
       "id": "ASE-ESC-DETE",
@@ -28,32 +46,45 @@
       "prob": 18
     },
     {
+      "id": "best-RET",
+      "label": "Best Case [устарел]",
+      "type": "retired",
+      "parent": "ROOT",
+      "depth": 2,
+      "prob": 0
+    },
+    {
       "id": "base-RET",
       "label": "Base Case [устарел]",
       "type": "retired",
       "parent": "ROOT",
       "depth": 2,
       "prob": 0
-    },
-    {
-      "id": "stress-RET",
-      "label": "Stress Case [устарел]",
-      "type": "retired",
-      "parent": "ROOT",
-      "depth": 2,
-      "prob": 0
-    },
-    {
-      "id": "worst-RET",
-      "label": "Worst Case [устарел]",
-      "type": "retired",
-      "parent": "ROOT",
-      "depth": 2,
-      "prob": 0
     }
   ],
-  "convergences": [],
-  "divergences": [],
-  "active_count": 2,
-  "retired_count": 3
+  "convergences": [
+    {
+      "scenario_a": "stress",
+      "scenario_b": "acceleration",
+      "score_gap": 5,
+      "prob_gap": 2.0,
+      "label": "Сближение: Stress Case ↔ Сценарий ускорения (deceleration)"
+    }
+  ],
+  "divergences": [
+    {
+      "scenario_a": "stress",
+      "scenario_b": "escalation_branch",
+      "score_gap": 32,
+      "label": "Расхождение: Stress Case ↔ Ветвь эскалации: deteriorating"
+    },
+    {
+      "scenario_a": "acceleration",
+      "scenario_b": "escalation_branch",
+      "score_gap": 37,
+      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь эскалации: deteriorating"
+    }
+  ],
+  "active_count": 4,
+  "retired_count": 2
 }
