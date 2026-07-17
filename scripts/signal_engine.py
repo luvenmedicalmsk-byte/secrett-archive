@@ -1390,7 +1390,23 @@ def _reconstruct_macro(signals, now):
 # STATE_CONFIRMATION (§2.1): SIC-класс PROCESS = «состояние продолжается», НЕ факт —
 # подтверждает существующий процесс, но не рождает новый.
 # OFF (ADMISSION_CANARY=set()) → байт-идентично.
-ADMISSION_CANARY = {'economy'}          # Phase 2: {'economy'}
+# ═══ PRODUCTION (18.07) — все 5 доменов ═══
+# Путь: Shadow (Phase 1) → Canary economy (Phase 2) → Verification (Phase 3) → Production.
+# ОСНОВАНИЕ ПЕРЕВОДА:
+#  · Longitudinal 12 прогонов (17:31-21:05): created_new 8 → BIRTH 3 · RETURN 4 · MERGE 0.
+#    DENY 0, процессов 510→513 — деградации нет, правило не вмешалось ни разу.
+#  · Verification механики на боевом коде 7/7: BIRTH+нет факта → DENY · BIRTH+факт → ACCEPT ·
+#    RETURN/MERGE/чужой домен → не тронуты (§3.2) · только REPORT → DENY (§4) ·
+#    нет разметки → fail-open.
+#  · Симуляция всех доменов на живых данных: BIRTH 1, DENY 0 — все рождения с фактами.
+# ПОЧЕМУ БЕЗОПАСНО (§7.2): Admission — страховка, а не фильтр. После FACT Model V2
+# (финансовая кинетика + институциональные действия) и REPORT-класса процессы проходят
+# критерии САМИ: фактов в COMMENTARY 9% → 0.7%. Правило перехватывает редкие ошибочные
+# рождения, а не чистит поток.
+# ОБЛАСТЬ (§3.2): только BIRTH. RETURN/RENAME/MERGE не затрагиваются — из 49 created_new
+# настоящих рождений 1, остальные 48 возвраты. Существующие процессы и lifecycle не тронуты.
+# Откат: ADMISSION_CANARY = set()
+ADMISSION_CANARY = {'economy', 'social', 'technology', 'geopolitics', 'climate'}
 _ADM_DENIED = []                  # телеметрия: кого не пустили
 _ADM_FACT = {'EVENT'}             # FACT_EVENT (PROCESS → STATE_CONFIRMATION, не факт)
 
