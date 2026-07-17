@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-07-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-17T18:08:20.589351+00:00",
+  "generated_at": "2026-07-17T18:33:06.650922+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 38,
+      "score": 44,
       "props": {
-        "risk_score": 38
+        "risk_score": 44
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 19,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Марк_Карни",
+      "id": "SIGNAL-CA-Пожарная_а",
       "type": "Signal",
-      "label": "Марк Карни отвел вину за неудачи с лесны",
-      "severity": 46,
+      "label": "Пожарная активность — Северная Америка",
+      "severity": 67,
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Канада:_Ды",
+      "id": "SIGNAL-CA-Киберугроз",
       "type": "Signal",
-      "label": "Канада: Дым от пожаров окутывает Нью-Йор",
-      "severity": 35,
-      "domain": "climate"
+      "label": "Киберугроза — Канада",
+      "severity": 58,
+      "domain": "technology"
     },
     {
-      "id": "SIGNAL-CA-Канада_дым",
+      "id": "SIGNAL-CA-Пожарная_а",
       "type": "Signal",
-      "label": "Канада дыма от пожаров накрывает небеса ",
-      "severity": 32,
+      "label": "Пожарная активность — Канада",
+      "severity": 38,
       "domain": "climate"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-CA-Geopolitical",
@@ -163,22 +163,85 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Марк_Карни",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.46
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
-      "from": "SIGNAL-CA-Канада:_Ды",
-      "to": "DOMAIN-CA-climate",
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.35
+      "weight": 0.7,
+      "lag_days": 60
     },
     {
-      "from": "SIGNAL-CA-Канада_дым",
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-Пожарная_а",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.67
+    },
+    {
+      "from": "SIGNAL-CA-Киберугроз",
+      "to": "DOMAIN-CA-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-CA-Пожарная_а",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.38
     }
   ]
 }
