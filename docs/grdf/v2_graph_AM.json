@@ -2,82 +2,89 @@
   "country": "AM",
   "date": "2026-07-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-17T11:06:29.824427+00:00",
+  "generated_at": "2026-07-17T12:44:48.409917+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-AM",
       "type": "Country",
       "label": "AM",
-      "score": 34,
+      "score": 47,
       "props": {
-        "risk_score": 34
+        "risk_score": 47
       }
     },
     {
       "id": "DOMAIN-AM-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": -20,
+      "score": 61,
       "trend": "up"
     },
     {
       "id": "DOMAIN-AM-economic",
       "type": "Domain",
       "label": "economic",
-      "score": -23,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 24,
-      "trend": "down"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 22,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-social",
       "type": "Domain",
       "label": "social",
-      "score": 26,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 24,
-      "trend": "down"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 20,
-      "trend": "down"
+      "score": 28,
+      "trend": "up"
     },
     {
-      "id": "DRIVER-AM-social",
+      "id": "DRIVER-AM-geopolitical",
       "type": "Driver",
-      "label": "social"
+      "label": "geopolitical"
     },
     {
-      "id": "DRIVER-AM-climate",
+      "id": "DRIVER-AM-technology",
       "type": "Driver",
-      "label": "climate"
+      "label": "technology"
     },
     {
-      "id": "DRIVER-AM-infrastructure",
+      "id": "DRIVER-AM-economic",
       "type": "Driver",
-      "label": "infrastructure"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-AM-Киберугроз",
+      "type": "Signal",
+      "label": "Киберугроза — Армения",
+      "severity": 58,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-AM-Геополитич",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Армения",
       "severity": 46,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-AM-Россельхоз",
-      "type": "Signal",
-      "label": "Россельхознадзор попросил иранские власт",
-      "severity": 34,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,61 +106,88 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-geopolitical",
       "type": "CORRELATES",
-      "weight": -0.2
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-economic",
       "type": "CORRELATES",
-      "weight": -0.23
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-climate",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-technology",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-social",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-cyber",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.28
     },
     {
-      "from": "DRIVER-AM-social",
+      "from": "DRIVER-AM-geopolitical",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AM-climate",
+      "from": "DRIVER-AM-technology",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AM-infrastructure",
+      "from": "DRIVER-AM-economic",
       "to": "COUNTRY-AM",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-AM-geopolitical",
+      "to": "DOMAIN-AM-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AM-infrastructure",
+      "to": "DOMAIN-AM-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AM-economic",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AM-Киберугроз",
+      "to": "DOMAIN-AM-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     },
     {
       "from": "SIGNAL-AM-Геополитич",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-AM-social",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-AM-Россельхоз",
-      "to": "DOMAIN-AM-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
