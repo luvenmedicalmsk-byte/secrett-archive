@@ -2,39 +2,39 @@
   "country": "CA",
   "date": "2026-07-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-17T09:31:39.931065+00:00",
+  "generated_at": "2026-07-17T11:06:29.814405+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 32,
+      "score": 35,
       "props": {
-        "risk_score": 32
+        "risk_score": 35
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "stable"
+      "score": 22,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 28,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
@@ -47,21 +47,21 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
-      "trend": "stable"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -80,17 +80,17 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Канада_дым",
+      "id": "SIGNAL-CA-Канада:_Ды",
       "type": "Signal",
-      "label": "Канада дыма от пожаров накрывает небеса ",
-      "severity": 32,
+      "label": "Канада: Дым от пожаров окутывает Нью-Йор",
+      "severity": 35,
       "domain": "climate"
     },
     {
       "id": "SIGNAL-CA-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Северная Америка",
-      "severity": 42,
+      "severity": 48,
       "domain": "climate"
     },
     {
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-CA",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.03
     },
     {
       "from": "DRIVER-CA-Geopolitical",
@@ -163,16 +163,58 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Канада_дым",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CA-Канада:_Ды",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.35
     },
     {
       "from": "SIGNAL-CA-Пожарная_а",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.42
+      "weight": 0.48
     },
     {
       "from": "SIGNAL-CA-Киберугроз",
