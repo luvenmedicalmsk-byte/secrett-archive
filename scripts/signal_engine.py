@@ -2325,11 +2325,38 @@ def write_signals_json(events, path):
         json.dump(report, open(os.path.join(os.path.dirname(path),'_signal_engine_report.json'),'w',encoding='utf-8'), ensure_ascii=False, indent=2)
     except Exception: pass
     # BIRTH SEMANTICS + ADMISSION — телеметрия (SPEC-013 §3). Только наблюдение.
+    # Phase III (Longitudinal Observation): накапливаем ИСТОРИЮ прогонов — отчёт
+    # перезаписывался каждый крон, и наблюдать серию было не на чем. Храним последние 48
+    # записей (≈сутки при cron */30): birth · accept · deny · процессы по доменам.
     try:
         _br = birth_report(); _ar = admission_report()
-        json.dump({'generated': now, 'birth_semantics': _br, 'admission': _ar},
-                  open(os.path.join(os.path.dirname(path), '_birth_semantics.json'), 'w', encoding='utf-8'),
-                  ensure_ascii=False, indent=2)
+        _bs_path = os.path.join(os.path.dirname(path), '_birth_semantics.json')
+        _hist = []
+        try:
+            _prev_bs = json.load(open(_bs_path, encoding='utf-8'))
+            _hist = _prev_bs.get('history') or []
+        except Exception:
+            _hist = []
+        _dom_now = {}
+        for _s in evolved:
+            _d = (_s.get('domains') or [''])[0] or '—'
+            _dom_now[_d] = _dom_now.get(_d, 0) + 1
+        _hist.append({
+            'ts': now,
+            'births': _br.get('real_births', 0),
+            'created_new': _br.get('created_new_total', 0),
+            'by_kind': _br.get('by_kind', {}),
+            'admission_denied': _ar.get('denied_total', 0),
+            'denied_by_domain': _ar.get('denied_by_domain', {}),
+            'admission_accept': max(0, _br.get('real_births', 0) - _ar.get('denied_total', 0)),
+            'processes_total': len(evolved),
+            'processes_by_domain': _dom_now,
+        })
+        _hist = _hist[-48:]          # ≈сутки при cron */30
+        json.dump({'generated': now, 'birth_semantics': _br, 'admission': _ar,
+                   'history_note': 'Phase III Longitudinal Observation: последние 48 прогонов',
+                   'history': _hist},
+                  open(_bs_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
         import sys as _s
         print(f"  [BIRTH] created_new={_br['created_new_total']} → настоящих рождений "
               f"{_br['real_births']} ({_br['birth_ratio_pct']}%) · {_br['by_kind']}", file=_s.stderr)
