@@ -1,82 +1,82 @@
 {
-  "generated": "2026-07-17T22:30:52Z",
+  "generated": "2026-07-17T22:40:41Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 320,
     "DENY_COMMENTARY": 186,
+    "DENY_BACKGROUND": 2,
     "DENY_OTHER": 1,
     "DENY_FEATURE": 2,
     "UNMATCHED": 3,
-    "DENY_BACKGROUND": 1,
     "DENY_STATE_ONLY": 1
   },
   "kpi": {
-    "processes_total": 514,
-    "matched": 511,
+    "processes_total": 515,
+    "matched": 512,
     "unmatched": 3,
     "coverage_pct": 99.4,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 62.6,
-    "admission_deny_rate": 37.4,
-    "processes_without_fact": 191,
+    "admission_pass_rate": 62.5,
+    "admission_deny_rate": 37.5,
+    "processes_without_fact": 192,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 206,
-      "sample": 369,
-      "agreement_pct": 96.7,
-      "decision_agreement_pct": 96.7,
-      "critical_errors": 12,
-      "truth_ratio_pct": 71.7,
+      "processes": 207,
+      "sample": 367,
+      "agreement_pct": 97.3,
+      "decision_agreement_pct": 97.3,
+      "critical_errors": 10,
+      "truth_ratio_pct": 71.5,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 6,
+        "COMMENTARY→FACT_EVENT": 4,
         "FACT_EVENT→COMMENTARY": 5,
         "FEATURE→FACT_EVENT": 1
       }
     },
     "historical": {
-      "processes": 514,
-      "sample": 369,
-      "agreement_pct": 96.7,
-      "decision_agreement_pct": 96.7,
-      "critical_errors": 12,
+      "processes": 515,
+      "sample": 367,
+      "agreement_pct": 97.3,
+      "decision_agreement_pct": 97.3,
+      "critical_errors": 10,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 6,
+        "COMMENTARY→FACT_EVENT": 4,
         "FACT_EVENT→COMMENTARY": 5,
         "FEATURE→FACT_EVENT": 1
       }
     },
     "events_stream": {
-      "sample": 150,
-      "agreement_pct": 96.7,
-      "decision_agreement_pct": 96.7,
-      "critical_errors": 5,
+      "sample": 146,
+      "agreement_pct": 97.3,
+      "decision_agreement_pct": 97.3,
+      "critical_errors": 4,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 3,
-        "COMMENTARY→FACT_EVENT": 2
+        "COMMENTARY→FACT_EVENT": 1
       }
     },
     "gate": {
       "scope": "operational (status=active)",
       "coverage_min": 95.0,
       "decision_agreement_min": 97.0,
-      "passed": false
+      "passed": true
     }
   },
   "class_source": {
-    "evidence_sic": 369,
     "shadow_title_only": 564,
+    "evidence_sic": 367,
     "event_sic": 16
   },
-  "truth_ratio_pct": 40.6,
+  "truth_ratio_pct": 40.4,
   "domain_statistics": {
     "geopolitics": {
       "pass": 107,
-      "deny": 55
+      "deny": 56
     },
     "climate": {
       "pass": 124,
@@ -118,12 +118,11 @@
       "title": "Климатический сигнал",
       "domain": "climate",
       "severity": 86,
-      "pressure": 55,
+      "pressure": 52,
       "first_seen": "2026-07-01",
-      "evidence_count": 2,
+      "evidence_count": 1,
       "evidence_classes": {
-        "BACKGROUND": 1,
-        "COMMENTARY": 1
+        "BACKGROUND": 1
       },
       "status": "active",
       "causal_links": 0,
@@ -338,6 +337,21 @@
       },
       "status": "active",
       "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-сша-a91e",
+      "title": "Геополитический процесс — США",
+      "domain": "geopolitics",
+      "severity": 62,
+      "pressure": 42,
+      "first_seen": "2026-07-01",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 4,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -984,21 +998,6 @@
       "status": "fading",
       "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "geop-геополитич-венгрия-88c6",
-      "title": "Геополитический процесс — Венгрия",
-      "domain": "geopolitics",
-      "severity": 55,
-      "pressure": 26,
-      "first_seen": "2026-07-09",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "fading",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1025,16 +1024,16 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-глобальн-11a0",
-      "domain": "climate",
-      "legacy": 86,
+      "signal_id": "tech-киберугроз-россия-4f5c",
+      "domain": "technology",
+      "legacy": 96,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "tech-киберугроз-россия-4f5c",
-      "domain": "technology",
-      "legacy": 96,
+      "signal_id": "clim-климатичес-глобальн-11a0",
+      "domain": "climate",
+      "legacy": 86,
       "shadow": null,
       "delta": null
     },
@@ -1063,6 +1062,13 @@
       "signal_id": "econ-экономичес-япония-93c9",
       "domain": "economy",
       "legacy": 76,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "geop-геополитич-сша-a91e",
+      "domain": "geopolitics",
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1415,19 +1421,12 @@
       "legacy": 62,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-кувейт-сша-c514",
-      "domain": "geopolitics",
-      "legacy": 72,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 1,
     "31-50": 106,
-    "51-70": 78,
+    "51-70": 79,
     "71-90": 5,
     "91-100": 1
   }
