@@ -1390,7 +1390,7 @@ def _reconstruct_macro(signals, now):
 # STATE_CONFIRMATION (§2.1): SIC-класс PROCESS = «состояние продолжается», НЕ факт —
 # подтверждает существующий процесс, но не рождает новый.
 # OFF (ADMISSION_CANARY=set()) → байт-идентично.
-ADMISSION_CANARY = set()          # Phase 2: {'economy'}
+ADMISSION_CANARY = {'economy'}          # Phase 2: {'economy'}
 _ADM_DENIED = []                  # телеметрия: кого не пустили
 _ADM_FACT = {'EVENT'}             # FACT_EVENT (PROCESS → STATE_CONFIRMATION, не факт)
 
@@ -1519,8 +1519,17 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 # остаются в потоке и в Archive (§0 — право сохранить ≠ право изменить модель).
                 if ADMISSION_CANARY:
                     _dom = (cur.get('domains') or [''])[0] or cur.get('primary_domain') or ''
-                    if _dom in ADMISSION_CANARY and not _has_fact_event(cur):
+                    # SPEC-013 §3.2: Admission применяется ТОЛЬКО к BIRTH.
+                    # created_new — техническое событие («нет identity_key в previous»), а не
+                    # рождение: замер 17.07 — 50 created_new, из них настоящих рождений 2.
+                    # Остальные 48 — RETURN/окаменелости (dormant/fading с first_seen до 25
+                    # дней назад). Без этой проверки Admission ударил бы по ним, а не по
+                    # новым процессам: они не рождаются — они возвращаются.
+                    _bk = _birth_kind(cur, now)
+                    if (_bk == 'birth' and _dom in ADMISSION_CANARY
+                            and not _has_fact_event(cur)):
                         _ADM_DENIED.append({'signal_id': sid, 'domain': _dom,
+                                            'birth_kind': _bk,
                                             'title': (cur.get('title') or '')[:70],
                                             'severity': cur.get('severity'),
                                             'evidence_n': len(cur.get('evidence') or []),
