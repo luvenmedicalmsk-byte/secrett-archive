@@ -6216,9 +6216,9 @@ def fetch_telegram():
                 'ecotopor',
                 'NeKaspersky', 'anti_malware', 'trueosint', 'f6_cybersecurity', 'SecLabNews',
                 'Social_engineering', 'Russian_OSINT', 'alexmakus', 'xakep_ru',
-                'sterngang', 'Ateobreaking',
+                'sterngang', 'Ateobreaking', 'Tyumen72chs',
                 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
-    TG_DISPLAY = {'ecotopor':'T Live','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
+    TG_DISPLAY = {'ecotopor':'T Live','Tyumen72chs':'T news','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
                   'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU'}
@@ -6253,6 +6253,33 @@ def fetch_telegram():
                        ('сбой','цод'),('отказ','цод'),('сбой','облак'),('авари','энерг'),('отключен','электр'),
                        ('сбой','плат'),('сбой','банк'),('атак','инфраструктур'),('риск','ии'),('риск','искусственн')]
     # эконом-источник: аналитические каналы — только сигналы стресса/риска (раннее предупреждение)
+    # ═══ ECO_SRC — региональные каналы ЧС ═══
+    # Tyumen72chs («T news») — тюменский канал ЧС. Даёт ценные эко/природные события
+    # («В реке Тура массово гибнет рыба» — кейс, ради которого добавлен), но вперемешку
+    # с локальным шумом: ДТП, бытовые пожары, происшествия с частными лицами.
+    # Пропускаем ТОЛЬКО системные природные/экологические/техногенные сигналы — по
+    # структуре (среда/биота + изменение состояния), а не по списку слов (§10).
+    # Layer Sufficiency не нарушен: парсер не решает «важно ли», он отсекает то, что
+    # заведомо вне профиля источника — как ECON_SRC/SOCIAL_SRC/TECH_SRC.
+    ECO_SRC = {'Tyumen72chs'}
+    _ECO_RISK = re.compile(
+        r'(?:гибел|гибн|погиб|мор\b|замор|падеж|вымира)\w*\s+(?:\w+\s+){0,3}(?:рыб|птиц|животн|скот|пч[её]л)|'
+        r'(?:рыб|птиц|животн|скот|пч[её]л)\w*\s+(?:\w+\s+){0,3}(?:гибел|гибн|погиб|всплыл|вымира)|'
+        r'загрязнени\w*|разлив\w*\s+(?:нефт|мазут|топлив|химикат)|нефтеразлив|'
+        r'сброс\w*\s+(?:\w+\s+){0,2}(?:в\s+реку|сточн|отход)|'
+        r'выброс\w*\s+(?:\w+\s+){0,2}(?:в\s+атмосфер|сероводород|хлор|аммиак)|'
+        r'превышени\w*\s+(?:\w+\s+){0,2}пдк|экологическ\w*|токсичн\w*|'
+        r'запах\w*\s+(?:воды|в\s+воде|канализац|сероводород)|\bпробы\s+(?:воды|почвы|воздуха)|'
+        r'росприроднадзор|цветени\w*\s+воды|'
+        r'наводнени\w*|паводок|паводк|подтоплени\w*|половодь|'
+        r'лесн\w*\s+пожар|природн\w*\s+пожар|торфян\w*\s+пожар|крупн\w*\s+пожар|'
+        r'ураган\w*|смерч|шторм\w*|аномальн\w*\s+(?:жар|холод|температур)|'
+        r'землетрясени\w*|оползен|лавин|'
+        r'авари\w*\s+(?:на\s+)?(?:нпз|завод|тэц|гэс|аэс|трубопровод|коллектор|очистн)|'
+        r'прорыв\w*\s+(?:дамб|плотин|трубопровод|коллектор)|'
+        r'массов\w*\s+(?:отключени|эвакуац|отравлени)|режим\s+чс|чрезвычайн\w*\s+ситуац',
+        re.I)
+
     ECON_SRC = {'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist', 'ecotopor'}
     ECON_RISK_KW = ['банкротств','дефолт','девальвац','рецесси','стагфляц','неплатёжеспособн','просрочк','кассовый разрыв','секвестр','обвал',
                     # ТОПЛИВНЫЙ КРИЗИС: эконом-каналы (T Live и др.) писали факты про топливо первыми,
@@ -6343,6 +6370,14 @@ def fetch_telegram():
                 _kw_window(_tf, TECH_RISK_KW, TECH_RISK_PAIRS, ch)       # Phase 0.5 shadow
                 return None        # тех-источник: только риск/инцидент (чистые каналы — байпас)
             _d = 'social' if is_srisk else 'technology'
+        elif ch in ECO_SRC:
+            # Региональный ЧС-канал: пропускаем только системные природные/экологические/
+            # техногенные сигналы. Бытовой шум (ДТП, пожар в квартире, кража) не проходит.
+            # Домен и тип определит canon — парсер лишь отсекает то, что вне профиля.
+            if not _ECO_RISK.search(_tf):
+                _prej(ch, 'keyword_missing')
+                return None
+            _d = 'climate'
         elif ch in ECON_SRC:
             is_erisk = any(k in tlw for k in ECON_RISK_KW) or any(a in tlw and b in tlw for a,b in ECON_RISK_PAIRS)
             # ECONOMY WHITELIST v1 CANARY: для canary-каналов кризисный словарь дополняется
