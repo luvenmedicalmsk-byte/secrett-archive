@@ -11255,6 +11255,16 @@ def save_enriched(events, previous_snapshot=None):
             print(f"[CASUALTY_RU] casualty-подъёмов за прогон: {len(_CASUALTY_RU_HITS)}")
         except Exception:
             pass
+    # HOME_FIRE post-build: бытовой пожар в жилье -> из ленты (ловит и персистящие события, не только входящие в gate)
+    if HOME_FIRE_GUARD:
+        _HF_HOME=('таунхаус','коттедж','частн дом','в частном доме','в жилом дом','в квартир','дачн','в бараке','в гараж','в бане','надворн','в избе')
+        _HF_PUB=('интернат','престарел','больниц','школ','детск сад','торгов центр','общежит','завод','фабрик','цех','нефтебаз','склад','гостиниц','отел')
+        for _hfe in events:
+            _hfb=((_hfe.get('title','') or '')+' '+(_hfe.get('summary','') or '')).lower()
+            if ('пожар' in _hfb or 'загорел' in _hfb) and any(w in _hfb for w in _HF_HOME) and not any(w in _hfb for w in _HF_PUB):
+                _hfm=re.search(r'(\d+)\s*(?:погиб|жертв|человек)', _hfb)
+                if not (_hfm and _hfm.group(1).isdigit() and int(_hfm.group(1))>=10):
+                    _hfe['feed_visible']=False
     raw_snapshot = {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "count":   len(events),
