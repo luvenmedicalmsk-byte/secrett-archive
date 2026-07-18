@@ -11265,6 +11265,17 @@ def save_enriched(events, previous_snapshot=None):
                 _hfm=re.search(r'(\d+)\s*(?:погиб|жертв|человек)', _hfb)
                 if not (_hfm and _hfm.group(1).isdigit() and int(_hfm.group(1))>=10):
                     _hfe['feed_visible']=False
+    # AIR_ACCIDENT post-build: авиапроисшествие малой/сельхоз авиации -> из ленты (не крупная/военная/массовая)
+    if HOME_FIRE_GUARD:
+        for _aae in events:
+            _aab=((_aae.get('title','') or '')+' '+(_aae.get('summary','') or '')).lower()
+            _acr=('упал' in _aab or 'разбил' in _aab or 'рухнул' in _aab or 'крушение' in _aab) and any(w in _aab for w in ('вертолет','вертолёт','самолет','самолёт','ми-2','ан-2','кукурузник','легкомоторн','дельтаплан','параплан','сельскохозяйствен'))
+            _amaj=any(w in _aab for w in ('пассажир','боинг','airbus','аэробус','лайнер','рейс '))
+            _acmb=any(w in _aab for w in ('удар','бпла','обстрел','атак','ракет','дрон','всу','войск','сбит','пво','поразил'))
+            if _acr and not _amaj and not _acmb:
+                _aam=re.search(r'(\d+)\s*(?:погиб|жертв|человек|пассажир)', _aab)
+                if not (_aam and _aam.group(1).isdigit() and int(_aam.group(1))>=10):
+                    _aae['feed_visible']=False
     raw_snapshot = {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "count":   len(events),
