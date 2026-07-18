@@ -2811,7 +2811,14 @@ def process_events(raw_items):
                      and any(w in _blob for w in ('самолет','самолёт','вертолет','вертолёт','параплан','парашютн','дельтаплан','легкомоторн')))
         # 4) бытовые взрывы газа (если не боевые)
         _gas = ('взрыв' in _blob and any(w in _blob for w in ('газа','бытов','в жилом','в квартир','в доме','котельн','газовый баллон','газового баллон')))
-        if _fluff or _local or ((_accident or _gas) and not _combat):
+        # 5) бытовой пожар в жилье (малый масштаб, не публичная инфра) -- локальное ЧП, не systemic
+        _home_fire = HOME_FIRE_GUARD and ('пожар' in _blob or 'загорел' in _blob) \
+            and any(w in _blob for w in ('таунхаус','коттедж','частн дом','в частном доме','в жилом дом','в квартир','дачн','в бараке','в гараж','в бане','надворн','в избе')) \
+            and not any(w in _blob for w in ('интернат','престарел','больниц','школ','детск сад','торгов центр','общежит','завод','фабрик','цех','нефтебаз','склад','гостиниц','отел'))
+        if _home_fire:
+            _hmd = re.search(r'(\d+)\s*(?:погиб|жертв|человек)', _blob)
+            if _hmd and _hmd.group(1).isdigit() and int(_hmd.group(1)) >= 10: _home_fire = False
+        if _fluff or _local or ((_accident or _gas or _home_fire) and not _combat):
             _LOSS['sev']+=1; _LOSS['sev_content']=_LOSS.get('sev_content',0)+1; continue
         # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
         _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
@@ -3978,6 +3985,7 @@ _GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономи�
 # Сингапур сваливались в legacy Retail. Под тем же флагом DOMAIN_GEOECON_CANARY.
 _ARMS = re.compile(r'прода\w*\s+(?:ракет|оруж|вооружен|истребител|танк|боеприпас|снаряд|бпла|беспилотник|дрон|систем\w*\s+пво|комплекс\w*\s+с-\d|зенитн|patriot|пэтриот|томагавк|tomahawk|javelin|f-?16|ф-?16|himars|хаймарс)|экспорт\w*\s+(?:оруж|вооружен)|поставк\w*\s+(?:оруж|вооружен|ракет|истребител|танк|patriot|пэтриот|томагавк|tomahawk|f-?16)|военн\w*\s+помощ\w*|военн\w*\s+поставк')
 FIRE_HEAT_GUARD = True   # CANARY: пожар/жара переопределяют домен climate только при природном контексте. Откат = False.
+HOME_FIRE_GUARD = True   # CANARY: бытовой пожар в жилье (малый масштаб) -> локальное ЧП, из ленты. Откат = False.
 _FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухостой|ландшафтн|природн\w* пожар|дик\w* природ|wildfire|буш|растительн|GDACS|верхов\w* пожар|пожароопасн', re.I)
 _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
 
