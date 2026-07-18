@@ -3977,6 +3977,10 @@ _GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономи�
 # «Оборонное производство» (geopolitics). Закрывает canon_type=None, из-за которого Германия/
 # Сингапур сваливались в legacy Retail. Под тем же флагом DOMAIN_GEOECON_CANARY.
 _ARMS = re.compile(r'прода\w*\s+(?:ракет|оруж|вооружен|истребител|танк|боеприпас|снаряд|бпла|беспилотник|дрон|систем\w*\s+пво|комплекс\w*\s+с-\d|зенитн|patriot|пэтриот|томагавк|tomahawk|javelin|f-?16|ф-?16|himars|хаймарс)|экспорт\w*\s+(?:оруж|вооружен)|поставк\w*\s+(?:оруж|вооружен|ракет|истребител|танк|patriot|пэтриот|томагавк|tomahawk|f-?16)|военн\w*\s+помощ\w*|военн\w*\s+поставк')
+FIRE_HEAT_GUARD = True   # CANARY: пожар/жара переопределяют домен climate только при природном контексте. Откат = False.
+_FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухостой|ландшафтн|природн\w* пожар|дик\w* природ|wildfire|буш|растительн|GDACS|верхов\w* пожар|пожароопасн', re.I)
+_FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
+
 def _canon_type_of(title, summ):
     _txt = title + ' ' + summ
     _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
@@ -3997,6 +4001,11 @@ def _canon_type_of(title, summ):
     # Проверяем ВЕСЬ текст на спортивный контекст.
     if best == 'Санкционное давление' and _GEOECON_SPORT.search(_txt):
         return None, 'sport-guard'    # спортивная дисциплинарка — не системный сигнал
+    # FIRE_HEAT_GUARD: 'пожар'/'жара' -> climate ТОЛЬКО при природном контексте (иначе техно/военный/бытовой/метафора)
+    if FIRE_HEAT_GUARD and best == 'Пожарная активность' and not _FG_NAT_FIRE.search(_txt):
+        return None, 'fire-guard'
+    if FIRE_HEAT_GUARD and best == 'Тепловая волна' and not _FG_REAL_HEAT.search(_txt):
+        return None, 'heat-guard'
     return best, br
 
 def _canonize_event(e, SIG):
