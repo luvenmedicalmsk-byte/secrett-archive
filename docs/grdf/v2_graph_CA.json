@@ -2,39 +2,39 @@
   "country": "CA",
   "date": "2026-07-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-18T21:42:45.993544+00:00",
+  "generated_at": "2026-07-18T22:23:03.331357+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 53,
-      "trend": "down"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 33,
-      "trend": "down"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-Канада:_ко",
+      "type": "Signal",
+      "label": "Канада: количество лесных пожаров достиг",
+      "severity": 59,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CA-Дым_от_пож",
       "type": "Signal",
       "label": "Дым от пожаров душит восточные и среднез",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Пожарная_а",
+      "id": "SIGNAL-CA-Сажа_от_ка",
       "type": "Signal",
-      "label": "Пожарная активность — Северная Америка",
-      "severity": 63,
+      "label": "Сажа от канадских лесных пожаров окутала",
+      "severity": 46,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Киберугроз",
-      "type": "Signal",
-      "label": "Киберугроза — Канада",
-      "severity": 58,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-CA",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-CA",
@@ -184,22 +184,64 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CA-Канада:_ко",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.59
+    },
+    {
       "from": "SIGNAL-CA-Дым_от_пож",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.53
     },
     {
-      "from": "SIGNAL-CA-Пожарная_а",
+      "from": "SIGNAL-CA-Сажа_от_ка",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.63
-    },
-    {
-      "from": "SIGNAL-CA-Киберугроз",
-      "to": "DOMAIN-CA-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.46
     }
   ]
 }
