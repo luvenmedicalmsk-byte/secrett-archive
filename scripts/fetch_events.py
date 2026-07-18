@@ -2684,6 +2684,8 @@ def process_events(raw_items):
 
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
+        if str(item.get('source','')).strip().lower() in _BLOCKED_SOURCES:
+            _LOSS['filter']+=1; continue   # редакционный source-блок (анти-канал)
         if item.get('date','') < cutoff: _LOSS['old']+=1; continue
         # --- Ingestion Cleanup (VNext L0): нормализуем desc ДО классификации ---
         # HTML-теги/entities/пробелы чистятся один раз здесь, чтобы detect_domain,
@@ -3988,6 +3990,7 @@ _GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономи�
 _ARMS = re.compile(r'прода\w*\s+(?:ракет|оруж|вооружен|истребител|танк|боеприпас|снаряд|бпла|беспилотник|дрон|систем\w*\s+пво|комплекс\w*\s+с-\d|зенитн|patriot|пэтриот|томагавк|tomahawk|javelin|f-?16|ф-?16|himars|хаймарс)|экспорт\w*\s+(?:оруж|вооружен)|поставк\w*\s+(?:оруж|вооружен|ракет|истребител|танк|patriot|пэтриот|томагавк|tomahawk|f-?16)|военн\w*\s+помощ\w*|военн\w*\s+поставк')
 FIRE_HEAT_GUARD = True   # CANARY: пожар/жара переопределяют домен climate только при природном контексте. Откат = False.
 HOME_FIRE_GUARD = True   # CANARY: бытовой пожар в жилье (малый масштаб) -> локальное ЧП, из ленты. Откат = False.
+_BLOCKED_SOURCES = {'meduza'}   # редакционный блок источников (анти-каналы) -> drop на входе
 _FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухостой|ландшафтн|природн\w* пожар|дик\w* природ|wildfire|буш|растительн|GDACS|верхов\w* пожар|пожароопасн', re.I)
 _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
 _BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
@@ -7084,7 +7087,7 @@ def fetch_russia_climate():
         # RFE/RL по России
         {"url": "https://www.rferl.org/api/zjrqovec-q_", "source": "RFE/RL", "bias": 6},
         # Meduza -- новости из России
-        {"url": "https://meduza.io/rss/all", "source": "Meduza", "bias": 7},
+        # {"url": "https://meduza.io/rss/all", "source": "Meduza", "bias": 7},  # BLOCKED: анти-канал (редакционный source-блок)
     ]
     
     russia_climate_keywords = [
