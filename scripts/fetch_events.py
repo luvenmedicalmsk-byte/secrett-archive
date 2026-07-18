@@ -3990,6 +3990,8 @@ FIRE_HEAT_GUARD = True   # CANARY: пожар/жара переопределя�
 HOME_FIRE_GUARD = True   # CANARY: бытовой пожар в жилье (малый масштаб) -> локальное ЧП, из ленты. Откат = False.
 _FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухостой|ландшафтн|природн\w* пожар|дик\w* природ|wildfire|буш|растительн|GDACS|верхов\w* пожар|пожароопасн', re.I)
 _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
+_BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
+_REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|обстрел|артиллер|авиауд|\bвсу\b|войск|танк|снаряд|\bпво\b|удар\w* по|нанесл|боевик|\bфронт|оккуп|диверси|террорист', re.I)
 
 def _canon_type_of(title, summ):
     _txt = title + ' ' + summ
@@ -4016,6 +4018,9 @@ def _canon_type_of(title, summ):
         return None, 'fire-guard'
     if FIRE_HEAT_GUARD and best == 'Тепловая волна' and not _FG_REAL_HEAT.search(_txt):
         return None, 'heat-guard'
+    # bio-attack-guard: «атакуют» насекомые/вирусы/болезни -- не «Военные удары»/geopolitics
+    if best == 'Военные удары' and _BIO_ATTACK_G.search(_txt) and not _REAL_MIL_G.search(_txt):
+        return None, 'bio-attack-guard'
     return best, br
 
 def _canonize_event(e, SIG):
