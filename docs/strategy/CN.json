@@ -2,102 +2,102 @@
   "country": "CN",
   "country_name": "Китай",
   "date": "2026-07-18",
-  "generated_at": "2026-07-18T06:31:22.906010+00:00",
-  "strategy_score": 36,
+  "generated_at": "2026-07-18T08:23:14.601385+00:00",
+  "strategy_score": 49,
   "strategy_confidence": 75,
-  "urgency_level": "high",
-  "urgency_level_ru": "Высокая",
-  "urgency_color": "#f59e0b",
-  "preparedness_level": "active",
-  "preparedness_level_ru": "Активная готовность",
-  "monitoring_priority": 3,
-  "monitoring_ru": "Каждые 6 часов",
+  "urgency_level": "critical",
+  "urgency_level_ru": "Критическая",
+  "urgency_color": "#ef4444",
+  "preparedness_level": "emergency",
+  "preparedness_level_ru": "Чрезвычайная готовность",
+  "monitoring_priority": 4,
+  "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "E-01",
+      "id": "CR-01",
       "priority": 1,
-      "action": "Удержать деэскалационный потенциал",
-      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
-      "trigger": "escalating + best dominant",
+      "action": "Контролируемая деэскалация",
+      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
+      "trigger": "critical + best dominant",
       "expiry": "state transition",
-      "confidence": 74,
+      "confidence": 71,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     },
     {
-      "id": "E-02",
+      "id": "CR-02",
       "priority": 2,
-      "action": "Инициировать дипломатические/превентивные контакты",
-      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
-      "trigger": "prob_best > 20%",
-      "expiry": "prob_best < 15%",
-      "confidence": 74,
+      "action": "Защитить деэскалационные индикаторы",
+      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
+      "trigger": "always",
+      "expiry": "deescalation confirmed",
+      "confidence": 71,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "escalating",
+  "state": "critical",
   "dominant_scenario": "best",
-  "scenario_score": 22,
-  "instability": 31,
+  "scenario_score": 30,
+  "instability": 39,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 69 (+8pt)",
-      "leads_to": "critical",
-      "probability": 20
+      "condition": "risk_score ≥ 72 (+8pt)",
+      "leads_to": "cascade",
+      "probability": 22
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "critical",
-      "probability": 16
+      "leads_to": "cascade",
+      "probability": 20
     },
     {
-      "condition": "Worst-case 30d ≥ 88",
-      "leads_to": "critical",
-      "probability": 25
+      "condition": "Worst-case 30d ≥ 95",
+      "leads_to": "cascade",
+      "probability": 29
     },
     {
       "condition": "Новый критический драйвер в climate",
-      "leads_to": "critical",
-      "probability": 19
+      "leads_to": "cascade",
+      "probability": 20
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 71,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 83,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "90 дней",
-      "score": 63,
+      "score": 73,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
+    },
+    {
+      "horizon": "180 дней",
+      "score": 64,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
-      "horizon": "180 дней",
-      "score": 56,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
-    },
-    {
       "horizon": "365 дней",
-      "score": 50,
+      "score": 56,
       "state": "contained",
       "urgency": "moderate",
       "preparedness": "enhanced"
     }
   ],
   "probabilities": {
-    "worst": 25,
-    "stress": 24,
-    "base": 20,
-    "best": 31
+    "worst": 29,
+    "stress": 25,
+    "base": 17,
+    "best": 29
   }
 }
