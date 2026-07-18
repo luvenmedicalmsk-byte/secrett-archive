@@ -2,66 +2,66 @@
   "country": "PL",
   "date": "2026-07-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-18T10:59:38.913886+00:00",
+  "generated_at": "2026-07-18T11:49:04.730079+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-PL",
       "type": "Country",
       "label": "PL",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-PL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "down"
+      "score": 28,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 33,
-      "trend": "down"
+      "score": 7,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-PL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
+      "score": 7,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-PL-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "down"
+      "score": 14,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-PL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "down"
+      "score": 16,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-PL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-PL-Министерст",
+      "type": "Signal",
+      "label": "Министерство национальной обороны Польши",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-PL-Климатичес",
       "type": "Signal",
       "label": "Климатическая политика — Польша",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Польша",
       "severity": 46,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-PL-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Польша",
-      "severity": 34,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-climate",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-PL",
       "to": "DOMAIN-PL-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-PL-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-PL-geopolitical",
+      "to": "DOMAIN-PL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PL-infrastructure",
+      "to": "DOMAIN-PL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PL-economic",
+      "to": "DOMAIN-PL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PL-Министерст",
+      "to": "DOMAIN-PL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-PL-Климатичес",
       "to": "DOMAIN-PL-climate",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-PL-social",
       "type": "AMPLIFIES",
       "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-PL-Геополитич",
-      "to": "DOMAIN-PL-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
