@@ -84,8 +84,10 @@ _PROMO_RE = re.compile(
 _CHAN_SIG_RE = re.compile(r'\s*(?:Прямой\s+эфир|Топор\s*Live|Прямой эфир)\s*[.!…]?\s*$')
 _PROMO2_RE = re.compile(r'\s*(?:\u043d\u0435 \u0433\u0440\u0443\u0437\u0438\u0442[^?\n]{0,60}\?)?\s*\u043f\u0435\u0440\u0435\u0445\u043e\u0434(?:\u0438|\u0438\u0442\u0435)\s+\u0432\s+\u043d\u0430\u0448[^.!?\n]{0,60}[.!\u2026\s]*$', re.I)
 def _strip_promo(t):
-    """Срез промо-хвостов TG (@Канал | Подписывайтесь, Подписывайтесь..., хвостовой @хендл)."""
-    t = (t or '').strip(); prev = None
+    """Срез промо-хвостов TG (@Канал | Подписывайтесь...) + URL-ссылок на источник в тексте (display)."""
+    t = (t or '').strip()
+    t = re.sub(r'\s*(?:https?://|www\.)\S+|\s*t\.me/\S+', '', t).strip()   # URL-strip: ссылки не место в заголовке карточки
+    prev = None
     while prev != t and t:
         prev = t; t = _PROMO2_RE.sub('', _CHAN_SIG_RE.sub('', _PROMO_RE.sub('', t))).rstrip(' \t\n|\u00b7\u2014\u2013-')
     return t.strip()
