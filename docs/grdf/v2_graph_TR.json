@@ -2,66 +2,66 @@
   "country": "TR",
   "date": "2026-07-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-18T14:19:28.725046+00:00",
+  "generated_at": "2026-07-18T15:31:59.621474+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 35,
+      "score": 39,
       "props": {
-        "risk_score": 35
+        "risk_score": 39
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
+      "score": 52,
       "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
+      "score": 10,
       "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 4,
+      "score": 2,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 4,
+      "score": 2,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 8,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 8,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
+      "score": 1,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-TR-Турция_мод",
+      "type": "Signal",
+      "label": "Турция модернизирует авиабазу для гигант",
+      "severity": 47,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-TR-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Ближний Восток",
       "severity": 83,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-TR-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.01
     },
     {
       "from": "DRIVER-TR-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-TR-Турция_мод",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.47
+    },
+    {
       "from": "SIGNAL-TR-Военный_ко",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.83
-    },
-    {
-      "from": "SIGNAL-TR-Геополитич",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
