@@ -465,6 +465,8 @@ def _trunc_shadow_report(_c2):
 
 OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
 MAX_EVENTS = 350
+CASUALTY_RU = True          # CANARY (Fix A): русское извлечение числа жертв в estimate_severity. Откат = False.
+_CASUALTY_RU_HITS = []      # shadow-метрика для Morning Audit (обнуляется каждый прогон)
 SEVERITY_THRESHOLD = 45
 
 # ── S34B SOURCE GOVERNANCE ──────────────────────────────────────────────────
@@ -1094,6 +1096,16 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
     for num_str, _ in re.findall(r'\b(\d[\d,]*)\s*(killed|dead|displaced|million|billion)', text):
         try: casualties = max(casualties, int(num_str.replace(',', '')))
         except Exception: pass
+    # CASUALTY_RU (Fix A): русское число жертв через _metric_floors + летальный guard (жертв != пожертвование)
+    if CASUALTY_RU:
+        try:
+            _dd = _metric_floors(text, return_metrics=True)[1].get('deaths', 0) or 0
+            if _dd and re.search(r'погиб|убит|скончал|унесл|смерт|мёртв|killed|dead|жертв(?!ова)', text):
+                if _dd > casualties:
+                    _CASUALTY_RU_HITS.append({'t': title[:50], 'from': casualties, 'to': _dd})
+                casualties = max(casualties, _dd)
+        except Exception:
+            pass
     return normalize_severity('news', {'kw_high': kw_high, 'kw_med': kw_med,
                                        'casualties': casualties, 'bias': bias, 'weight': weight,
                                        'kw_conflict': kw_conflict, 'mass_scale': mass})
@@ -11207,6 +11219,15 @@ def save_enriched(events, previous_snapshot=None):
       3. enrich_with_escalation() -> escalation_score, level, trend_direction
     Полностью обратно совместима -- добавляет поля, не трогает старые.
     """
+    if CASUALTY_RU and _CASUALTY_RU_HITS:
+        try:
+            (OUTPUT_PATH.parent / '_casualty_ru_shadow.json').write_text(
+                json.dumps({'updated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                            'raised': len(_CASUALTY_RU_HITS), 'sample': _CASUALTY_RU_HITS[:20]},
+                           ensure_ascii=False, indent=2), encoding='utf-8')
+            print(f"[CASUALTY_RU] casualty-подъёмов за прогон: {len(_CASUALTY_RU_HITS)}")
+        except Exception:
+            pass
     raw_snapshot = {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "count":   len(events),
