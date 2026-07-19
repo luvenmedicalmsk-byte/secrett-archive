@@ -5,9 +5,17 @@
 Источники: _diagnostics_report.json (текущий прогон) + собственный предыдущий
 _change_impact.json (снимок прошлого прогона). Выход: docs/_change_impact.json
 """
-import json, os, sys
+import json, os, sys, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+
+def _code_fingerprint():
+    # отпечаток дерева scripts/: data-коммиты его не меняют, только правки кода
+    try:
+        return subprocess.run(['git','rev-parse','HEAD:scripts'],capture_output=True,text=True,
+                              cwd=str(Path(__file__).parent), timeout=10).stdout.strip()[:12] or None
+    except Exception:
+        return None
 
 DOCS = Path(__file__).parent.parent / 'docs'
 DIAG = DOCS / '_diagnostics_report.json'
@@ -24,6 +32,7 @@ def _cur_snapshot():
     dom = (d.get('domain_stats') or {}).get('by_domain') or {}
     return {
         'commit': (os.environ.get('COMMIT_SHA') or '')[:10] or None,
+        'code_fingerprint': _code_fingerprint(),
         'run_generated': d.get('generated'),
         'diagnostics_status': d.get('status'),
         'metrics': {
@@ -105,7 +114,13 @@ def main():
         elif _ing < 2: conf = 'HIGH'
         elif _ing < 5: conf = 'MEDIUM'
         else: conf = 'LOW'
-        code_changed = (prev.get('commit') != cur.get('commit')) if prev.get('commit') and cur.get('commit') else None
+        _pf, _cf = prev.get('code_fingerprint'), cur.get('code_fingerprint')
+        if _pf and _cf:
+            code_changed = (_pf != _cf)   # по дереву scripts/: data-коммиты не считаются изменением кода
+        elif prev.get('commit') and cur.get('commit'):
+            code_changed = (prev.get('commit') != cur.get('commit'))
+        else:
+            code_changed = None
         if code_changed is False:
             conf_note = 'код не менялся между прогонами — изменения отражают естественную изменчивость потока'
         elif conf == 'LOW':
