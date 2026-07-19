@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: '*/30 * * * *'   # каждые 30 минут
   workflow_dispatch:
+    inputs:
+      lineage:
+        description: 'LINEAGE observability (0/1)'
+        default: '0'
 
 concurrency:
   group: update-events-${{ github.ref }}
@@ -44,6 +48,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           WORKER_URL: ${{ secrets.WORKER_URL }}
           ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+          LINEAGE: ${{ github.event.inputs.lineage || '0' }}
           CF_RADAR_TOKEN: ${{ secrets.CF_RADAR_TOKEN }}
           TG_API_ID: ${{ secrets.TG_API_ID }}
           TG_API_HASH: ${{ secrets.TG_API_HASH }}
