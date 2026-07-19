@@ -2794,7 +2794,7 @@ def process_events(raw_items):
             # S36.4: домен ленты в приоритете (оба ключа), иначе по ключевым словам
             domain = item.get('_domain') or item.get('domain') or detect_domain(item['title'], item.get('desc',''))
             if not domain:
-                _trace(_tid,'CLASSIFIER','removed',reason='no_domain'); _LOSS['no_domain']+=1
+                _LOSS['no_domain']+=1
                 # SHADOW-ЛОГ для Domain Coverage Audit: сохраняем отброшенные без домена,
                 # чтобы анализировать потерю recall (не меняет поведение — событие всё равно дропается)
                 try:
