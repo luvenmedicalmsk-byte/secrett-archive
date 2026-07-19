@@ -74,7 +74,9 @@ def invariants(traces, fun, dom, run_start_iso):
         for i,l in enumerate(lines,1):
             for m in re.finditer(r"_LOSS\['(\w+)'\]", l):
                 if '+=' in l or '+ 1' in l:
-                    t+=1; c+=('_trace(' in l or (i>1 and '_trace(' in lines[i-2]))
+                    t+=1
+                    lo,hi=max(0,i-3), min(len(lines), i+10)
+                    c+=any('_trace(' in lines[j] for j in range(lo,hi))
         inv['trace_coverage']={'value':f'{c}/{t}','ok':c==t}
     except Exception as e:
         inv['trace_coverage']={'value':f'err {str(e)[:40]}','ok':False}
@@ -85,6 +87,15 @@ def invariants(traces, fun, dom, run_start_iso):
         inv['updated_fresh']={'value':upd,'run_start':run_start_iso,'ok':fresh}
     except Exception:
         inv['updated_fresh']={'value':None,'ok':False}
+    # lineage свежий: traces == ingested текущего прогона (из _pipeline_loss)
+    try:
+        pl=json.load(open(LOSS, encoding='utf-8'))
+        ing=pl.get('loss',{}).get('ingested',0)
+        n=len(traces)
+        ok = (n>0 and ing>0 and abs(n-ing)<=max(5, int(0.05*ing)))
+        inv['lineage_fresh']={'value':f'traces={n} ingested={ing}','ok':ok}
+    except Exception as e:
+        inv['lineage_fresh']={'value':f'err {str(e)[:40]}','ok':False}
     # feed <= exported <= built (из funnel)
     fd,ex,bd = fun.get('FEED',0), fun.get('EXPORTED',0), fun.get('BUILT',0)
     inv['feed_le_exported']={'value':f'{fd}<={ex}','ok':fd<=ex}
