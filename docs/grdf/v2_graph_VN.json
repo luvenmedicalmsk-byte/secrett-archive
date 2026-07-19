@@ -2,67 +2,72 @@
   "country": "VN",
   "date": "2026-07-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-19T12:26:12.154133+00:00",
+  "generated_at": "2026-07-19T12:54:43.758062+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 65,
+      "score": 45,
       "props": {
-        "risk_score": 65
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 47,
-      "trend": "stable"
+      "score": 43,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 58,
-      "trend": "stable"
+      "score": 40,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
-      "trend": "stable"
+      "score": -6,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 42,
-      "trend": "stable"
+      "score": 29,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
-      "score": 49,
-      "trend": "stable"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 46,
-      "trend": "stable"
+      "score": 31,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 39,
-      "trend": "stable"
+      "score": 27,
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-VN-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-VN-economic",
@@ -73,18 +78,6 @@
       "id": "DRIVER-VN-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-VN-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-VN-По_меньшей",
-      "type": "Signal",
-      "label": "По меньшей мере 5 человек погибли в резу",
-      "severity": 65,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-VN-Наводнение",
@@ -99,6 +92,13 @@
       "label": "Климатический сигнал — Юго-Восточная Ази",
       "severity": 52,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-VN-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Вьетнам",
+      "severity": 50,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,49 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": -0.06
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-technology",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-social",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-cyber",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.27
+    },
+    {
+      "from": "DRIVER-VN-geopolitical",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-VN-economic",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-VN-social",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-VN-geopolitical",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,33 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-VN-infrastructure",
-      "to": "DOMAIN-VN-economic",
-      "type": "ESCALATES",
-      "weight": 0.78,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 21
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-social",
-      "type": "CORRELATES",
-      "weight": 0.5,
-      "lag_days": 60
-    },
-    {
-      "from": "SIGNAL-VN-По_меньшей",
-      "to": "DOMAIN-VN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.65
-    },
-    {
       "from": "SIGNAL-VN-Наводнение",
       "to": "DOMAIN-VN-climate",
       "type": "AMPLIFIES",
@@ -221,6 +194,12 @@
       "to": "DOMAIN-VN-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-VN-Геополитич",
+      "to": "DOMAIN-VN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
