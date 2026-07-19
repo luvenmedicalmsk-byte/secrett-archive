@@ -4844,6 +4844,16 @@ def save(events):
                     ensure_ascii=False, indent=2), encoding='utf-8')
             except Exception:
                 pass
+    # ═══ ФИНАЛЬНЫЕ DISPLAY-ФИКСЫ (настоящая точка записи events.json — функция save) ═══
+    for _fxe in events:
+        _fxb=((_fxe.get('title','') or '')+' '+(_fxe.get('summary','') or '')).lower()
+        # BC: закэшированный мисрезолв GB->CA (провинция Канады)
+        if 'британск' in _fxb and 'колумби' in _fxb and (_fxe.get('geo') or {}).get('country')=='GB':
+            _fxe['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
+            _fxe['lat']=53.7; _fxe['lng']=-127.6; _fxe['region']='Британская Колумбия'
+        # нейтрализация пропаганд. терминов (display, 0 churn)
+        for _fxf in ('title','summary','_headline'):
+            if _fxe.get(_fxf): _fxe[_fxf]=_neutralize(_fxe[_fxf])
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         "count": len(events),
