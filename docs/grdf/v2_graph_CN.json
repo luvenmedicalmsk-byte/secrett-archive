@@ -2,9 +2,9 @@
   "country": "CN",
   "date": "2026-07-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-19T07:25:57.978214+00:00",
+  "generated_at": "2026-07-19T08:41:35.651450+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
@@ -19,28 +19,28 @@
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "down"
+      "score": 43,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 22,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 30,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 37,
       "trend": "stable"
     },
     {
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 12,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -98,7 +98,7 @@
       "type": "Signal",
       "label": "Новая китайская модель ИИ Moonshot Kimi ",
       "severity": 60,
-      "domain": "climate"
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-CN",
@@ -118,13 +118,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Оранжевое_",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -176,7 +197,7 @@
     },
     {
       "from": "SIGNAL-CN-Новая_кита",
-      "to": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.6
     }
