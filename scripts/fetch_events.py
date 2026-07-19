@@ -51,6 +51,15 @@ def _lineage_flush(path):
         print(f"  [LINEAGE] traces={rep['total']} feed={rep['feed']} removed={rep['removed']} unfinished={rep['unfinished']} dup={rep['duplicate_finals']} order_viol={rep['stage_order_violations']}")
     except Exception: pass
 # ═══ end lineage framework ═══
+# ═══ НЕЙТРАЛИЗАЦИЯ пропаганд./уничижит. терминов (display-слой, для двусторонней аудитории) ═══
+_NEUTRALIZE = [(re.compile(p, re.I), r) for p, r in [
+    (r'укронацист\w*','ВСУ'), (r'укрофашист\w*','ВСУ'), (r'\bнацик\w*','ВСУ'), (r'бандеровц\w*','ВСУ'),
+    (r'рашист\w*','российские силы'), (r'\bмоскал\w*','россияне'), (r'\bхохл\w*','украинцы'),
+]]
+def _neutralize(t):
+    if not t: return t
+    for _rx, _r in _NEUTRALIZE: t = _rx.sub(_r, t)
+    return t
 # signal schema enrichment v2.2
 try:
     from signal_enricher import enrich_snapshot as _enrich_snapshot
@@ -11412,6 +11421,10 @@ def save_enriched(events, previous_snapshot=None):
                 if 'британск' in _bcb and 'колумби' in _bcb and (_bce.get('geo') or {}).get('country')=='GB':
                     _bce['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
                     _bce['lat']=53.7; _bce['lng']=-127.6; _bce['region']='Британская Колумбия'
+            # НЕЙТРАЛИЗАЦИЯ пропаганд. терминов в display-полях (title/summary/_headline), 0 churn
+            for _ne in enriched["events"]:
+                for _nf in ('title','summary','_headline'):
+                    if _ne.get(_nf): _ne[_nf]=_neutralize(_ne[_nf])
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
