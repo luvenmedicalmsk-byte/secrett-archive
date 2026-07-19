@@ -11467,6 +11467,12 @@ def save_enriched(events, previous_snapshot=None):
                 if 'британск' in _bcb and 'колумби' in _bcb and (_bce.get('geo') or {}).get('country')=='GB':
                     _bce['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
                     _bce['lat']=53.7; _bce['lng']=-127.6; _bce['region']='Британская Колумбия'
+            # ХОТФИКС: застрявший домен climate у финансово-военного события НАТО/€140 млрд (персист старого инжеста; live-классификатор даёт geopolitics/economy)
+            for _nte in enriched["events"]:
+                _ntb=(_nte.get('title','') or '').lower()
+                if 'нато' in _ntb and '140' in _ntb and (_nte.get('domain')=='climate' or _nte.get('canon_domain')=='climate'):
+                    _nte['domain']='geopolitics'
+                    if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
             # НЕЙТРАЛИЗАЦИЯ пропаганд. терминов в display-полях (title/summary/_headline), 0 churn
             for _ne in enriched["events"]:
                 for _nf in ('title','summary','_headline'):
