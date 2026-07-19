@@ -11299,6 +11299,14 @@ def save_enriched(events, previous_snapshot=None):
                 _aam=re.search(r'(\d+)\s*(?:погиб|жертв|человек|пассажир)', _aab)
                 if not (_aam and _aam.group(1).isdigit() and int(_aam.group(1))>=10):
                     _aae['feed_visible']=False
+    # ХОТФИКС (продажи): закэшированный мисрезолв 'Британская Колумбия' GB->CA (провинция Канады). Временный до общего сброса гео-кэша.
+    for _bce in events:
+        _bcb=((_bce.get('title','') or '')+' '+(_bce.get('summary','') or '')).lower()
+        if 'британск' in _bcb and 'колумби' in _bcb:
+            _bcg=_bce.get('geo') or {}
+            if _bcg.get('country')=='GB':
+                _bcg.update({'country':'CA','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
+                _bce['geo']=_bcg
     # I.1 LINEAGE: FEED / EXPORTED трассировка (только при LINEAGE=1)
     if LINEAGE:
         for _fe in events:
