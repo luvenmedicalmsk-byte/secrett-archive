@@ -67,6 +67,9 @@ _NEUTRALIZE = [(re.compile(p, re.I), r) for p, r in [
     (r'укронацист\w*','ВСУ'), (r'укрофашист\w*','ВСУ'), (r'\bнацик\w*','ВСУ'), (r'бандеровц\w*','ВСУ'),
     (r'рашист\w*','российские силы'), (r'\bмоскал\w*','россияне'), (r'\bхохл\w*','украинцы'),
 ]]
+# Гуманитарный класс (голод/беженцы/эпидемии/детская смертность и т.п.) = СОЦИУМ.
+# Редакционное решение 19.07.2026: институциональные гуманитарные ленты (UN News) не геополитика.
+_HUMANITARIAN = re.compile(r'голод|недоедан|продовольственн\w+ (?:кризис|небезопасн)|беженц|перемещ[её]нн|вынужденн\w+ переселен|эпидеми|холер|вспышк\w+ (?:кор[иь]|лихорадк|полиомиелит|эбол)|детск\w+ смертност|материнск\w+ смертност|гуманитарн\w+ (?:кризис|катастроф|помощ|ситуац)|нехватк\w+ (?:воды|питьев|продовольств|медикамент)|famine|displaced|refugee|cholera|malnutrition', re.I)
 def _neutralize(t):
     if not t: return t
     for _rx, _r in _NEUTRALIZE: t = _rx.sub(_r, t)
@@ -7138,7 +7141,7 @@ def fetch_global_rss():
                     'date': parse_date(pub_date),
                     'source': feed['source'],
                     'source_bias': feed['bias'],
-                    '_domain': feed.get('domain')
+                    '_domain': ('social' if (feed.get('source')=='UN News' and _HUMANITARIAN.search((title or '')+' '+(desc or ''))) else feed.get('domain'))
                 })
                 count += 1
         except: pass
@@ -11473,6 +11476,13 @@ def save_enriched(events, previous_snapshot=None):
                 if 'нато' in _ntb and '140' in _ntb and (_nte.get('domain')=='climate' or _nte.get('canon_domain')=='climate'):
                     _nte['domain']='geopolitics'
                     if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
+            # Гуманитарный класс UN News -> social (редакционное решение; чинит и персистентные карточки)
+            for _hme in enriched["events"]:
+                if _hme.get('source')=='UN News' and _hme.get('domain') in ('geopolitics',None):
+                    _hmb=((_hme.get('title','') or '')+' '+(_hme.get('summary','') or ''))
+                    if _HUMANITARIAN.search(_hmb):
+                        _hme['domain']='social'
+                        if _hme.get('canon_domain')=='geopolitics': _hme['canon_domain']='social'
             # НЕЙТРАЛИЗАЦИЯ пропаганд. терминов в display-полях (title/summary/_headline), 0 churn
             for _ne in enriched["events"]:
                 for _nf in ('title','summary','_headline'):
