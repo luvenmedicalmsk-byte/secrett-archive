@@ -11343,7 +11343,7 @@ def save_enriched(events, previous_snapshot=None):
                 _trace(_ftid,'EXPORTED'); _trace(_ftid,'FEED')
             else:
                 _trace(_ftid,'FEED_HIDDEN','removed',reason='feed_visible_false')
-        raw_snapshot = {
+    raw_snapshot = {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "count":   len(events),
         "sources": ["NewsAPI", "GDELT 2.0", "ReliefWeb", "NASA EONET"],
