@@ -2,77 +2,77 @@
   "country": "GB",
   "date": "2026-07-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-19T12:15:22.633030+00:00",
+  "generated_at": "2026-07-19T12:26:12.138616+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 35,
+      "score": 50,
       "props": {
-        "risk_score": 35
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 30,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "stable"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "stable"
-    },
-    {
-      "id": "DRIVER-GB-Geopolitical",
-      "type": "Driver",
-      "label": "Geopolitical"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Economic",
       "type": "Driver",
       "label": "Economic"
+    },
+    {
+      "id": "DRIVER-GB-Geopolitical",
+      "type": "Driver",
+      "label": "Geopolitical"
     },
     {
       "id": "DRIVER-GB-Economic",
@@ -94,10 +94,10 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-GB-Экономичес",
+      "id": "SIGNAL-GB-Топливный_",
       "type": "Signal",
-      "label": "Экономический сигнал — Великобритания",
-      "severity": 45,
+      "label": "Топливный рынок — Великобритания",
+      "severity": 53,
       "domain": "economic"
     }
   ],
@@ -106,43 +106,49 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-cyber",
       "type": "CORRELATES",
       "weight": 0.03
+    },
+    {
+      "from": "DRIVER-GB-Economic",
+      "to": "COUNTRY-GB",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-GB-Geopolitical",
@@ -157,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GB-Economic",
-      "to": "COUNTRY-GB",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-GB-Санкционно",
@@ -175,10 +196,10 @@
       "weight": 0.53
     },
     {
-      "from": "SIGNAL-GB-Экономичес",
+      "from": "SIGNAL-GB-Топливный_",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.53
     }
   ]
 }
