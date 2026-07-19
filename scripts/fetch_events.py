@@ -11361,13 +11361,6 @@ def save_enriched(events, previous_snapshot=None):
             enriched["count"] = len(enriched["events"])
             enriched["events"] = _aggregate_series(_editorial_gate(enriched["events"]))   # аудит качества: шум/PR/ретро + серии
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
-            # ХОТФИКС (продажи): закэшированный мисрезолв 'Британская Колумбия' GB->CA на ФИНАЛЬНОМ enriched (после гео-контракта). Временный.
-            for _bce in enriched["events"]:
-                _bcb=((_bce.get('title','') or '')+' '+(_bce.get('summary','') or '')).lower()
-                if 'британск' in _bcb and 'колумби' in _bcb:
-                    _bcg=_bce.get('geo') or {}
-                    if _bcg.get('country')=='GB':
-                        _bcg.update({'country':'CA','region':'Британская Колумбия','lat':53.7,'lng':-127.6}); _bce['geo']=_bcg
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
             # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
             try:
@@ -11413,6 +11406,12 @@ def save_enriched(events, previous_snapshot=None):
                               file=sys.stderr)
             except Exception as _fe:
                 print(f'  [FSS] skip: {_fe}', file=sys.stderr)
+            # ХОТФИКС (продажи): BC GB->CA в САМОМ последнем месте, после всех пересборок enriched, перед записью.
+            for _bce in enriched["events"]:
+                _bcb=((_bce.get('title','') or '')+' '+(_bce.get('summary','') or '')).lower()
+                if 'британск' in _bcb and 'колумби' in _bcb and (_bce.get('geo') or {}).get('country')=='GB':
+                    _bce['geo'].update({'country':'CA','country_ru':'Канада','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
+                    _bce['lat']=53.7; _bce['lng']=-127.6; _bce['region']='Британская Колумбия'
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
