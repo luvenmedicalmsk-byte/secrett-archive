@@ -2803,6 +2803,7 @@ def process_events(raw_items):
                             'desc':(item.get('desc','') or '')[:160],'source':str(item.get('source',''))[:30]})
                 except NameError:
                     pass
+                _trace(_tid,'CLASSIFIER','removed',reason='no_domain')
                 continue
             # Сначала пробуем российские координаты
             geo = detect_russia_coords(item['title'], item.get('desc',''))
@@ -3032,7 +3033,7 @@ def process_events(raw_items):
             # событие держится ТОЛЬКО на Process Impact, если A=ADMIT, B=REJECT
             _proc_dependent = (_adm == 'ADMIT' and _adm_b == 'REJECT' and _proc_bonus > 0)
             if _proc_dependent:
-                _trace(_tid,'ADMISSION','removed',reason='proc_only'); _LOSS['proc_only'] = _LOSS.get('proc_only', 0) + 1
+                _trace(_tid,'ADMISSION','modified',reason='proc_only'); _LOSS['proc_only'] = _LOSS.get('proc_only', 0) + 1
             # объяснимость Admission — человекочитаемая причина
             _reason_map = {'structural': 'меняет структуру системы',
                 'process_confirm': 'подтверждает существующий процесс',
@@ -3420,8 +3421,9 @@ def process_events(raw_items):
     if LINEAGE:
         _fin={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
         for _tid2,_rec2 in list(_LINEAGE_LOG.items()):
-            if any(s.get('stage')=='BUILT' for s in _rec2.get('route',[])) and _tid2 not in _fin and '_finals' not in _rec2:
-                _trace(_tid2,'TOPIC_CAP','removed',reason='post_build_filter')
+            if _tid2 in _fin or '_finals' in _rec2: continue
+            _had_built = any(s.get('stage')=='BUILT' for s in _rec2.get('route',[]))
+            _trace(_tid2,'TOPIC_CAP','removed',reason=('post_build_filter' if _had_built else 'gate_unattributed'))
     return top_events
 
 _ACTOR_REGION = [('евросоюз','ЕС'),('еврокомисс','ЕС'),('еврокоми','ЕС'),('брюссель','ЕС'),('ес ','ЕС'),('ес,','ЕС'),
@@ -11469,6 +11471,12 @@ def save_enriched(events, previous_snapshot=None):
             for _ne in enriched["events"]:
                 for _nf in ('title','summary','_headline'):
                     if _ne.get(_nf): _ne[_nf]=_neutralize(_ne[_nf])
+            # I.1 LINEAGE: enrich-merge — события, потерянные при слиянии снапшотов
+            if LINEAGE:
+                _em_fin={x.get('_obs_tid') for x in enriched["events"] if x.get('_obs_tid')}
+                for _tid3,_rec3 in list(_LINEAGE_LOG.items()):
+                    if _tid3 not in _em_fin and '_finals' not in _rec3 and any(s.get('stage')=='BUILT' for s in _rec3.get('route',[])):
+                        _trace(_tid3,'TOPIC_CAP','removed',reason='enrich_merge')
             # I.1 LINEAGE: FEED/EXPORTED — в САМОМ конце (после series/editorial/FSS), один финал на трассу
             if LINEAGE:
                 for _fe2 in enriched["events"]:
