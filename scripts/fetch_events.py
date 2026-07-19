@@ -11477,6 +11477,17 @@ def save_enriched(events, previous_snapshot=None):
                     _nte['domain']='geopolitics'
                     if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
             # Гуманитарный класс UN News -> social (редакционное решение; чинит и персистентные карточки)
+            # COURT_CHRONICLE (Мия 19.07): судебная хроника отдельных персон (продление ареста/СИЗО
+            # редактору/блогеру/бизнесмену) = шум, из ленты. Guard: массовые/системные кейсы остаются.
+            import re as _re_cc
+            _CC_HIT=_re_cc.compile(r'продлил\w* (арест|срок ареста|содержание под стражей)|заключ\w* под страж|'
+                r'арестова\w+ (основател|главред|редактор|блогер|журналист|бизнесмен|директор|актер|актёр)|'
+                r'приговор\w* к \d|мера пресечения|отправил\w* в СИЗО', _re_cc.I)
+            _CC_SYS=_re_cc.compile(r'массов|протест|митинг|беспоряд|тысяч|сотни задержан|оппозицион\w+ лидер|экстрадиц', _re_cc.I)
+            for _cce in enriched["events"]:
+                _ccb=((_cce.get('title','') or '')+' '+(_cce.get('summary','') or ''))
+                if _CC_HIT.search(_ccb) and not _CC_SYS.search(_ccb):
+                    _cce['feed_visible']=False
             # Решение Мии 19.07: весь UN News = социум (в т.ч. персистентные карточки)
             for _hme in enriched["events"]:
                 if _hme.get('source')=='UN News' and _hme.get('domain') in ('geopolitics',None):
