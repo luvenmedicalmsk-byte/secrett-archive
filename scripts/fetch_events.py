@@ -16,22 +16,39 @@ import random
 # ═══ I.1 LINEAGE FRAMEWORK (read-only, строгий no-op при LINEAGE=0) ═══
 LINEAGE = os.environ.get('LINEAGE') == '1'
 _LINEAGE_LOG = {}
-def _lineage_id(item):
-    try: return hashlib.md5((str(item.get('source',''))+str(item.get('title',''))+str(item.get('date',''))).encode()).hexdigest()[:10]
+_STAGE_ORDER = ['INGESTED','SOURCE_BLOCK','OLD','FILTER','CLASSIFIER','NO_GEO','GEO','SEVERITY','DEDUP','ADMISSION','BUILT','OVERFLOW','FRESHNESS','TOPIC_CAP','EXPORTED','FEED','FEED_HIDDEN']
+_STAGE_IDX = {s: i for i, s in enumerate(_STAGE_ORDER)}
+def _obs_id(item):
+    # obs_trace_id: ТЕХНИЧЕСКИЙ идентификатор наблюдаемости (не системный ID), для ранних стадий до make_id
+    try: return 'obs_' + hashlib.md5((str(item.get('source',''))+str(item.get('title',''))+str(item.get('date',''))).encode()).hexdigest()[:10]
     except Exception: return None
-def _trace(trace_id, stage, decision='pass', reason=None, **meta):
+def _trace(trace_id, stage, decision='pass', reason=None, event_id=None, **meta):
     if not LINEAGE or not trace_id: return
-    rec=_LINEAGE_LOG.setdefault(trace_id,{'trace_id':trace_id,'route':[]})
-    step={'stage':stage,'decision':decision}
-    if reason: step['reason']=reason
+    rec = _LINEAGE_LOG.setdefault(trace_id, {'obs_trace_id': trace_id, 'event_id': None, 'route': []})
+    if event_id: rec['event_id'] = event_id
+    step = {'stage_seq': len(rec['route'])+1, 'stage': stage, 'decision': decision}
+    if reason: step['reason'] = reason
     step.update(meta); rec['route'].append(step)
-    if decision=='removed': rec['removed_by']=reason
-    if stage=='FEED' and decision=='pass': rec['final']='feed'
+    if decision == 'removed': rec.setdefault('_finals', []).append(('removed', reason))
+    if stage == 'FEED' and decision == 'pass': rec.setdefault('_finals', []).append(('feed', None))
 def _lineage_flush(path):
     if not LINEAGE: return
+    rep = {'total': len(_LINEAGE_LOG), 'feed':0, 'removed':0, 'unfinished':0, 'duplicate_finals':0, 'stage_order_violations':0}
+    for rec in _LINEAGE_LOG.values():
+        f = rec.pop('_finals', [])
+        if not f: rec['final']='unfinished'; rep['unfinished']+=1
+        elif len(f) > 1: rec['final']='ERROR_duplicate_finals'; rep['duplicate_finals']+=1
+        else:
+            rec['final']=f[0][0]; rep['feed' if f[0][0]=='feed' else 'removed']+=1
+            if f[0][0]=='removed': rec['removed_by']=f[0][1]
+        idx=[_STAGE_IDX.get(s['stage'],99) for s in rec['route']]
+        if idx != sorted(idx): rec['stage_order_violation']=True; rep['stage_order_violations']+=1
     try:
-        with open(path,'w',encoding='utf-8') as f:
-            for r in _LINEAGE_LOG.values(): f.write(json.dumps(r,ensure_ascii=False)+chr(10))
+        with open(path,'w',encoding='utf-8') as _f:
+            for r in _LINEAGE_LOG.values(): _f.write(json.dumps(r,ensure_ascii=False)+chr(10))
+        with open(path.replace('_lineage.jsonl','_lineage_report.json'),'w',encoding='utf-8') as _f:
+            json.dump(rep,_f,ensure_ascii=False,indent=2)
+        print(f"  [LINEAGE] traces={rep['total']} feed={rep['feed']} removed={rep['removed']} unfinished={rep['unfinished']} dup={rep['duplicate_finals']} order_viol={rep['stage_order_violations']}")
     except Exception: pass
 # ═══ end lineage framework ═══
 # signal schema enrichment v2.2
@@ -2706,7 +2723,7 @@ def process_events(raw_items):
 
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
-        _tid = _lineage_id(item); _trace(_tid, 'INGESTED', source=item.get('source'))
+        _tid = _obs_id(item); _trace(_tid, 'INGESTED', source=item.get('source'))
         if str(item.get('source','')).strip().lower() in _BLOCKED_SOURCES:
             _trace(_tid,'SOURCE_BLOCK','removed',reason='source_block');             _LOSS['filter']+=1; continue   # редакционный source-блок (анти-канал)
         if item.get('date','') < cutoff: _trace(_tid,'OLD','removed',reason='old'); _LOSS['old']+=1; continue
@@ -3139,7 +3156,7 @@ def process_events(raw_items):
             _md = 7 if ev.get('domain') in ('economy','social') else 3
             if (today - _ed).days > _md: continue
         except: continue
-        _trace(_lineage_id(ev),'BUILT'); balanced.append(ev)
+        _trace(_obs_id(ev),'BUILT'); balanced.append(ev)
         _flood_reserved.add(ev['id'])
         domain_counts[ev['domain']] = domain_counts.get(ev['domain'], 0) + 1
         _flood_added += 1
@@ -3157,7 +3174,7 @@ def process_events(raw_items):
             # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
             max_days = 14 if _evd in ('technology','social') else 7 if _evd == 'economy' else 3  # S36.4: 72ч окно для новостных доменов
             if days_old > max_days:
-                _trace(_lineage_id(ev),'FRESHNESS','removed',reason='fresh'); _LOSS['fresh']+=1; continue
+                _trace(_obs_id(ev),'FRESHNESS','removed',reason='fresh'); _LOSS['fresh']+=1; continue
         except:
             continue
         if ev['id'] in _flood_reserved: continue  # уже зарезервировано как наводнение
@@ -3172,7 +3189,7 @@ def process_events(raw_items):
             balanced.append(ev)
             domain_counts[d] = domain_counts.get(d, 0) + 1
         else:
-            _trace(_lineage_id(ev),'OVERFLOW','removed',reason='overflow'); overflow.append(ev)
+            _trace(_obs_id(ev),'OVERFLOW','removed',reason='overflow'); overflow.append(ev)
 
     # MAX_EVENTS -- КАП для FEED-слоя (ленты). Analytic-события (feed_visible=False) идут
     # в поток сверх капа: их не видит FREE, но видят Process Engine / Radar / Pressure.
@@ -11299,18 +11316,10 @@ def save_enriched(events, previous_snapshot=None):
                 _aam=re.search(r'(\d+)\s*(?:погиб|жертв|человек|пассажир)', _aab)
                 if not (_aam and _aam.group(1).isdigit() and int(_aam.group(1))>=10):
                     _aae['feed_visible']=False
-    # ХОТФИКС (продажи): закэшированный мисрезолв 'Британская Колумбия' GB->CA (провинция Канады). Временный до общего сброса гео-кэша.
-    for _bce in events:
-        _bcb=((_bce.get('title','') or '')+' '+(_bce.get('summary','') or '')).lower()
-        if 'британск' in _bcb and 'колумби' in _bcb:
-            _bcg=_bce.get('geo') or {}
-            if _bcg.get('country')=='GB':
-                _bcg.update({'country':'CA','region':'Британская Колумбия','lat':53.7,'lng':-127.6})
-                _bce['geo']=_bcg
     # I.1 LINEAGE: FEED / EXPORTED трассировка (только при LINEAGE=1)
     if LINEAGE:
         for _fe in events:
-            _ftid=_lineage_id(_fe)
+            _ftid=_obs_id(_fe)
             if _fe.get('feed_visible', True) is not False:
                 _trace(_ftid,'EXPORTED'); _trace(_ftid,'FEED')
             else:
