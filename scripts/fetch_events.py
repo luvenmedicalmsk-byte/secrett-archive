@@ -11361,6 +11361,13 @@ def save_enriched(events, previous_snapshot=None):
             enriched["count"] = len(enriched["events"])
             enriched["events"] = _aggregate_series(_editorial_gate(enriched["events"]))   # аудит качества: шум/PR/ретро + серии
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
+            # ХОТФИКС (продажи): закэшированный мисрезолв 'Британская Колумбия' GB->CA на ФИНАЛЬНОМ enriched (после гео-контракта). Временный.
+            for _bce in enriched["events"]:
+                _bcb=((_bce.get('title','') or '')+' '+(_bce.get('summary','') or '')).lower()
+                if 'британск' in _bcb and 'колумби' in _bcb:
+                    _bcg=_bce.get('geo') or {}
+                    if _bcg.get('country')=='GB':
+                        _bcg.update({'country':'CA','region':'Британская Колумбия','lat':53.7,'lng':-127.6}); _bce['geo']=_bcg
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
             # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
             try:
