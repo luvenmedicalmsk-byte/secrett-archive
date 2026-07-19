@@ -12,6 +12,28 @@
 import json, os, sys, hashlib, math, re, time, html, urllib.request, urllib.parse, urllib.error
 import xml.etree.ElementTree as ET
 import random
+
+# ═══ I.1 LINEAGE FRAMEWORK (read-only, строгий no-op при LINEAGE=0) ═══
+LINEAGE = os.environ.get('LINEAGE') == '1'
+_LINEAGE_LOG = {}
+def _lineage_id(item):
+    try: return hashlib.md5((str(item.get('source',''))+str(item.get('title',''))+str(item.get('date',''))).encode()).hexdigest()[:10]
+    except Exception: return None
+def _trace(trace_id, stage, decision='pass', reason=None, **meta):
+    if not LINEAGE or not trace_id: return
+    rec=_LINEAGE_LOG.setdefault(trace_id,{'trace_id':trace_id,'route':[]})
+    step={'stage':stage,'decision':decision}
+    if reason: step['reason']=reason
+    step.update(meta); rec['route'].append(step)
+    if decision=='removed': rec['removed_by']=reason
+    if stage=='FEED' and decision=='pass': rec['final']='feed'
+def _lineage_flush(path):
+    if not LINEAGE: return
+    try:
+        with open(path,'w',encoding='utf-8') as f:
+            for r in _LINEAGE_LOG.values(): f.write(json.dumps(r,ensure_ascii=False)+chr(10))
+    except Exception: pass
+# ═══ end lineage framework ═══
 # signal schema enrichment v2.2
 try:
     from signal_enricher import enrich_snapshot as _enrich_snapshot
@@ -2684,9 +2706,10 @@ def process_events(raw_items):
 
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
+        _tid = _lineage_id(item); _trace(_tid, 'INGESTED', source=item.get('source'))
         if str(item.get('source','')).strip().lower() in _BLOCKED_SOURCES:
-            _LOSS['filter']+=1; continue   # редакционный source-блок (анти-канал)
-        if item.get('date','') < cutoff: _LOSS['old']+=1; continue
+            _trace(_tid,'SOURCE_BLOCK','removed',reason='source_block');             _LOSS['filter']+=1; continue   # редакционный source-блок (анти-канал)
+        if item.get('date','') < cutoff: _trace(_tid,'OLD','removed',reason='old'); _LOSS['old']+=1; continue
         # --- Ingestion Cleanup (VNext L0): нормализуем desc ДО классификации ---
         # HTML-теги/entities/пробелы чистятся один раз здесь, чтобы detect_domain,
         # RUSSIA_FILTER, _is_ad, гео и severity читали plain text. Иначе разметка вида
@@ -2774,7 +2797,7 @@ def process_events(raw_items):
                         lat, lng, region = None, None, ''
                         item['map_visible'] = False; _LOSS['nogeo_valid'] += 1
                     else:
-                        _LOSS['nogeo_noise'] += 1; continue
+                        _trace(_tid,'NO_GEO','removed',reason='nogeo_noise'); _LOSS['nogeo_noise'] += 1; continue
             else:
                 lat, lng, region = geo
             severity = _severity_for(item, _gov.get('weight', 1.0))
@@ -2880,7 +2903,7 @@ def process_events(raw_items):
         if (item.get('_force_severity') is None and not _sys
                 and domain in ('geopolitics','economy','social','technology')
                 and not _SIG_RE.search(_blob)):
-            _LOSS['sev']+=1; _LOSS['sev_nomarker']=_LOSS.get('sev_nomarker',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_nomarker'); _LOSS['sev']+=1; _LOSS['sev_nomarker']=_LOSS.get('sev_nomarker',0)+1; continue
 
         # ANALYTIC ADMISSION: слабый сигнал (ниже порога ленты) допускается в аналитический
         # слой ТОЛЬКО при аналитической ценности — иначе даже пройдя шум-фильтры остаётся вне
@@ -3008,7 +3031,7 @@ def process_events(raw_items):
             except Exception:
                 _id_geo = ''
         ev_id = make_id(item['title'] + _id_geo, item['date'])
-        if ev_id in seen_ids: _LOSS['dup']+=1; continue
+        if ev_id in seen_ids: _trace(_tid,'DEDUP','removed',reason='dup'); _LOSS['dup']+=1; continue
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
@@ -3116,7 +3139,7 @@ def process_events(raw_items):
             _md = 7 if ev.get('domain') in ('economy','social') else 3
             if (today - _ed).days > _md: continue
         except: continue
-        balanced.append(ev)
+        _trace(_lineage_id(ev),'BUILT'); balanced.append(ev)
         _flood_reserved.add(ev['id'])
         domain_counts[ev['domain']] = domain_counts.get(ev['domain'], 0) + 1
         _flood_added += 1
@@ -3134,7 +3157,7 @@ def process_events(raw_items):
             # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
             max_days = 14 if _evd in ('technology','social') else 7 if _evd == 'economy' else 3  # S36.4: 72ч окно для новостных доменов
             if days_old > max_days:
-                _LOSS['fresh']+=1; continue
+                _trace(_lineage_id(ev),'FRESHNESS','removed',reason='fresh'); _LOSS['fresh']+=1; continue
         except:
             continue
         if ev['id'] in _flood_reserved: continue  # уже зарезервировано как наводнение
@@ -3149,7 +3172,7 @@ def process_events(raw_items):
             balanced.append(ev)
             domain_counts[d] = domain_counts.get(d, 0) + 1
         else:
-            overflow.append(ev)
+            _trace(_lineage_id(ev),'OVERFLOW','removed',reason='overflow'); overflow.append(ev)
 
     # MAX_EVENTS -- КАП для FEED-слоя (ленты). Analytic-события (feed_visible=False) идут
     # в поток сверх капа: их не видит FREE, но видят Process Engine / Radar / Pressure.
@@ -11276,7 +11299,15 @@ def save_enriched(events, previous_snapshot=None):
                 _aam=re.search(r'(\d+)\s*(?:погиб|жертв|человек|пассажир)', _aab)
                 if not (_aam and _aam.group(1).isdigit() and int(_aam.group(1))>=10):
                     _aae['feed_visible']=False
-    raw_snapshot = {
+    # I.1 LINEAGE: FEED / EXPORTED трассировка (только при LINEAGE=1)
+    if LINEAGE:
+        for _fe in events:
+            _ftid=_lineage_id(_fe)
+            if _fe.get('feed_visible', True) is not False:
+                _trace(_ftid,'EXPORTED'); _trace(_ftid,'FEED')
+            else:
+                _trace(_ftid,'FEED_HIDDEN','removed',reason='feed_visible_false')
+        raw_snapshot = {
         "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "count":   len(events),
         "sources": ["NewsAPI", "GDELT 2.0", "ReliefWeb", "NASA EONET"],
@@ -11361,6 +11392,7 @@ def save_enriched(events, previous_snapshot=None):
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
+                _lineage_flush(str(OUTPUT_PATH.parent / '_lineage.jsonl'))
 
             # GEO CONTRACT Phase 0 (shadow) — боевой путь публикации идёт здесь,
             # а не через save(); контракт считается по финальным enriched-событиям
