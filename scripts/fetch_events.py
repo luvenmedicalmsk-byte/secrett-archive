@@ -7087,7 +7087,7 @@ def fetch_global_rss():
     feeds = [
         # Геополитика -- рабочие источники
         {"url": "https://foreignpolicy.com/feed/", "source": "Foreign Policy", "bias": 8, "domain": "geopolitics"},
-        {"url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "source": "UN News", "bias": 5, "domain": "geopolitics"},
+        {"url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "source": "UN News", "bias": 5, "domain": "social"},
         # Геополитика
         {"url": "https://feeds.feedburner.com/breitbart", "source": "Global News", "bias": 5},
         {"url": "https://rss.dw.com/rdf/rss-en-world", "source": "DW World", "bias": 6},
@@ -11477,12 +11477,11 @@ def save_enriched(events, previous_snapshot=None):
                     _nte['domain']='geopolitics'
                     if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
             # Гуманитарный класс UN News -> social (редакционное решение; чинит и персистентные карточки)
+            # Решение Мии 19.07: весь UN News = социум (в т.ч. персистентные карточки)
             for _hme in enriched["events"]:
                 if _hme.get('source')=='UN News' and _hme.get('domain') in ('geopolitics',None):
-                    _hmb=((_hme.get('title','') or '')+' '+(_hme.get('summary','') or ''))
-                    if _HUMANITARIAN.search(_hmb):
-                        _hme['domain']='social'
-                        if _hme.get('canon_domain')=='geopolitics': _hme['canon_domain']='social'
+                    _hme['domain']='social'
+                    if _hme.get('canon_domain')=='geopolitics': _hme['canon_domain']='social'
             # НЕЙТРАЛИЗАЦИЯ пропаганд. терминов в display-полях (title/summary/_headline), 0 churn
             for _ne in enriched["events"]:
                 for _nf in ('title','summary','_headline'):
