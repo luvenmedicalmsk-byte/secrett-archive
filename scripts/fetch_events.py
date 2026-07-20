@@ -11572,6 +11572,16 @@ def save_enriched(events, previous_snapshot=None):
                     _nte['domain']='geopolitics'
                     if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
             # Гуманитарный класс UN News -> social (редакционное решение; чинит и персистентные карточки)
+            # КЛИМАТ-МУСОР 2 (Мия 20.07): бытовые ЧП с животными/люди (собака напала, укус) != климат -> из ленты
+            _CM_ANIMAL=re.compile(r'собак\w+ напал|напал\w+ собак|укусил\w*|покусал\w*|бродяч\w+ (?:собак|пёс|животн)|напад\w+ (?:собак|животн|бездомн)', re.I)
+            # аналитические разборы "вопрос-ответ / что означает" = контекст, не оперативное событие
+            _CM_QA=re.compile(r'вопрос-ответ|что означает|разбор[:\s]|объясня\w+[:\s]|как понять', re.I)
+            for _cme2 in enriched["events"]:
+                _cmb2=(_cme2.get('title','') or '')
+                if _cme2.get('domain')=='climate' and _CM_ANIMAL.search(_cmb2):
+                    _cme2['feed_visible']=False
+                if _CM_QA.search(_cmb2) and _cme2.get('sic_class')=='EVENT':
+                    _cme2['sic_class']='COMMENTARY'
             # Inside Climate News -> климат (решение Мии 20.07)
             _CLIMATE_SRC=('Inside Climate News','Reuters Climate','AP Climate','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','E&E News','Phys.org Climate','ScienceDaily Climate','Living on Earth')
             for _icne in enriched["events"]:
