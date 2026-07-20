@@ -3198,7 +3198,7 @@ def process_events(raw_items):
         _ev['severity'] = _recompute_severity(_ev)
     # RSS-аналитика (climate/social) получает сорт-бонус, чтобы качественные источники не проигрывали
     # TG-потоку по severity и попадали в квоту (Мия 20.07). Не меняет реальную severity — только порядок отбора.
-    _RSS_PRIORITY={'Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate','Yale E360','WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC'}
+    _RSS_PRIORITY={'Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate','Yale E360','WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review'}
     events.sort(key=lambda e: (e.get('severity',0) or 0) + (25 if e.get('source') in _RSS_PRIORITY else 0), reverse=True)
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
