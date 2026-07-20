@@ -3198,7 +3198,7 @@ def process_events(raw_items):
         _ev['severity'] = _recompute_severity(_ev)
     # RSS-аналитика (climate/social) получает сорт-бонус, чтобы качественные источники не проигрывали
     # TG-потоку по severity и попадали в квоту (Мия 20.07). Не меняет реальную severity — только порядок отбора.
-    _RSS_PRIORITY={'Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate','Yale E360','WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review'}
+    _RSS_PRIORITY={'Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate','Yale E360','WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review','IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business','Trading Economics','IMF','World Bank','BIS','OECD'}
     events.sort(key=lambda e: (e.get('severity',0) or 0) + (25 if e.get('source') in _RSS_PRIORITY else 0), reverse=True)
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
@@ -5720,6 +5720,25 @@ def fetch_economy_rss():
         ('https://feeds.a.dj.com/rss/RSSMarketsMain.xml', 'WSJ Markets', 'economy'),
         # RU экономика
         ('https://www.kommersant.ru/RSS/section-economics.xml', 'Коммерсантъ', 'economy'),
+        # ═══ ЯДРО ДОМЕНА ЭКОНОМИКА (Мия 20.07): системные процессы ═══
+        # Энергетические рынки
+        ('https://www.iea.org/rss/news', 'IEA', 'economy'),
+        ('https://www.eia.gov/rss/todayinenergy.xml', 'EIA', 'economy'),
+        ('https://oilprice.com/rss/main', 'OilPrice', 'economy'),
+        # Сырьевые рынки / критические минералы
+        ('https://www.mining.com/feed/', 'Mining.com', 'economy'),
+        # Цепочки поставок / логистика
+        ('https://www.freightwaves.com/feed', 'FreightWaves', 'economy'),
+        ('https://www.joc.com/rss.xml', 'Journal of Commerce', 'economy'),
+        # Международная торговля
+        ('https://www.wto.org/library/rss/latest_news_e.xml', 'WTO', 'economy'),
+        ('https://unctad.org/rss.xml', 'UNCTAD', 'economy'),
+        # Корпоративные риски / рынки
+        ('https://feeds.reuters.com/reuters/businessNews', 'Reuters Business', 'economy'),
+        # Продовольственная экономика
+        ('https://www.fao.org/newsroom/rss/en/', 'FAO Economy', 'economy'),
+        # Макро-агрегатор
+        ('https://tradingeconomics.com/rss/news.aspx', 'Trading Economics', 'economy'),
     ]
 
     items = []
