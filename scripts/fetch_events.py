@@ -7151,6 +7151,18 @@ def fetch_global_rss():
         {"url": "https://foreignpolicy.com/feed/", "source": "Foreign Policy", "bias": 8, "domain": "geopolitics"},
         {"url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "source": "UN News", "bias": 5, "domain": "social"},
         {"url": "https://insideclimatenews.org/feed/", "source": "Inside Climate News", "bias": 6, "domain": "climate"},   # решение Мии 20.07: только климат
+        {"url": "https://www.reuters.com/arc/outboundfeeds/rss/category/environment/?outputType=xml", "source": "Reuters Climate", "bias": 8, "domain": "climate"},
+        {"url": "https://apnews.com/hub/climate-and-environment/rss", "source": "AP Climate", "bias": 8, "domain": "climate"},
+        {"url": "https://www.carbonbrief.org/feed/", "source": "Carbon Brief", "bias": 7, "domain": "climate"},
+        {"url": "https://www.climatechangenews.com/feed/", "source": "Climate Home News", "bias": 7, "domain": "climate"},
+        {"url": "https://news.mongabay.com/feed/", "source": "Mongabay", "bias": 6, "domain": "climate"},
+        {"url": "https://yaleclimateconnections.org/feed/", "source": "Yale Climate Connections", "bias": 6, "domain": "climate"},
+        {"url": "https://www.canarymedia.com/rss.xml", "source": "Canary Media", "bias": 6, "domain": "climate"},
+        {"url": "https://grist.org/feed/", "source": "Grist", "bias": 6, "domain": "climate"},
+        {"url": "https://www.eenews.net/feed/", "source": "E&E News", "bias": 6, "domain": "climate"},
+        {"url": "https://phys.org/rss-feed/earth-news/environment/", "source": "Phys.org Climate", "bias": 5, "domain": "climate"},
+        {"url": "https://www.sciencedaily.com/rss/earth_climate/climate.xml", "source": "ScienceDaily Climate", "bias": 5, "domain": "climate"},
+        {"url": "https://loe.org/feeds/rss.xml", "source": "Living on Earth", "bias": 5, "domain": "climate"},
         # Геополитика
         {"url": "https://feeds.feedburner.com/breitbart", "source": "Global News", "bias": 5},
         {"url": "https://rss.dw.com/rdf/rss-en-world", "source": "DW World", "bias": 6},
@@ -11541,8 +11553,9 @@ def save_enriched(events, previous_snapshot=None):
                     if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
             # Гуманитарный класс UN News -> social (редакционное решение; чинит и персистентные карточки)
             # Inside Climate News -> климат (решение Мии 20.07)
+            _CLIMATE_SRC=('Inside Climate News','Reuters Climate','AP Climate','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','E&E News','Phys.org Climate','ScienceDaily Climate','Living on Earth')
             for _icne in enriched["events"]:
-                if _icne.get('source')=='Inside Climate News' and _icne.get('domain')!='climate':
+                if _icne.get('source') in _CLIMATE_SRC and _icne.get('domain')!='climate':
                     _icne['domain']='climate'
                     if _icne.get('canon_domain'): _icne['canon_domain']='climate'
             # УТИЛЬСБОР (Мия 20.07): утилизационный сбор = экономика/регуляторика, не климат («заморозить» ложно матчил мороз)
