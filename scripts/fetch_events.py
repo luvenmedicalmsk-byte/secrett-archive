@@ -7004,6 +7004,36 @@ def fetch_tech_rss():
         ('https://www.lawfaremedia.org/feed', 'Lawfare', 'technology'),
         ('https://www.rand.org/blog/rss.xml', 'RAND', 'technology'),
         ('https://cset.georgetown.edu/feed/', 'CSET', 'technology'),
+        # ═══ ЯДРО ДОМЕНА ТЕХНОЛОГИИ (Мия 20.07): 9 процессов ═══
+        # 1. Искусственный интеллект
+        ('https://spectrum.ieee.org/rss/fulltext', 'IEEE Spectrum', 'technology'),
+        ('https://huggingface.co/blog/feed.xml', 'Hugging Face', 'technology'),
+        ('https://openai.com/news/rss.xml', 'OpenAI News', 'technology'),
+        ('https://deepmind.google/blog/rss.xml', 'Google DeepMind', 'technology'),
+        # 2. Кибербезопасность (доп)
+        ('https://krebsonsecurity.com/feed/', 'KrebsOnSecurity', 'technology'),
+        ('https://www.cisa.gov/cybersecurity-advisories/all.xml', 'CISA', 'technology'),
+        ('https://blog.talosintelligence.com/rss/', 'Cisco Talos', 'technology'),
+        ('https://www.enisa.europa.eu/media/news-items/news-wire/RSS', 'ENISA', 'technology'),
+        # 3. Полупроводники
+        ('https://semiengineering.com/feed/', 'Semiconductor Engineering', 'technology'),
+        ('https://www.eetimes.com/feed/', 'EE Times', 'technology'),
+        # 4. Критическая цифровая инфраструктура
+        ('https://www.datacenterdynamics.com/rss/', 'Data Center Dynamics', 'technology'),
+        ('https://www.theregister.com/headlines.atom', 'The Register', 'technology'),
+        # 5. Космос
+        ('https://spacenews.com/feed/', 'SpaceNews', 'technology'),
+        ('https://www.space.com/feeds/all', 'Space.com', 'technology'),
+        # 6. Энергетические технологии
+        ('https://www.utilitydive.com/feeds/news/', 'Utility Dive', 'technology'),
+        ('https://www.pv-magazine.com/feed/', 'PV Magazine', 'technology'),
+        # 7. Роботизация
+        ('https://www.therobotreport.com/feed/', 'The Robot Report', 'technology'),
+        # 8. Интернет и связь
+        ('https://blog.cloudflare.com/rss/', 'Cloudflare Blog', 'technology'),
+        ('https://labs.ripe.net/rss/', 'RIPE NCC', 'technology'),
+        # 9. Новые технологии / наука
+        ('https://www.newscientist.com/feed/home/', 'New Scientist', 'technology'),
     ]
 
     items = []
