@@ -11638,6 +11638,22 @@ def save_enriched(events, previous_snapshot=None):
                     _cme2['feed_visible']=False
                 if _CM_QA.search(_cmb2) and _cme2.get('sic_class')=='EVENT':
                     _cme2['sic_class']='COMMENTARY'
+            # КЛИМАТ-КОНТЕНТ 3 (Мия 20.07): природные зарисовки + дайджест-рубрики = шум; голод в climate -> social
+            _CM_WILDLIFE=re.compile(r'кулик\w*|птиц\w+, известн|острыми клювами|блестящими глазами|бусинка|пингвин\w*, |милые |очаровательн\w+ (?:животн|птиц|зверь)', re.I)
+            _CM_DIGEST=re.compile(r'^(срезано|сокращение|обрезано|cropped|дайджест|мы отбираем и объясняем)|самые важные истории на пересечении', re.I)
+            for _cme3 in enriched["events"]:
+                _t3=(_cme3.get('title','') or ''); _s3=(_cme3.get('summary','') or '')
+                if _cme3.get('domain')=='climate':
+                    # природная зарисовка про животных = не риск-сигнал
+                    if _CM_WILDLIFE.search(_t3) or _CM_WILDLIFE.search(_s3[:80]):
+                        _cme3['feed_visible']=False
+                    # дайджест-рубрика (Carbon Brief Cropped и т.п.) = шаблон, не событие
+                    if _CM_DIGEST.search(_t3) or _CM_DIGEST.search(_s3[:60]):
+                        _cme3['feed_visible']=False
+                    # голод/продбезопасность в climate -> social (гуманитарное измерение)
+                    if re.search(r'голод\w*|недоеда\w+|продовольствен\w+ кризис|famine', _t3+' '+_s3, re.I):
+                        _cme3['domain']='social'
+                        if _cme3.get('canon_domain')=='climate': _cme3['canon_domain']='social'
             # Inside Climate News -> климат (решение Мии 20.07)
             _CLIMATE_SRC=('Inside Climate News','Reuters Climate','AP Climate','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','E&E News','Phys.org Climate','ScienceDaily Climate','Living on Earth')
             for _icne in enriched["events"]:
