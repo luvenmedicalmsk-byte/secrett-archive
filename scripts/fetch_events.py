@@ -2789,7 +2789,7 @@ def process_events(raw_items):
         # доверенные RSS-источники доменов (Мия 20.07): институциональная аналитика значима by design
         _TRUSTED_RSS=('IEEE Spectrum','Hugging Face','OpenAI','DeepMind','KrebsOnSecurity','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare','RIPE','New Scientist','MIT Technology Review','IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Trading Economics','IMF','World Bank','BIS','OECD','Carbon Brief','Mongabay','Inside Climate News','Yale Climate','Climate Home','Canary Media','Grist','ScienceDaily','WFP','FAO','Pew Research','Brookings','Freedom House','Oxfam','UNHCR','IDMC','WHO','ECDC','The Lancet','ProMED')
         if any(_s in _src for _s in _TRUSTED_RSS):
-            score += 2.0; why.append('src_reliable')
+            score += 3.0; why.append('src_reliable')
         # 7) базовая риск-сигнатура (совместимо с прежним keyword-слоем, но не единственный критерий)
         if has_sig:
             score += 0.5
