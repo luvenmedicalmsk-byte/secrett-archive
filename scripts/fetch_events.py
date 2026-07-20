@@ -11528,6 +11528,18 @@ def save_enriched(events, previous_snapshot=None):
                     _nte['domain']='geopolitics'
                     if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
             # Гуманитарный класс UN News -> social (редакционное решение; чинит и персистентные карточки)
+            # КЛИМАТ-МУСОР (Мия 20.07): инфекции/эпидемии в climate -> social (humanitarian); не-климатические темы из climate
+            import re as _re_cm
+            _CM_HUM=_re_cm.compile(r'туляремия|сибирская язва|зоонозн|инфекци\w+|эпидеми|заболеваем|вспышк\w+ (кор|холер|лихорад)', _re_cm.I)
+            _CM_NONCLIM=_re_cm.compile(r'история новой философ|путь развития|экономическ\w+ чудо', _re_cm.I)
+            for _cme in enriched["events"]:
+                if _cme.get('domain')=='climate':
+                    _cmb=((_cme.get('title','') or '')+' '+(_cme.get('summary','') or ''))
+                    if _CM_HUM.search(_cmb):
+                        _cme['domain']='social'
+                        if _cme.get('canon_domain')=='climate': _cme['canon_domain']='social'
+                    elif _CM_NONCLIM.search(_cmb):
+                        _cme['feed_visible']=False
             # COURT_CHRONICLE (Мия 19.07): судебная хроника отдельных персон (продление ареста/СИЗО
             # редактору/блогеру/бизнесмену) = шум, из ленты. Guard: массовые/системные кейсы остаются.
             import re as _re_cc
