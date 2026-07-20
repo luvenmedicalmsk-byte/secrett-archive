@@ -173,6 +173,30 @@ def main():
         status='WARNING'
         if any(a['severity']=='critical' for a in anomalies): status='CRITICAL'
     if not inv.get('all_ok'): status='INVARIANT_VIOLATION'
+    # ═══ BROKEN TITLES (обрыв начала/конца заголовка) ═══
+    broken={'checked':0,'start_fragment':0,'end_preposition':0,'samples':[]}
+    try:
+        import re as _rb
+        _STOP={'в','на','с','по','из','от','для','о','об','за','при','и','а','но','к','у','не','что','как','около','более','менее','до','после','под','над'}
+        evd=json.load(open(EVENTS, encoding='utf-8'))
+        for e in evd.get('events',[]):
+            if e.get('feed_visible') is False: continue
+            t=(e.get('title') or '').strip()
+            if not t: continue
+            broken['checked']+=1
+            w=t.split(); f=w[0].lower().strip('.,:»') if w else ''
+            if t[:1].islower() and f not in _STOP and 2<=len(f)<=6:
+                broken['start_fragment']+=1
+                if len(broken['samples'])<8: broken['samples'].append({'type':'start','t':t[:55],'src':e.get('source')})
+            elif _rb.search(r'\s(в|на|с|по|к|о|у|и|а|из|от)$', t):
+                broken['end_preposition']+=1
+                if len(broken['samples'])<8: broken['samples'].append({'type':'end','t':t[:55],'src':e.get('source')})
+        _bt=broken['start_fragment']+broken['end_preposition']
+        if _bt>0:
+            anomalies.append({'severity':'warning','metric':'broken_titles',
+                'description':f'Обрывы заголовков: {_bt} (начало {broken[chr(34)+"start_fragment"+chr(34)]}, конец {broken[chr(34)+"end_preposition"+chr(34)]})','prev':None,'cur':_bt})
+    except Exception as _be:
+        broken['error']=str(_be)[:80]
     # ═══ I.4.3 GEO QUALITY (география процессов, read-only) ═══
     geo_quality={'checked':0,'duplicate_country':0,'mixed_name_formats':0,'empty_affected_with_countries':0,'bad_country_token':0,'samples':[]}
     try:
@@ -219,6 +243,7 @@ def main():
         'anomalies': anomalies,
         'invariants': inv,
         'geo_quality': geo_quality,
+        'broken_titles': broken,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT,'w',encoding='utf-8') as f:
