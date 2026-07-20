@@ -7099,6 +7099,12 @@ def fetch_climate_rss():
         ('https://e360.yale.edu/feed.xml', 'Yale E360', 'climate'),
         # Prevention Web
         ('https://www.preventionweb.net/news/rss.xml', 'PreventionWeb', 'climate'),
+        # Добавлено Мия 20.07 (энергопереход/наука/аналитика)
+        ('https://www.climatechangenews.com/feed/', 'Climate Home News', 'climate'),
+        ('https://www.canarymedia.com/rss.xml', 'Canary Media', 'climate'),
+        ('https://grist.org/feed/', 'Grist', 'climate'),
+        ('https://phys.org/rss-feed/earth-news/environment/', 'Phys.org Climate', 'climate'),
+        ('https://www.sciencedaily.com/rss/earth_climate/climate.xml', 'ScienceDaily Climate', 'climate'),
     ]
 
     items = []
