@@ -2948,6 +2948,13 @@ def process_events(raw_items):
             domain = _sys[0]; severity = max(severity, _sys[1])
         elif item.get('_force_severity') is None and _is_nat_hazard(item.get('title',''), item.get('desc','')):
             domain = 'climate'  # S40: стихия -- только климат, независимо от источника
+        # РАННИЙ ГАРД ИСТОЧНИКА (Мия 20.07): климат/социум-источники получают домен ДО квотирования,
+        # иначе классификатор кидает их в чужую квоту -> overflow (guard в save_enriched был слишком поздно).
+        _isrc=item.get('source','')
+        if _isrc in ('Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate'):
+            domain='climate'
+        elif _isrc in ('WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC') and not _is_nat_hazard(item.get('title',''), item.get('desc','')):
+            domain='social'
         # ══ SEMANTIC VALIDATION LAYER ══ единая смысловая проверка вместо разрозненных
         # guard'ов (дипломатия/заявление/домен-военное). Проверяет согласованность готовых
         # признаков и применяет объяснимые коррекции. Заменяет частные исключения одной моделью.
