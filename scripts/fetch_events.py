@@ -70,6 +70,55 @@ _NEUTRALIZE = [(re.compile(p, re.I), r) for p, r in [
 # Гуманитарный класс (голод/беженцы/эпидемии/детская смертность и т.п.) = СОЦИУМ.
 # Редакционное решение 19.07.2026: институциональные гуманитарные ленты (UN News) не геополитика.
 _HUMANITARIAN = re.compile(r'голод|недоедан|продовольственн\w+ (?:кризис|небезопасн)|беженц|перемещ[её]нн|вынужденн\w+ переселен|эпидеми|холер|вспышк\w+ (?:кор[иь]|лихорадк|полиомиелит|эбол)|детск\w+ смертност|материнск\w+ смертност|гуманитарн\w+ (?:кризис|катастроф|помощ|ситуац)|нехватк\w+ (?:воды|питьев|продовольств|медикамент)|famine|displaced|refugee|cholera|malnutrition', re.I)
+# ═══ INFRASTRUCTURE ENTITY LAYER v1 — READ-ONLY SHADOW (Этап 1, Retail Canon v2) ═══
+# Объектная классификация по ТИПУ инфраструктуры (без брендов, по ТЗ). Пока только наблюдение.
+_IE_ENTITY = {k: re.compile(v, re.I) for k, v in {
+ 'warehouse':           r'склад\w*',
+ 'distribution_center': r'распределительн\w+ центр|логистическ\w+ центр\w*|\bРЦ\b',
+ 'fulfillment_center':  r'фулфилмент|fulfillment',
+ 'logistics_hub':       r'логистическ\w+ (хаб|комплекс|парк)|сортировочн\w+ центр',
+ 'ecommerce_platform':  r'платформ\w+ (электронной торговли|e-?commerce)|интернет-магазин|онлайн-(торговл|ритейл|платформ)\w*|e-?commerce',
+ 'marketplace':         r'маркетплейс\w*',
+ 'retail_chain':        r'торгов\w+ сет\w*|сет\w+ (магазинов|супермаркетов|гипермаркетов)|ритейлер\w*',
+ 'last_mile':           r'последн\w+ мил\w*|курьерск\w+ (доставк|служб)\w*|пункт\w* выдачи|\bПВЗ\b',
+}.items()}
+_IE_EVCLASS = {k: re.compile(v, re.I) for k, v in {
+ 'attack':     r'атак\w*|удар\w*|БПЛА|беспилотник|дрон\w*|обстрел',
+ 'incident':   r'пожар\w*|возгоран|горит|сгорел|обрушен|взрыв(?!чат)',
+ 'outage':     r'сбо\w+|недоступ\w+|не работает|упал\w* (сайт|приложени)|отказ\w* систем',
+ 'regulation': r'ФАС|антимонопол|оштраф\w*|закон\w*|регулир\w*|минпромторг',
+ 'earnings':   r'выручк|отчита\w+|прибыл\w+',
+ 'ma':         r'покупает|приобрета\w+|поглощ\w+',
+}.items()}
+def _ie_detect(text):
+    ents=[k for k,rx in _IE_ENTITY.items() if rx.search(text)]
+    if not ents: return None
+    evs=[k for k,rx in _IE_EVCLASS.items() if rx.search(text)]
+    if 'attack' in evs:     return (ents, evs, 'Военные удары', ['geopolitics','economy'])
+    if 'incident' in evs:   return (ents, evs, 'Инфраструктурный инцидент (retail)', ['economy','climate'])
+    if 'outage' in evs:     return (ents, evs, 'Сбой e-commerce', ['economy','technology'])
+    if 'regulation' in evs: return (ents, evs, 'Регулирование торговли', ['economy'])
+    if 'ma' in evs:         return (ents, evs, 'Розничная торговля (M&A)', ['economy'])
+    return (ents, evs, 'Розничная торговля', ['economy'])
+def _entity_shadow_report(events, outdir):
+    rep={'total':len(events),'with_entity':0,'by_entity':{},'by_class':{},'would_domain_change':0,'samples':[]}
+    for e in events:
+        b=((e.get('title','') or '')+' '+(e.get('summary','') or ''))
+        r=_ie_detect(b)
+        if not r: continue
+        rep['with_entity']+=1
+        for x in r[0]: rep['by_entity'][x]=rep['by_entity'].get(x,0)+1
+        for x in r[1]: rep['by_class'][x]=rep['by_class'].get(x,0)+1
+        cur=e.get('domain'); would=r[3][0]
+        chg = (cur!=would and 'attack' not in r[1])
+        if chg: rep['would_domain_change']+=1
+        if len(rep['samples'])<12:
+            rep['samples'].append({'t':(e.get('title') or '')[:60],'cur_domain':cur,'entity':r[0],'evclass':r[1],'would_canon':r[2],'would_domains':r[3]})
+    try:
+        (outdir / '_entity_shadow.json').write_text(json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), **rep}, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(f"  [ENTITY-SHADOW] with_entity={rep['with_entity']}/{rep['total']} would_change={rep['would_domain_change']}")
+    except Exception: pass
+# ═══ end entity layer shadow ═══
 def _neutralize(t):
     if not t: return t
     for _rx, _r in _NEUTRALIZE: t = _rx.sub(_r, t)
@@ -11513,6 +11562,8 @@ def save_enriched(events, previous_snapshot=None):
                         _trace(_ftid2,'EXPORTED'); _trace(_ftid2,'FEED')
                     else:
                         _trace(_ftid2,'FEED_HIDDEN','removed',reason='feed_visible_false')
+            try: _entity_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _iee: print('  [WARN] entity shadow fail: %s' % _iee, file=sys.stderr)
             for _ste in enriched["events"]: _ste.pop('_obs_tid', None)   # техполе наблюдаемости не пишем в файл
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
