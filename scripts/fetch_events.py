@@ -1089,7 +1089,7 @@ def fetch_url(url, timeout=20, headers=None, retries=1):
     for attempt in range(retries + 1):
         try:
             req = urllib.request.Request(url, headers=headers or {
-                'User-Agent': 'ArchiveRiskMonitor/2.0'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
             })
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read().decode('utf-8', errors='ignore')
@@ -7150,6 +7150,7 @@ def fetch_global_rss():
         # Геополитика -- рабочие источники
         {"url": "https://foreignpolicy.com/feed/", "source": "Foreign Policy", "bias": 8, "domain": "geopolitics"},
         {"url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "source": "UN News", "bias": 5, "domain": "social"},
+        {"url": "https://insideclimatenews.org/feed/", "source": "Inside Climate News", "bias": 6, "domain": "climate"},   # решение Мии 20.07: только климат
         # Геополитика
         {"url": "https://feeds.feedburner.com/breitbart", "source": "Global News", "bias": 5},
         {"url": "https://rss.dw.com/rdf/rss-en-world", "source": "DW World", "bias": 6},
@@ -11539,6 +11540,11 @@ def save_enriched(events, previous_snapshot=None):
                     _nte['domain']='geopolitics'
                     if _nte.get('canon_domain')=='climate': _nte['canon_domain']='geopolitics'
             # Гуманитарный класс UN News -> social (редакционное решение; чинит и персистентные карточки)
+            # Inside Climate News -> климат (решение Мии 20.07)
+            for _icne in enriched["events"]:
+                if _icne.get('source')=='Inside Climate News' and _icne.get('domain')!='climate':
+                    _icne['domain']='climate'
+                    if _icne.get('canon_domain'): _icne['canon_domain']='climate'
             # УТИЛЬСБОР (Мия 20.07): утилизационный сбор = экономика/регуляторика, не климат («заморозить» ложно матчил мороз)
             for _ute in enriched["events"]:
                 _utb=((_ute.get('title','') or '')+' '+(_ute.get('summary','') or '')).lower()
