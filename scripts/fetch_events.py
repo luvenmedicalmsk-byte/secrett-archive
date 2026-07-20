@@ -5602,6 +5602,27 @@ def fetch_social_rss():
         ('https://www.foreignaffairs.com/feeds/rss', 'Foreign Affairs', 'geopolitics'),
         # WEF социальные риски
         ('https://www.weforum.org/agenda/feed/', 'WEF', 'social'),
+        # ═══ ЯДРО ДОМЕНА СОЦИУМ (Мия 20.07): 8 процессов ═══
+        # Голод и продбезопасность
+        ('https://www.wfp.org/rss.xml', 'WFP', 'social'),
+        ('https://www.fao.org/newsroom/rss/en/', 'FAO News', 'social'),
+        ('https://fews.net/rss.xml', 'FEWS NET', 'social'),
+        # Поляризация общества
+        ('https://www.pewresearch.org/feed/', 'Pew Research', 'social'),
+        ('https://www.brookings.edu/feed/', 'Brookings', 'social'),
+        ('https://carnegieendowment.org/rss/solr?maxrow=20', 'Carnegie', 'social'),
+        ('https://freedomhouse.org/rss.xml', 'Freedom House', 'social'),
+        # Здоровье и эпидемии
+        ('https://tools.cdc.gov/api/v2/resources/media/403372.rss', 'CDC', 'social'),
+        ('https://www.ecdc.europa.eu/en/taxonomy/term/2942/feed', 'ECDC', 'social'),
+        ('https://www.who.int/feeds/entity/csr/don/en/rss.xml', 'WHO Outbreaks', 'social'),
+        ('https://www.thelancet.com/rssfeed/lancet_current.xml', 'The Lancet', 'social'),
+        ('https://promedmail.org/feed/', 'ProMED', 'social'),
+        # Неравенство
+        ('https://www.oxfam.org/en/rss.xml', 'Oxfam', 'social'),
+        # Вынужденная миграция
+        ('https://www.unhcr.org/rss/news.xml', 'UNHCR', 'social'),
+        ('https://www.internal-displacement.org/rss.xml', 'IDMC', 'social'),
     ]
 
     items = []
@@ -6971,9 +6992,6 @@ def fetch_tech_rss():
         ('https://www.lawfaremedia.org/feed', 'Lawfare', 'technology'),
         ('https://www.rand.org/blog/rss.xml', 'RAND', 'technology'),
         ('https://cset.georgetown.edu/feed/', 'CSET', 'technology'),
-        # WEF
-        ('https://www.weforum.org/agenda/feed/', 'WEF', 'technology'),
-        ('https://www.weforum.org/rss/', 'WEF', 'technology'),
     ]
 
     items = []
