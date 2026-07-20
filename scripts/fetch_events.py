@@ -66,6 +66,8 @@ def _lineage_flush(path):
 _NEUTRALIZE = [(re.compile(p, re.I), r) for p, r in [
     (r'укронацист\w*','ВСУ'), (r'укрофашист\w*','ВСУ'), (r'\bнацик\w*','ВСУ'), (r'бандеровц\w*','ВСУ'),
     (r'рашист\w*','российские силы'), (r'\bмоскал\w*','россияне'), (r'\bхохл\w*','украинцы'),
+    (r'режим\w*\s+Путина','руководство РФ'), (r'путинск\w+ режим\w*','руководство РФ'),
+    (r'режим\w*\s+Зеленского','власти Украины'), (r'киевск\w+ режим\w*','власти Украины'),
 ]]
 # Гуманитарный класс (голод/беженцы/эпидемии/детская смертность и т.п.) = СОЦИУМ.
 # Редакционное решение 19.07.2026: институциональные гуманитарные ленты (UN News) не геополитика.
@@ -11538,6 +11540,14 @@ def save_enriched(events, previous_snapshot=None):
                 _ccb=((_cce.get('title','') or '')+' '+(_cce.get('summary','') or ''))
                 if (_CC_HIT.search(_ccb) or _CC_MNT.search(_ccb)) and not _CC_SYS.search(_ccb):
                     _cce['feed_visible']=False
+            # Аналитические эссе-мнения (риторические заголовки) + иностранная локальная политика = шум для RU-аудитории
+            import re as _re_fl
+            _FL_ESSAY=_re_fl.compile(r'выиграл\w* войну|новый путь к глобальн|история новой философ|конец эпохи|что означает для мира', _re_fl.I)
+            _FL_LOCAL=_re_fl.compile(r'\bCJP\b|JP Nadda|Надд[ео]|\bNEET\b|Кокроча|Bharatiya|Lok Sabha|партии \w+ Джаната', _re_fl.I)
+            for _fle in enriched["events"]:
+                _flb=((_fle.get('title','') or '')+' '+(_fle.get('summary','') or '')+' '+(_fle.get('source','') or ''))
+                if _FL_ESSAY.search(_fle.get('title','') or '') or _FL_LOCAL.search(_flb):
+                    _fle['feed_visible']=False
             # Решение Мии 19.07: весь UN News = социум (в т.ч. персистентные карточки)
             for _hme in enriched["events"]:
                 if _hme.get('source')=='UN News' and _hme.get('domain') in ('geopolitics',None):
