@@ -15,6 +15,7 @@ import random
 
 # ═══ I.1 LINEAGE FRAMEWORK (read-only, строгий no-op при LINEAGE=0) ═══
 LINEAGE = os.environ.get('LINEAGE') == '1'
+RETAIL_CANON_V2 = True   # Этап 2: entity_class-маршрутизация retail (incident/outage/regulation/earnings/ma)
 _LINEAGE_LOG = {}
 _STAGE_ORDER = ['INGESTED','SOURCE_BLOCK','OLD','FILTER','CLASSIFIER','NO_GEO','GEO','SEVERITY','DEDUP','ADMISSION','BUILT','OVERFLOW','FRESHNESS','SIGNAL_GATE','TOPIC_CAP','EXPORTED','FEED','FEED_HIDDEN']
 _STAGE_IDX = {s: i for i, s in enumerate(_STAGE_ORDER)}
@@ -75,7 +76,7 @@ _HUMANITARIAN = re.compile(r'голод|недоедан|продовольст�
 # ═══ INFRASTRUCTURE ENTITY LAYER v1 — READ-ONLY SHADOW (Этап 1, Retail Canon v2) ═══
 # Объектная классификация по ТИПУ инфраструктуры (без брендов, по ТЗ). Пока только наблюдение.
 _IE_ENTITY = {k: re.compile(v, re.I) for k, v in {
- 'warehouse':           r'склад\w*',
+ 'warehouse':           r'\bсклад(?:а|ы|ов|ам|ах|ами|е|у)?\b|складск\w+',
  'distribution_center': r'распределительн\w+ центр|логистическ\w+ центр\w*|\bРЦ\b',
  'fulfillment_center':  r'фулфилмент|fulfillment',
  'logistics_hub':       r'логистическ\w+ (хаб|комплекс|парк)|сортировочн\w+ центр',
@@ -4137,6 +4138,17 @@ _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|об�
 def _canon_type_of(title, summ):
     _txt = title + ' ' + summ
     _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
+    # ═══ RETAIL CANON v2 (Этап 2): entity_class + класс события ПЕРЕД словарным ═══
+    if RETAIL_CANON_V2:
+        _ie = _ie_detect(_txt)
+        if _ie:
+            _ents, _evs = _ie[0], _ie[1]
+            if 'attack' not in _evs:   # kinetic оставляем словарю (geopolitics), не перехватываем
+                if 'incident' in _evs:   return 'Инфраструктурный инцидент', 'economy'
+                if 'outage' in _evs:     return 'Сбой e-commerce', 'economy'
+                if 'regulation' in _evs: return 'Регулирование торговли', 'economy'
+                if 'ma' in _evs:         return 'Розничная торговля', 'economy'
+                if 'earnings' in _evs:   return 'Розничная торговля', 'economy'
     best = None; bs = 0; br = None
     for pat, name in _CANON_TYPE:
         if _commem and name in _MILITARY_CANON: continue   # мемориал/годовщина → не текущий удар
