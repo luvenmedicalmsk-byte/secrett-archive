@@ -173,6 +173,32 @@ def main():
         status='WARNING'
         if any(a['severity']=='critical' for a in anomalies): status='CRITICAL'
     if not inv.get('all_ok'): status='INVARIANT_VIOLATION'
+    # ═══ I.4.3 GEO QUALITY (география процессов, read-only) ═══
+    geo_quality={'checked':0,'duplicate_country':0,'mixed_name_formats':0,'empty_affected_with_countries':0,'bad_country_token':0,'samples':[]}
+    try:
+        import re as _re
+        sig=json.load(open(DOCS/'signals.json', encoding='utf-8'))
+        for s in sig.get('signals',[]):
+            cs=s.get('countries') or []
+            if not cs: continue
+            geo_quality['checked']+=1
+            if len(cs)!=len(set(cs)):
+                geo_quality['duplicate_country']+=1; geo_quality['samples'].append(('dup',s.get('title','')[:50]))
+            iso=[c for c in cs if _re.fullmatch(r'[A-Z]{2}', str(c))]
+            if iso and len(iso)!=len(cs):
+                geo_quality['mixed_name_formats']+=1; geo_quality['samples'].append(('mixed',s.get('title','')[:50]))
+            bad=[c for c in cs if not _re.fullmatch(r'[A-Z]{2}', str(c)) and not _re.search(r'[А-Яа-яЁё]', str(c))]
+            if bad:
+                geo_quality['bad_country_token']+=1; geo_quality['samples'].append(('bad:'+str(bad[:2]),s.get('title','')[:40]))
+            if not (s.get('affected_regions') or []):
+                geo_quality['empty_affected_with_countries']+=1
+        geo_quality['samples']=geo_quality['samples'][:6]
+        for k in ('duplicate_country','mixed_name_formats','bad_country_token'):
+            if geo_quality[k]:
+                anomalies.append({'severity':'warning','metric':f'geo.{k}',
+                    'description':f'География процессов: {k} = {geo_quality[k]}','prev':None,'cur':geo_quality[k]})
+    except Exception as _ge:
+        geo_quality['error']=str(_ge)[:80]
     report={
         'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'mode': mode,
@@ -192,6 +218,7 @@ def main():
         'diff': diffs,
         'anomalies': anomalies,
         'invariants': inv,
+        'geo_quality': geo_quality,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT,'w',encoding='utf-8') as f:
