@@ -2227,8 +2227,8 @@ def _classify_no_geo(title, desc, domain):
     о событии, не событие. Не трогает Signal Gate/GeoContract/Risk Engine/Domain Routing."""
     t = (title or '')
     blob = (t + ' ' + (desc or '')[:200])
-    # 0-климат (Мия 20.07): климат-аналитика без места = валидный сигнал (тренды/доклады/политика), не шум
-    if domain == 'climate' and not (_NOGEO_FP_RX.search(t) and not _NOGEO_EVENT_RX.search(t)):
+    # 0-климат/социум (Мия 20.07): институциональная аналитика без места = валидный сигнал, не шум
+    if domain in ('climate','social') and not (_NOGEO_FP_RX.search(t) and not _NOGEO_EVENT_RX.search(t)):
         return 'VALID'
     # 0a) структурные метки/агрегаты платформы — валидный процесс
     if _NOGEO_STRUCT_RX.search(t):
@@ -2995,8 +2995,10 @@ def process_events(raw_items):
                 and not _SYS_PROTECT_RE.search(item.get('title',''))):
             _trace(_tid,'SEVERITY','removed',reason='sev_crime'); _LOSS['sev']+=1; _LOSS['sev_crime']=_LOSS.get('sev_crime',0)+1; continue
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
+        _TRUSTED_SOCIAL={'WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','WHO','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IOM','ReliefWeb','UN News','ILO','WEF'}
         if (item.get('_force_severity') is None and not _sys
                 and domain in ('geopolitics','economy','social','technology')
+                and item.get('source') not in _TRUSTED_SOCIAL
                 and not _SIG_RE.search(_blob)):
             _trace(_tid,'SEVERITY','removed',reason='sev_nomarker'); _LOSS['sev']+=1; _LOSS['sev_nomarker']=_LOSS.get('sev_nomarker',0)+1; continue
 
