@@ -3191,11 +3191,11 @@ def process_events(raw_items):
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     DOMAIN_QUOTA = {
-        'climate':     60,
+        'climate':     120,
         'geopolitics': 120,
         'economy':     70,
         'technology':  40,
-        'social':      45,
+        'social':      55,
     }
     domain_counts = {d: 0 for d in DOMAIN_QUOTA}
     balanced = []
