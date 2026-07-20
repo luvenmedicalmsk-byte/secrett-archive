@@ -11649,6 +11649,19 @@ def save_enriched(events, previous_snapshot=None):
                     _cme2['feed_visible']=False
                 if _CM_QA.search(_cmb2) and _cme2.get('sic_class')=='EVENT':
                     _cme2['sic_class']='COMMENTARY'
+            # ШУМ-КЛАССЫ 2 (Мия 20.07): спорт-колонки + фандрайзинг/донаты + бытовые заметки в климате
+            _SH_SPORT=re.compile(r'месси|роналду|ямал|стадион\w*|матч\w*|футбол\w*|чемпионат мира по|олимпиад\w*|кубок \w+|финал лиги', re.I)
+            _SH_DONATE=re.compile(r'пожертвовани\w+|будет удвоен|как вы можете (?:спасти|помочь)|поддержите нас|ваш\w+ (?:взнос|донат)|donate|fundrais', re.I)
+            _SH_TRIVIA=re.compile(r'скупа\w+ .{0,25}(?:для (?:питомц|домашн|животн|собак|кошек))|дыни для|корм для питомц|модн\w+ тренд|лайфхак', re.I)
+            for _sh2 in enriched["events"]:
+                _t=(_sh2.get('title','') or ''); _s=(_sh2.get('summary','') or '')
+                _blob=_t+' '+_s
+                if _sh2.get('domain')=='climate' and _SH_SPORT.search(_blob):
+                    _sh2['feed_visible']=False
+                if _SH_DONATE.search(_blob):
+                    _sh2['feed_visible']=False
+                if _sh2.get('domain')=='climate' and _SH_TRIVIA.search(_blob):
+                    _sh2['feed_visible']=False
             # ШУМ-КЛАССЫ (Мия 20.07): мелкая крим-хроника краж + listicle-дайджесты
             _SH_PETTY=re.compile(r'(?:вынести|вынес\w+|спрятал\w*|похитил\w*|укра\w+|кража) .{0,40}(?:супермаркет|магазин|тысяч руб)|любовь к \w+ довела|грозит до \w+ лет|магазинн\w+ (?:кража|вор)', re.I)
             _SH_LISTICLE=re.compile(r'^\d{1,2} (?:цитат|фактов|способ\w*|причин|вещей|признак\w*|совет\w*|правил|мифов|график\w*)|впервые появился на|пост \x27\d', re.I)
