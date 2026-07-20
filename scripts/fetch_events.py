@@ -11645,6 +11645,15 @@ def save_enriched(events, previous_snapshot=None):
                     _cme2['feed_visible']=False
                 if _CM_QA.search(_cmb2) and _cme2.get('sic_class')=='EVENT':
                     _cme2['sic_class']='COMMENTARY'
+            # ШУМ-КЛАССЫ (Мия 20.07): мелкая крим-хроника краж + listicle-дайджесты
+            _SH_PETTY=re.compile(r'(?:вынести|вынес\w+|спрятал\w*|похитил\w*|укра\w+|кража) .{0,40}(?:супермаркет|магазин|тысяч руб)|любовь к \w+ довела|грозит до \w+ лет|магазинн\w+ (?:кража|вор)', re.I)
+            _SH_LISTICLE=re.compile(r'^\d{1,2} (?:цитат|фактов|способ\w*|причин|вещей|признак\w*|совет\w*|правил|мифов|график\w*)|впервые появился на|пост \x27\d', re.I)
+            for _she in enriched["events"]:
+                _sht=(_she.get('title','') or ''); _shs=(_she.get('summary','') or '')
+                if _SH_PETTY.search(_sht+' '+_shs):
+                    _she['feed_visible']=False
+                if _SH_LISTICLE.search(_sht) or 'впервые появился на' in _shs:
+                    _she['feed_visible']=False
             # КЛИМАТ-КОНТЕНТ 3 (Мия 20.07): природные зарисовки + дайджест-рубрики = шум; голод в climate -> social
             _CM_WILDLIFE=re.compile(r'кулик\w*|птиц\w+, известн|острыми клювами|блестящими глазами|бусинка|пингвин\w*, |милые |очаровательн\w+ (?:животн|птиц|зверь)', re.I)
             _CM_DIGEST=re.compile(r'^(срезано|сокращение|обрезано|cropped|дайджест|мы отбираем и объясняем)|самые важные истории на пересечении', re.I)
