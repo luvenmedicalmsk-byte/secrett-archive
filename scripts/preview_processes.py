@@ -9,6 +9,7 @@ import json, hashlib, re, sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+INFRA_PRODUCTION = True   # ADR-012 Phase 2: Infrastructure Process в Production (Shadow Validation пройдена)
 DOCS = Path(__file__).parent.parent / 'docs'
 EVENTS = DOCS / 'events.json'
 
@@ -85,7 +86,8 @@ def build_infra(events):
         proc={
             'process_id': f'infra-{key}',
             'process_type': 'infrastructure',
-            'preview': True,
+            'preview': not INFRA_PRODUCTION,
+            'production': INFRA_PRODUCTION,
             'maturity': maturity,
             'entity_class_group': g['group'],
             'causal_model': g['causal'],
@@ -97,7 +99,7 @@ def build_infra(events):
             'lifecycle': 'active',
             'confidence': round(min(0.95, 0.3 + 0.15*mc + 0.1*gs), 2),
             'evidence': g['members'][:6],
-            'title': f'🧪 Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])} ({_CAUSAL_RU.get(g["causal"], g["causal"])})',
+            'title': (f'Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])} ({_CAUSAL_RU.get(g["causal"], g["causal"])})' if INFRA_PRODUCTION else f'🧪 Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])} ({_CAUSAL_RU.get(g["causal"], g["causal"])})'),
         }
         procs.append(proc)
         shadow.append({'key':key,'group':g['group'],'causal':g['causal'],'mc':mc,'gs':gs,'maturity':maturity})
