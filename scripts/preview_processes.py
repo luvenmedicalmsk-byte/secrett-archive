@@ -37,13 +37,26 @@ _GROUP = {'warehouse':'ecommerce_logistics','distribution_center':'ecommerce_log
 def _now(): return datetime.now(timezone.utc)
 def _iso(d): return d.strftime('%Y-%m-%dT%H:%M:%SZ')
 
+# Ритейл-контекст: атака засчитывается ТОЛЬКО если это гражданская ритейл-инфраструктура,
+# а не военный удар по стране (США->Иран, ракетные удары и т.п. — не инфраструктурный процесс ритейла).
+_RETAIL_CTX = re.compile(r'wildberries|ozon|озон|вайлдберриз|маркетплейс\w*|пункт\w* выдачи|\bПВЗ\b|фулфилмент|'
+    r'склад\w* (?:компании|маркетплейс|wildberries|ozon|товарн)|товарн\w+ склад|распределительн\w+ центр\w* (?:компании|wildberries|ozon)', re.I)
+_MILITARY = re.compile(r'по (?:ирану|израилю|сектору|сирии|ливану|украине|россии)|удар\w* по|военн\w+ (?:объект|баз|цел|предприят)|'
+    r'аэродром|\bпво\b|ракетн\w+ удар|минобороны|авиауд|пункты командования', re.I)
 def _detect(text):
     ents=[k for k,rx in _ENT.items() if rx.search(text)]
     if not ents: return None
     evs=[k for k,rx in _EVC.items() if rx.search(text)]
     if not evs: return None
     grp=_GROUP.get(ents[0],'other')
-    causal='attack' if 'attack' in evs else ('incident' if 'incident' in evs else ('outage' if 'outage' in evs else 'regulation'))
+    if 'attack' in evs:
+        # attack засчитывается ТОЛЬКО при явном ритейл-контексте (маркетплейс/бренд-склад/ПВЗ).
+        # Иначе это военный удар или общий kinetic — не инфраструктурный процесс ритейла.
+        if not _RETAIL_CTX.search(text): return None
+        causal='attack'
+    elif 'incident' in evs: causal='incident'
+    elif 'outage' in evs: causal='outage'
+    else: causal='regulation'
     return grp, causal
 
 # ── Задача 1: Infrastructure Process (Preview, ADR-012) ──
@@ -56,7 +69,7 @@ def build_infra(events):
         grp,causal=d
         key=hashlib.md5(f"{grp}|{causal}".encode()).hexdigest()[:8]
         g=groups.setdefault(key,{'group':grp,'causal':causal,'members':[],'places':set(),'dates':[]})
-        g['members'].append((e.get('title') or '')[:80])
+        g['members'].append((e.get('title') or '')[:140])
         pl=e.get('region') or (e.get('geo') or {}).get('country')
         if pl: g['places'].add(pl)
         dt=e.get('date') or e.get('first_seen')
@@ -83,7 +96,7 @@ def build_infra(events):
             'last_seen': dates[-1] if dates else _iso(_now())[:10],
             'lifecycle': 'active',
             'confidence': round(min(0.95, 0.3 + 0.15*mc + 0.1*gs), 2),
-            'evidence': g['members'][:8],
+            'evidence': g['members'][:6],
             'title': f'🧪 Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])} ({_CAUSAL_RU.get(g["causal"], g["causal"])})',
         }
         procs.append(proc)
