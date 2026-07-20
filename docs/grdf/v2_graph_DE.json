@@ -2,67 +2,67 @@
   "country": "DE",
   "date": "2026-07-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-20T22:49:02.409928+00:00",
+  "generated_at": "2026-07-20T22:59:11.218833+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 35,
+      "score": 40,
       "props": {
-        "risk_score": 35
+        "risk_score": 40
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 20,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 15,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 7,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 8,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-DE-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-DE-Германия_п",
+      "type": "Signal",
+      "label": "Германия повысила уровень террористическ",
+      "severity": 49,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-DE-Шторм_—_Ге",
       "type": "Signal",
       "label": "Шторм — Германия",
@@ -92,13 +99,6 @@
       "label": "Тепловая волна — Германия",
       "severity": 62,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-DE-Покушение_",
-      "type": "Signal",
-      "label": "Покушение — Германия",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-DE",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-DE",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-DE-Германия_п",
+      "to": "DOMAIN-DE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.49
+    },
+    {
       "from": "SIGNAL-DE-Шторм_—_Ге",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
@@ -171,12 +198,6 @@
     {
       "from": "SIGNAL-DE-Тепловая_в",
       "to": "DOMAIN-DE-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-DE-Покушение_",
-      "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
