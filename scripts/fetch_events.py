@@ -2227,6 +2227,9 @@ def _classify_no_geo(title, desc, domain):
     о событии, не событие. Не трогает Signal Gate/GeoContract/Risk Engine/Domain Routing."""
     t = (title or '')
     blob = (t + ' ' + (desc or '')[:200])
+    # 0-климат (Мия 20.07): климат-аналитика без места = валидный сигнал (тренды/доклады/политика), не шум
+    if domain == 'climate' and not (_NOGEO_FP_RX.search(t) and not _NOGEO_EVENT_RX.search(t)):
+        return 'VALID'
     # 0a) структурные метки/агрегаты платформы — валидный процесс
     if _NOGEO_STRUCT_RX.search(t):
         return 'VALID'
