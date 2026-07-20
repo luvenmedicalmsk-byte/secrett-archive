@@ -2233,7 +2233,7 @@ def _classify_no_geo(title, desc, domain):
     t = (title or '')
     blob = (t + ' ' + (desc or '')[:200])
     # 0-климат/социум (Мия 20.07): институциональная аналитика без места = валидный сигнал, не шум
-    if domain in ('climate','social') and not (_NOGEO_FP_RX.search(t) and not _NOGEO_EVENT_RX.search(t)):
+    if domain in ('climate','social','technology','economy') and not (_NOGEO_FP_RX.search(t) and not _NOGEO_EVENT_RX.search(t)):
         return 'VALID'
     # 0a) структурные метки/агрегаты платформы — валидный процесс
     if _NOGEO_STRUCT_RX.search(t):
@@ -3007,7 +3007,9 @@ def process_events(raw_items):
                 and not _SYS_PROTECT_RE.search(item.get('title',''))):
             _trace(_tid,'SEVERITY','removed',reason='sev_crime'); _LOSS['sev']+=1; _LOSS['sev_crime']=_LOSS.get('sev_crime',0)+1; continue
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
-        _TRUSTED_SOCIAL={'WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','WHO','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IOM','ReliefWeb','UN News','ILO','WEF'}
+        _TRUSTED_SOCIAL={'WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','WHO','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IOM','ReliefWeb','UN News','ILO','WEF',
+            'IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review',
+            'IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business','Trading Economics','FAO Economy','IMF','World Bank','BIS','OECD'}
         if (item.get('_force_severity') is None and not _sys
                 and domain in ('geopolitics','economy','social','technology')
                 and item.get('source') not in _TRUSTED_SOCIAL
