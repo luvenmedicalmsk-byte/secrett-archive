@@ -3196,7 +3196,10 @@ def process_events(raw_items):
     # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
     for _ev in events:
         _ev['severity'] = _recompute_severity(_ev)
-    events.sort(key=lambda e: e['severity'], reverse=True)
+    # RSS-аналитика (climate/social) получает сорт-бонус, чтобы качественные источники не проигрывали
+    # TG-потоку по severity и попадали в квоту (Мия 20.07). Не меняет реальную severity — только порядок отбора.
+    _RSS_PRIORITY={'Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate','Yale E360','WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC'}
+    events.sort(key=lambda e: (e.get('severity',0) or 0) + (25 if e.get('source') in _RSS_PRIORITY else 0), reverse=True)
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     DOMAIN_QUOTA = {
