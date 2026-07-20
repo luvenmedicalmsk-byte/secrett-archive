@@ -11483,10 +11483,11 @@ def save_enriched(events, previous_snapshot=None):
             _CC_HIT=_re_cc.compile(r'продлил\w* (арест|срок ареста|содержание под стражей)|заключ\w* под страж|'
                 r'арестова\w+ (основател|главред|редактор|блогер|журналист|бизнесмен|директор|актер|актёр)|'
                 r'приговор\w* к \d|мера пресечения|отправил\w* в СИЗО', _re_cc.I)
+            _CC_MNT=_re_cc.compile(r'(альпинист|турист)\w*.{0,60}(сорвал|погиб|упал|пропал)|установлены личности', _re_cc.I|_re_cc.S)
             _CC_SYS=_re_cc.compile(r'массов|протест|митинг|беспоряд|тысяч|сотни задержан|оппозицион\w+ лидер|экстрадиц', _re_cc.I)
             for _cce in enriched["events"]:
                 _ccb=((_cce.get('title','') or '')+' '+(_cce.get('summary','') or ''))
-                if _CC_HIT.search(_ccb) and not _CC_SYS.search(_ccb):
+                if (_CC_HIT.search(_ccb) or _CC_MNT.search(_ccb)) and not _CC_SYS.search(_ccb):
                     _cce['feed_visible']=False
             # Решение Мии 19.07: весь UN News = социум (в т.ч. персистентные карточки)
             for _hme in enriched["events"]:
