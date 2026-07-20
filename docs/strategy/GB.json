@@ -2,113 +2,102 @@
   "country": "GB",
   "country_name": "Великобритания",
   "date": "2026-07-20",
-  "generated_at": "2026-07-20T16:59:07.336885+00:00",
-  "strategy_score": 63,
+  "generated_at": "2026-07-20T18:40:08.114171+00:00",
+  "strategy_score": 22,
   "strategy_confidence": 79,
-  "urgency_level": "maximum",
-  "urgency_level_ru": "Максимальная",
-  "urgency_color": "#dc2626",
-  "preparedness_level": "maximum",
-  "preparedness_level_ru": "Максимальная готовность",
-  "monitoring_priority": 5,
-  "monitoring_ru": "Непрерывно",
+  "urgency_level": "moderate",
+  "urgency_level_ru": "Умеренная",
+  "urgency_color": "#fbbf24",
+  "preparedness_level": "enhanced",
+  "preparedness_level_ru": "Повышенная готовность",
+  "monitoring_priority": 2,
+  "monitoring_ru": "Дважды в сутки",
   "actions": [
     {
-      "id": "CA-01",
+      "id": "C-01",
       "priority": 1,
-      "action": "КАСКАДНЫЙ КРИЗИС — МАКСИМАЛЬНАЯ ТРЕВОГА",
-      "detail": "Системный каскадный сбой. Все механизмы реагирования активированы немедленно",
-      "trigger": "cascade state",
-      "expiry": "cascade resolution",
-      "confidence": 69,
+      "action": "Ожидать деэскалации",
+      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
+      "trigger": "contained + best dominant",
+      "expiry": "state change or prob_best < 25%",
+      "confidence": 83,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CA-02",
-      "priority": 1,
-      "action": "Полная активация антикризисного центра",
-      "detail": "Непрерывная работа антикризисного центра, координация всех задействованных сторон",
-      "trigger": "always",
-      "expiry": "cascade resolved",
-      "confidence": 69,
-      "domain_context": "economy",
-      "horizon_relevant": "30d"
-    },
-    {
-      "id": "CA-03",
-      "priority": 1,
-      "action": "Изоляция критических систем",
-      "detail": "Предотвратить дальнейшее распространение каскада на смежные домены",
-      "trigger": "systemic_combos > 2",
-      "expiry": "cascade isolated",
-      "confidence": 69,
+      "id": "C-02",
+      "priority": 2,
+      "action": "Подготовить план выхода из контролируемой фазы",
+      "detail": "Определить индикаторы для перевода в мониторинговый режим",
+      "trigger": "contained > 5d",
+      "expiry": "stabilization transition",
+      "confidence": 83,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 3,
-  "state": "cascade",
-  "dominant_scenario": "worst",
-  "scenario_score": 42,
-  "instability": 54,
+  "action_count": 2,
+  "state": "contained",
+  "dominant_scenario": "best",
+  "scenario_score": 22,
+  "instability": 9,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
       "condition": "risk_score ≥ 68 (+8pt)",
-      "leads_to": "cascade",
-      "probability": 26
+      "leads_to": "escalating",
+      "probability": 14
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "cascade",
-      "probability": 27
+      "leads_to": "escalating",
+      "probability": 5
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
-      "leads_to": "cascade",
-      "probability": 34
+      "condition": "Worst-case 30d ≥ 71",
+      "leads_to": "escalating",
+      "probability": 16
     },
     {
       "condition": "Новый критический драйвер в economy",
-      "leads_to": "cascade",
-      "probability": 22
+      "leads_to": "escalating",
+      "probability": 17
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 95,
-      "state": "cascade",
-      "urgency": "maximum",
-      "preparedness": "maximum"
+      "score": 54,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "90 дней",
-      "score": 95,
-      "state": "cascade",
-      "urgency": "maximum",
-      "preparedness": "maximum"
+      "score": 48,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "180 дней",
-      "score": 95,
-      "state": "cascade",
-      "urgency": "maximum",
-      "preparedness": "maximum"
+      "score": 43,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "365 дней",
-      "score": 95,
-      "state": "cascade",
-      "urgency": "maximum",
-      "preparedness": "maximum"
+      "score": 39,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     }
   ],
   "probabilities": {
-    "worst": 34,
-    "stress": 28,
-    "base": 12,
-    "best": 26
+    "worst": 16,
+    "stress": 21,
+    "base": 29,
+    "best": 34
   }
 }
