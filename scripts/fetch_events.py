@@ -580,7 +580,7 @@ def _trunc_shadow_report(_c2):
     }
 
 OUTPUT_PATH = Path(__file__).parent.parent / "docs" / "events.json"
-MAX_EVENTS = 350
+MAX_EVENTS = 450   # поднят под климат/социум-пулы (Мия 20.07)
 CASUALTY_RU = True          # CANARY (Fix A): русское извлечение числа жертв в estimate_severity. Откат = False.
 _CASUALTY_RU_HITS = []      # shadow-метрика для Morning Audit (обнуляется каждый прогон)
 SEVERITY_THRESHOLD = 45
@@ -3253,7 +3253,7 @@ def process_events(raw_items):
             source = ev.get('source', '')
             _evd = ev.get('domain','')
             # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
-            max_days = 14 if _evd in ('technology','social') else 7 if _evd == 'economy' else 3  # S36.4: 72ч окно для новостных доменов
+            max_days = 14 if _evd in ('technology','social') else 10 if _evd == 'climate' else 7 if _evd == 'economy' else 3  # S36.4 + климат-аналитика 10д (Мия 20.07)
             if days_old > max_days:
                 _trace(_obs_id(ev),'FRESHNESS','removed',reason='fresh'); _LOSS['fresh']+=1; continue
         except:
