@@ -129,6 +129,11 @@ jobs:
         run: |
           python scripts/change_impact.py || true
 
+      - name: Preview Processes (Этап 3, read-only)
+        continue-on-error: true
+        run: |
+          python scripts/preview_processes.py || true
+
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
@@ -144,6 +149,7 @@ jobs:
           git add docs/_diagnostics_report.json 2>/dev/null || true   # I.2 Diagnostics
           git add docs/_change_impact.json 2>/dev/null || true   # I.3 Change Impact
           git add docs/_entity_shadow.json 2>/dev/null || true   # Entity Layer Shadow (Этап 1)
+          git add docs/_preview_processes.json docs/_infra_process_shadow.json docs/_financial_shadow.json 2>/dev/null || true   # Этап 3 Preview
           git add docs/_birth_semantics.json 2>/dev/null || true   # SPEC-013 §3 Birth Semantics
           git add docs/_impact_debug.json 2>/dev/null || true
           if git diff --staged --quiet; then
