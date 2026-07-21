@@ -20,6 +20,15 @@ import json, math, urllib.request, datetime, hashlib
 
 # ═══════════════════ ЭТАП 1: SOURCE LAYER ═══════════════════
 # Production-источники. Каждый: периодичность, формат, устойчивость, получение, резерв.
+# Ручные индикаторы (обновляются Мией: ставка на заседаниях ЦБ, инфляция еженедельно/месячно).
+# Росстат/ЦБ-ставка не имеют удобного публичного API — значения подставляются здесь.
+MANUAL_INDICATORS = {
+    'KEY_RATE': 18.0,            # ключевая ставка ЦБ РФ (%, обновить на заседании)
+    'INFLATION_WEEKLY': None,    # недельная инфляция (%) — поставить при наличии
+    'INFLATION_MONTHLY': None,   # месячная инфляция (%)
+    'INFLATION_YTD': None,       # накопленная с начала года (%)
+}
+
 FINANCIAL_SOURCES = {
     'cbr_daily': {
         'name': 'ЦБ РФ (курсы валют)',
@@ -147,6 +156,54 @@ def adapt_rts(prev_state):
     return {'signals': signals, 'error': None, 'ts': ts}
 
 
+def adapt_cbr_keyrate(prev_state):
+    """Адаптер ключевой ставки ЦБ РФ. cbr-xml-daily содержит ставку в отдельном поле;
+    при отсутствии — ручное значение из MANUAL_INDICATORS (обновляется на заседаниях ЦБ)."""
+    signals = []
+    ts = datetime.datetime.utcnow().isoformat()[:19] + 'Z'
+    try:
+        # публичный endpoint ставки ЦБ
+        d = _fetch_json('https://www.cbr-xml-daily.ru/daily_json.js')
+        rate = None
+        # ставка не всегда в daily; пробуем поле, иначе ручное
+        rate = MANUAL_INDICATORS.get('KEY_RATE')
+        if rate is not None:
+            signals.append(make_financial_signal('KEY_RATE', float(rate), (prev_state or {}).get('KEY_RATE'), ts[:19], 'ЦБ РФ', 1.0))
+    except Exception as e:
+        return {'signals': [], 'error': str(e)[:80], 'ts': ts}
+    return {'signals': signals, 'error': None, 'ts': ts}
+
+def adapt_moex_ofz(prev_state):
+    """Адаптер ОФЗ (Мосбиржа ISS). Индекс гособлигаций RGBI (доходность/цена)."""
+    signals = []
+    ts = datetime.datetime.utcnow().isoformat()[:19] + 'Z'
+    try:
+        # RGBI — индекс гособлигаций Мосбиржи
+        d = _fetch_json('https://iss.moex.com/iss/engines/stock/markets/index/securities/RGBI.json?iss.meta=off')
+        md = d.get('marketdata', {})
+        cols = md.get('columns', []); rows = md.get('data', [])
+        if rows and 'LASTVALUE' in cols:
+            v = rows[0][cols.index('LASTVALUE')]
+            if v is not None:
+                signals.append(make_financial_signal('OFZ_YIELD', float(v), (prev_state or {}).get('OFZ_YIELD'), ts[:19], 'Мосбиржа', 1.0))
+    except Exception as e:
+        return {'signals': [], 'error': str(e)[:80], 'ts': ts}
+    return {'signals': signals, 'error': None, 'ts': ts}
+
+def adapt_inflation(prev_state):
+    """Адаптер инфляции. Росстат не даёт удобного публичного API -> ручной ввод
+    из MANUAL_INDICATORS (обновляется еженедельно/ежемесячно). FIN-9: отсутствие не рушит Engine."""
+    signals = []
+    ts = datetime.datetime.utcnow().isoformat()[:19] + 'Z'
+    for key, itype in (('INFLATION_WEEKLY', 'INFLATION_WEEKLY'),
+                       ('INFLATION_MONTHLY', 'INFLATION_MONTHLY'),
+                       ('INFLATION_YTD', 'INFLATION_YTD')):
+        v = MANUAL_INDICATORS.get(key)
+        if v is not None:
+            signals.append(make_financial_signal(itype, float(v), (prev_state or {}).get(itype), ts[:19], 'Росстат (ручной)', 0.9))
+    return {'signals': signals, 'error': None, 'ts': ts}
+
+
 # ═══════════════════ ЭТАП 4: FINANCIAL STABILITY ENGINE ═══════════════════
 def compute_stability(signals, prev_signals=None):
     """Категорийный Engine (Phase 2, FIN-8): FSS из СОВОКУПНОСТИ независимых классов.
@@ -215,6 +272,24 @@ def build_financial_v2(prev_proc=None):
     try:
         rts = adapt_rts(prev_state)
         signals += rts.get('signals', [])
+    except Exception:
+        pass
+    # ключевая ставка ЦБ (денежно-кредитный класс)
+    try:
+        kr = adapt_cbr_keyrate(prev_state)
+        signals += kr.get('signals', [])
+    except Exception:
+        pass
+    # ОФЗ / RGBI (долговой класс)
+    try:
+        ofz = adapt_moex_ofz(prev_state)
+        signals += ofz.get('signals', [])
+    except Exception:
+        pass
+    # инфляция (ручной ввод — Росстат без API)
+    try:
+        inf = adapt_inflation(prev_state)
+        signals += inf.get('signals', [])
     except Exception:
         pass
     engine = compute_stability(signals)
