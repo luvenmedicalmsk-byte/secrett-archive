@@ -134,6 +134,109 @@ def relationship_context(sig, rels):
         return (f'Процесс связан с {n} другими процессами и является частью общей {dom} картины.')
     return None
 
+# ═══════════════════ PHASE 5: PROCESS ROLE INTELLIGENCE (ROLE-1..5) ═══════════════════
+# Роль процесса в сети из ГРАФА связей (ROLE-2: только существующий граф). Одна роль (ROLE-5).
+_ROLE_BADGE = {
+    'cascade_source':   {'label': 'Источник каскада',      'color': '🟥', 'hex': '#E24A3B'},
+    'amplifier':        {'label': 'Усилитель',             'color': '🟧', 'hex': '#e0a458'},
+    'transit':          {'label': 'Передаточное звено',    'color': '🟨', 'hex': '#D4AF5A'},
+    'concentration':    {'label': 'Узел концентрации',     'color': '🟪', 'hex': '#9b7fc7'},
+    'consequence':      {'label': 'Следствие',             'color': '🟩', 'hex': '#7fb069'},
+    'terminal':         {'label': 'Завершающий процесс',   'color': '⬜', 'hex': 'rgba(148,163,184,0.7)'},
+    'isolated':         {'label': 'Изолированный процесс', 'color': '⬛', 'hex': 'rgba(148,163,184,0.4)'},
+}
+
+def _count_edges(sig, all_sigs_by_id):
+    """Входящие/исходящие связи из графа (ROLE-2)."""
+    # исходящие: этот процесс влияет на других (amplifies/causes/suppresses)
+    out_amp = len(sig.get('amplifies', []) or [])
+    out_cause = len(sig.get('causes', []) or [])
+    out_supp = len(sig.get('suppresses', []) or [])
+    outgoing = out_amp + out_cause + out_supp
+    # входящие: этот процесс — цель чужих causes/amplifies (обратный обход)
+    incoming = 0
+    sid = sig.get('signal_id')
+    for other in all_sigs_by_id.values():
+        if other is sig: continue
+        if sid in (other.get('amplifies', []) or []) or sid in (other.get('causes', []) or []):
+            incoming += 1
+    # плюс явные caused_by
+    incoming = max(incoming, len(sig.get('caused_by', []) or []))
+    return incoming, outgoing
+
+def determine_role(sig, all_sigs_by_id):
+    """Системная роль из графа (Этап 1-2, ROLE-3 детерминирована, ROLE-5 одна роль)."""
+    inc, out = _count_edges(sig, all_sigs_by_id)
+    stage = sig.get('lifecycle_stage') or ''
+    # приоритетный каскад решений (одна роль)
+    if inc == 0 and out == 0:
+        role = 'isolated'
+    elif stage == 'Завершён':
+        role = 'terminal'
+    elif inc == 0 and out >= 2:
+        role = 'cascade_source'         # только влияет, сам не получает — источник
+    elif inc >= 1 and out >= 2:
+        role = 'amplifier'              # получает и передаёт дальше с усилением
+    elif inc >= 2 and out == 0:
+        role = 'consequence'            # только получает от многих — следствие
+    elif inc >= 3 and out >= 3:
+        role = 'concentration'          # много связей в обе стороны — узел
+    elif inc >= 1 and out >= 1:
+        role = 'transit'                # передаёт влияние дальше
+    elif out >= 1:
+        role = 'cascade_source'
+    elif inc >= 1:
+        role = 'consequence'
+    else:
+        role = 'isolated'
+    return role, inc, out
+
+def role_explanation(role, inc, out, sig):
+    """Этап 4: почему эта роль (ROLE-4)."""
+    dom = _DOMAIN_CASCADE.get((sig.get('primary_domain') or '').lower(), 'системного')
+    if role == 'cascade_source':
+        return (f'Процесс сам влияет на {out} других процесс' + ('а' if 2<=out<=4 else 'ов') +
+                ', но не получает влияния извне. Поэтому система классифицирует его как источник каскада.')
+    if role == 'amplifier':
+        return (f'Процесс получает влияние от {inc} процесс' + ('а' if inc==1 else 'ов') +
+                f' и сам усиливает ещё {out}. Поэтому система классифицирует его как усилитель каскада.')
+    if role == 'consequence':
+        return (f'Процесс получает влияние от {inc} независимых процессов и сам не оказывает '
+                'существенного воздействия. Это следствие в общей цепочке.')
+    if role == 'transit':
+        return (f'Процесс получает влияние от {inc} и передаёт его дальше на {out}. '
+                'Это промежуточное звено в цепочке влияния.')
+    if role == 'concentration':
+        return (f'Процесс связан со множеством других ({inc} входящих, {out} исходящих) и является '
+                f'центральным узлом текущего {dom} каскада.')
+    if role == 'terminal':
+        return 'Процесс завершён и больше не участвует активно в цепочке влияния.'
+    return 'Процесс не имеет выраженных связей с другими процессами.'
+
+def build_role(sig, all_sigs_by_id):
+    role, inc, out = determine_role(sig, all_sigs_by_id)
+    badge = _ROLE_BADGE.get(role, _ROLE_BADGE['isolated'])
+    # системный вывод (Этап 3)
+    summary_map = {
+        'cascade_source': 'Источник каскада',
+        'amplifier': 'Усилитель каскада',
+        'consequence': 'Следствие нескольких процессов',
+        'transit': 'Передаточное звено',
+        'concentration': 'Центральный узел каскада',
+        'terminal': 'Завершающий процесс',
+        'isolated': 'Изолированный процесс',
+    }
+    return {
+        'role': role,
+        'role_label': badge['label'],
+        'role_badge': badge['color'],
+        'role_hex': badge['hex'],
+        'role_summary': summary_map.get(role, badge['label']),
+        'role_explanation': role_explanation(role, inc, out, sig),
+        'incoming': inc,
+        'outgoing': out,
+    }
+
 def enrich_with_relationships(signals, max_rels=5):
     """Обогащает процессы связями. НЕ меняет сами процессы (PREL-1) — только +поле relationships."""
     by_id = {s.get('signal_id'): s for s in signals}
@@ -143,6 +246,8 @@ def enrich_with_relationships(signals, max_rels=5):
             if rels:
                 sig['relationships'] = rels
                 sig['relationship_context'] = relationship_context(sig, rels)
+            # PHASE 5: системная роль (для всех процессов, ROLE-5)
+            sig['system_role'] = build_role(sig, by_id)
         except Exception:
             pass
     return signals
