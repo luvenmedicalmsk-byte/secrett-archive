@@ -32,11 +32,19 @@ FINANCIAL_SOURCES = {
     },
     'cbr_key_rate': {
         'name': 'ЦБ РФ (ключевая ставка)',
-        'url': 'https://www.cbr-xml-daily.ru/daily_json.js',   # ставка не в daily; берётся из статики/ручного
-        'periodicity': 'irregular',    # меняется на заседаниях ЦБ
+        'url': 'https://www.cbr-xml-daily.ru/daily_json.js',
+        'periodicity': 'irregular',
         'format': 'json',
         'reliability': 'high',
         'indicators': ['KEY_RATE'],
+    },
+    'moex_imoex': {
+        'name': 'Мосбиржа (индекс IMOEX)',
+        'url': 'https://iss.moex.com/iss/engines/stock/markets/index/securities/IMOEX.json?iss.meta=off',
+        'periodicity': 'intraday',     # торговые часы
+        'format': 'json',
+        'reliability': 'high',         # официальный ISS Мосбиржи
+        'indicators': ['IMOEX'],
     },
 }
 
@@ -86,6 +94,26 @@ def adapt_cbr(prev_state):
         return {'signals': [], 'error': str(e)[:80], 'ts': ts}
     return {'signals': signals, 'error': None, 'ts': ts}
 
+def adapt_moex(prev_state):
+    """Адаптер Мосбиржи (ISS) -> Unified Model. Индекс IMOEX."""
+    signals = []
+    ts = datetime.datetime.utcnow().isoformat()[:19] + 'Z'
+    try:
+        d = _fetch_json(FINANCIAL_SOURCES['moex_imoex']['url'])
+        # ISS формат: marketdata.data со столбцами marketdata.columns
+        md = d.get('marketdata', {})
+        cols = md.get('columns', []); rows = md.get('data', [])
+        if rows and 'LASTVALUE' in cols:
+            idx = cols.index('LASTVALUE')
+            v = rows[0][idx]
+            if v is not None:
+                pv = (prev_state or {}).get('IMOEX')
+                signals.append(make_financial_signal('IMOEX', float(v), pv, ts[:19], 'Мосбиржа', 1.0))
+    except Exception as e:
+        return {'signals': [], 'error': str(e)[:80], 'ts': ts}
+    return {'signals': signals, 'error': None, 'ts': ts}
+
+
 # ═══════════════════ ЭТАП 4: FINANCIAL STABILITY ENGINE ═══════════════════
 def compute_stability(signals, prev_signals=None):
     """Вычислительный слой (ТЗ Этап 4). Анализирует отклонения, тренды,
@@ -128,7 +156,13 @@ def build_financial_v2(prev_proc=None):
         prev_timeline = prev_proc.get('timeline') or []
 
     adapted = adapt_cbr(prev_state)
-    signals = adapted['signals']
+    signals = list(adapted['signals'])
+    # Мосбиржа (индекс) — дополнительный источник, тот же Unified Model (FIN-2)
+    try:
+        moex = adapt_moex(prev_state)
+        signals += moex.get('signals', [])
+    except Exception:
+        pass
     engine = compute_stability(signals)
 
     # деградация: если источник недоступен — сохраняем прошлое состояние (не рушим процесс)
