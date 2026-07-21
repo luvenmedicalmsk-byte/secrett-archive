@@ -11678,6 +11678,17 @@ def save_enriched(events, previous_snapshot=None):
                     _cme2['feed_visible']=False
                 if _CM_QA.search(_cmb2) and _cme2.get('sic_class')=='EVENT':
                     _cme2['sic_class']='COMMENTARY'
+            # ШУМ-КЛАСС ПОЛИТПРОГНОЗ (Мия 21.07): оценочные прогнозы о крахе/смене власти —
+            # политически опасный контент для РФ-аудитории (не факт, а мнение об одной стороне)
+            _SH_REGIME=re.compile(r'(?:подрыва\w+|подорв\w+|рухн\w+|паден\w+|крах\w*|свержен\w+|конец режим\w+|смен\w+ власти|дни.{0,15}сочтены|последн\w+ минут\w+ перед|потеря\w+ власт|уход\w* путин|после путин)\w*', re.I)
+            _SH_REGIME_CTX=re.compile(r'путин|кремл|режим|власт', re.I)
+            for _shr in enriched["events"]:
+                if _shr.get('domain')!='geopolitics': continue
+                _t=(_shr.get('title','') or ''); _s=(_shr.get('summary','') or '')
+                _blob=_t+' '+_s[:160]
+                # оба условия: оценочный прогноз о крахе + контекст власти РФ
+                if _SH_REGIME.search(_blob) and _SH_REGIME_CTX.search(_blob):
+                    _shr['feed_visible']=False
             # ШУМ-КЛАСС ЭССЕ (Мия 21.07): фотоэссе / travel-блог / личное повествование
             _SH_ESSAY=re.compile(r'фотоэссе|фото-эссе|photo essay|это эссе|личн\w+ (?:истори|повествован|заметк)|мо\w+ путешеств|о моих путешеств|путешествие вне сезона|автор:\s*\w+\s+\w+\s+следующее|дневник\w* путешеств|travel (?:blog|diary)', re.I)
             for _she2 in enriched["events"]:
