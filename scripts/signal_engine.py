@@ -2352,6 +2352,13 @@ def write_signals_json(events, path):
         _sem.validate_display(evolved)
     except Exception:
         pass
+    # ЗАЧИСТКА ФОССИЛОВ: старые процессы с типом «Наркотрафик» (переименован в «Криминальный
+    # оборот»). evolve_signals переносит их из прошлого снапшота — принудительно переименовываем.
+    for s in evolved:
+        for _fld in ('process_type','title'):
+            _v=s.get(_fld)
+            if isinstance(_v,str) and 'Наркотрафик' in _v:
+                s[_fld]=_v.replace('Наркотрафик','Криминальный оборот')
     # ФИНАЛЬНЫЙ СКРАБ (catch-all перед записью): ловит шум и дубли независимо от того, как
     # они попали — новые из build_signals ИЛИ перенесённые через evolve из прошлого снапшота
     # (continuation-процессы тянут старые evidence/timeline до фикса). Гарантия чистого вывода.
