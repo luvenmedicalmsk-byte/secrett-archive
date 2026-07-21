@@ -388,6 +388,7 @@ def build_financial_v2(prev_proc=None):
     except Exception:
         pass
     engine = compute_stability(signals)
+    causal = build_causal_explanation(signals)   # Phase 3: причинная цепочка
 
     # деградация: если источник недоступен — сохраняем прошлое состояние (не рушим процесс)
     if not signals and prev_proc:
@@ -412,6 +413,7 @@ def build_financial_v2(prev_proc=None):
         'contributions': engine.get('contributions', []),   # вклад каждого индикатора в FSS
         'signal_level': engine['status'],
         'reasons': engine['reasons'],
+        'causal': causal,            # Phase 3: причинная цепочка (FIN-13 трассируема)
     }
     return {
         'process_id': 'financial-stability',
@@ -431,6 +433,9 @@ def build_financial_v2(prev_proc=None):
         'status': engine['status'],
         'by_category': engine.get('by_category', {}),
         'active_categories': engine.get('active_categories', []),
+        'causal_explanation': causal.get('explanation'),
+        'causal_chain': (causal.get('chains') or [{}])[0].get('chain') if causal.get('chains') else [],
+        'causal_confidence': causal.get('confidence'),
         'lifecycle_stage': 'Активный',
         'first_seen': (prev_proc.get('first_seen') if prev_proc and prev_proc.get('first_seen') else ts),
         'last_seen': ts,
