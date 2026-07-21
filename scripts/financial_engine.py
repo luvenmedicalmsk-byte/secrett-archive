@@ -233,9 +233,13 @@ def build_financial_v2(prev_proc=None):
 
     # Observability-запись (FIN-5: полная трассируемость)
     observability = {
-        'raw': [{'type': s['indicator_type'], 'value': s['value'], 'source': s['source']} for s in signals],
-        'normalized': [{'type': s['indicator_type'], 'direction': s['direction'], 'velocity': s['velocity']} for s in signals],
-        'engine': {'stress_status': engine['status'], 'fss': fss, 'pressure': pressure},
+        'raw': [{'type': s['indicator_type'], 'value': s['value'], 'previous': s.get('previous_value'), 'source': s['source']} for s in signals],
+        'normalized': [{'type': s['indicator_type'], 'category': s.get('category'), 'direction': s['direction'], 'velocity': s['velocity'], 'delta': s.get('delta')} for s in signals],
+        'engine': {'stress_status': engine['status'], 'fss': fss, 'pressure': pressure,
+                   'by_category': engine.get('by_category', {}),
+                   'active_categories': engine.get('active_categories', []),
+                   'coincidence_factor': engine.get('coincidence_factor', 0)},
+        'contributions': engine.get('contributions', []),   # вклад каждого индикатора в FSS
         'signal_level': engine['status'],
         'reasons': engine['reasons'],
     }
@@ -255,6 +259,8 @@ def build_financial_v2(prev_proc=None):
         'pressure': pressure,
         'severity': severity,
         'status': engine['status'],
+        'by_category': engine.get('by_category', {}),
+        'active_categories': engine.get('active_categories', []),
         'lifecycle_stage': 'Активный',
         'first_seen': (prev_proc.get('first_seen') if prev_proc and prev_proc.get('first_seen') else ts),
         'last_seen': ts,
