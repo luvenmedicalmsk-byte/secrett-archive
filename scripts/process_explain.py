@@ -171,6 +171,72 @@ def explain_merge(sig):
 
 
 # ═══════════════════ ЭТАП 6 + OBSERVABILITY: сборка полного объяснения ═══════════════════
+# ═══════════════════ PHASE 2: HUMAN EXPLAINABILITY (PEX-6/8) ═══════════════════
+# Человеческий слой БЕЗ технических терминов. Только существующие данные, без LLM.
+def human_summary(sig):
+    """Краткое человеческое описание процесса простым языком (PEX-8: без identity_key/continuity)."""
+    ec = sig.get('evidence_count') or 0
+    gs = sig.get('geo_spread') or 0
+    stage = sig.get('lifecycle_stage') or ''
+    place = sig.get('process_place') or ''
+    is_macro = sig.get('is_macro')
+
+    # база: сколько событий, где
+    if ec >= 2:
+        base = f'Процесс объединяет {ec} {_plural_ev(ec)}'
+        if gs > 1:
+            base += f', происходящих на {gs} связанных территориях'
+        elif place and place not in ('—', 'Глобально'):
+            base += f' в регионе «{place}»'
+    else:
+        base = 'Процесс отслеживает развитие явления'
+        if place and place not in ('—', 'Глобально'):
+            base += f' в регионе «{place}»'
+
+    # состояние по стадии
+    if stage == 'Развитие':
+        tail = ' и продолжает развиваться'
+    elif stage == 'Пик':
+        tail = ' и достиг пика активности'
+    elif stage == 'Стабилизация':
+        tail = ' и стабилизировался'
+    elif stage == 'Ослабление':
+        tail = ' и постепенно затухает'
+    elif stage == 'Завершён':
+        tail = ' и завершился'
+    elif stage == 'Обнаружение':
+        tail = ' и находится на ранней стадии'
+    else:
+        tail = ''
+    return base + tail + '.'
+
+def _plural_ev(n):
+    n10, n100 = n % 10, n % 100
+    if n10 == 1 and n100 != 11: return 'событие'
+    if 2 <= n10 <= 4 and (n100 < 10 or n100 >= 20): return 'события'
+    return 'событий'
+
+def why_one_process(sig):
+    """Почему Atlas считает это одним процессом — человеческим языком (PEX-8)."""
+    if sig.get('is_macro'):
+        return 'Все проявления относятся к одному процессу, потому что описывают развитие одного явления в общей области.'
+    return ('Все события относятся к одному процессу, потому что описывают развитие '
+            'одного и того же явления на связанных территориях без нарушения непрерывности.')
+
+def what_changed(sig):
+    """Структурированные реальные изменения (PEX-9: только реальные)."""
+    delta = sig.get('delta') or {}
+    changes = []
+    ev = delta.get('evidence', 0) or 0
+    if ev > 0: changes.append(f'+{ev} {_plural_ev(ev)}')
+    terr = delta.get('new_territories', []) or []
+    if terr: changes.append(f'+{len(terr)} {"территория" if len(terr)==1 else "территории"}')
+    dsev = delta.get('severity', 0) or 0
+    if abs(dsev) >= 1: changes.append(f'давление {"+"if dsev>0 else ""}{round(dsev)}')
+    nc = len(delta.get('new_connections', []) or [])
+    if nc > 0: changes.append(f'+{nc} новых связей')
+    return changes
+
 def build_explanation(sig, prev_stage=None):
     """Полное объяснение процесса (PEX-2/3). Собирает все слои.
     Возвращает структуру для Observability: Decision/Reason/Criteria/Confidence/Timestamp."""
@@ -187,7 +253,16 @@ def build_explanation(sig, prev_stage=None):
     if lifecycle: confs.append(lifecycle['confidence'])
     overall_conf = round(sum(confs) / len(confs), 2)
 
+    # PHASE 2: человеческий слой
+    _changes = what_changed(sig)
+    if lifecycle:
+        _changes.append(f"стадия: {lifecycle['from']} → {lifecycle['to']}")
     return {
+        # ── Human Explainability (PEX-6/8) ──
+        'human_summary': human_summary(sig),
+        'why_one_process': why_one_process(sig),
+        'what_changed': _changes,
+        # ── Technical Explainability (PEX-7) ──
         'origin': origin,
         'attachment': attachment,
         'evolution': evolution,
