@@ -2,60 +2,60 @@
   "country": "US",
   "date": "2026-07-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-21T10:00:06.253678+00:00",
+  "generated_at": "2026-07-21T11:03:05.823358+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 60,
+      "score": 57,
       "props": {
-        "risk_score": 60
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 55,
-      "trend": "up"
+      "score": 39,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "up"
+      "score": 26,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "stable"
+      "score": 13,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-Иордания_з",
-      "type": "Signal",
-      "label": "Иордания заявляет, что нейтрализовала ир",
-      "severity": 69,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-US-Экспорт_сы",
       "type": "Signal",
       "label": "Экспорт сырой нефти и нефтепродуктов из ",
@@ -99,6 +92,13 @@
       "label": "250-летняя история потребления энергии в",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-US-Хакерская_",
+      "type": "Signal",
+      "label": "Хакерская атака на дочернее предприятие ",
+      "severity": 62,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.55
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-US",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-US",
@@ -163,33 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-US-geopolitical",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-US-infrastructure",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-US-Иордания_з",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.69
-    },
-    {
       "from": "SIGNAL-US-Экспорт_сы",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
@@ -198,6 +171,12 @@
     {
       "from": "SIGNAL-US-250-летняя",
       "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-US-Хакерская_",
+      "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
