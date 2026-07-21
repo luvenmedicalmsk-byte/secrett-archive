@@ -347,6 +347,9 @@ def current_state_meaning(sig):
         return ('Активность процесса снижается. Новых подтверждений становится меньше, '
                 'признаки дальнейшего распространения пока отсутствуют.')
     if trend['key'] == 'rising' or stage in ('Развитие', 'Пик'):
+        _ds = _DOMAIN_STATE_ACTIVE.get(_domain_of(sig))
+        if _ds:
+            return _ds
         return ('Процесс продолжает усиливаться и остаётся активным. Новые подтверждения '
                 'продолжают поступать, поэтому вероятность завершения процесса пока низкая.')
     if stage == 'Стабилизация':
@@ -399,6 +402,8 @@ def build_explanation(sig, prev_stage=None):
         'what_changed': _changes,
         # ── Meaning Layer (PEX-11..15) ──
         'meaning': build_meaning(sig),
+        # ── Domain Layer (PEX-16): почему важно наблюдать ──
+        'why_watch': why_watch(sig),
         # ── Technical Explainability (PEX-7) ──
         'origin': origin,
         'attachment': attachment,
