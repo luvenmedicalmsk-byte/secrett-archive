@@ -2297,6 +2297,10 @@ def write_signals_json(events, path):
         import process_cascade as _casc     # ADR-019: Cascade Intelligence (не меняет граф, CAS-1)
     except Exception:
         _casc = None
+    try:
+        import process_importance as _imp   # ADR-020: System Importance (не меняет граф, IMP-1)
+    except Exception:
+        _imp = None
     previous=[]
     try:
         if os.path.exists(path):
@@ -2333,6 +2337,12 @@ def write_signals_json(events, path):
     if _casc is not None:
         try:
             _casc.enrich_with_cascade(evolved)
+        except Exception:
+            pass
+    # ADR-020: System Importance — значимость процесса в сети (IMP-1: не меняет граф)
+    if _imp is not None:
+        try:
+            _imp.enrich_with_importance(evolved)
         except Exception:
             pass
     # ФИНАЛЬНЫЙ СКРАБ (catch-all перед записью): ловит шум и дубли независимо от того, как
