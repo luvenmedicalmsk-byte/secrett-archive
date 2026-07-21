@@ -2285,6 +2285,10 @@ def build_signals(events):
 def write_signals_json(events, path):
     import os
     now=_now_iso()
+    try:
+        import process_explain as _pex   # ADR-017: Explainability (не меняет решения, PEX-1)
+    except Exception:
+        _pex = None
     previous=[]
     try:
         if os.path.exists(path):
@@ -2304,6 +2308,13 @@ def write_signals_json(events, path):
     current=build_signals(events)
     evolved,report,global_health,memory_updated,patterns=evolve_signals(
         current, previous, now, want_report=True, prev_global=prev_global, memory=memory)
+    # ADR-017: Explainability — обогащаем объяснениями (PEX-1: НЕ меняет решения, только +поле)
+    if _pex is not None:
+        try:
+            _prev_by_id={s.get('signal_id'):s for s in (previous or [])}
+            _pex.enrich_with_explanations(evolved, _prev_by_id)
+        except Exception:
+            pass
     # ФИНАЛЬНЫЙ СКРАБ (catch-all перед записью): ловит шум и дубли независимо от того, как
     # они попали — новые из build_signals ИЛИ перенесённые через evolve из прошлого снапшота
     # (continuation-процессы тянут старые evidence/timeline до фикса). Гарантия чистого вывода.
