@@ -15,6 +15,10 @@ try:
     import financial_engine as _fin_v2
 except Exception:
     _fin_v2 = None
+try:
+    import engine_process as _enp   # ADR-015 Phase 1: Engine-native Process Contract
+except Exception:
+    _enp = None
 DOCS = Path(__file__).parent.parent / 'docs'
 EVENTS = DOCS / 'events.json'
 
@@ -176,6 +180,19 @@ def main():
             _fv2=_fin_v2.build_financial_v2(_prev_fin_v2)
             if _fv2 and _fv2.get('active_indicators'):
                 fin=_fv2
+                # ADR-015 Phase 1: обогатить общим Engine-native контрактом (measurements/evidence
+                # разделены). Адаптер НЕ публикует в основной поток — только добавляет поля контракта.
+                if _enp is not None:
+                    try:
+                        _contract=_enp.adapt_financial_to_contract(_fv2)
+                        if _contract:
+                            fin['engine_native']=True
+                            fin['measurements']=_contract['measurements']   # ENP-2: входы Engine
+                            fin['evidence']=_contract.get('evidence', [])   # ENP-3: события (пусто пока)
+                            fin['state']=_contract['state']                 # ENP-4: состояние Engine
+                            fin['contract_version']='engine-native-v1'
+                    except Exception as _ce:
+                        print(f'[PREVIEW] contract adapter: {_ce}', file=sys.stderr)
         except Exception as _fe:
             print(f'[PREVIEW] financial v2 недоступен, fallback synthetic: {_fe}', file=sys.stderr)
     if fin is None:
