@@ -1710,9 +1710,20 @@ def fetch_nasa_eonet():
                             'Россия' if (41<=lat<=82 and 19<=lng<=180) else
                             'Австралия' if (-44<=lat<=-10 and 112<=lng<=154) else '')
                 _cat_clean = cat_title.strip().rstrip('.')
+                # EONET title = «Wildfires <место>» -> перевод даёт кривой падеж «Лесных пожаров».
+                # Нормализуем: категория в именительном + двоеточие + оригинальное имя очага/место.
+                import re as _re2
+                _own = _t_clean
+                # срезаем ведущую переведённую категорию в любом падеже (Лесны* пожар*, Урага*, Наводнени* и т.п.)
+                _own = _re2.sub(r'^(лесн\w*\s+пожар\w*|пожар\w*|урага\w*|наводнени\w*|шторм\w*|землетрясени\w*|вулкан\w*|засух\w*|оползн\w*|ледян\w*\s+покров\w*)\s*', '', _own, flags=_re2.I).strip()
                 if _t_clean.lower() == _cat_clean.lower() or not _t_clean:
-                    # пустышка = только категория: строим «Лесные пожары — <место> (координаты)»
+                    # чистая пустышка: только категория
                     title = f"{desc_ru} — {_loc}" if _loc else f"{desc_ru} (спутниковая фиксация)"
+                elif _own and _own.lower()!=_t_clean.lower():
+                    # было «Лесных пожаров Big Gulch, Colorado» -> «Лесные пожары: Big Gulch, Colorado»
+                    title = f"{desc_ru}: {_own}"
+                else:
+                    title = f"{desc_ru} — {_loc}" if _loc else desc_ru
                 # осмысленный summary с координатами вместо дубля «Лесные пожары. Wildfires.»
                 _summ = f"{desc_ru}: очаг зафиксирован спутником EONET"
                 if _loc: _summ += f" в регионе {_loc}"
