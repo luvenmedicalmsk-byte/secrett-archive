@@ -1701,14 +1701,26 @@ def fetch_nasa_eonet():
                              r'controlled\s+burn|planned\s+burn|hazard\s+reduction\s+burn',
                              (title or ''), re.I):
                     continue
-                if _t_clean.lower() == cat_title.strip().rstrip('.').lower() and region:
-                    title = f"{_t_clean} — {region}"
-                elif not _t_clean:
-                    title = f"{cat_title} — {region}" if region else cat_title
+                # локация: регион ИЛИ страна по координатам (не оставляем generic-пустышку)
+                _loc = region or detect_country_by_coords(lat, lng) if 'detect_country_by_coords' in dir() else region
+                if not _loc:
+                    # грубая страна по координатам как последний резерв
+                    _loc = ('США' if (24<=lat<=49 and -125<=lng<=-66) else
+                            'Канада' if (49<lat<=70 and -140<=lng<=-52) else
+                            'Россия' if (41<=lat<=82 and 19<=lng<=180) else
+                            'Австралия' if (-44<=lat<=-10 and 112<=lng<=154) else '')
+                _cat_clean = cat_title.strip().rstrip('.')
+                if _t_clean.lower() == _cat_clean.lower() or not _t_clean:
+                    # пустышка = только категория: строим «Лесные пожары — <место> (координаты)»
+                    title = f"{desc_ru} — {_loc}" if _loc else f"{desc_ru} (спутниковая фиксация)"
+                # осмысленный summary с координатами вместо дубля «Лесные пожары. Wildfires.»
+                _summ = f"{desc_ru}: очаг зафиксирован спутником EONET"
+                if _loc: _summ += f" в регионе {_loc}"
+                _summ += f" (координаты {lat:.2f}, {lng:.2f}, {parse_date(date_raw)})."
 
                 items.append({
                     'title': title,
-                    'desc': f"{desc_ru}. {cat_title}.",
+                    'desc': _summ,
                     'date': parse_date(date_raw),
                     'source': 'NASA EONET',
                     'source_bias': bias,
