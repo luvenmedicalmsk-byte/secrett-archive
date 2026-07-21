@@ -2352,6 +2352,13 @@ def write_signals_json(events, path):
         _sem.validate_display(evolved)
     except Exception:
         pass
+    # ADR-023: Semantic Relationship Classification — классы связей A/B/C/D/E,
+    # сортировка, контекст-блок, каскад только причинный (RELSEM-1..8, после фильтра)
+    try:
+        import relationship_semantics as _rsem
+        _rsem.enrich_with_semantics(evolved)
+    except Exception:
+        pass
     # ЗАЧИСТКА ФОССИЛОВ: старые процессы с типом «Наркотрафик» (переименован в «Криминальный
     # оборот»). evolve_signals переносит их из прошлого снапшота — принудительно переименовываем.
     for s in evolved:
