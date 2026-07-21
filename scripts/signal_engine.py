@@ -2380,6 +2380,12 @@ def write_signals_json(events, path):
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path,'w',encoding='utf-8') as f: json.dump(out,f,ensure_ascii=False,indent=2)
+    # ADR-021: System State — агрегированное состояние сети (SYS-1: только рассчитанные данные)
+    try:
+        import system_state as _sys
+        _sys.write_system_state(evolved, os.path.join(os.path.dirname(path),'system_state.json'))
+    except Exception:
+        pass
     try:
         json.dump(memory_updated, open(mem_path,'w',encoding='utf-8'), ensure_ascii=False, indent=2)
         json.dump(report, open(os.path.join(os.path.dirname(path),'_signal_engine_report.json'),'w',encoding='utf-8'), ensure_ascii=False, indent=2)
