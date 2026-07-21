@@ -136,14 +136,15 @@ def relationship_context(sig, rels):
 
 # ═══════════════════ PHASE 5: PROCESS ROLE INTELLIGENCE (ROLE-1..5) ═══════════════════
 # Роль процесса в сети из ГРАФА связей (ROLE-2: только существующий граф). Одна роль (ROLE-5).
+# icon: тип SVG-иконки (рисуется в UI), hex: цвет. Без эмодзи.
 _ROLE_BADGE = {
-    'cascade_source':   {'label': 'Источник каскада',      'color': '🟥', 'hex': '#E24A3B'},
-    'amplifier':        {'label': 'Усилитель',             'color': '🟧', 'hex': '#e0a458'},
-    'transit':          {'label': 'Передаточное звено',    'color': '🟨', 'hex': '#D4AF5A'},
-    'concentration':    {'label': 'Узел концентрации',     'color': '🟪', 'hex': '#9b7fc7'},
-    'consequence':      {'label': 'Следствие',             'color': '🟩', 'hex': '#7fb069'},
-    'terminal':         {'label': 'Завершающий процесс',   'color': '⬜', 'hex': 'rgba(148,163,184,0.7)'},
-    'isolated':         {'label': 'Изолированный процесс', 'color': '⬛', 'hex': 'rgba(148,163,184,0.4)'},
+    'cascade_source':   {'label': 'Источник каскада',      'icon': 'alert',  'hex': '#E24A3B'},
+    'amplifier':        {'label': 'Усилитель',             'icon': 'up',     'hex': '#e0a458'},
+    'transit':          {'label': 'Передаточное звено',    'icon': 'transit','hex': '#D4AF5A'},
+    'concentration':    {'label': 'Узел концентрации',     'icon': 'node',   'hex': '#9b7fc7'},
+    'consequence':      {'label': 'Следствие',             'icon': 'down',   'hex': '#7fb069'},
+    'terminal':         {'label': 'Завершающий процесс',   'icon': 'check',  'hex': 'rgba(148,163,184,0.75)'},
+    'isolated':         {'label': 'Изолированный процесс', 'icon': 'dot',    'hex': 'rgba(148,163,184,0.45)'},
 }
 
 def _count_edges(sig, all_sigs_by_id):
@@ -229,7 +230,7 @@ def build_role(sig, all_sigs_by_id):
     return {
         'role': role,
         'role_label': badge['label'],
-        'role_badge': badge['color'],
+        'role_icon': badge['icon'],
         'role_hex': badge['hex'],
         'role_summary': summary_map.get(role, badge['label']),
         'role_explanation': role_explanation(role, inc, out, sig),
