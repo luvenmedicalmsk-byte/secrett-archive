@@ -2289,6 +2289,10 @@ def write_signals_json(events, path):
         import process_explain as _pex   # ADR-017: Explainability (не меняет решения, PEX-1)
     except Exception:
         _pex = None
+    try:
+        import process_relations as _prel   # ADR-018: Relationship Engine (не меняет процессы, PREL-1)
+    except Exception:
+        _prel = None
     previous=[]
     try:
         if os.path.exists(path):
@@ -2313,6 +2317,12 @@ def write_signals_json(events, path):
         try:
             _prev_by_id={s.get('signal_id'):s for s in (previous or [])}
             _pex.enrich_with_explanations(evolved, _prev_by_id)
+        except Exception:
+            pass
+    # ADR-018: Relationship Engine — связи между процессами (PREL-1: не меняет процессы)
+    if _prel is not None:
+        try:
+            _prel.enrich_with_relationships(evolved)
         except Exception:
             pass
     # ФИНАЛЬНЫЙ СКРАБ (catch-all перед записью): ловит шум и дубли независимо от того, как
