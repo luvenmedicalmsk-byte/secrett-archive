@@ -130,33 +130,65 @@ def adapt_moex(prev_state):
     return {'signals': signals, 'error': None, 'ts': ts}
 
 
+def adapt_rts(prev_state):
+    """Адаптер РТС (RTSI, ISS Мосбиржи) -> Unified Model. Валютный индекс."""
+    signals = []
+    ts = datetime.datetime.utcnow().isoformat()[:19] + 'Z'
+    try:
+        d = _fetch_json('https://iss.moex.com/iss/engines/stock/markets/index/securities/RTSI.json?iss.meta=off')
+        md = d.get('marketdata', {})
+        cols = md.get('columns', []); rows = md.get('data', [])
+        if rows and 'LASTVALUE' in cols:
+            v = rows[0][cols.index('LASTVALUE')]
+            if v is not None:
+                signals.append(make_financial_signal('RTSI', float(v), (prev_state or {}).get('RTSI'), ts[:19], 'Мосбиржа', 1.0))
+    except Exception as e:
+        return {'signals': [], 'error': str(e)[:80], 'ts': ts}
+    return {'signals': signals, 'error': None, 'ts': ts}
+
+
 # ═══════════════════ ЭТАП 4: FINANCIAL STABILITY ENGINE ═══════════════════
 def compute_stability(signals, prev_signals=None):
-    """Вычислительный слой (ТЗ Этап 4). Анализирует отклонения, тренды,
-    накопление напряжения, критические изменения, восстановление.
-    Формирует СИГНАЛ, не сырьё (FIN-3). Детерминированно (FIN-4)."""
+    """Категорийный Engine (Phase 2, FIN-8): FSS из СОВОКУПНОСТИ независимых классов.
+    Отдельный индикатор НЕ означает стресс — риск определяется совпадением сигналов
+    между категориями (currency/monetary/debt/equity/inflation). Детерминированно (FIN-4)."""
     if not signals:
-        return {'fss': None, 'pressure': None, 'status': 'no_data', 'reasons': ['источники недоступны']}
+        return {'fss': None, 'pressure': None, 'status': 'no_data', 'reasons': ['источники недоступны'],
+                'by_category': {}, 'contributions': []}
     reasons = []
-    stress = 0.0
+    contributions = []          # вклад каждого индикатора (Observability)
+    cat_stress = {}             # напряжение по категориям
     for s in signals:
-        # напряжение = резкость движения индикатора (velocity), масштабированная
+        cat = s.get('category', 'other')
         v = abs(s.get('velocity', 0) or 0)
-        # пороги: >2% скачок = заметное отклонение, >5% = критическое
+        contrib = 0.0
         if v >= 5.0:
-            stress += 0.30; reasons.append(f"{s['indicator_type']}: критическое движение {s['velocity']}%")
+            contrib = 0.30; reasons.append(f"{s['indicator_type']}: критическое движение {s['velocity']}%")
         elif v >= 2.0:
-            stress += 0.15; reasons.append(f"{s['indicator_type']}: заметное движение {s['velocity']}%")
+            contrib = 0.15; reasons.append(f"{s['indicator_type']}: заметное движение {s['velocity']}%")
         elif v >= 1.0:
-            stress += 0.05
-    stress = min(1.0, stress)
-    # FSS: 0-100, чем выше — тем устойчивее
+            contrib = 0.05
+        cat_stress[cat] = cat_stress.get(cat, 0.0) + contrib
+        contributions.append({'indicator': s['indicator_type'], 'category': cat,
+                              'velocity': s.get('velocity', 0), 'contribution': round(contrib, 3)})
+    # FIN-8: базовое напряжение = сумма по категориям, НО совпадение сигналов между
+    # РАЗНЫМИ категориями усиливает (несколько классов под давлением = системный стресс)
+    active_cats = [c for c, st in cat_stress.items() if st >= 0.10]
+    base_stress = sum(cat_stress.values())
+    coincidence = 0.0
+    if len(active_cats) >= 2:
+        coincidence = 0.15 * (len(active_cats) - 1)   # каждая доп. категория усиливает
+        reasons.append(f"совпадение давления в {len(active_cats)} категориях: {', '.join(active_cats)}")
+    stress = min(1.0, base_stress + coincidence)
     fss = round(max(0, min(100, 100 - stress * 100)), 0)
     pressure = round(stress * 100, 0)
     if not reasons:
         reasons.append('индикаторы в пределах нормальных колебаний')
     status = 'critical' if pressure >= 60 else ('elevated' if pressure >= 30 else ('watch' if pressure >= 15 else 'stable'))
-    return {'fss': fss, 'pressure': pressure, 'status': status, 'reasons': reasons}
+    return {'fss': fss, 'pressure': pressure, 'status': status, 'reasons': reasons,
+            'by_category': {c: round(st * 100, 1) for c, st in cat_stress.items()},
+            'active_categories': active_cats, 'coincidence_factor': round(coincidence * 100, 1),
+            'contributions': contributions}
 
 # ═══════════════════ ЭТАП 5: INTEGRATION (сборка процесса) ═══════════════════
 def build_financial_v2(prev_proc=None):
@@ -173,10 +205,16 @@ def build_financial_v2(prev_proc=None):
 
     adapted = adapt_cbr(prev_state)
     signals = list(adapted['signals'])
-    # Мосбиржа (индекс) — дополнительный источник, тот же Unified Model (FIN-2)
+    # Мосбиржа IMOEX — тот же Unified Model (FIN-2). Отказ источника не рушит Engine (FIN-9)
     try:
         moex = adapt_moex(prev_state)
         signals += moex.get('signals', [])
+    except Exception:
+        pass
+    # РТС (RTSI) — валютный индекс Мосбиржи
+    try:
+        rts = adapt_rts(prev_state)
+        signals += rts.get('signals', [])
     except Exception:
         pass
     engine = compute_stability(signals)
