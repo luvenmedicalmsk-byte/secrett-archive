@@ -109,6 +109,31 @@ def build_relationships(sig, by_id, max_rels=5):
     return rels[:max_rels]
 
 
+# ЭТАП 5 — системный контекст (роль процесса в общей системе)
+_DOMAIN_CASCADE = {
+    'geopolitics': 'геополитического', 'economy': 'экономического',
+    'climate': 'климатического', 'social': 'социального', 'technology': 'технологического',
+}
+def relationship_context(sig, rels):
+    """Короткое системное резюме: причина/следствие/каскад (REL-3, только из данных)."""
+    if not rels:
+        return None
+    # исходящее влияние (усиливает/формирует последствия) vs входящее (зависит от)
+    outgoing = [r for r in rels if r['relationship_type'] in ('amplifies', 'causes', 'suppresses')]
+    incoming = [r for r in rels if r['relationship_type'] in ('caused_by',)]
+    dom = _DOMAIN_CASCADE.get((sig.get('primary_domain') or '').lower(), 'системного')
+    n = len(rels)
+    if len(outgoing) >= 2:
+        return (f'Данный процесс является частью более крупного {dom} каскада и оказывает '
+                f'влияние на ещё {len(outgoing)} активных процесс' +
+                ('а' if 2 <= len(outgoing) <= 4 else 'ов') + '.')
+    if incoming and not outgoing:
+        return ('На текущий момент процесс преимущественно получает влияние извне и сам ещё '
+                'не оказывает существенного воздействия на другие процессы.')
+    if n >= 1:
+        return (f'Процесс связан с {n} другими процессами и является частью общей {dom} картины.')
+    return None
+
 def enrich_with_relationships(signals, max_rels=5):
     """Обогащает процессы связями. НЕ меняет сами процессы (PREL-1) — только +поле relationships."""
     by_id = {s.get('signal_id'): s for s in signals}
@@ -117,6 +142,7 @@ def enrich_with_relationships(signals, max_rels=5):
             rels = build_relationships(sig, by_id, max_rels)
             if rels:
                 sig['relationships'] = rels
+                sig['relationship_context'] = relationship_context(sig, rels)
         except Exception:
             pass
     return signals
