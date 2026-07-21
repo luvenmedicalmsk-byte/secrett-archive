@@ -137,7 +137,10 @@ def build_financial_v2(prev_proc=None):
                 'timeline': prev_timeline}
 
     fss = engine['fss']; pressure = engine['pressure']
-    severity = round(min(100, (pressure or 0) * 0.9), 0)
+    # baseline: даже при полной стабильности процесс виден в ленте (низкий, но не нулевой)
+    _p = pressure if pressure is not None else 0
+    severity = round(min(100, max(20, _p * 0.9)), 0)   # min 20 для видимости карточки
+    pressure = max(15, _p)   # min 15 (Наблюдение), стресс поднимет выше
     timeline = (prev_timeline + [{'t': ts, 'fss': fss}])[-48:]   # копится, cap 48
 
     # Observability-запись (FIN-5: полная трассируемость)
