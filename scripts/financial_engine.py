@@ -248,6 +248,100 @@ def compute_stability(signals, prev_signals=None):
             'active_categories': active_cats, 'coincidence_factor': round(coincidence * 100, 1),
             'contributions': contributions}
 
+# ═══════════════════ PHASE 3: FINANCIAL CAUSAL LAYER ═══════════════════
+# ЭТАП 1 — Causal Graph: декларативная модель связей (FIN-11: не хардкод-логика).
+# Каждая связь: source -> effect, направление, тип, сила. Читается Dependency Engine.
+FINANCIAL_CAUSAL_GRAPH = [
+    # источник, следствие, направление, тип, сила (0-1)
+    {'source': 'OFZ_YIELD',        'effect': 'USD/RUB',           'direction': 'up_up',   'type': 'capital_flow',   'strength': 0.6},
+    {'source': 'USD/RUB',          'effect': 'INFLATION_MONTHLY', 'direction': 'up_up',   'type': 'passthrough',    'strength': 0.7},
+    {'source': 'INFLATION_MONTHLY','effect': 'KEY_RATE',          'direction': 'up_up',   'type': 'policy_response', 'strength': 0.8},
+    {'source': 'KEY_RATE',         'effect': 'OFZ_YIELD',         'direction': 'up_up',   'type': 'funding_cost',   'strength': 0.7},
+    {'source': 'KEY_RATE',         'effect': 'IMOEX',             'direction': 'up_down', 'type': 'liquidity',      'strength': 0.6},
+    {'source': 'USD/RUB',          'effect': 'RTSI',              'direction': 'up_down', 'type': 'valuation',      'strength': 0.7},
+    {'source': 'IMOEX',            'effect': 'RTSI',              'direction': 'up_up',   'type': 'correlation',    'strength': 0.9},
+]
+
+# человекочитаемые описания звеньев (для объяснения)
+_CAUSAL_PHRASE = {
+    ('OFZ_YIELD','USD/RUB'): 'рост доходностей ОФЗ провоцирует отток капитала и ослабление рубля',
+    ('USD/RUB','INFLATION_MONTHLY'): 'ослабление рубля переносится в рост инфляции',
+    ('INFLATION_MONTHLY','KEY_RATE'): 'рост инфляции повышает вероятность ужесточения денежно-кредитной политики',
+    ('KEY_RATE','OFZ_YIELD'): 'рост ключевой ставки удорожает фондирование и поднимает доходности ОФЗ',
+    ('KEY_RATE','IMOEX'): 'рост ставки снижает ликвидность и давит на фондовый рынок',
+    ('USD/RUB','RTSI'): 'ослабление рубля снижает долларовую оценку РТС',
+    ('IMOEX','RTSI'): 'динамика МосБиржи транслируется в РТС',
+}
+
+def _moving_indicators(signals, min_velocity=1.0):
+    """Индикаторы с заметным движением (кандидаты причинных узлов)."""
+    moving = {}
+    for s in signals:
+        v = abs(s.get('velocity', 0) or 0)
+        if v >= min_velocity:
+            moving[s['indicator_type']] = {'velocity': s.get('velocity', 0), 'direction': s.get('direction'), 'category': s.get('category')}
+    return moving
+
+def build_causal_explanation(signals):
+    """ЭТАП 2-4: Dependency Engine + Causal Reasoning + Confidence.
+    Определяет первичный фактор, строит цепочку распространения (без циклов),
+    считает уверенность. FIN-12/13/15."""
+    moving = _moving_indicators(signals)
+    if not moving:
+        return {'chains': [], 'primary': None, 'explanation': 'значимых причинных движений не выявлено',
+                'confidence': 0.0, 'traceable': True}
+
+    # ЭТАП 2: первичный фактор = движущийся индикатор, у которого НЕТ входящих рёбер
+    # от других движущихся (он причина, не следствие). FIN-12.
+    incoming = {}
+    for edge in FINANCIAL_CAUSAL_GRAPH:
+        if edge['source'] in moving and edge['effect'] in moving:
+            incoming.setdefault(edge['effect'], []).append(edge['source'])
+    primary_candidates = [ind for ind in moving if ind not in incoming]
+    # если все имеют входящие (цикл в данных) — берём с макс velocity как первичный
+    if not primary_candidates:
+        primary_candidates = [max(moving, key=lambda k: abs(moving[k]['velocity']))]
+
+    # ЭТАП 3: строим цепочку распространения от первичного (BFS, без циклов — FIN-12)
+    chains = []
+    for primary in primary_candidates:
+        chain = [primary]; visited = {primary}; cur = primary
+        while True:
+            nxt = None
+            for edge in FINANCIAL_CAUSAL_GRAPH:
+                if edge['source'] == cur and edge['effect'] in moving and edge['effect'] not in visited:
+                    nxt = edge['effect']; break
+            if not nxt: break
+            chain.append(nxt); visited.add(nxt); cur = nxt
+        if len(chain) >= 2:
+            steps = []
+            for i in range(len(chain) - 1):
+                a, b = chain[i], chain[i+1]
+                steps.append(_CAUSAL_PHRASE.get((a, b), f'{a} влияет на {b}'))
+            # ЭТАП 4: confidence = доля подтверждённых звеньев * средняя сила
+            edges_used = [e for e in FINANCIAL_CAUSAL_GRAPH
+                          for i in range(len(chain)-1) if e['source']==chain[i] and e['effect']==chain[i+1]]
+            avg_strength = sum(e['strength'] for e in edges_used)/len(edges_used) if edges_used else 0.5
+            completeness = len(chain) / (len(moving) + 1)
+            confidence = round(min(1.0, avg_strength * (0.5 + 0.5*completeness)), 2)
+            chains.append({'chain': chain, 'steps': steps, 'confidence': confidence,
+                           'confirming_indicators': len(chain), 'completeness': round(completeness, 2)})
+
+    chains.sort(key=lambda c: -c['confidence'])
+    best = chains[0] if chains else None
+    explanation = ' → '.join(best['steps']) if best else 'причинная цепочка не построена'
+    # альтернативные объяснения (Этап 4)
+    alternatives = [{'chain': c['chain'], 'confidence': c['confidence']} for c in chains[1:3]]
+    return {
+        'chains': chains,
+        'primary': best['chain'][0] if best else None,
+        'explanation': explanation,
+        'confidence': best['confidence'] if best else 0.0,
+        'alternatives': alternatives,
+        'traceable': True,           # FIN-13: все узлы из наблюдаемых сигналов
+    }
+
+
 # ═══════════════════ ЭТАП 5: INTEGRATION (сборка процесса) ═══════════════════
 def build_financial_v2(prev_proc=None):
     """Собирает Financial-процесс из РЕАЛЬНЫХ индикаторов (заменяет synthetic).
