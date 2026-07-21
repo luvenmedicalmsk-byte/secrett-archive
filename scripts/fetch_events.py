@@ -2836,7 +2836,9 @@ def process_events(raw_items):
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
         _tid = _obs_assign(item); _trace(_tid, 'INGESTED', source=item.get('source'))
-        if str(item.get('source','')).strip().lower() in _BLOCKED_SOURCES:
+        _src_l = str(item.get('source','')).strip().lower()
+        _src_ch = _src_l.split('/')[-1]  # канал после 'telegram/' — сравниваем и полное имя, и канал
+        if _src_l in _BLOCKED_SOURCES or _src_ch in _BLOCKED_SOURCES:
             _trace(_tid,'SOURCE_BLOCK','removed',reason='source_block');             _LOSS['filter']+=1; continue   # редакционный source-блок (анти-канал)
         if item.get('date','') < cutoff: _trace(_tid,'OLD','removed',reason='old'); _LOSS['old']+=1; continue
         # --- Ingestion Cleanup (VNext L0): нормализуем desc ДО классификации ---
@@ -4183,7 +4185,7 @@ _GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономи�
 _ARMS = re.compile(r'прода\w*\s+(?:ракет|оруж|вооружен|истребител|танк|боеприпас|снаряд|бпла|беспилотник|дрон|систем\w*\s+пво|комплекс\w*\s+с-\d|зенитн|patriot|пэтриот|томагавк|tomahawk|javelin|f-?16|ф-?16|himars|хаймарс)|экспорт\w*\s+(?:оруж|вооружен)|поставк\w*\s+(?:оруж|вооружен|ракет|истребител|танк|patriot|пэтриот|томагавк|tomahawk|f-?16)|военн\w*\s+помощ\w*|военн\w*\s+поставк')
 FIRE_HEAT_GUARD = True   # CANARY: пожар/жара переопределяют домен climate только при природном контексте. Откат = False.
 HOME_FIRE_GUARD = True   # CANARY: бытовой пожар в жилье (малый масштаб) -> локальное ЧП, из ленты. Откат = False.
-_BLOCKED_SOURCES = {'meduza'}   # редакционный блок источников (анти-каналы) -> drop на входе
+_BLOCKED_SOURCES = {'meduza', 'investfuture', 'telegram/investfuture'}   # редакционный блок источников (анти-каналы) -> drop на входе
 _FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухостой|ландшафтн|природн\w* пожар|дик\w* природ|wildfire|буш|растительн|GDACS|верхов\w* пожар|пожароопасн', re.I)
 _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
 _BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
