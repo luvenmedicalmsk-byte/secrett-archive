@@ -2,67 +2,67 @@
   "country": "MX",
   "date": "2026-07-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-21T06:57:31.390245+00:00",
+  "generated_at": "2026-07-21T07:07:27.837629+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 53,
+      "score": 57,
       "props": {
-        "risk_score": 53
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 28,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 23,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-MX-У_Nissan_п",
+      "type": "Signal",
+      "label": "У Nissan похитили данные сотрудников из-",
+      "severity": 60,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-MX-Киберугроз",
       "type": "Signal",
       "label": "Киберугроза — Мексика",
@@ -92,13 +99,6 @@
       "label": "Шторм — Мексиканский залив",
       "severity": 53,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Мексика",
-      "severity": 56,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-MX",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-MX-У_Nissan_п",
+      "to": "DOMAIN-MX-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-MX-Киберугроз",
       "to": "DOMAIN-MX-technology",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-MX-Социальный",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
