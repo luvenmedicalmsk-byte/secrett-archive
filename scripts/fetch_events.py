@@ -2986,8 +2986,10 @@ def process_events(raw_items):
         # РАННИЙ ГАРД ИСТОЧНИКА (Мия 20.07): климат/социум-источники получают домен ДО квотирования,
         # иначе классификатор кидает их в чужую квоту -> overflow (guard в save_enriched был слишком поздно).
         _isrc=item.get('source','')
-        if _isrc in ('Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','Phys.org Climate','ScienceDaily Climate'):
+        if _isrc in ('Inside Climate News','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Grist','Phys.org Climate','ScienceDaily Climate'):
             domain='climate'
+        elif _isrc in ('Canary Media','Utility Dive','PV Magazine','IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business','Trading Economics','FAO Economy'):
+            domain='economy'
         elif _isrc in ('WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC') and not _is_nat_hazard(item.get('title',''), item.get('desc','')):
             domain='social'
         # ══ SEMANTIC VALIDATION LAYER ══ единая смысловая проверка вместо разрозненных
@@ -7082,8 +7084,8 @@ def fetch_tech_rss():
         ('https://spacenews.com/feed/', 'SpaceNews', 'technology'),
         ('https://www.space.com/feeds/all', 'Space.com', 'technology'),
         # 6. Энергетические технологии
-        ('https://www.utilitydive.com/feeds/news/', 'Utility Dive', 'technology'),
-        ('https://www.pv-magazine.com/feed/', 'PV Magazine', 'technology'),
+        ('https://www.utilitydive.com/feeds/news/', 'Utility Dive', 'economy'),
+        ('https://www.pv-magazine.com/feed/', 'PV Magazine', 'economy'),
         # 7. Роботизация
         ('https://www.therobotreport.com/feed/', 'The Robot Report', 'technology'),
         # 8. Интернет и связь
@@ -7191,7 +7193,7 @@ def fetch_climate_rss():
         ('https://www.preventionweb.net/news/rss.xml', 'PreventionWeb', 'climate'),
         # Добавлено Мия 20.07 (энергопереход/наука/аналитика)
         ('https://www.climatechangenews.com/feed/', 'Climate Home News', 'climate'),
-        ('https://www.canarymedia.com/rss.xml', 'Canary Media', 'climate'),
+        ('https://www.canarymedia.com/rss.xml', 'Canary Media', 'economy'),   # энергорынок, не климат (Мия 21.07)
         ('https://grist.org/feed/', 'Grist', 'climate'),
         ('https://phys.org/rss-feed/earth-news/environment/', 'Phys.org Climate', 'climate'),
         ('https://www.sciencedaily.com/rss/earth_climate/climate.xml', 'ScienceDaily Climate', 'climate'),
@@ -11715,7 +11717,7 @@ def save_enriched(events, previous_snapshot=None):
                         _cme3['domain']='social'
                         if _cme3.get('canon_domain')=='climate': _cme3['canon_domain']='social'
             # Inside Climate News -> климат (решение Мии 20.07)
-            _CLIMATE_SRC=('Inside Climate News','Reuters Climate','AP Climate','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Canary Media','Grist','E&E News','Phys.org Climate','ScienceDaily Climate','Living on Earth')
+            _CLIMATE_SRC=('Inside Climate News','Reuters Climate','AP Climate','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Grist','E&E News','Phys.org Climate','ScienceDaily Climate','Living on Earth')
             for _icne in enriched["events"]:
                 if _icne.get('source') in _CLIMATE_SRC and _icne.get('domain')!='climate':
                     _icne['domain']='climate'
