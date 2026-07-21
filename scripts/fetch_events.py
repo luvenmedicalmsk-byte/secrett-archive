@@ -2370,12 +2370,15 @@ def _topic_cap(events, N=5):
     for e in events:
         for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')): df[t] = df.get(t, 0) + 1
     counts = {}; out = []
+    # доверенные RSS-домены: больше слотов на тему (аналитика имеет разные подтемы; Мия 20.07)
+    _RSS_DOM=('technology','economy','climate','social')
     for e in sorted(events, key=lambda x: -(x.get('severity', 0) or 0)):
         toks = [t for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')) if not _tc_is_stop(t) and df.get(t, 0) >= 8]
         if len(toks) < 2: out.append(e); continue
         hot = sorted(toks, key=lambda t: -df[t])[0]
         counts[hot] = counts.get(hot, 0) + 1
-        if counts[hot] <= N: out.append(e)
+        _capN = N*3 if e.get('domain') in _RSS_DOM else N
+        if counts[hot] <= _capN: out.append(e)
     return out
 
 def _reclass_domain(title, summary, current):
