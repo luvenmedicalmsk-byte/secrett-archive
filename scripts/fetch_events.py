@@ -11678,6 +11678,12 @@ def save_enriched(events, previous_snapshot=None):
                     _cme2['feed_visible']=False
                 if _CM_QA.search(_cmb2) and _cme2.get('sic_class')=='EVENT':
                     _cme2['sic_class']='COMMENTARY'
+            # ШУМ-КЛАСС ЭССЕ (Мия 21.07): фотоэссе / travel-блог / личное повествование
+            _SH_ESSAY=re.compile(r'фотоэссе|фото-эссе|photo essay|это эссе|личн\w+ (?:истори|повествован|заметк)|мо\w+ путешеств|о моих путешеств|путешествие вне сезона|автор:\s*\w+\s+\w+\s+следующее|дневник\w* путешеств|travel (?:blog|diary)', re.I)
+            for _she2 in enriched["events"]:
+                _t=(_she2.get('title','') or ''); _s=(_she2.get('summary','') or '')
+                if _SH_ESSAY.search(_t+' '+_s[:120]):
+                    _she2['feed_visible']=False
             # ШУМ-КЛАССЫ 2 (Мия 20.07): спорт-колонки + фандрайзинг/донаты + бытовые заметки в климате
             _SH_SPORT=re.compile(r'месси|роналду|ямал|стадион\w*|матч\w*|футбол\w*|чемпионат мира по|олимпиад\w*|кубок \w+|финал лиги', re.I)
             _SH_DONATE=re.compile(r'пожертвовани\w+|будет удвоен|как вы можете (?:спасти|помочь)|поддержите нас|ваш\w+ (?:взнос|донат)|donate|fundrais', re.I)
