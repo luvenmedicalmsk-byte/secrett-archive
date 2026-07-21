@@ -19,6 +19,14 @@ Process Explainability Engine (ADR-017).
 """
 
 
+def _geo_n(sig):
+    """geo_spread может быть числом ИЛИ списком территорий — нормализуем в число."""
+    gs = _geo_n(sig)
+    if isinstance(gs, list): return len(gs)
+    if isinstance(gs, (int, float)): return int(gs)
+    return 0
+
+
 # ═══════════════════ ЭТАП 1: PROCESS ORIGIN ═══════════════════
 def explain_origin(sig):
     """Объяснение происхождения процесса из continuity + birth_kind (PEX-4)."""
@@ -26,7 +34,7 @@ def explain_origin(sig):
     if sig.get('is_macro'):
         fs = (sig.get('first_seen') or '')[:10]
         ec = sig.get('evidence_count') or 0
-        gs = sig.get('geo_spread') or 0
+        gs = _geo_n(sig)
         return {'text': f'Системный процесс, агрегирующий {ec} проявлений' +
                 (f' по {gs} территориям' if gs else '') +
                 (f' (с {fs})' if fs else '') + '.',
@@ -62,7 +70,7 @@ def explain_attachment(sig):
     # Макро: объединяет члены по домену и типу процесса
     if sig.get('is_macro'):
         criteria = [('единый тип процесса', True), ('общий домен', True)]
-        gs = sig.get('geo_spread') or 0
+        gs = _geo_n(sig)
         if gs > 1: criteria.append((f'охватывает {gs} территорий', True))
         return {'decision': 'aggregate', 'target': sig.get('title'),
                 'criteria': criteria, 'matched_count': len(criteria),
@@ -176,7 +184,7 @@ def explain_merge(sig):
 def human_summary(sig):
     """Краткое человеческое описание процесса простым языком (PEX-8: без identity_key/continuity)."""
     ec = sig.get('evidence_count') or 0
-    gs = sig.get('geo_spread') or 0
+    gs = _geo_n(sig)
     stage = sig.get('lifecycle_stage') or ''
     place = sig.get('process_place') or ''
     is_macro = sig.get('is_macro')
@@ -260,7 +268,7 @@ def process_trend(sig):
 
 # ЭТАП 4 — масштаб процесса (из geo_spread/territories)
 def impact_scale(sig):
-    gs = sig.get('geo_spread') or 0
+    gs = _geo_n(sig)
     terr = len(sig.get('included_places') or [])
     n = max(gs, terr)
     place = (sig.get('process_place') or '')
