@@ -499,6 +499,8 @@ _ROLE_TIER={'measurement':'первичный/измерительный','state
  'science':'научный','financial':'финансовый','agency':'агентство','osint':'OSINT','telegram':'Telegram'}
 
 # Task 1: тип процесса (детерминирован) — основа стабильного ID
+CANON_FULL_PRODUCTION = True   # ADR-005 Phase 6: Canon — единственный Production-путь (все домены). Morning Audit пройден (type/domain diff=0)
+_ALL_DOMAINS = {'climate','economy','geopolitics','technology','social'}
 DOMAIN_CANARY = set()   # A2 Canary (ADR-005): домены, читающие canon_type вместо legacy.
                         # Пустой = чистый legacy. Управляется fetch_events перед сборкой.
                         # Изоляция: события НЕ в canary-домене классифицируются legacy без изменений.
@@ -540,9 +542,10 @@ def _process_type(evs, domain):
     устойчив к смешанным кластерам. Заголовки весомее summary."""
     # A2 CANARY: для включённых доменов тип берётся из canon_type (не legacy scoring).
     # Только события, чей canon_domain входит в canary-набор; остальное — legacy ниже.
-    if DOMAIN_CANARY:
+    _canary_set = _ALL_DOMAINS if CANON_FULL_PRODUCTION else DOMAIN_CANARY
+    if _canary_set:
         _ct = [e.get('canon_type') for e in evs
-               if e.get('canon_domain') in DOMAIN_CANARY and e.get('canon_type') not in (None, 'unknown')]
+               if e.get('canon_domain') in _canary_set and e.get('canon_type') not in (None, 'unknown')]
         if _ct:
             # PHASE 1 (Cause over Effect): сильный канонический тип авторитетнее ЛЮБОГО
             # большинства. Порядок: Strong Canon → Weak Canon (майоритет канона) → Legacy.
