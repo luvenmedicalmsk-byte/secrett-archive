@@ -10,6 +10,11 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 INFRA_PRODUCTION = True   # ADR-012 Phase 2: Infrastructure Process в Production (Shadow Validation пройдена)
+FINANCIAL_V2 = True       # ADR-010 Phase 1: реальные индикаторы (ЦБ РФ) вместо synthetic
+try:
+    import financial_engine as _fin_v2
+except Exception:
+    _fin_v2 = None
 DOCS = Path(__file__).parent.parent / 'docs'
 EVENTS = DOCS / 'events.json'
 
@@ -158,7 +163,23 @@ def main():
     except Exception as e:
         print(f'[PREVIEW] нет events.json: {e}', file=sys.stderr); return 0
     infra, infra_shadow = build_infra(events)
-    fin = build_financial(events)
+    # ADR-010 Phase 1: реальные индикаторы; при недоступности источника — fallback на synthetic
+    fin = None
+    if FINANCIAL_V2 and _fin_v2 is not None:
+        try:
+            _prev_fin_v2=None
+            if (DOCS/'_preview_processes.json').exists():
+                try:
+                    _oldv=json.load(open(DOCS/'_preview_processes.json',encoding='utf-8'))
+                    _prev_fin_v2=next((p for p in _oldv.get('processes',[]) if p.get('process_id')=='financial-stability'), None)
+                except Exception: pass
+            _fv2=_fin_v2.build_financial_v2(_prev_fin_v2)
+            if _fv2 and _fv2.get('active_indicators'):
+                fin=_fv2
+        except Exception as _fe:
+            print(f'[PREVIEW] financial v2 недоступен, fallback synthetic: {_fe}', file=sys.stderr)
+    if fin is None:
+        fin = build_financial(events)
     # FS timeline: подклеить прошлую историю (копить точки)
     prev_fin=None
     if (DOCS/'_preview_processes.json').exists():
