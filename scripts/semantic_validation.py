@@ -81,6 +81,29 @@ _SEMANTIC_LINKS = {
 }
 
 
+# SEM-6: ОБЩИЕ правила релевантности домен→домен (не жёсткие пары, а принцип).
+# Матрица: насколько осмысленно влияние домена A на домен B (0=нет, 1=сильно).
+_DOMAIN_RELEVANCE = {
+    ('climate', 'climate'): 1.0, ('climate', 'social'): 0.8, ('climate', 'economy'): 0.7,
+    ('climate', 'geopolitics'): 0.2, ('climate', 'technology'): 0.1,
+    ('economy', 'economy'): 1.0, ('economy', 'social'): 0.8, ('economy', 'geopolitics'): 0.6,
+    ('economy', 'technology'): 0.3, ('economy', 'climate'): 0.2,
+    ('geopolitics', 'geopolitics'): 1.0, ('geopolitics', 'economy'): 0.9, ('geopolitics', 'social'): 0.7,
+    ('geopolitics', 'technology'): 0.4, ('geopolitics', 'climate'): 0.1,
+    ('technology', 'technology'): 1.0, ('technology', 'economy'): 0.7, ('technology', 'social'): 0.5,
+    ('technology', 'geopolitics'): 0.3, ('technology', 'climate'): 0.05,
+    ('social', 'social'): 1.0, ('social', 'economy'): 0.7, ('social', 'geopolitics'): 0.4,
+    ('social', 'climate'): 0.15, ('social', 'technology'): 0.2,
+}
+_RELEVANCE_THRESHOLD = 0.4    # ниже — связь скрывается как нерелевантная (SEM-6)
+
+def _domain_relevance(sd, td):
+    """SEM-6: общая релевантность домена-источника домену-цели."""
+    if not sd or not td:
+        return 1.0   # нет данных — не блокируем
+    return _DOMAIN_RELEVANCE.get((sd, td), 0.3)   # незнакомая пара — низкая релевантность
+
+
 def _type_of(sig):
     """Тип процесса (для матрицы)."""
     pt = sig.get('process_type')
@@ -101,12 +124,15 @@ def is_semantic_link(source_sig, target_sig):
     sd = _TYPE_DOMAIN.get(st); td = _TYPE_DOMAIN.get(tt)
     if sd and td and sd == td:
         return True
-    # проверяем матрицу разрешённых переходов
+    # SEM-6: слой 1 — жёсткая матрица типов (если есть явное правило)
     allowed = _SEMANTIC_LINKS.get(st)
-    if allowed is None:
-        # тип не в матрице — разрешаем within-domain, кросс-домен скрываем
-        return sd == td if (sd and td) else True
-    return tt in allowed
+    if allowed is not None:
+        if tt in allowed:
+            return True
+        # нет в whitelist — проверяем общую релевантность домена (SEM-6: не только пары)
+        return _domain_relevance(sd, td) >= _RELEVANCE_THRESHOLD
+    # SEM-6: слой 2 — тип не в матрице → общее правило релевантности домена
+    return _domain_relevance(sd, td) >= _RELEVANCE_THRESHOLD
 
 
 def filter_relationships(sig, by_id):
@@ -165,6 +191,42 @@ def _count(nodes):
     return c
 
 
+# ЭТАП 6 — естественные формулировки (тип связи → человеческая фраза с учётом цели)
+_NATURAL_PHRASE = {
+    'amplifies': 'усиливает',
+    'causes': 'приводит к изменениям в',
+    'caused_by': 'зависит от',
+    'suppresses': 'сдерживает',
+    'related': 'связан с',
+}
+# спец-фразы для конкретных целевых типов (естественнее)
+_NATURAL_TARGET = {
+    'Государственные финансы': 'увеличивает нагрузку на государственные финансы',
+    'Инфляция': 'усиливает инфляционное давление',
+    'Топливный рынок': 'влияет на топливный рынок',
+    'Эпидемиологический риск': 'повышает эпидемиологические риски',
+    'Социальный процесс': 'затрагивает социальную обстановку',
+    'Водный дефицит': 'усугубляет дефицит воды',
+    'Миграционная политика': 'усиливает миграционное давление',
+}
+
+def natural_relationship_phrase(rel, target_type):
+    """Этап 6: естественная формулировка связи вместо технического типа."""
+    spec = _NATURAL_TARGET.get(target_type)
+    rt = rel.get('relationship_type')
+    if spec and rt in ('amplifies', 'causes'):
+        return spec
+    return _NATURAL_PHRASE.get(rt, 'связан с')
+
+
+def _enrich_natural_phrases(sig, by_id):
+    """Добавляет естественную фразу к каждой связи (Этап 6)."""
+    for r in (sig.get('relationships') or []):
+        t = by_id.get(r.get('target_process'))
+        tt = _type_of(t) if t else ''
+        r['natural_phrase'] = natural_relationship_phrase(r, tt)
+
+
 def validate_display(signals):
     """Проходит все процессы, фильтрует семантически несостоятельные связи/каскады.
     НЕ меняет Engine (SEM-1..3), только отображение. Возвращает отчёт (SEM-5)."""
@@ -176,6 +238,7 @@ def validate_display(signals):
         n_casc_before = (sig.get('cascade') or {}).get('total_affected', 0)
         filter_relationships(sig, by_id)
         filter_cascade_tree(sig, by_id)
+        _enrich_natural_phrases(sig, by_id)
         report['rels_removed'] += n_rels_before - len(sig.get('relationships') or [])
         report['cascade_pruned'] += n_casc_before - (sig.get('cascade') or {}).get('total_affected', 0)
     return report
