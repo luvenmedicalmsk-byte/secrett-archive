@@ -18,102 +18,126 @@ Cascade Intelligence Engine (ADR-019).
   CAS-6  Защита от циклов (visited).
 """
 
-# типы связей, по которым распространяется каскад (влияние вперёд)
-_CASCADE_EDGES = ['amplifies', 'causes']
-_MAX_DEPTH = 3          # глубина прослеживания
-_MAX_BRANCH = 4         # ветвей на узел
-_DECAY = 0.7            # затухание уверенности с каждым уровнем (CAS-4)
+# типы связей и их человекочитаемый переход (Этап 1)
+_EDGE_LABEL = {
+    'amplifies': 'усиливает',
+    'causes':    'формирует',
+    'caused_by': 'зависит от',
+    'suppresses':'ослабляет',
+    'related':   'сопровождает',
+}
+# сила базовая по типу ребра (Этап 2)
+_EDGE_STRENGTH = {
+    'amplifies': 0.9, 'causes': 0.85, 'caused_by': 0.85, 'suppresses': 0.8, 'related': 0.6,
+}
+_CASCADE_EDGES = ['amplifies', 'causes']    # распространение влияния вперёд
+_MAX_DEPTH = 3
+_MIN_CONF = 0.35        # Этап 3: обрезка слабых цепочек (ниже — не рисуем)
+_MAX_BRANCH = 3         # ветвей на узел
+
+
+def _edge_confidence(parent_conf, edge_type, source, target):
+    """Сила КОНКРЕТНОГО перехода (Этап 2). Собственная у каждого ребра."""
+    base = _EDGE_STRENGTH.get(edge_type, 0.6)
+    conf = parent_conf * base
+    # бонус за совпадение территории/динамики
+    sp = source.get('process_place'); tp = target.get('process_place')
+    if sp and tp and sp == tp and sp not in ('—', 'Глобально'):
+        conf += 0.05
+    return round(min(0.99, conf), 3)
+
+
+def _build_tree(node_id, by_id, visited, depth, parent_conf, max_depth):
+    """Рекурсивное дерево каскада (Этап 4: ветвление, CAS-6: visited)."""
+    if depth >= max_depth:
+        return []
+    node = by_id.get(node_id)
+    if not node:
+        return []
+    branches = []
+    edges = []
+    for et in _CASCADE_EDGES:
+        for tid in (node.get(et, []) or []):
+            if tid not in visited:
+                edges.append((tid, et))
+    edges = edges[:_MAX_BRANCH]
+    for tid, et in edges:
+        target = by_id.get(tid)
+        if not target:
+            continue
+        conf = _edge_confidence(parent_conf, et, node, target)
+        if conf < _MIN_CONF:          # Этап 3: обрезка слабых
+            continue
+        visited.add(tid)
+        children = _build_tree(tid, by_id, visited, depth + 1, conf, max_depth)
+        branches.append({
+            'process_id': tid,
+            'title': target.get('title', ''),
+            'domain': target.get('primary_domain', ''),
+            'edge_type': et,
+            'edge_label': _EDGE_LABEL.get(et, 'структурно связан'),
+            'edge_confidence': conf,          # сила ЭТОГО перехода (Этап 2)
+            'stage': target.get('lifecycle_stage', ''),
+            'children': children,             # Этап 4: вложенные ветви
+        })
+    return branches
 
 
 def trace_cascade(sig, by_id, max_depth=_MAX_DEPTH):
-    """BFS по графу связей от процесса (CAS-2/6). Возвращает уровни каскада."""
+    """Древовидный каскад (Этап 4). Возвращает дерево ветвей от корня."""
     root_id = sig.get('signal_id')
-    visited = {root_id}                       # CAS-6: защита от циклов
-    levels = []                               # levels[i] = процессы на глубине i+1
-    frontier = [(root_id, 1.0)]
+    visited = {root_id}
+    return _build_tree(root_id, by_id, visited, 0, 1.0, max_depth)
 
-    for depth in range(max_depth):
-        next_frontier = []
-        level_nodes = []
-        for node_id, conf in frontier:
-            node = by_id.get(node_id)
-            if not node:
-                continue
-            # исходящие связи (на кого влияет)
-            targets = []
-            for et in _CASCADE_EDGES:
-                for tid in (node.get(et, []) or []):
-                    if tid not in visited:
-                        targets.append((tid, et))
-            targets = targets[:_MAX_BRANCH]
-            for tid, et in targets:
-                target = by_id.get(tid)
-                if not target:
-                    continue
-                visited.add(tid)
-                child_conf = round(conf * _DECAY, 3)      # CAS-4: затухание
-                level_nodes.append({
-                    'process_id': tid,
-                    'title': target.get('title', ''),
-                    'domain': target.get('primary_domain', ''),
-                    'via': et,
-                    'confidence': child_conf,
-                    'stage': target.get('lifecycle_stage', ''),
-                })
-                next_frontier.append((tid, child_conf))
-        if not level_nodes:
-            break
-        levels.append(level_nodes)
-        frontier = next_frontier
-        if not frontier:
-            break
-    return levels
+
+def _count_tree(branches):
+    """Всего узлов + макс глубина + затронутые домены."""
+    total = 0; max_d = 0; domains = set()
+    def walk(nodes, d):
+        nonlocal total, max_d
+        for n in nodes:
+            total += 1; max_d = max(max_d, d)
+            if n.get('domain'): domains.add(n['domain'])
+            walk(n.get('children', []), d + 1)
+    walk(branches, 1)
+    return total, max_d, domains
 
 
 def build_cascade(sig, by_id):
-    """Строит описание каскада (CAS-3: структурное, не прогноз)."""
-    levels = trace_cascade(sig, by_id)
-    if not levels:
+    """Строит каскад-дерево (CAS-3: структурное, не прогноз)."""
+    tree = trace_cascade(sig, by_id)
+    if not tree:
         return None
-    total = sum(len(l) for l in levels)
-    depth = len(levels)
-    # затронутые домены
-    domains = set()
-    for l in levels:
-        for n in l:
-            if n.get('domain'):
-                domains.add(n['domain'])
-    # первый уровень — прямое влияние
-    direct = levels[0]
+    total, depth, domains = _count_tree(tree)
+    if total == 0:
+        return None
     _dom_ru = {'geopolitics': 'геополитические', 'economy': 'экономические',
                'climate': 'климатические', 'social': 'социальные', 'technology': 'технологические'}
     cross = len(domains) >= 2
     return {
+        'tree': tree,                     # Этап 4: древовидная структура
         'depth': depth,
         'total_affected': total,
-        'direct_count': len(direct),
-        'levels': levels,
+        'direct_count': len(tree),
+        'branch_count': len(tree),        # число альтернативных ветвей
         'domains_touched': sorted(domains),
         'cross_domain': cross,
-        # структурное резюме (CAS-3: «структурно связан», не «произойдёт»)
-        'summary': _cascade_summary(sig, depth, total, len(direct), domains, _dom_ru),
+        'summary': _cascade_summary(sig, depth, total, len(tree), domains, _dom_ru),
+        'disclaimer': 'Каскад отражает существующую структуру взаимосвязей процессов и не является прогнозом будущих событий.',
     }
 
 
-def _cascade_summary(sig, depth, total, direct, domains, dom_ru):
+def _cascade_summary(sig, depth, total, branches, domains, dom_ru):
     if total == 0:
         return None
     parts = [f'Процесс структурно связан с {total} процесс' +
-             ('ом' if total == 1 else ('ами' if 2 <= total <= 4 else 'ами'))]
-    if depth >= 2:
-        parts.append(f'на глубину {depth} уровн' + ('я' if depth < 5 else 'ей'))
+             ('ом' if total == 1 else 'ами')]
+    if branches >= 2:
+        parts.append(f'по {branches} независимым ветвям')
     if len(domains) >= 2:
         dnames = [dom_ru.get(d, d) for d in sorted(domains)]
         parts.append('охватывая ' + ' и '.join(dnames[:3]) + ' процессы')
-    txt = ', '.join(parts) + '.'
-    if depth >= 2 and direct >= 2:
-        txt += ' При усилении процесса влияние структурно распространяется по цепочке связей.'
-    return txt
+    return ', '.join(parts) + '.'
 
 
 def enrich_with_cascade(signals):
