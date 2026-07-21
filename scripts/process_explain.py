@@ -22,6 +22,15 @@ Process Explainability Engine (ADR-017).
 # ═══════════════════ ЭТАП 1: PROCESS ORIGIN ═══════════════════
 def explain_origin(sig):
     """Объяснение происхождения процесса из continuity + birth_kind (PEX-4)."""
+    # Макро-процесс (системный): собирается из членов, не имеет continuity.
+    if sig.get('is_macro'):
+        fs = (sig.get('first_seen') or '')[:10]
+        ec = sig.get('evidence_count') or 0
+        gs = sig.get('geo_spread') or 0
+        return {'text': f'Системный процесс, агрегирующий {ec} проявлений' +
+                (f' по {gs} территориям' if gs else '') +
+                (f' (с {fs})' if fs else '') + '.',
+                'kind': 'macro', 'confidence': 0.85}
     cont = sig.get('continuity') or {}
     decision = cont.get('decision')
     birth_kind = sig.get('birth_kind')
@@ -50,6 +59,15 @@ def explain_origin(sig):
 # ═══════════════════ ЭТАП 2: ATTACHMENT EXPLANATION ═══════════════════
 def explain_attachment(sig):
     """Объяснение прикрепления/создания из фактических признаков (PEX-2/4)."""
+    # Макро: объединяет члены по домену и типу процесса
+    if sig.get('is_macro'):
+        criteria = [('единый тип процесса', True), ('общий домен', True)]
+        gs = sig.get('geo_spread') or 0
+        if gs > 1: criteria.append((f'охватывает {gs} территорий', True))
+        return {'decision': 'aggregate', 'target': sig.get('title'),
+                'criteria': criteria, 'matched_count': len(criteria),
+                'confidence': 0.8,
+                'text': f'Системный процесс объединяет связанные проявления по домену и типу.'}
     cont = sig.get('continuity') or {}
     decision = cont.get('decision')
     criteria = []
