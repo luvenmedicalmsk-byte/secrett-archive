@@ -3241,7 +3241,7 @@ def process_events(raw_items):
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
     DOMAIN_QUOTA = {
-        'climate':     160,
+        'climate':     200,
         'geopolitics': 120,
         'economy':     70,
         'technology':  40,
