@@ -49,25 +49,41 @@ FINANCIAL_SOURCES = {
 }
 
 # ═══════════════════ ЭТАП 3: UNIFIED FINANCIAL MODEL ═══════════════════
+# Phase 2: категории индикаторов (FIN-8: FSS из СОВОКУПНОСТИ независимых классов)
+INDICATOR_CATEGORY = {
+    'USD/RUB': 'currency', 'EUR/RUB': 'currency', 'CNY/RUB': 'currency',
+    'KEY_RATE': 'monetary',
+    'OFZ_YIELD': 'debt', 'OFZ_10Y': 'debt',
+    'IMOEX': 'equity', 'RTSI': 'equity',
+    'INFLATION_WEEKLY': 'inflation', 'INFLATION_MONTHLY': 'inflation', 'INFLATION_YTD': 'inflation',
+}
+
 def make_financial_signal(indicator_type, value, prev_value, ts, source, confidence=1.0):
-    """Каноническая модель финансового сигнала (ТЗ Этап 3).
-    Поля: id, тип, значение, направление, скорость, время, источник, доверие."""
+    """Каноническая модель финансового сигнала (Phase 2 полный контракт).
+    Поля: indicator_id, category, value, previous_value, delta, velocity, direction, confidence, timestamp, source."""
     direction = 'flat'
     velocity = 0.0
+    delta = None
     if prev_value is not None and prev_value != 0:
+        delta = round(value - prev_value, 4)
         change = (value - prev_value) / abs(prev_value)
         velocity = round(change * 100, 3)        # % изменения
         direction = 'up' if change > 0.001 else ('down' if change < -0.001 else 'flat')
     sig_id = 'fin-' + hashlib.md5(f'{indicator_type}|{source}'.encode()).hexdigest()[:8]
     return {
         'id': sig_id,
-        'indicator_type': indicator_type,   # тип индикатора
-        'value': value,                      # значение
-        'direction': direction,              # направление изменения
-        'velocity': velocity,                # скорость изменения (%)
-        'measured_at': ts,                   # время измерения
-        'source': source,                    # источник
-        'confidence': confidence,            # уровень доверия
+        'indicator_id': sig_id,
+        'indicator_type': indicator_type,
+        'category': INDICATOR_CATEGORY.get(indicator_type, 'other'),   # класс индикатора
+        'value': value,
+        'previous_value': prev_value,
+        'delta': delta,
+        'direction': direction,
+        'velocity': velocity,
+        'measured_at': ts,
+        'timestamp': ts,
+        'source': source,
+        'confidence': confidence,
     }
 
 # ═══════════════════ ЭТАП 2: FINANCIAL ADAPTER ═══════════════════
