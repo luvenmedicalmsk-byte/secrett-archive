@@ -56,15 +56,22 @@ def _build_tree(node_id, by_id, visited, depth, parent_conf, max_depth):
         return []
     branches = []
     edges = []
+    _edge_seen = set()          # дедуп: один target не должен попасть дважды (через amplifies И causes)
     for et in _CASCADE_EDGES:
         for tid in (node.get(et, []) or []):
-            if tid not in visited:
+            if tid not in visited and tid not in _edge_seen:
+                _edge_seen.add(tid)
                 edges.append((tid, et))
     edges = edges[:_MAX_BRANCH]
+    _title_seen = set()         # дедуп по названию (разные id, один процесс-title)
     for tid, et in edges:
         target = by_id.get(tid)
         if not target:
             continue
+        _ttl = (target.get('title') or '').strip()
+        if _ttl and _ttl in _title_seen:
+            continue
+        _title_seen.add(_ttl)
         conf = _edge_confidence(parent_conf, et, node, target)
         if conf < _MIN_CONF:          # Этап 3: обрезка слабых
             continue
