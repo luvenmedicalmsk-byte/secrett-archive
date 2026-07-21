@@ -201,6 +201,10 @@ def build_financial_v2(prev_proc=None):
         'pressure': pressure,
         'severity': severity,
         'status': engine['status'],
+        'lifecycle_stage': 'Активный',
+        'first_seen': (prev_proc.get('first_seen') if prev_proc and prev_proc.get('first_seen') else ts),
+        'last_seen': ts,
+        'last_update': ts,
         'active_indicators': [
             {'name': s['indicator_type'], 'indicator_type': s['indicator_type'],
              'value': s['value'], 'direction': s['direction'], 'velocity': s['velocity'],
