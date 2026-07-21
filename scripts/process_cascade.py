@@ -47,8 +47,9 @@ def _edge_confidence(parent_conf, edge_type, source, target):
     return round(min(0.99, conf), 3)
 
 
-def _build_tree(node_id, by_id, visited, depth, parent_conf, max_depth):
+def _build_tree(node_id, by_id, visited, depth, parent_conf, max_depth, seen_titles=None):
     """Рекурсивное дерево каскада (Этап 4: ветвление, CAS-6: visited)."""
+    if seen_titles is None: seen_titles = set()
     if depth >= max_depth:
         return []
     node = by_id.get(node_id)
@@ -68,15 +69,16 @@ def _build_tree(node_id, by_id, visited, depth, parent_conf, max_depth):
         target = by_id.get(tid)
         if not target:
             continue
-        _ttl = (target.get('title') or '').strip()
-        if _ttl and _ttl in _title_seen:
+        _ttl = (target.get('title') or '').split(' — ')[0].strip()  # базовый тип без региона
+        if _ttl and (_ttl in _title_seen or _ttl in seen_titles):
             continue
         _title_seen.add(_ttl)
+        if _ttl: seen_titles.add(_ttl)   # глобально — не повторять на других ветвях
         conf = _edge_confidence(parent_conf, et, node, target)
         if conf < _MIN_CONF:          # Этап 3: обрезка слабых
             continue
         visited.add(tid)
-        children = _build_tree(tid, by_id, visited, depth + 1, conf, max_depth)
+        children = _build_tree(tid, by_id, visited, depth + 1, conf, max_depth, seen_titles)
         branches.append({
             'process_id': tid,
             'title': target.get('title', ''),
@@ -94,7 +96,11 @@ def trace_cascade(sig, by_id, max_depth=_MAX_DEPTH):
     """Древовидный каскад (Этап 4). Возвращает дерево ветвей от корня."""
     root_id = sig.get('signal_id')
     visited = {root_id}
-    return _build_tree(root_id, by_id, visited, 0, 1.0, max_depth)
+    # глобальный дедуп по названию через ВСЁ дерево (один процесс — одна ветвь, не на разных)
+    _seen_titles = set()
+    rt = (sig.get('title') or '').split(' — ')[0].strip()
+    if rt: _seen_titles.add(rt)
+    return _build_tree(root_id, by_id, visited, 0, 1.0, max_depth, _seen_titles)
 
 
 def _count_tree(branches):
