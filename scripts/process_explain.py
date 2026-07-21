@@ -237,6 +237,83 @@ def what_changed(sig):
     if nc > 0: changes.append(f'+{nc} новых связей')
     return changes
 
+# ═══════════════════ PHASE 3: PROCESS MEANING LAYER (PEX-11..15) ═══════════════════
+# Интерпретация СМЫСЛА текущего состояния. НЕ прогноз (PEX-12), не меняет оценки (PEX-13).
+# Только из существующих данных Engine (PEX-11), детерминированно (PEX-14).
+
+# ЭТАП 3 — направление процесса (из delta/velocity, без прогноза)
+def process_trend(sig):
+    delta = sig.get('delta') or {}
+    dsev = delta.get('severity', 0) or 0
+    vel = (sig.get('velocity') or {}).get('severity_per_h', 0) or 0
+    new_conn = len(delta.get('new_connections', []) or [])
+    rising = dsev > 1 or vel > 0.05 or new_conn > 0
+    falling = dsev < -1 or vel < -0.05
+    if rising and not falling:
+        return {'key': 'rising', 'arrow': '↑', 'text': 'Усиливается'}
+    if falling and not rising:
+        return {'key': 'falling', 'arrow': '↓', 'text': 'Ослабевает'}
+    stage = sig.get('lifecycle_stage')
+    if stage == 'Стабилизация':
+        return {'key': 'stable', 'arrow': '→', 'text': 'Стабилизируется'}
+    return {'key': 'flat', 'arrow': '·', 'text': 'Без существенных изменений'}
+
+# ЭТАП 4 — масштаб процесса (из geo_spread/territories)
+def impact_scale(sig):
+    gs = sig.get('geo_spread') or 0
+    terr = len(sig.get('included_places') or [])
+    n = max(gs, terr)
+    place = (sig.get('process_place') or '')
+    if place == 'Глобально' or n >= 8:
+        return {'key': 'international', 'text': 'международный'}
+    if n >= 4:
+        return {'key': 'national', 'text': 'национальный'}
+    if n >= 2:
+        return {'key': 'regional', 'text': 'региональный'}
+    return {'key': 'local', 'text': 'локальный'}
+
+# ЭТАП 2 — смысл стадии (интерпретация, не прогноз)
+_STAGE_MEANING = {
+    'Обнаружение': 'Процесс только выявлен, идёт накопление подтверждений.',
+    'Развитие': 'Процесс активно развивается, поступают новые подтверждения.',
+    'Пик': 'Процесс находится на этапе максимальной интенсивности.',
+    'Стабилизация': 'Процесс стабилизировался: интенсивность держится без роста.',
+    'Ослабление': 'Скорость развития процесса снижается, однако он ещё не завершён.',
+    'Завершён': 'Процесс завершён: новых подтверждений не поступает.',
+}
+
+# ЭТАП 1 — что означает текущее состояние (связный смысл из стадии + тренда)
+def current_state_meaning(sig):
+    stage = sig.get('lifecycle_stage') or ''
+    trend = process_trend(sig)
+    if stage in ('Развитие', 'Пик') and trend['key'] == 'rising':
+        return ('Процесс продолжает усиливаться и остаётся активным. Новые подтверждения '
+                'продолжают поступать, поэтому вероятность завершения процесса пока низкая.')
+    if stage == 'Ослабление' or trend['key'] == 'falling':
+        return ('Активность процесса снижается. Новых подтверждений становится меньше, '
+                'признаки дальнейшего распространения пока отсутствуют.')
+    if stage == 'Стабилизация':
+        return ('Процесс остаётся активным, но без роста. Интенсивность держится на текущем '
+                'уровне, резких изменений не наблюдается.')
+    if stage == 'Завершён':
+        return 'Процесс завершён. Новых подтверждений не поступает.'
+    if stage == 'Обнаружение':
+        return ('Процесс недавно выявлен. Система накапливает подтверждения, чтобы уточнить '
+                'его характер и масштаб.')
+    return 'Процесс активен, значимых изменений в текущем состоянии не зафиксировано.'
+
+def build_meaning(sig):
+    """Собирает Meaning Layer (PEX-11: только данные Engine, PEX-15: обоснован состоянием)."""
+    stage = sig.get('lifecycle_stage') or ''
+    return {
+        'current_state': current_state_meaning(sig),
+        'stage_meaning': _STAGE_MEANING.get(stage, ''),
+        'stage': stage,
+        'trend': process_trend(sig),
+        'scale': impact_scale(sig),
+    }
+
+
 def build_explanation(sig, prev_stage=None):
     """Полное объяснение процесса (PEX-2/3). Собирает все слои.
     Возвращает структуру для Observability: Decision/Reason/Criteria/Confidence/Timestamp."""
@@ -262,6 +339,8 @@ def build_explanation(sig, prev_stage=None):
         'human_summary': human_summary(sig),
         'why_one_process': why_one_process(sig),
         'what_changed': _changes,
+        # ── Meaning Layer (PEX-11..15) ──
+        'meaning': build_meaning(sig),
         # ── Technical Explainability (PEX-7) ──
         'origin': origin,
         'attachment': attachment,
