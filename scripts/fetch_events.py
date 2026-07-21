@@ -11700,6 +11700,14 @@ def save_enriched(events, previous_snapshot=None):
                 # оба условия: оценочный прогноз о крахе + контекст власти РФ
                 if _SH_REGIME.search(_blob) and _SH_REGIME_CTX.search(_blob):
                     _shr['feed_visible']=False
+            # ШУМ-КЛАСС ФИНБЛОГ (Мия 21.07): личные блог-посты трейдеров (мнение, не сигнал)
+            # «поговорил с коллегами», «дорогие друзья», «хотите верьте», обращения от первого лица
+            _SH_FINBLOG=re.compile(r'поговорил с коллег|дорогие друзья|хотите верьте|утро начинается не с коф|друзья,|как я (?:уже )?(?:писал|говорил)|мо\w+ прогноз|моё мнение|история одной|дорогой подписчик|подписчик\w* спрашива', re.I)
+            for _sfb in enriched["events"]:
+                if _sfb.get('domain')!='economy': continue
+                _t=(_sfb.get('title','') or ''); _s=(_sfb.get('summary','') or '')
+                if _SH_FINBLOG.search(_t+' '+_s[:140]):
+                    _sfb['feed_visible']=False
             # ШУМ-КЛАСС ЭССЕ (Мия 21.07): фотоэссе / travel-блог / личное повествование
             _SH_ESSAY=re.compile(r'фотоэссе|фото-эссе|photo essay|это эссе|личн\w+ (?:истори|повествован|заметк)|мо\w+ путешеств|о моих путешеств|путешествие вне сезона|автор:\s*\w+\s+\w+\s+следующее|дневник\w* путешеств|travel (?:blog|diary)', re.I)
             for _she2 in enriched["events"]:
