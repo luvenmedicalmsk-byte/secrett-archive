@@ -2345,6 +2345,13 @@ def write_signals_json(events, path):
             _imp.enrich_with_importance(evolved)
         except Exception:
             pass
+    # ADR-022: Semantic Validation — фильтр отображения абсурдных связей/каскадов
+    # (Наводнение→Криминал и т.п.). Не меняет граф, только displayable (SEM-1..4).
+    try:
+        import semantic_validation as _sem
+        _sem.validate_display(evolved)
+    except Exception:
+        pass
     # ФИНАЛЬНЫЙ СКРАБ (catch-all перед записью): ловит шум и дубли независимо от того, как
     # они попали — новые из build_signals ИЛИ перенесённые через evolve из прошлого снапшота
     # (continuation-процессы тянут старые evidence/timeline до фикса). Гарантия чистого вывода.
