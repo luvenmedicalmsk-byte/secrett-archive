@@ -2,39 +2,39 @@
   "country": "ES",
   "date": "2026-07-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-22T09:53:27.427180+00:00",
+  "generated_at": "2026-07-22T10:24:32.141959+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 51,
+      "score": 52,
       "props": {
-        "risk_score": 51
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
@@ -94,10 +94,10 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Жители_25_",
+      "id": "SIGNAL-ES-Двенадцать",
       "type": "Signal",
-      "label": "Жители 25 муниципалитетов в Испании стал",
-      "severity": 44,
+      "label": "Двенадцать человек погибли, многие други",
+      "severity": 32,
       "domain": "climate"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-ES",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-ES",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-ES",
@@ -163,10 +163,67 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-ES-Лесной_пож",
-      "to": "DOMAIN-ES-climate",
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-ES-geopolitical",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-ES-Лесной_пож",
@@ -175,10 +232,16 @@
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-ES-Жители_25_",
+      "from": "SIGNAL-ES-Лесной_пож",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-ES-Двенадцать",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
