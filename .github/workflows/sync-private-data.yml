@@ -27,6 +27,9 @@ jobs:
               rsync -a --delete "$d/" "/tmp/priv/$d/"
             fi
           done
+          # платный preview-файл процессов -> private (гейт через Worker /api/processes)
+          mkdir -p /tmp/priv/docs
+          if [ -f docs/_preview_processes.json ]; then cp docs/_preview_processes.json /tmp/priv/docs/_preview_processes.json; fi
           cd /tmp/priv
           git add -A
           if git diff --cached --quiet; then
