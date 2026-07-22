@@ -2,67 +2,67 @@
   "country": "UZ",
   "date": "2026-07-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-22T10:24:32.146111+00:00",
-  "node_count": 13,
-  "edge_count": 15,
+  "generated_at": "2026-07-22T10:38:16.254658+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-UZ",
       "type": "Country",
       "label": "UZ",
-      "score": 50,
+      "score": 53,
       "props": {
-        "risk_score": 50
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-UZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 48,
-      "trend": "down"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 45,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 25,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 32,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 38,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 35,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 30,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DRIVER-UZ-geopolitical",
@@ -75,16 +75,9 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-UZ-social",
+      "id": "DRIVER-UZ-climate",
       "type": "Driver",
-      "label": "social"
-    },
-    {
-      "id": "SIGNAL-UZ-Россельхоз",
-      "type": "Signal",
-      "label": "Россельхознадзор ограничил ввоз продукци",
-      "severity": 45,
-      "domain": "economic"
+      "label": "climate"
     },
     {
       "id": "SIGNAL-UZ-Экономичес",
@@ -99,43 +92,43 @@
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-economic",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-climate",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-technology",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-social",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-cyber",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.32
     },
     {
       "from": "DRIVER-UZ-geopolitical",
@@ -150,7 +143,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-UZ-social",
+      "from": "DRIVER-UZ-climate",
       "to": "COUNTRY-UZ",
       "type": "CAUSES",
       "weight": 0.8
@@ -177,10 +170,46 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-UZ-Россельхоз",
+      "from": "DOMAIN-UZ-climate",
+      "to": "DOMAIN-UZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-UZ-infrastructure",
       "to": "DOMAIN-UZ-economic",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-UZ-climate",
+      "to": "DOMAIN-UZ-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-UZ-social",
+      "to": "DOMAIN-UZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-UZ-Экономичес",
