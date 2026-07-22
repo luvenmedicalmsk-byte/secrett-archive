@@ -247,6 +247,20 @@ def _watch_window(last_seen, days=7):
     return {'start': start.strftime('%Y-%m-%d'), 'end': end.strftime('%Y-%m-%d'),
             'label': f'{_fmt(start)} – {_fmt(end)}'}
 
+def _what_changed(mc, gs, places):
+    """Этап 2: что изменилось у наблюдения относительно родительского Confirmed-процесса."""
+    ch = []
+    if gs >= 2:
+        ch.append(f'расширение географии — вовлечено {gs} регионов')
+    if mc >= 5:
+        ch.append('увеличение повторяемости — накоплено много однотипных событий')
+    if mc >= 3 and gs >= 2:
+        ch.append('формирование устойчивого паттерна на одном классе объектов')
+    # если по какой-то причине пусто — базовый признак
+    if not ch:
+        ch.append('появление новых событий в рамках отслеживаемого процесса')
+    return ch
+
 def build_observation_detection(infra_procs):
     """Для каждого Confirmed инфра-процесса создаёт Observation + Detection (ADR-024)."""
     out = []
@@ -302,6 +316,16 @@ def build_observation_detection(infra_procs):
             'parent_domain': p.get('primary_domain','economy'),
             # ── ADR-024 Phase 2 ──
             'parent_title': p.get('title',''),                    # Этап 1: ссылка на родителя
+            # ── Phase 3 ──
+            'parent_meta': {                                      # Этап 3: карточка родителя с метриками
+                'title': p.get('title',''),
+                'status': 'ACTIVE',
+                'evidence_count': mc,
+                'geo_spread': gs,
+            },
+            'what_changed': _what_changed(mc, gs, places),        # Этап 2: что изменилось vs родитель
+            'close_explanation': ('Если до окончания окна наблюдения не появятся новые подтверждения, '
+                                  'гипотеза будет автоматически закрыта и не перейдёт в новый процесс.'),  # Этап 7
             'lifecycle_state': 'Наблюдается',                     # Этап 3: состояние (Создан→Наблюдается→Подтверждён/Закрыт)
             'lifecycle_states': ['Создан','Наблюдается','Подтверждён','Закрыт'],
             # Этап 5: уверенность гипотезы (не проценты вероятности событий)
@@ -312,8 +336,8 @@ def build_observation_detection(infra_procs):
                                'критериям нового подтверждённого процесса. Наблюдение создано автоматически для '
                                'проверки, разовьётся ли паттерн в самостоятельный процесс.',
             # Этап 7: цепочка эволюции
-            'evolution_chain': ['Confirmed','Observation','Detection','New Confirmed Process'],
-            'evolution_current': 'Observation',
+            'evolution_chain': ['Родительский процесс','Наблюдение','Обнаружение','Новый подтверждённый процесс'],
+            'evolution_current': 'Наблюдение',
             # Этап 8: автопереход
             'auto_promote_when': 'выполнены все критерии подтверждения',
             'auto_close_when': f'окно наблюдения ({win["label"]}) завершилось без подтверждений',
@@ -354,6 +378,12 @@ def build_observation_detection(infra_procs):
             'parent_domain': p.get('primary_domain','economy'),
             # ── ADR-024 Phase 2 ──
             'parent_title': p.get('title',''),                    # Этап 1
+            'parent_meta': {                                      # Этап 3
+                'title': p.get('title',''),
+                'status': 'ACTIVE',
+                'evidence_count': mc,
+                'geo_spread': gs,
+            },
             # Этап 4: чек-лист признаков перехода (☑/☐ по фактически наблюдаемому)
             # done вычисляется из реального состояния процесса: >1 региона => новая география выполнена
             'transition_checklist': [
@@ -364,9 +394,17 @@ def build_observation_detection(infra_procs):
             ],
             'checklist_done': sum([gs>=2, False, False, mc>=5]),
             'checklist_total': 4,
-            # Этап 7
-            'evolution_chain': ['Confirmed','Observation','Detection','New Confirmed Process'],
-            'evolution_current': 'Detection',
+            'checklist_pct': round(sum([gs>=2, False, False, mc>=5])/4*100),  # Этап 4: прогресс %
+            # Этап 5: чего НЕ хватает до подтверждения (недостающие критерии)
+            'pending_criteria': [c['label'] for c in [
+                {'label':'Новый регион','done':gs>=2},
+                {'label':'Новый тип объекта','done':False},
+                {'label':'Новая инфраструктура','done':False},
+                {'label':'Новая динамика','done':mc>=5},
+            ] if not c['done']],
+            # Этап 6: цепочка происхождения (не «Confirmed заново»)
+            'evolution_chain': ['Родительский процесс','Наблюдение','Обнаружение','Новый подтверждённый процесс'],
+            'evolution_current': 'Обнаружение',
             'severity': p.get('severity', 50),
             'confidence': p.get('confidence', 0.5),
         }
