@@ -297,6 +297,23 @@ def build_observation_detection(infra_procs):
                 'сохранение характера воздействия в пределах окна наблюдения',
             ],
             'related_processes': [p['process_id']],
+            # ── ADR-024 Phase 2 ──
+            'parent_title': p.get('title',''),                    # Этап 1: ссылка на родителя
+            'lifecycle_state': 'Наблюдается',                     # Этап 3: состояние (Создан→Наблюдается→Подтверждён/Закрыт)
+            'lifecycle_states': ['Создан','Наблюдается','Подтверждён','Закрыт'],
+            # Этап 5: уверенность гипотезы (не проценты вероятности событий)
+            'confidence_basis': [f'{mc} подтверждениях', f'{gs} регионах', '1 типе объекта'],
+            'confidence_level': 'Высокая' if _score>=60 else 'Средняя' if _score>=30 else 'Низкая',
+            # Этап 6: причина автосоздания
+            'creation_reason': 'Atlas обнаружил устойчивый повторяющийся паттерн, который пока не соответствует '
+                               'критериям нового подтверждённого процесса. Наблюдение создано автоматически для '
+                               'проверки, разовьётся ли паттерн в самостоятельный процесс.',
+            # Этап 7: цепочка эволюции
+            'evolution_chain': ['Confirmed','Observation','Detection','New Confirmed Process'],
+            'evolution_current': 'Observation',
+            # Этап 8: автопереход
+            'auto_promote_when': 'выполнены все критерии подтверждения',
+            'auto_close_when': f'окно наблюдения ({win["label"]}) завершилось без подтверждений',
             'severity': p.get('severity', 50),
             'confidence': p.get('confidence', 0.5),
         }
@@ -330,6 +347,21 @@ def build_observation_detection(infra_procs):
                 'смена характера воздействия на несвязанный класс',
             ],
             'related_processes': [p['process_id'], f'obs-{key}'],
+            # ── ADR-024 Phase 2 ──
+            'parent_title': p.get('title',''),                    # Этап 1
+            # Этап 4: чек-лист признаков перехода (☑/☐ по фактически наблюдаемому)
+            # done вычисляется из реального состояния процесса: >1 региона => новая география выполнена
+            'transition_checklist': [
+                {'label': 'Новый регион', 'done': gs >= 2},
+                {'label': 'Новый тип объекта', 'done': False},
+                {'label': 'Новая инфраструктура', 'done': False},
+                {'label': 'Новая динамика', 'done': mc >= 5},
+            ],
+            'checklist_done': sum([gs>=2, False, False, mc>=5]),
+            'checklist_total': 4,
+            # Этап 7
+            'evolution_chain': ['Confirmed','Observation','Detection','New Confirmed Process'],
+            'evolution_current': 'Detection',
             'severity': p.get('severity', 50),
             'confidence': p.get('confidence', 0.5),
         }
