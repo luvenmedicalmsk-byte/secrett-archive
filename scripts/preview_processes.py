@@ -92,10 +92,16 @@ def build_infra(events):
         grp,causal=d
         key=hashlib.md5(f"{grp}|{causal}".encode()).hexdigest()[:8]
         g=groups.setdefault(key,{'group':grp,'causal':causal,'members':[],'places':set(),'dates':[]})
-        g['members'].append((e.get('title') or '')[:140])
         pl=e.get('region') or (e.get('geo') or {}).get('country')
-        if pl: g['places'].add(pl)
         dt=e.get('date') or e.get('first_seen')
+        g['members'].append({
+            'title': (e.get('title') or '')[:140],
+            'date': str(dt)[:10] if dt else '',
+            'severity': e.get('severity') or e.get('escalation_score') or 0,
+            'source': e.get('source') or '',
+            'place': pl or '',
+        })
+        if pl: g['places'].add(pl)
         if dt: g['dates'].append(str(dt)[:10])
     procs=[]; shadow=[]
     for key,g in groups.items():
@@ -105,6 +111,38 @@ def build_infra(events):
         elif mc>=2: maturity='Emerging'
         else: maturity='Candidate'
         dates=sorted([d for d in g['dates'] if d])
+        mems=g['members']  # список dict {title,date,severity,source,place}
+        ev_titles=[m['title'] for m in mems][:6]
+        grp_ru=_GRP_RU.get(g["group"], g["group"])
+        cau_ru=_CAUSAL_RU.get(g["causal"], g["causal"])
+        # severity/pressure — из членов (пиковая и средняя), как у обычного процесса
+        sevs=[int(m.get('severity') or 0) for m in mems]
+        sev_peak=max(sevs) if sevs else 50
+        sev_avg=round(sum(sevs)/len(sevs)) if sevs else 50
+        pressure=min(100, round(sev_avg*0.6 + mc*4 + gs*3))  # нагрузка: тяжесть+широта+гео
+        # timeline (Хроника): члены по датам, формат обычного процесса {t,event,detail,severity}
+        timeline=sorted([
+            {'t': m['date'], 'event': m['title'], 'detail': (m['source'] or ''), 'severity': int(m.get('severity') or 0)}
+            for m in mems if m['date']], key=lambda x: x['t'])
+        # explain (Объяснение/Сводка): своя формулировка для инфра-процесса
+        _plc=', '.join(sorted(g['places'])) if g['places'] else 'ряде регионов'
+        explain={
+            'why_exists': f'Процесс отслеживает {grp_ru} как объект инфраструктуры: система объединила {mc} событий '
+                          f'({cau_ru}) в {gs} регионах ({_plc}) в единый процесс по устойчивому признаку объекта и характеру воздействия.',
+            'why_priority': f'Приоритет отражает широту охвата ({gs} регионов) и совокупную тяжесть событий (пик {sev_peak}).',
+            'formed_by': [f'{grp_ru} — {p}' for p in sorted(g['places'])][:6],
+        }
+        # importance (Системная значимость): своя оценка по охвату/повторяемости
+        _imp_score = min(100, mc*8 + gs*10)
+        _cent = ('Центральный узел','central',5) if _imp_score>=70 else \
+                ('Важный узел','important',4) if _imp_score>=45 else \
+                ('Локальный узел','local',3) if _imp_score>=25 else ('Периферийный','peripheral',2)
+        importance={
+            'score': _imp_score, 'centrality': _cent[0], 'centrality_key': _cent[1], 'stars': _cent[2],
+            'connects_processes': 0, 'cascade_reach': gs, 'domains_connected': 1,
+            'explanation': f'Значимость определяется охватом {gs} регионов и {mc} подтверждающими событиями '
+                           f'по одному классу инфраструктуры ({grp_ru}).',
+        }
         proc={
             'process_id': f'infra-{key}',
             'process_type': 'infrastructure',
@@ -119,16 +157,22 @@ def build_infra(events):
             'first_seen': dates[0] if dates else _iso(_now())[:10],
             'last_seen': dates[-1] if dates else _iso(_now())[:10],
             'lifecycle': 'active',
+            'lifecycle_stage': 'active',
             'confidence': round(min(0.95, 0.3 + 0.15*mc + 0.1*gs), 2),
-            'evidence': g['members'][:6],
-            'evidence_count': mc,           # ЭТАП 4: явный счётчик (UI показывает список evidence)
-            'created_at': (dates[0] if dates else _iso(_now())[:10]) + 'T00:00:00Z',  # ЭТАП 5: возраст
-            'updated_at': (dates[-1] if dates else _iso(_now())[:10]) + 'T00:00:00Z', # ЭТАП 6: обновление
-            'forecast_ready': mc >= 4,      # ЭТАП 7: прогноз при >=4 наблюдениях (иначе слишком короткий)
-            # ЭТАП 1 (TASK логистика): название = ОБЪЕКТ системы, без способа воздействия.
-            # Тип воздействия остаётся в causal_model для аналитики, но не в заголовке.
-            'title': (f'Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])}' if INFRA_PRODUCTION else f'🧪 Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])}'),
-            'causal_label': _CAUSAL_RU.get(g["causal"], g["causal"]),  # отдельное поле (не в title)
+            'evidence': ev_titles,
+            'evidence_count': mc,
+            'created_at': (dates[0] if dates else _iso(_now())[:10]) + 'T00:00:00Z',
+            'updated_at': (dates[-1] if dates else _iso(_now())[:10]) + 'T00:00:00Z',
+            'forecast_ready': mc >= 4,
+            # ── обогащение как у обычных процессов, но своими данными ──
+            'severity': sev_peak,
+            'pressure': pressure,
+            'priority': sev_peak,
+            'explain': explain,
+            'importance': importance,
+            'timeline': timeline,
+            'title': (f'Инфраструктурный процесс — {grp_ru}' if INFRA_PRODUCTION else f'🧪 Инфраструктурный процесс — {grp_ru}'),
+            'causal_label': cau_ru,
         }
         procs.append(proc)
         shadow.append({'key':key,'group':g['group'],'causal':g['causal'],'mc':mc,'gs':gs,'maturity':maturity})
