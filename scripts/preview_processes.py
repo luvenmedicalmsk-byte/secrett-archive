@@ -297,6 +297,9 @@ def build_observation_detection(infra_procs):
                 'сохранение характера воздействия в пределах окна наблюдения',
             ],
             'related_processes': [p['process_id']],
+            # наследуют гео/домен родителя (obs/det — производные, не свои события)
+            'places': places,
+            'parent_domain': p.get('primary_domain','economy'),
             # ── ADR-024 Phase 2 ──
             'parent_title': p.get('title',''),                    # Этап 1: ссылка на родителя
             'lifecycle_state': 'Наблюдается',                     # Этап 3: состояние (Создан→Наблюдается→Подтверждён/Закрыт)
@@ -347,6 +350,8 @@ def build_observation_detection(infra_procs):
                 'смена характера воздействия на несвязанный класс',
             ],
             'related_processes': [p['process_id'], f'obs-{key}'],
+            'places': places,
+            'parent_domain': p.get('primary_domain','economy'),
             # ── ADR-024 Phase 2 ──
             'parent_title': p.get('title',''),                    # Этап 1
             # Этап 4: чек-лист признаков перехода (☑/☐ по фактически наблюдаемому)
