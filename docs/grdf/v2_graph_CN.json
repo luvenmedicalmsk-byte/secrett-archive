@@ -2,67 +2,67 @@
   "country": "CN",
   "date": "2026-07-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-22T08:45:01.127851+00:00",
+  "generated_at": "2026-07-22T09:11:15.109806+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 51,
+      "score": 57,
       "props": {
-        "risk_score": 51
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "down"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 23,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "down"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-CN-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-CN-Китай:_Инъ",
+      "id": "SIGNAL-CN-Наводнение",
       "type": "Signal",
-      "label": "Китай: Инъекции ликвидности через обратн",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Наводнение — Китай",
+      "severity": 90,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Оранжевое_",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-CN-Китай:_Инъ",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Наводнение",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.9
     }
   ]
 }
