@@ -224,6 +224,120 @@ def build_financial(events):
     }
     return proc
 
+# ── ADR-024: Observation & Detection Layer ──
+# Из подтверждённого (Confirmed) инфраструктурного процесса система деривирует два
+# аналитических процесса: Наблюдение (гипотеза расширения) и Обнаружение (признаки перехода).
+# Это НЕ прогнозы — это механизм раннего обнаружения изменений.
+_GRP_NEXT = {
+ 'ecommerce_logistics': ['транспортной инфраструктуры','топливной инфраструктуры','цифровой инфраструктуры'],
+ 'ecommerce_platform':  ['платёжной инфраструктуры','логистических партнёров','цифровой инфраструктуры'],
+ 'offline_retail':      ['складской инфраструктуры','цепочек поставок','транспортной инфраструктуры'],
+ 'last_mile':           ['пунктов выдачи','транспортной инфраструктуры','складской инфраструктуры'],
+}
+def _watch_window(last_seen, days=7):
+    """Окно повышенного внимания — гипотеза модели, не дата события."""
+    try:
+        base = datetime.strptime(last_seen[:10], '%Y-%m-%d').replace(tzinfo=timezone.utc)
+    except Exception:
+        base = _now()
+    start = base + timedelta(days=1)
+    end = start + timedelta(days=days)
+    _MRU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']
+    def _fmt(d): return f'{d.day} {_MRU[d.month-1]}'
+    return {'start': start.strftime('%Y-%m-%d'), 'end': end.strftime('%Y-%m-%d'),
+            'label': f'{_fmt(start)} – {_fmt(end)}'}
+
+def build_observation_detection(infra_procs):
+    """Для каждого Confirmed инфра-процесса создаёт Observation + Detection (ADR-024)."""
+    out = []
+    for p in infra_procs:
+        if p.get('maturity') != 'Confirmed':
+            continue  # гипотезы деривируем только из зрелых процессов
+        grp = p.get('entity_class_group','')
+        grp_ru = _GRP_RU.get(grp, grp)
+        cau_ru = _CAUSAL_RU.get(p.get('causal_model',''), p.get('causal_model',''))
+        key = p['process_id'].replace('infra-','')
+        places = p.get('places', [])
+        mc = p.get('member_count', 0)
+        gs = p.get('geo_spread', 0)
+        win = _watch_window(p.get('last_seen',''))
+        # приоритет наблюдения по силе паттерна (язык аналитики, не проценты)
+        _score = mc*8 + gs*10
+        watch_priority = 'Высокий' if _score>=60 else 'Средний' if _score>=30 else 'Низкий'
+        # ── Observation (Наблюдение) ──
+        obs = {
+            'process_id': f'obs-{key}',
+            'process_type': 'observation',
+            'production': INFRA_PRODUCTION,
+            'preview': not INFRA_PRODUCTION,
+            'parent_id': p['process_id'],
+            'title': f'Расширение паттерна «{cau_ru}» на {grp_ru}',
+            'status_label': 'Наблюдение',
+            'lifecycle_stage': 'observation',
+            'lifecycle': 'observation',
+            'pattern': f'Зафиксирован устойчивый паттерн: {cau_ru} на объектах «{grp_ru}» в {gs} регионах '
+                       f'({", ".join(places) if places else "ряде регионов"}). Событий в паттерне — {mc}.',
+            'hypothesis': 'Гипотеза появилась из-за повторяемости однотипных инцидентов на одном классе '
+                          'инфраструктуры. Требуется проверка на расширение процесса, пока подтверждений '
+                          'для выделения нового активного процесса недостаточно.',
+            'watch_window': win,
+            'watch_priority': watch_priority,
+            'watch_reason': f'Текущий процесс демонстрирует признаки возможного расширения на смежные элементы '
+                            f'логистической инфраструктуры. Для подтверждения требуется регистрация новых '
+                            f'инцидентов соответствующего типа.',
+            # индикаторы = «Следующие сигналы для проверки» (что система отслеживает, не что произойдёт)
+            'indicators': [
+                'появление инцидентов на новых типах логистических объектов',
+                'расширение географии процесса',
+            ] + [f'вовлечение {x}' for x in _GRP_NEXT.get(grp, ['смежной инфраструктуры'])],
+            # критерии перевода в Active
+            'confirmation_criteria': [
+                'регистрация не менее 2 новых инцидентов соответствующего типа',
+                'вовлечение нового региона или нового типа объекта',
+                'сохранение характера воздействия в пределах окна наблюдения',
+            ],
+            'related_processes': [p['process_id']],
+            'severity': p.get('severity', 50),
+            'confidence': p.get('confidence', 0.5),
+        }
+        # ── Detection (Обнаружение) — только признаки перехода, без прогнозов ──
+        det = {
+            'process_id': f'det-{key}',
+            'process_type': 'detection',
+            'production': INFRA_PRODUCTION,
+            'preview': not INFRA_PRODUCTION,
+            'parent_id': p['process_id'],
+            'title': f'Переход к следующему уровню воздействия на логистическую цепочку',
+            'status_label': 'Обнаружение',
+            'lifecycle_stage': 'detection',
+            'lifecycle': 'detection',
+            'question': 'Что должно произойти, чтобы система признала переход процесса в новую фазу?',
+            # признаки перехода (не список целей, а изменения режима)
+            'transition_signs': [
+                'сменился тип объекта',
+                'изменился уровень инфраструктуры',
+                'появились новые территории',
+                'изменилась периодичность',
+                'появился новый сектор экономики',
+                'изменился характер воздействия',
+            ],
+            'promote_conditions': [
+                'накоплено достаточное число подтверждений соответствующего типа',
+                'подтверждён новый тип объекта или новая территория',
+            ],
+            'close_conditions': [
+                f'отсутствие подтверждений к концу окна наблюдения ({win["label"]})',
+                'смена характера воздействия на несвязанный класс',
+            ],
+            'related_processes': [p['process_id'], f'obs-{key}'],
+            'severity': p.get('severity', 50),
+            'confidence': p.get('confidence', 0.5),
+        }
+        out.append(obs)
+        out.append(det)
+    return out
+
+
 def main():
     try:
         ev=json.load(open(EVENTS, encoding='utf-8'))
@@ -271,8 +385,9 @@ def main():
     if prev_fin and prev_fin.get('timeline'):
         tl=prev_fin['timeline'][-23:] + fin['timeline']
         fin['timeline']=tl[-24:]
+    obsdet = build_observation_detection(infra)  # ADR-024: Observation + Detection
     out={'generated': _iso(_now()), 'preview': True,
-         'processes': infra + [fin]}
+         'processes': infra + obsdet + [fin]}
     (DOCS/'_preview_processes.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
     # shadow-файлы (Задача 4)
     (DOCS/'_infra_process_shadow.json').write_text(json.dumps({'ts':_iso(_now()),'candidates':infra_shadow},ensure_ascii=False,indent=2),encoding='utf-8')
