@@ -2,49 +2,53 @@
   "country": "MX",
   "country_name": "MX",
   "date": "2026-07-22",
-  "alert_level": "WATCH",
-  "alert_score": 56,
-  "risk_score": 59,
-  "confidence": 36,
-  "signals": 2,
+  "alert_level": "ALERT",
+  "alert_score": 61,
+  "risk_score": 61,
+  "confidence": 37,
+  "signals": 3,
   "trend": "rising",
   "top_drivers": [
     "geopolitics",
     "economy",
     "finance"
   ],
-  "created_at": "2026-07-22T00:19:34.138579+00:00",
+  "created_at": "2026-07-22T04:00:32.811008+00:00",
   "triggered_rules": [
     "A",
     "B",
-    "D"
+    "C",
+    "D",
+    "E"
   ],
   "rules": {
     "A_velocity": {
       "rule": "A",
       "name": "velocity_spike",
       "triggered": true,
-      "change_7d": 84.4,
-      "change_30d": -1.7,
+      "change_7d": 90.6,
+      "change_30d": 1.7,
       "velocity_score": 100
     },
     "B_signal_expl": {
       "rule": "B",
       "name": "signal_explosion",
       "triggered": true,
-      "current_signals": 2,
-      "avg_90d": 0.5,
+      "current_signals": 3,
+      "avg_90d": 0.6,
       "threshold": 0.8,
-      "explosion_ratio": 2.0
+      "explosion_ratio": 3.0
     },
     "C_multi_eng": {
       "rule": "C",
       "name": "multi_engine_confirmation",
-      "triggered": false,
+      "triggered": true,
       "confirming_engines": [
-        "technology"
+        "geopolitics",
+        "economy",
+        "climate"
       ],
-      "engine_count": 1,
+      "engine_count": 3,
       "threshold": 3
     },
     "D_emerging": {
@@ -53,8 +57,8 @@
       "triggered": true,
       "threats": [
         {
-          "domain": "technology",
-          "severity": 64,
+          "domain": "climate",
+          "severity": 66,
           "frequency": 0,
           "source": "Тренд: нарастание давления"
         }
@@ -64,26 +68,32 @@
     "E_confidence": {
       "rule": "E",
       "name": "confidence_escalation",
-      "triggered": false,
-      "current_confidence": 36,
-      "prev_confidence": 35,
+      "triggered": true,
+      "current_confidence": 37,
+      "prev_confidence": 36,
       "confidence_delta": 1,
-      "score_delta": -1
+      "score_delta": 2
     }
   },
   "sub_scores": {
     "velocity_component": 100,
-    "severity_component": 55,
-    "confidence_component": 21,
-    "signal_density": 27
+    "severity_component": 68,
+    "confidence_component": 23,
+    "signal_density": 30
   },
-  "escalation": null,
-  "is_escalation": false,
-  "dominant_domain": "technology",
-  "escalation_level": "elevated",
-  "delta": 0,
+  "escalation": {
+    "previous": "WATCH",
+    "current": "ALERT",
+    "delta_score": 5,
+    "timestamp": "2026-07-22T04:00:32.810999+00:00",
+    "escalated": true
+  },
+  "is_escalation": true,
+  "dominant_domain": "climate",
+  "escalation_level": "pressured",
+  "delta": 2,
   "engine_version": "ALERT_V1",
   "model_version": "GRIE_V1",
-  "generated_at": "2026-07-22T00:19:34.138579+00:00",
-  "hash": "3f4492b6a52bbf21"
+  "generated_at": "2026-07-22T04:00:32.811008+00:00",
+  "hash": "4ab3de6ef3ade6c3"
 }
