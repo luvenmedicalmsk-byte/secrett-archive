@@ -1,9 +1,9 @@
 {
-  "generated": "2026-07-22T09:24:29Z",
+  "generated": "2026-07-22T09:51:27Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 375,
+    "PASS_FACT": 376,
     "DENY_COMMENTARY": 189,
     "DENY_STATE_ONLY": 3,
     "DENY_BACKGROUND": 3,
@@ -11,8 +11,8 @@
     "UNMATCHED": 3
   },
   "kpi": {
-    "processes_total": 574,
-    "matched": 571,
+    "processes_total": 575,
+    "matched": 572,
     "unmatched": 3,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
@@ -25,44 +25,41 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 247,
+      "processes": 248,
       "sample": 660,
-      "agreement_pct": 91.5,
-      "decision_agreement_pct": 91.8,
-      "critical_errors": 54,
+      "agreement_pct": 91.2,
+      "decision_agreement_pct": 91.4,
+      "critical_errors": 57,
       "truth_ratio_pct": 87.0,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 29,
+        "FACT_EVENT→COMMENTARY": 32,
         "COMMENTARY→FACT_EVENT": 19,
         "STATE_CONFIRMATION→FACT_EVENT": 6,
-        "BACKGROUND→COMMENTARY": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 574,
+      "processes": 575,
       "sample": 774,
-      "agreement_pct": 91.9,
-      "decision_agreement_pct": 92.1,
-      "critical_errors": 61,
+      "agreement_pct": 91.6,
+      "decision_agreement_pct": 91.7,
+      "critical_errors": 64,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 33,
+        "FACT_EVENT→COMMENTARY": 36,
         "COMMENTARY→FACT_EVENT": 21,
         "STATE_CONFIRMATION→FACT_EVENT": 7,
-        "BACKGROUND→COMMENTARY": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1
       }
     },
     "events_stream": {
       "sample": 308,
-      "agreement_pct": 92.5,
-      "decision_agreement_pct": 92.9,
-      "critical_errors": 22,
+      "agreement_pct": 92.2,
+      "decision_agreement_pct": 92.2,
+      "critical_errors": 24,
       "error_matrix": {
         "STATE_CONFIRMATION→FACT_EVENT": 1,
-        "FACT_EVENT→COMMENTARY": 19,
-        "COMMENTARY→FACT_EVENT": 2,
-        "BACKGROUND→COMMENTARY": 1
+        "FACT_EVENT→COMMENTARY": 21,
+        "COMMENTARY→FACT_EVENT": 2
       }
     },
     "gate": {
@@ -84,8 +81,8 @@
       "deny": 56
     },
     "economy": {
-      "pass": 43,
-      "deny": 51,
+      "pass": 45,
+      "deny": 50,
       "unmatched": 2
     },
     "climate": {
@@ -94,8 +91,8 @@
       "unmatched": 1
     },
     "technology": {
-      "pass": 43,
-      "deny": 29
+      "pass": 42,
+      "deny": 30
     },
     "social": {
       "pass": 29,
@@ -103,6 +100,21 @@
     }
   },
   "deny_impact": [
+    {
+      "signal_id": "tech-уязвимость-глобальн-d798",
+      "title": "Уязвимость ПО",
+      "domain": "technology",
+      "severity": 95,
+      "pressure": 57,
+      "first_seen": "2026-06-25",
+      "evidence_count": 5,
+      "evidence_classes": {
+        "COMMENTARY": 5
+      },
+      "status": "active",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
     {
       "signal_id": "tech-киберугроз-россия-4f5c",
       "title": "Киберугроза — Россия",
@@ -270,21 +282,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "geop-геополитич-сша-a91e",
-      "title": "Геополитический процесс — США",
-      "domain": "geopolitics",
-      "severity": 65,
-      "pressure": 40,
-      "first_seen": "2026-07-01",
-      "evidence_count": 3,
-      "evidence_classes": {
-        "COMMENTARY": 3
-      },
-      "status": "active",
-      "causal_links": 5,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "tech-фишинговая-глобальн-украин-7da6",
       "title": "Фишинговая кампания",
       "domain": "technology",
@@ -342,6 +339,21 @@
       },
       "status": "dormant",
       "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-санкционно-россия-73bd",
+      "title": "Санкционное давление — Россия",
+      "domain": "geopolitics",
+      "severity": 62,
+      "pressure": 44,
+      "first_seen": "2026-06-29",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 5,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -882,7 +894,7 @@
         "COMMENTARY": 1
       },
       "status": "fading",
-      "causal_links": 0,
+      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -989,21 +1001,6 @@
       "status": "dormant",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "tech-технологич-сингапур-1f43",
-      "title": "Технологический сигнал — Сингапур",
-      "domain": "technology",
-      "severity": 56,
-      "pressure": 25,
-      "first_seen": "2026-06-25",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "dormant",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1037,9 +1034,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-китай-3eea",
-      "domain": "economy",
-      "legacy": 48,
+      "signal_id": "tech-уязвимость-глобальн-d798",
+      "domain": "technology",
+      "legacy": 95,
       "shadow": null,
       "delta": null
     },
@@ -1058,6 +1055,13 @@
       "delta": null
     },
     {
+      "signal_id": "geop-санкционно-россия-73bd",
+      "domain": "geopolitics",
+      "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-пожарнаяак-ес-adc9",
       "domain": "climate",
       "legacy": 56,
@@ -1068,13 +1072,6 @@
       "signal_id": "tech-киберугроз-россия-4f5c",
       "domain": "technology",
       "legacy": 93,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-сша-a91e",
-      "domain": "geopolitics",
-      "legacy": 65,
       "shadow": null,
       "delta": null
     },
@@ -1431,9 +1428,9 @@
   ],
   "deny_by_severity": {
     "0-30": 1,
-    "31-50": 109,
+    "31-50": 108,
     "51-70": 80,
     "71-90": 5,
-    "91-100": 1
+    "91-100": 2
   }
 }
