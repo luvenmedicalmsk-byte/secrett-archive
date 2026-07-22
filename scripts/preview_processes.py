@@ -60,9 +60,11 @@ def _detect(text):
     if not evs: return None
     grp=_GROUP.get(ents[0],'other')
     if 'attack' in evs:
-        # attack засчитывается ТОЛЬКО при явном ритейл-контексте (маркетплейс/бренд-склад/ПВЗ).
-        # Иначе это военный удар или общий kinetic — не инфраструктурный процесс ритейла.
-        if not _RETAIL_CTX.search(text): return None
+        # attack засчитывается при ритейл-контексте (бренд/маркетплейс) ЛИБО при явном
+        # гражданском логистическом объекте (логцентр/распредцентр/склад), но НЕ при военном
+        # ударе по стране/военным объектам (_MILITARY отсекает удары по Ирану/Украине и т.п.).
+        _civ_logi = (grp == 'ecommerce_logistics') and not _MILITARY.search(text)
+        if not (_RETAIL_CTX.search(text) or _civ_logi): return None
         causal='attack'
     elif 'incident' in evs: causal='incident'
     elif 'outage' in evs: causal='outage'
