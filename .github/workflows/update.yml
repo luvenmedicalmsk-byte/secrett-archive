@@ -151,7 +151,7 @@ jobs:
           git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/luvenmedicalmsk-byte/secrett-archive-data.git" /tmp/pp
           mkdir -p /tmp/pp/docs
           [ -f docs/_preview_processes.json ] && cp docs/_preview_processes.json /tmp/pp/docs/_preview_processes.json
-          PDIRS="docs/grdf docs/resilience docs/scenarios docs/strategy docs/decision-support docs/early-warning docs/executive-summary docs/risk-ranking docs/calibration docs/correlations docs/systemic docs/timelines docs/scenario-tree docs/scenario-pathways docs/scenario-evolution docs/propagation docs/decision-quality docs/recommendations docs/dashboard docs/risk-hierarchy docs/risk-acceleration docs/strategy-feedback docs/strategy-history docs/strategy-optimization docs/validation docs/validation-external docs/decision-ranking docs/explanations docs/global-risks docs/track-record docs/intelligence"
+          PDIRS="docs/snapshots docs/strategy-evolution docs/grdf docs/resilience docs/scenarios docs/strategy docs/decision-support docs/early-warning docs/executive-summary docs/risk-ranking docs/calibration docs/correlations docs/systemic docs/timelines docs/scenario-tree docs/scenario-pathways docs/scenario-evolution docs/propagation docs/decision-quality docs/recommendations docs/dashboard docs/risk-hierarchy docs/risk-acceleration docs/strategy-feedback docs/strategy-history docs/strategy-optimization docs/validation docs/validation-external docs/decision-ranking docs/explanations docs/global-risks docs/track-record docs/intelligence"
           for d in $PDIRS; do
             if [ -d "$d" ]; then mkdir -p "/tmp/pp/$d"; rsync -a --delete "$d/" "/tmp/pp/$d/"; fi
           done
@@ -163,7 +163,7 @@ jobs:
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add docs/_filter_noise.json docs/_dedup_debug.json docs/_pipeline_loss.json docs/_netblocks_debug.json docs/_ioda_debug.json docs/_tg_debug.json docs/coverage_totals.json docs/sources_health.json docs/_audit_events.json scripts/firms_persist.json docs/climate/ docs/events.json docs/_lifecycle.json docs/snapshots/ docs/alerts/ docs/alerts/rankings/ grivl.html docs/strategy-evolution/ docs/model-history.json 2>/dev/null || true
+          git add docs/_filter_noise.json docs/_dedup_debug.json docs/_pipeline_loss.json docs/_netblocks_debug.json docs/_ioda_debug.json docs/_tg_debug.json docs/coverage_totals.json docs/sources_health.json docs/_audit_events.json scripts/firms_persist.json docs/climate/ docs/events.json docs/_lifecycle.json docs/alerts/ docs/alerts/rankings/ grivl.html docs/model-history.json 2>/dev/null || true
           git add docs/_geo_audit.json docs/_geo_review.json docs/_geo_authority.json 2>/dev/null || true
           git add docs/signals.json docs/signal_memory.json docs/_geo_shadow.json 2>/dev/null || true
           git add docs/system_state.json 2>/dev/null || true   # ADR-021 System State
