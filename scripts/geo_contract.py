@@ -482,6 +482,9 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
         t = str(title or '').strip().lower()
         s = str(summary or '').lower()
         blob = (t + ' ' + s)
+        # ФИКС #3: «Украинск* ССР» — историческая отсылка (УССР 1922-1991), место
+        # рождения ≠ современная Украина как актор/impact. Гасим до gazetteer.
+        blob = re.sub(r'украинск\w*\s+сср', ' советск-респ ', blob)
         # Британская Колумбия — провинция Канады (не GB через стем 'британ'). Явное сопоставление до gazetteer (покрывает падежи).
         if re.search(r'британск\w*\s+колумби', blob):
             return _mk(('CA','Канада',53.7,-127.6),'natural',blob,None,raw_coords)
