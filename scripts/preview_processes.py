@@ -108,7 +108,14 @@ def build_infra(events):
             'lifecycle': 'active',
             'confidence': round(min(0.95, 0.3 + 0.15*mc + 0.1*gs), 2),
             'evidence': g['members'][:6],
-            'title': (f'Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])} ({_CAUSAL_RU.get(g["causal"], g["causal"])})' if INFRA_PRODUCTION else f'🧪 Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])} ({_CAUSAL_RU.get(g["causal"], g["causal"])})'),
+            'evidence_count': mc,           # ЭТАП 4: явный счётчик (UI показывает список evidence)
+            'created_at': (dates[0] if dates else _iso(_now())[:10]) + 'T00:00:00Z',  # ЭТАП 5: возраст
+            'updated_at': (dates[-1] if dates else _iso(_now())[:10]) + 'T00:00:00Z', # ЭТАП 6: обновление
+            'forecast_ready': mc >= 4,      # ЭТАП 7: прогноз при >=4 наблюдениях (иначе слишком короткий)
+            # ЭТАП 1 (TASK логистика): название = ОБЪЕКТ системы, без способа воздействия.
+            # Тип воздействия остаётся в causal_model для аналитики, но не в заголовке.
+            'title': (f'Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])}' if INFRA_PRODUCTION else f'🧪 Инфраструктурный процесс — {_GRP_RU.get(g["group"], g["group"])}'),
+            'causal_label': _CAUSAL_RU.get(g["causal"], g["causal"]),  # отдельное поле (не в title)
         }
         procs.append(proc)
         shadow.append({'key':key,'group':g['group'],'causal':g['causal'],'mc':mc,'gs':gs,'maturity':maturity})
