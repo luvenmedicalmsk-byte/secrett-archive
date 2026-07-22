@@ -139,6 +139,22 @@ jobs:
         run: |
           python scripts/infra_detection_shadow.py || true
 
+      - name: Push preview_processes -> private (платный контент, не в public)
+        continue-on-error: true
+        env:
+          TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ] || [ ! -f docs/_preview_processes.json ]; then echo "skip preview push"; exit 0; fi
+          git config --global user.email "bot@secrett-archive"
+          git config --global user.name "atlas-sync"
+          rm -rf /tmp/pp
+          git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/luvenmedicalmsk-byte/secrett-archive-data.git" /tmp/pp
+          mkdir -p /tmp/pp/docs
+          cp docs/_preview_processes.json /tmp/pp/docs/_preview_processes.json
+          cd /tmp/pp
+          git add docs/_preview_processes.json
+          if git diff --cached --quiet; then echo "нет изменений"; else git commit -m "preview_processes $(date -u +%FT%TZ)" && git push; fi
+
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
@@ -155,7 +171,7 @@ jobs:
           git add docs/_diagnostics_report.json 2>/dev/null || true   # I.2 Diagnostics
           git add docs/_change_impact.json 2>/dev/null || true   # I.3 Change Impact
           git add docs/_entity_shadow.json 2>/dev/null || true   # Entity Layer Shadow (Этап 1)
-          git add docs/_preview_processes.json docs/_infra_process_shadow.json docs/_financial_shadow.json 2>/dev/null || true   # Этап 3 Preview
+          git add docs/_infra_process_shadow.json docs/_financial_shadow.json 2>/dev/null || true   # Этап 3 Preview (_preview_processes.json уведён в private-only)
           git add docs/_infra_detection_shadow.json docs/_infra_detection_state.json 2>/dev/null || true   # ADR-012 Phase 1 Shadow
           git add docs/_birth_semantics.json 2>/dev/null || true   # SPEC-013 §3 Birth Semantics
           git add docs/_impact_debug.json 2>/dev/null || true
