@@ -2,66 +2,66 @@
   "country": "SG",
   "date": "2026-07-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-22T13:13:01.981163+00:00",
+  "generated_at": "2026-07-22T15:00:49.481286+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SG",
       "type": "Country",
       "label": "SG",
-      "score": 48,
+      "score": 62,
       "props": {
-        "risk_score": 48
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-SG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
+      "score": 59,
       "trend": "up"
     },
     {
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 60,
+      "score": 63,
       "trend": "up"
     },
     {
       "id": "DOMAIN-SG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
+      "score": 43,
       "trend": "up"
     },
     {
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 31,
+      "score": 40,
       "trend": "up"
     },
     {
       "id": "DOMAIN-SG-social",
       "type": "Domain",
       "label": "social",
-      "score": 36,
+      "score": 46,
       "trend": "up"
     },
     {
       "id": "DOMAIN-SG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 34,
+      "score": 43,
       "trend": "up"
     },
     {
       "id": "DOMAIN-SG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 29,
+      "score": 37,
       "trend": "up"
     },
     {
@@ -80,13 +80,6 @@
       "label": "social"
     },
     {
-      "id": "SIGNAL-SG-Исследован",
-      "type": "Signal",
-      "label": "Исследование показывает, что добыча речн",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-SG-Технологич",
       "type": "Signal",
       "label": "Технологический сигнал — Сингапур",
@@ -99,6 +92,13 @@
       "label": "Климатический сигнал — Юго-Восточная Ази",
       "severity": 52,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SG-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Сингапур",
+      "severity": 34,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-social",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-cyber",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.37
     },
     {
       "from": "DRIVER-SG-economic",
@@ -184,10 +184,46 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SG-Исследован",
-      "to": "DOMAIN-SG-climate",
+      "from": "DOMAIN-SG-climate",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
+      "to": "DOMAIN-SG-economic",
+      "type": "ESCALATES",
+      "weight": 0.78,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 21
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "CORRELATES",
+      "weight": 0.5,
+      "lag_days": 60
     },
     {
       "from": "SIGNAL-SG-Технологич",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-SG-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-SG-Экономичес",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.34
     }
   ]
 }
