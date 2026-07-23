@@ -139,31 +139,11 @@ jobs:
         run: |
           python scripts/infra_detection_shadow.py || true
 
-      - name: Push премиум -> private (платный контент, не в public)
-        continue-on-error: true
-        env:
-          TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
-        run: |
-          if [ -z "$TOKEN" ]; then echo "нет токена, skip"; exit 0; fi
-          git config --global user.email "bot@secrett-archive"
-          git config --global user.name "atlas-sync"
-          rm -rf /tmp/pp
-          git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/luvenmedicalmsk-byte/secrett-archive-data.git" /tmp/pp
-          mkdir -p /tmp/pp/docs
-          [ -f docs/_preview_processes.json ] && cp docs/_preview_processes.json /tmp/pp/docs/_preview_processes.json
-          PDIRS="docs/snapshots docs/strategy-evolution docs/grdf docs/resilience docs/scenarios docs/strategy docs/decision-support docs/early-warning docs/executive-summary docs/risk-ranking docs/calibration docs/correlations docs/systemic docs/timelines docs/scenario-tree docs/scenario-pathways docs/scenario-evolution docs/propagation docs/decision-quality docs/recommendations docs/dashboard docs/risk-hierarchy docs/risk-acceleration docs/strategy-feedback docs/strategy-history docs/strategy-optimization docs/validation docs/validation-external docs/decision-ranking docs/explanations docs/global-risks docs/track-record docs/intelligence"
-          for d in $PDIRS; do
-            if [ -d "$d" ]; then mkdir -p "/tmp/pp/$d"; rsync -a --delete "$d/" "/tmp/pp/$d/"; fi
-          done
-          cd /tmp/pp
-          git add -A
-          if git diff --cached --quiet; then echo "нет изменений"; else git commit -m "premium data $(date -u +%FT%TZ)" && git push; fi
-
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add docs/_filter_noise.json docs/_dedup_debug.json docs/_pipeline_loss.json docs/_netblocks_debug.json docs/_ioda_debug.json docs/_tg_debug.json docs/coverage_totals.json docs/sources_health.json docs/_audit_events.json scripts/firms_persist.json docs/climate/ docs/events.json docs/_lifecycle.json docs/alerts/ docs/alerts/rankings/ grivl.html docs/model-history.json 2>/dev/null || true
+          git add docs/_filter_noise.json docs/_dedup_debug.json docs/_pipeline_loss.json docs/_netblocks_debug.json docs/_ioda_debug.json docs/_tg_debug.json docs/coverage_totals.json docs/sources_health.json docs/_audit_events.json scripts/firms_persist.json docs/climate/ docs/events.json docs/_lifecycle.json docs/snapshots/ docs/intelligence/ docs/alerts/ docs/alerts/rankings/ grivl.html docs/grdf/ docs/timelines/ docs/scenarios/ docs/correlations/ docs/propagation/ docs/systemic/ docs/early-warning/ docs/decision-support/ docs/resilience/ docs/calibration/ docs/strategy/ docs/strategy-history/ docs/strategy-feedback/ docs/validation/ docs/explanations/ docs/dashboard/ docs/decision-quality/ docs/decision-ranking/ docs/strategy-optimization/ docs/strategy-evolution/ docs/recommendations/ docs/executive-summary/ docs/scenario-evolution/ docs/scenario-pathways/ docs/scenario-tree/ docs/global-risks/ docs/risk-ranking/ docs/risk-hierarchy/ docs/risk-acceleration/ docs/validation-external/ docs/track-record/ docs/model-history.json docs/validation/ 2>/dev/null || true
           git add docs/_geo_audit.json docs/_geo_review.json docs/_geo_authority.json 2>/dev/null || true
           git add docs/signals.json docs/signal_memory.json docs/_geo_shadow.json 2>/dev/null || true
           git add docs/system_state.json 2>/dev/null || true   # ADR-021 System State
@@ -175,7 +155,7 @@ jobs:
           git add docs/_diagnostics_report.json 2>/dev/null || true   # I.2 Diagnostics
           git add docs/_change_impact.json 2>/dev/null || true   # I.3 Change Impact
           git add docs/_entity_shadow.json 2>/dev/null || true   # Entity Layer Shadow (Этап 1)
-          git add docs/_infra_process_shadow.json docs/_financial_shadow.json 2>/dev/null || true   # Этап 3 Preview (_preview_processes.json уведён в private-only)
+          git add docs/_preview_processes.json docs/_infra_process_shadow.json docs/_financial_shadow.json 2>/dev/null || true   # Этап 3 Preview
           git add docs/_infra_detection_shadow.json docs/_infra_detection_state.json 2>/dev/null || true   # ADR-012 Phase 1 Shadow
           git add docs/_birth_semantics.json 2>/dev/null || true   # SPEC-013 §3 Birth Semantics
           git add docs/_impact_debug.json 2>/dev/null || true
