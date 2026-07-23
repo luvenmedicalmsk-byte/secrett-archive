@@ -2,67 +2,67 @@
   "country": "UA",
   "date": "2026-07-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-23T05:20:11.120867+00:00",
+  "generated_at": "2026-07-23T07:59:26.598982+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-UA",
       "type": "Country",
       "label": "UA",
-      "score": 56,
+      "score": 60,
       "props": {
-        "risk_score": 56
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-UA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "down"
+      "score": 67,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 17,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 4,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-UA-social",
       "type": "Domain",
       "label": "social",
-      "score": 8,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 9,
-      "trend": "down"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-UA-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-UA-ВСУ_ударил",
+      "type": "Signal",
+      "label": "ВСУ ударили по городскому рынку и магази",
+      "severity": 68,
+      "domain": "social"
+    },
+    {
+      "id": "SIGNAL-UA-Ночью_ВС_Р",
+      "type": "Signal",
+      "label": "Ночью ВС РФ нанесли комбинированные удар",
+      "severity": 67,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-UA-Пророссийс",
       "type": "Signal",
       "label": "Пророссийские хакеры разгромили системы ",
       "severity": 62,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-UA-Александр_",
-      "type": "Signal",
-      "label": "Александр Лукашенко поручил министру обо",
-      "severity": 53,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-UA-Михаил_Фед",
-      "type": "Signal",
-      "label": "Михаил Федоров был уволен за свои успехи",
-      "severity": 46,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.67
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-economic",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-climate",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-technology",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-social",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-UA",
       "to": "DOMAIN-UA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-UA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-UA-geopolitical",
+      "to": "DOMAIN-UA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UA-infrastructure",
+      "to": "DOMAIN-UA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UA-economic",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-UA-ВСУ_ударил",
+      "to": "DOMAIN-UA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.68
+    },
+    {
+      "from": "SIGNAL-UA-Ночью_ВС_Р",
+      "to": "DOMAIN-UA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.67
+    },
+    {
       "from": "SIGNAL-UA-Пророссийс",
       "to": "DOMAIN-UA-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-UA-Александр_",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-UA-Михаил_Фед",
-      "to": "DOMAIN-UA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
