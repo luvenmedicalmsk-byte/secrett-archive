@@ -1,67 +1,67 @@
 {
   "country": "JP",
-  "date": "2026-07-22",
+  "date": "2026-07-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-22T19:00:32.323642+00:00",
+  "generated_at": "2026-07-23T05:20:11.122172+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-JP",
       "type": "Country",
       "label": "JP",
-      "score": 53,
+      "score": 60,
       "props": {
-        "risk_score": 53
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 33,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-JP-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 2,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-JP-Япония_стр",
-      "type": "Signal",
-      "label": "Япония страдает от 'катастрофы' из-за жа",
-      "severity": 57,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-JP-В_централь",
       "type": "Signal",
       "label": "В центральной Японии впервые с начала го",
       "severity": 56,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-JP-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Япония",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-climate",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "DRIVER-JP-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-JP-geopolitical",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-JP-Ядерная_эн",
       "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-JP-Япония_стр",
-      "to": "DOMAIN-JP-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.57
-    },
-    {
       "from": "SIGNAL-JP-В_централь",
       "to": "DOMAIN-JP-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-JP-Геополитич",
+      "to": "DOMAIN-JP-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
