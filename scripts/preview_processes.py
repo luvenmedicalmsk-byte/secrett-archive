@@ -181,6 +181,10 @@ def build_infra(events):
 _GRP_RU={'ecommerce_logistics':'логистика e-commerce','ecommerce_platform':'платформы e-commerce',
  'offline_retail':'офлайн-ритейл','last_mile':'последняя миля'}
 _CAUSAL_RU={'attack':'атаки','incident':'инциденты','outage':'сбои','regulation':'регулирование'}
+# падежные формы для заголовка гипотезы: «Расширение паттерна <род.п.> на <вин.п.>»
+_CAUSAL_GEN={'attack':'атак','incident':'инцидентов','outage':'сбоев','regulation':'регулирования'}
+_GRP_ACC={'ecommerce_logistics':'логистику e-commerce','ecommerce_platform':'платформы e-commerce',
+ 'offline_retail':'офлайн-ритейл','last_mile':'последнюю милю'}
 
 # ── Задача 2: Financial Stability Process (Preview, SYNTHETIC) ──
 # СТРУКТУРА карточки. Synthetic-значения детерминированы от даты (заменяются реальными индикаторами).
@@ -270,6 +274,8 @@ def build_observation_detection(infra_procs):
         grp = p.get('entity_class_group','')
         grp_ru = _GRP_RU.get(grp, grp)
         cau_ru = _CAUSAL_RU.get(p.get('causal_model',''), p.get('causal_model',''))
+        cau_gen = _CAUSAL_GEN.get(p.get('causal_model',''), cau_ru)
+        grp_acc = _GRP_ACC.get(grp, grp_ru)
         key = p['process_id'].replace('infra-','')
         places = p.get('places', [])
         mc = p.get('member_count', 0)
@@ -285,7 +291,7 @@ def build_observation_detection(infra_procs):
             'production': INFRA_PRODUCTION,
             'preview': not INFRA_PRODUCTION,
             'parent_id': p['process_id'],
-            'title': f'Расширение паттерна «{cau_ru}» на {grp_ru}',
+            'title': f'Расширение паттерна {cau_gen} на {grp_acc}',
             'status_label': 'Наблюдение',
             'lifecycle_stage': 'observation',
             'lifecycle': 'observation',
