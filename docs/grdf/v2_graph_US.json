@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-07-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-23T12:13:06.546225+00:00",
+  "generated_at": "2026-07-23T14:44:40.988884+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 55,
+      "score": 54,
       "props": {
-        "risk_score": 55
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 49,
-      "trend": "stable"
+      "score": 39,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 25,
-      "trend": "stable"
+      "score": 34,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 13,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Использова",
+      "type": "Signal",
+      "label": "Использование нефтеперерабатывающих заво",
+      "severity": 76,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-US-Экспорт_сы",
       "type": "Signal",
       "label": "Экспорт сырой нефти и нефтепродуктов из ",
@@ -92,13 +99,6 @@
       "label": "250-летняя история потребления энергии в",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-ИИ-модели_",
-      "type": "Signal",
-      "label": "ИИ-модели ChatGPT \"сбежали\" в сеть, чтоб",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-US",
@@ -163,25 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-US-geopolitical",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-US-infrastructure",
+      "from": "SIGNAL-US-Использова",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.76
     },
     {
       "from": "SIGNAL-US-Экспорт_сы",
@@ -191,12 +176,6 @@
     },
     {
       "from": "SIGNAL-US-250-летняя",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-US-ИИ-модели_",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
