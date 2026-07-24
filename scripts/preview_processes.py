@@ -159,6 +159,10 @@ def _ent_ru(keys):
 
 
 try:
+    from geo_resolver import all_subjects as _ALL_SUBJ
+except Exception:
+    def _ALL_SUBJ(_t): return []
+try:
     from geo_resolver import RU_SUBJECTS as _RU_SUBJ, BARE_CITY_SUBJECT as _RU_BARE
     _REGION_WHITELIST = set(_RU_SUBJ.values()) | set(_RU_BARE.values())
 except Exception:
@@ -247,6 +251,10 @@ _ECOM_ANCHOR = re.compile(
     r'маркетплейс\w*|интернет-магазин\w*|пункт\w*\s+выдач\w*|\bпвз\b|'
     r'распределительн\w*\s+центр\w*|логистическ\w*\s+(?:центр|комплекс|хаб|терминал)\w*|'
     r'сортировочн\w*\s+(?:центр|комплекс)\w*|фулфилмент\w*|фулфилмент-центр\w*', re.I)
+# Экономическая реакция на инцидент (выплаты, меры поддержки, страховка) — это
+# следствие процесса, но не событие на объекте.
+_SUPPORT = re.compile(r'мер\w*\s+поддержк\w*|запустил\w*\s+(?:мер|программ)\w*|'
+                      r'страхов\w*\s+возмещен\w*|компенсац\w*\s+бизнес\w*', re.I)
 _DRILL = re.compile(r'учебн\w*\s+(?:эвакуац|тревог|сбор|занят)\w*|\bучени[йяею]\b|'
                     r'тренировочн\w*|плановая\s+проверк\w*|отработк\w*\s+действий', re.I)
 _MEDIA_META = re.compile(
@@ -291,12 +299,50 @@ _OBJ_RX_EV = _re.compile(r'склад|логистич|логистик|марк
                          r'транспортн\w* узел|терминал|порт\b|перевозк', _re.I)
 
 
-def build_infra(events):
+def _historic_members(docs_dir):
+    """События, уже выпавшие из окна events.json, но сохранённые как evidence
+    в signals.json. Без них процесс теряет свою первую волну: build_infra видит
+    только текущее окно, а хроника процесса длиннее его."""
+    out = []
+    try:
+        import json as _j
+        with open(str(docs_dir) + '/signals.json', encoding='utf-8') as f:
+            data = _j.load(f)
+        seen = set()
+        for s in (data.get('signals') or []):
+            for e in (s.get('evidence') or []):
+                if not isinstance(e, dict):
+                    continue
+                t = (e.get('title') or '').strip()
+                if not t or t[:60] in seen:
+                    continue
+                seen.add(t[:60])
+                out.append({'title': t, 'summary': e.get('detail') or '',
+                            'date': (e.get('date') or '')[:10],
+                            'source': e.get('source') or '', '_historic': True})
+    except Exception as _e:
+        print('[INFRA] historic skip: %s' % _e, file=sys.stderr)
+    return out
+
+
+def build_infra(events, docs_dir=None):
     groups={}   # identity_key_infra -> члены
-    for e in events:
-        b=((e.get('title','') or '')+' '+(e.get('summary','') or ''))
-        d=_detect(b)
+    _src=list(events or [])
+    if FEATURES_LAYER and docs_dir:
+        # историческая память: события, выпавшие из окна, но живущие в signals.json
+        _seen={((e.get('title') or '')[:60]) for e in _src}
+        for _h in _historic_members(docs_dir):
+            if _h['title'][:60] not in _seen:
+                _src.append(_h); _seen.add(_h['title'][:60])
+    for e in _src:
+        _ttl=(e.get('title','') or '')
+        b=(_ttl+' '+(e.get('summary','') or ''))
+        # инцидент определяется ЗАГОЛОВКОМ: в теле новости пересказывают чужие
+        # эпизоды, меры поддержки и места госпитализации — это не события процесса
+        d=_detect(b)                      # причинность — по всему тексту
         if not d: continue
+        if FEATURES_LAYER and _SUPPORT.search(_ttl):
+            continue                      # меры поддержки/выплаты — не инцидент
         grp,causal=d
         key=hashlib.md5(f"{grp}|{causal}".encode()).hexdigest()[:8]
         g=groups.setdefault(key,{'group':grp,'causal':causal,'members':[],'places':set(),'dates':[],'entities':set()})
@@ -304,6 +350,13 @@ def build_infra(events):
             for _ek,_erx in _ENT.items():
                 if _erx.search(b): g['entities'].add(_ek)
         pl=e.get('region') or (e.get('geo') or {}).get('country')
+        if FEATURES_LAYER:
+            # мульти-гео: «склады в Тамбовской области И в Электростали» — два региона
+            try:
+                for _s in _ALL_SUBJ(_ttl):      # только из заголовка
+                    g['places'].add(_s)
+            except Exception:
+                pass
         dt=e.get('date') or e.get('first_seen')
         g['members'].append({
             'title': (e.get('title') or '')[:140],
@@ -1143,7 +1196,7 @@ def main():
         events=ev.get('events', [])
     except Exception as e:
         print(f'[PREVIEW] нет events.json: {e}', file=sys.stderr); return 0
-    infra, infra_shadow = build_infra(events)
+    infra, infra_shadow = build_infra(events, DOCS)
     # ADR-010 Phase 1: реальные индикаторы; при недоступности источника — fallback на synthetic
     fin = None
     if FINANCIAL_V2 and _fin_v2 is not None:

@@ -70,9 +70,27 @@ BARE_CITY_SUBJECT = {
     'самара': 'Самарская область', 'тверь': 'Тверская область',
     'пермь': 'Пермский край', 'уфа': 'Башкортостан', 'омск': 'Омская область',
     'симферопол': 'Крым', 'севастопол': 'Севастополь',
+    'электростал': 'Московская область', 'подмосков': 'Московская область',
+    'котовск': 'Тамбовская область', 'невинномысск': 'Ставропольский край',
 }
 # Только по границе слова: 'казан' внутри «безнаказанности» давал Татарстан.
 _BARE_RX = {c: re.compile(r'\b' + c[:-1] + r'[а-яё]{0,3}\b', re.I) for c in BARE_CITY_SUBJECT}
+
+
+def all_subjects(text):
+    """ВСЕ субъекты, упомянутые в тексте. Событие «атакованы склады в Тамбовской
+    области и в Электростали» относится к двум регионам сразу — одного места мало."""
+    low = (text or '').lower()
+    out = []
+    for stem, name in RU_SUBJECTS.items():
+        if stem in low and stem not in SPB_DISTRICT_HOMONYMS and name not in out:
+            out.append(name)
+    for c, nm in BARE_CITY_SUBJECT.items():
+        if _BARE_RX[c].search(low) and nm not in out:
+            out.append(nm)
+    if ('петербург' in low or 'спб' in low) and 'Санкт-Петербург' not in out:
+        out.append('Санкт-Петербург')
+    return out
 
 
 def ru_subject(text):
