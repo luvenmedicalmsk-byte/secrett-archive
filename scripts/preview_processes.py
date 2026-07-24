@@ -54,6 +54,34 @@ _LOGI_CLUSTERS = [
 ]
 
 
+# ── СПРАВОЧНИК ОПЕРАТОРОВ КЛАССА (экспертная разметка, НЕ вывод модели) ──
+# Описывает состав инфраструктурного класса e-commerce: кто в нём есть и какую
+# роль занимает. Модель вычисляет только одно — кто из них уже присутствует в
+# событиях процесса. Позиции на рынке даны как справка, они не пересчитываются.
+_CLASS_OPERATORS = [
+    {'name': 'Wildberries', 'kind': 'marketplace', 'rank': '№1 на рынке',
+     'note': 'самая разветвлённая складская сеть'},
+    {'name': 'Ozon', 'kind': 'marketplace', 'rank': '№2',
+     'note': 'сильные позиции в Поволжье и Сибири'},
+    {'name': 'Яндекс Маркет', 'kind': 'marketplace', 'rank': '№3',
+     'note': 'интегрирован с другими сервисами Яндекса'},
+    {'name': 'СДЭК', 'kind': 'logistics', 'rank': 'логистический оператор',
+     'note': 'не маркетплейс, но критическая инфраструктура доставки'},
+    {'name': 'Boxberry', 'kind': 'logistics', 'rank': 'логистический оператор',
+     'note': 'не маркетплейс, но критическая инфраструктура доставки'},
+]
+
+
+def _class_operators(observed):
+    """Состав класса + отметка, кто уже наблюдается в событиях процесса."""
+    obs = {str(k).lower(): v for k, v in (observed or {}).items()}
+    out = []
+    for o in _CLASS_OPERATORS:
+        n = obs.get(o['name'].lower())
+        out.append(dict(o, observed=bool(n), mentions=(n or 0)))
+    return out
+
+
 def _watch_zones(regions):
     """Зоны наблюдения: где у процесса уже есть подтверждения, а где их нет.
     Отсутствие подтверждений = максимальная информативность нового наблюдения
@@ -669,6 +697,7 @@ def _features(p, ctx=None):
         'watch_zones': _watch_zones(regions),
         'watch_objects': {
             'operators': sorted((p.get('operators') or {}).items(), key=lambda x: -x[1]),
+            'class_operators': _class_operators(p.get('operators')),
             'object_types': _ent_ru(ents),
             'note': 'Объекты одного инфраструктурного класса. Перечень отражает то, что уже '
                     'наблюдается внутри процесса, и служит для проверки сохранения паттерна.',
