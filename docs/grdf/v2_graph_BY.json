@@ -2,67 +2,67 @@
   "country": "BY",
   "date": "2026-07-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-24T14:56:50.188620+00:00",
+  "generated_at": "2026-07-24T16:33:49.709612+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-BY",
       "type": "Country",
       "label": "BY",
-      "score": 53,
+      "score": 62,
       "props": {
-        "risk_score": 53
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-BY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 8,
-      "trend": "down"
+      "score": 66,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 3,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BY-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 2,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-BY-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-BY-Узбекистан",
-      "type": "Signal",
-      "label": "Узбекистан планирует построить логцентр ",
-      "severity": 53,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-BY-Санкционно",
       "type": "Signal",
       "label": "Санкционное давление — Беларусь",
@@ -99,6 +92,13 @@
       "label": "Климатический сигнал — Беларусь",
       "severity": 53,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-BY-Валютный_р",
+      "type": "Signal",
+      "label": "Валютный рынок — Беларусь",
+      "severity": 62,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.66
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-climate",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-BY",
       "to": "DOMAIN-BY-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "DRIVER-BY-Geopolitical",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-BY-Узбекистан",
-      "to": "DOMAIN-BY-climate",
+      "from": "DOMAIN-BY-geopolitical",
+      "to": "DOMAIN-BY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-BY-infrastructure",
+      "to": "DOMAIN-BY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BY-economic",
+      "to": "DOMAIN-BY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-BY-Санкционно",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-BY-climate",
       "type": "AMPLIFIES",
       "weight": 0.53
+    },
+    {
+      "from": "SIGNAL-BY-Валютный_р",
+      "to": "DOMAIN-BY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
