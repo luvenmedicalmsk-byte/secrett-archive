@@ -1,0 +1,60 @@
+name: Features Audit (ADR-035, инженерный)
+
+# Диагностика перед включением FEATURES_LAYER. НЕ часть основного прогона:
+# ничего не коммитит в docs, не создаёт шума в истории. Только ручной запуск.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: features-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read          # read-only: отчёт не коммитится
+    steps:
+      - name: Клонирование репозитория
+        uses: actions/checkout@v4
+
+      - name: Настройка Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Сравнение старой и новой модели (old vs features)
+        timeout-minutes: 5
+        run: |
+          python scripts/features_diff.py
+          echo '── сводка ──'
+          python - <<'PY'
+          import json
+          r = json.load(open('docs/_features_diff.json', encoding='utf-8'))
+          print('процессов:', r['summary']['processes'],
+                '| unexpected:', r['summary']['unexpected_total'],
+                '| вердикт:', r['summary']['verdict'])
+          for p in r['processes']:
+              print('\n══', p['process_id'], '|', p.get('title'))
+              for c in p.get('changed_fields', []):
+                  print(f"   ~ {c['field']}: {c['from']} → {c['to']}  [{c['verdict']}] {c['reason']}")
+              print('   инварианты:', p.get('consistency'))
+          PY
+
+      - name: Отчёт как артефакт
+        uses: actions/upload-artifact@v4
+        with:
+          name: features-diff
+          path: docs/_features_diff.json
+          retention-days: 14
+
+      - name: Вердикт (падает при UNEXPECTED)
+        run: |
+          python - <<'PY'
+          import json, sys
+          r = json.load(open('docs/_features_diff.json', encoding='utf-8'))
+          if r['summary']['unexpected_total']:
+              print('UNEXPECTED расхождения — включать FEATURES_LAYER нельзя')
+              sys.exit(1)
+          print('PASS')
+          PY

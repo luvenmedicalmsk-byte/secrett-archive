@@ -221,6 +221,11 @@ def build_infra(events):
         }
         if FEATURES_LAYER:
             proc['entities'] = sorted(g['entities'])   # типы объектов процесса (для features/delta)
+            # качество географии ≠ состояние процесса: члены без разрешённого региона
+            # (пустое место или страновая заглушка) считаются отдельно — из них
+            # выводится geo_resolution в features.state.
+            proc['geo_unresolved'] = sum(
+                1 for m in mems if not m.get('place') or m['place'] in _COUNTRY_STANDIN)
         procs.append(proc)
         shadow.append({'key':key,'group':g['group'],'causal':g['causal'],'mc':mc,'gs':gs,'maturity':maturity})
     return procs, shadow
@@ -445,25 +450,71 @@ def _reasons_to_changes(reasons):
     out.sort(key=lambda x: -x['weight'])
     return out
 
+def _delta_vs(regions, ents, mc, ref, ref_label):
+    """Признаки перехода относительно опорного состояния ref (baseline или прошлая ревизия).
+    Единая механика для обоих слоёв — второй реализации нет."""
+    has = bool(ref)
+    ref_regions = set(_regions(ref.get('places')))
+    ref_mc = ref.get('mc') or 0
+    # 'entities' появилось в схеме снимка вместе с этим слоем: пока опорный снимок
+    # его не содержит, дельта по типам объектов не считается (baseline, не «всё новое»)
+    ents_baseline = has and 'entities' not in ref
+    new_regions = sorted(set(regions) - ref_regions) if has else []
+    new_ents = ([] if (not has or ents_baseline)
+                else sorted(set(ents) - set(ref.get('entities') or [])))
+    return {
+        'available': has,
+        'reference': ref_label,
+        'new_region': bool(new_regions),
+        'new_regions': new_regions,
+        'geo_expansion': bool(has and len(regions) > len(ref_regions)),
+        'repeatability_growth': bool(has and mc > ref_mc),
+        'member_delta': (mc - ref_mc) if has else None,
+        'new_object_type': bool(new_ents),
+        'new_object_types': new_ents,
+        'new_object_type_status': ('baseline' if ents_baseline else 'computed'),
+        # РАЗВИЛКА 2 (утверждён вариант А): признак межпроцессный. Внутри одного
+        # процесса структурно невычислим — новая инфраструктура это другая группа,
+        # то есть другой процесс. Хардкод False убран; null = нет данных, признак
+        # ждёт Relationship Layer. UI обязан показать «межпроцессный анализ
+        # недоступен», а не пустой чекбокс.
+        'new_infrastructure': None,
+        'new_infrastructure_status': 'requires_relationship_layer',
+    }
+
+
 def _features(p, ctx=None):
     """ЕДИНЫЙ СЛОЙ АНАЛИТИЧЕСКИХ ПРИЗНАКОВ (ADR-035).
 
     Единственное место вычисления. Ни одна карточка, ни один UI-модуль не имеет
     права считать эти признаки самостоятельно.
-        state    — что известно о процессе сейчас   (Process Card, сценарии, сводка)
-        delta    — что изменилось vs прошлой ревизии (Observation, Detection, Delta Layer)
-        evidence — доказательная база                (уверенность, история, жизненный цикл)
-    ctx — контекст снимка: {'prev_state', 'state', 'revision', 'previous_revision', 'changed_at'}
+        state               — что известно о процессе сейчас   (Process Card, сценарии, сводка)
+        baseline            — состояние на момент появления гипотезы (IMMUTABLE)
+        delta               — накопленный переход vs baseline    (Observation, Detection)
+        last_revision_delta — изменение vs прошлый прогон        (Delta Layer, Timeline)
+        evidence            — доказательная база                 (уверенность, история, ЖЦ)
+    ctx: {'baseline_state','baseline_meta','prev_state','revision','previous_revision','changed_at'}
     """
     ctx = ctx or {}
-    prev = ctx.get('prev_state') or {}
     regions = _regions(p.get('places'))
     ents = sorted(p.get('entities') or [])
     mc = p.get('member_count') or 0
+    unresolved = p.get('geo_unresolved') or 0
+
+    # КАЧЕСТВО ДАННЫХ ≠ СОСТОЯНИЕ ПРОЦЕССА (утв. решение №1).
+    # regions_count остаётся честным; geo_resolution объясняет UI, почему он такой.
+    if not regions:
+        geo_resolution = 'pending'      # UI: «География уточняется», не «0 регионов»
+    elif unresolved:
+        geo_resolution = 'partial'
+    else:
+        geo_resolution = 'resolved'
 
     state = {
         'regions_count': len(regions),
         'regions': regions,
+        'geo_resolution': geo_resolution,
+        'geo_unresolved_events': unresolved,
         'member_count': mc,
         'entities': ents,
         'entity_count': len(ents),
@@ -477,37 +528,27 @@ def _features(p, ctx=None):
         'confidence': p.get('confidence'),
     }
 
-    has_prev = bool(prev)
-    prev_regions = set(_regions(prev.get('places')))
-    prev_mc = prev.get('mc') or 0
-    # 'entities' появилось в схеме снимка вместе с этим слоем: пока прошлый снимок
-    # его не содержит, дельта по типам объектов не считается (baseline, не «всё новое»)
-    ents_baseline = has_prev and 'entities' not in prev
-    new_regions = sorted(set(regions) - prev_regions) if has_prev else []
-    new_ents = ([] if (not has_prev or ents_baseline)
-                else sorted(set(ents) - set(prev.get('entities') or [])))
-
-    delta = {
-        'available': has_prev,
-        'revision': ctx.get('revision'),
-        'previous_revision': ctx.get('previous_revision'),
-        'changed_at': ctx.get('changed_at'),
-        'new_region': bool(new_regions),
-        'new_regions': new_regions,
-        'geo_expansion': bool(has_prev and len(regions) > len(prev_regions)),
-        'repeatability_growth': bool(has_prev and mc > prev_mc),
-        'member_delta': (mc - prev_mc) if has_prev else None,
-        'new_object_type': bool(new_ents),
-        'new_object_types': new_ents,
-        'new_object_type_status': ('baseline' if ents_baseline else 'computed'),
-        # РАЗВИЛКА 2 (утверждён вариант А): признак межпроцессный. Внутри одного
-        # процесса структурно невычислим — новая инфраструктура это другая группа,
-        # то есть другой процесс. Хардкод False убран; null = нет данных, признак
-        # ждёт Relationship Layer. UI обязан показать «межпроцессный анализ
-        # недоступен», а не пустой чекбокс.
-        'new_infrastructure': None,
-        'new_infrastructure_status': 'requires_relationship_layer',
+    bstate = ctx.get('baseline_state') or {}
+    bmeta = ctx.get('baseline_meta') or {}
+    baseline = {
+        'available': bool(bstate),
+        'origin': bmeta.get('origin'),          # 'created' | 'seeded'
+        'at': bmeta.get('at'),
+        'revision': bmeta.get('revision'),
+        'immutable': True,
+        'regions_count': len(_regions(bstate.get('places'))) if bstate else None,
+        'regions': _regions(bstate.get('places')) if bstate else [],
+        'member_count': bstate.get('mc') if bstate else None,
+        'entities': sorted(bstate.get('entities') or []) if bstate else [],
     }
+
+    delta = _delta_vs(regions, ents, mc, bstate, 'baseline')
+    delta.update({'baseline_at': bmeta.get('at'), 'baseline_origin': bmeta.get('origin'),
+                  'revision': ctx.get('revision')})
+    last_rev = _delta_vs(regions, ents, mc, ctx.get('prev_state') or {}, 'previous_revision')
+    last_rev.update({'revision': ctx.get('revision'),
+                     'previous_revision': ctx.get('previous_revision'),
+                     'changed_at': ctx.get('changed_at')})
 
     evidence = {
         'confirmed_events': mc,
@@ -518,8 +559,8 @@ def _features(p, ctx=None):
         'snapshot_revision': ctx.get('revision'),
         'window': {'from': p.get('first_seen'), 'to': p.get('last_seen')},
     }
-    return {'features_version': FEATURES_VERSION,
-            'state': state, 'delta': delta, 'evidence': evidence}
+    return {'features_version': FEATURES_VERSION, 'state': state, 'baseline': baseline,
+            'delta': delta, 'last_revision_delta': last_rev, 'evidence': evidence}
 
 
 def _snapshot_pass(procs, docs_dir):
@@ -543,18 +584,47 @@ def _snapshot_pass(procs, docs_dir):
         snap = _build_snapshot(p)
         rec = store['processes'].get(pid) or {}
         prev = rec.get('current')
+        # ── BASELINE (IMMUTABLE, утв. решение №2/№4) ─────────────────────────
+        # Состояние на момент появления гипотезы. Создаётся ровно один раз и
+        # НИКОГДА не обновляется, не пересчитывается и не мигрирует — иначе
+        # «накопленный переход» потеряет точку отсчёта и история гипотезы умрёт.
+        bl = rec.get('baseline')
+        if FEATURES_LAYER and not bl:
+            if prev:
+                # запись существовала до появления слоя: сеем из текущего состояния,
+                # честно помечая origin='seeded' (это не момент рождения гипотезы)
+                bl = {'state': prev.get('state') or {}, 'at': rec.get('changed_at') or snap['generated_at'],
+                      'revision': rec.get('revision'), 'origin': 'seeded'}
+            else:
+                bl = {'state': snap['state'], 'at': snap['generated_at'],
+                      'revision': 1, 'origin': 'created'}
+        _bctx = ({'baseline_state': (bl or {}).get('state') or {},
+                  'baseline_meta': {'origin': (bl or {}).get('origin'), 'at': (bl or {}).get('at'),
+                                    'revision': (bl or {}).get('revision')}}
+                 if FEATURES_LAYER else {})
         if prev and prev.get('state_hash') == snap['state_hash']:
             if FEATURES_LAYER:
+                if bl and not rec.get('baseline'):
+                    rec = dict(rec); rec['baseline'] = bl
+                    store['processes'][pid] = rec        # только досев baseline
                 # состояние не изменилось — но контекст нужен features (delta = «без изменений»)
                 deltas[pid] = {'changes': [], 'changed_at': rec.get('changed_at'),
                                'revision': rec.get('revision'),
                                'previous_revision': rec.get('revision'),
                                'prev_state': (prev or {}).get('state') or {},
-                               'state': snap['state']}
+                               'state': snap['state'], **_bctx}
             continue                                   # без исключений: не изменилось — не пишем
         reasons = _snapshot_reasons(prev, snap)
         rlog = _reasons_log(reasons)
         changes = _reasons_to_changes(reasons)          # Delta из тех же причин
+        # МИГРАЦИОННАЯ РЕВИЗИЯ: первый снимок после включения FEATURES_LAYER меняет
+        # gs/score из-за очистки страновых заглушек. Это техническая миграция схемы,
+        # а не событие процесса — пользователю «Активность снизилась» показывать нельзя.
+        # Диагностика остаётся в change_reasons, наружу не выходит ничего.
+        _migration = bool(FEATURES_LAYER and prev and 'entities' not in (prev.get('state') or {}))
+        if _migration:
+            changes = []
+            rlog = ['[migration] features layer: ' + '; '.join(rlog)[:140]]
         store['processes'][pid] = {
             'current': snap,
             'revision': (rec.get('revision') or 0) + 1,
@@ -562,12 +632,15 @@ def _snapshot_pass(procs, docs_dir):
             'change_reasons': rlog,
             'changes': changes,
         }
+        if FEATURES_LAYER and bl:
+            # IMMUTABLE: сохраняется как есть, ни одна ветка кода его не переписывает
+            store['processes'][pid]['baseline'] = rec.get('baseline') or bl
         deltas[pid] = {'changes': changes, 'changed_at': snap['generated_at'],
                        'revision': store['processes'][pid]['revision']}
         if FEATURES_LAYER:
             deltas[pid].update({'previous_revision': rec.get('revision'),
                                 'prev_state': (prev or {}).get('state') or {},
-                                'state': snap['state']})
+                                'state': snap['state'], **_bctx})
         changed += 1
         print('[SNAPSHOT] %s rev.%d — %s' % (pid, store['processes'][pid]['revision'], '; '.join(rlog)[:160]),
               file=sys.stderr)

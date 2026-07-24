@@ -118,11 +118,16 @@ def main():
         # features собираем с контекстом реального снимка
         rec = snaps.get(pid) or {}
         cur = rec.get('current') or {}
-        fctx = {'prev_state': cur.get('state') or {}, 'state': {},
+        bl = rec.get('baseline') or {}
+        fctx = {'prev_state': cur.get('state') or {},
+                'baseline_state': bl.get('state') or {},
+                'baseline_meta': {'origin': bl.get('origin'), 'at': bl.get('at'),
+                                  'revision': bl.get('revision')},
                 'revision': rec.get('revision'), 'previous_revision': rec.get('revision'),
                 'changed_at': rec.get('changed_at')}
         feats = pp._features(new, fctx)
         st, dl = feats['state'], feats['delta']
+        lrd = feats['last_revision_delta']
 
         # ── контроль ТЗ §8: число регионов обязано совпадать со списком ──
         consistency = {
@@ -130,6 +135,13 @@ def main():
             'geo_spread_matches_regions': new.get('geo_spread') == st['regions_count'],
             'places_has_no_standin': not [x for x in (new.get('places') or [])
                                           if x in pp._COUNTRY_STANDIN],
+            # решение №1: нулевой счётчик обязан сопровождаться статусом качества данных
+            'zero_regions_marked_pending': (st['regions_count'] > 0
+                                            or st['geo_resolution'] == 'pending'),
+            # решение №4: baseline либо отсутствует, либо помечен immutable с origin
+            'baseline_immutable_flag': (not feats['baseline']['available']
+                                        or (feats['baseline']['immutable']
+                                            and feats['baseline']['origin'] in ('created', 'seeded'))),
         }
         if not all(consistency.values()):
             total_unexpected += 1
@@ -149,11 +161,13 @@ def main():
             'same_fields': same,
             'changed_fields': changed,
             'consistency': consistency,
-            'features': {'state': st, 'delta': dl, 'evidence': feats['evidence']},
+            'features': {'state': st, 'baseline': feats['baseline'], 'delta': dl,
+                         'last_revision_delta': lrd, 'evidence': feats['evidence']},
             'checklist_legacy': legacy_checklist,
             'checklist_features': features_checklist,
             'checklist_note': ('legacy считал пороги размера (gs>=2, mc>=5) — features считают '
-                               'переход относительно ревизии снимка; расхождение ожидаемо'),
+                               'накопленный переход относительно IMMUTABLE baseline гипотезы; '
+                               'расхождение ожидаемо'),
         })
 
     report['summary'] = {
