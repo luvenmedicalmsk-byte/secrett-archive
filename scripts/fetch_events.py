@@ -11221,20 +11221,24 @@ def _adr039a_shadow_report(events, outdir):
             for e in new_rep
         ],
     }
+    # ADR-039C: кросс-таблица двух осей — главный артефакт для решения
+    if SIC_SOURCE_AXIS_SHADOW:
+        _cross = {}
+        for _e in events:
+            _st = _e.get('source_type') or 'MIXED'
+            _pt = _e.get('sic_class') or 'UNKNOWN'
+            _cross.setdefault(_st, {})
+            _cross[_st][_pt] = _cross[_st].get(_pt, 0) + 1
+        rep_data['axis_cross'] = _cross
+        rep_data['by_source_type'] = dict(Counter(e.get('source_type') for e in events))
+        rep_data['by_document_form'] = dict(Counter(e.get('document_form') for e in events))
+        rep_data['form_mixed_lexical'] = [
+            {'source': str(e.get('source')), 'sic': e.get('sic_class'),
+             'title': (e.get('title') or '')[:120]}
+            for e in events
+            if e.get('source_type') == 'MIXED' and e.get('document_form') == 'REPORT']
     (outdir / 'adr039a-shadow.json').write_text(
         json.dumps(rep_data, ensure_ascii=False, indent=1), encoding='utf-8')
-    # Phase 4 требует СРАВНЕНИЯ прогонов: один перезаписываемый срез для drift-анализа
-    # бесполезен. Компактная история — по строке на прогон.
-    try:
-        _hist = {'ts': rep_data['generated'], 'events': N,
-                 'prod': len(prod_rep), 'shadow': len(shad_rep), 'new': len(new_rep),
-                 'by_reason': rep_data['by_reason'],
-                 'by_source': dict(Counter(str(e.get('source')) for e in shad_rep).most_common(20)),
-                 'unknown_count': len(rep_data['unknown_channels'])}
-        with open(str(outdir / 'adr039a-shadow-history.jsonl'), 'a', encoding='utf-8') as _f:
-            _f.write(json.dumps(_hist, ensure_ascii=False) + '\n')
-    except Exception as _e:
-        print('  [ADR-039A] history skip: %s' % _e, file=sys.stderr)
     print('  [ADR-039A shadow] events=%d | REPORT prod=%d shadow=%d (+%d) | STRONG=%d MIXED=%d'
           % (N, len(prod_rep), len(shad_rep), len(new_rep),
              rep_data['by_reason'].get('STRONG', 0), rep_data['by_reason'].get('MIXED+LEXICAL', 0)))
@@ -11247,6 +11251,10 @@ def _sic_shadow_pass(events):
                                     e.get('canon_type'))
         # ADR-039A shadow: production-поле sic_class НЕ меняется
         _sc, _reason, _match = _report_shadow_eval(e)
+        if SIC_SOURCE_AXIS_SHADOW:
+            # ADR-039C: две независимые оси. publication_type (sic_class) НЕ меняется
+            e['source_type'] = _source_type(e)
+            e['document_form'] = _document_form(e, e['source_type'])
         if SIC_REPORT_SHADOW:
             e['sic_class_shadow'] = _sc or e['sic_class']
             if _sc:
@@ -11301,6 +11309,48 @@ _RPT_LEX = _re_sic.compile(
     r'(?:отч[её]т|доклад|бюллетень|исследовани|assessment|advisory|outlook|bulletin|'
     r'report\s+card|situation\s+report|crisis\s+mapping|кризисн\w*\s+картирован|'
     r'картирован|postmortem|surveillance\s+report|threat\s+report)', _re_sic.I)
+
+
+# ═══ ADR-039C — ДВЕ НЕЗАВИСИМЫЕ ОСИ (SHADOW, READ-ONLY) ══════════════════════
+# ADR-039A смешивал природу ИСТОЧНИКА и характер ПУБЛИКАЦИИ на одной оси, из-за
+# чего Росгидромет CAP и IODA (алерты) конкурировали с REPORT, а Trading Economics
+# (котировки) не помещался ни в одну категорию.
+#   source_type      — свойство канала: REPORT | ALERT | DATA | MIXED
+#   publication_type — свойство записи: EVENT | PROCESS | COMMENTARY | BACKGROUND
+#                      (это существующий sic_class, НЕ меняется)
+#   document_form    — производная: source_type, если он определён; иначе лексика
+# Классификация публикации выполняется независимо от типа источника.
+SIC_SOURCE_AXIS_SHADOW = True
+_SRC_TYPE = {
+    # ALERT — оперативное предупреждение в реальном времени, срочность важнее формы
+    'Росгидромет CAP': 'ALERT',      # CAP: Common Alerting Protocol
+    'Copernicus EMS': 'ALERT',       # активация экстренного картирования
+    'IODA': 'ALERT',                 # детекция отключений связи в реальном времени
+    'The Watchers': 'ALERT',
+    # DATA — поток измерений и котировок, не документ
+    'Trading Economics': 'DATA',
+    'EIA': 'DATA',
+    # REPORT — институциональная публикация результатов наблюдения/исследования
+    'ECDC': 'REPORT', 'Cisco Talos': 'REPORT', 'WHO': 'REPORT',
+    'ScienceDaily Climate': 'REPORT', 'Phys.org Climate': 'REPORT',
+    'Yale E360': 'REPORT', 'Climate Home News': 'REPORT', 'R Osint': 'REPORT',
+    'Carbon Brief': 'REPORT', 'Pew Research': 'REPORT',
+}
+
+
+def _source_type(e):
+    """Ось 1: природа источника. Справочник каналов, из текста не выводится."""
+    return _SRC_TYPE.get(str(e.get('source') or ''), 'MIXED')
+
+
+def _document_form(e, src_type=None):
+    """Производная от двух осей: чем является публикация по форме.
+    Лексика применяется ТОЛЬКО к MIXED — там, где источник ничего не гарантирует."""
+    st = src_type or _source_type(e)
+    if st != 'MIXED':
+        return st
+    blob = ((e.get('title') or '') + ' ' + (e.get('summary') or '')[:300]).lower()
+    return 'REPORT' if _RPT_LEX.search(blob) else 'NEWS'
 
 
 def _report_shadow_eval(e):
