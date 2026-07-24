@@ -11223,6 +11223,18 @@ def _adr039a_shadow_report(events, outdir):
     }
     (outdir / 'adr039a-shadow.json').write_text(
         json.dumps(rep_data, ensure_ascii=False, indent=1), encoding='utf-8')
+    # Phase 4 требует СРАВНЕНИЯ прогонов: один перезаписываемый срез для drift-анализа
+    # бесполезен. Компактная история — по строке на прогон.
+    try:
+        _hist = {'ts': rep_data['generated'], 'events': N,
+                 'prod': len(prod_rep), 'shadow': len(shad_rep), 'new': len(new_rep),
+                 'by_reason': rep_data['by_reason'],
+                 'by_source': dict(Counter(str(e.get('source')) for e in shad_rep).most_common(20)),
+                 'unknown_count': len(rep_data['unknown_channels'])}
+        with open(str(outdir / 'adr039a-shadow-history.jsonl'), 'a', encoding='utf-8') as _f:
+            _f.write(json.dumps(_hist, ensure_ascii=False) + '\n')
+    except Exception as _e:
+        print('  [ADR-039A] history skip: %s' % _e, file=sys.stderr)
     print('  [ADR-039A shadow] events=%d | REPORT prod=%d shadow=%d (+%d) | STRONG=%d MIXED=%d'
           % (N, len(prod_rep), len(shad_rep), len(new_rep),
              rep_data['by_reason'].get('STRONG', 0), rep_data['by_reason'].get('MIXED+LEXICAL', 0)))
