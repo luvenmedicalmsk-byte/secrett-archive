@@ -158,10 +158,30 @@ def _ent_ru(keys):
     return [_ENT_RU.get(k, k) for k in (keys or [])]
 
 
+try:
+    from geo_resolver import RU_SUBJECTS as _RU_SUBJ, BARE_CITY_SUBJECT as _RU_BARE
+    _REGION_WHITELIST = set(_RU_SUBJ.values()) | set(_RU_BARE.values())
+except Exception:
+    _REGION_WHITELIST = set()
+
+
+def _is_region(p):
+    """Регион — субъект федерации, а не страна. «Украина», «Россия», «Глобально»
+    регионами не являются: страна и регион — разные уровни географии."""
+    if not p:
+        return False
+    if p in _COUNTRY_STANDIN:
+        return False
+    if _REGION_WHITELIST:
+        return p in _REGION_WHITELIST
+    # запасное правило, если справочник недоступен
+    return bool(re.search(r'(област|кра[йя]|республик|округ|\bАО\b|Москва|Петербург|Севастополь)', p, re.I))
+
+
 def _regions(places):
-    """Канонический список регионов: места без страновых заглушек.
+    """Канонический список регионов процесса.
     ЕДИНСТВЕННЫЙ источник счёта регионов — len() этого списка."""
-    return sorted(p for p in (places or []) if p and p not in _COUNTRY_STANDIN)
+    return sorted(p for p in (places or []) if _is_region(p))
 try:
     import financial_engine as _fin_v2
 except Exception:
@@ -208,6 +228,13 @@ _MILITARY = re.compile(r'по (?:ирану|израилю|сектору|сир
     r'запасн\w+ част\w+ и логистическ\w+ оборудован', re.I)
 # Планы/строительство — не инцидент с объектом (Узбекистан строит логцентр в Беларуси и т.п.)
 _PLAN = re.compile(r'планир\w*|намерен\w*|построит\w*|строительств\w*|ввести в эксплуатац\w*|поручил\w*|проект\w* строит', re.I)
+# Медиа-мета-новость: сообщение о том, как (не) освещали инцидент, само инцидентом
+# не является. «На Первом канале не сообщили об атаках на склады» попадало в паттерн
+# и приносило с собой чужую географию из пересказа сюжета.
+_MEDIA_META = re.compile(
+    r'(?:не\s+сообщил\w*|умолчал\w*|обошл\w*\s+стороной|не\s+упомянул\w*)|'
+    r'в\s+(?:новостях|эфире|сюжете|программе)\s+на\b|'
+    r'(?:первый|первом)\s+канал\w*|(?:телеканал|телеэфир)\w*\s+(?:не\s+)?(?:сообщ|показ|рассказ)', re.I)
 # Лог-объект ДОЛЖЕН быть целью удара: атака/удар/БПЛА в пределах ~50 символов от объекта-слова.
 _OBJ_UNDER_ATTACK = re.compile(
     r'(?:атак\w*|удар\w*|БПЛА|беспилотник|дрон\w*|обстрел|поврежд\w*|пострадавш\w*)[^.]{0,50}'
@@ -224,6 +251,8 @@ def _detect(text):
         # attack засчитывается при ритейл-контексте (бренд/маркетплейс) ЛИБО при явном
         # гражданском логистическом объекте ПОД УДАРОМ, но НЕ при военном ударе по стране,
         # НЕ при планах строительства и только если удар относится к самому объекту.
+        if _MEDIA_META.search(text):
+            return None          # освещение инцидента, а не инцидент
         _civ_logi = (grp == 'ecommerce_logistics') and not _MILITARY.search(text) \
             and not _PLAN.search(text) and _OBJ_UNDER_ATTACK.search(text)
         if not (_RETAIL_CTX.search(text) or _civ_logi): return None
