@@ -2,60 +2,60 @@
   "country": "CN",
   "date": "2026-07-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-24T08:51:19.730843+00:00",
+  "generated_at": "2026-07-24T09:20:47.716594+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 57,
+      "score": 62,
       "props": {
-        "risk_score": 57
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "down"
+      "score": 67,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 30,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CN-Супер_Эль_",
-      "type": "Signal",
-      "label": "Супер Эль Нино: является ли 2026 год 'кр",
-      "severity": 35,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CN-Наводнение",
       "type": "Signal",
       "label": "Наводнение — Китай",
       "severity": 90,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CN-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Китай",
+      "severity": 65,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.67
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-CN",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-CN",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Оранжевое_",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.9
     },
     {
-      "from": "SIGNAL-CN-Супер_Эль_",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.35
-    },
-    {
       "from": "SIGNAL-CN-Наводнение",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.9
+    },
+    {
+      "from": "SIGNAL-CN-Санкционно",
+      "to": "DOMAIN-CN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.65
     }
   ]
 }
