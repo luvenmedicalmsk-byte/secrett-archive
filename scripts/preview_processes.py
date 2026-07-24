@@ -311,27 +311,95 @@ def _build_snapshot(p):
 
 
 def _snapshot_reasons(old, new):
-    """Почему изменился state_hash. Не Delta для UI — диагностический лог."""
+    """ЕДИНЫЙ ИСТОЧНИК изменений: структурированные причины смены state_hash.
+    Из них порождаются и диагностический лог (_reasons_log), и пользовательский
+    блок «Что изменилось» (_reasons_to_changes). Второй системы вычисления нет.
+    Сравнивается ТОЛЬКО state; служебные поля не участвуют."""
     if not old:
-        return ['первый снимок']
+        return [{'field': '_first', 'kind': 'first'}]
     o, n = old.get('state', {}), new.get('state', {})
     out = []
     for f in ('mc', 'gs', 'score', 'last_event_date', 'entity_class_group', 'causal_model'):
         if o.get(f) != n.get(f):
-            out.append(f'{f}: {o.get(f)} → {n.get(f)}')
+            out.append({'field': f, 'kind': 'scalar', 'from': o.get(f), 'to': n.get(f)})
     for f in ('places', 'event_hashes', 'timeline_dates'):
         a, b = set(o.get(f) or []), set(n.get(f) or [])
         if a != b:
-            add, rem = sorted(b - a), sorted(a - b)
-            if add: out.append(f'{f} +: {", ".join(str(x)[:40] for x in add[:6])}')
-            if rem: out.append(f'{f} -: {", ".join(str(x)[:40] for x in rem[:6])}')
-    return out or ['state_hash изменился без различий в отслеживаемых полях']
+            out.append({'field': f, 'kind': 'set',
+                        'added': sorted(b - a), 'removed': sorted(a - b)})
+    return out or [{'field': '_unknown', 'kind': 'none'}]
+
+
+def _reasons_log(reasons):
+    """Диагностическая строка для stderr — из тех же причин."""
+    out = []
+    for r in reasons:
+        if r['kind'] == 'first':  out.append('первый снимок')
+        elif r['kind'] == 'none': out.append('state_hash изменился без различий в отслеживаемых полях')
+        elif r['kind'] == 'scalar': out.append(f"{r['field']}: {r['from']} → {r['to']}")
+        else:
+            if r['added']:   out.append(f"{r['field']} +: " + ', '.join(str(x)[:40] for x in r['added'][:6]))
+            if r['removed']: out.append(f"{r['field']} -: " + ', '.join(str(x)[:40] for x in r['removed'][:6]))
+    return out
+
+
+def _reasons_to_changes(reasons):
+    """Блок «Что изменилось» для карточки. Только изменения — состояние не дублируем.
+    Порождается из тех же структурированных причин, что и лог."""
+    if not reasons or any(r['kind'] in ('first', 'none') for r in reasons):
+        return []
+    by = {r['field']: r for r in reasons}
+    out = []
+    # ── 1. Подтверждения: рост / выбытие / изменение состава ──
+    ev = by.get('event_hashes')
+    mc = by.get('mc')
+    if ev:
+        na, nr = len(ev['added']), len(ev['removed'])
+        if na and nr:
+            out.append({'type': 'evidence', 'text': 'Состав подтверждений изменился',
+                        'detail': f'добавлено {na}, вышло из окна наблюдения {nr}'})
+        elif na:
+            out.append({'type': 'evidence', 'text': f'+{na} ' + ('новое подтверждение' if na == 1 else 'новых подтверждений')})
+        elif nr:
+            out.append({'type': 'evidence', 'text': f'−{nr} ' + ('подтверждение' if nr == 1 else 'подтверждений'),
+                        'detail': 'события вышли из окна наблюдения'})
+    elif mc:
+        d = (mc['to'] or 0) - (mc['from'] or 0)
+        if d:
+            out.append({'type': 'evidence',
+                        'text': ('+' if d > 0 else '−') + f'{abs(d)} подтверждений'})
+    # ── 2. География: состав важнее числа ──
+    pl = by.get('places')
+    if pl:
+        for p in pl['added'][:4]:
+            out.append({'type': 'geo', 'text': f'Новый регион: {p}'})
+        for p in pl['removed'][:4]:
+            out.append({'type': 'geo', 'text': f'Регион вышел из окна: {p}'})
+    # ── 3. Интенсивность: аналитическая формулировка, без технического score ──
+    sc = by.get('score')
+    if sc and sc['from'] is not None and sc['to'] is not None:
+        if sc['to'] > sc['from']:
+            out.append({'type': 'intensity', 'text': 'Интенсивность наблюдения выросла'})
+        elif sc['to'] < sc['from']:
+            out.append({'type': 'intensity', 'text': 'Активность процесса снизилась'})
+    # ── 4. Новые типы объектов / характер воздействия ──
+    ec = by.get('entity_class_group')
+    if ec and ec['to'] and ec['to'] != ec['from']:
+        out.append({'type': 'object', 'text': 'Выявлен новый тип объекта'})
+    cm = by.get('causal_model')
+    if cm and cm['to'] and cm['to'] != cm['from']:
+        out.append({'type': 'causal', 'text': 'Изменился характер воздействия'})
+    # ── 5. Плотность событий ──
+    td = by.get('timeline_dates')
+    if td and td['added'] and not any(o_['type'] == 'intensity' for o_ in out):
+        out.append({'type': 'intensity', 'text': 'Плотность событий увеличилась'})
+    return out
 
 
 def _snapshot_pass(procs, docs_dir):
     """Change-triggered: снимок сохраняется ТОЛЬКО при изменении state_hash."""
     if not SNAPSHOT_ENABLED:
-        return
+        return {}
     path = docs_dir / SNAPSHOT_FILE
     store = {'snapshot_version': SNAPSHOT_VERSION, 'processes': {}}
     if path.exists():
@@ -341,6 +409,7 @@ def _snapshot_pass(procs, docs_dir):
         except Exception:
             pass
     changed = 0
+    deltas = {}
     for p in procs:
         if p.get('process_type') != 'infrastructure':
             continue
@@ -351,23 +420,31 @@ def _snapshot_pass(procs, docs_dir):
         if prev and prev.get('state_hash') == snap['state_hash']:
             continue                                   # без исключений: не изменилось — не пишем
         reasons = _snapshot_reasons(prev, snap)
+        rlog = _reasons_log(reasons)
+        changes = _reasons_to_changes(reasons)          # Delta из тех же причин
         store['processes'][pid] = {
             'current': snap,
             'revision': (rec.get('revision') or 0) + 1,
             'changed_at': snap['generated_at'],
-            'change_reasons': reasons,
+            'change_reasons': rlog,
+            'changes': changes,
         }
+        deltas[pid] = {'changes': changes, 'changed_at': snap['generated_at'],
+                       'revision': store['processes'][pid]['revision']}
         changed += 1
-        print('[SNAPSHOT] %s rev.%d — %s' % (pid, store['processes'][pid]['revision'], '; '.join(reasons)[:160]),
+        print('[SNAPSHOT] %s rev.%d — %s' % (pid, store['processes'][pid]['revision'], '; '.join(rlog)[:160]),
               file=sys.stderr)
     store['updated_at'] = _iso(_now())
     path.write_text(json.dumps(store, ensure_ascii=False, indent=1), encoding='utf-8')
     print('[SNAPSHOT] процессов: %d | изменилось: %d' % (
         sum(1 for x in procs if x.get('process_type') == 'infrastructure'), changed))
+    return deltas
 
 
-def build_observation_detection(infra_procs):
-    """Для каждого Confirmed инфра-процесса создаёт Observation + Detection (ADR-024)."""
+def build_observation_detection(infra_procs, deltas=None):
+    """Для каждого Confirmed инфра-процесса создаёт Observation + Detection (ADR-024).
+    deltas — блок «Что изменилось» из snapshot-причин (Delta Layer v1)."""
+    deltas = deltas or {}
     out = []
     for p in infra_procs:
         if p.get('maturity') != 'Confirmed':
@@ -515,6 +592,13 @@ def build_observation_detection(infra_procs):
             'severity': p.get('severity', 50),
             'confidence': p.get('confidence', 0.5),
         }
+        _dl = deltas.get(p['process_id']) or {}
+        _ch = _dl.get('changes') or []
+        if _ch:                                   # блок только при реальных изменениях
+            for _card in (obs, det):
+                _card['changes'] = _ch
+                _card['changes_title'] = 'Что изменилось'
+                _card['changes_at'] = _dl.get('changed_at')
         out.append(obs)
         out.append(det)
     return out
@@ -567,14 +651,15 @@ def main():
     if prev_fin and prev_fin.get('timeline'):
         tl=prev_fin['timeline'][-23:] + fin['timeline']
         fin['timeline']=tl[-24:]
-    obsdet = build_observation_detection(infra)  # ADR-024: Observation + Detection
+    _deltas = {}
+    try:
+        _deltas = _snapshot_pass(infra, DOCS) or {}   # Delta Layer: снимок + причины
+    except Exception as _se:
+        print(f'[SNAPSHOT] fail: {_se}', file=sys.stderr)
+    obsdet = build_observation_detection(infra, _deltas)  # ADR-024 + блок «Что изменилось»
     out={'generated': _iso(_now()), 'preview': True,
          'processes': infra + obsdet + [fin]}
     (DOCS/'_preview_processes.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
-    try:
-        _snapshot_pass(infra, DOCS)      # Delta Layer этап 1 — read-only
-    except Exception as _se:
-        print(f'[SNAPSHOT] fail: {_se}', file=sys.stderr)
     # shadow-файлы (Задача 4)
     (DOCS/'_infra_process_shadow.json').write_text(json.dumps({'ts':_iso(_now()),'candidates':infra_shadow},ensure_ascii=False,indent=2),encoding='utf-8')
     (DOCS/'_financial_shadow.json').write_text(json.dumps({'ts':_iso(_now()),'fss':fin['fss'],'pressure':fin['pressure'],'indicators':fin['active_indicators']},ensure_ascii=False,indent=2),encoding='utf-8')
