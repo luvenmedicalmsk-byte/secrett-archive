@@ -37,6 +37,70 @@ _ENT_RU = {
 }
 
 
+# ── СПРАВОЧНИК ЛОГИСТИЧЕСКИХ КЛАСТЕРОВ (экспертная разметка, НЕ вывод модели) ──
+# Используется только для одного: определить, в каких кластерах у процесса уже
+# есть подтверждения, а в каких их нет. Сам факт отсутствия подтверждений делает
+# зону информативной для проверки модели — это утверждение о полноте наблюдения,
+# а не о том, что там что-то произойдёт.
+_LOGI_CLUSTERS = [
+    ('Центр',            ['москва', 'московская']),
+    ('Северо-Запад',     ['санкт-петербург', 'ленинградская', 'калининградская', 'новгородская', 'псковская']),
+    ('Чернозёмье',       ['воронежская', 'липецкая', 'белгородская', 'тамбовская', 'курская', 'орловская']),
+    ('Юг',               ['краснодарский', 'ростовская', 'ставропольский', 'астраханская', 'волгоградская', 'крым']),
+    ('Поволжье',         ['татарстан', 'нижегородская', 'самарская', 'саратовская', 'ульяновская', 'башкортостан', 'пензенская']),
+    ('Урал',             ['свердловская', 'челябинская', 'пермский', 'тюменская', 'курганская', 'оренбургская']),
+    ('Сибирь',           ['новосибирская', 'красноярский', 'омская', 'кемеровская', 'иркутская', 'томская', 'алтайский']),
+    ('Дальний Восток',   ['приморский', 'хабаровский', 'амурская', 'сахалинская', 'якутия', 'бурятия']),
+]
+
+
+def _watch_zones(regions):
+    """Зоны наблюдения: где у процесса уже есть подтверждения, а где их нет.
+    Отсутствие подтверждений = максимальная информативность нового наблюдения
+    (оно либо расширит модель, либо ограничит её текущими границами)."""
+    reg_l = [str(r).lower() for r in (regions or [])]
+    covered, open_ = [], []
+    for name, keys in _LOGI_CLUSTERS:
+        hits = [r for r in (regions or [])
+                if any(k in str(r).lower() for k in keys)]
+        if hits:
+            covered.append({'zone': name, 'status': 'covered', 'regions': hits,
+                            'basis': 'подтверждения внутри процесса уже есть — новые данные проверяют, '
+                                     'продолжается развитие или процесс затухает'})
+        else:
+            open_.append({'zone': name, 'status': 'open', 'regions': [],
+                          'basis': 'подтверждений внутри процесса нет — появление новых данных здесь '
+                                   'сильнее всего изменит текущую модель'})
+    return {'covered': covered, 'open': open_,
+            'note': 'Перечень кластеров — справочник инфраструктуры, не вывод модели. '
+                    'Вычисляется только наличие или отсутствие подтверждений внутри процесса.'}
+
+
+def _watch_span(dates, last_seen):
+    """Окно усиленного наблюдения — из фактического ритма процесса,
+    а не из фиксированных семи дней."""
+    try:
+        ds = sorted({str(d)[:10] for d in (dates or []) if d})
+        gaps = []
+        for i in range(1, len(ds)):
+            gaps.append((datetime.strptime(ds[i], '%Y-%m-%d') -
+                         datetime.strptime(ds[i-1], '%Y-%m-%d')).days)
+        gaps = [g for g in gaps if g > 0]
+        med = sorted(gaps)[len(gaps)//2] if gaps else 0
+        span = max(3, min(14, int(round(med * 3)))) if med else 7
+        base = datetime.strptime(str(last_seen)[:10], '%Y-%m-%d')
+    except Exception:
+        return None
+    a, b = base + timedelta(days=1), base + timedelta(days=span)
+    _M = ['января','февраля','марта','апреля','мая','июня','июля','августа',
+          'сентября','октября','ноября','декабря']
+    lab = (f'{a.day}' if a.month == b.month else f'{a.day} {_M[a.month-1]}') + f'–{b.day} {_M[b.month-1]}'
+    return {'from': a.strftime('%Y-%m-%d'), 'to': b.strftime('%Y-%m-%d'), 'label': lab,
+            'days': span, 'median_gap': med,
+            'basis': (f'рассчитано по текущему ритму процесса: медианный интервал {med} '
+                      f'{_plu_ru(med, "день", "дня", "дней")}' if med else 'ритм процесса пока не определён')}
+
+
 def _plu_ru(n, one, few, many):
     n = abs(int(n or 0)); n100, n10 = n % 100, n % 10
     if 11 <= n100 <= 14: return many
@@ -256,6 +320,16 @@ def build_infra(events):
             for _m in _m0:
                 for _ek, _erx in _ENT.items():
                     if _erx.search(_m.get('title') or ''): _e0.add(_ek)
+            # операторы, фактически присутствующие в событиях процесса (не список кандидатов)
+            _OPS = {'Wildberries': r'wildberries|вайлдберриз|\bwb\b', 'Ozon': r'ozon|озон',
+                    'Яндекс Маркет': r'яндекс\s*маркет', 'СДЭК': r'сдэк|cdek',
+                    'Почта России': r'почт\w*\s+россии'}
+            _ops = {}
+            for _m in mems:
+                _t = (_m.get('title') or '')
+                for _on, _orx in _OPS.items():
+                    if _re.search(_orx, _t, _re.I): _ops[_on] = _ops.get(_on, 0) + 1
+            proc['operators'] = _ops
             proc['baseline_reconstructed'] = {
                 'mc': len(_m0),
                 'places': _regions({m.get('place') for m in _m0 if m.get('place')}),
@@ -589,6 +663,16 @@ def _features(p, ctx=None):
         'pressure': p.get('pressure'),
         'score': mc * 8 + len(regions) * 10,
         'confidence': p.get('confidence'),
+        # ── панель наблюдения (ADR-035, Experimental Intelligence) ──
+        'watch_window': _watch_span([t.get('t') for t in (p.get('timeline') or [])
+                                     if isinstance(t, dict)], p.get('last_seen')),
+        'watch_zones': _watch_zones(regions),
+        'watch_objects': {
+            'operators': sorted((p.get('operators') or {}).items(), key=lambda x: -x[1]),
+            'object_types': _ent_ru(ents),
+            'note': 'Объекты одного инфраструктурного класса. Перечень отражает то, что уже '
+                    'наблюдается внутри процесса, и служит для проверки сохранения паттерна.',
+        },
     }
 
     bstate = ctx.get('baseline_state') or {}
