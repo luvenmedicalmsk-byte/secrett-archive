@@ -345,56 +345,53 @@ def _reasons_log(reasons):
 
 def _reasons_to_changes(reasons):
     """Блок «Что изменилось» для карточки. Только изменения — состояние не дублируем.
-    Порождается из тех же структурированных причин, что и лог."""
+    Порождается из тех же структурированных причин, что и лог.
+
+    ВАЖНО: механика скользящего окна наружу НЕ выводится. Выбытие свидетельств и
+    регионов — внутренняя деталь модели; пользователю показывается расширение,
+    обновление или усиление паттерна. Диагностика выбытия остаётся в change_reasons.
+    """
     if not reasons or any(r['kind'] in ('first', 'none') for r in reasons):
         return []
     by = {r['field']: r for r in reasons}
     out = []
-    # ── 1. Подтверждения: рост / выбытие / изменение состава ──
-    ev = by.get('event_hashes')
-    mc = by.get('mc')
-    if ev:
-        na, nr = len(ev['added']), len(ev['removed'])
-        if na and nr:
-            out.append({'type': 'evidence', 'text': 'Состав подтверждений изменился',
-                        'detail': f'добавлено {na}, вышло из окна наблюдения {nr}'})
-        elif na:
-            out.append({'type': 'evidence', 'text': f'+{na} ' + ('новое подтверждение' if na == 1 else 'новых подтверждений')})
-        elif nr:
-            out.append({'type': 'evidence', 'text': f'−{nr} ' + ('подтверждение' if nr == 1 else 'подтверждений'),
-                        'detail': 'события вышли из окна наблюдения'})
-    elif mc:
-        d = (mc['to'] or 0) - (mc['from'] or 0)
-        if d:
-            out.append({'type': 'evidence',
-                        'text': ('+' if d > 0 else '−') + f'{abs(d)} подтверждений'})
-    # ── 2. География: состав важнее числа ──
+    # ── 1. География: расширение или обновление состава ──
     pl = by.get('places')
     if pl:
-        for p in pl['added'][:4]:
-            out.append({'type': 'geo', 'text': f'Новый регион: {p}'})
-        for p in pl['removed'][:4]:
-            out.append({'type': 'geo', 'text': f'Регион вышел из окна: {p}'})
-    # ── 3. Интенсивность: аналитическая формулировка, без технического score ──
-    sc = by.get('score')
-    if sc and sc['from'] is not None and sc['to'] is not None:
-        if sc['to'] > sc['from']:
-            out.append({'type': 'intensity', 'text': 'Интенсивность наблюдения выросла'})
-        elif sc['to'] < sc['from']:
-            out.append({'type': 'intensity', 'text': 'Активность процесса снизилась'})
-    # ── 4. Новые типы объектов / характер воздействия ──
+        add, rem = pl['added'], pl['removed']
+        if add and rem:
+            out.append({'type': 'geo', 'text': 'География процесса обновилась', 'weight': 3})
+        for p in add[:3]:
+            out.append({'type': 'geo', 'text': f'Новый регион: {p}', 'weight': 5})
+    # ── 2. Подтверждения: только приток, без механики выбытия ──
+    ev = by.get('event_hashes')
+    mc = by.get('mc')
+    na = len(ev['added']) if ev else 0
+    if na == 1:
+        out.append({'type': 'evidence', 'text': 'Добавлено новое подтверждение', 'weight': 4})
+    elif na > 1:
+        out.append({'type': 'evidence', 'text': f'Подтверждено ещё {na} эпизода' if na < 5
+                    else f'Подтверждено ещё {na} эпизодов', 'weight': 4})
+    elif not ev and mc and (mc['to'] or 0) > (mc['from'] or 0):
+        out.append({'type': 'evidence', 'text': 'Добавлено новое подтверждение', 'weight': 4})
+    # ── 3. Новые типы объектов / характер воздействия ──
     ec = by.get('entity_class_group')
     if ec and ec['to'] and ec['to'] != ec['from']:
-        out.append({'type': 'object', 'text': 'Выявлен новый тип объекта'})
+        out.append({'type': 'object', 'text': 'Выявлен новый тип объекта', 'weight': 5})
     cm = by.get('causal_model')
     if cm and cm['to'] and cm['to'] != cm['from']:
-        out.append({'type': 'causal', 'text': 'Изменился характер воздействия'})
-    # ── 5. Плотность событий ──
+        out.append({'type': 'causal', 'text': 'Изменился характер воздействия', 'weight': 5})
+    # ── 4. Интенсивность: аналитическая формулировка, без технического score ──
+    sc = by.get('score')
     td = by.get('timeline_dates')
-    if td and td['added'] and not any(o_['type'] == 'intensity' for o_ in out):
-        out.append({'type': 'intensity', 'text': 'Плотность событий увеличилась'})
+    if sc and sc['from'] is not None and sc['to'] is not None and sc['to'] != sc['from']:
+        out.append({'type': 'intensity',
+                    'text': 'Интенсивность процесса выросла' if sc['to'] > sc['from']
+                            else 'Активность процесса снизилась', 'weight': 2})
+    elif td and td['added']:
+        out.append({'type': 'intensity', 'text': 'Частота появления событий увеличилась', 'weight': 2})
+    out.sort(key=lambda x: -x['weight'])
     return out
-
 
 def _snapshot_pass(procs, docs_dir):
     """Change-triggered: снимок сохраняется ТОЛЬКО при изменении state_hash."""
