@@ -5,7 +5,8 @@
 Два preview-процесса: Infrastructure (ADR-012, из entity-событий) + Financial Stability (synthetic).
 Также ведёт shadow: _infra_process_shadow.json, _financial_shadow.json.
 """
-import json, hashlib, re, sys
+import json
+import hashlib, hashlib, re, sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -265,6 +266,106 @@ def _what_changed(mc, gs, places):
         ch.append('появление новых событий в рамках отслеживаемого процесса')
     return ch
 
+# ═══ DELTA LAYER · ЭТАП 1 — SNAPSHOT (READ-ONLY, не влияет на карточки) ══════
+# Аналитическое состояние гипотезы. Delta НЕ вычисляется — только фиксируется
+# состояние и причины его изменения (для отладки и будущего Delta Layer).
+#
+# АРХИТЕКТУРНЫЙ ИНВАРИАНТ (аудит 2026-07-24):
+#   timeline  — источник истины: все члены процесса с датами, без cap
+#   evidence  — витрина для UI: усечена до 6 заголовков (строка ~115)
+# Snapshot строится ТОЛЬКО из timeline. evidence для аналитики не использовать.
+#
+# OFF (SNAPSHOT_ENABLED=False) → файл не пишется, поведение байт-идентично.
+SNAPSHOT_ENABLED = True
+SNAPSHOT_VERSION = 1
+SNAPSHOT_FILE = '_hypothesis_snapshots.json'
+
+
+def _ev_hash(title):
+    return hashlib.md5((title or '').encode('utf-8')).hexdigest()[:8]
+
+
+def _build_snapshot(p):
+    """Аналитическое состояние процесса. Служебные поля отделены от state."""
+    tl = [t for t in (p.get('timeline') or []) if isinstance(t, dict)]
+    dates = sorted({t.get('t') for t in tl if t.get('t')})
+    state = {
+        'mc': p.get('member_count'),
+        'gs': p.get('geo_spread'),
+        'places': sorted(p.get('places') or []),
+        'event_hashes': sorted(_ev_hash(t.get('event')) for t in tl if t.get('event')),
+        'timeline_dates': dates,
+        'last_event_date': dates[-1] if dates else None,
+        'entity_class_group': p.get('entity_class_group'),
+        'causal_model': p.get('causal_model'),
+        'score': (p.get('member_count') or 0) * 8 + (p.get('geo_spread') or 0) * 10,
+    }
+    blob = json.dumps(state, ensure_ascii=False, sort_keys=True)
+    return {
+        'snapshot_version': SNAPSHOT_VERSION,
+        'process_id': p.get('process_id'),
+        'generated_at': _iso(_now()),
+        'state_hash': hashlib.md5(blob.encode('utf-8')).hexdigest()[:12],
+        'state': state,
+    }
+
+
+def _snapshot_reasons(old, new):
+    """Почему изменился state_hash. Не Delta для UI — диагностический лог."""
+    if not old:
+        return ['первый снимок']
+    o, n = old.get('state', {}), new.get('state', {})
+    out = []
+    for f in ('mc', 'gs', 'score', 'last_event_date', 'entity_class_group', 'causal_model'):
+        if o.get(f) != n.get(f):
+            out.append(f'{f}: {o.get(f)} → {n.get(f)}')
+    for f in ('places', 'event_hashes', 'timeline_dates'):
+        a, b = set(o.get(f) or []), set(n.get(f) or [])
+        if a != b:
+            add, rem = sorted(b - a), sorted(a - b)
+            if add: out.append(f'{f} +: {", ".join(str(x)[:40] for x in add[:6])}')
+            if rem: out.append(f'{f} -: {", ".join(str(x)[:40] for x in rem[:6])}')
+    return out or ['state_hash изменился без различий в отслеживаемых полях']
+
+
+def _snapshot_pass(procs, docs_dir):
+    """Change-triggered: снимок сохраняется ТОЛЬКО при изменении state_hash."""
+    if not SNAPSHOT_ENABLED:
+        return
+    path = docs_dir / SNAPSHOT_FILE
+    store = {'snapshot_version': SNAPSHOT_VERSION, 'processes': {}}
+    if path.exists():
+        try:
+            store = json.load(open(path, encoding='utf-8'))
+            store.setdefault('processes', {})
+        except Exception:
+            pass
+    changed = 0
+    for p in procs:
+        if p.get('process_type') != 'infrastructure':
+            continue
+        pid = p.get('process_id')
+        snap = _build_snapshot(p)
+        rec = store['processes'].get(pid) or {}
+        prev = rec.get('current')
+        if prev and prev.get('state_hash') == snap['state_hash']:
+            continue                                   # без исключений: не изменилось — не пишем
+        reasons = _snapshot_reasons(prev, snap)
+        store['processes'][pid] = {
+            'current': snap,
+            'revision': (rec.get('revision') or 0) + 1,
+            'changed_at': snap['generated_at'],
+            'change_reasons': reasons,
+        }
+        changed += 1
+        print('[SNAPSHOT] %s rev.%d — %s' % (pid, store['processes'][pid]['revision'], '; '.join(reasons)[:160]),
+              file=sys.stderr)
+    store['updated_at'] = _iso(_now())
+    path.write_text(json.dumps(store, ensure_ascii=False, indent=1), encoding='utf-8')
+    print('[SNAPSHOT] процессов: %d | изменилось: %d' % (
+        sum(1 for x in procs if x.get('process_type') == 'infrastructure'), changed))
+
+
 def build_observation_detection(infra_procs):
     """Для каждого Confirmed инфра-процесса создаёт Observation + Detection (ADR-024)."""
     out = []
@@ -470,6 +571,10 @@ def main():
     out={'generated': _iso(_now()), 'preview': True,
          'processes': infra + obsdet + [fin]}
     (DOCS/'_preview_processes.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+    try:
+        _snapshot_pass(infra, DOCS)      # Delta Layer этап 1 — read-only
+    except Exception as _se:
+        print(f'[SNAPSHOT] fail: {_se}', file=sys.stderr)
     # shadow-файлы (Задача 4)
     (DOCS/'_infra_process_shadow.json').write_text(json.dumps({'ts':_iso(_now()),'candidates':infra_shadow},ensure_ascii=False,indent=2),encoding='utf-8')
     (DOCS/'_financial_shadow.json').write_text(json.dumps({'ts':_iso(_now()),'fss':fin['fss'],'pressure':fin['pressure'],'indicators':fin['active_indicators']},ensure_ascii=False,indent=2),encoding='utf-8')
