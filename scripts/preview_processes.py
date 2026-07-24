@@ -13,6 +13,26 @@ from pathlib import Path
 
 INFRA_PRODUCTION = True   # ADR-012 Phase 2: Infrastructure Process в Production (Shadow Validation пройдена)
 FINANCIAL_V2 = True       # ADR-010 Phase 1: реальные индикаторы (ЦБ РФ) вместо synthetic
+
+# ══ FEATURES LAYER (ADR-035) — единый слой аналитических признаков ═══════════
+# Ядро вычисляет признаки ОДИН раз; Observation / Detection / Process Card /
+# Experimental Intelligence / Scenario Engine / History только отображают.
+#   features.state    — что известно о процессе СЕЙЧАС
+#   features.delta    — что изменилось относительно предыдущей ревизии
+#   features.evidence — доказательная база (без повторных проходов по событиям)
+# OFF (FEATURES_LAYER=False) → вывод байт-идентичен прежнему.
+FEATURES_LAYER = False
+FEATURES_VERSION = 1
+
+# Служебная гео-заглушка: страна, подставленная движком вместо неразрешённого
+# региона. В пользовательские метрики не входит (регионом не является).
+_COUNTRY_STANDIN = {'Россия', 'Российская Федерация', 'Russia', 'RU'}
+
+
+def _regions(places):
+    """Канонический список регионов: места без страновых заглушек.
+    ЕДИНСТВЕННЫЙ источник счёта регионов — len() этого списка."""
+    return sorted(p for p in (places or []) if p and p not in _COUNTRY_STANDIN)
 try:
     import financial_engine as _fin_v2
 except Exception:
@@ -98,7 +118,10 @@ def build_infra(events):
         if not d: continue
         grp,causal=d
         key=hashlib.md5(f"{grp}|{causal}".encode()).hexdigest()[:8]
-        g=groups.setdefault(key,{'group':grp,'causal':causal,'members':[],'places':set(),'dates':[]})
+        g=groups.setdefault(key,{'group':grp,'causal':causal,'members':[],'places':set(),'dates':[],'entities':set()})
+        if FEATURES_LAYER:
+            for _ek,_erx in _ENT.items():
+                if _erx.search(b): g['entities'].add(_ek)
         pl=e.get('region') or (e.get('geo') or {}).get('country')
         dt=e.get('date') or e.get('first_seen')
         g['members'].append({
@@ -112,7 +135,12 @@ def build_infra(events):
         if dt: g['dates'].append(str(dt)[:10])
     procs=[]; shadow=[]
     for key,g in groups.items():
-        mc=len(g['members']); gs=len(g['places'])
+        mc=len(g['members'])
+        # РАЗВИЛКА 3 (утв. Мией): regions_count — каноническое значение. От него
+        # считаются maturity / pressure / score / confidence. Вторая система
+        # координат (сырые places со страновой заглушкой) ликвидируется.
+        _regs = _regions(g['places'])
+        gs = len(_regs) if FEATURES_LAYER else len(g['places'])
         # статус зрелости ADR-012 (порог Confirmed: >=3 события + >=2 места)
         if mc>=3 and gs>=2: maturity='Confirmed'
         elif mc>=2: maturity='Emerging'
@@ -169,7 +197,8 @@ def build_infra(events):
             'causal_model': g['causal'],
             'member_count': mc,
             'geo_spread': gs,
-            'places': sorted(g['places']),
+            # ТЗ §8: количество регионов и список регионов обязаны совпадать
+            'places': (_regs if FEATURES_LAYER else sorted(g['places'])),
             'first_seen': dates[0] if dates else _iso(_now())[:10],
             'last_seen': dates[-1] if dates else _iso(_now())[:10],
             'lifecycle': 'active',
@@ -190,6 +219,8 @@ def build_infra(events):
             'title': (f'Инфраструктурный процесс — {grp_ru}' if INFRA_PRODUCTION else f'🧪 Инфраструктурный процесс — {grp_ru}'),
             'causal_label': cau_ru,
         }
+        if FEATURES_LAYER:
+            proc['entities'] = sorted(g['entities'])   # типы объектов процесса (для features/delta)
         procs.append(proc)
         shadow.append({'key':key,'group':g['group'],'causal':g['causal'],'mc':mc,'gs':gs,'maturity':maturity})
     return procs, shadow
@@ -315,6 +346,8 @@ def _build_snapshot(p):
         'causal_model': p.get('causal_model'),
         'score': (p.get('member_count') or 0) * 8 + (p.get('geo_spread') or 0) * 10,
     }
+    if FEATURES_LAYER:
+        state['entities'] = sorted(p.get('entities') or [])
     blob = json.dumps(state, ensure_ascii=False, sort_keys=True)
     return {
         'snapshot_version': SNAPSHOT_VERSION,
@@ -337,7 +370,11 @@ def _snapshot_reasons(old, new):
     for f in ('mc', 'gs', 'score', 'last_event_date', 'entity_class_group', 'causal_model'):
         if o.get(f) != n.get(f):
             out.append({'field': f, 'kind': 'scalar', 'from': o.get(f), 'to': n.get(f)})
-    for f in ('places', 'event_hashes', 'timeline_dates'):
+    for f in ('places', 'event_hashes', 'timeline_dates', 'entities'):
+        # МИГРАЦИОННЫЙ GUARD: поле, которого не было в прошлом снимке (новое в схеме),
+        # не порождает ложную причину «изменилось» при первом появлении.
+        if f not in o and f in n:
+            continue
         a, b = set(o.get(f) or []), set(n.get(f) or [])
         if a != b:
             out.append({'field': f, 'kind': 'set',
@@ -408,6 +445,83 @@ def _reasons_to_changes(reasons):
     out.sort(key=lambda x: -x['weight'])
     return out
 
+def _features(p, ctx=None):
+    """ЕДИНЫЙ СЛОЙ АНАЛИТИЧЕСКИХ ПРИЗНАКОВ (ADR-035).
+
+    Единственное место вычисления. Ни одна карточка, ни один UI-модуль не имеет
+    права считать эти признаки самостоятельно.
+        state    — что известно о процессе сейчас   (Process Card, сценарии, сводка)
+        delta    — что изменилось vs прошлой ревизии (Observation, Detection, Delta Layer)
+        evidence — доказательная база                (уверенность, история, жизненный цикл)
+    ctx — контекст снимка: {'prev_state', 'state', 'revision', 'previous_revision', 'changed_at'}
+    """
+    ctx = ctx or {}
+    prev = ctx.get('prev_state') or {}
+    regions = _regions(p.get('places'))
+    ents = sorted(p.get('entities') or [])
+    mc = p.get('member_count') or 0
+
+    state = {
+        'regions_count': len(regions),
+        'regions': regions,
+        'member_count': mc,
+        'entities': ents,
+        'entity_count': len(ents),
+        'entity_class_group': p.get('entity_class_group'),
+        'causal_model': p.get('causal_model'),
+        'stable_pattern': mc >= 3 and len(regions) >= 2,
+        'maturity': p.get('maturity'),
+        'severity': p.get('severity'),
+        'pressure': p.get('pressure'),
+        'score': mc * 8 + len(regions) * 10,
+        'confidence': p.get('confidence'),
+    }
+
+    has_prev = bool(prev)
+    prev_regions = set(_regions(prev.get('places')))
+    prev_mc = prev.get('mc') or 0
+    # 'entities' появилось в схеме снимка вместе с этим слоем: пока прошлый снимок
+    # его не содержит, дельта по типам объектов не считается (baseline, не «всё новое»)
+    ents_baseline = has_prev and 'entities' not in prev
+    new_regions = sorted(set(regions) - prev_regions) if has_prev else []
+    new_ents = ([] if (not has_prev or ents_baseline)
+                else sorted(set(ents) - set(prev.get('entities') or [])))
+
+    delta = {
+        'available': has_prev,
+        'revision': ctx.get('revision'),
+        'previous_revision': ctx.get('previous_revision'),
+        'changed_at': ctx.get('changed_at'),
+        'new_region': bool(new_regions),
+        'new_regions': new_regions,
+        'geo_expansion': bool(has_prev and len(regions) > len(prev_regions)),
+        'repeatability_growth': bool(has_prev and mc > prev_mc),
+        'member_delta': (mc - prev_mc) if has_prev else None,
+        'new_object_type': bool(new_ents),
+        'new_object_types': new_ents,
+        'new_object_type_status': ('baseline' if ents_baseline else 'computed'),
+        # РАЗВИЛКА 2 (утверждён вариант А): признак межпроцессный. Внутри одного
+        # процесса структурно невычислим — новая инфраструктура это другая группа,
+        # то есть другой процесс. Хардкод False убран; null = нет данных, признак
+        # ждёт Relationship Layer. UI обязан показать «межпроцессный анализ
+        # недоступен», а не пустой чекбокс.
+        'new_infrastructure': None,
+        'new_infrastructure_status': 'requires_relationship_layer',
+    }
+
+    evidence = {
+        'confirmed_events': mc,
+        'regions': regions,
+        'entities': ents,
+        'first_seen': p.get('first_seen'),
+        'last_seen': p.get('last_seen'),
+        'snapshot_revision': ctx.get('revision'),
+        'window': {'from': p.get('first_seen'), 'to': p.get('last_seen')},
+    }
+    return {'features_version': FEATURES_VERSION,
+            'state': state, 'delta': delta, 'evidence': evidence}
+
+
 def _snapshot_pass(procs, docs_dir):
     """Change-triggered: снимок сохраняется ТОЛЬКО при изменении state_hash."""
     if not SNAPSHOT_ENABLED:
@@ -430,6 +544,13 @@ def _snapshot_pass(procs, docs_dir):
         rec = store['processes'].get(pid) or {}
         prev = rec.get('current')
         if prev and prev.get('state_hash') == snap['state_hash']:
+            if FEATURES_LAYER:
+                # состояние не изменилось — но контекст нужен features (delta = «без изменений»)
+                deltas[pid] = {'changes': [], 'changed_at': rec.get('changed_at'),
+                               'revision': rec.get('revision'),
+                               'previous_revision': rec.get('revision'),
+                               'prev_state': (prev or {}).get('state') or {},
+                               'state': snap['state']}
             continue                                   # без исключений: не изменилось — не пишем
         reasons = _snapshot_reasons(prev, snap)
         rlog = _reasons_log(reasons)
@@ -443,6 +564,10 @@ def _snapshot_pass(procs, docs_dir):
         }
         deltas[pid] = {'changes': changes, 'changed_at': snap['generated_at'],
                        'revision': store['processes'][pid]['revision']}
+        if FEATURES_LAYER:
+            deltas[pid].update({'previous_revision': rec.get('revision'),
+                                'prev_state': (prev or {}).get('state') or {},
+                                'state': snap['state']})
         changed += 1
         print('[SNAPSHOT] %s rev.%d — %s' % (pid, store['processes'][pid]['revision'], '; '.join(rlog)[:160]),
               file=sys.stderr)
@@ -604,6 +729,10 @@ def build_observation_detection(infra_procs, deltas=None):
             'severity': p.get('severity', 50),
             'confidence': p.get('confidence', 0.5),
         }
+        if FEATURES_LAYER and p.get('features'):
+            # карточки НЕ вычисляют признаки — только наследуют готовый объект
+            obs['features'] = p['features']
+            det['features'] = p['features']
         _dl = deltas.get(p['process_id']) or {}
         _ch = _dl.get('changes') or []
         if _ch:                                   # блок только при реальных изменениях
@@ -668,6 +797,10 @@ def main():
         _deltas = _snapshot_pass(infra, DOCS) or {}   # Delta Layer: снимок + причины
     except Exception as _se:
         print(f'[SNAPSHOT] fail: {_se}', file=sys.stderr)
+    if FEATURES_LAYER:
+        # ADR-035: признаки считаются ОДИН раз, после снимка (нужен prev_state)
+        for _p in infra:
+            _p['features'] = _features(_p, _deltas.get(_p.get('process_id')))
     obsdet = build_observation_detection(infra, _deltas)  # ADR-024 + блок «Что изменилось»
     out={'generated': _iso(_now()), 'preview': True,
          'processes': infra + obsdet + [fin]}
