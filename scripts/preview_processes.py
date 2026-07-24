@@ -826,6 +826,13 @@ def build_observation_detection(infra_procs, deltas=None):
                                   else '1 типе объекта']
                                  if _f else
                                  [f'{mc} подтверждениях', f'{gs} регионах', '1 типе объекта']),
+            # ADR-035: UI не парсит строки и не склоняет по regex — получает число и сущность
+            **({'confidence_metrics': [
+                {'value': _fe.get('confirmed_events') or 0, 'unit': 'evidence'},
+                {'value': _fs.get('regions_count') or 0, 'unit': 'region',
+                 'pending': _fs.get('geo_resolution') == 'pending'},
+                {'value': _fs.get('entity_count') or 0, 'unit': 'entity'},
+            ]} if _f else {}),
             'confidence_level': 'Высокая' if _score>=60 else 'Средняя' if _score>=30 else 'Низкая',
             # Этап 6: причина автосоздания
             'creation_reason': 'Atlas обнаружил устойчивый повторяющийся паттерн, который пока не соответствует '
