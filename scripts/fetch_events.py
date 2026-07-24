@@ -11239,6 +11239,20 @@ def _adr039a_shadow_report(events, outdir):
             if e.get('source_type') == 'MIXED' and e.get('document_form') == 'REPORT']
     (outdir / 'adr039a-shadow.json').write_text(
         json.dumps(rep_data, ensure_ascii=False, indent=1), encoding='utf-8')
+    # ADR-039C serie: по строке на прогон для drift-анализа двух осей.
+    try:
+        _hist = {'ts': rep_data.get('generated'), 'events': len(events),
+                 'prod': len(prod_rep), 'shadow': len(shad_rep), 'new': len(new_rep),
+                 'by_source_type': rep_data.get('by_source_type'),
+                 'by_document_form': rep_data.get('by_document_form'),
+                 'axis_cross': rep_data.get('axis_cross'),
+                 'form_mixed_report': len(rep_data.get('form_mixed_lexical') or []),
+                 'sources_total': len(set(str(e.get('source')) for e in events)),
+                 'sources_typed': len(_SRC_TYPE)}
+        with open(str(outdir / 'adr039a-shadow-history.jsonl'), 'a', encoding='utf-8') as _f:
+            _f.write(json.dumps(_hist, ensure_ascii=False) + '\n')
+    except Exception as _e:
+        print('  [ADR-039C] history skip: %s' % _e, file=sys.stderr)
     print('  [ADR-039A shadow] events=%d | REPORT prod=%d shadow=%d (+%d) | STRONG=%d MIXED=%d'
           % (N, len(prod_rep), len(shad_rep), len(new_rep),
              rep_data['by_reason'].get('STRONG', 0), rep_data['by_reason'].get('MIXED+LEXICAL', 0)))
