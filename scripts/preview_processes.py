@@ -6,7 +6,8 @@
 Также ведёт shadow: _infra_process_shadow.json, _financial_shadow.json.
 """
 import json
-import hashlib, hashlib, re, sys
+import hashlib
+import re as _re, hashlib, re, sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -84,6 +85,11 @@ def _detect(text):
     return grp, causal
 
 # ── Задача 1: Infrastructure Process (Preview, ADR-012) ──
+_OBJ_RX_EV = _re.compile(r'склад|логистич|логистик|маркетплейс|wildberries|ozon|вайлдберриз|'
+                         r'озон|распределительн\w* центр|фулфилм|пункт\w* выдач|доставк|'
+                         r'транспортн\w* узел|терминал|порт\b|перевозк', _re.I)
+
+
 def build_infra(events):
     groups={}   # identity_key_infra -> члены
     for e in events:
@@ -113,7 +119,7 @@ def build_infra(events):
         else: maturity='Candidate'
         dates=sorted([d for d in g['dates'] if d])
         mems=g['members']  # список dict {title,date,severity,source,place}
-        ev_titles=[m['title'] for m in mems][:6]
+        ev_titles=[m['title'] for m in mems if _OBJ_RX_EV.search(m['title'] or '')][:6] or [m['title'] for m in mems][:6]
         grp_ru=_GRP_RU.get(g["group"], g["group"])
         cau_ru=_CAUSAL_RU.get(g["causal"], g["causal"])
         # severity/pressure — из членов (пиковая и средняя), как у обычного процесса
@@ -122,9 +128,18 @@ def build_infra(events):
         sev_avg=round(sum(sevs)/len(sevs)) if sevs else 50
         pressure=min(100, round(sev_avg*0.6 + mc*4 + gs*3))  # нагрузка: тяжесть+широта+гео
         # timeline (Хроника): члены по датам, формат обычного процесса {t,event,detail,severity}
+        # ХРОНИКА: только события, где объект процесса реально упомянут.
+        # Источник (Telegram-канал и т.п.) в хронике не отображается.
+        _OBJ_RX = _re.compile(r'склад|логистич|логистик|маркетплейс|wildberries|ozon|вайлдберриз|'
+                              r'озон|распределительн\w* центр|фулфилм|пункт\w* выдач|доставк|'
+                              r'транспортн\w* узел|терминал|порт\b|перевозк', _re.I)
         timeline=sorted([
-            {'t': m['date'], 'event': m['title'], 'detail': (m['source'] or ''), 'severity': int(m.get('severity') or 0)}
-            for m in mems if m['date']], key=lambda x: x['t'])
+            {'t': m['date'], 'event': m['title'], 'detail': '', 'severity': int(m.get('severity') or 0)}
+            for m in mems if m['date'] and _OBJ_RX.search(m['title'] or '')], key=lambda x: x['t'])
+        if not timeline:      # страховка: не оставлять процесс без хроники
+            timeline=sorted([
+                {'t': m['date'], 'event': m['title'], 'detail': '', 'severity': int(m.get('severity') or 0)}
+                for m in mems if m['date']], key=lambda x: x['t'])
         # explain (Объяснение/Сводка): своя формулировка для инфра-процесса
         _plc=', '.join(sorted(g['places'])) if g['places'] else 'ряде регионов'
         explain={
