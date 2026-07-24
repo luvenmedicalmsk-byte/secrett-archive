@@ -37,6 +37,14 @@ _ENT_RU = {
 }
 
 
+def _plu_ru(n, one, few, many):
+    n = abs(int(n or 0)); n100, n10 = n % 100, n % 10
+    if 11 <= n100 <= 14: return many
+    if n10 == 1: return one
+    if 2 <= n10 <= 4: return few
+    return many
+
+
 def _ent_ru(keys):
     return [_ENT_RU.get(k, k) for k in (keys or [])]
 
@@ -346,7 +354,7 @@ def _what_changed_features(f):
     if d.get('repeatability_growth'):
         _dm = d.get('member_delta')
         ch.append(f'рост повторяемости — подтверждений стало {s.get("member_count")}'
-                  + (f' (+{_dm})' if _dm else ''))
+                  + (f' (+{_dm} с момента создания гипотезы)' if _dm else ''))
     if d.get('new_object_type'):
         ch.append(f'новый тип объекта в паттерне — всего типов: {s.get("entity_count")}')
     if s.get('stable_pattern') and not ch:
@@ -741,10 +749,10 @@ def build_observation_detection(infra_procs, deltas=None):
                 {'label': 'Новая инфраструктура', 'done': None, 'status': 'unknown',
                  'detail': 'межпроцессный анализ недоступен',
                  'note': 'признак вычисляется на уровне связей между процессами'},
-                {'label': 'Новая динамика', 'done': bool(_fd.get('repeatability_growth')), 'status':
+                {'label': 'Рост повторяемости', 'done': bool(_fd.get('repeatability_growth')), 'status':
                  ('done' if _fd.get('repeatability_growth') else 'pending'),
-                 'detail': (f'+{_md} подтверждений с начала наблюдения' if _md
-                            else 'приток подтверждений не изменился')},
+                 'detail': (f'+{_md} {_plu_ru(_md, "новое подтверждение", "новых подтверждения", "новых подтверждений")}'
+                            if _md else 'новых подтверждений с момента создания гипотезы нет')},
             ]
         grp = p.get('entity_class_group','')
         grp_ru = _GRP_RU.get(grp, grp)
