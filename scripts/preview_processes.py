@@ -847,7 +847,10 @@ def build_observation_detection(infra_procs, deltas=None):
         places = p.get('places', [])
         mc = p.get('member_count', 0)
         gs = p.get('geo_spread', 0)
-        win = _watch_window(p.get('last_seen',''))
+        # окно из features (рассчитано по ритму процесса) имеет приоритет над фиксированными 7 днями
+        _fw = (_fs or {}).get('watch_window') or {}
+        win = ({'start': _fw['from'], 'end': _fw['to'], 'label': _fw['label']}
+               if _fw.get('label') else _watch_window(p.get('last_seen','')))
         # приоритет наблюдения по силе паттерна (язык аналитики, не проценты)
         _score = mc*8 + gs*10
         watch_priority = 'Высокий' if _score>=60 else 'Средний' if _score>=30 else 'Низкий'
@@ -1014,6 +1017,16 @@ def build_observation_detection(infra_procs, deltas=None):
             obs['features'] = p['features']
             det['features'] = p['features']
             det['checklist_unknown'] = sum(1 for c in _CHK if c['done'] is None)
+            # Наблюдение показывает тот же прогресс проверки перехода, что и Обнаружение:
+            # позиция в жизненном цикле статична по определению, а вот накопленный
+            # переход обязан двигаться по мере поступления данных.
+            _done = sum(1 for c in _CHK if c['done'] is True)
+            _total = sum(1 for c in _CHK if c['done'] is not None)
+            obs['transition_checklist'] = _CHK
+            obs['checklist_done'] = _done
+            obs['checklist_total'] = _total
+            obs['checklist_unknown'] = sum(1 for c in _CHK if c['done'] is None)
+            obs['checklist_pct'] = round(_done / max(1, _total) * 100)
         _dl = deltas.get(p['process_id']) or {}
         _ch = _dl.get('changes') or []
         if _ch:                                   # блок только при реальных изменениях
