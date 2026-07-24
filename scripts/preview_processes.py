@@ -237,6 +237,16 @@ _OTHER_INDUSTRY = re.compile(
     r'птицефабрик\w*|птицеферм\w*|свинокомплекс\w*|агрокомплекс\w*|зернохранилищ\w*|элеватор\w*|'
     r'нефтеперераб\w*|\bнпз\b|нефтебаз\w*|химзавод\w*|молокозавод\w*|мясокомбинат\w*', re.I)
 # Учения и плановые мероприятия — не инцидент на объекте.
+# «Склад» сам по себе класс не определяет: складом бывает что угодно. Для включения
+# в процесс логистики e-commerce нужен либо оператор класса, либо специфичный тип
+# объекта (распределительный/логистический/сортировочный/фулфилмент-центр), либо
+# явный контекст маркетплейса. Иначе «удар по складу в N» — это гражданская
+# инфраструктура вообще, а не наблюдаемый класс.
+_ECOM_ANCHOR = re.compile(
+    r'wildberries|вайлдберриз|\bwb\b|ozon|озон|яндекс\s*маркет|сдэк|cdek|boxberry|боксберри|'
+    r'маркетплейс\w*|интернет-магазин\w*|пункт\w*\s+выдач\w*|\bпвз\b|'
+    r'распределительн\w*\s+центр\w*|логистическ\w*\s+(?:центр|комплекс|хаб|терминал)\w*|'
+    r'сортировочн\w*\s+(?:центр|комплекс)\w*|фулфилмент\w*|фулфилмент-центр\w*', re.I)
 _DRILL = re.compile(r'учебн\w*\s+(?:эвакуац|тревог|сбор|занят)\w*|\bучени[йяею]\b|'
                     r'тренировочн\w*|плановая\s+проверк\w*|отработк\w*\s+действий', re.I)
 _MEDIA_META = re.compile(
@@ -266,7 +276,8 @@ def _detect(text):
         if _DRILL.search(text):
             return None          # учения/плановые мероприятия, а не инцидент
         _civ_logi = (grp == 'ecommerce_logistics') and not _MILITARY.search(text) \
-            and not _PLAN.search(text) and _OBJ_UNDER_ATTACK.search(text)
+            and not _PLAN.search(text) and _OBJ_UNDER_ATTACK.search(text) \
+            and bool(_ECOM_ANCHOR.search(text))
         if not (_RETAIL_CTX.search(text) or _civ_logi): return None
         causal='attack'
     elif 'incident' in evs: causal='incident'
