@@ -343,6 +343,9 @@ def build_infra(events, docs_dir=None):
         if not d: continue
         if FEATURES_LAYER and _SUPPORT.search(_ttl):
             continue                      # меры поддержки/выплаты — не инцидент
+        if FEATURES_LAYER and d[0] == 'ecommerce_logistics' and not _ECOM_ANCHOR.search(_ttl):
+            continue                      # сводка «атакованы несколько регионов»: класс
+                                          # назван лишь в теле, инцидент не про объект
         grp,causal=d
         key=hashlib.md5(f"{grp}|{causal}".encode()).hexdigest()[:8]
         g=groups.setdefault(key,{'group':grp,'causal':causal,'members':[],'places':set(),'dates':[],'entities':set()})
