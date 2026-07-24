@@ -21,12 +21,24 @@ FINANCIAL_V2 = True       # ADR-010 Phase 1: реальные индикатор
 #   features.delta    — что изменилось относительно предыдущей ревизии
 #   features.evidence — доказательная база (без повторных проходов по событиям)
 # OFF (FEATURES_LAYER=False) → вывод байт-идентичен прежнему.
-FEATURES_LAYER = False
+FEATURES_LAYER = True
 FEATURES_VERSION = 1
 
 # Служебная гео-заглушка: страна, подставленная движком вместо неразрешённого
 # региона. В пользовательские метрики не входит (регионом не является).
 _COUNTRY_STANDIN = {'Россия', 'Российская Федерация', 'Russia', 'RU'}
+
+
+_ENT_RU = {
+    'warehouse': 'склад', 'distribution_center': 'распределительный центр',
+    'fulfillment_center': 'фулфилмент-центр', 'logistics_hub': 'логистический узел',
+    'ecommerce_platform': 'платформа e-commerce', 'marketplace': 'маркетплейс',
+    'retail_chain': 'торговая сеть', 'last_mile': 'пункт выдачи',
+}
+
+
+def _ent_ru(keys):
+    return [_ENT_RU.get(k, k) for k in (keys or [])]
 
 
 def _regions(places):
@@ -226,6 +238,22 @@ def build_infra(events):
             # выводится geo_resolution в features.state.
             proc['geo_unresolved'] = sum(
                 1 for m in mems if not m.get('place') or m['place'] in _COUNTRY_STANDIN)
+            # ── РЕКОНСТРУКЦИЯ BASELINE (детерминированно, из событий) ──
+            # Состояние процесса в день его появления. Нужно, чтобы «накопленный
+            # переход» считался от рождения гипотезы, а не от момента подключения
+            # слоя. Записывается в снимок ОДИН раз и дальше immutable.
+            _d0 = dates[0] if dates else ''
+            _m0 = [m for m in mems if (m.get('date') or '') <= _d0] if _d0 else []
+            _e0 = set()
+            for _m in _m0:
+                for _ek, _erx in _ENT.items():
+                    if _erx.search(_m.get('title') or ''): _e0.add(_ek)
+            proc['baseline_reconstructed'] = {
+                'mc': len(_m0),
+                'places': _regions({m.get('place') for m in _m0 if m.get('place')}),
+                'entities': sorted(_e0),
+                'day': _d0,
+            }
         procs.append(proc)
         shadow.append({'key':key,'group':g['group'],'causal':g['causal'],'mc':mc,'gs':gs,'maturity':maturity})
     return procs, shadow
@@ -302,6 +330,33 @@ def _watch_window(last_seen, days=7):
     def _fmt(d): return f'{d.day} {_MRU[d.month-1]}'
     return {'start': start.strftime('%Y-%m-%d'), 'end': end.strftime('%Y-%m-%d'),
             'label': f'{_fmt(start)} – {_fmt(end)}'}
+
+def _what_changed_features(f):
+    """Блок «Что изменилось» из features.delta (ADR-035).
+    Ручной генерации текста по порогам больше нет — только признаки модели."""
+    d = (f or {}).get('delta') or {}
+    s = (f or {}).get('state') or {}
+    b = (f or {}).get('baseline') or {}
+    ch = []
+    if d.get('geo_expansion') or d.get('new_region'):
+        _n = d.get('new_regions') or []
+        _txt = (f'расширение географии — добавились регионы: {", ".join(_n[:4])}' if _n
+                else 'расширение географии процесса')
+        ch.append(_txt)
+    if d.get('repeatability_growth'):
+        _dm = d.get('member_delta')
+        ch.append(f'рост повторяемости — подтверждений стало {s.get("member_count")}'
+                  + (f' (+{_dm})' if _dm else ''))
+    if d.get('new_object_type'):
+        ch.append(f'новый тип объекта в паттерне — всего типов: {s.get("entity_count")}')
+    if s.get('stable_pattern') and not ch:
+        ch.append('устойчивый паттерн сохраняется, новых признаков перехода нет')
+    if not ch:
+        ch.append('с момента появления гипотезы новых признаков не зафиксировано')
+    if b.get('origin') == 'reconstructed' and b.get('at'):
+        ch.append(f'отсчёт ведётся с {str(b["at"])[:10]} — дня появления процесса')
+    return ch
+
 
 def _what_changed(mc, gs, places):
     """Этап 2: что изменилось у наблюдения относительно родительского Confirmed-процесса."""
@@ -590,9 +645,15 @@ def _snapshot_pass(procs, docs_dir):
         # «накопленный переход» потеряет точку отсчёта и история гипотезы умрёт.
         bl = rec.get('baseline')
         if FEATURES_LAYER and not bl:
-            if prev:
-                # запись существовала до появления слоя: сеем из текущего состояния,
-                # честно помечая origin='seeded' (это не момент рождения гипотезы)
+            _rb = p.get('baseline_reconstructed') or {}
+            if _rb.get('mc'):
+                # честная точка отсчёта: состояние процесса в день его появления,
+                # восстановленное из событий (детерминированно, не «текущее состояние»)
+                bl = {'state': {'mc': _rb['mc'], 'places': _rb['places'], 'entities': _rb['entities']},
+                      'at': (_rb.get('day') or snap['generated_at'][:10]) + 'T00:00:00Z',
+                      'revision': rec.get('revision') or 1, 'origin': 'reconstructed'}
+            elif prev:
+                # реконструкция невозможна — сеем из текущего, честно помечая origin
                 bl = {'state': prev.get('state') or {}, 'at': rec.get('changed_at') or snap['generated_at'],
                       'revision': rec.get('revision'), 'origin': 'seeded'}
             else:
@@ -659,6 +720,32 @@ def build_observation_detection(infra_procs, deltas=None):
     for p in infra_procs:
         if p.get('maturity') != 'Confirmed':
             continue  # гипотезы деривируем только из зрелых процессов
+        # ADR-035: карточки НЕ вычисляют признаки — читают готовый объект
+        _f = p.get('features') if FEATURES_LAYER else None
+        _fs = (_f or {}).get('state') or {}
+        _fd = (_f or {}).get('delta') or {}
+        _fe = (_f or {}).get('evidence') or {}
+        # чек-лист перехода: единственная сборка, из delta (никаких порогов и False)
+        _CHK = []
+        if _f:
+            _nr = _fd.get('new_regions') or []
+            _nt = _fd.get('new_object_types') or []
+            _md = _fd.get('member_delta')
+            _CHK = [
+                {'label': 'Новый регион', 'done': bool(_fd.get('new_region')), 'status':
+                 ('done' if _fd.get('new_region') else 'pending'),
+                 'detail': (', '.join(_nr[:4]) if _nr else 'новых регионов не зафиксировано')},
+                {'label': 'Новый тип объекта', 'done': bool(_fd.get('new_object_type')), 'status':
+                 ('done' if _fd.get('new_object_type') else 'pending'),
+                 'detail': (', '.join(_ent_ru(_nt)[:3]) if _nt else 'новых типов не зафиксировано')},
+                {'label': 'Новая инфраструктура', 'done': None, 'status': 'unknown',
+                 'detail': 'межпроцессный анализ недоступен',
+                 'note': 'признак вычисляется на уровне связей между процессами'},
+                {'label': 'Новая динамика', 'done': bool(_fd.get('repeatability_growth')), 'status':
+                 ('done' if _fd.get('repeatability_growth') else 'pending'),
+                 'detail': (f'+{_md} подтверждений с начала наблюдения' if _md
+                            else 'приток подтверждений не изменился')},
+            ]
         grp = p.get('entity_class_group','')
         grp_ru = _GRP_RU.get(grp, grp)
         cau_ru = _CAUSAL_RU.get(p.get('causal_model',''), p.get('causal_model',''))
@@ -683,8 +770,16 @@ def build_observation_detection(infra_procs, deltas=None):
             'status_label': 'Наблюдение',
             'lifecycle_stage': 'observation',
             'lifecycle': 'observation',
-            'pattern': f'Зафиксирован устойчивый паттерн: {cau_ru} на объектах «{grp_ru}» в {gs} регионах '
-                       f'({", ".join(places) if places else "ряде регионов"}). Событий в паттерне — {mc}.',
+            'pattern': (
+                (f'Зафиксирован устойчивый паттерн: {cau_ru} на объектах «{grp_ru}» в '
+                 f'{_fs["regions_count"]} регионах ({", ".join(_fs["regions"])}). '
+                 f'Событий в паттерне — {_fs["member_count"]}.')
+                if (_fs.get('regions_count'))
+                else (f'Зафиксирован устойчивый паттерн: {cau_ru} на объектах «{grp_ru}» — '
+                      f'{_fs["member_count"]} событий. География уточняется.')
+                if _fs else
+                f'Зафиксирован устойчивый паттерн: {cau_ru} на объектах «{grp_ru}» в {gs} регионах '
+                f'({", ".join(places) if places else "ряде регионов"}). Событий в паттерне — {mc}.'),
             'hypothesis': 'Гипотеза появилась из-за повторяемости однотипных инцидентов на одном классе '
                           'инфраструктуры. Требуется проверка на расширение процесса, пока подтверждений '
                           'для выделения нового активного процесса недостаточно.',
@@ -717,13 +812,20 @@ def build_observation_detection(infra_procs, deltas=None):
                 'evidence_count': mc,
                 'geo_spread': gs,
             },
-            'what_changed': _what_changed(mc, gs, places),        # Этап 2: что изменилось vs родитель
+            'what_changed': (_what_changed_features(_f) if _f
+                             else _what_changed(mc, gs, places)),   # Этап 2: что изменилось vs родитель
             'close_explanation': ('Если до окончания окна наблюдения не появятся новые подтверждения, '
                                   'гипотеза будет автоматически закрыта и не перейдёт в новый процесс.'),  # Этап 7
             'lifecycle_state': 'Наблюдается',                     # Этап 3: состояние (Создан→Наблюдается→Подтверждён/Закрыт)
             'lifecycle_states': ['Создан','Наблюдается','Подтверждён','Закрыт'],
             # Этап 5: уверенность гипотезы (не проценты вероятности событий)
-            'confidence_basis': [f'{mc} подтверждениях', f'{gs} регионах', '1 типе объекта'],
+            'confidence_basis': ([f'{_fe["confirmed_events"]} подтверждениях',
+                                  (f'{_fs["regions_count"]} регионах' if _fs.get('regions_count')
+                                   else 'география уточняется'),
+                                  f'{_fs["entity_count"]} типах объекта' if _fs.get('entity_count') != 1
+                                  else '1 типе объекта']
+                                 if _f else
+                                 [f'{mc} подтверждениях', f'{gs} регионах', '1 типе объекта']),
             'confidence_level': 'Высокая' if _score>=60 else 'Средняя' if _score>=30 else 'Низкая',
             # Этап 6: причина автосоздания
             'creation_reason': 'Atlas обнаружил устойчивый повторяющийся паттерн, который пока не соответствует '
@@ -778,24 +880,30 @@ def build_observation_detection(infra_procs, deltas=None):
                 'evidence_count': mc,
                 'geo_spread': gs,
             },
-            # Этап 4: чек-лист признаков перехода (☑/☐ по фактически наблюдаемому)
-            # done вычисляется из реального состояния процесса: >1 региона => новая география выполнена
-            'transition_checklist': [
+            # Этап 4 / ADR-035: чек-лист признаков перехода строится ТОЛЬКО из
+            # features.delta (накопленный переход от baseline гипотезы).
+            # status: done | pending | unknown. Хардкода False больше нет —
+            # невычислимый признак честно помечается unknown, а не «не выполнено».
+            'transition_checklist': (_CHK if _f else [
                 {'label': 'Новый регион', 'done': gs >= 2},
                 {'label': 'Новый тип объекта', 'done': False},
                 {'label': 'Новая инфраструктура', 'done': False},
                 {'label': 'Новая динамика', 'done': mc >= 5},
-            ],
-            'checklist_done': sum([gs>=2, False, False, mc>=5]),
-            'checklist_total': 4,
-            'checklist_pct': round(sum([gs>=2, False, False, mc>=5])/4*100),  # Этап 4: прогресс %
+            ]),
+            'checklist_done': (sum(1 for c in _CHK if c['done'] is True) if _f
+                               else sum([gs>=2, False, False, mc>=5])),
+            'checklist_total': (sum(1 for c in _CHK if c['done'] is not None) if _f else 4),
+            'checklist_pct': ((round(sum(1 for c in _CHK if c['done'] is True) /
+                                     max(1, sum(1 for c in _CHK if c['done'] is not None)) * 100)) if _f
+                              else round(sum([gs>=2, False, False, mc>=5])/4*100)),  # Этап 4: прогресс %
             # Этап 5: чего НЕ хватает до подтверждения (недостающие критерии)
-            'pending_criteria': [c['label'] for c in [
-                {'label':'Новый регион','done':gs>=2},
-                {'label':'Новый тип объекта','done':False},
-                {'label':'Новая инфраструктура','done':False},
-                {'label':'Новая динамика','done':mc>=5},
-            ] if not c['done']],
+            'pending_criteria': ([c['label'] for c in _CHK if c['done'] is False] if _f else
+                                 [c['label'] for c in [
+                                     {'label':'Новый регион','done':gs>=2},
+                                     {'label':'Новый тип объекта','done':False},
+                                     {'label':'Новая инфраструктура','done':False},
+                                     {'label':'Новая динамика','done':mc>=5},
+                                 ] if not c['done']]),
             # Этап 6: цепочка происхождения (не «Confirmed заново»)
             'evolution_chain': ['Родительский процесс','Наблюдение','Обнаружение','Новый подтверждённый процесс'],
             'evolution_current': 'Обнаружение',
@@ -806,6 +914,7 @@ def build_observation_detection(infra_procs, deltas=None):
             # карточки НЕ вычисляют признаки — только наследуют готовый объект
             obs['features'] = p['features']
             det['features'] = p['features']
+            det['checklist_unknown'] = sum(1 for c in _CHK if c['done'] is None)
         _dl = deltas.get(p['process_id']) or {}
         _ch = _dl.get('changes') or []
         if _ch:                                   # блок только при реальных изменениях
