@@ -11193,11 +11193,53 @@ def _unverified_feed_gate(events):
     return n
 
 
+def _adr039a_shadow_report(events, outdir):
+    """ADR-039A Phase 3 — метрики shadow-правила REPORT. Ничего не меняет."""
+    from collections import Counter
+    if not SIC_REPORT_SHADOW:
+        return
+    N = len(events)
+    prod_rep = [e for e in events if e.get('sic_class') == 'REPORT']
+    shad_rep = [e for e in events if e.get('sic_class_shadow') == 'REPORT']
+    new_rep = [e for e in shad_rep if e.get('sic_class') != 'REPORT']
+    known = set(_RPT_STRONG)
+    rep_data = {
+        'generated': datetime.now(timezone.utc).isoformat(),
+        'rule': 'STRONG_SOURCE OR (MIXED_SOURCE AND REPORT_LEXICAL)',
+        'total_events': N,
+        'report_production': len(prod_rep),
+        'report_shadow': len(shad_rep),
+        'report_new': len(new_rep),
+        'by_reason': dict(Counter(e.get('sic_report_reason') for e in shad_rep if e.get('sic_report_reason'))),
+        'by_source': dict(Counter(str(e.get('source')) for e in new_rep).most_common(30)),
+        'prod_class_of_new': dict(Counter(e.get('sic_class') for e in new_rep)),
+        'unknown_channels': sorted({str(e.get('source')) for e in events if str(e.get('source')) not in known})[:60],
+        'new_reports': [
+            {'id': e.get('id'), 'source': str(e.get('source')), 'title': (e.get('title') or '')[:140],
+             'sys_sic_prod': e.get('sic_class'), 'sys_sic_shadow': e.get('sic_class_shadow'),
+             'report_reason': e.get('sic_report_reason'), 'match': e.get('sic_report_match')}
+            for e in new_rep
+        ],
+    }
+    (outdir / 'adr039a-shadow.json').write_text(
+        json.dumps(rep_data, ensure_ascii=False, indent=1), encoding='utf-8')
+    print('  [ADR-039A shadow] events=%d | REPORT prod=%d shadow=%d (+%d) | STRONG=%d MIXED=%d'
+          % (N, len(prod_rep), len(shad_rep), len(new_rep),
+             rep_data['by_reason'].get('STRONG', 0), rep_data['by_reason'].get('MIXED+LEXICAL', 0)))
+
+
 def _sic_shadow_pass(events):
     """Добавляет e['sic_class'] каждому событию. Ничего больше не меняет (READ-ONLY инвариант)."""
     for e in events:
         e['sic_class'] = _sic_class(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
                                     e.get('canon_type'))
+        # ADR-039A shadow: production-поле sic_class НЕ меняется
+        _sc, _reason, _match = _report_shadow_eval(e)
+        if SIC_REPORT_SHADOW:
+            e['sic_class_shadow'] = _sc or e['sic_class']
+            if _sc:
+                e['sic_report_reason'] = _reason
+                e['sic_report_match'] = _match
 
 
 # ═══ SPEC-013 PHASE 1 — ADMISSION SHADOW (READ-ONLY) ══════════════════════════
@@ -11227,6 +11269,40 @@ _REPORT_RX = _re_sic.compile(
     # 3) прогноз института понижен/повышен
     r'|(?:опек|opec|мэа|iea|мвф|imf)\w*[:\s].{0,30}(?:прогноз|оценк)'
     r'|(?:прогноз|оценк)\w*\s+(?:спроса|роста|ввп|инфляц)\w*\s+(?:понижен|повышен|снижен)', _re_sic.I)
+
+# ═══ ADR-039A — REPORT: модель доверия к источникам (SHADOW, READ-ONLY) ═══════
+# Golden Set (147) показал: REPORT надёжнее определяется ИСТОЧНИКОМ, чем текстом
+# (Recall 65.5% по каналу против 30.9% по лексике, ложных 0 в обоих случаях).
+# Двухуровневое правило: STRONG — самостоятельный признак; MIXED — только с лексикой.
+# КРИТЕРИЙ STRONG: большинство публикаций канала — ПЕРВИЧНАЯ публикация результатов
+# наблюдения/мониторинга/измерений/отчётности, а не журналистская интерпретация.
+# OFF (SIC_REPORT_SHADOW=False) → поля не добавляются, поведение байт-идентично.
+SIC_REPORT_SHADOW = True
+_RPT_STRONG = {
+    'Copernicus EMS', 'Росгидромет CAP', 'Cisco Talos', 'ECDC', 'IODA',
+    'Trading Economics', 'ScienceDaily Climate', 'Phys.org Climate',
+    'Yale E360', 'Climate Home News', 'R Osint',
+}
+# MIXED-каналы: источник НЕ является самостоятельным признаком (banksta: 2/2 REPORT
+# в эталоне, но 4 не-REPORT на полном корпусе) — требуется форма документа.
+_RPT_LEX = _re_sic.compile(
+    r'(?:отч[её]т|доклад|бюллетень|исследовани|assessment|advisory|outlook|bulletin|'
+    r'report\s+card|situation\s+report|crisis\s+mapping|кризисн\w*\s+картирован|'
+    r'картирован|postmortem|surveillance\s+report|threat\s+report)', _re_sic.I)
+
+
+def _report_shadow_eval(e):
+    """ADR-039A. READ-ONLY: (shadow_class, reason, match) — событие не меняется."""
+    if not SIC_REPORT_SHADOW:
+        return (None, None, None)
+    src_name = str(e.get('source') or '')
+    if src_name in _RPT_STRONG:
+        return ('REPORT', 'STRONG', src_name)
+    blob = ((e.get('title') or '') + ' ' + (e.get('summary') or '')[:300]).lower()
+    m = _RPT_LEX.search(blob)
+    if m:
+        return ('REPORT', 'MIXED+LEXICAL', m.group(0)[:40])
+    return (None, None, None)
 
 
 def _adm_class(ev):
@@ -11636,6 +11712,7 @@ def save_enriched(events, previous_snapshot=None):
                 if UNVERIFIED_FEED_GATE:   # непроверенное — вне ленты (остаётся в данных)
                     _unverified_feed_gate(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+                _adr039a_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
                 print('  [WARN] sic shadow fail: %s' % _se, file=sys.stderr)
             # ═══ FSS (ADR-010 / FS-4): Финансовая устойчивость — событие в поток ═══
