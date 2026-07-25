@@ -1,8 +1,8 @@
 {
   "country": "AM",
-  "date": "2026-07-24",
+  "date": "2026-07-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-24T23:58:16.144103+00:00",
+  "generated_at": "2026-07-25T01:33:05.956973+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-AM",
       "type": "Country",
       "label": "AM",
-      "score": 60,
+      "score": 62,
       "props": {
-        "risk_score": 60
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-AM-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "stable"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 54,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 42,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 38,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-social",
       "type": "Domain",
       "label": "social",
-      "score": 45,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 42,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AM-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 36,
-      "trend": "stable"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DRIVER-AM-economic",
@@ -80,6 +80,13 @@
       "label": "social"
     },
     {
+      "id": "SIGNAL-AM-Россельхоз",
+      "type": "Signal",
+      "label": "Россельхознадзор вводит очередные эконом",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-AM-Киберугроз",
       "type": "Signal",
       "label": "Киберугроза — Армения",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Армения",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AM-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Армения",
-      "severity": 46,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-economic",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-climate",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-technology",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-social",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-AM",
       "to": "DOMAIN-AM-cyber",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.37
     },
     {
       "from": "DRIVER-AM-economic",
@@ -205,25 +205,31 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-AM-infrastructure",
+      "from": "DOMAIN-AM-climate",
       "to": "DOMAIN-AM-economic",
       "type": "ESCALATES",
-      "weight": 0.78,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-AM-economic",
-      "to": "DOMAIN-AM-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 21
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-AM-economic",
       "to": "DOMAIN-AM-social",
-      "type": "CORRELATES",
-      "weight": 0.5,
+      "type": "AMPLIFIES",
+      "weight": 0.7,
       "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-AM-social",
+      "to": "DOMAIN-AM-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-AM-Россельхоз",
+      "to": "DOMAIN-AM-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     },
     {
       "from": "SIGNAL-AM-Киберугроз",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-AM-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-AM-Социальный",
-      "to": "DOMAIN-AM-social",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
