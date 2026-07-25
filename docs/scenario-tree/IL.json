@@ -10,17 +10,26 @@
       "depth": 0
     },
     {
+      "id": "stress",
+      "label": "Stress Case",
+      "type": "stress",
+      "status": "active",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 30.0
+    },
+    {
       "id": "worst",
       "label": "Worst Case",
       "type": "worst",
       "status": "active",
       "parent": "ROOT",
       "depth": 1,
-      "prob": 40.0
+      "prob": 41.0
     },
     {
-      "id": "ASE-ACC-11",
-      "label": "Сценарий ускорения (deceleration)",
+      "id": "ASE-ACC-12",
+      "label": "Сценарий ускорения (acceleration)",
       "type": "acceleration",
       "status": "emerging",
       "parent": "ROOT",
@@ -51,31 +60,25 @@
       "parent": "ROOT",
       "depth": 2,
       "prob": 0
-    },
-    {
-      "id": "stress-RET",
-      "label": "Stress Case [устарел]",
-      "type": "retired",
-      "parent": "ROOT",
-      "depth": 2,
-      "prob": 0
     }
   ],
-  "convergences": [],
-  "divergences": [
+  "convergences": [
+    {
+      "scenario_a": "stress",
+      "scenario_b": "acceleration",
+      "score_gap": 0,
+      "prob_gap": 5.0,
+      "label": "Сближение: Stress Case ↔ Сценарий ускорения (acceleration)"
+    },
     {
       "scenario_a": "worst",
-      "scenario_b": "escalation_branch",
-      "score_gap": 30,
-      "label": "Расхождение: Worst Case ↔ Ветвь эскалации: deteriorating"
-    },
-    {
-      "scenario_a": "acceleration",
-      "scenario_b": "escalation_branch",
-      "score_gap": 43,
-      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь эскалации: deteriorating"
+      "scenario_b": "acceleration",
+      "score_gap": 0,
+      "prob_gap": 6.0,
+      "label": "Сближение: Worst Case ↔ Сценарий ускорения (acceleration)"
     }
   ],
-  "active_count": 3,
-  "retired_count": 3
+  "divergences": [],
+  "active_count": 4,
+  "retired_count": 2
 }
