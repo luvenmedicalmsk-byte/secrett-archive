@@ -4,6 +4,16 @@
 import json, sys
 from collections import Counter
 
+# ── Пороги разброса — ПАРАМЕТРЫ анализатора, НЕ часть ADR. Инвариант ADR: оценка
+# только по серии ≥6 прогонов. Конкретные значения разброса калибруются отдельно
+# для каждой метрики и уточняются по мере накопления данных.
+SERIES_MIN = 6                    # инвариант ADR: минимум прогонов для оценки
+VARIANCE_THRESHOLD = {
+    'source_type': 5.0,           # доля каналов по типам — справочник стабилен
+    'canon_coverage': 8.0,        # покрытие зависит от состава потока — шире
+}
+
+
 def load(path):
     rows=[]
     with open(path, encoding='utf-8') as f:
@@ -67,9 +77,11 @@ def analyze(rows):
         if pcts:
             spread=max(pcts)-min(pcts)
             print(f'   общее покрытие: {min(pcts):.1f}–{max(pcts):.1f}% (разброс {spread:.1f}пп)')
-            stable_cov = len(pcts)>=6 and spread<=8
+            stable_cov = len(pcts)>=SERIES_MIN and spread<=VARIANCE_THRESHOLD["canon_coverage"]
+            _vt=VARIANCE_THRESHOLD["canon_coverage"]
             print(f'   {"✓" if stable_cov else "×"} стабильность: {"да" if stable_cov else "нет"} '
-                  f'(нужно ≥6 прогонов И разброс ≤8пп; сейчас {len(pcts)} прогон(ов), разброс {spread:.1f}пп)')
+                  f'(параметр: ≥{SERIES_MIN} прогонов И разброс ≤{_vt:.0f}пп; '
+                  f'сейчас {len(pcts)} прогон(ов), разброс {spread:.1f}пп)')
         # по доменам — средний диапазон
         doms={}
         for c in covs:
@@ -80,7 +92,11 @@ def analyze(rows):
             print('   по доменам (диапазон покрытия за серию):')
             for dom,vals in sorted(doms.items(), key=lambda kv:-sum(kv[1])/len(kv[1])):
                 print(f'     {dom:12} {min(vals):.0f}–{max(vals):.0f}% (среднее {sum(vals)/len(vals):.0f}%)')
-            print('   → домены с низким покрытием = приоритет расширения канона')
+            # Приоритет расширения покрытия: домены по возрастанию среднего покрытия
+            _prio=sorted(doms.items(), key=lambda kv:sum(kv[1])/len(kv[1]))
+            print('   приоритет расширения покрытия (планировщик канона):')
+            for _i,(dom,vals) in enumerate(_prio,1):
+                print(f'     {_i}. {dom:12} {sum(vals)/len(vals):.0f}%')
 
     print('\n══ КРИТЕРИИ ЗАВЕРШЕНИЯ ══')
     src_stable=all((max([(r.get("by_source_type") or {}).get(k,0)/max(1,r["events"])*100 for r in rows])
