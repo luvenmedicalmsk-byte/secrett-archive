@@ -27,6 +27,38 @@ def doc_form(e):
     blob = ((e.get('title') or '') + ' ' + (e.get('summary') or '')[:300]).lower()
     return 'REPORT' if _RPT_LEX.search(blob) else 'NEWS'
 
+def _canon_coverage(evs):
+    """Снимок покрытия канона: сколько событий имеют canon_type и сколько unknown,
+    целиком и по доменам. Разбивка by_domain показывает, КУДА расширять канон,
+    а не только что он неполон. Метрика того же класса, что оси — по одному
+    прогону не оценивается, стабильна только на серии (см. adr039c_validate)."""
+    def _known(e):
+        ct = e.get('canon_type')
+        return bool(ct) and ct != 'unknown'
+    total = len(evs)
+    known = sum(1 for e in evs if _known(e))
+    unknown = total - known
+    by_domain = {}
+    for e in evs:
+        dom = str(e.get('canon_domain') or e.get('domain') or 'unknown')
+        d = by_domain.setdefault(dom, {'known': 0, 'unknown': 0})
+        if _known(e):
+            d['known'] += 1
+        else:
+            d['unknown'] += 1
+    for dom, d in by_domain.items():
+        _t = d['known'] + d['unknown']
+        d['coverage_pct'] = round(100 * d['known'] / _t, 1) if _t else None
+    return {
+        'total_events': total,
+        'canon_known': known,
+        'canon_unknown': unknown,
+        'unknown_pct': round(100 * unknown / total, 1) if total else None,
+        'coverage_pct': round(100 * known / total, 1) if total else None,
+        'by_domain': by_domain,
+    }
+
+
 def main(pub_docs, priv_docs):
     with open(os.path.join(pub_docs, 'events.json'), encoding='utf-8') as f:
         data = json.load(f)
@@ -44,6 +76,7 @@ def main(pub_docs, priv_docs):
         'form_mixed_report': sum(1 for e in evs if src_type(e) == 'MIXED' and doc_form(e) == 'REPORT'),
         'sources_total': len(set(str(e.get('source')) for e in evs)),
         'sources_typed': len(_SRC_TYPE),
+        'canon_coverage': _canon_coverage(evs),
     }
     outdir = os.path.join(priv_docs, 'adr039c')
     os.makedirs(outdir, exist_ok=True)

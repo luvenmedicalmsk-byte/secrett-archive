@@ -59,6 +59,29 @@ def analyze(rows):
             if tot and nonev/tot>0.3: conflicts+=1
     print(f'   прогонов с конфликтом ALERT-оси: {conflicts}/{len(rows)}')
 
+    # Canon coverage: тренд, разброс, стабильность
+    covs=[r.get('canon_coverage') for r in rows if r.get('canon_coverage')]
+    if covs:
+        print('\n6. CANON COVERAGE')
+        pcts=[c.get('coverage_pct') for c in covs if c.get('coverage_pct') is not None]
+        if pcts:
+            spread=max(pcts)-min(pcts)
+            print(f'   общее покрытие: {min(pcts):.1f}–{max(pcts):.1f}% (разброс {spread:.1f}пп)')
+            stable_cov = len(pcts)>=6 and spread<=8
+            print(f'   {"✓" if stable_cov else "×"} стабильность: {"да" if stable_cov else "нет"} '
+                  f'(нужно ≥6 прогонов И разброс ≤8пп; сейчас {len(pcts)} прогон(ов), разброс {spread:.1f}пп)')
+        # по доменам — средний диапазон
+        doms={}
+        for c in covs:
+            for dom,x in (c.get('by_domain') or {}).items():
+                if x.get('coverage_pct') is not None:
+                    doms.setdefault(dom,[]).append(x['coverage_pct'])
+        if doms:
+            print('   по доменам (диапазон покрытия за серию):')
+            for dom,vals in sorted(doms.items(), key=lambda kv:-sum(kv[1])/len(kv[1])):
+                print(f'     {dom:12} {min(vals):.0f}–{max(vals):.0f}% (среднее {sum(vals)/len(vals):.0f}%)')
+            print('   → домены с низким покрытием = приоритет расширения канона')
+
     print('\n══ КРИТЕРИИ ЗАВЕРШЕНИЯ ══')
     src_stable=all((max([(r.get("by_source_type") or {}).get(k,0)/max(1,r["events"])*100 for r in rows])
                     -min([(r.get("by_source_type") or {}).get(k,0)/max(1,r["events"])*100 for r in rows]))<=5 for k in keys)
