@@ -2,7 +2,7 @@
   "country": "GE",
   "date": "2026-07-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-24T23:10:22.680226+00:00",
+  "generated_at": "2026-07-24T23:58:16.143507+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,50 +19,50 @@
       "id": "DOMAIN-GE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 44,
-      "trend": "down"
+      "score": 48,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GE-economic",
       "type": "Domain",
       "label": "economic",
       "score": 58,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 46,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 37,
-      "trend": "down"
+      "score": 40,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GE-social",
       "type": "Domain",
       "label": "social",
       "score": 49,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 46,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 39,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-GE-economic",
@@ -75,28 +75,28 @@
       "label": "social"
     },
     {
-      "id": "DRIVER-GE-climate",
+      "id": "DRIVER-GE-geopolitical",
       "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-GE-Абхазия_ос",
-      "type": "Signal",
-      "label": "Абхазия осталась без электроснабжения из",
-      "severity": 62,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-GE-Тотальный_",
-      "type": "Signal",
-      "label": "Тотальный блэкаут прямо сейчас в Грузии ",
-      "severity": 62,
-      "domain": "technology"
+      "label": "geopolitical"
     },
     {
       "id": "SIGNAL-GE-Сообщения_",
       "type": "Signal",
       "label": "Сообщения о перебоях с электроэнергией п",
+      "severity": 62,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-GE-ЕС_условно",
+      "type": "Signal",
+      "label": "ЕС условно включает нефтеперерабатывающи",
+      "severity": 62,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-GE-Абхазия_ос",
+      "type": "Signal",
+      "label": "Абхазия осталась без электроснабжения из",
       "severity": 62,
       "domain": "technology"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-GE",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-technology",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-GE",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GE-climate",
+      "from": "DRIVER-GE-geopolitical",
       "to": "COUNTRY-GE",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,27 +184,6 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-GE-climate",
-      "to": "DOMAIN-GE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GE-economic",
-      "to": "DOMAIN-GE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-GE-social",
-      "to": "DOMAIN-GE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-GE-geopolitical",
       "to": "DOMAIN-GE-infrastructure",
       "type": "ESCALATES",
@@ -226,19 +205,40 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-GE-Абхазия_ос",
-      "to": "DOMAIN-GE-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "from": "DOMAIN-GE-climate",
+      "to": "DOMAIN-GE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
-      "from": "SIGNAL-GE-Тотальный_",
-      "to": "DOMAIN-GE-technology",
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-social",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GE-social",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-GE-Сообщения_",
+      "to": "DOMAIN-GE-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-GE-ЕС_условно",
+      "to": "DOMAIN-GE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-GE-Абхазия_ос",
       "to": "DOMAIN-GE-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
