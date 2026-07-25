@@ -30,6 +30,9 @@ jobs:
           # платный preview-файл процессов -> private (гейт через Worker /api/processes)
           mkdir -p /tmp/priv/docs
           if [ -f docs/_preview_processes.json ]; then cp docs/_preview_processes.json /tmp/priv/docs/_preview_processes.json; fi
+          # ADR-039C: генерируем срез двух осей ПРЯМО в приват из публичных events.json.
+          # Публичный docs не затрагивается; история append-only с дедупом по ts.
+          python3 scripts/adr039c_snapshot.py docs /tmp/priv/docs || echo "[ADR-039C] snapshot skip"
           cd /tmp/priv
           git add -A
           if git diff --cached --quiet; then

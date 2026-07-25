@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ADR-039C — анализатор серии прогонов. Читает adr039a-shadow-history.jsonl,
+"""ADR-039C — анализатор серии прогонов. Читает adr039c/shadow-history.jsonl,
 проверяет пять критериев завершения. Запуск: python adr039c_validate.py docs/"""
 import json, sys
 from collections import Counter
@@ -73,4 +73,4 @@ def analyze(rows):
 
 if __name__=='__main__':
     d=sys.argv[1] if len(sys.argv)>1 else 'docs'
-    analyze(load(f'{d}/adr039a-shadow-history.jsonl'))
+    analyze(load(f'{d}/adr039c/shadow-history.jsonl'))
