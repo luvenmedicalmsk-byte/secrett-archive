@@ -399,11 +399,13 @@ def build_infra(events, docs_dir=None):
                               r'озон|распределительн\w* центр|фулфилм|пункт\w* выдач|доставк|'
                               r'транспортн\w* узел|терминал|порт\b|перевозк', _re.I)
         timeline=sorted([
-            {'t': m['date'], 'event': m['title'], 'detail': '', 'severity': int(m.get('severity') or 0)}
+            {'t': m['date'], 'event': m['title'], 'detail': '', 'place': m.get('place'),
+             'severity': int(m.get('severity') or 0)}
             for m in mems if m['date'] and _OBJ_RX.search(m['title'] or '')], key=lambda x: x['t'])
         if not timeline:      # страховка: не оставлять процесс без хроники
             timeline=sorted([
-                {'t': m['date'], 'event': m['title'], 'detail': '', 'severity': int(m.get('severity') or 0)}
+                {'t': m['date'], 'event': m['title'], 'detail': '', 'place': m.get('place'),
+                 'severity': int(m.get('severity') or 0)}
                 for m in mems if m['date']], key=lambda x: x['t'])
         # explain (Объяснение/Сводка): своя формулировка для инфра-процесса
         _plc=', '.join(sorted(g['places'])) if g['places'] else 'ряде регионов'
@@ -740,25 +742,6 @@ def _reasons_to_changes(reasons):
     out.sort(key=lambda x: -x['weight'])
     return out
 
-def _last_confirmation(timeline):
-    """Самое свежее событие процесса и его регион — «последнее подтверждение».
-    new_regions отсортированы по алфавиту и теряют хронологию; это поле её возвращает.
-    Регион берётся из ЗАГОЛОВКА события (место инцидента), как и всюду в процессе."""
-    tl = [t for t in (timeline or []) if isinstance(t, dict) and t.get('t')]
-    if not tl:
-        return None
-    last = max(tl, key=lambda t: str(t.get('t')))
-    txt = (last.get('event') or '') + ' ' + (last.get('detail') or '')
-    reg = None
-    try:
-        subs = _ALL_SUBJ(last.get('event') or '')   # регион из заголовка события
-        reg = subs[0] if subs else None
-    except Exception:
-        reg = None
-    return {'date': str(last.get('t'))[:10], 'region': reg,
-            'event': (last.get('event') or '')[:120]}
-
-
 def _delta_vs(regions, ents, mc, ref, ref_label):
     """Признаки перехода относительно опорного состояния ref (baseline или прошлая ревизия).
     Единая механика для обоих слоёв — второй реализации нет."""
@@ -864,8 +847,7 @@ def _features(p, ctx=None):
 
     delta = _delta_vs(regions, ents, mc, bstate, 'baseline')
     delta.update({'baseline_at': bmeta.get('at'), 'baseline_origin': bmeta.get('origin'),
-                  'revision': ctx.get('revision'),
-                  'last_confirmation': _last_confirmation(p.get('timeline'))})
+                  'revision': ctx.get('revision')})
     last_rev = _delta_vs(regions, ents, mc, ctx.get('prev_state') or {}, 'previous_revision')
     last_rev.update({'revision': ctx.get('revision'),
                      'previous_revision': ctx.get('previous_revision'),
