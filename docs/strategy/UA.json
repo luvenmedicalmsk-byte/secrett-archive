@@ -2,89 +2,89 @@
   "country": "UA",
   "country_name": "Украина",
   "date": "2026-07-25",
-  "generated_at": "2026-07-25T18:56:07.511373+00:00",
-  "strategy_score": 38,
+  "generated_at": "2026-07-25T20:15:25.082813+00:00",
+  "strategy_score": 49,
   "strategy_confidence": 64,
-  "urgency_level": "high",
-  "urgency_level_ru": "Высокая",
-  "urgency_color": "#f59e0b",
-  "preparedness_level": "active",
-  "preparedness_level_ru": "Активная готовность",
-  "monitoring_priority": 3,
-  "monitoring_ru": "Каждые 6 часов",
+  "urgency_level": "critical",
+  "urgency_level_ru": "Критическая",
+  "urgency_color": "#ef4444",
+  "preparedness_level": "emergency",
+  "preparedness_level_ru": "Чрезвычайная готовность",
+  "monitoring_priority": 4,
+  "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "E-01",
+      "id": "CR-01",
       "priority": 1,
-      "action": "Удержать деэскалационный потенциал",
-      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
-      "trigger": "escalating + best dominant",
+      "action": "Контролируемая деэскалация",
+      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
+      "trigger": "critical + best dominant",
       "expiry": "state transition",
       "confidence": 69,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "E-02",
+      "id": "CR-02",
       "priority": 2,
-      "action": "Инициировать дипломатические/превентивные контакты",
-      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
-      "trigger": "prob_best > 20%",
-      "expiry": "prob_best < 15%",
+      "action": "Защитить деэскалационные индикаторы",
+      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
+      "trigger": "always",
+      "expiry": "deescalation confirmed",
       "confidence": 69,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "escalating",
+  "state": "critical",
   "dominant_scenario": "best",
-  "scenario_score": 28,
+  "scenario_score": 29,
   "instability": 24,
   "calibration_grade": "fair",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 75 (+8pt)",
-      "leads_to": "critical",
+      "condition": "risk_score ≥ 76 (+8pt)",
+      "leads_to": "cascade",
       "probability": 18
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "critical",
+      "leads_to": "cascade",
       "probability": 12
     },
     {
       "condition": "Worst-case 30d ≥ 95",
-      "leads_to": "critical",
+      "leads_to": "cascade",
       "probability": 23
     },
     {
       "condition": "Новый критический драйвер в geopolitics",
-      "leads_to": "critical",
+      "leads_to": "cascade",
       "probability": 18
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 72,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 73,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "90 дней",
-      "score": 64,
+      "score": 65,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "180 дней",
-      "score": 57,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 58,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "365 дней",
