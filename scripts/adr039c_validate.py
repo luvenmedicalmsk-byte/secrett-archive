@@ -106,13 +106,15 @@ def analyze(rows):
                 unk=sum(_unk.get(dom,[0]))/max(1,len(_unk.get(dom,[1])))
                 _rows.append((dom,cov,unk))
             _rows.sort(key=lambda r:-r[2])   # по убыванию непокрытого объёма
-            print('   планировщик канона (приоритет = ожидаемый прирост покрытия):')
-            print(f'     {"домен":12} {"покрытие":>9} {"unknown":>8}  приоритет')
+            print('   планировщик канона:')
+            print('   IMPACT (ожидаемый прирост) вычисляется из данных; COST (стоимость')
+            print('   реализации) — инженерная оценка, планировщик её НЕ выдумывает, оставляет')
+            print('   человеку. Приоритет = impact с учётом cost.')
+            print(f'     {"домен":12} {"покрытие":>9} {"unknown":>8}  {"impact":>10}  cost')
             for _i,(dom,cov,unk) in enumerate(_rows,1):
-                # приоритет: объём unknown важнее процента
-                _pr=('Very High' if unk>=40 else 'High' if unk>=20 else 'Medium' if unk>=8 else 'Low')
-                print(f'     {dom:12} {cov:>8.0f}% {unk:>8.0f}  {_pr}')
-            print('   → сортировка по объёму непокрытого: где час работы даст больший прирост корпуса')
+                _imp=('Very High' if unk>=40 else 'High' if unk>=20 else 'Medium' if unk>=8 else 'Low')
+                print(f'     {dom:12} {cov:>8.0f}% {unk:>8.0f}  {_imp:>10}  (оценить)')
+            print('   → impact из данных; итоговый приоритет — impact ÷ cost, где cost проставляет инженер')
 
     print('\n══ КРИТЕРИИ ЗАВЕРШЕНИЯ ══')
     src_stable=all((max([(r.get("by_source_type") or {}).get(k,0)/max(1,r["events"])*100 for r in rows])
