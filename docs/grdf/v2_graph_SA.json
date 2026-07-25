@@ -2,66 +2,66 @@
   "country": "SA",
   "date": "2026-07-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-25T11:09:21.753454+00:00",
+  "generated_at": "2026-07-25T12:01:52.714608+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 59,
+      "score": 60,
       "props": {
-        "risk_score": 59
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "down"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "down"
+      "score": 11,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
-      "trend": "down"
+      "score": 12,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-SA-Хуситы_зая",
+      "type": "Signal",
+      "label": "Хуситы заявляют, что ударили по Саудовск",
+      "severity": 55,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-SA-Война_на_З",
       "type": "Signal",
       "label": "Война на Западной Азии: Хуситы заявляют ",
       "severity": 50,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Военный_ко",
-      "type": "Signal",
-      "label": "Военный конфликт — Ближний Восток (систе",
-      "severity": 84,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-SA",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.03
     },
     {
       "from": "DRIVER-SA-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-SA-Хуситы_нан",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.78
     },
     {
+      "from": "SIGNAL-SA-Хуситы_зая",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.55
+    },
+    {
       "from": "SIGNAL-SA-Война_на_З",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-SA-Военный_ко",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.84
     }
   ]
 }
