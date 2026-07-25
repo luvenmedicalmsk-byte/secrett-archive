@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-07-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-25T01:33:05.942380+00:00",
+  "generated_at": "2026-07-25T04:46:08.221046+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,24 +10,24 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 64,
+      "score": 65,
       "props": {
-        "risk_score": 64
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 51,
-      "trend": "down"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
       "score": 24,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Пять_челов",
+      "type": "Signal",
+      "label": "Пять человек получили ранения после раке",
+      "severity": 75,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-RU-Маловодье:",
       "type": "Signal",
       "label": "Маловодье: Ханты-Мансийский а.о. (Россия",
@@ -92,13 +99,6 @@
       "label": "ВСУ ночью атаковали несколько регионов Р",
       "severity": 72,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Режим_ЧС_о",
-      "type": "Signal",
-      "label": "Режим ЧС объявили в Невинномысске, где т",
-      "severity": 72,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-RU",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-RU-Пять_челов",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.75
+    },
+    {
       "from": "SIGNAL-RU-Маловодье:",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
@@ -191,12 +197,6 @@
     },
     {
       "from": "SIGNAL-RU-ВСУ_ночью_",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-RU-Режим_ЧС_о",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.72
