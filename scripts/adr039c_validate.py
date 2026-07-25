@@ -92,11 +92,27 @@ def analyze(rows):
             print('   по доменам (диапазон покрытия за серию):')
             for dom,vals in sorted(doms.items(), key=lambda kv:-sum(kv[1])/len(kv[1])):
                 print(f'     {dom:12} {min(vals):.0f}–{max(vals):.0f}% (среднее {sum(vals)/len(vals):.0f}%)')
-            # Приоритет расширения покрытия: домены по возрастанию среднего покрытия
-            _prio=sorted(doms.items(), key=lambda kv:sum(kv[1])/len(kv[1]))
-            print('   приоритет расширения покрытия (планировщик канона):')
-            for _i,(dom,vals) in enumerate(_prio,1):
-                print(f'     {_i}. {dom:12} {sum(vals)/len(vals):.0f}%')
+            # Планировщик канона: приоритет = ОЖИДАЕМЫЙ ПРИРОСТ, не низкое покрытие.
+            # Домен с 8% и 15 событий даёт меньший прирост корпуса, чем домен с 20%
+            # и 340 событий. Ранжируем по среднему числу unknown-событий (объём работы,
+            # который реально перейдёт в known), а не по проценту покрытия.
+            _unk={}
+            for c in covs:
+                for dom,x in (c.get('by_domain') or {}).items():
+                    _unk.setdefault(dom,[]).append(x.get('unknown',0))
+            _rows=[]
+            for dom,vals in doms.items():
+                cov=sum(vals)/len(vals)
+                unk=sum(_unk.get(dom,[0]))/max(1,len(_unk.get(dom,[1])))
+                _rows.append((dom,cov,unk))
+            _rows.sort(key=lambda r:-r[2])   # по убыванию непокрытого объёма
+            print('   планировщик канона (приоритет = ожидаемый прирост покрытия):')
+            print(f'     {"домен":12} {"покрытие":>9} {"unknown":>8}  приоритет')
+            for _i,(dom,cov,unk) in enumerate(_rows,1):
+                # приоритет: объём unknown важнее процента
+                _pr=('Very High' if unk>=40 else 'High' if unk>=20 else 'Medium' if unk>=8 else 'Low')
+                print(f'     {dom:12} {cov:>8.0f}% {unk:>8.0f}  {_pr}')
+            print('   → сортировка по объёму непокрытого: где час работы даст больший прирост корпуса')
 
     print('\n══ КРИТЕРИИ ЗАВЕРШЕНИЯ ══')
     src_stable=all((max([(r.get("by_source_type") or {}).get(k,0)/max(1,r["events"])*100 for r in rows])
