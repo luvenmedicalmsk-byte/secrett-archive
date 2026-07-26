@@ -665,6 +665,14 @@ def _merge_audit(evs, place, ptype):
 
 # Task 4: Process Split — если внутри Signal >=2 независимых места процесса, разделить
 def _split_check(evs):
+    # STAGE 3 (IDR-001 / IEP-001): основание разделения — результат оценки связанности
+    # (ADR-D Decision), а не признак «>=2 конкретных места».
+    # Контракт НЕ изменён: list[list[event]] при разделении, None при отказе от него.
+    _coh = evaluate_cohesion(evs)
+    if _coh.get('cohesion'):
+        # Кластер связан по утверждённому критерию (rule=campaign|macro) — НЕ разделять.
+        return None
+    # Связанность не подтверждена — существующая механика разбиения по месту (без изменений).
     groups={}
     for e in evs:
         p=_process_place(e)['place']; groups.setdefault(p,[]).append(e)
