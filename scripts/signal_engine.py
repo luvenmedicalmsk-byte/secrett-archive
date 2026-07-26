@@ -674,6 +674,103 @@ def _split_check(evs):
         return list(groups.values())
     return None
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGE 2 (IDR-001 / IEP-001): Cohesion Evaluation Layer — ИЗОЛИРОВАННЫЙ СЛОЙ.
+# Реализует ADR-D Decision: оценка связанности вместо правила «>=2 конкретных места».
+# НА ЭТОМ ЭТАПЕ НЕ ПОДКЛЮЧЁН к _split_check — поведение пайплайна не меняется.
+#
+# КОНТРАКТ:
+#   вход:  cluster — список событий (dict)
+#   выход: dict {'cohesion': bool, 'rule': 'campaign'|'macro'|'none', 'explanation': str}
+#
+# ПРАВИЛА (источник — завершённые Evidence-артефакты):
+#   campaign — Investigation: Pattern Cohesion Criterion (Scope: координированные
+#              кампании): единый объект воздействия + координируемый механизм.
+#   macro    — ADR-D Decision, согласовано с наблюдаемым поведением macro-агрегации
+#              (Investigation: Multi-Object Cohesion Mechanisms): ptype + macro-zone.
+#
+# СВОЙСТВА: детерминирован, без побочных эффектов, не зависит от состояния пайплайна.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_COHESION_COORDINATED_VECTORS = ('kinetic', 'political', 'cyber', 'economic')
+_COHESION_NATURAL_ORIGINS = ('natural',)
+
+
+def _cohesion_objects(cluster):
+    """Объекты воздействия кластера (ISO-коды). Только чтение существующих полей."""
+    objs = set()
+    for e in cluster:
+        for c in (e.get('mentioned_countries') or []):
+            if c:
+                objs.add(c)
+        c1 = e.get('event_country') or e.get('primary_country') or e.get('country_code')
+        if c1:
+            objs.add(c1)
+    return objs
+
+
+def _cohesion_is_coordinated(cluster):
+    """Координируемый механизм: не природное происхождение + управляемый вектор."""
+    origins = set((e.get('canon_origin') or '') for e in cluster)
+    if origins and origins <= set(_COHESION_NATURAL_ORIGINS):
+        return False
+    for e in cluster:
+        for v in (e.get('vectors') or []):
+            if v in _COHESION_COORDINATED_VECTORS:
+                return True
+    return False
+
+
+def _cohesion_macro_zones(cluster):
+    """Макрозоны кластера через существующий _macro_for (без собственной логики зон)."""
+    zones = set()
+    for e in cluster:
+        pp = _process_place(e)
+        z = pp.get('macro') if isinstance(pp, dict) else None
+        if z:
+            zones.add(z)
+    return zones
+
+
+def _cohesion_ptypes(cluster):
+    """Типы процесса кластера (существующая типизация)."""
+    return set(
+        (e.get('canon_type') or e.get('process_type') or '')
+        for e in cluster
+    ) - {''}
+
+
+def evaluate_cohesion(cluster):
+    """Единая точка оценки связанности кластера. Детерминирована, без side effects.
+
+    Возвращает: {'cohesion': bool, 'rule': 'campaign'|'macro'|'none', 'explanation': str}
+    """
+    if not cluster or len(cluster) < 2:
+        return {'cohesion': False, 'rule': 'none',
+                'explanation': 'кластер содержит менее двух событий'}
+
+    # Правило campaign (Evidence: Pattern Cohesion Criterion)
+    objs = _cohesion_objects(cluster)
+    if len(objs) == 1 and _cohesion_is_coordinated(cluster):
+        return {'cohesion': True, 'rule': 'campaign',
+                'explanation': 'единый объект воздействия %s + координируемый механизм'
+                               % next(iter(objs))}
+
+    # Правило macro (ADR-D Decision, согласовано с macro-агрегацией)
+    zones = _cohesion_macro_zones(cluster)
+    ptypes = _cohesion_ptypes(cluster)
+    if len(zones) == 1 and len(ptypes) == 1:
+        return {'cohesion': True, 'rule': 'macro',
+                'explanation': 'единый тип «%s» в макрозоне «%s»'
+                               % (next(iter(ptypes)), next(iter(zones)))}
+
+    # Ни одно правило не применимо
+    return {'cohesion': False, 'rule': 'none',
+            'explanation': 'объектов: %d, макрозон: %d, типов: %d — правила связанности не выполнены'
+                           % (len(objs), len(zones), len(ptypes))}
+
+
 _PHASE_SHORT={'emerging':'зарождение','growing':'рост','active':'активная фаза','escalating':'усиление',
  'stabilizing':'стабилизация','de-escalating':'ослабление','dormant':'затухание','archived':'архив'}
 def _srcname(s):
