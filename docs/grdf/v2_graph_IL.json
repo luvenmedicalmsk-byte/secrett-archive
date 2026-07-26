@@ -2,67 +2,67 @@
   "country": "IL",
   "date": "2026-07-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-26T15:45:28.243521+00:00",
+  "generated_at": "2026-07-26T16:53:37.003319+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 32,
+      "score": 78,
       "props": {
-        "risk_score": 32
+        "risk_score": 78
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "stable"
+      "score": 73,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 28,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 7,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 8,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IL-Индикатор_",
-      "type": "Signal",
-      "label": "Индикатор производства в Израиле по срав",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-IL-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -99,6 +92,13 @@
       "label": "Военные удары — Ближний Восток",
       "severity": 81,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Ближний Восток (с",
+      "severity": 79,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.73
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IL",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-Индикатор_",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
       "to": "DOMAIN-IL-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
+      "to": "DOMAIN-IL-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IL-Военный_ко",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.81
+    },
+    {
+      "from": "SIGNAL-IL-Санкционно",
+      "to": "DOMAIN-IL-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.79
     }
   ]
 }
