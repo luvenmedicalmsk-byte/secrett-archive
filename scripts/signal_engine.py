@@ -1185,7 +1185,14 @@ def _enrich_macro(macro, members, now):
             _tl.append({'t':(e.get('date') or '')[:10], 'event':ttl[:140],
                         'detail':'', 'severity':e.get('severity',0)})
     _tl.sort(key=lambda x: x.get('t') or '')
-    macro['timeline']=_tl[-18:] if len(_tl)>18 else _tl
+    # ── ADR-D4 ШАГ 1: разделение контракта ──────────────────────────────────
+    # timeline_recent — ТЕКУЩАЯ активная хронология (из _live), для расчётов
+    #   динамики (_scenWindow, _rhythm). Строится как раньше.
+    # timeline — история процесса (сценарии, хроника). На шаге 1 идентичен
+    #   timeline_recent; накопление включается на шаге 4.
+    _tl_recent=_tl[-18:] if len(_tl)>18 else _tl
+    macro['timeline_recent']=_tl_recent
+    macro['timeline']=_tl_recent
     macro['history']=macro['timeline']
     # ── EVIDENCE: объединение событий под-процессов (дедуп по заголовку, без шума) ──
     # Stage 1: источник = ВСЕ члены (эволюция всего процесса), а не только живые.
