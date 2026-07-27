@@ -4159,6 +4159,15 @@ _CANON_TYPE_DOMAIN = {
 # только про ТЕКУЩЕЕ событие. Guard срабатывает при маркере памяти И отсутствии
 # текущего ударного действия (напр. «в годовщину X ВСУ нанесли удар» — реальный удар,
 # guard не гасит). Пример: «минута молчания в память о теракте 2016» → не «Военные удары».
+# ── ДОМЕННЫЕ GUARD-Ы (причина приоритетнее лексического триггера, ADR-011) ──
+# Эпидемия/медицина: «забастовка медиков во время вспышки» — это social, не рынок труда.
+_EPIDEMIC_GUARD = re.compile(r'эбол|эпидеми|пандеми|лихорадк|холер|оспа|корь\b|вспышк\w*\s+(?:заболев|инфекц|вирус)|инфекцион\w*\s+заболев|карантин|здравоохранени|медработник|медицинск\w*\s+персонал', re.I)
+# Кинетический удар: «удар по рынку/магазину» — это geopolitics, не розничная торговля.
+_KINETIC_GUARD = re.compile(r'удар\w*\s+по|обстрел|атак\w*\s+(?:по|на)\b|ракетн\w*|авиауд|бомбард|прилёт|прилет\w*\s+бпла|поражени\w*\s+объект', re.I)
+# Типы, отменяемые каждым guard-ом
+_LABOR_CANON = {'Рынок труда'}
+_RETAIL_CANON = {'Розничная торговля', 'Сбой e-commerce', 'Регулирование торговли'}
+
 _COMMEM_GUARD = re.compile(r'годовщин|минут\w*\s+молчани|в память|памяти\s+(?:жертв|погибш|павш)|почтил\w*\s+память|\bмемориал|\d+[-\s]*лети[еяю]\b')
 _PRESENT_STRIKE = re.compile(r'нанес\w*\s+удар|наносит удар|атаку(?:ет|ют)|обстрел(?:ял|ивает|яют)|нанесли|уничтожил|сбил[аи]?|поразил|прил[её]т|вторг')
 _MILITARY_CANON = {'Военные удары', 'Покушение'}
@@ -4201,6 +4210,11 @@ _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|об�
 def _canon_type_of(title, summ):
     _txt = title + ' ' + summ
     _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
+    # Причина приоритетнее лексического триггера: эпидемия отменяет «Рынок труда»
+    # (забастовка медиков ≠ трудовой спор), кинетический удар отменяет retail-типы
+    # (удар по рынку/магазину ≠ розничная торговля).
+    _epi = bool(_EPIDEMIC_GUARD.search(_txt))
+    _kin = bool(_KINETIC_GUARD.search(_txt))
     # ═══ RETAIL CANON v2 (Этап 2): entity_class + класс события ПЕРЕД словарным ═══
     if RETAIL_CANON_V2:
         _ie = _ie_detect(_txt)
@@ -4215,6 +4229,8 @@ def _canon_type_of(title, summ):
     best = None; bs = 0; br = None
     for pat, name in _CANON_TYPE:
         if _commem and name in _MILITARY_CANON: continue   # мемориал/годовщина → не текущий удар
+        if _epi and name in _LABOR_CANON: continue         # эпидемия → не рынок труда
+        if _kin and name in _RETAIL_CANON: continue        # удар по объекту → не розничная торговля
         sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
         if sc > bs: bs = sc; best = name; br = pat[:24]
     if DOMAIN_GEOECON_CANARY and best in _GEOECON_OVERRIDE_FROM:
