@@ -1803,8 +1803,9 @@ SHADOW_CB_SEED = 20260727
 _SHADOW_CB = {'pairs':[], 'pairs_seen':0, 'err_cohesion':0, 'err_union':0, 'err_report':0,
               'error_samples':[], 'cb_union':None, 'prod_union':None, 'rng':None}
 
-def _shadow_cb_pair(events, i, j, domain, cbunion, _cap=300):
-    """Оценка пары по CB-критерию. union ТОЛЬКО в теневой копии."""
+def _shadow_cb_pair(events, i, j, domain, _cap=300):
+    """Оценка пары по CB-критерию. НЕ выполняет union — только вердикт и запись.
+    Реальное объединение делают лексические ветки (как в CB), см. _cbunion ниже."""
     import random
     S=_SHADOW_CB
     if S['rng'] is None: S['rng']=random.Random(SHADOW_CB_SEED)
@@ -1813,14 +1814,8 @@ def _shadow_cb_pair(events, i, j, domain, cbunion, _cap=300):
     except Exception as e:
         S['err_cohesion']+=1
         if len(S['error_samples'])<5: S['error_samples'].append('cohesion: '+str(e)[:180])
-        return
-    if not c.get('cohesion'): return
-    try:
-        cbunion(i,j)
-    except Exception as e:
-        S['err_union']+=1
-        if len(S['error_samples'])<5: S['error_samples'].append('union: '+str(e)[:180])
-        return
+        return False
+    if not c.get('cohesion'): return False
     S['pairs_seen']+=1
     rec={'a_id':events[i].get('id'),'b_id':events[j].get('id'),
          'a_title':(events[i].get('title') or '')[:110],'b_title':(events[j].get('title') or '')[:110],
@@ -1831,6 +1826,8 @@ def _shadow_cb_pair(events, i, j, domain, cbunion, _cap=300):
     else:
         k=S['rng'].randint(0,S['pairs_seen']-1)
         if k<_cap: S['pairs'][k]=rec
+    return True          # пара ПРОПУСКАЕТСЯ дальше, как в CB
+
 
 def _cluster(events):
     n=len(events); TK=[_stems(e) for e in events]; LOC=[_loc_set(e)[0] for e in events]
@@ -1881,23 +1878,35 @@ def _cluster(events):
             # ЛОКАЦИЯ-ГЕЙТ: объединяем только при совпадении места
             li,lj=LOC[i],LOC[j]
             geo_ok = bool(li & lj) or (not li and not lj)
+            _cb_pass=False
             if not geo_ok:
-                if SHADOW_CB: _shadow_cb_pair(events,i,j,DOM[i],_cbunion)
-                continue
+                if SHADOW_CB: _cb_pass=_shadow_cb_pair(events,i,j,DOM[i])
+                if not _cb_pass: continue
+                # CB пропускает пару дальше; production — нет.
+                # Поэтому ниже основной union(i,j) НЕ выполняется (см. _prod_ok).
             # локация-шаблон (интернет/пожар/погода): объединяем при совпадении места (уже гарантировано geo-гейтом)
-            if LT[i] and LT[i]==LT[j]: union(i,j); _cbunion(i,j); continue
+            if LT[i] and LT[i]==LT[j]:
+                if not _cb_pass: union(i,j)
+                _cbunion(i,j); continue
             inter=a&b; jac=len(inter)/len(a|b)
             vrare=[w for w in inter if df[w]<=3]
             # Task 6: единый УВЕРЕННЫЙ origin + одно место = один процесс, даже при разной
             # лексике заголовков (ракетный удар/удар БПЛА/артудар — один военный процесс).
             _same_origin=(OGN[i]==OGN[j] and OGN[i]!='unknown' and OCF[i]>=0.5 and OCF[j]>=0.5)
             if _same_origin and (li & lj):
-                union(i,j); _cbunion(i,j); continue
+                if not _cb_pass: union(i,j)
+                _cbunion(i,j); continue
             if not li and not lj:
-                if jac>=0.6: union(i,j); _cbunion(i,j)
+                if jac>=0.6:
+                    if not _cb_pass: union(i,j)
+                    _cbunion(i,j)
             else:
-                if (jac>=0.35 and len(inter)>=2) or len(vrare)>=2: union(i,j); _cbunion(i,j)
-                elif _same_origin and (jac>=0.15 or len(inter)>=1): union(i,j); _cbunion(i,j)
+                if (jac>=0.35 and len(inter)>=2) or len(vrare)>=2:
+                    if not _cb_pass: union(i,j)
+                    _cbunion(i,j)
+                elif _same_origin and (jac>=0.15 or len(inter)>=1):
+                    if not _cb_pass: union(i,j)
+                    _cbunion(i,j)
     groups={}
     for i in range(n): groups.setdefault(find(i),[]).append(events[i])
     if SHADOW_CB:
@@ -2455,6 +2464,19 @@ def _shadow_cb_report(events, prod_clusters, signals, signals_path,
     else:
         cb_sizes, cb_count, cb_max = [], prod_count, prod_max
 
+    # ── SELF-CHECK: shadow должен моделировать ИМЕННО CB ──────────────────
+    # Инструмент обязан воспроизводить структуру решений CB. Если _cbunion
+    # вызывается не в тех же ветках, что union(), оценка относится к другому
+    # алгоритму (история: shadow v2 завышал компоненты в 2 раза).
+    # Контроль: доля пар с cohesion=True, реально объединённых теневым union.
+    cb_pairs_seen = S['pairs_seen']
+    cb_unions_done = None
+    try:
+        # число фактических слияний = n - число компонент shadow
+        cb_unions_done = (len(cb_roots) - len(set(cb_roots))) if cb_roots else None
+    except Exception:
+        S['err_report'] += 1
+
     # ── ИНВАРИАНТ ВЛОЖЕННОСТИ: production_component ⊆ shadow_component ────
     # Shadow имеет право ТОЛЬКО расширять компоненты. Если хотя бы одна пара,
     # объединённая в production, оказалась в разных компонентах shadow —
@@ -2524,6 +2546,8 @@ def _shadow_cb_report(events, prod_clusters, signals, signals_path,
         'pair_growth_vs_prev': round(growth, 2) if growth else None,
         'component_growth_ratio': round(growth_ratio, 2) if growth_ratio else None,
         'nesting_violations': nesting_violations,   # ДОЛЖНО быть 0
+        'cb_pairs_cohesion_true': cb_pairs_seen,    # прошли гео-гейт по CB
+        'cb_unions_applied': cb_unions_done,        # реально слито (после лексики)
         'by_rule': dict(Counter(p['rule'] for p in S['pairs'])),
         'by_domain': dict(Counter(p['domain'] for p in S['pairs'])),
         'cross_region_pairs': sum(1 for p in S['pairs'] if p['a_region'] != p['b_region']),
