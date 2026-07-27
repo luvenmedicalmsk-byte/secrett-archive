@@ -1799,7 +1799,12 @@ def _rising(trend):
 
 # ═══ SHADOW CB (Этап 2, IDR-001) — READ-ONLY наблюдение, на выход не влияет ═══
 SHADOW_CB = True
+CB_CANARY = True          # CB реально участвует в кластеризации (вариант A)
 SHADOW_CB_SEED = 20260727
+# Пороги CRITICAL (заданы до эксперимента, IDR-001 / shadow_plan)
+CB_CRIT_MAX_COMPONENT = 100
+CB_CRIT_GROWTH_RATIO  = 5.0
+_CB_GUARD = {'active': False, 'reason': None, 'checked': False}
 _SHADOW_CB = {'pairs':[], 'pairs_seen':0, 'err_cohesion':0, 'err_union':0, 'err_report':0,
               'error_samples':[], 'cb_union':None, 'prod_union':None, 'rng':None}
 
@@ -1829,7 +1834,7 @@ def _shadow_cb_pair(events, i, j, domain, _cap=300):
     return True          # пара ПРОПУСКАЕТСЯ дальше, как в CB
 
 
-def _cluster(events):
+def _cluster(events, apply_cb=False):
     n=len(events); TK=[_stems(e) for e in events]; LOC=[_loc_set(e)[0] for e in events]
     DOM=[e.get('domain','') for e in events]; LT=[_loc_tmpl(e) for e in events]; ENT=[_is_entity_tmpl(e) for e in events]
     ORG=[_origin_v2(e) for e in events]
@@ -1882,8 +1887,9 @@ def _cluster(events):
             if not geo_ok:
                 if SHADOW_CB: _cb_pass=_shadow_cb_pair(events,i,j,DOM[i])
                 if not _cb_pass: continue
-                # CB пропускает пару дальше; production — нет.
-                # Поэтому ниже основной union(i,j) НЕ выполняется (см. _prod_ok).
+                # Пара прошла только по CB-критерию. Если apply_cb — объединяем
+                # и в основном union (CANARY); иначе только в теневом (SHADOW).
+                if apply_cb: _cb_pass=False    # снимаем защиту → union выполнится
             # локация-шаблон (интернет/пожар/погода): объединяем при совпадении места (уже гарантировано geo-гейтом)
             if LT[i] and LT[i]==LT[j]:
                 if not _cb_pass: union(i,j)
@@ -2546,6 +2552,9 @@ def _shadow_cb_report(events, prod_clusters, signals, signals_path,
         'pair_growth_vs_prev': round(growth, 2) if growth else None,
         'component_growth_ratio': round(growth_ratio, 2) if growth_ratio else None,
         'nesting_violations': nesting_violations,   # ДОЛЖНО быть 0
+        'canary_enabled': CB_CANARY,
+        'canary_applied': _CB_GUARD.get('active'),      # CB реально применён в этом прогоне
+        'canary_disabled_reason': _CB_GUARD.get('reason'),
         'cb_pairs_cohesion_true': cb_pairs_seen,    # прошли гео-гейт по CB
         'cb_unions_applied': cb_unions_done,        # реально слито (после лексики)
         'by_rule': dict(Counter(p['rule'] for p in S['pairs'])),
@@ -2623,6 +2632,15 @@ def _canary_summary(report_path='docs/migration/shadow-cb-report.json', top_n=15
     # ── ШАПКА ─────────────────────────────────────────────────────────────
     print()
     print('═' * W)
+    _cen = r.get('canary_enabled'); _cap_ = r.get('canary_applied')
+    _rsn = r.get('canary_disabled_reason')
+    if _cen and not _cap_:
+        print('  CANARY ОТКЛЮЧЁН В ЭТОМ ПРОГОНЕ: ' + str(_rsn or 'причина не указана')[:W-36])
+        print('  кластеризация выполнена по production-алгоритму')
+        print('═' * W)
+    elif _cen and _cap_:
+        print('  CANARY АКТИВЕН · CB применён в кластеризации')
+        print('═' * W)
     print(f'  SHADOW CB · CANARY SUMMARY · {mark} {st}')
     print('═' * W)
 
@@ -2725,8 +2743,42 @@ def _canary_summary(report_path='docs/migration/shadow-cb-report.json', top_n=15
 
 
 def build_signals(events):
+    # ── CANARY GUARD (вариант A): предварительная оценка → решение применять CB ──
+    _apply = False
+    if CB_CANARY:
+        try:
+            _cluster(events, apply_cb=False)          # проход 1: теневая оценка
+            _pr = _SHADOW_CB.get('prod_union') or []
+            _cb = _SHADOW_CB.get('cb_union') or []
+            from collections import Counter as _C
+            _pmax = max(_C(_pr).values()) if _pr else 0
+            _cmax = max(_C(_cb).values()) if _cb else 0
+            _ratio = (_cmax/_pmax) if _pmax else 0
+            _viol = 0
+            if _pr and _cb:
+                from collections import defaultdict as _dd
+                _g=_dd(list)
+                for _i,_r in enumerate(_pr): _g[_r].append(_i)
+                for _m in _g.values():
+                    if len(_m)>1 and any(_cb[_x]!=_cb[_m[0]] for _x in _m[1:]): _viol+=1
+            _reasons=[]
+            if _viol: _reasons.append('nesting_violations=%d' % _viol)
+            if _cmax > CB_CRIT_MAX_COMPONENT: _reasons.append('largest_component=%d > %d' % (_cmax, CB_CRIT_MAX_COMPONENT))
+            if _ratio > CB_CRIT_GROWTH_RATIO: _reasons.append('growth_ratio=%.2fx > %.1fx' % (_ratio, CB_CRIT_GROWTH_RATIO))
+            if _SHADOW_CB.get('err_cohesion') or _SHADOW_CB.get('err_union'):
+                _reasons.append('errors: cohesion=%d union=%d' % (_SHADOW_CB['err_cohesion'], _SHADOW_CB['err_union']))
+            _CB_GUARD['checked']=True
+            if _reasons:
+                _CB_GUARD['active']=False; _CB_GUARD['reason']='; '.join(_reasons)
+            else:
+                _CB_GUARD['active']=True; _CB_GUARD['reason']=None
+                _apply=True
+        except Exception as _ge:
+            _CB_GUARD['checked']=True; _CB_GUARD['active']=False
+            _CB_GUARD['reason']='guard failed: '+str(_ge)[:120]
+
     clusters=[]
-    for evs in _cluster(events):
+    for evs in _cluster(events, apply_cb=_apply):
         parts=_split_check(evs)                    # защита от ошибочного объединения
         if parts and len(parts)>1: clusters.extend(parts)
         else: clusters.append(evs)
