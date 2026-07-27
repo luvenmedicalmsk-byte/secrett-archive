@@ -1191,10 +1191,6 @@ def _enrich_macro(macro, members, now):
     # timeline — история процесса (сценарии, хроника). На шаге 1 идентичен
     #   timeline_recent; накопление включается на шаге 4.
     _tl_recent=_tl[-18:] if len(_tl)>18 else _tl
-    # ── ЗАДАННАЯ ХРОНОЛОГИЯ ПРОЦЕССА (волны ударов по логистике e-commerce) ──
-    # Установленная последовательность волн. Задаётся явно, поскольку часть
-    # эпизодов не покрыта текущими источниками ленты. Используется только для
-    # «Динамика процесса» (даты и число объектов), не является evidence.
     macro['timeline_recent']=_tl_recent
     macro['timeline']=_tl_recent
     macro['history']=macro['timeline']
@@ -1313,9 +1309,50 @@ def _compute_macro_velocity(macros, now):
                       'new_sources': [], 'new_countries': [], 'new_connections': []}
 
 
+# ── ADR-D4 ШАГ 4: накопительный timeline макропроцесса ───────────────────────
+MACRO_TL_ACCUM = True      # накопление истории; False → байт-идентично шагу 3
+_MACRO_TL_CAP  = 60        # максимум записей в журнале
+_MACRO_TL_DAYS = 45        # возрастное окно (дней от now)
+
+def _merge_macro_timeline(prev_tl, cur_tl, now):
+    """Слияние прошлого журнала с текущим вкладом.
+    Дедуп по (дата, заголовок[:60]) — event_id в evidence отсутствует (проверено).
+    При коллизии обновляется severity, дата сохраняется (первое наблюдение).
+    Переполнение: отбрасываются записи с НАИМЕНЬШИМ severity, не последние по дате —
+    иначе крупная волна вытесняется потоком мелких событий."""
+    import datetime as _dt
+    def _key(x): return ((x.get('t') or '')[:10], (x.get('event') or '')[:60])
+    merged = {}
+    for x in list(prev_tl or []) + list(cur_tl or []):
+        if not x or not x.get('t'):
+            continue
+        k = _key(x)
+        if k in merged:
+            # запись уже в журнале: обновляем severity, дату не трогаем
+            if (x.get('severity') or 0) > (merged[k].get('severity') or 0):
+                merged[k]['severity'] = x.get('severity')
+        else:
+            merged[k] = dict(x)
+    out = list(merged.values())
+    # возрастное окно
+    try:
+        _cut = (_dt.datetime.strptime(now[:10], '%Y-%m-%d') - _dt.timedelta(days=_MACRO_TL_DAYS)).strftime('%Y-%m-%d')
+        out = [x for x in out if (x.get('t') or '')[:10] >= _cut]
+    except Exception:
+        pass
+    # кап: при переполнении сохраняем наиболее значимые
+    if len(out) > _MACRO_TL_CAP:
+        out.sort(key=lambda x: (-(x.get('severity') or 0), x.get('t') or ''))
+        out = out[:_MACRO_TL_CAP]
+    out.sort(key=lambda x: x.get('t') or '')
+    return out
+
+
 def _thread_macro_history(macros, prev_macros, now):
     """Stage 2.1: собственная история макро по стабильному signal_id.
-    Change-triggered append + _cap. ТОЛЬКО хранение — velocity/accel не вычисляет."""
+    Change-triggered append + _cap. ТОЛЬКО хранение — velocity/accel не вычисляет.
+    ADR-D4 шаг 4: timeline становится накопительным журналом (timeline_recent —
+    текущий срез — не затрагивается)."""
     _MH=[('severity_history','severity'),('pressure_history','pressure'),
          ('member_count_history',None),('geo_spread_history','geo_spread_count')]
     for m in macros:
@@ -1330,6 +1367,10 @@ def _thread_macro_history(macros, prev_macros, now):
             if (not hist) or hist[-1].get('v')!=cur_v:
                 hist.append({'t':now,'v':cur_v})
             m[hist_key]=hist[-_MACRO_HIST_CAP:]
+        # ADR-D4 шаг 4: timeline — журнал (prev + текущий вклад), не пересборка
+        if MACRO_TL_ACCUM:
+            m['timeline']=_merge_macro_timeline(prev.get('timeline'), m.get('timeline'), now)
+            m['history']=m['timeline']
 
 
 def _reconstruct_macro(signals, now):
