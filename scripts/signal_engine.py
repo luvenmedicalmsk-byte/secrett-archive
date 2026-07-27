@@ -1797,6 +1797,41 @@ def _rising(trend):
     if t in ('falling','down','de-escalating','decelerating'): return -0.5
     return 0.0
 
+# ═══ SHADOW CB (Этап 2, IDR-001) — READ-ONLY наблюдение, на выход не влияет ═══
+SHADOW_CB = True
+SHADOW_CB_SEED = 20260727
+_SHADOW_CB = {'pairs':[], 'pairs_seen':0, 'err_cohesion':0, 'err_union':0, 'err_report':0,
+              'error_samples':[], 'cb_union':None, 'prod_union':None, 'rng':None}
+
+def _shadow_cb_pair(events, i, j, domain, cbunion, _cap=300):
+    """Оценка пары по CB-критерию. union ТОЛЬКО в теневой копии."""
+    import random
+    S=_SHADOW_CB
+    if S['rng'] is None: S['rng']=random.Random(SHADOW_CB_SEED)
+    try:
+        c=evaluate_cohesion([events[i],events[j]])
+    except Exception as e:
+        S['err_cohesion']+=1
+        if len(S['error_samples'])<5: S['error_samples'].append('cohesion: '+str(e)[:180])
+        return
+    if not c.get('cohesion'): return
+    try:
+        cbunion(i,j)
+    except Exception as e:
+        S['err_union']+=1
+        if len(S['error_samples'])<5: S['error_samples'].append('union: '+str(e)[:180])
+        return
+    S['pairs_seen']+=1
+    rec={'a_id':events[i].get('id'),'b_id':events[j].get('id'),
+         'a_title':(events[i].get('title') or '')[:110],'b_title':(events[j].get('title') or '')[:110],
+         'a_region':events[i].get('region') or '','b_region':events[j].get('region') or '',
+         'a_date':(events[i].get('date') or '')[:10],'b_date':(events[j].get('date') or '')[:10],
+         'domain':domain,'rule':c.get('rule'),'explanation':c.get('explanation')}
+    if len(S['pairs'])<_cap: S['pairs'].append(rec)
+    else:
+        k=S['rng'].randint(0,S['pairs_seen']-1)
+        if k<_cap: S['pairs'][k]=rec
+
 def _cluster(events):
     n=len(events); TK=[_stems(e) for e in events]; LOC=[_loc_set(e)[0] for e in events]
     DOM=[e.get('domain','') for e in events]; LT=[_loc_tmpl(e) for e in events]; ENT=[_is_entity_tmpl(e) for e in events]
@@ -1807,6 +1842,16 @@ def _cluster(events):
     for s in TK:
         for w in s: df[w]+=1
     parent=list(range(n))
+    if SHADOW_CB:
+        _cbpar=list(range(n))
+        def _cbfind(x):
+            while _cbpar[x]!=x: _cbpar[x]=_cbpar[_cbpar[x]]; x=_cbpar[x]
+            return x
+        def _cbunion(a,b):
+            ra,rb=_cbfind(a),_cbfind(b)
+            if ra!=rb: _cbpar[ra]=rb
+    else:
+        _cbunion=lambda a,b: None
     def find(x):
         while parent[x]!=x: parent[x]=parent[parent[x]]; x=parent[x]
         return x
@@ -1836,23 +1881,28 @@ def _cluster(events):
             # ЛОКАЦИЯ-ГЕЙТ: объединяем только при совпадении места
             li,lj=LOC[i],LOC[j]
             geo_ok = bool(li & lj) or (not li and not lj)
-            if not geo_ok: continue
+            if not geo_ok:
+                if SHADOW_CB: _shadow_cb_pair(events,i,j,DOM[i],_cbunion)
+                continue
             # локация-шаблон (интернет/пожар/погода): объединяем при совпадении места (уже гарантировано geo-гейтом)
-            if LT[i] and LT[i]==LT[j]: union(i,j); continue
+            if LT[i] and LT[i]==LT[j]: union(i,j); _cbunion(i,j); continue
             inter=a&b; jac=len(inter)/len(a|b)
             vrare=[w for w in inter if df[w]<=3]
             # Task 6: единый УВЕРЕННЫЙ origin + одно место = один процесс, даже при разной
             # лексике заголовков (ракетный удар/удар БПЛА/артудар — один военный процесс).
             _same_origin=(OGN[i]==OGN[j] and OGN[i]!='unknown' and OCF[i]>=0.5 and OCF[j]>=0.5)
             if _same_origin and (li & lj):
-                union(i,j); continue
+                union(i,j); _cbunion(i,j); continue
             if not li and not lj:
-                if jac>=0.6: union(i,j)
+                if jac>=0.6: union(i,j); _cbunion(i,j)
             else:
-                if (jac>=0.35 and len(inter)>=2) or len(vrare)>=2: union(i,j)
-                elif _same_origin and (jac>=0.15 or len(inter)>=1): union(i,j)
+                if (jac>=0.35 and len(inter)>=2) or len(vrare)>=2: union(i,j); _cbunion(i,j)
+                elif _same_origin and (jac>=0.15 or len(inter)>=1): union(i,j); _cbunion(i,j)
     groups={}
     for i in range(n): groups.setdefault(find(i),[]).append(events[i])
+    if SHADOW_CB:
+        _SHADOW_CB['cb_union']=[_cbfind(x) for x in range(n)]
+        _SHADOW_CB['prod_union']=[find(x) for x in range(n)]
     return list(groups.values())
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2375,6 +2425,281 @@ def _is_noise_cluster(evs):
     if _LOCAL_CRIME.search(txt): return True                          # локальные криминальные разборки
     return False
 
+def _shadow_cb_report(events, prod_clusters, signals, signals_path,
+                      out_path='docs/migration/shadow-cb-report.json'):
+    """Диагностика shadow CB: структура кластеров + инварианты + метаданные."""
+    import os, json, hashlib, random
+    from collections import Counter
+    from datetime import datetime, timezone
+
+    S = _SHADOW_CB
+    now = datetime.now(timezone.utc).isoformat(timespec='seconds')
+
+    # ── ИНВАРИАНТ: signals.json не должен измениться ──────────────────────
+    def _sha(p):
+        try:
+            with open(p, 'rb') as f: return hashlib.sha256(f.read()).hexdigest()
+        except Exception: return None
+    sha_before = _sha(signals_path)   # хэш до записи текущего прогона
+
+    # ── СТРУКТУРА: production vs CB-оценка ────────────────────────────────
+    prod_sizes = sorted((len(c) for c in prod_clusters), reverse=True)
+    prod_count = len(prod_clusters)
+    prod_max = prod_sizes[0] if prod_sizes else 0
+
+    cb_roots = S.get('cb_union') or []
+    if cb_roots:
+        cb_comp = Counter(cb_roots)
+        cb_sizes = sorted(cb_comp.values(), reverse=True)
+        cb_count, cb_max = len(cb_comp), cb_sizes[0]
+    else:
+        cb_sizes, cb_count, cb_max = [], prod_count, prod_max
+
+    # ── ИНВАРИАНТ ВЛОЖЕННОСТИ: production_component ⊆ shadow_component ────
+    # Shadow имеет право ТОЛЬКО расширять компоненты. Если хотя бы одна пара,
+    # объединённая в production, оказалась в разных компонентах shadow —
+    # реализация некорректна (shadow разорвал существующую связь).
+    nesting_violations = 0
+    prod_roots = S.get('prod_union') or []
+    if cb_roots and prod_roots and len(prod_roots) == len(cb_roots):
+        from collections import defaultdict
+        prod_groups = defaultdict(list)
+        for idx, r in enumerate(prod_roots): prod_groups[r].append(idx)
+        for members in prod_groups.values():
+            if len(members) < 2: continue
+            base = cb_roots[members[0]]
+            if any(cb_roots[m] != base for m in members[1:]):
+                nesting_violations += 1
+
+    # ── АВАРИЙНЫЕ ПОРОГИ (заданы ДО эксперимента) ─────────────────────────
+    WARN_MAX_COMPONENT = 50       # предупреждение
+    CRIT_MAX_COMPONENT = 100      # критично
+    CRIT_GROWTH_RATIO  = 5.0      # относительный рост крупнейшего компонента
+    LIMIT_PAIR_GROWTH  = 10.0     # рост числа пар между прогонами
+    prev = {}
+    try:
+        with open(out_path, encoding='utf-8') as f: prev = json.load(f)
+    except Exception: pass
+    prev_pairs = prev.get('cb_extra_pairs') or 0
+    growth = (S['pairs_seen'] / prev_pairs) if prev_pairs else None
+    # ОТНОСИТЕЛЬНАЯ метрика: устойчивее абсолютной (prod max 8 → shadow 60 = сигнал)
+    growth_ratio = (cb_max / prod_max) if prod_max else None
+
+    warnings, criticals = [], []
+    if nesting_violations:
+        criticals.append(f'nesting_violations={nesting_violations} (shadow разорвал production-связи)')
+    if cb_max > CRIT_MAX_COMPONENT:
+        criticals.append(f'largest_component_estimate={cb_max} > {CRIT_MAX_COMPONENT}')
+    elif cb_max > WARN_MAX_COMPONENT:
+        warnings.append(f'largest_component_estimate={cb_max} > {WARN_MAX_COMPONENT}')
+    if growth_ratio and growth_ratio > CRIT_GROWTH_RATIO:
+        criticals.append(f'growth_ratio={growth_ratio:.1f}x (prod={prod_max} → shadow={cb_max})')
+    if growth and growth > LIMIT_PAIR_GROWTH:
+        warnings.append(f'pair_growth={growth:.1f}x > {LIMIT_PAIR_GROWTH}x')
+    if S['err_cohesion'] or S['err_union']:
+        warnings.append(f"errors: cohesion={S['err_cohesion']} union={S['err_union']}")
+
+    out = {
+        # ── МЕТАДАННЫЕ ПРОГОНА ──
+        'updated': now,
+        'schema': 'shadow-cb-v2',
+        'run_id': hashlib.sha1(f"{now}{len(events)}".encode()).hexdigest()[:12],
+        'git_commit': (os.environ.get('GITHUB_SHA') or '')[:12] or None,
+        'engine_schema': 'process-signal-v1.6',
+        'event_count': len(events),
+        'mode': 'READ-ONLY (production output unchanged)',
+
+        # ── СТРУКТУРА КЛАСТЕРОВ (главное) ──
+        'production_cluster_count': prod_count,
+        'shadow_cluster_count_estimate': cb_count,
+        'cluster_reduction': prod_count - cb_count,
+        'production_largest_component': prod_max,
+        'largest_component_estimate': cb_max,
+        'max_cluster_growth': cb_max - prod_max,
+        'cb_top_sizes': cb_sizes[:10],
+        'prod_top_sizes': prod_sizes[:10],
+
+        # ── ПАРЫ ──
+        'cb_extra_pairs': S['pairs_seen'],          # полный счётчик, не усечённый
+        'pair_growth_vs_prev': round(growth, 2) if growth else None,
+        'component_growth_ratio': round(growth_ratio, 2) if growth_ratio else None,
+        'nesting_violations': nesting_violations,   # ДОЛЖНО быть 0
+        'by_rule': dict(Counter(p['rule'] for p in S['pairs'])),
+        'by_domain': dict(Counter(p['domain'] for p in S['pairs'])),
+        'cross_region_pairs': sum(1 for p in S['pairs'] if p['a_region'] != p['b_region']),
+
+        # ── ОШИБКИ (раздельно по источнику) ──
+        'err_cohesion': S['err_cohesion'],
+        'err_union': S['err_union'],
+        'err_report': S['err_report'],
+        'error_samples': S['error_samples'],
+        'sampling_seed': SHADOW_CB_SEED,
+
+        # ── ИНВАРИАНТ ──
+        'signals_sha256_before': sha_before,
+        'signals_sha256_after': None,   # заполняется post-hoc, см. ниже
+        'signals_identical': None,
+
+        # ── АВАРИЙНЫЕ СИГНАЛЫ ──
+        'thresholds': {'warn_max_component': WARN_MAX_COMPONENT,
+                       'crit_max_component': CRIT_MAX_COMPONENT,
+                       'crit_growth_ratio': CRIT_GROWTH_RATIO,
+                       'pair_growth': LIMIT_PAIR_GROWTH},
+        'warnings': warnings,
+        'criticals': criticals,
+        'status': 'CRITICAL' if criticals else ('WARNING' if warnings else 'OK'),
+
+        # ── ДЕТАЛИ (равномерная выборка) ──
+        'pairs_sample': S['pairs'],
+        'pairs_sample_method': f"reservoir sampling, cap={len(S['pairs'])}",
+    }
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, 'w', encoding='utf-8') as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+
+    # сброс между прогонами
+    S['pairs'] = []; S['pairs_seen'] = 0
+    S['err_cohesion'] = S['err_union'] = S['err_report'] = 0
+    S['error_samples'] = []; S['cb_union'] = None; S['prod_union'] = None; S['rng'] = None
+
+
+
+def _box(title, lines, W=72):
+    """Рамка с корректным выравниванием (ширина по фактической длине строки)."""
+    inner = W - 6
+    print('  +' + '-' * inner + '+')
+    print('  | ' + title.ljust(inner - 1) + '|')
+    print('  +' + '-' * inner + '+')
+    for ln in lines:
+        if ln == '':
+            print('  +' + '-' * inner + '+')
+        else:
+            s = str(ln)
+            while s:
+                chunk, s = s[:inner - 2], s[inner - 2:]
+                print('  | ' + chunk.ljust(inner - 1) + '|')
+    print('  +' + '-' * inner + '+')
+
+
+def _canary_summary(report_path='docs/migration/shadow-cb-report.json', top_n=15):
+    """Печатает компактную сводку Shadow CB. Диагностика, без побочных эффектов."""
+    import json
+
+    try:
+        with open(report_path, encoding='utf-8') as f:
+            r = json.load(f)
+    except Exception as e:
+        print(f'[CANARY] отчёт недоступен: {e}')
+        return
+
+    W = 72
+    st = r.get('status', 'OK')
+    mark = {'OK': '✓', 'WARNING': '!', 'CRITICAL': '✗'}.get(st, '?')
+
+    # ── ШАПКА ─────────────────────────────────────────────────────────────
+    print()
+    print('═' * W)
+    print(f'  SHADOW CB · CANARY SUMMARY · {mark} {st}')
+    print('═' * W)
+
+    # ── КРИТИЧНОЕ ПЕРВЫМ ──────────────────────────────────────────────────
+    crits = r.get('criticals') or []
+    if crits:
+        print()
+        _box('CRITICAL', crits + ['', 'Shadow diagnostics cannot be trusted.'], W)
+
+    # ── ИДЕНТИФИКАЦИЯ ПРОГОНА ─────────────────────────────────────────────
+    print()
+    print('  ПРОГОН')
+    print(f"    run_id         {r.get('run_id')}")
+    print(f"    git_commit     {r.get('git_commit') or '—'}")
+    print(f"    engine_schema  {r.get('engine_schema')}")
+    print(f"    updated        {r.get('updated')}")
+    print(f"    events         {r.get('event_count')}")
+
+    # ── СТРУКТУРА КЛАСТЕРОВ ───────────────────────────────────────────────
+    pc = r.get('production_cluster_count')
+    sc = r.get('shadow_cluster_count_estimate')
+    pm = r.get('production_largest_component')
+    sm = r.get('largest_component_estimate')
+    gr = r.get('component_growth_ratio')
+
+    def _arrow(a, b):
+        if a is None or b is None: return ''
+        d = b - a
+        return f'  ({d:+d})' if d else '  (=)'
+
+    print()
+    print('  СТРУКТУРА                production →  shadow')
+    print(f"    кластеров              {str(pc):>10} → {str(sc):>7}{_arrow(pc, sc)}")
+    print(f"    крупнейший компонент   {str(pm):>10} → {str(sm):>7}{_arrow(pm, sm)}")
+    print(f"    growth_ratio           {'' :>10}   {str(gr) + 'x' if gr else '—':>7}")
+    print(f"    топ-размеры prod       {r.get('prod_top_sizes')}")
+    print(f"    топ-размеры shadow     {r.get('cb_top_sizes')}")
+
+    # ── ОБЪЕДИНЕНИЯ ───────────────────────────────────────────────────────
+    sample = r.get('pairs_sample') or []
+    print()
+    print('  ОБЪЕДИНЕНИЯ CB')
+    print(f"    extra merges           {r.get('cb_extra_pairs')}")
+    print(f"    pairs_seen             {r.get('cb_extra_pairs')}")
+    print(f"    reservoir sample       {len(sample)}  (seed={r.get('sampling_seed')})")
+    print(f"    rost vs prev           {str(r.get('pair_growth_vs_prev') or '—')}")
+    by_rule = r.get('by_rule') or {}
+    tot = sum(by_rule.values()) or 1
+    rules = '  '.join(f'{k}={v} ({100*v//tot}%)' for k, v in by_rule.items())
+    print(f"    by_rule                {rules or '—'}")
+    print(f"    by_domain              {r.get('by_domain') or '—'}")
+    print(f"    cross-region           {r.get('cross_region_pairs')}")
+
+    # ── КОНТРОЛЬ КОРРЕКТНОСТИ ─────────────────────────────────────────────
+    nv = r.get('nesting_violations')
+    print()
+    print('  КОНТРОЛЬ')
+    print(f"    nesting_violations     {nv}   {'← ДОЛЖНО БЫТЬ 0' if nv else 'ok'}")
+    print(f"    err_cohesion           {r.get('err_cohesion')}")
+    print(f"    err_union              {r.get('err_union')}")
+    print(f"    err_report             {r.get('err_report')}")
+    for s in (r.get('error_samples') or [])[:3]:
+        print(f'      · {s[:64]}')
+
+    # ── ПРЕДУПРЕЖДЕНИЯ ────────────────────────────────────────────────────
+    warns = r.get('warnings') or []
+    if warns:
+        print()
+        _box('WARNING', warns, W)
+
+    # ── ПРИМЕРЫ ОБЪЕДИНЕНИЙ ───────────────────────────────────────────────
+    if sample and top_n > 0:
+        # наиболее информативные: сначала трансрегиональные, затем macro-правило
+        ranked = sorted(
+            sample,
+            key=lambda p: (p.get('a_region') == p.get('b_region'),
+                           p.get('rule') != 'macro')
+        )[:top_n]
+        print()
+        print('─' * W)
+        print(f'  TOP CB MERGES  ({len(ranked)} из {len(sample)} в выборке)')
+        print('─' * W)
+        for k, p in enumerate(ranked, 1):
+            print()
+            print(f"  CB MERGE #{k}   rule={p.get('rule')}   domain={p.get('domain')}")
+            print(f"    причина: {(p.get('explanation') or '')[:60]}")
+            print(f"    A: {(p.get('a_title') or '')[:62]}")
+            print(f"       {p.get('a_region') or 'место не указано'} · {p.get('a_date')}")
+            print(f"    B: {(p.get('b_title') or '')[:62]}")
+            print(f"       {p.get('b_region') or 'место не указано'} · {p.get('b_date')}")
+            print(f"    production: separate   →   CB: merge")
+
+    # ── ПОДВАЛ ────────────────────────────────────────────────────────────
+    print()
+    print('═' * W)
+    print(f'  STATUS: {st}   ·   полный отчёт: {report_path}')
+    print('═' * W)
+    print()
+
+
+
 def build_signals(events):
     clusters=[]
     for evs in _cluster(events):
@@ -2385,6 +2710,13 @@ def build_signals(events):
     merged=_macro_merge_clusters(clusters)         # ВТОРОЙ УРОВЕНЬ: макропроцессы
     signals=[_build_one_signal(evs, meta) for evs,meta in merged]
     signals.sort(key=lambda s:-s['priority'])
+    if SHADOW_CB:
+        try:
+            _shadow_cb_report(events, clusters, signals, 'docs/signals.json')
+            _canary_summary()
+        except Exception as _e:
+            _SHADOW_CB['err_report']+=1
+            print('[SHADOW CB] report failed:', str(_e)[:150])
     return signals
 
 def write_signals_json(events, path):
