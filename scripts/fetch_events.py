@@ -5560,7 +5560,6 @@ def fetch_geopolitics_rss():
     ISW, War on the Rocks, The Diplomat, FPRI, GLOBSEC, Geopolitical Monitor"""
     sources = [
         # Премиальная аналитика
-        ('https://foreignpolicy.com/feed/', 'Foreign Policy', 'geopolitics'),
         ('https://www.csis.org/rss.xml', 'CSIS', 'geopolitics'),
         ('https://www.csis.org/feed', 'CSIS', 'geopolitics'),
         ('https://www.chathamhouse.org/rss.xml', 'Chatham House', 'geopolitics'),
@@ -7301,7 +7300,6 @@ def fetch_global_rss():
     items = []
     feeds = [
         # Геополитика -- рабочие источники
-        {"url": "https://foreignpolicy.com/feed/", "source": "Foreign Policy", "bias": 8, "domain": "geopolitics"},
         {"url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "source": "UN News", "bias": 5, "domain": "social"},
         
         # Геополитика
