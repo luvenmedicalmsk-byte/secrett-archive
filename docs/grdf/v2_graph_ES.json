@@ -2,39 +2,39 @@
   "country": "ES",
   "date": "2026-07-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-27T17:43:23.875157+00:00",
+  "generated_at": "2026-07-27T18:57:54.815868+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 58,
+      "score": 59,
       "props": {
-        "risk_score": 58
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 44,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
       "score": 28,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
@@ -55,13 +55,13 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -90,7 +90,7 @@
       "id": "SIGNAL-ES-Лесные_пож",
       "type": "Signal",
       "label": "Лесные пожары в Плана-Байша, Испания",
-      "severity": 75,
+      "severity": 76,
       "domain": "climate"
     },
     {
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-ES",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-ES",
@@ -142,7 +142,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-ES-Geopolitical",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -193,7 +235,7 @@
       "from": "SIGNAL-ES-Лесные_пож",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.75
+      "weight": 0.76
     },
     {
       "from": "SIGNAL-ES-Лесной_пож",
