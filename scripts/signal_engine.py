@@ -1198,6 +1198,18 @@ def _enrich_macro(macro, members, now):
     _wv=_MANUAL_WAVES.get(macro.get('signal_id'))
     if _wv:
         _tl_recent=[{'t':d,'event':ev,'detail':'','severity':sv} for d,ev,sv in _wv]
+    _pl=_MANUAL_PLACES.get(macro.get('signal_id'))
+    if _pl:
+        # Охват процесса: список регионов для сценария A (places → чипы «текущий
+        # охват», regions_count → «ограничен он текущими N зонами»).
+        macro['places']=list(_pl)
+        macro['included_regions']=list(_pl)
+        macro['geo_spread']=list(_pl)
+        macro['geo_spread_count']=len(_pl)
+        _fx=macro.get('features') or {}
+        _stx=dict(_fx.get('state') or {})
+        _stx['regions']=list(_pl); _stx['regions_count']=len(_pl)
+        _fx['state']=_stx; macro['features']=_fx
     macro['timeline_recent']=_tl_recent
     macro['timeline']=_tl_recent
     macro['history']=macro['timeline']
@@ -1338,6 +1350,16 @@ def _thread_macro_history(macros, prev_macros, now):
 # ── Заданная хронология волн (логистика e-commerce, июль 2026) ──────────────
 # Формат: signal_id → [(дата, описание, severity), ...]
 # Одна запись = один поражённый объект; _rhythm группирует по датам.
+# Регионы охвата процесса (для сценария A: «текущий охват процесса»)
+_MANUAL_PLACES = {
+ 'geop-macroинфра-ru-e487': [
+   'Тамбовская область', 'Московская область',
+   'Краснодарский край', 'Ставропольский край',
+   'Санкт-Петербург', 'Ленинградская область', 'Крым',
+   'Свердловская область',
+ ],
+}
+
 _MANUAL_WAVES = {
  'geop-macroинфра-ru-e487': [
    ('2026-07-18', 'Логистический центр, Котовск (Тамбовская область)', 70),
