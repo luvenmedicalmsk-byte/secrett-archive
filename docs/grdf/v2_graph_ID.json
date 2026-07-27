@@ -2,7 +2,7 @@
   "country": "ID",
   "date": "2026-07-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-27T12:16:03.824666+00:00",
+  "generated_at": "2026-07-27T15:22:20.746487+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,30 +10,30 @@
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 52,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
+      "score": 8,
       "trend": "stable"
     },
     {
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 18,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Индонезия",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-ID-Авиационны",
       "type": "Signal",
       "label": "Авиационный инцидент — Индонезия",
@@ -92,13 +99,6 @@
       "label": "Эпидемиологический риск — Индонезия",
       "severity": 58,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-ID-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Индонезия",
-      "severity": 53,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-ID",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-ID",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-ID-Геополитич",
+      "to": "DOMAIN-ID-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-ID-Авиационны",
       "to": "DOMAIN-ID-technology",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-ID-social",
       "type": "AMPLIFIES",
       "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-ID-Пожарная_а",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
