@@ -2,60 +2,60 @@
   "country": "GB",
   "date": "2026-07-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-27T18:57:54.807793+00:00",
+  "generated_at": "2026-07-27T20:20:13.581275+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 46,
+      "score": 50,
       "props": {
-        "risk_score": 46
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "stable"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 16,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
@@ -63,6 +63,11 @@
       "label": "cyber",
       "score": 4,
       "trend": "stable"
+    },
+    {
+      "id": "DRIVER-GB-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -75,30 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-GB-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-GB-Медработни",
-      "type": "Signal",
-      "label": "Медработник под наблюдением на предмет Э",
-      "severity": 58,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-GB-Мы_растрач",
-      "type": "Signal",
-      "label": "Мы растрачиваем потенциал светодиодов дл",
-      "severity": 32,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-GB-Эпидемиоло",
       "type": "Signal",
       "label": "Эпидемиологический риск — Великобритания",
       "severity": 58,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-GB-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Великобритания",
+      "severity": 44,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GB-Топливный_",
+      "type": "Signal",
+      "label": "Топливный рынок — Великобритания",
+      "severity": 53,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-GB",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-GB",
@@ -145,6 +145,12 @@
       "weight": 0.04
     },
     {
+      "from": "DRIVER-GB-Economic",
+      "to": "COUNTRY-GB",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-GB-Geopolitical",
       "to": "COUNTRY-GB",
       "type": "CAUSES",
@@ -157,28 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GB-Economic",
-      "to": "COUNTRY-GB",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-GB-Медработни",
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
-      "weight": 0.58
-    },
-    {
-      "from": "SIGNAL-GB-Мы_растрач",
-      "to": "DOMAIN-GB-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-GB-Эпидемиоло",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
       "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-GB-Геополитич",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.44
+    },
+    {
+      "from": "SIGNAL-GB-Топливный_",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
