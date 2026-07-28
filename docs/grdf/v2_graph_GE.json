@@ -2,7 +2,7 @@
   "country": "GE",
   "date": "2026-07-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-28T15:16:58.256514+00:00",
+  "generated_at": "2026-07-28T16:47:08.372634+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-GE",
       "type": "Country",
       "label": "GE",
-      "score": 60,
+      "score": 58,
       "props": {
-        "risk_score": 60
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-GE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 47,
-      "trend": "stable"
+      "score": 39,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 54,
-      "trend": "stable"
+      "score": 52,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 42,
-      "trend": "stable"
+      "score": 41,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 40,
-      "trend": "stable"
+      "score": 38,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GE-social",
       "type": "Domain",
       "label": "social",
-      "score": 45,
-      "trend": "stable"
+      "score": 44,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 42,
-      "trend": "stable"
+      "score": 41,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GE-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 36,
-      "trend": "stable"
+      "score": 35,
+      "trend": "down"
     },
     {
       "id": "DRIVER-GE-economic",
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-GE-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-GE-social",
       "type": "Driver",
       "label": "social"
+    },
+    {
+      "id": "DRIVER-GE-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "SIGNAL-GE-Санкции_ЕС",
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-GE-Тотальный_",
+      "id": "SIGNAL-GE-Санкционно",
       "type": "Signal",
-      "label": "Тотальный блэкаут прямо сейчас в Грузии ",
+      "label": "Санкционное давление — Грузия",
       "severity": 62,
-      "domain": "technology"
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,52 +106,46 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-economic",
       "type": "CORRELATES",
-      "weight": 0.54
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-climate",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-technology",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-social",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-cyber",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.35
     },
     {
       "from": "DRIVER-GE-economic",
-      "to": "COUNTRY-GE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-GE-geopolitical",
       "to": "COUNTRY-GE",
       "type": "CAUSES",
       "weight": 0.8
@@ -163,25 +157,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-GE-geopolitical",
-      "to": "DOMAIN-GE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-GE-infrastructure",
-      "to": "DOMAIN-GE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GE-economic",
-      "to": "DOMAIN-GE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "from": "DRIVER-GE-climate",
+      "to": "COUNTRY-GE",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-GE-climate",
@@ -226,6 +205,27 @@
       "lag_days": 60
     },
     {
+      "from": "DOMAIN-GE-climate",
+      "to": "DOMAIN-GE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GE-economic",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GE-social",
+      "to": "DOMAIN-GE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-GE-Санкции_ЕС",
       "to": "DOMAIN-GE-geopolitical",
       "type": "AMPLIFIES",
@@ -238,8 +238,8 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-GE-Тотальный_",
-      "to": "DOMAIN-GE-technology",
+      "from": "SIGNAL-GE-Санкционно",
+      "to": "DOMAIN-GE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
