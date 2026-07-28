@@ -40,6 +40,31 @@ REVIEW_THRESHOLD = ae.NOISE_THRESHOLD  # 0.5 → на проверку (оста
 MAX_REMOVE_FRACTION = 0.15         # предохранитель: не удалять > 15% ленты за прогон
 LOG_PATH = "docs/_filter_noise.json"
 
+# ── Ручные исключения (решение аналитика) ────────────────────────────────────
+# Убирает конкретное событие из ленты независимо от noise-score.
+# Применяется ДО предохранителя: это не массовая чистка, а точечное решение.
+# Матч по подстроке заголовка (регистронезависимо) — id меняется между прогонами.
+# Каждая запись сопровождается причиной: реестр не должен превращаться
+# в свалку без объяснений.
+MANUAL_EXCLUDE = [
+    # Гео-дефект: Copernicus передал шотландские координаты (57.19 N, -3.83 E),
+    # в событии оказался центроид Индии (28.6 N, 77.2 E). Причина не установлена,
+    # расследование открыто. До выяснения событие вводит в заблуждение.
+    ("Лесной пожар в Авиморе", "geo: Авимор (Шотландия) резолвится в Индию"),
+]
+
+
+def _manual_hits(events):
+    """События из реестра ручных исключений: [(event, reason), ...]."""
+    out = []
+    for e in events:
+        title = (e.get("title") or "").lower()
+        for needle, reason in MANUAL_EXCLUDE:
+            if needle.lower() in title:
+                out.append((e, reason))
+                break
+    return out
+
 
 def _slim(flag):
     """Короткая запись о событии для лога/отчёта."""
@@ -75,6 +100,18 @@ def main():
         data = {"events": events}
 
     total_in = len(events)
+
+    # 1.5) Ручные исключения — до классификации и до предохранителя.
+    # Точечное решение аналитика, не зависит от noise-score.
+    _manual = _manual_hits(events)
+    manual_removed = []
+    if _manual:
+        _mids = {id(e) for e, _ in _manual}
+        for e, reason in _manual:
+            manual_removed.append({"id": e.get("id"), "title": e.get("title"),
+                                   "source": e.get("source"), "reason": reason})
+            print(f"  [manual] убрано: {(e.get('title') or '')[:60]} — {reason}")
+        events = [e for e in events if id(e) not in _mids]
 
     # 2) Классификация — та же, что в аудите
     flagged = ae.audit_noise(events)
@@ -120,6 +157,8 @@ def main():
         "thresholds": {"auto_delete": AUTO_DELETE_THRESHOLD, "review": REVIEW_THRESHOLD},
         "total_in": total_in,
         "published": published,
+        "manual_excluded": manual_removed,
+        "manual_count": len(manual_removed),
         "removed_count": len(applied_removed),
         "review_count": len(to_review),
         "review_quarantined": (not guard_tripped),
