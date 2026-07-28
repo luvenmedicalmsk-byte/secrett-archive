@@ -325,6 +325,79 @@ def _historic_members(docs_dir):
     return out
 
 
+# ═══ ЗАДАННАЯ ХРОНОЛОГИЯ ПРОЦЕССА (устойчива к пересборке) ═══════════════════
+# Генератор пересобирает _preview_processes.json каждый прогон из текущих
+# событий, поэтому правки готового файла затираются. Данные, установленные
+# аналитиком, задаются ЗДЕСЬ и применяются после сборки карточки.
+_MANUAL_INFRA = {
+ 'infra-a5ee3518': {
+   'waves': [
+     ('2026-07-18','Логистический центр, Котовск (Тамбовская область)','Тамбовская область',70),
+     ('2026-07-18','Логистический центр, Электросталь (Московская область)','Московская область',70),
+     ('2026-07-22','Склад, Краснодар','Краснодарский край',68),
+     ('2026-07-22','Склад, Невинномысск (Ставропольский край)','Ставропольский край',68),
+     ('2026-07-24','Объект, Шушары (Ленинградская область)','Ленинградская область',72),
+     ('2026-07-24','Объект, Уткина Заводь (Ленинградская область)','Ленинградская область',72),
+     ('2026-07-24','Объект, Новосаратовка (Ленинградская область)','Ленинградская область',72),
+     ('2026-07-24','Объект (Республика Крым)','Республика Крым',72),
+     ('2026-07-25','Логистический центр Wildberries, Екатеринбург — работа хаба остановлена','Свердловская область',78),
+     ('2026-07-27','Объекты в Сарапуле — эвакуация и ограничение работы','Удмуртская Республика',76),
+     ('2026-07-27','Сортировочный центр, Ижевск — ограничение работы','Удмуртская Республика',76),
+   ],
+   'places': ['Тамбовская область','Московская область','Краснодарский край','Ставропольский край',
+              'Ленинградская область','Республика Крым','Свердловская область','Удмуртская Республика'],
+   'pressure': 74,
+   'covered': [
+     {'zone':'Тамбовская область','hubs':['Котовск'],'significance':'первая волна, логистический центр'},
+     {'zone':'Московская область','hubs':['Электросталь'],'significance':'первая волна, логистический центр'},
+     {'zone':'Краснодарский край','hubs':['Краснодар'],'significance':'вторая волна, складской комплекс'},
+     {'zone':'Ставропольский край','hubs':['Невинномысск'],'significance':'вторая волна, складской комплекс'},
+     {'zone':'Ленинградская область','hubs':['Шушары','Уткина Заводь','Новосаратовка'],'significance':'третья волна, четыре объекта'},
+     {'zone':'Республика Крым','hubs':[],'significance':'третья волна'},
+     {'zone':'Свердловская область','hubs':['Екатеринбург'],'significance':'четвёртая волна, хаб Wildberries остановлен'},
+     {'zone':'Удмуртская Республика','hubs':['Сарапул','Ижевск'],'significance':'пятая волна, эвакуация и сортировочный центр'},
+   ],
+   'open': [
+     {'zone':'Республика Татарстан','hubs':['Казань','Набережные Челны'],'significance':'крупный узел распределения, не затронут'},
+     {'zone':'Нижегородская область','hubs':['Нижний Новгород','Дзержинск'],'significance':'транзитный коридор между затронутыми зонами'},
+     {'zone':'Ростовская область','hubs':['Ростов-на-Дону','Азов'],'significance':'южное направление, объекты того же класса'},
+     {'zone':'Новосибирская область','hubs':['Новосибирск','Толмачёво'],'significance':'восточный хаб, проверка выхода за Урал'},
+     {'zone':'Самарская область','hubs':['Самара','Тольятти'],'significance':'поволжский узел, соседний с затронутой Удмуртией'},
+   ],
+ },
+}
+_MANUAL_ALIAS = {'obs-a5ee3518': 'infra-a5ee3518'}   # наблюдательная карточка того же процесса
+
+
+def _apply_manual(proc):
+    """Накладывает заданные аналитиком данные на собранную карточку."""
+    pid = proc.get('process_id')
+    key = pid if pid in _MANUAL_INFRA else _MANUAL_ALIAS.get(pid)
+    cfg = _MANUAL_INFRA.get(key)
+    if not cfg:
+        return proc
+    if cfg.get('waves') and pid == key:      # timeline — только основной карточке
+        proc['timeline'] = [{'t': d, 'event': e, 'detail': '', 'place': pl, 'severity': sv}
+                            for d, e, pl, sv in cfg['waves']]
+        proc['evidence_count'] = len(cfg['waves'])
+        proc['member_count']   = len(cfg['waves'])
+        proc['first_seen']     = cfg['waves'][0][0]
+        proc['last_seen']      = cfg['waves'][-1][0]
+    if cfg.get('places'):
+        proc['places'] = list(cfg['places'])
+        proc['geo_spread'] = len(cfg['places'])
+    if cfg.get('pressure') is not None:
+        proc['pressure'] = cfg['pressure']
+    st = proc.setdefault('features', {}).setdefault('state', {})
+    if cfg.get('places'):
+        st['regions'] = list(cfg['places'])
+        st['regions_count'] = len(cfg['places'])
+    if cfg.get('covered') or cfg.get('open'):
+        st['watch_zones'] = {'covered': [dict(z) for z in cfg.get('covered', [])],
+                             'open':    [dict(z) for z in cfg.get('open', [])]}
+    return proc
+
+
 def build_infra(events, docs_dir=None):
     groups={}   # identity_key_infra -> члены
     _src=list(events or [])
@@ -1254,6 +1327,12 @@ def main():
     obsdet = build_observation_detection(infra, _deltas)  # ADR-024 + блок «Что изменилось»
     out={'generated': _iso(_now()), 'preview': True,
          'processes': infra + obsdet + [fin]}
+    # Заданные аналитиком данные накладываются ПОСЛЕ сборки — переживают пересборку
+    try:
+        for _p in out.get('processes', []):
+            _apply_manual(_p)
+    except Exception as _me:
+        print(f'[PREVIEW] manual override: {_me}', file=sys.stderr)
     (DOCS/'_preview_processes.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
     # shadow-файлы (Задача 4)
     (DOCS/'_infra_process_shadow.json').write_text(json.dumps({'ts':_iso(_now()),'candidates':infra_shadow},ensure_ascii=False,indent=2),encoding='utf-8')
