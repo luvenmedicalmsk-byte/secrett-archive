@@ -3378,10 +3378,19 @@ def process_events(raw_items):
             continue
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
         if domain_counts.get(d, 0) < quota:
-            _trace(ev.get('_obs_tid'),'BUILT'); balanced.append(ev)
+            _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
+                   canon_type=ev.get('canon_type'), source=ev.get('source'))
+            balanced.append(ev)
             domain_counts[d] = domain_counts.get(d, 0) + 1
         else:
-            _trace(_obs_id(ev),'OVERFLOW','removed',reason='overflow'); overflow.append(ev)
+            # Диагностика Issue C: поля пишутся ТОЛЬКО в трассировку (LINEAGE=1),
+            # на поведение не влияют. Отдельного поля с результатом detect_domain
+            # в модели нет — новую логику не заводим, пишем что есть.
+            _trace(_obs_id(ev),'OVERFLOW','removed',reason='overflow',
+                   domain=d, severity=ev.get('severity'),
+                   canon_type=ev.get('canon_type'), source=ev.get('source'),
+                   quota=quota, filled=domain_counts.get(d, 0))
+            overflow.append(ev)
 
     # MAX_EVENTS -- КАП для FEED-слоя (ленты). Analytic-события (feed_visible=False) идут
     # в поток сверх капа: их не видит FREE, но видят Process Engine / Radar / Pressure.
