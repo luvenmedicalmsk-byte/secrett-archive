@@ -12838,12 +12838,18 @@ def _save_v6_dashboard(state_map: dict, link_lu: dict,
 # ИНВАРИАНТ: timeline процесса НЕ копируется. Хранится process_id + метаданные;
 # история живёт в signals.json и не дублируется.
 VCS_ENABLED    = True
+VCS_BOOTSTRAP  = True    # писать provisional-версию текущего месяца
 VCS_SCHEMA_VER = 1
 
-def _vcs_month_key(dt=None):
-    """Ключ ЗАКРЫВШЕГОСЯ месяца: в первые 3 дня месяца пишем предыдущий."""
+def _vcs_month_key(dt=None, current=False):
+    """Ключ месяца для записи.
+    current=False → ЗАКРЫВШИЙСЯ месяц (первые 3 дня следующего) — штатный режим.
+    current=True  → ТЕКУЩИЙ месяц — bootstrap: данные месяца уже есть в системе,
+                    ждать его закрытия не нужно; версия помечается provisional."""
     from datetime import datetime as _dt, timezone as _tz
     d = dt or _dt.now(_tz.utc)
+    if current:
+        return "%04d-%02d" % (d.year, d.month)
     if d.day > 3:
         return None                     # месяц ещё идёт — не пишем
     prev_m = d.month - 1 or 12
@@ -12851,17 +12857,33 @@ def _vcs_month_key(dt=None):
     return "%04d-%02d" % (prev_y, prev_m)
 
 
-def _vcs_write(iso2, state, signals):
-    """Записывает docs/grdf/archive/{ISO}/{YYYY-MM}.json — версию состояния страны."""
+def _vcs_write(iso2, state, signals, bootstrap=False):
+    """Записывает docs/grdf/archive/{ISO}/{YYYY-MM}.json — версию состояния страны.
+
+    bootstrap=True — предварительная версия ТЕКУЩЕГО месяца (provisional):
+      данные месяца уже есть в системе, раздел «Страны» не должен быть пустым.
+      Такая версия ПЕРЕЗАПИСЫВАЕТСЯ финальной при закрытии месяца.
+    bootstrap=False — финальная версия закрывшегося месяца; повторная запись
+      финальной версии блокируется (месяц зафиксирован).
+    """
     import json as _j, os as _os
-    mk = _vcs_month_key()
+    mk = _vcs_month_key(current=bootstrap)
     if not mk:
         return False
     d = GRDF_DIR / "archive" / iso2
     d.mkdir(parents=True, exist_ok=True)
     path = d / ("%s.json" % mk)
     if path.exists():
-        return False                    # версия месяца уже зафиксирована
+        try:
+            with open(path, encoding="utf-8") as _f:
+                _prev = _j.load(_f) or {}
+        except Exception:
+            _prev = {}
+        # финальная версия перезаписывает provisional; финальную не трогаем
+        if not _prev.get("provisional"):
+            return False
+        if bootstrap:
+            return False                # provisional уже есть — не переписываем ею же
     drivers = []
     for s in (signals or []):
         # относящиеся к стране процессы; relation пока LOCATION —
@@ -12892,6 +12914,7 @@ def _vcs_write(iso2, state, signals):
         "schema_version": VCS_SCHEMA_VER,
         "country":        iso2,
         "month":          mk,
+        "provisional":    bool(bootstrap),   # предварительная версия текущего месяца
         "generated_at":   datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "risk_score":     state.get("gri"),
         "state_score":    state.get("state_score"),
@@ -12916,7 +12939,7 @@ def save_grdf_v6(snapshots: list) -> None:
 
     # Phase 1: Build country states
     _vcs_signals = []
-    if VCS_ENABLED and _vcs_month_key():
+    if VCS_ENABLED and (VCS_BOOTSTRAP or _vcs_month_key()):
         try:
             with open(DOCS_DIR / "signals.json", encoding="utf-8") as _f:
                 _vcs_signals = (json.load(_f) or {}).get("signals") or []
@@ -12932,7 +12955,9 @@ def save_grdf_v6(snapshots: list) -> None:
                 json.dump(state, f, ensure_ascii=False, indent=2)
             if VCS_ENABLED:
                 try:
-                    _vcs_write(iso2, state, _vcs_signals)
+                    _vcs_write(iso2, state, _vcs_signals)              # финальная (закрытый месяц)
+                    if VCS_BOOTSTRAP:
+                        _vcs_write(iso2, state, _vcs_signals, bootstrap=True)  # provisional (текущий)
                 except Exception as _ve:
                     print(f"[VCS] {iso2}: {_ve}", file=sys.stderr)
         except Exception as e:
