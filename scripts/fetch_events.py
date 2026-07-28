@@ -835,7 +835,13 @@ DOMAIN_RULES = {
             "засуха","наводнение","пожар","ураган","землетрясение","цунами",
             "климат","экология","природные ресурсы","биоразнообразие",
             # --- EN target-stream expansion (Domain Coverage Audit, post-FREEZE) ---
-            "heat wave","heatwaves","storm risk"
+            "heat wave","heatwaves","storm risk",
+            # --- Точечное покрытие (аудит 28.07.2026): огненные явления ---
+            # «Беспрецедентные огненные облака — Франция» уходило в economy:
+            # источник New Scientist помечен экономическим фидом.
+            "пирокумулонимбус","pyrocumulonimbus","огненные облака","fire cloud",
+            "лесной пожар","лесные пожары","лесных пожаров","forest fire",
+            "вызванные пламенем","fire-generated","fire weather"
         ],
         "weight": 1.0,
         # Слова которые НЕ должны попасть в климат
@@ -845,6 +851,12 @@ DOMAIN_RULES = {
     "economy": {
         # Спад, инфляция, долги, финансовые пузыри, цепочки поставок, рынок труда
         "keywords": [
+            # --- Точечное покрытие (аудит 28.07.2026): энергорынок ---
+            # «Совет PJM: аукцион резервной мощности» detect_domain относил
+            # к technology по упоминанию ЦОД — тема экономическая.
+            "аукцион мощности","аукцион резервной мощности","capacity auction",
+            "энергорынок","оптовый рынок электроэнергии","коммунальные службы",
+            "capital investment","тариф","тарифы на электроэнергию","utility rates",
             "recession","economic downturn","inflation","debt","fiscal deficit",
             "asset bubble","stock market crash","financial crisis","banking collapse",
             "unemployment","labor shortage","talent shortage","workforce",
@@ -861,7 +873,9 @@ DOMAIN_RULES = {
         ],
         "weight": 1.3,
         "exclude": ["military","armed","weapon","flood","wildfire","earthquake","hack",
-                    "strike","airstrike","attack","killed","bombing","shelling","gaza","israeli","missile","war","troops","offensive","удары","ударов","жертв"]
+                    "strike","airstrike","attack","killed","bombing","shelling","gaza","israeli","missile","war","troops","offensive","удары","ударов","жертв",
+                    # аудит 28.07.2026: климатические явления не должны попадать в экономику
+                    "пирокумулонимбус","огненные облака","лесной пожар","лесные пожары","лесных пожаров"]
     },
     "geopolitics": {
         # Вооружённые конфликты, внутригосударственное насилие, ядерное/биооружие, геоэкономика
