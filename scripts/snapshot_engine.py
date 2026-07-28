@@ -12829,6 +12829,82 @@ def _save_v6_dashboard(state_map: dict, link_lu: dict,
 
 # ── V6 Orchestrator ───────────────────────────────────────────────────────
 
+# ═══ VERSIONED COUNTRY STATE (Issue: Country Relation Model, шаг A) ═══════════
+# Помесячная версия состояния страны. Пишется ПО СОБЫТИЮ СМЕНЫ МЕСЯЦА: снимок
+# закрывшегося месяца формируется в первые дни следующего, когда месяц завершён.
+# Архив нельзя построить задним числом — накопление начинается сейчас, интерфейс
+# появится после 3-4 месяцев данных.
+#
+# ИНВАРИАНТ: timeline процесса НЕ копируется. Хранится process_id + метаданные;
+# история живёт в signals.json и не дублируется.
+VCS_ENABLED    = True
+VCS_SCHEMA_VER = 1
+
+def _vcs_month_key(dt=None):
+    """Ключ ЗАКРЫВШЕГОСЯ месяца: в первые 3 дня месяца пишем предыдущий."""
+    from datetime import datetime as _dt, timezone as _tz
+    d = dt or _dt.now(_tz.utc)
+    if d.day > 3:
+        return None                     # месяц ещё идёт — не пишем
+    prev_m = d.month - 1 or 12
+    prev_y = d.year - (1 if d.month == 1 else 0)
+    return "%04d-%02d" % (prev_y, prev_m)
+
+
+def _vcs_write(iso2, state, signals):
+    """Записывает docs/grdf/archive/{ISO}/{YYYY-MM}.json — версию состояния страны."""
+    import json as _j, os as _os
+    mk = _vcs_month_key()
+    if not mk:
+        return False
+    d = GRDF_DIR / "archive" / iso2
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / ("%s.json" % mk)
+    if path.exists():
+        return False                    # версия месяца уже зафиксирована
+    drivers = []
+    for s in (signals or []):
+        # относящиеся к стране процессы; relation пока LOCATION —
+        # ACTOR/TARGET/REGULATORY/ECONOMIC появятся после Country Relation Model
+        # Поле countries — ISO2-коды стран процесса (заполнено у ~88% процессов).
+        # relation пока LOCATION для всех: разделение ACTOR/TARGET/REGULATORY —
+        # после внедрения Country Relation Model (см. Issue).
+        cs = [str(x).upper() for x in (s.get("countries") or [])]
+        if iso2 not in cs:
+            continue
+        fs = (s.get("first_seen") or "")[:10]
+        ls = (s.get("last_seen") or "")[:10]
+        if fs and fs[:7] > mk:          # процесс родился позже закрытого месяца
+            continue
+        drivers.append({
+            "process_id":    s.get("signal_id"),
+            "relation":      "LOCATION",
+            "domain":        (s.get("domains") or [s.get("primary_domain")])[0] if (s.get("domains") or s.get("primary_domain")) else None,
+            "title":         (s.get("title") or "")[:120],
+            "severity":      s.get("severity"),
+            "first_seen":    fs,
+            "last_seen":     ls,
+            "timeline_size": len(s.get("timeline") or []),
+            "is_macro":      bool(s.get("is_macro")),
+        })
+    drivers.sort(key=lambda x: -(x.get("severity") or 0))
+    out = {
+        "schema_version": VCS_SCHEMA_VER,
+        "country":        iso2,
+        "month":          mk,
+        "generated_at":   datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "risk_score":     state.get("gri"),
+        "state_score":    state.get("state_score"),
+        "dominant_domain": state.get("dominant_domain"),
+        "alert_level":    state.get("alert_level"),
+        "drivers":        drivers[:40],
+        "drivers_total":  len(drivers),
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        _j.dump(out, f, ensure_ascii=False, indent=1)
+    return True
+
+
 def save_grdf_v6(snapshots: list) -> None:
     """
     GRDF V6 -- Global Risk Digital Twin orchestrator.
@@ -12839,6 +12915,13 @@ def save_grdf_v6(snapshots: list) -> None:
     GRDF_DIR.mkdir(parents=True, exist_ok=True)
 
     # Phase 1: Build country states
+    _vcs_signals = []
+    if VCS_ENABLED and _vcs_month_key():
+        try:
+            with open(DOCS_DIR / "signals.json", encoding="utf-8") as _f:
+                _vcs_signals = (json.load(_f) or {}).get("signals") or []
+        except Exception as _e:
+            print(f"[VCS] signals.json: {_e}", file=sys.stderr)
     state_map: dict[str, dict] = {}
     for snap in snapshots:
         iso2 = snap["country"]
@@ -12847,6 +12930,11 @@ def save_grdf_v6(snapshots: list) -> None:
             state_map[iso2] = state
             with open(GRDF_DIR / f"v6_country_state_{iso2}.json","w") as f:
                 json.dump(state, f, ensure_ascii=False, indent=2)
+            if VCS_ENABLED:
+                try:
+                    _vcs_write(iso2, state, _vcs_signals)
+                except Exception as _ve:
+                    print(f"[VCS] {iso2}: {_ve}", file=sys.stderr)
         except Exception as e:
             print(f"[GRDF-V6] state {iso2}: {e}", file=sys.stderr)
 
