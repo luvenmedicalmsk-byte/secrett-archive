@@ -2,39 +2,39 @@
   "country": "IN",
   "date": "2026-07-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-29T12:47:02.310843+00:00",
+  "generated_at": "2026-07-29T13:29:46.746310+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 57,
+      "score": 59,
       "props": {
-        "risk_score": 57
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 44,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "stable"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "stable"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-Число_тигр",
+      "id": "SIGNAL-IN-Крупные_ме",
       "type": "Signal",
-      "label": "Число тигров в Индии растет. Защита их п",
-      "severity": 32,
-      "domain": "climate"
+      "label": "Крупные международные компании, среди ко",
+      "severity": 44,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IN",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IN",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-IN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-IN-geopolitical",
@@ -196,10 +238,10 @@
       "weight": 0.85
     },
     {
-      "from": "SIGNAL-IN-Число_тигр",
-      "to": "DOMAIN-IN-climate",
+      "from": "SIGNAL-IN-Крупные_ме",
+      "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.44
     }
   ]
 }
