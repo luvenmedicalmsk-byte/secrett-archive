@@ -553,6 +553,44 @@ SATELLITE_SOURCES = {
 }
 _SAT_LAYER = {}                   # телеметрия: сколько детекций выведено из квоты
 
+# ═══ FIRMS GRID SHADOW (READ-ONLY) ══════════════════════════════════════════
+# Проблема универсальна, не про Турцию: топ-10 берётся НА ОКНО, поэтому в
+# большом окне очаги одной страны вытесняют другую. «Средиземноморье (восток)»
+# = 200 кв.градусов на Италию, Грецию, Балканы и запад Турции разом.
+# Замер 29.07: из этого окна вышли только Стамбул и Афины, при том что
+# в Мугле и Фетхие горело (подтверждено СМИ).
+#
+# Дробление окна НЕ меняет ranking, clustering и severity — только размер
+# конкурентного пространства. Shadow считает, что дало бы разбиение,
+# на решения не влияет.
+FIRMS_GRID_SHADOW = [
+    ("Балканы/Греция",         (10.0, 35.0, 25.0, 45.0)),
+    ("Турция (запад)",         (25.0, 35.0, 35.0, 42.0)),
+    ("Турция (восток)/Левант", (35.0, 33.0, 45.0, 42.0)),
+]
+_FIRMS_SHADOW = {}                # {окно: {'clusters': n, 'top_bright': [...]}}
+
+
+def _firms_grid_shadow(region_name, clusters):
+    """Что дало бы дробление окна: топ-10 в каждой подзоне вместо общего.
+    Только счёт — production берёт свой топ-10 как прежде."""
+    if not clusters:
+        return
+    for _zn, (_x1, _y1, _x2, _y2) in FIRMS_GRID_SHADOW:
+        _in = [c for c in clusters.values()
+               if _x1 <= (c.get('lng') or 0) <= _x2 and _y1 <= (c.get('lat') or 0) <= _y2]
+        if not _in:
+            continue
+        _top = sorted(_in, key=lambda x: x.get('bright') or 0, reverse=True)[:10]
+        _st = _FIRMS_SHADOW.setdefault(_zn, {'clusters': 0, 'would_pass': 0, 'sample': []})
+        _st['clusters'] += len(_in)
+        _st['would_pass'] += len(_top)
+        for _c in _top[:4]:
+            if len(_st['sample']) < 6:
+                _st['sample'].append({'lat': round(_c.get('lat') or 0, 2),
+                                      'lng': round(_c.get('lng') or 0, 2),
+                                      'bright': round(_c.get('bright') or 0)})
+
 
 def _is_satellite(ev):
     """Событие получено спутниковой детекцией, а не сообщением источника."""
@@ -3846,6 +3884,7 @@ def process_events(raw_items):
             'shadow_routing': _SHADOW_ROUTE,
             'shadow_pipeline': _shadow_pipeline_probe(),
             'satellite_layer': {'sources': sorted(SATELLITE_SOURCES), 'moved': _SAT_LAYER},
+            'firms_grid_shadow': _FIRMS_SHADOW,
             'content_routing_canary': {'channels': sorted(CONTENT_ROUTING_CANARY),
                                        'passed': _CANARY_PASS, 'domains': _CANARY_DOM},
             'translation_incomplete': {'count': len(_TR_INCOMPLETE),
@@ -8787,6 +8826,9 @@ def fetch_nasa_firms(api_key=None):
             except Exception as e:
                 print(f"  [WARN] FIRMS {region_name}/{sensor}: {e}", file=sys.stderr)
 
+        # SHADOW: что дало бы дробление окна (только счёт, production не меняется)
+        try: _firms_grid_shadow(region_name, clusters)
+        except Exception: pass
         # Берём топ-10 очагов по яркости (объединённые оба сенсора)
         top = sorted(clusters.values(), key=lambda x: x['bright'], reverse=True)[:10]
         for fire in top:
