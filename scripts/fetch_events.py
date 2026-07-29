@@ -534,6 +534,32 @@ SHADOW_ROUTING_CHANNELS = {'ecotopor'}
 # Гейт по одной отрасли его профилю не соответствует.
 # ТОЛЬКО ecotopor. Остальные каналы ECON_SRC идут прежним путём.
 CONTENT_ROUTING_CANARY = {'ecotopor'}
+
+# ═══ SATELLITE DETECTION LAYER ══════════════════════════════════════════════
+# Спутниковая детекция — физическая фиксация очага, не новостное событие.
+# СМИ сообщают последствия: эвакуации, перекрытия дорог, разрушения.
+# Природа разная, поэтому за одну квоту конкурировать не должны.
+#
+# ИЗМЕРЕНИЕ (lineage 29.07 17:58): climate OVERFLOW = 327 событий,
+# спутниковых 142 (43%), новостных 185 (56%). Спутники вытесняли новости
+# даже после отбора top-10 на регион.
+#
+# Контур: детекции идут в поток БЕЗ квоты, как аналитический слой.
+# В ленте не показываются, но кормят Process Engine, Radar, Pressure Index
+# и служат подтверждением для новостных событий.
+SATELLITE_SOURCES = {
+    'NASA FIRMS', 'NASA FIRMS / Авиалесоохрана',
+    'NASA EONET', 'NSIDC Sea Ice', 'Copernicus Sentinel',
+}
+_SAT_LAYER = {}                   # телеметрия: сколько детекций выведено из квоты
+
+
+def _is_satellite(ev):
+    """Событие получено спутниковой детекцией, а не сообщением источника."""
+    _s = str(ev.get('source') or '')
+    if _s in SATELLITE_SOURCES:
+        return True
+    return any(_s.startswith(_k) for _k in ('NASA FIRMS', 'NASA EONET', 'NSIDC'))
 _SHADOW_ROUTE = {}                # {канал: {'received':n,'kw_missing':n,'classified':n,'domains':{},'no_domain':n}}
 
 
@@ -3590,6 +3616,16 @@ def process_events(raw_items):
         if ev.get('feed_visible') is False:
             _trace(ev.get('_obs_tid'),'BUILT'); balanced.append(ev)
             continue
+        # SATELLITE LAYER: детекции вне общей квоты — не конкурируют с новостями.
+        if _is_satellite(ev):
+            ev['feed_visible'] = False
+            ev['_layer'] = 'satellite'
+            _k = str(ev.get('source') or '?')
+            _SAT_LAYER[_k] = _SAT_LAYER.get(_k, 0) + 1
+            _trace(ev.get('_obs_tid'),'BUILT',layer='satellite',
+                   domain=d, severity=ev.get('severity'), source=ev.get('source'))
+            balanced.append(ev)
+            continue
         quota = DOMAIN_QUOTA.get(d, MAX_EVENTS)
         if domain_counts.get(d, 0) < quota:
             _trace(ev.get('_obs_tid'),'BUILT',domain=d, severity=ev.get('severity'),
@@ -3809,6 +3845,7 @@ def process_events(raw_items):
             # Только измерение — production-решения принимались прежней веткой.
             'shadow_routing': _SHADOW_ROUTE,
             'shadow_pipeline': _shadow_pipeline_probe(),
+            'satellite_layer': {'sources': sorted(SATELLITE_SOURCES), 'moved': _SAT_LAYER},
             'content_routing_canary': {'channels': sorted(CONTENT_ROUTING_CANARY),
                                        'passed': _CANARY_PASS, 'domains': _CANARY_DOM},
             'translation_incomplete': {'count': len(_TR_INCOMPLETE),
