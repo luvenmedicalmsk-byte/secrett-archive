@@ -2,32 +2,32 @@
   "country": "SA",
   "date": "2026-07-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-29T13:29:46.746991+00:00",
+  "generated_at": "2026-07-29T14:38:04.497514+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 54,
+      "score": 56,
       "props": {
-        "risk_score": 54
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 18,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 10,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
@@ -97,7 +97,7 @@
       "id": "SIGNAL-SA-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Ближний Восток",
-      "severity": 74,
+      "severity": 65,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-SA",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-SA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-SA-Саудовская",
       "to": "DOMAIN-SA-economic",
       "type": "AMPLIFIES",
@@ -178,7 +199,7 @@
       "from": "SIGNAL-SA-Геополитич",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.65
     }
   ]
 }
