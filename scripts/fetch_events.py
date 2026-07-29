@@ -82,6 +82,30 @@ def _shadow_pipeline_probe():
     return out
 
 
+def _parser_version():
+    """Версия логики, принявшей решение.
+
+    commit — GITHUB_SHA прогона (что именно было задеплоено),
+    hash — md5 самого fetch_events.py (ловит правку без коммита).
+    Через месяц на вопрос «почему домен определён так» ответ даёт
+    связка fetch_fn + parser_commit.
+    """
+    global _PV_CACHE
+    if _PV_CACHE:
+        return _PV_CACHE
+    _sha = (os.environ.get('GITHUB_SHA', '') or 'local')[:8]
+    try:
+        with open(__file__, 'rb') as _pf:
+            _h = hashlib.md5(_pf.read()).hexdigest()[:8]
+    except Exception:
+        _h = 'unknown'
+    _PV_CACHE = _sha + '/' + _h
+    return _PV_CACHE
+
+
+_PV_CACHE = None
+
+
 def _lineage_provenance():
     """Происхождение lineage-файла: к какому прогону он относится.
 
@@ -3060,7 +3084,8 @@ def process_events(raw_items):
                feed=(item.get('url') or item.get('link') or '')[:120],
                fetch_fn=item.get('_fetch_fn'),
                feed_domain=(item.get('_domain') or item.get('domain') or None),
-               ingest_time=datetime.now(timezone.utc).strftime('%H:%M:%SZ'))
+               ingest_time=datetime.now(timezone.utc).strftime('%H:%M:%SZ'),
+               parser_commit=_parser_version())
         _src_l = str(item.get('source','')).strip().lower()
         _src_ch = _src_l.split('/')[-1]  # канал после 'telegram/' — сравниваем и полное имя, и канал
         if _src_l in _BLOCKED_SOURCES or _src_ch in _BLOCKED_SOURCES:
