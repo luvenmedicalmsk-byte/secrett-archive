@@ -2,9 +2,9 @@
   "country": "GE",
   "country_name": "Грузия",
   "date": "2026-07-29",
-  "generated_at": "2026-07-29T10:33:55.317237+00:00",
+  "generated_at": "2026-07-29T11:16:15.581802+00:00",
   "strategy_score": 50,
-  "strategy_confidence": 89,
+  "strategy_confidence": 88,
   "urgency_level": "critical",
   "urgency_level_ru": "Критическая",
   "urgency_color": "#ef4444",
@@ -14,60 +14,49 @@
   "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "CR-09",
+      "id": "CR-01",
       "priority": 1,
-      "action": "МАКСИМАЛЬНЫЙ УРОВЕНЬ ТРЕВОГИ",
-      "detail": "Критический риск с worst-case dominant: системный кризис в высокой готовности",
-      "trigger": "critical + worst dominant",
-      "expiry": "state resolution",
+      "action": "Контролируемая деэскалация",
+      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
+      "trigger": "critical + best dominant",
+      "expiry": "state transition",
       "confidence": 78,
       "domain_context": "technology",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-10",
-      "priority": 1,
-      "action": "Немедленная эвакуация уязвимых активов",
-      "detail": "Приоритетная защита критической инфраструктуры и цепочек поставок",
+      "id": "CR-02",
+      "priority": 2,
+      "action": "Защитить деэскалационные индикаторы",
+      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
       "trigger": "always",
-      "expiry": "assets secured",
-      "confidence": 78,
-      "domain_context": "technology",
-      "horizon_relevant": "30d"
-    },
-    {
-      "id": "CR-11",
-      "priority": 1,
-      "action": "Активировать высший уровень кризисного управления",
-      "detail": "Передать координацию реагирования на высший уровень принятия решений",
-      "trigger": "always",
-      "expiry": "crisis resolved",
+      "expiry": "deescalation confirmed",
       "confidence": 78,
       "domain_context": "technology",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 3,
+  "action_count": 2,
   "state": "critical",
-  "dominant_scenario": "worst",
-  "scenario_score": 35,
-  "instability": 44,
+  "dominant_scenario": "best",
+  "scenario_score": 37,
+  "instability": 41,
   "calibration_grade": "excellent",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 63 (+8pt)",
+      "condition": "risk_score ≥ 70 (+8pt)",
       "leads_to": "cascade",
       "probability": 23
     },
     {
       "condition": "delta ≥ 6 за 24ч",
       "leads_to": "cascade",
-      "probability": 22
+      "probability": 20
     },
     {
-      "condition": "Worst-case 30d ≥ 35",
+      "condition": "Worst-case 30d ≥ 95",
       "leads_to": "cascade",
-      "probability": 30
+      "probability": 29
     },
     {
       "condition": "Новый критический драйвер в technology",
@@ -78,37 +67,37 @@
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 30,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 77,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "90 дней",
-      "score": 34,
+      "score": 68,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "180 дней",
-      "score": 38,
+      "score": 60,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "365 дней",
-      "score": 43,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 53,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     }
   ],
   "probabilities": {
-    "worst": 30,
+    "worst": 29,
     "stress": 26,
     "base": 16,
-    "best": 28
+    "best": 29
   }
 }
