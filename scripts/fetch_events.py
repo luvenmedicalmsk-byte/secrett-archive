@@ -43,6 +43,33 @@ def _trace(trace_id, stage, decision='pass', reason=None, event_id=None, **meta)
     step.update(meta); rec['route'].append(step)
     if decision == 'removed': rec.setdefault('_finals', []).append(('removed', reason))
     if stage == 'FEED' and decision == 'pass': rec.setdefault('_finals', []).append(('feed', None))
+def _lineage_provenance():
+    """Происхождение lineage-файла: к какому прогону он относится.
+
+    Без этих полей невозможно отличить свежий файл от оставшегося
+    с предыдущего прогона (Issue: Lineage Provenance). Значения берутся
+    только из окружения CI — ручной ввод исключён.
+    """
+    # Локальные импорты: функция объявлена в начале файла, до глобальных
+    # from datetime/pathlib — не зависим от порядка объявлений.
+    from datetime import datetime as _dt, timezone as _tz
+    _sha = os.environ.get('GITHUB_SHA', '') or 'local'
+    try:
+        with open(__file__, 'rb') as _pf:
+            _pv = hashlib.md5(_pf.read()).hexdigest()[:12]
+    except Exception:
+        _pv = 'unknown'
+    return {
+        'type': 'header',
+        'commit_sha': _sha,
+        'run_id': os.environ.get('GITHUB_RUN_ID', '') or 'local',
+        'run_number': os.environ.get('GITHUB_RUN_NUMBER', '') or '0',
+        'generated_at': _dt.now(_tz.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'parser_version': _pv,
+        'lineage_version': 1,
+    }
+
+
 def _lineage_flush(path):
     if not LINEAGE: return
     rep = {'total': len(_LINEAGE_LOG), 'feed':0, 'removed':0, 'unfinished':0, 'duplicate_finals':0, 'stage_order_violations':0}
@@ -55,13 +82,44 @@ def _lineage_flush(path):
             if f[0][0]=='removed': rec['removed_by']=f[0][1]
         idx=[_STAGE_IDX.get(s['stage'],99) for s in rec['route']]
         if idx != sorted(idx): rec['stage_order_violation']=True; rep['stage_order_violations']+=1
+    _hdr = _lineage_provenance()
+    rep.update({k: _hdr[k] for k in
+                ('commit_sha','run_id','run_number','generated_at','parser_version','lineage_version')})
+    _rep_path = path.replace('_lineage.jsonl','_lineage_report.json')
     try:
         with open(path,'w',encoding='utf-8') as _f:
+            _f.write(json.dumps(_hdr,ensure_ascii=False)+chr(10))   # header — первой строкой
             for r in _LINEAGE_LOG.values(): _f.write(json.dumps(r,ensure_ascii=False)+chr(10))
-        with open(path.replace('_lineage.jsonl','_lineage_report.json'),'w',encoding='utf-8') as _f:
+        with open(_rep_path,'w',encoding='utf-8') as _f:
             json.dump(rep,_f,ensure_ascii=False,indent=2)
-        print(f"  [LINEAGE] traces={rep['total']} feed={rep['feed']} removed={rep['removed']} unfinished={rep['unfinished']} dup={rep['duplicate_finals']} order_viol={rep['stage_order_violations']}")
-    except Exception: pass
+        print(f"  [LINEAGE] traces={rep['total']} feed={rep['feed']} removed={rep['removed']} "
+              f"unfinished={rep['unfinished']} dup={rep['duplicate_finals']}", file=sys.stderr)
+        print(f"  [LINEAGE] provenance: commit={_hdr['commit_sha'][:8]} run={_hdr['run_id']} "
+              f"#{_hdr['run_number']} parser={_hdr['parser_version']} at={_hdr['generated_at']}",
+              file=sys.stderr)
+    except Exception as _le:
+        # Ошибка записи lineage больше НЕ проглатывается: раньше except: pass
+        # позволял старому файлу пережить прогон незамеченным.
+        print(f"::warning::[LINEAGE] запись не удалась: {_le}", file=sys.stderr)
+        import traceback as _ltb; _ltb.print_exc(file=sys.stderr)
+        return
+    # Проверка после записи: файл существует, непустой, header читается.
+    try:
+        if not os.path.exists(path):
+            print("::warning::[LINEAGE] файл не создан: %s" % path, file=sys.stderr); return
+        _sz = os.path.getsize(path)
+        if _sz <= 0:
+            print("::warning::[LINEAGE] файл пустой: %s" % path, file=sys.stderr); return
+        with open(path, encoding='utf-8') as _f:
+            _first = _f.readline()
+        _h2 = json.loads(_first)
+        if _h2.get('type') != 'header' or not _h2.get('generated_at'):
+            print("::warning::[LINEAGE] header не записан или повреждён", file=sys.stderr); return
+        print(f"  [LINEAGE] verify OK: {_sz} байт, header на месте", file=sys.stderr)
+    except Exception as _ve:
+        print(f"::warning::[LINEAGE] проверка после записи не прошла: {_ve}", file=sys.stderr)
+
+
 # ═══ end lineage framework ═══
 # ═══ НЕЙТРАЛИЗАЦИЯ пропаганд./уничижит. терминов (display-слой, для двусторонней аудитории) ═══
 _NEUTRALIZE = [(re.compile(p, re.I), r) for p, r in [

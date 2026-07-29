@@ -153,6 +153,14 @@ jobs:
           git add docs/_admission_shadow.json 2>/dev/null || true   # SPEC-013 Phase 1 Shadow
           # ADR-039C: docs/adr039a-shadow.json и -history.jsonl НЕ коммитятся в
           # публичный репозиторий (нет в git add). Уходят в приват через sync.
+          # Lineage Provenance: показываем, КАКОЙ файл коммитится, до git add.
+          if [ -f docs/_lineage.jsonl ]; then
+            echo "[LINEAGE] commit=$GITHUB_SHA run=$GITHUB_RUN_ID #$GITHUB_RUN_NUMBER"
+            echo "[LINEAGE] размер: $(wc -c < docs/_lineage.jsonl) байт, строк: $(wc -l < docs/_lineage.jsonl)"
+            echo "[LINEAGE] header: $(head -n 1 docs/_lineage.jsonl)"
+          else
+            echo "::warning::[LINEAGE] docs/_lineage.jsonl отсутствует — в репозитории останется файл предыдущего прогона"
+          fi
           git add docs/_lineage.jsonl docs/_lineage_report.json 2>/dev/null || true   # I.1 Lineage (Run B)
           git add docs/_diagnostics_report.json 2>/dev/null || true   # I.2 Diagnostics
           git add docs/_change_impact.json 2>/dev/null || true   # I.3 Change Impact
