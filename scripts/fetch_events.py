@@ -3746,6 +3746,8 @@ def process_events(raw_items):
             # Только измерение — production-решения принимались прежней веткой.
             'shadow_routing': _SHADOW_ROUTE,
             'shadow_pipeline': _shadow_pipeline_probe(),
+            'translation_incomplete': {'count': len(_TR_INCOMPLETE),
+                                       'sample': _TR_INCOMPLETE[:5]},
             'dd_titles': [i.get('title','')[:60] for i in raw_items if i.get('source')=='Downdetector RU'][:8],
             'final_outage': dict(_c2.Counter(str((e.get('meta') or {}).get('kind','')) for e in top_events if str((e.get('meta') or {}).get('kind','')).startswith(('ioda','radar','netblocks')))),
         }, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -10415,6 +10417,34 @@ def _risk_gate(events):
     return kept
 
 
+# Английские СЛУЖЕБНЫЕ слова: в названиях компаний и продуктов не встречаются
+# (кроме «The» в имени издания), поэтому их скопление в русском тексте —
+# признак неполного перевода, а не легитимной латиницы.
+_EN_STOPWORDS_RE = re.compile(
+    r'\b(?:the|and|of|in|on|at|to|for|with|by|from|that|this|which|it|its|as|'
+    r'was|were|has|had|have|said|will|would|be|been|are|is|not|but|or|an)\b',
+    re.IGNORECASE)
+
+
+_TR_INCOMPLETE = []               # телеметрия: отклонённые неполные переводы
+
+
+def _translation_incomplete(text):
+    """Перевод оборвался: русский текст с хвостом английской фразы.
+
+    Порог 5 служебных слов подобран по корпусу 284 событий: единственное
+    срабатывание — реальный случай (Al-Monitor, 14 слов). При пороге 2
+    ложно захватывались «The Washington Examiner», «Coca-Cola»,
+    «Crypter-as-a-Service» — названия, а не непереведённый текст.
+    """
+    if not text:
+        return False
+    _ru = sum(1 for c in text if 'а' <= c.lower() <= 'я' or c.lower() == 'ё')
+    if _ru < 40:                      # не русский текст — проверять нечего
+        return False
+    return len(_EN_STOPWORDS_RE.findall(text)) >= 5
+
+
 def translate_batch(texts):
     """Переводит список текстов на русский (OpenAI JSON-контракт) с дисковым кэшем по хэшу."""
     if not texts:
@@ -10525,6 +10555,15 @@ def translate_batch(texts):
                     tr = m.get(str(k))
                     if isinstance(tr, str) and len(tr.strip()) > 2:
                         tr = tr.strip()
+                        # ПРОВЕРКА ВЫХОДА: перевод мог оборваться на середине —
+                        # русское начало и английский хвост. is_english такой текст
+                        # уже не признаёт английским, поэтому вторая попытка не
+                        # запускается и смесь уходит в ленту. Не кэшируем брак.
+                        if _translation_incomplete(tr):
+                            _TR_INCOMPLETE.append({'src': bt[:120], 'out': tr[:200]})
+                            print('  [WARN] неполный перевод, оставлен оригинал: '
+                                  + tr[:70], file=sys.stderr)
+                            continue
                         _translate_cache[bt] = tr
                         _TR_DISK[_tr_key(bt)] = tr
             except Exception as _e:
