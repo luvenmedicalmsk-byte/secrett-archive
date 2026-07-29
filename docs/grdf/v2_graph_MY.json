@@ -2,67 +2,72 @@
   "country": "MY",
   "date": "2026-07-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-29T01:43:16.480645+00:00",
+  "generated_at": "2026-07-29T04:45:34.568915+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-MY",
       "type": "Country",
       "label": "MY",
-      "score": 47,
+      "score": 60,
       "props": {
-        "risk_score": 47
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-MY-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "down"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 42,
-      "trend": "down"
+      "score": 54,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 33,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-social",
       "type": "Domain",
       "label": "social",
-      "score": 35,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 33,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MY-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 28,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-MY-technology",
+      "type": "Driver",
+      "label": "technology"
     },
     {
       "id": "DRIVER-MY-geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-MY-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "DRIVER-MY-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
-      "id": "SIGNAL-MY-Цены_на_бе",
-      "type": "Signal",
-      "label": "Цены на бензин в Малайзии",
-      "severity": 32,
-      "domain": "economic"
     },
     {
       "id": "SIGNAL-MY-Социальный",
@@ -99,6 +92,13 @@
       "label": "Технологический сигнал — Малайзия",
       "severity": 56,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-MY-Климатичес",
+      "type": "Signal",
+      "label": "Климатический сигнал — Юго-Восточная Ази",
+      "severity": 52,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,49 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-economic",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-climate",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-social",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-cyber",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.36
+    },
+    {
+      "from": "DRIVER-MY-technology",
+      "to": "COUNTRY-MY",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-MY-geopolitical",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-MY-economic",
-      "to": "COUNTRY-MY",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-MY-social",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,10 +184,46 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-MY-Цены_на_бе",
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MY-infrastructure",
       "to": "DOMAIN-MY-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MY-climate",
+      "to": "DOMAIN-MY-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-MY-economic",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-MY-social",
+      "to": "DOMAIN-MY-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-MY-Социальный",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-MY-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-MY-Климатичес",
+      "to": "DOMAIN-MY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
     }
   ]
 }
