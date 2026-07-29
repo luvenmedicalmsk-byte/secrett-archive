@@ -2,9 +2,9 @@
   "country": "SA",
   "date": "2026-07-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-29T18:56:04.586015+00:00",
+  "generated_at": "2026-07-29T19:13:52.615179+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 42,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 19,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-climate",
@@ -97,7 +97,7 @@
       "id": "SIGNAL-SA-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Ближний Восток",
-      "severity": 71,
+      "severity": 65,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-SA",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-SA-Саудовская",
       "to": "DOMAIN-SA-economic",
       "type": "AMPLIFIES",
@@ -178,7 +199,7 @@
       "from": "SIGNAL-SA-Геополитич",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.71
+      "weight": 0.65
     }
   ]
 }
