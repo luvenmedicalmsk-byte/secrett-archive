@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-07-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-29T18:00:35.567524+00:00",
+  "generated_at": "2026-07-29T18:56:04.577684+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 55,
+      "score": 54,
       "props": {
-        "risk_score": 55
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 44,
-      "trend": "up"
+      "score": 39,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 24,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -54,8 +54,8 @@
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "stable"
+      "score": 14,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-Засухи_в_К",
-      "type": "Signal",
-      "label": "Засухи в Калифорнии могли привести к пос",
-      "severity": 64,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-US-Экспорт_сы",
       "type": "Signal",
       "label": "Экспорт сырой нефти и нефтепродуктов из ",
@@ -99,6 +92,13 @@
       "label": "250-летняя история потребления энергии в",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-US-Законопрое",
+      "type": "Signal",
+      "label": "Законопроект об антироссийских санкциях ",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-US",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-US",
@@ -163,33 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-US-geopolitical",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-US-infrastructure",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-US-Засухи_в_К",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.64
-    },
-    {
       "from": "SIGNAL-US-Экспорт_сы",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
@@ -197,6 +170,12 @@
     },
     {
       "from": "SIGNAL-US-250-летняя",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-US-Законопрое",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
