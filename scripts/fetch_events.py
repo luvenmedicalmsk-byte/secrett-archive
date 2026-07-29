@@ -43,6 +43,45 @@ def _trace(trace_id, stage, decision='pass', reason=None, event_id=None, **meta)
     step.update(meta); rec['route'].append(step)
     if decision == 'removed': rec.setdefault('_finals', []).append(('removed', reason))
     if stage == 'FEED' and decision == 'pass': rec.setdefault('_finals', []).append(('feed', None))
+def _shadow_pipeline_probe():
+    """Phase 2: прогон теневых событий по остатку конвейера.
+
+    Отвечает на вопрос «сколько из классифицированных дошло бы до ленты».
+    Применяются ТЕ ЖЕ функции, что в production: _is_noise, _CRIME_NOISE_RE,
+    порог severity. Ни одно событие в production-поток не попадает.
+    """
+    if not _SHADOW_ITEMS:
+        return {}
+    out = {'input': len(_SHADOW_ITEMS), 'noise': 0, 'crime': 0, 'short': 0,
+           'dup': 0, 'passed': 0, 'by_domain': {}}
+    _seen = set()
+    for it in _SHADOW_ITEMS:
+        _t = it.get('text') or ''
+        _d = it.get('domain')
+        # 1) шум-фильтры — те же, что применяет production ниже по конвейеру
+        try:
+            if _is_noise(_t[:150]):
+                out['noise'] += 1; continue
+        except Exception:
+            pass
+        try:
+            if _CRIME_NOISE_RE.search(_t[:200]):
+                out['crime'] += 1; continue
+        except Exception:
+            pass
+        # 2) слишком короткое — не событие
+        if len(_t.strip()) < 25:
+            out['short'] += 1; continue
+        # 3) дедуп по нормализованному заголовку
+        _k = re.sub(r'[^а-яёa-z0-9]+', '', _t[:80].lower())
+        if _k in _seen:
+            out['dup'] += 1; continue
+        _seen.add(_k)
+        out['passed'] += 1
+        out['by_domain'][_d] = out['by_domain'].get(_d, 0) + 1
+    return out
+
+
 def _lineage_provenance():
     """Происхождение lineage-файла: к какому прогону он относится.
 
@@ -457,6 +496,9 @@ SHADOW_ROUTING_CHANNELS = {'ecotopor'}
 _SHADOW_ROUTE = {}                # {канал: {'received':n,'kw_missing':n,'classified':n,'domains':{},'no_domain':n}}
 
 
+_SHADOW_ITEMS = []                # теневые события для прогона по остатку конвейера
+
+
 def _shadow_route(ch, text, is_erisk_prod):
     """Теневой маршрут: что дал бы _tg_classify без отраслевого гейта.
     На production-решения НЕ влияет — только счётчики."""
@@ -476,6 +518,10 @@ def _shadow_route(ch, text, is_erisk_prod):
     if _sd:
         st['classified'] += 1
         st['domains'][_sd] = st['domains'].get(_sd, 0) + 1
+        # Phase 2: сохраняем классифицированное для прогона по остатку конвейера.
+        # Событие НЕ попадает в production-поток — только в теневой список.
+        if not is_erisk_prod and len(_SHADOW_ITEMS) < 400:
+            _SHADOW_ITEMS.append({'ch': ch, 'text': text, 'domain': _sd})
     else:
         st['no_domain'] += 1
 ECON_TOPIC = [
@@ -3699,6 +3745,7 @@ def process_events(raw_items):
             # SHADOW ROUTING TEST: что дал бы Canon без отраслевого гейта ECON_RISK.
             # Только измерение — production-решения принимались прежней веткой.
             'shadow_routing': _SHADOW_ROUTE,
+            'shadow_pipeline': _shadow_pipeline_probe(),
             'dd_titles': [i.get('title','')[:60] for i in raw_items if i.get('source')=='Downdetector RU'][:8],
             'final_outage': dict(_c2.Counter(str((e.get('meta') or {}).get('kind','')) for e in top_events if str((e.get('meta') or {}).get('kind','')).startswith(('ioda','radar','netblocks')))),
         }, ensure_ascii=False, indent=2), encoding='utf-8')
