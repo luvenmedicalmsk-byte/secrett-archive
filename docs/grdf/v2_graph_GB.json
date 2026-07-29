@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-07-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-29T16:12:52.803211+00:00",
+  "generated_at": "2026-07-29T17:22:20.709758+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 47,
+      "score": 42,
       "props": {
-        "risk_score": 47
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 42,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 22,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "stable"
+      "score": 13,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "stable"
+      "score": 15,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "stable"
+      "score": 3,
+      "trend": "down"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-GB-Эпидемиоло",
+      "id": "SIGNAL-GB-Нефтяной_б",
       "type": "Signal",
-      "label": "Эпидемиологический риск — Великобритания",
-      "severity": 58,
-      "domain": "social"
+      "label": "Нефтяной бум Гайаны важен как никогда",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-GB",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-GB-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-GB-Медработни",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.34
     },
     {
-      "from": "SIGNAL-GB-Эпидемиоло",
-      "to": "DOMAIN-GB-social",
+      "from": "SIGNAL-GB-Нефтяной_б",
+      "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.32
     }
   ]
 }
