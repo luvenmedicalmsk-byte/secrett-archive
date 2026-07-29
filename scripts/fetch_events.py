@@ -524,10 +524,22 @@ _ECON_TOPIC_HIT = {}              # телеметрия: сколько доп�
 # Доказано ранее: 98.1% сообщений канала отклоняются keyword_missing,
 # до Canon не доходит ни одного (domains: {}).
 SHADOW_ROUTING_CHANNELS = {'ecotopor'}
+
+# ═══ CONTENT ROUTING CANARY — обход отраслевого гейта ═════════════════════════
+# Shadow-эксперимент (2026-07-29) измерил: из 126 сообщений канала Canon
+# классифицирует 107, весь конвейер проходят 99. Production пропускает 3.
+# Узкое место — предварительный ECON_RISK, а не последующие слои: severity
+# для TG-каналов имеет порог 0, дедуп не срабатывает, шум-фильтры режут 5%.
+# Канал многотематический: 55% economy, 45% geopolitics/social/technology.
+# Гейт по одной отрасли его профилю не соответствует.
+# ТОЛЬКО ecotopor. Остальные каналы ECON_SRC идут прежним путём.
+CONTENT_ROUTING_CANARY = {'ecotopor'}
 _SHADOW_ROUTE = {}                # {канал: {'received':n,'kw_missing':n,'classified':n,'domains':{},'no_domain':n}}
 
 
 _SHADOW_ITEMS = []                # теневые события для прогона по остатку конвейера
+_CANARY_PASS = {}                 # canary: сколько сообщений прошло по содержанию
+_CANARY_DOM = {}                  # canary: раскладка по доменам
 
 
 def _shadow_route(ch, text, is_erisk_prod):
@@ -3797,6 +3809,8 @@ def process_events(raw_items):
             # Только измерение — production-решения принимались прежней веткой.
             'shadow_routing': _SHADOW_ROUTE,
             'shadow_pipeline': _shadow_pipeline_probe(),
+            'content_routing_canary': {'channels': sorted(CONTENT_ROUTING_CANARY),
+                                       'passed': _CANARY_PASS, 'domains': _CANARY_DOM},
             'translation_incomplete': {'count': len(_TR_INCOMPLETE),
                                        'sample': _TR_INCOMPLETE[:5]},
             'dd_titles': [i.get('title','')[:60] for i in raw_items if i.get('source')=='Downdetector RU'][:8],
@@ -7205,6 +7219,19 @@ def fetch_telegram():
                 _prej(ch, 'joke_not_event')
                 return None
             _d = 'climate'
+        elif ch in CONTENT_ROUTING_CANARY:
+            # CANARY: домен по содержанию, как у общих каналов (ветка else ниже).
+            # Отраслевой гейт не применяется — событие доходит до Canon.
+            _d = _tg_classify(text)
+            if not _d and is_srisk:
+                _d = 'social'
+            if not _d:
+                _prej(ch, 'no_domain')
+                return None
+            if is_srisk:
+                _d = 'social'
+            _CANARY_PASS[ch] = _CANARY_PASS.get(ch, 0) + 1
+            _CANARY_DOM.setdefault(ch, {})[_d] = _CANARY_DOM.setdefault(ch, {}).get(_d, 0) + 1
         elif ch in ECON_SRC:
             is_erisk = any(k in tlw for k in ECON_RISK_KW) or any(a in tlw and b in tlw for a,b in ECON_RISK_PAIRS)
             # ECONOMY WHITELIST v1 CANARY: для canary-каналов кризисный словарь дополняется
