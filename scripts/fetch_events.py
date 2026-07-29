@@ -262,7 +262,14 @@ except ImportError as _pe:
         for f in fetchers:
             name, fn = f if isinstance(f, tuple) else (getattr(f, "__name__", "fn"), f)
             try:
-                out += (fn() or [])
+                _got = fn() or []
+                # ДИАГНОСТИКА (Event Provenance): помечаем, какой загрузчик дал запись.
+                # Без этого происхождение события после выхода из окна невосстановимо —
+                # трижды упирались в это при расследованиях. На обработку не влияет.
+                for _it in _got:
+                    if isinstance(_it, dict) and '_fetch_fn' not in _it:
+                        _it['_fetch_fn'] = name
+                out += _got
             except Exception as _e:
                 print(f"  ✗ {name}: {_e}", file=sys.stderr)
         return out
@@ -3045,7 +3052,15 @@ def process_events(raw_items):
 
     _OPED_SOURCES = {'War on the Rocks', 'Geopolitical Futures', 'Project Syndicate Economy', 'Project Syndicate'}
     for item in raw_items:
-        _tid = _obs_assign(item); _trace(_tid, 'INGESTED', source=item.get('source'))
+        _tid = _obs_assign(item)
+        # ДИАГНОСТИКА (Event Provenance): паспорт записи на входе. Позволяет найти
+        # событие по названию и восстановить, какой загрузчик и какой фид его дал.
+        _trace(_tid, 'INGESTED', source=item.get('source'),
+               title=(item.get('title') or '')[:120],
+               feed=(item.get('url') or item.get('link') or '')[:120],
+               fetch_fn=item.get('_fetch_fn'),
+               feed_domain=(item.get('_domain') or item.get('domain') or None),
+               ingest_time=datetime.now(timezone.utc).strftime('%H:%M:%SZ'))
         _src_l = str(item.get('source','')).strip().lower()
         _src_ch = _src_l.split('/')[-1]  # канал после 'telegram/' — сравниваем и полное имя, и канал
         if _src_l in _BLOCKED_SOURCES or _src_ch in _BLOCKED_SOURCES:
@@ -3096,7 +3111,18 @@ def process_events(raw_items):
             severity = _severity_for(item, _gov.get('weight', 1.0))
         else:
             # S36.4: домен ленты в приоритете (оба ключа), иначе по ключевым словам
-            domain = item.get('_domain') or item.get('domain') or detect_domain(item['title'], item.get('desc',''))
+            _feed_dom = item.get('_domain') or item.get('domain')
+            if _feed_dom:
+                domain = _feed_dom
+                # ДИАГНОСТИКА: фиксируем, что классификатор НЕ вызывался и почему.
+                # Пустое поле раньше не отличалось от «вызван и вернул None».
+                _trace(_tid, 'CLASSIFIER', 'pass', detect_domain='SKIPPED',
+                       reason_skip='feed_domain_present', feed_domain=_feed_dom,
+                       final_domain=_feed_dom)
+            else:
+                domain = detect_domain(item['title'], item.get('desc',''))
+                _trace(_tid, 'CLASSIFIER', 'pass', detect_domain=(domain or 'NONE'),
+                       feed_domain=None, final_domain=domain)
             if not domain:
                 _LOSS['no_domain']+=1
                 # SHADOW-ЛОГ для Domain Coverage Audit: сохраняем отброшенные без домена,
