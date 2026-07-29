@@ -442,6 +442,38 @@ _AGE_SHADOW = {}
 # (1200 постов → 4 события до whitelist v1).
 ECON_WHITELIST_CANARY = {'investfuture', 'russianmacro', 'investorbiz'}   # шаг 2: +investorbiz
 _ECON_TOPIC_HIT = {}              # телеметрия: сколько допущено тематическим словарём
+
+# ═══ SHADOW ROUTING TEST — ecotopor вне ECON_SRC (READ-ONLY) ══════════════════
+# Вопрос: если убрать канал из ECON_SRC, найдёт ли Canon полезные события?
+# Production НЕ меняется: ветка ECON_SRC отрабатывает как прежде, shadow лишь
+# считает, что было бы в ветке else (_tg_classify по содержанию).
+# Доказано ранее: 98.1% сообщений канала отклоняются keyword_missing,
+# до Canon не доходит ни одного (domains: {}).
+SHADOW_ROUTING_CHANNELS = {'ecotopor'}
+_SHADOW_ROUTE = {}                # {канал: {'received':n,'kw_missing':n,'classified':n,'domains':{},'no_domain':n}}
+
+
+def _shadow_route(ch, text, is_erisk_prod):
+    """Теневой маршрут: что дал бы _tg_classify без отраслевого гейта.
+    На production-решения НЕ влияет — только счётчики."""
+    if ch not in SHADOW_ROUTING_CHANNELS:
+        return
+    st = _SHADOW_ROUTE.setdefault(ch, {'received': 0, 'kw_missing': 0, 'classified': 0,
+                                       'no_domain': 0, 'domains': {}, 'prod_passed': 0})
+    st['received'] += 1
+    if is_erisk_prod:
+        st['prod_passed'] += 1
+    else:
+        st['kw_missing'] += 1
+    try:
+        _sd = _tg_classify(text)
+    except Exception:
+        _sd = None
+    if _sd:
+        st['classified'] += 1
+        st['domains'][_sd] = st['domains'].get(_sd, 0) + 1
+    else:
+        st['no_domain'] += 1
 ECON_TOPIC = [
  # T1 Денежно-кредитная политика
  r'центральн\w*\s+банк|\bцб\b|банк\s+росси|\bфрс\b|\bецб\b|\becb\b|\bboe\b|\bboj\b',
@@ -3660,6 +3692,9 @@ def process_events(raw_items):
             'final_by_source': dict(_c2.Counter(e.get('source','') for e in top_events)),
             'dd_dates': dict(_c2.Counter(i.get('date','') for i in raw_items if i.get('source')=='Downdetector RU')),
             'parser_visibility': _parser_coverage_report(_c2, raw_items, events, top_events),
+            # SHADOW ROUTING TEST: что дал бы Canon без отраслевого гейта ECON_RISK.
+            # Только измерение — production-решения принимались прежней веткой.
+            'shadow_routing': _SHADOW_ROUTE,
             'dd_titles': [i.get('title','')[:60] for i in raw_items if i.get('source')=='Downdetector RU'][:8],
             'final_outage': dict(_c2.Counter(str((e.get('meta') or {}).get('kind','')) for e in top_events if str((e.get('meta') or {}).get('kind','')).startswith(('ioda','radar','netblocks')))),
         }, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -7073,6 +7108,9 @@ def fetch_telegram():
             if not is_erisk and ch in ECON_WHITELIST_CANARY and _econ_topic_hit(tlw):
                 is_erisk = True
                 _ECON_TOPIC_HIT[ch] = _ECON_TOPIC_HIT.get(ch, 0) + 1
+            # SHADOW ROUTING: считаем, что дал бы Canon без отраслевого гейта.
+            # Вызов ДО отсева — иначе отклонённые сообщения не были бы измерены.
+            _shadow_route(ch, text, is_erisk)
             if not is_erisk:
                 _prej(ch, 'text_truncated' if _kw_hit(_tf, ECON_RISK_KW, ECON_RISK_PAIRS) else 'keyword_missing')
                 _kw_window(_tf, ECON_RISK_KW, ECON_RISK_PAIRS, ch)       # Phase 0.5 shadow
