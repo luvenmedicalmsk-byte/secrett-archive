@@ -4570,7 +4570,9 @@ _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномаль
 _BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
 _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|обстрел|артиллер|авиауд|\bвсу\b|войск|танк|снаряд|\bпво\b|удар\w* по|нанесл|боевик|\bфронт|оккуп|диверси|террорист', re.I)
 
-def _canon_type_of(title, summ):
+def _canon_type_of(title, summ, _ban=None, _fb=False):
+    # _ban / _fb — SHADOW-параметры (ADR-005). По умолчанию (_ban=None, _fb=False)
+    # поведение функции БАЙТ-ИДЕНТИЧНО прежнему: обе ветви ниже не активируются.
     _txt = title + ' ' + summ
     _commem = bool(_COMMEM_GUARD.search(_txt)) and not _PRESENT_STRIKE.search(_txt)
     # Причина приоритетнее лексического триггера: эпидемия отменяет «Рынок труда»
@@ -4591,6 +4593,7 @@ def _canon_type_of(title, summ):
                 if 'earnings' in _evs:   return 'Розничная торговля', 'economy'
     best = None; bs = 0; br = None
     for pat, name in _CANON_TYPE:
+        if _ban and name in _ban: continue                 # SHADOW: тип отклонён guard-ом ранее
         if _commem and name in _MILITARY_CANON: continue   # мемориал/годовщина → не текущий удар
         if _epi and name in _LABOR_CANON: continue         # эпидемия → не рынок труда
         if _kin and name in _RETAIL_CANON: continue        # удар по объекту → не розничная торговля
@@ -4607,14 +4610,18 @@ def _canon_type_of(title, summ):
     # Lookahead в правиле не помогает: ФИФА стоит ПЕРЕД словом «санкциям», а не после.
     # Проверяем ВЕСЬ текст на спортивный контекст.
     if best == 'Санкционное давление' and _GEOECON_SPORT.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'sport-guard'    # спортивная дисциплинарка — не системный сигнал
     # FIRE_HEAT_GUARD: 'пожар'/'жара' -> climate ТОЛЬКО при природном контексте (иначе техно/военный/бытовой/метафора)
     if FIRE_HEAT_GUARD and best == 'Пожарная активность' and not _FG_NAT_FIRE.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'fire-guard'
     if FIRE_HEAT_GUARD and best == 'Тепловая волна' and not _FG_REAL_HEAT.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'heat-guard'
     # bio-attack-guard: «атакуют» насекомые/вирусы/болезни -- не «Военные удары»/geopolitics
     if best == 'Военные удары' and _BIO_ATTACK_G.search(_txt) and not _REAL_MIL_G.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'bio-attack-guard'
     return best, br
 
@@ -4646,6 +4653,89 @@ def _canonize_event(e, SIG):
     e['canon_reason'] = best_reason or 'domain-default'
     e['canon_engine_ver'] = 'canon-v2'
     return e
+
+# ═══ CANON SHADOW EXPERIMENTS (READ-ONLY, ADR-005) ══════════════════════════════
+# Два НЕЗАВИСИМЫХ эксперимента, измеряемых раздельно — объединять в один canary
+# нельзя: механизмы разные, эффект был бы неразличим.
+#
+# S-A · SUMMARY WINDOW. Production читает summary[:60]. Аудит EPIC 4.1 P2 показал:
+#   78 из 82 триггеров существующих типов лежат ДАЛЬШЕ 60-го символа (медиана
+#   длины summary — 268). Но обратное НЕ доказано: полный текст может дать
+#   неприемлемое число ложных совпадений из второстепенных фраз. Поэтому меряем
+#   ТРИ окна (60 / 160 / полный), а не выбираем между двумя.
+#
+# S-B · GUARD FALLBACK. Guard сейчас делает return None — отклонённый кандидат
+#   завершает типизацию целиком. Архитектурно guard означает «этот кандидат
+#   запрещён», а не «типизации не существует». Меряем: сколько событий получили бы
+#   тип при продолжении скоринга без забаненного типа.
+#
+# Инвариант: production-поля НЕ меняются. Отчёты — только в migration/.
+CANON_SHADOW_EXP = True
+_CANON_WINDOWS = (('w60', 60), ('w160', 160), ('wfull', None))
+_CSX = {}          # накопитель за прогон
+
+
+def _canon_shadow_experiments(events):
+    """S-A (окна summary) + S-B (guard fallback). READ-ONLY: ничего не пишет в события."""
+    from collections import Counter as _C
+    st = {'events': 0,
+          'windows': {k: {'typed': 0, 'changed_vs_prod': 0, 'new_typed': 0,
+                          'retyped': 0, 'lost': 0, 'types': {}, 'samples': []}
+                      for k, _ in _CANON_WINDOWS},
+          'guard_fallback': {'guard_hits': 0, 'recovered': 0, 'types': {}, 'samples': []}}
+    for e in events:
+        title = (e.get('title') or '').lower()
+        full = (e.get('summary') or '').lower()
+        prod = e.get('canon_type')
+        st['events'] += 1
+        # ── S-A: три окна ──
+        for key, n in _CANON_WINDOWS:
+            summ = full if n is None else full[:n]
+            try:
+                b, _r = _canon_type_of(title, summ)
+            except Exception:
+                continue
+            w = st['windows'][key]
+            if b:
+                w['typed'] += 1
+                w['types'][b] = w['types'].get(b, 0) + 1
+            if prod in (None, 'unknown') and b:
+                w['new_typed'] += 1; w['changed_vs_prod'] += 1
+                if len(w['samples']) < 12:
+                    w['samples'].append({'kind': 'new', 'type': b, 'sev': e.get('severity'),
+                                         'title': (e.get('title') or '')[:90]})
+            elif prod not in (None, 'unknown') and b and b != prod:
+                w['retyped'] += 1; w['changed_vs_prod'] += 1
+                if len(w['samples']) < 12:
+                    w['samples'].append({'kind': 'retyped', 'from': prod, 'type': b,
+                                         'sev': e.get('severity'), 'title': (e.get('title') or '')[:90]})
+            elif prod not in (None, 'unknown') and not b:
+                w['lost'] += 1; w['changed_vs_prod'] += 1
+        # ── S-B: guard fallback (на production-окне 60, чтобы не смешивать механизмы) ──
+        if e.get('canon_reason') in ('fire-guard', 'heat-guard', 'bio-attack-guard', 'sport-guard'):
+            g = st['guard_fallback']
+            g['guard_hits'] += 1
+            try:
+                b2, _r2 = _canon_type_of(title, full[:60], None, True)
+            except Exception:
+                b2 = None
+            if b2:
+                g['recovered'] += 1
+                g['types'][b2] = g['types'].get(b2, 0) + 1
+                if len(g['samples']) < 12:
+                    g['samples'].append({'guard': e.get('canon_reason'), 'would_type': b2,
+                                         'sev': e.get('severity'), 'title': (e.get('title') or '')[:90]})
+    # производные метрики
+    prod_typed = sum(1 for e in events if e.get('canon_type') not in (None, 'unknown'))
+    st['production'] = {'typed': prod_typed, 'unknown': st['events'] - prod_typed}
+    for k, _ in _CANON_WINDOWS:
+        w = st['windows'][k]
+        w['churn_pct'] = round(100.0 * w['changed_vs_prod'] / max(1, st['events']), 1)
+        w['types'] = dict(sorted(w['types'].items(), key=lambda x: -x[1])[:14])
+    st['guard_fallback']['types'] = dict(sorted(st['guard_fallback']['types'].items(),
+                                                key=lambda x: -x[1]))
+    return st
+
 
 def _canon_shadow_pass(events):
     from signal_engine import _PROC_TYPE, _TYPE_DOMAIN, _CLIM_PHEN, _clim_phen, _origin_v2, _process_type
@@ -12270,6 +12360,24 @@ def save_enriched(events, previous_snapshot=None):
             try:
                 _sig_ns = _canon_shadow_pass(enriched["events"])
                 _canon_shadow_report(enriched["events"], OUTPUT_PATH.parent, _sig_ns)
+                # CANON SHADOW EXPERIMENTS (S-A окна summary · S-B guard fallback) — READ-ONLY
+                if CANON_SHADOW_EXP:
+                    try:
+                        _csx = _canon_shadow_experiments(enriched["events"])
+                        _mdx = OUTPUT_PATH.parent / 'migration'
+                        _mdx.mkdir(parents=True, exist_ok=True)
+                        (_mdx / 'canon-shadow-experiments.json').write_text(
+                            json.dumps({'updated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                                        **_csx}, ensure_ascii=False, indent=2), encoding='utf-8')
+                        print('  [CSX] окна: ' + ' · '.join(
+                            '%s typed=%d churn=%.1f%%' % (k, _csx['windows'][k]['typed'],
+                                                          _csx['windows'][k]['churn_pct'])
+                            for k, _ in _CANON_WINDOWS)
+                            + ' | guard-fallback: %d/%d восстановлено'
+                              % (_csx['guard_fallback']['recovered'], _csx['guard_fallback']['guard_hits']),
+                            file=sys.stderr)
+                    except Exception as _cxe:
+                        print('  [CSX] skip: %s' % _cxe, file=sys.stderr)
             except Exception as _ce:
                 print('  [WARN] canon shadow fail: %s' % _ce, file=sys.stderr)
             # ═══ ADMISSION SHADOW v1 Phase 1 (ADR-008): диагностический контур, боевой путь не трогает ═══
