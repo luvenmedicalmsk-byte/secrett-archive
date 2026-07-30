@@ -4570,7 +4570,7 @@ _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномаль
 _BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
 _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|обстрел|артиллер|авиауд|\bвсу\b|войск|танк|снаряд|\bпво\b|удар\w* по|нанесл|боевик|\bфронт|оккуп|диверси|террорист', re.I)
 
-def _canon_type_of(title, summ, _ban=None, _fb=False):
+def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None):
     # _ban / _fb — SHADOW-параметры (ADR-005). По умолчанию (_ban=None, _fb=False)
     # поведение функции БАЙТ-ИДЕНТИЧНО прежнему: обе ветви ниже не активируются.
     _txt = title + ' ' + summ
@@ -4598,7 +4598,16 @@ def _canon_type_of(title, summ, _ban=None, _fb=False):
         if _epi and name in _LABOR_CANON: continue         # эпидемия → не рынок труда
         if _kin and name in _RETAIL_CANON: continue        # удар по объекту → не розничная торговля
         sc = 2*len(re.findall(pat, title)) + len(re.findall(pat, summ))
+        if _scores is not None and sc > 0:                 # SHADOW: surrogate-уверенность
+            _scores.setdefault('rank', []).append((sc, name))
         if sc > bs: bs = sc; best = name; br = pat[:24]
+    if _scores is not None:
+        _r = sorted(_scores.get('rank', []), key=lambda x: -x[0])
+        _scores['rank'] = _r
+        _scores['best_score'] = _r[0][0] if _r else 0
+        _scores['runner_up'] = _r[1][1] if len(_r) > 1 else None
+        _scores['runner_up_score'] = _r[1][0] if len(_r) > 1 else 0
+        _scores['margin'] = _scores['best_score'] - _scores['runner_up_score']
     if DOMAIN_GEOECON_CANARY and best in _GEOECON_OVERRIDE_FROM:
         if _geoecon_hit(_txt):        # sport-guard внутри: дисциплинарные санкции ≠ госдавление
             return 'Санкционное давление', 'geoecon'   # госинструмент давления → geopolitics
@@ -4680,7 +4689,13 @@ def _canon_shadow_experiments(events):
     from collections import Counter as _C
     st = {'events': 0,
           'windows': {k: {'typed': 0, 'changed_vs_prod': 0, 'new_typed': 0,
-                          'retyped': 0, 'lost': 0, 'types': {}, 'samples': []}
+                          'retyped': 0, 'lost': 0, 'types': {}, 'samples': [],
+                          'lost_samples': [],
+                          # confidence: surrogate = 2*совпадений в title + совпадения в окне.
+                          # margin = отрыв победителя от второго кандидата. Отличает
+                          # «почти равные» (margin<=1) от радикальной смены лидера.
+                          'retyped_margin': {'tight_le1': 0, 'mid_2_4': 0, 'wide_ge5': 0},
+                          'conf_delta_sum': 0}
                       for k, _ in _CANON_WINDOWS},
           'guard_fallback': {'guard_hits': 0, 'recovered': 0, 'types': {}, 'samples': []}}
     for e in events:
@@ -4689,10 +4704,17 @@ def _canon_shadow_experiments(events):
         prod = e.get('canon_type')
         st['events'] += 1
         # ── S-A: три окна ──
+        # production-уверенность (окно 60) — база для confidence_delta
+        _sc60 = {}
+        try:
+            _canon_type_of(title, full[:60], None, False, _sc60)
+        except Exception:
+            _sc60 = {}
         for key, n in _CANON_WINDOWS:
             summ = full if n is None else full[:n]
+            _scw = {}
             try:
-                b, _r = _canon_type_of(title, summ)
+                b, _r = _canon_type_of(title, summ, None, False, _scw)
             except Exception:
                 continue
             w = st['windows'][key]
@@ -4706,11 +4728,27 @@ def _canon_shadow_experiments(events):
                                          'title': (e.get('title') or '')[:90]})
             elif prod not in (None, 'unknown') and b and b != prod:
                 w['retyped'] += 1; w['changed_vs_prod'] += 1
+                _m = _scw.get('margin', 0)
+                w['retyped_margin']['tight_le1' if _m <= 1 else
+                                    ('mid_2_4' if _m <= 4 else 'wide_ge5')] += 1
+                w['conf_delta_sum'] += _scw.get('best_score', 0) - _sc60.get('best_score', 0)
                 if len(w['samples']) < 12:
+                    # позиция прежнего победителя в новом ранжировании: 1 = проиграл
+                    # с минимальным отрывом, None = вовсе выпал из кандидатов
+                    _rk = [nm for _s, nm in _scw.get('rank', [])]
                     w['samples'].append({'kind': 'retyped', 'from': prod, 'type': b,
-                                         'sev': e.get('severity'), 'title': (e.get('title') or '')[:90]})
+                                         'sev': e.get('severity'),
+                                         'new_score': _scw.get('best_score'),
+                                         'prod_score': _sc60.get('best_score'),
+                                         'margin': _m, 'runner_up': _scw.get('runner_up'),
+                                         'old_rank_in_new': (_rk.index(prod) + 1) if prod in _rk else None,
+                                         'title': (e.get('title') or '')[:90]})
             elif prod not in (None, 'unknown') and not b:
                 w['lost'] += 1; w['changed_vs_prod'] += 1
+                if len(w['lost_samples']) < 12:
+                    w['lost_samples'].append({'was': prod, 'sev': e.get('severity'),
+                                              'reason': e.get('canon_reason'),
+                                              'title': (e.get('title') or '')[:90]})
         # ── S-B: guard fallback (на production-окне 60, чтобы не смешивать механизмы) ──
         if e.get('canon_reason') in ('fire-guard', 'heat-guard', 'bio-attack-guard', 'sport-guard'):
             g = st['guard_fallback']
@@ -4732,8 +4770,23 @@ def _canon_shadow_experiments(events):
         w = st['windows'][k]
         w['churn_pct'] = round(100.0 * w['changed_vs_prod'] / max(1, st['events']), 1)
         w['types'] = dict(sorted(w['types'].items(), key=lambda x: -x[1])[:14])
-    st['guard_fallback']['types'] = dict(sorted(st['guard_fallback']['types'].items(),
-                                                key=lambda x: -x[1]))
+    _gt = dict(sorted(st['guard_fallback']['types'].items(), key=lambda x: -x[1]))
+    st['guard_fallback']['types'] = _gt
+    _gtot = sum(_gt.values())
+    # концентрация: если один класс даёт почти всё — проблема локальна для guard-а,
+    # если распределено — недостаток механизма общий
+    st['guard_fallback']['top_type_share_pct'] = (
+        round(100.0 * max(_gt.values()) / _gtot, 1) if _gtot else 0)
+    st['guard_fallback']['distinct_types'] = len(_gt)
+    for k, _ in _CANON_WINDOWS:
+        w = st['windows'][k]
+        w['conf_delta_avg'] = round(w.pop('conf_delta_sum') / max(1, w['retyped']), 2)
+    # сводка в порядке анализа: сначала регрессии, потом цена, потом выигрыш
+    st['gates'] = {k: {'lost': st['windows'][k]['lost'],
+                       'retyped': st['windows'][k]['retyped'],
+                       'new_typed': st['windows'][k]['new_typed'],
+                       'churn_pct': st['windows'][k]['churn_pct']}
+                   for k, _ in _CANON_WINDOWS}
     return st
 
 
