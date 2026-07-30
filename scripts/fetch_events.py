@@ -4824,6 +4824,11 @@ def _canon_shadow_experiments(events):
                     _dom_of = _CANON_TYPE_DOMAIN.get(b3) or _TD_SE.get(b3) or ''
                     _agree = bool(_dom_of) and _dom_of == (e.get('domain') or '')
                     if _agree: r['domain_agree'] += 1
+                    # НАБЛЮДЕНИЕ C серии: доля восстановлений, приходящихся на
+                    # спутниковый контур. Устойчиво высокая доля = систематический
+                    # дефект guard-а на FIRMS-карточках, а не особенность одного дня.
+                    if str(e.get('source') or '').startswith('NASA FIRMS'):
+                        r['firms'] = r.get('firms', 0) + 1
                     if len(r['samples']) < 40:
                         r['samples'].append({'guard': e.get('canon_reason'), 'recovered_type': b3,
                                              'domain': e.get('domain'), 'type_domain': _dom_of or None,
@@ -4877,6 +4882,9 @@ def _canon_shadow_experiments(events):
         r['domain_agree_pct'] = (round(100.0 * r['domain_agree'] / r['recovered'], 1)
                                  if r['recovered'] else None)
         r['recovery_precision_manual'] = None      # заполняется владельцем после разбора samples
+        r['firms'] = r.get('firms', 0)
+        r['firms_share_pct'] = (round(100.0 * r['firms'] / r['recovered'], 1)
+                                if r['recovered'] else None)
     # сводка в порядке анализа: сначала регрессии, потом цена, потом выигрыш
     st['gates'] = {k: {'lost': st['windows'][k]['lost'],
                        'retyped': st['windows'][k]['retyped'],
@@ -4890,7 +4898,10 @@ def _canon_shadow_experiments(events):
                           'new_typed': c['new_typed'], 'churn_pct': c['churn_pct'],
                           'net_gain_est': c['net_gain_est'],
                           'recovered': st['recovery'][k]['recovered'],
-                          'of_guard_hits': st['recovery'][k]['guard_hits']}
+                          'of_guard_hits': st['recovery'][k]['guard_hits'],
+                          'recovery_firms': st['recovery'][k]['firms'],
+                          'recovery_firms_share_pct': st['recovery'][k]['firms_share_pct'],
+                          'domain_agree_pct': st['recovery'][k]['domain_agree_pct']}
     # ── КРИТЕРИЙ ПРИНЯТИЯ (фиксируется в отчёте, чтобы не переопределялся по ходу) ──
     st['acceptance_criteria'] = {
         'min_runs': 3, 'max_runs_recommended': 5,
