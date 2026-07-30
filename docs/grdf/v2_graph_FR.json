@@ -2,67 +2,67 @@
   "country": "FR",
   "date": "2026-07-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-30T06:23:04.522136+00:00",
+  "generated_at": "2026-07-30T09:17:00.422567+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-FR",
       "type": "Country",
       "label": "FR",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-FR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 26,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
       "score": 16,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-FR-Geopolitical",
@@ -94,10 +94,10 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-FR-Аварийные_",
+      "id": "SIGNAL-FR-Красное_fo",
       "type": "Signal",
-      "label": "Аварийные службы по всей Франции и Испан",
-      "severity": 44,
+      "label": "Красное forest fire уведомление — Франци",
+      "severity": 38,
       "domain": "climate"
     }
   ],
@@ -106,19 +106,19 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-climate",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-FR",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-FR",
@@ -163,10 +163,67 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-FR-Лесной_пож",
-      "to": "DOMAIN-FR-climate",
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-FR-social",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-FR-geopolitical",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-FR-Лесной_пож",
@@ -175,10 +232,16 @@
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-FR-Аварийные_",
+      "from": "SIGNAL-FR-Лесной_пож",
       "to": "DOMAIN-FR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-FR-Красное_fo",
+      "to": "DOMAIN-FR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.38
     }
   ]
 }
