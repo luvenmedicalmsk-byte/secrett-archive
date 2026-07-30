@@ -4618,6 +4618,12 @@ def _canon_type_of(title, summ):
         return None, 'bio-attack-guard'
     return best, br
 
+# ═══ TD-002: временный debug-контур False Domain Routing. Только stderr-печать
+# нарушителей инварианта canon_domain==domain при canon_type='unknown'. Данные,
+# порядок вызовов и логика не затрагиваются. УДАЛИТЬ после локализации причины.
+TD002_DEBUG = True
+
+
 def _canonize_event(e, SIG):
     title = (e.get('title') or '').lower(); summ = (e.get('summary') or '')[:60].lower()
     legacy_dom = (e.get('domain') or '')
@@ -4647,7 +4653,25 @@ def _canon_shadow_pass(events):
     SIG = _t.SimpleNamespace(_PROC_TYPE=_PROC_TYPE, _TYPE_DOMAIN=_TYPE_DOMAIN, _CLIM_PHEN=_CLIM_PHEN,
                              _clim_phen=_clim_phen, _origin_v2=_origin_v2, _process_type=_process_type)
     for e in events:
+        # ═══ TD-002 DEBUG (временная инструментация, УДАЛИТЬ после локализации) ═══
+        # Инвариант: при canon_type='unknown' canon_domain == domain (L4628, canon_dom=legacy_dom).
+        # Замер 30.07: нарушают 7 из 194 unknown. Печатаем ТОЛЬКО нарушителей.
+        # Ограничения: только stderr · данные не меняются · порядок вызовов не меняется ·
+        # новых ветвей логики нет (условие охватывает исключительно print).
+        _td2_dom_before = e.get('domain') if TD002_DEBUG else None
+        _td2_cd_before = e.get('canon_domain') if TD002_DEBUG else None
         _canonize_event(e, SIG)
+        if TD002_DEBUG and e.get('canon_type') == 'unknown' and e.get('canon_domain') != e.get('domain'):
+            try:
+                print('  [TD-002] id=%s dom_before=%s dom_after=%s canon_domain=%s (was %s) '
+                      'canon_type=%s canon_reason=%s feed_domain=%s persisted_canon=%s src=%s | %s'
+                      % (e.get('id'), _td2_dom_before, e.get('domain'), e.get('canon_domain'),
+                         _td2_cd_before, e.get('canon_type'), e.get('canon_reason'),
+                         e.get('_feed_domain') or e.get('feed_domain'),
+                         'yes' if _td2_cd_before else 'no', e.get('source'),
+                         (e.get('title') or '')[:70]), file=sys.stderr)
+            except Exception:
+                pass
     # SEVERITY CANON ROUTE: canon вычислен → проверяем маршрут severity. Событие из
     # кибер-канала с НЕ кибер-типом (санкции/война/экономика) оценивалось по CVSS —
     # пересчитываем по содержанию. Только для _sev_route=='cyber', остальные не тронуты.
