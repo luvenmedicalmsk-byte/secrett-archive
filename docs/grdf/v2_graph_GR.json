@@ -2,67 +2,67 @@
   "country": "GR",
   "date": "2026-07-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-30T17:07:41.730508+00:00",
+  "generated_at": "2026-07-30T18:20:02.697344+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 63,
+      "score": 64,
       "props": {
-        "risk_score": 63
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "stable"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 57,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 41,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
-      "score": 47,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 44,
-      "trend": "stable"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 38,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GR-economic",
@@ -70,20 +70,20 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-GR-social",
-      "type": "Driver",
-      "label": "social"
-    },
-    {
       "id": "DRIVER-GR-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-GR-social",
+      "type": "Driver",
+      "label": "social"
+    },
+    {
       "id": "SIGNAL-GR-Лесные_пож",
       "type": "Signal",
       "label": "Лесные пожары на острове Крит, Греция",
-      "severity": 74,
+      "severity": 75,
       "domain": "climate"
     },
     {
@@ -97,7 +97,7 @@
       "id": "SIGNAL-GR-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Греция",
-      "severity": 74,
+      "severity": 75,
       "domain": "climate"
     }
   ],
@@ -106,37 +106,37 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-economic",
       "type": "CORRELATES",
-      "weight": 0.57
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-climate",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-technology",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-social",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-GR",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-social",
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-geopolitical",
+      "from": "DRIVER-GR-social",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -205,10 +205,31 @@
       "lag_days": 60
     },
     {
+      "from": "DOMAIN-GR-climate",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-GR-Лесные_пож",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.75
     },
     {
       "from": "SIGNAL-GR-Три_гречес",
@@ -220,7 +241,7 @@
       "from": "SIGNAL-GR-Пожарная_а",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.75
     }
   ]
 }
