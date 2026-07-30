@@ -4812,7 +4812,16 @@ def _canon_shadow_experiments(events):
                 if b3:
                     r['recovered'] += 1
                     r['types'][b3] = r['types'].get(b3, 0) + 1
-                    _dom_of = _CANON_TYPE_DOMAIN.get(b3) or ''
+                    # ФИКС surrogate: домен типа лежит в ДВУХ реестрах. _CANON_TYPE_DOMAIN
+                    # покрывает лишь часть (Пожарная активность / Тепловая волна /
+                    # Эпидемиологический риск в нём отсутствуют), остальное — в
+                    # signal_engine._TYPE_DOMAIN. Прогон 1 дал ложный domain_agree=0%
+                    # именно из-за неполного справочника, а не из-за плохих восстановлений.
+                    try:
+                        from signal_engine import _TYPE_DOMAIN as _TD_SE
+                    except Exception:
+                        _TD_SE = {}
+                    _dom_of = _CANON_TYPE_DOMAIN.get(b3) or _TD_SE.get(b3) or ''
                     _agree = bool(_dom_of) and _dom_of == (e.get('domain') or '')
                     if _agree: r['domain_agree'] += 1
                     if len(r['samples']) < 40:
