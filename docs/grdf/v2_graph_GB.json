@@ -2,66 +2,66 @@
   "country": "GB",
   "date": "2026-07-30",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-30T13:08:51.210694+00:00",
+  "generated_at": "2026-07-30T15:36:47.892249+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 34,
+      "score": 44,
       "props": {
-        "risk_score": 34
+        "risk_score": 44
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 2,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-GB-В_Британии",
-      "type": "Signal",
-      "label": "В Британии замедлят строительство дата-ц",
-      "severity": 34,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-GB-Эпидемиоло",
       "type": "Signal",
       "label": "Эпидемиологический риск — Великобритания",
@@ -99,6 +92,13 @@
       "label": "Геополитический процесс — Великобритания",
       "severity": 44,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GB-Топливный_",
+      "type": "Signal",
+      "label": "Топливный рынок — Великобритания",
+      "severity": 53,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-GB",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.02
     },
     {
       "from": "DRIVER-GB-Geopolitical",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-GB-В_Британии",
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-GB-Эпидемиоло",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.44
+    },
+    {
+      "from": "SIGNAL-GB-Топливный_",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
