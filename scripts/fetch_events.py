@@ -5139,6 +5139,51 @@ def _admission_shadow_report(events, outdir):
     return rep
 
 
+# ═══ CANARY OPERATING RANGES (утверждены 2026-07-30) ═══════════════════════════
+# Рассчитаны по 24 последовательным прогонам. Назначение — различать сигнал и шум:
+# пока метрики держались в идеальном нуле, любое отклонение читалось как событие;
+# после появления первых ненулевых значений нужен диапазон нормы.
+#
+# Наблюдение (WARN) не влияет на исполнение — только помечает выход за диапазон
+# в canary-status.json. Авто-rollback остаётся на прежнем жёстком пороге (ROLLBACK).
+#
+#   churn         медиана 0.0 · p95 0.0 · max 0.3   ненулевой в 4% прогонов
+#   lost          медиана 0   · p95 0   · max 2     ненулевой в 4% прогонов
+#   born_anew     медиана 0   · p95 2   · max 3     ненулевой в 42% прогонов
+#   born_anew_pct медиана 0.0 · p95 0.3 · max 0.4
+#   процессов     681…707 (медиана 692), максимальная дельта 26
+#
+# WARN-границы взяты с запасом к наблюдённому максимуму: устойчивый выход за них
+# означает смену режима, а не колебание состава потока.
+CANARY_RANGES = {
+    'churn':         {'warn': 2.0,  'rollback': 20.0},
+    'lost':          {'warn': 6,    'rollback': None},
+    'born_anew_pct': {'warn': 1.5,  'rollback': None},
+    'processes':     {'warn_delta': 60, 'baseline': 692},
+}
+
+
+def _canary_range_check(stats):
+    """Сверка метрик прогона с рабочими диапазонами. READ-ONLY: возвращает список
+    отклонений, ничего не меняет и на rollback не влияет."""
+    out = []
+    try:
+        if (stats.get('churn') or 0) > CANARY_RANGES['churn']['warn']:
+            out.append('churn %.1f%% > warn %.1f%%' % (stats.get('churn'), CANARY_RANGES['churn']['warn']))
+        if (stats.get('lost') or 0) > CANARY_RANGES['lost']['warn']:
+            out.append('lost %d > warn %d' % (stats.get('lost'), CANARY_RANGES['lost']['warn']))
+        if (stats.get('born_anew_pct') or 0) > CANARY_RANGES['born_anew_pct']['warn']:
+            out.append('born_anew %.1f%% > warn %.1f%%' % (stats.get('born_anew_pct'),
+                                                           CANARY_RANGES['born_anew_pct']['warn']))
+        _n = stats.get('new_canary') or 0
+        if _n and abs(_n - CANARY_RANGES['processes']['baseline']) > CANARY_RANGES['processes']['warn_delta']:
+            out.append('processes %d вне baseline %d ±%d' % (_n, CANARY_RANGES['processes']['baseline'],
+                                                             CANARY_RANGES['processes']['warn_delta']))
+    except Exception:
+        pass
+    return out
+
+
 def _canary_guard(prev_signals, sig_path, canary_domains):
     """A2 Canary auto-rollback guard (ADR-005). Читает свежесобранный canary signals.json,
     сравнивает canary-домен с предыдущим прогоном. Возвращает (ok, reason, stats).
@@ -12846,7 +12891,11 @@ def save_enriched(events, previous_snapshot=None):
                         if _cd in _CANARY_DOMAINS and _e.get('domain') != _cd:
                             _saved_dom[_i] = _e.get('domain'); _e['domain'] = _cd
                     _SE.DOMAIN_CANARY = set(_CANARY_DOMAINS)
-                    _SE.LIFECYCLE_CANARY = {'climate'}   # ADR-009 Lifecycle Canary Stage 1
+                    # ADR-009 Lifecycle Canary Stage 2: climate + economy.
+                    # Stage 1 (climate) держал false_decay=0 и continuity=1.0 на всём
+                    # периоде наблюдения, включая серию из 5 последовательных прогонов.
+                    # Расширение по критериям готовности (ADR-005 Amendment), не по времени.
+                    _SE.LIFECYCLE_CANARY = {'climate', 'economy'}
                     _sig_n = _write_signals(enriched["events"], _sig_path)
                     _SE.DOMAIN_CANARY = set()
                     # ═══ SPEC-013 PHASE 1: ADMISSION SHADOW (READ-ONLY) ═══
@@ -12870,6 +12919,15 @@ def save_enriched(events, previous_snapshot=None):
                         _sig_n = _write_signals(enriched["events"], _sig_path)
                         _canary_meta.update(active=False, rolled_back=True, reason=_reason, stats=_stats)
                         print(f"  ⚠ CANARY ROLLBACK[{','.join(sorted(_CANARY_DOMAINS))}]: {_reason} -> legacy пересобран ({_sig_n} процессов)", file=sys.stderr)
+                    # Сверка с рабочими диапазонами (READ-ONLY, на rollback не влияет)
+                    try:
+                        _dev = _canary_range_check(_stats)
+                        _canary_meta['range_check'] = {'ok': not _dev, 'deviations': _dev,
+                                                       'ranges_ver': '2026-07-30'}
+                        if _dev:
+                            print('  ⚠ CANARY RANGE: ' + ' · '.join(_dev), file=sys.stderr)
+                    except Exception:
+                        pass
                     try:
                         (OUTPUT_PATH.parent / 'migration' / 'canary-status.json').write_text(
                             json.dumps({'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), **_canary_meta},
