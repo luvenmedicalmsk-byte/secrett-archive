@@ -4681,6 +4681,7 @@ def _canonize_event(e, SIG):
 # Инвариант: production-поля НЕ меняются. Отчёты — только в migration/.
 CANON_SHADOW_EXP = True
 _CANON_WINDOWS = (('w60', 60), ('w160', 160), ('wfull', None))
+_CANON_COUPLED = (('w160_fb', 160), ('wfull_fb', None))   # S-C: окно + guard fallback
 _CSX = {}          # накопитель за прогон
 
 
@@ -4697,7 +4698,15 @@ def _canon_shadow_experiments(events):
                           'retyped_margin': {'tight_le1': 0, 'mid_2_4': 0, 'wide_ge5': 0},
                           'conf_delta_sum': 0}
                       for k, _ in _CANON_WINDOWS},
-          'guard_fallback': {'guard_hits': 0, 'recovered': 0, 'types': {}, 'samples': []}}
+          'guard_fallback': {'guard_hits': 0, 'recovered': 0, 'types': {}, 'samples': []},
+          # S-C: окно + fallback одновременно (проверяемая гипотеза)
+          'coupled': {k: {'typed': 0, 'changed_vs_prod': 0, 'new_typed': 0, 'retyped': 0,
+                          'retyped_suspect': 0, 'lost': 0, 'types': {}, 'samples': [],
+                          'lost_samples': []}
+                      for k, _ in _CANON_COUPLED},
+          'recovery': {k: {'guard_hits': 0, 'recovered': 0, 'domain_agree': 0,
+                           'types': {}, 'samples': []}
+                       for k, _ in _CANON_COUPLED}}
     for e in events:
         title = (e.get('title') or '').lower()
         full = (e.get('summary') or '').lower()
@@ -4749,7 +4758,69 @@ def _canon_shadow_experiments(events):
                     w['lost_samples'].append({'was': prod, 'sev': e.get('severity'),
                                               'reason': e.get('canon_reason'),
                                               'title': (e.get('title') or '')[:90]})
-        # ── S-B: guard fallback (на production-окне 60, чтобы не смешивать механизмы) ──
+            # ── S-C: COUPLED окно + fallback. ГИПОТЕЗА (не ожидаемый результат):
+        # расширенное окно поставляет альтернативных кандидатов, fallback не даёт
+        # guard-у аннулировать тип → lost уходит в 0 без роста retyped.
+        # Конкурирующий сценарий, который тоже надо увидеть: lost=0, но retyped
+        # растёт, потому что второй кандидат выигрывает слишком часто.
+        for key, n in _CANON_COUPLED:
+            summ = full if n is None else full[:n]
+            try:
+                b3, _r3 = _canon_type_of(title, summ, None, True)
+            except Exception:
+                continue
+            c = st['coupled'][key]
+            if b3:
+                c['typed'] += 1
+                c['types'][b3] = c['types'].get(b3, 0) + 1
+            if prod in (None, 'unknown') and b3:
+                c['new_typed'] += 1; c['changed_vs_prod'] += 1
+                if len(c['samples']) < 14:
+                    c['samples'].append({'kind': 'new', 'type': b3, 'sev': e.get('severity'),
+                                         'title': (e.get('title') or '')[:90]})
+            elif prod not in (None, 'unknown') and b3 and b3 != prod:
+                c['retyped'] += 1; c['changed_vs_prod'] += 1
+                _sc3 = {}
+                try: _canon_type_of(title, summ, None, False, _sc3)
+                except Exception: pass
+                _m3 = _sc3.get('margin', 0)
+                _rk3 = [nm for _s, nm in _sc3.get('rank', [])]
+                _rank_lost = prod not in _rk3
+                # SURROGATE ухудшения: смена победителя на почти равных кандидатах
+                # (margin<=1) либо полное исчезновение прежнего из кандидатов.
+                # Это ОЦЕНКА, не вердикт: окончательная категория — ручная.
+                if _m3 <= 1 or _rank_lost: c['retyped_suspect'] += 1
+                if len(c['samples']) < 14:
+                    c['samples'].append({'kind': 'retyped', 'from': prod, 'type': b3,
+                                         'sev': e.get('severity'), 'margin': _m3,
+                                         'old_rank_in_new': (_rk3.index(prod) + 1) if not _rank_lost else None,
+                                         'suspect': bool(_m3 <= 1 or _rank_lost),
+                                         'title': (e.get('title') or '')[:90]})
+            elif prod not in (None, 'unknown') and not b3:
+                c['lost'] += 1; c['changed_vs_prod'] += 1
+                if len(c['lost_samples']) < 14:
+                    c['lost_samples'].append({'was': prod, 'sev': e.get('severity'),
+                                              'reason': e.get('canon_reason'),
+                                              'title': (e.get('title') or '')[:90]})
+            # RECOVERY PRECISION: восстановить тип недостаточно — нужно правильный.
+            # Автоматически «правильность» не определима, поэтому: (1) объективный
+            # surrogate — согласие восстановленного типа с domain события;
+            # (2) полная выборка для ручной оценки владельцем.
+            if e.get('canon_reason') in ('fire-guard', 'heat-guard', 'bio-attack-guard', 'sport-guard'):
+                r = st['recovery'][key]
+                r['guard_hits'] += 1
+                if b3:
+                    r['recovered'] += 1
+                    r['types'][b3] = r['types'].get(b3, 0) + 1
+                    _dom_of = _CANON_TYPE_DOMAIN.get(b3) or ''
+                    _agree = bool(_dom_of) and _dom_of == (e.get('domain') or '')
+                    if _agree: r['domain_agree'] += 1
+                    if len(r['samples']) < 40:
+                        r['samples'].append({'guard': e.get('canon_reason'), 'recovered_type': b3,
+                                             'domain': e.get('domain'), 'type_domain': _dom_of or None,
+                                             'domain_agree': _agree, 'sev': e.get('severity'),
+                                             'title': (e.get('title') or '')[:90]})
+    # ── S-B: guard fallback (на production-окне 60, чтобы не смешивать механизмы) ──
         if e.get('canon_reason') in ('fire-guard', 'heat-guard', 'bio-attack-guard', 'sport-guard'):
             g = st['guard_fallback']
             g['guard_hits'] += 1
@@ -4781,12 +4852,45 @@ def _canon_shadow_experiments(events):
     for k, _ in _CANON_WINDOWS:
         w = st['windows'][k]
         w['conf_delta_avg'] = round(w.pop('conf_delta_sum') / max(1, w['retyped']), 2)
+    # ── S-C агрегаты ──
+    for k, _ in _CANON_COUPLED:
+        c = st['coupled'][k]
+        c['churn_pct'] = round(100.0 * c['changed_vs_prod'] / max(1, st['events']), 1)
+        c['types'] = dict(sorted(c['types'].items(), key=lambda x: -x[1])[:14])
+        # NET GAIN: чистая полезность вместо голого new_typed.
+        # Ухудшения оценены surrogate-ом (retyped_suspect) — окончательная
+        # категоризация ручная, поэтому величина помечена как оценка.
+        c['net_gain_est'] = c['new_typed'] - c['lost'] - c['retyped_suspect']
+        r = st['recovery'][k]
+        r['types'] = dict(sorted(r['types'].items(), key=lambda x: -x[1]))
+        # RECOVERY PRECISION: surrogate = доля восстановлений, чей тип согласуется
+        # с доменом события. Не заменяет ручную оценку правильности типа.
+        r['domain_agree_pct'] = (round(100.0 * r['domain_agree'] / r['recovered'], 1)
+                                 if r['recovered'] else None)
+        r['recovery_precision_manual'] = None      # заполняется владельцем после разбора samples
     # сводка в порядке анализа: сначала регрессии, потом цена, потом выигрыш
     st['gates'] = {k: {'lost': st['windows'][k]['lost'],
                        'retyped': st['windows'][k]['retyped'],
                        'new_typed': st['windows'][k]['new_typed'],
                        'churn_pct': st['windows'][k]['churn_pct']}
                    for k, _ in _CANON_WINDOWS}
+    for k, _ in _CANON_COUPLED:
+        c = st['coupled'][k]
+        st['gates'][k] = {'lost': c['lost'], 'retyped': c['retyped'],
+                          'retyped_suspect': c['retyped_suspect'],
+                          'new_typed': c['new_typed'], 'churn_pct': c['churn_pct'],
+                          'net_gain_est': c['net_gain_est'],
+                          'recovered': st['recovery'][k]['recovered'],
+                          'of_guard_hits': st['recovery'][k]['guard_hits']}
+    # ── КРИТЕРИЙ ПРИНЯТИЯ (фиксируется в отчёте, чтобы не переопределялся по ходу) ──
+    st['acceptance_criteria'] = {
+        'min_runs': 3, 'max_runs_recommended': 5,
+        'gate_lost': 'нет новых регрессий: lost не растёт между прогонами',
+        'gate_net_gain': 'net_gain_est устойчиво положителен',
+        'gate_reproducibility': 'воспроизводимость ТЕНДЕНЦИЙ, не абсолютных чисел',
+        'gate_recovery': 'recovery_precision оценена вручную по samples',
+        'note': 'решение по production — только после серии; один удачный прогон не основание',
+    }
     return st
 
 
@@ -12422,11 +12526,28 @@ def save_enriched(events, previous_snapshot=None):
                         (_mdx / 'canon-shadow-experiments.json').write_text(
                             json.dumps({'updated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                                         **_csx}, ensure_ascii=False, indent=2), encoding='utf-8')
+                        # СЕРИЯ ПРОГОНОВ: решение принимается по 3-5 независимым cron,
+                        # поэтому ключевые метрики копятся построчно — видно тенденции.
+                        try:
+                            _hline = {'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                                      'events': _csx['events'],
+                                      'prod_typed': _csx['production']['typed'],
+                                      'gates': _csx['gates']}
+                            with open(str(_mdx / 'canon-shadow-history.jsonl'), 'a', encoding='utf-8') as _hf:
+                                _hf.write(json.dumps(_hline, ensure_ascii=False) + '\n')
+                        except Exception:
+                            pass
                         print('  [CSX] окна: ' + ' · '.join(
                             '%s typed=%d churn=%.1f%%' % (k, _csx['windows'][k]['typed'],
                                                           _csx['windows'][k]['churn_pct'])
                             for k, _ in _CANON_WINDOWS)
-                            + ' | guard-fallback: %d/%d восстановлено'
+                            + ' | coupled: ' + ' · '.join(
+                                '%s new=%d lost=%d net=%d rec=%d/%d' % (
+                                    k, _csx['coupled'][k]['new_typed'], _csx['coupled'][k]['lost'],
+                                    _csx['coupled'][k]['net_gain_est'],
+                                    _csx['recovery'][k]['recovered'], _csx['recovery'][k]['guard_hits'])
+                                for k, _ in _CANON_COUPLED)
+                            + ' | guard-fallback(w60): %d/%d'
                               % (_csx['guard_fallback']['recovered'], _csx['guard_fallback']['guard_hits']),
                             file=sys.stderr)
                     except Exception as _cxe:
