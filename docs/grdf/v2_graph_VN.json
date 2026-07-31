@@ -1,8 +1,8 @@
 {
   "country": "VN",
-  "date": "2026-07-30",
+  "date": "2026-07-31",
   "grdf_version": "2.0",
-  "generated_at": "2026-07-30T23:58:11.384964+00:00",
+  "generated_at": "2026-07-31T02:04:22.339061+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-VN-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-VN-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-VN-climate",
-      "type": "Driver",
-      "label": "climate"
     },
     {
       "id": "SIGNAL-VN-Климатичес",
@@ -106,7 +106,7 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-VN",
@@ -151,16 +151,37 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-VN-geopolitical",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-VN-social",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-climate",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-VN-climate",
@@ -203,27 +224,6 @@
       "type": "CORRELATES",
       "weight": 0.5,
       "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-VN-climate",
-      "to": "DOMAIN-VN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-VN-economic",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-VN-social",
-      "to": "DOMAIN-VN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "SIGNAL-VN-Климатичес",
