@@ -4691,7 +4691,14 @@ def _canon_decision(e, SIG):
     _title = (e.get('title') or '').lower()
     _summ = (e.get('summary') or '')[:60].lower()
     _sc = {}
-    _best, _reason = _canon_type_of(_title, _summ, _scores=_sc)
+    # ИСПРАВЛЕНО 2026-08-02: пересчёт обязан идти с ТЕМИ ЖЕ параметрами, что и само
+    # решение. Первая версия не передавала _nat_src, поэтому у источников машинной
+    # детекции структура пересчитывала выбор с активным guard и записывала
+    # guard='fire-guard' при фактически присвоенном типе — 14 расхождений на
+    # прогоне 18:00. Гарантия «не может разойтись по построению» держится только
+    # при полном совпадении аргументов.
+    _best, _reason = _canon_type_of(_title, _summ, _scores=_sc,
+                                    _nat_src=_is_natural_detector(e.get('source')))
 
     _rank = _sc.get('rank') or []
     _cands, _seen_c = [], set()
