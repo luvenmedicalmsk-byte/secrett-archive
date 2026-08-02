@@ -4570,7 +4570,31 @@ _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномаль
 _BIO_ATTACK_G = re.compile(r'клещ|комар|москит|мошк|саранч|насеком|шершен|\bосы\b|вирус|бактери|инфекц|эпидеми|пандеми|заболел|болезн|грибок|паразит|аллерг|плесен', re.I)
 _REAL_MIL_G = re.compile(r'ракет|бпла|беспилот|\bдрон|обстрел|артиллер|авиауд|\bвсу\b|войск|танк|снаряд|\bпво\b|удар\w* по|нанесл|боевик|\bфронт|оккуп|диверси|террорист', re.I)
 
-def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None):
+# ═══ IDR-008 Phase 4A.1 · GUARD BYPASS ДЛЯ МАШИННОЙ ДЕТЕКЦИИ ═════════════════
+# Аудит 008C: из 18 срабатываний fire-guard / heat-guard восемь пришлись на
+# NASA FIRMS, Росгидромет CAP и NASA Earth Observatory. Эти источники — не
+# текстовые ленты, а спутниковая и метеослужебная детекция: они по определению
+# регистрируют природные явления.
+#
+# Guard требует лексики природности («лесной пожар», «торфяной», «огнеборцы»).
+# В сообщении FIRMS её нет — там координаты очага и регион. Guard снимал
+# корректного кандидата, событие теряло тип целиком.
+#
+# Признак СТРУКТУРНЫЙ — имя источника, не текст. Ни в одном из восьми случаев
+# guard не был прав, поэтому исключение безопасно.
+NATURAL_DETECTION_SOURCES = (
+    'NASA FIRMS', 'FIRMS', 'Росгидромет CAP', 'NASA Earth Observatory',
+    'EONET', 'Copernicus', 'GDACS',
+)
+
+
+def _is_natural_detector(src):
+    """Источник машинной детекции природных явлений."""
+    _s = str(src or '')
+    return any(_k in _s for _k in NATURAL_DETECTION_SOURCES)
+
+
+def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None, _nat_src=False):
     # _ban / _fb — SHADOW-параметры (ADR-005). По умолчанию (_ban=None, _fb=False)
     # поведение функции БАЙТ-ИДЕНТИЧНО прежнему: обе ветви ниже не активируются.
     _txt = title + ' ' + summ
@@ -4622,11 +4646,11 @@ def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None):
         if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
         return None, 'sport-guard'    # спортивная дисциплинарка — не системный сигнал
     # FIRE_HEAT_GUARD: 'пожар'/'жара' -> climate ТОЛЬКО при природном контексте (иначе техно/военный/бытовой/метафора)
-    if FIRE_HEAT_GUARD and best == 'Пожарная активность' and not _FG_NAT_FIRE.search(_txt):
-        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
+    if FIRE_HEAT_GUARD and not _nat_src and best == 'Пожарная активность' and not _FG_NAT_FIRE.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True, _nat_src=_nat_src)
         return None, 'fire-guard'
-    if FIRE_HEAT_GUARD and best == 'Тепловая волна' and not _FG_REAL_HEAT.search(_txt):
-        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True)
+    if FIRE_HEAT_GUARD and not _nat_src and best == 'Тепловая волна' and not _FG_REAL_HEAT.search(_txt):
+        if _fb: return _canon_type_of(title, summ, (_ban or set()) | {best}, True, _nat_src=_nat_src)
         return None, 'heat-guard'
     # bio-attack-guard: «атакуют» насекомые/вирусы/болезни -- не «Военные удары»/geopolitics
     if best == 'Военные удары' and _BIO_ATTACK_G.search(_txt) and not _REAL_MIL_G.search(_txt):
@@ -4777,11 +4801,17 @@ def _geo_decision(e, gc):
 def _canonize_event(e, SIG):
     title = (e.get('title') or '').lower(); summ = (e.get('summary') or '')[:60].lower()
     legacy_dom = (e.get('domain') or '')
-    best, best_reason = _canon_type_of(title, summ)
+    _nat = _is_natural_detector(e.get('source'))
+    best, best_reason = _canon_type_of(title, summ, _nat_src=_nat)
     if best:
         canon_type = best
         canon_dom = _CANON_TYPE_DOMAIN.get(best) or SIG._TYPE_DOMAIN.get(best) or legacy_dom
     else:
+        # IDR-008 Phase 4A.1: при неопределённом типе домен НЕ переопределяется.
+        # Инвариант: canon_type == unknown → canon_domain == feed_domain.
+        # Аудит 008D нашёл 4 события, где домен менялся без типа, способного это
+        # обосновать. Такой домен объяснить нечем: правило не сработало, а
+        # значение отличается от источника. Это же устраняет TD-002.
         canon_type = 'unknown'; canon_dom = legacy_dom or 'unknown'
     phen_hits = set(n for n, p in SIG._CLIM_PHEN if re.search(p, title))
     atom = 'bundle' if _CANON_BUNDLE_RX.search(title) else ('composite' if len(phen_hits) >= 2 else 'atomic')
