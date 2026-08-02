@@ -169,6 +169,37 @@ except Exception:
     _REGION_WHITELIST = set()
 
 
+# Канонические названия регионов: одна сущность — одно имя. Без нормализации
+# карточки одного процесса называют регион по-разному («Татарстан» в обнаружении
+# против «Удмуртская Республика» в процессе), и сравнение охвата даёт ложное
+# расхождение.
+_REGION_CANON = {
+    'татарстан': 'Республика Татарстан',
+    'республика татарстан': 'Республика Татарстан',
+    'удмуртия': 'Удмуртская Республика',
+    'удмуртская республика': 'Удмуртская Республика',
+    'башкирия': 'Республика Башкортостан',
+    'башкортостан': 'Республика Башкортостан',
+    'республика башкортостан': 'Республика Башкортостан',
+    'крым': 'Республика Крым',
+    'республика крым': 'Республика Крым',
+    'чувашия': 'Чувашская Республика',
+    'мордовия': 'Республика Мордовия',
+    'якутия': 'Республика Саха (Якутия)',
+    'питер': 'Санкт-Петербург',
+    'спб': 'Санкт-Петербург',
+    'подмосковье': 'Московская область',
+}
+
+
+def _canon_region(p):
+    """Приводит название региона к каноническому виду. Неизвестные значения
+    возвращаются без изменений — справочник расширяется по мере надобности."""
+    if not p:
+        return p
+    return _REGION_CANON.get(str(p).strip().lower(), str(p).strip())
+
+
 def _is_region(p):
     """Регион — субъект федерации, а не страна. «Украина», «Россия», «Глобально»
     регионами не являются: страна и регион — разные уровни географии."""
@@ -392,7 +423,43 @@ _MANUAL_INFRA = {
    ],
  },
 }
-_MANUAL_ALIAS = {'obs-a5ee3518': 'infra-a5ee3518'}   # наблюдательная карточка того же процесса
+# Стоп-слова сигнатуры события: общая лексика, не различающая эпизоды.
+# Без них «Склад, Краснодар» и «Склад, Невинномысск» дали бы пересечение по слову
+# «склад» и были бы признаны одним событием.
+# Операторы e-commerce: их различие означает разные события в одном городе.
+_MERGE_OPER = {
+    'wildberries', 'вайлдберриз', 'ozon', 'озон', 'яндекс', 'сбер', 'сбермегамаркет',
+    'сдэк', 'магнит', 'пятёрочка', 'пятерочка', 'ламода', 'lamoda', 'детский',
+}
+
+# Общая лексика сообщений: не топоним и не оператор, различать события не помогает.
+_MERGE_GENERIC = {
+    'бпла', 'всу', 'дрон', 'дрона', 'дронов', 'беспилотник', 'беспилотники',
+    'россии', 'россия', 'украины', 'украина', 'пожар', 'пожара', 'также', 'момент',
+    'последствия', 'ночью', 'утром', 'минобороны', 'военных', 'также',
+}
+
+_MERGE_STOP = {
+    'склад', 'склады', 'складе', 'складу', 'складов', 'складах',
+    'логистический', 'логистического', 'логистическом', 'логистическая',
+    'центр', 'центра', 'центре', 'центру', 'комплекс', 'комплекса',
+    'объект', 'объекты', 'объекта', 'объекте', 'объектов',
+    'область', 'области', 'областью', 'край', 'края', 'республика', 'республики',
+    'атака', 'атаки', 'атаке', 'атаку', 'атаковали', 'удар', 'удара', 'ударе',
+    'работы', 'работа', 'работу', 'ограничение', 'ограничения',
+    'сортировочный', 'сортировочного', 'после', 'нескольких', 'результате',
+    'также', 'ещё', 'еще', 'одному', 'одного', 'своих', 'который', 'которые',
+    'эвакуация', 'эвакуировали', 'попадание', 'остановлена', 'хаба', 'пытались',
+    'атаковать', 'логистическом', 'логистическую', 'комплексе', 'центре',
+}
+
+_MANUAL_ALIAS = {
+    # Производные карточки одного процесса: наблюдение и обнаружение. Обе обязаны
+    # получать те же данные, что основная, иначе три карточки одного процесса
+    # показывают три разные географии.
+    'obs-a5ee3518': 'infra-a5ee3518',
+    'det-a5ee3518': 'infra-a5ee3518',
+}
 
 # Провенанс ручных свидетельств: какие записи внесены аналитиком и почему.
 # Ключ — дата волны. Проставляется в timeline при сборке карточки.
@@ -433,10 +500,72 @@ def _apply_manual(proc):
         _merged = []
         _seen_key = set()          # (дата, нормализованный регион)
 
+        def _opers(text):
+            """Операторы, упомянутые в записи. Разные операторы в одном городе —
+            разные события: удар по складу Wildberries и по складу OZON в
+            Зеленодольске 31 июля произошли отдельно."""
+            return {_w for _w in _re.findall(r'[а-яёa-z]{4,}', str(text or '').lower())} & _MERGE_OPER
+
+        def _stems(text, place='', n=4):
+            """Основы топонимов записи. Четыре буквы вместо полного слова, чтобы
+            «Пенза» и «Пензе», «Рязань» и «Рязани», «Екатеринбург» и
+            «Екатеринбурге» распознавались как один город.
+
+            Слова самого региона исключаются: они одинаковы у всех его записей и
+            давали бы ложное совпадение."""
+            _pw = {_w[:n].lower() for _w in _re.findall(r'[А-ЯЁA-Z][а-яёa-z]{3,}', str(place or ''))}
+            _out = set()
+            for _w in _re.findall(r'[А-ЯЁA-Z][а-яёa-z]{4,}', str(text or '')):
+                _s = _w[:n].lower()
+                if _s in _pw or _w.lower() in _MERGE_STOP or _w.lower() in _MERGE_OPER \
+                        or _w.lower() in _MERGE_GENERIC:
+                    continue
+                _out.add(_s)
+            return _out
+
         def _pkey(row):
             _t = str(row.get('t') or '')[:10]
             _p = str(row.get('place') or '').strip().lower()
             return (_t, _p)
+
+        def _same_event(row_a, row_b):
+            """Одно ли это событие.
+
+            Пара (дата, регион) НЕ уникальна: 24 июля в Ленинградской области —
+            три разных объекта (Шушары, Уткина Заводь, Новосаратовка), 27 июля в
+            Удмуртии — два (Сарапул, Ижевск). Дедуп только по этой паре отбрасывал
+            реальные события — так были потеряны «атака на склад OZON в
+            Зеленодольске» и эпизод в Волгограде.
+
+            Порядок проверки: дата и регион → оператор → город → лексика.
+            Проверено на десяти контрольных случаях."""
+            if str(row_a.get('t') or '')[:10] != str(row_b.get('t') or '')[:10]:
+                return False                       # разные даты — разные события
+            _pa = str(row_a.get('place') or '').strip().lower()
+            _pb = str(row_b.get('place') or '').strip().lower()
+            # Регион у автоматических записей часто пуст: сравнение по нему дало бы
+            # ложное «разные события» и продублировало бы уже внесённый вручную
+            # эпизод. Если регион известен у обеих записей — он обязан совпадать;
+            # если хотя бы у одной его нет, решают оператор и топоним.
+            if _pa and _pb and _pa != _pb:
+                return False                       # разные регионы
+            _oa, _ob = _opers(row_a.get('event')), _opers(row_b.get('event'))
+            if _oa and _ob and not (_oa & _ob):
+                return False                       # разные операторы
+            _ca, _cb = _stems(row_a.get('event'), row_a.get('place')), \
+                       _stems(row_b.get('event'), row_b.get('place'))
+            if _ca and _cb:
+                return bool(_ca & _cb)             # решает совпадение города
+            if _oa and _ob and (_oa & _ob):
+                return True                        # тот же оператор, город не назван
+            _A = {_w for _w in _re.findall(r'[а-яёa-z]{4,}', str(row_a.get('event') or '').lower())
+                  if _w not in _MERGE_STOP}
+            _B = {_w for _w in _re.findall(r'[а-яёa-z]{4,}', str(row_b.get('event') or '').lower())
+                  if _w not in _MERGE_STOP}
+            if not _A or not _B:
+                return True
+            _i = len(_A & _B)
+            return _i >= 2 and _i >= min(len(_A), len(_B)) * 0.5
 
         for d, e, pl, sv in cfg['waves']:          # ручные — первыми, приоритет
             _row = {'t': d, 'event': e, 'detail': '', 'place': pl, 'severity': sv,
@@ -449,8 +578,8 @@ def _apply_manual(proc):
 
         _added = 0
         for _row in _auto:                          # автоматические — если не дубль
-            if _pkey(_row) in _seen_key:
-                continue
+            if any(_same_event(_row, _m) for _m in _merged):
+                continue                            # то же событие уже в хронике
             _r = dict(_row)
             _r['source_kind'] = 'auto'
             _merged.append(_r)
@@ -469,9 +598,9 @@ def _apply_manual(proc):
         # регионы: ручной список ПЛЮС регионы автоматических записей хроники —
         # иначе новый регион (Татарстан, Самарская область) не попадёт в охват
         # и останется в «зонах наблюдения» как незатронутый.
-        _pl = list(cfg['places'])
+        _pl = [_canon_region(_x) for _x in cfg['places']]
         for _row in (proc.get('timeline') or []):
-            _p = (_row.get('place') or '').strip()
+            _p = _canon_region((_row.get('place') or '').strip())
             # только субъекты: страновые заглушки («Россия», «Украина») регионом
             # не считаются — иначе охват завышается, а инвариант «единственный
             # источник счёта регионов — _regions()» нарушается.
@@ -479,15 +608,37 @@ def _apply_manual(proc):
                 _pl.append(_p)
         proc['places'] = _pl
         proc['geo_spread'] = len(_pl)
+        # признаки пересчитываются от слитого состава: иначе regions_count и
+        # member_count остаются дослияночными и противоречат places в той же карточке
+        _st = proc.setdefault('features', {}).setdefault('state', {})
+        _st['regions'] = list(_pl)
+        _st['regions_count'] = len(_pl)
+        if proc.get('member_count') is not None:
+            _st['member_count'] = proc['member_count']
     if cfg.get('pressure') is not None:
         proc['pressure'] = cfg['pressure']
     st = proc.setdefault('features', {}).setdefault('state', {})
-    if cfg.get('places'):
-        st['regions'] = list(cfg['places'])
-        st['regions_count'] = len(cfg['places'])
+    # ВНИМАНИЕ: regions и regions_count здесь НЕ перезаписываются ручным списком —
+    # они уже выставлены выше от СЛИТОГО состава. Прежняя перезапись возвращала
+    # дослияночное значение и создавала расхождение с places в той же карточке.
     if cfg.get('covered') or cfg.get('open'):
-        st['watch_zones'] = {'covered': [dict(z) for z in cfg.get('covered', [])],
-                             'open':    [dict(z) for z in cfg.get('open', [])]}
+        # Зоны наблюдения: регион, подтверждённый событием, переносится из
+        # открытых в охваченные. Иначе Самарская область остаётся в списке
+        # «максимально изменят гипотезу» после того, как удар там уже произошёл.
+        _covered = [dict(z) for z in cfg.get('covered', [])]
+        _open = []
+        _have = {_canon_region(x) for x in (proc.get('places') or [])}
+        _known = {_canon_region(z.get('zone')) for z in _covered}
+        for _z in cfg.get('open', []):
+            _zz = dict(_z)
+            _zone = _canon_region(_zz.get('zone'))
+            if _zone in _have and _zone not in _known:
+                _zz['confirmed_by'] = 'timeline'   # подтверждено событием хроники
+                _covered.append(_zz)
+                _known.add(_zone)
+            else:
+                _open.append(_zz)
+        st['watch_zones'] = {'covered': _covered, 'open': _open}
     return proc
 
 
@@ -1413,19 +1564,36 @@ def main():
         _deltas = _snapshot_pass(infra, DOCS) or {}   # Delta Layer: снимок + причины
     except Exception as _se:
         print(f'[SNAPSHOT] fail: {_se}', file=sys.stderr)
+    # ═══ ПОРЯДОК ВАЖЕН (исправлено 2026-08-02) ══════════════════════════════
+    # Раньше _apply_manual вызывался ПОСЛЕ build_observation_detection, поэтому
+    # сценарные карточки (наблюдение, обнаружение) наследовали дослияночный
+    # состав: три карточки одного процесса показывали три разные географии —
+    # 11 регионов у процесса, 10 у наблюдения, 7 у обнаружения. Признаки
+    # (regions_count, member_count) считались там же и расходились с places
+    # внутри одной карточки.
+    #
+    # Теперь: слияние → признаки → сценарии. Каждый следующий шаг видит уже
+    # объединённые данные, поэтому все производные согласованы по построению.
+    try:
+        for _p in infra:
+            _apply_manual(_p)                     # 1. слияние хроники и регионов
+    except Exception as _me:
+        print(f'[PREVIEW] manual override: {_me}', file=sys.stderr)
     if FEATURES_LAYER:
         # ADR-035: признаки считаются ОДИН раз, после снимка (нужен prev_state)
         for _p in infra:
-            _p['features'] = _features(_p, _deltas.get(_p.get('process_id')))
-    obsdet = build_observation_detection(infra, _deltas)  # ADR-024 + блок «Что изменилось»
+            _p['features'] = _features(_p, _deltas.get(_p.get('process_id')))  # 2. от слитых данных
+    obsdet = build_observation_detection(infra, _deltas)  # 3. сценарии от слитых данных
     out={'generated': _iso(_now()), 'preview': True,
          'processes': infra + obsdet + [fin]}
-    # Заданные аналитиком данные накладываются ПОСЛЕ сборки — переживают пересборку
+    # Повторное применение к производным карточкам: обеспечивает совпадение
+    # регионов у наблюдения и обнаружения с основным процессом (через _MANUAL_ALIAS).
     try:
         for _p in out.get('processes', []):
-            _apply_manual(_p)
+            if _p.get('process_type') in ('observation', 'detection'):
+                _apply_manual(_p)
     except Exception as _me:
-        print(f'[PREVIEW] manual override: {_me}', file=sys.stderr)
+        print(f'[PREVIEW] manual override (derived): {_me}', file=sys.stderr)
     (DOCS/'_preview_processes.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
     # shadow-файлы (Задача 4)
     (DOCS/'_infra_process_shadow.json').write_text(json.dumps({'ts':_iso(_now()),'candidates':infra_shadow},ensure_ascii=False,indent=2),encoding='utf-8')
