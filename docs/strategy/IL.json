@@ -2,102 +2,102 @@
   "country": "IL",
   "country_name": "Израиль",
   "date": "2026-08-02",
-  "generated_at": "2026-08-02T09:34:37.882893+00:00",
-  "strategy_score": 23,
+  "generated_at": "2026-08-02T11:05:10.071907+00:00",
+  "strategy_score": 49,
   "strategy_confidence": 55,
-  "urgency_level": "moderate",
-  "urgency_level_ru": "Умеренная",
-  "urgency_color": "#fbbf24",
-  "preparedness_level": "enhanced",
-  "preparedness_level_ru": "Повышенная готовность",
-  "monitoring_priority": 2,
-  "monitoring_ru": "Дважды в сутки",
+  "urgency_level": "critical",
+  "urgency_level_ru": "Критическая",
+  "urgency_color": "#ef4444",
+  "preparedness_level": "emergency",
+  "preparedness_level_ru": "Чрезвычайная готовность",
+  "monitoring_priority": 4,
+  "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "C-01",
+      "id": "CR-01",
       "priority": 1,
-      "action": "Ожидать деэскалации",
-      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
-      "trigger": "contained + best dominant",
-      "expiry": "state change or prob_best < 25%",
-      "confidence": 63,
+      "action": "Контролируемая деэскалация",
+      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
+      "trigger": "critical + best dominant",
+      "expiry": "state transition",
+      "confidence": 60,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "C-02",
+      "id": "CR-02",
       "priority": 2,
-      "action": "Подготовить план выхода из контролируемой фазы",
-      "detail": "Определить индикаторы для перевода в мониторинговый режим",
-      "trigger": "contained > 5d",
-      "expiry": "stabilization transition",
-      "confidence": 63,
+      "action": "Защитить деэскалационные индикаторы",
+      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
+      "trigger": "always",
+      "expiry": "deescalation confirmed",
+      "confidence": 60,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "contained",
+  "state": "critical",
   "dominant_scenario": "best",
-  "scenario_score": 24,
-  "instability": 25,
+  "scenario_score": 29,
+  "instability": 35,
   "calibration_grade": "fair",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 67 (+8pt)",
-      "leads_to": "escalating",
-      "probability": 18
+      "condition": "risk_score ≥ 70 (+8pt)",
+      "leads_to": "cascade",
+      "probability": 21
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "escalating",
-      "probability": 12
+      "leads_to": "cascade",
+      "probability": 18
     },
     {
-      "condition": "Worst-case 30d ≥ 73",
-      "leads_to": "escalating",
-      "probability": 23
+      "condition": "Worst-case 30d ≥ 95",
+      "leads_to": "cascade",
+      "probability": 27
     },
     {
       "condition": "Новый критический драйвер в geopolitics",
-      "leads_to": "escalating",
-      "probability": 18
+      "leads_to": "cascade",
+      "probability": 20
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 56,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 85,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "90 дней",
-      "score": 50,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 75,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "180 дней",
-      "score": 44,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 66,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "365 дней",
-      "score": 39,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 58,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     }
   ],
   "probabilities": {
-    "worst": 23,
-    "stress": 23,
-    "base": 22,
-    "best": 32
+    "worst": 27,
+    "stress": 25,
+    "base": 18,
+    "best": 30
   }
 }
