@@ -2,32 +2,32 @@
   "country": "KZ",
   "date": "2026-08-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-02T18:57:21.666813+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-08-02T20:09:56.842969+00:00",
+  "node_count": 13,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-KZ",
       "type": "Country",
       "label": "KZ",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-KZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 25,
-      "trend": "down"
+      "score": 26,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-KZ-climate",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-KZ-cyber",
@@ -92,13 +92,6 @@
       "label": "Климатическая политика — Казахстан",
       "severity": 53,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-KZ-Возможност",
-      "type": "Signal",
-      "label": "Возможность полной остановки работы Касп",
-      "severity": 44,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +99,13 @@
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-KZ",
       "to": "DOMAIN-KZ-economic",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-KZ",
@@ -163,6 +156,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-KZ-geopolitical",
+      "to": "DOMAIN-KZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-KZ-infrastructure",
+      "to": "DOMAIN-KZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-KZ-economic",
+      "to": "DOMAIN-KZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-KZ-Военные_уд",
       "to": "DOMAIN-KZ-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +187,6 @@
       "to": "DOMAIN-KZ-climate",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-KZ-Возможност",
-      "to": "DOMAIN-KZ-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.44
     }
   ]
 }
