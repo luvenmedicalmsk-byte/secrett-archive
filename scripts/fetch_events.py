@@ -3979,6 +3979,117 @@ _DIG_RE = re.compile(r'vpn|впн|блокир\w* (?:сервис|сайт|youtu
 _PROT_RE = re.compile(r'протест|митинг|демонстрац|забастовк|массов\w* беспорядк', re.IGNORECASE)
 _PROT_KEEP_RE = re.compile(r'войн|военн|мобилизац|\bтцк\b|тцкшник|оккупир|оккупац|санкц|дипломат|переговор|международн|свержени|госперевор|границ|режим прекращ', re.IGNORECASE)
 _NAT_RE = re.compile(r'землетрясени|афтершок|цунами|наводнени|паводок|ураган|тайфун|\bшторм|циклон|изверже|вулкан|оползен|сел[ьи]\b|лавин|засух|сейсм', re.IGNORECASE)
+# ═══ IDR-010 · DOMAIN LAYER INTEGRITY ════════════════════════════════════════
+# Аудит TASK-013: домен пишется двенадцатью независимыми местами, ни одно из них
+# не читает canon_type. Правило W3 переводило событие в climate по природной
+# лексике, включая ПОСЛЕДСТВИЕ нештатного события: «после взрыва начался пожар»
+# → climate, хотя предмет события — взрыв.
+#
+# Принцип: ПРЕДМЕТ СОБЫТИЯ ВЫШЕ УПОМИНАНИЙ. Тип установлен канонизацией по
+# предмету, лексика и источник говорят лишь о контексте.
+DOMAIN_INTEGRITY = True
+
+# Типы, для которых climate является природным доменом. Только они дают W3/W7
+# право переводить событие в климат.
+_CLIMATE_GROUP = frozenset({
+    'Пожарная активность', 'Наводнение', 'Шторм', 'Тепловая волна',
+    'Водный дефицит', 'Климатическая аномалия', 'Сейсмическая активность',
+    'Морской лёд', 'Оползень', 'Засуха', 'Климатическая политика',
+    'Экологический инцидент',
+})
+
+# Ожидаемые домены по типу — для отчёта целостности (F4). Диагностика, не правка.
+_TYPE_DOMAIN_EXPECT = {
+    'Военные удары': {'geopolitics'},
+    'Санкционное давление': {'geopolitics', 'economy'},
+    'Покушение': {'geopolitics', 'social'},
+    'Визовые ограничения': {'geopolitics', 'social'},
+    'Оборонное производство': {'geopolitics', 'economy'},
+    'Пожарная активность': {'climate'}, 'Наводнение': {'climate'},
+    'Шторм': {'climate'}, 'Тепловая волна': {'climate'},
+    'Водный дефицит': {'climate'}, 'Климатическая аномалия': {'climate'},
+    'Сейсмическая активность': {'climate'}, 'Морской лёд': {'climate'},
+    'Киберугроза': {'technology'}, 'Уязвимость ПО': {'technology'},
+    'Отключение интернета': {'technology'}, 'Фишинговая кампания': {'technology'},
+    'Топливный рынок': {'economy'}, 'Инфляция': {'economy'},
+    'Валютный рынок': {'economy'}, 'Финансовый рынок': {'economy'},
+    'Рынок труда': {'economy'}, 'Розничная торговля': {'economy'},
+    'Государственные финансы': {'economy'}, 'Государственный долг': {'economy'},
+    'Эпидемиологический риск': {'social'}, 'Эпидемиологический надзор': {'social'},
+    'Миграционная политика': {'social'}, 'Криминальный оборот': {'social'},
+    'Взрыв в общественном месте': {'geopolitics', 'social'},
+    'Криминальный инцидент': {'social', 'geopolitics'},
+    'Авиационный инцидент': {'technology', 'social'},
+}
+
+
+def _is_climate_type(ct):
+    """Тип принадлежит климатической группе."""
+    return ct in _CLIMATE_GROUP
+
+
+def _domain_integrity_restore(events):
+    """F1 · Возврат домена, отобранного правилом природной лексики.
+
+    W3 (_domain_fix) исполняется ДО канонизации: в тот момент canon_type ещё не
+    присвоен, и проверить его невозможно. Поэтому W3 лишь помечает событие полем
+    _natfix_from, а решение принимается здесь — после канонизации, когда тип
+    известен.
+
+    Возврат выполняется, если тип определён и НЕ климатический: значит природная
+    лексика была следствием или контекстом, а не предметом события.
+    """
+    if not DOMAIN_INTEGRITY:
+        return events
+    _n = 0
+    for e in (events or []):
+        _from = e.pop('_natfix_from', None)
+        if not _from:
+            continue
+        _ct = e.get('canon_type')
+        if _ct and _ct != 'unknown' and not _is_climate_type(_ct):
+            e['domain'] = _from
+            _n += 1
+    if _n:
+        print(f'[DOMAIN-INTEGRITY] F1 возвращён домен: {_n}', file=sys.stderr)
+    return events
+
+
+def _domain_integrity_report(events, docs_dir):
+    """F4 · Диагностика несовместимых пар. Ничего не исправляет.
+
+    Защита от повторения: любое новое правило, создающее невозможное сочетание
+    типа и домена, становится видимым в ближайшем прогоне.
+    """
+    if not DOMAIN_INTEGRITY:
+        return None
+    _bad = []
+    for e in (events or []):
+        _ct = e.get('canon_type')
+        _exp = _TYPE_DOMAIN_EXPECT.get(_ct)
+        if not _exp:
+            continue
+        _dm = e.get('domain')
+        if _dm and _dm not in _exp:
+            _bad.append({'id': e.get('id'), 'canon_type': _ct, 'domain': _dm,
+                         'expected': sorted(_exp), 'source': e.get('source'),
+                         'feed_visible': bool(e.get('feed_visible')),
+                         'title': (e.get('title') or '')[:120]})
+    _rep = {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'total_events': len(events or []),
+            'checked': sum(1 for e in (events or []) if e.get('canon_type') in _TYPE_DOMAIN_EXPECT),
+            'impossible_pairs': len(_bad),
+            'visible_in_feed': sum(1 for x in _bad if x['feed_visible']),
+            'items': _bad[:60]}
+    try:
+        (docs_dir / 'domain_integrity_report.json').write_text(
+            json.dumps(_rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    except Exception:
+        pass
+    print(f"[DOMAIN-INTEGRITY] несовместимых пар: {len(_bad)}", file=sys.stderr)
+    return _rep
+
+
 def _domain_fix(events):
     """S46.2 точечные доменные корректировки: VPN/цифр.регулирование -> technology;
     немилитаризированные протесты -> social. severity/индексы не трогает."""
@@ -3987,6 +4098,11 @@ def _domain_fix(events):
         # Природные события (землетрясения, цунами, наводнения и т.п.) -> climate,
         # даже если LLM ошибочно отнёс их к geopolitics/economy («ударили по...»).
         if e.get('domain') in ('geopolitics', 'economy', 'social') and _NAT_RE.search(t):
+            # IDR-010 · F1: прежний домен сохраняется. Канонизация ещё не
+            # выполнена, тип неизвестен, поэтому решение откладывается до
+            # _domain_integrity_restore — там оно принимается по типу.
+            if DOMAIN_INTEGRITY:
+                e['_natfix_from'] = e.get('domain')
             e['domain'] = 'climate'
             continue
         if e.get('domain') in ('economy', 'geopolitics') and _DIG_RE.search(t):
@@ -12968,6 +13084,12 @@ def save_enriched(events, previous_snapshot=None):
             # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
             try:
                 _sig_ns = _canon_shadow_pass(enriched["events"])
+                # IDR-010 · F1: решение по отложенным пометкам W3 принимается здесь —
+                # сразу после канонизации, когда canon_type известен.
+                try:
+                    _domain_integrity_restore(enriched["events"])
+                except Exception as _dre:
+                    print(f'[DOMAIN-INTEGRITY] restore skip: {_dre}', file=sys.stderr)
                 _canon_shadow_report(enriched["events"], OUTPUT_PATH.parent, _sig_ns)
                 # CANON SHADOW EXPERIMENTS (S-A окна summary · S-B guard fallback) — READ-ONLY
                 if CANON_SHADOW_EXP:
@@ -13146,6 +13268,15 @@ def save_enriched(events, previous_snapshot=None):
             _CLIMATE_SRC=('Inside Climate News','Reuters Climate','AP Climate','Carbon Brief','Climate Home News','Mongabay','Yale Climate Connections','Grist','E&E News','Phys.org Climate','ScienceDaily Climate','Living on Earth')
             for _icne in enriched["events"]:
                 if _icne.get('source') in _CLIMATE_SRC and _icne.get('domain')!='climate':
+                    # IDR-010 · F2: источник говорит, ОТКУДА новость, но не о природе
+                    # события. Климатическое издание пишет и об экономике:
+                    # «загрязнители платят» — Топливный рынок, «экологические меры
+                    # премьера» — Санкционное давление. При установленном
+                    # неклиматическом типе домен не меняется.
+                    _ict = _icne.get('canon_type')
+                    if DOMAIN_INTEGRITY and _ict and _ict != 'unknown' \
+                            and not _is_climate_type(_ict):
+                        continue
                     _icne['domain']='climate'
                     if _icne.get('canon_domain'): _icne['canon_domain']='climate'
             # УТИЛЬСБОР (Мия 20.07): утилизационный сбор = экономика/регуляторика, не климат («заморозить» ложно матчил мороз)
@@ -13221,6 +13352,13 @@ def save_enriched(events, previous_snapshot=None):
             # присвоены. Слой читает результаты других шагов, поэтому обязан идти
             # ПОСЛЕ них — непосредственно перед записью файла.
             _attach_decision_basis(enriched["events"])
+            # IDR-010 · F4: диагностика несовместимых пар тип↔домен. Ничего не
+            # исправляет — делает видимым любое новое правило, создающее
+            # невозможное сочетание.
+            try:
+                _domain_integrity_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _die:
+                print(f'[DOMAIN-INTEGRITY] report skip: {_die}', file=sys.stderr)
             # D36: индекс качества среза. Тоже после канонизации — иначе измеряет
             # незаполненные поля и даёт заведомо неверную базовую линию.
             try:
