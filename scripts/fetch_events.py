@@ -12749,16 +12749,7 @@ def save_enriched(events, previous_snapshot=None):
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
-            # IDR-006: слой обоснований. Ставится ПОСЛЕ географии и канонизации —
-            # ему нужны их результаты. Ничего не переопределяет, только читает.
-            _attach_decision_basis(enriched["events"])
-            # IDR-006 · D36: индекс качества среза. Без него эффект последующих
-            # изменений измерить нечем — сравнивать не с чем. Пишется каждый
-            # прогон, накапливается в истории.
-            try:
-                _quality_snapshot(enriched["events"], OUTPUT_PATH.parent)
-            except Exception as _qe:
-                print(f'[QUALITY] skip: {_qe}', file=sys.stderr)
+
             # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
             try:
                 _sig_ns = _canon_shadow_pass(enriched["events"])
@@ -13007,6 +12998,20 @@ def save_enriched(events, previous_snapshot=None):
             try: _entity_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _iee: print('  [WARN] entity shadow fail: %s' % _iee, file=sys.stderr)
             for _ste in enriched["events"]: _ste.pop('_obs_tid', None)   # техполе наблюдаемости не пишем в файл
+            # ═══ IDR-006 · МЕСТО ВЫЗОВА ВАЖНО ══════════════════════════════════
+            # Первая версия ставила слой сразу после географии — до канонизации и
+            # SIC. Прогон показал: basis.domain.canon_type пуст у 364 из 368,
+            # basis.intent.class пуст у 364, индекс качества дал canon 0.8% вместо
+            # фактических 48%. Причина: на том шаге canon_type и sic_class ещё не
+            # присвоены. Слой читает результаты других шагов, поэтому обязан идти
+            # ПОСЛЕ них — непосредственно перед записью файла.
+            _attach_decision_basis(enriched["events"])
+            # D36: индекс качества среза. Тоже после канонизации — иначе измеряет
+            # незаполненные поля и даёт заведомо неверную базовую линию.
+            try:
+                _quality_snapshot(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _qe:
+                print(f'[QUALITY] skip: {_qe}', file=sys.stderr)
             OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
                 json.dump(enriched, f, ensure_ascii=False, indent=2)
@@ -13079,6 +13084,20 @@ def save_enriched(events, previous_snapshot=None):
                     _SE.LIFECYCLE_CANARY = {'climate', 'economy'}
                     _sig_n = _write_signals(enriched["events"], _sig_path)
                     _SE.DOMAIN_CANARY = set()
+                    # IDR-006 · D12/D24: обратные ссылки событие→процесс проставляются
+                    # ВНУТРИ _write_signals, а events.json к этому моменту уже записан
+                    # (запись выше, вызов здесь). Прогон подтвердил: process_id = 0 из 368.
+                    # Повторная запись файла — минимальное решение: список событий тот же
+                    # объект в памяти, ссылки уже в нём.
+                    try:
+                        if any(_le.get('process_id') for _le in enriched["events"]):
+                            with open(OUTPUT_PATH, "w", encoding="utf-8") as _lf:
+                                json.dump(enriched, _lf, ensure_ascii=False, indent=2)
+                            _ln = sum(1 for _le in enriched["events"] if _le.get('process_id'))
+                            print(f'[LINKS] events.json перезаписан со ссылками: {_ln}',
+                                  file=sys.stderr)
+                    except Exception as _lre:
+                        print(f'[LINKS] rewrite skip: {_lre}', file=sys.stderr)
                     # ═══ SPEC-013 PHASE 1: ADMISSION SHADOW (READ-ONLY) ═══
                     # Альтернативная реальность правила Admission по УЖЕ ПОСТРОЕННЫМ процессам.
                     # Ничего не меняет: Process Builder отработал как обычно.
