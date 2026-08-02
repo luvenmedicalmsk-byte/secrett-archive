@@ -473,8 +473,13 @@ _MANUAL_PROVENANCE = {
 }
 
 
-def _apply_manual(proc):
-    """Накладывает заданные аналитиком данные на собранную карточку."""
+def _apply_manual(proc, parent=None):
+    """Накладывает заданные аналитиком данные на собранную карточку.
+
+    parent — основной процесс для производных карточек (наблюдение, обнаружение).
+    Передаётся, чтобы производные наследовали уже слитый охват, а не собирали его
+    заново из отсутствующей у них хроники.
+    """
     pid = proc.get('process_id')
     key = pid if pid in _MANUAL_INFRA else _MANUAL_ALIAS.get(pid)
     cfg = _MANUAL_INFRA.get(key)
@@ -496,7 +501,12 @@ def _apply_manual(proc):
         # приоритет у ручной записи: она описательнее («Склад Wildberries, Пенза
         # — попадание нескольких дронов» против заголовка новости).
         _prov = _MANUAL_PROVENANCE.get(key, {})
-        _auto = [r for r in (proc.get('timeline') or []) if isinstance(r, dict)]
+        # Записи, ранее помеченные как ручные, из автоматического набора исключаются:
+        # иначе повторный вызов _apply_manual добавил бы ручные волны второй раз и
+        # хроника росла бы с каждым применением (23 -> 25 -> 27). Функция должна быть
+        # ИДЕМПОТЕНТНОЙ: она вызывается дважды — до и после пересчёта признаков.
+        _auto = [r for r in (proc.get('timeline') or [])
+                 if isinstance(r, dict) and r.get('source_kind') != 'manual']
         _merged = []
         _seen_key = set()          # (дата, нормализованный регион)
 
@@ -598,7 +608,15 @@ def _apply_manual(proc):
         # регионы: ручной список ПЛЮС регионы автоматических записей хроники —
         # иначе новый регион (Татарстан, Самарская область) не попадёт в охват
         # и останется в «зонах наблюдения» как незатронутый.
-        _pl = [_canon_region(_x) for _x in cfg['places']]
+        #
+        # ПРОИЗВОДНЫЕ КАРТОЧКИ (наблюдение, обнаружение) собственной хроники не
+        # имеют, поэтому цикл ниже для них ничего не добавляет и охват выходит
+        # меньше родительского. Берём готовый список у основного процесса —
+        # так три карточки одного процесса всегда показывают одну географию.
+        if parent is not None and parent.get('places'):
+            _pl = list(parent['places'])              # производная карточка: охват родителя
+        else:
+            _pl = [_canon_region(_x) for _x in cfg['places']]
         for _row in (proc.get('timeline') or []):
             _p = _canon_region((_row.get('place') or '').strip())
             # только субъекты: страновые заглушки («Россия», «Украина») регионом
@@ -1583,15 +1601,27 @@ def main():
         # ADR-035: признаки считаются ОДИН раз, после снимка (нужен prev_state)
         for _p in infra:
             _p['features'] = _features(_p, _deltas.get(_p.get('process_id')))  # 2. от слитых данных
-    obsdet = build_observation_detection(infra, _deltas)  # 3. сценарии от слитых данных
+    # _features пересобирает features целиком и возвращает regions_count к
+    # дослияночному значению: карточка показывала places из 11 элементов и
+    # regions_count 10. Повторный вызов восстанавливает согласованность —
+    # _apply_manual идемпотентен, повторное применение безопасно.
+    try:
+        for _p in infra:
+            _apply_manual(_p)                     # 3. синхронизация признаков после _features
+    except Exception as _me:
+        print(f'[PREVIEW] manual resync: {_me}', file=sys.stderr)
+    obsdet = build_observation_detection(infra, _deltas)  # 4. сценарии от слитых данных
     out={'generated': _iso(_now()), 'preview': True,
          'processes': infra + obsdet + [fin]}
-    # Повторное применение к производным карточкам: обеспечивает совпадение
-    # регионов у наблюдения и обнаружения с основным процессом (через _MANUAL_ALIAS).
+    # Производные карточки получают охват РОДИТЕЛЯ: собственной хроники у них нет,
+    # поэтому самостоятельный расчёт дал бы меньший список регионов.
     try:
+        _by_id = {_p.get('process_id'): _p for _p in infra}
         for _p in out.get('processes', []):
             if _p.get('process_type') in ('observation', 'detection'):
-                _apply_manual(_p)
+                _parent = _by_id.get(_p.get('parent_id')) \
+                    or _by_id.get(_MANUAL_ALIAS.get(_p.get('process_id')))
+                _apply_manual(_p, parent=_parent)
     except Exception as _me:
         print(f'[PREVIEW] manual override (derived): {_me}', file=sys.stderr)
     (DOCS/'_preview_processes.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
