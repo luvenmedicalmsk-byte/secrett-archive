@@ -4640,6 +4640,140 @@ def _canon_type_of(title, summ, _ban=None, _fb=False, _scores=None):
 TD002_DEBUG = True
 
 
+# ═══ IDR-005 · CANON / GEO DECISION INTEGRITY ════════════════════════════════
+# Аудит TASK-010: у решения Canon сохранялось только имя правила-победителя
+# (canon_reason), у Geo — только результат. Отклонённые кандидаты, конкуренция
+# и переопределения не восстанавливались. IDR-006 записал ЧТО решено; здесь
+# записывается КАК и ПОЧЕМУ ИМЕННО ТАК, а не иначе.
+#
+# Инвариант IDR-005: решения НЕ меняются. Функции выбора не трогаются — берётся
+# уже существующий механизм подсчёта (_scores), который прежде использовался
+# только в shadow. Поля добавляются, ни одно не переопределяется.
+CANON_DECISION = True
+_CD_TOP = 5          # сколько кандидатов сохраняем помимо победителя
+_CD_GUARDS = ('sport-guard', 'fire-guard', 'heat-guard', 'bio-attack-guard')
+
+
+def _canon_decision(e, SIG):
+    """Структурное основание выбора канонического типа.
+
+    Отвечает на пять вопросов: почему выбран этот тип, почему отклонены
+    остальные, какое правило победило, было ли переопределение, какова
+    уверенность.
+
+    Детерминированность: строится из того же вызова _canon_type_of, что и само
+    решение, поэтому не может разойтись с ним по построению.
+    """
+    _title = (e.get('title') or '').lower()
+    _summ = (e.get('summary') or '')[:60].lower()
+    _sc = {}
+    _best, _reason = _canon_type_of(_title, _summ, _scores=_sc)
+
+    _rank = _sc.get('rank') or []
+    _cands, _seen_c = [], set()
+    for _s, _n in _rank:
+        if _n in _seen_c:
+            continue
+        _seen_c.add(_n)
+        _cands.append({'type': _n, 'score': _s})
+        if len(_cands) > _CD_TOP:
+            break
+    _winner = e.get('canon_type')
+
+    # Отклонённые: кандидаты со счётом выше нуля, не ставшие победителем.
+    # Дедуп по имени типа: в реестре у одного типа бывает несколько шаблонов,
+    # и без дедупа он попадал бы в список отклонённых по разу на шаблон.
+    _guard = _reason if _reason in _CD_GUARDS else None
+    _rejected = []
+    _seen_type = {_winner}
+    if _guard and _rank:
+        # Guard-отклонение: правило нашло кандидата, но защитное условие его сняло.
+        _rejected.append({'type': _rank[0][1], 'score': _rank[0][0],
+                          'why': f'отклонён защитой: {_guard}'})
+        _seen_type.add(_rank[0][1])
+    for _s, _n in _rank:
+        if _n in _seen_type:
+            continue
+        _seen_type.add(_n)
+        _why = ('равный счёт, победил первый в порядке реестра'
+                if _rank and _s == _rank[0][0] else 'меньший счёт совпадений')
+        _rejected.append({'type': _n, 'score': _s, 'why': _why})
+        if len(_rejected) >= _CD_TOP:
+            break
+
+    # Уверенность: отрыв победителя от следующего кандидата. Единственная
+    # величина, которую можно вывести из механизма скоринга, — доля отрыва.
+    _bs = _sc.get('best_score') or 0
+    _margin = _sc.get('margin') or 0
+    _conf = round(min(0.99, 0.5 + 0.1 * _margin), 2) if _bs else 0.0
+    if _winner in (None, 'unknown'):
+        _conf = 0.0
+
+    # Переопределение: домен события и домен канонического типа разошлись.
+    _ov = bool(e.get('domain') and e.get('canon_domain')
+               and e['domain'] != e['canon_domain'])
+
+    return {
+        'winner': _winner,
+        'candidates': _cands,
+        'rejected': _rejected,
+        'rule': _reason if _reason and _reason not in ('domain-default',) else None,
+        'rule_kind': ('registry' if _reason and _reason not in _CD_GUARDS
+                      and _reason != 'domain-default'
+                      else ('guard' if _guard else 'default')),
+        'best_score': _bs,
+        'runner_up': _sc.get('runner_up'),
+        'margin': _margin,
+        'confidence': _conf,
+        'overridden': _ov,
+        'override': ({'from': e.get('domain'), 'to': e.get('canon_domain'),
+                      'by': 'canon-registry', 'rule': _reason} if _ov else None),
+        'guard': _guard,
+        'v': 1,
+    }
+
+
+def _geo_decision(e, gc):
+    """Структурное основание геопривязки.
+
+    Источник, почему выбрана основная страна, какие рассматривались, почему
+    отклонены, точность решения.
+    """
+    _imp = [c for c in (getattr(gc, 'impact_countries', None) or ()) if c]
+    _primary = e.get('primary_country') or None
+    _ppt = getattr(gc, 'process_place_type', None)
+    _prec = getattr(gc, 'precision', None)
+
+    if _ppt == 'country':
+        _how = ('координаты объекта из текста' if _prec == 'exact'
+                else 'центроид административной единицы')
+        _src = 'resolve_geo_v2'
+    elif _ppt == 'global':
+        _how = 'событие глобального охвата, страна не определяется'; _src = 'resolve_geo_v2'
+    elif _ppt == 'zone':
+        _how = 'зона без страновой принадлежности'; _src = 'resolve_geo_v2'
+    else:
+        _how = ('страны упомянуты, место действия не установлено' if _imp
+                else 'география не определена'); _src = 'resolve_geo_v2'
+
+    _rejected = [{'country': _c, 'why': 'упомянута, но не место действия'}
+                 for _c in _imp if _c != _primary][:_CD_TOP]
+
+    return {
+        'source': _src,
+        'primary': _primary,
+        'why_primary': _how,
+        'considered': list(_imp)[:8],
+        'rejected': _rejected,
+        'precision': _prec,
+        'confidence': getattr(gc, 'confidence', None),
+        'place_type': _ppt,
+        'region': e.get('region') or None,
+        'fallback': None,
+        'v': 1,
+    }
+
+
 def _canonize_event(e, SIG):
     title = (e.get('title') or '').lower(); summ = (e.get('summary') or '')[:60].lower()
     legacy_dom = (e.get('domain') or '')
@@ -4661,6 +4795,13 @@ def _canonize_event(e, SIG):
     e['canon_atomicity'] = atom
     e['canon_reason'] = best_reason or 'domain-default'
     e['canon_engine_ver'] = 'canon-v2'
+    # IDR-005: структурное основание решения. Строится из ТОГО ЖЕ механизма
+    # скоринга, что и само решение, поэтому разойтись с ним не может.
+    if CANON_DECISION:
+        try:
+            e['canon_decision'] = _canon_decision(e, SIG)
+        except Exception:
+            pass
     return e
 
 # ═══ CANON SHADOW EXPERIMENTS (READ-ONLY, ADR-005) ══════════════════════════════
@@ -5629,6 +5770,13 @@ def _apply_geo_contract(events):
             e['mentioned_countries'] = _imp; e['country_codes'] = _imp
             e['is_global'] = False
             e['map_visible'] = False   # VALID_NO_GEO: в ленте есть, на карте нет
+        # IDR-005: основание геопривязки — одно на все три ветки, строится из
+        # результата контракта, поэтому одинаково для country / zone / none.
+        if CANON_DECISION:
+            try:
+                e['geo_decision'] = _geo_decision(e, gc)
+            except Exception:
+                pass
     # GEO fallback: RU-топоним в ЗАГОЛОВКЕ -> primary=RU, когда основной резолвер оставил
     # primary пустым. RU-субъект/город — всегда МЕСТО события, не актор. Проверено на живом
     # потоке: 10 событий, 0 ложных (guard: только title, region не европейский).
@@ -5637,9 +5785,22 @@ def _apply_geo_contract(events):
         for e in events:
             if (not e.get('primary_country')) and ((e.get('region') or '') not in _EU_REG) \
                and _ru_place_in_title(e.get('title') or ''):
+                _gd_prev = (e.get('geo_decision') or {}).get('primary')
                 e['primary_country'] = 'RU'; e['country_code'] = 'RU'
                 if not e.get('event_country'):
                     e['event_country'] = 'RU'
+                # IDR-005 · запись переопределения: основной резолвер оставил
+                # страну пустой, RU-топоним в заголовке её подставил. Без записи
+                # различить решение резолвера и результат запасного правила нельзя.
+                if isinstance(e.get('geo_decision'), dict):
+                    e['geo_decision']['primary'] = 'RU'
+                    e['geo_decision']['fallback'] = {
+                        'rule': 'ru_place_in_title',
+                        'from': _gd_prev,
+                        'to': 'RU',
+                        'why': 'российский топоним в заголовке — всегда место события, не актор',
+                        'by': 'geo-fallback',
+                    }
     except Exception:
         pass
     try:
