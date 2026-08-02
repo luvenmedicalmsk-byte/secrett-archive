@@ -169,6 +169,10 @@ jobs:
           git add docs/_infra_detection_shadow.json docs/_infra_detection_state.json 2>/dev/null || true   # ADR-012 Phase 1 Shadow
           git add docs/_birth_semantics.json 2>/dev/null || true   # SPEC-013 §3 Birth Semantics
           git add docs/_impact_debug.json 2>/dev/null || true
+          # IDR-006: отчёт по обратным ссылкам событие→процесс. Файл создавался
+          # на раннере, но не попадал в коммит — его не было ни в одной строке
+          # git add. То же касалось _signal_engine_report.json.
+          git add docs/_process_links_report.json docs/_signal_engine_report.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else
