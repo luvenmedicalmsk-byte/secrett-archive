@@ -148,12 +148,25 @@ _ROLE_BADGE = {
 }
 
 def _count_edges(sig, all_sigs_by_id):
-    """Входящие/исходящие связи из графа (ROLE-2)."""
-    # исходящие: этот процесс влияет на других (amplifies/causes/suppresses)
-    out_amp = len(sig.get('amplifies', []) or [])
-    out_cause = len(sig.get('causes', []) or [])
-    out_supp = len(sig.get('suppresses', []) or [])
-    outgoing = out_amp + out_cause + out_supp
+    """Входящие/исходящие связи из графа (ROLE-2).
+
+    ИСПРАВЛЕНО 2026-07-31 (IDR-001): раньше длины списков СКЛАДЫВАЛИСЬ, а поля
+    amplifies и causes содержат идентичные наборы целей (проверено: 231 процесс
+    из 231 с обоими заполненными полями). Каждая исходящая связь считалась
+    дважды. Следствия: все значения outgoing были чётными, значение 1
+    недостижимо, роль «передаточное звено» не назначалась ни разу, пороги ролей
+    смещены вдвое, балл значимости завышен (он использует outgoing дважды).
+
+    Теперь считаются УНИКАЛЬНЫЕ цели. Смысл величины прежний — на сколько
+    процессов влияет этот; изменилась только корректность счёта.
+    """
+    # исходящие: уникальные цели влияния (amplifies/causes/suppresses)
+    out_targets = set()
+    for _f in ('amplifies', 'causes', 'suppresses'):
+        for _t in (sig.get(_f) or []):
+            if _t:
+                out_targets.add(_t)
+    outgoing = len(out_targets)
     # входящие: этот процесс — цель чужих causes/amplifies (обратный обход)
     incoming = 0
     sid = sig.get('signal_id')
@@ -176,12 +189,17 @@ def determine_role(sig, all_sigs_by_id):
         role = 'terminal'
     elif inc == 0 and out >= 2:
         role = 'cascade_source'         # только влияет, сам не получает — источник
+    # ИСПРАВЛЕНО 2026-07-31 (IDR-001): условие «узла концентрации» перенесено ВЫШЕ
+    # «усилителя». Раньше оно стояло после и было недостижимо: любой процесс с
+    # inc>=3 и out>=3 удовлетворяет более широкому inc>=1 and out>=2 и получал
+    # роль «усилитель». Перебор всех комбинаций 0..7 подтверждал: concentration
+    # не назначался ни разу. Условие узла строго уже — его место перед усилителем.
+    elif inc >= 3 and out >= 3:
+        role = 'concentration'          # много связей в обе стороны — узел
     elif inc >= 1 and out >= 2:
         role = 'amplifier'              # получает и передаёт дальше с усилением
     elif inc >= 2 and out == 0:
         role = 'consequence'            # только получает от многих — следствие
-    elif inc >= 3 and out >= 3:
-        role = 'concentration'          # много связей в обе стороны — узел
     elif inc >= 1 and out >= 1:
         role = 'transit'                # передаёт влияние дальше
     elif out >= 1:
