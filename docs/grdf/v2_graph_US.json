@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-08-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-02T21:19:49.322148+00:00",
+  "generated_at": "2026-08-02T22:20:54.695506+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 54,
+      "score": 56,
       "props": {
-        "risk_score": 54
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 12,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
+      "id": "SIGNAL-US-Три_лесных",
+      "type": "Signal",
+      "label": "Три лесных пожара, бушующие в районе Спо",
+      "severity": 73,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-US-Деньги_вен",
       "type": "Signal",
       "label": "Деньги венчурных капиталистов хлынули в ",
       "severity": 64,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-US-Экспорт_не",
-      "type": "Signal",
-      "label": "Экспорт нефти и нефтепродуктов из США до",
-      "severity": 62,
       "domain": "economic"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Как_ручной",
       "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
       "weight": 0.93
     },
     {
+      "from": "SIGNAL-US-Три_лесных",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.73
+    },
+    {
       "from": "SIGNAL-US-Деньги_вен",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.64
-    },
-    {
-      "from": "SIGNAL-US-Экспорт_не",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
