@@ -2962,6 +2962,54 @@ def write_signals_json(events, path):
             if isinstance(s.get('timeline'),list):
                 s['timeline']=[t for t in s['timeline'] if _keep_phen(t.get('event'))]
                 if isinstance(s.get('history'),list): s['history']=s['timeline']
+    # ═══ IDR-006 · D12/D24: ОБРАТНАЯ ССЫЛКА СОБЫТИЕ → ПРОЦЕСС ═══════════════
+    # Аудит TASK-008 показал: у события нет ни process_id, ни причины включения
+    # в процесс — 0 из 368. Восстановить, в какой процесс вошло событие, можно
+    # было только обратным перебором по заголовкам свидетельств.
+    #
+    # Индекс строится ПОСЛЕ финального скраба, чтобы отражать фактический состав.
+    # Событие может входить в несколько процессов (обычный и макро) — сохраняются
+    # все, порядок соответствует порядку процессов в выдаче.
+    try:
+        _idx = {}
+        for _s in evolved:
+            _sid = _s.get('signal_id')
+            if not _sid:
+                continue
+            for _e in (_s.get('evidence') or []):
+                if not isinstance(_e, dict):
+                    continue
+                _t = (_e.get('title') or '').strip()[:80]
+                if not _t:
+                    continue
+                _idx.setdefault(_t, []).append({
+                    'process_id': _sid,
+                    'process_type': _s.get('process_type'),
+                    'process_title': _s.get('title'),
+                    'is_macro': bool(_s.get('is_macro')),
+                    'match': _e.get('match'),
+                    'match_score': _e.get('match_score'),
+                    'role': _e.get('role'),
+                    'is_trigger': bool(_e.get('is_trigger')),
+                })
+        _linked = 0
+        for _ev in (events or []):
+            _t = (_ev.get('title') or '').strip()[:80]
+            _hit = _idx.get(_t)
+            if not _hit:
+                continue
+            _ev['process_links'] = _hit
+            _ev['process_id'] = _hit[0]['process_id']      # основной — первый в выдаче
+            _linked += 1
+        _mem_dir = os.path.dirname(path)
+        json.dump({'generated': now, 'events_total': len(events or []),
+                   'events_linked': _linked, 'index_size': len(_idx)},
+                  open(os.path.join(_mem_dir, '_process_links_report.json'), 'w', encoding='utf-8'),
+                  ensure_ascii=False, indent=2)
+        print(f'[LINKS] событий связано с процессами: {_linked}/{len(events or [])}', file=sys.stderr)
+    except Exception as _le:
+        print(f'[LINKS] skip: {_le}', file=sys.stderr)
+
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)

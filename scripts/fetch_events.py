@@ -5397,6 +5397,177 @@ def _delatinize_titles(events):
             e['title'] = _cand
 
 
+# ═══ IDR-006 · DECISION BASIS LAYER ═══════════════════════════════════════════
+# Аудит TASK-010 показал: из шести вопросов о решениях системы три не имеют
+# ответа в данных вообще — почему событие оперативное, почему такой вес, почему
+# вошло в сигнал. Решения принимаются детерминированно и воспроизводимо, но
+# основание не сохраняется, поэтому объяснить результат нельзя (D11, D21, D22,
+# D23, D52).
+#
+# Слой АДДИТИВЕН: пишет одно поле `basis`, ничего не переопределяет. Отключается
+# флагом. Ни одно решение конвейера от него не зависит.
+DECISION_BASIS = True
+
+
+def _basis_geo(e):
+    """Основание выбора географии: уровень точности, уверенность, путь получения."""
+    _g = e.get('geo') or {}
+    _prec = _g.get('precision')
+    if _prec == 'exact':
+        _how = 'координаты объекта из текста'
+    elif _prec == 'centroid':
+        _how = 'центроид административной единицы'
+    elif e.get('primary_country'):
+        _how = 'страновой уровень, точка не определена'
+    elif e.get('mentioned_countries'):
+        _how = 'страны упомянуты, место действия не установлено'
+    else:
+        _how = 'география не определена'
+    return {'precision': _prec, 'confidence': _g.get('confidence'),
+            'country': _g.get('country') or e.get('primary_country'),
+            'mentioned': list(e.get('mentioned_countries') or [])[:6],
+            'how': _how}
+
+
+def _basis_domain(e):
+    """Основание выбора домена и канонического типа."""
+    _r = e.get('canon_reason')
+    _matched = bool(_r) and _r != 'domain-default'
+    return {'canon_type': e.get('canon_type'), 'canon_domain': e.get('canon_domain'),
+            'feed_domain': e.get('domain'),
+            'rule': _r if _matched else None,
+            'how': 'сработало правило реестра' if _matched
+                   else 'правило не найдено, домен унаследован от источника',
+            'origin': e.get('canon_origin'),
+            'overridden': bool(e.get('domain') and e.get('canon_domain')
+                               and e['domain'] != e['canon_domain'])}
+
+
+def _basis_severity(e):
+    """Основание веса: маршрут расчёта и наблюдаемые факторы.
+
+    Разложение по вкладу компонентов недоступно — оно не сохраняется внутри
+    estimate_severity. Здесь фиксируется то, что восстановимо: маршрут, наличие
+    факторов повышения и итог. Полное разложение — задача следующей итерации.
+    """
+    _b = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+    _f = []
+    if re.search(r'погиб|жертв|убит', _b):        _f.append('человеческие потери')
+    if re.search(r'ранен|пострадав', _b):          _f.append('пострадавшие')
+    if re.search(r'эвакуац|эвакуир', _b):          _f.append('эвакуация')
+    if re.search(r'разруш|уничтож|обрушен', _b):   _f.append('разрушения')
+    if re.search(r'критическ|critical', _b):       _f.append('критичность заявлена')
+    if re.search(r'остановлен|приостанов|закрыт', _b): _f.append('остановка работы')
+    return {'route': e.get('_sev_route'), 'value': e.get('severity'),
+            'factors': _f,
+            'how': {'force': 'значение задано источником',
+                    'cyber': 'шкала CVSS по кибер-каналу',
+                    'news': 'лексическая оценка текста'}.get(e.get('_sev_route'), 'не определён')}
+
+
+def _basis_intent(e):
+    """Основание разделения оперативного и контекстного (D52)."""
+    _b = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+    _sc = e.get('sic_class')
+    _marks = []
+    if _SIC_ACCOMPLISHED.search(_b):  _marks.append('свершившееся действие')
+    if _SIC_EVENT.search(_b):         _marks.append('событийная лексика')
+    if _SIC_PROCESS.search(_b):       _marks.append('признак продолжения')
+    if _SIC_FEATURE.search(_b):       _marks.append('человеческое измерение')
+    if _SIC_BACKGROUND.search(_b):    _marks.append('справочный характер')
+    return {'class': _sc, 'marks': _marks,
+            'operational': _sc == 'EVENT',
+            'how': 'распознаны признаки: ' + ', '.join(_marks) if _marks
+                   else 'признаков события не найдено, отнесено к контексту'}
+
+
+def _basis_signal(e):
+    """Основание присвоения статуса сигнала."""
+    _st = e.get('signal_type')
+    return {'signal_type': _st,
+            'is_signal': _st not in (None, 'baseline'),
+            'escalation_score': e.get('escalation_score'),
+            'escalation_level': e.get('escalation_level'),
+            'how': {'escalation': 'зафиксирован рост показателей процесса',
+                    'anomaly': 'отклонение от базовой линии',
+                    'structural': 'признак структурного изменения',
+                    'analysis': 'аналитический материал',
+                    'baseline': 'изменений относительно базовой линии не зафиксировано'
+                    }.get(_st, 'статус не присвоен')}
+
+
+def _quality_snapshot(events, docs_dir):
+    """Индекс качества корпуса — база для сравнения релизов (D36).
+
+    Формулы зафиксированы в TASK-008 §15. Изменение любой из них делает прошлые
+    значения несравнимыми, поэтому набор показателей менять нельзя без явного
+    решения: индекс сопоставим только с собственными прошлыми замерами.
+    """
+    _n = len(events or [])
+    if not _n:
+        return None
+
+    def _pct(a):
+        return round(a / _n * 100, 1)
+
+    _hard = re.compile(r'погиб|убит|жертв|ранен|взрыв|разруш|эвакуац|блокир|критическ|уязвим|атак')
+    _fh = sum(1 for e in events if (e.get('severity') or 0) >= 70 and e.get('sic_class') != 'EVENT')
+    _fl = sum(1 for e in events if (e.get('severity') or 0) < 45 and e.get('sic_class') == 'EVENT'
+              and _hard.search(((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()))
+    _q = {
+        'canon':          _pct(sum(1 for e in events if e.get('canon_type') not in (None, 'unknown'))),
+        'geo':            _pct(sum(1 for e in events if e.get('lat') is not None or e.get('primary_country'))),
+        'domain':         _pct(_n - sum(1 for e in events if e.get('domain') and e.get('canon_domain')
+                                        and e['domain'] != e['canon_domain'])),
+        'explainability': _pct(sum(1 for e in events if e.get('canon_reason') != 'domain-default')),
+        'severity':       _pct(_n - _fh - _fl),
+        'basis':          _pct(sum(1 for e in events if e.get('basis'))),
+    }
+    _q['overall'] = round(sum(_q.values()) / len(_q), 1)
+    _row = {'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'events': _n, 'quality': _q}
+    _dir = docs_dir / 'migration'
+    _dir.mkdir(parents=True, exist_ok=True)
+    with (_dir / 'quality-history.jsonl').open('a', encoding='utf-8') as _f:
+        _f.write(json.dumps(_row, ensure_ascii=False) + '\n')
+    (_dir / 'quality-latest.json').write_text(json.dumps(_row, ensure_ascii=False, indent=2),
+                                              encoding='utf-8')
+    print(f"[QUALITY] overall={_q['overall']}% canon={_q['canon']} geo={_q['geo']} "
+          f"basis={_q['basis']}", file=sys.stderr)
+    return _row
+
+
+def _attach_decision_basis(events):
+    """Добавляет каждому событию поле `basis` — единый след принятых решений.
+
+    Закрывает D11 (вес), D22 (география), D23 (видимость), D52 (интент).
+    Поле аддитивное: существующие потребители его не читают.
+    """
+    if not DECISION_BASIS:
+        return events
+    _n = 0
+    for e in (events or []):
+        try:
+            e['basis'] = {
+                'geo':      _basis_geo(e),
+                'domain':   _basis_domain(e),
+                'severity': _basis_severity(e),
+                'intent':   _basis_intent(e),
+                'signal':   _basis_signal(e),
+                'visible':  {'feed': bool(e.get('feed_visible')),
+                             'map': bool(e.get('map_visible')),
+                             'how': 'на карте' if e.get('map_visible')
+                                    else ('в ленте без карты' if e.get('feed_visible')
+                                          else 'скрыто из ленты')},
+                'v': 1,
+            }
+            _n += 1
+        except Exception:
+            continue
+    print(f'[BASIS] обоснования записаны: {_n}/{len(events or [])}', file=sys.stderr)
+    return events
+
+
 def _apply_geo_contract(events):
     """GEO CONTRACT Phase 2 (docs/GEO_CONTRACT.md): авторитетная география платформы.
     resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
@@ -12578,6 +12749,16 @@ def save_enriched(events, previous_snapshot=None):
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
+            # IDR-006: слой обоснований. Ставится ПОСЛЕ географии и канонизации —
+            # ему нужны их результаты. Ничего не переопределяет, только читает.
+            _attach_decision_basis(enriched["events"])
+            # IDR-006 · D36: индекс качества среза. Без него эффект последующих
+            # изменений измерить нечем — сравнивать не с чем. Пишется каждый
+            # прогон, накапливается в истории.
+            try:
+                _quality_snapshot(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _qe:
+                print(f'[QUALITY] skip: {_qe}', file=sys.stderr)
             # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
             try:
                 _sig_ns = _canon_shadow_pass(enriched["events"])
