@@ -414,21 +414,71 @@ def _apply_manual(proc):
     if not cfg:
         return proc
     if cfg.get('waves') and pid == key:      # timeline — только основной карточке
+        # ═══ СЛИЯНИЕ ДВУХ ИСТОЧНИКОВ ХРОНИКИ (замер 2026-08-02) ═══════════════
+        # Раньше ручные волны ЗАМЕЩАЛИ автоматически собранную хронику. Замер
+        # показал, что источники описывают РАЗНЫЕ события одного процесса:
+        # автосборщик находит 7 из 13 ручных записей (54%), при этом сам собирает
+        # эпизоды, которых в ручном списке нет вовсе (Татарстан, Самара, Ozon).
+        # Четыре ручные записи (Невинномысск, Шушары, Уткина Заводь, Ижевск) в
+        # данных отсутствуют — они внесены как manual_backfill до включения
+        # автосбора и восстановить их неоткуда.
+        #
+        # Поэтому хроника строится ОБЪЕДИНЕНИЕМ: ручные записи сохраняются,
+        # автоматические добавляются. Дедуп по паре (дата, регион) — на текущих
+        # данных пересечение нулевое, правило нужно на будущее. При совпадении
+        # приоритет у ручной записи: она описательнее («Склад Wildberries, Пенза
+        # — попадание нескольких дронов» против заголовка новости).
         _prov = _MANUAL_PROVENANCE.get(key, {})
-        proc['timeline'] = []
-        for d, e, pl, sv in cfg['waves']:
-            _row = {'t': d, 'event': e, 'detail': '', 'place': pl, 'severity': sv}
+        _auto = [r for r in (proc.get('timeline') or []) if isinstance(r, dict)]
+        _merged = []
+        _seen_key = set()          # (дата, нормализованный регион)
+
+        def _pkey(row):
+            _t = str(row.get('t') or '')[:10]
+            _p = str(row.get('place') or '').strip().lower()
+            return (_t, _p)
+
+        for d, e, pl, sv in cfg['waves']:          # ручные — первыми, приоритет
+            _row = {'t': d, 'event': e, 'detail': '', 'place': pl, 'severity': sv,
+                    'source_kind': 'manual'}
             _p = _prov.get(d)
             if _p:                       # ручное свидетельство — помечаем источник
                 _row.update(_p)
-            proc['timeline'].append(_row)
-        proc['evidence_count'] = len(cfg['waves'])
-        proc['member_count']   = len(cfg['waves'])
-        proc['first_seen']     = cfg['waves'][0][0]
-        proc['last_seen']      = cfg['waves'][-1][0]
+            _merged.append(_row)
+            _seen_key.add(_pkey(_row))
+
+        _added = 0
+        for _row in _auto:                          # автоматические — если не дубль
+            if _pkey(_row) in _seen_key:
+                continue
+            _r = dict(_row)
+            _r['source_kind'] = 'auto'
+            _merged.append(_r)
+            _seen_key.add(_pkey(_r))
+            _added += 1
+
+        _merged.sort(key=lambda r: str(r.get('t') or ''))
+        proc['timeline'] = _merged
+        proc['evidence_count'] = len(_merged)
+        proc['member_count']   = len(_merged)
+        proc['first_seen']     = _merged[0]['t'] if _merged else cfg['waves'][0][0]
+        proc['last_seen']      = _merged[-1]['t'] if _merged else cfg['waves'][-1][0]
+        proc['timeline_merge'] = {'manual': len(cfg['waves']), 'auto_added': _added,
+                                  'total': len(_merged)}
     if cfg.get('places'):
-        proc['places'] = list(cfg['places'])
-        proc['geo_spread'] = len(cfg['places'])
+        # регионы: ручной список ПЛЮС регионы автоматических записей хроники —
+        # иначе новый регион (Татарстан, Самарская область) не попадёт в охват
+        # и останется в «зонах наблюдения» как незатронутый.
+        _pl = list(cfg['places'])
+        for _row in (proc.get('timeline') or []):
+            _p = (_row.get('place') or '').strip()
+            # только субъекты: страновые заглушки («Россия», «Украина») регионом
+            # не считаются — иначе охват завышается, а инвариант «единственный
+            # источник счёта регионов — _regions()» нарушается.
+            if _p and _p not in _pl and _is_region(_p):
+                _pl.append(_p)
+        proc['places'] = _pl
+        proc['geo_spread'] = len(_pl)
     if cfg.get('pressure') is not None:
         proc['pressure'] = cfg['pressure']
     st = proc.setdefault('features', {}).setdefault('state', {})
