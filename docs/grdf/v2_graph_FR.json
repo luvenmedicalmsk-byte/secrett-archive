@@ -2,60 +2,60 @@
   "country": "FR",
   "date": "2026-08-02",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-02T11:23:22.328847+00:00",
+  "generated_at": "2026-08-02T12:02:00.546686+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-FR",
       "type": "Country",
       "label": "FR",
-      "score": 46,
+      "score": 50,
       "props": {
-        "risk_score": 46
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-FR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 55,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 26,
-      "trend": "down"
+      "score": 28,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 27,
-      "trend": "down"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-FR-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-FR-Лесной_пож",
+      "type": "Signal",
+      "label": "Лесной пожар в Бискарросе, Франция",
+      "severity": 60,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-FR-Изменение_",
       "type": "Signal",
       "label": "Изменение климата, вызванное человеком, ",
@@ -92,13 +99,6 @@
       "label": "Социальный процесс — Франция",
       "severity": 65,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-FR-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Франция",
-      "severity": 46,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-economic",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-climate",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-FR",
@@ -163,6 +163,75 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-FR-social",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-FR-geopolitical",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-FR-Лесной_пож",
+      "to": "DOMAIN-FR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-FR-Изменение_",
       "to": "DOMAIN-FR-climate",
       "type": "AMPLIFIES",
@@ -173,12 +242,6 @@
       "to": "DOMAIN-FR-social",
       "type": "AMPLIFIES",
       "weight": 0.65
-    },
-    {
-      "from": "SIGNAL-FR-Геополитич",
-      "to": "DOMAIN-FR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
