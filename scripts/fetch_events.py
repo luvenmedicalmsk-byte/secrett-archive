@@ -4678,29 +4678,24 @@ _CD_TOP = 5          # сколько кандидатов сохраняем п
 _CD_GUARDS = ('sport-guard', 'fire-guard', 'heat-guard', 'bio-attack-guard')
 
 
-def _canon_decision(e, SIG):
+def _canon_decision(e, _best, _reason, _sc):
     """Структурное основание выбора канонического типа.
 
     Отвечает на пять вопросов: почему выбран этот тип, почему отклонены
     остальные, какое правило победило, было ли переопределение, какова
     уверенность.
 
-    Детерминированность: строится из того же вызова _canon_type_of, что и само
-    решение, поэтому не может разойтись с ним по построению.
-    """
-    _title = (e.get('title') or '').lower()
-    _summ = (e.get('summary') or '')[:60].lower()
-    _sc = {}
-    # ИСПРАВЛЕНО 2026-08-02: пересчёт обязан идти с ТЕМИ ЖЕ параметрами, что и само
-    # решение. Первая версия не передавала _nat_src, поэтому у источников машинной
-    # детекции структура пересчитывала выбор с активным guard и записывала
-    # guard='fire-guard' при фактически присвоенном типе — 14 расхождений на
-    # прогоне 18:00. Гарантия «не может разойтись по построению» держится только
-    # при полном совпадении аргументов.
-    _best, _reason = _canon_type_of(_title, _summ, _scores=_sc,
-                                    _nat_src=_is_natural_detector(e.get('source')))
+    TASK-009 · РЕФАКТОРИНГ. Первая версия делала СВОЙ вызов _canon_type_of и
+    полагалась на совпадение аргументов. Прогон 18:00 показал, чего эта гарантия
+    стоит: параметр _nat_src, добавленный в Phase 4A.1, не был продублирован во
+    втором вызове, и структура записала guard-отклонение при фактически
+    присвоенном типе — 14 расхождений из 23.
 
-    _rank = _sc.get('rank') or []
+    Гарантия «не может разойтись по построению» держится только тогда, когда
+    вызов ОДИН. Теперь функция ничего не вычисляет: она принимает результат
+    единственного вызова и описывает его. Разойтись стало нечему.
+    """
+    _rank = (_sc or {}).get('rank') or []
     _cands, _seen_c = [], set()
     for _s, _n in _rank:
         if _n in _seen_c:
@@ -4734,8 +4729,8 @@ def _canon_decision(e, SIG):
 
     # Уверенность: отрыв победителя от следующего кандидата. Единственная
     # величина, которую можно вывести из механизма скоринга, — доля отрыва.
-    _bs = _sc.get('best_score') or 0
-    _margin = _sc.get('margin') or 0
+    _bs = (_sc or {}).get('best_score') or 0
+    _margin = (_sc or {}).get('margin') or 0
     _conf = round(min(0.99, 0.5 + 0.1 * _margin), 2) if _bs else 0.0
     if _winner in (None, 'unknown'):
         _conf = 0.0
@@ -4753,7 +4748,7 @@ def _canon_decision(e, SIG):
                       and _reason != 'domain-default'
                       else ('guard' if _guard else 'default')),
         'best_score': _bs,
-        'runner_up': _sc.get('runner_up'),
+        'runner_up': (_sc or {}).get('runner_up'),
         'margin': _margin,
         'confidence': _conf,
         'overridden': _ov,
@@ -4809,7 +4804,11 @@ def _canonize_event(e, SIG):
     title = (e.get('title') or '').lower(); summ = (e.get('summary') or '')[:60].lower()
     legacy_dom = (e.get('domain') or '')
     _nat = _is_natural_detector(e.get('source'))
-    best, best_reason = _canon_type_of(title, summ, _nat_src=_nat)
+    # TASK-009: ЕДИНСТВЕННЫЙ вызов. Его результат — и решение, и материал для
+    # объяснения. Второго вызова не существует, поэтому расхождение невозможно
+    # не по договорённости, а по устройству кода.
+    _sc = {}
+    best, best_reason = _canon_type_of(title, summ, _scores=_sc, _nat_src=_nat)
     if best:
         canon_type = best
         canon_dom = _CANON_TYPE_DOMAIN.get(best) or SIG._TYPE_DOMAIN.get(best) or legacy_dom
@@ -4836,7 +4835,7 @@ def _canonize_event(e, SIG):
     # скоринга, что и само решение, поэтому разойтись с ним не может.
     if CANON_DECISION:
         try:
-            e['canon_decision'] = _canon_decision(e, SIG)
+            e['canon_decision'] = _canon_decision(e, best, best_reason, _sc)
         except Exception:
             pass
     return e
