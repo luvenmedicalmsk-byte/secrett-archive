@@ -4055,6 +4055,121 @@ def _domain_integrity_restore(events):
     return events
 
 
+# ═══ IDR-011 · DOMAIN ARBITER (ADR-045) ══════════════════════════════════════
+# Принцип ADR-045: после определения canon_type он становится источником истины
+# о природе события. Ни один writer не может оставить невозможную пару.
+#
+# Арбитр НЕ заменяет writers — их восемнадцать, и они кодируют предметные
+# решения, накопленные за месяцы. Он вмешивается только там, где результат
+# противоречит установленному типу.
+#
+# Позиция выведена трассировкой (TASK-014): между последним writer'ом (W16) и
+# записью events.json. Единственная точка, где канонизация завершена, все
+# лексические и источниковые правила отработали, файл ещё не записан.
+DOMAIN_ARBITER = True
+
+# Соответствие типа и допустимых доменов — ОТДЕЛЬНАЯ таблица, не canon_domain.
+# Сегодня они совпадают, но это совпадение, а не тождество: IDR-009 ввёл режим
+# TYPE ONLY, где тип НАМЕРЕННО не задаёт домен. Плюс тип может допускать
+# несколько доменов, чего равенство не выражает. Первый элемент — целевой.
+_DOMAIN_ALLOWED = {
+    'Военные удары':            ('geopolitics',),
+    'Санкционное давление':     ('geopolitics', 'economy'),
+    'Покушение':                ('geopolitics', 'social'),
+    'Визовые ограничения':      ('geopolitics', 'social'),
+    'Оборонное производство':   ('geopolitics', 'economy'),
+    'Пожарная активность':      ('climate',),
+    'Наводнение':               ('climate',),
+    'Шторм':                    ('climate',),
+    'Тепловая волна':           ('climate',),
+    'Водный дефицит':           ('climate',),
+    'Климатическая аномалия':   ('climate',),
+    'Сейсмическая активность':  ('climate',),
+    'Морской лёд':              ('climate',),
+    'Киберугроза':              ('technology',),
+    'Уязвимость ПО':            ('technology',),
+    'Отключение интернета':     ('technology',),
+    'Фишинговая кампания':      ('technology',),
+    'Топливный рынок':          ('economy',),
+    'Инфляция':                 ('economy',),
+    'Валютный рынок':           ('economy',),
+    'Финансовый рынок':         ('economy',),
+    'Рынок труда':              ('economy',),
+    'Розничная торговля':       ('economy',),
+    'Государственные финансы':  ('economy',),
+    'Государственный долг':     ('economy',),
+    'Эпидемиологический риск':  ('social',),
+    'Эпидемиологический надзор': ('social',),
+    'Миграционная политика':    ('social',),
+    'Криминальный оборот':      ('social',),
+    'Взрыв в общественном месте': ('geopolitics', 'social'),
+    'Криминальный инцидент':    ('social', 'geopolitics'),
+    'Авиационный инцидент':     ('technology', 'social'),
+}
+
+
+def _last_domain_writer(e):
+    """Последний writer, установивший домен. Восстанавливается по признакам —
+    прямой записи writer'а в событии нет, добавлять её значило бы править
+    восемнадцать мест."""
+    if e.get('source') == 'UN News':
+        return 'W16 · UN News → social'
+    if e.get('_natfix_from'):
+        return 'W4 · природная лексика → climate'
+    _bd = ((e.get('basis') or {}).get('domain') or {})
+    if _bd.get('feed_domain') == e.get('domain'):
+        return 'W1 · классификатор ленты'
+    return 'неизвестен'
+
+
+def _domain_arbiter(events):
+    """Разрешает конфликт между установленным типом и назначенным доменом.
+
+    Алгоритм ADR-045:
+        canon_type == unknown   → поведение не изменяется
+        пара допустима          → домен сохраняется
+        иначе                   → домен приводится к целевому для типа
+    """
+    if not DOMAIN_ARBITER:
+        return events
+    _fixed = 0
+    for e in (events or []):
+        _ct = e.get('canon_type')
+        if not _ct or _ct == 'unknown':
+            continue                          # тип не определён — не вмешиваемся
+        _allowed = _DOMAIN_ALLOWED.get(_ct)
+        if not _allowed:
+            continue                          # тип вне таблицы — не вмешиваемся
+        _dm = e.get('domain')
+        if not _dm or _dm in _allowed:
+            continue                          # пара допустима
+        _target = _allowed[0]
+        e['domain_decision'] = {
+            'writer':   _last_domain_writer(e),
+            'original': _dm,
+            'final':    _target,
+            'reason':   'canon_type precedence',
+            'canon_type': _ct,
+            'allowed':  list(_allowed),
+            'arbiter':  True,
+        }
+        e['domain'] = _target
+        _fixed += 1
+    # У событий без вмешательства арбитра решение тоже фиксируется: иначе
+    # отсутствие поля читалось бы как «арбитр не отработал», а не как
+    # «вмешательство не потребовалось».
+    for e in (events or []):
+        if 'domain_decision' not in e:
+            e['domain_decision'] = {'writer': _last_domain_writer(e),
+                                    'original': e.get('domain'),
+                                    'final': e.get('domain'),
+                                    'reason': 'no conflict',
+                                    'canon_type': e.get('canon_type'),
+                                    'arbiter': False}
+    print(f'[DOMAIN-ARBITER] переопределено: {_fixed}/{len(events or [])}', file=sys.stderr)
+    return events
+
+
 def _domain_integrity_report(events, docs_dir):
     """F4 · Диагностика несовместимых пар. Ничего не исправляет.
 
@@ -13322,6 +13437,11 @@ def save_enriched(events, previous_snapshot=None):
                 if _hme.get('source')=='UN News' and _hme.get('domain') in ('geopolitics',None):
                     _hme['domain']='social'
                     if _hme.get('canon_domain')=='geopolitics': _hme['canon_domain']='social'
+            # ═══ IDR-011 · DOMAIN ARBITER: последний, кто трогает domain до записи ═══
+            try:
+                _domain_arbiter(enriched["events"])
+            except Exception as _dae:
+                print(f'[DOMAIN-ARBITER] skip: {_dae}', file=sys.stderr)
             # НЕЙТРАЛИЗАЦИЯ пропаганд. терминов в display-полях (title/summary/_headline), 0 churn
             for _ne in enriched["events"]:
                 for _nf in ('title','summary','_headline'):
