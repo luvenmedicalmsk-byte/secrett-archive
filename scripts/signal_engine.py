@@ -2,7 +2,11 @@
 """ATLAS V2 — Process Intelligence Engine (Phase 1.1: geo-gated).
 Объединяет статьи в процесс ТОЛЬКО при совпадении локации-сущности.
 Signal ID и имя строятся вокруг процесса, не вокруг текста публикации."""
-import json, re, math, hashlib
+import json, re, math, hashlib, sys
+# sys нужен для диагностической печати в stderr. Раньше модуль его не импортировал,
+# и добавленный в IDR-006 блок обратных ссылок падал на NameError при первом же
+# print(file=sys.stderr) — причём и в try, и в обработчике except, поэтому ошибка
+# уходила наверх, а process_links оставались пустыми (0 из 370).
 from collections import Counter
 from datetime import datetime, timezone
 
