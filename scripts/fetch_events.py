@@ -1279,7 +1279,7 @@ def _semantic_validation(item):
     # официальный жест без реального события не может нести высокий риск
     if _ceremonial and not _real_risk:
         if severity>30:
-            corrections['severity']=min(severity,30)
+            corrections['severity']=_sev_log(item, 'ceremonial_cap', severity, min(severity,30), 'церемониальное событие без признаков риска')
             flags.append('ceremonial_high_severity')
             reasons.append('Церемониальный жест (поздравление/соболезнование) — де-эскалационный фон. Severity %d → 30 (высокая severity недопустима без реального события).' % severity)
             score-=0.4
@@ -1287,7 +1287,7 @@ def _semantic_validation(item):
     # ── ПРОВЕРКА 3: профилактическое заявление с весом инцидента ──
     if _advisory and not re.search(r'(атак|удар|эвакуац|эпидеми|вспышк|теракт|захват|погиб|взрыв|обстрел|катастроф|радиац)', text):
         if severity>32:
-            corrections['severity']=min(severity,32)
+            corrections['severity']=_sev_log(item, 'advisory_cap', severity, min(severity,32), 'предупреждение без признаков реализации')
             flags.append('advisory_as_incident')
             reasons.append('Профилактическое предупреждение о бытовом риске — фон, не системный инцидент. Severity %d → 32.' % severity)
             score-=0.35
@@ -1482,6 +1482,72 @@ def detect_coords(title, desc):
         return round(lat + random.uniform(-1.5, 1.5), 2), round(lng + random.uniform(-1.5, 1.5), 2), best_desc.title()
 
     return None
+
+# ═══ IDR-013 · SEVERITY DECISION (TASK-016) ══════════════════════════════════
+# Аудит TASK-016: вес пишется четырнадцатью местами. Источник истины есть —
+# estimate_severity / normalize_severity, — но поверх него работают девять
+# ограничений, два пересчёта и одно повышение. Какое правило и на сколько
+# изменило значение, не сохранялось: basis.severity давал маршрут и факторы,
+# но не разложение.
+#
+# Слой АДДИТИВЕН: сами правила не меняются, порядок не меняется. Каждое
+# изменение веса регистрируется в списке; итоговое значение остаётся тем же.
+SEVERITY_DECISION = True
+
+
+def _sev_log(e, rule, before, after, why, kind='cap'):
+    """Регистрирует одно изменение веса. Вызывается ИЗ правил, не вместо них.
+
+    kind: base | cap | boost | recompute | forced | penalty
+    """
+    if not SEVERITY_DECISION or before == after:
+        return after
+    try:
+        _d = e.setdefault('severity_decision', {'applied': [], 'v': 1})
+        _d.setdefault('applied', []).append({
+            'rule': rule, 'kind': kind,
+            'from': before, 'to': after, 'why': why,
+        })
+    except Exception:
+        pass
+    return after
+
+
+def _sev_finalize(events):
+    """Достраивает severity_decision после всех правил.
+
+    Заполняется ВСЕМ событиям: отсутствие поля иначе читалось бы как «слой не
+    отработал», а не как «коррекций не было».
+
+    Порядок применения правил зафиксирован здесь же — TASK-016 показал, что он
+    содержательно влияет на исход (повышение стоит после ограничений и способно
+    их отменить), но нигде не был записан как решение.
+    """
+    if not SEVERITY_DECISION:
+        return events
+    _n = 0
+    for e in (events or []):
+        _d = e.get('severity_decision') or {'applied': [], 'v': 1}
+        _ap = _d.get('applied') or []
+        _d['route'] = e.get('_sev_route')
+        _d['final'] = e.get('severity')
+        _d['base'] = _ap[0]['from'] if _ap else e.get('severity')
+        _d['forced'] = any(x.get('kind') == 'forced' for x in _ap)
+        _d['capped'] = any(x.get('kind') == 'cap' for x in _ap)
+        _d['boosted'] = any(x.get('kind') == 'boost' for x in _ap)
+        # Ограничение, отменённое последующим повышением: единственное место,
+        # где порядок правил меняет результат. Помечается явно.
+        _d['cap_overridden'] = bool(_d['capped'] and _d['boosted'] and
+                                    any(x.get('kind') == 'boost' for x in _ap[
+                                        next((i for i, x in enumerate(_ap)
+                                              if x.get('kind') == 'cap'), 0):]))
+        _d['rules_count'] = len(_ap)
+        e['severity_decision'] = _d
+        if _ap:
+            _n += 1
+    print(f'[SEVERITY] событий с коррекциями: {_n}/{len(events or [])}', file=sys.stderr)
+    return events
+
 
 def estimate_severity(title, desc, bias=0, weight=1.0):
     """News/текст -> делегирует в normalize_severity('news', …). База 30 (не 50),
@@ -1766,7 +1832,7 @@ def _severity_canon_recheck(events):
         _new = estimate_severity(e.get('title', '') or '', (e.get('summary') or '')[:300],
                                  e.get('source_bias', 0), e.get('source_weight', 1.0) or 1.0)
         if _new is not None and _new != _old:
-            e['severity'] = _new
+            e['severity'] = _sev_log(e, 'cyber_cvss', _old, _new, 'пересчёт по шкале уязвимости', 'recompute')
             e['_sev_recheck'] = {'from': _old, 'to': _new, 'canon': ct, 'reason': 'cyber route but non-cyber canon'}
             n += 1
     if n:
@@ -3573,7 +3639,7 @@ def process_events(raw_items):
 
     # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
     for _ev in events:
-        _ev['severity'] = _recompute_severity(_ev)
+        _ev['severity'] = _sev_log(_ev, 'scale_recompute', _ev.get('severity'), _recompute_severity(_ev), 'пересчёт по масштабу риска (S45)', 'recompute')
     # RSS-аналитика (climate/social) получает сорт-бонус, чтобы качественные источники не проигрывали
     # TG-потоку по severity и попадали в квоту (Мия 20.07). Не меняет реальную severity — только порядок отбора.
     _DISASTER_SRC={'NASA EONET','GDACS','GDACS/Copernicus','USGS','Copernicus EMS','FloodList','The Watchers','Wildfire Today'}
@@ -4314,7 +4380,7 @@ def _softcap_firm_bankruptcy(events, cap=48):
             continue
         text = (e.get('title', '') or '') + ' ' + (e.get('summary', '') or '')
         if _BANKRUPT_RE.search(text) and _FIRM_RE.search(text) and not _SECTOR_WAVE_RE.search(text):
-            e['severity'] = cap
+            e['severity'] = _sev_log(e, 'single_firm_cap', sev, cap, 'банкротство одной компании, не отраслевая волна')
             e['_softcap'] = 'single_firm_bankruptcy'
             n += 1
     if n:
@@ -5793,10 +5859,10 @@ def _editorial_gate(events):
             continue
         if _PR_SOFT_RX.search(t):
             soft += 1
-            e['severity'] = min(int(e.get('severity') or 34), 34)
+            e['severity'] = _sev_log(e, 'refuted_cap', e.get('severity'), min(int(e.get('severity') or 34), 34), 'сообщение опровергнуто источником')
         if _RETRO_RX.search(t):
             retro += 1
-            e['severity'] = max(30, int(e.get('severity') or 45) - 15)
+            e['severity'] = _sev_log(e, 'retrospective_penalty', e.get('severity'), max(30, int(e.get('severity') or 45) - 15), 'ретроспективный материал, не текущее событие', 'penalty')
         kept.append(e)
     if dropped or soft or retro:
         print('  [EDITORIAL] удалено %d · PR/регуляторика в фон %d · ретро-штраф %d'
@@ -11944,7 +12010,7 @@ def _signal_quality_pass(events):
                     if _dm in ('climate','social','technology','geopolitics') and any(_w in _bt for _w in ('землетряс','наводнен','паводок','циклон','тайфун','ураган','шторм','цунами','оползен','сель','извержен','вулкан','катастроф','бедств','разрушен','погиб','эвакуир','пострадав')):
                         _fl = _disaster_scale_floor(_bt)
                         if _fl and _fl > (e.get('severity') or 0):
-                            e['severity'] = _fl
+                            e['severity'] = _sev_log(e, 'infra_boost', e.get('severity'), _fl, 'инфраструктурный объект в тексте', 'boost')
                 except Exception:
                     pass
                 # ретро-override приоритетного гео (Монако/микрогос./штаты США) — фикс уже сохранённых событий
@@ -11999,7 +12065,7 @@ def _signal_quality_pass(events):
                 if e.get('source') in _SQ_OPINION:
                     e['analysis'] = True
                     if isinstance(e.get('severity'), (int, float)):
-                        e['severity'] = int(e['severity'] * 0.85)
+                        e['severity'] = _sev_log(e, 'opinion_penalty', e['severity'], int(e['severity'] * 0.85), 'источник публикует мнения', 'penalty')
                     if e.get('signal_type') == 'baseline':
                         e['signal_type'] = 'analysis'
                 if (e.get('domain') == 'social'
@@ -13528,6 +13594,7 @@ def save_enriched(events, previous_snapshot=None):
             # фактических 48%. Причина: на том шаге canon_type и sic_class ещё не
             # присвоены. Слой читает результаты других шагов, поэтому обязан идти
             # ПОСЛЕ них — непосредственно перед записью файла.
+            _sev_finalize(enriched["events"])          # IDR-013: разложение веса
             _attach_decision_basis(enriched["events"])
             # IDR-010 · F4: диагностика несовместимых пар тип↔домен. Ничего не
             # исправляет — делает видимым любое новое правило, создающее
