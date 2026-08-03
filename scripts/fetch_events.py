@@ -1505,8 +1505,11 @@ def _sev_log(e, rule, before, after, why, kind='cap'):
     try:
         _d = e.setdefault('severity_decision', {'applied': [], 'v': 1})
         _d.setdefault('applied', []).append({
-            'rule': rule, 'kind': kind,
-            'from': before, 'to': after, 'why': why,
+            'rule': rule, 'type': kind,
+            'from': before, 'to': after,
+            'delta': (after - before) if isinstance(before, (int, float))
+                     and isinstance(after, (int, float)) else None,
+            'why': why,
         })
     except Exception:
         pass
@@ -1529,19 +1532,27 @@ def _sev_finalize(events):
     for e in (events or []):
         _d = e.get('severity_decision') or {'applied': [], 'v': 1}
         _ap = _d.get('applied') or []
+        _forced = bool(e.get('_force_severity') is not None)
         _d['route'] = e.get('_sev_route')
         _d['final'] = e.get('severity')
-        _d['base'] = _ap[0]['from'] if _ap else e.get('severity')
-        _d['forced'] = any(x.get('kind') == 'forced' for x in _ap)
-        _d['capped'] = any(x.get('kind') == 'cap' for x in _ap)
-        _d['boosted'] = any(x.get('kind') == 'boost' for x in _ap)
+        # forced исключает base: значение не вычислялось моделью, а назначено
+        # константой. Записывать сюда результат обхода означало бы выдавать
+        # константу за расчёт.
+        _d['base'] = None if _forced else (_ap[0]['from'] if _ap else e.get('severity'))
+        _d['forced'] = _forced
+        _d['forced_rule'] = '_force_severity' if _forced else None
+        _d['capped'] = any(x.get('type') == 'cap' for x in _ap)
+        _d['boosted'] = any(x.get('type') == 'boost' for x in _ap)
         # Ограничение, отменённое последующим повышением: единственное место,
         # где порядок правил меняет результат. Помечается явно.
-        _d['cap_overridden'] = bool(_d['capped'] and _d['boosted'] and
-                                    any(x.get('kind') == 'boost' for x in _ap[
-                                        next((i for i, x in enumerate(_ap)
-                                              if x.get('kind') == 'cap'), 0):]))
+        _cap_i = next((i for i, x in enumerate(_ap) if x.get('type') == 'cap'), None)
+        _d['cap_overridden'] = bool(_cap_i is not None and
+                                    any(x.get('type') == 'boost' for x in _ap[_cap_i:]))
         _d['rules_count'] = len(_ap)
+        # Уверенность: расчёт по модели без коррекций надёжнее многократно
+        # скорректированного. Обход модели уверенности не имеет.
+        _d['confidence'] = (0.0 if _forced else
+                            round(max(0.4, 1.0 - 0.15 * len(_ap)), 2))
         e['severity_decision'] = _d
         if _ap:
             _n += 1
@@ -3400,6 +3411,13 @@ def process_events(raw_items):
         # ══ SEMANTIC VALIDATION LAYER ══ единая смысловая проверка вместо разрозненных
         # guard'ов (дипломатия/заявление/домен-военное). Проверяет согласованность готовых
         # признаков и применяет объяснимые коррекции. Заменяет частные исключения одной моделью.
+        if item.get('_force_severity') is not None and SEVERITY_DECISION:
+            # IDR-013: обход модели фиксируется явно. TASK-016 назвал это скрытым
+            # состоянием: при наличии поля базовый расчёт пропускается целиком,
+            # и вес назначается константой без следа в данных.
+            _sev_log(item, '_force_severity', None, item.get('_force_severity'),
+                     'сбой сервиса: вес назначен константой, модель не применялась',
+                     'forced')
         if item.get('_force_severity') is None and not _sys:
             item['domain']=domain; item['severity']=severity
             _sv=_semantic_validation(item)
