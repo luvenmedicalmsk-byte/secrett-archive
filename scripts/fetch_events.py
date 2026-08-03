@@ -5804,6 +5804,62 @@ def _editorial_gate(events):
     return kept
 
 
+# ═══ НОРМАЛИЗАЦИЯ ИНДИЙСКИХ ЧИСЛОВЫХ ЕДИНИЦ ══════════════════════════════════
+# Индийские издания используют lakh (100 000) и crore (10 000 000). Машинный
+# перевод оставляет их латиницей: «1,35 lakh человек пострадали» — читатель
+# не может оценить масштаб, а число выглядит как 1,35.
+#
+# Десятичный разделитель в исходнике — точка; перевод часто меняет её на запятую,
+# поэтому обрабатываются оба варианта.
+_LAKH_RX = re.compile(r'(\d+(?:[.,]\d+)?)\s*(lakh|lakhs|лакх\w*)\b', re.I)
+_CRORE_RX = re.compile(r'(\d+(?:[.,]\d+)?)\s*(crore|crores|кроров?|крор\w*)\b', re.I)
+
+
+def _ru_number(n):
+    """Число с пробелами между разрядами: 135000 → «135 000»."""
+    _i = int(round(n))
+    return f'{_i:,}'.replace(',', '\u00a0')
+
+
+def _fix_indian_units(text):
+    """lakh → сотни тысяч, crore → десятки миллионов. Значение сохраняется."""
+    if not text:
+        return text
+
+    def _l(m):
+        try:
+            return _ru_number(float(m.group(1).replace(',', '.')) * 100000)
+        except Exception:
+            return m.group(0)
+
+    def _c(m):
+        try:
+            return _ru_number(float(m.group(1).replace(',', '.')) * 10000000)
+        except Exception:
+            return m.group(0)
+
+    _t = _LAKH_RX.sub(_l, text)
+    _t = _CRORE_RX.sub(_c, _t)
+    return _t
+
+
+def _normalize_units(events):
+    """Применяется к отображаемым полям ПОСЛЕ make_id — churn ноль."""
+    _n = 0
+    for e in (events or []):
+        for _f in ('title', 'summary', '_headline'):
+            _v = e.get(_f)
+            if not _v:
+                continue
+            _nv = _fix_indian_units(_v)
+            if _nv != _v:
+                e[_f] = _nv
+                _n += 1
+    if _n:
+        print(f'[UNITS] исправлено индийских единиц: {_n}', file=sys.stderr)
+    return events
+
+
 def _delatinize_titles(events):
     """Недоперевод title (OpenAI-fallback оставил латиницу): если summary — чистый
     русский, заголовок берётся из первого предложения summary. Вызывается ПОСЛЕ
@@ -13195,6 +13251,7 @@ def save_enriched(events, previous_snapshot=None):
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
+            _normalize_units(enriched["events"])      # lakh/crore → русские числа (0 churn)
 
             # ═══ A2 CANONIZER — SHADOW (ADR-005): пишет canon_* в события, движок не читает ═══
             try:
