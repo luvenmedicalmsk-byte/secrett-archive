@@ -2995,19 +2995,92 @@ def write_signals_json(events, path):
                     'match_score': _e.get('match_score'),
                     'role': _e.get('role'),
                     'is_trigger': bool(_e.get('is_trigger')),
+                    'evidence_count': len(_s.get('evidence') or []),
+                    'first_seen': _s.get('first_seen'),
+                    'lifecycle_stage': _s.get('lifecycle_stage'),
                 })
+
+        # ═══ IDR-012 · PRIMARY PROCESS SELECTION ═══════════════════════════════
+        # Было: process_id = _hit[0] — первый в порядке выдачи процессов. Аудит
+        # TASK-015 показал, что 182 события из 368 (49%) входят в несколько
+        # процессов, и «основной» определялся ПОЗИЦИЕЙ В МАССИВЕ, а не правилом:
+        # изменение сортировки signals.json меняло бы выбор при тех же связях.
+        #
+        # Правило явное, применяется по порядку до первого различия:
+        #   1. немакро приоритетнее макро   конкретный процесс важнее агрегата
+        #   2. больший match_score          сила совпадения
+        #   3. больше свидетельств          процесс с большей опорой
+        #   4. меньший возраст              свежий процесс точнее описывает событие
+        #   5. стабильный идентификатор     детерминированный tie-break
+        #
+        # Пятый пункт обязателен: без него сортировка массива всё равно могла бы
+        # менять исход при полном равенстве первых четырёх.
+        def _primary_key(_l):
+            return (
+                0 if not _l.get('is_macro') else 1,          # 1 · немакро вперёд
+                -(_l.get('match_score') or 0.0),             # 2 · выше score
+                -(_l.get('evidence_count') or 0),            # 3 · больше свидетельств
+                str(_l.get('first_seen') or '9999-99-99'),   # 4 · моложе процесс
+                str(_l.get('process_id') or ''),             # 5 · стабильный id
+            )
+
+        def _why_not(_w, _c):
+            """Причина проигрыша кандидата победителю — по первому различию."""
+            if bool(_c.get('is_macro')) != bool(_w.get('is_macro')):
+                return 'агрегат, а победитель — конкретный процесс'
+            if (_c.get('match_score') or 0) != (_w.get('match_score') or 0):
+                return 'ниже сила совпадения'
+            if (_c.get('evidence_count') or 0) != (_w.get('evidence_count') or 0):
+                return 'меньше свидетельств'
+            if str(_c.get('first_seen') or '') != str(_w.get('first_seen') or ''):
+                return 'процесс старше'
+            return 'равенство по всем признакам, выбран по стабильному идентификатору'
+
         _linked = 0
+        _multi = 0
         for _ev in (events or []):
             _t = (_ev.get('title') or '').strip()[:80]
             _hit = _idx.get(_t)
             if not _hit:
                 continue
-            _ev['process_links'] = _hit
-            _ev['process_id'] = _hit[0]['process_id']      # основной — первый в выдаче
+            _sorted = sorted(_hit, key=_primary_key)
+            _win = _sorted[0]
+            _ev['process_links'] = _sorted
+            _ev['process_id'] = _win['process_id']
+            if len(_sorted) > 1:
+                _multi += 1
+            # IDR-012 · process_decision — последнее решение конвейера, не имевшее
+            # структурного основания. Теперь цепочка симметрична:
+            # geo_decision → canon_decision → domain_decision → process_decision.
+            _ev['process_decision'] = {
+                'mechanism': 'cluster+evolve',
+                'selected_from': len(_sorted),
+                'winner': _win['process_id'],
+                'winner_type': _win.get('process_type'),
+                'winner_is_macro': bool(_win.get('is_macro')),
+                'match': _win.get('match'),
+                'match_score': _win.get('match_score'),
+                'role': _win.get('role'),
+                'is_trigger': bool(_win.get('is_trigger')),
+                'rule': ['non_macro', 'match_score', 'evidence_count',
+                         'process_age', 'stable_id'],
+                'primary_reason': ('единственный процесс' if len(_sorted) == 1
+                                   else 'правило выбора основного процесса'),
+                'candidates': [{
+                    'process_id': _c.get('process_id'),
+                    'process_type': _c.get('process_type'),
+                    'is_macro': bool(_c.get('is_macro')),
+                    'match_score': _c.get('match_score'),
+                    'evidence_count': _c.get('evidence_count'),
+                    'why_not': _why_not(_win, _c),
+                } for _c in _sorted[1:6]],
+                'v': 1,
+            }
             _linked += 1
         _mem_dir = os.path.dirname(path)
         json.dump({'generated': now, 'events_total': len(events or []),
-                   'events_linked': _linked, 'index_size': len(_idx)},
+                   'events_linked': _linked, 'index_size': len(_idx),
+                   'multi_process': _multi},
                   open(os.path.join(_mem_dir, '_process_links_report.json'), 'w', encoding='utf-8'),
                   ensure_ascii=False, indent=2)
         print(f'[LINKS] событий связано с процессами: {_linked}/{len(events or [])}', file=sys.stderr)
