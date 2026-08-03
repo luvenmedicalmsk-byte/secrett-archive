@@ -2,67 +2,72 @@
   "country": "MX",
   "date": "2026-08-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-03T11:56:48.549229+00:00",
+  "generated_at": "2026-08-03T12:17:40.143212+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 48,
+      "score": 39,
       "props": {
-        "risk_score": 48
+        "risk_score": 39
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "up"
+      "score": 17,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 28,
-      "trend": "up"
+      "score": 13,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "up"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 60,
-      "trend": "up"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "up"
+      "score": 10,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "up"
+      "score": 11,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "up"
+      "score": 3,
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-MX-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -75,9 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-MX-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-MX-Energia_Co",
+      "type": "Signal",
+      "label": "Energia Costa Azul, второй терминал сжиж",
+      "severity": 44,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-MX-Технологич",
@@ -92,13 +99,6 @@
       "label": "Экономический сигнал — Мексика",
       "severity": 44,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-MX-Шторм_—_Ме",
-      "type": "Signal",
-      "label": "Шторм — Мексиканский залив",
-      "severity": 57,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,49 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-technology",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
+    },
+    {
+      "from": "DRIVER-MX-Economic",
+      "to": "COUNTRY-MX",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-MX-Geopolitical",
@@ -157,31 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MX-Economic",
-      "to": "COUNTRY-MX",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-MX-geopolitical",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
+      "from": "SIGNAL-MX-Energia_Co",
       "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.44
     },
     {
       "from": "SIGNAL-MX-Технологич",
@@ -194,12 +179,6 @@
       "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-MX-Шторм_—_Ме",
-      "to": "DOMAIN-MX-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.57
     }
   ]
 }
