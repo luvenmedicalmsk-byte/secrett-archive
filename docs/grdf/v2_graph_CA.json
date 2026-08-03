@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-08-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-03T14:19:45.237232+00:00",
+  "generated_at": "2026-08-03T15:44:30.398863+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 45,
+      "score": 56,
       "props": {
-        "risk_score": 45
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,17 +80,10 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Jet.AI_при",
-      "type": "Signal",
-      "label": "Jet.AI приобретает 26% акций — разработч",
-      "severity": 32,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-CA-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Северная Америка",
-      "severity": 72,
+      "severity": 69,
       "domain": "geopolitical"
     },
     {
@@ -99,6 +92,13 @@
       "label": "Экономический сигнал — Северная Америка",
       "severity": 68,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-CA-Пожарная_а",
+      "type": "Signal",
+      "label": "Пожарная активность — Северная Америка",
+      "severity": 62,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Jet.AI_при",
-      "to": "DOMAIN-CA-technology",
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Военные_уд",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.69
     },
     {
       "from": "SIGNAL-CA-Экономичес",
       "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
       "weight": 0.68
+    },
+    {
+      "from": "SIGNAL-CA-Пожарная_а",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
