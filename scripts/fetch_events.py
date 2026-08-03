@@ -13547,6 +13547,15 @@ def save_enriched(events, previous_snapshot=None):
                     _saved_dom = {}
                     for _i, _e in enumerate(enriched["events"]):
                         _cd = _e.get('canon_domain')
+                        # IDR-011 · ADR-045: решение арбитра приоритетнее синхронизации.
+                        # Прогон 05:17 показал: W17 выставлял domain = canon_domain уже
+                        # ПОСЛЕ арбитра и отменял его решение у 6 событий из 14.
+                        # Арбитр опирается на canon_type — источник истины о природе
+                        # события; canon_domain у этих событий унаследован от ленты и
+                        # именно он был неверен.
+                        _dd = _e.get('domain_decision') or {}
+                        if _dd.get('arbiter'):
+                            continue
                         if _cd in _CANARY_DOMAINS and _e.get('domain') != _cd:
                             _saved_dom[_i] = _e.get('domain'); _e['domain'] = _cd
                     _SE.DOMAIN_CANARY = set(_CANARY_DOMAINS)
