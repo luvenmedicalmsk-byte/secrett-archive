@@ -88,13 +88,28 @@ _CLASS_OPERATORS = [
 ]
 
 
-def _class_operators(observed):
-    """Состав класса + отметка, кто уже наблюдается в событиях процесса."""
+def _class_operators(observed, hits=None):
+    """Состав класса + отметка, кто наблюдается в событиях процесса.
+
+    observed — сколько раз оператор упомянут;
+    hits     — сколько раз его объект ПОСТРАДАЛ.
+
+    Различие существенно для чтения карточки: оператор, чей склад отражённо
+    атаковали и который закупил огнетушители, не находится в том же положении,
+    что оператор с восемнадцатью поражёнными объектами.
+    """
     obs = {str(k).lower(): v for k, v in (observed or {}).items()}
+    hit = {str(k).lower(): v for k, v in (hits or {}).items()}
     out = []
     for o in _CLASS_OPERATORS:
-        n = obs.get(o['name'].lower())
-        out.append(dict(o, observed=bool(n), mentions=(n or 0)))
+        _k = o['name'].lower()
+        n = obs.get(_k) or 0
+        h = hit.get(_k) or 0
+        out.append(dict(o,
+                        observed=bool(h),          # зелёная отметка — только при поражении
+                        mentions=n,
+                        hits=h,
+                        status=('affected' if h else ('mentioned' if n else 'watched'))))
     return out
 
 
@@ -835,15 +850,50 @@ def build_infra(events, docs_dir=None):
                 for _ek, _erx in _ENT.items():
                     if _erx.search(_m.get('title') or ''): _e0.add(_ek)
             # операторы, фактически присутствующие в событиях процесса (не список кандидатов)
+            # Признак поражения объекта: результат, а не факт упоминания.
+            # Проверяется ПОСЛЕ _OP_MISS — «не пострадал» отменяет «атаковали».
+            _OP_HIT = _re.compile(
+                r'выгорел|сгорел|горит|пожар\s+(?:на|в)|повреждён|повреждено|повреждени|'
+                r'разрушен|уничтожен|попадани|ударил|поразил|потерял|'
+                r'остановлен\w*\s+работ|прекрати\w*\s+работ|приостанов\w*\s+работ|'
+                # «работа хаба остановлена» — обратный порядок слов
+                r'работа\s+\w+\s+остановлен|работ\w*\s+(?:остановлен|прекращен|приостановлен)|'
+                # «БПЛА атаковали склад X» — прямое указание на удар по объекту.
+                # Отменяется _OP_MISS при «пытались атаковать» и «не пострадал».
+                r'атаковал\w*\s+(?:логистическ|склад|центр|комплекс|объект)|'
+                r'удар\w*\s+по\s+(?:складу|центру|комплексу|объекту)',
+                _re.I)
+            # Признак отсутствия поражения: попытка отражена, объект цел, либо это
+            # мера защиты и восстановление работы.
+            _OP_MISS = _re.compile(
+                r'пытал\w+\s+атаковать|попытк\w*\s+атак|перехвач|сбит\w*|отражен\w*|'
+                r'не\s+пострадал|без\s+повреждений|закуп\w+|защит\w*\s+от|'
+                r'возобнов\w+\s+работ|восстанов\w+\s+работ|страхов',
+                _re.I)
             _OPS = {'Wildberries': r'wildberries|вайлдберриз|\bwb\b', 'Ozon': r'ozon|озон',
                     'Яндекс Маркет': r'яндекс\s*маркет', 'СДЭК': r'сдэк|cdek',
                     'Почта России': r'почт\w*\s+россии'}
             _ops = {}
+            _hits = {}
             for _m in mems:
                 _t = (_m.get('title') or '')
                 for _on, _orx in _OPS.items():
-                    if _re.search(_orx, _t, _re.I): _ops[_on] = _ops.get(_on, 0) + 1
+                    if not _re.search(_orx, _t, _re.I):
+                        continue
+                    _ops[_on] = _ops.get(_on, 0) + 1
+                    # ПОРАЖЕНИЕ ≠ УПОМИНАНИЕ. Оператор попадает в счётчик поражений
+                    # только при признаке результата. Отражённая попытка и мера
+                    # защиты — упоминание, но не удар по объекту.
+                    # Кейс: у Ozon два упоминания — «закупит защиту от пожаров» и
+                    # «пытались атаковать склад в Зеленодольске» (компания сообщила,
+                    # что склад не пострадал). Карточка показывала тот же статус,
+                    # что у Wildberries с 18 поражениями.
+                    if _OP_MISS.search(_t):
+                        continue
+                    if _OP_HIT.search(_t):
+                        _hits[_on] = _hits.get(_on, 0) + 1
             proc['operators'] = _ops
+            proc['operator_hits'] = _hits
             proc['baseline_reconstructed'] = {
                 'mc': len(_m0),
                 'places': _regions({m.get('place') for m in _m0 if m.get('place')}),
@@ -1183,7 +1233,7 @@ def _features(p, ctx=None):
         'watch_zones': _watch_zones(regions),
         'watch_objects': {
             'operators': sorted((p.get('operators') or {}).items(), key=lambda x: -x[1]),
-            'class_operators': _class_operators(p.get('operators')),
+            'class_operators': _class_operators(p.get('operators'), p.get('operator_hits')),
             'object_types': _ent_ru(ents),
             'note': 'Объекты одного инфраструктурного класса. Перечень отражает то, что уже '
                     'наблюдается внутри процесса, и служит для проверки сохранения паттерна.',
