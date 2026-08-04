@@ -2782,6 +2782,18 @@ def _tc_toks(t):
     return s
 def _tc_is_stop(t):
     return any(t.startswith(p) for p in _TC_STOP)
+# Порог, выше которого событие не режется ограничением на тему. Замер на
+# прогоне 04.08: из 291 события, снятого по topic_cap, порог 60 возвращает
+# десять. Среди них — удар БПЛА по складам в Красном Бору (Ленинградская
+# область), 47 пострадавших в Геленджике, теракт против руководителя региона.
+#
+# Ограничение по теме нужно и остаётся: девять сообщений об одном сюжете
+# действительно засоряют ленту. Но событие с весом 60+ — это не повтор темы,
+# а отдельное происшествие: жертвы, разрушения, удар по инфраструктуре.
+# Отсечение по счётчику темы его не различает.
+TOPIC_CAP_EXEMPT_SEVERITY = 60
+
+
 def _topic_cap(events, N=5):
     df = {}
     for e in events:
@@ -2789,13 +2801,23 @@ def _topic_cap(events, N=5):
     counts = {}; out = []
     # доверенные RSS-домены: больше слотов на тему (аналитика имеет разные подтемы; Мия 20.07)
     _RSS_DOM=('technology','economy','climate','social')
+    _exempt = 0
     for e in sorted(events, key=lambda x: -(x.get('severity', 0) or 0)):
         toks = [t for t in _tc_toks((e.get('title','') or '') + ' ' + (e.get('summary','') or '')) if not _tc_is_stop(t) and df.get(t, 0) >= 8]
         if len(toks) < 2: out.append(e); continue
         hot = sorted(toks, key=lambda t: -df[t])[0]
         counts[hot] = counts.get(hot, 0) + 1
         _capN = N*3 if e.get('domain') in _RSS_DOM else N
-        if counts[hot] <= _capN: out.append(e)
+        if counts[hot] <= _capN:
+            out.append(e)
+        elif (e.get('severity') or 0) >= TOPIC_CAP_EXEMPT_SEVERITY:
+            # Событие превысило лимит темы, но его вес говорит о собственной
+            # значимости. Счётчик уже увеличен — следующие по теме отсекаются
+            # как прежде, послабление не накапливается.
+            e['_topic_cap_exempt'] = True
+            out.append(e); _exempt += 1
+    if _exempt:
+        print(f'[TOPIC_CAP] сохранено по весу >= {TOPIC_CAP_EXEMPT_SEVERITY}: {_exempt}', file=sys.stderr)
     return out
 
 def _reclass_domain(title, summary, current):
