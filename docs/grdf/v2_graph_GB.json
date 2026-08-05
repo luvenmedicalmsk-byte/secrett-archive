@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-08-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-05T20:31:17.503511+00:00",
+  "generated_at": "2026-08-05T21:59:12.821256+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 52,
+      "score": 50,
       "props": {
-        "risk_score": 52
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 24,
+      "score": 50,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 21,
+      "score": 29,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 7,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 28,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
+      "score": 15,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
+      "score": 16,
       "trend": "down"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 4,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Обман_аген",
+      "type": "Signal",
+      "label": "Обман агентов ИИ переходит от теории к р",
+      "severity": 62,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-GB-Санкционно",
       "type": "Signal",
       "label": "Санкционное давление — Великобритания",
@@ -87,17 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-GB-Миграционн",
+      "id": "SIGNAL-GB-Экономичес",
       "type": "Signal",
-      "label": "Миграционная политика — Великобритания",
-      "severity": 44,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-GB-Валютный_р",
-      "type": "Signal",
-      "label": "Валютный рынок — Великобритания",
-      "severity": 44,
+      "label": "Экономический сигнал — Великобритания",
+      "severity": 34,
       "domain": "economic"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-GB-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-Обман_аген",
+      "to": "DOMAIN-GB-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-GB-Санкционно",
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-GB-Миграционн",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-GB-Валютный_р",
+      "from": "SIGNAL-GB-Экономичес",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
-      "weight": 0.44
+      "weight": 0.34
     }
   ]
 }
