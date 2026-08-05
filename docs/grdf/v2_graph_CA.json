@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-08-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-05T17:37:42.691545+00:00",
+  "generated_at": "2026-08-05T19:05:35.908275+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 33,
+      "score": 44,
       "props": {
-        "risk_score": 33
+        "risk_score": 44
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 13,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 29,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 7,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 7,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Человеческ",
-      "type": "Signal",
-      "label": "Человеческая деятельность более чем вдво",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Раннее_тая",
-      "type": "Signal",
-      "label": "Раннее таяние снега обнажает ледяную шап",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CA-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Северная Америка",
       "severity": 92,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Северная Америка",
+      "severity": 69,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CA-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Северная Америка",
+      "severity": 68,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-CA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Человеческ",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-CA-Раннее_тая",
-      "to": "DOMAIN-CA-climate",
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Пожарная_а",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.92
+    },
+    {
+      "from": "SIGNAL-CA-Военные_уд",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.69
+    },
+    {
+      "from": "SIGNAL-CA-Экономичес",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68
     }
   ]
 }
