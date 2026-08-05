@@ -2,7 +2,7 @@
   "country": "GE",
   "date": "2026-08-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-05T19:05:35.919714+00:00",
+  "generated_at": "2026-08-05T20:31:17.520473+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-GE",
       "type": "Country",
       "label": "GE",
-      "score": 66,
+      "score": 67,
       "props": {
-        "risk_score": 66
+        "risk_score": 67
       }
     },
     {
       "id": "DOMAIN-GE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 50,
-      "trend": "down"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 59,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 46,
-      "trend": "down"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 42,
-      "trend": "down"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-social",
       "type": "Domain",
       "label": "social",
       "score": 50,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 46,
-      "trend": "down"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 40,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GE-economic",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-GE-Тотальный_",
-      "type": "Signal",
-      "label": "Тотальный блэкаут накрыл Грузию уже трет",
-      "severity": 62,
-      "domain": "technology"
-    },
-    {
       "id": "SIGNAL-GE-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Грузия",
       "severity": 70,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GE-Энергоблэк",
+      "type": "Signal",
+      "label": "Энергоблэкаут — Грузия",
+      "severity": 62,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-economic",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-climate",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-technology",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-GE",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-GE",
       "to": "DOMAIN-GE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-GE",
@@ -205,34 +205,28 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-GE-infrastructure",
+      "from": "DOMAIN-GE-climate",
       "to": "DOMAIN-GE-economic",
       "type": "ESCALATES",
-      "weight": 0.78,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GE-economic",
-      "to": "DOMAIN-GE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 21
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-GE-economic",
       "to": "DOMAIN-GE-social",
-      "type": "CORRELATES",
-      "weight": 0.5,
+      "type": "AMPLIFIES",
+      "weight": 0.7,
       "lag_days": 60
     },
     {
-      "from": "SIGNAL-GE-Национальн",
-      "to": "DOMAIN-GE-technology",
+      "from": "DOMAIN-GE-social",
+      "to": "DOMAIN-GE-social",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
-      "from": "SIGNAL-GE-Тотальный_",
+      "from": "SIGNAL-GE-Национальн",
       "to": "DOMAIN-GE-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
@@ -242,6 +236,12 @@
       "to": "DOMAIN-GE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.7
+    },
+    {
+      "from": "SIGNAL-GE-Энергоблэк",
+      "to": "DOMAIN-GE-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
