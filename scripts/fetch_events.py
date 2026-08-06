@@ -1424,6 +1424,12 @@ COUNTRY_COORDS = {
 }
 
 
+# Источники, чьи события длятся дольше обычного окна свежести.
+# Наводнение остаётся активным месяцами, и 14 дней для него —
+# не признак устаревания, а нормальная продолжительность.
+_LONG_LIVED_SOURCES = ('GDACS Floods',)
+
+
 def fetch_url(url, timeout=20, headers=None, retries=1):
     """Загружает URL с retry при временных ошибках (429, 503, timeout).
     S36.4: retries=1 (а не 2), blacklist-гейт, timeout cap 12с —
@@ -3174,6 +3180,7 @@ def process_events(raw_items):
     _NO_DOMAIN_SHADOW = []      # Domain Coverage Audit: отброшенные без домена
     _SEV_SAMPLE = []
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
+    _cutoff_long = (datetime.now(timezone.utc) - timedelta(days=120)).strftime('%Y-%m-%d')
 
     # ADMISSION 3.0: активные процессы прошлого прогона — база для Process Impact и
     # Confirmation Value (событие оценивается по влиянию на наблюдаемую картину, не по словам).
@@ -3307,7 +3314,14 @@ def process_events(raw_items):
         _src_ch = _src_l.split('/')[-1]  # канал после 'telegram/' — сравниваем и полное имя, и канал
         if _src_l in _BLOCKED_SOURCES or _src_ch in _BLOCKED_SOURCES:
             _trace(_tid,'SOURCE_BLOCK','removed',reason='source_block');             _LOSS['filter']+=1; continue   # редакционный source-блок (анти-канал)
-        if item.get('date','') < cutoff: _trace(_tid,'OLD','removed',reason='old'); _LOSS['old']+=1; continue
+        # ДЛЯЩИЕСЯ СОБЫТИЯ ЖИВУТ ДОЛЬШЕ ОКНА СВЕЖЕСТИ.
+        # Наводнение в GDACS тянется неделями и месяцами: из 48 присланных
+        # 46 отсеивались как старые, оставаясь АКТИВНЫМИ на момент прогона.
+        # Сдвиг даты на todate не помог — у длящегося события и она давняя.
+        # Для таких источников окно 120 дней. Это не отмена проверки:
+        # событие старше четырёх месяцев по-прежнему уходит.
+        _cut = _cutoff_long if str(item.get('source','')) in _LONG_LIVED_SOURCES else cutoff
+        if item.get('date','') < _cut: _trace(_tid,'OLD','removed',reason='old'); _LOSS['old']+=1; continue
         # --- Ingestion Cleanup (VNext L0): нормализуем desc ДО классификации ---
         # HTML-теги/entities/пробелы чистятся один раз здесь, чтобы detect_domain,
         # RUSSIA_FILTER, _is_ad, гео и severity читали plain text. Иначе разметка вида
