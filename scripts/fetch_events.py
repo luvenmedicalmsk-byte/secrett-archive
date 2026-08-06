@@ -10154,7 +10154,12 @@ def fetch_flood_observatory():
                 base = {
                     'title': title,
                     'desc': (str(p.get('htmldescription') or name))[:300],
-                    'date': parse_date(str(p.get('fromdate') or p.get('todate') or '')),
+                    # ДАТА ПОСЛЕДНЕГО ОБНОВЛЕНИЯ, а не начала события.
+                    # Наводнение в GDACS длится неделями: fromdate у активного
+                    # события может быть месячной давности, и окно свежести
+                    # в 14 дней отсекало почти всё. Из 48 присланных доходило 1.
+                    'date': parse_date(str(p.get('todate') or p.get('datemodified')
+                                            or p.get('fromdate') or '')),
                     'source': 'GDACS Floods',
                     'source_bias': {'Red': 20, 'Orange': 12}.get(alert, 8),
                     '_domain': 'climate',
@@ -10166,6 +10171,19 @@ def fetch_flood_observatory():
                         base['_region'] = detect_region_by_coords(lat, lng)
                     except Exception:
                         pass
+                # Координаты могут прийти не в geometry, а в bbox или
+                # отдельными полями — GDACS отдаёт по-разному в зависимости
+                # от типа записи.
+                if '_lat' not in base:
+                    for _la, _lo in (('latitude','longitude'), ('lat','lon')):
+                        try:
+                            _v1, _v2 = p.get(_la), p.get(_lo)
+                            if _v1 is not None and _v2 is not None:
+                                base['_lat'], base['_lng'] = float(_v1), float(_v2)
+                                base['_region'] = detect_region_by_coords(base['_lat'], base['_lng'])
+                                break
+                        except Exception:
+                            pass
                 if '_lat' not in base and country:
                     # GDACS отдаёт страну ЛАТИНИЦЕЙ: «China», «Pakistan».
                     # detect_coords ищет по русским названиям и на них не
@@ -10210,6 +10228,8 @@ def fetch_flood_observatory():
                     base = {
                         'title': ttl,
                         'desc': desc,
+                        # pubDate в канале GDACS — время последнего
+                        # обновления записи, что здесь и нужно.
                         'date': parse_date(it.findtext('pubDate') or ''),
                         'source': 'GDACS Floods',
                         'source_bias': {'Red': 20, 'Orange': 12}.get(alert, 8),
