@@ -2,72 +2,72 @@
   "country": "HU",
   "date": "2026-08-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-06T14:50:28.120465+00:00",
+  "generated_at": "2026-08-06T20:11:50.271205+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-HU",
       "type": "Country",
       "label": "HU",
-      "score": 34,
+      "score": 49,
       "props": {
-        "risk_score": 34
+        "risk_score": 49
       }
     },
     {
       "id": "DOMAIN-HU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 29,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 24,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 22,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-social",
       "type": "Domain",
       "label": "social",
-      "score": 26,
-      "trend": "stable"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 24,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 20,
-      "trend": "stable"
+      "score": 29,
+      "trend": "up"
     },
     {
-      "id": "DRIVER-HU-economic",
+      "id": "DRIVER-HU-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
     },
     {
       "id": "DRIVER-HU-geopolitical",
@@ -75,9 +75,16 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-HU-social",
+      "id": "DRIVER-HU-economic",
       "type": "Driver",
-      "label": "social"
+      "label": "economic"
+    },
+    {
+      "id": "SIGNAL-HU-Хотите_уви",
+      "type": "Signal",
+      "label": "Хотите увидеть климатический кризис? Пое",
+      "severity": 62,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-HU-Климатичес",
@@ -92,13 +99,6 @@
       "label": "Водный дефицит — Венгрия",
       "severity": 62,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-HU-Тепловая_в",
-      "type": "Signal",
-      "label": "Тепловая волна — Венгрия",
-      "severity": 62,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,46 +106,46 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-climate",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-technology",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-social",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-cyber",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.29
     },
     {
-      "from": "DRIVER-HU-economic",
+      "from": "DRIVER-HU-climate",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,10 +157,79 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-social",
+      "from": "DRIVER-HU-economic",
       "to": "COUNTRY-HU",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-HU-social",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-HU-infrastructure",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-geopolitical",
+      "to": "DOMAIN-HU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-HU-infrastructure",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-HU-Хотите_уви",
+      "to": "DOMAIN-HU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     },
     {
       "from": "SIGNAL-HU-Климатичес",
@@ -170,12 +239,6 @@
     },
     {
       "from": "SIGNAL-HU-Водный_деф",
-      "to": "DOMAIN-HU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-HU-Тепловая_в",
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
       "weight": 0.62
