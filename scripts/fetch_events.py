@@ -332,13 +332,7 @@ _PROMO_RE = re.compile(
     # поэтому якорим по «в … канал* в «Макс/MAX», а не по началу фразы.
     r'|([\s.,\u2014\u2013-]*[^.!?\n]{0,60}?\u043a\u0430\u043d\u0430\u043b\w*\s+\u0432\s+[\u00ab"\u0027]?(?:\u041c\u0430\u043a\u0441|MAX)[^.!?\n]{0,30}[.!\s]*$)'
     r'|([\s.,\u2014\u2013-]*\u041a\u0430\u043d\u0430\u043b\s+\u0432\s+[\u00ab"\u0027]?\u041c\u0430\u043a\u0441[^.!?\n]{0,30}[.!\s]*$)'
-    r'|([\s.,\u2014\u2013-]*\u041f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435\s+\u0434\u043b\u044f\s+iOS[^.!?\n]{0,20}$)'
-    # Перечень площадок через разделитель: «Data distributor в Telegram|в MAX|в ВК».
-    # Прежние правила ждали ОДНУ площадку в конце строки и на перечне не срабатывали:
-    # якорь $ не совпадал, потому что после «в Telegram» шло «|в MAX|в ВК».
-    # Здесь допускается два и более блока «в <площадка>», разделённых | / · , ;
-    r'|([\s.,\u2014\u2013-]*[^.!?\n]{0,40}?\s*\u0432\s+(?:Telegram|MAX|\u041c\u0410\u041a\u0421|\u041c\u0430\u043a\u0441\w*|\u0412\u041a|VK|\u0422\u0435\u043b\u0435\u0433\u0440\u0430\u043c\w*|Viber|WhatsApp|Dzen|\u0414\u0437\u0435\u043d)'
-    r'(?:\s*[|/\u00b7,;]\s*\u0432\s+(?:Telegram|MAX|\u041c\u0410\u041a\u0421|\u041c\u0430\u043a\u0441\w*|\u0412\u041a|VK|\u0422\u0435\u043b\u0435\u0433\u0440\u0430\u043c\w*|Viber|WhatsApp|Dzen|\u0414\u0437\u0435\u043d)){1,4}[.!\s]*$)',
+    r'|([\s.,\u2014\u2013-]*\u041f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435\s+\u0434\u043b\u044f\s+iOS[^.!?\n]{0,20}$)',
     re.IGNORECASE)
 _CHAN_SIG_RE = re.compile(r'\s*(?:Прямой\s+эфир|Топор\s*Live|Прямой эфир)\s*[.!…]?\s*$')
 _PROMO2_RE = re.compile(r'\s*(?:\u043d\u0435 \u0433\u0440\u0443\u0437\u0438\u0442[^?\n]{0,60}\?)?\s*\u043f\u0435\u0440\u0435\u0445\u043e\u0434(?:\u0438|\u0438\u0442\u0435)\s+\u0432\s+\u043d\u0430\u0448[^.!?\n]{0,60}[.!\u2026\s]*$', re.I)
@@ -10097,59 +10091,114 @@ def fetch_global_forest_watch():
 
 
 def fetch_flood_observatory():
-    """Dartmouth Flood Observatory -- глобальный мониторинг наводнений"""
-    items = []
-    
-    # DFO -- самая полная база наводнений в мире
-    feeds = [
-        "https://floodobservatory.colorado.edu/GeographicRegions/GlobalFloodsR.html",
-        "https://floodobservatory.colorado.edu/rss",
-    ]
-    for url in feeds:
-        data = fetch_url(url)
-        if not data: continue
-        try:
-            root = ET.fromstring(data)
-            for item in root.findall('.//item')[:20]:
-                title = item.findtext('title','').strip()
-                desc = item.findtext('description','').strip()[:300]
-                pub_date = item.findtext('pubDate','')
-                if not title: continue
-                
-                # Извлекаем координаты из описания если есть
-                import re
+    """GDACS Flood API — глобальные наводнения с координатами и уровнем тревоги.
 
-                lat_match = re.search(r'lat[itude]*[:\s]+(-?\d+\.?\d*)', desc, re.I)
-                lon_match = re.search(r'lon[gitude]*[:\s]+(-?\d+\.?\d*)', desc, re.I)
-                
+    Заменил Dartmouth Flood Observatory: у DFO нет RSS, а страница
+    GlobalFloodsR.html парсилась как XML и всегда падала с исключением.
+    За всё время источник дал ноль записей.
+
+    GDACS отдаёт наводнения отдельным каналом от общего RSS: в общем
+    они смешаны с землетрясениями и циклонами и обрезаются лимитом.
+    Здесь запрашивается только eventtype=FL.
+    """
+    items = []
+    # Три адреса подряд: проверить их из окружения разработки нельзя —
+    # gdacs.org недоступен из sandbox. Поэтому вместо одного пути
+    # заложено три, и источник молчит только если не ответит ни один.
+    api = ("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH"
+           "?eventlist=FL&alertlevel=Orange;Red")
+    rss_fl = "https://www.gdacs.org/xml/rss_fl_7d.xml"
+    rss_all = "https://www.gdacs.org/xml/rss_7d.xml"
+
+    data = fetch_url(api, timeout=12)
+    if data:
+        try:
+            js = json.loads(data)
+            for f in (js.get('features') or [])[:60]:
+                p = f.get('properties') or {}
+                g = f.get('geometry') or {}
+                coords = g.get('coordinates') or []
+                alert = str(p.get('alertlevel') or '').strip()
+                if alert == 'Green':
+                    continue
+                name = str(p.get('name') or p.get('htmldescription') or '').strip()
+                country = str(p.get('country') or '').strip()
+                if not name and not country:
+                    continue
+                title = ("Наводнение: " + country) if country else ("Наводнение: " + name[:60])
                 base = {
-                    'title': f"Наводнение: {title}",
-                    'desc': desc,
-                    'date': parse_date(pub_date),
-                    'source': 'Dartmouth Flood Observatory',
-                    'source_bias': 16
+                    'title': title,
+                    'desc': (str(p.get('htmldescription') or name))[:300],
+                    'date': parse_date(str(p.get('fromdate') or p.get('todate') or '')),
+                    'source': 'GDACS Floods',
+                    'source_bias': {'Red': 20, 'Orange': 12}.get(alert, 8),
+                    '_domain': 'climate',
                 }
-                
-                if lat_match and lon_match:
-                    lat = float(lat_match.group(1))
-                    lng = float(lon_match.group(1))
-                    base['_lat'] = lat
-                    base['_lng'] = lng
-                    base['_region'] = detect_region_by_coords(lat, lng)
-                    base['_domain'] = 'climate'
-                else:
-                    geo = detect_coords(title, desc)
+                if len(coords) >= 2:
+                    try:
+                        lng, lat = float(coords[0]), float(coords[1])
+                        base['_lat'], base['_lng'] = lat, lng
+                        base['_region'] = detect_region_by_coords(lat, lng)
+                    except Exception:
+                        pass
+                if '_lat' not in base:
+                    geo = detect_coords(title, base['desc'])
                     if geo:
                         base['_lat'], base['_lng'], base['_region'] = geo
-                        base['_domain'] = 'climate'
-                
                 items.append(base)
         except Exception as e:
-            print(f"  [WARN] DFO: {e}", file=sys.stderr)
-    
-    print(f"  Flood Observatory: {len(items)} наводнений", file=sys.stderr)
-    return items
+            print("  [WARN] GDACS Floods JSON: " + str(e), file=sys.stderr)
 
+    # Запасной путь: сначала канал только наводнений, затем общий канал
+    # с отбором по типу события. У общего канала выше шанс не измениться.
+    for _u, _only_fl in ((rss_fl, False), (rss_all, True)):
+        if items:
+            break
+        data = fetch_url(_u, timeout=12)
+        if data:
+            try:
+                root = ET.fromstring(data)
+                GEO = '{http://www.w3.org/2003/01/geo/wgs84_pos#}'
+                for it in root.findall('.//item')[:40]:
+                    title = (it.findtext('title') or '').strip()
+                    if not title:
+                        continue
+                    desc = (it.findtext('description') or '').strip()[:300]
+                    alert_el = it.find('{http://www.gdacs.org}alertlevel')
+                    alert = alert_el.text if alert_el is not None else ''
+                    if alert == 'Green':
+                        continue
+                    if _only_fl:
+                        _et = it.find('{http://www.gdacs.org}eventtype')
+                        if _et is None or (_et.text or '').strip().upper() != 'FL':
+                            continue
+                    ttl = title if title.lower().startswith('наводн') else ("Наводнение: " + title)
+                    base = {
+                        'title': ttl,
+                        'desc': desc,
+                        'date': parse_date(it.findtext('pubDate') or ''),
+                        'source': 'GDACS Floods',
+                        'source_bias': {'Red': 20, 'Orange': 12}.get(alert, 8),
+                        '_domain': 'climate',
+                    }
+                    la, lo = it.find(GEO + 'lat'), it.find(GEO + 'long')
+                    if la is not None and lo is not None:
+                        try:
+                            lat, lng = float(la.text), float(lo.text)
+                            base['_lat'], base['_lng'] = lat, lng
+                            base['_region'] = detect_region_by_coords(lat, lng)
+                        except Exception:
+                            pass
+                    if '_lat' not in base:
+                        geo = detect_coords(ttl, desc)
+                        if geo:
+                            base['_lat'], base['_lng'], base['_region'] = geo
+                    items.append(base)
+            except Exception as e:
+                print("  [WARN] GDACS Floods RSS: " + str(e), file=sys.stderr)
+
+    print("  GDACS Floods: " + str(len(items)) + " наводнений", file=sys.stderr)
+    return items
 
 def get_russia_static_risks():
     """Постоянные структурные климатические риски России на карте"""
@@ -13950,6 +13999,7 @@ if __name__ == '__main__':
             # ('eonet_ice', fetch_eonet_ice),  # айсберги живут в крио-вкладке (EONET напрямую), из общей ленты убраны
             ('nsidc_seaice',       fetch_nsidc_seaice),
             ('gdacs',              fetch_gdacs),
+            ('gdacs_floods',       fetch_flood_observatory),
             ('usgs',               fetch_usgs_earthquakes),
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
             ('mgm_turkey',         fetch_mgm_turkey),
