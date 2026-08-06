@@ -2,9 +2,9 @@
   "country": "AE",
   "date": "2026-08-06",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-06T12:30:21.355414+00:00",
+  "generated_at": "2026-08-06T14:50:28.117419+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-AE",
@@ -19,50 +19,50 @@
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 42,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-AE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 26,
-      "trend": "down"
+      "score": 36,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-AE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-AE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-AE-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-AE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 13,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-AE-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-AE-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AE-Киберугроз",
+      "type": "Signal",
+      "label": "Киберугроза — Ближний Восток (системный ",
+      "severity": 89,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-AE-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Ближний Восток",
       "severity": 77,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AE-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — ОАЭ",
-      "severity": 63,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-economic",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-AE",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-AE-geopolitical",
+      "to": "DOMAIN-AE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AE-infrastructure",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-Киберугроз",
+      "to": "DOMAIN-AE-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.89
+    },
+    {
       "from": "SIGNAL-AE-Военный_ко",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.77
-    },
-    {
-      "from": "SIGNAL-AE-Геополитич",
-      "to": "DOMAIN-AE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.63
     }
   ]
 }
