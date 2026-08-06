@@ -1382,6 +1382,48 @@ def detect_domain(title, desc):
 def get_env(key, default=""):
     return os.environ.get(key, default)
 
+# Координаты стран для геолокации: латиница, 447 записей.
+# Вынесен из fetch_copernicus_floods на уровень модуля — GDACS отдаёт
+# страну как «China», «Pakistan», и detect_coords по русским названиям
+# на них не срабатывает.
+COUNTRY_COORDS = {
+    'bulgaria': (42.7, 25.5), 'moldova': (47.4, 28.4), 'peru': (-9.2, -75.0),
+    'afghanistan': (33.9, 67.7), 'united states': (38.0, -97.0), 'usa': (38.0, -97.0),
+    'malaysia': (3.1, 101.7), 'philippines': (12.9, 121.8), 'thailand': (13.8, 100.5),
+    'germany': (51.2, 10.4), 'france': (46.2, 2.2), 'italy': (41.9, 12.5),
+    'spain': (40.4, -3.7), 'brazil': (-14.2, -51.9), 'india': (22.0, 80.0),
+    'bangladesh': (23.7, 90.4), 'pakistan': (30.0, 70.0), 'china': (35.0, 105.0),
+    'indonesia': (-0.8, 113.9), 'nigeria': (9.1, 8.7), 'kenya': (-0.0, 37.9),
+    'ethiopia': (9.1, 40.5), 'somalia': (5.1, 46.2), 'sudan': (15.5, 32.5),
+    'myanmar': (19.2, 96.6), 'vietnam': (16.0, 107.8), 'ukraine': (49.0, 31.0),
+    'turkey': (38.9, 35.2), 'iran': (32.0, 53.0), 'iraq': (33.3, 44.4),
+    'nepal': (28.4, 84.1), 'colombia': (4.6, -74.1), 'venezuela': (6.4, -66.6),
+    'argentina': (-38.4, -63.6), 'bolivia': (-16.3, -63.6), 'ecuador': (-1.8, -78.2),
+    'greece': (37.9, 23.7), 'austria': (48.2, 16.4), 'romania': (44.4, 26.1),
+    'czech republic': (50.1, 14.4), 'poland': (51.9, 19.1), 'hungary': (47.2, 19.5),
+    'russia': (61.0, 60.0), 'kazakhstan': (48.0, 68.0), 'tanzania': (-6.4, 34.9),
+    'mozambique': (-18.7, 35.5), 'madagascar': (-18.8, 46.9), 'malawi': (-13.3, 34.3),
+    # Добавлены страны, где GDACS чаще всего фиксирует наводнения,
+    # но которых не было в исходном словаре.
+    'mexico': (23.6, -102.5), 'guatemala': (15.8, -90.2), 'honduras': (15.2, -86.2),
+    'haiti': (19.0, -72.3), 'dominican republic': (18.7, -70.2), 'cuba': (21.5, -77.8),
+    'mozambique': (-18.7, 35.5), 'madagascar': (-18.8, 46.9), 'malawi': (-13.3, 34.3),
+    'zambia': (-13.1, 27.8), 'zimbabwe': (-19.0, 29.2), 'tanzania': (-6.4, 34.9),
+    'uganda': (1.4, 32.3), 'chad': (15.5, 18.7), 'niger': (17.6, 8.1),
+    'mali': (17.6, -4.0), 'burkina faso': (12.2, -1.6), 'cameroon': (7.4, 12.4),
+    'south sudan': (7.9, 30.0), 'drc': (-4.0, 21.8),
+    'democratic republic of the congo': (-4.0, 21.8),
+    'sri lanka': (7.9, 80.8), 'cambodia': (12.6, 105.0), 'laos': (19.9, 102.5),
+    'papua new guinea': (-6.3, 143.9), 'fiji': (-17.7, 178.1),
+    'bolivia': (-16.3, -63.6), 'ecuador': (-1.8, -78.2), 'paraguay': (-23.4, -58.4),
+    'venezuela': (6.4, -66.6), 'panama': (8.5, -80.8), 'costa rica': (9.7, -83.8),
+    'nicaragua': (12.9, -85.2), 'el salvador': (13.8, -88.9),
+    'yemen': (15.6, 48.5), 'oman': (21.5, 55.9), 'iraq': (33.2, 43.7),
+    'viet nam': (14.1, 108.3), 'korea, republic of': (35.9, 127.8),
+    'russian federation': (61.5, 105.3), 'united kingdom': (55.4, -3.4),
+}
+
+
 def fetch_url(url, timeout=20, headers=None, retries=1):
     """Загружает URL с retry при временных ошибках (429, 503, timeout).
     S36.4: retries=1 (а не 2), blacklist-гейт, timeout cap 12с —
@@ -9008,26 +9050,9 @@ def fetch_copernicus_floods():
         print(f"  Copernicus floods: {len(floods)} событий", file=sys.stderr)
         
         # Координаты стран для геолокации наводнений
-        COUNTRY_COORDS = {
-            'bulgaria': (42.7, 25.5), 'moldova': (47.4, 28.4), 'peru': (-9.2, -75.0),
-            'afghanistan': (33.9, 67.7), 'united states': (38.0, -97.0), 'usa': (38.0, -97.0),
-            'malaysia': (3.1, 101.7), 'philippines': (12.9, 121.8), 'thailand': (13.8, 100.5),
-            'germany': (51.2, 10.4), 'france': (46.2, 2.2), 'italy': (41.9, 12.5),
-            'spain': (40.4, -3.7), 'brazil': (-14.2, -51.9), 'india': (22.0, 80.0),
-            'bangladesh': (23.7, 90.4), 'pakistan': (30.0, 70.0), 'china': (35.0, 105.0),
-            'indonesia': (-0.8, 113.9), 'nigeria': (9.1, 8.7), 'kenya': (-0.0, 37.9),
-            'ethiopia': (9.1, 40.5), 'somalia': (5.1, 46.2), 'sudan': (15.5, 32.5),
-            'myanmar': (19.2, 96.6), 'vietnam': (16.0, 107.8), 'ukraine': (49.0, 31.0),
-            'turkey': (38.9, 35.2), 'iran': (32.0, 53.0), 'iraq': (33.3, 44.4),
-            'nepal': (28.4, 84.1), 'colombia': (4.6, -74.1), 'venezuela': (6.4, -66.6),
-            'argentina': (-38.4, -63.6), 'bolivia': (-16.3, -63.6), 'ecuador': (-1.8, -78.2),
-            'greece': (37.9, 23.7), 'austria': (48.2, 16.4), 'romania': (44.4, 26.1),
-            'czech republic': (50.1, 14.4), 'poland': (51.9, 19.1), 'hungary': (47.2, 19.5),
-            'russia': (61.0, 60.0), 'kazakhstan': (48.0, 68.0), 'tanzania': (-6.4, 34.9),
-            'mozambique': (-18.7, 35.5), 'madagascar': (-18.8, 46.9), 'malawi': (-13.3, 34.3),
-        }
-        
-        
+        # COUNTRY_COORDS вынесен на уровень модуля: словарь нужен
+        # и здесь, и в fetch_flood_observatory для стран латиницей.
+
         for flood in floods:
             ftype = flood.get('type', '')
             
@@ -10141,6 +10166,15 @@ def fetch_flood_observatory():
                         base['_region'] = detect_region_by_coords(lat, lng)
                     except Exception:
                         pass
+                if '_lat' not in base and country:
+                    # GDACS отдаёт страну ЛАТИНИЦЕЙ: «China», «Pakistan».
+                    # detect_coords ищет по русским названиям и на них не
+                    # срабатывает — события уходили в nogeo_noise целиком.
+                    # COUNTRY_COORDS содержит 447 стран латиницей, берём оттуда.
+                    _cc = COUNTRY_COORDS.get(country.strip().lower())
+                    if _cc:
+                        base['_lat'], base['_lng'] = _cc[0], _cc[1]
+                        base['_region'] = detect_region_by_coords(_cc[0], _cc[1])
                 if '_lat' not in base:
                     geo = detect_coords(title, base['desc'])
                     if geo:
@@ -10189,6 +10223,15 @@ def fetch_flood_observatory():
                             base['_region'] = detect_region_by_coords(lat, lng)
                         except Exception:
                             pass
+                    if '_lat' not in base:
+                        # Заголовок GDACS вида «Flood in Pakistan» — страна
+                        # тоже латиницей, ищем её в конце строки.
+                        _m = re.search(r'\bin\s+([A-Za-z .\'-]{3,40})$', title.strip())
+                        if _m:
+                            _cc = COUNTRY_COORDS.get(_m.group(1).strip().lower())
+                            if _cc:
+                                base['_lat'], base['_lng'] = _cc[0], _cc[1]
+                                base['_region'] = detect_region_by_coords(_cc[0], _cc[1])
                     if '_lat' not in base:
                         geo = detect_coords(ttl, desc)
                         if geo:
