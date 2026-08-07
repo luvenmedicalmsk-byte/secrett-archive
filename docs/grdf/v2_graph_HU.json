@@ -2,67 +2,72 @@
   "country": "HU",
   "date": "2026-08-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-07T09:35:24.032629+00:00",
+  "generated_at": "2026-08-07T10:31:40.235562+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-HU",
       "type": "Country",
       "label": "HU",
-      "score": 49,
+      "score": 54,
       "props": {
-        "risk_score": 49
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-HU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 47,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 44,
-      "trend": "stable"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 35,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 32,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-social",
       "type": "Domain",
       "label": "social",
-      "score": 37,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 34,
-      "trend": "stable"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 29,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-HU-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-HU-geopolitical",
@@ -75,9 +80,11 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-HU-social",
-      "type": "Driver",
-      "label": "social"
+      "id": "SIGNAL-HU-Венгрия_ст",
+      "type": "Signal",
+      "label": "Венгрия сталкивается с рекордной жарой, ",
+      "severity": 64,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-HU-Хотите_уви",
@@ -89,15 +96,8 @@
     {
       "id": "SIGNAL-HU-Климатичес",
       "type": "Signal",
-      "label": "Климатический сигнал — Венгрия",
-      "severity": 62,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-HU-Водный_деф",
-      "type": "Signal",
-      "label": "Водный дефицит — Венгрия",
-      "severity": 62,
+      "label": "Климатическая аномалия — Венгрия",
+      "severity": 64,
       "domain": "climate"
     }
   ],
@@ -106,43 +106,49 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-economic",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-climate",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-technology",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-social",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-cyber",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.32
+    },
+    {
+      "from": "DRIVER-HU-climate",
+      "to": "COUNTRY-HU",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-HU-geopolitical",
@@ -157,10 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-social",
-      "to": "COUNTRY-HU",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-HU-infrastructure",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-HU-social",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-HU-geopolitical",
@@ -184,6 +226,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-HU-Венгрия_ст",
+      "to": "DOMAIN-HU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
       "from": "SIGNAL-HU-Хотите_уви",
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
@@ -193,13 +241,7 @@
       "from": "SIGNAL-HU-Климатичес",
       "to": "DOMAIN-HU-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-HU-Водный_деф",
-      "to": "DOMAIN-HU-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.64
     }
   ]
 }
