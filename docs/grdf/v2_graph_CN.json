@@ -2,9 +2,9 @@
   "country": "CN",
   "date": "2026-08-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-07T08:11:01.582953+00:00",
+  "generated_at": "2026-08-07T09:35:24.022561+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CN",
@@ -19,22 +19,22 @@
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 43,
-      "trend": "down"
+      "score": 47,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
       "score": 24,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 37,
-      "trend": "down"
+      "score": 40,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-technology",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-CN-1,230_раз_",
+      "id": "SIGNAL-CN-Война,_кот",
       "type": "Signal",
-      "label": "1,230 раз больше размера Гонконга: Китай",
-      "severity": 46,
-      "domain": "climate"
+      "label": "Война, которую может выбрать Китай",
+      "severity": 45,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-CN",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-CN-geopolitical",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-CN-Красное_на",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-CN-1,230_раз_",
-      "to": "DOMAIN-CN-climate",
+      "from": "SIGNAL-CN-Война,_кот",
+      "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.45
     }
   ]
 }
