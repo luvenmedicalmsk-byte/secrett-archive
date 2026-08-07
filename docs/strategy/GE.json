@@ -2,102 +2,102 @@
   "country": "GE",
   "country_name": "Грузия",
   "date": "2026-08-07",
-  "generated_at": "2026-08-07T14:51:27.389788+00:00",
-  "strategy_score": 49,
+  "generated_at": "2026-08-07T16:02:22.839120+00:00",
+  "strategy_score": 12,
   "strategy_confidence": 76,
-  "urgency_level": "critical",
-  "urgency_level_ru": "Критическая",
-  "urgency_color": "#ef4444",
-  "preparedness_level": "emergency",
-  "preparedness_level_ru": "Чрезвычайная готовность",
-  "monitoring_priority": 4,
-  "monitoring_ru": "Ежечасно",
+  "urgency_level": "low",
+  "urgency_level_ru": "Низкая",
+  "urgency_color": "#22c55e",
+  "preparedness_level": "routine",
+  "preparedness_level_ru": "Плановый режим",
+  "monitoring_priority": 1,
+  "monitoring_ru": "Ежедневно",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "S-01",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
-      "expiry": "state transition",
-      "confidence": 76,
+      "action": "Мониторинговый режим",
+      "detail": "Поддерживать стандартный цикл наблюдения, отклонений не выявлено",
+      "trigger": "risk_score < 40 AND dominant = best",
+      "expiry": "risk_score > 45 OR delta > 3",
+      "confidence": 77,
       "domain_context": "technology",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
+      "id": "S-02",
       "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
-      "trigger": "always",
-      "expiry": "deescalation confirmed",
-      "confidence": 76,
+      "action": "Обновить базовые прогнозы",
+      "detail": "Благоприятный период для актуализации долгосрочных прогнозов",
+      "trigger": "stabilization state > 7d",
+      "expiry": "state transition",
+      "confidence": 77,
       "domain_context": "technology",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "critical",
+  "state": "stabilization",
   "dominant_scenario": "best",
-  "scenario_score": 30,
-  "instability": 24,
+  "scenario_score": 28,
+  "instability": 23,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 71 (+8pt)",
-      "leads_to": "cascade",
+      "condition": "risk_score ≥ 68 (+8pt)",
+      "leads_to": "contained",
       "probability": 18
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "cascade",
+      "leads_to": "contained",
       "probability": 12
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
-      "leads_to": "cascade",
-      "probability": 23
+      "condition": "Worst-case 30d ≥ 56",
+      "leads_to": "contained",
+      "probability": 22
     },
     {
       "condition": "Новый критический драйвер в technology",
-      "leads_to": "cascade",
+      "leads_to": "contained",
       "probability": 18
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 77,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 31,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "90 дней",
-      "score": 68,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 28,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "180 дней",
-      "score": 60,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 25,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "365 дней",
-      "score": 53,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 22,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     }
   ],
   "probabilities": {
-    "worst": 23,
+    "worst": 22,
     "stress": 23,
-    "base": 22,
+    "base": 23,
     "best": 32
   }
 }
