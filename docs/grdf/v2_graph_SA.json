@@ -2,60 +2,60 @@
   "country": "SA",
   "date": "2026-08-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-07T17:44:59.469637+00:00",
+  "generated_at": "2026-08-07T18:57:11.999460+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 51,
+      "score": 58,
       "props": {
-        "risk_score": 51
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 17,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 4,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 4,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 9,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-SA-Хуситы_Йем",
+      "type": "Signal",
+      "label": "Хуситы Йемена заявляют, что атака на Мар",
+      "severity": 63,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-SA-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Ближний Восток",
       "severity": 77,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SA-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Ближний Восток",
-      "severity": 74,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-technology",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-social",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-SA",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-SA-Хуситы_Йем",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.63
+    },
+    {
       "from": "SIGNAL-SA-Военный_ко",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.77
-    },
-    {
-      "from": "SIGNAL-SA-Военные_уд",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.74
     }
   ]
 }
