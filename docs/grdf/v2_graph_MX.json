@@ -2,72 +2,67 @@
   "country": "MX",
   "date": "2026-08-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-07T12:12:47.625077+00:00",
+  "generated_at": "2026-08-07T14:05:24.139739+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 41,
+      "score": 56,
       "props": {
-        "risk_score": 41
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 6,
-      "trend": "down"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 2,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-MX-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -80,18 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-MX-Автоэкспор",
-      "type": "Signal",
-      "label": "Автоэкспорт Мексики",
-      "severity": 32,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-MX-Производст",
-      "type": "Signal",
-      "label": "Производство автомобилей в Мексике",
-      "severity": 32,
-      "domain": "economic"
+      "id": "DRIVER-MX-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "SIGNAL-MX-Технологич",
@@ -99,6 +85,20 @@
       "label": "Технологический сигнал — Мексика",
       "severity": 62,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-MX-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Мексика",
+      "severity": 56,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-MX-Шторм_—_Ме",
+      "type": "Signal",
+      "label": "Шторм — Мексиканский залив",
+      "severity": 57,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,49 +106,43 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
-    },
-    {
-      "from": "DRIVER-MX-Economic",
-      "to": "COUNTRY-MX",
-      "type": "CAUSES",
-      "weight": 0.8
+      "weight": 0.02
     },
     {
       "from": "DRIVER-MX-Geopolitical",
@@ -163,22 +157,49 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-MX-Автоэкспор",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
+      "from": "DRIVER-MX-Economic",
+      "to": "COUNTRY-MX",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
-      "from": "SIGNAL-MX-Производст",
+      "from": "DOMAIN-MX-geopolitical",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
       "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-MX-Технологич",
       "to": "DOMAIN-MX-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-MX-Геополитич",
+      "to": "DOMAIN-MX-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-MX-Шторм_—_Ме",
+      "to": "DOMAIN-MX-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.57
     }
   ]
 }
