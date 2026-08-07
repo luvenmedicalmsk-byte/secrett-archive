@@ -2,67 +2,72 @@
   "country": "HU",
   "date": "2026-08-07",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-07T14:05:24.133196+00:00",
+  "generated_at": "2026-08-07T14:51:29.419552+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-HU",
       "type": "Country",
       "label": "HU",
-      "score": 54,
+      "score": 64,
       "props": {
-        "risk_score": 54
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-HU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 51,
-      "trend": "down"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 49,
-      "trend": "down"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 17,
-      "trend": "down"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 35,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-social",
       "type": "Domain",
       "label": "social",
-      "score": 40,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 38,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-HU-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 32,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-HU-climate",
+      "type": "Driver",
+      "label": "climate"
     },
     {
       "id": "DRIVER-HU-geopolitical",
@@ -73,11 +78,6 @@
       "id": "DRIVER-HU-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "DRIVER-HU-social",
-      "type": "Driver",
-      "label": "social"
     },
     {
       "id": "SIGNAL-HU-Венгрия_ст",
@@ -106,43 +106,49 @@
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.51
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-economic",
       "type": "CORRELATES",
-      "weight": 0.49
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-climate",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-technology",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-social",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-HU",
       "to": "DOMAIN-HU-cyber",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.38
+    },
+    {
+      "from": "DRIVER-HU-climate",
+      "to": "COUNTRY-HU",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-HU-geopolitical",
@@ -157,10 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-HU-social",
-      "to": "COUNTRY-HU",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-HU-infrastructure",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-climate",
+      "to": "DOMAIN-HU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-HU-economic",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-HU-social",
+      "to": "DOMAIN-HU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-HU-geopolitical",
