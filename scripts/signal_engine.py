@@ -223,7 +223,47 @@ STAGE1_CHRONICLE = True
 # (severity/pressure/member_count/geo_spread) по стабильному macro signal_id.
 # ТОЛЬКО хранение (change-triggered append + _cap). velocity/accel НЕ трогает (Stage 2.2).
 MACRO_HISTORY = True
-_MACRO_HIST_CAP = 24  # Stage 2.1: cap собственной истории макро (change-triggered, <1% размера)
+_MACRO_HIST_CAP = 24
+
+# ══ ADR-048 · Pressure History Sampling Semantics ══════════════════════
+# Change-triggered запись оставляет отсутствие точки неоднозначным:
+# оно означает либо «значение не изменилось», либо «процесс давно
+# не наблюдался». Для процессов на устойчиво высоком давлении записи
+# прекращались вовсе — пять процессов с pressure>=70 не имели точек
+# более 72 часов, и Dynamics показывала Insufficient history там,
+# где фактически было плато.
+#
+# Heartbeat ДОПОЛНЯЕТ change-triggered, не заменяя его: активные
+# процессы не теряют ни одной реальной точки, записи добавляются
+# только там, где иначе был бы пробел.
+#
+# HEARTBEAT_H = 6 — ВРЕМЕННЫЙ operational baseline, не архитектурное
+# решение. Оптимальный интервал на прежних данных определить нельзя:
+# промежуточные значения между change-triggered точками никогда
+# не сохранялись. Значение подлежит калибровке в TASK-036 на реальных
+# heartbeat-данных, не ранее чем через 72 часа после включения.
+#
+# ОГРАНИЧЕНИЕ КЭПА: при _MACRO_HIST_CAP=24 интервал задаёт верхнюю
+# границу глубины истории — 6ч даёт 144 часа, 3ч дало бы ровно 72,
+# что совпадает с MAXAGE и для активных процессов оказалось бы меньше.
+HEARTBEAT_H = 6
+PRESSURE_HISTORY_SAMPLING = 'v2-change+heartbeat'
+
+
+def _hours_since(iso_ts, now_iso):
+    """Часы между двумя ISO-метками. При неразборчивом формате
+    возвращает 0 — это безопасно: heartbeat не сработает, поведение
+    останется прежним, change-triggered."""
+    try:
+        a = _dt.datetime.fromisoformat(str(iso_ts).replace('Z', '+00:00'))
+        b = _dt.datetime.fromisoformat(str(now_iso).replace('Z', '+00:00'))
+        if a.tzinfo is None:
+            a = a.replace(tzinfo=_dt.timezone.utc)
+        if b.tzinfo is None:
+            b = b.replace(tzinfo=_dt.timezone.utc)
+        return max((b - a).total_seconds() / 3600.0, 0.0)
+    except Exception:
+        return 0.0  # Stage 2.1: cap собственной истории макро (change-triggered, <1% размера)
 
 # ═══ Stage 2.2 Macro Velocity (dormant shadow flag) ═══
 # False = production (velocity=max(live-члены)). True = span pressure-velocity из
@@ -1369,7 +1409,14 @@ def _thread_macro_history(macros, prev_macros, now):
                 continue
             hist=list(prev.get(hist_key) or [])
             if (not hist) or hist[-1].get('v')!=cur_v:
+                # значение изменилось — пишем сразу, как и прежде
                 hist.append({'t':now,'v':cur_v})
+            elif _hours_since(hist[-1].get('t'), now) >= HEARTBEAT_H:
+                # ADR-048: значение прежнее, но прошёл интервал —
+                # фиксируем наблюдение, чтобы плато не читалось
+                # как отсутствие данных. Помечаем hb, чтобы отличать
+                # heartbeat-точки от change-triggered при калибровке.
+                hist.append({'t':now,'v':cur_v,'hb':1})
             m[hist_key]=hist[-_MACRO_HIST_CAP:]
         # ADR-D4 шаг 4: timeline — журнал (prev + текущий вклад), не пересборка
         if MACRO_TL_ACCUM:
