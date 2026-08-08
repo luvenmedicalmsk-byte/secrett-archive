@@ -2,67 +2,72 @@
   "country": "RO",
   "date": "2026-08-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-08T09:25:18.898308+00:00",
+  "generated_at": "2026-08-08T10:06:41.099671+00:00",
   "node_count": 13,
-  "edge_count": 12,
+  "edge_count": 15,
   "nodes": [
     {
       "id": "COUNTRY-RO",
       "type": "Country",
       "label": "RO",
-      "score": 44,
+      "score": 56,
       "props": {
-        "risk_score": 44
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-RO-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 9,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 40,
-      "trend": "down"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 31,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 29,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-social",
       "type": "Domain",
       "label": "social",
-      "score": 33,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 31,
-      "trend": "down"
+      "score": 39,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RO-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 26,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-RO-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-RO-economic",
@@ -73,11 +78,6 @@
       "id": "DRIVER-RO-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-RO-climate",
-      "type": "Driver",
-      "label": "climate"
     },
     {
       "id": "SIGNAL-RO-Военные_уд",
@@ -99,43 +99,49 @@
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-economic",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-climate",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-technology",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-social",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-RO",
       "to": "DOMAIN-RO-cyber",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.34
+    },
+    {
+      "from": "DRIVER-RO-geopolitical",
+      "to": "COUNTRY-RO",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-RO-economic",
@@ -150,10 +156,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-RO-climate",
-      "to": "COUNTRY-RO",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-RO-geopolitical",
+      "to": "DOMAIN-RO-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RO-infrastructure",
+      "to": "DOMAIN-RO-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RO-economic",
+      "to": "DOMAIN-RO-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-RO-Военные_уд",
