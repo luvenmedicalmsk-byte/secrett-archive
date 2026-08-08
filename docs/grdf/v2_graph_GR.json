@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-08-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-08T05:18:54.637172+00:00",
+  "generated_at": "2026-08-08T06:21:54.702874+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,55 +19,50 @@
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 69,
-      "trend": "up"
+      "score": 49,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 62,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 62,
-      "trend": "up"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 45,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
       "score": 52,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 48,
-      "trend": "up"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 41,
-      "trend": "up"
-    },
-    {
-      "id": "DRIVER-GR-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-GR-economic",
@@ -75,9 +70,14 @@
       "label": "economic"
     },
     {
-      "id": "DRIVER-GR-climate",
+      "id": "DRIVER-GR-social",
       "type": "Driver",
-      "label": "climate"
+      "label": "social"
+    },
+    {
+      "id": "DRIVER-GR-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "SIGNAL-GR-Лесные_пож",
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.69
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-GR",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-climate",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-GR",
@@ -145,19 +145,19 @@
       "weight": 0.41
     },
     {
-      "from": "DRIVER-GR-geopolitical",
-      "to": "COUNTRY-GR",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-GR-economic",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GR-climate",
+      "from": "DRIVER-GR-social",
+      "to": "COUNTRY-GR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-GR-geopolitical",
       "to": "COUNTRY-GR",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "ESCALATES",
+      "weight": 0.78,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 21
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-social",
+      "type": "CORRELATES",
+      "weight": 0.5,
+      "lag_days": 60
+    },
+    {
       "from": "DOMAIN-GR-climate",
       "to": "DOMAIN-GR-infrastructure",
       "type": "ESCALATES",
@@ -203,27 +224,6 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GR-climate",
-      "to": "DOMAIN-GR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-GR-social",
-      "to": "DOMAIN-GR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "SIGNAL-GR-Лесные_пож",
