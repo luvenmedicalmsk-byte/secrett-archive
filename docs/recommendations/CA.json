@@ -2,27 +2,27 @@
   "country": "CA",
   "country_name": "Канада",
   "date": "2026-08-09",
-  "generated_at": "2026-08-09T22:04:11.899609+00:00",
-  "srs_score": 56,
+  "generated_at": "2026-08-09T22:34:03.712072+00:00",
+  "srs_score": 54,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
-      "id": "R-02",
-      "category": "HIGH_PRIORITY",
-      "title": "Быстрая эскалация: Δ=+20/день",
-      "detail": "Скорость ухудшения 20 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
-      "metric_value": 20,
-      "urgency": 90,
-      "source": "delta"
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
     },
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
       "title": "Системное смещение прогнозов: +4.4pt",
       "detail": "Систематическая ошибка прогнозов +4.4pt снижает достоверность сценарного анализа.",
-      "metric_value": 4.44,
-      "urgency": 62.2,
+      "metric_value": 4.37,
+      "urgency": 61.85,
       "source": "validation_bias"
     },
     {
@@ -33,9 +33,18 @@
       "metric_value": 2,
       "urgency": 54,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -9,
+      "urgency": 48,
+      "source": "confidence_drift"
     }
   ],
-  "risk_count": 3,
+  "risk_count": 4,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -49,9 +58,9 @@
     {
       "id": "O-06",
       "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 76.7% успех",
-      "detail": "Исторический процент успешных решений 76.7% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 76.7,
+      "title": "Стратегия результативна: 74.4% успех",
+      "detail": "Исторический процент успешных решений 74.4% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 74.4,
       "impact": 65,
       "source": "decision_success"
     }
@@ -80,7 +89,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -7.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности -9.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -92,25 +101,16 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+6.60pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+6.51pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
-    {
-      "id": "R-02",
-      "type": "risk",
-      "priority": "HIGH_PRIORITY",
-      "title": "Быстрая эскалация: Δ=+20/день",
-      "rec_score": 62,
-      "metric_value": 20,
-      "source": "delta"
-    },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (10)",
-      "rec_score": 54,
+      "rec_score": 53,
       "metric_value": 10,
       "source": "high_alpha"
     },
@@ -118,18 +118,27 @@
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 76.7% успех",
+      "title": "Стратегия результативна: 74.4% успех",
       "rec_score": 51,
-      "metric_value": 76.7,
+      "metric_value": 74.4,
       "source": "decision_success"
+    },
+    {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 49,
+      "metric_value": 3,
+      "source": "diagnostics"
     },
     {
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
       "title": "Системное смещение прогнозов: +4.4pt",
-      "rec_score": 48,
-      "metric_value": 4.44,
+      "rec_score": 47,
+      "metric_value": 4.37,
       "source": "validation_bias"
     },
     {
@@ -140,16 +149,25 @@
       "rec_score": 43,
       "metric_value": 2,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "rec_score": 40,
+      "metric_value": -9,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
-      "id": "ACT-R-02",
-      "priority": "CRITICAL",
-      "action": "Реагировать: Быстрая эскалация: Δ=+20/день",
-      "rationale": "Скорость ухудшения 20 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
-      "deadline": "немедленно",
-      "source": "delta"
+      "id": "ACT-R-04",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
     },
     {
       "id": "ACT-R-03",
@@ -178,8 +196,8 @@
     {
       "id": "ACT-O-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Стратегия результативна: 76.7% успех",
-      "rationale": "Исторический процент успешных решений 76.7% — выше среднего. Поддерживать текущий подход.",
+      "action": "Использовать: Стратегия результативна: 74.4% успех",
+      "rationale": "Исторический процент успешных решений 74.4% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
     }
@@ -187,8 +205,8 @@
   "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 52,
-  "delta": 20,
+  "risk_score": 56,
+  "delta": 4,
   "domain": "climate",
   "history_depth": 73
 }
