@@ -1399,29 +1399,52 @@ def _thread_macro_history(macros, prev_macros, now):
     текущий срез — не затрагивается)."""
     _MH=[('severity_history','severity'),('pressure_history','pressure'),
          ('member_count_history',None),('geo_spread_history','geo_spread_count')]
+    # ДИАГНОСТИКА ADR-048 (временная, read-only): heartbeat не появлялся
+    # в данных при формально корректном коде. Счётчики отвечают, на каком
+    # именно звене обрывается цепочка — вызов, поиск prev или сама ветка.
+    _hb_stat = {'macros': len(macros or []), 'prev': len(prev_macros or {}),
+                'seen': 0, 'no_prev': 0, 'change': 0, 'heartbeat': 0, 'skip': 0}
     for m in macros:
         if not m.get('is_macro'):
             continue
+        _hb_stat['seen'] += 1
         prev=prev_macros.get(m.get('signal_id')) or {}
+        if not prev:
+            _hb_stat['no_prev'] += 1
         for hist_key, val_key in _MH:
             cur_v = len(m.get('included_processes') or []) if val_key is None else m.get(val_key)
             if cur_v is None:
                 continue
             hist=list(prev.get(hist_key) or [])
+            if hist_key == 'pressure_history':
+                _age = _hours_since(hist[-1].get('t'), now) if hist else -1.0
             if (not hist) or hist[-1].get('v')!=cur_v:
                 # значение изменилось — пишем сразу, как и прежде
                 hist.append({'t':now,'v':cur_v})
+                if hist_key == 'pressure_history': _hb_stat['change'] += 1
             elif _hours_since(hist[-1].get('t'), now) >= HEARTBEAT_H:
                 # ADR-048: значение прежнее, но прошёл интервал —
                 # фиксируем наблюдение, чтобы плато не читалось
                 # как отсутствие данных. Помечаем hb, чтобы отличать
                 # heartbeat-точки от change-triggered при калибровке.
                 hist.append({'t':now,'v':cur_v,'hb':1})
+                if hist_key == 'pressure_history': _hb_stat['heartbeat'] += 1
+            else:
+                if hist_key == 'pressure_history': _hb_stat['skip'] += 1
             m[hist_key]=hist[-_MACRO_HIST_CAP:]
         # ADR-D4 шаг 4: timeline — журнал (prev + текущий вклад), не пересборка
         if MACRO_TL_ACCUM:
             m['timeline']=_merge_macro_timeline(prev.get('timeline'), m.get('timeline'), now)
             m['history']=m['timeline']
+    # Одна строка в stderr — видна в логах шага «Запуск парсера».
+    # Убрать после установления причины.
+    try:
+        import sys as _s
+        print("[HB-DIAG] macros={macros} prev={prev} seen={seen} no_prev={no_prev} "
+              "change={change} heartbeat={heartbeat} skip={skip} H={h}".format(
+                  h=HEARTBEAT_H, **_hb_stat), file=_s.stderr)
+    except Exception:
+        pass
 
 
 def _reconstruct_macro(signals, now):
