@@ -2,67 +2,72 @@
   "country": "DE",
   "date": "2026-08-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-09T09:59:20.258975+00:00",
+  "generated_at": "2026-08-09T10:59:01.546200+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 48,
+      "score": 44,
       "props": {
-        "risk_score": 48
+        "risk_score": 44
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "up"
+      "score": 41,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 25,
-      "trend": "up"
+      "score": 19,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "stable"
+      "score": 8,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "stable"
+      "score": 8,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "stable"
+      "score": 17,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "up"
+      "score": 19,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-DE-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-DE-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-DE-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-DE-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-DE-Глава_МВД_",
-      "type": "Signal",
-      "label": "Глава МВД Германии Александер Добриндт н",
-      "severity": 71,
-      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-DE-В_Германии",
@@ -99,6 +92,13 @@
       "label": "Отказ Германии централизованно закупать ",
       "severity": 34,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-DE-В_Германии",
+      "type": "Signal",
+      "label": "В Германии ветер и солнечная энергия обг",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,43 +106,49 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
+    },
+    {
+      "from": "DRIVER-DE-Economic",
+      "to": "COUNTRY-DE",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-DE-Geopolitical",
@@ -157,16 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-DE-Economic",
-      "to": "COUNTRY-DE",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-DE-Глава_МВД_",
-      "to": "DOMAIN-DE-geopolitical",
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.71
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-DE-В_Германии",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
       "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-DE-В_Германии",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
