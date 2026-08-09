@@ -2,60 +2,60 @@
   "country": "CN",
   "date": "2026-08-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-09T06:11:47.451813+00:00",
+  "generated_at": "2026-08-09T07:33:59.596141+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 60,
+      "score": 65,
       "props": {
-        "risk_score": 60
+        "risk_score": 65
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 44,
-      "trend": "down"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 26,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 37,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "stable"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "down"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-CN-Китай_отме",
+      "type": "Signal",
+      "label": "Китай отменяет рейсы, издает приказы об ",
+      "severity": 79,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CN-Импорт_неф",
       "type": "Signal",
       "label": "Импорт нефти в Китай упал — второй кварт",
       "severity": 62,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-CN-Социалисти",
-      "type": "Signal",
-      "label": "Социалистический аутсорсинг: хакеры Ким ",
-      "severity": 62,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-CN",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-CN",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-CN-geopolitical",
@@ -190,14 +232,14 @@
       "weight": 0.9
     },
     {
-      "from": "SIGNAL-CN-Импорт_неф",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Китай_отме",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.79
     },
     {
-      "from": "SIGNAL-CN-Социалисти",
-      "to": "DOMAIN-CN-technology",
+      "from": "SIGNAL-CN-Импорт_неф",
+      "to": "DOMAIN-CN-economic",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
