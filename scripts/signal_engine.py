@@ -1404,6 +1404,11 @@ def _thread_macro_history(macros, prev_macros, now):
     # именно звене обрывается цепочка — вызов, поиск prev или сама ветка.
     _hb_stat = {'macros': len(macros or []), 'prev': len(prev_macros or {}),
                 'seen': 0, 'no_prev': 0, 'change': 0, 'heartbeat': 0, 'skip': 0}
+    # Расширение: замер показал 11 процессов из 34 с последней точкой
+    # старше 72 часов — они обязаны были попасть в heartbeat, а попали
+    # в skip. Собираем фактические значения _hours_since и сырые метки,
+    # чтобы понять, почему функция даёт меньше HEARTBEAT_H.
+    _hb_ages = []
     for m in macros:
         if not m.get('is_macro'):
             continue
@@ -1418,6 +1423,9 @@ def _thread_macro_history(macros, prev_macros, now):
             hist=list(prev.get(hist_key) or [])
             if hist_key == 'pressure_history':
                 _age = _hours_since(hist[-1].get('t'), now) if hist else -1.0
+                if hist:
+                    _hb_ages.append((round(_age, 1), str(hist[-1].get('t'))[:19],
+                                     str(m.get('signal_id') or '')[:22]))
             if (not hist) or hist[-1].get('v')!=cur_v:
                 # значение изменилось — пишем сразу, как и прежде
                 hist.append({'t':now,'v':cur_v})
@@ -1443,6 +1451,9 @@ def _thread_macro_history(macros, prev_macros, now):
         print("[HB-DIAG] macros={macros} prev={prev} seen={seen} no_prev={no_prev} "
               "change={change} heartbeat={heartbeat} skip={skip} H={h}".format(
                   h=HEARTBEAT_H, **_hb_stat), file=_s.stderr)
+        print("[HB-DIAG] now=%r" % (str(now)[:25],), file=_s.stderr)
+        for _a, _t, _sid in sorted(_hb_ages, reverse=True)[:6]:
+            print("[HB-AGE] age=%sч  last_t=%r  id=%s" % (_a, _t, _sid), file=_s.stderr)
     except Exception:
         pass
 
