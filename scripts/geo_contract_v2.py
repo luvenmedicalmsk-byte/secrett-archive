@@ -20,6 +20,23 @@ Lever A — механика без форка legacy:
 
 import re
 from geo_contract import resolve_geo as _legacy_resolve_geo
+from geo_contract import _KIN as _GC_KIN, _NAT as _GC_NAT
+from geo_contract import set_zone_fulltext as _set_zone_fulltext
+
+
+# ADR-050 · Domain-Scoped Title-First. geopolitics исключена по TASK-044.
+LEVER_TR = True
+LEVER_TR_DOMAINS = ('economy', 'social', 'technology', 'climate')
+
+
+def _has_geo_candidates(gc):
+    if gc is None:
+        return False
+    if getattr(gc, 'country', None):
+        return True
+    if [c for c in (getattr(gc, 'impact_countries', ()) or ()) if c]:
+        return True
+    return bool(getattr(gc, 'actor_country', None))
 
 # ── Переключатели рычагов. Phase 2: активен только A. ──
 LEVER_A = True    # LRR (Location Role Resolution)
@@ -72,7 +89,27 @@ def role_of(gc):
 def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
     """G1 Resolver v2. Phase 2: Lever A (LRR). Legacy — единственный источник координат
     и контракта; v2 лишь демотирует accusative-назначение при конкурирующем локативе."""
-    gc = _legacy_resolve_geo(title, summary, raw_coords, domain)
+    if LEVER_TR and str(domain or '') in LEVER_TR_DOMAINS:
+        _set_zone_fulltext((title or '') + ' ' + (summary or ''))
+        try:
+            _gt = _legacy_resolve_geo(title, '', raw_coords, domain)
+        finally:
+            _set_zone_fulltext('')
+        if _has_geo_candidates(_gt):
+            gc = _gt
+            # TASK-049: зона — законный результат с country=None,
+            # Lever R не должен её затирать.
+            _is_zone = str(getattr(gc, 'source', '') or '') in ('zone', 'global')
+            if not getattr(gc, 'country', None) and not _is_zone:
+                _imp = [c for c in (getattr(_gt, 'impact_countries', ()) or ()) if c]
+                if _imp:
+                    _t = (title or '').lower()
+                    if _GC_KIN.search(_t) or _GC_NAT.search(_t):
+                        gc = _legacy_resolve_geo(_imp[0], '', raw_coords, domain) or gc
+        else:
+            gc = _legacy_resolve_geo(title, summary, raw_coords, domain)
+    else:
+        gc = _legacy_resolve_geo(title, summary, raw_coords, domain)
     if not LEVER_A:
         return gc
     # Lever A применяется, только если legacy выбрал место как назначение/объект-цель

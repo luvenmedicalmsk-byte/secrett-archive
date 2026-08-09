@@ -520,6 +520,14 @@ def _null_mentions(blob, actor):
     return GeoContract(None, None, None, None, None, ment, actor, 'none', 0.0, 'null')
 
 
+_ZONE_FULLTEXT = ''
+
+
+def set_zone_fulltext(v):
+    global _ZONE_FULLTEXT
+    _ZONE_FULLTEXT = (v or '').lower()
+
+
 def resolve_geo(title, summary='', raw_coords=None, domain=None):
     """ЕДИНСТВЕННЫЙ алгоритм гео-резолва (SINGLE SOURCE). → GeoContract."""
     try:
@@ -594,10 +602,13 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
         # Зона из заголовка — всегда; из summary — только при событийном контексте
         # (кинетика/природа/outage/морская лексика), иначе политические тексты
         # с упоминанием акваторий дают ложные зоны
-        _zone_evt = bool(_KIN.search(blob) or _NAT.search(blob) or _OUTAGE.search(blob)
+        # TASK-048: ZONE-EXPLICIT видит полный текст независимо от того,
+        # урезан ли blob вызывающей стороной. Условие _zone_evt сохранено.
+        _zblob = _ZONE_FULLTEXT or blob
+        _zone_evt = bool(_KIN.search(_zblob) or _NAT.search(_zblob) or _OUTAGE.search(_zblob)
                          or re.search(r'судн|танкер|корабл|флот|вмс|патрул|конво', t))
         for rx, zid in _ZONE_GAZ:
-            if rx.search(t) or (_zone_evt and rx.search(blob)):
+            if rx.search(t) or (_zone_evt and rx.search(_zblob)):
                 return _mk_zone(zid, 'zone', blob, actor, raw_coords)
         # GLOBAL: планетарные процессы без территории
         if _GLOBAL_RX.search(blob):
