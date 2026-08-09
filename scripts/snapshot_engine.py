@@ -12453,7 +12453,10 @@ def _build_v6_digital_twin(iso2: str, snap: dict,
     # Incoming shocks: what arrives from others
     incoming = sorted(
         [(a, st) for (a,b),st in link_lu.items() if b == iso2],
-        key=lambda x: -state_map.get(a,{}).get("state_score",0)
+        # x — кортеж (страна, сила связи); раньше здесь стояло `a`,
+        # переменная из объемлющего list comprehension, недоступная
+        # в lambda. Из-за этого падали цифровые двойники всех 42 стран.
+        key=lambda x: -state_map.get(x[0],{}).get("state_score",0)
     )[:5]
 
     return {
