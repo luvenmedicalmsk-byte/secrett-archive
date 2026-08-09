@@ -2,8 +2,8 @@
   "country": "SG",
   "country_name": "Сингапур",
   "date": "2026-08-09",
-  "generated_at": "2026-08-09T16:36:28.201806+00:00",
-  "srs_score": 51,
+  "generated_at": "2026-08-09T17:02:21.259087+00:00",
+  "srs_score": 50,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
@@ -45,10 +45,32 @@
       "title": "Тренд: снижение срочности",
       "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
       "direction": "down"
+    },
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d7 точнее, d30 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
     }
   ],
-  "forecast_degradation": [],
+  "forecast_degradation": [
+    {
+      "type": "horizon_degradation",
+      "horizon": "d30",
+      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности -8.0pt указывает на деградацию долгосрочных прогнозов."
+    }
+  ],
   "forecast_improvement": [
+    {
+      "type": "horizon_strength",
+      "horizon": "d7",
+      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
+    },
     {
       "type": "alpha_positive",
       "horizon": "all",
@@ -79,7 +101,7 @@
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Смещения в принятии решений (2)",
-      "rec_score": 37,
+      "rec_score": 36,
       "metric_value": 2,
       "source": "decision_bias"
     }

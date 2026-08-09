@@ -2,13 +2,41 @@
   "country": "GR",
   "country_name": "Греция",
   "date": "2026-08-09",
-  "generated_at": "2026-08-09T16:36:28.205440+00:00",
-  "srs_score": 39,
-  "srs_grade": "F",
-  "srs_grade_ru": "Критический пересмотр",
-  "priority_risks": [],
-  "risk_count": 0,
+  "generated_at": "2026-08-09T17:02:21.263365+00:00",
+  "srs_score": 52,
+  "srs_grade": "D",
+  "srs_grade_ru": "Требует внимания",
+  "priority_risks": [
+    {
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +17.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +17.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 17,
+      "urgency": 60,
+      "source": "confidence_drift"
+    }
+  ],
+  "risk_count": 2,
   "priority_opportunities": [
+    {
+      "id": "O-04",
+      "category": "WATCHLIST",
+      "title": "Тренд деэскалации: Δ=-5/день",
+      "detail": "Риск снижается со скоростью 5 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "metric_value": -5,
+      "impact": 65,
+      "source": "delta_trend"
+    },
     {
       "id": "O-05",
       "category": "STRATEGIC",
@@ -19,29 +47,111 @@
       "source": "high_alpha"
     }
   ],
-  "opp_count": 1,
+  "opp_count": 2,
   "emerging_shifts": [
     {
       "type": "deteriorating",
       "title": "Тренд: нарастание давления",
       "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
       "direction": "up"
+    },
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d7 точнее, d30 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
     }
   ],
-  "forecast_degradation": [],
-  "forecast_improvement": [],
+  "forecast_degradation": [
+    {
+      "type": "horizon_degradation",
+      "horizon": "d30",
+      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности +17.0pt указывает на деградацию долгосрочных прогнозов."
+    }
+  ],
+  "forecast_improvement": [
+    {
+      "type": "horizon_strength",
+      "horizon": "d7",
+      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
+    }
+  ],
   "ranked_recommendations": [
+    {
+      "id": "O-04",
+      "type": "opportunity",
+      "priority": "WATCHLIST",
+      "title": "Тренд деэскалации: Δ=-5/день",
+      "rec_score": 47,
+      "metric_value": -5,
+      "source": "delta_trend"
+    },
+    {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 45,
+      "metric_value": 3,
+      "source": "diagnostics"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (2)",
-      "rec_score": 45,
+      "rec_score": 44,
       "metric_value": 2,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +17.0pt",
+      "rec_score": 43,
+      "metric_value": 17,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-04",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +17.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +17.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "72 часа",
+      "source": "confidence_drift"
+    },
+    {
+      "id": "ACT-O-04",
+      "priority": "STRATEGIC",
+      "action": "Использовать: Тренд деэскалации: Δ=-5/день",
+      "rationale": "Риск снижается со скоростью 5 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "deadline": "30 дней",
+      "source": "delta_trend"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 47.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
+    },
     {
       "id": "ACT-O-05",
       "priority": "WATCHLIST",
@@ -51,11 +161,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 1,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 62,
-  "delta": 0,
+  "risk_score": 57,
+  "delta": -5,
   "domain": "climate",
   "history_depth": 62
 }

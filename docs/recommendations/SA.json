@@ -2,23 +2,32 @@
   "country": "SA",
   "country_name": "Саудовская Аравия",
   "date": "2026-08-09",
-  "generated_at": "2026-08-09T16:36:28.173737+00:00",
-  "srs_score": 59,
+  "generated_at": "2026-08-09T17:02:21.223575+00:00",
+  "srs_score": 50,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
-      "id": "R-02",
-      "category": "HIGH_PRIORITY",
-      "title": "Быстрая эскалация: Δ=+8/день",
-      "detail": "Скорость ухудшения 8 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
-      "metric_value": 8,
-      "urgency": 90,
-      "source": "delta"
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -10.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -10.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -10,
+      "urgency": 50,
+      "source": "confidence_drift"
     }
   ],
   "risk_count": 1,
   "priority_opportunities": [
+    {
+      "id": "O-04",
+      "category": "WATCHLIST",
+      "title": "Тренд деэскалации: Δ=-8/день",
+      "detail": "Риск снижается со скоростью 8 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "metric_value": -8,
+      "impact": 65,
+      "source": "delta_trend"
+    },
     {
       "id": "O-06",
       "category": "INFORMATIONAL",
@@ -38,39 +47,61 @@
       "source": "high_alpha"
     }
   ],
-  "opp_count": 2,
+  "opp_count": 3,
   "emerging_shifts": [
     {
       "type": "deteriorating",
       "title": "Тренд: нарастание давления",
       "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
       "direction": "up"
+    },
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d30 точнее, d7 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d7. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
     }
   ],
-  "forecast_degradation": [],
+  "forecast_degradation": [
+    {
+      "type": "horizon_degradation",
+      "horizon": "d7",
+      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности -10.0pt указывает на деградацию долгосрочных прогнозов."
+    }
+  ],
   "forecast_improvement": [
+    {
+      "type": "horizon_strength",
+      "horizon": "d30",
+      "detail": "Лучший горизонт прогноза: d30. Рассмотреть расширение использования."
+    },
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+2.09pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+2.28pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
     {
-      "id": "R-02",
-      "type": "risk",
-      "priority": "HIGH_PRIORITY",
-      "title": "Быстрая эскалация: Δ=+8/день",
-      "rec_score": 62,
-      "metric_value": 8,
-      "source": "delta"
+      "id": "O-04",
+      "type": "opportunity",
+      "priority": "WATCHLIST",
+      "title": "Тренд деэскалации: Δ=-8/день",
+      "rec_score": 51,
+      "metric_value": -8,
+      "source": "delta_trend"
     },
     {
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
       "title": "Стратегия результативна: 69.8% успех",
-      "rec_score": 50,
+      "rec_score": 51,
       "metric_value": 69.8,
       "source": "decision_success"
     },
@@ -82,16 +113,33 @@
       "rec_score": 48,
       "metric_value": 2,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -10.0pt",
+      "rec_score": 41,
+      "metric_value": -10,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
-      "id": "ACT-R-02",
-      "priority": "CRITICAL",
-      "action": "Реагировать: Быстрая эскалация: Δ=+8/день",
-      "rationale": "Скорость ухудшения 8 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
-      "deadline": "немедленно",
-      "source": "delta"
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -10.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -10.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
+    },
+    {
+      "id": "ACT-O-04",
+      "priority": "STRATEGIC",
+      "action": "Использовать: Тренд деэскалации: Δ=-8/день",
+      "rationale": "Риск снижается со скоростью 8 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "deadline": "30 дней",
+      "source": "delta_trend"
     },
     {
       "id": "ACT-O-06",
@@ -100,21 +148,13 @@
       "rationale": "Исторический процент успешных решений 69.8% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
-    },
-    {
-      "id": "ACT-O-05",
-      "priority": "WATCHLIST",
-      "action": "Использовать: Высокоэффективные действия доступны (2)",
-      "rationale": "Идентифицировано 2 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
-      "deadline": "30 дней",
-      "source": "high_alpha"
     }
   ],
   "action_count": 3,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 72,
-  "delta": 8,
+  "risk_score": 64,
+  "delta": -8,
   "domain": "geopolitics",
   "history_depth": 73
 }

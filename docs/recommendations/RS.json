@@ -2,12 +2,22 @@
   "country": "RS",
   "country_name": "Сербия",
   "date": "2026-08-09",
-  "generated_at": "2026-08-09T16:36:28.194493+00:00",
-  "srs_score": 52,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
-  "priority_risks": [],
-  "risk_count": 0,
+  "generated_at": "2026-08-09T17:02:21.250259+00:00",
+  "srs_score": 62,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
+  "priority_risks": [
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +14.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +14.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 14,
+      "urgency": 58,
+      "source": "confidence_drift"
+    }
+  ],
+  "risk_count": 1,
   "priority_opportunities": [
     {
       "id": "O-06",
@@ -35,10 +45,32 @@
       "title": "Тренд: нарастание давления",
       "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
       "direction": "up"
+    },
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d7 точнее, d30 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
     }
   ],
-  "forecast_degradation": [],
+  "forecast_degradation": [
+    {
+      "type": "horizon_degradation",
+      "horizon": "d30",
+      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности +14.0pt указывает на деградацию долгосрочных прогнозов."
+    }
+  ],
   "forecast_improvement": [
+    {
+      "type": "horizon_strength",
+      "horizon": "d7",
+      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
+    },
     {
       "type": "alpha_positive",
       "horizon": "all",
@@ -51,7 +83,7 @@
       "type": "opportunity",
       "priority": "INFORMATIONAL",
       "title": "Стратегия результативна: 87.5% успех",
-      "rec_score": 52,
+      "rec_score": 53,
       "metric_value": 87.5,
       "source": "decision_success"
     },
@@ -60,12 +92,29 @@
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (2)",
-      "rec_score": 49,
+      "rec_score": 50,
       "metric_value": 2,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +14.0pt",
+      "rec_score": 47,
+      "metric_value": 14,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +14.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +14.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
+    },
     {
       "id": "ACT-O-06",
       "priority": "STRATEGIC",
@@ -73,6 +122,14 @@
       "rationale": "Исторический процент успешных решений 87.5% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 53.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     },
     {
       "id": "ACT-O-05",
@@ -83,7 +140,7 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 62,
