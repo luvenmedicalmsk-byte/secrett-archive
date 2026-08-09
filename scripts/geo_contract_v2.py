@@ -20,9 +20,6 @@ Lever A — механика без форка legacy:
 
 import re
 from geo_contract import resolve_geo as _legacy_resolve_geo
-# ADR-050: _KIN и _NAT нужны Lever R для проверки кинетики/природы
-# в заголовке. Импортируются явно, а не через модуль-ссылку.
-from geo_contract import _KIN as _GC_KIN, _NAT as _GC_NAT
 
 # ── Переключатели рычагов. Phase 2: активен только A. ──
 LEVER_A = True    # LRR (Location Role Resolution)
@@ -72,57 +69,10 @@ def role_of(gc):
     return 'mention'
 
 
-# ══ ADR-050 · Domain-Scoped Title-First Policy ═══════════════════════════
-# Lever T: если заголовок содержит географических кандидатов, summary
-# не используется. Lever R: если после этого страна не определена, но
-# в заголовке есть impact_countries и кинетика или природное явление —
-# место берётся из первого impact_country заголовка.
-#
-# ОБЛАСТЬ ДЕЙСТВИЯ ОГРАНИЧЕНА. geopolitics исключена по измерению
-# TASK-044: там соотношение выигрыша к проигрышу 2.7:1 против 15:1
-# в остальных доменах, а цена ошибки выше — география входит в расчёт
-# кросс-доменного сопряжения.
-#
-# Shadow на трёх срезах: NEW harmful churn 0, geopolitics не затронута
-# ни разу, замен country нет. Известное ограничение Minnesota-class
-# воспроизвелось один раз, как и предсказано ADR-050.
-#
-# T и R внедряются ТОЛЬКО ВМЕСТЕ — shadow проверял их совместно.
-LEVER_TR = True
-LEVER_TR_DOMAINS = ('economy', 'social', 'technology', 'climate')
-
-
-def _has_geo_candidates(gc):
-    """Заголовок содержит географических кандидатов в любой роли."""
-    if gc is None:
-        return False
-    if getattr(gc, 'country', None):
-        return True
-    if [c for c in (getattr(gc, 'impact_countries', ()) or ()) if c]:
-        return True
-    return bool(getattr(gc, 'actor_country', None))
-
-
 def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
     """G1 Resolver v2. Phase 2: Lever A (LRR). Legacy — единственный источник координат
     и контракта; v2 лишь демотирует accusative-назначение при конкурирующем локативе."""
-    # ADR-050: в области действия заголовок имеет приоритет над summary.
-    if LEVER_TR and str(domain or '') in LEVER_TR_DOMAINS:
-        _gt = _legacy_resolve_geo(title, '', raw_coords, domain)
-        if _has_geo_candidates(_gt):
-            # Lever T: кандидаты в заголовке есть — summary не используем.
-            gc = _gt
-            if not getattr(gc, 'country', None):
-                # Lever R: страна не определена, но impact в заголовке есть.
-                _imp = [c for c in (getattr(_gt, 'impact_countries', ()) or ()) if c]
-                if _imp:
-                    _t = (title or '').lower()
-                    if _GC_KIN.search(_t) or _GC_NAT.search(_t):
-                        gc = _legacy_resolve_geo(_imp[0], '', raw_coords, domain) or gc
-        else:
-            gc = _legacy_resolve_geo(title, summary, raw_coords, domain)
-    else:
-        gc = _legacy_resolve_geo(title, summary, raw_coords, domain)
+    gc = _legacy_resolve_geo(title, summary, raw_coords, domain)
     if not LEVER_A:
         return gc
     # Lever A применяется, только если legacy выбрал место как назначение/объект-цель
