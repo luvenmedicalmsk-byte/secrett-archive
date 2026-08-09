@@ -2,67 +2,72 @@
   "country": "AR",
   "date": "2026-08-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-09T23:05:35.155418+00:00",
+  "generated_at": "2026-08-09T23:35:09.302760+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-AR",
       "type": "Country",
       "label": "AR",
-      "score": 60,
+      "score": 42,
       "props": {
-        "risk_score": 60
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-AR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 44,
+      "score": 0,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-AR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 37,
-      "trend": "stable"
+      "score": -4,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 10,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 10,
-      "trend": "stable"
+      "score": 5,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AR-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "stable"
+      "score": 11,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 22,
-      "trend": "stable"
+      "score": 12,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-AR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
-      "trend": "stable"
+      "score": 3,
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-AR-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-AR-Geopolitical",
@@ -75,9 +80,18 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-AR-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-AR-Промышленн",
+      "type": "Signal",
+      "label": "Промышленное производство Аргентины",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-AR-Промышленн",
+      "type": "Signal",
+      "label": "Промышленное производство Аргентины в ме",
+      "severity": 32,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-AR-Климатичес",
@@ -85,20 +99,6 @@
       "label": "Климатический сигнал — Аргентина",
       "severity": 50,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-AR-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Аргентина",
-      "severity": 56,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AR-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Аргентина",
-      "severity": 47,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,43 +106,49 @@
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.0
     },
     {
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-economic",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": -0.04
     },
     {
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-climate",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-technology",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-AR",
       "to": "DOMAIN-AR-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.03
+    },
+    {
+      "from": "DRIVER-AR-Economic",
+      "to": "COUNTRY-AR",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-AR-Geopolitical",
@@ -157,49 +163,22 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-AR-Economic",
-      "to": "COUNTRY-AR",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-AR-geopolitical",
-      "to": "DOMAIN-AR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-AR-infrastructure",
+      "from": "SIGNAL-AR-Промышленн",
       "to": "DOMAIN-AR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "weight": 0.32
     },
     {
-      "from": "DOMAIN-AR-economic",
-      "to": "DOMAIN-AR-social",
+      "from": "SIGNAL-AR-Промышленн",
+      "to": "DOMAIN-AR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.32
     },
     {
       "from": "SIGNAL-AR-Климатичес",
       "to": "DOMAIN-AR-climate",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-AR-Геополитич",
-      "to": "DOMAIN-AR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-AR-Социальный",
-      "to": "DOMAIN-AR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.47
     }
   ]
 }
