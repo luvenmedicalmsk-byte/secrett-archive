@@ -1,32 +1,32 @@
 {
   "country": "DE",
-  "date": "2026-08-08",
+  "date": "2026-08-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-08T23:56:07.827194+00:00",
+  "generated_at": "2026-08-09T00:54:39.258575+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 47,
+      "score": 48,
       "props": {
-        "risk_score": 47
+        "risk_score": 48
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 48,
       "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
+      "score": 38,
       "trend": "up"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
+      "id": "SIGNAL-DE-Соратники_",
+      "type": "Signal",
+      "label": "Соратники канцлера Германии Фридриха Мер",
+      "severity": 45,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-DE-В_Германии",
       "type": "Signal",
       "label": "В Германии задержали 33-летнего украинца",
       "severity": 44,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-DE-Отказ_Герм",
-      "type": "Signal",
-      "label": "Отказ Германии централизованно закупать ",
-      "severity": 34,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-DE",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-DE-Глава_МВД_",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.71
     },
     {
+      "from": "SIGNAL-DE-Соратники_",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.45
+    },
+    {
       "from": "SIGNAL-DE-В_Германии",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-DE-Отказ_Герм",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
