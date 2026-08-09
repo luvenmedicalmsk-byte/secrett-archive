@@ -4782,14 +4782,14 @@ def compute_historical_validation(iso2: str, country_name: str) -> dict:
                     ps=max(10,min(95,round(rs+dr*30*damp)))
                 pd_=1 if ps>rs else(-1 if ps<rs else 0)
             ad_=1 if as_>rs else(-1 if as_<rs else 0)
-            h[h]["preds"].append(ps); h[h]["actuals"].append(as_)
-            h[h]["pred_dirs"].append(pd_); h[h]["act_dirs"].append(ad_)
-            h[h]["pred_states"].append(rec.get("escalation_level","stable"))
-            h[h]["act_states"].append(ar.get("escalation_level","stable"))
-            h[h]["pred_scens"].append(rec.get("dominant_scenario","base"))
-            h[h]["act_scens"].append(ar.get("dominant_scenario","base"))
-            h[h]["pred_probs"].append(rec.get("scenario_probs",{}))
-            h[h]["confs"].append(conf); h[h]["succs"].append(abs(ps-as_)<=8)
+            hd[h]["preds"].append(ps); hd[h]["actuals"].append(as_)
+            hd[h]["pred_dirs"].append(pd_); hd[h]["act_dirs"].append(ad_)
+            hd[h]["pred_states"].append(rec.get("escalation_level","stable"))
+            hd[h]["act_states"].append(ar.get("escalation_level","stable"))
+            hd[h]["pred_scens"].append(rec.get("dominant_scenario","base"))
+            hd[h]["act_scens"].append(ar.get("dominant_scenario","base"))
+            hd[h]["pred_probs"].append(rec.get("scenario_probs",{}))
+            hd[h]["confs"].append(conf); hd[h]["succs"].append(abs(ps-as_)<=8)
 
     horizons_out={}; hz_scores={}
     for hz in _VAL_HORIZONS:
