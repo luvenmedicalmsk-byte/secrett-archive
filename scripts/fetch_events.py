@@ -274,6 +274,7 @@ from pathlib import Path
 # ── S36.4 INGESTION PERFORMANCE: параллелизм + blacklist ─────────────────────
 try:
     from fetch_runtime import run_parallel, is_blacklisted, load_blacklist
+    from fetch_runtime import cached_fetch, url_cache_report
     load_blacklist()
     _PARALLEL_AVAILABLE = True
 except ImportError as _pe:
@@ -281,6 +282,10 @@ except ImportError as _pe:
     _PARALLEL_AVAILABLE = False
     def is_blacklisted(url):  # no-op fallback
         return False
+    def cached_fetch(url, fetcher):  # no-op fallback
+        return fetcher()
+    def url_cache_report():
+        return ""  
     def run_parallel(fetchers, max_workers=12):  # sequential fallback
         out = []
         for f in fetchers:
@@ -1469,9 +1474,15 @@ _LONG_LIVED_SOURCES = ('GDACS Floods',)
 def fetch_url(url, timeout=20, headers=None, retries=1):
     """Загружает URL с retry при временных ошибках (429, 503, timeout).
     S36.4: retries=1 (а не 2), blacklist-гейт, timeout cap 12с —
-    мёртвый источник больше не висит 3×timeout."""
+    мёртвый источник больше не висит 3×timeout.
+    Дедупликация: повторный запрос того же адреса в пределах прогона
+    берётся из кэша, включая отрицательный результат."""
     if is_blacklisted(url):
         return None
+    return cached_fetch(url, lambda: _fetch_url_raw(url, timeout, headers, retries))
+
+
+def _fetch_url_raw(url, timeout=20, headers=None, retries=1):
     timeout = min(timeout, 12)
     last_err = None
     for attempt in range(retries + 1):
