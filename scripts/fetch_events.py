@@ -7111,6 +7111,62 @@ def _usgs_country(place, lat, lng):
     return ('','')
 
 
+# Снимки решений USGS текущего прогона. Заполняется fetch_usgs_earthquakes,
+# записывается в docs/quake_history.json после сбора.
+_QUAKE_SNAPSHOTS = []
+
+
+def _save_quake_history():
+    """Копит историю уточнений USGS по event id.
+
+    USGS публикует предварительное решение и уточняет магнитуду, глубину
+    и координаты в течение часов. Живой фид отдаёт только текущее значение,
+    поэтому сравнить версии можно лишь по собственным снимкам.
+
+    Формат: {event_id: {place, versions: [{seen, rev, mag, depth, lat, lng}]}}
+    Версия добавляется только при фактическом изменении параметров.
+    """
+    if not _QUAKE_SNAPSHOTS:
+        return
+    _path = OUTPUT_PATH.parent / 'quake_history.json'
+    try:
+        _hist = {}
+        if _path.exists():
+            try:
+                _hist = json.loads(_path.read_text(encoding='utf-8')).get('events', {}) or {}
+            except Exception:
+                _hist = {}
+        _now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        _new = _rev = 0
+        for _s in _QUAKE_SNAPSHOTS:
+            _eid = _s['id']
+            _rec = _hist.get(_eid) or {'place': _s.get('place', ''), 'versions': []}
+            _cur = {'mag': _s['mag'], 'depth': _s['depth'], 'lat': _s['lat'], 'lng': _s['lng']}
+            _vs = _rec.get('versions') or []
+            _prev = ({k: _vs[-1].get(k) for k in ('mag', 'depth', 'lat', 'lng')} if _vs else None)
+            if _prev is None:
+                _vs.append(dict(_cur, seen=_now, rev='initial'))
+                _new += 1
+            elif _prev != _cur:
+                _vs.append(dict(_cur, seen=_now, rev='revised'))
+                _rev += 1
+            # место обновляется всегда: направление от города меняется вместе
+            # с координатами и относится к текущему решению
+            _rec['place'] = _s.get('place', _rec.get('place', ''))
+            _rec['time'] = _s.get('time')
+            _rec['updated'] = _s.get('updated')
+            _rec['versions'] = _vs[-6:]
+            _hist[_eid] = _rec
+        # чистим записи старше 40 дней: фид отдаёт месяц, запас на границу
+        _cut = (datetime.now(timezone.utc).timestamp() - 40 * 86400) * 1000
+        _hist = {k: v for k, v in _hist.items() if not v.get('time') or v['time'] >= _cut}
+        _path.write_text(json.dumps(
+            {'generated': _now, 'events': _hist}, ensure_ascii=False, indent=1), encoding='utf-8')
+        print(f"  [USGS] история: событий {len(_hist)}, новых {_new}, уточнений {_rev}", file=sys.stderr)
+    except Exception as _qe:
+        print(f"  [WARN] quake history failed: {_qe}", file=sys.stderr)
+
+
 def fetch_usgs_earthquakes():
     items = []
     # Землетрясения магнитудой 5.0+ за последние 7 дней
@@ -7176,6 +7232,21 @@ def fetch_usgs_earthquakes():
                 if _cc:
                     _it['_country_code'] = _cc
                 items.append(_it)
+                # Снимок решения USGS для истории ревизий. Пишется отдельно
+                # от ленты: карточки землетрясений отсекает P10, а раздел
+                # «Риски → Землетрясения» читает живой фид и между сессиями
+                # ничего не помнит. Историю может хранить только парсер.
+                if _usgs_id:
+                    _QUAKE_SNAPSHOTS.append({
+                        'id': _usgs_id,
+                        'mag': mag,
+                        'depth': (round(float(_depth), 1) if _depth is not None else None),
+                        'lat': round(lat, 3),
+                        'lng': round(lng, 3),
+                        'place': place,
+                        'time': _tm,
+                        'updated': _upd,
+                    })
         except Exception as e:
             print(f"  [WARN] USGS: {e}", file=sys.stderr)
     print(f"  USGS Earthquakes: {len(items)} событий", file=sys.stderr)
@@ -14414,6 +14485,7 @@ if __name__ == '__main__':
             pass
         print(f"  Итого сигналов на карте: {len(events)} (из {len(news_events)} новостных)", file=sys.stderr)
 
+        _save_quake_history()
         _prev_snapshot = _load_previous_snapshot()  # загружаем ДО записи
         _apply_quake_revisions(events, _prev_snapshot)
         save_enriched(events, _prev_snapshot)         # enriched save
