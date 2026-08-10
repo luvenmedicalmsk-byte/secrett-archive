@@ -12272,6 +12272,50 @@ def inject_into_html(events):
 # SIGNAL ENRICHMENT v2
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _apply_quake_revisions(events, prev):
+    """Сохраняет историю уточнений USGS для землетрясений.
+
+    USGS публикует предварительное решение и в течение часов уточняет
+    магнитуду, глубину, координаты и направление от населённого пункта.
+    Событие остаётся тем же — меняются его параметры.
+
+    Здесь в карточку добавляется поле quake_revisions: список версий
+    параметров очага в порядке появления. Первая запись — то, что Atlas
+    увидел первым; последняя — текущее решение USGS. Текущие значения
+    в title и desc не подменяются: карточка показывает актуальное,
+    история лежит рядом.
+    """
+    try:
+        # prev может отсутствовать на первом прогоне — история всё равно
+        # заводится, чтобы исходное решение было зафиксировано.
+        _prev_list = [] if not prev else (prev if isinstance(prev, list) else (prev.get('events') or []))
+        _by_id = {}
+        for _pe in _prev_list:
+            _pid = _pe.get('id')
+            if _pid:
+                _by_id[_pid] = _pe
+        _changed = 0
+        for _e in events:
+            _org = _e.get('_quake_origin')
+            if not _org:
+                continue
+            _old = _by_id.get(_e.get('id'))
+            _hist = list((_old or {}).get('quake_revisions') or [])
+            _now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+            if not _hist:
+                # первое наблюдение: фиксируем исходное решение
+                _hist.append({'seen': _now, 'origin': _org, 'rev': 'initial'})
+            elif _hist[-1].get('origin') != _org:
+                # параметры изменились — это уточнение USGS
+                _hist.append({'seen': _now, 'origin': _org, 'rev': 'revised'})
+                _changed += 1
+            _e['quake_revisions'] = _hist[-6:]
+        if _changed:
+            print(f"  [USGS] уточнено параметров очага: {_changed}", file=sys.stderr)
+    except Exception as _qe:
+        print(f"  [WARN] quake revisions failed: {_qe}", file=sys.stderr)
+
+
 def _load_previous_snapshot():
     """Загружает текущий events.json как предыдущий снапшот для delta."""
     try:
@@ -14371,6 +14415,7 @@ if __name__ == '__main__':
         print(f"  Итого сигналов на карте: {len(events)} (из {len(news_events)} новостных)", file=sys.stderr)
 
         _prev_snapshot = _load_previous_snapshot()  # загружаем ДО записи
+        _apply_quake_revisions(events, _prev_snapshot)
         save_enriched(events, _prev_snapshot)         # enriched save
         # inject_into_html(events)  # FIX5: DISABLED
         _push_snapshot_to_worker(events)              # push compact snapshot → KV
