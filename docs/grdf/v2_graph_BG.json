@@ -2,7 +2,7 @@
   "country": "BG",
   "date": "2026-08-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-10T22:33:58.933694+00:00",
+  "generated_at": "2026-08-10T23:07:33.854433+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-BG",
       "type": "Country",
       "label": "BG",
-      "score": 59,
+      "score": 63,
       "props": {
-        "risk_score": 59
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-BG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 53,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 53,
-      "trend": "stable"
+      "score": 57,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 41,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 38,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-social",
       "type": "Domain",
       "label": "social",
-      "score": 44,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 41,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-BG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 35,
-      "trend": "stable"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DRIVER-BG-economic",
@@ -70,14 +70,14 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-BG-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-BG-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-BG-climate",
-      "type": "Driver",
-      "label": "climate"
     },
     {
       "id": "SIGNAL-BG-Взрыв_прог",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-BG-Взрыв_и_по",
+      "id": "SIGNAL-BG-Геополитич",
       "type": "Signal",
-      "label": "Взрыв и пожар произошли на военном завод",
-      "severity": 53,
+      "label": "Геополитический процесс — Болгария",
+      "severity": 58,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-BG-Упавший_в_",
+      "id": "SIGNAL-BG-Пожарная_а",
       "type": "Signal",
-      "label": "Упавший в Болгарии дрон оказался украинс",
-      "severity": 47,
-      "domain": "geopolitical"
+      "label": "Пожарная активность — Болгария",
+      "severity": 53,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,46 +106,52 @@
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-economic",
       "type": "CORRELATES",
-      "weight": 0.53
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-climate",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-technology",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-social",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-BG",
       "to": "DOMAIN-BG-cyber",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.38
     },
     {
       "from": "DRIVER-BG-economic",
+      "to": "COUNTRY-BG",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-BG-geopolitical",
       "to": "COUNTRY-BG",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-BG-climate",
-      "to": "COUNTRY-BG",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-BG-geopolitical",
+      "to": "DOMAIN-BG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-BG-infrastructure",
+      "to": "DOMAIN-BG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-BG-economic",
+      "to": "DOMAIN-BG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "DOMAIN-BG-climate",
@@ -182,27 +203,6 @@
       "type": "AMPLIFIES",
       "weight": 0.55,
       "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-BG-infrastructure",
-      "to": "DOMAIN-BG-economic",
-      "type": "ESCALATES",
-      "weight": 0.78,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-BG-economic",
-      "to": "DOMAIN-BG-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 21
-    },
-    {
-      "from": "DOMAIN-BG-economic",
-      "to": "DOMAIN-BG-social",
-      "type": "CORRELATES",
-      "weight": 0.5,
-      "lag_days": 60
     },
     {
       "from": "DOMAIN-BG-climate",
@@ -232,16 +232,16 @@
       "weight": 0.58
     },
     {
-      "from": "SIGNAL-BG-Взрыв_и_по",
+      "from": "SIGNAL-BG-Геополитич",
       "to": "DOMAIN-BG-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.58
     },
     {
-      "from": "SIGNAL-BG-Упавший_в_",
-      "to": "DOMAIN-BG-geopolitical",
+      "from": "SIGNAL-BG-Пожарная_а",
+      "to": "DOMAIN-BG-climate",
       "type": "AMPLIFIES",
-      "weight": 0.47
+      "weight": 0.53
     }
   ]
 }
