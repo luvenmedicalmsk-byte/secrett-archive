@@ -2,67 +2,67 @@
   "country": "SG",
   "date": "2026-08-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-10T18:15:33.493586+00:00",
+  "generated_at": "2026-08-10T19:18:41.347883+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-SG",
       "type": "Country",
       "label": "SG",
-      "score": 47,
+      "score": 62,
       "props": {
-        "risk_score": 47
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-SG-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "down"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 33,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 31,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-social",
       "type": "Domain",
       "label": "social",
-      "score": 35,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 33,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SG-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 28,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DRIVER-SG-geopolitical",
@@ -70,21 +70,14 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-SG-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-SG-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-SG-climate",
-      "type": "Driver",
-      "label": "climate"
-    },
-    {
-      "id": "SIGNAL-SG-Базовая_пр",
-      "type": "Signal",
-      "label": "Базовая процентная ставка в Сингапуре по",
-      "severity": 32,
-      "domain": "economic"
     },
     {
       "id": "SIGNAL-SG-Технологич",
@@ -99,6 +92,13 @@
       "label": "Климатический сигнал — Юго-Восточная Ази",
       "severity": 52,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-SG-Финансовый",
+      "type": "Signal",
+      "label": "Финансовый рынок — Сингапур",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-climate",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-social",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-cyber",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.37
     },
     {
       "from": "DRIVER-SG-geopolitical",
@@ -151,13 +151,13 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-social",
+      "from": "DRIVER-SG-economic",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SG-climate",
+      "from": "DRIVER-SG-social",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,10 +184,46 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-SG-Базовая_пр",
+      "from": "DOMAIN-SG-climate",
+      "to": "DOMAIN-SG-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-SG-infrastructure",
       "to": "DOMAIN-SG-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SG-climate",
+      "to": "DOMAIN-SG-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SG-economic",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SG-social",
+      "to": "DOMAIN-SG-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-SG-Технологич",
@@ -200,6 +236,12 @@
       "to": "DOMAIN-SG-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-SG-Финансовый",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
