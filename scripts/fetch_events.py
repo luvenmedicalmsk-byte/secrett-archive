@@ -3983,26 +3983,6 @@ def process_events(raw_items):
         print("  [LOSS] err", _e, file=sys.stderr)
 
     # Пакетный перевод заголовков -- один запрос вместо 150
-    # Переписывание обсценных текстов — до перевода заголовков, чтобы
-    # дальше по конвейеру шёл уже нейтральный вариант.
-    _rw_ok = _rw_fail = 0
-    for _e in top_events:
-        if not _e.get('_needs_rewrite'):
-            continue
-        _nt = rewrite_obscene(_e.get('title', ''))
-        _ns_ = rewrite_obscene(_e.get('summary', ''))
-        if _nt or _ns_:
-            if _nt: _e['title'] = _nt
-            if _ns_: _e['summary'] = _ns_
-            _rw_ok += 1
-        else:
-            # Переписать не удалось — событие скрывается из ленты,
-            # но остаётся в процессах и связях.
-            _e['feed_visible'] = False
-            _rw_fail += 1
-    if _rw_ok or _rw_fail:
-        print(f"  [OBSCENE] переписано: {_rw_ok} · скрыто из ленты: {_rw_fail}", file=sys.stderr)
-
     print(f"  Переводим заголовки...", file=sys.stderr)
     titles = [e['title'] for e in top_events]
     translated_titles = translate_batch(titles)
@@ -4061,6 +4041,28 @@ def process_events(raw_items):
         for _nsx in (_ns_pre - _ns_post): _trace(_nsx,'TOPIC_CAP','removed',reason='noise_curio')
     top_events = _keep_ns
     print(f"  [S43b] шум-курьёзы убраны: {_before_ns} -> {len(top_events)}", file=sys.stderr)
+
+    # Переписывание обсценных текстов. Выполняется СРАЗУ после S43b,
+    # где выставляется _needs_rewrite: раньше блок стоял выше по коду
+    # и читал флаг до того, как он появлялся, — переписывание никогда
+    # не срабатывало.
+    _rw_ok = _rw_fail = 0
+    for _e in top_events:
+        if not _e.get('_needs_rewrite'):
+            continue
+        _nt = rewrite_obscene(_e.get('title', ''))
+        _ns_ = rewrite_obscene(_e.get('summary', ''))
+        if _nt or _ns_:
+            if _nt: _e['title'] = _nt
+            if _ns_: _e['summary'] = _ns_
+            _rw_ok += 1
+        else:
+            # Переписать не удалось — событие скрывается из ленты,
+            # но остаётся в процессах и связях.
+            _e['feed_visible'] = False
+            _rw_fail += 1
+    if _rw_ok or _rw_fail:
+        print(f"  [OBSCENE] переписано: {_rw_ok} · скрыто из ленты: {_rw_fail}", file=sys.stderr)
 
     # S46 (Этап 8): уровень подтверждённости -- снижаем риск, смягчаем заголовок, ставим метку (geopolitics/economy)
     _CFM_CAP = {'expectation':44,'statement':46,'negotiation':50,'preliminary':55}
