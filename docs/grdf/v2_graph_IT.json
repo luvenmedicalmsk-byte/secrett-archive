@@ -2,60 +2,60 @@
   "country": "IT",
   "date": "2026-08-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-10T12:00:41.629860+00:00",
+  "generated_at": "2026-08-10T12:48:07.628715+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 40,
+      "score": 45,
       "props": {
-        "risk_score": 40
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 22,
-      "trend": "stable"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 12,
-      "trend": "stable"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Интенсивно",
+      "type": "Signal",
+      "label": "Интенсивное извержение вулкана Этна выбр",
+      "severity": 55,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Новая_моде",
       "type": "Signal",
       "label": "Новая модель ИИ раскрывает объем леднико",
@@ -92,13 +99,6 @@
       "label": "Миграционная политика — Италия",
       "severity": 67,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-IT-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Италия",
-      "severity": 60,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,25 +106,25 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IT",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IT",
@@ -163,6 +163,75 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Интенсивно",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.55
+    },
+    {
       "from": "SIGNAL-IT-Новая_моде",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
@@ -173,12 +242,6 @@
       "to": "DOMAIN-IT-social",
       "type": "AMPLIFIES",
       "weight": 0.67
-    },
-    {
-      "from": "SIGNAL-IT-Экономичес",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.6
     }
   ]
 }

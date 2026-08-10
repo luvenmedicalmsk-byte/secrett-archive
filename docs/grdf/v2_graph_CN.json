@@ -2,60 +2,60 @@
   "country": "CN",
   "date": "2026-08-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-10T12:00:41.618225+00:00",
+  "generated_at": "2026-08-10T12:48:07.615798+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 60,
+      "score": 61,
       "props": {
-        "risk_score": 60
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "down"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 34,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 12,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CN-Тайфун_Дел",
+      "id": "SIGNAL-CN-Социалисти",
       "type": "Signal",
-      "label": "Тайфун Дельфин усиливается у Окинавы, 5 ",
+      "label": "Социалистический аутсорсинг: хакеры Ким ",
       "severity": 62,
-      "domain": "climate"
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-CN",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CN-social",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CN-climate",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-CN-geopolitical",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
@@ -196,8 +238,8 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-CN-Тайфун_Дел",
-      "to": "DOMAIN-CN-climate",
+      "from": "SIGNAL-CN-Социалисти",
+      "to": "DOMAIN-CN-technology",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
