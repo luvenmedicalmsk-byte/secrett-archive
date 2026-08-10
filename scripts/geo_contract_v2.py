@@ -92,7 +92,12 @@ def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
     if LEVER_TR and str(domain or '') in LEVER_TR_DOMAINS:
         _set_zone_fulltext((title or '') + ' ' + (summary or ''))
         try:
-            _gt = _legacy_resolve_geo(title, '', raw_coords, domain)
+            # TASK-069 · summary передаётся в резолвер. Интегрированный PLACE
+            # анализирует полный текст: место события часто названо в описании,
+            # а не в заголовке («…заводу — Россия»). Прежний пустой summary
+            # обрезал вход и терял такие места (TASK-068A).
+            import geo_contract as _gcv3
+            _gt = _legacy_resolve_geo(title, (summary if getattr(_gcv3, 'GEO_V3', False) else ''), raw_coords, domain)
         finally:
             _set_zone_fulltext('')
         if _has_geo_candidates(_gt):
