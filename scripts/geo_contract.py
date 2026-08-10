@@ -580,7 +580,16 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
             if p and p[0] != actor:
                 return _mk(p, 'direction', blob, actor, raw_coords)
         # KINETIC-TARGET: «удар … по X» (кроме не-мест: «по военным объектам»)
-        if _KIN.search(blob):
+        # Морская цель — не страна флага. «Удар по танкеру из ОАЭ … при
+        # прохождении через Ормузский пролив» давал ОАЭ: kinetic_target
+        # стоит выше ZONE-EXPLICIT и забирал страну принадлежности судна.
+        # Судно находится там, где акватория, поэтому при морской цели
+        # ветка пропускается — ниже сработает зона.
+        _sea_target = bool(re.search(r'по\s+(?:[а-яё\-]+\s+){0,2}'
+                                     r'(судн\w*|танкер\w*|корабл\w*|сухогруз\w*|балкер\w*|'
+                                     r'контейнеровоз\w*|катер\w*|траулер\w*|паром\w*)', blob, re.I))
+        _sea_zone = _sea_target and any(rx.search(blob) for rx, _z in _ZONE_GAZ)
+        if _KIN.search(blob) and not _sea_zone:
             _kt_re = (r'(?:^|[^а-яё])по\s+([а-яё\-]+(?:\s+[а-яё\-]+){0,2})'
                       if GEO_ACTOR_TARGET_CANARY else
                       r'(?:^|[^а-яё])по\s+([а-яё\-]+(?:\s+[а-яё\-]+)?)')
@@ -607,9 +616,22 @@ def resolve_geo(title, summary='', raw_coords=None, domain=None):
         _zblob = _ZONE_FULLTEXT or blob
         _zone_evt = bool(_KIN.search(_zblob) or _NAT.search(_zblob) or _OUTAGE.search(_zblob)
                          or re.search(r'судн|танкер|корабл|флот|вмс|патрул|конво', t))
+        # Выбор по позиции в тексте, а не по порядку в _ZONE_GAZ.
+        # «Атака на Моку на Красном море. Тем временем Иран заявил, что
+        # Ормузский пролив открыт» давала Ормуз: он стоит в справочнике
+        # выше, хотя упомянут позже и к событию не относится.
+        _zc = []
         for rx, zid in _ZONE_GAZ:
-            if rx.search(t) or (_zone_evt and rx.search(_zblob)):
-                return _mk_zone(zid, 'zone', blob, actor, raw_coords)
+            _m = rx.search(t)
+            if _m:
+                _zc.append((_m.start(), 0, zid))      # заголовок приоритетнее
+            elif _zone_evt:
+                _m = rx.search(_zblob)
+                if _m:
+                    _zc.append((_m.start(), 1, zid))
+        if _zc:
+            _zc.sort(key=lambda x: (x[1], x[0]))
+            return _mk_zone(_zc[0][2], 'zone', blob, actor, raw_coords)
         # GLOBAL: планетарные процессы без территории
         if _GLOBAL_RX.search(blob):
             return _mk_zone('global', 'global', blob, actor, raw_coords, conf=0.8)
