@@ -1,13 +1,31 @@
 {
   "country": "IL",
   "country_name": "Израиль",
-  "date": "2026-08-09",
+  "date": "2026-08-10",
   "nodes": [
     {
       "id": "ROOT",
       "label": "Текущее состояние",
       "type": "root",
       "depth": 0
+    },
+    {
+      "id": "worst",
+      "label": "Worst Case",
+      "type": "worst",
+      "status": "active",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 37.5
+    },
+    {
+      "id": "ASE-ACC-13",
+      "label": "Сценарий ускорения (deceleration)",
+      "type": "acceleration",
+      "status": "emerging",
+      "parent": "ROOT",
+      "depth": 1,
+      "prob": 35
     },
     {
       "id": "ASE-ESC-DETE",
@@ -44,7 +62,20 @@
     }
   ],
   "convergences": [],
-  "divergences": [],
-  "active_count": 1,
-  "retired_count": 4
+  "divergences": [
+    {
+      "scenario_a": "worst",
+      "scenario_b": "escalation_branch",
+      "score_gap": 26,
+      "label": "Расхождение: Worst Case ↔ Ветвь эскалации: deteriorating"
+    },
+    {
+      "scenario_a": "acceleration",
+      "scenario_b": "escalation_branch",
+      "score_gap": 49,
+      "label": "Расхождение: Сценарий ускорения (deceleration) ↔ Ветвь эскалации: deteriorating"
+    }
+  ],
+  "active_count": 3,
+  "retired_count": 3
 }
