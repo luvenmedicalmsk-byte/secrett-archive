@@ -3734,7 +3734,15 @@ def process_events(raw_items):
                 _id_geo = f"|{round(float(item['_lat'])*2)/2},{round(float(item['_lng'])*2)/2}"
             except Exception:
                 _id_geo = ''
-        ev_id = make_id(item['title'] + _id_geo, item['date'])
+        # Землетрясения: id строится на USGS event id, а не на заголовке.
+        # USGS уточняет магнитуду, глубину, координаты и направление от
+        # населённого пункта после первой публикации — заголовок при этом
+        # меняется, и событие уходило бы в ленту как новое. По event id
+        # ревизия попадает в тот же id и заменяет параметры.
+        if item.get('_usgs_id'):
+            ev_id = make_id('usgs:' + str(item['_usgs_id']), '')
+        else:
+            ev_id = make_id(item['title'] + _id_geo, item['date'])
         if ev_id in seen_ids: _trace(_tid,'DEDUP','removed',reason='dup'); _LOSS['dup']+=1; continue
         seen_ids.add(ev_id)
 
@@ -7131,15 +7139,39 @@ def fetch_usgs_earthquakes():
                 # страна в заголовке/тексте -> резолвер и метамодель страны её увидят
                 _tail = f" ({_ccru})" if _ccru and _ccru not in ru_place else ""
                 title = f"Землетрясение M{mag} — {ru_place}{_tail}"
+                # Параметры очага. USGS уточняет их после первой публикации:
+                # магнитуда, глубина, координаты и направление от населённого
+                # пункта могут измениться в течение часов после события.
+                _depth = coords[2] if len(coords) > 2 else None
+                _usgs_id = feat.get('id') or props.get('code') or ''
+                _upd = props.get('updated')
+                _tm = props.get('time')
+                def _iso(ms):
+                    if not ms: return ''
+                    try:
+                        return datetime.fromtimestamp(ms/1000, timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+                    except Exception:
+                        return ''
+                _origin = f"M{mag}"
+                if _tm: _origin += f", {_iso(_tm)}"
+                if _depth is not None: _origin += f", глубина {round(float(_depth))} км"
+                _origin += f", {lat:.3f}°, {lng:.3f}°"
                 _it = {
                     'title': title,
-                    'desc': f"Магнитуда {mag}. {ru_place}{_tail}",
+                    'desc': f"Магнитуда {mag}. {ru_place}{_tail}. Параметры очага: {_origin}.",
                     'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                     'source': 'USGS',
-                    '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': (coords[2] if len(coords) > 2 else None)}),
+                    '_force_severity': normalize_severity('earthquake', {'magnitude': mag, 'depth': _depth}),
                     '_lat': lat, '_lng': lng,
                     '_region': _region,
-                    '_domain': 'climate'
+                    '_domain': 'climate',
+                    # Ключ ревизии: USGS event id постоянен между уточнениями,
+                    # заголовок — нет. По нему прогон видит, что событие уже
+                    # было, и заменяет параметры вместо создания дубля.
+                    '_usgs_id': _usgs_id,
+                    '_usgs_updated': _upd,
+                    '_quake_origin': _origin,
+                    '_quake_depth': _depth,
                 }
                 if _cc:
                     _it['_country_code'] = _cc
