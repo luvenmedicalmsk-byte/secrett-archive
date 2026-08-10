@@ -3983,6 +3983,26 @@ def process_events(raw_items):
         print("  [LOSS] err", _e, file=sys.stderr)
 
     # Пакетный перевод заголовков -- один запрос вместо 150
+    # Переписывание обсценных текстов — до перевода заголовков, чтобы
+    # дальше по конвейеру шёл уже нейтральный вариант.
+    _rw_ok = _rw_fail = 0
+    for _e in top_events:
+        if not _e.get('_needs_rewrite'):
+            continue
+        _nt = rewrite_obscene(_e.get('title', ''))
+        _ns_ = rewrite_obscene(_e.get('summary', ''))
+        if _nt or _ns_:
+            if _nt: _e['title'] = _nt
+            if _ns_: _e['summary'] = _ns_
+            _rw_ok += 1
+        else:
+            # Переписать не удалось — событие скрывается из ленты,
+            # но остаётся в процессах и связях.
+            _e['feed_visible'] = False
+            _rw_fail += 1
+    if _rw_ok or _rw_fail:
+        print(f"  [OBSCENE] переписано: {_rw_ok} · скрыто из ленты: {_rw_fail}", file=sys.stderr)
+
     print(f"  Переводим заголовки...", file=sys.stderr)
     titles = [e['title'] for e in top_events]
     translated_titles = translate_batch(titles)
@@ -4027,8 +4047,12 @@ def process_events(raw_items):
         if 'пенси' in _b and 'автоматическ' in _b and 'назнача' in _b: _noise = True
         if 'не соответствуют действительности' in _b and 'якобы' in _b:
             if isinstance(e.get('severity'), (int, float)): e['severity'] = min(int(e['severity']), 32)
-        # Обсценная лексика: событие снимается целиком.
-        if _OBSCENE_RE.search(_b) or _OBSCENE_COMPOUND.search(_b): _noise = True
+        # Обсценная лексика: событие НЕ удаляется — оно может быть сигналом.
+        # Взлом промышленных контроллеров водоснабжения значим независимо
+        # от того, какими словами его пересказал источник. Помечаем на
+        # переписывание, сам отбор в ленту не трогаем.
+        if _OBSCENE_RE.search(_b) or _OBSCENE_COMPOUND.search(_b):
+            e['_needs_rewrite'] = True
         if not _noise: _keep_ns.append(e)
     _before_ns = len(top_events)
     if LINEAGE:
@@ -11943,6 +11967,54 @@ def _translation_incomplete(text):
     if _ru < 40:                      # не русский текст — проверять нечего
         return False
     return len(_EN_STOPWORDS_RE.findall(text)) >= 5
+
+
+def rewrite_obscene(text):
+    """Переписывает текст с обсценной лексикой нейтрально.
+
+    Использует тот же слой OpenAI, что и перевод заголовков. Расхождение
+    с источником здесь такое же, как у любого переведённого события, —
+    принятая практика. Событие сохраняется: значим факт, а не лексика.
+
+    При отсутствии ключа или ошибке возвращает None — вызывающая сторона
+    оставляет исходный текст и решает сама.
+    """
+    if not text:
+        return None
+    import os as _os
+    key = _os.environ.get('OPENAI_API_KEY', '')
+    if not key:
+        return None
+    sys_p = ('Ты редактор аналитического издания. Перепиши текст нейтральным '
+             'деловым языком, полностью убрав обсценную и туалетную лексику, '
+             'просторечия и каламбуры. Сохрани ВСЕ факты: цифры, названия '
+             'организаций, моделей оборудования, географию, последствия. '
+             'Не добавляй оценок и не сокращай фактуру. '
+             'Верни СТРОГО валидный JSON: {"t":"переписанный текст"}.')
+    try:
+        body = json.dumps({
+            'model': 'gpt-4o-mini', 'max_tokens': 1200, 'temperature': 0.1,
+            'response_format': {'type': 'json_object'},
+            'messages': [{'role': 'system', 'content': sys_p},
+                         {'role': 'user', 'content': (text or '')[:2400]}]
+        }).encode()
+        req = urllib.request.Request(
+            'https://api.openai.com/v1/chat/completions', data=body,
+            headers={'Content-Type': 'application/json',
+                     'Authorization': 'Bearer ' + key}, method='POST')
+        with urllib.request.urlopen(req, timeout=45) as r:
+            resp = json.loads(r.read().decode('utf-8'))
+        out = json.loads(resp['choices'][0]['message']['content']).get('t')
+        if not out or not str(out).strip():
+            return None
+        # Контроль: если переписанный текст всё ещё содержит обсценную
+        # лексику, он не принимается — лучше оставить как есть и решить
+        # отдельно, чем публиковать «полуотмытый» вариант.
+        if _OBSCENE_RE.search(str(out)) or _OBSCENE_COMPOUND.search(str(out)):
+            return None
+        return str(out).strip()
+    except Exception:
+        return None
 
 
 def translate_batch(texts):
