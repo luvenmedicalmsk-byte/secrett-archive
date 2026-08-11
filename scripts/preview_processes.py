@@ -783,9 +783,54 @@ def build_infra(events, docs_dir=None):
                 for m in mems if m['date']], key=lambda x: x['t'])
         # explain (Объяснение/Сводка): своя формулировка для инфра-процесса
         _plc=', '.join(sorted(g['places'])) if g['places'] else 'ряде регионов'
+        # Динамика интервалов. Прежняя формулировка описывала только охват
+        # и не показывала, как процесс развивался во времени: разреженная
+        # серия и ежедневная фиксация выглядели одинаково.
+        _dyn=''
+        try:
+            _dd=sorted({str(x['t'])[:10] for x in timeline if x.get('t')})
+            if len(_dd)>=4:
+                from datetime import date as _date
+                def _pd(s):
+                    y,m,dd=s.split('-'); return _date(int(y),int(m),int(dd))
+                _gp=[(_pd(_dd[i])-_pd(_dd[i-1])).days for i in range(1,len(_dd))]
+                _h=len(_gp)//2
+                _early=sum(_gp[:_h])/_h; _late=sum(_gp[-_h:])/_h
+                _dense=len([x for x in _gp if x<=1])
+                _M=['января','февраля','марта','апреля','мая','июня','июля',
+                    'августа','сентября','октября','ноября','декабря']
+                def _dn(n):
+                    n=int(n); n100=n%100; n10=n%10
+                    if 11<=n100<=14: return 'дней'
+                    if n10==1: return 'день'
+                    if n10 in (2,3,4): return 'дня'
+                    return 'дней'
+                def _iv(n):
+                    n=int(n); n100=n%100; n10=n%10
+                    if 11<=n100<=14: return 'интервалах'
+                    return 'интервале' if n10==1 else 'интервалах'
+                def _ru(s):
+                    y,m,dd=s.split('-'); return f'{int(dd)} {_M[int(m)-1]}'
+                _dyn=(f' Первое событие зафиксировано {_ru(_dd[0])}, последнее — {_ru(_dd[-1])};'
+                      f' всего {len(_dd)} дат, интервалы от {min(_gp)} до {max(_gp)} дней.')
+                if _dense>=4 and _late<_early-0.3:
+                    _dyn+=(f' Интервалы между событиями сокращаются: с {round(_early,1)} дней в начале'
+                           f' до {round(_late,1)} к настоящему моменту, ежедневная фиксация'
+                           f' наблюдается в {_dense} {_iv(_dense)}.')
+                elif _dense>=4:
+                    _dyn+=(f' Ряд неоднороден: ежедневная фиксация в {_dense} {_iv(_dense)}'
+                           f' чередуется с паузами до {max(_gp)} дней.')
+                elif _late>_early+0.3:
+                    _dyn+=f' Интервалы увеличиваются: с {round(_early,1)} до {round(_late,1)} дней.'
+                if _gp[-1]>=max(3, round(_late)+1):
+                    _dyn+=(f' Последний эпизод отмечен после паузы в {_gp[-1]} {_dn(_gp[-1])} —'
+                           f' признаков устойчивого затухания по текущей хронике не наблюдается.')
+        except Exception:
+            _dyn=''
         explain={
             'why_exists': f'Процесс отслеживает {grp_ru} как объект инфраструктуры: система объединила {mc} событий '
-                          f'({cau_ru}) в {gs} регионах ({_plc}) в единый процесс по устойчивому признаку объекта и характеру воздействия.',
+                          f'({cau_ru}) в {gs} регионах ({_plc}) в единый процесс по устойчивому признаку объекта и характеру воздействия.'
+                          + _dyn,
             'why_priority': f'Приоритет отражает широту охвата ({gs} регионов) и совокупную тяжесть событий (пик {sev_peak}).',
             'formed_by': [f'{grp_ru} — {p}' for p in sorted(g['places'])][:6],
         }
