@@ -1840,14 +1840,20 @@ def normalize_severity(source_type, m):
         else:           sev = 80 + min(15, (cvss - 9) * 15)   # 80-95
         if m.get('active'):         sev += 10   # активная эксплуатация
         if m.get('kev'):            sev += 10   # CISA KEV
-        if m.get('critical_infra'): sev += 10   # критическая инфраструктура
+        # Двойной счёт снят: если база уже поднята словом «критическ»,
+        # тот же термин не начисляет модификатор второй раз.
+        if m.get('critical_infra') and not (m.get('_cvss_proxy') and cvss >= 9.0):
+            sev += 10   # критическая инфраструктура
         if m.get('ransomware'):     sev += 8    # вовлечён ransomware
         if m.get('nation_state'):   sev += 12   # атрибуция state-актора / APT
         _bs = m.get('breach_scale') or 0        # масштаб утечки (число записей объективно)
         if _bs >= 1000000:  sev += 12
         elif _bs >= 100000: sev += 8
         elif _bs >= 10000:  sev += 4
-        return int(max(30, min(95, round(sev))))
+        # Потолок для событий без подтверждённого CVE: пресс-релиз и разбор
+        # с реальным CVSS 9.8 не должны получать сопоставимый балл.
+        _cap = 95 if not m.get('_cvss_proxy') else 88
+        return int(max(30, min(_cap, round(sev))))
 
     return None
 
@@ -1878,9 +1884,20 @@ def cyber_metrics(source, title, desc):
         if scores:   m['cvss'] = max(scores)
         elif nums:   m['cvss'] = max(nums)
     if 'cvss' not in m:
-        if 'critical' in t or 'критическ' in t: m['cvss'] = 9.2
-        elif 'high severity' in t or 'высок' in t: m['cvss'] = 8.0
-        else: m['cvss'] = 6.5
+        # «критическ» поднимает балл ТОЛЬКО рядом с уязвимостью. Прежде любое
+        # вхождение давало 9.2: «критическая инфраструктура» и «критическая
+        # ситуация» получали базу 83 наравне с реальной critical-уязвимостью.
+        _crit_vuln = re.search(
+            r'(?:critical|критическ\w*)\s+(?:\w+\s+){0,2}'
+            r'(?:vulnerabilit|уязвим|flaw|bug|cve|severity|rce|exploit)|'
+            r'(?:уязвимост\w*|vulnerabilit\w*|cve[- ]?\d)\s+(?:\w+\s+){0,2}'
+            r'(?:critical|критическ\w*)', t)
+        _high_vuln = re.search(
+            r'(?:high severity|высок\w*\s+(?:степен\w*\s+)?(?:опасност|критичн|severity))', t)
+        if _crit_vuln:   m['cvss'] = 9.2
+        elif _high_vuln: m['cvss'] = 8.0
+        else:            m['cvss'] = 6.5
+        m['_cvss_proxy'] = True   # балл выведен из текста, а не из CVE
     m['kev'] = (src == 'CISA KEV') or 'known exploited' in t or ' kev' in t
     m['active'] = m['kev'] or any(k in t for k in
         ['actively exploited', 'exploited in the wild', 'in the wild', 'zero-day',
