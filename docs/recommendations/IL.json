@@ -2,11 +2,20 @@
   "country": "IL",
   "country_name": "Израиль",
   "date": "2026-08-11",
-  "generated_at": "2026-08-11T06:50:38.622855+00:00",
-  "srs_score": 53,
+  "generated_at": "2026-08-11T08:08:25.891790+00:00",
+  "srs_score": 57,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+44/день",
+      "detail": "Скорость ухудшения 44 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 44,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-04",
       "category": "STRATEGIC",
@@ -19,20 +28,11 @@
     {
       "id": "R-06",
       "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -14.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на -14.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": -14,
-      "urgency": 58,
+      "title": "Дрейф уверенности прогнозов: -16.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -16.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -16,
+      "urgency": 60,
       "source": "confidence_drift"
-    },
-    {
-      "id": "R-05",
-      "category": "STRATEGIC",
-      "title": "Смещения в принятии решений (2)",
-      "detail": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "metric_value": 2,
-      "urgency": 54,
-      "source": "decision_bias"
     }
   ],
   "risk_count": 3,
@@ -50,28 +50,22 @@
   "opp_count": 1,
   "emerging_shifts": [
     {
-      "type": "improving",
-      "title": "Тренд: снижение срочности",
-      "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
-      "direction": "down"
-    },
-    {
-      "type": "horizon_shift",
-      "title": "Горизонт d7 точнее, d30 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
-      "direction": "neutral"
+      "type": "deteriorating",
+      "title": "Тренд: нарастание давления",
+      "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
+      "direction": "up"
     }
   ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d30",
-      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d7",
+      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
     },
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -14.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности -16.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -83,11 +77,20 @@
   ],
   "ranked_recommendations": [
     {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+44/день",
+      "rec_score": 54,
+      "metric_value": 44,
+      "source": "delta"
+    },
+    {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (5)",
-      "rec_score": 43,
+      "rec_score": 45,
       "metric_value": 5,
       "source": "high_alpha"
     },
@@ -96,7 +99,7 @@
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Множественные диагностические проблемы: 4",
-      "rec_score": 42,
+      "rec_score": 44,
       "metric_value": 4,
       "source": "diagnostics"
     },
@@ -104,22 +107,21 @@
       "id": "R-06",
       "type": "risk",
       "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -14.0pt",
-      "rec_score": 35,
-      "metric_value": -14,
+      "title": "Дрейф уверенности прогнозов: -16.0pt",
+      "rec_score": 38,
+      "metric_value": -16,
       "source": "confidence_drift"
-    },
-    {
-      "id": "R-05",
-      "type": "risk",
-      "priority": "STRATEGIC",
-      "title": "Смещения в принятии решений (2)",
-      "rec_score": 33,
-      "metric_value": 2,
-      "source": "decision_bias"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+44/день",
+      "rationale": "Скорость ухудшения 44 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
     {
       "id": "ACT-R-04",
       "priority": "HIGH_PRIORITY",
@@ -131,18 +133,10 @@
     {
       "id": "ACT-R-06",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Дрейф уверенности прогнозов: -14.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на -14.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "7 дней",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -16.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -16.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "72 часа",
       "source": "confidence_drift"
-    },
-    {
-      "id": "ACT-R-05",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
     },
     {
       "id": "ACT-O-05",
@@ -155,7 +149,7 @@
     {
       "id": "ACT-CONF",
       "priority": "STRATEGIC",
-      "action": "Рекалибровать уверенность прогнозов → 53.0%",
+      "action": "Рекалибровать уверенность прогнозов → 49.0%",
       "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
       "deadline": "30 дней",
       "source": "confidence_target"
@@ -164,8 +158,8 @@
   "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 34,
-  "delta": 0,
-  "domain": "economy",
+  "risk_score": 78,
+  "delta": 44,
+  "domain": "geopolitics",
   "history_depth": 75
 }
