@@ -6517,6 +6517,78 @@ def _geo_shadow_report(events):
 GEO_SHADOW = True
 
 
+def _role_shadow_report(events):
+    """TASK-092 · ROLE SHADOW · READ-ONLY.
+
+    Считает ролевую модель на тех же событиях, что проходят production,
+    и пишет отчёт в docs/migration/role-shadow-report.json. Ни одно поле
+    события не изменяется: production-контур остаётся impact_countries
+    из GeoContract.
+
+    Вызывается ПОСЛЕ _apply_geo_contract, чтобы PLACE был уже определён
+    контрактом — role layer его не пересчитывает.
+    """
+    try:
+        import roles as _RL
+        import geo_contract as _RG
+        _RL.set_place_module(_RG)
+    except Exception as _re:
+        print(f"  [ROLE-SHADOW] skip: {_re}", file=sys.stderr)
+        return
+    rows = []
+    st = {'actors': 0, 'targets': 0, 'parties': 0, 'third_party': 0,
+          'affected': 0, 'impact': 0}
+    cls = {'A_same': 0, 'B_role_adds': 0, 'C_localization': 0,
+           'D_ambiguous': 0, 'F_mismatch': 0}
+    for e in events:
+        try:
+            r = _RL.resolve_roles(e.get('title', '') or '', e.get('summary', '') or '')
+        except Exception:
+            cls['D_ambiguous'] += 1
+            continue
+        _imp = sorted([c for c in (e.get('impact_countries') or []) if c])
+        _aff = sorted(r.get('affected') or [])
+        _tp = sorted(r.get('third_party') or [])
+        for k, v in (('actors', r.get('actors')), ('targets', r.get('targets')),
+                     ('parties', r.get('parties')), ('third_party', _tp),
+                     ('affected', _aff)):
+            if v:
+                st[k] += 1
+        if _imp:
+            st['impact'] += 1
+        # Совпадение множеств не означает совпадения семантики:
+        # impact_countries приходит из географии, affected — из ролей.
+        if set(_imp) == set(_aff):
+            cls['A_same'] += 1
+        elif _aff and not _imp:
+            cls['B_role_adds'] += 1
+        elif _imp and not _aff:
+            cls['C_localization'] += 1
+        else:
+            cls['F_mismatch'] += 1
+        rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:70],
+                     'place': r.get('place'), 'actors': sorted(r.get('actors') or []),
+                     'targets': sorted(r.get('targets') or []),
+                     'parties': sorted(r.get('parties') or []),
+                     'third_party': _tp, 'affected': _aff,
+                     'impact_countries': _imp,
+                     'only_shadow': sorted(set(_aff) - set(_imp)),
+                     'only_impact': sorted(set(_imp) - set(_aff))})
+    try:
+        _p = OUTPUT_PATH.parent / 'migration' / 'role-shadow-report.json'
+        _p.parent.mkdir(parents=True, exist_ok=True)
+        _p.write_text(json.dumps(
+            {'meta': {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                      'phase': 'role-shadow-read-only', 'total_events': len(events),
+                      'production_path': 'unchanged'},
+             'counts': st, 'classification': cls, 'events': rows},
+            ensure_ascii=False, indent=1), encoding='utf-8')
+        print(f"  [ROLE-SHADOW] событий {len(rows)} · affected {st['affected']} · "
+              f"third_party {st['third_party']} · impact {st['impact']}", file=sys.stderr)
+    except Exception as _we:
+        print(f"  [ROLE-SHADOW] write failed: {_we}", file=sys.stderr)
+
+
 def _geo_v2_shadow_report(events):
     """G1 SHADOW Phase 1: свежий legacy resolve_geo vs свежий resolve_geo_v2, только отчёт.
     Сравнение двух РЕЗОЛВЕРОВ (raw), не против post-processed e['geo'] — дифф атрибутируется
@@ -13849,6 +13921,7 @@ def save_enriched(events, previous_snapshot=None):
                 _se_post = {e.get('_obs_tid') for e in enriched["events"] if e.get('_obs_tid')}
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
+            _role_shadow_report(enriched["events"])   # TASK-092 · ROLE SHADOW · read-only
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
             _normalize_units(enriched["events"])      # lakh/crore → русские числа (0 churn)
 
