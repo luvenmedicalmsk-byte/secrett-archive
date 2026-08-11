@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-08-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-11T21:22:39.890346+00:00",
+  "generated_at": "2026-08-11T21:40:29.080488+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 32,
+      "score": 45,
       "props": {
-        "risk_score": 32
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 17,
-      "trend": "stable"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 28,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 4,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 9,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 10,
-      "trend": "stable"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
-      "trend": "stable"
+      "score": 3,
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-CA-Геополитич",
+      "id": "SIGNAL-CA-Миграционн",
       "type": "Signal",
-      "label": "Геополитический процесс — Канада",
+      "label": "Миграционная политика — Канада",
       "severity": 56,
-      "domain": "geopolitical"
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.03
     },
     {
       "from": "DRIVER-CA-Geopolitical",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CA-Четыре_зам",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
@@ -175,8 +196,8 @@
       "weight": 0.67
     },
     {
-      "from": "SIGNAL-CA-Геополитич",
-      "to": "DOMAIN-CA-geopolitical",
+      "from": "SIGNAL-CA-Миграционн",
+      "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
       "weight": 0.56
     }
