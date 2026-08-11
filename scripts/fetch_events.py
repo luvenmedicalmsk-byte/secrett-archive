@@ -6332,62 +6332,17 @@ def _apply_geo_contract(events):
     from geo_contract_v2 import resolve_geo_v2 as resolve_geo
     st = {'country': 0, 'zone': 0, 'global': 0, 'none': 0, 'validate_fail': 0,
           'exact': 0, 'centroid': 0}
-    # ═══ TASK-081 · ВРЕМЕННАЯ ДИАГНОСТИКА · УДАЛИТЬ ПОСЛЕ TRACE ═══
-    # Только вывод для двух event id. Логика не изменяется.
-    _DIAG_IDS = {'e273ab0e8', 'e16c4be4d'}
-    _DIAG_TITLES = ('Гватемал', 'Малакастер', 'Виотии', 'Сербии')
-    try:
-        import geo_contract as _dgc, hashlib as _dh
-        print("  [T081] GAZ size=%d hash=%s file=%s" % (
-            len(_dgc.GAZ),
-            _dh.md5(json.dumps(sorted(_dgc.GAZ.keys()), ensure_ascii=False).encode()).hexdigest()[:16],
-            getattr(_dgc, '__file__', '?')), file=sys.stderr)
-        for _tk in ('гватемал', 'малакастер'):
-            _hit = _dgc.GAZ.get(_tk)
-            print("  [T081] T2.1 key=%r %s %s" % (_tk, 'HIT' if _hit else 'MISS', _hit or ''), file=sys.stderr)
-    except Exception as _de:
-        print("  [T081] gaz probe failed: %s" % _de, file=sys.stderr)
-    _T081_LOG = []
-    def _t081(msg):
-        # Логи Actions недоступны (HTTP 403), поэтому trace дублируется
-        # в docs/_t081_trace.txt и читается через API репозитория.
-        print("  [T081] " + msg, file=sys.stderr)
-        _T081_LOG.append(msg)
-    # ═══ КОНЕЦ ДИАГНОСТИКИ ═══
     for e in events:
         lat, lng = e.get('lat'), e.get('lng')
         rc = (lat, lng) if isinstance(lat, (int, float)) and isinstance(lng, (int, float)) else None
         gc = resolve_geo(e.get('title', ''), e.get('summary', '') or e.get('description', ''),
                          raw_coords=rc, domain=e.get('domain'))
         ok, _errs = validate_geo(gc)
-        # ═══ TASK-081 · ВРЕМЕННАЯ ДИАГНОСТИКА · УДАЛИТЬ ПОСЛЕ TRACE ═══
-        _dm = (e.get('id') in _DIAG_IDS) or any(_t in str(e.get('title', '')) for _t in _DIAG_TITLES)
-        if _dm:
-            try:
-                _dt = str(e.get('title', ''))[:44]
-                _ds = str(e.get('summary', '') or e.get('description', ''))
-                _t081("T0 id=%s title=%r" % (e.get('id'), _dt))
-                _t081("T1 sum_len=%d domain=%r rc=%r" % (len(_ds), e.get('domain'), rc))
-                _t081("T1 sum_head=%r" % _ds[:70])
-                _t081("T2 country=%r ppt=%r lat=%r src=%r conf=%r" % (
-                    gc.country, gc.process_place_type, gc.lat, gc.source, gc.confidence))
-                _t081("T3 validate=%r errs=%r" % (ok, _errs))
-                import geo_contract as _dgc2
-                _t081("T2.1 places_in=%r" % (
-                    [(p, g[0]) for p, g in _dgc2._places_in((_dt + ' ' + _ds).lower())][:4],))
-            except Exception as _de2:
-                print("  [T081] trace failed: %s" % _de2, file=sys.stderr)
-        # ═══ КОНЕЦ ДИАГНОСТИКИ ═══
         if not ok:
             st['validate_fail'] += 1
             gc = type(gc)(None, None, None, None, None, (), None, 'none', 0.0, 'gate_fail')
         e['geo'] = gc.as_dict()
         ppt = gc.process_place_type
-        # ═══ TASK-081 · ВРЕМЕННАЯ ДИАГНОСТИКА · УДАЛИТЬ ПОСЛЕ TRACE ═══
-        if _dm:
-            _t081("T4/T5 ppt=%r geo.country=%r geo.source=%r" % (
-                ppt, e['geo'].get('country'), e['geo'].get('source')))
-        # ═══ КОНЕЦ ДИАГНОСТИКИ ═══
         _imp = [c for c in (gc.impact_countries or ()) if c]
         if ppt == 'country':
             st['country'] += 1; st[gc.precision] = st.get(gc.precision, 0) + 1
@@ -6467,13 +6422,6 @@ def _apply_geo_contract(events):
             ensure_ascii=False, indent=2), encoding='utf-8')
     except Exception:
         pass
-    # ═══ TASK-081 · запись trace · УДАЛИТЬ ПОСЛЕ ═══
-    try:
-        (OUTPUT_PATH.parent / '_t081_trace.txt').write_text(
-            '\n'.join(_T081_LOG), encoding='utf-8')
-    except Exception:
-        pass
-    # ═══ КОНЕЦ ═══
     print('  [GEO-AUTHORITY] country %(country)d · zone %(zone)d · global %(global)d · '
           'без места %(none)d · gate_fail %(validate_fail)d' % st, file=sys.stderr)
 
