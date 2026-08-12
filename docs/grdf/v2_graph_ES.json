@@ -2,66 +2,66 @@
   "country": "ES",
   "date": "2026-08-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-12T06:55:37.511662+00:00",
+  "generated_at": "2026-08-12T08:27:14.268498+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 51,
+      "score": 55,
       "props": {
-        "risk_score": 51
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 41,
-      "trend": "stable"
+      "score": 55,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "stable"
+      "score": 23,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "stable"
+      "score": 12,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
+      "score": 3,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Финляндия,",
+      "id": "SIGNAL-ES-Пожарная_а",
       "type": "Signal",
-      "label": "Финляндия, Швеция, Дания, Австрия и Итал",
-      "severity": 34,
-      "domain": "social"
+      "label": "Пожарная активность — Испания",
+      "severity": 86,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.41
+      "weight": 0.55
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-ES-Geopolitical",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -196,10 +238,10 @@
       "weight": 0.44
     },
     {
-      "from": "SIGNAL-ES-Финляндия,",
-      "to": "DOMAIN-ES-social",
+      "from": "SIGNAL-ES-Пожарная_а",
+      "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.86
     }
   ]
 }
