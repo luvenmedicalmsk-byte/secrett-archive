@@ -2,67 +2,67 @@
   "country": "ID",
   "date": "2026-08-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-12T21:39:05.364876+00:00",
+  "generated_at": "2026-08-12T22:33:44.540776+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ID",
       "type": "Country",
       "label": "ID",
-      "score": 46,
+      "score": 52,
       "props": {
-        "risk_score": 46
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "stable"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ID-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "stable"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DRIVER-ID-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-ID-Ликвидация",
+      "type": "Signal",
+      "label": "Ликвидация лесных пожаров: Как восстанов",
+      "severity": 57,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Пожарная_а",
+      "type": "Signal",
+      "label": "Пожарная активность — Индонезия",
+      "severity": 57,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-ID-Авиационны",
       "type": "Signal",
       "label": "Авиационный инцидент — Индонезия",
       "severity": 60,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-ID-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Юго-Восточная Ази",
-      "severity": 52,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-ID-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Индонезия",
-      "severity": 45,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-ID-Geopolitical",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-ID",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ID-social",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-ID-climate",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-ID-geopolitical",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-ID-Ликвидация",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.57
+    },
+    {
+      "from": "SIGNAL-ID-Пожарная_а",
+      "to": "DOMAIN-ID-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.57
+    },
+    {
       "from": "SIGNAL-ID-Авиационны",
       "to": "DOMAIN-ID-technology",
       "type": "AMPLIFIES",
       "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-ID-Климатичес",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
-      "from": "SIGNAL-ID-Геополитич",
-      "to": "DOMAIN-ID-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.45
     }
   ]
 }
