@@ -2,9 +2,9 @@
   "country": "SA",
   "date": "2026-08-12",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-12T00:12:55.932845+00:00",
+  "generated_at": "2026-08-12T03:07:23.267858+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
@@ -19,50 +19,50 @@
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 25,
-      "trend": "down"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "down"
+      "score": 36,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
       "score": 11,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 12,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-SA-Geopolitical",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-SA-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Ближний Восток",
-      "severity": 77,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-SA-Санкционно",
       "type": "Signal",
       "label": "Санкционное давление — Ближний Восток (с",
       "severity": 79,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-SA-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Ближний Восток",
+      "severity": 73,
       "domain": "geopolitical"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-SA",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-SA-Военный_ко",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.86
     },
     {
-      "from": "SIGNAL-SA-Военные_уд",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.77
-    },
-    {
       "from": "SIGNAL-SA-Санкционно",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.79
+    },
+    {
+      "from": "SIGNAL-SA-Геополитич",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.73
     }
   ]
 }
