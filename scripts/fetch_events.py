@@ -2013,31 +2013,6 @@ def cyber_metrics(source, title, desc):
     return m
 
 
-_T110_LINEAGE = []
-
-
-def _t110_trace(item, stage, **kw):
-    """TASK-110 · ВРЕМЕННАЯ ДИАГНОСТИКА · УДАЛИТЬ ПОСЛЕ TRACE.
-
-    Пишет происхождение текста для severity. Логика не изменяется:
-    только чтение полей и запись в отдельный список.
-    """
-    try:
-        _t = str(item.get('title') or '')
-        if 'кспорт дизел' not in _t and 'ены на дизел' not in _t and 'тчет мэа' not in _t.lower():
-            return
-        rec = {'stage': stage, 'title': _t[:60],
-               'title_len': len(_t),
-               'desc_len': len(str(item.get('desc') or '')),
-               'summary_len': len(str(item.get('summary') or '')),
-               'desc_head': str(item.get('desc') or '')[:70],
-               'source': str(item.get('source') or '')[:24]}
-        rec.update(kw)
-        _T110_LINEAGE.append(rec)
-    except Exception:
-        pass
-
-
 def _severity_for(item, weight):
     """Единая маршрутизация severity: force -> cyber -> news (S34A).
     ВАЖНО (Layer Sufficiency): cyber-маршрут выбирается ПО ИСТОЧНИКУ, а не по сути события.
@@ -2068,17 +2043,16 @@ def _severity_for(item, weight):
     #
     # Ограничение 300 символов совпадает с _severity_canon_recheck,
     # который уже считает по summary[:300] — вход выравнивается.
-    _sev_text = (item.get('desc') or item.get('summary') or '')[:300]
-    _sv = estimate_severity(item.get('title', ''), _sev_text,
-                            item.get('source_bias', 0), weight)
-    # TASK-110 · ВРЕМЕННАЯ ДИАГНОСТИКА
-    _t110_trace(item, 'severity_for',
-                sev_input_len=len(_sev_text),
-                sev_input_src=('desc' if item.get('desc') else
-                               ('summary' if item.get('summary') else 'none')),
-                base=_sv, bias=item.get('source_bias', 0))
-    # ═══ КОНЕЦ ═══
-    return _sv
+    # Лимит [:300] снят. TASK-110 показал, что он сам был потерей входа:
+    #   Отчёт МЭА     desc_len 1194 → sev_input_len 300
+    #   Цены в Европе desc_len  562 → sev_input_len 300
+    # До правки f941ecc3 движок получал desc целиком; ограничение,
+    # введённое «для единообразия с _severity_canon_recheck», обрезало
+    # текст и занижало оценку. Второй проход работает с summary[:300]
+    # по своей причине — там пересчёт уже собранного события.
+    _sev_text = item.get('desc') or item.get('summary') or ''
+    return estimate_severity(item.get('title', ''), _sev_text,
+                             item.get('source_bias', 0), weight)
 
 
 # ═══ SEVERITY CANON ROUTE ═════════════════════════════════════════════════════
@@ -4015,11 +3989,6 @@ def process_events(raw_items):
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
-        # TASK-110 · ВРЕМЕННАЯ ДИАГНОСТИКА
-        _t110_trace(item, 'summary_build',
-                    raw_desc_len=len(str(item.get('desc') or '')),
-                    severity_now=severity)
-        # ═══ КОНЕЦ ═══
         _raw = _strip_promo(strip_html(item.get('desc','')).strip())
         if len(_raw) <= 1100:
             summary = _raw
@@ -14232,14 +14201,6 @@ def save_enriched(events, previous_snapshot=None):
             if LINEAGE:
                 _se_post = {e.get('_obs_tid') for e in enriched["events"] if e.get('_obs_tid')}
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
-            # TASK-110 · запись lineage · УДАЛИТЬ ПОСЛЕ
-            try:
-                (OUTPUT_PATH.parent / '_t110_lineage.json').write_text(
-                    json.dumps(_T110_LINEAGE, ensure_ascii=False, indent=1), encoding='utf-8')
-                print(f"  [T110] записей lineage: {len(_T110_LINEAGE)}", file=sys.stderr)
-            except Exception as _we:
-                print(f"  [T110] write failed: {_we}", file=sys.stderr)
-            # ═══ КОНЕЦ ═══
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             _role_shadow_report(enriched["events"])   # TASK-092 · ROLE SHADOW · read-only
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
