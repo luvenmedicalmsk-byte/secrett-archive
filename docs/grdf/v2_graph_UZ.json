@@ -2,67 +2,72 @@
   "country": "UZ",
   "date": "2026-08-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-13T12:47:21.799998+00:00",
+  "generated_at": "2026-08-13T14:19:55.150722+00:00",
   "node_count": 13,
-  "edge_count": 12,
+  "edge_count": 21,
   "nodes": [
     {
       "id": "COUNTRY-UZ",
       "type": "Country",
       "label": "UZ",
-      "score": 52,
+      "score": 68,
       "props": {
-        "risk_score": 52
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-UZ-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
-      "trend": "stable"
+      "score": 61,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 34,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-social",
       "type": "Domain",
       "label": "social",
-      "score": 39,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 36,
-      "trend": "stable"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-UZ-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 31,
-      "trend": "stable"
+      "score": 41,
+      "trend": "up"
+    },
+    {
+      "id": "DRIVER-UZ-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
       "id": "DRIVER-UZ-economic",
@@ -73,11 +78,6 @@
       "id": "DRIVER-UZ-social",
       "type": "Driver",
       "label": "social"
-    },
-    {
-      "id": "DRIVER-UZ-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
     },
     {
       "id": "SIGNAL-UZ-Социальный",
@@ -99,43 +99,49 @@
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.61
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-technology",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-social",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-UZ",
       "to": "DOMAIN-UZ-cyber",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.41
+    },
+    {
+      "from": "DRIVER-UZ-geopolitical",
+      "to": "COUNTRY-UZ",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-UZ-economic",
@@ -150,10 +156,67 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-UZ-geopolitical",
-      "to": "COUNTRY-UZ",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-UZ-geopolitical",
+      "to": "DOMAIN-UZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-UZ-infrastructure",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-UZ-climate",
+      "to": "DOMAIN-UZ-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-UZ-infrastructure",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-UZ-climate",
+      "to": "DOMAIN-UZ-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-UZ-economic",
+      "to": "DOMAIN-UZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-UZ-social",
+      "to": "DOMAIN-UZ-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-UZ-Социальный",
