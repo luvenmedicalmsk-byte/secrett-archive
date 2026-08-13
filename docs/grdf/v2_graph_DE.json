@@ -2,9 +2,9 @@
   "country": "DE",
   "date": "2026-08-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-13T19:36:36.606665+00:00",
+  "generated_at": "2026-08-13T20:34:05.243779+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
+      "score": 52,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-В_германск",
-      "type": "Signal",
-      "label": "В германском городе Мехерних на территор",
-      "severity": 67,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-DE-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Германия",
@@ -99,6 +92,13 @@
       "label": "Киберугроза — Германия",
       "severity": 62,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-DE-Покушение_",
+      "type": "Signal",
+      "label": "Покушение — Германия",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-DE",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-DE",
@@ -163,10 +163,25 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-DE-В_германск",
-      "to": "DOMAIN-DE-geopolitical",
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.67
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-DE-Геополитич",
@@ -177,6 +192,12 @@
     {
       "from": "SIGNAL-DE-Киберугроз",
       "to": "DOMAIN-DE-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-DE-Покушение_",
+      "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
     }
