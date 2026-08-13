@@ -2,96 +2,96 @@
   "country": "ID",
   "country_name": "Индонезия",
   "date": "2026-08-13",
-  "generated_at": "2026-08-13T16:30:02.368585+00:00",
-  "strategy_score": 10,
+  "generated_at": "2026-08-13T17:44:55.069712+00:00",
+  "strategy_score": 36,
   "strategy_confidence": 87,
-  "urgency_level": "low",
-  "urgency_level_ru": "Низкая",
-  "urgency_color": "#22c55e",
-  "preparedness_level": "routine",
-  "preparedness_level_ru": "Плановый режим",
-  "monitoring_priority": 1,
-  "monitoring_ru": "Ежедневно",
+  "urgency_level": "high",
+  "urgency_level_ru": "Высокая",
+  "urgency_color": "#f59e0b",
+  "preparedness_level": "active",
+  "preparedness_level_ru": "Активная готовность",
+  "monitoring_priority": 3,
+  "monitoring_ru": "Каждые 6 часов",
   "actions": [
     {
-      "id": "S-01",
+      "id": "E-01",
       "priority": 1,
-      "action": "Мониторинговый режим",
-      "detail": "Поддерживать стандартный цикл наблюдения, отклонений не выявлено",
-      "trigger": "risk_score < 40 AND dominant = best",
-      "expiry": "risk_score > 45 OR delta > 3",
+      "action": "Удержать деэскалационный потенциал",
+      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
+      "trigger": "escalating + best dominant",
+      "expiry": "state transition",
       "confidence": 85,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     },
     {
-      "id": "S-02",
+      "id": "E-02",
       "priority": 2,
-      "action": "Обновить базовые прогнозы",
-      "detail": "Благоприятный период для актуализации долгосрочных прогнозов",
-      "trigger": "stabilization state > 7d",
-      "expiry": "state transition",
+      "action": "Инициировать дипломатические/превентивные контакты",
+      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
+      "trigger": "prob_best > 20%",
+      "expiry": "prob_best < 15%",
       "confidence": 85,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "stabilization",
+  "state": "escalating",
   "dominant_scenario": "best",
-  "scenario_score": 20,
-  "instability": 16,
+  "scenario_score": 22,
+  "instability": 17,
   "calibration_grade": "excellent",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 58 (+8pt)",
-      "leads_to": "contained",
+      "condition": "risk_score ≥ 60 (+8pt)",
+      "leads_to": "critical",
       "probability": 16
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "contained",
+      "leads_to": "critical",
       "probability": 8
     },
     {
-      "condition": "Worst-case 30d ≥ 48",
-      "leads_to": "contained",
+      "condition": "Worst-case 30d ≥ 79",
+      "leads_to": "critical",
       "probability": 19
     },
     {
       "condition": "Новый критический драйвер в climate",
-      "leads_to": "contained",
+      "leads_to": "critical",
       "probability": 18
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 31,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 62,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "90 дней",
-      "score": 28,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 55,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "180 дней",
-      "score": 25,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 49,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "365 дней",
-      "score": 22,
-      "state": "stabilization",
-      "urgency": "low",
-      "preparedness": "routine"
+      "score": 44,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     }
   ],
   "probabilities": {

@@ -2,9 +2,9 @@
   "country": "TR",
   "country_name": "Турция",
   "date": "2026-08-13",
-  "generated_at": "2026-08-13T16:30:02.359112+00:00",
+  "generated_at": "2026-08-13T17:44:55.062583+00:00",
   "strategy_score": 48,
-  "strategy_confidence": 76,
+  "strategy_confidence": 75,
   "urgency_level": "critical",
   "urgency_level_ru": "Критическая",
   "urgency_color": "#ef4444",
@@ -14,90 +14,101 @@
   "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "CR-09",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
-      "expiry": "state transition",
-      "confidence": 72,
+      "action": "МАКСИМАЛЬНЫЙ УРОВЕНЬ ТРЕВОГИ",
+      "detail": "Критический риск с worst-case dominant: системный кризис в высокой готовности",
+      "trigger": "critical + worst dominant",
+      "expiry": "state resolution",
+      "confidence": 66,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
-      "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
+      "id": "CR-10",
+      "priority": 1,
+      "action": "Немедленная эвакуация уязвимых активов",
+      "detail": "Приоритетная защита критической инфраструктуры и цепочек поставок",
       "trigger": "always",
-      "expiry": "deescalation confirmed",
-      "confidence": 72,
+      "expiry": "assets secured",
+      "confidence": 66,
+      "domain_context": "climate",
+      "horizon_relevant": "30d"
+    },
+    {
+      "id": "CR-11",
+      "priority": 1,
+      "action": "Активировать высший уровень кризисного управления",
+      "detail": "Передать координацию реагирования на высший уровень принятия решений",
+      "trigger": "always",
+      "expiry": "crisis resolved",
+      "confidence": 66,
       "domain_context": "climate",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 2,
+  "action_count": 3,
   "state": "critical",
-  "dominant_scenario": "best",
-  "scenario_score": 28,
-  "instability": 38,
+  "dominant_scenario": "worst",
+  "scenario_score": 25,
+  "instability": 54,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 54 (+8pt)",
+      "condition": "risk_score ≥ 47 (+8pt)",
       "leads_to": "cascade",
-      "probability": 22
+      "probability": 26
     },
     {
       "condition": "delta ≥ 6 за 24ч",
       "leads_to": "cascade",
-      "probability": 19
+      "probability": 27
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
+      "condition": "Worst-case 30d ≥ 35",
       "leads_to": "cascade",
-      "probability": 28
+      "probability": 34
     },
     {
       "condition": "Новый критический драйвер в climate",
       "leads_to": "cascade",
-      "probability": 20
+      "probability": 22
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 77,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 30,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "90 дней",
-      "score": 68,
+      "score": 34,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "180 дней",
-      "score": 60,
+      "score": 39,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "365 дней",
-      "score": 53,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 44,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     }
   ],
   "probabilities": {
-    "worst": 28,
-    "stress": 25,
-    "base": 17,
-    "best": 30
+    "worst": 34,
+    "stress": 27,
+    "base": 12,
+    "best": 27
   }
 }
