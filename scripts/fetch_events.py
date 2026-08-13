@@ -14301,9 +14301,20 @@ def save_enriched(events, previous_snapshot=None):
                 _flb=((_fle.get('title','') or '')+' '+(_fle.get('summary','') or '')+' '+(_fle.get('source','') or ''))
                 if _FL_ESSAY.search(_fle.get('title','') or '') or _FL_LOCAL.search(_flb):
                     _fle['feed_visible']=False
-            # Решение Мии 19.07: весь UN News = социум (в т.ч. персистентные карточки)
+            # Решение Мии 19.07: весь UN News = социум (в т.ч. персистентные карточки).
+            # СУЖЕНО 13.08: правило смотрело только на источник и переписывало
+            # домен даже там, где канонический тип определён однозначно.
+            # «Смертельная атака на корабль в Красном море» с типом «Военные
+            # удары» получала social, а фронт по canon-override показывал Социум
+            # вместо Геополитики. Тип сильнее источника: если канонизатор
+            # распознал военное действие, лента ООН его не переопределяет.
+            # Гуманитарные новости ООН — миграция, здравоохранение, голод —
+            # типа не получают и остаются в социуме как раньше.
+            _UN_KEEP = _MILITARY_CANON | {'Санкционное давление', 'Оборонное производство'}
             for _hme in enriched["events"]:
                 if _hme.get('source')=='UN News' and _hme.get('domain') in ('geopolitics',None):
+                    if _hme.get('canon_type') in _UN_KEEP:
+                        continue
                     _hme['domain']='social'
                     if _hme.get('canon_domain')=='geopolitics': _hme['canon_domain']='social'
             # ═══ IDR-011 · DOMAIN ARBITER: последний, кто трогает domain до записи ═══
