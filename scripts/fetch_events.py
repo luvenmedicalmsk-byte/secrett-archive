@@ -2031,7 +2031,21 @@ def _severity_for(item, weight):
         item['_sev_route'] = 'cyber'
         return normalize_severity('cyber', cyber_metrics(src, item.get('title', ''), item.get('desc', '')))
     item['_sev_route'] = 'news'
-    return estimate_severity(item.get('title', ''), item.get('desc', ''), item.get('source_bias', 0), weight)
+    # INPUT TRUNCATION FIX. Поле desc живёт только внутри item на стадии
+    # загрузки источника и в итоговое событие не переносится: в ленте
+    # у всех 321 события desc пуст, а summary заполнен. Расчёт фактически
+    # шёл по одному заголовку.
+    #
+    # Замер на корпусе: 90 событий из 321 (28%) имеют риск-маркеры в теле,
+    # средний недобор base 7 баллов, максимум 26.
+    #   «Экспорт дизеля из России упал до многолетнего минимума»
+    #   по title 54 · по полному тексту 78
+    #
+    # Ограничение 300 символов совпадает с _severity_canon_recheck,
+    # который уже считает по summary[:300] — вход выравнивается.
+    _sev_text = (item.get('desc') or item.get('summary') or '')[:300]
+    return estimate_severity(item.get('title', ''), _sev_text,
+                             item.get('source_bias', 0), weight)
 
 
 # ═══ SEVERITY CANON ROUTE ═════════════════════════════════════════════════════
