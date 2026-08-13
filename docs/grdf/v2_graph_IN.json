@@ -2,32 +2,32 @@
   "country": "IN",
   "date": "2026-08-13",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-13T11:43:48.834621+00:00",
+  "generated_at": "2026-08-13T12:47:21.792179+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 46,
+      "score": 45,
       "props": {
-        "risk_score": 46
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "stable"
+      "score": 45,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "stable"
+      "score": 30,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-climate",
@@ -54,7 +54,7 @@
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
+      "score": 10,
       "trend": "stable"
     },
     {
@@ -80,11 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IN-Наводнение",
+      "id": "SIGNAL-IN-Отчет_о_са",
       "type": "Signal",
-      "label": "Наводнение — Индия",
-      "severity": 86,
-      "domain": "climate"
+      "label": "Отчет о санкциях Совета Безопасности ООН",
+      "severity": 63,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-IN-Наводнение",
@@ -94,10 +94,10 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-Климатичес",
+      "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
-      "label": "Климатический сигнал — Южная Азия",
-      "severity": 77,
+      "label": "Наводнение — Индия",
+      "severity": 86,
       "domain": "climate"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-IN",
@@ -136,7 +136,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IN",
@@ -163,10 +163,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IN-Наводнение",
-      "to": "DOMAIN-IN-climate",
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.86
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-Отчет_о_са",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.63
     },
     {
       "from": "SIGNAL-IN-Наводнение",
@@ -175,10 +196,10 @@
       "weight": 0.89
     },
     {
-      "from": "SIGNAL-IN-Климатичес",
+      "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.77
+      "weight": 0.86
     }
   ]
 }
