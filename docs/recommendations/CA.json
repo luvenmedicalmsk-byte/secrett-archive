@@ -2,11 +2,20 @@
   "country": "CA",
   "country_name": "Канада",
   "date": "2026-08-13",
-  "generated_at": "2026-08-13T14:19:53.281324+00:00",
-  "srs_score": 54,
+  "generated_at": "2026-08-13T15:48:12.436082+00:00",
+  "srs_score": 57,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+7/день",
+      "detail": "Скорость ухудшения 7 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 7,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-04",
       "category": "STRATEGIC",
@@ -19,10 +28,10 @@
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.2pt",
-      "detail": "Систематическая ошибка прогнозов +4.2pt снижает достоверность сценарного анализа.",
-      "metric_value": 4.17,
-      "urgency": 60.85,
+      "title": "Системное смещение прогнозов: +4.0pt",
+      "detail": "Систематическая ошибка прогнозов +4.0pt снижает достоверность сценарного анализа.",
+      "metric_value": 4.05,
+      "urgency": 60.25,
       "source": "validation_bias"
     },
     {
@@ -44,7 +53,7 @@
       "source": "confidence_drift"
     }
   ],
-  "risk_count": 4,
+  "risk_count": 5,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -56,31 +65,28 @@
       "source": "high_alpha"
     },
     {
-      "id": "O-04",
-      "category": "WATCHLIST",
-      "title": "Тренд деэскалации: Δ=-12/день",
-      "detail": "Риск снижается со скоростью 12 пунктов в сутки. Возможность для стратегической деэскалации.",
-      "metric_value": -12,
-      "impact": 65,
-      "source": "delta_trend"
-    },
-    {
       "id": "O-06",
       "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 78.7% успех",
-      "detail": "Исторический процент успешных решений 78.7% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 78.7,
+      "title": "Стратегия результативна: 76.6% успех",
+      "detail": "Исторический процент успешных решений 76.6% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 76.6,
       "impact": 65,
       "source": "decision_success"
     }
   ],
-  "opp_count": 3,
+  "opp_count": 2,
   "emerging_shifts": [
     {
       "type": "improving",
       "title": "Тренд: снижение срочности",
       "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
       "direction": "down"
+    },
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d30 точнее, d7 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d7. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
     }
   ],
   "forecast_degradation": [
@@ -98,16 +104,25 @@
   "forecast_improvement": [
     {
       "type": "horizon_strength",
-      "horizon": "d7",
-      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
+      "horizon": "d30",
+      "detail": "Лучший горизонт прогноза: d30. Рассмотреть расширение использования."
     },
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+6.68pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+6.53pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+7/день",
+      "rec_score": 62,
+      "metric_value": 7,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -118,21 +133,12 @@
       "source": "high_alpha"
     },
     {
-      "id": "O-04",
-      "type": "opportunity",
-      "priority": "WATCHLIST",
-      "title": "Тренд деэскалации: Δ=-12/день",
-      "rec_score": 51,
-      "metric_value": -12,
-      "source": "delta_trend"
-    },
-    {
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 78.7% успех",
+      "title": "Стратегия результативна: 76.6% успех",
       "rec_score": 51,
-      "metric_value": 78.7,
+      "metric_value": 76.6,
       "source": "decision_success"
     },
     {
@@ -148,9 +154,9 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.2pt",
+      "title": "Системное смещение прогнозов: +4.0pt",
       "rec_score": 47,
-      "metric_value": 4.17,
+      "metric_value": 4.05,
       "source": "validation_bias"
     },
     {
@@ -174,6 +180,14 @@
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+7/день",
+      "rationale": "Скорость ухудшения 7 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-04",
       "priority": "STRATEGIC",
       "action": "Реагировать: Множественные диагностические проблемы: 3",
@@ -184,18 +198,10 @@
     {
       "id": "ACT-R-03",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Системное смещение прогнозов: +4.2pt",
-      "rationale": "Систематическая ошибка прогнозов +4.2pt снижает достоверность сценарного анализа.",
+      "action": "Реагировать: Системное смещение прогнозов: +4.0pt",
+      "rationale": "Систематическая ошибка прогнозов +4.0pt снижает достоверность сценарного анализа.",
       "deadline": "72 часа",
       "source": "validation_bias"
-    },
-    {
-      "id": "ACT-R-05",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
     },
     {
       "id": "ACT-O-05",
@@ -206,19 +212,19 @@
       "source": "high_alpha"
     },
     {
-      "id": "ACT-O-04",
+      "id": "ACT-O-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Тренд деэскалации: Δ=-12/день",
-      "rationale": "Риск снижается со скоростью 12 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "action": "Использовать: Стратегия результативна: 76.6% успех",
+      "rationale": "Исторический процент успешных решений 76.6% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
-      "source": "delta_trend"
+      "source": "decision_success"
     }
   ],
   "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 40,
-  "delta": -12,
+  "risk_score": 47,
+  "delta": 7,
   "domain": "social",
   "history_depth": 77
 }
