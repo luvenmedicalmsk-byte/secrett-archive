@@ -2109,6 +2109,8 @@ def _severity_for(item, weight):
     # введённое «для единообразия с _severity_canon_recheck», обрезало
     # текст и занижало оценку. Второй проход работает с summary[:300]
     # по своей причине — там пересчёт уже собранного события.
+    _t111('sev_for_entry', item, has_desc=bool(item.get('desc')),
+          has_summary=bool(item.get('summary')))
     _sev_text = item.get('desc') or item.get('summary') or ''
     _sv = estimate_severity(item.get('title', ''), _sev_text,
                             item.get('source_bias', 0), weight)
@@ -4108,6 +4110,9 @@ def process_events(raw_items):
             _ev["event_kind"] = 'geophysical' if any(w in _bk for w in (
                 'землетряс','earthquake','quake','магнитуд','сейсм','seismic','афтершок','aftershock',
                 'вулкан','volcano','извержен','eruption','цунами','tsunami','оползен','landslide','сель ')) else 'meteorological'
+        # TASK-111 · ВРЕМЕННАЯ ДИАГНОСТИКА
+        _t111('appended', _ev, sev_at_append=_ev.get('severity'))
+        # ═══ КОНЕЦ ═══
         events.append(_ev)
 
     # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
