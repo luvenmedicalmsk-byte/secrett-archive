@@ -2,60 +2,60 @@
   "country": "IR",
   "date": "2026-08-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-14T10:51:56.624008+00:00",
+  "generated_at": "2026-08-14T11:45:14.812760+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 28,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 14,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 3,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 3,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 7,
-      "trend": "down"
+      "score": 10,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 8,
-      "trend": "down"
+      "score": 11,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IR-Дональд_Тр",
+      "type": "Signal",
+      "label": "Дональд Трамп возложил вину за кибератак",
+      "severity": 60,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-IR-ОАЭ_размор",
       "type": "Signal",
       "label": "ОАЭ разморозили и передали Ирану несколь",
@@ -92,13 +99,6 @@
       "label": "Военный конфликт — Ближний Восток (систе",
       "severity": 84,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IR-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 74,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-IR",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Дональд_Тр",
+      "to": "DOMAIN-IR-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-IR-ОАЭ_размор",
       "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.84
-    },
-    {
-      "from": "SIGNAL-IR-Геополитич",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.74
     }
   ]
 }
