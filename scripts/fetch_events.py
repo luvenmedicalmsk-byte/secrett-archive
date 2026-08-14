@@ -11994,11 +11994,29 @@ def _save_tr_disk():
         print('  [TR] cache save err: ' + str(_e), file=sys.stderr)
 
 def is_english(text):
-    """Проверяет что текст на английском (нужен перевод)"""
+    """Нужен ли перевод. Доля латиницы среди БУКВ, а не среди всех символов.
+
+    Прежний порог (кириллица < 15% от длины строки) создавал ловушку:
+    словарный fallback simple_translate подставлял отдельные слова
+    в английскую фразу, доля кириллицы поднималась выше 15%, и текст
+    переставал считаться английским — то есть больше НИКОГДА не попадал
+    на полный перевод. В ленте застряли:
+
+      «Vance Says Cheap нефть and газ Is Top U.S. Priority»
+      «Potential тропический циклон One-C moving toward Hawaii»
+      «Monsoon-driven лесных пожаров may have shaped human evolution»
+
+    Счёт по длине строки вместо букв усугублял: пробелы и знаки
+    препинания разбавляли обе доли и порог 0.3 для латиницы срабатывал
+    непредсказуемо на коротких заголовках.
+    """
     if not text: return False
     cyrillic = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
     latin = sum(1 for c in text if c.isalpha() and c.isascii())
-    return cyrillic < len(text) * 0.15 and latin > len(text) * 0.3
+    letters = cyrillic + latin
+    if letters < 8:
+        return False
+    return latin / letters > 0.45
 
 _CAPS_ACRONYMS = {'США','ЕС','РФ','ООН','НАТО','ВВП','ВНП','ЦБ','ФРС','МВФ','ВОЗ','ОПЕК','ЕАЭС','СНГ','ВТО','МИД','ВСУ','ПВО','БПЛА','НПЗ','ИИ','ЕЦБ','АЭС','ГЭС','ЧС','МЧС','ФБР','ЦРУ','АНБ','WSJ','FT','AI','EU','US','UN','GDP','IT','USA','OPEC','NATO','IMF','WHO','FED','UK','UAE','BRICS','БРИКС'}
 def _normalize_caps(title):
@@ -12683,6 +12701,13 @@ def translate_batch(texts):
     }
     _COMPILED = {eng: re.compile(r'\b' + re.escape(eng) + r'\b', re.IGNORECASE) for eng in WORD_MAP}
     def simple_translate(text):
+        """Словарный fallback. Применяется ТОЛЬКО когда OpenAI недоступен.
+
+        Раньше вызывался всегда и портил текст: подстановка отдельных
+        слов в английскую фразу даёт «Cheap нефть and газ», что читается
+        хуже чистого английского и, из-за прежнего порога is_english,
+        блокировало последующий полный перевод.
+        """
         if not text or not is_english(text):
             return text
         result = text; tl = text.lower()
