@@ -2,32 +2,32 @@
   "country": "IN",
   "date": "2026-08-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-14T09:34:56.203142+00:00",
+  "generated_at": "2026-08-14T10:51:56.618177+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 38,
+      "score": 42,
       "props": {
-        "risk_score": 38
+        "risk_score": 42
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 31,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 8,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 9,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IN-Геополитич",
+      "id": "SIGNAL-IN-Климатичес",
       "type": "Signal",
-      "label": "Геополитический процесс — Индия",
-      "severity": 56,
-      "domain": "geopolitical"
+      "label": "Климатический сигнал — Южная Азия",
+      "severity": 77,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-IN",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IN",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.63
     },
     {
-      "from": "SIGNAL-IN-Геополитич",
-      "to": "DOMAIN-IN-geopolitical",
+      "from": "SIGNAL-IN-Климатичес",
+      "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.77
     }
   ]
 }
