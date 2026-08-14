@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-08-14",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-14T06:38:12.082391+00:00",
+  "generated_at": "2026-08-14T07:09:12.483135+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 53,
+      "score": 54,
       "props": {
-        "risk_score": 53
+        "risk_score": 54
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 26,
-      "trend": "down"
+      "score": 27,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
+      "score": 14,
       "trend": "stable"
     },
     {
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 15,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -87,17 +87,17 @@
       "domain": "economic"
     },
     {
+      "id": "SIGNAL-US-Необычно_т",
+      "type": "Signal",
+      "label": "Необычно теплая погода, которая быстро т",
+      "severity": 53,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-US-Замедление",
       "type": "Signal",
       "label": "Замедление атлантического течения может ",
       "severity": 51,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-Система_уп",
-      "type": "Signal",
-      "label": "Система управления критической инфрастру",
-      "severity": 52,
       "domain": "climate"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.27
     },
     {
       "from": "COUNTRY-US",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-В_2025_год",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
     {
+      "from": "SIGNAL-US-Необычно_т",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-US-Замедление",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.51
-    },
-    {
-      "from": "SIGNAL-US-Система_уп",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
