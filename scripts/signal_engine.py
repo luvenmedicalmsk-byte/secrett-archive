@@ -1484,7 +1484,42 @@ def _thread_macro_history(macros, prev_macros, now):
         # ADR-D4 шаг 4: timeline — журнал (prev + текущий вклад), не пересборка
         if MACRO_TL_ACCUM:
             m['timeline']=_merge_macro_timeline(prev.get('timeline'), m.get('timeline'), now)
+            # Гео-фильтр применяется ПОСЛЕ слияния. При сборке он очищает
+            # только текущий вклад, но накопленный журнал приходит из
+            # prev.timeline и возвращает чужие записи обратно: в карточке
+            # «Военный конфликт — Россия — Украина» после правки фильтра
+            # остался 21 ближневосточный пункт («Хуситы заявили о нападении
+            # на саудовский НПЗ», «Пентагон: 153 убитых в Йемене»),
+            # потому что они лежали в журнале с прошлых прогонов.
+            m['timeline']=_macro_tl_geo_clean(m, m['timeline'])
             m['history']=m['timeline']
+
+
+def _macro_tl_geo_clean(macro, tl):
+    """Чистка накопленного журнала по географии места процесса.
+
+    Тот же контракт, что и при сборке: типы с однозначной географией,
+    якорь по process_place, запись проходит при пересечении стран,
+    при нераспознанной географии или при словесном упоминании якоря.
+    """
+    _STRICT = ('Шторм', 'Тепловая волна', 'Наводнение', 'Водный дефицит',
+               'Пожарная активность', 'Климатический сигнал', 'Военные удары')
+    if str(macro.get('process_type') or '') not in _STRICT:
+        return tl
+    _a = _MACRO_ANCHOR.get(str(macro.get('process_place') or ''))
+    if not _a or not _GC:
+        return tl
+    _rx = _MACRO_ANCHOR_RX.get(str(macro.get('process_place') or ''))
+    out = []
+    for x in (tl or []):
+        _low = str(x.get('event') or '').lower()
+        try:
+            _pl = {g[0] for _p, g in _GC._places_in(_low)}
+        except Exception:
+            out.append(x); continue
+        if (not _pl) or (_pl & _a) or (_rx and _rx.search(_low)):
+            out.append(x)
+    return out
 
 
 def _reconstruct_macro(signals, now):
