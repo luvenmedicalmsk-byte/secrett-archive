@@ -100,8 +100,21 @@ def _macro_for(place, iso):
         if GEO_MACRO_CANARY and iso == 'RU' and place:
             pl = str(place).strip().lower()
             if pl in ('россия', 'рф'): return 'Россия'
+            # ru_region отдаёт КОНТИНЕНТ: для Ингушетии, Чечни, Москвы
+            # и Ростова возвращалось 'Европа'. Географически верно, но
+            # для процессной модели это ставило российские регионы
+            # в одну группу с Германией и Австрией: под-процесс
+            # «Шторм — Европа» получал countries=['RU'] и evidence
+            # «Гроза: Республика Ингушетия», которые попадали
+            # в хронологию европейского системного процесса.
+            #
+            # Ветка ниже (RADAR_GEO_CANON=False) это уже учитывает:
+            #   return 'Россия'  # RU-регион вне справочника → страновой, НЕ Европа
+            # Здесь то же правило: макрорегион РФ-события — 'Россия'
+            # независимо от континента, к которому относится регион.
             _rr = _gcn.ru_region(pl)
-            return _rr['macro'] if _rr else 'Россия'
+            _mr = _rr['macro'] if _rr else None
+            return 'Россия' if (not _mr or _mr == 'Европа') else _mr
         return _gcn.radar_macro(iso)
     if GEO_MACRO_CANARY and iso=='RU' and place:
         pl=str(place).strip().lower()
