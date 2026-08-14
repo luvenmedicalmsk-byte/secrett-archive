@@ -2,96 +2,96 @@
   "country": "IL",
   "country_name": "Израиль",
   "date": "2026-08-14",
-  "generated_at": "2026-08-14T19:44:46.398053+00:00",
-  "strategy_score": 36,
+  "generated_at": "2026-08-14T20:06:23.851742+00:00",
+  "strategy_score": 22,
   "strategy_confidence": 76,
-  "urgency_level": "high",
-  "urgency_level_ru": "Высокая",
-  "urgency_color": "#f59e0b",
-  "preparedness_level": "active",
-  "preparedness_level_ru": "Активная готовность",
-  "monitoring_priority": 3,
-  "monitoring_ru": "Каждые 6 часов",
+  "urgency_level": "moderate",
+  "urgency_level_ru": "Умеренная",
+  "urgency_color": "#fbbf24",
+  "preparedness_level": "enhanced",
+  "preparedness_level_ru": "Повышенная готовность",
+  "monitoring_priority": 2,
+  "monitoring_ru": "Дважды в сутки",
   "actions": [
     {
-      "id": "E-01",
+      "id": "C-01",
       "priority": 1,
-      "action": "Удержать деэскалационный потенциал",
-      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
-      "trigger": "escalating + best dominant",
-      "expiry": "state transition",
+      "action": "Ожидать деэскалации",
+      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
+      "trigger": "contained + best dominant",
+      "expiry": "state change or prob_best < 25%",
       "confidence": 76,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     },
     {
-      "id": "E-02",
+      "id": "C-02",
       "priority": 2,
-      "action": "Инициировать дипломатические/превентивные контакты",
-      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
-      "trigger": "prob_best > 20%",
-      "expiry": "prob_best < 15%",
+      "action": "Подготовить план выхода из контролируемой фазы",
+      "detail": "Определить индикаторы для перевода в мониторинговый режим",
+      "trigger": "contained > 5d",
+      "expiry": "stabilization transition",
       "confidence": 76,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "escalating",
+  "state": "contained",
   "dominant_scenario": "best",
-  "scenario_score": 25,
+  "scenario_score": 24,
   "instability": 26,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 70 (+8pt)",
-      "leads_to": "critical",
+      "condition": "risk_score ≥ 69 (+8pt)",
+      "leads_to": "escalating",
       "probability": 18
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "critical",
+      "leads_to": "escalating",
       "probability": 13
     },
     {
-      "condition": "Worst-case 30d ≥ 94",
-      "leads_to": "critical",
+      "condition": "Worst-case 30d ≥ 79",
+      "leads_to": "escalating",
       "probability": 23
     },
     {
       "condition": "Новый критический драйвер в economy",
-      "leads_to": "critical",
+      "leads_to": "escalating",
       "probability": 18
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 69,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
-    },
-    {
-      "horizon": "90 дней",
-      "score": 61,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
-    },
-    {
-      "horizon": "180 дней",
       "score": 54,
       "state": "contained",
       "urgency": "moderate",
       "preparedness": "enhanced"
     },
     {
-      "horizon": "365 дней",
+      "horizon": "90 дней",
       "score": 48,
       "state": "contained",
       "urgency": "moderate",
       "preparedness": "enhanced"
+    },
+    {
+      "horizon": "180 дней",
+      "score": 43,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
+    },
+    {
+      "horizon": "365 дней",
+      "score": 38,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     }
   ],
   "probabilities": {
