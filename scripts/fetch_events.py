@@ -2045,41 +2045,6 @@ def cyber_metrics(source, title, desc):
     return m
 
 
-_T111_LC = []
-
-
-def _t111(tag, obj, **kw):
-    """TASK-111 · ВРЕМЕННАЯ ДИАГНОСТИКА · УДАЛИТЬ ПОСЛЕ TRACE.
-
-    Жизненный цикл severity для события об экспорте дизеля.
-    Только чтение полей, ничего не присваивает.
-    """
-    try:
-        _t = str(obj.get('title') or '')
-        _tl = _t.lower()
-        # Источник англоязычный: на момент append title ещё не переведён.
-        # Прежний фильтр искал только русский вариант и молчал на трёх
-        # точках из четырёх, из-за чего возник ложный вывод «событие
-        # не проходит через pipeline».
-        if not any(_k in _tl for _k in (
-                'кспорт дизел', 'diesel export', 'russian diesel',
-                'diesel exports', 'multi-year low')):
-            return
-        rec = {'tag': tag, 'id': obj.get('id'), 'title': _t[:70],
-               'title_lang': ('ru' if any(_c in _tl for _c in 'абвгдеёжзий') else 'en'),
-               'severity': obj.get('severity'),
-               'first_seen': obj.get('first_seen'),
-               'date': obj.get('date'),
-               'domain': obj.get('domain'),
-               'bias': obj.get('source_bias'),
-               'route': obj.get('_sev_route'),
-               'force': obj.get('_force_severity')}
-        rec.update(kw)
-        _T111_LC.append(rec)
-    except Exception:
-        pass
-
-
 def _severity_for(item, weight):
     """Единая маршрутизация severity: force -> cyber -> news (S34A).
     ВАЖНО (Layer Sufficiency): cyber-маршрут выбирается ПО ИСТОЧНИКУ, а не по сути события.
@@ -2117,16 +2082,9 @@ def _severity_for(item, weight):
     # введённое «для единообразия с _severity_canon_recheck», обрезало
     # текст и занижало оценку. Второй проход работает с summary[:300]
     # по своей причине — там пересчёт уже собранного события.
-    _t111('sev_for_entry', item, has_desc=bool(item.get('desc')),
-          has_summary=bool(item.get('summary')))
     _sev_text = item.get('desc') or item.get('summary') or ''
-    _sv = estimate_severity(item.get('title', ''), _sev_text,
-                            item.get('source_bias', 0), weight)
-    # TASK-111 · ВРЕМЕННАЯ ДИАГНОСТИКА
-    _t111('estimate_called', item, computed=_sv, input_len=len(_sev_text),
-          input_head=_sev_text[:60], weight=weight)
-    # ═══ КОНЕЦ ═══
-    return _sv
+    return estimate_severity(item.get('title', ''), _sev_text,
+                             item.get('source_bias', 0), weight)
 
 
 # ═══ SEVERITY CANON ROUTE ═════════════════════════════════════════════════════
@@ -4063,9 +4021,6 @@ def process_events(raw_items):
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
-        # TASK-111 · ВРЕМЕННАЯ ДИАГНОСТИКА
-        _t111('after_build', item, severity_var=severity)
-        # ═══ КОНЕЦ ═══
         _raw = _strip_promo(strip_html(item.get('desc','')).strip())
         if len(_raw) <= 1100:
             summary = _raw
@@ -4118,9 +4073,6 @@ def process_events(raw_items):
             _ev["event_kind"] = 'geophysical' if any(w in _bk for w in (
                 'землетряс','earthquake','quake','магнитуд','сейсм','seismic','афтершок','aftershock',
                 'вулкан','volcano','извержен','eruption','цунами','tsunami','оползен','landslide','сель ')) else 'meteorological'
-        # TASK-111 · ВРЕМЕННАЯ ДИАГНОСТИКА
-        _t111('appended', _ev, sev_at_append=_ev.get('severity'))
-        # ═══ КОНЕЦ ═══
         events.append(_ev)
 
     # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
@@ -14335,17 +14287,6 @@ def save_enriched(events, previous_snapshot=None):
             if LINEAGE:
                 _se_post = {e.get('_obs_tid') for e in enriched["events"] if e.get('_obs_tid')}
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
-            # TASK-111 · состояние ПЕРЕД гео-контрактом
-            for _e111 in enriched["events"]:
-                _t111('before_geo', _e111,
-                      sev_decision=(_e111.get('severity_decision') or {}).get('final'))
-            try:
-                (OUTPUT_PATH.parent / '_t111_lifecycle.json').write_text(
-                    json.dumps(_T111_LC, ensure_ascii=False, indent=1), encoding='utf-8')
-                print(f"  [T111] записей: {len(_T111_LC)}", file=sys.stderr)
-            except Exception as _we:
-                print(f"  [T111] write failed: {_we}", file=sys.stderr)
-            # ═══ КОНЕЦ ═══
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             _role_shadow_report(enriched["events"])   # TASK-092 · ROLE SHADOW · read-only
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
