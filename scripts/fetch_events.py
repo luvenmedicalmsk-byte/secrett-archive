@@ -2056,9 +2056,17 @@ def _t111(tag, obj, **kw):
     """
     try:
         _t = str(obj.get('title') or '')
-        if 'кспорт дизел' not in _t:
+        _tl = _t.lower()
+        # Источник англоязычный: на момент append title ещё не переведён.
+        # Прежний фильтр искал только русский вариант и молчал на трёх
+        # точках из четырёх, из-за чего возник ложный вывод «событие
+        # не проходит через pipeline».
+        if not any(_k in _tl for _k in (
+                'кспорт дизел', 'diesel export', 'russian diesel',
+                'diesel exports', 'multi-year low')):
             return
-        rec = {'tag': tag, 'id': obj.get('id'), 'title': _t[:52],
+        rec = {'tag': tag, 'id': obj.get('id'), 'title': _t[:70],
+               'title_lang': ('ru' if any(_c in _tl for _c in 'абвгдеёжзий') else 'en'),
                'severity': obj.get('severity'),
                'first_seen': obj.get('first_seen'),
                'date': obj.get('date'),
