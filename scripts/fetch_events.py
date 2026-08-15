@@ -2048,7 +2048,7 @@ def cyber_metrics(source, title, desc):
 _T112A_CAP = []
 
 
-def _t112a_capture(item, sev_input, base):
+def _t112a_capture(item, sev_input, base, weight=None):
     """TASK-112A · ВРЕМЕННЫЙ READ-ONLY CAPTURE · УДАЛИТЬ ПОСЛЕ ЗАМЕРА.
 
     Фиксирует ОРИГИНАЛЬНЫЙ вход severity до перевода. Нужен потому,
@@ -2080,6 +2080,13 @@ def _t112a_capture(item, sev_input, base):
             'severity_input_len': len(sev_input or ''),
             'base_severity': base,
             'bias': item.get('source_bias'),
+            # Gate 85.5% провалился: без weight и маршрута воспроизвести
+            # вызов нельзя. Вес приходит из _gov, маршрут выбирает ветку
+            # шкалы (news / cyber / disaster), их отсутствие давало
+            # расхождение до 22 баллов на одном событии.
+            'weight': weight,
+            'sev_route': item.get('_sev_route'),
+            'is_cyber': bool(item.get('_cyber') or item.get('cyber')),
         })
     except Exception:
         pass
@@ -2126,7 +2133,7 @@ def _severity_for(item, weight):
     _sv = estimate_severity(item.get('title', ''), _sev_text,
                             item.get('source_bias', 0), weight)
     # TASK-112A · ВРЕМЕННЫЙ CAPTURE
-    _t112a_capture(item, _sev_text, _sv)
+    _t112a_capture(item, _sev_text, _sv, weight)
     # ═══ КОНЕЦ ═══
     return _sv
 
