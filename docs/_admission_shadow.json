@@ -1,64 +1,64 @@
 {
-  "generated": "2026-08-15T11:12:13Z",
+  "generated": "2026-08-15T11:43:36Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 601,
-    "DENY_COMMENTARY": 264,
+    "PASS_FACT": 605,
+    "DENY_COMMENTARY": 259,
     "UNMATCHED": 5,
     "DENY_FEATURE": 2,
     "DENY_BACKGROUND": 3,
     "DENY_STATE_ONLY": 1
   },
   "kpi": {
-    "processes_total": 876,
-    "matched": 871,
+    "processes_total": 875,
+    "matched": 870,
     "unmatched": 5,
     "coverage_pct": 99.4,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 69.0,
-    "admission_deny_rate": 31.0,
-    "processes_without_fact": 270,
+    "admission_pass_rate": 69.5,
+    "admission_deny_rate": 30.5,
+    "processes_without_fact": 265,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 248,
-      "sample": 817,
-      "agreement_pct": 93.1,
-      "decision_agreement_pct": 93.1,
-      "critical_errors": 56,
+      "processes": 249,
+      "sample": 807,
+      "agreement_pct": 92.7,
+      "decision_agreement_pct": 92.7,
+      "critical_errors": 59,
       "truth_ratio_pct": 94.3,
       "error_matrix": {
+        "FACT_EVENT→COMMENTARY": 43,
         "COMMENTARY→FACT_EVENT": 14,
-        "FACT_EVENT→COMMENTARY": 40,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "FACT_EVENT→BACKGROUND": 1
       }
     },
     "historical": {
-      "processes": 876,
-      "sample": 1884,
-      "agreement_pct": 93.4,
-      "decision_agreement_pct": 93.5,
-      "critical_errors": 123,
+      "processes": 875,
+      "sample": 1872,
+      "agreement_pct": 93.2,
+      "decision_agreement_pct": 93.3,
+      "critical_errors": 126,
       "error_matrix": {
+        "FACT_EVENT→COMMENTARY": 95,
         "COMMENTARY→FACT_EVENT": 23,
-        "FACT_EVENT→COMMENTARY": 92,
         "STATE_CONFIRMATION→FACT_EVENT": 5,
         "FACT_EVENT→BACKGROUND": 3,
         "STATE_CONFIRMATION→COMMENTARY": 1
       }
     },
     "events_stream": {
-      "sample": 354,
-      "agreement_pct": 93.5,
-      "decision_agreement_pct": 93.5,
-      "critical_errors": 23,
+      "sample": 348,
+      "agreement_pct": 93.1,
+      "decision_agreement_pct": 93.1,
+      "critical_errors": 24,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 17,
+        "FACT_EVENT→COMMENTARY": 18,
         "COMMENTARY→FACT_EVENT": 5,
         "STATE_CONFIRMATION→FACT_EVENT": 1
       }
@@ -71,33 +71,33 @@
     }
   },
   "class_source": {
+    "evidence_sic": 1872,
     "shadow_title_only": 259,
-    "evidence_sic": 1884,
     "event_sic": 4
   },
   "truth_ratio_pct": 87.9,
   "domain_statistics": {
-    "climate": {
-      "pass": 232,
-      "deny": 30,
-      "unmatched": 3
-    },
-    "geopolitics": {
-      "pass": 185,
-      "deny": 71
-    },
     "social": {
       "pass": 42,
       "deny": 43
     },
+    "climate": {
+      "pass": 231,
+      "deny": 30,
+      "unmatched": 3
+    },
+    "economy": {
+      "pass": 85,
+      "deny": 82,
+      "unmatched": 2
+    },
+    "geopolitics": {
+      "pass": 186,
+      "deny": 70
+    },
     "technology": {
       "pass": 61,
       "deny": 40
-    },
-    "economy": {
-      "pass": 81,
-      "deny": 86,
-      "unmatched": 2
     }
   },
   "deny_impact": [
@@ -108,9 +108,9 @@
       "severity": 99,
       "pressure": 81,
       "first_seen": "2026-06-24",
-      "evidence_count": 10,
+      "evidence_count": 13,
       "evidence_classes": {
-        "COMMENTARY": 10
+        "COMMENTARY": 13
       },
       "status": "active",
       "causal_links": 0,
@@ -235,6 +235,21 @@
       },
       "status": "dormant",
       "causal_links": 2,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "tech-технологич-сша-4da7",
+      "title": "Технологический сигнал — США",
+      "domain": "technology",
+      "severity": 65,
+      "pressure": 62,
+      "first_seen": "2026-06-22",
+      "evidence_count": 4,
+      "evidence_classes": {
+        "COMMENTARY": 4
+      },
+      "status": "active",
+      "causal_links": 7,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -385,21 +400,6 @@
       },
       "status": "active",
       "causal_links": 3,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "tech-технологич-сша-4da7",
-      "title": "Технологический сигнал — США",
-      "domain": "technology",
-      "severity": 62,
-      "pressure": 32,
-      "first_seen": "2026-06-22",
-      "evidence_count": 2,
-      "evidence_classes": {
-        "COMMENTARY": 2
-      },
-      "status": "active",
-      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -632,7 +632,7 @@
       "title": "Социальный процесс — США",
       "domain": "social",
       "severity": 62,
-      "pressure": 37,
+      "pressure": 43,
       "first_seen": "2026-07-20",
       "evidence_count": 2,
       "evidence_classes": {
@@ -640,7 +640,7 @@
         "COMMENTARY": 1
       },
       "status": "dormant",
-      "causal_links": 1,
+      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -933,14 +933,14 @@
       "title": "Социальный процесс — США",
       "domain": "social",
       "severity": 58,
-      "pressure": 42,
+      "pressure": 48,
       "first_seen": "2026-07-03",
       "evidence_count": 2,
       "evidence_classes": {
         "COMMENTARY": 2
       },
       "status": "active",
-      "causal_links": 0,
+      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1014,6 +1014,13 @@
       "delta": null
     },
     {
+      "signal_id": "tech-технологич-сша-4da7",
+      "domain": "technology",
+      "legacy": 65,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "tech-уязвимость-сша-f6e8",
       "domain": "technology",
       "legacy": 60,
@@ -1035,6 +1042,13 @@
       "delta": null
     },
     {
+      "signal_id": "soci-социальный-сша-5278",
+      "domain": "social",
+      "legacy": 58,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-валютныйры-сша-a47b",
       "domain": "economy",
       "legacy": 32,
@@ -1052,20 +1066,6 @@
       "signal_id": "econ-топливныйр-сша-8442",
       "domain": "economy",
       "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "soci-социальный-сша-5278",
-      "domain": "social",
-      "legacy": 58,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-сша-a91e",
-      "domain": "geopolitics",
-      "legacy": 49,
       "shadow": null,
       "delta": null
     },
@@ -1126,13 +1126,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-испания-d064",
-      "domain": "economy",
-      "legacy": 44,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-рыноктруда-глобальн-58dd",
       "domain": "economy",
       "legacy": 34,
@@ -1164,13 +1157,6 @@
       "signal_id": "clim-macroклима-ближнийв-7137",
       "domain": "climate",
       "legacy": 63,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "tech-технологич-сша-4da7",
-      "domain": "technology",
-      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1425,11 +1411,25 @@
       "legacy": 45,
       "shadow": null,
       "delta": null
+    },
+    {
+      "signal_id": "econ-пузырьакти-сша-725d",
+      "domain": "economy",
+      "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-эпидемиоло-сша-ccda",
+      "domain": "social",
+      "legacy": 58,
+      "shadow": null,
+      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 0,
-    "31-50": 174,
+    "31-50": 169,
     "51-70": 92,
     "71-90": 3,
     "91-100": 1
