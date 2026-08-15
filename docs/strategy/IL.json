@@ -2,102 +2,102 @@
   "country": "IL",
   "country_name": "Израиль",
   "date": "2026-08-15",
-  "generated_at": "2026-08-15T16:57:26.922199+00:00",
-  "strategy_score": 23,
-  "strategy_confidence": 75,
-  "urgency_level": "moderate",
-  "urgency_level_ru": "Умеренная",
-  "urgency_color": "#fbbf24",
-  "preparedness_level": "enhanced",
-  "preparedness_level_ru": "Повышенная готовность",
-  "monitoring_priority": 2,
-  "monitoring_ru": "Дважды в сутки",
+  "generated_at": "2026-08-15T17:30:09.092121+00:00",
+  "strategy_score": 12,
+  "strategy_confidence": 76,
+  "urgency_level": "low",
+  "urgency_level_ru": "Низкая",
+  "urgency_color": "#22c55e",
+  "preparedness_level": "routine",
+  "preparedness_level_ru": "Плановый режим",
+  "monitoring_priority": 1,
+  "monitoring_ru": "Ежедневно",
   "actions": [
     {
-      "id": "C-01",
+      "id": "S-01",
       "priority": 1,
-      "action": "Ожидать деэскалации",
-      "detail": "Риск контролируется, лучший сценарий наиболее вероятен — удерживать позицию",
-      "trigger": "contained + best dominant",
-      "expiry": "state change or prob_best < 25%",
-      "confidence": 74,
-      "domain_context": "economy",
+      "action": "Мониторинговый режим",
+      "detail": "Поддерживать стандартный цикл наблюдения, отклонений не выявлено",
+      "trigger": "risk_score < 40 AND dominant = best",
+      "expiry": "risk_score > 45 OR delta > 3",
+      "confidence": 73,
+      "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "C-02",
+      "id": "S-02",
       "priority": 2,
-      "action": "Подготовить план выхода из контролируемой фазы",
-      "detail": "Определить индикаторы для перевода в мониторинговый режим",
-      "trigger": "contained > 5d",
-      "expiry": "stabilization transition",
-      "confidence": 74,
-      "domain_context": "economy",
+      "action": "Обновить базовые прогнозы",
+      "detail": "Благоприятный период для актуализации долгосрочных прогнозов",
+      "trigger": "stabilization state > 7d",
+      "expiry": "state transition",
+      "confidence": 73,
+      "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "contained",
+  "state": "stabilization",
   "dominant_scenario": "best",
   "scenario_score": 26,
-  "instability": 30,
+  "instability": 36,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 67 (+8pt)",
-      "leads_to": "escalating",
-      "probability": 20
+      "condition": "risk_score ≥ 64 (+8pt)",
+      "leads_to": "contained",
+      "probability": 21
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "escalating",
-      "probability": 15
+      "leads_to": "contained",
+      "probability": 18
     },
     {
-      "condition": "Worst-case 30d ≥ 72",
-      "leads_to": "escalating",
-      "probability": 25
+      "condition": "Worst-case 30d ≥ 64",
+      "leads_to": "contained",
+      "probability": 27
     },
     {
-      "condition": "Новый критический драйвер в economy",
-      "leads_to": "escalating",
-      "probability": 19
+      "condition": "Новый критический драйвер в geopolitics",
+      "leads_to": "contained",
+      "probability": 20
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 43,
-      "state": "contained",
-      "urgency": "moderate",
-      "preparedness": "enhanced"
+      "score": 35,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "90 дней",
-      "score": 38,
+      "score": 31,
       "state": "stabilization",
       "urgency": "low",
       "preparedness": "routine"
     },
     {
       "horizon": "180 дней",
-      "score": 34,
+      "score": 27,
       "state": "stabilization",
       "urgency": "low",
       "preparedness": "routine"
     },
     {
       "horizon": "365 дней",
-      "score": 30,
+      "score": 24,
       "state": "stabilization",
       "urgency": "low",
       "preparedness": "routine"
     }
   ],
   "probabilities": {
-    "worst": 25,
-    "stress": 24,
-    "base": 20,
-    "best": 31
+    "worst": 27,
+    "stress": 25,
+    "base": 18,
+    "best": 30
   }
 }

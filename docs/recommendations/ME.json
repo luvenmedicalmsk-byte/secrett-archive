@@ -2,11 +2,20 @@
   "country": "ME",
   "country_name": "Черногория",
   "date": "2026-08-15",
-  "generated_at": "2026-08-15T16:57:27.364404+00:00",
-  "srs_score": 61,
+  "generated_at": "2026-08-15T17:30:09.495409+00:00",
+  "srs_score": 62,
   "srs_grade": "C",
   "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "detail": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 15,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-04",
       "category": "STRATEGIC",
@@ -15,6 +24,15 @@
       "metric_value": 3,
       "urgency": 64,
       "source": "diagnostics"
+    },
+    {
+      "id": "R-05",
+      "category": "STRATEGIC",
+      "title": "Смещения в принятии решений (2)",
+      "detail": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
+      "metric_value": 2,
+      "urgency": 54,
+      "source": "decision_bias"
     },
     {
       "id": "R-06",
@@ -26,7 +44,7 @@
       "source": "confidence_drift"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 4,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -40,9 +58,9 @@
     {
       "id": "O-06",
       "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 94.7% успех",
-      "detail": "Исторический процент успешных решений 94.7% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 94.7,
+      "title": "Стратегия результативна: 92.1% успех",
+      "detail": "Исторический процент успешных решений 92.1% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 92.1,
       "impact": 65,
       "source": "decision_success"
     }
@@ -83,16 +101,25 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+7.89pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+7.50pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "rec_score": 57,
+      "metric_value": 15,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (10)",
-      "rec_score": 49,
+      "rec_score": 48,
       "metric_value": 10,
       "source": "high_alpha"
     },
@@ -100,9 +127,9 @@
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 94.7% успех",
-      "rec_score": 46,
-      "metric_value": 94.7,
+      "title": "Стратегия результативна: 92.1% успех",
+      "rec_score": 45,
+      "metric_value": 92.1,
       "source": "decision_success"
     },
     {
@@ -110,9 +137,18 @@
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Множественные диагностические проблемы: 3",
-      "rec_score": 44,
+      "rec_score": 43,
       "metric_value": 3,
       "source": "diagnostics"
+    },
+    {
+      "id": "R-05",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Смещения в принятии решений (2)",
+      "rec_score": 38,
+      "metric_value": 2,
+      "source": "decision_bias"
     },
     {
       "id": "R-06",
@@ -126,12 +162,28 @@
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+15/день",
+      "rationale": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-04",
       "priority": "STRATEGIC",
       "action": "Реагировать: Множественные диагностические проблемы: 3",
       "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
       "deadline": "72 часа",
       "source": "diagnostics"
+    },
+    {
+      "id": "ACT-R-05",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Смещения в принятии решений (2)",
+      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
+      "deadline": "7 дней",
+      "source": "decision_bias"
     },
     {
       "id": "ACT-O-05",
@@ -144,25 +196,17 @@
     {
       "id": "ACT-O-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Стратегия результативна: 94.7% успех",
-      "rationale": "Исторический процент успешных решений 94.7% — выше среднего. Поддерживать текущий подход.",
+      "action": "Использовать: Стратегия результативна: 92.1% успех",
+      "rationale": "Исторический процент успешных решений 92.1% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
-    },
-    {
-      "id": "ACT-R-06",
-      "priority": "WATCHLIST",
-      "action": "Реагировать: Дрейф уверенности прогнозов: -9.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "7 дней",
-      "source": "confidence_drift"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 45,
-  "delta": 0,
-  "domain": "geopolitics",
+  "risk_score": 60,
+  "delta": 15,
+  "domain": "climate",
   "history_depth": 68
 }
