@@ -2045,6 +2045,46 @@ def cyber_metrics(source, title, desc):
     return m
 
 
+_T112A_CAP = []
+
+
+def _t112a_capture(item, sev_input, base):
+    """TASK-112A · ВРЕМЕННЫЙ READ-ONLY CAPTURE · УДАЛИТЬ ПОСЛЕ ЗАМЕРА.
+
+    Фиксирует ОРИГИНАЛЬНЫЙ вход severity до перевода. Нужен потому,
+    что в events.json тексты уже переведены: все 344 события там
+    на русском, включая 288 от англоязычных источников. Сравнивать
+    варианты решения LANGUAGE_GAP на переведённом корпусе нельзя —
+    это не тот вход, что видит движок.
+
+    Ничего не присваивает: только читает поля item и складывает
+    копию в отдельный список.
+    """
+    try:
+        _t = str(item.get('title') or '')
+        _d = str(item.get('desc') or '')
+        _blob = (_t + ' ' + _d)
+        _cyr = sum(1 for c in _blob if '\u0400' <= c <= '\u04FF')
+        _lat = sum(1 for c in _blob if c.isalpha() and c.isascii())
+        _let = _cyr + _lat
+        _T112A_CAP.append({
+            'id': item.get('id') or item.get('_obs_tid'),
+            'source': str(item.get('source') or '')[:40],
+            'lang': ('ru' if (_let and _cyr / _let > 0.5) else 'en'),
+            'cyr_ratio': round(_cyr / _let, 3) if _let else None,
+            'title_original': _t[:200],
+            'desc_original': _d[:600],
+            'title_len': len(_t),
+            'desc_len': len(_d),
+            'severity_input': (sev_input or '')[:600],
+            'severity_input_len': len(sev_input or ''),
+            'base_severity': base,
+            'bias': item.get('source_bias'),
+        })
+    except Exception:
+        pass
+
+
 def _severity_for(item, weight):
     """Единая маршрутизация severity: force -> cyber -> news (S34A).
     ВАЖНО (Layer Sufficiency): cyber-маршрут выбирается ПО ИСТОЧНИКУ, а не по сути события.
@@ -2083,8 +2123,12 @@ def _severity_for(item, weight):
     # текст и занижало оценку. Второй проход работает с summary[:300]
     # по своей причине — там пересчёт уже собранного события.
     _sev_text = item.get('desc') or item.get('summary') or ''
-    return estimate_severity(item.get('title', ''), _sev_text,
-                             item.get('source_bias', 0), weight)
+    _sv = estimate_severity(item.get('title', ''), _sev_text,
+                            item.get('source_bias', 0), weight)
+    # TASK-112A · ВРЕМЕННЫЙ CAPTURE
+    _t112a_capture(item, _sev_text, _sv)
+    # ═══ КОНЕЦ ═══
+    return _sv
 
 
 # ═══ SEVERITY CANON ROUTE ═════════════════════════════════════════════════════
@@ -14287,6 +14331,26 @@ def save_enriched(events, previous_snapshot=None):
             if LINEAGE:
                 _se_post = {e.get('_obs_tid') for e in enriched["events"] if e.get('_obs_tid')}
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
+            # TASK-112A · запись корпуса оригинальных входов · УДАЛИТЬ ПОСЛЕ
+            try:
+                import hashlib as _hl
+                _pay = {'meta': {
+                            'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                            'phase': 'input-capture-read-only',
+                            'captured': len(_T112A_CAP),
+                            'production_schema': 'unchanged'},
+                        'items': _T112A_CAP}
+                _js = json.dumps(_pay, ensure_ascii=False, indent=1)
+                _pay['meta']['trace_hash'] = _hl.md5(
+                    json.dumps(_T112A_CAP, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+                (OUTPUT_PATH.parent / '_t112a_input.json').write_text(
+                    json.dumps(_pay, ensure_ascii=False, indent=1), encoding='utf-8')
+                _en = sum(1 for x in _T112A_CAP if x.get('lang') == 'en')
+                print(f"  [T112A] captured {len(_T112A_CAP)} · EN {_en} · "
+                      f"hash {_pay['meta']['trace_hash'][:12]}", file=sys.stderr)
+            except Exception as _we:
+                print(f"  [T112A] write failed: {_we}", file=sys.stderr)
+            # ═══ КОНЕЦ ═══
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             _role_shadow_report(enriched["events"])   # TASK-092 · ROLE SHADOW · read-only
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
