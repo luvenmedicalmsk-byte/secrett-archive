@@ -2072,11 +2072,15 @@ def _t112a_capture(item, sev_input, base, weight=None):
             'source': str(item.get('source') or '')[:40],
             'lang': ('ru' if (_let and _cyr / _let > 0.5) else 'en'),
             'cyr_ratio': round(_cyr / _let, 3) if _let else None,
-            'title_original': _t[:200],
-            'desc_original': _d[:600],
+            # Лимиты сняты. Gate 98.5% провалился на 19 записях, у всех
+            # desc длиннее 600 символов: движок считал по полному тексту,
+            # capture хранил обрезанный, и маркеры из хвоста терялись.
+            # Это дефект самого захвата, а не production-кода.
+            'title_original': _t,
+            'desc_original': _d,
             'title_len': len(_t),
             'desc_len': len(_d),
-            'severity_input': (sev_input or '')[:600],
+            'severity_input': (sev_input or ''),
             'severity_input_len': len(sev_input or ''),
             'base_severity': base,
             'bias': item.get('source_bias'),
