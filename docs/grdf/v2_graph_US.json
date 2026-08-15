@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-08-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-15T03:15:04.405097+00:00",
+  "generated_at": "2026-08-15T04:04:33.004225+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 51,
+      "score": 52,
       "props": {
-        "risk_score": 51
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 25,
-      "trend": "down"
+      "score": 26,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -87,17 +87,17 @@
       "domain": "economic"
     },
     {
+      "id": "SIGNAL-US-Ученые_опр",
+      "type": "Signal",
+      "label": "Ученые определили новую категорию аномал",
+      "severity": 53,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-US-Замедление",
       "type": "Signal",
       "label": "Замедление атлантического течения может ",
       "severity": 51,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-Система_уп",
-      "type": "Signal",
-      "label": "Система управления критической инфрастру",
-      "severity": 52,
       "domain": "climate"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-В_2025_год",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
     {
+      "from": "SIGNAL-US-Ученые_опр",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-US-Замедление",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.51
-    },
-    {
-      "from": "SIGNAL-US-Система_уп",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
