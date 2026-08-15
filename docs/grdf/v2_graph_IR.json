@@ -2,32 +2,32 @@
   "country": "IR",
   "date": "2026-08-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-15T09:21:28.274878+00:00",
+  "generated_at": "2026-08-15T10:06:56.085099+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 56,
+      "score": 57,
       "props": {
-        "risk_score": 56
+        "risk_score": 57
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 19,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
@@ -47,7 +47,7 @@
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 9,
+      "score": 10,
       "trend": "stable"
     },
     {
@@ -87,17 +87,17 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-IR-ОАЭ_размор",
-      "type": "Signal",
-      "label": "ОАЭ разморозили и передали Ирану несколь",
-      "severity": 52,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-IR-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
       "severity": 84,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Ближний Восток (с",
+      "severity": 79,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-IR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-Дональд_Тр",
       "to": "DOMAIN-IR-technology",
       "type": "AMPLIFIES",
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-IR-ОАЭ_размор",
-      "to": "DOMAIN-IR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
       "from": "SIGNAL-IR-Военный_ко",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.84
+    },
+    {
+      "from": "SIGNAL-IR-Санкционно",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.79
     }
   ]
 }
