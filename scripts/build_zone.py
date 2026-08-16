@@ -61,6 +61,11 @@ def clean(t):
                   .replace("▸", "·").replace("►", "·"))
 
 
+def P_height(text, width, style):
+    """Высота абзаца без отрисовки: нужна для проверки места."""
+    return Paragraph(clean(text), style).wrap(width, 10000)[1]
+
+
 def P(c, text, x, top, width, style):
     """Абзац с автопереносом. top отсчитывается сверху, возвращает новый top."""
     p = Paragraph(clean(text), style)
@@ -120,14 +125,22 @@ def callout(c, text, x, top, width, accent=CYAN, bg=PALE, style=None):
     return top + h + 14
 
 
-def bullets(c, items, x, top, width, style=None, nl=None):
-    """Список. nl — колбэк проверки места, вызывается перед каждым пунктом."""
+def bullets(c, items, x, top, width, style=None, nl=None, state=None):
+    """Список пунктов.
+
+    nl и state передаются вместе: перед каждым пунктом проверяется место
+    под него, и при переносе на новую страницу top читается из state.
+    Без этого длинные списки налезали на колонтитул: проверка стояла
+    только перед секцией целиком.
+    """
     st = style or body
     for it in items:
-        if nl:
-            nl(24)
-            top = nl.__self__['top'] if hasattr(nl, '__self__') else top
+        if nl and state is not None:
+            nl(P_height("• " + it, width, st) + 6)
+            top = state['top']
         top = P(c, "• " + it, x, top, width, st) + 2.5
+        if state is not None:
+            state['top'] = top
     return top
 
 
@@ -258,10 +271,11 @@ def make_body(c, z):
 
     # ── 6 · Проявления ────────────────────────────────────────────
     sec("Риск может проявляться как")
-    state['top'] = bullets(c, z['manifest'], X, state['top'], CW) + 12
+    state['top'] = bullets(c, z['manifest'], X, state['top'], CW, nl=nl, state=state) + 12
 
     # ── 7 · Расшифровка индекса ───────────────────────────────────
-    sec("Расшифровка индекса %d/100" % z['index'])
+    sec("Расшифровка индекса %d/100" % z['index'],
+        need=P_height(z['decode'], CW, body) + 46)
     state['top'] = P(c, z['decode'], X, state['top'], CW, body) + 16
 
     # ── 8 · Таблица диапазонов ────────────────────────────────────
@@ -283,17 +297,17 @@ def make_body(c, z):
     # давала заголовок с номером и без содержимого.
     if z.get('options'):
         sec(z.get('options_title') or 'Варианты')
-        state['top'] = bullets(c, z['options'], X, state['top'], CW) + 12
+        state['top'] = bullets(c, z['options'], X, state['top'], CW, nl=nl, state=state) + 12
     if z.get('filter'):
         sec(z.get('filter_title') or 'Фильтр')
         state['top'] = callout(c, z['filter'], X, state['top'], CW,
                                accent=GOLD, bg=PGOLD) + 16
     if z.get('anchors'):
         sec(z.get('anchors_title') or 'Ключевые показатели')
-        state['top'] = bullets(c, z['anchors'], X, state['top'], CW) + 12
+        state['top'] = bullets(c, z['anchors'], X, state['top'], CW, nl=nl, state=state) + 12
     if z.get('requirements'):
         sec(z.get('requirements_title') or 'Требования')
-        state['top'] = bullets(c, z['requirements'], X, state['top'], CW) + 12
+        state['top'] = bullets(c, z['requirements'], X, state['top'], CW, nl=nl, state=state) + 12
 
     # ── 13 · Инженерный комментарий ───────────────────────────────
     sec("Инженерный комментарий")
@@ -302,7 +316,7 @@ def make_body(c, z):
                    ('comment_under_title', 'comment_under')):
         nl(50)
         state['top'] = P(c, z[tk] + ":", X, state['top'], CW, subhead) + 5
-        state['top'] = bullets(c, z[ik], X, state['top'], CW) + 9
+        state['top'] = bullets(c, z[ik], X, state['top'], CW, nl=nl, state=state) + 9
     state['top'] += 6
 
     # ── 14 · Расшифровка для пользователя ─────────────────────────
@@ -320,13 +334,14 @@ def make_body(c, z):
     state['top'] = table(c, rows, X, state['top'], gw, header=True) + 16
 
     # ── 16-17 · Мини и мониторинг ─────────────────────────────────
-    sec("Мини-информация")
+    sec("Мини-информация", need=P_height(z['mini'], CW, body) + 46)
     state['top'] = P(c, z['mini'], X, state['top'], CW, body) + 16
     sec(z['watch_title'])
-    state['top'] = bullets(c, z['watch'], X, state['top'], CW) + 12
+    state['top'] = bullets(c, z['watch'], X, state['top'], CW, nl=nl, state=state) + 12
 
     # ── 18 · Про Atlas ────────────────────────────────────────────
-    sec("Atlas здесь полезен тем, что показывает")
+    sec("Atlas здесь полезен тем, что показывает",
+        need=P_height(z['atlas_note'], CW, body) + 50)
     state['top'] = P(c, z['atlas_note'], X, state['top'], CW, body) + 14
     nl(34)
     # Подпись поддержки кликабельна: reportlab понимает тег <a href>,
