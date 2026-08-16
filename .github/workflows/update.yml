@@ -31,7 +31,7 @@ jobs:
           python-version: '3.11'
 
       - name: Зависимости (Telethon для MTProto-забора Telegram)
-        run: pip install --quiet telethon
+        run: pip install --quiet telethon reportlab
 
 
       - name: Метка старта прогона (I.2)
@@ -143,6 +143,9 @@ jobs:
           # Генератор читает данные, текста в коде нет. Ошибка не останавливает
           # прогон: аналитические документы не входят в контур ленты сигналов.
           mkdir -p docs/reports
+          # Зоны сохраняются консолью в KV. Забираем их оттуда и кладём
+          # в файл: генератор читает JSON, а не хранилище.
+          python scripts/sync_zones.py || true
           python scripts/build_zone.py docs/country_zones.json docs/reports || true
 
       - name: Коммит и публикация
