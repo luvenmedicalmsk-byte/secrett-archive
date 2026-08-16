@@ -139,14 +139,20 @@ jobs:
         run: |
           python scripts/infra_detection_shadow.py || true
 
-          # Мини-разборы зон риска: PDF собирается из docs/country_zones.json.
-          # Генератор читает данные, текста в коде нет. Ошибка не останавливает
-          # прогон: аналитические документы не входят в контур ленты сигналов.
+      # Мини-разборы зон риска. Отдельный шаг: скрипту нужен ADMIN_KEY
+      # для чтения зон с visibility signal_pro из KV. Внутри чужого шага
+      # переменная недоступна — она объявлена в его собственном env.
+      - name: Мини-разборы зон риска (PDF)
+        continue-on-error: true
+        env:
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+        run: |
           mkdir -p docs/reports
           # Зоны сохраняются консолью в KV. Забираем их оттуда и кладём
           # в файл: генератор читает JSON, а не хранилище.
           python scripts/sync_zones.py || true
           python scripts/build_zone.py docs/country_zones.json docs/reports || true
+          ls -la docs/reports/ || true
 
       - name: Коммит и публикация
         run: |
