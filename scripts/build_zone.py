@@ -278,8 +278,14 @@ def make_body(c, z):
     # ── 18 · Про Atlas ────────────────────────────────────────────
     sec(18, "Atlas здесь полезен тем, что показывает")
     state['top'] = P(c, z['atlas_note'], X, state['top'], CW, body) + 14
-    nl(30)
-    state['top'] = P(c, z['support'], X, state['top'], CW, small)
+    nl(34)
+    # Подпись поддержки кликабельна: reportlab понимает тег <a href>,
+    # и ссылка остаётся рабочей при открытии PDF в браузере и читалках.
+    _sup = z.get('support', '')
+    _url = z.get('support_url', '')
+    if _url:
+        _sup = '<a href="%s" color="#20A9C9">%s</a>' % (_url, _sup)
+    state['top'] = P(c, _sup, X, state['top'], CW, small)
 
     footer(c, z, state['page'])
     c.showPage()
