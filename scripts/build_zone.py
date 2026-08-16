@@ -20,6 +20,9 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph, Table, TableStyle
 
 BASE = Path(__file__).resolve().parent
+# Логотип и шрифты лежат в scripts/assets. При локальном запуске
+# из папки разработки они могут быть рядом с генератором — проверяем оба.
+ASSETS = BASE / "assets" if (BASE / "assets").is_dir() else BASE
 W, H = A4
 
 NAVY  = colors.HexColor("#15233A")
@@ -30,8 +33,8 @@ LINE  = colors.HexColor("#DCE5EC")
 PALE  = colors.HexColor("#F0F5F8")
 PGOLD = colors.HexColor("#F7F4EA")
 
-pdfmetrics.registerFont(TTFont("Noto", str(BASE/"NotoSans-Regular-full.ttf")))
-pdfmetrics.registerFont(TTFont("Noto-Bold", str(BASE/"NotoSans-Bold-full.ttf")))
+pdfmetrics.registerFont(TTFont("Noto", str(ASSETS/"NotoSans-Regular-full.ttf")))
+pdfmetrics.registerFont(TTFont("Noto-Bold", str(ASSETS/"NotoSans-Bold-full.ttf")))
 
 body      = ParagraphStyle("body", fontName="Noto", fontSize=8.35, leading=11.0,
                            textColor=colors.HexColor("#4E6075"))
@@ -130,7 +133,7 @@ def footer(c, z, page):
 
 
 def make_cover(c, z):
-    c.drawImage(str(BASE/"atlas_logo.png"), 0, 0, width=W, height=H,
+    c.drawImage(str(ASSETS/"atlas_logo.png"), 0, 0, width=W, height=H,
                 preserveAspectRatio=False, mask='auto')
     c.setFillColor(colors.white); c.setStrokeColor(colors.white)
     c.rect(55, 0, 485, H - 405, stroke=0, fill=1)
@@ -305,7 +308,7 @@ def build(zone, outdir):
 
 
 if __name__ == "__main__":
-    src = Path(sys.argv[1]) if len(sys.argv) > 1 else BASE / "zone_schema.json"
+    src = Path(sys.argv[1]) if len(sys.argv) > 1 else BASE.parent / "docs" / "country_zones.json"
     outdir = Path(sys.argv[2]) if len(sys.argv) > 2 else BASE
     outdir.mkdir(parents=True, exist_ok=True)
     data = json.loads(src.read_text(encoding="utf-8"))

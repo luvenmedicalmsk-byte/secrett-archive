@@ -139,6 +139,12 @@ jobs:
         run: |
           python scripts/infra_detection_shadow.py || true
 
+          # Мини-разборы зон риска: PDF собирается из docs/country_zones.json.
+          # Генератор читает данные, текста в коде нет. Ошибка не останавливает
+          # прогон: аналитические документы не входят в контур ленты сигналов.
+          mkdir -p docs/reports
+          python scripts/build_zone.py docs/country_zones.json docs/reports || true
+
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
@@ -175,6 +181,7 @@ jobs:
           # на раннере, но не попадал в коммит — его не было ни в одной строке
           # git add. То же касалось _signal_engine_report.json.
           git add docs/_process_links_report.json docs/_signal_engine_report.json 2>/dev/null || true
+          git add docs/country_zones.json docs/reports/ 2>/dev/null || true   # мини-разборы зон
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else
