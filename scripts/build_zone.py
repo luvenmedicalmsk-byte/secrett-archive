@@ -279,18 +279,23 @@ def make_body(c, z):
     state['top'] = P(c, z['decode'], X, state['top'], CW, body) + 16
 
     # ── 8 · Таблица диапазонов ────────────────────────────────────
-    rows = [z['table_head']] + [list(r) for r in z['table_rows']]
-    # Ширины по фактическому числу колонок. Раньше задавались жёстко
-    # на две: при трёх колонках, как в разборе по России, третья
-    # уходила за правый край и текст обрезался.
-    _nc = max(len(r) for r in rows)
-    if _nc >= 3:
-        tw = [116, 62, CW - 178]        # название · значение · комментарий
-    else:
-        tw = [110, CW - 110]
-    sec(z['table_title'], need=table_height(rows, tw) + 60)
-    state['top'] = table(c, rows, X, state['top'], tw) + 6
-    state['top'] = P(c, z['table_note'], X, state['top'], CW, small) + 16
+    # Таблица выводится только при наличии строк: у зоны интернета
+    # табличных данных нет, и пустой Table ломал сборку.
+    if z.get('table_rows'):
+      rows = [z.get('table_head') or []] + [list(r) for r in z['table_rows']]
+      if not rows[0]:
+        rows = rows[1:]
+      # Ширины по фактическому числу колонок. Раньше задавались жёстко
+      # на две: при трёх колонках, как в разборе по России, третья
+      # уходила за правый край и текст обрезался.
+      _nc = max(len(r) for r in rows)
+      if _nc >= 3:
+          tw = [116, 62, CW - 178]        # название · значение · комментарий
+      else:
+          tw = [110, CW - 110]
+      sec(z['table_title'], need=table_height(rows, tw) + 60)
+      state['top'] = table(c, rows, X, state['top'], tw) + 6
+      state['top'] = P(c, z['table_note'], X, state['top'], CW, small) + 16
 
     # ── 9-12 · Списки ─────────────────────────────────────────────
     # Списки выводятся только при наличии данных: пустая секция раньше
@@ -308,6 +313,18 @@ def make_body(c, z):
     if z.get('requirements'):
         sec(z.get('requirements_title') or 'Требования')
         state['top'] = bullets(c, z['requirements'], X, state['top'], CW, nl=nl, state=state) + 12
+
+    # ── Практический выход: людям и бизнесу ──────────────────────
+    # Два отдельных раздела: рекомендации различаются по адресату
+    # и смешивать их нельзя. Выводятся только при наличии данных.
+    if z.get('for_people'):
+        sec(z.get('for_people_title') or 'Для людей')
+        state['top'] = bullets(c, z['for_people'], X, state['top'], CW,
+                               nl=nl, state=state) + 12
+    if z.get('for_business'):
+        sec(z.get('for_business_title') or 'Для бизнеса')
+        state['top'] = bullets(c, z['for_business'], X, state['top'], CW,
+                               nl=nl, state=state) + 12
 
     # ── 13 · Инженерный комментарий ───────────────────────────────
     sec("Инженерный комментарий")
