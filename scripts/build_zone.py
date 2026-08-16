@@ -101,6 +101,12 @@ def table(c, rows, x, top, widths, font=7.3, header=True):
     return top + h
 
 
+def callout_height(text, width, style=None):
+    """Высота врезки без отрисовки: нужна для проверки места."""
+    p = Paragraph(clean(text), style or body_dark)
+    return p.wrap(width - 22, 10000)[1] + 14
+
+
 def callout(c, text, x, top, width, accent=CYAN, bg=PALE, style=None):
     """Врезка с цветной полосой слева."""
     st = style or body_dark
@@ -227,7 +233,8 @@ def make_body(c, z):
 
     # ── 3 · Динамика ──────────────────────────────────────────────
     rows = [["Дата", "Индекс", "Событие-триггер"]] + [list(r) for r in z['history']]
-    hw = [62, 46, CW - 108]
+    _nh = max(len(r) for r in rows)
+    hw = ([62, 46, CW - 108] if _nh >= 3 else [80, CW - 80])
     sec("Динамика индекса", need=table_height(rows, hw) + 46)
     state['top'] = table(c, rows, X, state['top'], hw) + 16
 
@@ -259,7 +266,14 @@ def make_body(c, z):
 
     # ── 8 · Таблица диапазонов ────────────────────────────────────
     rows = [z['table_head']] + [list(r) for r in z['table_rows']]
-    tw = [110, CW - 110]
+    # Ширины по фактическому числу колонок. Раньше задавались жёстко
+    # на две: при трёх колонках, как в разборе по России, третья
+    # уходила за правый край и текст обрезался.
+    _nc = max(len(r) for r in rows)
+    if _nc >= 3:
+        tw = [116, 62, CW - 178]        # название · значение · комментарий
+    else:
+        tw = [110, CW - 110]
     sec(z['table_title'], need=table_height(rows, tw) + 60)
     state['top'] = table(c, rows, X, state['top'], tw) + 6
     state['top'] = P(c, z['table_note'], X, state['top'], CW, small) + 16
@@ -294,11 +308,14 @@ def make_body(c, z):
     # ── 14 · Расшифровка для пользователя ─────────────────────────
     sec("Расшифровка для пользователя")
     state['top'] = P(c, z['user_note'], X, state['top'], CW, body) + 8
+    # Врезка переносится целиком: раньше налезала на колонтитул.
+    nl(callout_height(z['user_indicator'], CW) + 10)
     state['top'] = callout(c, z['user_indicator'], X, state['top'], CW) + 16
 
     # ── 15 · Градиент ─────────────────────────────────────────────
     rows = [z['gradient_head']] + [list(r) for r in z['gradient']]
-    gw = [128, CW - 128 - 58, 58]
+    _ng = max(len(r) for r in rows)
+    gw = ([128, CW - 128 - 58, 58] if _ng >= 3 else [140, CW - 140])
     sec(z['gradient_title'], need=table_height(rows, gw) + 46)
     state['top'] = table(c, rows, X, state['top'], gw, header=True) + 16
 
