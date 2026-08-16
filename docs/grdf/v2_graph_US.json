@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-08-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-16T10:31:34.760737+00:00",
+  "generated_at": "2026-08-16T11:06:10.524822+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 36,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -47,15 +47,15 @@
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 17,
-      "trend": "down"
+      "score": 16,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 19,
-      "trend": "down"
+      "score": 18,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -87,17 +87,17 @@
       "domain": "economic"
     },
     {
+      "id": "SIGNAL-US-Система_уп",
+      "type": "Signal",
+      "label": "Система управления критической инфрастру",
+      "severity": 60,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-US-Замедление",
       "type": "Signal",
       "label": "Замедление атлантического течения может ",
       "severity": 51,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-США:_Гавай",
-      "type": "Signal",
-      "label": "США: Гавайи едва избежали прямого удара ",
-      "severity": 48,
       "domain": "climate"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-US",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-В_2025_год",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
     {
+      "from": "SIGNAL-US-Система_уп",
+      "to": "DOMAIN-US-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-US-Замедление",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.51
-    },
-    {
-      "from": "SIGNAL-US-США:_Гавай",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.48
     }
   ]
 }
