@@ -2855,6 +2855,23 @@ def _emsc_place(s):
         out = m.group(2).strip() + ' (' + _DIR_ADJ[m.group(1).lower()] + ')'
     return out
 
+def _GC_places(text):
+    """Первый топоним из текста для заполнения region.
+
+    Используется только когда region пуст: координат нет, а география
+    в тексте есть. Возвращает русское название страны из газетира
+    geo_contract, либо пустую строку.
+    """
+    try:
+        import geo_contract as _gcm
+        _pl = _gcm._places_in(str(text or '').lower())
+        if _pl:
+            return _pl[0][1][1]
+    except Exception:
+        pass
+    return ''
+
+
 def detect_region_by_coords(lat, lng):
     """Определяет название региона по координатам"""
     if lat > 60: return "Арктика / Северные широты"
@@ -3965,6 +3982,31 @@ def process_events(raw_items):
                         _trace(_tid,'NO_GEO','removed',reason='nogeo_noise'); _LOSS['nogeo_noise'] += 1; continue
             else:
                 lat, lng, region = geo
+            # REGION FALLBACK. Панель «Страны» строится по полю region:
+            # _grdfCountriesFromEvents группирует события именно по нему.
+            # При этом region заполняется только из координат через
+            # detect_region_by_coords, а тот возвращает МАКРОРЕГИОН
+            # («Европа», «Восточная Азия»), либо остаётся пустым, если
+            # координат нет вовсе.
+            #
+            # Замер на корпусе 335: region пуст у 229 событий (68%),
+            # из них у 141 резолвер находит топоним в тексте. То есть
+            # география известна, но до панели не доходит: в списке
+            # видно 59 стран вместо 88.
+            #
+            # Берём первый распознанный топоним. Он не всегда основной
+            # субъект («санкции ЕС против России» дадут Россию), но для
+            # панели это приемлемо: она показывает ОХВАТ упоминаний,
+            # а не действующее лицо. Роли разбираются отдельным слоем.
+            if not str(region or '').strip():
+                try:
+                    _rp = _GC_places(str(item.get('title') or '') + ' '
+                                     + str(item.get('desc') or ''))
+                    if _rp:
+                        region = _rp
+                        _LOSS['region_fallback'] = _LOSS.get('region_fallback', 0) + 1
+                except Exception:
+                    pass
             severity = _severity_for(item, _gov.get('weight', 1.0))
 
         # GDACS-наводнения с явным уровнем алерта не режем порогом (зелёные = низкие, но видимые)
