@@ -154,6 +154,19 @@ jobs:
           python scripts/build_zone.py docs/country_zones.json docs/reports || true
           ls -la docs/reports/ || true
 
+      # Документы уходят в приватный репозиторий: в публичном прямая ссылка
+      # открыта любому, кто её узнает. Worker забирает файл оттуда и отдаёт
+      # только администратору.
+      - name: Публикация разборов в приватный репозиторий
+        continue-on-error: true
+        env:
+          PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+        run: |
+          if [ -z "$PRIVATE_TOKEN" ]; then
+            echo "PRIVATE_REPO_TOKEN не задан, публикация пропущена"; exit 0
+          fi
+          python scripts/push_reports.py || true
+
       - name: Коммит и публикация
         run: |
           git config user.name "archive-bot"
@@ -190,7 +203,10 @@ jobs:
           # на раннере, но не попадал в коммит — его не было ни в одной строке
           # git add. То же касалось _signal_engine_report.json.
           git add docs/_process_links_report.json docs/_signal_engine_report.json 2>/dev/null || true
-          git add docs/country_zones.json docs/reports/ 2>/dev/null || true   # мини-разборы зон
+          # docs/reports НЕ коммитится в публичный репозиторий: документы
+          # уходят в приватный отдельным шагом. Данные зон остаются здесь,
+          # они нужны генератору и не содержат готового разбора.
+          git add docs/country_zones.json 2>/dev/null || true   # данные зон
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else
