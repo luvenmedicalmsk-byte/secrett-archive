@@ -174,25 +174,52 @@ def make_body(c, z):
             footer(c, z, state['page']); c.showPage()
             state['page'] += 1; state['top'] = TOP
 
-    def sec(num, title, need=40):
-        # Заголовок не должен оставаться внизу страницы без содержимого:
-        # резервируем место под сам заголовок и минимум три строки текста.
+    state['n'] = 0
+
+    def sec(title, need=40):
+        """Заголовок секции со сквозной нумерацией.
+
+        Номер выдаётся счётчиком в момент вызова, а не задаётся вручную:
+        при пропуске незаполненной секции нумерация не рвётся. Прежняя
+        жёсткая нумерация давала «8, 10, 11, 12, 13» с пустыми заголовками.
+
+        Заголовок не остаётся внизу страницы без содержимого: резервируем
+        место под него и первые строки.
+        """
+        state['n'] += 1
         nl(need)
-        state['top'] = P(c, "%d. %s" % (num, title), X, state['top'], CW, head) + 8
+        state['top'] = P(c, "%d. %s" % (state['n'], title),
+                         X, state['top'], CW, head) + 8
 
     # ── 1 · Ключевые параметры ────────────────────────────────────
+    # Сводка над таблицей: индекс, зона и уровень крупно. Читатель видит
+    # главное, не разбирая таблицу параметров.
+    sec("Ключевые параметры оценки", need=150)
+    _y = state['top']
+    c.setFillColor(PALE); c.setStrokeColor(colors.HexColor("#DCE5EC"))
+    c.roundRect(X, H - _y - 58, CW, 58, 7, stroke=1, fill=1)
+    c.setFont("Noto-Bold", 27); c.setFillColor(CYAN)
+    c.drawString(X + 15, H - _y - 33, "%d/100" % z['index'])
+    c.setFont("Noto-Bold", 11); c.setFillColor(NAVY)
+    c.drawString(X + 132, H - _y - 30, clean(z['zone']).upper())
+    c.setFont("Noto", 8.6); c.setFillColor(MUTED)
+    c.drawString(X + 15, H - _y - 47, "Индекс риска")
+    c.drawString(X + 132, H - _y - 47, clean(z.get('index_label') or ''))
+    state['top'] = _y + 58 + 12
+
     rows = [["Параметр", "Значение"],
-            ["Регион", "%s, %s" % (z['country'], z['region'])],
+            ["Регион", z['country'] if z['region'] == z['country']
+                       else ("%s, %s" % (z['country'], z['region']))],
             ["Главная зона риска", z['zone']],
             ["Тип зависимости", z['dependency']],
             ["Релевантные домены Atlas", z['domains_h']],
             ["Инженерная оговорка", z['engineering_note']]]
     kw = [120, CW - 120]
-    sec(1, "Ключевые параметры оценки", need=table_height(rows, kw) + 46)
+    nl(table_height(rows, kw) + 20)
     state['top'] = table(c, rows, X, state['top'], kw) + 16
 
     # ── 2 · Триггер ───────────────────────────────────────────────
-    sec(2, "Текущее событие - триггер индекса")
+    sec("Текущее событие - триггер индекса")
     state['top'] = P(c, z['trigger'], X, state['top'], CW, body) + 8
     state['top'] = P(c, "Источники: " + z['sources'], X, state['top'], CW, small) + 8
     state['top'] = callout(c, "Связь с индексом: " + z['index_link'],
@@ -201,11 +228,11 @@ def make_body(c, z):
     # ── 3 · Динамика ──────────────────────────────────────────────
     rows = [["Дата", "Индекс", "Событие-триггер"]] + [list(r) for r in z['history']]
     hw = [62, 46, CW - 108]
-    sec(3, "Динамика индекса", need=table_height(rows, hw) + 46)
+    sec("Динамика индекса", need=table_height(rows, hw) + 46)
     state['top'] = table(c, rows, X, state['top'], hw) + 16
 
     # ── 4 · Пересечения ───────────────────────────────────────────
-    sec(4, "Где пересекаются домены")
+    sec("Где пересекаются домены")
     for pair, txt in z['crossings']:
         nl(34)
         state['top'] = P(c, "<b>%s</b> &#160;·&#160; %s" % (pair, txt), X, state['top'], CW, body) + 5
@@ -214,7 +241,7 @@ def make_body(c, z):
                            accent=GOLD, bg=PGOLD) + 16
 
     # ── 5 · Каскад ────────────────────────────────────────────────
-    sec(5, "Важно смотреть не отдельную новость, а цепочку",
+    sec("Важно смотреть не отдельную новость, а цепочку",
         need=len(z['cascade']) * 13 + 70)
     for i, line in enumerate(z['cascade']):
         state['top'] = P(c, line, X + 6, state['top'], CW - 6,
@@ -223,33 +250,39 @@ def make_body(c, z):
     state['top'] = callout(c, z['cascade_note'], X, state['top'], CW) + 16
 
     # ── 6 · Проявления ────────────────────────────────────────────
-    sec(6, "Риск может проявляться как")
+    sec("Риск может проявляться как")
     state['top'] = bullets(c, z['manifest'], X, state['top'], CW) + 12
 
     # ── 7 · Расшифровка индекса ───────────────────────────────────
-    sec(7, "Расшифровка индекса %d/100" % z['index'])
+    sec("Расшифровка индекса %d/100" % z['index'])
     state['top'] = P(c, z['decode'], X, state['top'], CW, body) + 16
 
     # ── 8 · Таблица диапазонов ────────────────────────────────────
     rows = [z['table_head']] + [list(r) for r in z['table_rows']]
     tw = [110, CW - 110]
-    sec(8, z['table_title'], need=table_height(rows, tw) + 60)
+    sec(z['table_title'], need=table_height(rows, tw) + 60)
     state['top'] = table(c, rows, X, state['top'], tw) + 6
     state['top'] = P(c, z['table_note'], X, state['top'], CW, small) + 16
 
     # ── 9-12 · Списки ─────────────────────────────────────────────
-    for n, (tk, ik) in enumerate([('options_title', 'options'),
-                                  ('anchors_title', 'anchors'),
-                                  ('requirements_title', 'requirements')], start=9):
-        if n == 10:
-            sec(10, z['filter_title'])
-            state['top'] = callout(c, z['filter'], X, state['top'], CW,
-                                   accent=GOLD, bg=PGOLD) + 16
-        sec(n if n < 10 else n + 1, z[tk])
-        state['top'] = bullets(c, z[ik], X, state['top'], CW) + 12
+    # Списки выводятся только при наличии данных: пустая секция раньше
+    # давала заголовок с номером и без содержимого.
+    if z.get('options'):
+        sec(z.get('options_title') or 'Варианты')
+        state['top'] = bullets(c, z['options'], X, state['top'], CW) + 12
+    if z.get('filter'):
+        sec(z.get('filter_title') or 'Фильтр')
+        state['top'] = callout(c, z['filter'], X, state['top'], CW,
+                               accent=GOLD, bg=PGOLD) + 16
+    if z.get('anchors'):
+        sec(z.get('anchors_title') or 'Ключевые показатели')
+        state['top'] = bullets(c, z['anchors'], X, state['top'], CW) + 12
+    if z.get('requirements'):
+        sec(z.get('requirements_title') or 'Требования')
+        state['top'] = bullets(c, z['requirements'], X, state['top'], CW) + 12
 
     # ── 13 · Инженерный комментарий ───────────────────────────────
-    sec(13, "Инженерный комментарий")
+    sec("Инженерный комментарий")
     for tk, ik in (('comment_low_title', 'comment_low'),
                    ('comment_high_title', 'comment_high'),
                    ('comment_under_title', 'comment_under')):
@@ -259,24 +292,24 @@ def make_body(c, z):
     state['top'] += 6
 
     # ── 14 · Расшифровка для пользователя ─────────────────────────
-    sec(14, "Расшифровка для пользователя")
+    sec("Расшифровка для пользователя")
     state['top'] = P(c, z['user_note'], X, state['top'], CW, body) + 8
     state['top'] = callout(c, z['user_indicator'], X, state['top'], CW) + 16
 
     # ── 15 · Градиент ─────────────────────────────────────────────
     rows = [z['gradient_head']] + [list(r) for r in z['gradient']]
     gw = [128, CW - 128 - 58, 58]
-    sec(15, z['gradient_title'], need=table_height(rows, gw) + 46)
+    sec(z['gradient_title'], need=table_height(rows, gw) + 46)
     state['top'] = table(c, rows, X, state['top'], gw, header=True) + 16
 
     # ── 16-17 · Мини и мониторинг ─────────────────────────────────
-    sec(16, "Мини-информация")
+    sec("Мини-информация")
     state['top'] = P(c, z['mini'], X, state['top'], CW, body) + 16
-    sec(17, z['watch_title'])
+    sec(z['watch_title'])
     state['top'] = bullets(c, z['watch'], X, state['top'], CW) + 12
 
     # ── 18 · Про Atlas ────────────────────────────────────────────
-    sec(18, "Atlas здесь полезен тем, что показывает")
+    sec("Atlas здесь полезен тем, что показывает")
     state['top'] = P(c, z['atlas_note'], X, state['top'], CW, body) + 14
     nl(34)
     # Подпись поддержки кликабельна: reportlab понимает тег <a href>,
