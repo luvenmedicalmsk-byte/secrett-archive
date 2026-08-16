@@ -1809,6 +1809,114 @@ _FUEL_MED_RE = [
 ]
 
 
+# ══ EN SEVERITY PATTERNS · TASK-115 (B v3) ══════════════════════════════════
+# Severity считается ДО перевода: движок видит английский оригинал, а все
+# существующие шаблоны написаны по-русски. Замер на замороженном корпусе
+# 1324 записей (hash 70045fb1): из 573 англоязычных входов 390 не активируют
+# ни одного маркера, 25 недооценены в среднем на 6,9 балла.
+#
+# Путь сужения (TASK-113/114): исходные широкие шаблоны давали 107 срабатываний
+# при ~35 ложных. Каждое сужение проверялось на том же корпусе:
+#   107 → 38 → 28 → 25, false uplift 35 → 4 → 3 → 0.
+#
+# Принцип: шаблон подтверждает СОБЫТИЕ, а не наличие тематического слова.
+# Одиночные слова (crisis, warning, drought) намеренно не используются.
+
+# Жертвы: число вплотную к слову смерти. Разрыв запрещён — «41, was found
+# dead» давал ложное срабатывание, где 41 это возраст, а «48 indicators
+# studied» вовсе не про смерть.
+_EN_CASUALTY = (
+    r"(?:kill(?:ed|s|ing)|died|dead|fatalit\w+)\s+(?:at\s+least\s+)?\d+|"
+    r"\d+\s+(?:people\s+)?(?:kill(?:ed|s)|dead|died|fatalit\w+)\b|"
+    r"death\s+toll\s+(?:of\s+)?\d+|death\s+toll\s+(?:ris|climb|reach|hit)\w*"
+)
+
+_EN_HIGH_RE = [
+    _EN_CASUALTY,
+    r"confirmed\s+dead\s+(?:after|in)\b",
+    r"(?:destroy|devastat|flatten|level)\w*\s+(?:\w+\s+){0,3}?"
+    r"(?:home|building|village|town|district|infrastructure|crop|farm)",
+    r"(?:building|home|bridge|dam|tower)\w*\s+(?:collaps|destroy)\w*",
+    r"magnitude\s*\d+(?:\.\d+)?[^.]{0,40}?(?:strike|hit|jolt|rock|kill|damag)",
+    r"(?:earthquake|quake)[^.]{0,25}?(?:strike|hit|jolt|rock)\w*",
+    r"(?:blackout|power\s+outage)[^.]{0,40}?(?:hit|leav|affect|million|thousand)",
+    r"(?:leav|left)\w*\s+(?:\w+\s+){0,3}?(?:million|thousand|\d+)"
+    r"[^.]{0,25}?without\s+power",
+    r"(?:diesel|fuel|oil|gas)\s+export\w*[^.]{0,60}?(?:fall|drop|crash|plunge|halt)",
+    r"export\s+ban|ban\s+on\s+(?:diesel|fuel|oil)\s+export",
+    r"(?:strike|attack|drone)\w*[^.]{0,30}?(?:refiner|pipeline|terminal|depot)",
+    r"(?:clos|block|shut|disrupt|halt)\w*[^.]{0,25}?(?:strait|hormuz|suez|malacca)",
+    r"(?:production|output|supply)[^.]{0,40}?(?:suspend|halt|shut\s+down)",
+    r"wildfire\w*[^.]{0,40}?(?:sweep|engulf|ravage|rage|destroy)",
+    r"(?:flood|storm|cyclone|typhoon|hurricane)\w*[^.]{0,40}?"
+    r"(?:kill|destroy|damag|sweep|batter|slam|inundat|submerg)",
+    r"permafrost[^.]{0,40}?(?:thaw|collaps|sink|damag)|thermokarst",
+]
+
+# Явление плюс воздействие. Одно слово «drought» или «storm» не считается:
+# оно встречается в аналитике, прогнозах и статьях о дикой природе.
+_EN_MED_RE = [
+    r"(?:heat\s*wave|drought|flood|storm|cyclone|typhoon|wildfire)\w*"
+    r"[^.]{0,50}?(?:hit|struck|forc\w+|declar\w+|affect\w+|threaten\w+)",
+    r"(?:evacuat|displac)\w*[^.]{0,30}?(?:\d|thousand|million|resident|village|famil)",
+    r"(?:injur|wound)\w*\s+\d+|\d+\s+(?:injur|wound)\w*",
+    r"state\s+of\s+emergency\s+(?:declar|in\s+effect)",
+    r"(?:warning|alert)\s+(?:issu|rais|upgrad)\w*|"
+    r"(?:issu|rais)\w*\s+(?:a\s+)?(?:warning|alert)",
+    r"(?:price|cost)\w*[^.]{0,40}?(?:surge|jump|soar|spike)\w*[^.]{0,20}?\d",
+    r"(?:import|export)\w*[^.]{0,40}?(?:fall|drop|decline)\w*[^.]{0,25}?\d",
+    r"barrels\s+per\s+day",
+    r"shipping[^.]{0,40}?(?:disrupt|halt|suspend)\w*",
+    r"(?:sanction|embargo)\w*[^.]{0,30}?(?:impos|target|announc|expand)",
+]
+
+# Снятие ограничения не является ограничением: «India restores cabotage
+# waiver» описывает отмену, а не введение.
+_EN_RELIEF = re.compile(
+    r"\b(?:restor|resum|lift|ease|reopen|waiv|relax|normali[sz])\w*", re.I)
+# Спасение не является воздействием: «Bones of medieval kings saved from
+# Spanish wildfire» — событие о сохранении артефактов, не о пожаре.
+# Проверено на корпусе: широкий шаблон ловил «rescuers combed through
+# debris» в сообщении о землетрясении с 40 погибшими и обнулял бонус.
+# Спасатели на месте катастрофы — признак тяжести, а не её отсутствия.
+# Гейт сужен до конструкций, где объект СПАСЁН ОТ явления.
+_EN_RESCUE = re.compile(
+    r"\b(?:saved|rescued|salvaged|preserved|recovered)\s+from\b"
+    r"|\bsaved\s+(?:\w+\s+){0,2}?(?:bones|artefact|artifact|relic|painting|manuscript)"
+    r"|\b(?:artefact|artifact|relic|treasure)\w*\s+(?:saved|rescued|preserved)", re.I)
+
+# MODALITY GATE. Проверяется только ЗАГОЛОВОК: вопрос, объяснение или
+# ещё не случившееся действие не является событием.
+#   hurricane hit Hawaii        свершилось    засчитывается
+#   hurricane poised to hit     прогноз       нет
+#   why heat waves can hit      объяснение    нет
+#   how bad is the UK drought   вопрос        нет
+# Общего запрета на модальные слова НЕТ: «may have caused», «could trigger»,
+# «may worsen» сохраняются как валидные предупреждения о последствиях.
+_EN_MODAL = re.compile(
+    r"^\s*(?:why|how|what|when|where|is|are|will|should|does|do)\b"
+    r"|\?\s*$"
+    r"|\b(?:poised|set|due|expected|projected|likely)\s+to\b"
+    r"|\bcould\s+(?:mean|be|make|unleash)\b"
+    r"|\b(?:can|may)\s+\w+\s+(?:residents|people|states|areas)\b", re.I)
+
+
+def _en_severity_bonus(title, text):
+    """Надбавка за английские конструкции. Возвращает (high, med).
+
+    Пустая пара, если заголовок модальный, либо текст описывает снятие
+    ограничения или спасение.
+    """
+    _t = (title or "").strip()
+    if _EN_MODAL.search(_t):
+        return 0, 0
+    _blob = ((title or "") + " " + (text or "")).lower()
+    if _EN_RELIEF.search(_blob[:120]) or _EN_RESCUE.search(_blob[:120]):
+        return 0, 0
+    return (sum(1 for p in _EN_HIGH_RE if re.search(p, _blob)),
+            sum(1 for p in _EN_MED_RE if re.search(p, _blob)))
+
+
 def estimate_severity(title, desc, bias=0, weight=1.0):
     """News/текст -> делегирует в normalize_severity('news', …). База 30 (не 50),
     потолки: аналитика ≤65, подтверждённый ущерб ≤75, с учётом source_weight."""
@@ -1841,6 +1949,11 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
     kw_high += sum(1 for p in _ENERGY_HIGH_RE if re.search(p, text))
     if _PERMAFROST_CTX.search(text):
         kw_high += sum(1 for p in _PERMAFROST_HIGH_RE if re.search(p, text))
+    # TASK-115 · английские конструкции. title передаётся отдельно:
+    # modality gate проверяет только заголовок, чтобы вопрос или прогноз
+    # в нём не засчитывался событием, а предупреждение в теле — засчитывалось.
+    _enh, _enm = _en_severity_bonus(title, text)
+    kw_high += _enh
     kw_med  = sum(1 for p in _FUEL_MED_RE if re.search(p, text))
     kw_med += sum(1 for p in _FUEL_EXPORT_MED_RE if re.search(p, text))
     kw_med += sum(1 for p in _CHOKEPOINT_MED_RE if re.search(p, text))
@@ -1848,6 +1961,7 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
     if _PERMAFROST_CTX.search(text):
         kw_med += sum(1 for p in _PERMAFROST_MED_RE if re.search(p, text))
     kw_med += sum(1 for s in med if s in text)
+    kw_med += _enm
     # Конфликтные системные сигналы (RU+EN). Без «эскалации» — только конкретика.
     conflict = ['war','airstrike','air strike','missile','drone','shelling','offensive',
                 'sanction','invasion','mobiliz','refinery','strike','attack',
@@ -2078,57 +2192,6 @@ def cyber_metrics(source, title, desc):
     return m
 
 
-_T112A_CAP = []
-
-
-def _t112a_capture(item, sev_input, base, weight=None):
-    """TASK-112A · ВРЕМЕННЫЙ READ-ONLY CAPTURE · УДАЛИТЬ ПОСЛЕ ЗАМЕРА.
-
-    Фиксирует ОРИГИНАЛЬНЫЙ вход severity до перевода. Нужен потому,
-    что в events.json тексты уже переведены: все 344 события там
-    на русском, включая 288 от англоязычных источников. Сравнивать
-    варианты решения LANGUAGE_GAP на переведённом корпусе нельзя —
-    это не тот вход, что видит движок.
-
-    Ничего не присваивает: только читает поля item и складывает
-    копию в отдельный список.
-    """
-    try:
-        _t = str(item.get('title') or '')
-        _d = str(item.get('desc') or '')
-        _blob = (_t + ' ' + _d)
-        _cyr = sum(1 for c in _blob if '\u0400' <= c <= '\u04FF')
-        _lat = sum(1 for c in _blob if c.isalpha() and c.isascii())
-        _let = _cyr + _lat
-        _T112A_CAP.append({
-            'id': item.get('id') or item.get('_obs_tid'),
-            'source': str(item.get('source') or '')[:40],
-            'lang': ('ru' if (_let and _cyr / _let > 0.5) else 'en'),
-            'cyr_ratio': round(_cyr / _let, 3) if _let else None,
-            # Лимиты сняты. Gate 98.5% провалился на 19 записях, у всех
-            # desc длиннее 600 символов: движок считал по полному тексту,
-            # capture хранил обрезанный, и маркеры из хвоста терялись.
-            # Это дефект самого захвата, а не production-кода.
-            'title_original': _t,
-            'desc_original': _d,
-            'title_len': len(_t),
-            'desc_len': len(_d),
-            'severity_input': (sev_input or ''),
-            'severity_input_len': len(sev_input or ''),
-            'base_severity': base,
-            'bias': item.get('source_bias'),
-            # Gate 85.5% провалился: без weight и маршрута воспроизвести
-            # вызов нельзя. Вес приходит из _gov, маршрут выбирает ветку
-            # шкалы (news / cyber / disaster), их отсутствие давало
-            # расхождение до 22 баллов на одном событии.
-            'weight': weight,
-            'sev_route': item.get('_sev_route'),
-            'is_cyber': bool(item.get('_cyber') or item.get('cyber')),
-        })
-    except Exception:
-        pass
-
-
 def _severity_for(item, weight):
     """Единая маршрутизация severity: force -> cyber -> news (S34A).
     ВАЖНО (Layer Sufficiency): cyber-маршрут выбирается ПО ИСТОЧНИКУ, а не по сути события.
@@ -2167,12 +2230,8 @@ def _severity_for(item, weight):
     # текст и занижало оценку. Второй проход работает с summary[:300]
     # по своей причине — там пересчёт уже собранного события.
     _sev_text = item.get('desc') or item.get('summary') or ''
-    _sv = estimate_severity(item.get('title', ''), _sev_text,
-                            item.get('source_bias', 0), weight)
-    # TASK-112A · ВРЕМЕННЫЙ CAPTURE
-    _t112a_capture(item, _sev_text, _sv, weight)
-    # ═══ КОНЕЦ ═══
-    return _sv
+    return estimate_severity(item.get('title', ''), _sev_text,
+                             item.get('source_bias', 0), weight)
 
 
 # ═══ SEVERITY CANON ROUTE ═════════════════════════════════════════════════════
@@ -14444,26 +14503,6 @@ def save_enriched(events, previous_snapshot=None):
             if LINEAGE:
                 _se_post = {e.get('_obs_tid') for e in enriched["events"] if e.get('_obs_tid')}
                 for _set in (_se_pre - _se_post): _trace(_set,'TOPIC_CAP','removed',reason='series_or_editorial')
-            # TASK-112A · запись корпуса оригинальных входов · УДАЛИТЬ ПОСЛЕ
-            try:
-                import hashlib as _hl
-                _pay = {'meta': {
-                            'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-                            'phase': 'input-capture-read-only',
-                            'captured': len(_T112A_CAP),
-                            'production_schema': 'unchanged'},
-                        'items': _T112A_CAP}
-                _js = json.dumps(_pay, ensure_ascii=False, indent=1)
-                _pay['meta']['trace_hash'] = _hl.md5(
-                    json.dumps(_T112A_CAP, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
-                (OUTPUT_PATH.parent / '_t112a_input.json').write_text(
-                    json.dumps(_pay, ensure_ascii=False, indent=1), encoding='utf-8')
-                _en = sum(1 for x in _T112A_CAP if x.get('lang') == 'en')
-                print(f"  [T112A] captured {len(_T112A_CAP)} · EN {_en} · "
-                      f"hash {_pay['meta']['trace_hash'][:12]}", file=sys.stderr)
-            except Exception as _we:
-                print(f"  [T112A] write failed: {_we}", file=sys.stderr)
-            # ═══ КОНЕЦ ═══
             _apply_geo_contract(enriched["events"])   # GEO CONTRACT Phase 2 — единственный источник географии
             _role_shadow_report(enriched["events"])   # TASK-092 · ROLE SHADOW · read-only
             _delatinize_titles(enriched["events"])    # чистка недопереведённых title ПОСЛЕ гео (0 churn)
