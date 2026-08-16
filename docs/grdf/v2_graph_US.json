@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-08-16",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-16T12:13:44.896383+00:00",
+  "generated_at": "2026-08-16T12:35:57.392548+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "down"
+      "score": 41,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 25,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -84,7 +84,7 @@
       "type": "Signal",
       "label": "В 2025 году среди мировой молодежи увели",
       "severity": 56,
-      "domain": "economic"
+      "domain": "social"
     },
     {
       "id": "SIGNAL-US-Ученые_опр",
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-US",
@@ -163,8 +163,29 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-US-В_2025_год",
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
       "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-В_2025_год",
+      "to": "DOMAIN-US-social",
       "type": "AMPLIFIES",
       "weight": 0.56
     },
