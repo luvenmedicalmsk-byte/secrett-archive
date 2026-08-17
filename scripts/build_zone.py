@@ -325,13 +325,15 @@ def make_body(c, z):
     # что отслеживать, затем что делать, и только потом заключение.
     # Два отдельных раздела: рекомендации различаются по адресату
     # и смешивать их нельзя. Выводятся только при наличии данных.
-    if z.get('for_people'):
-        sec(z.get('for_people_title') or 'Для людей')
-        state['top'] = bullets(c, z['for_people'], X, state['top'], CW,
-                               nl=nl, state=state) + 12
+    # Бизнес идёт первым: решения принимаются раньше, чем частными
+    # лицами. Порядок совпадает с карточкой события и панелью страны.
     if z.get('for_business'):
         sec(z.get('for_business_title') or 'Для бизнеса')
         state['top'] = bullets(c, z['for_business'], X, state['top'], CW,
+                               nl=nl, state=state) + 12
+    if z.get('for_people'):
+        sec(z.get('for_people_title') or 'Для частных лиц')
+        state['top'] = bullets(c, z['for_people'], X, state['top'], CW,
                                nl=nl, state=state) + 12
 
 
