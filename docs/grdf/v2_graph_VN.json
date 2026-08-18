@@ -2,67 +2,67 @@
   "country": "VN",
   "date": "2026-08-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-18T12:40:30.388076+00:00",
+  "generated_at": "2026-08-18T13:22:33.100944+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-VN",
       "type": "Country",
       "label": "VN",
-      "score": 32,
+      "score": 45,
       "props": {
-        "risk_score": 32
+        "risk_score": 45
       }
     },
     {
       "id": "DOMAIN-VN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 22,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 28,
-      "trend": "stable"
+      "score": 29,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-social",
       "type": "Domain",
       "label": "social",
-      "score": 24,
-      "trend": "stable"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 22,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-VN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 19,
-      "trend": "stable"
+      "score": 27,
+      "trend": "up"
     },
     {
       "id": "DRIVER-VN-geopolitical",
@@ -70,14 +70,14 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-VN-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "DRIVER-VN-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "DRIVER-VN-technology",
-      "type": "Driver",
-      "label": "technology"
     },
     {
       "id": "SIGNAL-VN-Климатичес",
@@ -106,46 +106,52 @@
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-climate",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-technology",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.29
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-social",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-VN",
       "to": "DOMAIN-VN-cyber",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.27
     },
     {
       "from": "DRIVER-VN-geopolitical",
+      "to": "COUNTRY-VN",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-VN-climate",
       "to": "COUNTRY-VN",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,10 +163,67 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-VN-technology",
-      "to": "COUNTRY-VN",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-VN-climate",
+      "to": "DOMAIN-VN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-VN-social",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-VN-climate",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-VN-geopolitical",
+      "to": "DOMAIN-VN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-VN-infrastructure",
+      "to": "DOMAIN-VN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-VN-economic",
+      "to": "DOMAIN-VN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-VN-Климатичес",
