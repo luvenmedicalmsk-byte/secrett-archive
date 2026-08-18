@@ -2,60 +2,60 @@
   "country": "US",
   "date": "2026-08-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-18T06:11:09.941560+00:00",
+  "generated_at": "2026-08-18T06:27:53.963282+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 54,
+      "score": 56,
       "props": {
-        "risk_score": 54
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 34,
-      "trend": "down"
+      "score": 42,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "down"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -83,7 +83,14 @@
       "id": "SIGNAL-US-Система_уп",
       "type": "Signal",
       "label": "Система управления критической инфрастру",
-      "severity": 65,
+      "severity": 60,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-US-Ученые_опр",
+      "type": "Signal",
+      "label": "Ученые определили новую категорию аномал",
+      "severity": 53,
       "domain": "climate"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Замедление атлантического течения может ",
       "severity": 51,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — США",
-      "severity": 70,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-US",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Система_уп",
+      "to": "DOMAIN-US-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
+      "from": "SIGNAL-US-Ученые_опр",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-US-Замедление",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.51
-    },
-    {
-      "from": "SIGNAL-US-Геополитич",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.7
     }
   ]
 }
