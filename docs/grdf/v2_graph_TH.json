@@ -2,67 +2,67 @@
   "country": "TH",
   "date": "2026-08-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-18T14:08:08.364879+00:00",
+  "generated_at": "2026-08-18T15:17:32.308307+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 34,
+      "score": 53,
       "props": {
-        "risk_score": 34
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": -3,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 24,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 22,
-      "trend": "down"
+      "score": 34,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
-      "score": 26,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 24,
-      "trend": "down"
+      "score": 37,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 20,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DRIVER-TH-geopolitical",
@@ -70,20 +70,27 @@
       "label": "geopolitical"
     },
     {
+      "id": "DRIVER-TH-economic",
+      "type": "Driver",
+      "label": "economic"
+    },
+    {
       "id": "DRIVER-TH-social",
       "type": "Driver",
       "label": "social"
     },
     {
-      "id": "DRIVER-TH-climate",
-      "type": "Driver",
-      "label": "climate"
+      "id": "SIGNAL-TH-Крымчанка_",
+      "type": "Signal",
+      "label": "Крымчанка сбежала из России, рассчитывая",
+      "severity": 53,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-TH-Социальный",
       "type": "Signal",
       "label": "Социальный процесс — Таиланд",
-      "severity": 54,
+      "severity": 53,
       "domain": "social"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Климатический сигнал — Юго-Восточная Ази",
       "severity": 52,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TH-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Таиланд",
-      "severity": 50,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,46 +106,52 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-economic",
       "type": "CORRELATES",
-      "weight": -0.03
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-climate",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-technology",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-social",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.37
     },
     {
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-cyber",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.32
     },
     {
       "from": "DRIVER-TH-geopolitical",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-TH-economic",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -157,28 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-climate",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
+      "from": "DOMAIN-TH-geopolitical",
+      "to": "DOMAIN-TH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TH-infrastructure",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TH-economic",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-TH-Крымчанка_",
+      "to": "DOMAIN-TH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-TH-Социальный",
       "to": "DOMAIN-TH-social",
       "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-TH-Климатичес",
       "to": "DOMAIN-TH-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
-    },
-    {
-      "from": "SIGNAL-TH-Геополитич",
-      "to": "DOMAIN-TH-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
