@@ -441,7 +441,9 @@ def _strip_promo(t):
     prev = None
     while prev != t and t:
         prev = t; t = _PROMO4_RE.sub('', _PROMO3_RE.sub('', _PROMO2_RE.sub('', _CHAN_SIG_RE.sub('', _PROMO_RE.sub('', t))))).rstrip(' \t\n|\u00b7\u2014\u2013-')
-    text = _strip_edit_credit(text)
+    # Редакционный хвост снимается после промо-подписей канала.
+    # Переменная называется t, а не text: это параметр функции.
+    t = _strip_edit_credit(t)
     return t.strip()
 
 def _smart_truncate(text, limit=150):
