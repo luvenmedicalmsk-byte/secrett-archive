@@ -2,60 +2,60 @@
   "country": "AE",
   "date": "2026-08-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-18T20:07:32.292272+00:00",
+  "generated_at": "2026-08-18T20:29:22.427128+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-AE",
       "type": "Country",
       "label": "AE",
-      "score": 56,
+      "score": 59,
       "props": {
-        "risk_score": 56
+        "risk_score": 59
       }
     },
     {
       "id": "DOMAIN-AE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 47,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "stable"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 6,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-AE-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-AE-ОАЭ_обнару",
+      "type": "Signal",
+      "label": "ОАЭ обнаружили запуск ракеты из Ирана: ч",
+      "severity": 62,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-AE-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Ближний Восток",
       "severity": 74,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-AE-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Ближний Восток (с",
-      "severity": 79,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.47
     },
     {
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-AE",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-AE",
       "to": "DOMAIN-AE-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-AE",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-AE-geopolitical",
+      "to": "DOMAIN-AE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-AE-infrastructure",
+      "to": "DOMAIN-AE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AE-economic",
+      "to": "DOMAIN-AE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-AE-ОАЭ_обнару",
+      "to": "DOMAIN-AE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
+    },
+    {
       "from": "SIGNAL-AE-Военный_ко",
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-AE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.74
-    },
-    {
-      "from": "SIGNAL-AE-Санкционно",
-      "to": "DOMAIN-AE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.79
     }
   ]
 }
