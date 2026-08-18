@@ -533,6 +533,52 @@ _EVAL_PAT = [
 ]
 
 
+# НЕПЕРЕВЕДЁННЫЕ ТЕРМИНЫ. Машинный перевод иногда оставляет английские
+# конструкции в русском тексте, слипая их с предыдущим словом:
+#
+#   «подвергаются воздействию во времяНеа tw а v е s»
+#   «становятся опасными во времяheat waves»
+#
+# Первый случай хуже: переводчик разбил heat waves на буквы и часть
+# из них передал кириллицей. Смесь алфавитов внутри слова читается
+# как испорченный текст.
+#
+# Глоссарий покрывает климатические и инфраструктурные термины,
+# которые встречаются в источниках на английском чаще прочих.
+_UNTR_GLOSS = [
+    (r'во\s*врем[яи]\s*[Нн]еа\s*tw\s*а\s*v\s*е\s*s', 'во время тепловых волн'),
+    (r'во\s*врем[яи]\s*heat\s*waves?', 'во время тепловых волн'),
+    (r'[Нн]еа\s*tw\s*а\s*v\s*е\s*s', 'тепловые волны'),
+    (r'\bheat\s*waves?\b', 'тепловые волны'),
+    (r'\bcold\s*snaps?\b', 'похолодания'),
+    (r'\bwildfires?\b', 'лесные пожары'),
+    (r'\bflash\s*floods?\b', 'внезапные паводки'),
+    (r'\bstorm\s*surges?\b', 'штормовые нагоны'),
+    (r'\bsupply\s*chains?\b', 'цепи поставок'),
+    (r'\bblackouts?\b', 'отключения электроэнергии'),
+    (r'\bdroughts?\b', 'засухи'),
+    (r'\bsea\s*level\s*rise\b', 'подъём уровня моря'),
+]
+
+# Слипание: русское слово вплотную к латинскому термину. Список терминов
+# ограничен глоссарием, иначе правило разбивало бы украинские слова
+# с латинской «i»: «Пiвнiчний потiк».
+_UNTR_GLUE = re.compile(
+    r'([а-яё])(?=(?:heat|cold|wildfire|flash|storm|supply|blackout|drought|sea)\b)',
+    re.I)
+
+
+def _fix_untranslated(t):
+    """Замена непереведённых терминов на русские эквиваленты."""
+    s = str(t or '')
+    if not s:
+        return s
+    for p, r in _UNTR_GLOSS:
+        s = re.sub(p, r, s, flags=re.I)
+    s = _UNTR_GLUE.sub(r'\1 ', s)
+    return re.sub(r'\s{2,}', ' ', s).strip()
+
+
 def _deemotion(t):
     """Замена оценочных глаголов на нейтральные.
 
@@ -7672,7 +7718,8 @@ def save(events):
             _fxe['lat']=53.7; _fxe['lng']=-127.6; _fxe['region']='Британская Колумбия'
         # нейтрализация пропаганд. терминов (display, 0 churn)
         for _fxf in ('title','summary','_headline'):
-            if _fxe.get(_fxf): _fxe[_fxf]=_deemotion(_neutralize(_fxe[_fxf]))
+            if _fxe.get(_fxf):
+                _fxe[_fxf]=_fix_untranslated(_deemotion(_neutralize(_fxe[_fxf])))
     for _ste in events: _ste.pop('_obs_tid', None)   # техполе наблюдаемости не пишем в файл
     output = {
         "updated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
