@@ -2,18 +2,27 @@
   "country": "CA",
   "country_name": "Канада",
   "date": "2026-08-18",
-  "generated_at": "2026-08-18T15:17:30.436329+00:00",
-  "srs_score": 51,
+  "generated_at": "2026-08-18T15:32:59.001071+00:00",
+  "srs_score": 56,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+8/день",
+      "detail": "Скорость ухудшения 8 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 8,
+      "urgency": 90,
+      "source": "delta"
+    },
+    {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.7pt",
-      "detail": "Систематическая ошибка прогнозов +4.7pt снижает достоверность сценарного анализа.",
-      "metric_value": 4.73,
-      "urgency": 63.650000000000006,
+      "title": "Системное смещение прогнозов: +4.6pt",
+      "detail": "Систематическая ошибка прогнозов +4.6pt снижает достоверность сценарного анализа.",
+      "metric_value": 4.61,
+      "urgency": 63.05,
       "source": "validation_bias"
     },
     {
@@ -26,7 +35,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 3,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -54,12 +63,6 @@
       "title": "Тренд: снижение срочности",
       "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
       "direction": "down"
-    },
-    {
-      "type": "horizon_shift",
-      "title": "Горизонт d30 точнее, d7 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d7. Скорректируйте горизонты планирования.",
-      "direction": "neutral"
     }
   ],
   "forecast_degradation": [
@@ -77,16 +80,25 @@
   "forecast_improvement": [
     {
       "type": "horizon_strength",
-      "horizon": "d30",
-      "detail": "Лучший горизонт прогноза: d30. Рассмотреть расширение использования."
+      "horizon": "d7",
+      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
     },
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+6.69pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+6.54pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+8/день",
+      "rec_score": 62,
+      "metric_value": 8,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -101,7 +113,7 @@
       "type": "opportunity",
       "priority": "INFORMATIONAL",
       "title": "Стратегия результативна: 76.9% успех",
-      "rec_score": 50,
+      "rec_score": 51,
       "metric_value": 76.9,
       "source": "decision_success"
     },
@@ -109,9 +121,9 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.7pt",
+      "title": "Системное смещение прогнозов: +4.6pt",
       "rec_score": 48,
-      "metric_value": 4.73,
+      "metric_value": 4.61,
       "source": "validation_bias"
     },
     {
@@ -126,10 +138,18 @@
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+8/день",
+      "rationale": "Скорость ухудшения 8 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-03",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Системное смещение прогнозов: +4.7pt",
-      "rationale": "Систематическая ошибка прогнозов +4.7pt снижает достоверность сценарного анализа.",
+      "action": "Реагировать: Системное смещение прогнозов: +4.6pt",
+      "rationale": "Систематическая ошибка прогнозов +4.6pt снижает достоверность сценарного анализа.",
       "deadline": "72 часа",
       "source": "validation_bias"
     },
@@ -158,11 +178,11 @@
       "source": "decision_success"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 32,
-  "delta": 0,
-  "domain": "economy",
+  "risk_score": 40,
+  "delta": 8,
+  "domain": "geopolitics",
   "history_depth": 82
 }
