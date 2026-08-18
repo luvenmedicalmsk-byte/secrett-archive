@@ -2,67 +2,67 @@
   "country": "IT",
   "date": "2026-08-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-18T04:28:20.162137+00:00",
+  "generated_at": "2026-08-18T05:18:18.546124+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 60,
       "props": {
-        "risk_score": 50
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 21,
-      "trend": "down"
+      "score": 65,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "down"
+      "score": 33,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 16,
-      "trend": "down"
+      "score": 59,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "down"
+      "score": 18,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 4,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IT-Пожарный_с",
-      "type": "Signal",
-      "label": "Пожарный сигнал — Европа · Рим",
-      "severity": 39,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-IT-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Италия",
       "severity": 58,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IT-Миграционн",
+      "type": "Signal",
+      "label": "Миграционная политика — Италия",
+      "severity": 67,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.65
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.59
     },
     {
       "from": "COUNTRY-IT",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-IT",
@@ -163,22 +163,85 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IT-Лесной_пож",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.6
     },
     {
-      "from": "SIGNAL-IT-Пожарный_с",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.39
-    },
-    {
       "from": "SIGNAL-IT-Геополитич",
       "to": "DOMAIN-IT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.58
+    },
+    {
+      "from": "SIGNAL-IT-Миграционн",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.67
     }
   ]
 }
