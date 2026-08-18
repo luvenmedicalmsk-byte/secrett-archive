@@ -325,15 +325,13 @@ def make_body(c, z):
     # что отслеживать, затем что делать, и только потом заключение.
     # Два отдельных раздела: рекомендации различаются по адресату
     # и смешивать их нельзя. Выводятся только при наличии данных.
-    # Бизнес идёт первым: решения принимаются раньше, чем частными
-    # лицами. Порядок совпадает с карточкой события и панелью страны.
+    if z.get('for_people'):
+        sec(z.get('for_people_title') or 'Для людей')
+        state['top'] = bullets(c, z['for_people'], X, state['top'], CW,
+                               nl=nl, state=state) + 12
     if z.get('for_business'):
         sec(z.get('for_business_title') or 'Для бизнеса')
         state['top'] = bullets(c, z['for_business'], X, state['top'], CW,
-                               nl=nl, state=state) + 12
-    if z.get('for_people'):
-        sec(z.get('for_people_title') or 'Для частных лиц')
-        state['top'] = bullets(c, z['for_people'], X, state['top'], CW,
                                nl=nl, state=state) + 12
 
 
@@ -366,6 +364,13 @@ def make_body(c, z):
     state['top'] = P(c, z['mini'], X, state['top'], CW, body) + 16
 
     # ── 18 · Про Atlas ────────────────────────────────────────────
+    # Связь с Atlas как системой: место разбора в собственной картине
+    # платформы. Выводится перед общим объяснением о доменах.
+    if z.get('atlas_link'):
+        sec(z.get('atlas_link_title') or 'Связь с Atlas как системой',
+            need=P_height(z['atlas_link'], CW, body) + 50)
+        state['top'] = P(c, z['atlas_link'], X, state['top'], CW, body) + 14
+
     sec("Atlas здесь полезен тем, что показывает",
         need=P_height(z['atlas_note'], CW, body) + 50)
     state['top'] = P(c, z['atlas_note'], X, state['top'], CW, body) + 14
