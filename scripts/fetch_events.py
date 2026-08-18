@@ -2127,7 +2127,8 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
            'рост цен на топливо','рост цен на бензин','перебои поставок','снижение поставок топлива','логистика нефтепродуктов','ограничения на азс']
     kw_high = sum(1 for s in high if s in text)
     # Конструкции топливного кризиса: считаются наравне с ключевыми словами.
-    kw_high += sum(1 for p in _FUEL_HIGH_RE if re.search(p, text))
+    _fuel_hits = sum(1 for p in _FUEL_HIGH_RE if re.search(p, text))
+    kw_high += _fuel_hits
     kw_high += sum(1 for p in _FUEL_EXPORT_HIGH_RE if re.search(p, text))
     kw_high += sum(1 for p in _CHOKEPOINT_HIGH_RE if re.search(p, text))
     kw_high += sum(1 for p in _ENERGY_HIGH_RE if re.search(p, text))
@@ -2138,6 +2139,20 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
     # в нём не засчитывался событием, а предупреждение в теле — засчитывалось.
     _enh, _enm = _en_severity_bonus(title, text)
     kw_high += _enh
+    # ПОРОГ ТОПЛИВНОГО СБОЯ. Прибавка за каждое совпадение давала 68 при
+    # четырёх признаках, тогда как недоступность бензина на 72 процентах
+    # заправок страны - остановка снабжения, а не средний риск.
+    #
+    # Порог, а не прибавка: когда независимо сработали несколько признаков
+    # системного сбоя, событие уже не может быть средним по определению.
+    # Для сравнения на той же шкале: фрагментация интернета 72, дефицит
+    # топлива в масштабе страны не может стоять ниже.
+    _fuel_floor = 0
+    if _fuel_hits >= 4:
+        _fuel_floor = 82
+    elif _fuel_hits >= 3:
+        _fuel_floor = 78
+
     kw_med  = sum(1 for p in _FUEL_MED_RE if re.search(p, text))
     kw_med += sum(1 for p in _FUEL_EXPORT_MED_RE if re.search(p, text))
     kw_med += sum(1 for p in _CHOKEPOINT_MED_RE if re.search(p, text))
@@ -2171,9 +2186,14 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
                 casualties = max(casualties, _dd)
         except Exception:
             pass
-    return normalize_severity('news', {'kw_high': kw_high, 'kw_med': kw_med,
+    _sev_out = normalize_severity('news', {'kw_high': kw_high, 'kw_med': kw_med,
                                        'casualties': casualties, 'bias': bias, 'weight': weight,
                                        'kw_conflict': kw_conflict, 'mass_scale': mass})
+    # Порог топливного сбоя применяется после общей формулы: он поднимает
+    # оценку до минимума, но не снижает её, если расчёт дал больше.
+    if _fuel_floor and _sev_out < _fuel_floor:
+        _sev_out = _fuel_floor
+    return _sev_out
 
 
 def normalize_severity(source_type, m):
