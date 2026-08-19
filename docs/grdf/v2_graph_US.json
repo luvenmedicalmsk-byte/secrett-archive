@@ -2,66 +2,66 @@
   "country": "US",
   "date": "2026-08-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-19T20:18:31.645339+00:00",
+  "generated_at": "2026-08-19T20:55:56.130340+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 56,
+      "score": 55,
       "props": {
-        "risk_score": 56
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "up"
+      "score": 38,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 39,
-      "trend": "up"
+      "score": 32,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 10,
+      "score": 8,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 10,
+      "score": 8,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "up"
+      "score": 17,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 22,
-      "trend": "up"
+      "score": 19,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Система_уп",
+      "type": "Signal",
+      "label": "Система управления критической инфрастру",
+      "severity": 60,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-US-Пожарный_с",
       "type": "Signal",
       "label": "Пожарный сигнал — Северная Америка · Кал",
@@ -92,13 +99,6 @@
       "label": "Замедление Атлантического течения может ",
       "severity": 51,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-Система_уп",
-      "type": "Signal",
-      "label": "Система управления критической инфрастру",
-      "severity": 52,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.22
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,25 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-US-geopolitical",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-US-infrastructure",
-      "to": "DOMAIN-US-economic",
+      "from": "SIGNAL-US-Система_уп",
+      "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.6
     },
     {
       "from": "SIGNAL-US-Пожарный_с",
@@ -194,12 +179,6 @@
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.51
-    },
-    {
-      "from": "SIGNAL-US-Система_уп",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
     }
   ]
 }
