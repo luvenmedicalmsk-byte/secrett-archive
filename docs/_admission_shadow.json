@@ -1,68 +1,70 @@
 {
-  "generated": "2026-08-19T10:54:34Z",
+  "generated": "2026-08-19T11:18:12Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 643,
-    "DENY_COMMENTARY": 249,
+    "PASS_FACT": 638,
+    "DENY_COMMENTARY": 252,
     "DENY_FEATURE": 3,
     "DENY_BACKGROUND": 4,
     "UNMATCHED": 6,
     "DENY_STATE_ONLY": 1
   },
   "kpi": {
-    "processes_total": 906,
-    "matched": 900,
+    "processes_total": 904,
+    "matched": 898,
     "unmatched": 6,
     "coverage_pct": 99.3,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 71.4,
-    "admission_deny_rate": 28.6,
-    "processes_without_fact": 257,
+    "admission_pass_rate": 71.0,
+    "admission_deny_rate": 29.0,
+    "processes_without_fact": 260,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 252,
-      "sample": 889,
+      "processes": 250,
+      "sample": 899,
       "agreement_pct": 93.0,
-      "decision_agreement_pct": 93.3,
-      "critical_errors": 60,
+      "decision_agreement_pct": 93.2,
+      "critical_errors": 61,
       "truth_ratio_pct": 95.2,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 14,
-        "FACT_EVENT→COMMENTARY": 44,
+        "FACT_EVENT→COMMENTARY": 45,
         "BACKGROUND→COMMENTARY": 2,
+        "COMMENTARY→FACT_EVENT": 13,
         "FACT_EVENT→REPORT": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "FACT_EVENT→BACKGROUND": 1
       }
     },
     "historical": {
-      "processes": 906,
-      "sample": 1937,
+      "processes": 904,
+      "sample": 1947,
       "agreement_pct": 93.3,
       "decision_agreement_pct": 93.4,
-      "critical_errors": 127,
+      "critical_errors": 128,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 22,
-        "FACT_EVENT→COMMENTARY": 97,
+        "FACT_EVENT→COMMENTARY": 98,
         "BACKGROUND→COMMENTARY": 2,
+        "COMMENTARY→FACT_EVENT": 21,
         "FACT_EVENT→REPORT": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 5,
         "FACT_EVENT→BACKGROUND": 3,
-        "STATE_CONFIRMATION→FACT_EVENT": 4,
         "STATE_CONFIRMATION→COMMENTARY": 1
       }
     },
     "events_stream": {
-      "sample": 350,
-      "agreement_pct": 91.7,
-      "decision_agreement_pct": 92.0,
+      "sample": 330,
+      "agreement_pct": 91.2,
+      "decision_agreement_pct": 91.5,
       "critical_errors": 28,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 22,
+        "FACT_EVENT→COMMENTARY": 21,
         "FACT_EVENT→REPORT": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "COMMENTARY→FACT_EVENT": 5,
         "BACKGROUND→COMMENTARY": 1
       }
@@ -76,32 +78,32 @@
   },
   "class_source": {
     "shadow_title_only": 242,
-    "evidence_sic": 1937,
+    "evidence_sic": 1947,
     "event_sic": 8
   },
-  "truth_ratio_pct": 88.9,
+  "truth_ratio_pct": 89.0,
   "domain_statistics": {
     "geopolitics": {
       "pass": 202,
       "deny": 63
     },
     "climate": {
-      "pass": 240,
-      "deny": 30,
+      "pass": 237,
+      "deny": 31,
       "unmatched": 4
     },
+    "social": {
+      "pass": 46,
+      "deny": 43
+    },
     "economy": {
-      "pass": 90,
-      "deny": 84,
+      "pass": 88,
+      "deny": 86,
       "unmatched": 2
     },
     "technology": {
       "pass": 65,
       "deny": 37
-    },
-    "social": {
-      "pass": 46,
-      "deny": 43
     }
   },
   "deny_impact": [
@@ -588,6 +590,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "econ-валютныйры-беларусь-7267",
+      "title": "Валютный рынок — Беларусь",
+      "domain": "economy",
+      "severity": 62,
+      "pressure": 42,
+      "first_seen": "2026-07-01",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "archived",
+      "causal_links": 3,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "geop-санкционно-сша-турция-b551",
       "title": "Санкционное давление — США",
       "domain": "geopolitics",
@@ -600,21 +617,6 @@
       },
       "status": "archived",
       "causal_links": 6,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "econ-валютныйры-беларусь-7267",
-      "title": "Валютный рынок — Беларусь",
-      "domain": "economy",
-      "severity": 62,
-      "pressure": 34,
-      "first_seen": "2026-07-01",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "archived",
-      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1032,6 +1034,20 @@
       "delta": null
     },
     {
+      "signal_id": "econ-валютныйры-россия-19f3",
+      "domain": "economy",
+      "legacy": 34,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-рыноктруда-глобальн-58dd",
+      "domain": "economy",
+      "legacy": 46,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-топливныйр-санктпет-8cbf",
       "domain": "economy",
       "legacy": 55,
@@ -1039,8 +1055,8 @@
       "delta": null
     },
     {
-      "signal_id": "econ-рыноктруда-глобальн-58dd",
-      "domain": "economy",
+      "signal_id": "clim-пожарнаяак-россия-51fc",
+      "domain": "climate",
       "legacy": 46,
       "shadow": null,
       "delta": null
@@ -1053,16 +1069,16 @@
       "delta": null
     },
     {
-      "signal_id": "econ-финансовый-россия-9284",
+      "signal_id": "econ-экономичес-германия-c00c",
       "domain": "economy",
-      "legacy": 44,
+      "legacy": 45,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-германия-c00c",
+      "signal_id": "econ-финансовый-россия-9284",
       "domain": "economy",
-      "legacy": 45,
+      "legacy": 44,
       "shadow": null,
       "delta": null
     },
@@ -1075,6 +1091,13 @@
     },
     {
       "signal_id": "econ-экономичес-испания-d064",
+      "domain": "economy",
+      "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-валютныйры-сша-a47b",
       "domain": "economy",
       "legacy": 44,
       "shadow": null,
@@ -1102,23 +1125,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-валютныйры-сша-a47b",
-      "domain": "economy",
-      "legacy": 44,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-macroклима-cn-748e",
       "domain": "climate",
       "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-возобновля-глобальн-306b",
-      "domain": "economy",
-      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1130,9 +1139,16 @@
       "delta": null
     },
     {
-      "signal_id": "soci-эпидемиоло-россия-1c84",
-      "domain": "social",
-      "legacy": 34,
+      "signal_id": "econ-возобновля-глобальн-306b",
+      "domain": "economy",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-венесуэл-ada4",
+      "domain": "economy",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1140,6 +1156,13 @@
       "signal_id": "econ-финансовый-канада-6615",
       "domain": "economy",
       "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-эпидемиоло-россия-1c84",
+      "domain": "social",
+      "legacy": 34,
       "shadow": null,
       "delta": null
     },
@@ -1408,32 +1431,11 @@
       "legacy": 62,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "geop-военныеуда-бабэльма-bd52",
-      "domain": "geopolitics",
-      "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-германия-a5fc",
-      "domain": "geopolitics",
-      "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "soci-социальный-турция-a69f",
-      "domain": "social",
-      "legacy": 58,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 1,
-    "31-50": 170,
+    "31-50": 173,
     "51-70": 84,
     "71-90": 2,
     "91-100": 0
