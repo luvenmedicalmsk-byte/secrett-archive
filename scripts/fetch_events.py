@@ -1642,7 +1642,15 @@ def detect_domain(title, desc):
     _mil_attack = re.search(r'(бпла|беспилотник|дрон|ракет|обстрел|авиауд|удар\w* по|'
                             r'атаковал|взрыв прогрем|подорвал|теракт|боевик|корвет|'
                             r'военн\w* корабл|снаряд)', text)
-    _casualty = re.search(r'(погибл\w+|получили ранени|убит\w+|жертв\w+|пострадавш)', text)
+    # «Останки 11 палестинцев извлечены из-под завалов» получало домен
+    # economy: основа «погибл» не совпадает с формой «погибших», а слова
+    # «останки» и «извлечены из-под завалов» в списке отсутствовали.
+    # Военный признак при этом сработал - «авиауд».
+    _casualty = (re.search(r'(погиб\w*|получили ранени|убит\w+|жертв\w+|пострадавш|'
+                           r'останк\w+|тел[аои]\s+погиб|извлеч\w+\s+из-под|под\s+завалам|'
+                           r'умерш\w+|скончал\w+)', text)
+                 and not re.search(r'(обзор\s+книг|музе[йе]|динозавр|археолог|'
+                                   r'раскопк|древн\w+|летопис)', text))
     _mil_actor = re.search(r'(войн|военн|бпла|беспилотник|дрон|ракет|обстрел|корвет|всу|армия|войск|снаряд)', text)
     if (_mil_attack or (_casualty and re.search(r'взрыв|подорв|обрушен|теракт', text))):
         # военный актор → geopolitics; жертвы/теракт без актора → social
@@ -5359,11 +5367,29 @@ def process_events(raw_items):
             if _bd in _DOM5:
                 _cv.setdefault('global_built', {})
                 _cv['global_built'][_bd] = _cv['global_built'].get(_bd, 0) + 1
+        # УНИКАЛЬНЫЕ ЗАПИСИ НА ВХОДЕ. Оценка того, сколько разных публикаций
+        # система прочитала за всё время. Считается по raw_items до всех
+        # фильтров: одна и та же новость читается каждые тридцать минут,
+        # пока не выйдет из окна, но учитывается один раз.
+        _cv.setdefault('total_ingested', 0)
+        _cv.setdefault('_ing_ids', [])
+        _ICAP = 60000
+        _seen_i = set(_cv['_ing_ids'])
+        _new_i = []
+        for _ie in raw_items:
+            _ik = (str(_ie.get('title', ''))[:120] + '|' + str(_ie.get('source', '')))
+            if _ik in _seen_i:
+                continue
+            _seen_i.add(_ik); _new_i.append(_ik)
+            _cv['total_ingested'] += 1
+        _cv['_ing_ids'] = (_cv['_ing_ids'] + _new_i)[-_ICAP:]
+
         _cv['_built_ids'] = (_cv['_built_ids'] + _new_b)[-_BCAP:]
         _cv['built_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         _cvp.write_text(json.dumps(_cv, ensure_ascii=False), encoding='utf-8')
-        print('  [COVERAGE] построено новых %d, всего %d'
-              % (len(_new_b), _cv['total_built']), file=sys.stderr)
+        print('  [COVERAGE] прочитано новых %d (всего %d) · построено новых %d (всего %d)'
+              % (len(_new_i), _cv['total_ingested'],
+                 len(_new_b), _cv['total_built']), file=sys.stderr)
     except Exception as _cve:
         print('  [COVERAGE] пропуск: %s' % str(_cve)[:80], file=sys.stderr)
 
