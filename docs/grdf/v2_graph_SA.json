@@ -2,67 +2,67 @@
   "country": "SA",
   "date": "2026-08-19",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-19T11:51:35.094233+00:00",
+  "generated_at": "2026-08-19T12:26:37.388712+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 53,
+      "score": 58,
       "props": {
-        "risk_score": 53
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 27,
-      "trend": "down"
+      "score": 14,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-SA-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 2,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-SA-Geopolitical",
@@ -87,17 +87,17 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-SA-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Ближний Восток (с",
-      "severity": 79,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-SA-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Ближний Восток",
       "severity": 74,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-SA-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Ближний Восток (с",
+      "severity": 79,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.03
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.03
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.02
     },
     {
       "from": "DRIVER-SA-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-SA-geopolitical",
+      "to": "DOMAIN-SA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-SA-infrastructure",
+      "to": "DOMAIN-SA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-SA-economic",
+      "to": "DOMAIN-SA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-SA-Военный_ко",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.84
     },
     {
-      "from": "SIGNAL-SA-Санкционно",
-      "to": "DOMAIN-SA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.79
-    },
-    {
       "from": "SIGNAL-SA-Геополитич",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-SA-Санкционно",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.79
     }
   ]
 }
