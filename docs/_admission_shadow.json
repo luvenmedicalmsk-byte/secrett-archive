@@ -1,68 +1,70 @@
 {
-  "generated": "2026-08-19T04:08:02Z",
+  "generated": "2026-08-19T05:02:43Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 639,
-    "DENY_COMMENTARY": 251,
+    "DENY_COMMENTARY": 252,
     "DENY_BACKGROUND": 4,
     "UNMATCHED": 6,
     "DENY_FEATURE": 2,
     "DENY_STATE_ONLY": 1
   },
   "kpi": {
-    "processes_total": 903,
-    "matched": 897,
+    "processes_total": 904,
+    "matched": 898,
     "unmatched": 6,
     "coverage_pct": 99.3,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
     "admission_pass_rate": 71.2,
     "admission_deny_rate": 28.8,
-    "processes_without_fact": 258,
+    "processes_without_fact": 259,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 234,
-      "sample": 795,
-      "agreement_pct": 94.0,
-      "decision_agreement_pct": 94.1,
-      "critical_errors": 47,
-      "truth_ratio_pct": 94.6,
+      "processes": 235,
+      "sample": 832,
+      "agreement_pct": 93.8,
+      "decision_agreement_pct": 93.9,
+      "critical_errors": 51,
+      "truth_ratio_pct": 94.9,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 35,
-        "COMMENTARY→FACT_EVENT": 10,
+        "FACT_EVENT→COMMENTARY": 37,
+        "COMMENTARY→FACT_EVENT": 11,
         "BACKGROUND→COMMENTARY": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "FACT_EVENT→REPORT": 1,
         "FACT_EVENT→BACKGROUND": 1
       }
     },
     "historical": {
-      "processes": 903,
-      "sample": 1857,
-      "agreement_pct": 93.8,
-      "decision_agreement_pct": 93.9,
-      "critical_errors": 114,
+      "processes": 904,
+      "sample": 1894,
+      "agreement_pct": 93.7,
+      "decision_agreement_pct": 93.8,
+      "critical_errors": 118,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 88,
-        "COMMENTARY→FACT_EVENT": 18,
+        "FACT_EVENT→COMMENTARY": 90,
+        "COMMENTARY→FACT_EVENT": 19,
         "BACKGROUND→COMMENTARY": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 5,
         "FACT_EVENT→REPORT": 1,
         "FACT_EVENT→BACKGROUND": 3,
-        "STATE_CONFIRMATION→FACT_EVENT": 4,
         "STATE_CONFIRMATION→COMMENTARY": 1
       }
     },
     "events_stream": {
-      "sample": 307,
-      "agreement_pct": 93.8,
-      "decision_agreement_pct": 94.1,
-      "critical_errors": 18,
+      "sample": 327,
+      "agreement_pct": 93.6,
+      "decision_agreement_pct": 93.9,
+      "critical_errors": 20,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 14,
+        "FACT_EVENT→COMMENTARY": 15,
         "FACT_EVENT→REPORT": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "COMMENTARY→FACT_EVENT": 3,
         "BACKGROUND→COMMENTARY": 1
       }
@@ -76,32 +78,32 @@
   },
   "class_source": {
     "shadow_title_only": 245,
-    "evidence_sic": 1857,
+    "evidence_sic": 1894,
     "event_sic": 8
   },
-  "truth_ratio_pct": 88.4,
+  "truth_ratio_pct": 88.6,
   "domain_statistics": {
-    "climate": {
-      "pass": 238,
-      "deny": 31,
-      "unmatched": 4
-    },
     "geopolitics": {
       "pass": 200,
       "deny": 65
     },
+    "climate": {
+      "pass": 239,
+      "deny": 31,
+      "unmatched": 4
+    },
+    "social": {
+      "pass": 46,
+      "deny": 42
+    },
     "economy": {
-      "pass": 90,
-      "deny": 83,
+      "pass": 89,
+      "deny": 84,
       "unmatched": 2
     },
     "technology": {
       "pass": 65,
       "deny": 37
-    },
-    "social": {
-      "pass": 46,
-      "deny": 42
     }
   },
   "deny_impact": [
@@ -1095,6 +1097,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-валютныйры-сша-a47b",
+      "domain": "economy",
+      "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-возобновля-глобальн-306b",
       "domain": "economy",
       "legacy": 32,
@@ -1221,14 +1230,14 @@
       "delta": null
     },
     {
-      "signal_id": "econ-топливныйр-индия-1722",
+      "signal_id": "econ-экономичес-средизем-d7bf",
       "domain": "economy",
       "legacy": 46,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-средизем-d7bf",
+      "signal_id": "econ-топливныйр-индия-1722",
       "domain": "economy",
       "legacy": 46,
       "shadow": null,
@@ -1422,18 +1431,11 @@
       "legacy": 56,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-судан-769e",
-      "domain": "geopolitics",
-      "legacy": 55,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 1,
-    "31-50": 170,
+    "31-50": 171,
     "51-70": 85,
     "71-90": 2,
     "91-100": 0
