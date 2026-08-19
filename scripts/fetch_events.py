@@ -5322,6 +5322,51 @@ def process_events(raw_items):
             if _e.get('summary'): _e['summary'] = strip_non_flag_emoji(_e['summary'])
             _e['region'] = ru_geo(_e.get('region','') or '')
         except Exception: pass
+    # ═══ НАКОПИТЕЛЬНЫЙ СЧЁТЧИК ПО ПОСТРОЕННЫМ СОБЫТИЯМ ═══
+    # Прежний счётчик читал docs/events.json, то есть финальную ленту.
+    # За её пределами остаются события, отсеянные лимитами ОТОБРАЖЕНИЯ:
+    # overflow, topic_cap, post_build_filter. Они прошли классификатор,
+    # географию и severity - система их распознала и оценила.
+    #
+    # Считаем по events: все построенные, до применения лимитов ленты.
+    # Дедупликация по fingerprint сохранена, двойного счёта нет.
+    try:
+        _cvp = OUTPUT_PATH.parent / 'coverage_totals.json'
+        try:
+            _cv = json.loads(_cvp.read_text(encoding='utf-8'))
+        except Exception:
+            _cv = {}
+        _cv.setdefault('global', {})
+        _cv.setdefault('countries', {})
+        _cv.setdefault('total', 0)
+        _cv.setdefault('_recent_ids', [])
+        _cv.setdefault('total_built', 0)
+        _cv.setdefault('_built_ids', [])
+        _DOM5 = ('climate', 'geopolitics', 'economy', 'technology', 'social')
+        # Окно вдвое больше прежнего: построенных событий втрое больше
+        # ленты, при 5000 запас по времени сократился бы до недели.
+        _BCAP = 20000
+        _seen_b = set(_cv['_built_ids'])
+        _new_b = []
+        for _be in events:
+            _bk = (_be.get('fingerprint') or _be.get('id')
+                   or (str(_be.get('title', '')) + '|' + str(_be.get('source', ''))))
+            if _bk in _seen_b:
+                continue
+            _seen_b.add(_bk); _new_b.append(_bk)
+            _cv['total_built'] += 1
+            _bd = _be.get('domain') or 'other'
+            if _bd in _DOM5:
+                _cv.setdefault('global_built', {})
+                _cv['global_built'][_bd] = _cv['global_built'].get(_bd, 0) + 1
+        _cv['_built_ids'] = (_cv['_built_ids'] + _new_b)[-_BCAP:]
+        _cv['built_updated'] = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        _cvp.write_text(json.dumps(_cv, ensure_ascii=False), encoding='utf-8')
+        print('  [COVERAGE] построено новых %d, всего %d'
+              % (len(_new_b), _cv['total_built']), file=sys.stderr)
+    except Exception as _cve:
+        print('  [COVERAGE] пропуск: %s' % str(_cve)[:80], file=sys.stderr)
+
     try:
         import collections as _c2
         (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(json.dumps({
