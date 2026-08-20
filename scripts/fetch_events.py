@@ -1020,7 +1020,7 @@ def _parser_coverage_report(_c2, raw_items, events, top_events):
     Только наблюдение: логика фильтрации не менялась. До Phase 0 путь «пост → raw_items»
     был невидим — _LOSS и raw_by_source считают уже ПОСТРОЕННОЕ, поэтому 73% входа
     (5378 из 7400 постов) не попадали ни в один отчёт."""
-    _TGD = {'ecotopor': 'T Live', 'NeKaspersky': 'IT', 'anti_malware': 'AM Live', 'trueosint': 'Cyber',
+    _TGD = {'ecotopor': 'T Live', 'banksta': 'B News', 'NeKaspersky': 'IT', 'anti_malware': 'AM Live', 'trueosint': 'Cyber',
             'f6_cybersecurity': 'Cybersecurity', 'SecLabNews': 'Lab News', 'Social_engineering': 'Engineering',
             'Russian_OSINT': 'R Osint', 'alexmakus': 'Cybersec', 'xakep_ru': 'Xakep IT', 'sterngang': 'Data D',
             'Ateobreaking': 'A breaking', 'alertasdowndetector': 'Downdetector', 'dciber': 'Dciber',
@@ -9986,7 +9986,7 @@ def fetch_telegram():
                 'sterngang', 'Ateobreaking', 'investorbiz',
                 'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54', 'chp_ekb', 'chp_55',
                 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
-    TG_DISPLAY = {'ecotopor':'T Live','investorbiz':'Economics','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','chp_ekb':'Ekb News','chp_55':'Omsk News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
+    TG_DISPLAY = {'ecotopor':'T Live','investorbiz':'Economics','banksta':'B News','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','chp_ekb':'Ekb News','chp_55':'Omsk News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
                   'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU'}
