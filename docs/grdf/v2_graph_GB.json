@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-08-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-20T11:35:24.067958+00:00",
+  "generated_at": "2026-08-20T11:55:29.591325+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 40,
+      "score": 51,
       "props": {
-        "risk_score": 40
+        "risk_score": 51
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 14,
-      "trend": "down"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 14,
-      "trend": "down"
+      "score": 28,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 4,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 4,
-      "trend": "down"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 7,
-      "trend": "down"
+      "score": 24,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 8,
-      "trend": "down"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -75,9 +75,16 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-GB-Economic",
+      "id": "DRIVER-GB-Social",
       "type": "Driver",
-      "label": "Economic"
+      "label": "Social"
+    },
+    {
+      "id": "SIGNAL-GB-Палестинск",
+      "type": "Signal",
+      "label": "Палестинские группы призывают к маршу в ",
+      "severity": 67,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-GB-Социальный",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Великобритания",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-GB-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Великобритания",
-      "severity": 34,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-technology",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.24
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.04
     },
     {
       "from": "DRIVER-GB-Geopolitical",
@@ -157,10 +157,37 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-GB-Economic",
+      "from": "DRIVER-GB-Social",
       "to": "COUNTRY-GB",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-Палестинск",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.67
     },
     {
       "from": "SIGNAL-GB-Социальный",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-GB-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-GB-Экономичес",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.34
     }
   ]
 }
