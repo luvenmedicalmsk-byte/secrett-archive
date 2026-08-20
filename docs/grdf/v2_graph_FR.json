@@ -2,59 +2,59 @@
   "country": "FR",
   "date": "2026-08-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-20T19:13:42.235069+00:00",
+  "generated_at": "2026-08-20T19:58:16.043407+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-FR",
       "type": "Country",
       "label": "FR",
-      "score": 38,
+      "score": 40,
       "props": {
-        "risk_score": 38
+        "risk_score": 40
       }
     },
     {
       "id": "DOMAIN-FR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
+      "score": 40,
       "trend": "up"
     },
     {
       "id": "DOMAIN-FR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 52,
+      "score": 38,
       "trend": "up"
     },
     {
       "id": "DOMAIN-FR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
+      "score": 8,
       "trend": "up"
     },
     {
       "id": "DOMAIN-FR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
+      "score": 8,
       "trend": "up"
     },
     {
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
+      "score": 17,
       "trend": "up"
     },
     {
       "id": "DOMAIN-FR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
+      "score": 19,
       "trend": "up"
     },
     {
@@ -63,11 +63,6 @@
       "label": "cyber",
       "score": 4,
       "trend": "stable"
-    },
-    {
-      "id": "DRIVER-FR-Economic",
-      "type": "Driver",
-      "label": "Economic"
     },
     {
       "id": "DRIVER-FR-Geopolitical",
@@ -80,11 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-FR-7300_избыт",
-      "type": "Signal",
-      "label": "7300 избыточных смертей и продолжается —",
-      "severity": 32,
-      "domain": "climate"
+      "id": "DRIVER-FR-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "SIGNAL-FR-Валютный_р",
@@ -99,6 +92,13 @@
       "label": "Социальный процесс — Франция",
       "severity": 34,
       "domain": "social"
+    },
+    {
+      "id": "SIGNAL-FR-Тепловая_в",
+      "type": "Signal",
+      "label": "Тепловая волна — Франция",
+      "severity": 32,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,49 +106,43 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-economic",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-cyber",
       "type": "CORRELATES",
       "weight": 0.04
-    },
-    {
-      "from": "DRIVER-FR-Economic",
-      "to": "COUNTRY-FR",
-      "type": "CAUSES",
-      "weight": 0.8
     },
     {
       "from": "DRIVER-FR-Geopolitical",
@@ -163,10 +157,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-FR-7300_избыт",
-      "to": "DOMAIN-FR-climate",
+      "from": "DRIVER-FR-Economic",
+      "to": "COUNTRY-FR",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-FR-geopolitical",
+      "to": "DOMAIN-FR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-FR-infrastructure",
+      "to": "DOMAIN-FR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-FR-Валютный_р",
@@ -179,6 +194,12 @@
       "to": "DOMAIN-FR-social",
       "type": "AMPLIFIES",
       "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-FR-Тепловая_в",
+      "to": "DOMAIN-FR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
