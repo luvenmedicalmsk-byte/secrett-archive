@@ -2,7 +2,7 @@
   "country": "DE",
   "country_name": "Германия",
   "date": "2026-08-20",
-  "generated_at": "2026-08-20T22:33:24.004827+00:00",
+  "generated_at": "2026-08-20T22:55:35.276442+00:00",
   "strategy_score": 48,
   "strategy_confidence": 77,
   "urgency_level": "critical",
@@ -14,85 +14,74 @@
   "monitoring_ru": "Ежечасно",
   "actions": [
     {
-      "id": "CR-09",
+      "id": "CR-01",
       "priority": 1,
-      "action": "МАКСИМАЛЬНЫЙ УРОВЕНЬ ТРЕВОГИ",
-      "detail": "Критический риск с worst-case dominant: системный кризис в высокой готовности",
-      "trigger": "critical + worst dominant",
-      "expiry": "state resolution",
-      "confidence": 67,
-      "domain_context": "social",
+      "action": "Контролируемая деэскалация",
+      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
+      "trigger": "critical + best dominant",
+      "expiry": "state transition",
+      "confidence": 71,
+      "domain_context": "economy",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-10",
-      "priority": 1,
-      "action": "Немедленная эвакуация уязвимых активов",
-      "detail": "Приоритетная защита критической инфраструктуры и цепочек поставок",
+      "id": "CR-02",
+      "priority": 2,
+      "action": "Защитить деэскалационные индикаторы",
+      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
       "trigger": "always",
-      "expiry": "assets secured",
-      "confidence": 67,
-      "domain_context": "social",
-      "horizon_relevant": "30d"
-    },
-    {
-      "id": "CR-11",
-      "priority": 1,
-      "action": "Активировать высший уровень кризисного управления",
-      "detail": "Передать координацию реагирования на высший уровень принятия решений",
-      "trigger": "always",
-      "expiry": "crisis resolved",
-      "confidence": 67,
-      "domain_context": "social",
+      "expiry": "deescalation confirmed",
+      "confidence": 71,
+      "domain_context": "economy",
       "horizon_relevant": "30d"
     }
   ],
-  "action_count": 3,
+  "action_count": 2,
   "state": "critical",
-  "dominant_scenario": "worst",
-  "scenario_score": 27,
-  "instability": 56,
+  "dominant_scenario": "best",
+  "scenario_score": 25,
+  "instability": 43,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
-      "condition": "risk_score ≥ 40 (+8pt)",
+      "condition": "risk_score ≥ 47 (+8pt)",
       "leads_to": "cascade",
-      "probability": 26
+      "probability": 23
     },
     {
       "condition": "delta ≥ 6 за 24ч",
       "leads_to": "cascade",
-      "probability": 28
-    },
-    {
-      "condition": "Worst-case 30d ≥ 40",
-      "leads_to": "cascade",
-      "probability": 34
-    },
-    {
-      "condition": "Новый критический драйвер в social",
-      "leads_to": "cascade",
       "probability": 22
+    },
+    {
+      "condition": "Worst-case 30d ≥ 95",
+      "leads_to": "cascade",
+      "probability": 29
+    },
+    {
+      "condition": "Новый критический драйвер в economy",
+      "leads_to": "cascade",
+      "probability": 21
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 35,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 75,
+      "state": "critical",
+      "urgency": "critical",
+      "preparedness": "emergency"
     },
     {
       "horizon": "90 дней",
-      "score": 40,
+      "score": 66,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "180 дней",
-      "score": 45,
+      "score": 58,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
@@ -106,9 +95,9 @@
     }
   ],
   "probabilities": {
-    "worst": 34,
-    "stress": 27,
-    "base": 12,
-    "best": 27
+    "worst": 29,
+    "stress": 26,
+    "base": 16,
+    "best": 29
   }
 }
