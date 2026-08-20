@@ -2,66 +2,66 @@
   "country": "IN",
   "date": "2026-08-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-20T10:03:52.955388+00:00",
+  "generated_at": "2026-08-20T10:26:37.927615+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 32,
+      "score": 50,
       "props": {
-        "risk_score": 32
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 13,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 28,
-      "trend": "stable"
+      "score": 3,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
       "score": 3,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 7,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 7,
-      "trend": "stable"
+      "score": 6,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 2,
+      "score": 1,
       "trend": "stable"
     },
     {
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-'RSS_счита",
+      "type": "Signal",
+      "label": "'RSS считает, что знает правду для всех'",
+      "severity": 66,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IN-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Индия",
+      "severity": 66,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
       "label": "Наводнение — Южная Азия",
       "severity": 89,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IN-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Индия",
-      "severity": 60,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-IN-Наводнение",
-      "type": "Signal",
-      "label": "Наводнение — Индия",
-      "severity": 81,
       "domain": "climate"
     }
   ],
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.03
     },
     {
       "from": "COUNTRY-IN",
@@ -130,19 +130,19 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-cyber",
       "type": "CORRELATES",
-      "weight": 0.02
+      "weight": 0.01
     },
     {
       "from": "DRIVER-IN-Geopolitical",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IN-'RSS_счита",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
+      "from": "SIGNAL-IN-Военные_уд",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.89
-    },
-    {
-      "from": "SIGNAL-IN-Технологич",
-      "to": "DOMAIN-IN-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.6
-    },
-    {
-      "from": "SIGNAL-IN-Наводнение",
-      "to": "DOMAIN-IN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.81
     }
   ]
 }
