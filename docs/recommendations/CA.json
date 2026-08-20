@@ -2,18 +2,27 @@
   "country": "CA",
   "country_name": "Канада",
   "date": "2026-08-20",
-  "generated_at": "2026-08-20T12:27:49.109889+00:00",
-  "srs_score": 51,
+  "generated_at": "2026-08-20T13:30:35.760266+00:00",
+  "srs_score": 56,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+12/день",
+      "detail": "Скорость ухудшения 12 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 12,
+      "urgency": 90,
+      "source": "delta"
+    },
+    {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.9pt",
-      "detail": "Систематическая ошибка прогнозов +4.9pt снижает достоверность сценарного анализа.",
-      "metric_value": 4.88,
-      "urgency": 64.4,
+      "title": "Системное смещение прогнозов: +4.7pt",
+      "detail": "Систематическая ошибка прогнозов +4.7pt снижает достоверность сценарного анализа.",
+      "metric_value": 4.7,
+      "urgency": 63.5,
       "source": "validation_bias"
     },
     {
@@ -26,7 +35,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 3,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -67,6 +76,11 @@
       "type": "horizon_degradation",
       "horizon": "d7",
       "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности -7.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -78,10 +92,19 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+6.78pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+6.56pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+12/день",
+      "rec_score": 62,
+      "metric_value": 12,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -104,9 +127,9 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.9pt",
+      "title": "Системное смещение прогнозов: +4.7pt",
       "rec_score": 48,
-      "metric_value": 4.88,
+      "metric_value": 4.7,
       "source": "validation_bias"
     },
     {
@@ -121,10 +144,18 @@
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+12/день",
+      "rationale": "Скорость ухудшения 12 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-03",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Системное смещение прогнозов: +4.9pt",
-      "rationale": "Систематическая ошибка прогнозов +4.9pt снижает достоверность сценарного анализа.",
+      "action": "Реагировать: Системное смещение прогнозов: +4.7pt",
+      "rationale": "Систематическая ошибка прогнозов +4.7pt снижает достоверность сценарного анализа.",
       "deadline": "72 часа",
       "source": "validation_bias"
     },
@@ -153,11 +184,11 @@
       "source": "decision_success"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 32,
-  "delta": 0,
-  "domain": "geopolitics",
+  "risk_score": 44,
+  "delta": 12,
+  "domain": "climate",
   "history_depth": 84
 }

@@ -2,67 +2,67 @@
   "country": "US",
   "date": "2026-08-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-20T12:27:50.650198+00:00",
+  "generated_at": "2026-08-20T13:30:37.453858+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 52,
+      "score": 53,
       "props": {
-        "risk_score": 52
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 31,
-      "trend": "down"
+      "score": 46,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 26,
-      "trend": "down"
+      "score": 23,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 8,
-      "trend": "down"
+      "score": 6,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 16,
-      "trend": "down"
+      "score": 11,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 18,
-      "trend": "down"
+      "score": 13,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "down"
+      "score": 3,
+      "trend": "stable"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-US-Международ",
+      "type": "Signal",
+      "label": "Международный уголовный суд: Новые санкц",
+      "severity": 66,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-US-Система_уп",
       "type": "Signal",
       "label": "Система управления критической инфрастру",
@@ -92,13 +99,6 @@
       "label": "Пожарный сигнал — Южная Америка · Белен",
       "severity": 52,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-US-Замедление",
-      "type": "Signal",
-      "label": "Замедление Атлантического течения может ",
-      "severity": 51,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.26
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.08
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.03
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-US-Международ",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
+    },
+    {
       "from": "SIGNAL-US-Система_уп",
       "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
@@ -173,12 +200,6 @@
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.52
-    },
-    {
-      "from": "SIGNAL-US-Замедление",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }
