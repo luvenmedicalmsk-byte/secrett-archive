@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-08-20",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-20T22:55:37.797665+00:00",
+  "generated_at": "2026-08-20T23:20:19.583479+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "down"
+      "score": 42,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 24,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-US-Пожарный_с",
+      "id": "SIGNAL-US-Система_уп",
       "type": "Signal",
-      "label": "Пожарный сигнал — Северная Америка · Ван",
-      "severity": 52,
-      "domain": "climate"
+      "label": "Система управления критической инфрастру",
+      "severity": 60,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Международ",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-US-Пожарный_с",
-      "to": "DOMAIN-US-climate",
+      "from": "SIGNAL-US-Система_уп",
+      "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.6
     }
   ]
 }

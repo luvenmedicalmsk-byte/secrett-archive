@@ -2,102 +2,102 @@
   "country": "DE",
   "country_name": "Германия",
   "date": "2026-08-20",
-  "generated_at": "2026-08-20T22:55:35.276442+00:00",
-  "strategy_score": 48,
+  "generated_at": "2026-08-20T23:20:17.062913+00:00",
+  "strategy_score": 8,
   "strategy_confidence": 77,
-  "urgency_level": "critical",
-  "urgency_level_ru": "Критическая",
-  "urgency_color": "#ef4444",
-  "preparedness_level": "emergency",
-  "preparedness_level_ru": "Чрезвычайная готовность",
-  "monitoring_priority": 4,
-  "monitoring_ru": "Ежечасно",
+  "urgency_level": "low",
+  "urgency_level_ru": "Низкая",
+  "urgency_color": "#22c55e",
+  "preparedness_level": "routine",
+  "preparedness_level_ru": "Плановый режим",
+  "monitoring_priority": 1,
+  "monitoring_ru": "Ежедневно",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "S-01",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
-      "expiry": "state transition",
-      "confidence": 71,
+      "action": "Мониторинговый режим",
+      "detail": "Поддерживать стандартный цикл наблюдения, отклонений не выявлено",
+      "trigger": "risk_score < 40 AND dominant = best",
+      "expiry": "risk_score > 45 OR delta > 3",
+      "confidence": 81,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
+      "id": "S-02",
       "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
-      "trigger": "always",
-      "expiry": "deescalation confirmed",
-      "confidence": 71,
+      "action": "Обновить базовые прогнозы",
+      "detail": "Благоприятный период для актуализации долгосрочных прогнозов",
+      "trigger": "stabilization state > 7d",
+      "expiry": "state transition",
+      "confidence": 81,
       "domain_context": "economy",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "critical",
+  "state": "stabilization",
   "dominant_scenario": "best",
-  "scenario_score": 25,
-  "instability": 43,
+  "scenario_score": 11,
+  "instability": 12,
   "calibration_grade": "good",
   "escalation_triggers": [
     {
       "condition": "risk_score ≥ 47 (+8pt)",
-      "leads_to": "cascade",
-      "probability": 23
+      "leads_to": "contained",
+      "probability": 14
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "cascade",
-      "probability": 22
+      "leads_to": "contained",
+      "probability": 6
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
-      "leads_to": "cascade",
-      "probability": 29
+      "condition": "Worst-case 30d ≥ 55",
+      "leads_to": "contained",
+      "probability": 17
     },
     {
       "condition": "Новый критический драйвер в economy",
-      "leads_to": "cascade",
-      "probability": 21
+      "leads_to": "contained",
+      "probability": 17
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 75,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 38,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "90 дней",
-      "score": 66,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 34,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "180 дней",
-      "score": 58,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 30,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     },
     {
       "horizon": "365 дней",
-      "score": 51,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 27,
+      "state": "stabilization",
+      "urgency": "low",
+      "preparedness": "routine"
     }
   ],
   "probabilities": {
-    "worst": 29,
-    "stress": 26,
-    "base": 16,
-    "best": 29
+    "worst": 17,
+    "stress": 21,
+    "base": 27,
+    "best": 35
   }
 }
