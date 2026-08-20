@@ -3,68 +3,68 @@
   "country_name": "Великобритания",
   "date": "2026-08-20",
   "grdf_version": "6.0",
-  "generated_at": "2026-08-20T13:30:38.455857+00:00",
+  "generated_at": "2026-08-20T14:12:23.646850+00:00",
   "state": {
     "country": "GB",
     "country_name": "Великобритания",
     "date": "2026-08-20",
     "grdf_version": "6.0",
-    "generated_at": "2026-08-20T13:30:38.408182+00:00",
-    "state_score": 20,
-    "gri": 17,
-    "uro_score": 50,
-    "velocity": 0.5,
-    "velocity_norm": 2,
-    "ssi_inverse": 12,
-    "resilience": 88,
-    "vulnerability": 23,
-    "signal_score": 17,
-    "bifurcation_score": 31,
-    "cascade_exposure": 6,
+    "generated_at": "2026-08-20T14:12:23.593679+00:00",
+    "state_score": 28,
+    "gri": 15,
+    "uro_score": 40,
+    "velocity": 0.83,
+    "velocity_norm": 4,
+    "ssi_inverse": 33,
+    "resilience": 67,
+    "vulnerability": 40,
+    "signal_score": 35,
+    "bifurcation_score": 49,
+    "cascade_exposure": 4,
     "forecast_delta": -1,
-    "dominant_domain": "social",
+    "dominant_domain": "climate",
     "alert_level": "NONE"
   },
   "forecast": {
-    "30d": 49,
-    "90d": 49,
-    "180d": 47,
-    "365d": 45
+    "30d": 39,
+    "90d": 37,
+    "180d": 35,
+    "365d": 30
   },
   "probable_scenario": "best_case",
   "standard_scenarios": {
     "baseline": {
-      "projected_score": 49,
-      "confidence": 30,
+      "projected_score": 39,
+      "confidence": 49,
       "time_horizon": 30,
       "drivers": [
-        "social"
+        "climate"
       ]
     },
     "best_case": {
-      "projected_score": 33,
-      "confidence": 20,
+      "projected_score": 102,
+      "confidence": 32,
       "time_horizon": 90,
       "drivers": [
         "stabilisation"
       ]
     },
     "stress": {
-      "projected_score": 79,
-      "confidence": 23,
+      "projected_score": 97,
+      "confidence": 38,
       "time_horizon": 90,
       "drivers": [
-        "social",
+        "climate",
         "cascade"
       ]
     },
     "worst": {
       "projected_score": 97,
-      "confidence": 14,
+      "confidence": 23,
       "time_horizon": 180,
       "drivers": [
         "systemic_failure",
-        "social"
+        "climate"
       ]
     }
   },
@@ -73,100 +73,146 @@
       "scenario_name": "emergent_a",
       "description": "Near-term emergence",
       "drivers": [
-        "geopolitical"
+        "geopolitical",
+        "economic",
+        "climate"
       ],
-      "confidence": 29,
+      "confidence": 46,
       "affected_domains": [
-        "geopolitical"
+        "geopolitical",
+        "economic",
+        "climate"
       ],
       "time_horizon": 90,
-      "projected_score": 86,
-      "signal_basis": 17
+      "projected_score": 97,
+      "signal_basis": 35
     },
     "emergent_b": {
       "scenario_name": "emergent_b",
       "description": "Medium-term escalation",
       "drivers": [
-        "geopolitical"
+        "geopolitical",
+        "economic",
+        "climate"
       ],
-      "confidence": 29,
+      "confidence": 46,
       "affected_domains": [
-        "geopolitical"
+        "geopolitical",
+        "economic",
+        "climate"
       ],
       "time_horizon": 180,
       "projected_score": 97,
-      "signal_basis": 17
+      "signal_basis": 35
     },
     "emergent_c": {
       "scenario_name": "emergent_c",
       "description": "Long-term structural shift",
       "drivers": [
-        "geopolitical"
+        "geopolitical",
+        "economic",
+        "climate"
       ],
-      "confidence": 29,
+      "confidence": 46,
       "affected_domains": [
-        "geopolitical"
+        "geopolitical",
+        "economic",
+        "climate"
       ],
       "time_horizon": 365,
       "projected_score": 97,
-      "signal_basis": 17
+      "signal_basis": 35
     }
   },
-  "top_triggers": [],
+  "top_triggers": [
+    {
+      "trigger": "political",
+      "domain": "geopolitical",
+      "strength": 27,
+      "impact": 0.4,
+      "velocity": 1.0,
+      "persistence": 0.67,
+      "time_to_activation": 266,
+      "trend": "down",
+      "activates": "conditional"
+    },
+    {
+      "trigger": "economic",
+      "domain": "economic",
+      "strength": 15,
+      "impact": 0.22,
+      "velocity": 1.0,
+      "persistence": 0.67,
+      "time_to_activation": 310,
+      "trend": "down",
+      "activates": "conditional"
+    },
+    {
+      "trigger": "supply_chain",
+      "domain": "economic",
+      "strength": 15,
+      "impact": 0.22,
+      "velocity": 1.0,
+      "persistence": 0.67,
+      "time_to_activation": 310,
+      "trend": "down",
+      "activates": "conditional"
+    }
+  ],
   "transitions": [
     {
       "from_state": "baseline",
       "to_state": "stress",
-      "probability": 0.098,
-      "confidence": 0.58
+      "probability": 0.167,
+      "confidence": 0.68
     },
     {
       "from_state": "baseline",
       "to_state": "worst",
-      "probability": 0.039,
-      "confidence": 0.58
+      "probability": 0.048,
+      "confidence": 0.68
     },
     {
       "from_state": "baseline",
       "to_state": "best_case",
-      "probability": 0.814,
-      "confidence": 0.58
+      "probability": 0.681,
+      "confidence": 0.68
     },
     {
       "from_state": "baseline",
       "to_state": "emergent_a",
-      "probability": 0.049,
-      "confidence": 0.58
+      "probability": 0.104,
+      "confidence": 0.68
     },
     {
       "from_state": "stress",
       "to_state": "worst",
-      "probability": 0.105,
-      "confidence": 0.58
+      "probability": 0.196,
+      "confidence": 0.68
     },
     {
       "from_state": "stress",
       "to_state": "baseline",
-      "probability": 0.63,
-      "confidence": 0.58
+      "probability": 0.505,
+      "confidence": 0.68
     },
     {
       "from_state": "stress",
       "to_state": "emergent_b",
-      "probability": 0.071,
-      "confidence": 0.58
+      "probability": 0.143,
+      "confidence": 0.68
     },
     {
       "from_state": "stress",
       "to_state": "best_case",
-      "probability": 0.195,
-      "confidence": 0.58
+      "probability": 0.155,
+      "confidence": 0.68
     }
   ],
-  "bifurcation_score": 31,
-  "bifurcation_grade": "stable",
-  "cascade_exposure": 6,
-  "probable_scenario_basis": "noise",
+  "bifurcation_score": 49,
+  "bifurcation_grade": "unstable",
+  "cascade_exposure": 4,
+  "probable_scenario_basis": "weak",
   "top_drivers": [
     "Geopolitical",
     "Economic",
@@ -175,46 +221,46 @@
   "recommended_monitoring": [],
   "top_outbound_links": [
     {
-      "country": "CA",
-      "strength": 0.375
+      "country": "IN",
+      "strength": 0.405
+    },
+    {
+      "country": "CN",
+      "strength": 0.38
     },
     {
       "country": "TW",
-      "strength": 0.318
+      "strength": 0.355
     },
     {
       "country": "GR",
-      "strength": 0.282
+      "strength": 0.32
     },
     {
-      "country": "ME",
-      "strength": 0.263
-    },
-    {
-      "country": "GE",
-      "strength": 0.26
+      "country": "IT",
+      "strength": 0.306
     }
   ],
   "top_inbound_links": [
     {
-      "country": "CA",
-      "strength": 0.375
+      "country": "IN",
+      "strength": 0.405
     },
     {
       "country": "TW",
-      "strength": 0.318
+      "strength": 0.355
+    },
+    {
+      "country": "CN",
+      "strength": 0.38
     },
     {
       "country": "GR",
-      "strength": 0.282
+      "strength": 0.32
     },
     {
       "country": "ME",
-      "strength": 0.263
-    },
-    {
-      "country": "GE",
-      "strength": 0.26
+      "strength": 0.3
     }
   ]
 }
