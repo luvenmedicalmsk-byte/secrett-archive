@@ -419,13 +419,7 @@ _PROMO_RE = re.compile(
     r'\u0432\u043f\u0435\u0440\u0432\u044b\u0435\s+\u043f\u043e\u044f\u0432\u0438\u043b[\u0430\u043e\u0441\u044c\u044f]{0,3}'
     r'(?:\s+\u043d\u0430\b[^.!?\n]{0,60})?[.!\s]*$)',
     re.IGNORECASE)
-# Флаг re.I обязателен: канал подписывается «Прямой Эфир» с заглавной,
-# шаблон со строчной «эфир» не совпадал. Дубль «Прямой эфир» в списке
-# был попыткой обойти это без флага и не помог: регистр другой у второго
-# слова, а не у первого.
-_CHAN_SIG_RE = re.compile(
-    r'\s*(?:прямой\s+эфир|топор\s*live|мск\s*live|осторожно\s+новости)'
-    r'\s*[.!\u2026]?\s*$', re.I)
+_CHAN_SIG_RE = re.compile(r'\s*(?:Прямой\s+эфир|Топор\s*Live|Прямой эфир)\s*[.!…]?\s*$')
 # Рекламные хвосты изданий: «Канал в «Максе»», «Приложение для iOS
 # и Android», «Наш канал в MAX». Отличаются от TG-промо тем, что не
 # содержат призыва подписаться — это просто перечень площадок издания.
@@ -8023,7 +8017,14 @@ def _apply_geo_contract(events):
             e['lat'], e['lng'] = gc.lat, gc.lng
             e['region'] = gc.region
             if ppt == 'global':
-                e['event_country'] = 'GLOBAL'; e['primary_country'] = 'GLOBAL'
+                # TASK-175: GLOBAL не является кодом страны. Прежде писался
+                # в оба поля со страновой семантикой и приходил в цепочки
+                # вида «event_country || primary_country» как ISO-код.
+                #
+                # Глобальность определяется географическим контрактом:
+                # process_place_type, zone_type, zone_id, is_global, region.
+                # Фронт читает именно process_place_type == 'global'.
+                e['event_country'] = ''; e['primary_country'] = ''
             else:
                 e['event_country'] = gc.region; e['primary_country'] = ''
             e['country_code'] = ''

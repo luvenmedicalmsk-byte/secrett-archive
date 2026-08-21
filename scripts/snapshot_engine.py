@@ -370,7 +370,10 @@ def _tag_event_countries(events: list[dict]) -> None:
     RU-observer эвристики и повторные вычисления удалены (NO RECALCULATION,
     SINGLE SOURCE). Страна-актор (geo.actor_country) добавляется в атрибуцию
     страновой аналитики (страна вовлечена), но не является местом процесса."""
-    _NON_COUNTRY = {"EU", "UN"}  # GEO-fix: блоки/организации — не страны, из атрибуции исключаются
+    # TASK-175: GLOBAL добавлен к блокам и организациям. Это признак
+    # масштаба события, не код страны: как значение country он создавал
+    # псевдострану в атрибуции.
+    _NON_COUNTRY = {"EU", "UN", "GLOBAL"}  # GEO-fix: блоки/организации/масштаб — не страны
     for ev in events:
         for _k in ("mentioned_countries", "impact_countries", "country_codes"):
             if ev.get(_k):
