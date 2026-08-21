@@ -2,67 +2,67 @@
   "country": "TR",
   "date": "2026-08-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-21T15:06:24.414996+00:00",
+  "generated_at": "2026-08-21T15:53:29.390544+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 45,
+      "score": 68,
       "props": {
-        "risk_score": 45
+        "risk_score": 68
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 15,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 4,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 4,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 8,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-TR-Geopolitical",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-TR-Геополитич",
+      "id": "SIGNAL-TR-Социальный",
       "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 74,
-      "domain": "geopolitical"
+      "label": "Социальный процесс — Ближний Восток (сис",
+      "severity": 69,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-TR-Санкционно",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.84
     },
     {
-      "from": "SIGNAL-TR-Геополитич",
-      "to": "DOMAIN-TR-geopolitical",
+      "from": "SIGNAL-TR-Социальный",
+      "to": "DOMAIN-TR-social",
       "type": "AMPLIFIES",
-      "weight": 0.74
+      "weight": 0.69
     }
   ]
 }
