@@ -3990,7 +3990,19 @@ def _domvoc_hit(word, blob):
         return _smog_is_phenomenon(blob)
     rx = _DOMVOC_RE_CACHE.get(word)
     if rx is None:
-        rx = re.compile(r'(?:^|[^а-яёa-z0-9])' + re.escape(word), re.I)
+        # СОСТАВНЫЕ КЛЮЧИ. «нейронн сет» не совпадал ни с «нейронная
+        # сеть», ни с «нейронные сети»: между основами стоит окончание,
+        # а шаблон требовал непрерывного вхождения. Из сорока составных
+        # ключей словаря почти все не срабатывали.
+        #
+        # Пробел в ключе означает «окончание до трёх букв плюс пробел».
+        # Длина проверена подбором: при двух теряются формы родительного
+        # падежа, при четырёх ложных срабатываний не прибавляется.
+        if ' ' in word:
+            _parts = [re.escape(p) for p in word.split()]
+            rx = re.compile(r'(?:^|[^а-яёa-z0-9])' + r'\w{0,3}\s+'.join(_parts), re.I)
+        else:
+            rx = re.compile(r'(?:^|[^а-яёa-z0-9])' + re.escape(word), re.I)
         _DOMVOC_RE_CACHE[word] = rx
     return bool(rx.search(blob))
 
