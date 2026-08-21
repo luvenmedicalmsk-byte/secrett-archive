@@ -2,66 +2,66 @@
   "country": "ES",
   "date": "2026-08-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-21T20:17:40.356334+00:00",
+  "generated_at": "2026-08-21T20:50:31.863865+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
       "type": "Country",
       "label": "ES",
-      "score": 56,
+      "score": 58,
       "props": {
-        "risk_score": 56
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-ES-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 42,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 25,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "stable"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 13,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 14,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-ES-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -82,6 +82,13 @@
     {
       "id": "SIGNAL-ES-Лесной_пож",
       "type": "Signal",
+      "label": "Лесной пожар в Сегорбе, Испания",
+      "severity": 60,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ES-Лесной_пож",
+      "type": "Signal",
       "label": "Лесной пожар в Арагоне, Испания",
       "severity": 60,
       "domain": "climate"
@@ -92,13 +99,6 @@
       "label": "Экономика еврозоны: Старый свет пытается",
       "severity": 44,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-ES-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Испания",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.25
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.04
     },
     {
       "from": "DRIVER-ES-Geopolitical",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -190,16 +232,16 @@
       "weight": 0.6
     },
     {
+      "from": "SIGNAL-ES-Лесной_пож",
+      "to": "DOMAIN-ES-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-ES-Экономика_",
       "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
       "weight": 0.44
-    },
-    {
-      "from": "SIGNAL-ES-Геополитич",
-      "to": "DOMAIN-ES-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
