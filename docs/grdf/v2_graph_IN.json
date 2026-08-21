@@ -2,32 +2,32 @@
   "country": "IN",
   "date": "2026-08-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-21T00:42:20.667914+00:00",
+  "generated_at": "2026-08-21T02:22:01.561048+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 42,
+      "score": 43,
       "props": {
-        "risk_score": 42
+        "risk_score": 43
       }
     },
     {
       "id": "DOMAIN-IN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "down"
+      "score": 40,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "down"
+      "score": 36,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IN-climate",
@@ -80,18 +80,18 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IN-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Индия",
+      "severity": 65,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-IN-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Индия",
       "severity": 66,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IN-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Индия",
-      "severity": 62,
-      "domain": "economic"
     },
     {
       "id": "SIGNAL-IN-Наводнение",
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IN",
@@ -163,16 +163,37 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IN-Военные_уд",
-      "to": "DOMAIN-IN-geopolitical",
+      "from": "DOMAIN-IN-geopolitical",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.66
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IN-Экономичес",
       "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.65
+    },
+    {
+      "from": "SIGNAL-IN-Военные_уд",
+      "to": "DOMAIN-IN-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.66
     },
     {
       "from": "SIGNAL-IN-Наводнение",
