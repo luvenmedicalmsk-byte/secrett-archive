@@ -1,10 +1,10 @@
 {
-  "generated": "2026-08-21T15:51:44Z",
+  "generated": "2026-08-21T16:36:56Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 655,
-    "DENY_COMMENTARY": 252,
+    "PASS_FACT": 654,
+    "DENY_COMMENTARY": 253,
     "DENY_FEATURE": 1,
     "UNMATCHED": 5,
     "DENY_BACKGROUND": 3,
@@ -16,9 +16,9 @@
     "unmatched": 5,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 71.8,
-    "admission_deny_rate": 28.2,
-    "processes_without_fact": 257,
+    "admission_pass_rate": 71.7,
+    "admission_deny_rate": 28.3,
+    "processes_without_fact": 258,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -26,45 +26,47 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 268,
-      "sample": 858,
-      "agreement_pct": 93.9,
-      "decision_agreement_pct": 94.3,
-      "critical_errors": 49,
+      "sample": 856,
+      "agreement_pct": 93.8,
+      "decision_agreement_pct": 94.2,
+      "critical_errors": 50,
       "truth_ratio_pct": 94.9,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 38,
         "COMMENTARY→FACT_EVENT": 9,
         "FEATURE→COMMENTARY": 2,
         "FACT_EVENT→REPORT": 2,
-        "BACKGROUND→COMMENTARY": 1
+        "BACKGROUND→COMMENTARY": 1,
+        "FACT_EVENT→BACKGROUND": 1
       }
     },
     "historical": {
       "processes": 917,
-      "sample": 1926,
+      "sample": 1924,
       "agreement_pct": 93.7,
       "decision_agreement_pct": 93.9,
-      "critical_errors": 117,
+      "critical_errors": 118,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 91,
         "COMMENTARY→FACT_EVENT": 19,
         "FEATURE→COMMENTARY": 2,
         "FACT_EVENT→REPORT": 2,
         "BACKGROUND→COMMENTARY": 1,
+        "FACT_EVENT→BACKGROUND": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
-        "FACT_EVENT→BACKGROUND": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1
       }
     },
     "events_stream": {
-      "sample": 326,
-      "agreement_pct": 94.2,
-      "decision_agreement_pct": 94.2,
-      "critical_errors": 19,
+      "sample": 331,
+      "agreement_pct": 94.0,
+      "decision_agreement_pct": 94.0,
+      "critical_errors": 20,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 16,
         "FACT_EVENT→REPORT": 1,
-        "COMMENTARY→FACT_EVENT": 2
+        "COMMENTARY→FACT_EVENT": 2,
+        "FACT_EVENT→BACKGROUND": 1
       }
     },
     "gate": {
@@ -75,11 +77,11 @@
     }
   },
   "class_source": {
-    "shadow_title_only": 243,
-    "evidence_sic": 1926,
-    "event_sic": 3
+    "shadow_title_only": 241,
+    "evidence_sic": 1924,
+    "event_sic": 5
   },
-  "truth_ratio_pct": 88.8,
+  "truth_ratio_pct": 88.9,
   "domain_statistics": {
     "climate": {
       "pass": 240,
@@ -90,14 +92,14 @@
       "pass": 202,
       "deny": 67
     },
+    "technology": {
+      "pass": 67,
+      "deny": 38
+    },
     "economy": {
       "pass": 98,
       "deny": 80,
       "unmatched": 2
-    },
-    "technology": {
-      "pass": 68,
-      "deny": 37
     },
     "social": {
       "pass": 47,
@@ -302,21 +304,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "geop-военныеуда-израиль-израил-1c31",
-      "title": "Санкционное давление — Израиль",
-      "domain": "geopolitics",
-      "severity": 63,
-      "pressure": 32,
-      "first_seen": "2026-08-06",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "fading",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "clim-климатичес-иран-45a1",
       "title": "Климатическая политика — Иран",
       "domain": "climate",
@@ -332,11 +319,26 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "geop-военныеуда-израиль-израил-1c31",
+      "title": "Санкционное давление — Израиль",
+      "domain": "geopolitics",
+      "severity": 63,
+      "pressure": 32,
+      "first_seen": "2026-08-06",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "dormant",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "econ-экономичес-иран-7b7d",
       "title": "Экономический сигнал — Иран",
       "domain": "economy",
       "severity": 62,
-      "pressure": 55,
+      "pressure": 50,
       "first_seen": "2026-07-02",
       "evidence_count": 1,
       "evidence_classes": {
@@ -347,18 +349,18 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "geop-геополитич-испания-60f2",
-      "title": "Геополитический процесс — Испания",
-      "domain": "geopolitics",
+      "signal_id": "soci-социальный-сша-5278",
+      "title": "Социальный процесс — США",
+      "domain": "social",
       "severity": 62,
-      "pressure": 39,
-      "first_seen": "2026-07-08",
+      "pressure": 44,
+      "first_seen": "2026-07-03",
       "evidence_count": 1,
       "evidence_classes": {
         "COMMENTARY": 1
       },
       "status": "active",
-      "causal_links": 3,
+      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -374,6 +376,21 @@
       },
       "status": "active",
       "causal_links": 6,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-испания-60f2",
+      "title": "Геополитический процесс — Испания",
+      "domain": "geopolitics",
+      "severity": 62,
+      "pressure": 33,
+      "first_seen": "2026-07-08",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -419,21 +436,6 @@
       },
       "status": "fading",
       "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "econ-экономичес-ирак-3e40",
-      "title": "Экономический сигнал — Ирак",
-      "domain": "economy",
-      "severity": 62,
-      "pressure": 29,
-      "first_seen": "2026-07-17",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "fading",
-      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -524,6 +526,21 @@
       },
       "status": "dormant",
       "causal_links": 1,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-экономичес-ирак-3e40",
+      "title": "Экономический сигнал — Ирак",
+      "domain": "economy",
+      "severity": 62,
+      "pressure": 29,
+      "first_seen": "2026-07-17",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "dormant",
+      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -847,7 +864,7 @@
       "title": "Эпидемиологический риск — Россия",
       "domain": "social",
       "severity": 58,
-      "pressure": 42,
+      "pressure": 41,
       "first_seen": "2026-07-01",
       "evidence_count": 1,
       "evidence_classes": {
@@ -870,21 +887,6 @@
       },
       "status": "fading",
       "causal_links": 2,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "soci-социальный-сша-5278",
-      "title": "Социальный процесс — США",
-      "domain": "social",
-      "severity": 58,
-      "pressure": 27,
-      "first_seen": "2026-07-03",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "fading",
-      "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1011,6 +1013,13 @@
   "report_log": [],
   "severity_delta": [
     {
+      "signal_id": "econ-розничнаят-глобальн-2762",
+      "domain": "economy",
+      "legacy": 65,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-иран-7b7d",
       "domain": "economy",
       "legacy": 62,
@@ -1025,9 +1034,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-розничнаят-глобальн-2762",
-      "domain": "economy",
-      "legacy": 65,
+      "signal_id": "soci-социальный-сша-5278",
+      "domain": "social",
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1035,6 +1044,20 @@
       "signal_id": "soci-эпидемиоло-дрконго-fe53",
       "domain": "social",
       "legacy": 61,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-государств-сша-14f5",
+      "domain": "economy",
+      "legacy": 60,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-валютныйры-россия-19f3",
+      "domain": "economy",
+      "legacy": 34,
       "shadow": null,
       "delta": null
     },
@@ -1053,30 +1076,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-государств-сша-14f5",
-      "domain": "economy",
-      "legacy": 60,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-санкционно-северная-1a88",
       "domain": "geopolitics",
       "legacy": 65,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-валютныйры-россия-19f3",
-      "domain": "economy",
-      "legacy": 34,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-испания-60f2",
-      "domain": "geopolitics",
-      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1158,9 +1160,9 @@
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-китай-a7d2",
+      "signal_id": "geop-геополитич-испания-60f2",
       "domain": "geopolitics",
-      "legacy": 46,
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1175,6 +1177,13 @@
       "signal_id": "geop-санкционно-китай-a3db",
       "domain": "geopolitics",
       "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "tech-уязвимость-глобальн-d798",
+      "domain": "technology",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1256,6 +1265,13 @@
       "delta": null
     },
     {
+      "signal_id": "geop-геополитич-китай-a7d2",
+      "domain": "geopolitics",
+      "legacy": 46,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "tech-технологич-китай-81e0",
       "domain": "technology",
       "legacy": 45,
@@ -1270,8 +1286,8 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-венесуэл-ada4",
-      "domain": "economy",
+      "signal_id": "clim-шторм-бенгальс-fda4",
+      "domain": "climate",
       "legacy": 32,
       "shadow": null,
       "delta": null
@@ -1298,13 +1314,6 @@
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-сша-4da7",
-      "domain": "technology",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-экономичес-франция-58ca",
       "domain": "economy",
       "legacy": 44,
@@ -1312,15 +1321,15 @@
       "delta": null
     },
     {
-      "signal_id": "clim-шторм-бенгальс-fda4",
-      "domain": "climate",
+      "signal_id": "econ-финансовый-глобальн-ee05",
+      "domain": "economy",
       "legacy": 32,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "econ-финансовый-глобальн-ee05",
-      "domain": "economy",
+      "signal_id": "tech-технологич-сша-4da7",
+      "domain": "technology",
       "legacy": 32,
       "shadow": null,
       "delta": null
@@ -1333,14 +1342,14 @@
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-индия-80ae",
+      "signal_id": "clim-климатичес-тихийоке-41c0",
       "domain": "climate",
       "legacy": 32,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-тихийоке-41c0",
+      "signal_id": "clim-климатичес-индия-80ae",
       "domain": "climate",
       "legacy": 32,
       "shadow": null,
@@ -1396,13 +1405,6 @@
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-япония-9958",
-      "domain": "technology",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-геополитич-мьянма-6598",
       "domain": "geopolitics",
       "legacy": 20,
@@ -1417,23 +1419,23 @@
       "delta": null
     },
     {
-      "signal_id": "geop-военныеуда-израиль-израил-1c31",
+      "signal_id": "geop-геополитич-армения-f813",
       "domain": "geopolitics",
-      "legacy": 63,
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-армения-f813",
-      "domain": "geopolitics",
-      "legacy": 62,
+      "signal_id": "clim-климатичес-сша-ca49",
+      "domain": "climate",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 1,
-    "31-50": 168,
+    "31-50": 169,
     "51-70": 85,
     "71-90": 3,
     "91-100": 0
