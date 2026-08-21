@@ -2,32 +2,32 @@
   "country": "US",
   "date": "2026-08-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-21T18:12:46.784630+00:00",
+  "generated_at": "2026-08-21T18:26:45.329313+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 57,
+      "score": 56,
       "props": {
-        "risk_score": 57
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 47,
-      "trend": "up"
+      "score": 39,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 30,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "up"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-US-НАТО_утвер",
+      "id": "SIGNAL-US-Пожарный_с",
       "type": "Signal",
-      "label": "НАТО утверждает, что готова защитить аме",
-      "severity": 53,
-      "domain": "geopolitical"
+      "label": "Пожарный сигнал — Северная Америка · Вин",
+      "severity": 52,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-US-Топовый_CI",
+      "id": "SIGNAL-US-Пожарный_с",
       "type": "Signal",
-      "label": "Топовый CISO с кусачками против китайски",
-      "severity": 50,
-      "domain": "technology"
+      "label": "Пожарный сигнал — Южная Америка · Белен",
+      "severity": 52,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-US-Эфтимиадес",
+      "id": "SIGNAL-US-Замедление",
       "type": "Signal",
-      "label": "Эфтимиадес дал показания в Подкомитете п",
-      "severity": 45,
-      "domain": "geopolitical"
+      "label": "Замедление Атлантического течения может ",
+      "severity": 51,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-US",
@@ -163,43 +163,22 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-US-geopolitical",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "from": "SIGNAL-US-Пожарный_с",
+      "to": "DOMAIN-US-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
     },
     {
-      "from": "DOMAIN-US-infrastructure",
-      "to": "DOMAIN-US-economic",
+      "from": "SIGNAL-US-Пожарный_с",
+      "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "weight": 0.52
     },
     {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
+      "from": "SIGNAL-US-Замедление",
+      "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-US-НАТО_утвер",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-US-Топовый_CI",
-      "to": "DOMAIN-US-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-US-Эфтимиадес",
-      "to": "DOMAIN-US-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.51
     }
   ]
 }
