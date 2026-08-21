@@ -2,60 +2,60 @@
   "country": "IR",
   "date": "2026-08-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-21T05:05:45.473110+00:00",
+  "generated_at": "2026-08-21T05:59:40.082419+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 57,
+      "score": 56,
       "props": {
-        "risk_score": 57
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
+      "score": 41,
       "trend": "down"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
+      "score": 25,
       "trend": "down"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 6,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 6,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 10,
-      "trend": "down"
+      "score": 12,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
-      "trend": "down"
+      "score": 14,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IR-cyber",
@@ -87,18 +87,18 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-IR-Санкционно",
+      "id": "SIGNAL-IR-Трамп_не_в",
       "type": "Signal",
-      "label": "Санкционное давление — Ближний Восток (с",
-      "severity": 79,
+      "label": "Трамп не видит выхода из войны с Ираном",
+      "severity": 54,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Санкционно",
+      "id": "SIGNAL-IR-ОАЭ_размор",
       "type": "Signal",
-      "label": "Санкционное давление — Ближний Восток",
-      "severity": 78,
-      "domain": "geopolitical"
+      "label": "ОАЭ разморозили и передали Ирану несколь",
+      "severity": 52,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.06
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.12
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
+      "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-IR-Падение_ин",
       "to": "DOMAIN-IR-technology",
       "type": "AMPLIFIES",
       "weight": 0.64
     },
     {
-      "from": "SIGNAL-IR-Санкционно",
+      "from": "SIGNAL-IR-Трамп_не_в",
       "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.79
+      "weight": 0.54
     },
     {
-      "from": "SIGNAL-IR-Санкционно",
-      "to": "DOMAIN-IR-geopolitical",
+      "from": "SIGNAL-IR-ОАЭ_размор",
+      "to": "DOMAIN-IR-economic",
       "type": "AMPLIFIES",
-      "weight": 0.78
+      "weight": 0.52
     }
   ]
 }
