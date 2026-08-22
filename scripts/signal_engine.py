@@ -3253,6 +3253,81 @@ def write_signals_json(events, path):
     except Exception as _le:
         print(f'[LINKS] skip: {_le}', file=sys.stderr)
 
+    # ═══ WATCH OBJECTS · панель наблюдения ═══════════════════════════════
+    # Фронт показывает блок «Какие объекты Atlas отслеживает» при наличии
+    # watch_objects. Поле формировалось только в preview_processes -
+    # утилите предпросмотра, - и в signals.json не попадало ни разу:
+    # блок не отображался ни для одного процесса.
+    #
+    # Область наблюдения, а не перечень ожидаемых событий: по этим объектам
+    # проверяется, сохраняется ли наблюдаемый паттерн.
+    try:
+        _WO_OPS = {
+            'Wildberries': r'wildberries|вайлдберриз|\bwb\b',
+            'Ozon': r'ozon|озон',
+            'Яндекс Маркет': r'яндекс\s*маркет',
+            'СДЭК': r'сдэк|cdek',
+            'Почта России': r'почт\w*\s+россии',
+        }
+        _WO_CLASS = [
+            {'name': 'Wildberries', 'kind': 'marketplace', 'rank': '№1 на рынке',
+             'note': 'самая разветвлённая складская сеть'},
+            {'name': 'Ozon', 'kind': 'marketplace', 'rank': '№2',
+             'note': 'сильные позиции в Поволжье и Сибири'},
+            {'name': 'Яндекс Маркет', 'kind': 'marketplace', 'rank': '№3',
+             'note': 'интегрирован с другими сервисами'},
+            {'name': 'СДЭК', 'kind': 'logistics', 'rank': 'логистический оператор',
+             'note': 'не маркетплейс, но критическая инфраструктура доставки'},
+            {'name': 'Почта России', 'kind': 'logistics', 'rank': 'государственный оператор',
+             'note': 'сеть отделений по всей стране'},
+        ]
+        # ПОРАЖЕНИЕ НЕ РАВНО УПОМИНАНИЮ. Оператор попадает в счётчик поражений
+        # только при признаке результата. Отражённая атака и мера защиты -
+        # упоминание, но не удар по объекту.
+        _WO_HIT = re.compile(
+            r'(?:атак\w*|удар\w*|порази\w*|повреж\w*|разруш\w*|сгорел\w*|'
+            r'пожар\w*|загорел\w*|обстрел\w*|взрыв\w*|прилёт\w*|прилет\w*)', re.I)
+        _WO_MISS = re.compile(
+            r'(?:отраж\w*|перехвач\w*|не\s+пострадал\w*|без\s+повреждений|'
+            r'закуп\w+|защит\w*\s+от|возобнов\w+\s+работ|восстанов\w+\s+работ|'
+            r'страхов|попытк\w*\s+атак)', re.I)
+        _WO_RX = {k: re.compile(v, re.I) for k, v in _WO_OPS.items()}
+        _wo_filled = 0
+        for _s in evolved:
+            _ops, _hits = {}, {}
+            for _e in (_s.get('evidence') or []):
+                _t = str((_e or {}).get('title') or '')
+                if not _t:
+                    continue
+                for _on, _rx in _WO_RX.items():
+                    if not _rx.search(_t):
+                        continue
+                    _ops[_on] = _ops.get(_on, 0) + 1
+                    if _WO_MISS.search(_t):
+                        continue
+                    if _WO_HIT.search(_t):
+                        _hits[_on] = _hits.get(_on, 0) + 1
+            if not _ops:
+                continue
+            _co = []
+            for _o in _WO_CLASS:
+                _k = _o['name']
+                _co.append(dict(_o, observed=bool(_hits.get(_k)),
+                                mentions=_ops.get(_k, 0), hits=_hits.get(_k, 0)))
+            _s['watch_objects'] = {
+                'operators': sorted(_ops.items(), key=lambda x: -x[1]),
+                'class_operators': _co,
+                'object_types': [],
+                'note': ('Объекты одного инфраструктурного класса. Перечень отражает то, '
+                         'что уже наблюдается внутри процесса, и служит для проверки '
+                         'сохранения паттерна.'),
+            }
+            _wo_filled += 1
+        print('[WATCH-OBJECTS] процессов с объектами наблюдения: %d' % _wo_filled,
+              file=sys.stderr)
+    except Exception as _woe:
+        print('[WATCH-OBJECTS] skip: %s' % str(_woe)[:90], file=sys.stderr)
+
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
