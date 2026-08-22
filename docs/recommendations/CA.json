@@ -2,18 +2,36 @@
   "country": "CA",
   "country_name": "Канада",
   "date": "2026-08-22",
-  "generated_at": "2026-08-22T13:12:07.190687+00:00",
-  "srs_score": 56,
+  "generated_at": "2026-08-22T13:53:17.469051+00:00",
+  "srs_score": 58,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+11/день",
+      "detail": "Скорость ухудшения 11 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 11,
+      "urgency": 90,
+      "source": "delta"
+    },
+    {
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
+    },
+    {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.3pt",
-      "detail": "Систематическая ошибка прогнозов +4.3pt снижает достоверность сценарного анализа.",
-      "metric_value": 4.27,
-      "urgency": 61.349999999999994,
+      "title": "Системное смещение прогнозов: +4.1pt",
+      "detail": "Систематическая ошибка прогнозов +4.1pt снижает достоверность сценарного анализа.",
+      "metric_value": 4.1,
+      "urgency": 60.5,
       "source": "validation_bias"
     },
     {
@@ -24,9 +42,18 @@
       "metric_value": 2,
       "urgency": 54,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -9,
+      "urgency": 48,
+      "source": "confidence_drift"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 5,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -71,7 +98,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -8.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности -9.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -83,10 +110,19 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+6.16pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+5.96pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+11/день",
+      "rec_score": 62,
+      "metric_value": 11,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -106,12 +142,21 @@
       "source": "decision_success"
     },
     {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 48,
+      "metric_value": 3,
+      "source": "diagnostics"
+    },
+    {
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.3pt",
-      "rec_score": 47,
-      "metric_value": 4.27,
+      "title": "Системное смещение прогнозов: +4.1pt",
+      "rec_score": 46,
+      "metric_value": 4.1,
       "source": "validation_bias"
     },
     {
@@ -122,24 +167,41 @@
       "rec_score": 43,
       "metric_value": 2,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "rec_score": 40,
+      "metric_value": -9,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
-      "id": "ACT-R-03",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Системное смещение прогнозов: +4.3pt",
-      "rationale": "Систематическая ошибка прогнозов +4.3pt снижает достоверность сценарного анализа.",
-      "deadline": "72 часа",
-      "source": "validation_bias"
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+11/день",
+      "rationale": "Скорость ухудшения 11 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
     },
     {
-      "id": "ACT-R-05",
+      "id": "ACT-R-04",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
+    },
+    {
+      "id": "ACT-R-03",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Системное смещение прогнозов: +4.1pt",
+      "rationale": "Систематическая ошибка прогнозов +4.1pt снижает достоверность сценарного анализа.",
+      "deadline": "72 часа",
+      "source": "validation_bias"
     },
     {
       "id": "ACT-O-05",
@@ -158,11 +220,11 @@
       "source": "decision_success"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 57,
-  "delta": 0,
+  "risk_score": 68,
+  "delta": 11,
   "domain": "technology",
   "history_depth": 86
 }
