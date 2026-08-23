@@ -871,6 +871,18 @@ def _pl_dependent(text, pos):
     return bool(_DEPEND.search(left.rstrip()))
 
 
+# ГЕНИТИВ ПРИ ОПОРЕ УДАРА = АКТОР, ЕСЛИ ДАЛЬШЕ ИДЁТ ЦЕЛЬ.
+# «ответных ударов России по логистике» давало RU: правило рассчитано
+# на «обстрел Харькова», где генитив указывает место. Здесь он указывает,
+# ЧЬИ удары, а место идёт после предлога «по».
+#
+#   обстрел Харькова          Харьков - цель, место        ✅
+#   удары России по логистике Россия - субъект, не место   ❌
+_GEN_ACTOR = re.compile(
+    r'(?:обстрел\w*|бомбардировк\w*|атак\w*|удар\w*|нал[её]т\w*)\s+'
+    r'([а-яё\-]+)\s+по\s+', re.I)
+
+
 def detect_place_v2(title, summary, others):
     """PLACE по ADR-051 + расширенное покрытие конструкций."""
     text = (title or "") + " " + (summary or "")
@@ -976,8 +988,15 @@ def detect_place_v2(title, summary, others):
         if cc and cc not in others and not _pl_dependent(tl, m.start(1)):
             return cc, "локатив по/над"
 
+    _actor_gen = set()
+    for _am in _GEN_ACTOR.finditer(tl):
+        _actor_gen.add(_am.start(1))
     for m in _GEN_HEAD.finditer(tl):              # D-062-1
         if _is_attributive(m.group(1)):           # D-065-1
+            continue
+        # Генитив после опоры удара, за которым следует «по <цель>»:
+        # это актор, а не место события.
+        if m.start(1) in _actor_gen:
             continue
         cc = _pl_resolve(m.group(1))
         if cc and cc not in others and not _pl_dependent(tl, m.start(1)):
