@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-08-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-23T08:12:21.540951+00:00",
+  "generated_at": "2026-08-23T08:21:51.929233+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,15 +19,15 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "down"
+      "score": 42,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 31,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-US-Эфтимиадес",
+      "id": "SIGNAL-US-Пожарный_с",
       "type": "Signal",
-      "label": "Эфтимиадес дал показания в Подкомитете п",
-      "severity": 45,
-      "domain": "geopolitical"
+      "label": "Пожарный сигнал — Южная Америка · Порту-",
+      "severity": 46,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.42
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Замедление",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-US-Эфтимиадес",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "SIGNAL-US-Пожарный_с",
+      "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.46
     }
   ]
 }

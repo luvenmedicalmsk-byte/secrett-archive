@@ -2,11 +2,20 @@
   "country": "IN",
   "country_name": "Индия",
   "date": "2026-08-23",
-  "generated_at": "2026-08-23T08:12:19.545168+00:00",
-  "srs_score": 50,
+  "generated_at": "2026-08-23T08:21:49.890456+00:00",
+  "srs_score": 54,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "detail": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 15,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-04",
       "category": "STRATEGIC",
@@ -15,15 +24,6 @@
       "metric_value": 3,
       "urgency": 64,
       "source": "diagnostics"
-    },
-    {
-      "id": "R-05",
-      "category": "STRATEGIC",
-      "title": "Смещения в принятии решений (2)",
-      "detail": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "metric_value": 2,
-      "urgency": 54,
-      "source": "decision_bias"
     }
   ],
   "risk_count": 2,
@@ -41,10 +41,16 @@
   "opp_count": 1,
   "emerging_shifts": [
     {
-      "type": "improving",
-      "title": "Тренд: снижение срочности",
-      "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
-      "direction": "down"
+      "type": "deteriorating",
+      "title": "Тренд: нарастание давления",
+      "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
+      "direction": "up"
+    },
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d30 точнее, d7 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d7. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
     }
   ],
   "forecast_degradation": [
@@ -62,22 +68,31 @@
   "forecast_improvement": [
     {
       "type": "horizon_strength",
-      "horizon": "d7",
-      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
+      "horizon": "d30",
+      "detail": "Лучший горизонт прогноза: d30. Рассмотреть расширение использования."
     },
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+3.42pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+3.16pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "rec_score": 55,
+      "metric_value": 15,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (7)",
-      "rec_score": 45,
+      "rec_score": 46,
       "metric_value": 7,
       "source": "high_alpha"
     },
@@ -86,21 +101,20 @@
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Множественные диагностические проблемы: 3",
-      "rec_score": 40,
+      "rec_score": 42,
       "metric_value": 3,
       "source": "diagnostics"
-    },
-    {
-      "id": "R-05",
-      "type": "risk",
-      "priority": "STRATEGIC",
-      "title": "Смещения в принятии решений (2)",
-      "rec_score": 35,
-      "metric_value": 2,
-      "source": "decision_bias"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+15/день",
+      "rationale": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
     {
       "id": "ACT-R-04",
       "priority": "STRATEGIC",
@@ -108,14 +122,6 @@
       "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
       "deadline": "72 часа",
       "source": "diagnostics"
-    },
-    {
-      "id": "ACT-R-05",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
     },
     {
       "id": "ACT-O-05",
@@ -129,8 +135,8 @@
   "action_count": 3,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 33,
-  "delta": 1,
-  "domain": "economy",
+  "risk_score": 48,
+  "delta": 15,
+  "domain": "social",
   "history_depth": 87
 }
