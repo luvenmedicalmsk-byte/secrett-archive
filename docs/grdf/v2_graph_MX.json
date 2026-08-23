@@ -2,67 +2,72 @@
   "country": "MX",
   "date": "2026-08-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-23T20:49:00.269362+00:00",
+  "generated_at": "2026-08-23T21:15:54.311461+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-MX",
       "type": "Country",
       "label": "MX",
-      "score": 60,
+      "score": 53,
       "props": {
-        "risk_score": 60
+        "risk_score": 53
       }
     },
     {
       "id": "DOMAIN-MX-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 44,
-      "trend": "stable"
+      "score": 28,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 27,
-      "trend": "stable"
+      "score": 23,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-climate",
       "type": "Domain",
       "label": "climate",
       "score": 7,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-technology",
       "type": "Domain",
       "label": "technology",
       "score": 7,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
       "score": 14,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 15,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-MX-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 3,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-MX-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-MX-Geopolitical",
@@ -75,9 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-MX-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-MX-Pemex_и_Pe",
+      "type": "Signal",
+      "label": "Pemex и Petrobras делают крупные ставки ",
+      "severity": 53,
+      "domain": "economic"
     },
     {
       "id": "SIGNAL-MX-Санкционно",
@@ -87,18 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-MX-Технологич",
+      "id": "SIGNAL-MX-Экономичес",
       "type": "Signal",
-      "label": "Технологический сигнал — Мексика",
-      "severity": 62,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-MX-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Мексика",
-      "severity": 60,
-      "domain": "geopolitical"
+      "label": "Экономический сигнал — Мексика",
+      "severity": 53,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.28
     },
     {
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-economic",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.23
     },
     {
       "from": "COUNTRY-MX",
@@ -145,6 +145,12 @@
       "weight": 0.03
     },
     {
+      "from": "DRIVER-MX-Economic",
+      "to": "COUNTRY-MX",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-MX-Geopolitical",
       "to": "COUNTRY-MX",
       "type": "CAUSES",
@@ -157,31 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MX-Economic",
-      "to": "COUNTRY-MX",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-MX-geopolitical",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
+      "from": "SIGNAL-MX-Pemex_и_Pe",
       "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-MX-Санкционно",
@@ -190,16 +175,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-MX-Технологич",
-      "to": "DOMAIN-MX-technology",
+      "from": "SIGNAL-MX-Экономичес",
+      "to": "DOMAIN-MX-economic",
       "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-MX-Геополитич",
-      "to": "DOMAIN-MX-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.6
+      "weight": 0.53
     }
   ]
 }
