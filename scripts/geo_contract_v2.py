@@ -53,8 +53,35 @@ _ACC_DEST = re.compile(
     r'(?:^|[^а-яёА-ЯЁ])(?:в|во|на)\s+([А-ЯЁ][а-яё\-]+[ую])(?![а-яёА-ЯЁ])')
 
 # source -> LRR-роль. Минимальный набор: event_location/object_location/destination/mention.
-_ROLE_EVENT = {'locative', 'natural', 'kinetic_target', 'zone', 'zone_coords',
-               'adj_locative', 'outage', 'global', 'single'}
+# TASK-176 · соответствие имён источников ролям LRR.
+#
+# Список писался на английских именах, а legacy переведён на русские:
+# ожидалось 'locative', приходило 'локатив'. Совпадали только три
+# технических значения - zone, zone_coords, global, - и role_of размечала
+# как mention 354 события из 355.
+#
+# Из-за этого Lever A не получал вход: он срабатывает на роли object
+# и direction, которых legacy не возвращает ни под каким именем.
+_ROLE_EVENT = {
+    # конструкция прямо указывает, где происходит событие
+    'локатив', 'локатив по/над', 'кинетическая цель',
+    'административная голова', 'географический генитив',
+    'генитив при опоре', 'генитив через зависимые', 'приложение',
+    'страна в конце через тире', 'уточнение после точки', 'двоеточие',
+    'outage-территория', 'место события над свидетелем',
+    'коммуникативное о физическом',
+    # TASK-169: конструкции, добавленные в legacy
+    'показатель страны', 'приложение-хвост', 'город', 'регион',
+    # технические: зона и планетарный масштаб
+    'zone', 'zone_coords', 'global',
+    # прежние английские имена сохранены на случай отката перевода
+    'locative', 'natural', 'kinetic_target', 'adj_locative',
+    'outage', 'single',
+}
+
+# Место названо как объект действия: «удар по заводу в городе N».
+# Lever A проверяет, нет ли конкурирующего локатива с иным местом.
+_ROLE_OBJECT = {'винительный при предикате', 'object'}
 
 
 def _mask_accusative_destination(text):
@@ -79,7 +106,7 @@ def role_of(gc):
         return 'mention'
     if s in _ROLE_EVENT:
         return 'event_location'
-    if s == 'object':
+    if s in _ROLE_OBJECT:
         return 'object_location'
     if s == 'direction':
         return 'destination'
@@ -119,7 +146,8 @@ def resolve_geo_v2(title, summary='', raw_coords=None, domain=None):
         return gc
     # Lever A применяется, только если legacy выбрал место как назначение/объект-цель
     # (accusative-роль), а не как event-location.
-    if getattr(gc, 'source', None) in ('object', 'direction'):
+    if getattr(gc, 'source', None) in _ROLE_OBJECT or \
+       getattr(gc, 'source', None) == 'direction':
         masked = _mask_accusative_destination(title or '')
         if masked != (title or ''):
             gc2 = _legacy_resolve_geo(masked, summary, raw_coords, domain)
