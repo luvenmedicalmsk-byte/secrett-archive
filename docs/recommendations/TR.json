@@ -2,22 +2,31 @@
   "country": "TR",
   "country_name": "Турция",
   "date": "2026-08-23",
-  "generated_at": "2026-08-23T06:39:50.162287+00:00",
-  "srs_score": 48,
-  "srs_grade": "F",
-  "srs_grade_ru": "Критический пересмотр",
+  "generated_at": "2026-08-23T07:12:35.750859+00:00",
+  "srs_score": 52,
+  "srs_grade": "D",
+  "srs_grade_ru": "Требует внимания",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+11/день",
+      "detail": "Скорость ухудшения 11 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 11,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.2pt",
-      "detail": "Систематическая ошибка прогнозов +4.2pt снижает достоверность сценарного анализа.",
-      "metric_value": 4.16,
-      "urgency": 60.8,
+      "title": "Системное смещение прогнозов: +4.0pt",
+      "detail": "Систематическая ошибка прогнозов +4.0pt снижает достоверность сценарного анализа.",
+      "metric_value": 4.0,
+      "urgency": 60.0,
       "source": "validation_bias"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 2,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -36,19 +45,13 @@
       "title": "Тренд: нарастание давления",
       "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
       "direction": "up"
-    },
-    {
-      "type": "horizon_shift",
-      "title": "Горизонт d7 точнее, d30 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
-      "direction": "neutral"
     }
   ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d30",
-      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d7",
+      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
     }
   ],
   "forecast_improvement": [
@@ -60,10 +63,19 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+4.14pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+3.95pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+11/день",
+      "rec_score": 58,
+      "metric_value": 11,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -77,18 +89,26 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: +4.2pt",
-      "rec_score": 43,
-      "metric_value": 4.16,
+      "title": "Системное смещение прогнозов: +4.0pt",
+      "rec_score": 42,
+      "metric_value": 4.0,
       "source": "validation_bias"
     }
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+11/день",
+      "rationale": "Скорость ухудшения 11 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-03",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Системное смещение прогнозов: +4.2pt",
-      "rationale": "Систематическая ошибка прогнозов +4.2pt снижает достоверность сценарного анализа.",
+      "action": "Реагировать: Системное смещение прогнозов: +4.0pt",
+      "rationale": "Систематическая ошибка прогнозов +4.0pt снижает достоверность сценарного анализа.",
       "deadline": "72 часа",
       "source": "validation_bias"
     },
@@ -101,11 +121,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 3,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 50,
-  "delta": 0,
+  "risk_score": 61,
+  "delta": 11,
   "domain": "geopolitics",
   "history_depth": 87
 }
