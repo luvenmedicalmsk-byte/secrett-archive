@@ -2,9 +2,9 @@
   "country": "UA",
   "country_name": "UA",
   "date": "2026-08-23",
-  "alert_level": "WATCH",
-  "alert_score": 56,
-  "risk_score": 63,
+  "alert_level": "ALERT",
+  "alert_score": 66,
+  "risk_score": 66,
   "confidence": 61,
   "signals": 26,
   "trend": "rising",
@@ -13,9 +13,10 @@
     "economy",
     "finance"
   ],
-  "created_at": "2026-08-23T05:57:30.504839+00:00",
+  "created_at": "2026-08-23T06:39:51.981040+00:00",
   "triggered_rules": [
     "B",
+    "C",
     "D"
   ],
   "rules": {
@@ -23,9 +24,9 @@
       "rule": "A",
       "name": "velocity_spike",
       "triggered": false,
-      "change_7d": 5.0,
-      "change_30d": -8.7,
-      "velocity_score": 17
+      "change_7d": 10.0,
+      "change_30d": -4.3,
+      "velocity_score": 33
     },
     "B_signal_expl": {
       "rule": "B",
@@ -39,11 +40,13 @@
     "C_multi_eng": {
       "rule": "C",
       "name": "multi_engine_confirmation",
-      "triggered": false,
+      "triggered": true,
       "confirming_engines": [
-        "geopolitics"
+        "geopolitics",
+        "economy",
+        "geopolitical"
       ],
-      "engine_count": 1,
+      "engine_count": 3,
       "threshold": 3
     },
     "D_emerging": {
@@ -51,6 +54,12 @@
       "name": "emerging_threat",
       "triggered": true,
       "threats": [
+        {
+          "domain": "?",
+          "severity": 78,
+          "frequency": 0,
+          "source": "Российские ракеты убивают еще 17 — Украина, пока Г"
+        },
         {
           "domain": "?",
           "severity": 78,
@@ -65,12 +74,12 @@
         },
         {
           "domain": "geopolitics",
-          "severity": 68,
+          "severity": 71,
           "frequency": 0,
           "source": "Тренд: нарастание давления"
         }
       ],
-      "threat_count": 3
+      "threat_count": 4
     },
     "E_confidence": {
       "rule": "E",
@@ -79,22 +88,28 @@
       "current_confidence": 61,
       "prev_confidence": 61,
       "confidence_delta": 0,
-      "score_delta": 0
+      "score_delta": 3
     }
   },
   "sub_scores": {
-    "velocity_component": 32,
-    "severity_component": 62,
-    "confidence_component": 38,
+    "velocity_component": 48,
+    "severity_component": 77,
+    "confidence_component": 40,
     "signal_density": 100
   },
-  "escalation": null,
-  "is_escalation": false,
+  "escalation": {
+    "previous": "WATCH",
+    "current": "ALERT",
+    "delta_score": 10,
+    "timestamp": "2026-08-23T06:39:51.981030+00:00",
+    "escalated": true
+  },
+  "is_escalation": true,
   "dominant_domain": "geopolitics",
   "escalation_level": "pressured",
-  "delta": -1,
+  "delta": 3,
   "engine_version": "ALERT_V1",
   "model_version": "GRIE_V1",
-  "generated_at": "2026-08-23T05:57:30.504839+00:00",
-  "hash": "aab51bdfe4ae5f58"
+  "generated_at": "2026-08-23T06:39:51.981040+00:00",
+  "hash": "d0aa45c641a93fd6"
 }
