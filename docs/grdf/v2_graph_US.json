@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-08-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-24T00:40:39.001485+00:00",
+  "generated_at": "2026-08-24T02:20:15.434805+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,43 +19,43 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "down"
+      "score": 43,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 30,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 8,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
       "score": 15,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 17,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -87,16 +87,16 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-US-Эфтимиадес",
-      "type": "Signal",
-      "label": "Эфтимиадес дал показания в Подкомитете п",
-      "severity": 45,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-US-Пожарные_б",
       "type": "Signal",
       "label": "Пожарные бьют тревогу, так как в США наб",
+      "severity": 32,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-US-Оценка_слу",
+      "type": "Signal",
+      "label": "Оценка службы лесных пожаров США, пока о",
       "severity": 32,
       "domain": "climate"
     }
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-US",
@@ -163,19 +163,40 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-Топовый_CI",
       "to": "DOMAIN-US-technology",
       "type": "AMPLIFIES",
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-US-Эфтимиадес",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "SIGNAL-US-Пожарные_б",
+      "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.32
     },
     {
-      "from": "SIGNAL-US-Пожарные_б",
+      "from": "SIGNAL-US-Оценка_слу",
       "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
