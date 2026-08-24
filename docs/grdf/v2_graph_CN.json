@@ -2,60 +2,60 @@
   "country": "CN",
   "date": "2026-08-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-24T15:13:01.922264+00:00",
+  "generated_at": "2026-08-24T16:07:50.378057+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
       "type": "Country",
       "label": "CN",
-      "score": 45,
+      "score": 43,
       "props": {
-        "risk_score": 45
+        "risk_score": 43
       }
     },
     {
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 30,
+      "score": 43,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 18,
+      "score": 17,
       "trend": "down"
     },
     {
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 26,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-social",
       "type": "Domain",
       "label": "social",
       "score": 9,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 10,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CN-cyber",
@@ -87,16 +87,16 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CN-Экономичес",
+      "id": "SIGNAL-CN-Климатичес",
       "type": "Signal",
-      "label": "Экономический сигнал — Китай",
+      "label": "Климатическая политика — Китай",
       "severity": 62,
-      "domain": "economic"
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CN-Климатичес",
       "type": "Signal",
-      "label": "Климатическая политика — Китай",
+      "label": "Климатический сигнал — Китай (системный ",
       "severity": 62,
       "domain": "climate"
     }
@@ -106,25 +106,25 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-economic",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.26
     },
     {
       "from": "COUNTRY-CN",
@@ -163,14 +163,35 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CN-geopolitical",
+      "to": "DOMAIN-CN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CN-infrastructure",
+      "to": "DOMAIN-CN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CN-economic",
+      "to": "DOMAIN-CN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-CN-Наводнение",
       "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.9
     },
     {
-      "from": "SIGNAL-CN-Экономичес",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Климатичес",
+      "to": "DOMAIN-CN-climate",
       "type": "AMPLIFIES",
       "weight": 0.62
     },
