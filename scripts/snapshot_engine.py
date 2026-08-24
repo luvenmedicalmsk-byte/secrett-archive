@@ -522,6 +522,18 @@ COUNTRY_SIGNALS_FALLBACK = True
 #    (ME: dominant=geopolitics, а max=climate 46; CY: climate 56; UZ: economy 47).
 #    Источник истины один — domain_scores. OFF → байт-идентично.
 COUNTRY_NULL_NO_DATA = True
+
+# TASK-217 · territorial-only вход GRI. При OFF работает прежний путь:
+# страна получает событие по любому упоминанию. Замер показал, что так
+# 56 процентов пар приходят из лексики, и страна получает индекс без
+# доказанного территориального наблюдения.
+#
+#   OFF  ccs = country_codes | mentioned | impact | primary
+#   ON   ccs = primary_country
+#
+# Формула GRI не меняется: меняется только состав входной выборки.
+# Прогноз по замеру 24 августа: EVENT 16, PROCESS 26, NO_OBSERVATIONS 2.
+GRI_TERRITORIAL_ONLY = False
 # PROCESS PRIMARY: max(event, process) для EWS/CRI. Каскад — свойство ПРОЦЕССОВ
 # (мультидоменность, causes/related, geo_spread); одна-две свежие новости его не
 # описывают (у TR было CRI 13 из событий против 70 из 18 процессов). Берём максимум:
@@ -637,6 +649,13 @@ def match_events(events: list[dict], iso2: str) -> list[dict]:
     iso2 = (iso2 or "").upper()
     matched = []
     for ev in events:
+        if GRI_TERRITORIAL_ONLY:
+            # Только доказанное место события. Упоминание страны в тексте
+            # территориальным наблюдением не является: актор, направление
+            # и предмет обсуждения дают ту же лексику, что и место.
+            if ev.get("primary_country") == iso2:
+                matched.append(ev)
+            continue
         ccs = set(ev.get("country_codes") or []) | set(ev.get("mentioned_countries") or []) \
               | set(ev.get("impact_countries") or [])
         if ev.get("primary_country"):
