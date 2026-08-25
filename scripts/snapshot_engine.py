@@ -533,7 +533,11 @@ COUNTRY_NULL_NO_DATA = True
 #
 # Формула GRI не меняется: меняется только состав входной выборки.
 # Прогноз по замеру 24 августа: EVENT 16, PROCESS 26, NO_OBSERVATIONS 2.
-GRI_TERRITORIAL_ONLY = False
+# Stage 4 · включён 25 августа. Прогноз по замеру: EVENT 16,
+# PROCESS 26, NO_OBSERVATIONS 2. Десять стран теряют индекс,
+# включая Аргентину с 78 при нуле территориальных событий.
+# Откат: вернуть False, один прогон восстанавливает прежнее.
+GRI_TERRITORIAL_ONLY = True
 # PROCESS PRIMARY: max(event, process) для EWS/CRI. Каскад — свойство ПРОЦЕССОВ
 # (мультидоменность, causes/related, geo_spread); одна-две свежие новости его не
 # описывают (у TR было CRI 13 из событий против 70 из 18 процессов). Берём максимум:
