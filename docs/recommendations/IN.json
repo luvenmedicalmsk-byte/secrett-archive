@@ -2,11 +2,38 @@
   "country": "IN",
   "country_name": "Индия",
   "date": "2026-08-25",
-  "generated_at": "2026-08-25T06:13:38.162595+00:00",
-  "srs_score": 44,
-  "srs_grade": "F",
-  "srs_grade_ru": "Критический пересмотр",
+  "generated_at": "2026-08-25T06:26:55.135864+00:00",
+  "srs_score": 56,
+  "srs_grade": "D",
+  "srs_grade_ru": "Требует внимания",
   "priority_risks": [
+    {
+      "id": "R-01",
+      "category": "CRITICAL",
+      "title": "Критический уровень риска: 84",
+      "detail": "Скор риска 84 превышает критический порог 80. Доминирующий домен: climate.",
+      "metric_value": 84,
+      "urgency": 95,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+40/день",
+      "detail": "Скорость ухудшения 40 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 40,
+      "urgency": 90,
+      "source": "delta"
+    },
+    {
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
+    },
     {
       "id": "R-05",
       "category": "STRATEGIC",
@@ -17,7 +44,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 4,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -36,19 +63,13 @@
       "title": "Тренд: снижение срочности",
       "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
       "direction": "down"
-    },
-    {
-      "type": "horizon_shift",
-      "title": "Горизонт d7 точнее, d30 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
-      "direction": "neutral"
     }
   ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d30",
-      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d7",
+      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
     },
     {
       "type": "confidence_drift",
@@ -65,37 +86,80 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+4.12pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+3.44pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-01",
+      "type": "risk",
+      "priority": "CRITICAL",
+      "title": "Критический уровень риска: 84",
+      "rec_score": 57,
+      "metric_value": 84,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+40/день",
+      "rec_score": 54,
+      "metric_value": 40,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (7)",
-      "rec_score": 46,
+      "rec_score": 45,
       "metric_value": 7,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 40,
+      "metric_value": 3,
+      "source": "diagnostics"
     },
     {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Смещения в принятии решений (2)",
-      "rec_score": 36,
+      "rec_score": 35,
       "metric_value": 2,
       "source": "decision_bias"
     }
   ],
   "action_plan": [
     {
-      "id": "ACT-R-05",
+      "id": "ACT-R-01",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Критический уровень риска: 84",
+      "rationale": "Скор риска 84 превышает критический порог 80. Доминирующий домен: climate.",
+      "deadline": "немедленно",
+      "source": "risk_score"
+    },
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+40/день",
+      "rationale": "Скорость ухудшения 40 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
+      "id": "ACT-R-04",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
     },
     {
       "id": "ACT-O-05",
@@ -106,11 +170,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 44,
-  "delta": -1,
-  "domain": "economy",
+  "risk_score": 84,
+  "delta": 40,
+  "domain": "climate",
   "history_depth": 89
 }
