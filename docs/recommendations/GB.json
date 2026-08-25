@@ -2,11 +2,20 @@
   "country": "GB",
   "country_name": "Великобритания",
   "date": "2026-08-25",
-  "generated_at": "2026-08-25T18:41:21.256572+00:00",
-  "srs_score": 47,
-  "srs_grade": "F",
-  "srs_grade_ru": "Критический пересмотр",
+  "generated_at": "2026-08-25T19:12:12.255511+00:00",
+  "srs_score": 53,
+  "srs_grade": "D",
+  "srs_grade_ru": "Требует внимания",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+18/день",
+      "detail": "Скорость ухудшения 18 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 18,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-05",
       "category": "STRATEGIC",
@@ -17,7 +26,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 2,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -36,19 +45,18 @@
       "title": "Тренд: снижение срочности",
       "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
       "direction": "down"
-    },
-    {
-      "type": "horizon_shift",
-      "title": "Горизонт d7 точнее, d30 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
-      "direction": "neutral"
     }
   ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d30",
-      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d7",
+      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности -6.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -60,10 +68,19 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+5.02pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+4.71pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+18/день",
+      "rec_score": 62,
+      "metric_value": 18,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -85,6 +102,14 @@
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+18/день",
+      "rationale": "Скорость ухудшения 18 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-05",
       "priority": "STRATEGIC",
       "action": "Реагировать: Смещения в принятии решений (2)",
@@ -101,11 +126,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 3,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 32,
-  "delta": 0,
-  "domain": "geopolitics",
+  "risk_score": 50,
+  "delta": 18,
+  "domain": "economy",
   "history_depth": 89
 }
