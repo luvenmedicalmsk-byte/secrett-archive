@@ -2,67 +2,67 @@
   "country": "IL",
   "date": "2026-08-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-25T07:27:18.314531+00:00",
+  "generated_at": "2026-08-25T08:10:31.124272+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IL",
       "type": "Country",
       "label": "IL",
-      "score": 52,
+      "score": 78,
       "props": {
-        "risk_score": 52
+        "risk_score": 78
       }
     },
     {
       "id": "DOMAIN-IL-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 30,
-      "trend": "down"
+      "score": 73,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
-      "trend": "down"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
-      "trend": "down"
+      "score": 4,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "down"
+      "score": 9,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
-      "trend": "down"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IL-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
-      "trend": "down"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-IL-Geopolitical",
@@ -75,16 +75,9 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-IL-Social",
+      "id": "DRIVER-IL-Economic",
       "type": "Driver",
-      "label": "Social"
-    },
-    {
-      "id": "SIGNAL-IL-Запущена_н",
-      "type": "Signal",
-      "label": "Запущена новая инициатива по защите жерт",
-      "severity": 52,
-      "domain": "social"
+      "label": "Economic"
     },
     {
       "id": "SIGNAL-IL-Военный_ко",
@@ -92,6 +85,13 @@
       "label": "Военный конфликт — Ближний Восток (систе",
       "severity": 84,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IL-Киберугроз",
+      "type": "Signal",
+      "label": "Киберугроза — Ближний Восток (системный ",
+      "severity": 78,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-IL-Геополитич",
@@ -106,43 +106,43 @@
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.73
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.04
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-IL",
       "to": "DOMAIN-IL-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.02
     },
     {
       "from": "DRIVER-IL-Geopolitical",
@@ -157,22 +157,43 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-IL-Social",
+      "from": "DRIVER-IL-Economic",
       "to": "COUNTRY-IL",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IL-Запущена_н",
+      "from": "DOMAIN-IL-geopolitical",
+      "to": "DOMAIN-IL-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IL-infrastructure",
+      "to": "DOMAIN-IL-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IL-economic",
       "to": "DOMAIN-IL-social",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-IL-Военный_ко",
       "to": "DOMAIN-IL-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.84
+    },
+    {
+      "from": "SIGNAL-IL-Киберугроз",
+      "to": "DOMAIN-IL-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.78
     },
     {
       "from": "SIGNAL-IL-Геополитич",
