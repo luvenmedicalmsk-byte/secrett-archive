@@ -6264,6 +6264,99 @@ _GATE_ANALYSIS_RX = re.compile(
     r'смогут ли|удастся ли|способен ли|можно ли считать)', re.I)
 
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# АУДИТ ЛЕНТЫ. Гейт считает, сколько отсеял, но не проверяет, что пропустил.
+# Пять классов шума за одну сессию нашёл человек, а не система: шоу-бизнес,
+# единичное ДТП, некролог, пересказ романа, годовщина удара.
+#
+# Аудит помечает карточки с признаками шума и пишет их отдельным файлом.
+# Он ничего не удаляет: решение остаётся за человеком, задача аудита -
+# сократить проверку со всей ленты до нескольких карточек.
+# ══════════════════════════════════════════════════════════════════════════════
+_AUD_NO_ACTION = re.compile(
+    r'(?:обзор|анализ|мнени|коммент|интервью|размышл|дискусси)', re.I)
+_AUD_FICTION = re.compile(
+    r'роман|повесть|антиутопи|сериал|экраниз|по\s+сюжету|герой\s+книги|фантастик', re.I)
+_AUD_RETRO = re.compile(
+    r'(?:год|года|лет)\s+спустя|спустя\s+(?:\w+\s+)?(?:год|года|лет)\b|'
+    r'годовщин|(?:лет|года)\s+назад', re.I)
+_AUD_PERSON = re.compile(
+    r'умер|скончал|ушёл из жизни|похорон|в\s+возраст[ае]\s+\d+', re.I)
+_AUD_SHOW = re.compile(
+    r'концерт|гастрол|альбом|премьер\w*\s+фильм|блогер|рэпер', re.I)
+_AUD_LOCAL = re.compile(
+    r'\bдтп\b|врезал\w*с[ья]|поножовщин|бытов\w*\s+ссор|пьян\w*\s+дебош', re.I)
+_AUD_ACTION = re.compile(
+    r'погиб|пострадав|разруш|взрыв|удар|атак|обстрел|горит|загорел|'
+    r'эвакуац|эвакуирова|остановл|прекращ|закрыт|отключ|дефицит|обвал|рухнул|'
+    r'тайфун|ураган|наводнен|землетряс|затопл|обрушен|сошёл|сошел', re.I)
+# Число жертв выше порога в новостном маршруте почти всегда означает пересказ
+# или историческую справку: реальные события такого масштаба приходят
+# из машинных источников.
+_AUD_CAS_LIMIT = 10000
+
+
+def audit_feed(events):
+    """Помечает карточки с признаками шума. Ничего не удаляет."""
+    flags = []
+    for e in events:
+        try:
+            t = str(e.get('title') or '')
+            b = t + ' ' + str(e.get('summary') or '')[:400]
+            low = b.lower()
+            sev = e.get('severity') or 0
+            dom = str(e.get('domain') or '')
+            route = str(e.get('_sev_route') or '')
+            why = []
+            if _AUD_FICTION.search(low):
+                why.append('художественный текст')
+            if _AUD_RETRO.search(low):
+                why.append('ретроспектива')
+            if _AUD_PERSON.search(low) and not re.search(r'погибл[иа]|жертв', low):
+                why.append('персональная новость')
+            if _AUD_SHOW.search(low):
+                why.append('шоу-бизнес')
+            if _AUD_LOCAL.search(low):
+                why.append('бытовая хроника')
+            if _AUD_NO_ACTION.search(low) and sev >= 60:
+                why.append('обзор с высокой оценкой')
+            # Эвакуация исключена: 90 000 эвакуированных это реальная цифра,
+            # тогда как 20 миллионов погибших встречались только в пересказе
+            # сюжета романа.
+            for _m in re.finditer(
+                    r'(\d[\d\s]{3,})\s*(?:погибш|жертв|убит)', low):
+                try:
+                    _v = int(re.sub(r'\s', '', _m.group(1)))
+                except ValueError:
+                    continue
+                if _v >= _AUD_CAS_LIMIT:
+                    why.append('число жертв нереально велико')
+                    break
+            if dom == 'climate' and _TECHNO_CTX.search(b) and not _NATURE_CTX.search(b):
+                why.append('климат при техногенном контексте')
+            if sev >= 70 and route == 'news' and not _AUD_ACTION.search(low):
+                why.append('высокая оценка без признака действия')
+            if why:
+                flags.append({
+                    'id': e.get('id'), 'title': t[:120], 'severity': sev,
+                    'domain': dom, 'route': route,
+                    'source': str(e.get('source') or '')[:40],
+                    'country': e.get('primary_country'), 'reasons': why,
+                })
+        except Exception:
+            continue
+    by_reason = _co.Counter()
+    for f in flags:
+        for r in f['reasons']:
+            by_reason[r] += 1
+    return {
+        'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'total': len(events), 'flagged': len(flags),
+        'by_reason': dict(by_reason),
+        'items': sorted(flags, key=lambda x: -(x['severity'] or 0))[:40],
+    }
+
 def _signal_gate(events):
     """SIGNAL GATE 1.0: пропускает только аналитические сигналы. Возвращает
     (signals, gate_report). Шум отсекается ДО гео/impact/severity-переоценки."""
@@ -16362,6 +16455,14 @@ if __name__ == '__main__':
         if LINEAGE:
             _sg_post = {e.get('_obs_tid') for e in events if e.get('_obs_tid')}
             for _sgx in (_sg_pre - _sg_post): _trace(_sgx,'SIGNAL_GATE','removed',reason='signal_gate')
+        try:
+            # Аудит рядом с отчётом гейта: гейт показывает, что отсеяно,
+            # аудит - что пропущено и требует взгляда человека.
+            (OUTPUT_PATH.parent / '_feed_audit.json').write_text(
+                json.dumps(audit_feed(events), ensure_ascii=False, indent=2),
+                encoding='utf-8')
+        except Exception as _aue:
+            print('[AUDIT] не записан: %s' % _aue, file=sys.stderr)
         try:
             (OUTPUT_PATH.parent / '_signal_gate.json').write_text(json.dumps(
                 {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
