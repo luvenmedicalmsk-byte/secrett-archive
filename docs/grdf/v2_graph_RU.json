@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-08-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-26T06:36:47.671946+00:00",
+  "generated_at": "2026-08-26T07:42:08.780402+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,24 +10,24 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 57,
+      "score": 58,
       "props": {
-        "risk_score": 57
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 48,
-      "trend": "down"
+      "score": 56,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 20,
-      "trend": "down"
+      "score": 21,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-RU-climate",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Нет_топлив",
+      "type": "Signal",
+      "label": "Нет топлива — нет зарплаты",
+      "severity": 78,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-RU-Правительс",
       "type": "Signal",
       "label": "Правительство Великобритании активизиров",
@@ -92,13 +99,6 @@
       "label": "Ночью Афипский НПЗ в Краснодарском крае ",
       "severity": 78,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Один_челов",
-      "type": "Signal",
-      "label": "Один человек погиб при взрыве на Амурско",
-      "severity": 77,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-economic",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-RU",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-RU-Нет_топлив",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.78
+    },
+    {
       "from": "SIGNAL-RU-Правительс",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.78
-    },
-    {
-      "from": "SIGNAL-RU-Один_челов",
-      "to": "DOMAIN-RU-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.77
     }
   ]
 }
