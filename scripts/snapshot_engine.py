@@ -1400,6 +1400,10 @@ def build_snapshot(iso2: str, events: list[dict]) -> dict:
             if _ds.get(_mx) and snap.get("dominant_domain") != _mx:
                 snap["dominant_domain"] = _mx
     snap["gri_delta_7d"] = compute_delta_7d(iso2, "risk_score", score)
+    # Сопоставимость дельты: обе точки должны быть наблюдением. Признак
+    # нужен потребителям, которые не могут сами дотянуться до истории.
+    # Пишется всегда, читается пока только propagate_risk.
+    snap["delta_status"] = _delta_status_7d(iso2, snap)
     snap["ews_delta_7d"] = compute_delta_7d(iso2, "ews_score", snap["ews_score"])
     snap["cri_delta_7d"] = compute_delta_7d(iso2, "cri_score", snap["cri_score"])
     return snap
@@ -2497,6 +2501,79 @@ def _propagation_score(source_score: int, source_delta: int,
     return max(0, min(100, round(raw)))
 
 
+def _delta_status_7d(iso2: str, snap: dict) -> str:
+    """Сопоставима ли недельная дельта: обе точки должны быть наблюдением.
+
+    TASK-225.3: из 308 пар за 16 дней 191 сравнивала величины разной
+    природы. Казахстан на 26 августа наблюдаем, но семью днями раньше
+    был на baseline: дельта несопоставима при чистом текущем статусе.
+
+    Читает ту же историю, что compute_delta_7d, и ищет запись возрастом
+    около семи дней. При отсутствии истории сопоставимость не доказана.
+    """
+    if _obs_status(snap) != 'OBSERVED':
+        return 'N/A'
+    hist_path = HISTORY_DIR / f"{iso2}.json"
+    if not hist_path.exists():
+        return 'N/A'
+    try:
+        snaps = json.load(open(hist_path)).get("snapshots", [])
+    except Exception:
+        return 'N/A'
+    from datetime import date as _date
+    try:
+        today_d = _date.fromisoformat(TODAY)
+    except Exception:
+        return 'N/A'
+    best, best_gap = None, None
+    for rec in snaps:
+        try:
+            gap = abs((today_d - _date.fromisoformat(str(rec.get("date"))[:10])).days - 7)
+        except Exception:
+            continue
+        if best_gap is None or gap < best_gap:
+            best, best_gap = rec, gap
+    if best is None or best_gap is None or best_gap > 2:
+        return 'N/A'
+    return 'OBSERVED_COMPARABLE' if _obs_status(best) == 'OBSERVED' else 'N/A'
+
+
+def _obs_status(snap: dict) -> str:
+    """Происхождение risk_score: наблюдение, константа или отсутствие данных.
+
+    TASK-225.5B доказал, что propagate_risk использует risk_score источника
+    без проверки происхождения: 38 связей из 78 имели источником страну
+    без единого территориального события, где risk_score равен baseline
+    из реестра COUNTRIES.
+
+    Каскад распространял константу по графу: на третьем уровне заражение
+    достигало 82 связей и девяти наблюдаемых стран, включая Россию,
+    Украину и США.
+    """
+    if not snap:
+        return 'UNKNOWN'
+    ev = snap.get('event_count')
+    if ev is None:
+        return 'UNKNOWN'
+    if ev > 0:
+        return 'OBSERVED'
+    return 'BASELINE' if (snap.get('process_count') or 0) > 0 else 'NO_DATA'
+
+
+def _delta_comparable(snap: dict) -> bool:
+    """Дельта сопоставима, только если обе её точки были наблюдением.
+
+    TASK-225.3: дельта вычитает наблюдаемое значение прошлого из константы
+    настоящего и наоборот. Из 308 пар за 16 дней 191 сравнивала величины
+    разной природы. Казахстан на 26 августа наблюдаем, но семью днями
+    раньше был на baseline: его дельта несопоставима, хотя статус чистый.
+
+    Признак пишется в снапшот при расчёте дельты. При его отсутствии
+    сопоставимость не подтверждена, и связь не строится.
+    """
+    return str(snap.get('delta_status') or '') == 'OBSERVED_COMPARABLE'
+
+
 def propagate_risk(snap: dict, all_snapshots: list[dict]) -> dict:
     """
     Risk Propagation Engine V1 — deterministic propagation chain.
@@ -2526,6 +2603,21 @@ def propagate_risk(snap: dict, all_snapshots: list[dict]) -> dict:
 
     snap_by_cc: dict[str, dict] = {s["country"]: s for s in all_snapshots}
     links    = _COUNTRY_LINKS.get(iso2, [])
+
+    # КОНТРАКТ ИСТОЧНИКА. Страна распространяет риск, только если её оценка
+    # получена из наблюдения, а скорость изменения сопоставима.
+    #
+    #   OBSERVED + сопоставимая дельта → распространяет
+    #   BASELINE                       → не распространяет
+    #   NO_DATA                        → не распространяет
+    #   OBSERVED + дельта N/A          → не распространяет
+    #
+    # СТАТУС ЦЕЛИ НЕ ПРОВЕРЯЕТСЯ: наблюдаемая страна может толкать риск
+    # в страну без наблюдений, это законный сценарий. Из 32 валидных связей
+    # shadow-прогона 14 имеют цель на baseline.
+    _src_status = _obs_status(snap)
+    if _src_status != 'OBSERVED' or not _delta_comparable(snap):
+        links = []
 
     # ── PRIMARY IMPACTS (direct links, ≤7 days) ────────────────────────
     primary: list[dict] = []
