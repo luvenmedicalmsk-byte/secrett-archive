@@ -2508,8 +2508,10 @@ def _delta_status_7d(iso2: str, snap: dict) -> str:
     природы. Казахстан на 26 августа наблюдаем, но семью днями раньше
     был на baseline: дельта несопоставима при чистом текущем статусе.
 
-    Читает ту же историю, что compute_delta_7d, и ищет запись возрастом
-    около семи дней. При отсутствии истории сопоставимость не доказана.
+    Ищет ТУ ЖЕ историческую запись, что compute_delta_7d: тот же файл,
+    тот же ключ snapshots, тот же критерий близости к семи дням, то же
+    требование непустого поля risk_score. Расхождение семантики привело
+    бы к паре delta = число при delta_status = N/A.
     """
     if _obs_status(snap) != 'OBSERVED':
         return 'N/A'
@@ -2524,19 +2526,21 @@ def _delta_status_7d(iso2: str, snap: dict) -> str:
     try:
         today_d = _date.fromisoformat(TODAY)
     except Exception:
-        return 'N/A'
+        today_d = None
     best, best_gap = None, None
     for rec in snaps:
+        if rec.get("risk_score") is None:
+            continue
         try:
-            gap = abs((today_d - _date.fromisoformat(str(rec.get("date"))[:10])).days - 7)
+            rd = _date.fromisoformat(rec.get("date"))
         except Exception:
             continue
-        if best_gap is None or gap < best_gap:
+        gap = abs((today_d - rd).days - 7) if today_d else 0
+        if best is None or gap < best_gap:
             best, best_gap = rec, gap
-    if best is None or best_gap is None or best_gap > 2:
+    if best is None:
         return 'N/A'
     return 'OBSERVED_COMPARABLE' if _obs_status(best) == 'OBSERVED' else 'N/A'
-
 
 def _obs_status(snap: dict) -> str:
     """Происхождение risk_score: наблюдение, константа или отсутствие данных.
