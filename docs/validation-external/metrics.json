@@ -1,48 +1,48 @@
 {
-  "generated_at": "2026-08-26T18:30:20.094076+00:00",
+  "generated_at": "2026-08-26T20:26:06.526859+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 19.06,
-    "rmse": 21.95,
-    "bias": -19.0,
-    "accuracy_pct": 74.6
+    "mae": 19.61,
+    "rmse": 22.46,
+    "bias": -19.56,
+    "accuracy_pct": 73.9
   },
   "2_scenario_accuracy": {
     "n": 76,
-    "hit_rate": 2.6
+    "hit_rate": 0.0
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": 0.196,
-    "r_squared": 0.038,
+    "pearson_r": 0.205,
+    "r_squared": 0.042,
     "interpretation": "weak"
   },
   "4_5_6_classification": {
-    "TP": 38,
+    "TP": 30,
     "FP": 4,
     "TN": 10,
-    "FN": 41,
-    "precision_pct": 90.5,
-    "recall_pct": 48.1,
+    "FN": 49,
+    "precision_pct": 88.2,
+    "recall_pct": 38.0,
     "fpr_pct": 28.6,
-    "fnr_pct": 51.9,
-    "f1_score_pct": 62.8,
-    "accuracy_pct": 51.6,
+    "fnr_pct": 62.0,
+    "f1_score_pct": 53.1,
+    "accuracy_pct": 43.0,
     "signal_threshold": 60,
     "severity_threshold": 70
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.2084,
-    "brier_skill_score": -0.63,
+    "brier_score": 0.2109,
+    "brier_skill_score": -0.649,
     "interpretation": "poor"
   },
   "8_calibration_error": {
-    "ece": 0.277,
+    "ece": 0.2813,
     "n_bins_populated": 5,
     "calibration_curve": [
       {
@@ -61,10 +61,10 @@
       },
       {
         "bin_center": 0.55,
-        "mean_pred": 0.544,
+        "mean_pred": 0.536,
         "mean_actual": 0.84,
         "n": 50,
-        "error": 0.296
+        "error": 0.304
       },
       {
         "bin_center": 0.65,
@@ -92,7 +92,7 @@
     "by_country": {
       "US": {
         "n_events": 15,
-        "mae": 19.3,
+        "mae": 21.3,
         "classification_accuracy_pct": 20.0,
         "n_hits": 3,
         "event_ids": [
@@ -161,9 +161,9 @@
       },
       "IT": {
         "n_events": 2,
-        "mae": 15.5,
-        "classification_accuracy_pct": 100.0,
-        "n_hits": 2,
+        "mae": 17.5,
+        "classification_accuracy_pct": 0.0,
+        "n_hits": 0,
         "event_ids": [
           "E2012-002",
           "E2018-004"
@@ -264,9 +264,9 @@
       },
       "RU": {
         "n_events": 6,
-        "mae": 23.0,
-        "classification_accuracy_pct": 100.0,
-        "n_hits": 6,
+        "mae": 24.0,
+        "classification_accuracy_pct": 0.0,
+        "n_hits": 0,
         "event_ids": [
           "E2020-002",
           "E2022-002",
@@ -317,23 +317,19 @@
         "accuracy": 100.0
       },
       {
-        "country": "IT",
-        "accuracy": 100.0
-      },
-      {
         "country": "UA",
         "accuracy": 100.0
       },
       {
-        "country": "RU",
+        "country": "IL",
+        "accuracy": 100.0
+      },
+      {
+        "country": "KZ",
         "accuracy": 100.0
       }
     ],
     "bottom5": [
-      {
-        "country": "JP",
-        "accuracy": 0.0
-      },
       {
         "country": "CH",
         "accuracy": 0.0
@@ -349,6 +345,10 @@
       {
         "country": "SA",
         "accuracy": 0.0
+      },
+      {
+        "country": "RU",
+        "accuracy": 0.0
       }
     ],
     "n_countries_covered": 18
@@ -359,7 +359,7 @@
       {
         "type": "threshold_adjust",
         "action": "lower_signal_threshold",
-        "detail": "Recall 48.1% → missing events. Lower threshold to 55.",
+        "detail": "Recall 38.0% → missing events. Lower threshold to 55.",
         "priority": "HIGH",
         "param": "signal_threshold",
         "current": 60,
@@ -368,13 +368,13 @@
       {
         "type": "bias_correction",
         "action": "increase_base_pressure",
-        "detail": "Systematic underestimation bias -19.0pt. Increase sensitivity.",
+        "detail": "Systematic underestimation bias -19.56pt. Increase sensitivity.",
         "priority": "MEDIUM"
       },
       {
         "type": "calibration",
         "action": "recalibrate_confidence",
-        "detail": "ECE=0.277 — confidence scores need Platt scaling or isotonic regression.",
+        "detail": "ECE=0.281 — confidence scores need Platt scaling or isotonic regression.",
         "priority": "HIGH"
       },
       {
@@ -386,13 +386,13 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=0.196 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=0.205 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.630 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.649 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
