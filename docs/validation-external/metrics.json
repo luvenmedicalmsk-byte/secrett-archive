@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-26T02:37:17.363798+00:00",
+  "generated_at": "2026-08-26T03:35:50.500866+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 19.07,
-    "rmse": 21.61,
-    "bias": -19.01,
-    "accuracy_pct": 74.6
+    "mae": 19.12,
+    "rmse": 21.66,
+    "bias": -19.07,
+    "accuracy_pct": 74.5
   },
   "2_scenario_accuracy": {
     "n": 76,
@@ -17,32 +17,32 @@
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": 0.22,
-    "r_squared": 0.048,
+    "pearson_r": 0.222,
+    "r_squared": 0.049,
     "interpretation": "weak"
   },
   "4_5_6_classification": {
-    "TP": 32,
+    "TP": 30,
     "FP": 4,
     "TN": 10,
-    "FN": 47,
-    "precision_pct": 88.9,
-    "recall_pct": 40.5,
+    "FN": 49,
+    "precision_pct": 88.2,
+    "recall_pct": 38.0,
     "fpr_pct": 28.6,
-    "fnr_pct": 59.5,
-    "f1_score_pct": 55.7,
-    "accuracy_pct": 45.2,
+    "fnr_pct": 62.0,
+    "f1_score_pct": 53.1,
+    "accuracy_pct": 43.0,
     "signal_threshold": 60,
     "severity_threshold": 70
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.2067,
-    "brier_skill_score": -0.616,
+    "brier_score": 0.207,
+    "brier_skill_score": -0.619,
     "interpretation": "poor"
   },
   "8_calibration_error": {
-    "ece": 0.2771,
+    "ece": 0.2775,
     "n_bins_populated": 5,
     "calibration_curve": [
       {
@@ -61,10 +61,10 @@
       },
       {
         "bin_center": 0.55,
-        "mean_pred": 0.54,
+        "mean_pred": 0.539,
         "mean_actual": 0.84,
         "n": 50,
-        "error": 0.3
+        "error": 0.301
       },
       {
         "bin_center": 0.65,
@@ -161,9 +161,9 @@
       },
       "IT": {
         "n_events": 2,
-        "mae": 15.5,
-        "classification_accuracy_pct": 100.0,
-        "n_hits": 2,
+        "mae": 17.5,
+        "classification_accuracy_pct": 0.0,
+        "n_hits": 0,
         "event_ids": [
           "E2012-002",
           "E2018-004"
@@ -317,15 +317,15 @@
         "accuracy": 100.0
       },
       {
-        "country": "IT",
-        "accuracy": 100.0
-      },
-      {
         "country": "UA",
         "accuracy": 100.0
       },
       {
         "country": "IL",
+        "accuracy": 100.0
+      },
+      {
+        "country": "KZ",
         "accuracy": 100.0
       }
     ],
@@ -359,7 +359,7 @@
       {
         "type": "threshold_adjust",
         "action": "lower_signal_threshold",
-        "detail": "Recall 40.5% → missing events. Lower threshold to 55.",
+        "detail": "Recall 38.0% → missing events. Lower threshold to 55.",
         "priority": "HIGH",
         "param": "signal_threshold",
         "current": 60,
@@ -368,13 +368,13 @@
       {
         "type": "bias_correction",
         "action": "increase_base_pressure",
-        "detail": "Systematic underestimation bias -19.01pt. Increase sensitivity.",
+        "detail": "Systematic underestimation bias -19.07pt. Increase sensitivity.",
         "priority": "MEDIUM"
       },
       {
         "type": "calibration",
         "action": "recalibrate_confidence",
-        "detail": "ECE=0.277 — confidence scores need Platt scaling or isotonic regression.",
+        "detail": "ECE=0.278 — confidence scores need Platt scaling or isotonic regression.",
         "priority": "HIGH"
       },
       {
@@ -386,13 +386,13 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=0.22 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=0.222 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.616 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.619 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
