@@ -2761,7 +2761,7 @@ def fetch_gdelt():
 
 def fetch_reliefweb():
     items = []
-    url = ("https://api.reliefweb.int/v1/reports"
+    url = ("https://api.reliefweb.int/v2/reports"
            "?appname=archivemiabot"
            "&limit=30"
            "&sort[]=date:desc"
@@ -2792,7 +2792,7 @@ def fetch_reliefweb():
             print(f"  [WARN] ReliefWeb parse: {e}", file=sys.stderr)
 
     # Также берём disasters
-    url2 = ("https://api.reliefweb.int/v1/disasters"
+    url2 = ("https://api.reliefweb.int/v2/disasters"
             "?appname=archivemiabot&limit=20&sort[]=date:desc"
             "&fields[include][]=name&fields[include][]=date.event"
             "&fields[include][]=type.name&fields[include][]=country.name"
@@ -9094,7 +9094,7 @@ def fetch_gdacs():
 def fetch_reliefweb_v2():
     items = []
     # Исправленный endpoint ReliefWeb API v1
-    url = ("https://api.reliefweb.int/v1/disasters"
+    url = ("https://api.reliefweb.int/v2/disasters"
            "?appname=archivemiabot"
            "&limit=25"
            "&sort[]=date:desc"
