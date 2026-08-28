@@ -2,102 +2,102 @@
   "country": "UA",
   "country_name": "Украина",
   "date": "2026-08-28",
-  "generated_at": "2026-08-28T01:39:23.426220+00:00",
-  "strategy_score": 51,
+  "generated_at": "2026-08-28T05:12:33.155463+00:00",
+  "strategy_score": 38,
   "strategy_confidence": 84,
-  "urgency_level": "critical",
-  "urgency_level_ru": "Критическая",
-  "urgency_color": "#ef4444",
-  "preparedness_level": "emergency",
-  "preparedness_level_ru": "Чрезвычайная готовность",
-  "monitoring_priority": 4,
-  "monitoring_ru": "Ежечасно",
+  "urgency_level": "high",
+  "urgency_level_ru": "Высокая",
+  "urgency_color": "#f59e0b",
+  "preparedness_level": "active",
+  "preparedness_level_ru": "Активная готовность",
+  "monitoring_priority": 3,
+  "monitoring_ru": "Каждые 6 часов",
   "actions": [
     {
-      "id": "CR-01",
+      "id": "E-01",
       "priority": 1,
-      "action": "Контролируемая деэскалация",
-      "detail": "Критическая фаза при наличии best-сценария — сосредоточиться на факторах снижения риска",
-      "trigger": "critical + best dominant",
+      "action": "Удержать деэскалационный потенциал",
+      "detail": "Эскалация идёт, но лучший сценарий сохраняет вес — не допустить дальнейшего ухудшения",
+      "trigger": "escalating + best dominant",
       "expiry": "state transition",
-      "confidence": 76,
+      "confidence": 83,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     },
     {
-      "id": "CR-02",
+      "id": "E-02",
       "priority": 2,
-      "action": "Защитить деэскалационные индикаторы",
-      "detail": "Идентифицировать и поддержать факторы, ведущие к best-сценарию",
-      "trigger": "always",
-      "expiry": "deescalation confirmed",
-      "confidence": 76,
+      "action": "Инициировать дипломатические/превентивные контакты",
+      "detail": "Использовать окно best-сценария для превентивных мер снижения риска",
+      "trigger": "prob_best > 20%",
+      "expiry": "prob_best < 15%",
+      "confidence": 83,
       "domain_context": "geopolitics",
       "horizon_relevant": "30d"
     }
   ],
   "action_count": 2,
-  "state": "critical",
+  "state": "escalating",
   "dominant_scenario": "best",
-  "scenario_score": 39,
-  "instability": 39,
+  "scenario_score": 29,
+  "instability": 16,
   "calibration_grade": "excellent",
   "escalation_triggers": [
     {
       "condition": "risk_score ≥ 80 (+8pt)",
-      "leads_to": "cascade",
-      "probability": 23
+      "leads_to": "critical",
+      "probability": 16
     },
     {
       "condition": "delta ≥ 6 за 24ч",
-      "leads_to": "cascade",
+      "leads_to": "critical",
+      "probability": 8
+    },
+    {
+      "condition": "Worst-case 30d ≥ 89",
+      "leads_to": "critical",
       "probability": 20
     },
     {
-      "condition": "Worst-case 30d ≥ 95",
-      "leads_to": "cascade",
-      "probability": 29
-    },
-    {
       "condition": "Новый критический драйвер в geopolitics",
-      "leads_to": "cascade",
-      "probability": 21
+      "leads_to": "critical",
+      "probability": 18
     }
   ],
   "horizon_outlook": [
     {
       "horizon": "30 дней",
-      "score": 75,
-      "state": "critical",
-      "urgency": "critical",
-      "preparedness": "emergency"
+      "score": 68,
+      "state": "escalating",
+      "urgency": "high",
+      "preparedness": "active"
     },
     {
       "horizon": "90 дней",
-      "score": 66,
+      "score": 61,
       "state": "escalating",
       "urgency": "high",
       "preparedness": "active"
     },
     {
       "horizon": "180 дней",
-      "score": 58,
-      "state": "escalating",
-      "urgency": "high",
-      "preparedness": "active"
+      "score": 54,
+      "state": "contained",
+      "urgency": "moderate",
+      "preparedness": "enhanced"
     },
     {
       "horizon": "365 дней",
-      "score": 51,
+      "score": 48,
       "state": "contained",
       "urgency": "moderate",
       "preparedness": "enhanced"
     }
   ],
   "probabilities": {
-    "worst": 29,
-    "stress": 26,
-    "base": 16,
-    "best": 29
+    "worst": 20,
+    "stress": 22,
+    "base": 25,
+    "best": 33
   }
 }
