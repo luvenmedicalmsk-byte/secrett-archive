@@ -2838,6 +2838,46 @@ def fetch_reliefweb():
         except: pass
 
     print(f"  ReliefWeb: {len(items)} записей", file=sys.stderr)
+    # ВТОРОЙ ЗАПРОС: типы кроме Situation Report. Отдельным вызовом,
+    # а не расширением первого: синтаксис множественного значения
+    # в ReliefWeb не проверен, и ошибка в нём обнулила бы работающий
+    # запрос. При сбое второго первый продолжает отдавать бедствия.
+    #
+    # Situation Report даёт почти исключительно катастрофы. Анализ,
+    # оценка и пресс-релизы приносят события в социум и геополитику:
+    # перемещение населения, эпидемии, продовольственная безопасность.
+    for _rw_type in ('Analysis', 'Assessment', 'News+and+Press+Release'):
+        _u2 = ("https://api.reliefweb.int/v2/reports"
+               "?appname=atlas-riskmonitor-x7k2"
+               "&limit=15"
+               "&sort[]=date:desc"
+               "&filter[field]=type.name&filter[value]=" + _rw_type +
+               "&fields[include][]=title&fields[include][]=body"
+               "&fields[include][]=date.created&fields[include][]=source.name"
+               "&fields[include][]=country.name")
+        _d2 = fetch_url(_u2)
+        if not _d2:
+            continue
+        try:
+            _j2 = json.loads(_d2)
+            for _it in _j2.get('data', []):
+                _f = _it.get('fields', {})
+                _t = (_f.get('title') or '').strip()
+                if not _t:
+                    continue
+                _b = (_f.get('body') or '')[:300]
+                _cc = [c.get('name') for c in (_f.get('country') or []) if c.get('name')]
+                items.append({
+                    'title': _t,
+                    'summary': _b,
+                    'source': 'ReliefWeb/UN',
+                    'url': _it.get('url') or '',
+                    'date': ((_f.get('date') or {}).get('created') or '')[:10],
+                    'countries_raw': _cc,
+                })
+        except Exception:
+            pass
+    print(f'  ReliefWeb reports: {len(items)} записей', file=sys.stderr)
     return items
 
 # ══════════════════════════════════════════════════════════════════════════════
