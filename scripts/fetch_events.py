@@ -2783,7 +2783,7 @@ def fetch_gdelt():
 def fetch_reliefweb():
     items = []
     url = ("https://api.reliefweb.int/v2/reports"
-           "?appname=archivemiabot"
+           "?appname=atlas-riskmonitor-x7k2"
            "&limit=30"
            "&sort[]=date:desc"
            "&filter[field]=type.name&filter[value]=Situation+Report"
@@ -2814,7 +2814,7 @@ def fetch_reliefweb():
 
     # Также берём disasters
     url2 = ("https://api.reliefweb.int/v2/disasters"
-            "?appname=archivemiabot&limit=20&sort[]=date:desc"
+            "?appname=atlas-riskmonitor-x7k2&limit=20&sort[]=date:desc"
             "&fields[include][]=name&fields[include][]=date.event"
             "&fields[include][]=type.name&fields[include][]=country.name"
             "&filter[field]=status&filter[value]=current")
@@ -9135,7 +9135,7 @@ def fetch_reliefweb_v2():
     items = []
     # Исправленный endpoint ReliefWeb API v1
     url = ("https://api.reliefweb.int/v2/disasters"
-           "?appname=archivemiabot"
+           "?appname=atlas-riskmonitor-x7k2"
            "&limit=25"
            "&sort[]=date:desc"
            "&fields[include][]=name"
