@@ -1,68 +1,68 @@
 {
   "country": "IR",
-  "date": "2026-08-27",
+  "date": "2026-08-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-27T21:40:47.634275+00:00",
+  "generated_at": "2026-08-28T01:39:26.112405+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-IR",
       "type": "Country",
       "label": "IR",
-      "score": 44,
+      "score": 55,
       "props": {
-        "risk_score": 44
+        "risk_score": 55
       }
     },
     {
       "id": "DOMAIN-IR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 37,
-      "trend": "stable"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 33,
-      "trend": "stable"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 3,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 3,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-social",
       "type": "Domain",
       "label": "social",
-      "score": 9,
-      "trend": "stable"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 11,
-      "trend": "stable"
+      "score": 7,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-IR-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IR-Рынок_люби",
+      "id": "SIGNAL-IR-Вечернее_о",
       "type": "Signal",
-      "label": "Рынок любит наказывать за очевидные выво",
-      "severity": 44,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IR-Военный_ко",
-      "type": "Signal",
-      "label": "Военный конфликт — Ближний Восток (систе",
-      "severity": 84,
+      "label": "Вечернее обновление",
+      "severity": 64,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IR-Киберугроз",
+      "id": "SIGNAL-IR-США_не_пла",
       "type": "Signal",
-      "label": "Киберугроза — Ближний Восток (системный ",
-      "severity": 78,
+      "label": "США не планируют наносить новые удары по",
+      "severity": 44,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IR-Отключение",
+      "type": "Signal",
+      "label": "Отключение интернета — Ближний Восток (с",
+      "severity": 77,
       "domain": "technology"
     }
   ],
@@ -106,37 +106,37 @@
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-economic",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.03
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.03
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-social",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IR",
       "to": "DOMAIN-IR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-IR",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-IR-Рынок_люби",
+      "from": "DOMAIN-IR-geopolitical",
+      "to": "DOMAIN-IR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IR-infrastructure",
       "to": "DOMAIN-IR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IR-economic",
+      "to": "DOMAIN-IR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IR-Вечернее_о",
+      "to": "DOMAIN-IR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-IR-США_не_пла",
+      "to": "DOMAIN-IR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.44
     },
     {
-      "from": "SIGNAL-IR-Военный_ко",
-      "to": "DOMAIN-IR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.84
-    },
-    {
-      "from": "SIGNAL-IR-Киберугроз",
+      "from": "SIGNAL-IR-Отключение",
       "to": "DOMAIN-IR-technology",
       "type": "AMPLIFIES",
-      "weight": 0.78
+      "weight": 0.77
     }
   ]
 }
