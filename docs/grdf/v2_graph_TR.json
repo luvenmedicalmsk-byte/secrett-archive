@@ -2,66 +2,66 @@
   "country": "TR",
   "date": "2026-08-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-29T11:31:45.134736+00:00",
+  "generated_at": "2026-08-29T15:45:44.246806+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
       "type": "Country",
       "label": "TR",
-      "score": 39,
+      "score": 43,
       "props": {
-        "risk_score": 39
+        "risk_score": 43
       }
     },
     {
       "id": "DOMAIN-TR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 35,
-      "trend": "stable"
+      "score": 51,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 38,
-      "trend": "stable"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 31,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 10,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 19,
-      "trend": "stable"
+      "score": 15,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 4,
       "trend": "stable"
     },
     {
@@ -80,9 +80,16 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Сильный_до",
+      "id": "SIGNAL-TR-Посол_Укра",
       "type": "Signal",
-      "label": "Сильный дождь / ливень: Турция (уровень ",
+      "label": "Посол Украины в Анкаре Джелялов был вызв",
+      "severity": 52,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TR-Сильный_ве",
+      "type": "Signal",
+      "label": "Сильный ветер: Турция (уровень жёлтое)",
       "severity": 38,
       "domain": "climate"
     },
@@ -92,13 +99,6 @@
       "label": "Гроза: Турция (уровень жёлтое)",
       "severity": 38,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TR-Гроза:_Тур",
-      "type": "Signal",
-      "label": "Гроза: Турция (уровень оранжевое)",
-      "severity": 38,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.35
+      "weight": 0.51
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.3
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.31
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.15
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.04
     },
     {
       "from": "DRIVER-TR-Geopolitical",
@@ -163,13 +163,76 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-TR-Сильный_до",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.38
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-TR-Гроза:_Тур",
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-TR-geopolitical",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-TR-Посол_Укра",
+      "to": "DOMAIN-TR-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-TR-Сильный_ве",
       "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
       "weight": 0.38
