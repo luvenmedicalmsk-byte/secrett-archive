@@ -1,12 +1,30 @@
 {
   "country": "AE",
   "country_name": "ОАЭ",
-  "date": "2026-08-28",
-  "generated_at": "2026-08-28T23:28:47.669798+00:00",
-  "srs_score": 50,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "date": "2026-08-29",
+  "generated_at": "2026-08-29T04:17:28.576700+00:00",
+  "srs_score": 66,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +13.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +13.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 13,
+      "urgency": 56,
+      "source": "confidence_drift"
+    },
     {
       "id": "R-05",
       "category": "STRATEGIC",
@@ -17,7 +35,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 3,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -36,6 +54,12 @@
       "title": "Тренд: снижение срочности",
       "detail": "Оптимизационный движок рекомендует снизить уровень срочности на основании исторических паттернов.",
       "direction": "down"
+    },
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d90 точнее, d7 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d90 и менее точно на d7. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
     }
   ],
   "forecast_degradation": [
@@ -47,14 +71,14 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -7.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности +13.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
     {
       "type": "horizon_strength",
-      "horizon": "d7",
-      "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
+      "horizon": "d90",
+      "detail": "Лучший горизонт прогноза: d90. Рассмотреть расширение использования."
     }
   ],
   "ranked_recommendations": [
@@ -63,21 +87,55 @@
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (9)",
-      "rec_score": 47,
+      "rec_score": 51,
       "metric_value": 9,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 46,
+      "metric_value": 3,
+      "source": "diagnostics"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +13.0pt",
+      "rec_score": 41,
+      "metric_value": 13,
+      "source": "confidence_drift"
     },
     {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Смещения в принятии решений (2)",
-      "rec_score": 37,
+      "rec_score": 40,
       "metric_value": 2,
       "source": "decision_bias"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-04",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +13.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +13.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
+    },
     {
       "id": "ACT-R-05",
       "priority": "STRATEGIC",
@@ -93,13 +151,21 @@
       "rationale": "Идентифицировано 9 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
       "deadline": "7 дней",
       "source": "high_alpha"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 55.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     }
   ],
-  "action_count": 2,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 45,
   "delta": 0,
   "domain": "geopolitics",
-  "history_depth": 92
+  "history_depth": 93
 }
