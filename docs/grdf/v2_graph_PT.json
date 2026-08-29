@@ -2,9 +2,9 @@
   "country": "PT",
   "date": "2026-08-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-08-29T21:34:57.863870+00:00",
+  "generated_at": "2026-08-29T23:49:52.598936+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-PT",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 32,
+      "score": 40,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 38,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -65,14 +65,14 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-PT-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
       "id": "DRIVER-PT-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
+    },
+    {
+      "id": "DRIVER-PT-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "DRIVER-PT-social",
@@ -80,18 +80,18 @@
       "label": "social"
     },
     {
-      "id": "SIGNAL-PT-Геополитич",
-      "type": "Signal",
-      "label": "Геополитическое давление",
-      "severity": 40,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-PT-Экономичес",
       "type": "Signal",
       "label": "Экономическое давление",
-      "severity": 32,
+      "severity": 38,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-PT-Геополитич",
+      "type": "Signal",
+      "label": "Геополитическое давление",
+      "severity": 32,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-PT-Социальное",
@@ -106,13 +106,13 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-PT",
@@ -145,13 +145,13 @@
       "weight": 0.25
     },
     {
-      "from": "DRIVER-PT-economic",
+      "from": "DRIVER-PT-geopolitical",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DRIVER-PT-geopolitical",
+      "from": "DRIVER-PT-economic",
       "to": "COUNTRY-PT",
       "type": "CAUSES",
       "weight": 0.8
@@ -163,14 +163,35 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-PT-Геополитич",
-      "to": "DOMAIN-PT-geopolitical",
+      "from": "DOMAIN-PT-geopolitical",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.4
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-PT-Экономичес",
       "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.38
+    },
+    {
+      "from": "SIGNAL-PT-Геополитич",
+      "to": "DOMAIN-PT-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.32
     },
