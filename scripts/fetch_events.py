@@ -1800,7 +1800,10 @@ COUNTRY_COORDS = {
 # Источники, чьи события длятся дольше обычного окна свежести.
 # Наводнение остаётся активным месяцами, и 14 дней для него —
 # не признак устаревания, а нормальная продолжительность.
-_LONG_LIVED_SOURCES = ('GDACS Floods',)
+# 'ReliefWeb Disasters' добавлен 30.08.2026: у активного бедствия date.event —
+# дата НАЧАЛА, а не последнего наблюдения. Из 20 присланных записей до ленты
+# не доходила ни одна: событие, идущее третий месяц, отсекалось как устаревшее.
+_LONG_LIVED_SOURCES = ('GDACS Floods', 'ReliefWeb Disasters')
 
 
 def fetch_url(url, timeout=20, headers=None, retries=1):
@@ -2896,13 +2899,19 @@ def fetch_reliefweb():
                     continue
                 _b = (_f.get('body') or '')[:300]
                 _cc = [c.get('name') for c in (_f.get('country') or []) if c.get('name')]
+                # Схема совпадает с первым блоком, иначе запись не доходит до
+                # ленты (30.08.2026): классификация домена читает 'desc', а не
+                # 'summary'; страны обязаны быть в тексте, поле 'countries_raw'
+                # конвейер не читает; дата проходит parse_date, как у всех
+                # остальных источников; без source_bias запись получает 0 и
+                # проигрывает конкуренцию за квоту.
                 items.append({
                     'title': _t,
-                    'summary': _b,
+                    'desc': (_b + ' ' + ' '.join(_cc)).strip(),
                     'source': 'ReliefWeb/UN',
                     'url': _it.get('url') or '',
-                    'date': ((_f.get('date') or {}).get('created') or '')[:10],
-                    'countries_raw': _cc,
+                    'date': parse_date((_f.get('date') or {}).get('created') or ''),
+                    'source_bias': 5,
                 })
         except Exception:
             pass
