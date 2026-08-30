@@ -1,0 +1,44 @@
+name: Аудит словарей (ключ внутри чужого слова)
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'   # понедельник 05:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: dict-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Клонирование репозитория
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Настройка Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Поиск ключей внутри чужих слов
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          python scripts/audit_dictionaries.py --json docs/_dict_audit.json
+
+      - name: Коммит отчёта
+        run: |
+          git config user.name "archive-bot"
+          git config user.email "bot@secrett-archive.com"
+          git add docs/_dict_audit.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "Нет изменений"
+          else
+            git commit -m "Аудит словарей · $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git pull --rebase origin main && git push || (sleep 5 && git pull --rebase origin main && git push)
+          fi
