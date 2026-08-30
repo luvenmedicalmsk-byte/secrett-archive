@@ -4830,6 +4830,21 @@ def process_events(raw_items):
     _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
              'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0,
              'nogeo_valid': 0, 'nogeo_noise': 0, 'proc_only': 0}
+    # PIPELINE LOSS AUDIT · разбивка по источнику (30.08.2026).
+    # Прежде отчёт давал три среза: пришло, построено, ушло в витрину.
+    # Между построением и витриной лежат дедупликация, порог тяжести и
+    # гео-проверка, и понять, на каком из них теряется источник, было
+    # нельзя. Теперь каждая точка отбраковки помечает источник записи.
+    _LOSS_SRC = {}
+    def _lost(stage, obj=None, delta=1):
+        _LOSS[stage] = _LOSS.get(stage, 0) + delta
+        try:
+            src = (obj or {}).get('source') or '?'
+        except Exception:
+            src = '?'
+        _LOSS_SRC.setdefault(stage, {})
+        _LOSS_SRC[stage][src] = _LOSS_SRC[stage].get(src, 0) + delta
+
     _NO_DOMAIN_SHADOW = []      # Domain Coverage Audit: отброшенные без домена
     _SEV_SAMPLE = []
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).strftime('%Y-%m-%d')
@@ -4966,7 +4981,7 @@ def process_events(raw_items):
         _src_l = str(item.get('source','')).strip().lower()
         _src_ch = _src_l.split('/')[-1]  # канал после 'telegram/' — сравниваем и полное имя, и канал
         if _src_l in _BLOCKED_SOURCES or _src_ch in _BLOCKED_SOURCES:
-            _trace(_tid,'SOURCE_BLOCK','removed',reason='source_block');             _LOSS['filter']+=1; continue   # редакционный source-блок (анти-канал)
+            _trace(_tid,'SOURCE_BLOCK','removed',reason='source_block');             _lost('filter', item); continue   # редакционный source-блок (анти-канал)
         # ДЛЯЩИЕСЯ СОБЫТИЯ ЖИВУТ ДОЛЬШЕ ОКНА СВЕЖЕСТИ.
         # Наводнение в GDACS тянется неделями и месяцами: из 48 присланных
         # 46 отсеивались как старые, оставаясь АКТИВНЫМИ на момент прогона.
@@ -4974,7 +4989,7 @@ def process_events(raw_items):
         # Для таких источников окно 120 дней. Это не отмена проверки:
         # событие старше четырёх месяцев по-прежнему уходит.
         _cut = _cutoff_long if str(item.get('source','')) in _LONG_LIVED_SOURCES else cutoff
-        if item.get('date','') < _cut: _trace(_tid,'OLD','removed',reason='old'); _LOSS['old']+=1; continue
+        if item.get('date','') < _cut: _trace(_tid,'OLD','removed',reason='old'); _lost('old', item); continue
         # --- Ingestion Cleanup (VNext L0): нормализуем desc ДО классификации ---
         # HTML-теги/entities/пробелы чистятся один раз здесь, чтобы detect_domain,
         # RUSSIA_FILTER, _is_ad, гео и severity читали plain text. Иначе разметка вида
@@ -4986,18 +5001,18 @@ def process_events(raw_items):
         if _src0.startswith('Telegram/') or _src0 in _TG_SRC:
             _ld = _text_latest_date((item.get('title','') or '') + ' ' + (item.get('desc','') or ''))
             if _ld is not None and (datetime.now(timezone.utc).date() - _ld).days > 14:
-                _trace(_tid,'OLD','removed',reason='old'); _LOSS['old']+=1; continue
+                _trace(_tid,'OLD','removed',reason='old'); _lost('old', item); continue
 
         title_low = (item.get('title','') or '').lower()
         desc_low = (item.get('desc','') or '').lower()
         text_low = title_low + ' ' + desc_low
         if any(phrase in text_low for phrase in RUSSIA_FILTER):
-            _trace(_tid,'FILTER','removed',reason='filter'); _LOSS['filter']+=1; continue
+            _trace(_tid,'FILTER','removed',reason='filter'); _lost('filter', item); continue
 
         # S41: нативная реклама/промо -- не сигнал риска, убираем безусловно
         # (независимо от severity/источника/домена)
         if _is_ad(text_low):
-            _trace(_tid,'FILTER','removed',reason='ad'); _LOSS['ad']+=1; continue
+            _trace(_tid,'FILTER','removed',reason='ad'); _lost('ad', item); continue
 
         # S34B governance: REMOVE-источники отбрасываем до обработки
         _gov = SOURCE_GOVERNANCE.get(item.get('source',''), {})
@@ -5006,11 +5021,11 @@ def process_events(raw_items):
         if not _gov and str(item.get('source','')).startswith('Telegram/'):
             _gov = {'weight': 0.85, 'tier': 'aggregator'}
         if _gov.get('action') == 'REMOVE':
-            _trace(_tid,'CLASSIFIER','removed',reason='gov'); _LOSS['gov']+=1; continue
+            _trace(_tid,'CLASSIFIER','removed',reason='gov'); _lost('gov', item); continue
 
         # Чистая аналитика/колонки (комментарий, не событие) -- по источнику
         if item.get('source','') in _OPED_SOURCES:
-            _trace(_tid,'FILTER','removed',reason='filter'); _LOSS['filter']+=1; continue
+            _trace(_tid,'FILTER','removed',reason='filter'); _lost('filter', item); continue
 
         # NASA EONET уже имеет координаты
         if '_lat' in item:
@@ -5033,7 +5048,7 @@ def process_events(raw_items):
                 _trace(_tid, 'CLASSIFIER', 'pass', detect_domain=(domain or 'NONE'),
                        feed_domain=None, final_domain=domain)
             if not domain:
-                _LOSS['no_domain']+=1
+                _lost('no_domain', item)
                 # SHADOW-ЛОГ для Domain Coverage Audit: сохраняем отброшенные без домена,
                 # чтобы анализировать потерю recall (не меняет поведение — событие всё равно дропается)
                 try:
@@ -5057,14 +5072,14 @@ def process_events(raw_items):
                 # корректная страновая привязка восстанавливается в D2 (Snapshot, пост-релиз).
                 _foreign = _foreign_country(((item.get('title','') or '') + ' ' + (item.get('desc','') or '')))[0]
                 if str(_src).startswith('Telegram') or _src == 'Downdetector RU':
-                    lat, lng, region = _ru_default(item['title']); _trace(_tid,'GEO','modified',reason='global_marker'); _LOSS['global_marker']+=1
+                    lat, lng, region = _ru_default(item['title']); _trace(_tid,'GEO','modified',reason='global_marker'); _lost('global_marker', item)
                 elif _foreign:
                     # иностранное место без координат: снапшот восстановит страну (D2).
                     # Публикуем в ленте без карты, метка страны придёт из GeoContract.
                     lat, lng, region = None, None, ''
-                    item['map_visible'] = False; _trace(_tid,'NO_GEO','modified',reason='nogeo_valid'); _LOSS['nogeo_valid'] += 1
+                    item['map_visible'] = False; _trace(_tid,'NO_GEO','modified',reason='nogeo_valid'); _lost('nogeo_valid', item)
                 elif _home:
-                    lat, lng, region = _home; _trace(_tid,'GEO','modified',reason='global_marker'); _LOSS['global_marker']+=1
+                    lat, lng, region = _home; _trace(_tid,'GEO','modified',reason='global_marker'); _lost('global_marker', item)
                 else:
                     # VALID_NO_GEO RECOVERY: процесс без физического места.
                     # Аналитический сигнал (кибер/эконом/техно/санкции) → в ленту без карты;
@@ -5072,9 +5087,9 @@ def process_events(raw_items):
                     _cls = _classify_no_geo(item.get('title',''), item.get('desc',''), domain)
                     if _cls == 'VALID':
                         lat, lng, region = None, None, ''
-                        item['map_visible'] = False; _trace(_tid,'NO_GEO','modified',reason='nogeo_valid'); _LOSS['nogeo_valid'] += 1
+                        item['map_visible'] = False; _trace(_tid,'NO_GEO','modified',reason='nogeo_valid'); _lost('nogeo_valid', item)
                     else:
-                        _trace(_tid,'NO_GEO','removed',reason='nogeo_noise'); _LOSS['nogeo_noise'] += 1; continue
+                        _trace(_tid,'NO_GEO','removed',reason='nogeo_noise'); _lost('nogeo_noise', item); continue
             else:
                 lat, lng, region = geo
             # REGION FALLBACK. Панель «Страны» строится по полю region:
@@ -5111,10 +5126,10 @@ def process_events(raw_items):
         # само событие приходит нормальным сигналом из профильных источников
         _ttl0 = str(item.get('title','')).strip().lower()
         if _ttl0.startswith(('смотрите','смотри:','видео:','watch:','смотреть','фото:')):
-            _trace(_tid,'SEVERITY','removed',reason='sev_teaser'); _LOSS['sev']+=1; _LOSS['sev_teaser']=_LOSS.get('sev_teaser',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_teaser'); _lost('sev', item); _lost('sev_teaser', item); continue
         # S40: бюрократические сводки/отчёты о ситуации -- не сигнал, убираем безусловно
         if any(k in _ttl0 for k in ('отчет о ситуации','отчёт о ситуации','situation report','sitrep','период отчетности','reporting period','cluster report')):
-            _trace(_tid,'SEVERITY','removed',reason='sev_sitrep'); _LOSS['sev']+=1; _LOSS['sev_sitrep']=_LOSS.get('sev_sitrep',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_sitrep'); _lost('sev', item); _lost('sev_sitrep', item); continue
         # S41: безусловный дроп не-сигналов. Развлечения/спорт/селебрити/лайфстайл/колонки --
         # никогда не сигнал. Аварии/взрывы дропаем, если НЕ боевого происхождения (узкий _combat).
         _blob = _ttl0 + ' ' + str(item.get('desc','')).lower()
@@ -5148,7 +5163,7 @@ def process_events(raw_items):
             _hmd = re.search(r'(\d+)\s*(?:погиб|жертв|человек)', _blob)
             if _hmd and _hmd.group(1).isdigit() and int(_hmd.group(1)) >= 10: _home_fire = False
         if _fluff or _local or ((_accident or _gas or _home_fire) and not _combat):
-            _trace(_tid,'SEVERITY','removed',reason='sev_content'); _LOSS['sev']+=1; _LOSS['sev_content']=_LOSS.get('sev_content',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_content'); _lost('sev', item); _lost('sev_content', item); continue
         # S38: системные сигналы -- мимо порога и шум-фильтра, с высоким полом severity
         _sys = _systemic_class(item.get('title',''), item.get('desc','')) if item.get('_force_severity') is None else None
         if _sys:
@@ -5202,21 +5217,21 @@ def process_events(raw_items):
         # но кормит Process Engine / Radar / Country Analytics / Pressure Index).
         _below_feed = False
         if item.get('_force_severity') is None and not _sys and severity < _thr:
-            _trace(_tid,'SEVERITY','modified',reason='sev_threshold'); _LOSS['sev_threshold'] = _LOSS.get('sev_threshold', 0) + 1
+            _trace(_tid,'SEVERITY','modified',reason='sev_threshold'); _lost('sev_threshold', item)
             _below_feed = True
         # S37: контент-фильтр низкосигнального шума (порог severity <46, реальные события не трогаем)
         if item.get('_force_severity') is None and not _sys and severity < 46 and _is_noise(item.get('title','')):
-            _trace(_tid,'SEVERITY','removed',reason='sev_noise'); _LOSS['sev']+=1; _LOSS['sev_noise']=_LOSS.get('sev_noise',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_noise'); _lost('sev', item); _lost('sev_noise', item); continue
         # S43: виральный/человеческий шум -- виральная подача + НИ ОДНОГО риск-маркера в заголовке = новость.
         if (item.get('_force_severity') is None and not _sys
                 and _VIRAL_RE.search(item.get('title',''))
                 and not _SIG_RE.search(item.get('title',''))):
-            _trace(_tid,'SEVERITY','removed',reason='sev_viral'); _LOSS['sev']+=1; _LOSS['sev_viral']=_LOSS.get('sev_viral',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_viral'); _lost('sev', item); _lost('sev_viral', item); continue
         # S44: бытовой криминал / частные суды / блогеры / локальные ЧП -- без системного маркера = шум.
         if (item.get('_force_severity') is None and not _sys
                 and _CRIME_NOISE_RE.search(item.get('title',''))
                 and not _SYS_PROTECT_RE.search(item.get('title',''))):
-            _trace(_tid,'SEVERITY','removed',reason='sev_crime'); _LOSS['sev']+=1; _LOSS['sev_crime']=_LOSS.get('sev_crime',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_crime'); _lost('sev', item); _lost('sev_crime', item); continue
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
         _TRUSTED_SOCIAL={'WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','WHO','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IOM','ReliefWeb','UN News','ILO','WEF',
             'IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review',
@@ -5230,7 +5245,7 @@ def process_events(raw_items):
                 and not _is_regulatory_event(_blob)
                 and not _is_judicial_event(_blob)
                 and not _is_digital_failure(_blob)):
-            _trace(_tid,'SEVERITY','removed',reason='sev_nomarker'); _LOSS['sev']+=1; _LOSS['sev_nomarker']=_LOSS.get('sev_nomarker',0)+1; continue
+            _trace(_tid,'SEVERITY','removed',reason='sev_nomarker'); _lost('sev', item); _lost('sev_nomarker', item); continue
 
         # ANALYTIC ADMISSION: слабый сигнал (ниже порога ленты) допускается в аналитический
         # слой ТОЛЬКО при аналитической ценности — иначе даже пройдя шум-фильтры остаётся вне
@@ -5338,7 +5353,7 @@ def process_events(raw_items):
                     'score': round(_score, 1), 'score_b': round(_score_noproc, 1),
                     'why': _why, 'src': str(item.get('source',''))[:24]})
             if _adm == 'REJECT':
-                _trace(_tid,'SEVERITY','removed',reason='sev_low'); _LOSS['sev'] += 1; continue
+                _trace(_tid,'SEVERITY','removed',reason='sev_low'); _lost('sev', item); _lost('sev_low', item); continue
             # сохранить объяснимость в само событие (для аналитики/UI)
             item['admission_reason'] = [_reason_map.get(w, w) for w in _why]
             item['admission_score'] = round(_score, 1)
@@ -5366,7 +5381,7 @@ def process_events(raw_items):
             ev_id = make_id('usgs:' + str(item['_usgs_id']), '')
         else:
             ev_id = make_id(item['title'] + _id_geo, item['date'])
-        if ev_id in seen_ids: _trace(_tid,'DEDUP','removed',reason='dup'); _LOSS['dup']+=1; continue
+        if ev_id in seen_ids: _trace(_tid,'DEDUP','removed',reason='dup'); _lost('dup', item); continue
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
@@ -5508,7 +5523,7 @@ def process_events(raw_items):
             # S36.4: economy/social -- до 7 дней (институц. ленты редки); аналитика -- 3; новости -- сегодня
             max_days = 21 if _evd in ('technology','social') else 14 if _evd == 'climate' else 10 if _evd == 'economy' else 3  # S36.4 + институц.аналитика (Мия 21.07)
             if days_old > max_days:
-                _trace(_obs_id(ev),'FRESHNESS','removed',reason='fresh'); _LOSS['fresh']+=1; continue
+                _trace(_obs_id(ev),'FRESHNESS','removed',reason='fresh'); _lost('fresh', ev); continue
         except:
             continue
         if ev['id'] in _flood_reserved: continue  # уже зарезервировано как наводнение
@@ -5562,8 +5577,32 @@ def process_events(raw_items):
         print(f"  [LOSS] ingested={_LOSS['ingested']} old={_LOSS['old']} russia_filter={_LOSS['filter']} ad={_LOSS['ad']} gov_remove={_LOSS['gov']} no_domain={_LOSS['no_domain']} no_geo={_LOSS['no_geo']} global_marker={_LOSS['global_marker']} low_sev={_LOSS['sev']} dup={_LOSS['dup']} built={len(events)} freshness_drop={_LOSS['fresh']} nogeo_valid={_LOSS.get('nogeo_valid',0)} nogeo_noise={_LOSS.get('nogeo_noise',0)} feed_layer={_LOSS.get('feed_layer',0)} analytic_layer={_LOSS.get('analytic_layer',0)} exported={len(top_events)}", file=sys.stderr)
         try:  # PIPELINE LOSS AUDIT: публикуемая карта воронки (statistics, не догадки)
             _loss_report = dict(_LOSS)
+            # Разбивка по источнику на каждом этапе + сводка «пришло / дошло /
+            # где именно потерялось» по каждому источнику: без неё вопрос
+            # «почему источник не виден в ленте» решается догадками.
+            _src_final = {}
+            for _e in top_events:
+                _s = _e.get('source') or '?'
+                _src_final[_s] = _src_final.get(_s, 0) + 1
+            _src_raw = {}
+            for _it in raw_items:
+                _s = (_it or {}).get('source') or '?'
+                _src_raw[_s] = _src_raw.get(_s, 0) + 1
+            _by_source = {}
+            for _s, _n in sorted(_src_raw.items(), key=lambda kv: -kv[1]):
+                _stages = {st: cnt.get(_s, 0) for st, cnt in _LOSS_SRC.items() if cnt.get(_s)}
+                _fin = _src_final.get(_s, 0)
+                if _n and not _fin:
+                    _verdict = 'не доходит'
+                elif _fin < _n * 0.2:
+                    _verdict = 'доходит мало'
+                else:
+                    _verdict = 'норма'
+                _by_source[_s] = {'raw': _n, 'final': _fin, 'verdict': _verdict, 'lost_at': _stages}
             _loss_report.update({'built': len(events), 'exported': len(top_events),
-                'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')})
+                'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'loss_by_stage_source': _LOSS_SRC,
+                'source_funnel': _by_source})
             (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(
                 json.dumps(_loss_report, ensure_ascii=False, indent=2), encoding='utf-8')
             # DOMAIN COVERAGE AUDIT: отброшенные без домена — для анализа recall
