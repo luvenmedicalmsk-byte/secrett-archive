@@ -1,20 +1,38 @@
 {
   "country": "IN",
   "country_name": "Индия",
-  "date": "2026-08-29",
-  "generated_at": "2026-08-29T23:49:50.411809+00:00",
-  "srs_score": 52,
+  "date": "2026-08-30",
+  "generated_at": "2026-08-30T02:14:19.155474+00:00",
+  "srs_score": 59,
   "srs_grade": "D",
   "srs_grade_ru": "Требует внимания",
   "priority_risks": [
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -16.4pt",
-      "detail": "Систематическая ошибка прогнозов -16.4pt снижает достоверность сценарного анализа.",
-      "metric_value": -16.44,
+      "title": "Системное смещение прогнозов: -11.7pt",
+      "detail": "Систематическая ошибка прогнозов -11.7pt снижает достоверность сценарного анализа.",
+      "metric_value": -11.74,
       "urgency": 80,
       "source": "validation_bias"
+    },
+    {
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -16.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -16.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -16,
+      "urgency": 60,
+      "source": "confidence_drift"
     },
     {
       "id": "R-05",
@@ -26,7 +44,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 4,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -58,6 +76,11 @@
       "type": "horizon_degradation",
       "horizon": "d90",
       "detail": "Худший горизонт прогноза: d90. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности -16.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -69,7 +92,7 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+4.40pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+4.20pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
@@ -77,9 +100,9 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -16.4pt",
+      "title": "Системное смещение прогнозов: -11.7pt",
       "rec_score": 54,
-      "metric_value": -16.44,
+      "metric_value": -11.74,
       "source": "validation_bias"
     },
     {
@@ -87,16 +110,34 @@
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (7)",
-      "rec_score": 50,
+      "rec_score": 51,
       "metric_value": 7,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 46,
+      "metric_value": 3,
+      "source": "diagnostics"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -16.0pt",
+      "rec_score": 44,
+      "metric_value": -16,
+      "source": "confidence_drift"
     },
     {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Смещения в принятии решений (2)",
-      "rec_score": 40,
+      "rec_score": 41,
       "metric_value": 2,
       "source": "decision_bias"
     }
@@ -105,18 +146,26 @@
     {
       "id": "ACT-R-03",
       "priority": "CRITICAL",
-      "action": "Реагировать: Системное смещение прогнозов: -16.4pt",
-      "rationale": "Систематическая ошибка прогнозов -16.4pt снижает достоверность сценарного анализа.",
+      "action": "Реагировать: Системное смещение прогнозов: -11.7pt",
+      "rationale": "Систематическая ошибка прогнозов -11.7pt снижает достоверность сценарного анализа.",
       "deadline": "немедленно",
       "source": "validation_bias"
     },
     {
-      "id": "ACT-R-05",
+      "id": "ACT-R-04",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -16.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -16.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "72 часа",
+      "source": "confidence_drift"
     },
     {
       "id": "ACT-O-05",
@@ -125,13 +174,21 @@
       "rationale": "Идентифицировано 7 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
       "deadline": "7 дней",
       "source": "high_alpha"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 49.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     }
   ],
-  "action_count": 3,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 71,
   "delta": 0,
   "domain": "climate",
-  "history_depth": 93
+  "history_depth": 94
 }
