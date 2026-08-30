@@ -1717,6 +1717,25 @@ def detect_domain(title, desc):
     if max(scores.values(), default=0) == 0:
         return None
     _winner = max(scores, key=scores.get)
+    # ГУМАНИТАРНЫЙ ГАРД (30.08.2026). «Humanitarian crisis deepens... civilians
+    # fleeing civil war in Sudan» уходило в geopolitics: 'war' и 'civil war' дали
+    # 2 попадания × 1.5 = 3.0, а social получил 0 и ещё штраф — 'war' стоит у него
+    # в exclude. При этом гуманитарных ключей в social нет: там 'refugees' и
+    # 'displaced persons', но не 'humanitarian crisis' и не 'displaced civilians'.
+    # Перемещение людей почти всегда связано с войной, поэтому по словарю такие
+    # сюжеты систематически проигрывали геополитике.
+    # Гард уступает военной атаке: удар, обстрел, теракт остаются geopolitics,
+    # и срабатывает только когда победил именно geopolitics — климатические
+    # события GDACS со словом «перемещённые» не затрагиваются.
+    _humanitarian = re.search(
+        r'(humanitarian\s+(?:crisis|conditions|catastrophe|situation|emergency)|'
+        r'internally\s+displaced|displaced\s+(?:person|civilian|famil|people)|'
+        r'displacement\s+camp|refugee\s+camp|refugee\s+crisis|\bidps?\b|'
+        r'famine|malnutrition|starvation|'
+        r'гуманитарн\w*\s+(?:кризис|катастроф|услови|ситуац)|'
+        r'перемещённ\w*|перемещенн\w*|лагер\w*\s+беженц|вынужденн\w*\s+переселен)', text)
+    if _winner == 'geopolitics' and _humanitarian and not _mil_attack:
+        return 'social'
     # военный актор в climate-домене → geopolitics (Owner=Domain: удар по объекту, не стихия)
     if _winner == 'climate' and re.search(r'(бпла|ракет|обстрел|авиауд|военн\w* корабл|всу|армия|войск)', text) \
        and re.search(r'(удар\w* по|атаковал|обстрел|поражен)', text):
