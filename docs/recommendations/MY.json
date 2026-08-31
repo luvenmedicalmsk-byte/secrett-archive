@@ -2,11 +2,20 @@
   "country": "MY",
   "country_name": "Малайзия",
   "date": "2026-08-31",
-  "generated_at": "2026-08-31T01:02:53.441841+00:00",
-  "srs_score": 57,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "generated_at": "2026-08-31T06:42:38.402587+00:00",
+  "srs_score": 61,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+11/день",
+      "detail": "Скорость ухудшения 11 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 11,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-04",
       "category": "STRATEGIC",
@@ -19,14 +28,14 @@
     {
       "id": "R-06",
       "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -9.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": -9,
-      "urgency": 48,
+      "title": "Дрейф уверенности прогнозов: -12.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -12.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -12,
+      "urgency": 54,
       "source": "confidence_drift"
     }
   ],
-  "risk_count": 2,
+  "risk_count": 3,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -40,9 +49,9 @@
     {
       "id": "O-06",
       "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 85.2% успех",
-      "detail": "Исторический процент успешных решений 85.2% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 85.2,
+      "title": "Стратегия результативна: 83.3% успех",
+      "detail": "Исторический процент успешных решений 83.3% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 83.3,
       "impact": 65,
       "source": "decision_success"
     }
@@ -71,7 +80,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -9.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности -12.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -83,10 +92,19 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+3.17pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+2.96pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+11/день",
+      "rec_score": 64,
+      "metric_value": 11,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -100,9 +118,9 @@
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 85.2% успех",
+      "title": "Стратегия результативна: 83.3% успех",
       "rec_score": 52,
-      "metric_value": 85.2,
+      "metric_value": 83.3,
       "source": "decision_success"
     },
     {
@@ -118,13 +136,21 @@
       "id": "R-06",
       "type": "risk",
       "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: -9.0pt",
-      "rec_score": 42,
-      "metric_value": -9,
+      "title": "Дрейф уверенности прогнозов: -12.0pt",
+      "rec_score": 45,
+      "metric_value": -12,
       "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+11/день",
+      "rationale": "Скорость ухудшения 11 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
     {
       "id": "ACT-R-04",
       "priority": "STRATEGIC",
@@ -132,6 +158,14 @@
       "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
       "deadline": "72 часа",
       "source": "diagnostics"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -12.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -12.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
     },
     {
       "id": "ACT-O-05",
@@ -144,25 +178,17 @@
     {
       "id": "ACT-O-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Стратегия результативна: 85.2% успех",
-      "rationale": "Исторический процент успешных решений 85.2% — выше среднего. Поддерживать текущий подход.",
+      "action": "Использовать: Стратегия результативна: 83.3% успех",
+      "rationale": "Исторический процент успешных решений 83.3% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
-    },
-    {
-      "id": "ACT-R-06",
-      "priority": "WATCHLIST",
-      "action": "Реагировать: Дрейф уверенности прогнозов: -9.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "7 дней",
-      "source": "confidence_drift"
     }
   ],
-  "action_count": 4,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 45,
-  "delta": 0,
-  "domain": "economy",
+  "risk_score": 56,
+  "delta": 11,
+  "domain": "technology",
   "history_depth": 84
 }
