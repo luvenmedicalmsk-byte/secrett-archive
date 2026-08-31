@@ -36,14 +36,14 @@ PGOLD = colors.HexColor("#F7F4EA")
 pdfmetrics.registerFont(TTFont("Noto", str(ASSETS/"NotoSans-Regular-full.ttf")))
 pdfmetrics.registerFont(TTFont("Noto-Bold", str(ASSETS/"NotoSans-Bold-full.ttf")))
 
-body      = ParagraphStyle("body", fontName="Noto", fontSize=8.35, leading=11.0,
+body      = ParagraphStyle("body", fontName="Noto", fontSize=9.4, leading=13.2,
                            textColor=colors.HexColor("#4E6075"))
 body_dark = ParagraphStyle("body_dark", parent=body, textColor=colors.HexColor("#35465B"))
-small     = ParagraphStyle("small", fontName="Noto", fontSize=7.0, leading=9.2, textColor=MUTED)
-head      = ParagraphStyle("head", fontName="Noto-Bold", fontSize=11.0, leading=13.5, textColor=NAVY)
-subhead   = ParagraphStyle("subhead", fontName="Noto-Bold", fontSize=9.25, leading=11.5, textColor=NAVY)
+small     = ParagraphStyle("small", fontName="Noto", fontSize=7.8, leading=10.4, textColor=MUTED)
+head      = ParagraphStyle("head", fontName="Noto-Bold", fontSize=12.0, leading=14.8, textColor=NAVY)
+subhead   = ParagraphStyle("subhead", fontName="Noto-Bold", fontSize=10.2, leading=12.8, textColor=NAVY)
 boldbody  = ParagraphStyle("boldbody", parent=body, fontName="Noto-Bold", textColor=NAVY)
-mono      = ParagraphStyle("mono", fontName="Noto", fontSize=8.0, leading=11.5,
+mono      = ParagraphStyle("mono", fontName="Noto", fontSize=8.8, leading=12.6,
                            textColor=colors.HexColor("#35465B"))
 
 
@@ -74,7 +74,7 @@ def P(c, text, x, top, width, style):
     return top + h
 
 
-def table_height(rows, widths, font=7.3, header=True):
+def table_height(rows, widths, font=8.2, header=True):
     """Высота таблицы без отрисовки: нужна, чтобы решить о переносе."""
     data = [[Paragraph(clean(v), ParagraphStyle(
                 "tdm", fontName=("Noto-Bold" if (header and i == 0) else "Noto"),
@@ -84,7 +84,7 @@ def table_height(rows, widths, font=7.3, header=True):
     return t.wrap(sum(widths), 10000)[1]
 
 
-def table(c, rows, x, top, widths, font=7.3, header=True):
+def table(c, rows, x, top, widths, font=8.2, header=True):
     data = [[Paragraph(clean(v), ParagraphStyle(
                 "td", fontName=("Noto-Bold" if (header and i == 0) else "Noto"),
                 fontSize=font, leading=font*1.42,
@@ -168,7 +168,7 @@ def make_cover(c, z):
     T(468.0,  9.2, MUTED, "Noto",      "Дата оценки: " + z['date_h'])
     T(504.0, 44.0, CYAN,  "Noto-Bold", "%d/100" % z['index'])
     T(568.0, 10.6, NAVY,  "Noto-Bold", "Индекс риска «%s»" % z['zone'])
-    st = ParagraphStyle("st", fontName="Noto", fontSize=8.5, leading=12.0, textColor=MUTED)
+    st = ParagraphStyle("st", fontName="Noto", fontSize=9.2, leading=13.0, textColor=MUTED)
     p = Paragraph(clean(z['index_label'] + " · " + z['index_note']), st)
     w, h = p.wrap(440, 60); p.drawOn(c, 78, H - 602 - h + 1.5)
     T(646.0, 8.5, MUTED, "Noto", "Релевантные домены: " + z['domains_h'])
