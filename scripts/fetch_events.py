@@ -443,6 +443,19 @@ _PROMO5_RE = re.compile(
     r'одноклассник\w*|вайбер|viber|ватсап|whatsapp|тг\b)[»"]?\s*[.!\u2026]?\s*$',
     re.I)
 
+# Английские промо-хвосты (30.08.2026). Очистка промо работает ДО перевода,
+# то есть на исходном языке источника. Русские шаблоны английский хвост не
+# видели, и «Explosions heard in southern Iran Subscribe to bit.ly/AJ»
+# доезжал до перевода целиком: в ленте оставалось «Подпишитесь на ly/AJ».
+_PROMO_EN_RE = re.compile(
+    r'([\s.,\u2014\u2013\-|]*subscribe\s+(?:to|on|now)?[^!?\n]{0,60}$)'
+    r'|([\s.,\u2014\u2013\-|]*follow\s+us[^!?\n]{0,60}$)'
+    r'|([\s.,\u2014\u2013\-|]*(?:read|watch|listen)\s+(?:more|live|us)[^!?\n]{0,60}$)'
+    r'|([\s.,\u2014\u2013\-|]*(?:download|get)\s+(?:the\s+)?app[^!?\n]{0,60}$)'
+    r'|([\s.,\u2014\u2013\-|]*for\s+more\s+(?:news|stories|videos)[^!?\n]{0,60}$)'
+    r'|([\s.,\u2014\u2013\-|]*(?:aje\.io|bit\.ly|ow\.ly|buff\.ly|reut\.rs)\S*\s*$)',
+    re.I)
+
 _PROMO3_RE = re.compile(
     r'\s*(?:наш\w*\s+)?(?:канал|чат|бот)\s+в\s+[«"\u00ab]?'
     r'(?:макс\w*|max|телеграм\w*|telegram|вконтакте|вк|дзен|одноклассник\w*|'
@@ -661,7 +674,7 @@ def _strip_promo(t):
     t = re.sub(r'\s*(?:https?://|www\.)\S+|\s*t\.me/\S+', '', t).strip()   # URL-strip: ссылки не место в заголовке карточки
     prev = None
     while prev != t and t:
-        prev = t; t = _PROMO5_RE.sub('', _PROMO4_RE.sub('', _PROMO3_RE.sub('', _PROMO2_RE.sub('', _CHAN_SIG_RE.sub('', _PROMO_RE.sub('', t)))))).rstrip(' \t\n|\u00b7\u2014\u2013-')
+        prev = t; t = _PROMO_EN_RE.sub('', _PROMO5_RE.sub('', _PROMO4_RE.sub('', _PROMO3_RE.sub('', _PROMO2_RE.sub('', _CHAN_SIG_RE.sub('', _PROMO_RE.sub('', t))))))).rstrip(' \t\n|\u00b7\u2014\u2013-')
     # Редакционный хвост снимается после промо-подписей канала.
     # Переменная называется t, а не text: это параметр функции.
     t = _strip_edit_credit(t)
