@@ -16557,6 +16557,25 @@ def save_enriched(events, previous_snapshot=None):
                     _SE.LIFECYCLE_CANARY = {'climate', 'economy'}
                     _sig_n = _write_signals(enriched["events"], _sig_path)
                     _SE.DOMAIN_CANARY = set()
+                    # PULSE (01.09.2026): маленький публичный файл со счётчиками
+                    # витрины. Лендинг показывает сигналы, критические и процессы,
+                    # но signals.json весит 60+ МБ, а _preview_processes.json
+                    # содержит только пять записей: ни то, ни другое для счётчика
+                    # не годится. Здесь число процессов уже известно.
+                    try:
+                        _pulse_path = str(OUTPUT_PATH.parent / "_pulse.json")
+                        _pv = enriched["events"]
+                        json.dump({
+                            "generated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                            "events": len(_pv),
+                            "critical": sum(1 for _e in _pv if (_e.get('severity') or 0) >= 80),
+                            "developing": sum(1 for _e in _pv if _e.get('signal_type') == 'escalation'),
+                            "processes": int(_sig_n or 0),
+                            "by_domain": {_d: sum(1 for _e in _pv if _e.get('domain') == _d)
+                                          for _d in ('climate','economy','geopolitics','technology','social')},
+                        }, open(_pulse_path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+                    except Exception:
+                        pass
                     # IDR-006 · D12/D24: обратные ссылки событие→процесс проставляются
                     # ВНУТРИ _write_signals, а events.json к этому моменту уже записан
                     # (запись выше, вызов здесь). Прогон подтвердил: process_id = 0 из 368.
