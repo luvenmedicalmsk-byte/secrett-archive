@@ -2383,7 +2383,18 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
            'пошлин','инфляц','рецесс','стагфляц','каскад','системный риск',
            'цепочки поставок','нарушение поставок','сбой поставок',
            'банкротств','bankruptcy','арест активов','конфискац',
-           'остановка производства','остановка завода','закрытие предприяти']
+           'остановка производства','остановка завода','закрытие предприяти',
+           # Ценовой шок с историческим экстремумом (01.09.2026): «нефть к 100
+           # долларам», «доходности облигаций на максимуме с 2008». Такие
+           # формулировки описывают выход показателя за исторический диапазон,
+           # а словарь их не видел вовсе.
+           # «рекордного уровня» без контекста не берём: рекорд ввода мощностей
+           # это рост, а не шок. Нужны формы, называющие исторический экстремум
+           # показателя вместе с годом отсчёта.
+           'максимума с 20','максимума с 19','максимального уровня с',
+           'высшего уровня с','минимума с 20','уровня с 2008','уровня с 2014',
+           'доходности облигаций','ралли нефти','цены на нефть выше',
+           'нефть к 100','выше 100 долларов','ценовой шок','скачок цен']
     kw_high = sum(1 for s in high if s in text)
     # Конструкции топливного кризиса: считаются наравне с ключевыми словами.
     _fuel_hits = sum(1 for p in _FUEL_HIGH_RE if re.search(p, text))
@@ -5052,6 +5063,17 @@ def process_events(raw_items):
                                      'ECB', 'NOAA', 'Frankfurter', 'GDELT')):
             score += 1.0; why.append('src_reliable')
         # доверенные RSS-источники доменов (Мия 20.07): институциональная аналитика значима by design
+        _DOMAIN_BY_SOURCE_ALL = (
+            'Inside Climate News','Carbon Brief','Climate Home News','Mongabay',
+            'Yale Climate Connections','Grist','Phys.org Climate','ScienceDaily Climate',
+            'Canary Media','Utility Dive','PV Magazine','IEA','EIA','OilPrice','Mining.com',
+            'FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business',
+            'Trading Economics','FAO Economy','WFP','FAO News','FEWS NET','Pew Research',
+            'Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet',
+            'ProMED','Oxfam','UNHCR','IDMC')
+        _MIL_OVERRIDE_RE = re.compile(
+            r'\b(удар\w*\s+(?:по|сша|рф|израил)|нанес\w*\s+удар|обстрел\w*|ракетн\w*\s+удар'
+            r'|бомбардир\w*|авиауд\w*|бпла|беспилотник\w*\s+атак|наступлен\w*\s+войск)', re.I)
         _TRUSTED_RSS=('IEEE Spectrum','Hugging Face','OpenAI','DeepMind','KrebsOnSecurity','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare','RIPE','New Scientist','MIT Technology Review','IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Trading Economics','IMF','World Bank','BIS','OECD','Carbon Brief','Mongabay','Inside Climate News','Yale Climate','Climate Home','Canary Media','Grist','ScienceDaily','WFP','FAO','Pew Research','Brookings','Freedom House','Oxfam','UNHCR','IDMC','WHO','ECDC','The Lancet','ProMED')
         if any(_s in _src for _s in _TRUSTED_RSS):
             score += 3.0; why.append('src_reliable')
@@ -5285,6 +5307,21 @@ def process_events(raw_items):
             domain='economy'
         elif _isrc in ('WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet','ProMED','Oxfam','UNHCR','IDMC') and not _is_nat_hazard(item.get('title',''), item.get('desc','')):
             domain='social'
+        # ПРИЧИНА ПРИОРИТЕТНЕЕ ИСТОЧНИКА (01.09.2026).
+        # Домен, зашитый за источником, перебивал классификацию по содержанию:
+        # «Удары США по Ирану возвращают нефть к 100 долларам» от нефтяного
+        # издания уходило в экономику, хотя detect_domain по тексту давал
+        # geopolitics со счётом 4.5. Это нарушает и правило первопричины, и
+        # ADR-045 о владении доменом: источник описывает тему издания, а не
+        # природу события.
+        # Источниковый домен уступает только явному военному признаку в тексте:
+        # он однозначен и не встречается в отраслевой аналитике случайно.
+        if _isrc in _DOMAIN_BY_SOURCE_ALL and _MIL_OVERRIDE_RE.search(
+                (item.get('title') or '') + ' ' + (item.get('desc') or '')):
+            _by_text = detect_domain(item.get('title') or '', item.get('desc') or '')
+            if _by_text == 'geopolitics':
+                domain = 'geopolitics'
+
         # ══ SEMANTIC VALIDATION LAYER ══ единая смысловая проверка вместо разрозненных
         # guard'ов (дипломатия/заявление/домен-военное). Проверяет согласованность готовых
         # признаков и применяет объяснимые коррекции. Заменяет частные исключения одной моделью.
