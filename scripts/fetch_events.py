@@ -4978,6 +4978,24 @@ def _is_nat_hazard(title, desc=''):
     return any(w in t for w in _NAT_HAZARD)
 
 
+# ПРИЧИНА ПРИОРИТЕТНЕЕ ИСТОЧНИКА (01.09.2026, исправлено 03.09.2026).
+# Определения вынесены на уровень модуля: 01.09 они стояли внутри вложенной
+# функции admission-scoring, а использовались в теле process_events. Разные
+# области видимости давали NameError, конвейер падал на первом же событии, и
+# лента не публиковалась с 01.09 20:06 при успешных прогонах.
+_DOMAIN_BY_SOURCE_ALL = (
+    'Inside Climate News','Carbon Brief','Climate Home News','Mongabay',
+    'Yale Climate Connections','Grist','Phys.org Climate','ScienceDaily Climate',
+    'Canary Media','Utility Dive','PV Magazine','IEA','EIA','OilPrice','Mining.com',
+    'FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business',
+    'Trading Economics','FAO Economy','WFP','FAO News','FEWS NET','Pew Research',
+    'Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet',
+    'ProMED','Oxfam','UNHCR','IDMC')
+_MIL_OVERRIDE_RE = re.compile(
+    r'\b(удар\w*\s+(?:по|сша|рф|израил)|нанес\w*\s+удар|обстрел\w*|ракетн\w*\s+удар'
+    r'|бомбардир\w*|авиауд\w*|бпла|беспилотник\w*\s+атак|наступлен\w*\s+войск)', re.I)
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -5100,17 +5118,6 @@ def process_events(raw_items):
                                      'ECB', 'NOAA', 'Frankfurter', 'GDELT')):
             score += 1.0; why.append('src_reliable')
         # доверенные RSS-источники доменов (Мия 20.07): институциональная аналитика значима by design
-        _DOMAIN_BY_SOURCE_ALL = (
-            'Inside Climate News','Carbon Brief','Climate Home News','Mongabay',
-            'Yale Climate Connections','Grist','Phys.org Climate','ScienceDaily Climate',
-            'Canary Media','Utility Dive','PV Magazine','IEA','EIA','OilPrice','Mining.com',
-            'FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business',
-            'Trading Economics','FAO Economy','WFP','FAO News','FEWS NET','Pew Research',
-            'Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','The Lancet',
-            'ProMED','Oxfam','UNHCR','IDMC')
-        _MIL_OVERRIDE_RE = re.compile(
-            r'\b(удар\w*\s+(?:по|сша|рф|израил)|нанес\w*\s+удар|обстрел\w*|ракетн\w*\s+удар'
-            r'|бомбардир\w*|авиауд\w*|бпла|беспилотник\w*\s+атак|наступлен\w*\s+войск)', re.I)
         _TRUSTED_RSS=('IEEE Spectrum','Hugging Face','OpenAI','DeepMind','KrebsOnSecurity','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare','RIPE','New Scientist','MIT Technology Review','IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Trading Economics','IMF','World Bank','BIS','OECD','Carbon Brief','Mongabay','Inside Climate News','Yale Climate','Climate Home','Canary Media','Grist','ScienceDaily','WFP','FAO','Pew Research','Brookings','Freedom House','Oxfam','UNHCR','IDMC','WHO','ECDC','The Lancet','ProMED')
         if any(_s in _src for _s in _TRUSTED_RSS):
             score += 3.0; why.append('src_reliable')
