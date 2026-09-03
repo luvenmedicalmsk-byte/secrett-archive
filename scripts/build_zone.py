@@ -66,12 +66,36 @@ def P_height(text, width, style):
     return Paragraph(clean(text), style).wrap(width, 10000)[1]
 
 
-def P(c, text, x, top, width, style):
-    """Абзац с автопереносом. top отсчитывается сверху, возвращает новый top."""
+def P(c, text, x, top, width, style, nl=None, state=None):
+    """Абзац с автопереносом. top отсчитывается сверху, возвращает новый top.
+
+    nl и state передаются вместе: длинный абзац разбивается по страницам,
+    а не рисуется целиком. Без этого перечень источников на второй странице
+    заезжал на колонтитул: проверка места стояла только перед секцией, а
+    сам абзац переносить было нечем (02.09.2026).
+    """
     p = Paragraph(clean(text), style)
-    w, h = p.wrap(width, 10000)
-    p.drawOn(c, x, H - top - h)
-    return top + h
+    if nl is None or state is None:
+        w, h = p.wrap(width, 10000)
+        p.drawOn(c, x, H - top - h)
+        return top + h
+    while True:
+        avail = H - BOT - state['top']
+        w, h = p.wrap(width, 10000)
+        if h <= avail:
+            p.drawOn(c, x, H - state['top'] - h)
+            state['top'] += h
+            return state['top']
+        parts = p.split(width, avail)
+        if not parts or len(parts) < 2:
+            nl(min(h, H - BOT - TOP))          # целиком не влезает — начинаем страницу
+            continue
+        head_p, rest = parts[0], parts[1]
+        hw, hh = head_p.wrap(width, 10000)
+        head_p.drawOn(c, x, H - state['top'] - hh)
+        state['top'] += hh
+        nl(H)                                   # безусловный перенос страницы
+        p = rest
 
 
 def table_height(rows, widths, font=8.2, header=True):
@@ -170,8 +194,17 @@ def make_cover(c, z):
     T(568.0, 10.6, NAVY,  "Noto-Bold", "Индекс риска «%s»" % z['zone'])
     st = ParagraphStyle("st", fontName="Noto", fontSize=9.2, leading=13.0, textColor=MUTED)
     p = Paragraph(clean(z['index_label'] + " · " + z['index_note']), st)
-    w, h = p.wrap(440, 60); p.drawOn(c, 78, H - 602 - h + 1.5)
-    T(646.0, 8.5, MUTED, "Noto", "Релевантные домены: " + z['domains_h'])
+    # Высота считается по фактическому тексту, а не зажимается в 60 пунктов
+    # (02.09.2026): длинная инженерная оговорка выходила за отведённое место
+    # и накладывалась на строку доменов. Строка доменов теперь ставится
+    # ПОД абзацем, с отступом, а не по фиксированной координате.
+    _pw, _ph = p.wrap(440, 10000)
+    _ptop = 602.0
+    p.drawOn(c, 78, H - _ptop - _ph + 1.5)
+    _dom_y = _ptop + _ph + 14.0
+    if _dom_y > 700.0:          # не заезжаем на колонтитул обложки
+        _dom_y = 700.0
+    T(_dom_y, 8.5, MUTED, "Noto", "Релевантные домены: " + z['domains_h'])
     c.setFont("Noto", 7.1); c.setFillColor(MUTED)
     c.drawString(78, H - 768.4 - 5.5, "Atlas Intelligence · аналитический мини-разбор")
     c.drawString(465, H - 768.4 - 5.5, z['date_h'])
@@ -239,8 +272,12 @@ def make_body(c, z):
 
     # ── 2 · Триггер ───────────────────────────────────────────────
     sec("Текущее событие - триггер индекса")
-    state['top'] = P(c, z['trigger'], X, state['top'], CW, body) + 8
-    state['top'] = P(c, "Источники: " + z['sources'], X, state['top'], CW, small) + 8
+    state['top'] = P(c, z['trigger'], X, state['top'], CW, body, nl, state) + 8
+    state['top'] = P(c, "Источники: " + z['sources'], X, state['top'], CW, small, nl, state) + 8
+    # Место под врезку проверяется заранее (02.09.2026): при длинном тексте
+    # «Связь с индексом» уезжала на колонтитул. callout_height существовал,
+    # но здесь не вызывался.
+    nl(callout_height("Связь с индексом: " + z['index_link'], CW))
     state['top'] = callout(c, "Связь с индексом: " + z['index_link'],
                            X, state['top'], CW) + 16
 
@@ -257,6 +294,7 @@ def make_body(c, z):
         nl(34)
         state['top'] = P(c, "<b>%s</b> &#160;·&#160; %s" % (pair, txt), X, state['top'], CW, body) + 5
     state['top'] += 4
+    nl(callout_height(z['crossings_note'], CW))
     state['top'] = callout(c, z['crossings_note'], X, state['top'], CW,
                            accent=GOLD, bg=PGOLD) + 16
 
@@ -267,6 +305,7 @@ def make_body(c, z):
         state['top'] = P(c, line, X + 6, state['top'], CW - 6,
                          boldbody if i == 0 else mono) + 1
     state['top'] += 6
+    nl(callout_height(z['cascade_note'], CW))
     state['top'] = callout(c, z['cascade_note'], X, state['top'], CW) + 16
 
     # ── 6 · Проявления ────────────────────────────────────────────
@@ -276,7 +315,7 @@ def make_body(c, z):
     # ── 7 · Расшифровка индекса ───────────────────────────────────
     sec("Расшифровка индекса %d/100" % z['index'],
         need=P_height(z['decode'], CW, body) + 46)
-    state['top'] = P(c, z['decode'], X, state['top'], CW, body) + 16
+    state['top'] = P(c, z['decode'], X, state['top'], CW, body, nl, state) + 16
 
     # ── 8 · Таблица диапазонов ────────────────────────────────────
     # Таблица выводится только при наличии строк: у зоны интернета
@@ -305,6 +344,7 @@ def make_body(c, z):
         state['top'] = bullets(c, z['options'], X, state['top'], CW, nl=nl, state=state) + 12
     if z.get('filter'):
         sec(z.get('filter_title') or 'Фильтр')
+        nl(callout_height(z['filter'], CW))
         state['top'] = callout(c, z['filter'], X, state['top'], CW,
                                accent=GOLD, bg=PGOLD) + 16
     if z.get('anchors'):
@@ -356,7 +396,7 @@ def make_body(c, z):
 
     # ── 14 · Расшифровка для пользователя ─────────────────────────
     sec("Расшифровка для пользователя")
-    state['top'] = P(c, z['user_note'], X, state['top'], CW, body) + 8
+    state['top'] = P(c, z['user_note'], X, state['top'], CW, body, nl, state) + 8
     # Врезка переносится целиком: раньше налезала на колонтитул.
     nl(callout_height(z['user_indicator'], CW) + 10)
     state['top'] = callout(c, z['user_indicator'], X, state['top'], CW) + 16
@@ -370,7 +410,7 @@ def make_body(c, z):
 
     # ── 16-17 · Мини и мониторинг ─────────────────────────────────
     sec("Мини-информация", need=P_height(z['mini'], CW, body) + 46)
-    state['top'] = P(c, z['mini'], X, state['top'], CW, body) + 16
+    state['top'] = P(c, z['mini'], X, state['top'], CW, body, nl, state) + 16
 
     # ── 18 · Про Atlas ────────────────────────────────────────────
     # Связь с Atlas как системой: место разбора в собственной картине
@@ -382,7 +422,7 @@ def make_body(c, z):
 
     sec("Atlas здесь полезен тем, что показывает",
         need=P_height(z['atlas_note'], CW, body) + 50)
-    state['top'] = P(c, z['atlas_note'], X, state['top'], CW, body) + 14
+    state['top'] = P(c, z['atlas_note'], X, state['top'], CW, body, nl, state) + 14
     nl(34)
     # Подпись поддержки кликабельна: reportlab понимает тег <a href>,
     # и ссылка остаётся рабочей при открытии PDF в браузере и читалках.
