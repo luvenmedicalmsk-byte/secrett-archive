@@ -2,60 +2,60 @@
   "country": "IT",
   "date": "2026-09-03",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-03T14:06:30.322921+00:00",
+  "generated_at": "2026-09-03T15:35:32.770008+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 56,
+      "score": 58,
       "props": {
-        "risk_score": 56
+        "risk_score": 58
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 42,
-      "trend": "stable"
+      "score": 50,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
-      "trend": "stable"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 44,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 9,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 20,
-      "trend": "stable"
+      "score": 19,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Шторм_в_Ло",
+      "type": "Signal",
+      "label": "Шторм в Ломбардии, Италия",
+      "severity": 60,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Пожарный_с",
       "type": "Signal",
       "label": "Пожарный сигнал — Европа · Катания",
@@ -89,15 +96,8 @@
     {
       "id": "SIGNAL-IT-Пожарный_с",
       "type": "Signal",
-      "label": "Пожарный сигнал — Европа · Рим",
-      "severity": 56,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Пожарный_с",
-      "type": "Signal",
       "label": "Пожарный сигнал — Европа · Палермо",
-      "severity": 52,
+      "severity": 56,
       "domain": "climate"
     }
   ],
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IT",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.19
     },
     {
       "from": "COUNTRY-IT",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-IT-geopolitical",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -184,10 +226,10 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IT-Пожарный_с",
+      "from": "SIGNAL-IT-Шторм_в_Ло",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.56
+      "weight": 0.6
     },
     {
       "from": "SIGNAL-IT-Пожарный_с",
@@ -199,7 +241,7 @@
       "from": "SIGNAL-IT-Пожарный_с",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.56
     }
   ]
 }
