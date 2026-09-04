@@ -672,8 +672,18 @@ def match_events(events: list[dict], iso2: str) -> list[dict]:
 def compute_risk_score(events: list[dict], baseline: int) -> int:
     """
     Compute risk_score 0-100.
-    Uses weighted average of event severities with count bonus.
-    Falls back to baseline if no events found.
+    Взвешенное среднее тяжести событий с бонусом за количество, но НЕ НИЖЕ
+    базового уровня страны.
+
+    БАЗОВЫЙ УРОВЕНЬ КАК ПОЛ, А НЕ КАК ЗАПАСНОЕ ЗНАЧЕНИЕ (04.09.2026).
+    Раньше baseline применялся только при пустом потоке событий, а при любом
+    непустом отбрасывался. Из-за этого у России выходило 58-62 при базовом 72:
+    маловодье и климатическая рутина тянули среднее вниз, а постоянное
+    состояние страны в расчёт не входило вовсе.
+
+    Базовый уровень описывает фон страны, поток описывает сегодняшнее
+    давление. Итог не может быть ниже фона: события добавляют к состоянию,
+    но не отменяют его.
     """
     if not events:
         return baseline
@@ -684,7 +694,7 @@ def compute_risk_score(events: list[dict], baseline: int) -> int:
     # Count bonus: more events → higher signal
     count_bonus = min(len(sevs) * 0.5, 8)
     score = int(min(95, avg + count_bonus))
-    return score
+    return max(score, baseline)
 
 
 def compute_dominant_domain(events: list[dict]) -> str:
