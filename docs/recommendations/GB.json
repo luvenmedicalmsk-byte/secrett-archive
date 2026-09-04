@@ -1,12 +1,21 @@
 {
   "country": "GB",
   "country_name": "Великобритания",
-  "date": "2026-09-03",
-  "generated_at": "2026-09-03T22:45:47.672268+00:00",
-  "srs_score": 56,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "date": "2026-09-04",
+  "generated_at": "2026-09-04T00:34:35.891098+00:00",
+  "srs_score": 62,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
+    },
     {
       "id": "R-05",
       "category": "STRATEGIC",
@@ -15,9 +24,18 @@
       "metric_value": 2,
       "urgency": 54,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +10.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +10.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 10,
+      "urgency": 50,
+      "source": "confidence_drift"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 3,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -49,6 +67,11 @@
       "type": "horizon_degradation",
       "horizon": "d7",
       "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности +10.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -60,7 +83,7 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+4.03pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+4.12pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
@@ -74,6 +97,15 @@
       "source": "high_alpha"
     },
     {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 51,
+      "metric_value": 3,
+      "source": "diagnostics"
+    },
+    {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
@@ -81,9 +113,26 @@
       "rec_score": 46,
       "metric_value": 2,
       "source": "decision_bias"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +10.0pt",
+      "rec_score": 44,
+      "metric_value": 10,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-04",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
+    },
     {
       "id": "ACT-R-05",
       "priority": "STRATEGIC",
@@ -91,6 +140,14 @@
       "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
       "deadline": "7 дней",
       "source": "decision_bias"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +10.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +10.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
     },
     {
       "id": "ACT-O-05",
@@ -101,11 +158,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 50,
   "delta": 0,
   "domain": "economy",
-  "history_depth": 98
+  "history_depth": 99
 }
