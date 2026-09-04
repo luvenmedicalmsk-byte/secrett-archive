@@ -2547,11 +2547,9 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
     # свойством системы. Порог поднимает до уровня класса.
     # Технологическая деградация (связность, сеть) сюда не входит: она
     # обратима восстановлением, и её оценка считается обычным путём.
-    if (((_IRREVERSIBLE_RE.search(text) and _NATURAL_SYSTEM_RE.search(text))
-             or _IRREVERSIBLE_SOLO_RE.search(text))
-            and not _TECH_DEGRADATION_RE.search(text)
-            and _sev_out < _IRREVERSIBLE_FLOOR):
-        _sev_out = _IRREVERSIBLE_FLOOR
+    # Порог необратимой деградации применяется в редакционном слое, а не
+    # здесь: пересчёт по масштабу риска (S45) идёт после estimate_severity
+    # и затирал результат.
     return _sev_out
 
 
@@ -8431,6 +8429,19 @@ def _editorial_gate(events):
         # упомянуто извержение 2019 года с 22 погибшими.
         # Правило стоит здесь, а не в estimate_severity: там считаются только
         # новые записи, а событие из ленты держит оценку из кэша.
+        # НЕОБРАТИМАЯ ДЕГРАДАЦИЯ (04.09.2026). Порог 62 стоял в
+        # estimate_severity и затирался пересчётом по масштабу риска (S45),
+        # который идёт позже: «Таяние вечной мерзлоты может обойтись в 261
+        # млрд долларов» получало 44 вместо 62. Место применения важнее
+        # логики: порог перенесён сюда, где события пересчитываются после
+        # всех предыдущих слоёв.
+        if ((( _IRREVERSIBLE_RE.search(t) and _NATURAL_SYSTEM_RE.search(t))
+                 or _IRREVERSIBLE_SOLO_RE.search(t))
+                and not _TECH_DEGRADATION_RE.search(t)
+                and int(e.get('severity') or 0) < _IRREVERSIBLE_FLOOR):
+            e['severity'] = _sev_log(e, 'irreversible_floor', e.get('severity'),
+                                     _IRREVERSIBLE_FLOOR,
+                                     'необратимая деградация природной системы', 'boost')
         elif (_RETRO_DAMAGE_RE.search(t)
                 and not _SIC_EVENT.search(str(e.get('title') or '').lower())
                 and int(e.get('severity') or 0) > 55):
