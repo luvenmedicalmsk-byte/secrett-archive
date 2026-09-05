@@ -1,21 +1,61 @@
 {
   "country": "HU",
   "country_name": "Венгрия",
-  "date": "2026-09-04",
-  "generated_at": "2026-09-04T23:35:14.660002+00:00",
-  "srs_score": 38,
+  "date": "2026-09-05",
+  "generated_at": "2026-09-05T02:07:01.683650+00:00",
+  "srs_score": 49,
   "srs_grade": "F",
   "srs_grade_ru": "Критический пересмотр",
-  "priority_risks": [],
-  "risk_count": 0,
+  "priority_risks": [
+    {
+      "id": "R-03",
+      "category": "HIGH_PRIORITY",
+      "title": "Системное смещение прогнозов: -11.1pt",
+      "detail": "Систематическая ошибка прогнозов -11.1pt снижает достоверность сценарного анализа.",
+      "metric_value": -11.12,
+      "urgency": 80,
+      "source": "validation_bias"
+    },
+    {
+      "id": "R-04",
+      "category": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "detail": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "metric_value": 3,
+      "urgency": 64,
+      "source": "diagnostics"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -9,
+      "urgency": 48,
+      "source": "confidence_drift"
+    }
+  ],
+  "risk_count": 3,
   "priority_opportunities": [],
   "opp_count": 0,
-  "emerging_shifts": [],
+  "emerging_shifts": [
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d7 точнее, d30 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
+    }
+  ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d7",
-      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d30",
+      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности -9.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -25,19 +65,66 @@
       "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
     }
   ],
-  "ranked_recommendations": [],
-  "action_plan": [],
-  "action_count": 0,
-  "rec_diagnostics": [
+  "ranked_recommendations": [
     {
-      "type": "blind_spot",
-      "label": "Слепое пятно",
-      "detail": "Нет ни рисков, ни возможностей — проверьте полноту данных"
+      "id": "R-03",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Системное смещение прогнозов: -11.1pt",
+      "rec_score": 53,
+      "metric_value": -11.12,
+      "source": "validation_bias"
+    },
+    {
+      "id": "R-04",
+      "type": "risk",
+      "priority": "STRATEGIC",
+      "title": "Множественные диагностические проблемы: 3",
+      "rec_score": 44,
+      "metric_value": 3,
+      "source": "diagnostics"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "rec_score": 36,
+      "metric_value": -9,
+      "source": "confidence_drift"
     }
   ],
-  "diagnostic_count": 1,
+  "action_plan": [
+    {
+      "id": "ACT-R-03",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Системное смещение прогнозов: -11.1pt",
+      "rationale": "Систематическая ошибка прогнозов -11.1pt снижает достоверность сценарного анализа.",
+      "deadline": "немедленно",
+      "source": "validation_bias"
+    },
+    {
+      "id": "ACT-R-04",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Множественные диагностические проблемы: 3",
+      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
+      "deadline": "72 часа",
+      "source": "diagnostics"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "WATCHLIST",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -9.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
+    }
+  ],
+  "action_count": 3,
+  "rec_diagnostics": [],
+  "diagnostic_count": 0,
   "risk_score": 52,
   "delta": 0,
   "domain": "climate",
-  "history_depth": 32
+  "history_depth": 33
 }

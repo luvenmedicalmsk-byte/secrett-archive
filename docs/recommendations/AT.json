@@ -1,21 +1,62 @@
 {
   "country": "AT",
   "country_name": "Австрия",
-  "date": "2026-09-04",
-  "generated_at": "2026-09-04T23:35:14.663173+00:00",
-  "srs_score": 40,
-  "srs_grade": "F",
-  "srs_grade_ru": "Критический пересмотр",
-  "priority_risks": [],
-  "risk_count": 0,
-  "priority_opportunities": [],
-  "opp_count": 0,
-  "emerging_shifts": [],
+  "date": "2026-09-05",
+  "generated_at": "2026-09-05T02:07:01.687898+00:00",
+  "srs_score": 61,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
+  "priority_risks": [
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +35.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +35.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 35,
+      "urgency": 60,
+      "source": "confidence_drift"
+    }
+  ],
+  "risk_count": 1,
+  "priority_opportunities": [
+    {
+      "id": "O-06",
+      "category": "INFORMATIONAL",
+      "title": "Стратегия результативна: 66.7% успех",
+      "detail": "Исторический процент успешных решений 66.7% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 66.7,
+      "impact": 65,
+      "source": "decision_success"
+    },
+    {
+      "id": "O-05",
+      "category": "STRATEGIC",
+      "title": "Высокоэффективные действия доступны (2)",
+      "detail": "Идентифицировано 2 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
+      "metric_value": 2,
+      "impact": 60,
+      "source": "high_alpha"
+    }
+  ],
+  "opp_count": 2,
+  "emerging_shifts": [
+    {
+      "type": "horizon_shift",
+      "title": "Горизонт d7 точнее, d30 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
+      "direction": "neutral"
+    }
+  ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d7",
-      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d30",
+      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности +35.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -23,21 +64,81 @@
       "type": "horizon_strength",
       "horizon": "d7",
       "detail": "Лучший горизонт прогноза: d7. Рассмотреть расширение использования."
-    }
-  ],
-  "ranked_recommendations": [],
-  "action_plan": [],
-  "action_count": 0,
-  "rec_diagnostics": [
+    },
     {
-      "type": "blind_spot",
-      "label": "Слепое пятно",
-      "detail": "Нет ни рисков, ни возможностей — проверьте полноту данных"
+      "type": "alpha_positive",
+      "horizon": "all",
+      "detail": "Положительная альфа стратегии (+2.33pt) — решения превосходят пассивный базис."
     }
   ],
-  "diagnostic_count": 1,
+  "ranked_recommendations": [
+    {
+      "id": "O-06",
+      "type": "opportunity",
+      "priority": "INFORMATIONAL",
+      "title": "Стратегия результативна: 66.7% успех",
+      "rec_score": 48,
+      "metric_value": 66.7,
+      "source": "decision_success"
+    },
+    {
+      "id": "O-05",
+      "type": "opportunity",
+      "priority": "STRATEGIC",
+      "title": "Высокоэффективные действия доступны (2)",
+      "rec_score": 45,
+      "metric_value": 2,
+      "source": "high_alpha"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +35.0pt",
+      "rec_score": 43,
+      "metric_value": 35,
+      "source": "confidence_drift"
+    }
+  ],
+  "action_plan": [
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +35.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +35.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "72 часа",
+      "source": "confidence_drift"
+    },
+    {
+      "id": "ACT-O-06",
+      "priority": "STRATEGIC",
+      "action": "Использовать: Стратегия результативна: 66.7% успех",
+      "rationale": "Исторический процент успешных решений 66.7% — выше среднего. Поддерживать текущий подход.",
+      "deadline": "30 дней",
+      "source": "decision_success"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 45%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
+    },
+    {
+      "id": "ACT-O-05",
+      "priority": "WATCHLIST",
+      "action": "Использовать: Высокоэффективные действия доступны (2)",
+      "rationale": "Идентифицировано 2 действий с альфой выше порога. Их приоритизация улучшит стратегический результат.",
+      "deadline": "30 дней",
+      "source": "high_alpha"
+    }
+  ],
+  "action_count": 4,
+  "rec_diagnostics": [],
+  "diagnostic_count": 0,
   "risk_score": 44,
   "delta": 0,
   "domain": "climate",
-  "history_depth": 32
+  "history_depth": 33
 }

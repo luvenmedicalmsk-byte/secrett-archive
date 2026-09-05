@@ -1,19 +1,19 @@
 {
-  "generated": "2026-09-04T23:34:21Z",
+  "generated": "2026-09-05T02:05:36Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 723,
+    "PASS_FACT": 722,
     "DENY_COMMENTARY": 277,
+    "UNMATCHED": 6,
     "DENY_BACKGROUND": 6,
-    "UNMATCHED": 5,
     "DENY_FEATURE": 1
   },
   "kpi": {
     "processes_total": 1012,
-    "matched": 1007,
-    "unmatched": 5,
-    "coverage_pct": 99.5,
+    "matched": 1006,
+    "unmatched": 6,
+    "coverage_pct": 99.4,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
     "admission_pass_rate": 71.8,
     "admission_deny_rate": 28.2,
@@ -24,17 +24,16 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 236,
-      "sample": 907,
-      "agreement_pct": 92.5,
-      "decision_agreement_pct": 92.7,
-      "critical_errors": 66,
-      "truth_ratio_pct": 96.0,
+      "processes": 237,
+      "sample": 928,
+      "agreement_pct": 92.6,
+      "decision_agreement_pct": 92.8,
+      "critical_errors": 67,
+      "truth_ratio_pct": 96.1,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 15,
+        "COMMENTARY→FACT_EVENT": 17,
         "FACT_EVENT→COMMENTARY": 46,
         "FACT_EVENT→FEATURE": 3,
-        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "FEATURE→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
         "FACT_EVENT→BACKGROUND": 1
@@ -42,31 +41,30 @@
     },
     "historical": {
       "processes": 1012,
-      "sample": 2253,
-      "agreement_pct": 93.5,
-      "decision_agreement_pct": 93.6,
-      "critical_errors": 144,
+      "sample": 2233,
+      "agreement_pct": 93.4,
+      "decision_agreement_pct": 93.5,
+      "critical_errors": 145,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 30,
+        "COMMENTARY→FACT_EVENT": 32,
         "FACT_EVENT→COMMENTARY": 106,
         "FACT_EVENT→FEATURE": 4,
-        "STATE_CONFIRMATION→FACT_EVENT": 3,
         "FEATURE→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
-        "FACT_EVENT→BACKGROUND": 1
+        "FACT_EVENT→BACKGROUND": 1,
+        "STATE_CONFIRMATION→FACT_EVENT": 2
       }
     },
     "events_stream": {
-      "sample": 365,
-      "agreement_pct": 92.1,
+      "sample": 337,
+      "agreement_pct": 92.0,
       "decision_agreement_pct": 92.6,
-      "critical_errors": 27,
+      "critical_errors": 25,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 5,
-        "FACT_EVENT→COMMENTARY": 19,
+        "COMMENTARY→FACT_EVENT": 6,
+        "FACT_EVENT→COMMENTARY": 17,
         "FACT_EVENT→FEATURE": 2,
         "BACKGROUND→COMMENTARY": 1,
-        "STATE_CONFIRMATION→FACT_EVENT": 1,
         "FEATURE→COMMENTARY": 1
       }
     },
@@ -79,10 +77,10 @@
   },
   "class_source": {
     "shadow_title_only": 217,
-    "evidence_sic": 2253,
+    "evidence_sic": 2233,
     "event_sic": 1
   },
-  "truth_ratio_pct": 91.2,
+  "truth_ratio_pct": 91.1,
   "domain_statistics": {
     "geopolitics": {
       "pass": 220,
@@ -93,9 +91,9 @@
       "deny": 35
     },
     "climate": {
-      "pass": 255,
+      "pass": 254,
       "deny": 36,
-      "unmatched": 3
+      "unmatched": 4
     },
     "technology": {
       "pass": 78,
@@ -219,14 +217,29 @@
       "title": "Санкционное давление — Европа",
       "domain": "geopolitics",
       "severity": 65,
-      "pressure": 42,
+      "pressure": 49,
       "first_seen": "2026-07-04",
-      "evidence_count": 3,
+      "evidence_count": 4,
       "evidence_classes": {
-        "COMMENTARY": 3
+        "COMMENTARY": 4
       },
       "status": "active",
       "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-иран-31f9",
+      "title": "Геополитический процесс — Иран",
+      "domain": "geopolitics",
+      "severity": 65,
+      "pressure": 46,
+      "first_seen": "2026-06-29",
+      "evidence_count": 4,
+      "evidence_classes": {
+        "COMMENTARY": 4
+      },
+      "status": "active",
+      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -287,21 +300,6 @@
       },
       "status": "archived",
       "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "geop-геополитич-иран-31f9",
-      "title": "Геополитический процесс — Иран",
-      "domain": "geopolitics",
-      "severity": 62,
-      "pressure": 50,
-      "first_seen": "2026-06-29",
-      "evidence_count": 2,
-      "evidence_classes": {
-        "COMMENTARY": 2
-      },
-      "status": "active",
-      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1014,9 +1012,16 @@
   "report_log": [],
   "severity_delta": [
     {
+      "signal_id": "geop-санкционно-европа-cde9",
+      "domain": "geopolitics",
+      "legacy": 65,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "geop-геополитич-иран-31f9",
       "domain": "geopolitics",
-      "legacy": 62,
+      "legacy": 65,
       "shadow": null,
       "delta": null
     },
@@ -1024,20 +1029,6 @@
       "signal_id": "clim-macroклима-ближнийв-7137",
       "domain": "climate",
       "legacy": 56,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-сша-7b87",
-      "domain": "economy",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-санкционно-европа-cde9",
-      "domain": "geopolitics",
-      "legacy": 65,
       "shadow": null,
       "delta": null
     },
@@ -1059,6 +1050,13 @@
       "signal_id": "econ-инфляция-россия-927a",
       "domain": "economy",
       "legacy": 59,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-сша-7b87",
+      "domain": "economy",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1406,13 +1404,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-франция-58ca",
-      "domain": "economy",
-      "legacy": 53,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-банковская-россия-9ff4",
       "domain": "economy",
       "legacy": 46,
@@ -1430,6 +1421,13 @@
       "signal_id": "econ-топливныйр-иран-5c98",
       "domain": "economy",
       "legacy": 50,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-глобальн-01da",
+      "domain": "economy",
+      "legacy": 76,
       "shadow": null,
       "delta": null
     }
