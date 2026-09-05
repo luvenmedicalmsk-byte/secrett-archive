@@ -2,60 +2,60 @@
   "country": "DE",
   "date": "2026-09-05",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-05T13:41:13.690380+00:00",
+  "generated_at": "2026-09-05T16:27:09.865707+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 71,
+      "score": 76,
       "props": {
-        "risk_score": 71
+        "risk_score": 76
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 43,
-      "trend": "stable"
+      "score": 76,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 29,
-      "trend": "stable"
+      "score": 31,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 8,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 14,
-      "trend": "stable"
+      "score": 16,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 16,
-      "trend": "stable"
+      "score": 17,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
@@ -94,10 +94,10 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-DE-[Интервью]",
+      "id": "SIGNAL-DE-Военные_уд",
       "type": "Signal",
-      "label": "[Интервью] «В Германии все постоянно боя",
-      "severity": 59,
+      "label": "Военные удары — Германия",
+      "severity": 62,
       "domain": "geopolitical"
     }
   ],
@@ -106,37 +106,37 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.43
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.31
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.08
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.16
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.17
     },
     {
       "from": "COUNTRY-DE",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-DE-geopolitical",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
@@ -184,6 +205,27 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-DE-Смертоносн",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
@@ -196,10 +238,10 @@
       "weight": 0.61
     },
     {
-      "from": "SIGNAL-DE-[Интервью]",
+      "from": "SIGNAL-DE-Военные_уд",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.59
+      "weight": 0.62
     }
   ]
 }
