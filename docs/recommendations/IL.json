@@ -1,13 +1,23 @@
 {
   "country": "IL",
   "country_name": "Израиль",
-  "date": "2026-09-06",
-  "generated_at": "2026-09-06T23:24:11.877402+00:00",
-  "srs_score": 46,
+  "date": "2026-09-07",
+  "generated_at": "2026-09-07T01:14:02.290303+00:00",
+  "srs_score": 48,
   "srs_grade": "F",
   "srs_grade_ru": "Критический пересмотр",
-  "priority_risks": [],
-  "risk_count": 0,
+  "priority_risks": [
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -9,
+      "urgency": 48,
+      "source": "confidence_drift"
+    }
+  ],
+  "risk_count": 1,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -39,6 +49,11 @@
       "type": "horizon_degradation",
       "horizon": "d90",
       "detail": "Худший горизонт прогноза: d90. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности -9.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -57,9 +72,26 @@
       "rec_score": 45,
       "metric_value": 2,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -9.0pt",
+      "rec_score": 37,
+      "metric_value": -9,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-06",
+      "priority": "WATCHLIST",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -9.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -9.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
+    },
     {
       "id": "ACT-O-05",
       "priority": "WATCHLIST",
@@ -69,11 +101,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 1,
+  "action_count": 2,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 78,
   "delta": 0,
   "domain": "technology",
-  "history_depth": 101
+  "history_depth": 102
 }
