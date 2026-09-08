@@ -1,10 +1,10 @@
 {
   "country": "IN",
-  "date": "2026-09-07",
+  "date": "2026-09-08",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-07T23:42:10.258543+00:00",
+  "generated_at": "2026-09-08T01:56:01.326494+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IN",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-IN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
+      "score": 40,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-Индия_увел",
+      "id": "SIGNAL-IN-Индия_выст",
       "type": "Signal",
-      "label": "Индия увеличивает поставки угля по желез",
+      "label": "Индия выставила на тендер 700 МВт солнеч",
       "severity": 32,
-      "domain": "climate"
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.4
     },
     {
       "from": "COUNTRY-IN",
@@ -184,6 +184,48 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IN-infrastructure",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
@@ -196,8 +238,8 @@
       "weight": 0.5
     },
     {
-      "from": "SIGNAL-IN-Индия_увел",
-      "to": "DOMAIN-IN-climate",
+      "from": "SIGNAL-IN-Индия_выст",
+      "to": "DOMAIN-IN-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
     }
