@@ -669,6 +669,12 @@ def match_events(events: list[dict], iso2: str) -> list[dict]:
     return matched
 
 
+# Потолок странового индекса. 92, а не 95: сегмент 92-100 зарезервирован
+# под состояние, когда плохо всё сразу, и обычный тяжёлый день туда попадать
+# не должен (решение 09.09.2026).
+_RISK_CAP = 92
+
+
 def compute_risk_score(events: list[dict], baseline: int) -> int:
     """
     Compute risk_score 0-100.
@@ -693,7 +699,22 @@ def compute_risk_score(events: list[dict], baseline: int) -> int:
     avg = sum(sevs) / len(sevs)
     # Count bonus: more events → higher signal
     count_bonus = min(len(sevs) * 0.5, 8)
-    score = int(min(95, avg + count_bonus))
+    score = int(min(_RISK_CAP, avg + count_bonus))
+
+    # ФОН ПЛЮС НАДБАВКА, А НЕ МАКСИМУМ ИЗ ДВУХ (09.09.2026).
+    # Прежняя формула max(score, baseline) давала неподвижную цифру: у России
+    # поток держался на 44-51 при фоне 72, и события ТЯЖЕЛЕЕ фона исчезали из
+    # расчёта. В срезе 08.09 таких событий было пять — от маловодья 74 до
+    # ударов по Севастополю и Новороссийску 68 — а индекс всё равно
+    # показывал ровно 72 семь дней подряд.
+    #
+    # Теперь фон остаётся нижней границей, а события, превышающие его,
+    # добавляют сверху. Затухание вдвое на каждое следующее: одно тяжёлое
+    # событие даёт полное превышение, десять однотипных не раздувают цифру.
+    above = sorted((s for s in sevs if s > baseline), reverse=True)
+    if above:
+        add = sum((s - baseline) * (0.5 ** i) for i, s in enumerate(above))
+        return int(min(_RISK_CAP, baseline + add))
     return max(score, baseline)
 
 
