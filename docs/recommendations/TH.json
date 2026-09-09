@@ -1,12 +1,30 @@
 {
   "country": "TH",
   "country_name": "Таиланд",
-  "date": "2026-09-08",
-  "generated_at": "2026-09-08T23:51:58.141460+00:00",
-  "srs_score": 52,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "date": "2026-09-09",
+  "generated_at": "2026-09-09T02:02:05.110588+00:00",
+  "srs_score": 67,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-03",
+      "category": "HIGH_PRIORITY",
+      "title": "Системное смещение прогнозов: +12.8pt",
+      "detail": "Систематическая ошибка прогнозов +12.8pt снижает достоверность сценарного анализа.",
+      "metric_value": 12.83,
+      "urgency": 80,
+      "source": "validation_bias"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +34.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +34.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 34,
+      "urgency": 60,
+      "source": "confidence_drift"
+    },
     {
       "id": "R-05",
       "category": "STRATEGIC",
@@ -17,7 +35,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 3,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -31,9 +49,9 @@
     {
       "id": "O-06",
       "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 87.1% успех",
-      "detail": "Исторический процент успешных решений 87.1% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 87.1,
+      "title": "Стратегия результативна: 87.3% успех",
+      "detail": "Исторический процент успешных решений 87.3% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 87.3,
       "impact": 65,
       "source": "decision_success"
     }
@@ -48,21 +66,21 @@
     },
     {
       "type": "horizon_shift",
-      "title": "Горизонт d30 точнее, d7 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d7. Скорректируйте горизонты планирования.",
+      "title": "Горизонт d30 точнее, d90 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d30 и менее точно на d90. Скорректируйте горизонты планирования.",
       "direction": "neutral"
     }
   ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d7",
-      "detail": "Худший горизонт прогноза: d7. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d90",
+      "detail": "Худший горизонт прогноза: d90. Увеличить частоту переобучения на этом горизонте."
     },
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -6.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности +34.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -74,16 +92,25 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+6.90pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+6.83pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-03",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Системное смещение прогнозов: +12.8pt",
+      "rec_score": 57,
+      "metric_value": 12.83,
+      "source": "validation_bias"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (10)",
-      "rec_score": 52,
+      "rec_score": 54,
       "metric_value": 10,
       "source": "high_alpha"
     },
@@ -91,22 +118,47 @@
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 87.1% успех",
-      "rec_score": 49,
-      "metric_value": 87.1,
+      "title": "Стратегия результативна: 87.3% успех",
+      "rec_score": 51,
+      "metric_value": 87.3,
       "source": "decision_success"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +34.0pt",
+      "rec_score": 47,
+      "metric_value": 34,
+      "source": "confidence_drift"
     },
     {
       "id": "R-05",
       "type": "risk",
       "priority": "STRATEGIC",
       "title": "Смещения в принятии решений (2)",
-      "rec_score": 42,
+      "rec_score": 44,
       "metric_value": 2,
       "source": "decision_bias"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-03",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Системное смещение прогнозов: +12.8pt",
+      "rationale": "Систематическая ошибка прогнозов +12.8pt снижает достоверность сценарного анализа.",
+      "deadline": "немедленно",
+      "source": "validation_bias"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +34.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +34.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "72 часа",
+      "source": "confidence_drift"
+    },
     {
       "id": "ACT-R-05",
       "priority": "STRATEGIC",
@@ -126,17 +178,25 @@
     {
       "id": "ACT-O-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Стратегия результативна: 87.1% успех",
-      "rationale": "Исторический процент успешных решений 87.1% — выше среднего. Поддерживать текущий подход.",
+      "action": "Использовать: Стратегия результативна: 87.3% успех",
+      "rationale": "Исторический процент успешных решений 87.3% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 45%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     }
   ],
-  "action_count": 3,
+  "action_count": 6,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
   "risk_score": 50,
   "delta": 0,
   "domain": "climate",
-  "history_depth": 92
+  "history_depth": 93
 }

@@ -1,14 +1,14 @@
 {
   "country": "RU",
   "country_name": "Россия",
-  "date": "2026-09-08",
-  "generated_at": "2026-09-08T23:51:57.962958+00:00",
+  "date": "2026-09-09",
+  "generated_at": "2026-09-09T02:02:04.954966+00:00",
   "optimization_score": 65,
   "grade": "C",
   "grade_ru": "Умеренная",
   "decision_score_base": 47,
-  "predicted_next_score": 50,
-  "optimization_gain": 2.8,
+  "predicted_next_score": 48,
+  "optimization_gain": 0.5,
   "high_alpha_actions": [
     {
       "action_id": "CR-01",
@@ -49,6 +49,32 @@
   ],
   "underperforming": [
     {
+      "action_id": "C-01",
+      "sample_count": 27,
+      "win_rate": 48.1,
+      "avg_alpha": -0.7,
+      "avg_efficiency": 46.3,
+      "action_score": 33,
+      "reasons": [
+        "низкий effectiveness (33)",
+        "отрицательная альфа (-0.70)"
+      ],
+      "recommendation": "reduce_weight"
+    },
+    {
+      "action_id": "C-02",
+      "sample_count": 27,
+      "win_rate": 48.1,
+      "avg_alpha": -0.7,
+      "avg_efficiency": 46.3,
+      "action_score": 33,
+      "reasons": [
+        "низкий effectiveness (33)",
+        "отрицательная альфа (-0.70)"
+      ],
+      "recommendation": "reduce_weight"
+    },
+    {
       "action_id": "S-01",
       "sample_count": 2,
       "win_rate": 0.0,
@@ -79,6 +105,18 @@
   ],
   "rebalance_plan": {
     "action_adjustments": [
+      {
+        "action_id": "C-01",
+        "adjustment": "reduce",
+        "factor": 0.7,
+        "reason": "низкий effectiveness (33); отрицательная альфа (-0.70)"
+      },
+      {
+        "action_id": "C-02",
+        "adjustment": "reduce",
+        "factor": 0.7,
+        "reason": "низкий effectiveness (33); отрицательная альфа (-0.70)"
+      },
       {
         "action_id": "S-01",
         "adjustment": "reduce",
@@ -121,7 +159,7 @@
     "urgency_adjustment": "increase",
     "urgency_factor": 1.1,
     "n_boosted": 4,
-    "n_reduced": 2
+    "n_reduced": 4
   },
   "adjusted_actions": [
     {
@@ -158,19 +196,19 @@
     },
     {
       "action_id": "C-01",
-      "original_score": 35,
-      "adjusted_score": 33,
-      "factor": 1.0,
-      "win_rate": 50.0,
-      "avg_alpha": -0.31
+      "original_score": 33,
+      "adjusted_score": 22,
+      "factor": 0.7,
+      "win_rate": 48.1,
+      "avg_alpha": -0.7
     },
     {
       "action_id": "C-02",
-      "original_score": 35,
-      "adjusted_score": 33,
-      "factor": 1.0,
-      "win_rate": 50.0,
-      "avg_alpha": -0.31
+      "original_score": 33,
+      "adjusted_score": 22,
+      "factor": 0.7,
+      "win_rate": 48.1,
+      "avg_alpha": -0.7
     },
     {
       "action_id": "S-01",
@@ -191,9 +229,9 @@
   ],
   "confidence_target": 45,
   "urgency_adjustment": "increase",
-  "stability_index": 85,
-  "alpha_score": 61,
-  "win_rate": 54.8,
+  "stability_index": 97,
+  "alpha_score": 59,
+  "win_rate": 54.1,
   "rr_score": 47,
   "opp_score": 100,
   "diagnostics": [
@@ -201,26 +239,32 @@
       "type": "confidence_drift",
       "label": "Дрейф уверенности",
       "severity": "high",
-      "detail": "Дрейф +24.0pt — уверенность не откалибрована"
+      "detail": "Дрейф +27.0pt — уверенность не откалибрована"
+    },
+    {
+      "type": "optimization_instability",
+      "label": "Нестабильность оптимизации",
+      "severity": "medium",
+      "detail": "Одновременно 4 boost и 4 reduce — высокая волатильность весов"
     }
   ],
-  "diagnostic_count": 1,
-  "conf_drift": 24,
+  "diagnostic_count": 2,
+  "conf_drift": 27,
   "fb_grade": "fair",
   "hv_score": 67,
   "n_actions": 8,
-  "history_depth": 103,
+  "history_depth": 104,
   "evolution_record": {
-    "date": "2026-09-08",
+    "date": "2026-09-09",
     "optimization_score": 65,
     "grade": "C",
     "decision_score": 47,
-    "opt_gain": 2.8,
-    "alpha_mean": 1.08,
-    "win_rate": 54.8,
-    "stability": 85,
+    "opt_gain": 0.5,
+    "alpha_mean": 0.92,
+    "win_rate": 54.1,
+    "stability": 97,
     "n_boosted": 4,
-    "n_reduced": 2,
+    "n_reduced": 4,
     "bias_count": 1
   }
 }
