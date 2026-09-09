@@ -2,67 +2,67 @@
   "country": "CH",
   "date": "2026-09-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-09T07:03:14.885590+00:00",
+  "generated_at": "2026-09-09T12:11:32.504529+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 32,
+      "score": 44,
       "props": {
-        "risk_score": 32
+        "risk_score": 44
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 28,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 18,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 9,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 10,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 2,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -80,10 +80,17 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CH-В_Швейцари",
+      "type": "Signal",
+      "label": "В Швейцарии произошел взрыв на гидроэлек",
+      "severity": 44,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CH-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Швейцария",
-      "severity": 65,
+      "severity": 44,
       "domain": "geopolitical"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Климатический сигнал — Швейцария",
       "severity": 54,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CH-Миграционн",
-      "type": "Signal",
-      "label": "Миграционная политика — Швейцария",
-      "severity": 50,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-CH",
@@ -130,13 +130,13 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CH",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CH-geopolitical",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CH-В_Швейцари",
+      "to": "DOMAIN-CH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.44
+    },
+    {
       "from": "SIGNAL-CH-Геополитич",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.65
+      "weight": 0.44
     },
     {
       "from": "SIGNAL-CH-Климатичес",
       "to": "DOMAIN-CH-climate",
       "type": "AMPLIFIES",
       "weight": 0.54
-    },
-    {
-      "from": "SIGNAL-CH-Миграционн",
-      "to": "DOMAIN-CH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
