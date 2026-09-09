@@ -16213,6 +16213,32 @@ def _sic_class(title, summary='', canon_type=None):
     # «по данным ООН» (репортаж, где институт лишь ссылка).
     if SIC_REPORT_CLASS and _SIC_REPORT.search(low) and not _REPORT_NOT.search(low):
         return 'REPORT'
+    # ЗАГОЛОВОК С СОСТОЯВШИМСЯ ИЗМЕРЕНИЕМ ПЕРЕВЕШИВАЕТ КОММЕНТАРИЙ В ТЕЛЕ
+    # (09.09.2026). «Европейские цены на газ обновили четырёхлетние
+    # максимумы» с оценкой 44 стояло контекстом: в третьем абзаце текста
+    # встречались «рискует увеличить» и «по оценкам Wood Mackenzie», и они
+    # блокировали ветку фактов и возвращали COMMENTARY раньше, чем очередь
+    # доходила до признака экстремума.
+    #
+    # Признаки намерения и предупреждения ищутся по ВСЕМУ тексту, включая
+    # абзацы, не относящиеся к главному утверждению. Одно упоминание
+    # прогноза в конце отменяло факт, заявленный в заголовке.
+    #
+    # Заголовок — главное утверждение записи. Если он содержит
+    # состоявшееся измерение в прошедшем времени, комментарий аналитиков в
+    # теле его не отменяет.
+    _title_low = (title or '').strip().lower()
+    _title_fact = False
+    _te = _SIC_EXTREMUM.search(_title_low)
+    if _te and re.match(r'\w*(?:л[аои]?|ся)\b', _te.group(0)):
+        _title_fact = True
+    elif (_ECON_ACT_RE.search(_title_low) and _ECON_MEASURE_RE.search(_title_low)
+          and not _ECON_MODAL_RE.search(_title_low)):
+        _title_fact = True
+    if _title_fact and not _SIC_INTENT.search(_title_low) and not _SIC_WARN.search(_title_low):
+        b = _base()
+        if b in ('EVENT', 'PROCESS'):
+            return b
     # 4) аналитическое предупреждение о возможном будущем (нет accomplished, нет операц.алерта) → COMMENTARY.
     if _SIC_WARN.search(low):
         return 'COMMENTARY'
