@@ -2,18 +2,36 @@
   "country": "IN",
   "country_name": "Индия",
   "date": "2026-09-09",
-  "generated_at": "2026-09-09T12:11:30.599706+00:00",
-  "srs_score": 56,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "generated_at": "2026-09-09T16:52:55.225405+00:00",
+  "srs_score": 61,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-01",
+      "category": "CRITICAL",
+      "title": "Критический уровень риска: 84",
+      "detail": "Скор риска 84 превышает критический порог 80. Доминирующий домен: climate.",
+      "metric_value": 84,
+      "urgency": 95,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+27/день",
+      "detail": "Скорость ухудшения 27 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 27,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-03",
       "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -5.3pt",
-      "detail": "Систематическая ошибка прогнозов -5.3pt снижает достоверность сценарного анализа.",
-      "metric_value": -5.34,
-      "urgency": 66.7,
+      "title": "Системное смещение прогнозов: -6.2pt",
+      "detail": "Систематическая ошибка прогнозов -6.2pt снижает достоверность сценарного анализа.",
+      "metric_value": -6.2,
+      "urgency": 71.0,
       "source": "validation_bias"
     },
     {
@@ -35,7 +53,7 @@
       "source": "decision_bias"
     }
   ],
-  "risk_count": 3,
+  "risk_count": 5,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -67,11 +85,6 @@
       "type": "horizon_degradation",
       "horizon": "d90",
       "detail": "Худший горизонт прогноза: d90. Увеличить частоту переобучения на этом горизонте."
-    },
-    {
-      "type": "confidence_drift",
-      "horizon": "long",
-      "detail": "Дрейф уверенности -6.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -83,10 +96,28 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+2.99pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+2.62pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-01",
+      "type": "risk",
+      "priority": "CRITICAL",
+      "title": "Критический уровень риска: 84",
+      "rec_score": 61,
+      "metric_value": 84,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+27/день",
+      "rec_score": 58,
+      "metric_value": 27,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -100,9 +131,9 @@
       "id": "R-03",
       "type": "risk",
       "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -5.3pt",
-      "rec_score": 46,
-      "metric_value": -5.34,
+      "title": "Системное смещение прогнозов: -6.2pt",
+      "rec_score": 49,
+      "metric_value": -6.2,
       "source": "validation_bias"
     },
     {
@@ -126,28 +157,28 @@
   ],
   "action_plan": [
     {
+      "id": "ACT-R-01",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Критический уровень риска: 84",
+      "rationale": "Скор риска 84 превышает критический порог 80. Доминирующий домен: climate.",
+      "deadline": "немедленно",
+      "source": "risk_score"
+    },
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+27/день",
+      "rationale": "Скорость ухудшения 27 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-03",
       "priority": "HIGH_PRIORITY",
-      "action": "Реагировать: Системное смещение прогнозов: -5.3pt",
-      "rationale": "Систематическая ошибка прогнозов -5.3pt снижает достоверность сценарного анализа.",
+      "action": "Реагировать: Системное смещение прогнозов: -6.2pt",
+      "rationale": "Систематическая ошибка прогнозов -6.2pt снижает достоверность сценарного анализа.",
       "deadline": "72 часа",
       "source": "validation_bias"
-    },
-    {
-      "id": "ACT-R-04",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Множественные диагностические проблемы: 3",
-      "rationale": "Обнаружено 3 диагностических предупреждений в стратегическом слое. Возможны системные ошибки.",
-      "deadline": "72 часа",
-      "source": "diagnostics"
-    },
-    {
-      "id": "ACT-R-05",
-      "priority": "STRATEGIC",
-      "action": "Реагировать: Смещения в принятии решений (2)",
-      "rationale": "Выявлено 2 смещений: Гиперреакция, Недостаточная реакция. Рекомендуется рекалибровка стратегии.",
-      "deadline": "7 дней",
-      "source": "decision_bias"
     },
     {
       "id": "ACT-O-05",
@@ -161,8 +192,8 @@
   "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 57,
-  "delta": 0,
+  "risk_score": 84,
+  "delta": 27,
   "domain": "climate",
   "history_depth": 104
 }
