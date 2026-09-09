@@ -2,9 +2,9 @@
   "country": "US",
   "date": "2026-09-09",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-09T16:52:57.578823+00:00",
+  "generated_at": "2026-09-09T19:39:02.807934+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-US",
@@ -19,43 +19,43 @@
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 45,
-      "trend": "down"
+      "score": 52,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 39,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 39,
-      "trend": "down"
+      "score": 46,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
       "score": 10,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
       "score": 19,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 22,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-cyber",
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-US-Для_многих",
+      "id": "SIGNAL-US-Иран_и_США",
       "type": "Signal",
-      "label": "Для многих жителей Нью-Йорка дом не явля",
-      "severity": 32,
-      "domain": "climate"
+      "label": "Иран и США обмениваются ударами на фоне ",
+      "severity": 54,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-US",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-US-social",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-US-geopolitical",
       "to": "DOMAIN-US-infrastructure",
       "type": "ESCALATES",
@@ -196,10 +238,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-US-Для_многих",
-      "to": "DOMAIN-US-climate",
+      "from": "SIGNAL-US-Иран_и_США",
+      "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.54
     }
   ]
 }
