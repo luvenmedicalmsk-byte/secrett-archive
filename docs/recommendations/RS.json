@@ -1,20 +1,20 @@
 {
   "country": "RS",
   "country_name": "Сербия",
-  "date": "2026-09-09",
-  "generated_at": "2026-09-09T22:08:46.129266+00:00",
-  "srs_score": 62,
+  "date": "2026-09-10",
+  "generated_at": "2026-09-10T00:28:48.265648+00:00",
+  "srs_score": 60,
   "srs_grade": "C",
   "srs_grade_ru": "Умеренная",
   "priority_risks": [
     {
-      "id": "R-03",
-      "category": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -4.9pt",
-      "detail": "Систематическая ошибка прогнозов -4.9pt снижает достоверность сценарного анализа.",
-      "metric_value": -4.87,
-      "urgency": 64.35,
-      "source": "validation_bias"
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +10.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +10.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 10,
+      "urgency": 50,
+      "source": "confidence_drift"
     }
   ],
   "risk_count": 1,
@@ -22,9 +22,9 @@
     {
       "id": "O-06",
       "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 79.4% успех",
-      "detail": "Исторический процент успешных решений 79.4% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 79.4,
+      "title": "Стратегия результативна: 78.1% успех",
+      "detail": "Исторический процент успешных решений 78.1% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 78.1,
       "impact": 65,
       "source": "decision_success"
     },
@@ -58,6 +58,11 @@
       "type": "horizon_degradation",
       "horizon": "d30",
       "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+    },
+    {
+      "type": "confidence_drift",
+      "horizon": "long",
+      "detail": "Дрейф уверенности +10.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -69,7 +74,7 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+3.32pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+3.20pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
@@ -77,44 +82,44 @@
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 79.4% успех",
+      "title": "Стратегия результативна: 78.1% успех",
       "rec_score": 56,
-      "metric_value": 79.4,
+      "metric_value": 78.1,
       "source": "decision_success"
-    },
-    {
-      "id": "R-03",
-      "type": "risk",
-      "priority": "HIGH_PRIORITY",
-      "title": "Системное смещение прогнозов: -4.9pt",
-      "rec_score": 54,
-      "metric_value": -4.87,
-      "source": "validation_bias"
     },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (2)",
-      "rec_score": 53,
+      "rec_score": 54,
       "metric_value": 2,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +10.0pt",
+      "rec_score": 47,
+      "metric_value": 10,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
-      "id": "ACT-R-03",
+      "id": "ACT-R-06",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Системное смещение прогнозов: -4.9pt",
-      "rationale": "Систематическая ошибка прогнозов -4.9pt снижает достоверность сценарного анализа.",
-      "deadline": "72 часа",
-      "source": "validation_bias"
+      "action": "Реагировать: Дрейф уверенности прогнозов: +10.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +10.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
     },
     {
       "id": "ACT-O-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Стратегия результативна: 79.4% успех",
-      "rationale": "Исторический процент успешных решений 79.4% — выше среднего. Поддерживать текущий подход.",
+      "action": "Использовать: Стратегия результативна: 78.1% успех",
+      "rationale": "Исторический процент успешных решений 78.1% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
     },
@@ -133,5 +138,5 @@
   "risk_score": 55,
   "delta": 0,
   "domain": "social",
-  "history_depth": 93
+  "history_depth": 94
 }
