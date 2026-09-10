@@ -2,67 +2,67 @@
   "country": "CH",
   "date": "2026-09-10",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-10T20:00:19.375255+00:00",
+  "generated_at": "2026-09-10T22:14:33.486053+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 44,
+      "score": 63,
       "props": {
-        "risk_score": 44
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
-      "trend": "stable"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 30,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 7,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 7,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 15,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 17,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 4,
-      "trend": "stable"
+      "score": 2,
+      "trend": "up"
     },
     {
       "id": "DRIVER-CH-Geopolitical",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CH-Несколько_",
+      "type": "Signal",
+      "label": "Несколько человек погибли и получили ран",
+      "severity": 57,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CH-В_Швейцари",
       "type": "Signal",
       "label": "В Швейцарии произошел взрыв на гидроэлек",
@@ -90,15 +97,8 @@
       "id": "SIGNAL-CH-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Швейцария",
-      "severity": 46,
+      "severity": 60,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CH-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Швейцария",
-      "severity": 54,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,43 +106,43 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.3
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-technology",
       "type": "CORRELATES",
-      "weight": 0.07
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.15
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.17
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-cyber",
       "type": "CORRELATES",
-      "weight": 0.04
+      "weight": 0.02
     },
     {
       "from": "DRIVER-CH-Geopolitical",
@@ -163,6 +163,33 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CH-geopolitical",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CH-Несколько_",
+      "to": "DOMAIN-CH-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.57
+    },
+    {
       "from": "SIGNAL-CH-В_Швейцари",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
@@ -172,13 +199,7 @@
       "from": "SIGNAL-CH-Геополитич",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.46
-    },
-    {
-      "from": "SIGNAL-CH-Климатичес",
-      "to": "DOMAIN-CH-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.54
+      "weight": 0.6
     }
   ]
 }
