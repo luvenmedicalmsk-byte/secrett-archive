@@ -2,66 +2,66 @@
   "country": "CH",
   "date": "2026-09-11",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-11T05:02:10.665039+00:00",
+  "generated_at": "2026-09-11T09:24:50.528079+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CH",
       "type": "Country",
       "label": "CH",
-      "score": 63,
+      "score": 71,
       "props": {
-        "risk_score": 63
+        "risk_score": 71
       }
     },
     {
       "id": "DOMAIN-CH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 68,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 40,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 10,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 10,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-social",
       "type": "Domain",
       "label": "social",
-      "score": 20,
-      "trend": "stable"
+      "score": 10,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 23,
-      "trend": "stable"
+      "score": 11,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CH-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 5,
+      "score": 2,
       "trend": "stable"
     },
     {
@@ -80,10 +80,10 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CH-Несколько_",
+      "id": "SIGNAL-CH-Пять_челов",
       "type": "Signal",
-      "label": "Несколько человек погибли и получили ран",
-      "severity": 57,
+      "label": "Пять человек погибли и 40 получили ранен",
+      "severity": 65,
       "domain": "geopolitical"
     },
     {
@@ -97,7 +97,7 @@
       "id": "SIGNAL-CH-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Швейцария",
-      "severity": 57,
+      "severity": 65,
       "domain": "geopolitical"
     }
   ],
@@ -106,43 +106,43 @@
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-economic",
       "type": "CORRELATES",
-      "weight": 0.4
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-climate",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-technology",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-social",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-CH",
       "to": "DOMAIN-CH-cyber",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.02
     },
     {
       "from": "DRIVER-CH-Geopolitical",
@@ -163,10 +163,31 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CH-Несколько_",
+      "from": "DOMAIN-CH-geopolitical",
+      "to": "DOMAIN-CH-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CH-infrastructure",
+      "to": "DOMAIN-CH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CH-economic",
+      "to": "DOMAIN-CH-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CH-Пять_челов",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.65
     },
     {
       "from": "SIGNAL-CH-В_Швейцари",
@@ -178,7 +199,7 @@
       "from": "SIGNAL-CH-Геополитич",
       "to": "DOMAIN-CH-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.65
     }
   ]
 }
