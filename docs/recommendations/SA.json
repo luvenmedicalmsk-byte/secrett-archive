@@ -2,22 +2,41 @@
   "country": "SA",
   "country_name": "Саудовская Аравия",
   "date": "2026-09-11",
-  "generated_at": "2026-09-11T09:24:49.004468+00:00",
-  "srs_score": 53,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
-  "priority_risks": [],
-  "risk_count": 0,
-  "priority_opportunities": [
+  "generated_at": "2026-09-11T10:54:44.728796+00:00",
+  "srs_score": 68,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
+  "priority_risks": [
     {
-      "id": "O-04",
-      "category": "WATCHLIST",
-      "title": "Тренд деэскалации: Δ=-24/день",
-      "detail": "Риск снижается со скоростью 24 пунктов в сутки. Возможность для стратегической деэскалации.",
-      "metric_value": -24,
-      "impact": 65,
-      "source": "delta_trend"
+      "id": "R-01",
+      "category": "CRITICAL",
+      "title": "Критический уровень риска: 82",
+      "detail": "Скор риска 82 превышает критический порог 80. Доминирующий домен: geopolitics.",
+      "metric_value": 82,
+      "urgency": 95,
+      "source": "risk_score"
     },
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+24/день",
+      "detail": "Скорость ухудшения 24 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 24,
+      "urgency": 90,
+      "source": "delta"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +15.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +15.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 15,
+      "urgency": 60,
+      "source": "confidence_drift"
+    }
+  ],
+  "risk_count": 3,
+  "priority_opportunities": [
     {
       "id": "O-05",
       "category": "STRATEGIC",
@@ -28,7 +47,7 @@
       "source": "high_alpha"
     }
   ],
-  "opp_count": 2,
+  "opp_count": 1,
   "emerging_shifts": [
     {
       "type": "deteriorating",
@@ -52,7 +71,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности +8.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности +15.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -64,32 +83,74 @@
   ],
   "ranked_recommendations": [
     {
-      "id": "O-04",
-      "type": "opportunity",
-      "priority": "WATCHLIST",
-      "title": "Тренд деэскалации: Δ=-24/день",
-      "rec_score": 53,
-      "metric_value": -24,
-      "source": "delta_trend"
+      "id": "R-01",
+      "type": "risk",
+      "priority": "CRITICAL",
+      "title": "Критический уровень риска: 82",
+      "rec_score": 66,
+      "metric_value": 82,
+      "source": "risk_score"
+    },
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+24/день",
+      "rec_score": 63,
+      "metric_value": 24,
+      "source": "delta"
     },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (2)",
-      "rec_score": 50,
+      "rec_score": 49,
       "metric_value": 2,
       "source": "high_alpha"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: +15.0pt",
+      "rec_score": 48,
+      "metric_value": 15,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
-      "id": "ACT-O-04",
+      "id": "ACT-R-01",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Критический уровень риска: 82",
+      "rationale": "Скор риска 82 превышает критический порог 80. Доминирующий домен: geopolitics.",
+      "deadline": "немедленно",
+      "source": "risk_score"
+    },
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+24/день",
+      "rationale": "Скорость ухудшения 24 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
+      "id": "ACT-R-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Тренд деэскалации: Δ=-24/день",
-      "rationale": "Риск снижается со скоростью 24 пунктов в сутки. Возможность для стратегической деэскалации.",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +15.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +15.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "72 часа",
+      "source": "confidence_drift"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 51.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
       "deadline": "30 дней",
-      "source": "delta_trend"
+      "source": "confidence_target"
     },
     {
       "id": "ACT-O-05",
@@ -100,11 +161,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 58,
-  "delta": -24,
+  "risk_score": 82,
+  "delta": 24,
   "domain": "geopolitics",
   "history_depth": 106
 }
