@@ -1071,7 +1071,7 @@ def _parser_coverage_report(_c2, raw_items, events, top_events):
     Только наблюдение: логика фильтрации не менялась. До Phase 0 путь «пост → raw_items»
     был невидим — _LOSS и raw_by_source считают уже ПОСТРОЕННОЕ, поэтому 73% входа
     (5378 из 7400 постов) не попадали ни в один отчёт."""
-    _TGD = {'ecotopor': 'T Live', 'banksta': 'B News', 'NeKaspersky': 'IT', 'anti_malware': 'AM Live', 'trueosint': 'Cyber',
+    _TGD = {'ecotopor': 'Economics RU', 'toporlive': 'TN news', 'banksta': 'B News', 'NeKaspersky': 'IT', 'anti_malware': 'AM Live', 'trueosint': 'Cyber',
             'f6_cybersecurity': 'Cybersecurity', 'SecLabNews': 'Lab News', 'Social_engineering': 'Engineering',
             'Russian_OSINT': 'R Osint', 'alexmakus': 'Cybersec', 'xakep_ru': 'Xakep IT', 'sterngang': 'Data D',
             'Ateobreaking': 'A breaking', 'alertasdowndetector': 'Downdetector', 'dciber': 'Dciber',
@@ -4841,7 +4841,7 @@ def _cfm_grand(b):
     if 'пролив' in b and ('открыт' in b or 'возобновл' in b): return True
     if 'ормуз' in b and ('открыт' in b or 'возобновл' in b): return True
     return False
-_TG_SRC = {'IT','AM Live','Cyber','Cybersecurity','Lab News','Engineering','R Osint','Cybersec','Xakep IT','Data D','A breaking','T Live','Downdetector','Dciber','Cyber Threat','THN','Cyber SN'}
+_TG_SRC = {'IT','AM Live','Cyber','Cybersecurity','Lab News','Engineering','R Osint','Cybersec','Xakep IT','Data D','A breaking','TN news','Economics RU','Downdetector','Dciber','Cyber Threat','THN','Cyber SN'}
 _RU_MONTHS = {'январ':1,'феврал':2,'март':3,'апрел':4,'мая':5,'май':5,'мае':5,'июн':6,'июл':7,'август':8,'сентябр':9,'октябр':10,'ноябр':11,'декабр':12}
 def _text_latest_date(text):
     """Самая поздняя явная дата (DD месяца) в тексте. None если дат нет. Для отсева TG-репостов о старье."""
@@ -11399,7 +11399,7 @@ def fetch_telegram():
     иначе фолбэк на скрейпинг t.me/s. Классификатор и риск-фильтр социума — общие для обоих режимов."""
     import re as _re
     import os, sys, time as _time
-    channels = ['bbbreaking', 'novosti_efir', 'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
+    channels = ['bbbreaking', 'novosti_efir', 'toporlive', 'minzdrav_ru', 'mintrudrf', 'zdravblog', 'readovkanews', 'bazabazon', 'mash',
                 'rospotrebnadzor_ru', 'mediamedics', 'rotfront_su', 'worldprotest', 'populationdemography', 'demografic', 'rakshademography',
                 'russianmacro', 'spydell_finance', 'investfuture', 'banksta', 'bankerist',
                 'ecotopor',
@@ -11408,7 +11408,13 @@ def fetch_telegram():
                 'sterngang', 'Ateobreaking', 'investorbiz',
                 'Tyumen72chs', 'kraschp', 'chp_irkutsk', 'inc54', 'chp_ekb', 'chp_55',
                 'alertasdowndetector', 'dciber', 'ctinow', 'thehackernews', 'Cyber_Security_Channel']
-    TG_DISPLAY = {'ecotopor':'T Live','investorbiz':'Economics','banksta':'B News','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','chp_ekb':'Ekb News','chp_55':'Omsk News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
+    # ПОДПИСИ РАЗВЕДЕНЫ (11.09.2026). Канал ecotopor подписывался как «T Live»,
+    # хотя это разные каналы: ecotopor это экономика (t.me/ecotopor), а T Live это
+    # оперативные сводки (t.me/toporlive). Настоящий toporlive в конвейере
+    # отсутствовал, и его события не приходили вовсе — так пропал удар по
+    # логистическому центру в Саратове.
+    # Теперь: ecotopor -> «Economics RU», toporlive -> «TN news».
+    TG_DISPLAY = {'ecotopor':'Economics RU','toporlive':'TN news','investorbiz':'Economics','banksta':'B News','Tyumen72chs':'T news','kraschp':'K News','chp_irkutsk':'Irk News','inc54':'N News','chp_ekb':'Ekb News','chp_55':'Omsk News','NeKaspersky':'IT','anti_malware':'AM Live','trueosint':'Cyber',
                   'f6_cybersecurity':'Cybersecurity','SecLabNews':'Lab News','Social_engineering':'Engineering',
                   'Russian_OSINT':'R Osint','alexmakus':'Cybersec','xakep_ru':'Xakep IT','sterngang':'Data D','Ateobreaking':'A breaking',
                   'alertasdowndetector':'Downdetector','dciber':'Dciber','ctinow':'Cyber Threat','thehackernews':'THN','Cyber_Security_Channel':'Cyber SN','ru_downdetector_su':'Downdetector RU'}
