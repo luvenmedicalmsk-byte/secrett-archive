@@ -6038,12 +6038,27 @@ def process_events(raw_items):
     events.sort(key=lambda e: (e.get('severity',0) or 0) + (30 if e.get('source') in _DISASTER_SRC else (25 if e.get('source') in _RSS_PRIORITY else 0)), reverse=True)
     
     # Квотирование по доменам (суммы дают ровно MAX_EVENTS=200)
+    # КВОТЫ ПЕРЕРАСПРЕДЕЛЕНЫ (10.09.2026). Сумма квот 485 была МЕНЬШЕ
+    # MAX_EVENTS 600, то есть общий лимит не достигался никогда: ленту резали
+    # квоты доменов, а не общий потолок.
+    #
+    # Диагностика прогона: собрано 1152, в ленту попало 403, отсечено 749.
+    # Двадцать два источника терялись ЦЕЛИКОМ, и почти все в двух
+    # переполненных доменах:
+    #   технологии 34 в ленте при квоте 40 — CISA Advisory, CISA KEV,
+    #     BleepingComputer, Hacker News Security, Hugging Face, Industrial Cyber
+    #   социум     18 в ленте при квоте 55, но гуманитарные отчёты не успевали
+    #     занять место: ReliefWeb Disasters, IDMC
+    #   экономика  73 в ленте при квоте 70 — уже за пределом, Trading Economics
+    #
+    # Климат при квоте 200 давал в ленту 100: половина резерва не
+    # использовалась и при этом занимала место в общей сумме.
     DOMAIN_QUOTA = {
-        'climate':     200,
-        'geopolitics': 120,
-        'economy':     70,
-        'technology':  40,
-        'social':      55,
+        'climate':     150,
+        'geopolitics': 130,
+        'economy':     110,
+        'technology':  100,
+        'social':      100,
     }
     domain_counts = {d: 0 for d in DOMAIN_QUOTA}
     balanced = []
