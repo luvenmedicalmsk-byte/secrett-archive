@@ -1,39 +1,39 @@
 {
-  "generated": "2026-09-13T20:08:47Z",
+  "generated": "2026-09-13T22:34:48Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 741,
+    "DENY_COMMENTARY": 288,
     "PASS_FACT_REPORT": 1,
-    "DENY_COMMENTARY": 287,
     "DENY_BACKGROUND": 7,
     "UNMATCHED": 5,
     "DENY_FEATURE": 2,
     "DENY_STATE_ONLY": 1
   },
   "kpi": {
-    "processes_total": 1044,
-    "matched": 1039,
+    "processes_total": 1045,
+    "matched": 1040,
     "unmatched": 5,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 71.4,
-    "admission_deny_rate": 28.6,
-    "processes_without_fact": 297,
+    "admission_pass_rate": 71.3,
+    "admission_deny_rate": 28.7,
+    "processes_without_fact": 298,
     "report_evidence_count": 1,
     "reports_boosting": 1
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 220,
-      "sample": 854,
-      "agreement_pct": 91.8,
-      "decision_agreement_pct": 92.4,
-      "critical_errors": 65,
+      "processes": 216,
+      "sample": 853,
+      "agreement_pct": 92.0,
+      "decision_agreement_pct": 92.6,
+      "critical_errors": 63,
       "truth_ratio_pct": 96.1,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 19,
+        "COMMENTARY→FACT_EVENT": 17,
         "FACT_EVENT→COMMENTARY": 45,
         "FEATURE→COMMENTARY": 2,
         "REPORT→FACT_EVENT": 1,
@@ -42,13 +42,13 @@
       }
     },
     "historical": {
-      "processes": 1044,
-      "sample": 2216,
-      "agreement_pct": 93.2,
-      "decision_agreement_pct": 93.5,
-      "critical_errors": 144,
+      "processes": 1045,
+      "sample": 2220,
+      "agreement_pct": 93.3,
+      "decision_agreement_pct": 93.6,
+      "critical_errors": 142,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 47,
+        "COMMENTARY→FACT_EVENT": 45,
         "FACT_EVENT→COMMENTARY": 91,
         "FEATURE→COMMENTARY": 2,
         "REPORT→FACT_EVENT": 1,
@@ -60,14 +60,14 @@
       }
     },
     "events_stream": {
-      "sample": 356,
-      "agreement_pct": 90.7,
-      "decision_agreement_pct": 91.6,
-      "critical_errors": 30,
+      "sample": 368,
+      "agreement_pct": 91.3,
+      "decision_agreement_pct": 92.4,
+      "critical_errors": 28,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 23,
-        "BACKGROUND→COMMENTARY": 1,
-        "COMMENTARY→FACT_EVENT": 6,
+        "FACT_EVENT→COMMENTARY": 22,
+        "BACKGROUND→COMMENTARY": 2,
+        "COMMENTARY→FACT_EVENT": 5,
         "REPORT→FACT_EVENT": 1,
         "FEATURE→COMMENTARY": 2
       }
@@ -80,24 +80,24 @@
     }
   },
   "class_source": {
-    "shadow_title_only": 201,
-    "evidence_sic": 2216,
-    "event_sic": 3
+    "shadow_title_only": 202,
+    "evidence_sic": 2220,
+    "event_sic": 2
   },
   "truth_ratio_pct": 91.7,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 218,
-      "deny": 83
+      "pass": 217,
+      "deny": 84
     },
     "climate": {
-      "pass": 265,
-      "deny": 39,
+      "pass": 267,
+      "deny": 38,
       "unmatched": 3
     },
     "economy": {
-      "pass": 111,
-      "deny": 96,
+      "pass": 110,
+      "deny": 97,
       "unmatched": 2
     },
     "technology": {
@@ -172,21 +172,6 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
-      "signal_id": "econ-розничнаят-россия-e861",
-      "title": "Розничная торговля — Россия",
-      "domain": "economy",
-      "severity": 69,
-      "pressure": 46,
-      "first_seen": "2026-06-29",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 5,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
       "signal_id": "econ-macroрозни-ru-fc58",
       "title": "Розничная торговля — Россия (системный процесс)",
       "domain": "economy",
@@ -198,6 +183,21 @@
         "COMMENTARY": 3
       },
       "status": "active",
+      "causal_links": 5,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-розничнаят-россия-e861",
+      "title": "Розничная торговля — Россия",
+      "domain": "economy",
+      "severity": 69,
+      "pressure": 46,
+      "first_seen": "2026-06-29",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "fading",
       "causal_links": 5,
       "reason": "no FACT_EVENT in evidence"
     },
@@ -334,6 +334,21 @@
       },
       "status": "active",
       "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-военныеуда-саудовск-a4bd",
+      "title": "Военные удары — Саудовская Аравия",
+      "domain": "geopolitics",
+      "severity": 62,
+      "pressure": 38,
+      "first_seen": "2026-07-13",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -996,21 +1011,6 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "tech-технологич-россия-62df",
-      "title": "Технологический сигнал — Россия",
-      "domain": "technology",
-      "severity": 58,
-      "pressure": 27,
-      "first_seen": "2026-06-29",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 4,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [
@@ -1018,7 +1018,7 @@
       "signal_id": "econ-экономичес-глобальн-ec76",
       "title": "Экономический сигнал",
       "domain": "economy",
-      "severity_now": 83,
+      "severity_now": 84,
       "report_count": 1,
       "would_boost": "наблюдение (§4.3: размер не задан до калибровки)"
     }
@@ -1046,13 +1046,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-розничнаят-россия-e861",
-      "domain": "economy",
-      "legacy": 69,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-macroрозни-ru-fc58",
       "domain": "economy",
       "legacy": 69,
@@ -1063,13 +1056,6 @@
       "signal_id": "econ-финансовый-россия-9284",
       "domain": "economy",
       "legacy": 49,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-иран-31f9",
-      "domain": "geopolitics",
-      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1137,6 +1123,13 @@
       "delta": null
     },
     {
+      "signal_id": "geop-военныеуда-саудовск-a4bd",
+      "domain": "geopolitics",
+      "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-турция-286f",
       "domain": "economy",
       "legacy": 60,
@@ -1172,23 +1165,16 @@
       "delta": null
     },
     {
+      "signal_id": "econ-топливныйр-индия-1722",
+      "domain": "economy",
+      "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-экономичес-венгрия-fbf0",
       "domain": "economy",
       "legacy": 45,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-европа-cc63",
-      "domain": "economy",
-      "legacy": 49,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "geop-геополитич-мексика-90d1",
-      "domain": "geopolitics",
-      "legacy": 56,
       "shadow": null,
       "delta": null
     },
@@ -1214,16 +1200,16 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-ближнийв-35d5",
-      "domain": "economy",
-      "legacy": 62,
+      "signal_id": "geop-геополитич-мексика-90d1",
+      "domain": "geopolitics",
+      "legacy": 56,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-климатичес-антаркти-807a",
-      "domain": "climate",
-      "legacy": 46,
+      "signal_id": "econ-экономичес-ближнийв-35d5",
+      "domain": "economy",
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1270,6 +1256,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-экономичес-европа-cc63",
+      "domain": "economy",
+      "legacy": 49,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "clim-климатичес-глобальн-8637",
       "domain": "climate",
       "legacy": 62,
@@ -1294,6 +1287,13 @@
       "signal_id": "geop-санкционно-китай-a3db",
       "domain": "geopolitics",
       "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "geop-геополитич-иран-31f9",
+      "domain": "geopolitics",
+      "legacy": 47,
       "shadow": null,
       "delta": null
     },
@@ -1417,13 +1417,6 @@
       "delta": null
     },
     {
-      "signal_id": "clim-возобновля-африка-d5de",
-      "domain": "climate",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-геополитич-китай-a7d2",
       "domain": "geopolitics",
       "legacy": 22,
@@ -1438,6 +1431,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-розничнаят-россия-e861",
+      "domain": "economy",
+      "legacy": 69,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "geop-военныеуда-ближнийв-израил-917a",
       "domain": "geopolitics",
       "legacy": 65,
@@ -1447,7 +1447,7 @@
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 193,
+    "31-50": 194,
     "51-70": 97,
     "71-90": 4,
     "91-100": 0
