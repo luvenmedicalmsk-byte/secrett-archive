@@ -1,73 +1,73 @@
 {
-  "generated": "2026-09-14T20:05:14Z",
+  "generated": "2026-09-14T20:25:11Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
     "PASS_FACT": 750,
     "PASS_FACT_REPORT": 2,
-    "DENY_COMMENTARY": 285,
+    "DENY_COMMENTARY": 284,
     "UNMATCHED": 5,
     "DENY_BACKGROUND": 5,
     "DENY_FEATURE": 2,
     "DENY_STATE_ONLY": 1
   },
   "kpi": {
-    "processes_total": 1050,
-    "matched": 1045,
+    "processes_total": 1049,
+    "matched": 1044,
     "unmatched": 5,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
     "admission_pass_rate": 72.0,
     "admission_deny_rate": 28.0,
-    "processes_without_fact": 293,
+    "processes_without_fact": 292,
     "report_evidence_count": 2,
     "reports_boosting": 2
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 249,
-      "sample": 918,
-      "agreement_pct": 91.3,
+      "processes": 250,
+      "sample": 925,
+      "agreement_pct": 91.4,
       "decision_agreement_pct": 91.7,
-      "critical_errors": 76,
-      "truth_ratio_pct": 96.5,
+      "critical_errors": 77,
+      "truth_ratio_pct": 96.6,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 20,
+        "FACT_EVENT→COMMENTARY": 55,
         "REPORT→FACT_EVENT": 2,
-        "FACT_EVENT→COMMENTARY": 54,
+        "FEATURE→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
-        "COMMENTARY→BACKGROUND": 1,
-        "FEATURE→COMMENTARY": 2
+        "COMMENTARY→BACKGROUND": 1
       }
     },
     "historical": {
-      "processes": 1050,
-      "sample": 2257,
+      "processes": 1049,
+      "sample": 2262,
       "agreement_pct": 93.2,
       "decision_agreement_pct": 93.4,
-      "critical_errors": 149,
+      "critical_errors": 150,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 46,
+        "FACT_EVENT→COMMENTARY": 98,
         "REPORT→FACT_EVENT": 2,
-        "FACT_EVENT→COMMENTARY": 97,
+        "FEATURE→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
         "COMMENTARY→BACKGROUND": 2,
-        "FEATURE→COMMENTARY": 2,
         "FACT_EVENT→FEATURE": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 3
       }
     },
     "events_stream": {
-      "sample": 372,
-      "agreement_pct": 90.1,
-      "decision_agreement_pct": 90.3,
-      "critical_errors": 36,
+      "sample": 379,
+      "agreement_pct": 90.0,
+      "decision_agreement_pct": 90.2,
+      "critical_errors": 37,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 28,
+        "FACT_EVENT→COMMENTARY": 29,
         "COMMENTARY→FACT_EVENT": 7,
-        "FEATURE→COMMENTARY": 1,
-        "REPORT→FACT_EVENT": 1
+        "REPORT→FACT_EVENT": 1,
+        "FEATURE→COMMENTARY": 1
       }
     },
     "gate": {
@@ -78,8 +78,9 @@
     }
   },
   "class_source": {
-    "shadow_title_only": 200,
-    "evidence_sic": 2257
+    "shadow_title_only": 199,
+    "evidence_sic": 2262,
+    "event_sic": 1
   },
   "truth_ratio_pct": 91.9,
   "domain_statistics": {
@@ -87,19 +88,19 @@
       "pass": 223,
       "deny": 79
     },
-    "economy": {
-      "pass": 115,
-      "deny": 95,
-      "unmatched": 2
-    },
     "climate": {
-      "pass": 266,
+      "pass": 265,
       "deny": 39,
       "unmatched": 3
     },
     "social": {
-      "pass": 69,
-      "deny": 36
+      "pass": 70,
+      "deny": 35
+    },
+    "economy": {
+      "pass": 115,
+      "deny": 95,
+      "unmatched": 2
     },
     "technology": {
       "pass": 79,
@@ -969,12 +970,11 @@
       "title": "Технологический сигнал — Россия",
       "domain": "technology",
       "severity": 58,
-      "pressure": 29,
+      "pressure": 27,
       "first_seen": "2026-06-29",
-      "evidence_count": 2,
+      "evidence_count": 1,
       "evidence_classes": {
-        "COMMENTARY": 1,
-        "FEATURE": 1
+        "COMMENTARY": 1
       },
       "status": "active",
       "causal_links": 5,
@@ -1016,7 +1016,7 @@
       "signal_id": "econ-macroэконо-kz-20e6",
       "title": "Экономический сигнал — KZ (системный процесс)",
       "domain": "economy",
-      "severity_now": 83,
+      "severity_now": 84,
       "report_count": 1,
       "would_boost": "наблюдение (§4.3: размер не задан до калибровки)"
     },
@@ -1024,7 +1024,7 @@
       "signal_id": "econ-экономичес-глобальн-ec76",
       "title": "Экономический сигнал",
       "domain": "economy",
-      "severity_now": 83,
+      "severity_now": 84,
       "report_count": 1,
       "would_boost": "наблюдение (§4.3: размер не задан до калибровки)"
     }
@@ -1055,6 +1055,13 @@
       "signal_id": "geop-геополитич-европа-00ed",
       "domain": "geopolitics",
       "legacy": 64,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-финансовый-россия-9284",
+      "domain": "economy",
+      "legacy": 44,
       "shadow": null,
       "delta": null
     },
@@ -1125,13 +1132,6 @@
       "signal_id": "clim-macroклима-ближнийв-7137",
       "domain": "climate",
       "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-финансовый-россия-9284",
-      "domain": "economy",
-      "legacy": 45,
       "shadow": null,
       "delta": null
     },
@@ -1234,13 +1234,6 @@
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-россия-62df",
-      "domain": "technology",
-      "legacy": 58,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "tech-технологич-сша-4da7",
       "domain": "technology",
       "legacy": 62,
@@ -1286,6 +1279,13 @@
       "signal_id": "geop-геополитич-грузия-4edf",
       "domain": "geopolitics",
       "legacy": 61,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "tech-технологич-россия-62df",
+      "domain": "technology",
+      "legacy": 58,
       "shadow": null,
       "delta": null
     },
@@ -1423,14 +1423,14 @@
       "delta": null
     },
     {
-      "signal_id": "clim-экологичес-глобальн-2e2e",
+      "signal_id": "clim-шторм-бенгальс-fda4",
       "domain": "climate",
       "legacy": 44,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "clim-шторм-бенгальс-fda4",
+      "signal_id": "clim-экологичес-глобальн-2e2e",
       "domain": "climate",
       "legacy": 44,
       "shadow": null,
@@ -1453,7 +1453,7 @@
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 191,
+    "31-50": 190,
     "51-70": 94,
     "71-90": 5,
     "91-100": 0
