@@ -1728,8 +1728,21 @@ map.getPane('labels').style.zIndex = 650;
 map.getPane('labels').style.pointerEvents = 'none';
 
 // ── Переключаемые подложки: Тёмная / Рельеф / Спутник ──────────────────────
-const _baseDark    = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19 });
-const _labelsDark  = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19, pane:'labels' });
+/* ТЁМНАЯ ПОДЛОЖКА ПЕРЕВЕДЕНА НА MAPTILER (14.09.2026). CARTO отдаёт тайлы
+   без ключа, но с 2026 года наносит поверх водяной знак «API KEY REQUIRED»
+   с адресом регистрации — он виден на карте поверх стран и маркеров.
+   Ключ MapTiler в проекте уже есть, но использовался только спутниковым
+   слоем. Стиль darkmatter даёт ту же тёмную карту без подписей.
+   При отсутствии ключа остаётся прежний путь через CARTO. */
+const _baseDark    = MAPTILER_KEY
+  ? L.tileLayer('https://api.maptiler.com/maps/darkmatter/{z}/{x}/{y}.png?key='+MAPTILER_KEY, { maxZoom:20, attribution:'© MapTiler © OpenStreetMap' })
+  : L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19 });
+/* Стиль darkmatter уже содержит подписи, поэтому отдельный слой надписей
+   при MapTiler не нужен: подключается пустой слой, чтобы остальной код,
+   который его добавляет и убирает, работал без изменений. */
+const _labelsDark  = MAPTILER_KEY
+  ? L.layerGroup([])
+  : L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { subdomains:'abcd', maxZoom:19, pane:'labels' });
 // MapTiler-ключ (бесплатный). Вставь ключ ниже и ОБЯЗАТЕЛЬНО ограничь его доменом secrett-archive.com в кабинете MapTiler.
 // Пока пусто — автоматически используется бесплатный фолбэк (OpenTopoMap / Esri).
 const MAPTILER_KEY = 'f28lYOjwuWqhkNv6LQ2Y';
@@ -1741,7 +1754,7 @@ const _satHasLabels = !!MAPTILER_KEY;
 const _labelsSat   = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom:19, pane:'labels' });
 function setBaseMap(kind){
   [_baseDark,_labelsDark,_baseSat,_labelsSat].forEach(function(l){ if(map.hasLayer(l)) map.removeLayer(l); });
-  var attr='© CARTO · © OpenStreetMap';
+  var attr = MAPTILER_KEY ? '© MapTiler · © OpenStreetMap' : '© CARTO · © OpenStreetMap';
   if(kind==='sat'){ _baseSat.addTo(map); if(!_satHasLabels) _labelsSat.addTo(map); attr=MAPTILER_KEY?'© MapTiler · © OpenStreetMap, Maxar':'© Esri · Maxar'; }
   else { kind='dark'; _baseDark.addTo(map); _labelsDark.addTo(map); }
   var at=document.getElementById('map-attr-text'); if(at) at.textContent=attr;

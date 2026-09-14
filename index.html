@@ -1663,7 +1663,10 @@ footer {
       touchZoom:false,keyboard:false,minZoom:2,maxZoom:2,
       maxBounds:[[-85,-180],[85,180]],maxBoundsViscosity:1
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(m);
+    /* Подложка переведена на MapTiler (14.09.2026): CARTO наносит на тайлы
+       водяной знак «API KEY REQUIRED». Ключ тот же, что в risk-map.html;
+       он публичный по устройству и ограничивается доменом в кабинете. */
+    L.tileLayer('https://api.maptiler.com/maps/darkmatter/{z}/{x}/{y}.png?key=f28lYOjwuWqhkNv6LQ2Y',{maxZoom:20}).addTo(m);
     buildMarkers(m);
     fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
       .then(function(r){return r.ok?r.json():null})
