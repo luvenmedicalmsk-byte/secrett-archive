@@ -2,22 +2,31 @@
   "country": "SA",
   "country_name": "Саудовская Аравия",
   "date": "2026-09-15",
-  "generated_at": "2026-09-15T02:00:48.663111+00:00",
-  "srs_score": 52,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
+  "generated_at": "2026-09-15T02:39:29.534184+00:00",
+  "srs_score": 63,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
   "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "detail": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 15,
+      "urgency": 90,
+      "source": "delta"
+    },
     {
       "id": "R-06",
       "category": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +11.0pt",
-      "detail": "Уверенность прогнозной системы дрейфует на +11.0pt от краткосрочного к долгосрочному горизонту.",
-      "metric_value": 11,
-      "urgency": 52,
+      "title": "Дрейф уверенности прогнозов: +17.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на +17.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": 17,
+      "urgency": 60,
       "source": "confidence_drift"
     }
   ],
-  "risk_count": 1,
+  "risk_count": 2,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -53,7 +62,7 @@
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности +11.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности +17.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -64,6 +73,15 @@
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+15/день",
+      "rec_score": 63,
+      "metric_value": 15,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
@@ -77,20 +95,36 @@
       "id": "R-06",
       "type": "risk",
       "priority": "WATCHLIST",
-      "title": "Дрейф уверенности прогнозов: +11.0pt",
-      "rec_score": 43,
-      "metric_value": 11,
+      "title": "Дрейф уверенности прогнозов: +17.0pt",
+      "rec_score": 47,
+      "metric_value": 17,
       "source": "confidence_drift"
     }
   ],
   "action_plan": [
     {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+15/день",
+      "rationale": "Скорость ухудшения 15 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
       "id": "ACT-R-06",
       "priority": "STRATEGIC",
-      "action": "Реагировать: Дрейф уверенности прогнозов: +11.0pt",
-      "rationale": "Уверенность прогнозной системы дрейфует на +11.0pt от краткосрочного к долгосрочному горизонту.",
-      "deadline": "7 дней",
+      "action": "Реагировать: Дрейф уверенности прогнозов: +17.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на +17.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "72 часа",
       "source": "confidence_drift"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 47.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     },
     {
       "id": "ACT-O-05",
@@ -101,11 +135,11 @@
       "source": "high_alpha"
     }
   ],
-  "action_count": 2,
+  "action_count": 4,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 58,
-  "delta": 0,
+  "risk_score": 73,
+  "delta": 15,
   "domain": "geopolitics",
   "history_depth": 110
 }
