@@ -2,77 +2,67 @@
   "country": "PT",
   "date": "2026-09-15",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-15T07:00:02.620675+00:00",
-  "node_count": 14,
-  "edge_count": 13,
+  "generated_at": "2026-09-15T07:25:32.566724+00:00",
+  "node_count": 12,
+  "edge_count": 20,
   "nodes": [
     {
       "id": "COUNTRY-PT",
       "type": "Country",
       "label": "PT",
-      "score": 42,
+      "score": 50,
       "props": {
-        "risk_score": 42
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-PT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 16,
-      "trend": "down"
+      "score": 48,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 38,
-      "trend": "down"
+      "score": 45,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 29,
-      "trend": "down"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 27,
-      "trend": "down"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-social",
       "type": "Domain",
       "label": "social",
-      "score": 32,
-      "trend": "down"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 29,
-      "trend": "down"
+      "score": 35,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-PT-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 25,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-PT-economic",
-      "type": "Driver",
-      "label": "economic"
-    },
-    {
-      "id": "DRIVER-PT-social",
-      "type": "Driver",
-      "label": "social"
+      "score": 30,
+      "trend": "up"
     },
     {
       "id": "DRIVER-PT-climate",
@@ -80,24 +70,20 @@
       "label": "climate"
     },
     {
-      "id": "SIGNAL-PT-Геополитич",
-      "type": "Signal",
-      "label": "Геополитическое давление",
-      "severity": 40,
-      "domain": "geopolitical"
+      "id": "DRIVER-PT-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
-      "id": "SIGNAL-PT-Экономичес",
-      "type": "Signal",
-      "label": "Экономическое давление",
-      "severity": 38,
-      "domain": "economic"
+      "id": "DRIVER-PT-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
-      "id": "SIGNAL-PT-Климатичес",
+      "id": "SIGNAL-PT-Пожарный_с",
       "type": "Signal",
-      "label": "Климатическое давление",
-      "severity": 36,
+      "label": "Пожарный сигнал — Европа · Коимбра",
+      "severity": 50,
       "domain": "climate"
     }
   ],
@@ -106,55 +92,43 @@
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.16
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-economic",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.45
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-climate",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-technology",
       "type": "CORRELATES",
-      "weight": 0.27
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-social",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.29
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-PT",
       "to": "DOMAIN-PT-cyber",
       "type": "CORRELATES",
-      "weight": 0.25
-    },
-    {
-      "from": "DRIVER-PT-economic",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-PT-social",
-      "to": "COUNTRY-PT",
-      "type": "CAUSES",
-      "weight": 0.8
+      "weight": 0.3
     },
     {
       "from": "DRIVER-PT-climate",
@@ -163,22 +137,85 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-PT-Геополитич",
-      "to": "DOMAIN-PT-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.4
+      "from": "DRIVER-PT-geopolitical",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
-      "from": "SIGNAL-PT-Экономичес",
+      "from": "DRIVER-PT-economic",
+      "to": "COUNTRY-PT",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-PT-climate",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
       "to": "DOMAIN-PT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.38
+      "weight": 0.68,
+      "lag_days": 14
     },
     {
-      "from": "SIGNAL-PT-Климатичес",
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PT-climate",
+      "to": "DOMAIN-PT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-PT-social",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-PT-geopolitical",
+      "to": "DOMAIN-PT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-PT-infrastructure",
+      "to": "DOMAIN-PT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-PT-economic",
+      "to": "DOMAIN-PT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-PT-Пожарный_с",
       "to": "DOMAIN-PT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.36
+      "weight": 0.5
     }
   ]
 }
