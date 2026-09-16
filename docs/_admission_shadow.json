@@ -1,24 +1,24 @@
 {
-  "generated": "2026-09-16T16:04:36Z",
+  "generated": "2026-09-16T16:24:59Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 768,
+    "PASS_FACT": 766,
     "DENY_COMMENTARY": 286,
+    "DENY_STATE_ONLY": 2,
     "DENY_FEATURE": 4,
     "DENY_BACKGROUND": 5,
-    "UNMATCHED": 4,
-    "DENY_STATE_ONLY": 1
+    "UNMATCHED": 4
   },
   "kpi": {
-    "processes_total": 1068,
-    "matched": 1064,
+    "processes_total": 1067,
+    "matched": 1063,
     "unmatched": 4,
     "coverage_pct": 99.6,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 72.2,
-    "admission_deny_rate": 27.8,
-    "processes_without_fact": 296,
+    "admission_pass_rate": 72.1,
+    "admission_deny_rate": 27.9,
+    "processes_without_fact": 297,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -26,13 +26,13 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 304,
-      "sample": 1022,
-      "agreement_pct": 90.7,
-      "decision_agreement_pct": 90.9,
-      "critical_errors": 93,
+      "sample": 1040,
+      "agreement_pct": 91.0,
+      "decision_agreement_pct": 91.2,
+      "critical_errors": 92,
       "truth_ratio_pct": 96.9,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 27,
+        "COMMENTARY→FACT_EVENT": 26,
         "FACT_EVENT→COMMENTARY": 62,
         "FACT_EVENT→BACKGROUND": 2,
         "FEATURE→FACT_EVENT": 2,
@@ -40,13 +40,13 @@
       }
     },
     "historical": {
-      "processes": 1068,
-      "sample": 2282,
-      "agreement_pct": 92.8,
-      "decision_agreement_pct": 92.9,
-      "critical_errors": 163,
+      "processes": 1067,
+      "sample": 2299,
+      "agreement_pct": 92.9,
+      "decision_agreement_pct": 93.0,
+      "critical_errors": 162,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 51,
+        "COMMENTARY→FACT_EVENT": 50,
         "FACT_EVENT→COMMENTARY": 104,
         "FACT_EVENT→BACKGROUND": 2,
         "FEATURE→FACT_EVENT": 2,
@@ -56,12 +56,12 @@
       }
     },
     "events_stream": {
-      "sample": 364,
-      "agreement_pct": 90.9,
-      "decision_agreement_pct": 91.5,
-      "critical_errors": 31,
+      "sample": 372,
+      "agreement_pct": 91.4,
+      "decision_agreement_pct": 91.9,
+      "critical_errors": 30,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 22,
+        "FACT_EVENT→COMMENTARY": 21,
         "BACKGROUND→COMMENTARY": 1,
         "COMMENTARY→FACT_EVENT": 8,
         "FACT_EVENT→BACKGROUND": 1,
@@ -77,21 +77,25 @@
   },
   "class_source": {
     "shadow_title_only": 193,
-    "evidence_sic": 2282,
+    "evidence_sic": 2299,
     "event_sic": 3
   },
-  "truth_ratio_pct": 92.2,
+  "truth_ratio_pct": 92.3,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 219,
-      "deny": 90
+      "pass": 220,
+      "deny": 89
+    },
+    "social": {
+      "pass": 67,
+      "deny": 37
     },
     "technology": {
       "pass": 81,
       "deny": 44
     },
     "economy": {
-      "pass": 126,
+      "pass": 125,
       "deny": 96,
       "unmatched": 1
     },
@@ -99,10 +103,6 @@
       "pass": 273,
       "deny": 31,
       "unmatched": 3
-    },
-    "social": {
-      "pass": 69,
-      "deny": 35
     }
   },
   "deny_impact": [
@@ -149,6 +149,21 @@
       },
       "status": "dormant",
       "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "soci-социальный-газа-b49c",
+      "title": "Социальный процесс — Газа",
+      "domain": "social",
+      "severity": 74,
+      "pressure": 39,
+      "first_seen": "2026-07-03",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "STATE_CONFIRMATION": 1
+      },
+      "status": "active",
+      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -307,7 +322,7 @@
       "title": "Экономический сигнал — Латвия",
       "domain": "economy",
       "severity": 62,
-      "pressure": 39,
+      "pressure": 38,
       "first_seen": "2026-08-06",
       "evidence_count": 1,
       "evidence_classes": {
@@ -674,7 +689,7 @@
         "COMMENTARY": 1
       },
       "status": "archived",
-      "causal_links": 4,
+      "causal_links": 5,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -992,32 +1007,10 @@
       "status": "fading",
       "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "geop-санкционно-северная-канада-4398",
-      "title": "Санкционное давление — Северная Америка",
-      "domain": "geopolitics",
-      "severity": 59,
-      "pressure": 36,
-      "first_seen": "2026-08-23",
-      "evidence_count": 3,
-      "evidence_classes": {
-        "COMMENTARY": 3
-      },
-      "status": "dormant",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
-    {
-      "signal_id": "econ-экономичес-сша-7b87",
-      "domain": "economy",
-      "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
     {
       "signal_id": "econ-топливныйр-иран-5c98",
       "domain": "economy",
@@ -1043,6 +1036,13 @@
       "signal_id": "econ-финансовый-россия-9284",
       "domain": "economy",
       "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-сша-7b87",
+      "domain": "economy",
+      "legacy": 32,
       "shadow": null,
       "delta": null
     },
@@ -1082,9 +1082,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-латвия-e85d",
-      "domain": "economy",
-      "legacy": 62,
+      "signal_id": "soci-социальный-газа-b49c",
+      "domain": "social",
+      "legacy": 74,
       "shadow": null,
       "delta": null
     },
@@ -1092,6 +1092,13 @@
       "signal_id": "tech-технологич-европа-1cdd",
       "domain": "technology",
       "legacy": 46,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-латвия-e85d",
+      "domain": "economy",
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1152,22 +1159,8 @@
       "delta": null
     },
     {
-      "signal_id": "soci-эпидемиоло-сша-ccda",
-      "domain": "social",
-      "legacy": 44,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-геополитич-европа-00ed",
       "domain": "geopolitics",
-      "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-экономичес-турция-286f",
-      "domain": "economy",
       "legacy": 46,
       "shadow": null,
       "delta": null
@@ -1176,6 +1169,13 @@
       "signal_id": "econ-топливныйр-ормузски-d6b9",
       "domain": "economy",
       "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-турция-286f",
+      "domain": "economy",
+      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1341,13 +1341,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-пакистан-4096",
-      "domain": "economy",
-      "legacy": 46,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-санкционно-индия-1e93",
       "domain": "geopolitics",
       "legacy": 62,
@@ -1386,6 +1379,13 @@
       "signal_id": "econ-топливныйр-индия-1722",
       "domain": "economy",
       "legacy": 44,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-пакистан-4096",
+      "domain": "economy",
+      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1436,7 +1436,7 @@
     "0-30": 3,
     "31-50": 194,
     "51-70": 94,
-    "71-90": 5,
+    "71-90": 6,
     "91-100": 0
   }
 }
