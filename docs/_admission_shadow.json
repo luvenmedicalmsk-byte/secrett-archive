@@ -1,69 +1,71 @@
 {
-  "generated": "2026-09-17T01:04:03Z",
+  "generated": "2026-09-17T01:24:19Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 767,
-    "DENY_COMMENTARY": 288,
+    "PASS_FACT": 764,
+    "DENY_COMMENTARY": 289,
     "DENY_STATE_ONLY": 2,
+    "DENY_FEATURE": 3,
     "DENY_BACKGROUND": 6,
-    "UNMATCHED": 5,
-    "DENY_FEATURE": 2
+    "UNMATCHED": 5
   },
   "kpi": {
-    "processes_total": 1070,
-    "matched": 1065,
+    "processes_total": 1069,
+    "matched": 1064,
     "unmatched": 5,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 72.0,
-    "admission_deny_rate": 28.0,
-    "processes_without_fact": 298,
+    "admission_pass_rate": 71.8,
+    "admission_deny_rate": 28.2,
+    "processes_without_fact": 300,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 298,
-      "sample": 996,
-      "agreement_pct": 90.9,
-      "decision_agreement_pct": 91.1,
-      "critical_errors": 89,
+      "processes": 297,
+      "sample": 994,
+      "agreement_pct": 90.5,
+      "decision_agreement_pct": 90.7,
+      "critical_errors": 92,
       "truth_ratio_pct": 96.8,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 28,
-        "FACT_EVENT→COMMENTARY": 59,
+        "FACT_EVENT→COMMENTARY": 61,
         "FEATURE→COMMENTARY": 1,
+        "FACT_EVENT→FEATURE": 1,
         "FEATURE→FACT_EVENT": 2,
         "BACKGROUND→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 1070,
-      "sample": 2266,
-      "agreement_pct": 92.9,
-      "decision_agreement_pct": 92.9,
-      "critical_errors": 160,
+      "processes": 1069,
+      "sample": 2264,
+      "agreement_pct": 92.7,
+      "decision_agreement_pct": 92.8,
+      "critical_errors": 163,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 52,
-        "FACT_EVENT→COMMENTARY": 102,
+        "FACT_EVENT→COMMENTARY": 104,
         "FEATURE→COMMENTARY": 1,
+        "FACT_EVENT→FEATURE": 2,
         "FEATURE→FACT_EVENT": 2,
         "BACKGROUND→COMMENTARY": 1,
-        "FACT_EVENT→FEATURE": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 3
       }
     },
     "events_stream": {
-      "sample": 331,
-      "agreement_pct": 92.1,
-      "decision_agreement_pct": 92.7,
-      "critical_errors": 24,
+      "sample": 330,
+      "agreement_pct": 91.2,
+      "decision_agreement_pct": 91.8,
+      "critical_errors": 27,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 17,
+        "FACT_EVENT→COMMENTARY": 19,
         "COMMENTARY→FACT_EVENT": 7,
-        "FEATURE→COMMENTARY": 2
+        "FEATURE→COMMENTARY": 2,
+        "FACT_EVENT→FEATURE": 1
       }
     },
     "gate": {
@@ -75,7 +77,7 @@
   },
   "class_source": {
     "shadow_title_only": 192,
-    "evidence_sic": 2266,
+    "evidence_sic": 2264,
     "event_sic": 3
   },
   "truth_ratio_pct": 92.2,
@@ -94,8 +96,8 @@
       "deny": 45
     },
     "climate": {
-      "pass": 275,
-      "deny": 29,
+      "pass": 272,
+      "deny": 31,
       "unmatched": 4
     },
     "social": {
@@ -1144,6 +1146,13 @@
       "delta": null
     },
     {
+      "signal_id": "clim-пожарнаяак-россия-51fc",
+      "domain": "climate",
+      "legacy": 46,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "tech-технологич-европа-1cdd",
       "domain": "technology",
       "legacy": 46,
@@ -1422,18 +1431,11 @@
       "legacy": 53,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "tech-уязвимость-китай-a9d0",
-      "domain": "technology",
-      "legacy": 52,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 195,
+    "31-50": 197,
     "51-70": 94,
     "71-90": 6,
     "91-100": 0
