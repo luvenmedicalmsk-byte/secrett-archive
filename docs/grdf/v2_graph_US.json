@@ -2,67 +2,72 @@
   "country": "US",
   "date": "2026-09-17",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-17T19:06:54.063677+00:00",
+  "generated_at": "2026-09-17T19:26:30.164895+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 85,
+      "score": 71,
       "props": {
-        "risk_score": 85
+        "risk_score": 71
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 52,
-      "trend": "stable"
+      "score": 22,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
-      "trend": "stable"
+      "score": 14,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 10,
-      "trend": "stable"
+      "score": 9,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 10,
-      "trend": "stable"
+      "score": 9,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 20,
-      "trend": "stable"
+      "score": 18,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 23,
-      "trend": "stable"
+      "score": 21,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-US-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
+    },
+    {
+      "id": "DRIVER-US-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-US-Geopolitical",
@@ -73,18 +78,6 @@
       "id": "DRIVER-US-Economic",
       "type": "Driver",
       "label": "Economic"
-    },
-    {
-      "id": "DRIVER-US-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
-      "id": "SIGNAL-US-Отслеживай",
-      "type": "Signal",
-      "label": "Отслеживайте новые законы о лесных пожар",
-      "severity": 76,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-US-В_США_нача",
@@ -99,6 +92,13 @@
       "label": "В США начался топливный кризис",
       "severity": 61,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-US-CBS_публик",
+      "type": "Signal",
+      "label": "CBS публикует кадры разрушений на америк",
+      "severity": 59,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,43 +106,49 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.1
+      "weight": 0.09
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.18
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.21
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
       "weight": 0.05
+    },
+    {
+      "from": "DRIVER-US-Economic",
+      "to": "COUNTRY-US",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -157,39 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-US-Economic",
-      "to": "COUNTRY-US",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-US-geopolitical",
-      "to": "DOMAIN-US-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-US-infrastructure",
-      "to": "DOMAIN-US-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-US-economic",
-      "to": "DOMAIN-US-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-US-Отслеживай",
-      "to": "DOMAIN-US-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.76
-    },
-    {
       "from": "SIGNAL-US-В_США_нача",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
@@ -200,6 +173,12 @@
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
       "weight": 0.61
+    },
+    {
+      "from": "SIGNAL-US-CBS_публик",
+      "to": "DOMAIN-US-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.59
     }
   ]
 }
