@@ -1,18 +1,18 @@
 {
-  "generated": "2026-09-17T22:44:20Z",
+  "generated": "2026-09-17T23:01:52Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 773,
-    "DENY_COMMENTARY": 286,
+    "PASS_FACT": 775,
+    "DENY_COMMENTARY": 287,
     "DENY_STATE_ONLY": 3,
-    "DENY_FEATURE": 3,
     "DENY_BACKGROUND": 6,
-    "UNMATCHED": 5
+    "UNMATCHED": 5,
+    "DENY_FEATURE": 2
   },
   "kpi": {
-    "processes_total": 1076,
-    "matched": 1071,
+    "processes_total": 1078,
+    "matched": 1073,
     "unmatched": 5,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
@@ -25,45 +25,45 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 294,
-      "sample": 1032,
-      "agreement_pct": 91.6,
-      "decision_agreement_pct": 91.8,
-      "critical_errors": 85,
+      "processes": 296,
+      "sample": 1036,
+      "agreement_pct": 91.8,
+      "decision_agreement_pct": 92.0,
+      "critical_errors": 83,
       "truth_ratio_pct": 96.9,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 23,
-        "FACT_EVENT→COMMENTARY": 58,
+        "FACT_EVENT→COMMENTARY": 56,
         "FACT_EVENT→BACKGROUND": 2,
-        "FEATURE→COMMENTARY": 1,
         "FEATURE→FACT_EVENT": 2,
+        "FEATURE→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 1076,
-      "sample": 2339,
-      "agreement_pct": 92.9,
-      "decision_agreement_pct": 93.0,
-      "critical_errors": 164,
+      "processes": 1078,
+      "sample": 2343,
+      "agreement_pct": 93.0,
+      "decision_agreement_pct": 93.1,
+      "critical_errors": 162,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 49,
-        "FACT_EVENT→COMMENTARY": 107,
+        "FACT_EVENT→COMMENTARY": 105,
         "FACT_EVENT→BACKGROUND": 2,
-        "FEATURE→COMMENTARY": 1,
         "FEATURE→FACT_EVENT": 2,
+        "FEATURE→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
         "FACT_EVENT→FEATURE": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 3
       }
     },
     "events_stream": {
-      "sample": 380,
-      "agreement_pct": 91.6,
-      "decision_agreement_pct": 92.6,
-      "critical_errors": 28,
+      "sample": 387,
+      "agreement_pct": 92.0,
+      "decision_agreement_pct": 93.0,
+      "critical_errors": 27,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 24,
+        "FACT_EVENT→COMMENTARY": 23,
         "BACKGROUND→COMMENTARY": 1,
         "COMMENTARY→FACT_EVENT": 3,
         "FACT_EVENT→BACKGROUND": 1,
@@ -79,7 +79,7 @@
   },
   "class_source": {
     "shadow_title_only": 190,
-    "evidence_sic": 2339,
+    "evidence_sic": 2343,
     "event_sic": 2
   },
   "truth_ratio_pct": 92.5,
@@ -88,19 +88,19 @@
       "pass": 225,
       "deny": 85
     },
-    "economy": {
-      "pass": 124,
-      "deny": 98,
-      "unmatched": 1
-    },
     "technology": {
       "pass": 82,
       "deny": 44
     },
     "climate": {
-      "pass": 277,
-      "deny": 30,
+      "pass": 279,
+      "deny": 29,
       "unmatched": 4
+    },
+    "economy": {
+      "pass": 124,
+      "deny": 99,
+      "unmatched": 1
     },
     "social": {
       "pass": 65,
@@ -616,7 +616,7 @@
         "COMMENTARY": 1
       },
       "status": "dormant",
-      "causal_links": 4,
+      "causal_links": 5,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1112,6 +1112,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-экономичес-франция-58ca",
+      "domain": "economy",
+      "legacy": 48,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "soci-социальный-газа-b49c",
       "domain": "social",
       "legacy": 74,
@@ -1122,13 +1129,6 @@
       "signal_id": "econ-экономичес-латвия-e85d",
       "domain": "economy",
       "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-инфляция-глобальн-82e4",
-      "domain": "economy",
-      "legacy": 50,
       "shadow": null,
       "delta": null
     },
@@ -1147,16 +1147,16 @@
       "delta": null
     },
     {
-      "signal_id": "clim-пожарнаяак-россия-51fc",
-      "domain": "climate",
+      "signal_id": "tech-технологич-европа-1cdd",
+      "domain": "technology",
       "legacy": 46,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-европа-1cdd",
-      "domain": "technology",
-      "legacy": 46,
+      "signal_id": "econ-валютныйры-сша-грузия-eda2",
+      "domain": "economy",
+      "legacy": 44,
       "shadow": null,
       "delta": null
     },
