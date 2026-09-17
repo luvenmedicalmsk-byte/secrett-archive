@@ -1,70 +1,70 @@
 {
-  "generated": "2026-09-17T09:04:36Z",
+  "generated": "2026-09-17T09:24:41Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 772,
+    "PASS_FACT": 768,
     "DENY_COMMENTARY": 284,
-    "DENY_STATE_ONLY": 2,
+    "DENY_STATE_ONLY": 3,
+    "DENY_FEATURE": 3,
     "DENY_BACKGROUND": 6,
-    "UNMATCHED": 5,
-    "DENY_FEATURE": 2
+    "UNMATCHED": 5
   },
   "kpi": {
-    "processes_total": 1071,
-    "matched": 1066,
+    "processes_total": 1069,
+    "matched": 1064,
     "unmatched": 5,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 72.4,
-    "admission_deny_rate": 27.6,
-    "processes_without_fact": 294,
+    "admission_pass_rate": 72.2,
+    "admission_deny_rate": 27.8,
+    "processes_without_fact": 296,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 295,
-      "sample": 1049,
-      "agreement_pct": 91.0,
-      "decision_agreement_pct": 91.3,
-      "critical_errors": 91,
-      "truth_ratio_pct": 96.8,
+      "processes": 291,
+      "sample": 1033,
+      "agreement_pct": 90.8,
+      "decision_agreement_pct": 91.1,
+      "critical_errors": 92,
+      "truth_ratio_pct": 96.7,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 26,
+        "COMMENTARY→FACT_EVENT": 27,
         "FACT_EVENT→COMMENTARY": 62,
         "FEATURE→COMMENTARY": 1,
-        "FEATURE→FACT_EVENT": 2,
         "FACT_EVENT→FEATURE": 1,
-        "BACKGROUND→COMMENTARY": 2
+        "BACKGROUND→COMMENTARY": 2,
+        "FEATURE→FACT_EVENT": 2
       }
     },
     "historical": {
-      "processes": 1071,
-      "sample": 2322,
-      "agreement_pct": 92.9,
-      "decision_agreement_pct": 93.0,
-      "critical_errors": 163,
+      "processes": 1069,
+      "sample": 2308,
+      "agreement_pct": 92.7,
+      "decision_agreement_pct": 92.9,
+      "critical_errors": 165,
       "error_matrix": {
-        "COMMENTARY→FACT_EVENT": 49,
-        "FACT_EVENT→COMMENTARY": 107,
+        "COMMENTARY→FACT_EVENT": 50,
+        "FACT_EVENT→COMMENTARY": 108,
         "FEATURE→COMMENTARY": 1,
-        "FEATURE→FACT_EVENT": 2,
         "FACT_EVENT→FEATURE": 2,
         "BACKGROUND→COMMENTARY": 2,
+        "FEATURE→FACT_EVENT": 2,
         "STATE_CONFIRMATION→FACT_EVENT": 3
       }
     },
     "events_stream": {
-      "sample": 370,
-      "agreement_pct": 90.5,
-      "decision_agreement_pct": 91.4,
-      "critical_errors": 32,
+      "sample": 366,
+      "agreement_pct": 90.2,
+      "decision_agreement_pct": 91.0,
+      "critical_errors": 33,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 24,
         "BACKGROUND→COMMENTARY": 1,
-        "COMMENTARY→FACT_EVENT": 7,
+        "COMMENTARY→FACT_EVENT": 8,
         "FEATURE→COMMENTARY": 2,
         "FACT_EVENT→FEATURE": 1
       }
@@ -78,7 +78,7 @@
   },
   "class_source": {
     "shadow_title_only": 194,
-    "evidence_sic": 2322,
+    "evidence_sic": 2308,
     "event_sic": 3
   },
   "truth_ratio_pct": 92.3,
@@ -92,13 +92,13 @@
       "deny": 44
     },
     "economy": {
-      "pass": 125,
-      "deny": 96,
+      "pass": 124,
+      "deny": 97,
       "unmatched": 1
     },
     "climate": {
-      "pass": 276,
-      "deny": 28,
+      "pass": 273,
+      "deny": 29,
       "unmatched": 4
     },
     "social": {
@@ -286,6 +286,21 @@
       },
       "status": "active",
       "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "econ-валютныйры-россия-19f3",
+      "title": "Валютный рынок — Россия",
+      "domain": "economy",
+      "severity": 63,
+      "pressure": 70,
+      "first_seen": "2026-06-29",
+      "evidence_count": 4,
+      "evidence_classes": {
+        "COMMENTARY": 4
+      },
+      "status": "active",
+      "causal_links": 11,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -586,7 +601,7 @@
         "COMMENTARY": 2
       },
       "status": "dormant",
-      "causal_links": 5,
+      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -994,21 +1009,6 @@
       "status": "active",
       "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "soci-социальный-судан-15d1",
-      "title": "Социальный процесс — Судан",
-      "domain": "social",
-      "severity": 59,
-      "pressure": 27,
-      "first_seen": "2026-06-30",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1016,7 +1016,7 @@
     {
       "signal_id": "econ-валютныйры-россия-19f3",
       "domain": "economy",
-      "legacy": 49,
+      "legacy": 63,
       "shadow": null,
       "delta": null
     },
@@ -1091,6 +1091,13 @@
       "delta": null
     },
     {
+      "signal_id": "geop-геополитич-китай-a7d2",
+      "domain": "geopolitics",
+      "legacy": 39,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "soci-социальный-газа-b49c",
       "domain": "social",
       "legacy": 74,
@@ -1105,13 +1112,6 @@
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-китай-a7d2",
-      "domain": "geopolitics",
-      "legacy": 39,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-экономичес-канада-ef1c",
       "domain": "economy",
       "legacy": 46,
@@ -1119,8 +1119,22 @@
       "delta": null
     },
     {
+      "signal_id": "econ-инфляция-глобальн-82e4",
+      "domain": "economy",
+      "legacy": 50,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-государств-украина-806a",
       "domain": "economy",
+      "legacy": 46,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "clim-пожарнаяак-россия-51fc",
+      "domain": "climate",
       "legacy": 46,
       "shadow": null,
       "delta": null
@@ -1143,6 +1157,13 @@
       "signal_id": "econ-экономичес-турция-286f",
       "domain": "economy",
       "legacy": 46,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "geop-геополитич-венесуэл-d9c5",
+      "domain": "geopolitics",
+      "legacy": 58,
       "shadow": null,
       "delta": null
     },
@@ -1178,13 +1199,6 @@
       "signal_id": "econ-экономичес-франция-58ca",
       "domain": "economy",
       "legacy": 48,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-топливныйр-индия-1722",
-      "domain": "economy",
-      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1399,13 +1413,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-газа-767a",
-      "domain": "economy",
-      "legacy": 44,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-экономичес-индонези-5543",
       "domain": "economy",
       "legacy": 32,
@@ -1425,19 +1432,12 @@
       "legacy": 49,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "soci-миграционн-глобальн-aafb",
-      "domain": "social",
-      "legacy": 47,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 190,
-    "51-70": 95,
+    "51-70": 97,
     "71-90": 6,
     "91-100": 0
   }
