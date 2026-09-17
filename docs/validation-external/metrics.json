@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-09-17T14:07:14.755895+00:00",
+  "generated_at": "2026-09-17T14:27:00.906782+00:00",
   "events_database_size": 93,
   "years_covered": "2010-2026",
   "signal_threshold": 60,
   "severity_threshold": 70,
   "1_forecast_accuracy": {
     "n": 72,
-    "mae": 14.88,
-    "rmse": 18.06,
-    "bias": -14.43,
-    "accuracy_pct": 80.2
+    "mae": 12.96,
+    "rmse": 16.55,
+    "bias": -10.26,
+    "accuracy_pct": 82.7
   },
   "2_scenario_accuracy": {
     "n": 76,
@@ -17,32 +17,32 @@
   },
   "3_signal_correlation": {
     "n": 72,
-    "pearson_r": 0.3,
-    "r_squared": 0.09,
+    "pearson_r": 0.135,
+    "r_squared": 0.018,
     "interpretation": "weak"
   },
   "4_5_6_classification": {
-    "TP": 39,
-    "FP": 5,
-    "TN": 9,
-    "FN": 40,
-    "precision_pct": 88.6,
-    "recall_pct": 49.4,
-    "fpr_pct": 35.7,
-    "fnr_pct": 50.6,
-    "f1_score_pct": 63.4,
-    "accuracy_pct": 51.6,
+    "TP": 51,
+    "FP": 8,
+    "TN": 6,
+    "FN": 28,
+    "precision_pct": 86.4,
+    "recall_pct": 64.6,
+    "fpr_pct": 57.1,
+    "fnr_pct": 35.4,
+    "f1_score_pct": 73.9,
+    "accuracy_pct": 61.3,
     "signal_threshold": 60,
     "severity_threshold": 70
   },
   "7_brier_score": {
     "n": 93,
-    "brier_score": 0.1902,
-    "brier_skill_score": -0.487,
+    "brier_score": 0.1831,
+    "brier_skill_score": -0.432,
     "interpretation": "fair"
   },
   "8_calibration_error": {
-    "ece": 0.2416,
+    "ece": 0.2094,
     "n_bins_populated": 6,
     "calibration_curve": [
       {
@@ -61,10 +61,10 @@
       },
       {
         "bin_center": 0.55,
-        "mean_pred": 0.541,
-        "mean_actual": 0.791,
-        "n": 43,
-        "error": 0.25
+        "mean_pred": 0.514,
+        "mean_actual": 0.786,
+        "n": 28,
+        "error": 0.271
       },
       {
         "bin_center": 0.65,
@@ -75,10 +75,10 @@
       },
       {
         "bin_center": 0.75,
-        "mean_pred": 0.76,
-        "mean_actual": 1.0,
-        "n": 9,
-        "error": 0.24
+        "mean_pred": 0.779,
+        "mean_actual": 0.875,
+        "n": 24,
+        "error": 0.096
       },
       {
         "bin_center": 0.85,
@@ -99,9 +99,9 @@
     "by_country": {
       "US": {
         "n_events": 15,
-        "mae": 16.3,
-        "classification_accuracy_pct": 20.0,
-        "n_hits": 3,
+        "mae": 7.1,
+        "classification_accuracy_pct": 80.0,
+        "n_hits": 12,
         "event_ids": [
           "E2010-002",
           "E2011-003",
@@ -366,7 +366,7 @@
       {
         "type": "threshold_adjust",
         "action": "lower_signal_threshold",
-        "detail": "Recall 49.4% → missing events. Lower threshold to 55.",
+        "detail": "Recall 64.6% → missing events. Lower threshold to 55.",
         "priority": "HIGH",
         "param": "signal_threshold",
         "current": 60,
@@ -375,13 +375,13 @@
       {
         "type": "bias_correction",
         "action": "increase_base_pressure",
-        "detail": "Systematic underestimation bias -14.43pt. Increase sensitivity.",
+        "detail": "Systematic underestimation bias -10.26pt. Increase sensitivity.",
         "priority": "MEDIUM"
       },
       {
         "type": "calibration",
         "action": "recalibrate_confidence",
-        "detail": "ECE=0.242 — confidence scores need Platt scaling or isotonic regression.",
+        "detail": "ECE=0.209 — confidence scores need Platt scaling or isotonic regression.",
         "priority": "HIGH"
       },
       {
@@ -393,13 +393,13 @@
       {
         "type": "correlation",
         "action": "review_signal_sources",
-        "detail": "Signal-outcome correlation r=0.3 is weak. Review domain weighting formula.",
+        "detail": "Signal-outcome correlation r=0.135 is weak. Review domain weighting formula.",
         "priority": "HIGH"
       },
       {
         "type": "brier",
         "action": "recalibrate_probability_model",
-        "detail": "BSS=-0.487 — model barely outperforms climatology. Reweight GRIE_W.",
+        "detail": "BSS=-0.432 — model barely outperforms climatology. Reweight GRIE_W.",
         "priority": "HIGH"
       }
     ],
