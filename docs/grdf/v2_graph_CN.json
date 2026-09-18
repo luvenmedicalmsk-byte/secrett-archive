@@ -2,9 +2,9 @@
   "country": "CN",
   "date": "2026-09-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-18T20:45:38.693295+00:00",
+  "generated_at": "2026-09-18T21:06:01.848684+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CN",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-CN-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 65,
+      "score": 44,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-CN-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 44,
+      "score": 7,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CN-Конгресс_С",
+      "type": "Signal",
+      "label": "Конгресс США начал разбирательство в свя",
+      "severity": 34,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-CN-Наводнение",
       "type": "Signal",
       "label": "Наводнение — Восточная Азия",
@@ -92,13 +99,6 @@
       "label": "Военные удары — Китай",
       "severity": 53,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CN-Шторм_—_Во",
-      "type": "Signal",
-      "label": "Шторм — Восточно-Китайское море",
-      "severity": 51,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.65
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-CN",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CN",
       "to": "DOMAIN-CN-climate",
       "type": "CORRELATES",
-      "weight": 0.44
+      "weight": 0.07
     },
     {
       "from": "COUNTRY-CN",
@@ -163,27 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CN-social",
-      "to": "DOMAIN-CN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
       "from": "DOMAIN-CN-geopolitical",
       "to": "DOMAIN-CN-infrastructure",
       "type": "ESCALATES",
@@ -205,25 +184,10 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-CN-climate",
-      "to": "DOMAIN-CN-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CN-infrastructure",
-      "to": "DOMAIN-CN-economic",
+      "from": "SIGNAL-CN-Конгресс_С",
+      "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CN-economic",
-      "to": "DOMAIN-CN-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "weight": 0.34
     },
     {
       "from": "SIGNAL-CN-Наводнение",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-CN-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-CN-Шторм_—_Во",
-      "to": "DOMAIN-CN-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.51
     }
   ]
 }
