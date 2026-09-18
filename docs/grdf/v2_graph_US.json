@@ -2,59 +2,59 @@
   "country": "US",
   "date": "2026-09-18",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-18T09:25:44.997123+00:00",
+  "generated_at": "2026-09-18T09:45:54.827378+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 71,
+      "score": 70,
       "props": {
-        "risk_score": 71
+        "risk_score": 70
       }
     },
     {
       "id": "DOMAIN-US-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 23,
+      "score": 46,
       "trend": "down"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 14,
+      "score": 38,
       "trend": "down"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 9,
-      "trend": "down"
+      "score": 10,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 9,
-      "trend": "down"
+      "score": 10,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-US-social",
       "type": "Domain",
       "label": "social",
-      "score": 18,
+      "score": 20,
       "trend": "down"
     },
     {
       "id": "DOMAIN-US-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 21,
+      "score": 22,
       "trend": "down"
     },
     {
@@ -62,17 +62,17 @@
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
-    },
-    {
-      "id": "DRIVER-US-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-US-Geopolitical",
       "type": "Driver",
       "label": "Geopolitical"
+    },
+    {
+      "id": "DRIVER-US-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
       "id": "DRIVER-US-Economic",
@@ -94,10 +94,10 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-US-CBS_публик",
+      "id": "SIGNAL-US-CBS_показа",
       "type": "Signal",
-      "label": "CBS публикует кадры разрушений на америк",
-      "severity": 59,
+      "label": "CBS показал кадры разрушений на американ",
+      "severity": 56,
       "domain": "geopolitical"
     }
   ],
@@ -106,49 +106,43 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-economic",
       "type": "CORRELATES",
-      "weight": 0.14
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-technology",
       "type": "CORRELATES",
-      "weight": 0.09
+      "weight": 0.1
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-social",
       "type": "CORRELATES",
-      "weight": 0.18
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.21
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-cyber",
       "type": "CORRELATES",
       "weight": 0.05
-    },
-    {
-      "from": "DRIVER-US-Economic",
-      "to": "COUNTRY-US",
-      "type": "CAUSES",
-      "weight": 0.8
     },
     {
       "from": "DRIVER-US-Geopolitical",
@@ -163,6 +157,33 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-US-Economic",
+      "to": "COUNTRY-US",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-US-geopolitical",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-US-В_США_нача",
       "to": "DOMAIN-US-economic",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.61
     },
     {
-      "from": "SIGNAL-US-CBS_публик",
+      "from": "SIGNAL-US-CBS_показа",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.59
+      "weight": 0.56
     }
   ]
 }
