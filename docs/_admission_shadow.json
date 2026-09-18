@@ -1,10 +1,10 @@
 {
-  "generated": "2026-09-18T01:35:53Z",
+  "generated": "2026-09-18T02:04:46Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 772,
-    "DENY_COMMENTARY": 293,
+    "PASS_FACT": 771,
+    "DENY_COMMENTARY": 294,
     "DENY_STATE_ONLY": 3,
     "DENY_BACKGROUND": 6,
     "UNMATCHED": 5,
@@ -16,9 +16,9 @@
     "unmatched": 5,
     "coverage_pct": 99.5,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 71.7,
-    "admission_deny_rate": 28.3,
-    "processes_without_fact": 305,
+    "admission_pass_rate": 71.6,
+    "admission_deny_rate": 28.4,
+    "processes_without_fact": 306,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -26,9 +26,9 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 298,
-      "sample": 1012,
-      "agreement_pct": 92.1,
-      "decision_agreement_pct": 92.3,
+      "sample": 1006,
+      "agreement_pct": 92.0,
+      "decision_agreement_pct": 92.2,
       "critical_errors": 78,
       "truth_ratio_pct": 96.8,
       "error_matrix": {
@@ -42,7 +42,7 @@
     },
     "historical": {
       "processes": 1082,
-      "sample": 2321,
+      "sample": 2315,
       "agreement_pct": 93.1,
       "decision_agreement_pct": 93.2,
       "critical_errors": 158,
@@ -58,16 +58,16 @@
       }
     },
     "events_stream": {
-      "sample": 349,
-      "agreement_pct": 92.3,
-      "decision_agreement_pct": 93.1,
+      "sample": 345,
+      "agreement_pct": 92.5,
+      "decision_agreement_pct": 93.0,
       "critical_errors": 24,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 19,
         "BACKGROUND→COMMENTARY": 1,
         "COMMENTARY→FACT_EVENT": 4,
         "FACT_EVENT→BACKGROUND": 1,
-        "FEATURE→COMMENTARY": 2
+        "FEATURE→COMMENTARY": 1
       }
     },
     "gate": {
@@ -79,14 +79,14 @@
   },
   "class_source": {
     "shadow_title_only": 190,
-    "evidence_sic": 2321,
+    "evidence_sic": 2315,
     "event_sic": 2
   },
   "truth_ratio_pct": 92.4,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 225,
-      "deny": 85
+      "pass": 224,
+      "deny": 86
     },
     "technology": {
       "pass": 81,
@@ -362,6 +362,22 @@
       },
       "status": "active",
       "causal_links": 11,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-беларусь-0891",
+      "title": "Геополитический процесс — Беларусь",
+      "domain": "geopolitics",
+      "severity": 62,
+      "pressure": 45,
+      "first_seen": "2026-07-06",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "FEATURE": 1,
+        "COMMENTARY": 1
+      },
+      "status": "active",
+      "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -994,21 +1010,6 @@
       "status": "fading",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "geop-санкционно-северная-канада-4398",
-      "title": "Санкционное давление — Северная Америка",
-      "domain": "geopolitics",
-      "severity": 59,
-      "pressure": 36,
-      "first_seen": "2026-08-23",
-      "evidence_count": 3,
-      "evidence_classes": {
-        "COMMENTARY": 3
-      },
-      "status": "dormant",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1073,6 +1074,13 @@
       "signal_id": "econ-экономичес-украина-828a",
       "domain": "economy",
       "legacy": 54,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "geop-геополитич-беларусь-0891",
+      "domain": "geopolitics",
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1425,19 +1433,12 @@
       "legacy": 45,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "tech-технологич-юговосто-298e",
-      "domain": "technology",
-      "legacy": 53,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 197,
-    "51-70": 99,
+    "51-70": 100,
     "71-90": 6,
     "91-100": 0
   }
