@@ -2,66 +2,148 @@
   "country": "US",
   "country_name": "США",
   "date": "2026-09-19",
-  "generated_at": "2026-09-19T09:28:23.607863+00:00",
-  "evolution_score": 60,
-  "grade": "C",
-  "grade_ru": "Умеренная",
+  "generated_at": "2026-09-19T09:46:10.748185+00:00",
+  "evolution_score": 65,
+  "grade": "B",
+  "grade_ru": "Стабильная эволюция",
   "active_scenarios": [
     {
-      "id": "ASE-ESC-DETE",
-      "type": "escalation_branch",
-      "name": "Ветвь эскалации: deteriorating",
-      "trigger": "Тренд: нарастание давления",
-      "score": 79,
-      "probability": 18,
-      "confidence": 50,
-      "trend_strength": 65,
+      "id": "ASE-ACC-15",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+15",
+      "score": 95,
+      "probability": 35,
+      "confidence": 55,
+      "trend_strength": 100,
       "status": "emerging",
-      "source": "recommendation_shift",
+      "source": "signal_acceleration",
       "domain": "economy"
-    }
-  ],
-  "active_count": 1,
-  "emerging_scenarios": [
+    },
     {
       "id": "ASE-ESC-DETE",
       "type": "escalation_branch",
       "name": "Ветвь эскалации: deteriorating",
       "trigger": "Тренд: нарастание давления",
-      "score": 79,
+      "score": 94,
       "probability": 18,
       "confidence": 50,
       "trend_strength": 65,
       "status": "emerging",
       "source": "recommendation_shift",
       "domain": "economy"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 84",
+      "score": 97,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "economy"
     }
   ],
-  "convergences": [],
+  "active_count": 3,
+  "emerging_scenarios": [
+    {
+      "id": "ASE-ACC-15",
+      "type": "acceleration",
+      "name": "Сценарий ускорения (acceleration)",
+      "trigger": "signal_acceleration Δ=+15",
+      "score": 95,
+      "probability": 35,
+      "confidence": 55,
+      "trend_strength": 100,
+      "status": "emerging",
+      "source": "signal_acceleration",
+      "domain": "economy"
+    },
+    {
+      "id": "ASE-ESC-DETE",
+      "type": "escalation_branch",
+      "name": "Ветвь эскалации: deteriorating",
+      "trigger": "Тренд: нарастание давления",
+      "score": 94,
+      "probability": 18,
+      "confidence": 50,
+      "trend_strength": 65,
+      "status": "emerging",
+      "source": "recommendation_shift",
+      "domain": "economy"
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "type": "critical_branch",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "trigger": "Критический уровень риска: 84",
+      "score": 97,
+      "probability": 12,
+      "confidence": 60,
+      "trend_strength": 80,
+      "status": "emerging",
+      "source": "critical_risk",
+      "domain": "economy"
+    }
+  ],
+  "convergences": [
+    {
+      "scenario_a": "escalation_branch",
+      "scenario_b": "critical_branch",
+      "score_gap": 3,
+      "prob_gap": 6,
+      "label": "Сближение: Ветвь эскалации: deteriorating ↔ Критический каскад (ветвь КРИТИЧЕСКИХ рисков)"
+    }
+  ],
   "divergences": [],
   "ranked_pathways": [
     {
+      "id": "ASE-ACC-15",
+      "name": "Сценарий ускорения (acceleration)",
+      "type": "acceleration",
+      "status": "emerging",
+      "probability": 53.8,
+      "score": 95,
+      "confidence": 55,
+      "trend_strength": 100,
+      "scenario_score": 70
+    },
+    {
+      "id": "ASE-CRIT-WORST",
+      "name": "Критический каскад (ветвь КРИТИЧЕСКИХ рисков)",
+      "type": "critical_branch",
+      "status": "emerging",
+      "probability": 18.5,
+      "score": 97,
+      "confidence": 60,
+      "trend_strength": 80,
+      "scenario_score": 59
+    },
+    {
       "id": "ASE-ESC-DETE",
       "name": "Ветвь эскалации: deteriorating",
       "type": "escalation_branch",
       "status": "emerging",
-      "probability": 100.0,
-      "score": 79,
+      "probability": 27.7,
+      "score": 94,
       "confidence": 50,
       "trend_strength": 65,
-      "scenario_score": 70
+      "scenario_score": 56
     }
   ],
-  "pathway_count": 1,
+  "pathway_count": 3,
   "future_landscape": {
-    "dominant_pathway": "Ветвь эскалации: deteriorating",
-    "dominant_prob": 100.0,
-    "dominant_score": 79,
-    "outlook": "stable",
-    "narrative": "Базовый сценарий 'Ветвь эскалации: deteriorating' (100%) — ситуация стабильна. Скор 79.",
-    "n_convergences": 0,
+    "dominant_pathway": "Сценарий ускорения (acceleration)",
+    "dominant_prob": 53.8,
+    "dominant_score": 95,
+    "outlook": "deteriorating",
+    "narrative": "Доминирующий сценарий 'Сценарий ускорения (acceleration)' (54%) указывает на ухудшение — скор 95. Риск системной эскалации.",
+    "n_convergences": 1,
     "n_divergences": 0,
-    "landscape_complexity": 10
+    "landscape_complexity": 30
   },
   "diagnostics": [
     {
@@ -71,26 +153,26 @@
     }
   ],
   "diagnostic_count": 1,
-  "scenario_diversity_index": 0,
-  "future_stability_index": 100,
+  "scenario_diversity_index": 6,
+  "future_stability_index": 91,
   "retired_scenarios": [
     {
       "type": "best",
       "name": "Best Case",
       "name_ru": "Лучший сценарий",
-      "probability": 34,
-      "score": 66,
-      "delta_from_current": -3,
+      "probability": 24,
+      "score": 70,
+      "delta_from_current": -14,
       "state": "escalating",
       "state_ru": "Эскалация",
       "impact": "severe",
       "impact_ru": "Тяжёлый",
-      "velocity": "moderate",
-      "velocity_ru": "Умеренный",
-      "recovery_days": 353,
-      "future_pressure": 46,
-      "future_resilience": 49,
-      "future_probability": 34,
+      "velocity": "explosive",
+      "velocity_ru": "Взрывной",
+      "recovery_days": 390,
+      "future_pressure": 53,
+      "future_resilience": 43,
+      "future_probability": 24,
       "drivers": [
         {
           "driver": "Деэскалация",
@@ -102,62 +184,66 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 66,
+          "score": 70,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -3
+          "delta_from_current": -14
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 59,
+          "score": 61,
           "state": "escalating",
           "state_ru": "Эскалация",
-          "delta_from_current": -10
+          "delta_from_current": -23
         },
         {
           "horizon": "180d",
           "label": "180 дней",
           "score": 53,
-          "state": "contained",
-          "state_ru": "Контролируемо",
-          "delta_from_current": -16
+          "state": "escalating",
+          "state_ru": "Эскалация",
+          "delta_from_current": -31
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 47,
-          "state": "contained",
-          "state_ru": "Контролируемо",
-          "delta_from_current": -22
+          "score": 46,
+          "state": "escalating",
+          "state_ru": "Эскалация",
+          "delta_from_current": -38
         }
       ],
-      "evolved_probability": 33.7,
+      "evolved_probability": 23.8,
       "evolved_confidence": 25,
-      "evolution_delta": -0.3,
+      "evolution_delta": -0.2,
       "status": "retiring"
     },
     {
       "type": "base",
       "name": "Base Case",
       "name_ru": "Базовый сценарий",
-      "probability": 27,
-      "score": 72,
-      "delta_from_current": 3,
-      "state": "escalating",
-      "state_ru": "Эскалация",
-      "impact": "severe",
-      "impact_ru": "Тяжёлый",
-      "velocity": "moderate",
-      "velocity_ru": "Умеренный",
-      "recovery_days": 386,
-      "future_pressure": 54,
-      "future_resilience": 46,
-      "future_probability": 27,
+      "probability": 8,
+      "score": 95,
+      "delta_from_current": 11,
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
+      "impact": "catastrophic",
+      "impact_ru": "Катастрофический",
+      "velocity": "explosive",
+      "velocity_ru": "Взрывной",
+      "recovery_days": 529,
+      "future_pressure": 79,
+      "future_resilience": 40,
+      "future_probability": 8,
       "drivers": [
         {
+          "driver": "Отслеживайте новые законы о лесных пожарах в ",
+          "impact": 11
+        },
+        {
           "driver": "В США начался топливный кризис: дизель подоро",
-          "impact": 10
+          "impact": 11
         }
       ],
       "description": "Текущие тренды сохраняются, без значимых изменений",
@@ -165,62 +251,66 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 72,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": 3
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 72,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": 3
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 72,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": 3
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 72,
-          "state": "escalating",
-          "state_ru": "Эскалация",
-          "delta_from_current": 3
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         }
       ],
-      "evolved_probability": 26.8,
+      "evolved_probability": 7.9,
       "evolved_confidence": 25,
-      "evolution_delta": -0.2,
+      "evolution_delta": -0.1,
       "status": "retiring"
     },
     {
       "type": "stress",
       "name": "Stress Case",
       "name_ru": "Стресс-сценарий",
-      "probability": 21,
-      "score": 75,
-      "delta_from_current": 6,
-      "state": "critical",
-      "state_ru": "Критическая эскалация",
-      "impact": "severe",
-      "impact_ru": "Тяжёлый",
-      "velocity": "fast",
-      "velocity_ru": "Быстрый",
-      "recovery_days": 402,
-      "future_pressure": 58,
-      "future_resilience": 42,
-      "future_probability": 21,
+      "probability": 29,
+      "score": 95,
+      "delta_from_current": 11,
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
+      "impact": "catastrophic",
+      "impact_ru": "Катастрофический",
+      "velocity": "explosive",
+      "velocity_ru": "Взрывной",
+      "recovery_days": 529,
+      "future_pressure": 80,
+      "future_resilience": 37,
+      "future_probability": 29,
       "drivers": [
         {
+          "driver": "Отслеживайте новые законы о лесных пожарах в ",
+          "impact": 14
+        },
+        {
           "driver": "В США начался топливный кризис: дизель подоро",
-          "impact": 13
+          "impact": 14
         },
         {
           "driver": "Негативный сдвиг",
@@ -232,37 +322,37 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 75,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 6
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 80,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
           "delta_from_current": 11
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 85,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 16
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         },
         {
           "horizon": "365d",
           "label": "365 дней",
-          "score": 91,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 22
+          "delta_from_current": 11
         }
       ],
-      "evolved_probability": 20.8,
+      "evolved_probability": 28.8,
       "evolved_confidence": 25,
       "evolution_delta": -0.2,
       "status": "retiring"
@@ -271,23 +361,27 @@
       "type": "worst",
       "name": "Worst Case",
       "name_ru": "Худший сценарий",
-      "probability": 18,
-      "score": 78,
-      "delta_from_current": 9,
-      "state": "critical",
-      "state_ru": "Критическая эскалация",
-      "impact": "severe",
-      "impact_ru": "Тяжёлый",
+      "probability": 39,
+      "score": 95,
+      "delta_from_current": 11,
+      "state": "cascade",
+      "state_ru": "Каскадный кризис",
+      "impact": "catastrophic",
+      "impact_ru": "Катастрофический",
       "velocity": "explosive",
       "velocity_ru": "Взрывной",
-      "recovery_days": 418,
-      "future_pressure": 64,
-      "future_resilience": 35,
-      "future_probability": 18,
+      "recovery_days": 529,
+      "future_pressure": 83,
+      "future_resilience": 31,
+      "future_probability": 39,
       "drivers": [
         {
+          "driver": "Отслеживайте новые законы о лесных пожарах в ",
+          "impact": 20
+        },
+        {
           "driver": "В США начался топливный кризис: дизель подоро",
-          "impact": 18
+          "impact": 20
         },
         {
           "driver": "Каскадный эффект",
@@ -299,26 +393,26 @@
         {
           "horizon": "30d",
           "label": "30 дней",
-          "score": 78,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 9
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         },
         {
           "horizon": "90d",
           "label": "90 дней",
-          "score": 84,
-          "state": "critical",
-          "state_ru": "Критическая эскалация",
-          "delta_from_current": 15
+          "score": 95,
+          "state": "cascade",
+          "state_ru": "Каскадный кризис",
+          "delta_from_current": 11
         },
         {
           "horizon": "180d",
           "label": "180 дней",
-          "score": 91,
+          "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 22
+          "delta_from_current": 11
         },
         {
           "horizon": "365d",
@@ -326,25 +420,25 @@
           "score": 95,
           "state": "cascade",
           "state_ru": "Каскадный кризис",
-          "delta_from_current": 26
+          "delta_from_current": 11
         }
       ],
-      "evolved_probability": 17.9,
-      "evolved_confidence": 25,
-      "evolution_delta": -0.1,
+      "evolved_probability": 39.8,
+      "evolved_confidence": 25.5,
+      "evolution_delta": 0.8,
       "status": "retiring"
     }
   ],
   "retired_count": 4,
   "sub_scores": {
-    "fc_acc": 71,
+    "fc_acc": 70,
     "sc_val": 100,
     "prob_cal": 0,
-    "adapt": 65,
+    "adapt": 95,
     "stability": 52
   },
   "history_depth": 4,
-  "risk_score": 69,
-  "delta": 0,
+  "risk_score": 84,
+  "delta": 15,
   "domain": "economy"
 }
