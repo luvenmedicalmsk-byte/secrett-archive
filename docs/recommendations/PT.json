@@ -2,12 +2,31 @@
   "country": "PT",
   "country_name": "Португалия",
   "date": "2026-09-19",
-  "generated_at": "2026-09-19T16:05:51.832596+00:00",
-  "srs_score": 59,
-  "srs_grade": "D",
-  "srs_grade_ru": "Требует внимания",
-  "priority_risks": [],
-  "risk_count": 0,
+  "generated_at": "2026-09-19T16:25:23.382929+00:00",
+  "srs_score": 69,
+  "srs_grade": "C",
+  "srs_grade_ru": "Умеренная",
+  "priority_risks": [
+    {
+      "id": "R-02",
+      "category": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+14/день",
+      "detail": "Скорость ухудшения 14 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "metric_value": 14,
+      "urgency": 90,
+      "source": "delta"
+    },
+    {
+      "id": "R-06",
+      "category": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -14.0pt",
+      "detail": "Уверенность прогнозной системы дрейфует на -14.0pt от краткосрочного к долгосрочному горизонту.",
+      "metric_value": -14,
+      "urgency": 58,
+      "source": "confidence_drift"
+    }
+  ],
+  "risk_count": 2,
   "priority_opportunities": [
     {
       "id": "O-05",
@@ -21,9 +40,9 @@
     {
       "id": "O-06",
       "category": "INFORMATIONAL",
-      "title": "Стратегия результативна: 98.6% успех",
-      "detail": "Исторический процент успешных решений 98.6% — выше среднего. Поддерживать текущий подход.",
-      "metric_value": 98.6,
+      "title": "Стратегия результативна: 97.3% успех",
+      "detail": "Исторический процент успешных решений 97.3% — выше среднего. Поддерживать текущий подход.",
+      "metric_value": 97.3,
       "impact": 65,
       "source": "decision_success"
     }
@@ -31,22 +50,28 @@
   "opp_count": 2,
   "emerging_shifts": [
     {
+      "type": "deteriorating",
+      "title": "Тренд: нарастание давления",
+      "detail": "Оптимизационный движок фиксирует систематическую недооценку угроз.",
+      "direction": "up"
+    },
+    {
       "type": "horizon_shift",
-      "title": "Горизонт d7 точнее, d30 — слабее",
-      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d30. Скорректируйте горизонты планирования.",
+      "title": "Горизонт d7 точнее, d90 — слабее",
+      "detail": "Система прогнозирует надёжнее на горизонте d7 и менее точно на d90. Скорректируйте горизонты планирования.",
       "direction": "neutral"
     }
   ],
   "forecast_degradation": [
     {
       "type": "horizon_degradation",
-      "horizon": "d30",
-      "detail": "Худший горизонт прогноза: d30. Увеличить частоту переобучения на этом горизонте."
+      "horizon": "d90",
+      "detail": "Худший горизонт прогноза: d90. Увеличить частоту переобучения на этом горизонте."
     },
     {
       "type": "confidence_drift",
       "horizon": "long",
-      "detail": "Дрейф уверенности -7.0pt указывает на деградацию долгосрочных прогнозов."
+      "detail": "Дрейф уверенности -14.0pt указывает на деградацию долгосрочных прогнозов."
     }
   ],
   "forecast_improvement": [
@@ -58,16 +83,25 @@
     {
       "type": "alpha_positive",
       "horizon": "all",
-      "detail": "Положительная альфа стратегии (+2.62pt) — решения превосходят пассивный базис."
+      "detail": "Положительная альфа стратегии (+2.42pt) — решения превосходят пассивный базис."
     }
   ],
   "ranked_recommendations": [
+    {
+      "id": "R-02",
+      "type": "risk",
+      "priority": "HIGH_PRIORITY",
+      "title": "Быстрая эскалация: Δ=+14/день",
+      "rec_score": 69,
+      "metric_value": 14,
+      "source": "delta"
+    },
     {
       "id": "O-05",
       "type": "opportunity",
       "priority": "STRATEGIC",
       "title": "Высокоэффективные действия доступны (9)",
-      "rec_score": 62,
+      "rec_score": 61,
       "metric_value": 9,
       "source": "high_alpha"
     },
@@ -75,13 +109,38 @@
       "id": "O-06",
       "type": "opportunity",
       "priority": "INFORMATIONAL",
-      "title": "Стратегия результативна: 98.6% успех",
-      "rec_score": 59,
-      "metric_value": 98.6,
+      "title": "Стратегия результативна: 97.3% успех",
+      "rec_score": 58,
+      "metric_value": 97.3,
       "source": "decision_success"
+    },
+    {
+      "id": "R-06",
+      "type": "risk",
+      "priority": "WATCHLIST",
+      "title": "Дрейф уверенности прогнозов: -14.0pt",
+      "rec_score": 53,
+      "metric_value": -14,
+      "source": "confidence_drift"
     }
   ],
   "action_plan": [
+    {
+      "id": "ACT-R-02",
+      "priority": "CRITICAL",
+      "action": "Реагировать: Быстрая эскалация: Δ=+14/день",
+      "rationale": "Скорость ухудшения 14 пунктов в сутки. Требуется немедленное увеличение мониторинга.",
+      "deadline": "немедленно",
+      "source": "delta"
+    },
+    {
+      "id": "ACT-R-06",
+      "priority": "STRATEGIC",
+      "action": "Реагировать: Дрейф уверенности прогнозов: -14.0pt",
+      "rationale": "Уверенность прогнозной системы дрейфует на -14.0pt от краткосрочного к долгосрочному горизонту.",
+      "deadline": "7 дней",
+      "source": "confidence_drift"
+    },
     {
       "id": "ACT-O-05",
       "priority": "STRATEGIC",
@@ -93,17 +152,25 @@
     {
       "id": "ACT-O-06",
       "priority": "STRATEGIC",
-      "action": "Использовать: Стратегия результативна: 98.6% успех",
-      "rationale": "Исторический процент успешных решений 98.6% — выше среднего. Поддерживать текущий подход.",
+      "action": "Использовать: Стратегия результативна: 97.3% успех",
+      "rationale": "Исторический процент успешных решений 97.3% — выше среднего. Поддерживать текущий подход.",
       "deadline": "30 дней",
       "source": "decision_success"
+    },
+    {
+      "id": "ACT-CONF",
+      "priority": "STRATEGIC",
+      "action": "Рекалибровать уверенность прогнозов → 53.0%",
+      "rationale": "Оптимизационный движок выявил отклонение от оптимальной уверенности.",
+      "deadline": "30 дней",
+      "source": "confidence_target"
     }
   ],
-  "action_count": 2,
+  "action_count": 5,
   "rec_diagnostics": [],
   "diagnostic_count": 0,
-  "risk_score": 42,
-  "delta": 0,
+  "risk_score": 56,
+  "delta": 14,
   "domain": "climate",
   "history_depth": 103
 }
