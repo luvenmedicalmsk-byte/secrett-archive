@@ -4530,6 +4530,58 @@ _SYS_PROTECT_RE = re.compile(
     r'europol|интерпол|\bfbi\b|\bфбр\b|разрушил|ликвидир|пресек|'
     r'землетряс|наводнен|цунами|радиац',
     re.IGNORECASE)
+
+# S44.1 ЧАСТНАЯ ХРОНИКА (19.09.2026). Таможенный протокол и частный иск
+# с одним физлицом — не системный риск ни в одном домене. В ленту попали
+# «В Пулково у россиянки нашли 55 кг натуральных волос» (46) и «Работяга
+# отсудил полмиллиона у руководства за утренние созвоны» (34). Первое
+# ушло триггером в процесс «Валютный рынок», второе — в «Экономический
+# сигнал»: шум не просто виден в ленте, он подмешивается в процессы.
+#
+# Почему прежние фильтры не сработали:
+#   S37  _is_noise  — словарь лайфстайла (сериалы, гороскопы, питомцы),
+#                     таможни и частных исков в нём нет; плюс гейт
+#                     severity < 46, а у Пулково ровно 46.
+#   S44  _CRIME_NOISE_RE — насильственная преступность (нож, ограбление,
+#                     ДТП), гражданский иск и таможня не покрыты.
+#   Admission 3.0   — к Telegram не применяется вовсе: на строке с _thr
+#                     порог ленты для Telegram равен 0, поэтому
+#                     _below_feed=False и весь блок шум-фильтров
+#                     Admission пропускается. Оба события — Telegram.
+#
+# Правило намеренно узкое: требуется ПАРА частное лицо + частноправовой
+# исход, и масштаб её снимает. Отдельный guard, а не _SYS_PROTECT_RE:
+# тот проверяется подстрокой без границы слова и здесь даёт ложную
+# защиту — «д-ВОЙН-ой стоимости» ловится как «войн», «бурение НЕФТ-яных
+# скважин» как «нефт». Границы слова в _SYS_PROTECT_RE — отдельная
+# задача, тут её не трогаем.
+_PRIVATE_ACTOR_RE = re.compile(
+    r'(?:у\s+)?росси(?:янк|янин)\w*|работяг\w*|пенсионер\w*|школьник\w*|'
+    r'(?:местн\w*\s+)?житель\s+\w+|пассажир\w*|'
+    r'(?:одн|некий|некая)\w*\s+(?:мужчин|женщин)\w*|'
+    r'(?:у|для)\s+(?:девушк|мужчин|женщин)\w*', re.I)
+_PRIVATE_OUTCOME_RE = re.compile(
+    r'грозит\s+штраф|конфискац\w*|отсудил\w*|зел[ёе]н\w*\s+коридор|'
+    r'таможн\w*[^.]{0,40}(?:не\s+согласил|изъя|нашл)|'
+    r'возбужден\w*\s+(?:уголовн\w*\s+)?дело\s+против\s+\w+|'
+    r'приговорил\w*\s+к\s+\d', re.I)
+# Снимает правило только МАСШТАБ, а не присутствие юрлица: «компания»
+# в деле о созвонах — это ответчик, а не масштаб события.
+_PRIVATE_SCALE_RE = re.compile(
+    r'тысяч|млн\s+человек|миллион\w*\s+человек|массов\w*|'
+    r'по\s+всей\s+стране|общенациональн|национальн\w*\s+(?:масштаб|уровн)|'
+    r'сотн\w*\s+(?:тысяч|человек)', re.I)
+
+
+def _is_private_blotter(title, desc=''):
+    """S44.1: частная хроника — физлицо + частноправовой исход, без массового масштаба."""
+    b = (title or '') + ' ' + (desc or '')[:500]
+    if not _PRIVATE_ACTOR_RE.search(b):
+        return False
+    if not _PRIVATE_OUTCOME_RE.search(b):
+        return False
+    return not _PRIVATE_SCALE_RE.search(b)
+
 def _is_noise(title):
     """S37: низкосигнальный шум (речи/PR/интервью/опросы/лайфстайл) -- по заголовку."""
     t = (title or '').lower()
@@ -6401,6 +6453,11 @@ def process_events(raw_items):
                 and _CRIME_NOISE_RE.search(item.get('title',''))
                 and not _SYS_PROTECT_RE.search(item.get('title',''))):
             _trace(_tid,'SEVERITY','removed',reason='sev_crime'); _lost('sev', item); _lost('sev_crime', item); continue
+        # S44.1: частная хроника (таможенный протокол, частный иск) -- шум
+        # независимо от severity: гейт S37 (<46) её не ловит, Пулково ровно 46.
+        if (item.get('_force_severity') is None and not _sys
+                and _is_private_blotter(item.get('title', ''), item.get('desc', ''))):
+            _trace(_tid,'SEVERITY','removed',reason='sev_private'); _lost('sev', item); _lost('sev_private', item); continue
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
         _TRUSTED_SOCIAL={'WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','WHO','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IOM','ReliefWeb','UN News','ILO','WEF',
             'IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review',
