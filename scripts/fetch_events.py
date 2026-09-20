@@ -8646,6 +8646,22 @@ _GEOECON_OVERRIDE_FROM = {'Розничная торговля','Экономи�
 _ARMS = re.compile(r'прода\w*\s+(?:ракет|оруж|вооружен|истребител|танк|боеприпас|снаряд|бпла|беспилотник|дрон|систем\w*\s+пво|комплекс\w*\s+с-\d|зенитн|patriot|пэтриот|томагавк|tomahawk|javelin|f-?16|ф-?16|himars|хаймарс)|экспорт\w*\s+(?:оруж|вооружен)|поставк\w*\s+(?:оруж|вооружен|ракет|истребител|танк|patriot|пэтриот|томагавк|tomahawk|f-?16)|военн\w*\s+помощ\w*|военн\w*\s+поставк')
 FIRE_HEAT_GUARD = True   # CANARY: пожар/жара переопределяют домен climate только при природном контексте. Откат = False.
 HOME_FIRE_GUARD = True   # CANARY: бытовой пожар в жилье (малый масштаб) -> локальное ЧП, из ленты. Откат = False.
+# POST-BUILD REPAIR (20.09.2026): правки словарей применяются и к УЖЕ
+# опубликованным событиям. Обычные правила severity и geo работают в
+# момент разбора записи, а события переносятся из прошлого снимка и
+# второй раз через разбор не проходят: карточка «Работа АЗС
+# приостановлена ... Сириус» держала бы 34/100 и страну Сирия до
+# lifecycle-decay, хотя оба дефекта уже починены. Откат = False.
+POSTBUILD_REPAIR = True
+# Починка страны требует ЯВНОГО российского маркера в ЗАГОЛОВКЕ. Без него
+# проход вредит: на срезе он уводил «SoftBank согласен приобрести Институт
+# робототехники» из США в Республику Коми, потому что _foreign_country уже
+# не видел страну, а ru_subject нашёл подстроку. Маркер сужает проход до
+# записей, которые сами называют себя российскими.
+_PB_RU_MARK = re.compile(
+    r'(?:^|[^а-яё])(?:росси\w*|рф\b|федеральн\w*\s+территор\w*|'
+    r'минобороны|минэнерго|мчс|губернатор\w*|'
+    r'администрац\w*\s+(?:города|района|территор))', re.I)
 _BLOCKED_SOURCES = {'meduza', 'investfuture', 'telegram/investfuture'}   # редакционный блок источников (анти-каналы) -> drop на входе
 _FG_NAT_FIRE = re.compile(r'лесн|степн|\bтрав|торф|сухостой|ландшафтн|природн\w* пожар|дик\w* природ|wildfire|буш|растительн|GDACS|верхов\w* пожар|пожароопасн', re.I)
 _FG_REAL_HEAT = re.compile(r'градус|температур|°|аномальн\w* (?:жар|тепл)|рекордн\w* (?:жар|тепл)|\bзно[йя]|засух|тепловой удар|волн\w* жары|\+\d+\s*°?[сc]', re.I)
@@ -17941,6 +17957,58 @@ def save_enriched(events, previous_snapshot=None):
             print(f"[CASUALTY_RU] casualty-подъёмов за прогон: {len(_CASUALTY_RU_HITS)}")
         except Exception:
             pass
+    # POST-BUILD REPAIR: применяем починенные правила к персистящим событиям.
+    # Проход идёт по тому же списку, что и HOME_FIRE ниже, то есть включает
+    # записи, перенесённые из прошлого снимка.
+    if POSTBUILD_REPAIR:
+        _pb_sev = _pb_geo = 0
+        for _pe in events:
+            _pt = ((_pe.get('title') or '') + ' ' + (_pe.get('summary') or ''))
+            _pl = _pt.lower()
+            # 1) Порог приостановки работы АЗС.
+            try:
+                if (_FUEL_HALT_RE.search(_pl) and _FUEL_HALT_SCOPE_RE.search(_pl)
+                        and not _FUEL_HALT_GUARD_RE.search(_pl)
+                        and int(_pe.get('severity') or 0) < _FUEL_HALT_FLOOR):
+                    _pe['severity'] = _sev_log(_pe, 'fuel_halt_floor_postbuild',
+                                               _pe.get('severity'), _FUEL_HALT_FLOOR,
+                                               'приостановка работы АЗС в административном охвате',
+                                               'recompute')
+                    _pb_sev += 1
+            except Exception:
+                pass
+            # 2) Устаревшая страна: резолвер больше не находит иностранное
+            # государство, но находит субъект РФ. Снимаем только такие записи,
+            # то есть заведомо ложные срабатывания прошлых словарей.
+            try:
+                _pc = [c for c in (_pe.get('country_codes') or []) if c] or \
+                      [c for c in (_pe.get('mentioned_countries') or []) if c]
+                if (_pc and 'RU' not in _pc
+                        and _pe.get('country_code') in ('', None)
+                        and _PB_RU_MARK.search(_pe.get('title') or '')):
+                    _fc = _foreign_country(_pt)[0]
+                    _ru = ru_subject_in(_pt)
+                    if _ru and not _fc:
+                        _pe['country_codes'] = []
+                        _pe['mentioned_countries'] = []
+                        _pe['impact_countries'] = []
+                        _pe['event_country'] = 'RU'
+                        _pe['primary_country'] = 'RU'
+                        _pe['country_code'] = 'RU'
+                        _pe['region'] = _ru
+                        _g = _pe.get('geo')
+                        if isinstance(_g, dict):
+                            _g['impact_countries'] = []
+                            _g['country'] = 'RU'
+                            _g['country_ru'] = 'Россия'
+                            _g['region'] = _ru
+                        _pb_geo += 1
+            except Exception:
+                pass
+        if _pb_sev or _pb_geo:
+            print('  [POSTBUILD] порогов пересчитано %d · стран исправлено %d'
+                  % (_pb_sev, _pb_geo), file=sys.stderr)
+
     # HOME_FIRE post-build: бытовой пожар в жилье -> из ленты (ловит и персистящие события, не только входящие в gate)
     if HOME_FIRE_GUARD:
         _HF_HOME=('таунхаус','коттедж','частн дом','в частном доме','в жилом дом','в квартир','дачн','в бараке','в гараж','в бане','надворн','в избе')
