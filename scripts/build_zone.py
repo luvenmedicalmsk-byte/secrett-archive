@@ -183,15 +183,31 @@ def make_cover(c, z):
     c.setStrokeColor(GOLD); c.setLineWidth(0.7)
     c.line(78, H - 400, 518, H - 400)
 
-    def T(y, size, col, font, txt, k=1.07):
-        c.setFont(font, size); c.setFillColor(col)
+    # ПЕРЕПОЛНЕНИЕ СТРОКИ ОБЛОЖКИ (20.09.2026). Подзаголовок и строка
+    # индекса рисуются одной строкой через drawString, без переноса и без
+    # контроля ширины: длинное название зоны или региона молча уезжало
+    # за правое поле листа, без ошибки при сборке. Поймано на зоне
+    # «Сценарий блокады Сувалкского коридора»: подзаголовок занимал
+    # 534.7 pt при доступных 497.3.
+    #
+    # Кегль подбирается вниз, пока строка не уложится в поле. Базовая
+    # линия считается по ИСХОДНОМУ кеглю, чтобы вертикальная сетка
+    # обложки не поехала: уменьшается только начертание.
+    RIGHT = 575.0
+
+    def T(y, size, col, font, txt, k=1.07, fit=False):
+        draw = size
+        if fit:
+            while draw > 6.6 and 78 + pdfmetrics.stringWidth(txt, font, draw) > RIGHT:
+                draw -= 0.2
+        c.setFont(font, draw); c.setFillColor(col)
         c.drawString(78, H - y - size*k, txt)
 
     T(408.0, 17.5, NAVY,  "Noto-Bold", z['title'])
-    T(448.0,  9.2, MUTED, "Noto",      z['subtitle'])
+    T(448.0,  9.2, MUTED, "Noto",      z['subtitle'], fit=True)
     T(468.0,  9.2, MUTED, "Noto",      "Дата оценки: " + z['date_h'])
     T(504.0, 44.0, CYAN,  "Noto-Bold", "%d/100" % z['index'])
-    T(568.0, 10.6, NAVY,  "Noto-Bold", "Индекс риска «%s»" % z['zone'])
+    T(568.0, 10.6, NAVY,  "Noto-Bold", "Индекс риска «%s»" % z['zone'], fit=True)
     st = ParagraphStyle("st", fontName="Noto", fontSize=9.2, leading=13.0, textColor=MUTED)
     p = Paragraph(clean(z['index_label'] + " · " + z['index_note']), st)
     # Высота считается по фактическому тексту, а не зажимается в 60 пунктов
