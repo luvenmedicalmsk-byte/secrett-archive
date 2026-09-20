@@ -4471,7 +4471,7 @@ _NOISE_WORDS = [
     'опрос потреб','результаты опроса','типологии','быть в курсе ключевых','уведомление для','notice for',
     # лайфстайл / фичи / животные
     'этикет','гороскоп','католиц','60 minutes','знаменитост',
-    'домашних животн','к собакам','собакам, кошк','питомц','живущим рядом с человеком',
+    'домашних животн','к собакам','собакам','кошк','питомц','живущим рядом с человеком',
     # культура / кино / развлечения -- не сигнал риска
     'документальный сериал','документальный фильм','документального фильма',
     'документального киноцикл','киноцикл','режиссёр','режиссер','кинофестивал',
@@ -4573,14 +4573,55 @@ _PRIVATE_SCALE_RE = re.compile(
     r'сотн\w*\s+(?:тысяч|человек)', re.I)
 
 
+def _cut_words(text, limit):
+    """Обрезка по границе слова.
+
+    Срез по числу знаков рубит слово пополам и создаёт ложную границу:
+    «в подмосковных Котельниках», обрезанное на 300-м знаке, давало
+    отдельно стоящее «Кот» и ловилось правилом про животных.
+    """
+    t = (text or '')[:limit]
+    return re.sub(r'\S+$', '', t) if len(text or '') > limit else t
+
+
 def _is_private_blotter(title, desc=''):
     """S44.1: частная хроника — физлицо + частноправовой исход, без массового масштаба."""
-    b = (title or '') + ' ' + (desc or '')[:500]
+    b = (title or '') + ' ' + _cut_words(desc, 500)
     if not _PRIVATE_ACTOR_RE.search(b):
         return False
     if not _PRIVATE_OUTCOME_RE.search(b):
         return False
     return not _PRIVATE_SCALE_RE.search(b)
+
+# ВИРАЛЬНЫЙ КОНТЕНТ О ЖИВОТНЫХ (20.09.2026). «Желание котов скидывать
+# всё подряд не имеет границ» прошло в ленту как геополитика 42/100.
+# Единственное, что движок нашёл в тексте, — слово «границ» в идиоме
+# «не имеет границ»: оно есть и в _SIG_RE, и в геополитическом словаре,
+# поэтому запись получила и риск-сигнатуру, и домен.
+#
+# Животный блок в _NOISE_WORDS существовал, но не работал: ключи
+# «собакам» и «кошк» были записаны одним литералом 'собакам, кошк'
+# и совпадали только с этой строкой целиком. Исправлено выше.
+#
+# Проверка по границе слова обязательна: 'кот' простой подстрокой ловит
+# «КОТировки», «КОТорый», «сКОТоводов» — на срезе это десятки событий.
+_ANIMAL_RE = re.compile(
+    r'(?:^|[^а-яёa-z])(?:кот(?:ов|ы|ам|ах|а|у|е|ик\w*|ёнок|ят\w*)?|'
+    r'кош(?:к\w*|ач\w*)|пёс|пса|псы|щен(?:ок|ка|ят\w*)|'
+    r'хомяк\w*|попуга\w*|енот\w*|котопёс)(?:[^а-яёa-z]|$)', re.I)
+# Настоящий риск, в котором животное — участник, а не мем.
+_ANIMAL_RISK_RE = re.compile(
+    r'бешенств|птичий\s+грипп|ящур|зооноз|падёж|падеж\s+скот|поголов|'
+    r'эпизоот|вспышк|карантин|отлов|нападени\w*\s+на\s+человек|'
+    r'браконьер|краснокнижн|популяц|вымиран|инвазивн', re.I)
+
+
+def _is_animal_viral(title, desc=''):
+    """Виральная заметка о животных без риск-контекста."""
+    b = (title or '') + ' ' + _cut_words(desc, 300)
+    return bool(_ANIMAL_RE.search(b)) and not _ANIMAL_RISK_RE.search(b)
+
+
 
 def _is_noise(title):
     """S37: низкосигнальный шум (речи/PR/интервью/опросы/лайфстайл) -- по заголовку."""
@@ -6458,6 +6499,12 @@ def process_events(raw_items):
         if (item.get('_force_severity') is None and not _sys
                 and _is_private_blotter(item.get('title', ''), item.get('desc', ''))):
             _trace(_tid,'SEVERITY','removed',reason='sev_private'); _lost('sev', item); _lost('sev_private', item); continue
+        # S44.2: виральный контент о животных без риск-контекста -- шум
+        # независимо от severity и домена (идиома «не имеет границ» давала
+        # и риск-сигнатуру, и геополитику).
+        if (item.get('_force_severity') is None and not _sys
+                and _is_animal_viral(item.get('title', ''), item.get('desc', ''))):
+            _trace(_tid,'SEVERITY','removed',reason='sev_animal'); _lost('sev', item); _lost('sev_animal', item); continue
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
         _TRUSTED_SOCIAL={'WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','WHO','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IOM','ReliefWeb','UN News','ILO','WEF',
             'IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review',
