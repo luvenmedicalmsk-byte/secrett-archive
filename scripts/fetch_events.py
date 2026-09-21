@@ -9608,6 +9608,7 @@ def _junk_shadow_report(events, outdir):
 # GS-4  Shadow: только считает и пишет отчёт. Ни индекс, ни ярлык не меняются.
 #       Промоушен — GRI_FIX_GATE, откат = одна строка в False.
 # ══════════════════════════════════════════════════════════════════════════════
+_HISTORY_MAP_SIZE = [None]   # состояние истории для HISTORY SHADOW
 GRI_FIX_GATE = False   # промоушен: применять инверсию adaptive_capacity в боевом индексе
 
 _GRI_LEVELS = (('critical', 80), ('high', 60), ('moderate', 35), ('weak', 15), ('none', 0))
@@ -9718,6 +9719,85 @@ def _gri_shadow_report(enriched, published_events, outdir):
           % (sg.get('index_published'), sg.get('index_fixed'), sg.get('level_fixed'),
              out['basis']['delta_total'], len(conf), GRI_FIX_GATE), file=sys.stderr)
     return out
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# HISTORY STARVATION SHADOW v1 (READ-ONLY). Корень низкого GRI найден аудитом
+# 2026-09-21 и лежит не в формуле, а в том, что истории нет.
+#
+# HS-1  ЦЕПОЧКА. docs/.history/ не попадает ни в git (нет в списке `git add`
+#       workflow update-v2.yml), ни в actions/cache. GitHub Actions берёт чистый
+#       checkout, LocalHistoryCache создаёт пустую папку, get_windows() отдаёт
+#       пустые окна, history_map = {}. Далее в compute_escalation:
+#           count_24h = history.get(...) if history else 0   → всегда 0
+#           trend = _trend_direction(None)                   → "new"
+#       а _trend_component("new") отсутствует в таблице → 0.
+#       Снимок пишется в течение прогона и уничтожается вместе с раннером.
+#
+# HS-2  ЦЕНА. Из 100 очков escalation_score структурно недостижимы 55:
+#           trend      0 из 20   (нужна история)
+#           recurrence 0 из 15   (нужна история)
+#           delta      0 из 20   (нужен предыдущий снимок)
+#       Достижимый максимум = severity 35 + type_boost 10 = 45, умноженный на
+#       phase_mult. Наблюдаемый максимум по корпусу 2026-09-21 — ровно 45.
+#
+# HS-3  СЛЕДСТВИЕ. escalation_score медиана 3 → system_pressure 8 → GRI 13 «none».
+#       Чинить шкалу GRI до восстановления истории бессмысленно: она измеряет
+#       величину, которую нечем наполнить.
+#
+# HS-4  Shadow: только считает и пишет отчёт, ничего не меняет.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _history_shadow_report(events, history_size, outdir):
+    """HS-1..HS-4. Фиксирует состояние истории и недостижимую часть шкалы."""
+    from collections import Counter
+    n = max(1, len(events))
+    trends = Counter(e.get('trend_direction') for e in events)
+    c24 = sum(1 for e in events if (e.get('count_24h') or 0) > 0)
+    c7d = sum(1 for e in events if (e.get('count_7d') or 0) > 0)
+    dlt = sum(1 for e in events if (e.get('severity_delta') or 0) != 0)
+    scores = [e.get('escalation_score') or 0 for e in events]
+    scores_sorted = sorted(scores)
+    med = scores_sorted[len(scores_sorted) // 2] if scores_sorted else 0
+
+    history_size = int(history_size or 0)
+    starved = (history_size == 0)
+    # какая часть шкалы недостижима при текущем состоянии истории
+    unreachable = 0
+    if starved:
+        unreachable = 20 + 15 + 20      # trend + recurrence + delta
+    rep = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'history-shadow-v1', 'phase': 'shadow-read-only',
+        'history_map_size': history_size,
+        'starved': starved,
+        'cache_dir': str((OUTPUT_PATH.parent / '.history')),
+        'cache_dir_exists': (OUTPUT_PATH.parent / '.history').exists(),
+        'events': len(events),
+        'trend_direction_dist': dict(trends.most_common()),
+        'with_count_24h': c24,
+        'with_count_7d': c7d,
+        'with_severity_delta': dlt,
+        'escalation_score': {'median': med, 'max': max(scores) if scores else 0,
+                             'zero_or_low': sum(1 for x in scores if x <= 5)},
+        'scale': {
+            'unreachable_points': unreachable,
+            'reachable_max': 100 - unreachable,
+            'note': 'trend 20 + recurrence 15 + delta 20 требуют истории между прогонами',
+        },
+        'root_cause': ('docs/.history/ не сохраняется между прогонами: нет ни в git add '
+                       'workflow update-v2.yml, ни в actions/cache') if starved else None,
+    }
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'history-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    if starved:
+        print('  [HISTORY-SHADOW] ИСТОРИЯ ПУСТА: fingerprints=0, недостижимо %d из 100 очков '
+              'escalation, медиана score=%s' % (unreachable, med), file=sys.stderr)
+    else:
+        print('  [HISTORY-SHADOW] fingerprints=%d, с count_24h=%d, медиана score=%s'
+              % (history_size, c24, med), file=sys.stderr)
+    return rep
 
 
 def _admission_contract_classify(title, domain):
@@ -18335,6 +18415,7 @@ def save_enriched(events, previous_snapshot=None):
             if _ESCALATION_AVAILABLE:
                 cache = _get_history_cache()
                 history_map = _build_history_map(cache) if cache else {}
+                _HISTORY_MAP_SIZE[0] = len(history_map or {})
                 enriched = _enrich_escalation(enriched, history_map, cache)
 
             for _e in enriched["events"]:
@@ -18426,6 +18507,11 @@ def save_enriched(events, previous_snapshot=None):
                 _gri_shadow_report(enriched, enriched["events"], OUTPUT_PATH.parent)
             except Exception as _ge:
                 print('  [WARN] gri shadow fail: %s' % _ge, file=sys.stderr)
+            # ═══ HISTORY STARVATION SHADOW v1 (READ-ONLY): корень низкого escalation_score ═══
+            try:
+                _history_shadow_report(enriched["events"], _HISTORY_MAP_SIZE[0], OUTPUT_PATH.parent)
+            except Exception as _he:
+                print('  [WARN] history shadow fail: %s' % _he, file=sys.stderr)
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
