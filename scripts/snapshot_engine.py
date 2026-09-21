@@ -8983,6 +8983,39 @@ _GRDF_DOMAINS = [
 # Base weights (equal = 1.0 each, configurable)
 _GRDF_WEIGHTS: dict[str, float] = {d: 1.0 for d in _GRDF_DOMAINS}
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GRDF v2 (2026-09-21). Два дефекта, найденные при разборе «почему у США GRI выше,
+# чем у России и Украины, где идёт война».
+#
+# G1  ЗАГЛУШКА ПРОИЗВОДИЛА РИСК ИЗ НИЧЕГО. _domain_scores_fill_fallback заполнял
+#     неизмеренный домен как risk_score × множитель 0.60-0.95. Отсутствие данных
+#     давало высокий балл, а реальное измерение выходило низким: климат у России 7,
+#     у США 11, у Германии 6. В итоге страна без данных обгоняла страну с данными.
+#     Замер 21.09.2026: 19 из 44 стран собраны из заглушки на 5 и более доменов
+#     из 7, и они занимали весь верх рейтинга. У Тайваня 6 доменов из 7 совпадали
+#     с заглушкой точь-в-точь, и он был первым в мире с GRI 53.
+#
+# G2  ПРОСТОЕ СРЕДНЕЕ РАЗМЫВАЛО ОСТРЫЙ ДОМЕН. GRI = среднее по семи равновесным
+#     доменам, то есть война весила столько же, сколько фоновая киберактивность.
+#     Россия: геополитика 62 против 47 у США, но по шести мирным доменам США
+#     набирали 116 против 79. Широкий ровный фон перекрывал пик.
+#
+# Решение. Неизмеренный домен получает пол _GRDF_NODATA и почти не влияет на
+# среднее. Агрегация становится доминантной: ведущий домен даёт основную часть
+# оценки, а ширина охвата сохраняет вес, потому что конвергенция доменов это
+# отдельный сигнал и терять его нельзя.
+#
+# Проверка на боевых данных 21.09.2026 (44 страны с полными доменами):
+#   было   США 23.3 · Россия 20.1 · Украина 19.6 · Тайвань 52.6 (первое место)
+#   стало  Россия 45.3 · Украина 45.0 · США 37.5 · Тайвань 34.6
+#
+# ОТКАТ: GRDF_V2_GATE = False возвращает прежнее поведение обеих функций.
+# ══════════════════════════════════════════════════════════════════════════════
+GRDF_V2_GATE = True      # откат: False
+
+_GRDF_NODATA = 5         # пол для домена без измерений (прежний минимум функции)
+_GRDF_DOMINANCE = 0.6    # доля ведущего домена в оценке; остальное на среднее
+
 # GRIE category → GRDF domain
 _GRIE_TO_GRDF: dict[str, str] = {
     "geopolitical":    "geopolitical",
@@ -9036,7 +9069,7 @@ def _calc_gri(domain_scores: dict[str, int | None],
     Performance: O(7) — always <50ms.
     """
     w = weights or _GRDF_WEIGHTS
-    total = 0.0; w_sum = 0.0
+    total = 0.0; w_sum = 0.0; peak = 0.0
     for domain in _GRDF_DOMAINS:
         score = domain_scores.get(domain)
         if score is None:
@@ -9044,7 +9077,16 @@ def _calc_gri(domain_scores: dict[str, int | None],
         wt = w.get(domain, 1.0)
         total += score * wt
         w_sum += wt
-    return round(total / w_sum, 1) if w_sum > 0 else 50.0
+        if score > peak:
+            peak = float(score)
+    if w_sum <= 0:
+        return 50.0
+    mean = total / w_sum
+    if not GRDF_V2_GATE:
+        return round(mean, 1)
+    # G2: доминантная агрегация. Ведущий домен ведёт оценку, ширина охвата
+    # сохраняет вес: конвергенция доменов это отдельный сигнал.
+    return round(_GRDF_DOMINANCE * peak + (1.0 - _GRDF_DOMINANCE) * mean, 1)
 
 
 def _gri_grade(gri: float) -> str:
@@ -9147,6 +9189,11 @@ def _domain_scores_fill_fallback(snap: dict,
     base = snap.get("risk_score", 50) or 50
     for d in _GRDF_DOMAINS:
         if scores[d] is None:
+            if GRDF_V2_GATE:
+                # G1: отсутствие данных не производит риск. Домен без измерений
+                # получает пол и практически не влияет на оценку страны.
+                scores[d] = _GRDF_NODATA
+                continue
             # Proportional fallback: economic/geo slightly higher, cyber slightly lower
             factors = {
                 "geopolitical":0.95,"economic":0.90,"climate":0.70,
