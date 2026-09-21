@@ -9922,6 +9922,157 @@ def _scope_shadow_report(events, outdir):
     return rep
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# MAGNITUDE SHADOW v1 (21.09.2026) — КОЛИЧЕСТВЕННЫЙ МАСШТАБ ПОТЕРИ
+#
+# Модель severity извлекает из текста только число погибших (casualties) и
+# число дронов (mass_scale). Доли, объёмы и мощности не читаются вовсе:
+#   «уничтожила половину европейского импорта авиатоплива»   0 баллов
+#   «добыча снизилась на 200 тыс. баррелей в сутки»          0 баллов
+#   «Арктика 17% ниже нормы»                                 0 баллов
+#
+# ЧЕМ ЭТО ОТЛИЧАЕТСЯ ОТ СЛОВАРЯ severity. Словарь ловит СЛОВО и потому
+# расползается: «удар» срабатывает в «ударить по сельской Америке», «атак» в
+# «кибератака», «дефолт» где угодно. Здесь ловится ИЗМЕРЕННАЯ ВЕЛИЧИНА, и
+# только когда рядом стоят ОБА условия: направление утраты (_MAG_DOWN) и
+# предмет, потеря которого есть ущерб (_MAG_SUBJ). Список предметов БЕЛЫЙ:
+# он перечисляет, что считается, а не что исключается, и поэтому не растёт
+# сам собой при каждом новом тексте.
+#
+# КАЛИБРОВКА НА КОРПУСЕ (328 событий, прототип вне репозитория).
+# Версия без требования предмета срабатывала на 32 событиях, из них верных
+# 6. Мусор: «35» из «F-35», «2026» из года, «40,000» из суммы пожертвования,
+# «100%» из «стопроцентная укомплектованность», «32%» из рейтинга одобрения,
+# «треть» из «третьего этажа». Отдельный детектор числа пострадавших выброшен
+# целиком: он дублировал casualties и давал только шум.
+# Версия с белым списком: 6 срабатываний, верных 5.
+#
+# ОХВАТ ЧЕСТНО МАЛ. Источники корпуса (Telegram, RSS) описывают события
+# качественно, количественная оценка в тексте редка. Контур поднимает те
+# события, где величина названа, и его отдача вырастет вместе с качеством
+# ingestion, а не сама по себе.
+#
+# ОТКАТ: MAGNITUDE_GATE = False (по умолчанию). severity не меняется.
+# ══════════════════════════════════════════════════════════════════════════════
+MAGNITUDE_GATE = False        # промоушен: True
+
+_MAG_DOWN = re.compile(
+    r'(?:сниз\w+|упал\w*|падени\w*|сократ\w+|сокращени\w*|потер\w+|лишил\w+|'
+    r'утрат\w+|уничтож\w+|обвал\w*|рухнул\w*|ниже нормы|меньше нормы|'
+    r'дефицит|нехватк\w+|остановл\w+|приостановл\w+|прекращ\w+|'
+    r'отключ\w+|обесточ\w+|разрушен\w*|поврежд\w+|вышл\w+ из строя)')
+
+# Белый список предметов. Расширяется ЯВНО и только тем, потеря чего измерима.
+_MAG_SUBJ = re.compile(
+    r'(?:импорт\w*|экспорт\w*|поставк\w+|добыч\w+|производств\w+|выпуск\w*|'
+    r'мощност\w+|генерац\w+|переработк\w+|прокачк\w+|транзит\w*|'
+    r'запас\w+|резерв\w+|хранилищ\w+|заполненност\w+|'
+    r'урожа\w+|посев\w+|пашн\w+|'
+    r'льда|льд\w+|ледник\w+|акватори\w+|площад\w+|'
+    r'населени\w+|жител\w+|абонент\w+|потребител\w+|'
+    r'энергоснабжени\w+|электроснабжени\w+|водоснабжени\w+|связ[ьи]|'
+    r'использовани\w+ вод|водопотреблени\w*|водозабор\w*|'
+    r'норм\w+|пропускн\w+|перевозк\w+|грузооборот\w*)')
+
+_MAG_SHARE_RE = re.compile(
+    r'(\d{1,3}(?:[.,]\d)?)\s?%|(половин\w+|две трети|треть|трети|четверт\w+)')
+_MAG_VOL_RE = re.compile(
+    r'(?:\d[\d\s  .,]*)\s*(?:тыс\.?|тысяч\w*|млн|миллион\w*|млрд|миллиард\w*|трлн)?\s*'
+    r'(?:баррел\w*|тонн\w*|кубометр\w*|куб\.?\s?м|м³|квт|мвт|гвт|'
+    r'человек|людей|жител\w*|семей|домов|гектар\w*|км²|кв\.?\s?км)')
+
+_MAG_WORD_SHARE = {'половин': 50.0, 'две трети': 67.0, 'треть': 33.0,
+                   'трети': 33.0, 'четверт': 25.0}
+
+
+def _mag_window(text, m, w=80):
+    return text[max(0, m.start() - w):min(len(text), m.end() + w)]
+
+
+def _mag_share_value(m):
+    """Доля в процентах из совпадения: 17% -> 17.0, «половину» -> 50.0."""
+    if m.group(1):
+        try:
+            return float(m.group(1).replace(',', '.'))
+        except ValueError:
+            return None
+    word = (m.group(2) or '').lower()
+    for k, v in _MAG_WORD_SHARE.items():
+        if word.startswith(k):
+            return v
+    return None
+
+
+def _mag_classify(e):
+    """(надбавка, детали). Ничего не меняет."""
+    t = ((e.get('title') or '') + '. ' + (e.get('summary') or '')).lower()
+    det, bonus = [], 0
+
+    share = None
+    for m in _MAG_SHARE_RE.finditer(t):
+        w = _mag_window(t, m)
+        if _MAG_DOWN.search(w) and _MAG_SUBJ.search(w):
+            share = _mag_share_value(m)
+            if share is not None:
+                det.append({'d': 'M1_доля', 'v': m.group(0).strip(), 'pct': share})
+                break
+
+    # Надбавка по доле потери. Порог 50% это «половина», ниже 10% шум рынка.
+    if share is not None:
+        bonus += 12 if share >= 50 else 8 if share >= 25 else 5 if share >= 10 else 2
+
+    for m in _MAG_VOL_RE.finditer(t):
+        w = _mag_window(t, m)
+        if _MAG_DOWN.search(w) and _MAG_SUBJ.search(w):
+            det.append({'d': 'M2_объём', 'v': re.sub(r'\s+', ' ', m.group(0).strip())})
+            # Абсолютный объём без базы сравнения не говорит о доле потери:
+            # 200 тыс. баррелей это много для Ливии и мало для мирового рынка.
+            # Поэтому он лишь подтверждает, что величина названа.
+            bonus += 3
+            break
+
+    return min(12, bonus), det
+
+
+def _magnitude_shadow_report(events, outdir):
+    """MG-1. Считает надбавку по количественному масштабу. READ-ONLY."""
+    rows = []
+    for e in events:
+        bonus, det = _mag_classify(e)
+        if not bonus:
+            continue
+        old = e.get('severity') or 0
+        cap = 75 if (e.get('casualties') or 0) else 65
+        new = max(old, min(cap, old + bonus))
+        rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:110],
+                     'domain': e.get('domain'), 'sic_class': e.get('sic_class'),
+                     'canon_type': e.get('canon_type'),
+                     'severity': old, 'severity_mag': new,
+                     'raw_bonus': bonus, 'bonus': new - old,
+                     'lost_to_cap': max(0, (old + bonus) - cap) if old < cap else bonus,
+                     'detectors': det})
+    rows.sort(key=lambda r: -r['raw_bonus'])
+    moved = [r for r in rows if r['bonus'] > 0]
+    rep = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'magnitude-shadow-v1', 'phase': 'shadow-read-only',
+        'gate': MAGNITUDE_GATE,
+        'events': len(events), 'matched': len(rows), 'moved': len(moved),
+        'lost_to_cap': sum(r['lost_to_cap'] for r in rows),
+        'avg_bonus': round(sum(r['bonus'] for r in moved) / len(moved), 1) if moved else 0,
+        'note': ('охват мал по свойству корпуса: источники описывают события '
+                 'качественно, количественная оценка в тексте редка'),
+        'rows': rows,
+    }
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'magnitude-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [MAG-SHADOW] величина найдена у %d событий, поднялось бы %d, '
+          'средняя надбавка +%s, потолок съел %d'
+          % (len(rows), len(moved), rep['avg_bonus'], rep['lost_to_cap']), file=sys.stderr)
+    return rep
+
+
 def _admission_contract_classify(title, domain):
     """ADR-008 §2: N1 событийность ∧ N2 риск-релевантность ∧ N3 фактичность (по финальному тексту)."""
     t = (title or '').lower()
@@ -18639,6 +18790,11 @@ def save_enriched(events, previous_snapshot=None):
                 _scope_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
                 print('  [WARN] scope shadow fail: %s' % _se, file=sys.stderr)
+            # ═══ MAGNITUDE SHADOW v1 (READ-ONLY): количественный масштаб потери ═══
+            try:
+                _magnitude_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _me:
+                print('  [WARN] magnitude shadow fail: %s' % _me, file=sys.stderr)
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
