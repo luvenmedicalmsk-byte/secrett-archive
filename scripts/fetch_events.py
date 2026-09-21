@@ -5723,7 +5723,13 @@ def _word_numbers(text):
         tail = low[m.end():m.end() + 40]
         if not _WORD_NUM_CTX_RE.search(tail):
             continue
-        out.append((_WORD_NUM[w], m.start(), m.end()))
+        val = _WORD_NUM[w]
+        # CONTEXT_GATE (22.09.2026): множитель после словесного числа.
+        # «Япония призывает ДВА МИЛЛИОНА человек эвакуироваться» давало evac=2
+        # и severity 46: таблица переводит «два» в 2, а «миллиона» не читала.
+        if CONTEXT_GATE:
+            val *= _cx_word_mult(low, m.end())
+        out.append((val, m.start(), m.end()))
     return out
 
 
@@ -5774,9 +5780,19 @@ def _metric_floors(low, return_metrics=False):
     # ферме != массовая гибель людей. Это локальное происшествие, severity задаётся базовым
     # контекстом, а не поголовьем. Массовый мор от засухи/эпизоотии сохраняет severity через
     # свой контекст (засуха/вспышка), не через счёт голов.
+    # CONTEXT_GATE (22.09.2026): список животных расширен дикими видами. Прежний
+    # перечисляет скот и птицу, поэтому «Серые киты голодают ... тысячи погибли»
+    # давало 3000 погибших и severity 92 — выше, чем у людских потерь в корпусе.
+    _animal_words = (r'(?<![а-яё])(свин|поросят|птиц|цыпл|коров|быко\w|т[её]лк|телят|'
+                     r'скот[аие]\b|скота|поголов|птицефабрик|свиноферм|овец|овцы|'
+                     r'коз[аы]\b|лошад|кролик|индюш|курин|кур[аеыиц])')
+    if CONTEXT_GATE:
+        _animal_words = (_animal_words[:-1] +
+                         r'|кит(?:а|ы|ов|ам|ами|ах|е)?(?![а-яё])|дельфин|тюлен|морж|'
+                         r'олен|лосос|сайгак|антилоп|медвед|животн)')
     _animal_deaths = bool(
-        re.search(r'(?<![а-яё])(свин|поросят|птиц|цыпл|коров|быко\w|т[её]лк|телят|скот[аие]\b|скота|поголов|птицефабрик|свиноферм|овец|овцы|коз[аы]\b|лошад|кролик|индюш|курин|кур[аеыиц])', low)
-        and re.search(r'(погиб|пал[иo]\b|сгорел|усыпл|уничтожен|над[её]ж|пад[её]ж|задохнул|забит|мор\b)', low)
+        re.search(_animal_words, low)
+        and re.search(r'(погиб|пал[иo]\b|сгорел|усыпл|уничтожен|над[её]ж|пад[её]ж|задохнул|забит|мор\b|голода\w+)', low)
         and not re.search(r'(человек|людей|жител|детей|реб[её]н|пассажир|мужчин|женщин|подрост|ранен\w*\s+человек)', low)
     )
     nums=_numbers(low) + _word_numbers(low)
@@ -5792,6 +5808,14 @@ def _metric_floors(low, return_metrics=False):
     _area_unit=re.compile(r'^\s*(?:кв\.?\s*км|км²|км2|квадратн|гектар|га\b)')
     for (n,ns,ne) in nums:
         if _area_unit.match(low[ne:ne+14]):   # число площади -> не метрика человеч. потерь
+            continue
+        # ГАРДЫ КОНТЕКСТА (CONTEXT_GATE, 22.09.2026). Тот же принцип, что у
+        # гарда площади выше: число должно относиться к событию. Отсекаются
+        # валюта («£40,000 ... для жертв» давало 40 000 погибших и severity 97),
+        # число из названия («Мультикан-8», «COVID-19»), год рождения
+        # («мужчину 1973 года» давало 1973 пострадавших) и возраст
+        # («погибла 44-летняя женщина»). OFF -> байт-идентично.
+        if CONTEXT_GATE and _cx_reject_number(low, ns, ne):
             continue
         best_mt=None; best_d=25
         for mt,pos in kw_pos.items():
@@ -10164,7 +10188,7 @@ def _magnitude_shadow_report(events, outdir):
 #
 # ОТКАТ: CONTEXT_GATE = False (по умолчанию). Метрики не меняются.
 # ══════════════════════════════════════════════════════════════════════════════
-CONTEXT_GATE = False          # промоушен: True
+CONTEXT_GATE = True           # откат: False
 
 _CX_CURRENCY = re.compile(
     r'[£$€₽¥]|фунт\w*|доллар\w*|евро|рубл\w*|иен\w*|юан\w*|лир\w*|крон\w*|франк\w*|'
@@ -10341,7 +10365,7 @@ def _context_shadow_report(events, outdir):
 #
 # ОТКАТ: ACCOMPLISHED_GATE = False (по умолчанию). Классы не меняются.
 # ══════════════════════════════════════════════════════════════════════════════
-ACCOMPLISHED_GATE = False     # промоушен: True
+ACCOMPLISHED_GATE = True      # откат: False
 
 _ACC_PAST = re.compile(r'(?<![а-яё])([а-яё]{3,})(л|ла|ло|ли|лся|лась|лось|лись)(?![а-яё])')
 # Страдательные причастия: окончание должно быть причастным, иначе шаблон
@@ -10394,6 +10418,39 @@ def _acc_classify(title):
             continue
         return True, 'прош. время: %s' % word
     return False, 'нет глагола действия'
+
+
+def _accomplished_apply(events):
+    """ACCOMPLISHED_GATE: COMMENTARY со свершившимся действием -> EVENT.
+
+    Требуется ТРИ условия, не два. Одного признака действия мало: морфология
+    путает глагол с существительным на -л/-ла/-ли («Сигнал тревоги по климату»,
+    «Протокол отчётности»), таких на корпусе 7 из 50. Третье условие —
+    определённый канонический тип — снимает их все: у разбора и заметки канон
+    остаётся unknown.
+
+    Цена осторожности: отсеиваются и верные случаи («Рейтинг Франции понижен»,
+    «Банк Японии: ставка поднята»). Это сознательно — доклассификация меняет
+    класс события, и лучше поднять 20 бесспорных, чем 50 с семью ошибками.
+
+    Прежний класс сохраняется в sic_class_before. OFF -> байт-идентично.
+    """
+    n = 0
+    for e in events:
+        if e.get('sic_class') != 'COMMENTARY':
+            continue
+        if (e.get('canon_type') or 'unknown') == 'unknown':
+            continue
+        ok, form = _acc_classify(e.get('title'))
+        if not ok:
+            continue
+        e['sic_class_before'] = 'COMMENTARY'
+        e['sic_class'] = 'EVENT'
+        e['sic_accomplished'] = form
+        n += 1
+    if n:
+        print('  [ACC-APPLY] COMMENTARY -> EVENT: %d' % n, file=sys.stderr)
+    return n
 
 
 def _accomplished_shadow_report(events, outdir):
@@ -19174,6 +19231,8 @@ def save_enriched(events, previous_snapshot=None):
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
+                if ACCOMPLISHED_GATE:      # состоявшееся событие не комментарий
+                    _accomplished_apply(enriched["events"])
                 if UNVERIFIED_FEED_GATE:   # непроверенное — вне ленты (остаётся в данных)
                     _unverified_feed_gate(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
