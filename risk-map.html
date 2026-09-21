@@ -4188,6 +4188,12 @@ const LEVEL_COLORS = {
   stable:'#6b7280', elevated:'#f59e0b', pressured:'#ef4444', critical:'#dc2626'
 };
 
+// Главная цифра страны: доменный индекс (абсолютный уровень). Пока пайплайн
+// не перегенерировал выдачу, поля domain_index нет и берём прежний risk_score.
+function _cIdx(c) {
+  return Number.isFinite(c && c.domain_index) ? c.domain_index : ((c && c.risk_score) || 0);
+}
+
 async function openCountriesPanel() {
   const panel = document.getElementById('countries-panel');
   const btn   = document.getElementById('countries-btn');
@@ -4202,7 +4208,11 @@ async function openCountriesPanel() {
   const grid = document.getElementById('cp-grid');
   grid.innerHTML = '';
 
-  const sorted = [...data.countries].sort((a,b) => b.risk_score - a.risk_score);
+  const sorted = [...data.countries].sort((a,b) =>
+    _cIdx(b) - _cIdx(a) ||
+    ((b.domain_scores && b.domain_scores.geopolitics) || 0) -
+    ((a.domain_scores && a.domain_scores.geopolitics) || 0) ||
+    (b.risk_score || 0) - (a.risk_score || 0));
 
   sorted.forEach(c => {
     const delta  = c.delta || 0;
@@ -4211,6 +4221,12 @@ async function openCountriesPanel() {
     const domRu  = DOMAIN_RU[c.dominant_domain] || c.dominant_domain;
     const dSign  = delta > 0 ? '▲+' : delta < 0 ? '▼' : '→';
     const dClass = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+    const idx    = _cIdx(c);
+    // risk_score это отклонение от собственной нормы страны, не абсолютный
+    // уровень. Показываем его второй строкой, когда главная цифра уже индекс.
+    const meta   = Number.isFinite(c.domain_index)
+      ? domRu + ' · аномалия ' + c.risk_score
+      : domRu;
 
     const row = document.createElement('div');
     row.className = 'cp-row';
@@ -4218,10 +4234,10 @@ async function openCountriesPanel() {
       '<div class="cp-flag">' + (FLAGS[c.country]||'🌐') + '</div>' +
       '<div class="cp-info">' +
         '<div class="cp-name">' + _esc(c.country_name) + '</div>' +
-        '<div class="cp-meta">' + _esc(domRu) + '</div>' +
+        '<div class="cp-meta">' + _esc(meta) + '</div>' +
       '</div>' +
       '<div class="cp-score-col">' +
-        '<div class="cp-score" style="color:' + col + '">' + c.risk_score + '</div>' +
+        '<div class="cp-score" style="color:' + col + '">' + idx + '</div>' +
         '<div class="cp-delta ' + dClass + '">' + dSign + Math.abs(delta) + '</div>' +
       '</div>' +
       '<div class="cp-dot" style="background:' + lvlCol + '"></div>';
