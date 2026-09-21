@@ -10073,6 +10073,184 @@ def _magnitude_shadow_report(events, outdir):
     return rep
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTEXT SHADOW v1 (22.09.2026) — ЧИСЛО ДОЛЖНО ОТНОСИТЬСЯ К СОБЫТИЮ
+#
+# Найдено при разборе «почему severity занижены». Оказалось, что механизм
+# _metric_floors, который читает из текста числа потерь и задаёт по ним ПОЛ
+# индекса (до 97), ошибается в обе стороны. Он привязывает число к ключевому
+# слову по расстоянию в символах, и что это за число, не проверяет.
+#
+# Гарды в нём уже есть — на площадь (кв. км) и на падёж скота, — значит подход
+# признан; не хватает остальных случаев. Найденные на корпусе 22.09.2026:
+#
+#   CX-1 ВАЛЮТА КАК ПОГИБШИЕ
+#     «Фолклендские острова пожертвовали £40,000 ... для жертв наводнений»
+#     40 000 фунтов → deaths=40000 → пол 97. Это САМОЕ ТЯЖЁЛОЕ СОБЫТИЕ КОРПУСА.
+#
+#   CX-2 ЖИВОТНЫЕ КАК ЛЮДИ
+#     «Серые киты голодают ... тысячи из них погибли» → deaths=3000 → 92.
+#     Гард на животных есть, но перечисляет скот и птицу: кита в нём нет.
+#
+#   CX-3 ЧИСЛО ИЗ НАЗВАНИЯ
+#     «В вакцине "Мультикан-8" нашли смертельный вирус» → deaths=8 → 65.
+#
+#   CX-4 ГОД И ДАТА
+#     «Мужчина получил ожоги на пожаре в Ангарске» → inj=1973 → 68.
+#     Один пострадавший оценён как массовое поражение.
+#
+#   CX-5 ВОЗРАСТ
+#     «погибла 44-летняя женщина» → deaths=44.
+#
+#   CX-6 СЛОВЕСНЫЙ МНОЖИТЕЛЬ ПОТЕРЯН (занижение, а не завышение)
+#     «Тайфун Дуджуан: Япония призывает ДВА МИЛЛИОНА человек эвакуироваться»
+#     → evac=2 → severity 46. Таблица _WORD_NUM переводит «два» в 2, а стоящий
+#     следом «миллиона» не читает. Эвакуация двух миллионов человек оценена
+#     как эвакуация двух человек.
+#
+# Итог противоречия, которое видит читатель: пожертвование Красного Креста
+# стоит 97, эвакуация двух миллионов человек — 46.
+#
+# ОТКАТ: CONTEXT_GATE = False (по умолчанию). Метрики не меняются.
+# ══════════════════════════════════════════════════════════════════════════════
+CONTEXT_GATE = False          # промоушен: True
+
+_CX_CURRENCY = re.compile(
+    r'[£$€₽¥]|фунт\w*|доллар\w*|евро|рубл\w*|иен\w*|юан\w*|лир\w*|крон\w*|франк\w*|'
+    r'стерлинг\w*|usd|eur|rub|gbp')
+# Животные сверх списка, уже стоящего в _metric_floors (скот и птица).
+# ОСТОРОЖНО С ОКОНЧАНИЯМИ. Первая версия писала «кит\w*» и ловила «КИТай»:
+# «Оранжевое наводнения предупреждение — Китай» с 399 045 перемещёнными
+# помечалось как гибель животных. Это ровно та ошибка подстроки, которую
+# контур и должен находить, поэтому здесь окончания перечислены явно.
+# По той же причине снято «особ\w*»: оно ловило «особенно».
+_CX_ANIMAL = re.compile(
+    r'(?<![а-яё])(кит(?:а|ы|ов|ам|ами|ах|е)?(?![а-яё])|дельфин\w*|тюлен\w*|морж\w*|'
+    r'олен\w*|лосос\w*|рыб\w*|пчёл\w*|пчел\w*|сайгак\w*|антилоп\w*|'
+    r'медвед\w*|птиц\w*|животн\w*|поголов\w*)')
+_CX_NAME_NUM = re.compile(r'[a-zA-Zа-яёА-ЯЁ]-\s?$')       # «мультикан-8», «f-35»
+_CX_AGE = re.compile(r'^-?\s?лет\w*')                      # «44-летняя»
+_CX_YEAR_TAIL = re.compile(r'^\s*(?:год\w*|г\.)')          # «2026 года»
+# Множитель, стоящий ПОСЛЕ словесного числа: «два миллиона человек».
+_CX_WORD_MULT = re.compile(
+    r'^\s*(тысяч\w*|тыс\.?|миллион\w*|млн|миллиард\w*|млрд)')
+_CX_MULT_VAL = {'тысяч': 1000, 'тыс': 1000, 'миллион': 10 ** 6, 'млн': 10 ** 6,
+                'миллиард': 10 ** 9, 'млрд': 10 ** 9}
+
+
+def _cx_reject_number(low, ns, ne):
+    """Почему это число НЕ является метрикой потерь. None = число годное."""
+    before = low[max(0, ns - 14):ns]
+    after = low[ne:ne + 14]
+    if _CX_CURRENCY.search(before) or _CX_CURRENCY.search(after):
+        return 'CX-1 валюта'
+    if _CX_NAME_NUM.search(before):
+        return 'CX-3 число в названии'
+    if _CX_AGE.match(after):
+        return 'CX-5 возраст'
+    frag = low[ns:ne].strip()
+    if re.fullmatch(r'(?:19|20)\d{2}', frag) and (
+            _CX_YEAR_TAIL.match(after) or re.search(r'(?:в|с|до|по|за)\s*$', before)):
+        return 'CX-4 год'
+    return None
+
+
+def _cx_word_mult(low, ne):
+    """Множитель после словесного числа: «два МИЛЛИОНА» -> 1000000."""
+    m = _CX_WORD_MULT.match(low[ne:ne + 12])
+    if not m:
+        return 1
+    w = m.group(1).rstrip('.')
+    for k, v in _CX_MULT_VAL.items():
+        if w.startswith(k):
+            return v
+    return 1
+
+
+def _cx_classify(e):
+    """Что в этом событии прочитано неверно. Ничего не меняет."""
+    low = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+    if _CX_ANIMAL.search(low) and not re.search(
+            r'(человек|людей|жител|детей|пассажир|мужчин|женщин|подрост)', low):
+        animal = 'CX-2 потери среди животных'
+    else:
+        animal = None
+
+    bad, fixed, seen = [], [], set()
+    try:
+        nums = _numbers(low)
+    except Exception:
+        nums = []
+    for (n, ns, ne) in nums:
+        why = _cx_reject_number(low, ns, ne)
+        if why and (n, why) not in seen:      # одно и то же число не повторяем
+            seen.add((n, why))
+            bad.append({'n': n, 'why': why, 'frag': low[max(0, ns - 22):ne + 22].strip()})
+    try:
+        wnums = _word_numbers(low)
+    except Exception:
+        wnums = []
+    for (n, ns, ne) in wnums:
+        mult = _cx_word_mult(low, ne)
+        if mult > 1 and (n, mult) not in seen:
+            seen.add((n, mult))
+            fixed.append({'was': n, 'becomes': n * mult, 'why': 'CX-6 множитель',
+                          'frag': low[max(0, ns - 22):ne + 24].strip()})
+    return animal, bad, fixed
+
+
+def _context_shadow_report(events, outdir):
+    """CX-1..CX-6. Проверяет, относится ли прочитанное число к событию. READ-ONLY."""
+    from collections import Counter
+    rows, kinds = [], Counter()
+    for e in events:
+        low = ((e.get('title') or '') + ' ' + (e.get('summary') or '')).lower()
+        try:
+            _, mx = _metric_floors(low, return_metrics=True)
+            floor = _disaster_scale_floor(low)
+        except Exception:
+            continue
+        if not any((mx or {}).values()) and not floor:
+            continue
+        animal, bad, fixed = _cx_classify(e)
+        if not (animal or bad or fixed):
+            continue
+        # какие из отбракованных чисел реально стали метрикой
+        vals = set(v for v in (mx or {}).values() if v)
+        hit = [b for b in bad if b['n'] in vals]
+        if not (animal or hit or fixed):
+            continue
+        for b in hit:
+            kinds[b['why']] += 1
+        if animal and vals:
+            kinds[animal] += 1
+        for f in fixed:
+            kinds[f['why']] += 1
+        rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:110],
+                     'severity': e.get('severity'), 'floor': floor,
+                     'metrics': {k: v for k, v in (mx or {}).items() if v},
+                     'animal': animal, 'bad_numbers': hit, 'undercount': fixed})
+    rows.sort(key=lambda r: -(r['floor'] or 0))
+    rep = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'context-shadow-v1', 'phase': 'shadow-read-only',
+        'gate': CONTEXT_GATE,
+        'events': len(events), 'affected': len(rows),
+        'by_kind': dict(kinds.most_common()),
+        'note': ('_metric_floors задаёт ПОЛ индекса по числам из текста (до 97) и '
+                 'привязывает число к слову по расстоянию, не проверяя, что это '
+                 'за число. Гарды на площадь и падёж скота там уже есть.'),
+        'rows': rows,
+    }
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'context-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [CONTEXT-SHADOW] неверно прочитанных чисел у %d событий: %s'
+          % (len(rows), ', '.join('%s×%d' % (k, v) for k, v in kinds.most_common()) or 'нет'),
+          file=sys.stderr)
+    return rep
+
+
 def _admission_contract_classify(title, domain):
     """ADR-008 §2: N1 событийность ∧ N2 риск-релевантность ∧ N3 фактичность (по финальному тексту)."""
     t = (title or '').lower()
@@ -18795,6 +18973,11 @@ def save_enriched(events, previous_snapshot=None):
                 _magnitude_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _me:
                 print('  [WARN] magnitude shadow fail: %s' % _me, file=sys.stderr)
+            # ═══ CONTEXT SHADOW v1 (READ-ONLY): число должно относиться к событию ═══
+            try:
+                _context_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _ce:
+                print('  [WARN] context shadow fail: %s' % _ce, file=sys.stderr)
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
