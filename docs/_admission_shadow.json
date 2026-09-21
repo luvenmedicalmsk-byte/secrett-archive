@@ -1,18 +1,18 @@
 {
-  "generated": "2026-09-21T04:39:07Z",
+  "generated": "2026-09-21T05:09:46Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 784,
-    "DENY_COMMENTARY": 292,
+    "PASS_FACT": 787,
+    "DENY_COMMENTARY": 291,
+    "DENY_BACKGROUND": 5,
     "DENY_FEATURE": 2,
     "UNMATCHED": 4,
-    "DENY_STATE_ONLY": 3,
-    "DENY_BACKGROUND": 4
+    "DENY_STATE_ONLY": 3
   },
   "kpi": {
-    "processes_total": 1089,
-    "matched": 1085,
+    "processes_total": 1092,
+    "matched": 1088,
     "unmatched": 4,
     "coverage_pct": 99.6,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
@@ -25,12 +25,12 @@
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 256,
-      "sample": 1001,
-      "agreement_pct": 92.8,
-      "decision_agreement_pct": 93.0,
+      "processes": 259,
+      "sample": 1023,
+      "agreement_pct": 93.0,
+      "decision_agreement_pct": 93.2,
       "critical_errors": 70,
-      "truth_ratio_pct": 97.3,
+      "truth_ratio_pct": 96.9,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 16,
         "FACT_EVENT→COMMENTARY": 51,
@@ -41,10 +41,10 @@
       }
     },
     "historical": {
-      "processes": 1089,
-      "sample": 2323,
-      "agreement_pct": 93.2,
-      "decision_agreement_pct": 93.3,
+      "processes": 1092,
+      "sample": 2345,
+      "agreement_pct": 93.3,
+      "decision_agreement_pct": 93.4,
       "critical_errors": 155,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 42,
@@ -58,9 +58,9 @@
       }
     },
     "events_stream": {
-      "sample": 308,
+      "sample": 310,
       "agreement_pct": 91.6,
-      "decision_agreement_pct": 92.5,
+      "decision_agreement_pct": 92.6,
       "critical_errors": 23,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 19,
@@ -77,27 +77,27 @@
     }
   },
   "class_source": {
-    "shadow_title_only": 185,
-    "evidence_sic": 2323,
+    "shadow_title_only": 190,
+    "evidence_sic": 2345,
     "event_sic": 2
   },
-  "truth_ratio_pct": 92.6,
+  "truth_ratio_pct": 92.5,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 233,
-      "deny": 77
+      "pass": 234,
+      "deny": 78
     },
     "technology": {
       "pass": 83,
       "deny": 47
     },
     "economy": {
-      "pass": 122,
-      "deny": 102,
+      "pass": 123,
+      "deny": 101,
       "unmatched": 1
     },
     "climate": {
-      "pass": 279,
+      "pass": 280,
       "deny": 34,
       "unmatched": 3
     },
@@ -233,12 +233,11 @@
       "title": "Геополитический процесс — США",
       "domain": "geopolitics",
       "severity": 65,
-      "pressure": 44,
+      "pressure": 41,
       "first_seen": "2026-07-01",
-      "evidence_count": 4,
+      "evidence_count": 3,
       "evidence_classes": {
-        "COMMENTARY": 3,
-        "BACKGROUND": 1
+        "COMMENTARY": 3
       },
       "status": "active",
       "causal_links": 6,
@@ -377,6 +376,21 @@
       },
       "status": "active",
       "causal_links": 3,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-геополитич-россия-3032",
+      "title": "Геополитический процесс — Россия",
+      "domain": "geopolitics",
+      "severity": 62,
+      "pressure": 40,
+      "first_seen": "2026-06-28",
+      "evidence_count": 2,
+      "evidence_classes": {
+        "COMMENTARY": 2
+      },
+      "status": "active",
+      "causal_links": 6,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -994,21 +1008,6 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "geop-геополитич-венесуэл-d9c5",
-      "title": "Санкционное давление — Венесуэла",
-      "domain": "geopolitics",
-      "severity": 58,
-      "pressure": 26,
-      "first_seen": "2026-07-24",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "fading",
-      "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1070,6 +1069,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-государств-украина-806a",
+      "domain": "economy",
+      "legacy": 60,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "geop-геополитич-сша-a91e",
       "domain": "geopolitics",
       "legacy": 65,
@@ -1077,9 +1083,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-государств-украина-806a",
-      "domain": "economy",
-      "legacy": 60,
+      "signal_id": "geop-геополитич-россия-3032",
+      "domain": "geopolitics",
+      "legacy": 62,
       "shadow": null,
       "delta": null
     },
@@ -1112,13 +1118,6 @@
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-франция-8954",
-      "domain": "geopolitics",
-      "legacy": 50,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "clim-климатичес-глобальн-8637",
       "domain": "climate",
       "legacy": 32,
@@ -1129,6 +1128,13 @@
       "signal_id": "econ-топливныйр-чёрноемо-1853",
       "domain": "economy",
       "legacy": 53,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "geop-геополитич-ближнийв-cff8",
+      "domain": "geopolitics",
+      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1157,13 +1163,6 @@
       "signal_id": "econ-валютныйры-сша-грузия-eda2",
       "domain": "economy",
       "legacy": 44,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-инфляция-глобальн-82e4",
-      "domain": "economy",
-      "legacy": 42,
       "shadow": null,
       "delta": null
     },
@@ -1436,8 +1435,8 @@
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 198,
-    "51-70": 94,
+    "31-50": 197,
+    "51-70": 95,
     "71-90": 6,
     "91-100": 0
   }
