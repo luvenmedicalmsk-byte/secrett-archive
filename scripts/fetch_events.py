@@ -9850,6 +9850,37 @@ _SCOPE_POINT = {
     'Военные удары', 'Розничная торговля', 'Авиационный инцидент',
     'Морской инцидент', 'Железнодорожный инцидент', 'Теракт',
 }
+# Точечные действия, у которых канонический тип не определён: пуск, перехват,
+# удар по одиночной цели. «КНДР запустила ракету в Японское море» — зона это
+# направление пуска, а не охват.
+_SCOPE_POINT_RE = re.compile(
+    r'(?<![а-яё])(запустил\w*|пустил\w*|выпустил\w*|перехватил\w*|сбил\w*|'
+    r'ударил\w*|нанесл\w*\s+удар|обстрелял\w*|атаковал\w*)\s')
+
+# ЗОНА ДОЛЖНА БЫТЬ НАЗВАНА В ЗАГОЛОВКЕ (правка 22.09.2026).
+# Геодвижок назначает зону и тогда, когда просто не смог определить страну:
+# «Рейтинг кредитоспособности Франции понижен» получал zone=europe, «Прага
+# ограничивает цены на топливо» тоже. Сначала это отсекалось фильтром
+# sic_class == EVENT, но Мия верно указала, что классификатор ошибается, и
+# опираться на него нельзя (подтверждено: 46 состоявшихся событий лежат в
+# COMMENTARY). Прямой признак надёжнее: если событие действительно охватывает
+# зону, её название стоит в заголовке — «В ЕВРОПЕ ощущается нехватка», «Лесные
+# пожары — СЕВЕРНАЯ АМЕРИКА», «Морской лёд: АРКТИКА». Если в заголовке стоит
+# страна, а зона приписана движком, надбавки нет.
+_SCOPE_ZONE_WORDS = {
+    'europe': r'европ|евросоюз|\bес\b', 'global': r'по всему миру|глобальн|в мире|мировой',
+    'arctic_ocean': r'арктик|арктич|северн\w+ ледовит', 'antarctic': r'антарктик|антарктич',
+    'middle_east': r'ближн\w+ восток', 'pacific_ocean': r'тих\w+ океан',
+    'atlantic_ocean': r'атлантик|атлантич', 'indian_ocean': r'индийск\w+ океан',
+    'japan_sea': r'японск\w+ мор', 'caribbean_sea': r'карибск',
+    'mediterranean': r'средиземн', 'mediterranean_reg': r'средиземн',
+    'caspian_sea': r'каспийск', 'black_sea': r'ч[её]рн\w+ мор',
+    'baltic_sea': r'балтийск', 'red_sea': r'красн\w+ мор',
+    'hormuz_strait': r'ормуз', 'north_america': r'северн\w+ америк',
+    'south_america': r'южн\w+ америк|латинск\w+ америк', 'africa_continent': r'африк',
+    'asia': r'\bазия|\bазии|азиатск', 'international_waters':
+        r'открыт\w+ мор|нейтральн\w+ вод|международн\w+ вод',
+}
 
 
 def _scope_classify(e):
@@ -9861,10 +9892,30 @@ def _scope_classify(e):
     bonus = _SCOPE_BONUS.get(zt)
     if not bonus:
         return 0, zt, 'зона не шире страны'
-    if e.get('sic_class') != 'EVENT':
-        return 0, zt, 'не событие: %s' % (e.get('sic_class') or '?')
+    # ПРАВКА 22.09.2026. Здесь стояло sic_class == 'EVENT'. Снято: классификатор
+    # ошибается и относит состоявшиеся события к комментариям (ACCOMPLISHED
+    # SHADOW: 46 из 142). Вместо класса проверяется прямой признак — названа ли
+    # зона в заголовке.
+    title = (e.get('title') or '').lower()
+    zw = _SCOPE_ZONE_WORDS.get((e.get('geo') or {}).get('zone_id') or '')
+    if zt == 'global':
+        named = bool(zw and re.search(zw, title)) or bool(e.get('is_global'))
+    else:
+        named = bool(zw and re.search(zw, title))
+    if not named:
+        return 0, zt, 'зона не названа в заголовке (приписана движком)'
+    # Класс ненадёжен ТОЛЬКО В ОДНУ СТОРОНУ: пометка COMMENTARY может стоять на
+    # состоявшемся событии, обратной ошибки замер не показал. Поэтому EVENT
+    # проходит сам по себе, а от записи с пометкой COMMENTARY требуется ещё и
+    # признак свершившегося действия. Иначе сюда попадают призывы, мнения и
+    # предупреждения: «Австрия призывает приостановить законы ЕС»,
+    # «Милитаризация Германии вызывает тревогу», «посольства предупредили».
+    if e.get('sic_class') != 'EVENT' and not _acc_classify(e.get('title'))[0]:
+        return 0, zt, 'ни событие, ни свершившееся действие'
     if (e.get('canon_type') or '') in _SCOPE_POINT:
         return 0, zt, 'точечный тип: %s' % e.get('canon_type')
+    if _SCOPE_POINT_RE.search(title):
+        return 0, zt, 'точечное действие в заголовке'
     return bonus, zt, None
 
 
@@ -10248,6 +10299,143 @@ def _context_shadow_report(events, outdir):
     print('  [CONTEXT-SHADOW] неверно прочитанных чисел у %d событий: %s'
           % (len(rows), ', '.join('%s×%d' % (k, v) for k, v in kinds.most_common()) or 'нет'),
           file=sys.stderr)
+    return rep
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ACCOMPLISHED SHADOW v1 (22.09.2026) — СВЕРШИВШЕЕСЯ ДЕЙСТВИЕ
+#
+# Замечание Мии: классификатор EVENT/COMMENTARY ошибается, состоявшиеся события
+# попадают в комментарии, поэтому опираться на sic_class опасно. Проверено на
+# корпусе 22.09.2026 — замечание верное, и причина конкретная.
+#
+# _SIC_ACCOMPLISHED написан под НАСТОЯЩЕЕ время военных действий: «атакуют»,
+# «обстреливают», «наступают», «перехватывают». Обычное прошедшее время
+# совершенного вида — главная форма, которой русская новость сообщает о
+# состоявшемся, — в нём почти отсутствует. Проверка на живых заголовках:
+#
+#   «Украинские беспилотники АТАКОВАЛИ Уфу»              accomplished = False
+#   «Законопроект ... ПРИНЯЛ конгресс США»               accomplished = False
+#   «В Питере ЗАКОНЧИЛСЯ бензин из-за остановки НПЗ»     accomplished = False
+#   «Городская больница ПОДВЕРГЛАСЬ атаке вымогателей»   accomplished = False
+#   «Группировка ShinyHunters ВЗЛОМАЛА сайт»             accomplished = False
+#   «Работа АЗС ПРИОСТАНОВЛЕНА»                          accomplished = False
+#   «Хакеры ... ЗАРАЗИЛИ 30 000 устройств»               accomplished = False
+#
+# Все семь помечены COMMENTARY. Всего таких в корпусе 50 из 142 COMMENTARY.
+#
+# ЗДЕСЬ ПРОВЕРЯЕТСЯ ФОРМА, А НЕ СПИСОК СЛОВ. Глагол прошедшего времени или
+# страдательное причастие из явного списка, за вычетом речи, мнения,
+# модальности и разбора. Это не заменяет _SIC_ACCOMPLISHED, а измеряет,
+# сколько он пропускает.
+#
+# ПОЧЕМУ ЭТО ВАЖНО ЗА ПРЕДЕЛАМИ КЛАССИФИКАТОРА: на sic_class опирается фильтр
+# SCOPE SHADOW, и предложенный потолок по классу опирался бы на него же.
+# Поэтому оба должны смотреть на свершившееся действие напрямую.
+#
+# ТОЧНОСТЬ НЕПОЛНАЯ. Морфология путает глагол с существительным на -л/-ла/-ли:
+# «сигнал», «протокол», «правила», «недели». На корпусе таких 7 из 50.
+# Имена собственные отсекаются по заглавной букве в исходном заголовке
+# («Михаила», «Пауэлл»), причастия — явным списком с причастными окончаниями
+# («закрыть» и «повышение» под шаблон не подпадают).
+#
+# ОТКАТ: ACCOMPLISHED_GATE = False (по умолчанию). Классы не меняются.
+# ══════════════════════════════════════════════════════════════════════════════
+ACCOMPLISHED_GATE = False     # промоушен: True
+
+_ACC_PAST = re.compile(r'(?<![а-яё])([а-яё]{3,})(л|ла|ло|ли|лся|лась|лось|лись)(?![а-яё])')
+# Страдательные причастия: окончание должно быть причастным, иначе шаблон
+# ловит «закрыть» и «повышение».
+_ACC_PART = re.compile(
+    r'(?<![а-яё])(?:приостановлен|остановлен|закрыт|отмен[её]н|введ[её]н|понижен|'
+    r'повышен|поднят|снижен|разрушен|поврежд[её]н|уничтожен|взломан|зараж[её]н|'
+    r'эвакуирован|арестован|задержан|заблокирован|отключ[её]н|обесточен|сорван|'
+    r'перекрыт|захвачен|подтвержд[её]н|увеличен)(?:а|о|ы|ное|ная|ные|ного|ный|)(?![а-яё])')
+_ACC_SPEECH = re.compile(
+    r'^(заяв|сообщ|отмет|указа|подчеркну|рассказа|написа|пиш|призва|предупред|'
+    r'предлож|счита|полага|утвержда|обвин|раскритикова|прокомментирова|ответи|'
+    r'добави|напомни|объясни|допусти|назва|выраз|поблагодари|поздрави|пообеща|'
+    r'опроверг|усомни|предположи|знал|преувеличи|похвали|пошути|намекну)')
+_ACC_MODAL = re.compile(
+    r'(?<![а-яё])(может|могут|мог|могли|планиру|намер|собира|рискует|ожида|'
+    r'прогнозиру|предстоит|будет|будут|намерева|хочет|хотят|рассматрива|'
+    r'обсужда|изуча|стремится|готов)')
+_ACC_ANALYSIS = re.compile(
+    r'(?<![а-яё])(анализ|обзор|исследовани|почему\s|что\s+будет|мнени|колонк|'
+    r'интервью|подкаст|рубрик|дайджест|итоги\s+недел|уроки\s)')
+# Частые существительные, кончающиеся как глагол прошедшего времени.
+_ACC_NOUN = {'сигнал', 'протокол', 'правила', 'недели', 'капитал', 'материал',
+             'канал', 'металл', 'потенциал', 'финал', 'терминал', 'персонал',
+             'портал', 'интервал', 'филиал', 'мемориал', 'арсенал', 'земли',
+             'был', 'была', 'было', 'были', 'если', 'или', 'мало', 'число'}
+
+
+def _acc_classify(title):
+    """(свершилось?, найденная форма или причина отказа)."""
+    orig = (title or '').strip()
+    low = orig.lower()
+    if _ACC_ANALYSIS.search(low):
+        return False, 'разбор, а не сообщение'
+    if _ACC_MODAL.search(low):
+        return False, 'модальность или будущее'
+    m = _ACC_PART.search(low)
+    if m:
+        return True, 'причастие: %s' % m.group(0)
+    # Заглавные слова в исходном заголовке (кроме первого) — имена собственные.
+    caps = set()
+    for i, w in enumerate(re.finditer(r'\S+', orig)):
+        if i > 0 and w.group(0)[:1].isupper():
+            caps.add(w.start())
+    for m in _ACC_PAST.finditer(low):
+        word = m.group(0)
+        if word in _ACC_NOUN or _ACC_SPEECH.match(word):
+            continue
+        if any(abs(m.start() - c) < 2 for c in caps):
+            continue
+        return True, 'прош. время: %s' % word
+    return False, 'нет глагола действия'
+
+
+def _accomplished_shadow_report(events, outdir):
+    """AC-1. Сколько состоявшихся событий лежит в COMMENTARY. READ-ONLY."""
+    from collections import Counter
+    rows, forms = [], Counter()
+    com = [e for e in events if e.get('sic_class') == 'COMMENTARY']
+    for e in com:
+        ok, form = _acc_classify(e.get('title'))
+        if not ok:
+            continue
+        forms[form.split(':')[0]] += 1
+        rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:110],
+                     'severity': e.get('severity'), 'domain': e.get('domain'),
+                     'canon_type': e.get('canon_type'), 'form': form,
+                     'feed_visible': e.get('feed_visible'),
+                     'sic_now': 'COMMENTARY', 'sic_would': 'EVENT'})
+    rows.sort(key=lambda r: -(r['severity'] or 0))
+    # контроль в обратную сторону: EVENT без признака свершившегося действия
+    ev_no_acc = sum(1 for e in events
+                    if e.get('sic_class') == 'EVENT' and not _acc_classify(e.get('title'))[0])
+    rep = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'accomplished-shadow-v1', 'phase': 'shadow-read-only',
+        'gate': ACCOMPLISHED_GATE,
+        'events': len(events), 'commentary': len(com),
+        'would_be_event': len(rows),
+        'share_of_commentary': round(len(rows) / max(1, len(com)), 3),
+        'event_without_accomplished': ev_no_acc,
+        'by_form': dict(forms.most_common()),
+        'root_cause': ('_SIC_ACCOMPLISHED написан под настоящее время военных '
+                       'действий; прошедшее время совершенного вида в нём почти '
+                       'отсутствует'),
+        'known_limit': ('морфология путает глагол с существительным на -л/-ла/-ли '
+                        '(сигнал, протокол, правила): на корпусе 7 из 50'),
+        'rows': rows,
+    }
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'accomplished-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [ACC-SHADOW] в COMMENTARY лежит %d состоявшихся событий из %d (%.0f%%)'
+          % (len(rows), len(com), 100 * rep['share_of_commentary']), file=sys.stderr)
     return rep
 
 
@@ -18978,6 +19166,11 @@ def save_enriched(events, previous_snapshot=None):
                 _context_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _ce:
                 print('  [WARN] context shadow fail: %s' % _ce, file=sys.stderr)
+            # ═══ ACCOMPLISHED SHADOW v1 (READ-ONLY): состоявшиеся события в COMMENTARY ═══
+            try:
+                _accomplished_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _ae2:
+                print('  [WARN] accomplished shadow fail: %s' % _ae2, file=sys.stderr)
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
