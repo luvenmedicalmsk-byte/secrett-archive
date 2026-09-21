@@ -718,6 +718,42 @@ def compute_risk_score(events: list[dict], baseline: int) -> int:
     return max(score, baseline)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИНДЕКС ПО ДОМЕНАМ СТРАНЫ (2026-09-21). Абсолютная оценка для витрины.
+#
+# Список стран на платформе сортировался по risk_score и его же показывал
+# крупной цифрой. risk_score меряет ПРЕВЫШЕНИЕ над базовым уровнем страны:
+#   score = базовый + Σ(превышение × 0.5^i)
+# Базовые уровни: США 52, Россия 72, Украина 85. У страны с низкой базой
+# обычный поток взлетает над ней, у воюющей страны война уже входит в базу
+# и почти ничего не добавляет. Отсюда США 92 при России 82: как сигнал
+# аномалии это верно, но подписано «risk_score» и читается как абсолютный риск.
+#
+# domain_index отвечает на другой вопрос: насколько плохо по доменам, без
+# сравнения с собственной нормой. Правило то же, что в GRDF v2: ведущий домен
+# ведёт оценку, ширина охвата сохраняет вес.
+#
+# Поле ДОБАВЛЕНО, существующие не изменены: risk_score, его пороги (65, 50, 40),
+# delta, история и внешняя валидация работают как прежде.
+#
+# ОТКАТ: DOMAIN_INDEX_GATE = False — поле перестаёт передаваться, витрина
+# возвращается к risk_score своим же запасным путём.
+# ══════════════════════════════════════════════════════════════════════════════
+DOMAIN_INDEX_GATE = True      # откат: False
+
+
+def compute_domain_index(domain_scores: dict) -> int | None:
+    """Доминантная агрегация по доменам страны. Та же доля, что в GRDF v2."""
+    if not DOMAIN_INDEX_GATE or not domain_scores:
+        return None
+    vals = [v for v in domain_scores.values() if isinstance(v, (int, float))]
+    if not vals:
+        return None
+    peak = max(vals)
+    mean = sum(vals) / len(vals)
+    return int(round(_GRDF_DOMINANCE * peak + (1.0 - _GRDF_DOMINANCE) * mean))
+
+
 def compute_dominant_domain(events: list[dict]) -> str:
     """Return domain with highest total severity weight."""
     if not events:
@@ -1536,6 +1572,7 @@ def update_index(snapshots: list[dict]) -> None:
                 "escalation_level": s["escalation_level"],
                 "delta":            s["delta"],
                 "domain_scores":    s.get("domain_scores") or {},
+                "domain_index":     compute_domain_index(s.get("domain_scores") or {}),
                 "ews_score":        s.get("ews_score"),
                 "cri_score":        s.get("cri_score"),
                 "gri_delta_7d":     s.get("gri_delta_7d"),
