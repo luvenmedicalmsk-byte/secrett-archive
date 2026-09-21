@@ -1,10 +1,10 @@
 {
-  "generated": "2026-09-21T01:24:28Z",
+  "generated": "2026-09-21T01:45:18Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 783,
-    "DENY_COMMENTARY": 294,
+    "PASS_FACT": 782,
+    "DENY_COMMENTARY": 295,
     "DENY_FEATURE": 2,
     "UNMATCHED": 4,
     "DENY_STATE_ONLY": 3,
@@ -16,9 +16,9 @@
     "unmatched": 4,
     "coverage_pct": 99.6,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 72.1,
-    "admission_deny_rate": 27.9,
-    "processes_without_fact": 303,
+    "admission_pass_rate": 72.0,
+    "admission_deny_rate": 28.0,
+    "processes_without_fact": 304,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
@@ -26,15 +26,15 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 256,
-      "sample": 1000,
-      "agreement_pct": 92.7,
-      "decision_agreement_pct": 93.0,
-      "critical_errors": 70,
+      "sample": 995,
+      "agreement_pct": 92.9,
+      "decision_agreement_pct": 93.1,
+      "critical_errors": 69,
       "truth_ratio_pct": 97.3,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 16,
-        "FACT_EVENT→COMMENTARY": 51,
-        "BACKGROUND→COMMENTARY": 2,
+        "FACT_EVENT→COMMENTARY": 50,
+        "BACKGROUND→COMMENTARY": 1,
         "FEATURE→COMMENTARY": 1,
         "FEATURE→FACT_EVENT": 2,
         "FACT_EVENT→BACKGROUND": 1
@@ -42,14 +42,14 @@
     },
     "historical": {
       "processes": 1090,
-      "sample": 2321,
-      "agreement_pct": 93.1,
-      "decision_agreement_pct": 93.3,
-      "critical_errors": 155,
+      "sample": 2316,
+      "agreement_pct": 93.2,
+      "decision_agreement_pct": 93.4,
+      "critical_errors": 154,
       "error_matrix": {
         "COMMENTARY→FACT_EVENT": 42,
-        "FACT_EVENT→COMMENTARY": 106,
-        "BACKGROUND→COMMENTARY": 2,
+        "FACT_EVENT→COMMENTARY": 105,
+        "BACKGROUND→COMMENTARY": 1,
         "FEATURE→COMMENTARY": 2,
         "FEATURE→FACT_EVENT": 2,
         "FACT_EVENT→BACKGROUND": 1,
@@ -58,15 +58,15 @@
       }
     },
     "events_stream": {
-      "sample": 305,
-      "agreement_pct": 90.8,
-      "decision_agreement_pct": 92.1,
-      "critical_errors": 24,
+      "sample": 301,
+      "agreement_pct": 91.4,
+      "decision_agreement_pct": 92.4,
+      "critical_errors": 23,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 20,
+        "FACT_EVENT→COMMENTARY": 19,
         "COMMENTARY→FACT_EVENT": 4,
         "FEATURE→COMMENTARY": 2,
-        "BACKGROUND→COMMENTARY": 2
+        "BACKGROUND→COMMENTARY": 1
       }
     },
     "gate": {
@@ -78,7 +78,7 @@
   },
   "class_source": {
     "shadow_title_only": 185,
-    "evidence_sic": 2321,
+    "evidence_sic": 2316,
     "event_sic": 2
   },
   "truth_ratio_pct": 92.6,
@@ -91,22 +91,37 @@
       "pass": 83,
       "deny": 47
     },
-    "economy": {
-      "pass": 119,
-      "deny": 105,
-      "unmatched": 1
-    },
     "climate": {
       "pass": 279,
       "deny": 34,
       "unmatched": 3
     },
+    "economy": {
+      "pass": 119,
+      "deny": 105,
+      "unmatched": 1
+    },
     "social": {
-      "pass": 69,
-      "deny": 40
+      "pass": 68,
+      "deny": 41
     }
   },
   "deny_impact": [
+    {
+      "signal_id": "tech-уязвимость-глобальн-d798",
+      "title": "Уязвимость ПО",
+      "domain": "technology",
+      "severity": 100,
+      "pressure": 84,
+      "first_seen": "2026-06-25",
+      "evidence_count": 7,
+      "evidence_classes": {
+        "COMMENTARY": 7
+      },
+      "status": "active",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
     {
       "signal_id": "tech-уязвимость-атлантич-9717",
       "title": "Уязвимость ПО — Атлантический океан",
@@ -119,6 +134,21 @@
         "COMMENTARY": 2
       },
       "status": "dormant",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "soci-эпидемиоло-глобальн-f9d4",
+      "title": "Эпидемиологический надзор",
+      "domain": "social",
+      "severity": 76,
+      "pressure": 52,
+      "first_seen": "2026-07-27",
+      "evidence_count": 1,
+      "evidence_classes": {
+        "COMMENTARY": 1
+      },
+      "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
     },
@@ -978,44 +1008,28 @@
       "status": "dormant",
       "causal_links": 1,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "soci-эпидемиоло-глобальн-6b54",
-      "title": "Эпидемиологический риск",
-      "domain": "social",
-      "severity": 58,
-      "pressure": 40,
-      "first_seen": "2026-07-01",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "active",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "geop-геополитич-венесуэл-d9c5",
-      "title": "Санкционное давление — Венесуэла",
-      "domain": "geopolitics",
-      "severity": 58,
-      "pressure": 26,
-      "first_seen": "2026-07-24",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "fading",
-      "causal_links": 1,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
     {
+      "signal_id": "tech-уязвимость-глобальн-d798",
+      "domain": "technology",
+      "legacy": 100,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-валютныйры-сша-a47b",
       "domain": "economy",
       "legacy": 62,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "soci-эпидемиоло-глобальн-f9d4",
+      "domain": "social",
+      "legacy": 76,
       "shadow": null,
       "delta": null
     },
@@ -1086,13 +1100,6 @@
       "signal_id": "soci-эпидемиоло-глобальн-6b54",
       "domain": "social",
       "legacy": 58,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "tech-уязвимость-глобальн-d798",
-      "domain": "technology",
-      "legacy": 52,
       "shadow": null,
       "delta": null
     },
@@ -1424,20 +1431,13 @@
       "legacy": 34,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "econ-валютныйры-иран-9b2e",
-      "domain": "economy",
-      "legacy": 50,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
     "31-50": 200,
-    "51-70": 95,
-    "71-90": 5,
-    "91-100": 0
+    "51-70": 94,
+    "71-90": 6,
+    "91-100": 1
   }
 }
