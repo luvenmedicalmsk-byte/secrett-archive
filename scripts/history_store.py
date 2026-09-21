@@ -202,10 +202,29 @@ def aggregate_history(
 # LOCAL DISK CACHE (для GitHub Actions — работает без KV)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════════════════════
+# RETENTION. Окно хранения снимков на диске.
+#
+# До 2026-09-21 кэш вообще не переживал прогон: docs/.history/ не попадал ни в
+# git, ни в actions/cache, поэтому history_map всегда был пуст, trend_direction
+# у всех событий — "new", а 55 из 100 очков escalation_score (trend 20 +
+# recurrence 15 + delta 20) были структурно недостижимы.
+#
+# Окно выбрано 7 дней, а не 30: 168 снимков по ~36 КБ ≈ 6 МБ в рабочем дереве
+# против 25 МБ у 30-дневного. Этого хватает обоим окнам, которые реально
+# питают escalation (24h и 7d). Окно 30d в get_windows() остаётся и просто
+# отдаёт то, что есть, — деградация честная, не ошибка.
+#
+# ОТКАТ: вернуть 30 здесь и убрать строку `git add docs/.history/` из
+# .github/workflows/update-v2.yml.
+# ══════════════════════════════════════════════════════════════════════════════
+HISTORY_RETENTION_DAYS = 7
+
+
 class LocalHistoryCache:
     """
     Кэш снапшотов на диске для GitHub Actions.
-    Сохраняет rolling window последних 30 дней.
+    Сохраняет rolling window последних HISTORY_RETENTION_DAYS дней.
     Worker читает из KV — этот класс используется только в pipeline.
     """
 
@@ -238,7 +257,7 @@ class LocalHistoryCache:
         snap_path = self.cache_dir / f"{key.replace(':', '_')}.json"
         snap_path.write_text(json.dumps(snap, ensure_ascii=False))
         self._save_index()
-        # Pruning: удаляем записи старше 30 дней
+        # Pruning: удаляем записи старше HISTORY_RETENTION_DAYS
         self._prune()
 
     def get(self, key: str) -> Optional[dict]:
@@ -248,8 +267,8 @@ class LocalHistoryCache:
         return [self._snapshots[k] for k in keys if k in self._snapshots]
 
     def _prune(self):
-        """Удаляет снапшоты старше 30 дней."""
-        cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+        """Удаляет снапшоты старше HISTORY_RETENTION_DAYS."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=HISTORY_RETENTION_DAYS)
         cutoff_str = cutoff.strftime("%Y-%m-%dT%H")
         to_delete = [k for k in self._snapshots if k < f"snapshot:{cutoff_str}"]
         for k in to_delete:
