@@ -8653,6 +8653,7 @@ HOME_FIRE_GUARD = True   # CANARY: бытовой пожар в жилье (ма
 # приостановлена ... Сириус» держала бы 34/100 и страну Сирия до
 # lifecycle-decay, хотя оба дефекта уже починены. Откат = False.
 POSTBUILD_REPAIR = True
+_PB_GUARDS = ('fire-guard', 'heat-guard', 'bio-attack-guard', 'sport-guard')
 # Починка страны требует ЯВНОГО российского маркера в ЗАГОЛОВКЕ. Без него
 # проход вредит: на срезе он уводил «SoftBank согласен приобрести Институт
 # робототехники» из США в Республику Коми, потому что _foreign_country уже
@@ -17961,7 +17962,7 @@ def save_enriched(events, previous_snapshot=None):
     # Проход идёт по тому же списку, что и HOME_FIRE ниже, то есть включает
     # записи, перенесённые из прошлого снимка.
     if POSTBUILD_REPAIR:
-        _pb_sev = _pb_geo = 0
+        _pb_sev = _pb_geo = _pb_dom = 0
         for _pe in events:
             _pt = ((_pe.get('title') or '') + ' ' + (_pe.get('summary') or ''))
             _pl = _pt.lower()
@@ -17981,6 +17982,15 @@ def save_enriched(events, previous_snapshot=None):
             # государство, но находит субъект РФ. Снимаем только такие записи,
             # то есть заведомо ложные срабатывания прошлых словарей.
             try:
+                # ОСТАНОВЛЕНО НА ЗАМЕРЕ (21.09.2026). Пробовал сделать починку
+                # идемпотентной, перевязав условие на сам признак порчи:
+                # иностранный код в списках, которого резолвер не видит.
+                # Замер показал вред: у карточки «Москва в ответ на 21-й пакет
+                # санкций Евросоюза» снимались законные UA и EU. Причина в том,
+                # что справочник иностранных стран не покрывает Украину и ЕС,
+                # поэтому «резолвер не подтверждает» означает и «устарело»,
+                # и «нет в словаре». Условие оставлено узким; хвост
+                # mentioned_countries чистится отдельной задачей.
                 _pc = [c for c in (_pe.get('country_codes') or []) if c] or \
                       [c for c in (_pe.get('mentioned_countries') or []) if c]
                 if (_pc and 'RU' not in _pc
@@ -18005,9 +18015,44 @@ def save_enriched(events, previous_snapshot=None):
                         _pb_geo += 1
             except Exception:
                 pass
-        if _pb_sev or _pb_geo:
-            print('  [POSTBUILD] порогов пересчитано %d · стран исправлено %d'
-                  % (_pb_sev, _pb_geo), file=sys.stderr)
+            # 3) Домен от ОТВЕРГНУТОГО canon-кандидата.
+            # Guard снимает тип («это не тепловая волна», «это не природный
+            # пожар»), но домен, который этот кандидат принёс, остаётся.
+            # Кейс: «Воздушный удар Пакистана убивает 3, Талибан предупреждает
+            # о разрушительном ответе» стояло в климате. Канон предложил
+            # «Тепловую волну», heat-guard её отклонил (признаков жары в тексте
+            # нет), а климат остался: карточка классифицирована по кандидату,
+            # которого движок сам же и забраковал.
+            #
+            # Переводим домен только когда содержательный классификатор даёт
+            # СТРОГО больший счёт, чем текущий домен. Ничья ничего не меняет.
+            try:
+                if _pe.get('canon_reason') in _PB_GUARDS:
+                    _bt = detect_domain(_pe.get('title') or '', _pe.get('summary') or '')
+                    if _bt and _bt != _pe.get('domain'):
+                        _bl = _pl
+                        _n_new = sum(1 for w in _DOMAIN_VOCAB.get(_bt, ()) if _domvoc_hit(w, _bl))
+                        _n_old = sum(1 for w in _DOMAIN_VOCAB.get(_pe.get('domain'), ()) if _domvoc_hit(w, _bl))
+                        if _n_new > _n_old:
+                            _pe['domain'] = _bt
+                            _pe['canon_domain'] = _bt
+                            _dd = _pe.get('domain_decision')
+                            if isinstance(_dd, dict):
+                                _dd['final'] = _bt
+                                _dd['reason'] = 'guard отклонил тип, домен пересчитан по тексту'
+                                _dd['writer'] = 'postbuild_guard'
+                            _bs = (_pe.get('basis') or {}).get('domain')
+                            if isinstance(_bs, dict):
+                                _bs['canon_domain'] = _bt
+                                _bs['feed_domain'] = _bt
+                                _bs['overridden'] = True
+                                _bs['how'] = 'домен кандидата снят вместе с типом, пересчитан по тексту'
+                            _pb_dom += 1
+            except Exception:
+                pass
+        if _pb_sev or _pb_geo or _pb_dom:
+            print('  [POSTBUILD] порогов пересчитано %d · стран исправлено %d · доменов %d'
+                  % (_pb_sev, _pb_geo, _pb_dom), file=sys.stderr)
 
     # HOME_FIRE post-build: бытовой пожар в жилье -> из ленты (ловит и персистящие события, не только входящие в gate)
     if HOME_FIRE_GUARD:
