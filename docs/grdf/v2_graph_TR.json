@@ -2,9 +2,9 @@
   "country": "TR",
   "date": "2026-09-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-21T18:07:43.276787+00:00",
+  "generated_at": "2026-09-21T18:27:48.957765+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
@@ -26,42 +26,42 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 23,
+      "score": 44,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 6,
+      "score": 48,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 6,
+      "score": 11,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-social",
       "type": "Domain",
       "label": "social",
-      "score": 11,
+      "score": 22,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
-      "score": 13,
+      "score": 25,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-cyber",
       "type": "Domain",
       "label": "cyber",
-      "score": 3,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Военный_ко",
+      "id": "SIGNAL-TR-Пожарный_с",
       "type": "Signal",
-      "label": "Военный конфликт — Ближний Восток (систе",
-      "severity": 84,
-      "domain": "geopolitical"
+      "label": "Пожарный сигнал — Европа · Балыкесир",
+      "severity": 56,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-TR-Отключение",
+      "id": "SIGNAL-TR-Пожарный_с",
       "type": "Signal",
-      "label": "Отключение интернета — Ближний Восток (с",
-      "severity": 72,
-      "domain": "technology"
+      "label": "Пожарный сигнал — Европа · Стамбул",
+      "severity": 52,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-TR-Экономичес",
+      "id": "SIGNAL-TR-Гроза:_Тур",
       "type": "Signal",
-      "label": "Экономический сигнал — Турция",
-      "severity": 76,
-      "domain": "economic"
+      "label": "Гроза: Турция (уровень жёлтое)",
+      "severity": 38,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -112,37 +112,37 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.23
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.48
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.06
+      "weight": 0.11
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-social",
       "type": "CORRELATES",
-      "weight": 0.11
+      "weight": 0.22
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-infrastructure",
       "type": "CORRELATES",
-      "weight": 0.13
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-cyber",
       "type": "CORRELATES",
-      "weight": 0.03
+      "weight": 0.05
     },
     {
       "from": "DRIVER-TR-Geopolitical",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-TR",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-TR-geopolitical",
@@ -184,22 +205,43 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-Военный_ко",
-      "to": "DOMAIN-TR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.84
-    },
-    {
-      "from": "SIGNAL-TR-Отключение",
-      "to": "DOMAIN-TR-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-TR-Экономичес",
+      "from": "DOMAIN-TR-climate",
       "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
       "type": "AMPLIFIES",
-      "weight": 0.76
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-TR-Пожарный_с",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-TR-Пожарный_с",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
+      "from": "SIGNAL-TR-Гроза:_Тур",
+      "to": "DOMAIN-TR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.38
     }
   ]
 }

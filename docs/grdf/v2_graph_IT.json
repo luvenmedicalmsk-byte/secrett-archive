@@ -2,60 +2,60 @@
   "country": "IT",
   "date": "2026-09-21",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-21T18:07:43.288025+00:00",
+  "generated_at": "2026-09-21T18:27:48.968513+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 52,
       "props": {
-        "risk_score": 50
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
-      "trend": "down"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 24,
-      "trend": "down"
+      "score": 25,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 28,
-      "trend": "down"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 6,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 12,
-      "trend": "down"
+      "score": 13,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 14,
-      "trend": "down"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Пожарный_с",
+      "type": "Signal",
+      "label": "Пожарный сигнал — Европа · Кальяри",
+      "severity": 52,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Военные_уд",
       "type": "Signal",
       "label": "Военные удары — Италия",
@@ -92,13 +99,6 @@
       "label": "Миграционная политика — Италия",
       "severity": 67,
       "domain": "social"
-    },
-    {
-      "id": "SIGNAL-IT-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Италия",
-      "severity": 42,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.24
+      "weight": 0.25
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-IT",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.12
+      "weight": 0.13
     },
     {
       "from": "COUNTRY-IT",
@@ -163,6 +163,75 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Пожарный_с",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
       "from": "SIGNAL-IT-Военные_уд",
       "to": "DOMAIN-IT-geopolitical",
       "type": "AMPLIFIES",
@@ -173,12 +242,6 @@
       "to": "DOMAIN-IT-social",
       "type": "AMPLIFIES",
       "weight": 0.67
-    },
-    {
-      "from": "SIGNAL-IT-Пожарная_а",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.42
     }
   ]
 }
