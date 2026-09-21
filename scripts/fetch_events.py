@@ -9800,6 +9800,128 @@ def _history_shadow_report(events, history_size, outdir):
     return rep
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# SCOPE SHADOW v1 (21.09.2026) — ГЕОГРАФИЧЕСКИЙ ОХВАТ В ОЦЕНКЕ ТЯЖЕСТИ
+#
+# Модель severity для news считает слова: 40 + 7×сильные + 4×средние + жертвы.
+# Насколько широко событие распространено, она не знает вовсе. Геодвижок этот
+# ответ уже дал и положил в geo.zone_type, но в severity поле не участвует.
+#
+# Замер по корпусу 21.09.2026 (320 событий): события континентального охвата
+# имеют медиану severity 41 против 52 по корпусу. Событие, охватывающее целый
+# континент, в среднем оценено НИЖЕ обычного.
+#
+# ПРАВИЛО ПРОВЕРЕНО НА КОРПУСЕ ДО НАПИСАНИЯ, И ПЕРВАЯ ВЕРСИЯ ОТБРАКОВАНА.
+# Сырой признак «zone шире страны» даёт ложные попадания двух видов:
+#
+#   1. Зона как запасной вариант, когда страну определить не удалось:
+#      «Рейтинг Франции понижен» → zone=continent (это Франция)
+#      «Прага ограничивает цены на топливо» → zone=continent (это Чехия)
+#      Отсекается фильтром sic_class == EVENT: все такие записи COMMENTARY.
+#
+#   2. Точечное событие, произошедшее внутри зоны. Место точки широкое,
+#      воздействие нет:
+#      «США ударили по лодке в Карибском море» → zone=sea
+#      «КНДР запустила ракету в Японское море» → zone=sea
+#      «Госдеп одобрил продажу Украине ПВО» → zone=continent
+#      Отсекается списком точечных канонических типов _SCOPE_POINT.
+#
+# После обоих фильтров на корпусе остаётся 12 событий, все распределённые:
+# морской лёд Арктики и Антарктики, лесные пожары Северной Америки, крах AMOC,
+# арктические штормы, цунами в Средиземном море, нехватка авиатоплива в Европе.
+#
+# ОТКАТ: SCOPE_GATE = False (значение по умолчанию). Контур только считает и
+# пишет отчёт; severity не меняется ни при каком значении флага в этой версии.
+# ══════════════════════════════════════════════════════════════════════════════
+SCOPE_GATE = False            # промоушен: True
+
+# Надбавка по широте места действия. Порядок величин согласован со шкалой
+# news: сильное слово +7, среднее +4. Охват это свойство события, а не ещё
+# одно слово, поэтому он стоит между ними и не суммируется сам с собой.
+_SCOPE_BONUS = {
+    'global': 8, 'continent': 8, 'macroregion': 6,
+    'ocean': 6, 'sea': 6, 'polar': 6,
+    'strait': 4, 'international_waters': 4,
+}
+
+# Канонические типы, у которых событие происходит В ТОЧКЕ. Широкая зона у них
+# означает координаты места, а не охват воздействия.
+_SCOPE_POINT = {
+    'Военные удары', 'Розничная торговля', 'Авиационный инцидент',
+    'Морской инцидент', 'Железнодорожный инцидент', 'Теракт',
+}
+
+
+def _scope_classify(e):
+    """Возвращает (надбавка, зона, причина отказа). Ничего не меняет."""
+    geo = e.get('geo') or {}
+    zt = geo.get('zone_type') or ('global' if e.get('is_global') else None)
+    if not zt:
+        return 0, None, 'место уже страна или точка'
+    bonus = _SCOPE_BONUS.get(zt)
+    if not bonus:
+        return 0, zt, 'зона не шире страны'
+    if e.get('sic_class') != 'EVENT':
+        return 0, zt, 'не событие: %s' % (e.get('sic_class') or '?')
+    if (e.get('canon_type') or '') in _SCOPE_POINT:
+        return 0, zt, 'точечный тип: %s' % e.get('canon_type')
+    return bonus, zt, None
+
+
+def _scope_shadow_report(events, outdir):
+    """SC-1. Считает надбавку по охвату рядом с боевой оценкой. READ-ONLY."""
+    from collections import Counter
+    rows, refused = [], Counter()
+    for e in events:
+        bonus, zt, why = _scope_classify(e)
+        if not bonus:
+            if zt and why and not why.startswith('зона не'):
+                refused[why] += 1
+            continue
+        old = e.get('severity') or 0
+        # Потолок боевой модели: 75 с подтверждёнными жертвами, иначе 65. Событие
+        # могло прийти по другому маршруту (force, конфликтный потолок 78) и уже
+        # стоять выше — тогда потолок не его, и надбавка просто не применяется.
+        # Надбавка за охват НИКОГДА не понижает оценку: max(old, …).
+        cap = 75 if (e.get('casualties') or 0) else 65
+        new = max(old, min(cap, old + bonus))
+        rows.append({'id': e.get('id'), 'title': (e.get('title') or '')[:110],
+                     'zone': zt, 'domain': e.get('domain'),
+                     'canon_type': e.get('canon_type'),
+                     'severity': old, 'severity_scope': new, 'bonus': new - old,
+                     'capped': old < cap < (old + bonus),
+                     'above_cap': old >= cap,
+                     'lost_to_cap': max(0, (old + bonus) - cap) if old < cap else bonus})
+    rows.sort(key=lambda r: -r['bonus'])
+    moved = [r for r in rows if r['bonus'] > 0]
+    rep = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'scope-shadow-v1', 'phase': 'shadow-read-only',
+        'gate': SCOPE_GATE,
+        'events': len(events),
+        'matched': len(rows),
+        'moved': len(moved),
+        'capped': sum(1 for r in rows if r['capped']),
+        'above_cap': sum(1 for r in rows if r['above_cap']),
+        # сколько баллов надбавки съедает потолок 65: отдельная величина, потому
+        # что это ограничение самой модели, а не свойство правила охвата
+        'lost_to_cap': sum(r['lost_to_cap'] for r in rows),
+        'avg_bonus': round(sum(r['bonus'] for r in moved) / len(moved), 1) if moved else 0,
+        'refused': dict(refused.most_common()),
+        'bonus_table': _SCOPE_BONUS,
+        'point_types': sorted(_SCOPE_POINT),
+        'rows': rows,
+    }
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'scope-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [SCOPE-SHADOW] под правило %d событий, поднялось бы %d, средняя надбавка +%s, '
+          'потолок съел %d баллов у %d событий'
+          % (len(rows), len(moved), rep['avg_bonus'], rep['lost_to_cap'],
+             rep['capped'] + rep['above_cap']), file=sys.stderr)
+    return rep
+
+
 def _admission_contract_classify(title, domain):
     """ADR-008 §2: N1 событийность ∧ N2 риск-релевантность ∧ N3 фактичность (по финальному тексту)."""
     t = (title or '').lower()
@@ -18512,6 +18634,11 @@ def save_enriched(events, previous_snapshot=None):
                 _history_shadow_report(enriched["events"], _HISTORY_MAP_SIZE[0], OUTPUT_PATH.parent)
             except Exception as _he:
                 print('  [WARN] history shadow fail: %s' % _he, file=sys.stderr)
+            # ═══ SCOPE SHADOW v1 (READ-ONLY): географический охват в оценке тяжести ═══
+            try:
+                _scope_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _se:
+                print('  [WARN] scope shadow fail: %s' % _se, file=sys.stderr)
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
