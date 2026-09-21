@@ -9579,6 +9579,147 @@ def _junk_shadow_report(events, outdir):
     return rep
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GRI SHADOW v1 (READ-ONLY). Три расхождения, найденные аудитом корпуса 2026-09-21.
+#
+# GS-1  ЗНАК adaptive_capacity. gri_v2.py документирует его как инверсный
+#       («высокая capacity снижает GRI», строка 32 и docstring модуля), но
+#       compute_gri_v2 складывает его наравне с остальными:
+#           composite = sum(sub[k] * GRI_WEIGHTS[k] for k in GRI_WEIGHTS)
+#       При ac=95 это даёт +7.6 из 13.5 — больше половины индекса риска состоит
+#       из того, что система хорошо справляется. Shadow считает index_fixed
+#       с инверсией, как задумано, и показывает обе цифры рядом.
+#
+# GS-2  ОСНОВАНИЕ СЧЁТА. compute_gri_v2 получает список ДО финальных гейтов ленты
+#       (SIGNAL_GATE / TOPIC_CAP / OVERFLOW / FRESHNESS), а events.json пишется
+#       ПОСЛЕ них. Отсюда by_domain в индексе не сходится с корпусом на карте:
+#       2026-09-21 индекс 405, корпус 341. Shadow пересчитывает by_domain по
+#       опубликованному списку и показывает дельту.
+#
+# GS-3  СОГЛАСОВАННОСТЬ СЛОЁВ. Слои считаются независимо и не сверяются. На
+#       2026-09-21 система одновременно утверждала: GRI 13 «none», режим stable,
+#       активных доменов 0 — и доминирующий сценарий на 30 и 90 дней «escalation»
+#       при семи странах в статусе high. Shadow перечисляет противоречия списком.
+#
+#       Страновые 70 — НЕ дефект шкалы: это conflict_floor из country_risk.py,
+#       осознанный редакционный пол для стран в вооружённом конфликте. Противоречие
+#       не в нём, а в том, что глобальный ярлык «риска нет» показывается над ним.
+#
+# GS-4  Shadow: только считает и пишет отчёт. Ни индекс, ни ярлык не меняются.
+#       Промоушен — GRI_FIX_GATE, откат = одна строка в False.
+# ══════════════════════════════════════════════════════════════════════════════
+GRI_FIX_GATE = False   # промоушен: применять инверсию adaptive_capacity в боевом индексе
+
+_GRI_LEVELS = (('critical', 80), ('high', 60), ('moderate', 35), ('weak', 15), ('none', 0))
+
+
+def _gri_level(score):
+    for name, lo in _GRI_LEVELS:
+        if score >= lo:
+            return name
+    return 'none'
+
+
+def _gri_shadow_report(enriched, published_events, outdir):
+    """GS-1..GS-4. Ничего не меняет, только считает и пишет отчёт."""
+    from collections import Counter
+    gri = enriched.get('global_risk_index') or {}
+    sub = gri.get('subindices') or {}
+    w = gri.get('weights') or {}
+    out = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'gri-shadow-v1', 'phase': 'shadow-read-only',
+        'gate_active': bool(GRI_FIX_GATE),
+    }
+
+    # ─── GS-1: знак adaptive_capacity ───
+    if sub and w:
+        cur = sum(sub.get(k, 0) * w.get(k, 0) for k in w)
+        fixed = sum(((100 - sub.get(k, 0)) if k == 'adaptive_capacity' else sub.get(k, 0))
+                    * w.get(k, 0) for k in w)
+        ac = sub.get('adaptive_capacity', 0)
+        out['sign'] = {
+            'index_published': gri.get('index'),
+            'level_published': gri.get('level'),
+            'index_recomputed': round(cur, 1),
+            'index_fixed': round(fixed, 1),
+            'level_fixed': _gri_level(round(fixed)),
+            'adaptive_capacity': ac,
+            'ac_contribution_now': round(ac * w.get('adaptive_capacity', 0), 2),
+            'ac_contribution_fixed': round((100 - ac) * w.get('adaptive_capacity', 0), 2),
+            'note': 'gri_v2.py документирует инверсию, compute_gri_v2 её не делает',
+        }
+
+    # ─── GS-2: основание счёта ───
+    doms = ('geopolitics', 'climate', 'economy', 'technology', 'social')
+    pub = Counter(e.get('domain') for e in published_events)
+    bd = gri.get('by_domain') or {}
+    rows = {}
+    for d in doms:
+        idx_n = (bd.get(d) or {}).get('count', 0)
+        rows[d] = {'in_index': idx_n, 'published': pub.get(d, 0), 'delta': idx_n - pub.get(d, 0)}
+    out['basis'] = {
+        'index_total': sum(r['in_index'] for r in rows.values()),
+        'published_total': len(published_events),
+        'delta_total': sum(r['in_index'] for r in rows.values()) - len(published_events),
+        'by_domain': rows,
+        'note': 'индекс считается до финальных гейтов ленты, корпус пишется после',
+    }
+
+    # ─── GS-3: противоречия между слоями ───
+    conf = []
+    lvl = gri.get('level')
+    reg = enriched.get('regime') or {}
+    cvg = enriched.get('convergence') or {}
+    prob = enriched.get('probabilistic') or {}
+    cps = enriched.get('country_profiles') or {}
+    hot = [k for k, v in cps.items() if (v or {}).get('risk_level') in ('high', 'critical')]
+    esc_n = sum(1 for e in published_events if e.get('signal_type') == 'escalation')
+
+    if lvl in ('none', 'weak') and prob.get('dominant_scenario_30d') == 'escalation':
+        conf.append({'code': 'GRI-vs-SCENARIO',
+                     'text': 'глобальный уровень «%s», но доминирующий сценарий 30д — escalation' % lvl})
+    if lvl in ('none', 'weak') and prob.get('dominant_scenario_90d') == 'escalation':
+        conf.append({'code': 'GRI-vs-SCENARIO-90',
+                     'text': 'глобальный уровень «%s», но доминирующий сценарий 90д — escalation' % lvl})
+    if lvl in ('none', 'weak') and hot:
+        conf.append({'code': 'GRI-vs-COUNTRIES',
+                     'text': 'глобальный уровень «%s» при %d странах в статусе high/critical: %s'
+                             % (lvl, len(hot), ', '.join(sorted(hot)[:10]))})
+    if reg.get('state') == 'stable' and esc_n > 0 and cvg.get('n_active') == 0:
+        conf.append({'code': 'REGIME-vs-ESCALATION',
+                     'text': 'режим stable и активных доменов 0 при %d событиях с signal_type=escalation' % esc_n})
+    if (sub.get('cascade_exposure') == 0) and not (enriched.get('cascade_paths') or []):
+        geo_esc = sum(1 for e in published_events
+                      if e.get('domain') == 'geopolitics' and e.get('signal_type') == 'escalation')
+        conf.append({'code': 'CASCADE-EMPTY',
+                     'text': 'каскадный слой пуст (cascade_exposure=0, cascade_paths=0) при %d геополитических эскалациях' % geo_esc})
+    if not (enriched.get('structural_vulnerabilities') or []):
+        conf.append({'code': 'STRUCT-EMPTY', 'text': 'structural_vulnerabilities пуст'})
+
+    out['consistency'] = {
+        'contradictions': conf,
+        'count': len(conf),
+        'context': {
+            'gri_level': lvl, 'regime_state': reg.get('state'),
+            'convergence_level': cvg.get('convergence_level'), 'n_active': cvg.get('n_active'),
+            'scenario_30d': prob.get('dominant_scenario_30d'),
+            'scenario_90d': prob.get('dominant_scenario_90d'),
+            'countries_high': hot, 'escalation_events': esc_n,
+        },
+        'note': 'страновые 70 — conflict_floor из country_risk.py, не дефект шкалы',
+    }
+
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'gri-shadow-report.json').write_text(
+        json.dumps(out, ensure_ascii=False, indent=2), encoding='utf-8')
+    sg = out.get('sign') or {}
+    print('  [GRI-SHADOW] index=%s→fixed=%s (%s) basis Δ=%+d противоречий=%d gate=%s'
+          % (sg.get('index_published'), sg.get('index_fixed'), sg.get('level_fixed'),
+             out['basis']['delta_total'], len(conf), GRI_FIX_GATE), file=sys.stderr)
+    return out
+
+
 def _admission_contract_classify(title, domain):
     """ADR-008 §2: N1 событийность ∧ N2 риск-релевантность ∧ N3 фактичность (по финальному тексту)."""
     t = (title or '').lower()
@@ -18280,6 +18421,11 @@ def save_enriched(events, previous_snapshot=None):
                 _junk_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _je:
                 print('  [WARN] junk shadow fail: %s' % _je, file=sys.stderr)
+            # ═══ GRI SHADOW v1 (READ-ONLY): знак adaptive_capacity, основание счёта, согласованность ═══
+            try:
+                _gri_shadow_report(enriched, enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _ge:
+                print('  [WARN] gri shadow fail: %s' % _ge, file=sys.stderr)
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
