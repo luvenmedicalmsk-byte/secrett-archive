@@ -9478,6 +9478,107 @@ _SHA_DOMV = {
     'climate': r'наводн|паводок|землетряс|шторм|ураган|тайфун|засух|пожар|вулкан|цунами|оползен|циклон|торнадо|морск\w* л[её]д|подтопл|\bсель\b|деград\w* (?:каспи|мор|озер)|маловод|аномальн\w* (?:жар|температур)|гроза|опасн\w* осадк|метеоявлени|опасн\w* метео',
 }
 
+# ══════════════════════════════════════════════════════════════════════════════
+# JUNK SHADOW v1 (READ-ONLY). Редакционный мусор: ведомственные ритуалы, рубрики,
+# кадровые заметки, быт, спорт, шоу-бизнес. Это НЕ повтор _SHA_NOISE: тот покрывает
+# спорт/гороскопы/рецепты и работает только внутри shadow-классификатора ADR-008,
+# в боевой допуск не входит.
+#
+# JS-1  Классификация ТОЛЬКО по заголовку. Сводки несут подвалы telegram-каналов
+#       («подписывайтесь», «читайте подробнее») и названия ведомств («санитарно-
+#       эпидемиологического»), что давало ложные срабатывания и на мусоре, и на защите.
+# JS-2  Точность важнее полноты. Ложное скрытие сигнала дороже пропущенного мусора
+#       (тот же принцип, что GI-3 «ложная координата хуже отсутствующей»).
+# JS-3  GUARD отменяет вердикт при любом намёке на риск, конфликт, срыв или
+#       пострадавших. Проверено на архиве: «Четыре гражданских лица убиты — Аль-Джауф»
+#       и «Кинофестиваль Красное море отменён из-за войны» — сигналы, не мусор.
+# JS-4  Shadow: только считает и пишет отчёт. Видимость не меняется.
+#       Промоушен — флагом JUNK_GATE, откат = одна строка в False.
+#
+# Калибровка 2026-09-21: архив signals.json 1711 уникальных заголовков → 3 попадания,
+# ложных срабатываний 0; текущий корпус 354 → 3 попадания, ложных 0.
+# ══════════════════════════════════════════════════════════════════════════════
+JUNK_GATE = False   # промоушен в боевой путь: скрывать мусор из ленты. Откат — эта строка в False
+
+_JUNK_RULES = [
+    ('ритуал',  re.compile(r'поздрав|с профессиональн\w* праздник|\bюбиле|'
+                           r'вручил\w* (?:награ|грамот|благодарност)|почётн\w* звани|'
+                           r'день федеральн\w* государственн', re.I)),
+    ('рубрика', re.compile(r'рубрик|«лица \w|"лица \w|геро(?:й|иня) (?:рубрик|недел)|'
+                           r'фоторепортаж|дайджест|анонс недели|подборк\w* (?:недел|дня)', re.I)),
+    ('кадры',   re.compile(r'вступил\w* в должност|представил\w* коллектив нов', re.I)),
+    ('быт',     re.compile(r'рецепт|похуден|гороскоп|астролог|\bтаро\b|распродаж|подарк', re.I)),
+    ('спорт',   re.compile(r'\bнба\b|\bnba\b|футбол|хоккей|\bматч\b|турнир|чемпионат|'
+                           r'олимп|пловц', re.I)),
+    ('блогеры', re.compile(r'ютубер|блогер|подписчик|тикток|инфлюенс', re.I)),
+    ('шоубиз',  re.compile(r'конкурс на открытие|церемони\w* награжд|номинац\w* на прем|'
+                           r'премьер\w* (?:фильм|альбом)', re.I)),
+]
+_JUNK_GUARD = re.compile(
+    r'санкц|удар\w|обстрел|погиб|пострадал|жертв|уби(?:т|л)|ранен|наводнени|землетрясени|пожар|'
+    r'кибератак|взлом|утечк|уязвим|дефолт|банкрот|обвал|эвакуац|режим чс|чрезвычайн|'
+    r'мобилизац|теракт|взрыв|блэкаут|обесточ|\bдрон|бпла|ракет|вспышк|эпидеми|инфекц|'
+    r'\bвойн|конфликт|боев|отмен|сорван|сорвал|приостанов|закрыт|запрет|угроз|'
+    r'гражданск\w* лиц|мирн\w* жител|беженц|блокад|перекры', re.I)
+
+
+def _junk_classify(title):
+    """JS-1/JS-3. → (category|None, guarded: bool). Чистая функция, ничего не меняет."""
+    t = title or ''
+    for name, rx in _JUNK_RULES:
+        if rx.search(t):
+            if _JUNK_GUARD.search(t):
+                return None, True          # риск-контекст отменяет вердикт
+            return name, False
+    return None, False
+
+
+def _junk_shadow_report(events, outdir):
+    """JS-4. Помечает junk_shadow на событии и пишет отчёт. Видимость не трогает."""
+    from collections import Counter
+    cats = Counter(); guarded = 0; items = []
+    for e in events:
+        cat, g = _junk_classify(e.get('title', ''))
+        if g:
+            guarded += 1
+            e['junk_shadow'] = {'cat': None, 'guarded': True}
+            continue
+        e['junk_shadow'] = {'cat': cat, 'guarded': False}
+        if cat:
+            cats[cat] += 1
+            items.append({
+                'title': (e.get('title') or '')[:140],
+                'cat': cat,
+                'domain': e.get('domain'),
+                'severity': e.get('severity'),
+                'source': e.get('source'),
+                'feed_visible': bool(e.get('feed_visible')),
+                'map_visible': bool(e.get('map_visible')),
+            })
+    n = max(1, len(events))
+    total = sum(cats.values())
+    rep = {
+        'ts': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'contract_ver': 'junk-v1', 'phase': 'shadow-read-only',
+        'gate_active': bool(JUNK_GATE),
+        'events_seen': len(events),
+        'junk_total': total,
+        'junk_rate': round(total / n, 4),
+        'in_feed': sum(1 for x in items if x['feed_visible']),
+        'on_map': sum(1 for x in items if x['map_visible']),
+        'guarded': guarded,
+        'by_cat': dict(cats.most_common()),
+        'items': items[:80],
+        'note': 'JS-4: shadow, видимость не меняется. Промоушен — JUNK_GATE=True.',
+    }
+    (outdir / 'migration').mkdir(parents=True, exist_ok=True)
+    (outdir / 'migration' / 'junk-shadow-report.json').write_text(
+        json.dumps(rep, ensure_ascii=False, indent=2), encoding='utf-8')
+    print('  [JUNK-SHADOW] junk=%d (%.2f%%) в ленте=%d защита=%d gate=%s'
+          % (total, 100 * total / n, rep['in_feed'], guarded, JUNK_GATE), file=sys.stderr)
+    return rep
+
+
 def _admission_contract_classify(title, domain):
     """ADR-008 §2: N1 событийность ∧ N2 риск-релевантность ∧ N3 фактичность (по финальному тексту)."""
     t = (title or '').lower()
@@ -18174,6 +18275,11 @@ def save_enriched(events, previous_snapshot=None):
                 _admission_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _ae:
                 print('  [WARN] admission shadow fail: %s' % _ae, file=sys.stderr)
+            # ═══ JUNK SHADOW v1 (READ-ONLY): редакционный мусор, боевой путь не трогает ═══
+            try:
+                _junk_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+            except Exception as _je:
+                print('  [WARN] junk shadow fail: %s' % _je, file=sys.stderr)
             # ═══ SIC SHADOW (Stage SIC-1, READ-ONLY): добавляет sic_class + отчёт, боевой путь не трогает ═══
             try:
                 _sic_shadow_pass(enriched["events"])
