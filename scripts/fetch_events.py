@@ -11922,12 +11922,16 @@ def _apply_geo_contract(events):
                     _low = (e.get('title') or '').lower()
                     _best = None
                     for _cc in _imp:
+                        # ГРАНИЦА СЛОВА (22.09.2026). Было _low.find(_stem) —
+                        # сырое вхождение подстроки. Давало «Тирана» -> Иран,
+                        # «Боливии» -> Ливия, «Генассамблею» -> Ассам.
                         for _stem, _g in _gcm.GAZ.items():
                             if _g[0] != _cc or len(_g) < 4 or _g[2] is None:
                                 continue
-                            _p = _low.find(_stem)
-                            if _p >= 0 and (_best is None or _p < _best[0]):
-                                _best = (_p, _cc, _g)
+                            _rx = getattr(_gcm, '_GAZ_RE', {}).get(_stem)
+                            _mm = _rx.search(_low) if _rx else None
+                            if _mm and (_best is None or _mm.start() < _best[0]):
+                                _best = (_mm.start(), _cc, _g)
                     if _best is None:
                         # Страна названа не в заголовке, а в сводке. Порядок в
                         # списке не текстовый, поэтому берётся первая с

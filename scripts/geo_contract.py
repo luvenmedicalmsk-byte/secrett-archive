@@ -1292,10 +1292,15 @@ def _ready_subject_country(title):
     if not _GEO_READY.search(low) or _GEO_STRIKE.search(low):
         return None
     best = None
+    # ГРАНИЦА СЛОВА (22.09.2026). Было low.find(stem) — сырое вхождение
+    # подстроки в обход _GAZ_RE. На корпусе это давало «Тирана» -> Иран,
+    # «Боливии» -> Ливия, «Генассамблею» -> Ассам (Индия), «верфь» -> РФ,
+    # «применить» -> Рим, «увидели» -> Дели. Ищем через ту же скомпилированную
+    # регулярку, что и _place_at: она требует границу слова слева.
     for stem, g in GAZ.items():
-        pos = low.find(stem)
-        if pos >= 0 and (best is None or pos < best[0]):
-            best = (pos, g)
+        _m = _GAZ_RE[stem].search(low)
+        if _m and (best is None or _m.start() < best[0]):
+            best = (_m.start(), g)
     return best[1] if best else None
 
 
@@ -1316,8 +1321,10 @@ def _locative_in_title(title, cc):
     if not title or not cc:
         return False
     low = str(title).lower()
+    # Та же правка границы слова: сырое `stem in low` ловило топоним внутри
+    # чужого слова и подтверждало страну, которой в заголовке нет.
     for stem, g in GAZ.items():
-        if g[0] == cc and stem in low:
+        if g[0] == cc and _GAZ_RE[stem].search(low):
             return True
     return False
 
