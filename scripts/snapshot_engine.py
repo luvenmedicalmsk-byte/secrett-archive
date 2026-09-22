@@ -783,10 +783,25 @@ def compute_domain_index(domain_scores: dict, iso3: str = "") -> int | None:
         try:
             from country_risk import conflict_floor as _cf
             rec = _cf(code)
-            if rec and rec.get("floor"):
-                idx = max(idx, int(rec["floor"]))
+            floor = int(rec["floor"]) if rec and rec.get("floor") else 0
         except Exception:
-            pass
+            floor = 0
+        if floor and idx < floor:
+            # ФОН ПЛЮС НАДБАВКА, А НЕ МАКСИМУМ ИЗ ДВУХ.
+            #
+            # Простой max(idx, floor) ставил бы Россию, Украину, Израиль и
+            # Иран ровно на 70 и держал бы их там неподвижно. Этот дефект уже
+            # разбирался 09.09.2026 для risk_score: пока стоял максимум,
+            # индекс России показывал ровно 72 семь дней подряд, а события
+            # тяжелее фона из расчёта исчезали.
+            #
+            # Здесь то же правило и то же затухание: пол остаётся нижней
+            # границей, а домены, превышающие его, добавляются сверху, вдвое
+            # слабее с каждым следующим. Один тяжёлый домен даёт полное
+            # превышение, пять одинаковых не раздувают цифру.
+            above = sorted((v for v in vals if v > floor), reverse=True)
+            add = sum((v - floor) * (0.5 ** i) for i, v in enumerate(above))
+            idx = int(round(min(100, floor + add)))
     return idx
 
 
