@@ -3354,9 +3354,17 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
                 casualties = max(casualties, _dd)
         except Exception:
             pass
+    # CAP_V2: признак свершившегося действия нужен потолку (см. normalize_severity).
+    # Класс события здесь ещё не вычислен — он проставляется позже, — поэтому
+    # берётся тот же морфологический признак, что и в ACCOMPLISHED SHADOW.
+    try:
+        _acc_flag = _acc_classify(title or '')[0] if CAP_V2_GATE else False
+    except Exception:
+        _acc_flag = False
     _sev_out = normalize_severity('news', {'kw_high': kw_high, 'kw_med': kw_med,
                                        'casualties': casualties, 'bias': bias, 'weight': weight,
-                                       'kw_conflict': kw_conflict, 'mass_scale': mass})
+                                       'kw_conflict': kw_conflict, 'mass_scale': mass,
+                                       'accomplished': _acc_flag})
     # Порог топливного сбоя применяется после общей формулы: он поднимает
     # оценку до минимума, но не снижает её, если расчёт дал больше.
     if _fuel_floor and _sev_out < _fuel_floor:
@@ -3606,11 +3614,38 @@ def normalize_severity(source_type, m):
         elif cas >= 1000:   score += 8
         elif cas > 0:       score += 4
         score += min(8, (m.get('bias') or 0) // 2)   # влияние source_bias уменьшено вдвое, потолок +8
-        cap = 75 if confirmed else 65                # подтверждённый ущерб ≤75, аналитика/мнение ≤65
+        # ПОТОЛКИ (пересмотр 22.09.2026, CAP_V2_GATE).
+        #
+        # Прежние 65 без жертв и 75 с жертвами делали верх шкалы почти
+        # недостижимым: «Высокий» и «Критический» вместе занимали 5,6%
+        # корпуса, и туда попадали только события с погибшими. Всё
+        # остальное упиралось в 65 независимо от масштаба:
+        #   обрыв половины европейского импорта авиатоплива     набирал 75, вставало 65
+        #   Польша и Латвия подняли авиацию и ПВО               потолок 78
+        #   остановка НПЗ, дефолт, отключение от SWIFT          упирались в 65
+        #
+        # Потолок 65 ставился, чтобы мнение и аналитика не соревновались с
+        # реальным ущербом. Эту задачу он решает, но не различает мнение и
+        # состоявшееся событие без жертв. Теперь различает: признак
+        # свершившегося действия берётся из того же морфологического
+        # разбора, что в ACCOMPLISHED SHADOW, а не из класса sic_class,
+        # который ошибается на трети комментариев.
+        #
+        #   мнение, прогноз, разбор              ≤ 65  (как было)
+        #   состоявшееся событие без жертв       ≤ 82
+        #   подтверждённые жертвы                ≤ 92
+        #   конфликтные маркеры                  ≤ 84  (было 78)
+        #
+        # ОТКАТ: CAP_V2_GATE = False — возвращаются 65 / 75 / 78.
+        _acc = bool(m.get('accomplished'))
+        if CAP_V2_GATE:
+            cap = 92 if confirmed else (82 if _acc else 65)
+        else:
+            cap = 75 if confirmed else 65
         kc = m.get('kw_conflict') or 0               # конфликтные сигналы — вровень с климатом (74-78)
         if kc:
             score += 6 * kc
-            cap = max(cap, 78)
+            cap = max(cap, 84 if CAP_V2_GATE else 78)
         _ms = m.get('mass_scale') or 0               # п.6: масштаб массированной атаки/перехвата
         if _ms >= 500:  score += 16
         elif _ms >= 200: score += 12
@@ -10413,6 +10448,10 @@ def _context_shadow_report(events, outdir):
 # ОТКАТ: ACCOMPLISHED_GATE = False (по умолчанию). Классы не меняются.
 # ══════════════════════════════════════════════════════════════════════════════
 ACCOMPLISHED_GATE = True      # откат: False
+
+# Потолки оценки различают мнение и состоявшееся событие. Подробности и
+# значения — в normalize_severity, ветка news. ОТКАТ: False.
+CAP_V2_GATE = True
 
 _ACC_PAST = re.compile(r'(?<![а-яё])([а-яё]{3,})(л|ла|ло|ли|лся|лась|лось|лись)(?![а-яё])')
 # Страдательные причастия: окончание должно быть причастным, иначе шаблон
