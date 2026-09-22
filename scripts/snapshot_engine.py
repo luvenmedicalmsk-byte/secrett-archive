@@ -742,8 +742,32 @@ def compute_risk_score(events: list[dict], baseline: int) -> int:
 DOMAIN_INDEX_GATE = True      # откат: False
 
 
-def compute_domain_index(domain_scores: dict) -> int | None:
-    """Доминантная агрегация по доменам страны. Та же доля, что в GRDF v2."""
+# Конфликтный реестр ведётся на трёхбуквенных кодах, снимок страны — на
+# двухбуквенных. Карта покрывает только страны реестра: расширять её нужно
+# ровно тогда, когда в CONFLICT_REGISTRY добавляется страна.
+_CF_ISO2_TO_ISO3 = {
+    'RU': 'RUS', 'UA': 'UKR', 'IL': 'ISR', 'PS': 'PSE', 'IR': 'IRN',
+    'SD': 'SDN', 'MM': 'MMR', 'YE': 'YEM', 'SY': 'SYR', 'ML': 'MLI',
+    'BF': 'BFA', 'NE': 'NER', 'SO': 'SOM', 'CD': 'COD', 'HT': 'HTI',
+}
+
+
+def compute_domain_index(domain_scores: dict, iso3: str = "") -> int | None:
+    """Доминантная агрегация по доменам страны. Та же доля, что в GRDF v2.
+
+    КОНФЛИКТНЫЙ ПОЛ (22.09.2026). Первая версия считала только домены и
+    обрушила воюющие страны: Украина 51, Израиль 50, Беларусь 49 — ниже
+    Франции и Египта. Причина та же, что у risk_score: война входит в
+    постоянный фон страны, поэтому по доменам она не выделяется.
+
+    В системе для этого уже есть conflict_floor — редакционный пол 70 для
+    стран в вооружённом конфликте, с датой начала и обоснованием. Он
+    применялся к risk_score, но не к новому индексу, и индекс его потерял.
+
+    Пол — это структурный риск, который не зависит от того, попало ли
+    сегодня в ленту одно сообщение или двадцать. Судан с одним сигналом
+    получает 70 потому, что война там идёт независимо от потока новостей.
+    """
     if not DOMAIN_INDEX_GATE or not domain_scores:
         return None
     vals = [v for v in domain_scores.values() if isinstance(v, (int, float))]
@@ -751,7 +775,19 @@ def compute_domain_index(domain_scores: dict) -> int | None:
         return None
     peak = max(vals)
     mean = sum(vals) / len(vals)
-    return int(round(_GRDF_DOMINANCE * peak + (1.0 - _GRDF_DOMINANCE) * mean))
+    idx = int(round(_GRDF_DOMINANCE * peak + (1.0 - _GRDF_DOMINANCE) * mean))
+    code = (iso3 or '').upper()
+    if len(code) == 2:
+        code = _CF_ISO2_TO_ISO3.get(code, '')
+    if code:
+        try:
+            from country_risk import conflict_floor as _cf
+            rec = _cf(code)
+            if rec and rec.get("floor"):
+                idx = max(idx, int(rec["floor"]))
+        except Exception:
+            pass
+    return idx
 
 
 def compute_dominant_domain(events: list[dict]) -> str:
@@ -1572,7 +1608,7 @@ def update_index(snapshots: list[dict]) -> None:
                 "escalation_level": s["escalation_level"],
                 "delta":            s["delta"],
                 "domain_scores":    s.get("domain_scores") or {},
-                "domain_index":     compute_domain_index(s.get("domain_scores") or {}),
+                "domain_index":     compute_domain_index(s.get("domain_scores") or {}, s["country"]),
                 "ews_score":        s.get("ews_score"),
                 "cri_score":        s.get("cri_score"),
                 "gri_delta_7d":     s.get("gri_delta_7d"),
