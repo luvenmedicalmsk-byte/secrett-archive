@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-09-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-22T05:00:36.874918+00:00",
+  "generated_at": "2026-09-22T05:21:19.148277+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 33,
+      "score": 44,
       "trend": "stable"
     },
     {
@@ -33,7 +33,7 @@
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 33,
       "trend": "stable"
     },
     {
@@ -80,18 +80,18 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-Канада_зак",
+      "type": "Signal",
+      "label": "Канада закрывает корпоративного надзорщи",
+      "severity": 44,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-CA-Санкционно",
       "type": "Signal",
       "label": "Санкционное давление — Северная Америка",
       "severity": 81,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-CA-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Канада",
-      "severity": 58,
-      "domain": "climate"
     },
     {
       "id": "SIGNAL-CA-Геополитич",
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.33
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-CA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-CA",
@@ -163,16 +163,37 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-Канада_зак",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.44
+    },
+    {
       "from": "SIGNAL-CA-Санкционно",
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.81
-    },
-    {
-      "from": "SIGNAL-CA-Пожарная_а",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.58
     },
     {
       "from": "SIGNAL-CA-Геополитич",
