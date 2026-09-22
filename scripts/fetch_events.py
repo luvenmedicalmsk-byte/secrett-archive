@@ -9939,7 +9939,7 @@ def _history_shadow_report(events, history_size, outdir):
 # ОТКАТ: SCOPE_GATE = False (значение по умолчанию). Контур только считает и
 # пишет отчёт; severity не меняется ни при каком значении флага в этой версии.
 # ══════════════════════════════════════════════════════════════════════════════
-SCOPE_GATE = False            # промоушен: True
+SCOPE_GATE = True             # откат: False
 
 # Надбавка по широте места действия. Порядок величин согласован со шкалой
 # news: сильное слово +7, среднее +4. Охват это свойство события, а не ещё
@@ -10111,7 +10111,7 @@ def _scope_shadow_report(events, outdir):
 #
 # ОТКАТ: MAGNITUDE_GATE = False (по умолчанию). severity не меняется.
 # ══════════════════════════════════════════════════════════════════════════════
-MAGNITUDE_GATE = False        # промоушен: True
+MAGNITUDE_GATE = True         # откат: False
 
 _MAG_DOWN = re.compile(
     r'(?:сниз\w+|упал\w*|падени\w*|сократ\w+|сокращени\w*|потер\w+|лишил\w+|'
@@ -10189,6 +10189,44 @@ def _mag_classify(e):
             break
 
     return min(12, bonus), det
+
+
+def _scope_mag_apply(events):
+    """Применяет надбавки за охват и за количественный масштаб к severity.
+
+    Вызывается ПОСЛЕ отчётов, чтобы те показывали разницу, а не итог.
+    Надбавка никогда не понижает оценку и не переступает потолок модели.
+    Прежнее значение и состав надбавки пишутся в severity_decision.
+
+    OFF по обоим флагам -> байт-идентично.
+    """
+    n = 0
+    for e in events:
+        sb = mb = 0
+        det = []
+        if SCOPE_GATE:
+            sb, zone, _ = _scope_classify(e)
+            if sb:
+                det.append({'d': 'охват', 'v': zone, 'add': sb})
+        if MAGNITUDE_GATE:
+            mb, mdet = _mag_classify(e)
+            if mb:
+                det.append({'d': 'величина', 'v': [x.get('v') for x in mdet], 'add': mb})
+        if not (sb or mb):
+            continue
+        old = e.get('severity') or 0
+        cap = (92 if (e.get('casualties') or 0) else 82) if CAP_V2_GATE else (
+            75 if (e.get('casualties') or 0) else 65)
+        new = max(old, min(cap, old + sb + mb))
+        if new == old:
+            continue
+        e['severity'] = _sev_log(e, 'scope_magnitude', old, new,
+                                 'охват и количественный масштаб', 'boost')
+        e['_scope_mag'] = {'from': old, 'to': new, 'parts': det}
+        n += 1
+    if n:
+        print('  [SCOPE+MAG] поднято событий: %d' % n, file=sys.stderr)
+    return n
 
 
 def _magnitude_shadow_report(events, outdir):
@@ -10452,6 +10490,11 @@ ACCOMPLISHED_GATE = True      # откат: False
 # Потолки оценки различают мнение и состоявшееся событие. Подробности и
 # значения — в normalize_severity, ветка news. ОТКАТ: False.
 CAP_V2_GATE = True
+
+# Событие с определённой страной, но без точных координат получает центр
+# страны, чтобы не пропадать с карты. Подробности — у ветки country.
+# ОТКАТ: False.
+GEO_COUNTRY_FALLBACK_XY = True
 
 _ACC_PAST = re.compile(r'(?<![а-яё])([а-яё]{3,})(л|ла|ло|ли|лся|лась|лось|лись)(?![а-яё])')
 # Страдательные причастия: окончание должно быть причастным, иначе шаблон
@@ -11384,6 +11427,28 @@ def _apply_geo_contract(events):
         if ppt == 'country':
             st['country'] += 1; st[gc.precision] = st.get(gc.precision, 0) + 1
             e['lat'], e['lng'] = gc.lat, gc.lng
+            # ТОЧКА СТРАНЫ, КОГДА ТОЧНОЙ НЕТ (22.09.2026).
+            #
+            # Страна определена, а координат нет — и событие пропадает с карты,
+            # потому что map_visible считается по наличию lat. На корпусе таких
+            # было 15, среди них «Украинские беспилотники атаковали Уфу», «В
+            # Свердловской области ввели режим ЧС», «БПЛА атаковали Московский
+            # НПЗ». Для карты это потеря без причины: страна известна.
+            #
+            # Ставится центр страны из справочника, precision честно
+            # остаётся прежней («country»), чтобы слой, которому нужна
+            # точность, отличал такую точку от привязки к городу.
+            #
+            # ОТКАТ: GEO_COUNTRY_FALLBACK_XY = False.
+            if GEO_COUNTRY_FALLBACK_XY and e.get('lat') is None and gc.country:
+                try:
+                    import geo_contract as _gcm
+                    for _st, _g in _gcm.GAZ.items():
+                        if _g[0] == gc.country and len(_g) >= 4 and _g[2] is not None:
+                            e['lat'], e['lng'] = _g[2], _g[3]
+                            break
+                except Exception:
+                    pass
             e['region'] = gc.region or gc.country_ru
             e['event_country'] = gc.country      # ISO: фронт локализует через _CNRU
             e['primary_country'] = gc.country; e['country_code'] = gc.country
@@ -19331,6 +19396,9 @@ def save_enriched(events, previous_snapshot=None):
             # ═══ MAGNITUDE SHADOW v1 (READ-ONLY): количественный масштаб потери ═══
             try:
                 _magnitude_shadow_report(enriched["events"], OUTPUT_PATH.parent)
+                # Применение надбавок идёт ПОСЛЕ отчётов: отчёт показывает
+                # разницу, а боевое значение получает итог.
+                _scope_mag_apply(enriched["events"])
             except Exception as _me:
                 print('  [WARN] magnitude shadow fail: %s' % _me, file=sys.stderr)
             # ═══ CONTEXT SHADOW v1 (READ-ONLY): число должно относиться к событию ═══

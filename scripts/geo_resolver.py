@@ -87,7 +87,8 @@ def all_subjects(text):
     low = (text or '').lower()
     out = []
     for stem, name in RU_SUBJECTS.items():
-        if stem in low and stem not in SPB_DISTRICT_HOMONYMS and name not in out:
+        if (stem not in SPB_DISTRICT_HOMONYMS and name not in out
+                and _ru_subj_rx(stem).search(low)):
             out.append(name)
     for c, nm in BARE_CITY_SUBJECT.items():
         if _BARE_RX[c].search(low) and nm not in out:
@@ -95,6 +96,31 @@ def all_subjects(text):
     if ('петербург' in low or 'спб' in low) and 'Санкт-Петербург' not in out:
         out.append('Санкт-Петербург')
     return out
+
+
+_RU_SUBJ_RX = {}
+
+
+def _ru_subj_rx(stem):
+    """Основа субъекта РФ как СЛОВО, а не как подстрока.
+
+    Проверка `stem in low` давала ложные субъекты: «КОМИссия по общественным
+    утилитам Техаса» возвращала Республику Коми, и событие про Техас получало
+    страну RU, точку на карте над Москвой и место в профиле России.
+
+    Длина допустимого хвоста зависит от длины основы. Короткая основа
+    («коми», «омск», «крым») получает строгие три буквы — «комиссия» это
+    коми плюс четыре и под шаблон не подпадает. Длинная («башкорт»,
+    «краснодарск») получает восемь, иначе не поймается «Башкортостане».
+    Ложных совпадений длинная основа не даёт: слов, начинающихся на
+    «башкорт» и не относящихся к Башкортостану, не существует.
+    """
+    rx = _RU_SUBJ_RX.get(stem)
+    if rx is None:
+        tail = 3 if len(stem) <= 5 else 8
+        rx = _RU_SUBJ_RX[stem] = re.compile(
+            r'(?<![а-яёa-z])' + re.escape(stem) + r'[а-яё\-]{0,%d}(?![а-яё])' % tail)
+    return rx
 
 
 def ru_subject(text):
@@ -112,8 +138,25 @@ def ru_subject(text):
     # если упомянут РАНЬШЕ Петербурга.
     _BIG = 10 ** 9
     _p_spb = min([low.find(x) for x in ('петербург', 'спб') if x in low] or [_BIG])
-    _cand = [(low.find(stem), name) for stem, name in RU_SUBJECTS.items()
-             if stem in low and stem not in SPB_DISTRICT_HOMONYMS]
+    # ГРАНИЦА СЛОВА У ОСНОВЫ СУБЪЕКТА (22.09.2026).
+    #
+    # Проверка `stem in low` брала основу как подстроку, и «КОМИссия по
+    # общественным утилитам Техаса» давала Республику Коми: событие про Техас
+    # получало страну RU, точку на карте над Москвой и попадало в профиль
+    # России. То же ждало «омск» в «Томский», «крым» в «крымчане» и любое
+    # слово, начинающееся с короткой основы.
+    #
+    # Теперь основа должна стоять словом: перед ней не буква, после — не более
+    # трёх букв окончания («московск» + «ой», «якути» + «и»). Длина окончания
+    # выбрана по самому длинному падежному хвосту в списке; «комиссия» это
+    # коми + пять букв и под шаблон не подпадает.
+    _cand = []
+    for stem, name in RU_SUBJECTS.items():
+        if stem in SPB_DISTRICT_HOMONYMS:
+            continue
+        _hit = _ru_subj_rx(stem).search(low)
+        if _hit:
+            _cand.append((_hit.start(), name))
     for _c, _nm in BARE_CITY_SUBJECT.items():
         _m = _BARE_RX[_c].search(low)
         if _m:
@@ -126,8 +169,10 @@ def ru_subject(text):
         return 'Санкт-Петербург'
     if 'севастопол' in low:
         return 'Севастополь'
+    # Запасной путь. Раньше здесь стоял тот же подстрочный поиск, что и выше,
+    # и он возвращал ложный субъект даже после проверки по границам слова.
     for stem, name in RU_SUBJECTS.items():
-        if stem in low:
+        if _ru_subj_rx(stem).search(low):
             return name
     return None
 
