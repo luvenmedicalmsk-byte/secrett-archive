@@ -10868,6 +10868,7 @@ GEO_COUNTRY_FALLBACK_XY = True
 GEO_SINGLE_MENTION = True
 
 GEO_MENTIONED_XY = True
+ADM1_GATE = True            # регион первого уровня по координатам; откат: False
 
 _ACC_PAST = re.compile(r'(?<![а-яё])([а-яё]{3,})(л|ла|ло|ли|лся|лась|лось|лись)(?![а-яё])')
 # Страдательные причастия: окончание должно быть причастным, иначе шаблон
@@ -11994,6 +11995,34 @@ def _apply_geo_contract(events):
         pass
     print('  [GEO-AUTHORITY] country %(country)d · zone %(zone)d · global %(global)d · '
           'без места %(none)d · gate_fail %(validate_fail)d' % st, file=sys.stderr)
+    # ═══ ADM1 · РЕГИОН ПЕРВОГО УРОВНЯ ПО КООРДИНАТАМ ════════════════════════
+    # Ставится ПОСЛЕ гео-контура: до него country_code ещё пуст, а без страны
+    # ближайший город может оказаться за границей и событие получит чужой
+    # регион — та же ошибка, из-за которой карта приписывала страну актора.
+    #
+    # Поле region для большинства стран равно названию самой страны: субрегион
+    # извлекался только для России через ru_subject. На срезе 22.09.2026 из 132
+    # событий со страной и регионом настоящий субрегион имели 13 (9%), и все
+    # тринадцать российские. Блок «Горячие регионы» в карточке страны из-за
+    # этого мог наполниться только для РФ.
+    #
+    # Пишется РЯДОМ с region, а не вместо него: region остаётся тем, что дал
+    # источник или ru_subject, и ничего из прежнего поведения не ломается.
+    # Ошибка справочника не может испортить существующее поле.
+    # Откат: ADM1_GATE = False.
+    if ADM1_GATE:
+        _n = 0
+        try:
+            import adm1 as _adm1
+            for e in events:
+                _r = _adm1.adm1_ru(e.get('lat'), e.get('lng'), e.get('country_code'))
+                if _r:
+                    e['region_adm1'] = _r
+                    _n += 1
+            print('  [ADM1] регион по координатам: %d из %d событий' % (_n, len(events)),
+                  file=sys.stderr)
+        except Exception as _ex:
+            print('  [WARN] ADM1: %s' % _ex, file=sys.stderr)
 
 
 def _geo_shadow_report(events):
