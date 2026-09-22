@@ -6292,6 +6292,7 @@ def process_events(raw_items):
     events = []
     seen_ids = set()
     seen_numkeys = {}      # второй ключ дедупликации: числа -> источник
+    seen_wordsets = {}     # третий ключ: набор слов -> (дата, источник)
     _LOSS = {'ingested': len(raw_items), 'old': 0, 'filter': 0, 'gov': 0,
              'no_domain': 0, 'no_geo': 0, 'global_marker': 0, 'sev': 0, 'dup': 0, 'fresh': 0, 'ad': 0,
              'nogeo_valid': 0, 'nogeo_noise': 0, 'proc_only': 0}
@@ -6898,6 +6899,29 @@ def process_events(raw_items):
         if _nk and _nk in seen_numkeys and seen_numkeys[_nk] != _nsrc:
             _trace(_tid,'DEDUP','removed',reason='dup_numeric'); _lost('dup', item); continue
         if _nk: seen_numkeys.setdefault(_nk, _nsrc)
+        # ТРЕТИЙ КЛЮЧ · ПЕРЕСТАНОВКА СЛОВ (22.09.2026). Откат: WORDSET_DUP=False.
+        # «Трамп подписал закон об адских санкциях против России» (18.09) и
+        # «Закон об адских санкциях против России подписал Трамп» (19.09) стояли
+        # в ленте оба. Ключ по id не совпал: заголовки разные посимвольно.
+        # Числовой ключ не сработал: чисел в заголовке нет вовсе.
+        # Набор значимых слов у них ИДЕНТИЧЕН, отличается только порядок.
+        # Условия намеренно жёсткие, потому что слабее сразу даёт ложные склейки
+        # (проверено: пара «Пожарная опасность: Алтайский край» и «Саратовская
+        # обл.» склеивалась из-за общего слова «Россия» в обоих заголовках):
+        #   полное совпадение МНОЖЕСТВА значимых слов, не пересечение;
+        #   полное совпадение множества чисел — «четверо пострадали» и «двое
+        #   пострадали» это расхождение источников, а не дубль;
+        #   разные источники — повтор внутри одной ленты законен;
+        #   окно 3 дня — публикации одного факта расходятся на сутки.
+        # На корпусе 257 видимых событий ключ снимает РОВНО ОДНУ карточку.
+        if WORDSET_DUP:
+            _wk = _wordset_dup_key(item.get('title'), item.get('date'))
+            if _wk:
+                _prev = seen_wordsets.get(_wk[0])
+                if _prev and _prev[1] != _nsrc and abs((_wk[1] - _prev[0]).days) <= 3:
+                    _trace(_tid,'DEDUP','removed',reason='dup_wordset')
+                    _lost('dup', item); continue
+                seen_wordsets.setdefault(_wk[0], (_wk[1], _nsrc))
         seen_ids.add(ev_id)
 
         svgX, svgY = coord_to_svg(lat, lng)
@@ -7998,6 +8022,37 @@ _FIN_COLLAPSE_FLOOR = 76
 # дата, и домен — то есть когда речь наверняка об одном событии.
 _NUM_KEY_RE = re.compile(r'\d+[.,]?\d*')
 _ABBR_KEY_RE = re.compile(r'\b[A-ZА-ЯЁ]{2,}\b')
+
+
+# ═══ ТРЕТИЙ КЛЮЧ ДЕДУПЛИКАЦИИ · НАБОР СЛОВ ═════════════════════════════════
+# Ловит один факт, поданный с переставленными словами. Первый ключ (id по
+# заголовку) на это не годится — заголовки различаются посимвольно; второй
+# (числовой) не годится, когда чисел в заголовке нет.
+WORDSET_DUP = True
+_WS_STOP = {
+    'в','на','и','с','от','по','за','к','о','из','не','для','что','как','при',
+    'его','это','был','была','было','также','ещё','еще','уже','или','но','а',
+    'the','a','an','of','in','on','at','to','for','is','was','are','were',
+    'that','this','it','be','after','amid','says','say','new',
+}
+
+
+def _wordset_dup_key(title, date):
+    """(множество значимых слов + множество чисел, дата) или None.
+    Слово короче четырёх букв и стоп-слова не участвуют: они несут порядок,
+    а не смысл. Числа входят в ключ отдельно — «четверо пострадали» и «двое
+    пострадали» это расхождение источников по факту, а не дубль."""
+    t = title or ''
+    ws = frozenset(w for w in re.findall(r'[a-zа-яё]{4,}', t.lower())
+                   if w not in _WS_STOP)
+    if len(ws) < 4:
+        return None            # слишком короткий заголовок: склейка ненадёжна
+    nm = frozenset(re.findall(r'\d+', t))
+    try:
+        dt = datetime.strptime((date or '')[:10], '%Y-%m-%d')
+    except Exception:
+        return None
+    return ((ws, nm), dt)
 
 
 def _numeric_dup_key(title, date, domain, summary=''):
