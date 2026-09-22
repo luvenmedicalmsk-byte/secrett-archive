@@ -17651,9 +17651,36 @@ def _signal_quality_pass(events):
         return events
 
 
+# УДЕРЖАНИЕ В ЛЕНТЕ (пересмотр 22.09.2026).
+#
+# Лента пересобирается каждый прогон из свежих выдач источников: что источник
+# перестал отдавать, из неё уходит. Это правило удерживает тяжёлые события,
+# пока они актуальны.
+#
+# Прежние значения — порог 85 и срок 7 дней — защищали почти ничего: событий
+# 85+ в корпусе единицы. Ночью 21→22.09, когда прогоны встали на 4 ч 11 мин,
+# под порог попало ОДНО событие, а из ленты выпало 51, среди них:
+#   84  Оранжевое наводнения предупреждение — Индия
+#   84  Оранжевое наводнения предупреждение — Китай
+#   78  Талибан протестует, пока Пакистан снова бомбит Афганистан
+#   74  Маловодье: Алтайский край
+#   72  Падение интернет-связи: Сирия, Южный Судан, Нигерия
+# Наводнениям не хватило одного балла.
+#
+# Порог опущен до 70 («Повышенный» и выше по шкале Atlas), срок сокращён до
+# 2 суток. Сочетание выбрано так, чтобы простой сбора не выбивал тяжёлое, но
+# удержанное не залёживалось: прежние 7 дней при низком пороге держали бы в
+# ленте прошлую неделю.
+#
+# ОТКАТ: вернуть 85 и 7.
+_RETAIN_MIN_SEV = 70      # прежнее значение: 85
+_RETAIN_MAX_DAYS = 2      # прежнее значение: 7
+
+
 def _retain_critical(evs, prev):
-    """Критические события (sev>=85, не старше 7 дней) не выпадают из ленты,
-    пока актуальны, даже если источник перестал их отдавать."""
+    """Тяжёлые события (sev>=_RETAIN_MIN_SEV, не старше _RETAIN_MAX_DAYS суток)
+    не выпадают из ленты, пока актуальны, даже если источник перестал их
+    отдавать."""
     try:
         pevs=(prev or {}).get('events') or []
         if not pevs: return evs
@@ -17662,16 +17689,18 @@ def _retain_critical(evs, prev):
         from datetime import datetime as _dt, timezone as _tz
         _now=_dt.now(_tz.utc); kept=[]
         for e in pevs:
-            if (e.get('severity') or 0) < 85: continue
+            if (e.get('severity') or 0) < _RETAIN_MIN_SEV: continue
             key=e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]
             if key in have or (e.get('title') or '')[:60] in have_t: continue
             try:
                 d=_dt.strptime((e.get('date') or '')[:10],'%Y-%m-%d').replace(tzinfo=_tz.utc)
-                if (_now-d).days>7: continue
+                if (_now-d).days>_RETAIN_MAX_DAYS: continue
             except Exception: continue
             m=dict(e.get('meta') or {}); m['retained']=True; e['meta']=m
             kept.append(e)
-        if kept: print(f"  ✓ retention: удержано критических событий {len(kept)}", file=sys.stderr)
+        if kept:
+            print(f"  ✓ retention: удержано тяжёлых событий {len(kept)} "
+                  f"(порог {_RETAIN_MIN_SEV}, до {_RETAIN_MAX_DAYS} сут)", file=sys.stderr)
         return evs+kept
     except Exception:
         return evs
