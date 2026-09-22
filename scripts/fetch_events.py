@@ -13485,6 +13485,177 @@ def _mgm_repair(raw):
                 return []
         return []
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ИСТОЧНИК: NOTAM (EUROCONTROL EAD через autorouter) — ПЕРВЫЙ МАШИННЫЙ ДЕТЕКТОР
+# В ГЕОПОЛИТИКЕ.
+#
+# ЗАЧЕМ. Климат питается машинной детекцией: FIRMS, EONET, GDACS, USGS,
+# Copernicus, GloFAS, Росгидромет CAP — событие фиксируется в момент, когда оно
+# происходит. Геополитика питалась ТОЛЬКО текстом: ACLED RSS, новостные ленты,
+# телеграм. Геополитический сигнал отставал ровно на время, пока кто-то напишет
+# новость. NOTAM закрывает этот разрыв: закрытие воздушного пространства
+# оформляется РАНЬШЕ, чем выходит сообщение для населения.
+#
+# ФИЛЬТР. Поток NOTAM — тысячи записей в сутки, и подавляющее большинство это
+# рутина аэродромов: неработающий огонь на полосе, закрытая рулёжка, смена
+# частоты. Фильтровать по тексту нельзя — он закодирован. Фильтруем по
+# РАЗЛОЖЕННОМУ Q-коду ICAO, поле code23 (субъект уведомления):
+#   RA  airspace reservation   RD  danger area        RP  prohibited area
+#   RR  restricted area        RT  temporary restricted
+#   RM  military operating     RO  overflying          WM  military exercise
+#   WP  parachute jumping      WU  unmanned aircraft
+# Плюс отдельно GNSS: глушение навигации проходит субъектом GW / GA и надёжнее
+# опознаётся по тексту (GPS, GNSS, JAMMING, INTERFERENCE, RAIM). Калининград и
+# Балтика видны именно так, и видны независимо от чьих-либо заявлений.
+#
+# СТАТУС. Источник за флагом NOTAM_GATE, по умолчанию ВЫКЛЮЧЕН. Включение
+# требует ключа (AR_CLIENT_ID / AR_CLIENT_SECRET) и shadow-прогона с замером
+# объёма после фильтра. Без ключа функция возвращает пустой список и пишет
+# [SKIP] — конвейер не страдает.
+# ══════════════════════════════════════════════════════════════════════════════
+NOTAM_GATE = False            # откат/включение: одно значение
+
+_AR_TOKEN_URL = "https://api.autorouter.aero/oauth2/token"
+_AR_NOTAM_URL = "https://api.autorouter.aero/v1.0/notam"
+
+# FIR, за которыми следим. Восточный фланг НАТО, Балтика, Калининград, Чёрное
+# море. Список узкий намеренно: каждый FIR это отдельный запрос, а ценность
+# даёт не охват, а зона, где военная активность меняет режим неба.
+_NOTAM_FIR = [
+    'EPWW',   # Польша
+    'EYVL',   # Литва
+    'EVRR',   # Латвия
+    'EETT',   # Эстония
+    'EFIN',   # Финляндия
+    'UMKK',   # Калининград
+    'UMMV',   # Беларусь (Минск)
+    'LRBB',   # Румыния
+    'LBSR',   # Болгария
+    'UKFV',   # Крым / Симферополь
+]
+
+# Субъект Q-кода (code23) — что именно объявляется. Только режим воздушного
+# пространства, аэродромная рутина не проходит.
+_NOTAM_CODE23 = {'RA', 'RD', 'RP', 'RR', 'RT', 'RM', 'RO', 'WM', 'WP', 'WU'}
+
+# Глушение навигации: субъект ненадёжен, опознаём по тексту.
+_NOTAM_GNSS = re.compile(r'\b(?:GPS|GNSS|RAIM|GBAS|SBAS)\b|JAMMING|INTERFERENCE|SPOOFING', re.I)
+
+# Уровень. Запрет и опасная зона весомее временного ограничения; глушение
+# навигации отдельным весом, потому что это прямой след радиоэлектронной борьбы.
+_NOTAM_SEV = {'RP': 76, 'RD': 74, 'RA': 70, 'RR': 70, 'RM': 68,
+              'WM': 68, 'RT': 64, 'RO': 64, 'WU': 60, 'WP': 52}
+_NOTAM_SEV_GNSS = 72
+
+_NOTAM_FIR_RU = {
+    'EPWW': ('Польша', 'PL'), 'EYVL': ('Литва', 'LT'), 'EVRR': ('Латвия', 'LV'),
+    'EETT': ('Эстония', 'EE'), 'EFIN': ('Финляндия', 'FI'),
+    'UMKK': ('Калининградская область', 'RU'), 'UMMV': ('Беларусь', 'BY'),
+    'LRBB': ('Румыния', 'RO'), 'LBSR': ('Болгария', 'BG'),
+    'UKFV': ('Крым', 'UA'),
+}
+
+
+def _notam_qline_xy(qline):
+    """Координаты из Q-line ICAO. Последнее поле имеет вид 4840N00912E —
+    градусы и минуты без разделителя, поэтому разбираем по позициям, а не
+    регулярным разбиением по запятой."""
+    m = re.search(r'(\d{2})(\d{2})([NS])(\d{3})(\d{2})([EW])', str(qline or ''))
+    if not m:
+        return None, None
+    la = int(m.group(1)) + int(m.group(2)) / 60.0
+    if m.group(3).upper() == 'S':
+        la = -la
+    lo = int(m.group(4)) + int(m.group(5)) / 60.0
+    if m.group(6).upper() == 'W':
+        lo = -lo
+    return round(la, 4), round(lo, 4)
+
+
+def _notam_token():
+    """OAuth client_credentials. Без секретов возвращает пустую строку —
+    вызывающая сторона обязана это проверить и выйти без запроса."""
+    cid = os.environ.get('AR_CLIENT_ID', '')
+    sec = os.environ.get('AR_CLIENT_SECRET', '')
+    if not cid or not sec:
+        return ''
+    try:
+        body = urllib.parse.urlencode({
+            'grant_type': 'client_credentials',
+            'client_id': cid, 'client_secret': sec,
+        }).encode()
+        req = urllib.request.Request(_AR_TOKEN_URL, data=body,
+              headers={'Content-Type': 'application/x-www-form-urlencoded'})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return (json.loads(r.read().decode()) or {}).get('access_token', '')
+    except Exception as e:
+        print(f"  [WARN] NOTAM: токен не получен: {e}", file=sys.stderr)
+        return ''
+
+
+def fetch_notam():
+    """Действующие NOTAM по FIR восточного фланга, Балтики и Чёрного моря.
+    В ленту идут только изменения режима воздушного пространства и глушение
+    навигации; аэродромная рутина отсекается по Q-коду."""
+    items = []
+    if not NOTAM_GATE:
+        return items
+    tok = _notam_token()
+    if not tok:
+        print("  [SKIP] NOTAM: нет AR_CLIENT_ID / AR_CLIENT_SECRET", file=sys.stderr)
+        return items
+    now = datetime.now(timezone.utc)
+    seen, total, kept = set(), 0, 0
+    for fir in _NOTAM_FIR:
+        try:
+            url = (_AR_NOTAM_URL + '?itemas=' + urllib.parse.quote('["%s"]' % fir)
+                   + '&offset=0&limit=100')
+            req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + tok})
+            with urllib.request.urlopen(req, timeout=25) as r:
+                data = json.loads(r.read().decode())
+        except Exception as e:
+            print(f"  [WARN] NOTAM {fir}: {e}", file=sys.stderr)
+            continue
+        rows = (data or {}).get('rows') or []
+        total += len(rows)
+        for n in rows:
+            c23 = str(n.get('code23') or '').upper()
+            txt = str(n.get('all') or n.get('itemE') or '')
+            gnss = bool(_NOTAM_GNSS.search(txt))
+            if c23 not in _NOTAM_CODE23 and not gnss:
+                continue
+            nid = str(n.get('id') or n.get('number') or '')[:40]
+            if nid and nid in seen:
+                continue
+            seen.add(nid)
+            lat, lng = _notam_qline_xy(n.get('Qline') or n.get('qline') or n.get('all'))
+            if lat is None:
+                lat, lng = n.get('latitude'), n.get('longitude')
+            reg_ru, cc = _NOTAM_FIR_RU.get(fir, (fir, ''))
+            score = _NOTAM_SEV_GNSS if gnss else _NOTAM_SEV.get(c23, 60)
+            what = ('Помехи спутниковой навигации' if gnss else
+                    'Изменение режима воздушного пространства')
+            items.append({
+                "title": f"{what}: {reg_ru}"[:130],
+                "desc": (txt[:400] + f" · NOTAM {nid}, FIR {fir}").strip(),
+                "date": now.strftime("%Y-%m-%d"),
+                "source": "EUROCONTROL NOTAM",
+                "_lat": lat, "_lng": lng,
+                "_region": reg_ru,
+                "_country_code": cc,
+                "_domain": "geopolitics",
+                "_force_severity": score,
+                "_meta": {"kind": "notam", "verified": True, "fir": fir,
+                          "code23": c23, "code45": str(n.get('code45') or ''),
+                          "gnss": gnss, "notam_id": nid,
+                          "radius": n.get('radius')},
+            })
+            kept += 1
+    print(f"  NOTAM: {kept} из {total} записей прошли фильтр Q-кода "
+          f"({len(_NOTAM_FIR)} FIR)", file=sys.stderr)
+    return items
+
+
 def fetch_mgm_turkey():
     """Активные метеопредупреждения Турции (MGM). Климат TR."""
     items = []
@@ -20228,6 +20399,7 @@ if __name__ == '__main__':
             ('gdacs_floods',       fetch_flood_observatory),
             ('usgs',               fetch_usgs_earthquakes),
             ('rosgidromet_cap',    fetch_rosgidromet_cap),
+            ('notam',              fetch_notam),   # NOTAM_GATE=False -> пустой список
             ('mgm_turkey',         fetch_mgm_turkey),
             ('cbr_russia',         fetch_cbr_russia),
             ('cbrt_turkey',        fetch_cbrt_turkey),
