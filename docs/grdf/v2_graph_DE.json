@@ -2,32 +2,32 @@
   "country": "DE",
   "date": "2026-09-22",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-22T20:27:17.662616+00:00",
+  "generated_at": "2026-09-22T20:46:14.950788+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 66,
+      "score": 67,
       "props": {
-        "risk_score": 66
+        "risk_score": 67
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
-      "trend": "stable"
+      "score": 43,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 37,
-      "trend": "stable"
+      "score": 38,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-climate",
@@ -48,14 +48,14 @@
       "type": "Domain",
       "label": "social",
       "score": 19,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 21,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-cyber",
@@ -90,7 +90,7 @@
       "id": "SIGNAL-DE-Берлин_гот",
       "type": "Signal",
       "label": "Берлин готовится ограничить доступ власт",
-      "severity": 50,
+      "severity": 52,
       "domain": "economic"
     },
     {
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.43
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.37
+      "weight": 0.38
     },
     {
       "from": "COUNTRY-DE",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-geopolitical",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-DE-Возможную_",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
@@ -172,7 +193,7 @@
       "from": "SIGNAL-DE-Берлин_гот",
       "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.5
+      "weight": 0.52
     },
     {
       "from": "SIGNAL-DE-Приток_миг",
