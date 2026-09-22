@@ -171,6 +171,41 @@ _RU_NAMES = {
     'Western Region': 'Западный регион', 'Central Region': 'Центральный регион',
     'Bono East': 'Боно-Ист', 'Dibër County': 'Дибра',
     'Marlborough': 'Марлборо',
+    # Полный список субъектов РФ (22.09.2026). Первая версия покрывала только
+    # те, что встретились в корпусе, и на витрине сразу вылезли «Saratov
+    # Oblast» и «Karachayevo-Cherkesiya Republic». Теперь закрыты все 83.
+    'Adygeya Republic': 'Адыгея', 'Altai': 'Республика Алтай',
+    'Amur Oblast': 'Амурская область', 'Arkhangelskaya': 'Архангельская область',
+    'Astrakhan Oblast': 'Астраханская область',
+    'Bashkortostan Republic': 'Башкортостан', 'Buryatiya Republic': 'Бурятия',
+    'Chechnya': 'Чечня', 'Chukotka': 'Чукотка', 'Chuvash Republic': 'Чувашия',
+    'Dagestan': 'Дагестан', 'Ingushetiya Republic': 'Ингушетия',
+    'Irkutsk Oblast': 'Иркутская область', 'Ivanovo Oblast': 'Ивановская область',
+    'Jewish Autonomous Oblast': 'Еврейская АО',
+    'Kabardino-Balkariya Republic': 'Кабардино-Балкария',
+    'Kaliningrad Oblast': 'Калининградская область',
+    'Kalmykiya Republic': 'Калмыкия', 'Kamchatka': 'Камчатский край',
+    'Karachayevo-Cherkesiya Republic': 'Карачаево-Черкесия',
+    'Karelia': 'Карелия', 'Khakasiya Republic': 'Хакасия', 'Komi': 'Коми',
+    'Kostroma Oblast': 'Костромская область', 'Kurgan Oblast': 'Курганская область',
+    'Kuzbass': 'Кузбасс', 'Lipetsk Oblast': 'Липецкая область',
+    'Magadan Oblast': 'Магаданская область', 'Mariy-El Republic': 'Марий Эл',
+    'Mordoviya Republic': 'Мордовия', 'Murmansk': 'Мурманская область',
+    'Nenets': 'Ненецкий АО', 'North Ossetia\u2013Alania': 'Северная Осетия',
+    'Novgorod Oblast': 'Новгородская область', 'Omsk Oblast': 'Омская область',
+    'Orenburg Oblast': 'Оренбургская область', 'Oryol oblast': 'Орловская область',
+    'Penza Oblast': 'Пензенская область', 'Perm Krai': 'Пермский край',
+    'Pskov Oblast': 'Псковская область', 'Republic of Tyva': 'Тыва',
+    'Ryazan Oblast': 'Рязанская область', 'Sakhalin Oblast': 'Сахалинская область',
+    'Saratov Oblast': 'Саратовская область', 'Smolensk Oblast': 'Смоленская область',
+    'Stavropol Kray': 'Ставропольский край', 'Tambov Oblast': 'Тамбовская область',
+    'Tatarstan Republic': 'Татарстан', 'Tomsk Oblast': 'Томская область',
+    'Tula Oblast': 'Тульская область', 'Tyumen Oblast': 'Тюменская область',
+    'Udmurtiya Republic': 'Удмуртия', 'Ulyanovsk': 'Ульяновская область',
+    'Vladimir Oblast': 'Владимирская область', 'Volgograd Oblast': 'Волгоградская область',
+    'Vologda Oblast': 'Вологодская область', 'Voronezh Oblast': 'Воронежская область',
+    'Zabaykalskiy (Transbaikal) Kray': 'Забайкальский край',
+
 }
 
 
