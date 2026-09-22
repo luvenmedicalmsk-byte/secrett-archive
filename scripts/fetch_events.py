@@ -10496,6 +10496,10 @@ CAP_V2_GATE = True
 # ОТКАТ: False.
 GEO_COUNTRY_FALLBACK_XY = True
 
+# Событие без места действия, но с названной в заголовке страной получает её
+# центр и метку точности 'mentioned'. Подробности — в ветке none. ОТКАТ: False.
+GEO_MENTIONED_XY = True
+
 _ACC_PAST = re.compile(r'(?<![а-яё])([а-яё]{3,})(л|ла|ло|ли|лся|лась|лось|лись)(?![а-яё])')
 # Страдательные причастия: окончание должно быть причастным, иначе шаблон
 # ловит «закрыть» и «повышение».
@@ -11491,6 +11495,48 @@ def _apply_geo_contract(events):
             e['mentioned_countries'] = _imp; e['country_codes'] = _imp
             e['is_global'] = False
             e['map_visible'] = False   # VALID_NO_GEO: в ленте есть, на карте нет
+            # ТОЧКА ПО УПОМЯНУТОЙ СТРАНЕ (22.09.2026).
+            #
+            # Места действия нет, но страна в заголовке названа. Такие события
+            # не показывались на карте вовсе — 65 штук, среди них «В Турции
+            # разворачивается кризис», «Средства ПВО Саудовской Аравии отразили
+            # удар», «Блокировка Ормуза ставит под угрозу ставку Катара».
+            #
+            # Это привязка «о какой стране речь», а НЕ «где произошло», и
+            # честность здесь важнее полноты: precision помечается 'mentioned',
+            # geo.source — 'упомянута в заголовке'. Аналитическим слоям видно,
+            # что точка слабая; карта при этом перестаёт быть полупустой.
+            #
+            # Берётся страна, названная в заголовке ПЕРВОЙ. Порядок в
+            # mentioned_countries не текстовый, и первая из списка часто чужая:
+            # «Минторг КНР выступил против закона США» даёт US, хотя речь о КНР.
+            #
+            # ОТКАТ: GEO_MENTIONED_XY = False.
+            if GEO_MENTIONED_XY and _imp:
+                try:
+                    import geo_contract as _gcm
+                    _low = (e.get('title') or '').lower()
+                    _best = None
+                    for _cc in _imp:
+                        for _stem, _g in _gcm.GAZ.items():
+                            if _g[0] != _cc or len(_g) < 4 or _g[2] is None:
+                                continue
+                            _p = _low.find(_stem)
+                            if _p >= 0 and (_best is None or _p < _best[0]):
+                                _best = (_p, _cc, _g)
+                    if _best:
+                        _, _cc, _g = _best
+                        e['lat'], e['lng'] = _g[2], _g[3]
+                        e['map_visible'] = True
+                        e['region'] = _g[1]
+                        _gd = e.get('geo') if isinstance(e.get('geo'), dict) else {}
+                        _gd['precision'] = 'mentioned'
+                        _gd['source'] = 'упомянута в заголовке'
+                        _gd['lat'], _gd['lng'] = _g[2], _g[3]
+                        e['geo'] = _gd
+                        e['geo_mentioned_xy'] = _cc
+                except Exception:
+                    pass
         # IDR-005: основание геопривязки — одно на все три ветки, строится из
         # результата контракта, поэтому одинаково для country / zone / none.
         if CANON_DECISION:
