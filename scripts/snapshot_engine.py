@@ -9101,6 +9101,67 @@ _GRDF_WEIGHTS: dict[str, float] = {d: 1.0 for d in _GRDF_DOMAINS}
 # ══════════════════════════════════════════════════════════════════════════════
 GRDF_V2_GATE = True      # откат: False
 GRDF_EVIDENCE = True        # домен оценивается по собственным событиям страны; откат: False
+GRDF_REGIONAL_DISCOUNT = True  # региональная метка не задаёт оценку страны; откат: False
+GRDF_MEAN_OBSERVED = True      # среднее по доменам с данными, а не по полам; откат: False
+GRDF_CONFLICT_LIFT = True      # собственные боевые свидетельства поднимают страну; откат: False
+GRDF_ATLAS_SCALE = True        # пороги GRI по шкале Atlas 90/75/60/40; откат: False
+_GRDF_CONFLICT_LIFT_PTS = 8
+_GRDF_REGIONAL_FACTOR = 0.75
+_GRDF_REGIONAL_CAP = 74        # верх полосы «Повышенный» по шкале Atlas
+
+# Региональная метка: процесс, приписанный не стране, а макрорегиону.
+# Движок раздаёт такие драйверы всем странам региона с одинаковой
+# серьёзностью: «Военный конфликт — Ближний Восток» 84 стоял у Израиля,
+# Турции, Саудовской Аравии и ОАЭ одновременно. На срезе 23.09 это 24 из 125
+# драйверов, и у 8 стран из 44 именно такая метка была самым тяжёлым
+# драйвером — у Тайваня при НУЛЕ собственных событий.
+_GRDF_REGIONAL_RX = re.compile(
+    r'\(системн\w* процесс\)|\u2014\s*(Ближний Восток|Северная Америка|Южная Америка|'
+    r'Латинская Америка|Юго-Восточная Азия|Восточная Азия|Южная Азия|Центральная Азия|'
+    r'Западная Европа|Восточная Европа|Европа|Африка|Северная Африка|Глобально|Арктика|'
+    r'Балканы|Кавказ|Сибирь)\s*$', re.I)
+
+# Признаки собственных боевых действий. Глагол «удар» намеренно НЕ включён
+# сам по себе: «топливный кризис ударил по спасательным службам» давал США
+# боевые свидетельства с серьёзностью 78. Оставлены однозначные признаки и
+# «удар по» только с военным объектом.
+_GRDF_WAR_RX = re.compile(
+    r'обстрел|бпла|беспилотн|\bдрон\w*|ракетн\w*|авиауда|бомбард|наступлен|'
+    r'боев\w*\s+действ|военн\w*\s+(?:конфликт|действ|операц)|вторжен|линия\s+фронт|'
+    r'нанес\w*\s+удар|удар\w*\s+по\s+(?:городу|киев|москв|энергет|нпз|аэродром|'
+    r'военн|промышленн|инфраструктур)|атак\w*\s+(?:рф|росси|украин|бпла|дрон)', re.I)
+
+
+def _grdf_is_regional(name):
+    return bool(_GRDF_REGIONAL_RX.search(str(name or '')))
+
+
+def _grdf_conflict_level(snap):
+    """Максимальная серьёзность СОБСТВЕННЫХ боевых свидетельств страны.
+
+    Требуется хотя бы одно реальное событие: без этого условия синтетические
+    метки вида «Военные удары — Италия» давали Италии боевые свидетельства
+    при нуле событий в ленте.
+    """
+    try:
+        if int(snap.get('event_count') or 0) < 1:
+            return 0
+    except (TypeError, ValueError):
+        return 0
+    best = 0
+    for drv in (snap.get('drivers') or []):
+        nm = str(drv.get('name') or '')
+        if _grdf_is_regional(nm):
+            continue
+        raw = str(drv.get('domain') or '').lower()
+        if _ENGINE_TO_GRDF.get(raw, raw) != 'geopolitical':
+            continue
+        if _GRDF_WAR_RX.search(nm):
+            try:
+                best = max(best, int(drv.get('severity') or 0))
+            except (TypeError, ValueError):
+                pass
+    return best
 GRDF_EXPL_EVIDENCE = True   # разложение вклада не создаёт риск в домене без событий; откат: False
 
 _GRDF_NODATA = 5         # пол для домена без измерений (прежний минимум функции)
@@ -9172,6 +9233,23 @@ def _calc_gri(domain_scores: dict[str, int | None],
     if w_sum <= 0:
         return 50.0
     mean = total / w_sum
+    # GRDF_MEAN_OBSERVED 23.09.2026. Среднее считалось по ВСЕМ семи доменам,
+    # включая те, где данных нет и стоит пол _GRDF_NODATA. Принцип G1 гласит,
+    # что отсутствие данных не производит риск, но в среднем этот пол его
+    # УМЕНЬШАЛ — зеркальная ошибка того же принципа.
+    #
+    # Из-за неё индекс вознаграждал широту, а не тяжесть. У России геополитика
+    # 84 и шесть доменов на полу: среднее 16, GRI 57. У США три домена
+    # 82/78/76: среднее 36, GRI 64. Страна с войной стояла ниже страны с
+    # топливным кризисом.
+    #
+    # Теперь среднее берётся по доменам, где данные есть. Домен без данных не
+    # добавляет риска и не вычитает его.
+    if GRDF_MEAN_OBSERVED:
+        _obs = [domain_scores.get(d) for d in _GRDF_DOMAINS
+                if (domain_scores.get(d) or 0) > _GRDF_NODATA]
+        if _obs:
+            mean = sum(_obs) / len(_obs)
     if not GRDF_V2_GATE:
         return round(mean, 1)
     # G2: доминантная агрегация. Ведущий домен ведёт оценку, ширина охвата
@@ -9180,6 +9258,23 @@ def _calc_gri(domain_scores: dict[str, int | None],
 
 
 def _gri_grade(gri: float) -> str:
+    """Класс GRI по шкале Atlas.
+
+    GRDF_ATLAS_SCALE 23.09.2026. Здесь стояли собственные пороги 80/65/50/35,
+    не совпадавшие со шкалой платформы, по которой размечены карточки
+    событий, зоны риска и матрица: 90 критический, 75 высокий, 60 повышенный,
+    40 средний. Одна и та же цифра 78 называлась «HIGH» в GRI и «Высокий» на
+    карточке — совпадение случайное, а 66 было «HIGH» в GRI и «Повышенный» на
+    карточке. Две шкалы об одном числе.
+
+    Откат: GRDF_ATLAS_SCALE = False — вернутся 80/65/50/35.
+    """
+    if GRDF_ATLAS_SCALE:
+        if gri >= 90: return "CRITICAL"
+        if gri >= 75: return "HIGH"
+        if gri >= 60: return "ELEVATED"
+        if gri >= 40: return "MODERATE"
+        return "LOW"
     if gri >= 80: return "CRITICAL"
     if gri >= 65: return "HIGH"
     if gri >= 50: return "ELEVATED"
@@ -9276,12 +9371,28 @@ def _domain_scores_from_drivers(snap: dict,
             sev = int(drv.get("severity") or 0)
         except (TypeError, ValueError):
             continue
+        # Региональная метка приписана макрорегиону, а не стране, и раздаётся
+        # всем странам региона одинаково. Она может поднять оценку, но не
+        # задать её: без собственных свидетельств страна не поднимается выше
+        # полосы «Повышенный».
+        if GRDF_REGIONAL_DISCOUNT and _grdf_is_regional(drv.get("name")):
+            sev = min(int(sev * _GRDF_REGIONAL_FACTOR), _GRDF_REGIONAL_CAP)
         if sev > peak.get(dom, 0):
             peak[dom] = sev
     for dom, sev in peak.items():
         cur = base_scores.get(dom)
         if cur is None or sev > cur:
             base_scores[dom] = max(0, min(100, sev))
+    # Собственные боевые действия поднимают страну над прочей нестабильностью.
+    # Правило владельца платформы: «наверху должны быть страны с военными
+    # действиями, а ниже уже по нестабильности». Без этого Индия с климатом 88
+    # стояла выше России с обстрелами 84: при равной серьёзности индекс не
+    # различал классы риска.
+    if GRDF_CONFLICT_LIFT:
+        _lv = _grdf_conflict_level(snap)
+        if _lv:
+            base_scores["geopolitical"] = min(
+                100, (base_scores.get("geopolitical") or 0) + _GRDF_CONFLICT_LIFT_PTS)
     return base_scores
 
 
