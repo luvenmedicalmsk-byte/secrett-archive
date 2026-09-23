@@ -334,8 +334,21 @@ def make_cover(c, z):
         c.setFont("Noto", 8.5); c.setFillColor(MUTED)
         c.drawString(x0, H - 561.0 - 8.5*1.07, clean(lab)[:46])
 
-    idx_block(78.0,  z['risk_index'],   z['risk_cover_label'],   z['risk_caption'])
-    idx_block(318.0, z['region_index'], z['region_cover_label'], z['region_caption'])
+    # ВТОРОЙ ИНДЕКС НА ОБЛОЖКЕ НЕ ПРИВЯЗАН К РЕГИОНАЛЬНОМУ РАЗДЕЛУ.
+    # Раньше он брался только из region_index, и у экспертизы без
+    # региональной привязки на обложке печаталось «0/100». При этом
+    # второе число обложке нужно: оно разводит ситуационную оценку
+    # и страновой индекс Atlas, которые иначе читаются как одно и то же.
+    # Поля cover2_* задают его отдельно, с откатом на региональные.
+    idx_block(78.0, z['risk_index'], z['risk_cover_label'], z['risk_caption'])
+    # Откат по ЗНАЧЕНИЮ, а не по наличию ключа: форма всегда присылает
+    # cover2_index, и при пустом поле это ноль. Проверка на наличие
+    # ключа тогда не срабатывала, и второй индекс с обложки пропадал.
+    _c2 = z.get('cover2_index') or z.get('region_index')
+    if _c2:
+        idx_block(318.0, _c2,
+                  z.get('cover2_label') or z.get('region_cover_label') or '',
+                  z.get('cover2_caption') or z.get('region_caption') or '')
 
     st = ParagraphStyle("st", fontName="Noto", fontSize=9.2, leading=13.0, textColor=MUTED)
     p = Paragraph(clean(z['cover_note']), st)
@@ -459,13 +472,17 @@ def make_body(c, z):
     state['top'] += 8
 
     # ── 4 · Региональный риск ─────────────────────────────────────
-    sec(z['region_title'], need=200)
-    index_head(z['region_index'], z['region_caption'], z.get('scale_hint') or '')
-    if z.get('region_event'):
+    # Раздел НЕОБЯЗАТЕЛЕН. Раньше он рисовался всегда, и у экспертизы без
+    # региональной привязки (вопрос о правовом режиме, а не о месте)
+    # получался пустой заголовок с плашкой 0/100.
+    if z.get('region_index') or z.get('region_blocks') or z.get('region_levels'):
+      sec(z['region_title'], need=200)
+      index_head(z['region_index'], z['region_caption'], z.get('scale_hint') or '')
+      if z.get('region_event'):
         nl(callout_height("<b>Событие риска:</b> " + z['region_event'], CW))
         state['top'] = callout(c, "<b>Событие риска:</b> " + z['region_event'],
                                X, state['top'], CW) + 14
-    for b in (z.get('region_blocks') or []):
+      for b in (z.get('region_blocks') or []):
         if b.get('head'):
             sub(b['head'])
         paras(b.get('text'))
@@ -474,28 +491,40 @@ def make_body(c, z):
             state['top'] = chain(c, b['chain'], X, state['top'], CW, nl, state) + 10
         paras(b.get('after'))
         state['top'] += 4
-    for lv in (z.get('region_levels') or []):
+      for lv in (z.get('region_levels') or []):
         nl(40)
         state['top'] = P(c, lv.get('head', ''), X, state['top'], CW, boldbody) + 4
         state['top'] = bullets(c, lv.get('items') or [], X + 10, state['top'], CW - 10,
                                nl=nl, state=state) + 8
-    if z.get('region_conclusion'):
+      if z.get('region_conclusion'):
         if z.get('region_conclusion_title'):
             sub(z['region_conclusion_title'])
         nl(callout_height(z['region_conclusion'], CW, boldbody))
         state['top'] = callout(c, z['region_conclusion'], X, state['top'], CW,
                                accent=GOLD, bg=PGOLD, style=boldbody) + 12
-    paras(z.get('region_after'))
-    if z.get('region_sequence'):
+      paras(z.get('region_after'))
+      if z.get('region_sequence'):
         if z.get('region_sequence_title'):
             sub(z['region_sequence_title'])
         nl(len(z['region_sequence']) * 26 + 16)
         state['top'] = chain(c, z['region_sequence'], X, state['top'], CW, nl, state) + 12
-    if z.get('region_method_note'):
+      if z.get('region_method_note'):
         nl(callout_height(z['region_method_note'], CW, small) + 4)
         state['top'] = callout(c, z['region_method_note'], X, state['top'], CW,
                                accent=MUTED, bg=PALE, style=small) + 14
-    state['top'] += 4
+      state['top'] += 4
+
+    # ── 5 · Инженерная цепочка ────────────────────────────────────
+    # Отдельный раздел, а не блок внутри региона: у экспертизы про
+    # правовой режим региона нет, а механизм возникновения ограничения
+    # есть, и он несёт основную мысль документа.
+    if z.get('chain'):
+        sec(z.get('chain_title') or "Инженерная цепочка", need=110)
+        paras(z.get('chain_intro'))
+        nl(len(z['chain']) * 26 + 16)
+        state['top'] = chain(c, z['chain'], X, state['top'], CW, nl, state) + 12
+        paras(z.get('chain_after'))
+        state['top'] += 4
 
     # ── 5 · Карта траекторий ──────────────────────────────────────
     # Маршрут рисуется БЛОКОМ, а не строкой широкой таблицы. В исходном
@@ -567,7 +596,10 @@ def make_body(c, z):
     # ── 8 · Что меняется ──────────────────────────────────────────
     if z.get('changes'):
         sec(z.get('changes_title') or "Что меняется", need=80)
+        if z.get('changes_note'):
+            state['top'] = P(c, z['changes_note'], X, state['top'], CW, body, nl, state) + 8
         titled(z['changes'], numbered_head=True)
+        paras(z.get('changes_after'))
 
     # ── 9 · Действия ──────────────────────────────────────────────
     # Срок жирной строкой, под ним текст: это единственный раздел,
