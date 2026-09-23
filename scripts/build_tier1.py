@@ -623,13 +623,25 @@ def make_body(c, z):
         state['top'] = P(c, z['source_line'], X, state['top'], CW, boldbody) + 6
     paras(z.get('disclaimer'))
 
+    # Подпись и сайт: две отдельные строки, обе кликабельные.
+    # Место резервируется под ОБЕ сразу, иначе подпись останется внизу
+    # страницы, а адрес сайта уедет на следующую и повиснет там один.
     _sup = z.get('support', '')
+    _site = z.get('site', '')
+    if _sup or _site:
+        nl(34 + (13 if (_sup and _site) else 0))
     if _sup:
-        nl(34)
         _url = z.get('support_url', '')
         if _url:
             _sup = '<a href="%s" color="#20A9C9">%s</a>' % (_url, _sup)
-        state['top'] = P(c, _sup, X, state['top'], CW, small)
+        state['top'] = P(c, _sup, X, state['top'], CW, small) + 3
+    if _site:
+        # Адрес сам себе и ссылка: если site_url не задан, кликабельным
+        # становится сам текст. Писать адрес и вести по другому - способ
+        # потерять доверие к документу.
+        _surl = z.get('site_url', '') or _site
+        state['top'] = P(c, '<a href="%s" color="#20A9C9">%s</a>' % (_surl, _site),
+                         X, state['top'], CW, small)
 
     footer(c, z, state['page'])
     c.showPage()
