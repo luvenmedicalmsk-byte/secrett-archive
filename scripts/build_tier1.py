@@ -438,7 +438,7 @@ def make_body(c, z):
         c.setFont("Noto-Bold", 11); c.setFillColor(NAVY)
         c.drawString(X + 132, H - _y - 30, clean(label).upper()[:38])
         c.setFont("Noto", 8.6); c.setFillColor(MUTED)
-        c.drawString(X + 15, H - _y - 47, "Индекс Atlas")
+        c.drawString(X + 15, H - _y - 47, clean(z.get('risk_cover_label') or "Индекс")[:30])
         c.drawString(X + 132, H - _y - 47, clean(note)[:46])
         state['top'] = _y + 58 + 12
 
