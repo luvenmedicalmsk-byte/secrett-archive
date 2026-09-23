@@ -60,6 +60,8 @@ GEO_MACRO_CANARY = True
 # CAUSAL-EXPLAIN CANARY (п.14): CAUSE только прямая объяснимая цепочка (origin-каскад с via);
 # косвенный domain-каскад (tdom in connectivity, без via) → RELATED. OFF → байт-идентично.
 CAUSAL_EXPLAIN_CANARY = True
+CAUSAL_LINKS_CAP = True      # causal_origin_links не больше шести и только по выжившим causes; откат: False
+SIGNALS_COMPACT = True       # signals.json пишется без отступов; откат: False
 # CAUSAL-SEMANTIC CANARY (Вариант A): убрать семантически пустые рёбра economic→social,
 # financial→social из построения CAUSE (не origin-резолюция). OFF → байт-идентично.
 CAUSAL_SEMANTIC_CANARY = True
@@ -2377,6 +2379,29 @@ def _build_relations(signals):
     for S in signals:
         for k in ('causes','caused_by','related','amplifies','suppresses'):
             S[k]=sorted(set(S[k]))[:6]
+        # CAUSAL_LINKS_CAP 23.09.2026. causal_origin_links не попал в список выше:
+        # блок рос по одной записи на каждую подходящую пару и после капа causes
+        # не чистился. На срезе 23.09 это 578 538 записей, до 16 835 у одного
+        # сигнала, 47 МБ из 100 МБ файла. Из-за этого docs/signals.json перешагнул
+        # жёсткий лимит GitHub в 100 МБ и публикация встала целиком: три прогона
+        # подряд получили pre-receive hook declined.
+        # Инвариант блока: он объясняет выжившие causes, то есть записей не больше
+        # шести, без дублей и без указателей на сигналы, выпавшие из causes.
+        # Ровно эта проверка уже стоит на макро-уровне (t in macro['causes']),
+        # на уровне сигнала её забыли. Откат: CAUSAL_LINKS_CAP = False.
+        if CAUSAL_LINKS_CAP:
+            _col = S.get('causal_origin_links')
+            if _col:
+                _keep, _seen = [], set()
+                _cz = set(S['causes'])
+                for _l in _col:
+                    _t = _l.get('to')
+                    if _t in _cz and _t not in _seen:
+                        _seen.add(_t); _keep.append(_l)
+                if _keep:
+                    S['causal_origin_links'] = _keep
+                else:
+                    S.pop('causal_origin_links', None)
         # ДЕДУП МЕЖДУ БЛОКАМИ: одна связь показывается в одном разделе. Приоритет
         # причина/следствие > связанные: убираем из «связанные» то, что уже причина/следствие
         # (иначе процесс висит и как причина, и как «связанный» — визуальный дубль).
@@ -3256,7 +3281,15 @@ def write_signals_json(events, path):
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
     os.makedirs(os.path.dirname(path),exist_ok=True)
-    with open(path,'w',encoding='utf-8') as f: json.dump(out,f,ensure_ascii=False,indent=2)
+    # SIGNALS_COMPACT 23.09.2026. Файл отдаётся коду, а не человеку: отступы
+    # занимали 31 МБ из 100 МБ и приближали его к лимиту GitHub. Читаемость
+    # при таком размере всё равно мнимая — в редакторе он не открывается.
+    # Откат: SIGNALS_COMPACT = False (вернутся indent=2).
+    with open(path,'w',encoding='utf-8') as f:
+        if SIGNALS_COMPACT:
+            json.dump(out,f,ensure_ascii=False,separators=(',',':'))
+        else:
+            json.dump(out,f,ensure_ascii=False,indent=2)
     # ADR-021: System State — агрегированное состояние сети (SYS-1: только рассчитанные данные)
     try:
         import system_state as _sys
