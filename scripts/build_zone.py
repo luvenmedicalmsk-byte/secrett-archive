@@ -67,11 +67,50 @@ def clean(t):
     Стрелки и типографские значки, которых нет в подмножестве шрифта,
     заменяются на точку-разделитель: иначе reportlab рисует пустой
     глиф и в тексте появляется \x00.
+
+    23.09.2026. Таблица была неполной: стрелка вправо и указатели
+    обрабатывались, а знаки \u2260 \u2191 \u2193 \u2190 \u221e \u25cf нет. Проверка шрифта
+    показала, что их в нём тоже нет, и в разборе энергетики РФ стрелка
+    вниз печаталась пустым местом. Таблица приведена к той же, что в
+    генераторе точечных экспертиз. Знак "не равно" разворачивается
+    словами: точка-разделитель на его месте перевернула бы смысл
+    фразы на противоположный.
     """
-    return (str(t).replace("—", "-").replace("–", "-")
-                  .replace("−", "-").replace("\u00a0", " ")
-                  .replace("→", "·").replace("⇒", "·")
-                  .replace("▸", "·").replace("►", "·"))
+    s = str(t)
+    for a, b in _SUBST:
+        if a in s:
+            s = s.replace(a, b)
+    _note_missing(s)
+    return s
+
+
+_SUBST = [
+    ("—", "-"), ("–", "-"), ("−", "-"), ("\u00a0", " "),
+    ("≠", " это не "),
+    ("∞", "бессрочно"),
+    ("→", "·"), ("←", "·"), ("↑", "·"), ("↓", "·"),
+    ("⇒", "·"), ("▸", "·"), ("►", "·"),
+    ("●", ""), ("○", ""), ("✅", ""), ("\U0001F4CC", ""),
+]
+
+_CMAP = None
+_MISSING = set()
+
+
+def _note_missing(s):
+    """Копит знаки, которых нет в шрифте: молча они рисуются пустотой."""
+    global _CMAP
+    if _CMAP is None:
+        try:
+            _CMAP = set(pdfmetrics.getFont("Noto").face.charToGlyph.keys())
+        except Exception:
+            _CMAP = set()
+    if not _CMAP:
+        return
+    for ch in s:
+        o = ord(ch)
+        if o > 0x2000 and o not in _CMAP and ch not in _MISSING:
+            _MISSING.add(ch)
 
 
 def P_height(text, width, style):
@@ -281,8 +320,31 @@ def make_body(c, z):
     c.roundRect(X, H - _y - 58, CW, 58, 7, stroke=1, fill=1)
     c.setFont("Noto-Bold", 27); c.setFillColor(CYAN)
     c.drawString(X + 15, H - _y - 33, "%d/100" % z['index'])
-    c.setFont("Noto-Bold", 11); c.setFillColor(NAVY)
-    c.drawString(X + 132, H - _y - 30, clean(z['zone']).upper())
+    # 23.09.2026. Раньше здесь стоял drawString фиксированным кеглем 11
+    # без проверки ширины: длинное имя зоны молча уезжало за правый край
+    # плашки и за край страницы. Кегль подбирается под доступную ширину,
+    # ниже 7 пунктов не опускается: если не влезло и там, имя переносится
+    # на вторую строку, но не обрезается.
+    _zn = clean(z['zone']).upper()
+    _zw = CW - 132 - 12
+    _fs = 11
+    while _fs > 7 and pdfmetrics.stringWidth(_zn, "Noto-Bold", _fs) > _zw:
+        _fs -= 0.5
+    c.setFillColor(NAVY)
+    if pdfmetrics.stringWidth(_zn, "Noto-Bold", _fs) > _zw:
+        _cut = len(_zn)
+        while _cut > 1 and pdfmetrics.stringWidth(_zn[:_cut], "Noto-Bold", _fs) > _zw:
+            _cut -= 1
+        _sp = _zn.rfind(" ", 0, _cut)
+        _cut = _sp if _sp > 0 else _cut
+        c.setFont("Noto-Bold", _fs)
+        c.drawString(X + 132, H - _y - 26, _zn[:_cut])
+        c.drawString(X + 132, H - _y - 26 + _fs + 1.5, "")
+        c.setFont("Noto-Bold", _fs)
+        c.drawString(X + 132, H - _y - 26 + _fs + 2, _zn[_cut:].lstrip())
+    else:
+        c.setFont("Noto-Bold", _fs)
+        c.drawString(X + 132, H - _y - 30, _zn)
     c.setFont("Noto", 8.6); c.setFillColor(MUTED)
     c.drawString(X + 15, H - _y - 47, "Индекс риска")
     c.drawString(X + 132, H - _y - 47, clean(z.get('index_label') or ''))
@@ -311,21 +373,29 @@ def make_body(c, z):
                            X, state['top'], CW) + 16
 
     # ── 3 · Динамика ──────────────────────────────────────────────
-    rows = [["Дата", "Индекс", "Событие-триггер"]] + [list(r) for r in z['history']]
-    _nh = max(len(r) for r in rows)
-    hw = ([62, 46, CW - 108] if _nh >= 3 else [80, CW - 80])
-    sec("Динамика индекса", need=table_height(rows, hw) + 46)
-    state['top'] = table(c, rows, X, state['top'], hw) + 16
+    # Только при наличии точек: у прогнозных разборов прослеженной
+    # динамики может не быть вовсе, и раньше печаталась таблица из
+    # одной строки заголовков.
+    if z.get('history'):
+        rows = [["Дата", "Индекс", "Событие-триггер"]] + [list(r) for r in z['history']]
+        _nh = max(len(r) for r in rows)
+        hw = ([62, 46, CW - 108] if _nh >= 3 else [80, CW - 80])
+        sec("Динамика индекса", need=table_height(rows, hw) + 46)
+        state['top'] = table(c, rows, X, state['top'], hw) + 16
 
     # ── 4 · Пересечения ───────────────────────────────────────────
-    sec("Где пересекаются домены")
-    for pair, txt in z['crossings']:
-        nl(34)
-        state['top'] = P(c, "<b>%s</b> &#160;·&#160; %s" % (pair, txt), X, state['top'], CW, body) + 5
-    state['top'] += 4
-    nl(callout_height(z['crossings_note'], CW))
-    state['top'] = callout(c, z['crossings_note'], X, state['top'], CW,
-                           accent=GOLD, bg=PGOLD) + 16
+    # Секция целиком опускается без пар: иначе оставался заголовок и
+    # висящая врезка без анализа, к которому она относится.
+    if z.get('crossings'):
+      sec("Где пересекаются домены")
+      for pair, txt in z['crossings']:
+          nl(34)
+          state['top'] = P(c, "<b>%s</b> &#160;·&#160; %s" % (pair, txt), X, state['top'], CW, body) + 5
+      state['top'] += 4
+      if z.get('crossings_note'):
+          nl(callout_height(z['crossings_note'], CW))
+          state['top'] = callout(c, z['crossings_note'], X, state['top'], CW,
+                                 accent=GOLD, bg=PGOLD) + 16
 
     # ── 5 · Каскад ────────────────────────────────────────────────
     sec("Важно смотреть не отдельную новость, а цепочку",
@@ -414,14 +484,22 @@ def make_body(c, z):
 
 
     # ── 13 · Инженерный комментарий ───────────────────────────────
-    sec("Инженерный комментарий")
-    for tk, ik in (('comment_low_title', 'comment_low'),
-                   ('comment_high_title', 'comment_high'),
-                   ('comment_under_title', 'comment_under')):
-        nl(50)
-        state['top'] = P(c, z[tk] + ":", X, state['top'], CW, subhead) + 5
-        state['top'] = bullets(c, z[ik], X, state['top'], CW, nl=nl, state=state) + 9
-    state['top'] += 6
+    # Блоки без содержания пропускаются: у прогнозных разборов бывает
+    # заполнен только один из трёх, и пустой подзаголовок с двоеточием
+    # выглядел в готовом документе как потерянный текст. Сама секция
+    # выводится, только если заполнен хотя бы один блок (та же логика,
+    # что у списков ниже по потоку).
+    _cmt = [(tk, ik) for tk, ik in (('comment_low_title', 'comment_low'),
+                                    ('comment_high_title', 'comment_high'),
+                                    ('comment_under_title', 'comment_under'))
+            if (z.get(ik) or [])]
+    if _cmt:
+        sec("Инженерный комментарий")
+        for tk, ik in _cmt:
+            nl(50)
+            state['top'] = P(c, (z.get(tk) or '') + ":", X, state['top'], CW, subhead) + 5
+            state['top'] = bullets(c, z[ik], X, state['top'], CW, nl=nl, state=state) + 9
+        state['top'] += 6
 
     # ── 14 · Расшифровка для пользователя ─────────────────────────
     sec("Расшифровка для пользователя")
@@ -431,11 +509,16 @@ def make_body(c, z):
     state['top'] = callout(c, z['user_indicator'], X, state['top'], CW) + 16
 
     # ── 15 · Градиент ─────────────────────────────────────────────
-    rows = [z['gradient_head']] + [list(r) for r in z['gradient']]
-    _ng = max(len(r) for r in rows)
-    gw = ([128, CW - 128 - 58, 58] if _ng >= 3 else [140, CW - 140])
-    sec(z['gradient_title'], need=table_height(rows, gw) + 46)
-    state['top'] = table(c, rows, X, state['top'], gw, header=True) + 16
+    # Только при наличии строк: у разборов без территориальной или
+    # групповой разбивки таблица сводилась к одному заголовку.
+    if z.get('gradient'):
+        rows = [z.get('gradient_head') or []] + [list(r) for r in z['gradient']]
+        if not rows[0]:
+            rows = rows[1:]
+        _ng = max(len(r) for r in rows)
+        gw = ([128, CW - 128 - 58, 58] if _ng >= 3 else [140, CW - 140])
+        sec(z.get('gradient_title') or 'Разбивка', need=table_height(rows, gw) + 46)
+        state['top'] = table(c, rows, X, state['top'], gw, header=True) + 16
 
     # ── 16-17 · Мини и мониторинг ─────────────────────────────────
     sec("Мини-информация", need=P_height(z['mini'], CW, body) + 46)
@@ -496,3 +579,8 @@ if __name__ == "__main__":
     for zz in zones:
         p = build(zz, outdir)
         print("  собрано: %s" % p.name)
+    if _MISSING:
+        # Не молчим: знак без глифа рисуется пустым местом, и на готовой
+        # странице это видно только глазами.
+        print("  [zone] ВНИМАНИЕ, нет в шрифте: %s"
+              % " ".join("U+%04X (%s)" % (ord(ch), ch) for ch in sorted(_MISSING)))
