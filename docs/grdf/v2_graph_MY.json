@@ -2,7 +2,7 @@
   "country": "MY",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T17:07:40.508843+00:00",
+  "generated_at": "2026-09-23T17:29:30.300474+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -33,7 +33,7 @@
       "id": "DOMAIN-MY-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 34,
       "trend": "stable"
     },
     {
@@ -75,9 +75,16 @@
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-MY-economic",
+      "id": "DRIVER-MY-climate",
       "type": "Driver",
-      "label": "economic"
+      "label": "climate"
+    },
+    {
+      "id": "SIGNAL-MY-Вырубка_ле",
+      "type": "Signal",
+      "label": "Вырубка лесов по-прежнему угрожает борне",
+      "severity": 32,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-MY-Санкционно",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Отключение интернета — Малайзия",
       "severity": 56,
-      "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-MY-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Юго-Восточная А",
-      "severity": 53,
       "domain": "technology"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-MY",
       "to": "DOMAIN-MY-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.34
     },
     {
       "from": "COUNTRY-MY",
@@ -157,7 +157,7 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-MY-economic",
+      "from": "DRIVER-MY-climate",
       "to": "COUNTRY-MY",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-MY-Вырубка_ле",
+      "to": "DOMAIN-MY-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-MY-Санкционно",
       "to": "DOMAIN-MY-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-MY-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-MY-Технологич",
-      "to": "DOMAIN-MY-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.53
     }
   ]
 }
