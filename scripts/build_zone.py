@@ -36,6 +36,19 @@ PGOLD = colors.HexColor("#F7F4EA")
 pdfmetrics.registerFont(TTFont("Noto", str(ASSETS/"NotoSans-Regular-full.ttf")))
 pdfmetrics.registerFont(TTFont("Noto-Bold", str(ASSETS/"NotoSans-Bold-full.ttf")))
 
+# БЕЗ ЭТОЙ СТРОКИ ТЕГ <b> НЕ РАБОТАЕТ, и он здесь есть: названием пары
+# доменов в разделе «Где пересекаются домены» (строка с <b>%s</b>).
+# Проверено 23.09.2026: Paragraph со стилем fontName="Noto" и разметкой
+# «обычный <b>жирный</b> текст» отдаёт ОДИН фрагмент шрифтом Noto, то
+# есть выделение пропадает молча, без ошибки. reportlab ищет жирное
+# начертание в семействе шрифтов, а регистрация двух отдельных TTFont
+# семейства не создаёт: имя «-Bold» само по себе ничего не связывает.
+# Значит, во всех ранее собранных разборах зон названия пар доменов шли
+# обычным начертанием, хотя код требовал жирного. При следующем прогоне
+# они пересоберутся и станут выделенными - это и было задумано.
+pdfmetrics.registerFontFamily("Noto", normal="Noto", bold="Noto-Bold",
+                              italic="Noto", boldItalic="Noto-Bold")
+
 body      = ParagraphStyle("body", fontName="Noto", fontSize=9.4, leading=13.2,
                            textColor=colors.HexColor("#4E6075"))
 body_dark = ParagraphStyle("body_dark", parent=body, textColor=colors.HexColor("#35465B"))

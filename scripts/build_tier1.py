@@ -4,15 +4,21 @@
 Tier 1 отличается от мини-разбора зоны адресатом. Зона описывает риск
 страны и уходит в панель Atlas; точечная экспертиза отвечает на ОДИН
 вопрос ОДНОГО клиента и существует только как документ. Отсюда и
-различия в структуре: вердикт стоит первым, индексы считаются по
-предмету вопроса (специальность, регион проживания), а два последних
-раздела очерчивают границу тира - что входит в работу и что вынесено
-в Tier 2 и выше.
+различия в структуре: вердикт стоит первым, риски считаются по предмету
+вопроса, а последние разделы очерчивают границу тира - что входит в
+работу и что вынесено в Tier 2 и выше.
 
 Данные читаются из JSON, в коде текста нет. Один запуск собирает PDF
 для каждой записи в docs/tier1_reports.json.
 
-Примитивы верстки (P, table, callout, bullets, footer) повторяют
+ВТОРАЯ РЕДАКЦИЯ СТРУКТУРЫ (23.09.2026). Первая держала риск одним
+числом с таблицей факторов. Реальный разбор оказался устроен иначе:
+у каждого подриска свой индекс и свой текст, у раздела есть «событие
+риска», а решения выражены цепочками шагов и картой профессиональных
+маршрутов. Плоская таблица это не передаёт, поэтому добавлены блоки
+risk_items, chain, levels и routes.
+
+Примитивы вёрстки (P, table, callout, bullets, footer) повторяют
 scripts/build_zone.py намеренно: у двух документов один бланк, и
 расхождение в полях или кегле читалось бы как разные отправители.
 Копия, а не импорт: build_zone.py заводит свои поля и нумерацию
@@ -44,30 +50,87 @@ PGOLD = colors.HexColor("#F7F4EA")
 pdfmetrics.registerFont(TTFont("Noto", str(ASSETS/"NotoSans-Regular-full.ttf")))
 pdfmetrics.registerFont(TTFont("Noto-Bold", str(ASSETS/"NotoSans-Bold-full.ttf")))
 
+# БЕЗ ЭТОЙ СТРОКИ ТЕГ <b> НЕ РАБОТАЕТ. Проверено 23.09.2026: Paragraph
+# со стилем fontName="Noto" и разметкой «обычный <b>жирный</b> текст»
+# отдаёт ОДИН фрагмент шрифтом Noto, то есть выделение пропадает молча,
+# без ошибки и без предупреждения. reportlab ищет жирное начертание
+# в семействе шрифтов, а регистрация двух отдельных TTFont семейства
+# не создаёт: имя «-Bold» само по себе ничего не связывает.
+# После registerFontFamily тот же абзац даёт три фрагмента, и середина
+# идёт шрифтом Noto-Bold.
+pdfmetrics.registerFontFamily("Noto", normal="Noto", bold="Noto-Bold",
+                              italic="Noto", boldItalic="Noto-Bold")
+
 body      = ParagraphStyle("body", fontName="Noto", fontSize=9.4, leading=13.2,
                            textColor=colors.HexColor("#4E6075"))
 body_dark = ParagraphStyle("body_dark", parent=body, textColor=colors.HexColor("#35465B"))
 small     = ParagraphStyle("small", fontName="Noto", fontSize=7.8, leading=10.4, textColor=MUTED)
 head      = ParagraphStyle("head", fontName="Noto-Bold", fontSize=12.0, leading=14.8, textColor=NAVY)
+subhead   = ParagraphStyle("subhead", fontName="Noto-Bold", fontSize=10.2, leading=12.8, textColor=NAVY)
 boldbody  = ParagraphStyle("boldbody", parent=body, fontName="Noto-Bold", textColor=NAVY)
+chain_st  = ParagraphStyle("chain", fontName="Noto-Bold", fontSize=9.2, leading=12.4, textColor=NAVY)
+
+# ЗАМЕНЫ ЗНАКОВ. В подмножестве шрифта НЕТ стрелок, знака неравенства,
+# бесконечности, закрашенного круга и эмодзи: проверено по таблице cmap
+# (fontTools, 23.09.2026). reportlab на такой символ рисует пустой глиф,
+# и в тексте появляется дыра, а при извлечении текста - \x00.
+#
+# Стрелки в исходном тексте работают как МАРКЕР СПИСКА или как СВЯЗКА
+# цепочки, поэтому они не заменяются символом, а передаются структурой:
+# маркер становится пунктом списка, цепочка - блоком chain со своими
+# соединителями. Здесь остаётся только страховка на случай, если знак
+# попал в середину строки.
+#
+# Знак неравенства заменять точкой НЕЛЬЗЯ: «GRC != техническая ИБ»
+# превратилось бы в «GRC техническая ИБ», то есть в обратное утверждение.
+# Он заменяется словами.
+_SUBST = [
+    ("—", "-"), ("–", "-"), ("−", "-"), (" ", " "),
+    ("≠", " это не "),
+    ("∞", "бессрочно"),
+    ("→", "·"), ("←", "·"),
+    ("↓", "·"), ("↑", "·"),
+    ("⇒", "·"), ("▸", "·"), ("►", "·"),
+    ("●", ""), ("○", ""), ("✅", ""), ("\U0001F4CC", ""),
+]
+
+_CMAP = None
+_MISSING = set()
+
+
+def _cmap():
+    global _CMAP
+    if _CMAP is None:
+        try:
+            from fontTools.ttLib import TTFont as _TT
+            _CMAP = set(_TT(str(ASSETS/"NotoSans-Regular-full.ttf")).getBestCmap().keys())
+        except Exception:
+            _CMAP = set()
+    return _CMAP
 
 
 def clean(t):
     """Нормализация текста под шрифт и правила Atlas.
 
     Длинные тире заменяются дефисом по правилу клиентских текстов.
-    Значки, которых нет в подмножестве шрифта, заменяются на точку:
-    иначе reportlab рисует пустой глиф и в тексте появляется \x00.
-    Отдельно снимается булавка из раздела «что дальше»: в исходном
-    тексте она стоит маркером списка, а список здесь рисуется своими
-    маркерами.
+    Знаки, которых нет в шрифте, заменяются по таблице выше.
+
+    Остаток проверяется по cmap и копится в _MISSING: при сборке
+    печатается предупреждение со списком символов. Молча рисовать
+    пустой глиф нельзя - в первой редакции такую дыру было видно
+    только глазами на готовой странице.
     """
-    return (str(t).replace("—", "-").replace("–", "-")
-                  .replace("−", "-").replace(" ", " ")
-                  .replace("→", "·").replace("⇒", "·")
-                  .replace("▸", "·").replace("►", "·")
-                  .replace("\U0001F4CC", "").replace("✅", "·")
-                  .strip())
+    s = str(t)
+    for a, b in _SUBST:
+        s = s.replace(a, b)
+    cm = _cmap()
+    if cm:
+        for ch in s:
+            if ch in "\n\r\t":
+                continue
+            if ord(ch) not in cm:
+                _MISSING.add(ch)
+    return s.strip()
 
 
 def P_height(text, width, style):
@@ -162,12 +225,8 @@ def bullets(c, items, x, top, width, style=None, nl=None, state=None, marker="�
 
 
 def numbered(c, items, x, top, width, nl=None, state=None):
-    """Нумерованный список с висячим отступом.
-
-    Свидетельства и риски в исходном документе пронумерованы, и номер
-    несёт смысл: на него ссылаются в разговоре с клиентом. Маркер-точка
-    этот номер потеряла бы.
-    """
+    """Нумерованный список. Номер несёт смысл: на него ссылаются
+    в разговоре с клиентом, маркер-точка его потерял бы."""
     for i, it in enumerate(items, 1):
         txt = "<b>%d.</b> &#160;%s" % (i, it)
         if nl and state is not None:
@@ -177,6 +236,53 @@ def numbered(c, items, x, top, width, nl=None, state=None):
         if state is not None:
             state['top'] = top
     return top
+
+
+def chain(c, steps, x, top, width, nl=None, state=None):
+    """Цепочка шагов: каждый шаг своей строкой, между шагами соединитель.
+
+    В исходном тексте шаги связаны стрелкой вниз, а этого знака в шрифте
+    нет. Соединитель рисуется линией: смысл «одно ведёт к другому»
+    передаётся геометрией, а не символом, и не зависит от шрифта.
+    """
+    for i, s in enumerate(steps):
+        need = P_height(s, width - 16, chain_st) + (14 if i else 6)
+        if nl and state is not None:
+            nl(need)
+            top = state['top']
+        if i:
+            c.setStrokeColor(CYAN); c.setLineWidth(0.9)
+            c.line(x + 7, H - top - 9, x + 7, H - top - 2)
+            top += 11
+        c.setFillColor(CYAN)
+        c.circle(x + 7, H - top - 5.6, 2.1, stroke=0, fill=1)
+        top = P(c, s, x + 18, top, width - 18, chain_st)
+        if state is not None:
+            state['top'] = top
+    return top
+
+
+def risk_bar(c, name, idx, x, top, width, caption=""):
+    """Подриск: имя слева, индекс справа, тонкая плашка.
+
+    У каждого подриска в разборе свой индекс, и он должен читаться
+    отдельно от общего: клиент сверяет 65 и 52 между собой, а не
+    с итоговым числом на обложке.
+    """
+    p = Paragraph(clean(name), subhead)
+    w, h = p.wrap(width - 74, 10000)
+    box = max(h, 15) + 10
+    c.setFillColor(PALE); c.setStrokeColor(LINE)
+    c.roundRect(x, H - top - box, width, box, 5, stroke=1, fill=1)
+    p.drawOn(c, x + 11, H - top - 5 - h)
+    c.setFont("Noto-Bold", 13); c.setFillColor(CYAN)
+    c.drawRightString(x + width - 11, H - top - box + (box - 11) / 2 + 1, "%d/100" % idx)
+    top += box
+    if caption:
+        c.setFont("Noto", 7.8); c.setFillColor(MUTED)
+        c.drawRightString(x + width - 11, H - top - 9, clean(caption))
+        top += 11
+    return top + 7
 
 
 def footer(c, z, page):
@@ -207,36 +313,34 @@ def make_cover(c, z):
         c.setFont(font, draw); c.setFillColor(col)
         c.drawString(78, H - y - size*k, txt)
 
-    T(408.0, 17.5, NAVY,  "Noto-Bold", z['title'])
-    T(448.0,  9.2, MUTED, "Noto",      z['subtitle'], fit=True)
+    T(408.0, 17.5, NAVY,  "Noto-Bold", clean(z['title']))
+    T(448.0,  9.2, MUTED, "Noto",      clean(z['subtitle']), fit=True)
     T(468.0,  9.2, MUTED, "Noto",      "Дата оценки: " + z['date_h']
-                                       + ("   ·   Срок: " + z['deadline'] if z.get('deadline') else ""))
+                                       + ("   ·   Срок: " + clean(z['deadline']) if z.get('deadline') else ""))
 
     # На обложке зоны стоит один индекс. У Tier 1 их два, и ни один из
-    # них не главнее: устойчивость специальности отвечает на вопрос «чем
-    # заниматься», индекс региона - на вопрос «откуда». Поэтому два блока
-    # рядом, одинакового размера, каждый со своей подписью.
-    # ИНТЕРВАЛ ПОД ЦИФРОЙ. Первая редакция ставила цифру на 504 и подпись
-    # на 536: между базовыми линиями оставалось около 6 пунктов, и подпись
-    # почти касалась цифры. Цифра рисуется от базовой линии, то есть
-    # координата 504 - это ВЕРХ кегля, а низ уходит ещё на 36 пунктов.
-    # Разведено до 20 пунктов между базовыми линиями.
+    # них не главнее: риск траектории отвечает на вопрос «чем заниматься»,
+    # региональный - на вопрос «откуда». Поэтому два блока рядом,
+    # одинакового размера, каждый со своей подписью.
+    #
+    # ИНТЕРВАЛ ПОД ЦИФРОЙ. Координата - это ВЕРХ кегля, а низ уходит ещё
+    # на 36 пунктов: в первой редакции подпись стояла на 536 и почти
+    # касалась цифры. Разведено до 20 пунктов между базовыми линиями.
     def idx_block(x0, val, cap, lab):
         c.setFont("Noto-Bold", 34); c.setFillColor(CYAN)
         c.drawString(x0, H - 500.0 - 34*1.07, "%d/100" % val)
         c.setFont("Noto-Bold", 9.4); c.setFillColor(NAVY)
-        c.drawString(x0, H - 546.0 - 9.4*1.07, clean(cap)[:44])
+        c.drawString(x0, H - 546.0 - 9.4*1.07, clean(cap)[:46])
         c.setFont("Noto", 8.5); c.setFillColor(MUTED)
-        c.drawString(x0, H - 561.0 - 8.5*1.07, clean(lab)[:44])
+        c.drawString(x0, H - 561.0 - 8.5*1.07, clean(lab)[:46])
 
-    idx_block(78.0,  z['spec_index'],   "Устойчивость специальности", z['spec_caption'])
-    idx_block(318.0, z['region_index'], "Индекс риска региона",       z['region_caption'])
+    idx_block(78.0,  z['risk_index'],   z['risk_cover_label'],   z['risk_caption'])
+    idx_block(318.0, z['region_index'], z['region_cover_label'], z['region_caption'])
 
     st = ParagraphStyle("st", fontName="Noto", fontSize=9.2, leading=13.0, textColor=MUTED)
     p = Paragraph(clean(z['cover_note']), st)
     _pw, _ph = p.wrap(440, 10000)
-    _ptop = 592.0
-    p.drawOn(c, 78, H - _ptop - _ph + 1.5)
+    p.drawOn(c, 78, H - 592.0 - _ph + 1.5)
 
     c.setFont("Noto", 7.1); c.setFillColor(MUTED)
     c.drawString(78, H - 768.4 - 5.5, "Atlas Intelligence · точечная экспертиза Tier 1")
@@ -249,7 +353,7 @@ TOP, BOT = 62, 60        # верх и низ полосы набора
 
 
 def make_body(c, z):
-    """Разделы экспертизы. Верстка идёт потоком: если блок не помещается
+    """Разделы экспертизы. Вёрстка идёт потоком: если блок не помещается
     до нижней границы, начинается новая страница."""
     state = {'page': 2, 'top': TOP, 'n': 0}
 
@@ -259,16 +363,21 @@ def make_body(c, z):
             state['page'] += 1; state['top'] = TOP
 
     def sec(title, need=40):
-        """Заголовок раздела со сквозной нумерацией.
-
-        Номер выдаётся счётчиком в момент вызова: при пропуске пустого
-        раздела нумерация не рвётся. Заголовок не остаётся внизу страницы
-        без содержимого - резервируем место под него и первые строки.
-        """
+        """Заголовок раздела со сквозной нумерацией. Номер выдаётся
+        счётчиком: при пропуске пустого раздела нумерация не рвётся."""
         state['n'] += 1
         nl(need)
         state['top'] = P(c, "%d. %s" % (state['n'], title),
                          X, state['top'], CW, head) + 8
+
+    def paras(items, style=None, gap=6):
+        for t in (items or []):
+            nl(P_height(t, CW, style or body) + 12)
+            state['top'] = P(c, t, X, state['top'], CW, style or body, nl, state) + gap
+
+    def sub(title, need=34):
+        nl(need)
+        state['top'] = P(c, title, X, state['top'], CW, subhead) + 5
 
     # ── 1 · Запрос ────────────────────────────────────────────────
     sec("Запрос клиента", need=120)
@@ -285,22 +394,29 @@ def make_body(c, z):
     # ── 2 · Вердикт ───────────────────────────────────────────────
     # Вердикт стоит вторым, сразу после запроса: клиент платит за ответ,
     # а не за обоснование. Обоснование идёт ниже и читается по желанию.
-    if z.get('verdict'):
+    if z.get('verdict_lead') or z.get('verdict'):
         sec("Вердикт", need=90)
-        for i, para in enumerate(z['verdict']):
-            nl(P_height(para, CW - 24, body_dark) + 22)
-            state['top'] = callout(c, para, X, state['top'], CW,
-                                   accent=(CYAN if i == 0 else GOLD),
-                                   bg=(PALE if i == 0 else PGOLD)) + 8
-        state['top'] += 8
+        if z.get('verdict_lead'):
+            nl(callout_height(z['verdict_lead'], CW, boldbody) + 8)
+            state['top'] = callout(c, z['verdict_lead'], X, state['top'], CW,
+                                   style=boldbody) + 10
+        paras(z.get('verdict'))
+        if z.get('verdict_routes'):
+            if z.get('verdict_routes_title'):
+                sub(z['verdict_routes_title'])
+            state['top'] = bullets(c, z['verdict_routes'], X, state['top'], CW,
+                                   style=boldbody, nl=nl, state=state) + 10
+        paras(z.get('verdict_tail'))
+        if z.get('verdict_frame'):
+            nl(callout_height(z['verdict_frame'], CW, boldbody))
+            state['top'] = callout(c, z['verdict_frame'], X, state['top'], CW,
+                                   accent=GOLD, bg=PGOLD, style=boldbody) + 10
+        paras(z.get('verdict_close'))
+        state['top'] += 6
 
-    def index_section(title, idx, label, rows_in, note, extra_title=None, extra=None):
-        """Раздел с индексом: плашка, разбор по факторам, расшифровка.
-
-        Плашка повторяет «Ключевые параметры» разбора зоны, чтобы цифра
-        читалась одинаково в обоих документах.
-        """
-        sec(title, need=170)
+    def index_head(idx, label, note):
+        """Плашка индекса раздела. Повторяет «Ключевые параметры» разбора
+        зоны, чтобы цифра читалась одинаково в обоих документах."""
         _y = state['top']
         c.setFillColor(PALE); c.setStrokeColor(LINE)
         c.roundRect(X, H - _y - 58, CW, 58, 7, stroke=1, fill=1)
@@ -310,94 +426,202 @@ def make_body(c, z):
         c.drawString(X + 132, H - _y - 30, clean(label).upper()[:38])
         c.setFont("Noto", 8.6); c.setFillColor(MUTED)
         c.drawString(X + 15, H - _y - 47, "Индекс Atlas")
-        c.drawString(X + 132, H - _y - 47, clean(z['scale_hint'])[:46])
+        c.drawString(X + 132, H - _y - 47, clean(note)[:46])
         state['top'] = _y + 58 + 12
 
-        if rows_in:
-            rws = [["Фактор", "Оценка", "Комментарий"]] + [list(r) for r in rows_in]
-            fw = [126, 52, CW - 178]
-            nl(table_height(rws, fw) + 20)
-            state['top'] = table(c, rws, X, state['top'], fw) + 14
-        if note:
-            nl(callout_height(note, CW))
-            state['top'] = callout(c, note, X, state['top'], CW,
-                                   accent=GOLD, bg=PGOLD) + 14
-        if extra:
-            if extra_title:
-                nl(28)
-                state['top'] = P(c, extra_title, X, state['top'], CW, boldbody) + 6
-            state['top'] = bullets(c, extra, X, state['top'], CW, nl=nl, state=state) + 14
+    # ── 3 · Риск траектории ───────────────────────────────────────
+    sec(z['risk_title'], need=200)
+    index_head(z['risk_index'], z['risk_caption'], z.get('scale_hint') or '')
+    if z.get('risk_event'):
+        nl(callout_height("<b>Событие риска:</b> " + z['risk_event'], CW))
+        state['top'] = callout(c, "<b>Событие риска:</b> " + z['risk_event'],
+                               X, state['top'], CW) + 14
+    for it in (z.get('risk_items') or []):
+        nl(60)
+        state['top'] = risk_bar(c, it.get('name', ''), int(it.get('index') or 0),
+                                X, state['top'], CW, it.get('caption', ''))
+        paras(it.get('text'))
+        state['top'] += 4
+    if z.get('risk_note'):
+        if z.get('risk_note_title'):
+            sub(z['risk_note_title'])
+        nl(callout_height(z['risk_note'], CW))
+        state['top'] = callout(c, z['risk_note'], X, state['top'], CW,
+                               accent=GOLD, bg=PGOLD) + 14
+    if z.get('risk_extra'):
+        rx = z['risk_extra']
+        if z.get('risk_extra_title'):
+            sub(z['risk_extra_title'])
+        nl(60)
+        state['top'] = risk_bar(c, rx.get('name', ''), int(rx.get('index') or 0),
+                                X, state['top'], CW, rx.get('caption', ''))
+        paras(rx.get('text'))
+    state['top'] += 8
 
-    # ── 3 · Индекс специальности ──────────────────────────────────
-    index_section(z['spec_title'], z['spec_index'], z['spec_caption'],
-                  z.get('spec_rows'), z.get('spec_note'))
+    # ── 4 · Региональный риск ─────────────────────────────────────
+    sec(z['region_title'], need=200)
+    index_head(z['region_index'], z['region_caption'], z.get('scale_hint') or '')
+    if z.get('region_event'):
+        nl(callout_height("<b>Событие риска:</b> " + z['region_event'], CW))
+        state['top'] = callout(c, "<b>Событие риска:</b> " + z['region_event'],
+                               X, state['top'], CW) + 14
+    for b in (z.get('region_blocks') or []):
+        if b.get('head'):
+            sub(b['head'])
+        paras(b.get('text'))
+        if b.get('chain'):
+            nl(len(b['chain']) * 26 + 16)
+            state['top'] = chain(c, b['chain'], X, state['top'], CW, nl, state) + 10
+        paras(b.get('after'))
+        state['top'] += 4
+    for lv in (z.get('region_levels') or []):
+        nl(40)
+        state['top'] = P(c, lv.get('head', ''), X, state['top'], CW, boldbody) + 4
+        state['top'] = bullets(c, lv.get('items') or [], X + 10, state['top'], CW - 10,
+                               nl=nl, state=state) + 8
+    if z.get('region_conclusion'):
+        if z.get('region_conclusion_title'):
+            sub(z['region_conclusion_title'])
+        nl(callout_height(z['region_conclusion'], CW, boldbody))
+        state['top'] = callout(c, z['region_conclusion'], X, state['top'], CW,
+                               accent=GOLD, bg=PGOLD, style=boldbody) + 12
+    paras(z.get('region_after'))
+    if z.get('region_sequence'):
+        if z.get('region_sequence_title'):
+            sub(z['region_sequence_title'])
+        nl(len(z['region_sequence']) * 26 + 16)
+        state['top'] = chain(c, z['region_sequence'], X, state['top'], CW, nl, state) + 12
+    if z.get('region_method_note'):
+        nl(callout_height(z['region_method_note'], CW, small) + 4)
+        state['top'] = callout(c, z['region_method_note'], X, state['top'], CW,
+                               accent=MUTED, bg=PALE, style=small) + 14
+    state['top'] += 4
 
-    # ── 4 · Индекс региона ────────────────────────────────────────
-    index_section(z['region_title'], z['region_index'], z['region_caption'],
-                  z.get('region_rows'), z.get('region_note'),
-                  z.get('region_means_title'), z.get('region_means'))
+    # ── 5 · Карта траекторий ──────────────────────────────────────
+    # Маршрут рисуется БЛОКОМ, а не строкой широкой таблицы. В исходном
+    # разборе это таблица из шести колонок; на А4 в книжной ориентации
+    # на колонку приходится около 73 пунктов, то есть восемь-девять
+    # знаков в строке, и таблица становится нечитаемой. Landscape ради
+    # одного раздела ломает колонтитул и сетку всего документа.
+    # Блок сохраняет все шесть полей и читается сверху вниз.
+    if z.get('map_routes'):
+        sec(z.get('map_title') or "Карта профессиональных траекторий", need=120)
+        paras(z.get('map_intro'))
+        if z.get('map_base'):
+            nl(callout_height(z['map_base'], CW, boldbody))
+            state['top'] = callout(c, z['map_base'], X, state['top'], CW,
+                                   style=boldbody) + 14
+        for r in z['map_routes']:
+            rows = [["Поле", "Значение"]]
+            for lbl, key in (("Что добавить к образованию", "add"),
+                             ("Возможный профессиональный выход", "exit"),
+                             ("Что она будет делать", "does"),
+                             ("Российские работодатели", "employers")):
+                if r.get(key):
+                    rows.append([lbl, r[key]])
+            rw = [150, CW - 150]
+            nl(table_height(rows[1:], rw, header=False) + 52)
+            state['top'] = P(c, r.get('name', ''), X, state['top'], CW, subhead) + 6
+            state['top'] = table(c, rows[1:], X, state['top'], rw, header=False) + 14
+        paras(z.get('map_note'), style=small)
+        if z.get('map_split'):
+            if z.get('map_split_title'):
+                sub(z['map_split_title'])
+            for s in z['map_split']:
+                nl(P_height(s, CW, body) + 14)
+                state['top'] = P(c, s, X, state['top'], CW, body, nl, state) + 7
+        paras(z.get('map_after'))
+        state['top'] += 6
 
-    # ── 5 · Свидетельства ─────────────────────────────────────────
+    def titled(items, numbered_head=False):
+        """Раздел из озаглавленных блоков: заголовок и абзацы под ним.
+
+        Заголовок не остаётся внизу страницы в одиночестве: под него
+        резервируется место вместе с первыми строками текста.
+        """
+        for i, b in enumerate(items, 1):
+            hd = b.get('head', '')
+            if numbered_head:
+                hd = "%d. %s" % (i, hd)
+            nl(P_height(hd, CW, subhead) + 34)
+            state['top'] = P(c, hd, X, state['top'], CW, subhead) + 5
+            paras(b.get('text'))
+            if b.get('items'):
+                state['top'] = bullets(c, b['items'], X + 10, state['top'], CW - 10,
+                                       nl=nl, state=state) + 4
+            if b.get('impl'):
+                nl(callout_height(b['impl'], CW))
+                state['top'] = callout(c, b['impl'], X, state['top'], CW) + 8
+            state['top'] += 5
+
+    # ── 6 · Свидетельства ─────────────────────────────────────────
     if z.get('evidence'):
-        sec("Свидетельства", need=70)
-        state['top'] = numbered(c, z['evidence'], X, state['top'], CW, nl, state) + 12
+        sec(z.get('evidence_title') or "Свидетельства", need=80)
+        titled(z['evidence'], numbered_head=True)
 
-    # ── 6 · Риски ─────────────────────────────────────────────────
-    # Заголовок риска и его разбор идут одним абзацем с жирным началом:
-    # отдельной строкой заголовок отрывался от текста при переносе.
+    # ── 7 · Риски ─────────────────────────────────────────────────
     if z.get('risks'):
-        sec(z.get('risks_title') or "Ключевые риски", need=70)
-        state['top'] = numbered(
-            c, ["<b>%s</b><br/>%s" % (r[0], r[1]) if len(r) > 1 else r[0]
-                for r in z['risks']],
-            X, state['top'], CW, nl, state) + 12
+        sec(z.get('risks_title') or "Ключевые риски", need=80)
+        titled(z['risks'], numbered_head=True)
 
-    # ── 7 · Что меняется ──────────────────────────────────────────
+    # ── 8 · Что меняется ──────────────────────────────────────────
     if z.get('changes'):
-        sec(z.get('changes_title') or "Что меняется в мире", need=70)
-        if z.get('changes_note'):
-            state['top'] = P(c, z['changes_note'], X, state['top'], CW, small, nl, state) + 8
-        state['top'] = bullets(c, z['changes'], X, state['top'], CW, nl=nl, state=state) + 12
+        sec(z.get('changes_title') or "Что меняется", need=80)
+        titled(z['changes'], numbered_head=True)
 
-    # ── 8 · Действия ──────────────────────────────────────────────
-    # Срок и действие разнесены: срок жирной строкой, под ним текст.
-    # Это единственный раздел, который клиент будет перечитывать,
-    # и он должен листаться взглядом по датам.
+    # ── 9 · Действия ──────────────────────────────────────────────
+    # Срок жирной строкой, под ним текст: это единственный раздел,
+    # который клиент будет перечитывать, и он должен листаться
+    # взглядом по датам.
     if z.get('actions'):
         sec(z.get('actions_title') or "Конкретные действия", need=90)
-        for term, txt in [(a[0], a[1]) for a in z['actions']]:
-            nl(P_height(txt, CW, body) + 34)
-            state['top'] = P(c, term, X, state['top'], CW, boldbody) + 3
-            state['top'] = P(c, txt, X, state['top'], CW, body, nl, state) + 10
-        state['top'] += 4
+        for a in z['actions']:
+            nl(60)
+            state['top'] = P(c, a.get('term', ''), X, state['top'], CW, boldbody) + 5
+            paras(a.get('text'))
+            if a.get('items'):
+                state['top'] = bullets(c, a['items'], X + 10, state['top'], CW - 10,
+                                       nl=nl, state=state) + 5
+            if a.get('result_title'):
+                sub(a['result_title'], need=28)
+            if a.get('result'):
+                state['top'] = bullets(c, a['result'], X + 10, state['top'], CW - 10,
+                                       nl=nl, state=state) + 5
+            paras(a.get('after'))
+            state['top'] += 8
 
-    # ── 9-10 · Границы тира ───────────────────────────────────────
+    # ── 10-11 · Границы тира ──────────────────────────────────────
     # Что входит и что не входит стоят рядом намеренно: граница работы
-    # определяется парой, а не одним списком. Разнесённые по документу,
-    # они читались бы как обещание и отдельная оговорка.
+    # определяется парой. Разнесённые по документу, они читались бы как
+    # обещание и отдельная оговорка.
     if z.get('included'):
         sec("Что входит в вердикт", need=70)
         state['top'] = bullets(c, z['included'], X, state['top'], CW,
-                               nl=nl, state=state, marker="· ") + 12
+                               nl=nl, state=state) + 12
     if z.get('excluded'):
         sec("Что не входит", need=70)
-        state['top'] = bullets(c, z['excluded'], X, state['top'], CW,
-                               nl=nl, state=state, marker="· ") + 12
+        rows = [["Вынесено", "Тир"]] + [[e[0], e[1]] for e in z['excluded']]
+        ew = [CW - 86, 86]
+        nl(table_height(rows, ew) + 20)
+        state['top'] = table(c, rows, X, state['top'], ew) + 14
 
-    # ── 11 · Что дальше ───────────────────────────────────────────
+    # ── 12 · Что дальше ───────────────────────────────────────────
     if z.get('next'):
         sec(z.get('next_title') or "Что дальше", need=80)
-        for tier, txt in [(n[0], n[1]) for n in z['next']]:
-            nl(P_height(txt, CW - 24, body_dark) + 26)
-            state['top'] = callout(c, "<b>%s</b> &#160;·&#160; %s" % (tier, txt),
-                                   X, state['top'], CW, accent=GOLD, bg=PGOLD) + 6
-        state['top'] += 8
+        for n in z['next']:
+            nl(50)
+            state['top'] = P(c, n.get('tier', ''), X, state['top'], CW, subhead) + 5
+            paras(n.get('text'))
+            if n.get('items'):
+                state['top'] = bullets(c, n['items'], X + 10, state['top'], CW - 10,
+                                       nl=nl, state=state) + 4
+            state['top'] += 8
 
-    # ── 12 · Источник и дисклеймер ────────────────────────────────
-    sec("Источник и дисклеймер", need=P_height(z['disclaimer'], CW, body) + 60)
+    # ── 13 · Источник и дисклеймер ────────────────────────────────
+    sec("Источник и дисклеймер", need=90)
     if z.get('source_line'):
         state['top'] = P(c, z['source_line'], X, state['top'], CW, boldbody) + 6
-    state['top'] = P(c, z['disclaimer'], X, state['top'], CW, body, nl, state) + 14
+    paras(z.get('disclaimer'))
 
     _sup = z.get('support', '')
     if _sup:
@@ -420,14 +644,15 @@ def prepare(z):
     z['title'] = z.get('title') or "Точечная экспертиза"
     z['subtitle'] = z.get('subtitle') or ("%s · %s" % (z['client_h'], z.get('request') or ''))
     z['scale_hint'] = z.get('scale_hint') or "Шкала Atlas: 0-100"
-    z.setdefault('spec_title', 'Индекс Atlas: устойчивость специальности')
-    z.setdefault('region_title', 'Индекс Atlas по региону')
-    z.setdefault('spec_index', 0)
+    z.setdefault('risk_title', 'Индекс Atlas: риск траектории')
+    z.setdefault('region_title', 'Региональный риск')
+    z.setdefault('risk_index', 0)
     z.setdefault('region_index', 0)
-    z.setdefault('spec_caption', '')
+    z.setdefault('risk_caption', '')
     z.setdefault('region_caption', '')
+    z.setdefault('risk_cover_label', 'Риск траектории')
+    z.setdefault('region_cover_label', 'Региональный риск')
     z.setdefault('cover_note', '')
-    z.setdefault('disclaimer', '')
     return z
 
 
@@ -455,3 +680,8 @@ if __name__ == "__main__":
     for rr in reports:
         p = build(rr, outdir)
         print("  собрано: %s" % p.name)
+    if _MISSING:
+        # Не молчим: символ без глифа рисуется пустым местом, и на готовой
+        # странице это видно только глазами.
+        print("  [tier1] ВНИМАНИЕ, нет в шрифте: %s"
+              % " ".join("U+%04X (%s)" % (ord(ch), ch) for ch in sorted(_MISSING)))
