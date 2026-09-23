@@ -187,16 +187,54 @@ jobs:
         run: |
           git config user.name "archive-bot"
           git config user.email "bot@secrett-archive.com"
-          git add docs/_pulse.json docs/_filter_noise.json docs/_dedup_debug.json docs/_pipeline_loss.json docs/_netblocks_debug.json docs/_ioda_debug.json docs/_tg_debug.json docs/coverage_totals.json docs/sources_health.json docs/_audit_events.json scripts/firms_persist.json docs/climate/ docs/events.json docs/_lifecycle.json docs/snapshots/ docs/intelligence/ docs/alerts/ docs/alerts/rankings/ grivl.html docs/grdf/ docs/timelines/ docs/scenarios/ docs/correlations/ docs/propagation/ docs/systemic/ docs/early-warning/ docs/decision-support/ docs/resilience/ docs/calibration/ docs/strategy/ docs/strategy-history/ docs/strategy-feedback/ docs/validation/ docs/explanations/ docs/dashboard/ docs/decision-quality/ docs/decision-ranking/ docs/strategy-optimization/ docs/strategy-evolution/ docs/recommendations/ docs/executive-summary/ docs/scenario-evolution/ docs/scenario-pathways/ docs/scenario-tree/ docs/global-risks/ docs/risk-ranking/ docs/risk-hierarchy/ docs/risk-acceleration/ docs/validation-external/ docs/track-record/ docs/model-history.json docs/validation/ 2>/dev/null || true
-          git add docs/_geo_audit.json docs/_geo_review.json docs/_geo_authority.json 2>/dev/null || true
-          git add docs/signals.json docs/signal_memory.json docs/_geo_shadow.json 2>/dev/null || true
-          git add docs/quake_history.json 2>/dev/null || true   # история уточнений USGS
-          git add docs/migration/role-shadow-report.json 2>/dev/null || true  # TASK-092
-          git add docs/system_state.json 2>/dev/null || true   # ADR-021 System State
-          git add docs/migration/ 2>/dev/null || true
-          git add docs/_signal_gate.json docs/_geo_authority.json 2>/dev/null || true
-          git add docs/_pipeline_loss.json docs/_admission_sample.json docs/_admission_history.json docs/_no_domain.json 2>/dev/null || true
-          git add docs/_admission_shadow.json 2>/dev/null || true   # SPEC-013 Phase 1 Shadow
+
+          # ═══ PUBLISH-ADD 23.09.2026 ═══════════════════════════════════════
+          # Раньше пути добавлялись длинными строками вида
+          #     git add <до 50 путей> 2>/dev/null || true
+          # git add атомарен по списку: если ХОТЬ ОДИН путь не существует, он
+          # падает с ошибкой и не добавляет НИЧЕГО из строки, а «2>/dev/null
+          # || true» прячет это полностью. Проверено на дереве 23.09: строка
+          #     git add docs/_geo_audit.json docs/_geo_review.json docs/_geo_authority.json
+          # не добавляла _geo_authority.json, потому что первых двух файлов нет.
+          #
+          # Последствие было не только в потерянном файле. Неcтейдженные файлы
+          # уходили в autostash на шаге публикации и конфликтовали при его
+          # возврате — отсюда падения с CONFLICT (content) в docs/validation/*.json
+          # и десятках других перегенерируемых файлов.
+          #
+          # Теперь каждый путь добавляется отдельно, отсутствующие называются
+          # в логе предупреждением, а не исчезают молча.
+          # ОТКАТ: вернуть строки «git add <список> 2>/dev/null || true».
+          _add() {
+            local miss=""
+            for p in "$@"; do
+              if [ -e "$p" ]; then
+                git add -- "$p" || echo "::warning::[PUBLISH] git add не смог добавить $p"
+              else
+                miss="$miss $p"
+              fi
+            done
+            if [ -n "$miss" ]; then
+              echo "::warning::[PUBLISH] нет на диске, пропущено:$miss"
+            fi
+            return 0
+          }
+          _add docs/_pulse.json docs/_filter_noise.json docs/_dedup_debug.json docs/_pipeline_loss.json docs/_netblocks_debug.json docs/_ioda_debug.json docs/_tg_debug.json docs/coverage_totals.json docs/sources_health.json docs/_audit_events.json scripts/firms_persist.json docs/climate/ docs/events.json docs/_lifecycle.json docs/snapshots/ docs/intelligence/ docs/alerts/ docs/alerts/rankings/ grivl.html docs/grdf/ docs/timelines/ docs/scenarios/ docs/correlations/ docs/propagation/ docs/systemic/ docs/early-warning/ docs/decision-support/ docs/resilience/ docs/calibration/ docs/strategy/ docs/strategy-history/ docs/strategy-feedback/ docs/validation/ docs/explanations/ docs/dashboard/ docs/decision-quality/ docs/decision-ranking/ docs/strategy-optimization/ docs/strategy-evolution/ docs/recommendations/ docs/executive-summary/ docs/scenario-evolution/ docs/scenario-pathways/ docs/scenario-tree/ docs/global-risks/ docs/risk-ranking/ docs/risk-hierarchy/ docs/risk-acceleration/ docs/validation-external/ docs/track-record/ docs/model-history.json docs/validation/
+
+          _add docs/_geo_audit.json docs/_geo_review.json docs/_geo_authority.json
+
+          _add docs/signals.json docs/signal_memory.json docs/_geo_shadow.json
+
+          _add docs/quake_history.json   # история уточнений USGS
+          _add docs/migration/role-shadow-report.json  # TASK-092
+          _add docs/system_state.json   # ADR-021 System State
+          _add docs/migration/
+
+          _add docs/_signal_gate.json docs/_geo_authority.json
+
+          _add docs/_pipeline_loss.json docs/_admission_sample.json docs/_admission_history.json docs/_no_domain.json
+
+          _add docs/_admission_shadow.json   # SPEC-013 Phase 1 Shadow
           # История снимков между прогонами. Без неё history_map пуст, trend_direction
           # у всех событий "new", и 55 из 100 очков escalation_score недостижимы.
           # Окно 7 дней задано HISTORY_RETENTION_DAYS в scripts/history_store.py (~6 МБ).
@@ -212,30 +250,63 @@ jobs:
           else
             echo "::warning::[LINEAGE] docs/_lineage.jsonl отсутствует — в репозитории останется файл предыдущего прогона"
           fi
-          git add docs/_lineage.jsonl docs/_lineage_report.json 2>/dev/null || true   # I.1 Lineage (Run B)
-          git add docs/_diagnostics_report.json 2>/dev/null || true   # I.2 Diagnostics
-          git add docs/_change_impact.json 2>/dev/null || true   # I.3 Change Impact
-          git add docs/_entity_shadow.json 2>/dev/null || true   # Entity Layer Shadow (Этап 1)
-          git add docs/_preview_processes.json docs/_hypothesis_snapshots.json docs/_infra_process_shadow.json docs/_financial_shadow.json 2>/dev/null || true   # Этап 3 Preview
-          git add docs/_infra_detection_shadow.json docs/_infra_detection_state.json 2>/dev/null || true   # ADR-012 Phase 1 Shadow
-          git add docs/_birth_semantics.json 2>/dev/null || true   # SPEC-013 §3 Birth Semantics
-          git add docs/_impact_debug.json 2>/dev/null || true
+          _add docs/_lineage.jsonl docs/_lineage_report.json   # I.1 Lineage (Run B)
+          _add docs/_diagnostics_report.json   # I.2 Diagnostics
+          _add docs/_change_impact.json   # I.3 Change Impact
+          _add docs/_entity_shadow.json   # Entity Layer Shadow (Этап 1)
+          _add docs/_preview_processes.json docs/_hypothesis_snapshots.json docs/_infra_process_shadow.json docs/_financial_shadow.json   # Этап 3 Preview
+          _add docs/_infra_detection_shadow.json docs/_infra_detection_state.json   # ADR-012 Phase 1 Shadow
+          _add docs/_birth_semantics.json   # SPEC-013 §3 Birth Semantics
+          _add docs/_impact_debug.json
+
           # IDR-006: отчёт по обратным ссылкам событие→процесс. Файл создавался
           # на раннере, но не попадал в коммит — его не было ни в одной строке
           # git add. То же касалось _signal_engine_report.json.
-          git add docs/_process_links_report.json docs/_signal_engine_report.json 2>/dev/null || true
+          _add docs/_process_links_report.json docs/_signal_engine_report.json
+
           # docs/reports НЕ коммитится в публичный репозиторий: документы
           # уходят в приватный отдельным шагом. Данные зон остаются здесь,
           # они нужны генератору и не содержат готового разбора.
-          git add docs/country_zones.json 2>/dev/null || true   # данные зон
+          _add docs/country_zones.json   # данные зон
           if git diff --staged --quiet; then
             echo "Нет изменений"
           else
             TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
             COUNT=${{ steps.healthcheck.outputs.events_count }}
             git commit -m "Карта сигналов · $TIMESTAMP · ${COUNT} событий"
-            git pull --rebase --autostash origin main
-            git push || (sleep 3 && git pull --rebase --autostash origin main && git push) || (sleep 6 && git pull --rebase --autostash origin main && git push)
+            # ═══ PUBLISH-PUSH 23.09.2026 ═════════════════════════════════
+            # Было: git pull --rebase --autostash с тройным повтором.
+            # Два механизма роняли шаг на файлах, которые прогон
+            # перегенерирует целиком:
+            #   1. rebase без стратегии. Встречный коммит с теми же файлами
+            #      даёт CONFLICT (content), хотя выбирать тут нечего: прав
+            #      всегда свежий прогон, он пересобрал файл заново.
+            #   2. autostash. Всё, что не попало в индекс, пряталось в стеш,
+            #      а при возврате конфликтовало с перебазированным деревом.
+            #      Содержимое стеша при этом НИКОГДА не публиковалось:
+            #      коммит делается до него. То есть конфликты возникали
+            #      из-за данных, которые всё равно выбрасывались.
+            # Стало: стеш делается явно и не возвращается, а rebase идёт с
+            # -X theirs — на перегенерированных файлах побеждает наш коммит.
+            # Проверено на песочнице 23.09: при rebase «theirs» — это
+            # накатываемый коммит, «ours» — то, на что накатывают. Порядок
+            # обратный интуиции, поэтому и проверялся отдельно.
+            # ОТКАТ: вернуть git pull --rebase --autostash origin main + git push.
+            git stash push -u -q 2>/dev/null || true
+            _pushed=0
+            for _i in 1 2 3; do
+              if git push; then _pushed=1; break; fi
+              git fetch -q origin main || true
+              if ! git rebase -X theirs FETCH_HEAD; then
+                git rebase --abort 2>/dev/null || true
+                echo "::warning::[PUBLISH] rebase не удался, попытка $_i"
+              fi
+              sleep $((_i * 3))
+            done
+            if [ "$_pushed" != 1 ]; then
+              echo "::error::[PUBLISH] публикация не удалась после трёх попыток"
+              exit 1
+            fi
           fi
 
       - name: Контроль публикации (AUDIT 4.6)
