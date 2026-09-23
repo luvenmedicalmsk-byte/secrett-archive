@@ -2,9 +2,9 @@
   "country": "GB",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T16:46:18.632910+00:00",
+  "generated_at": "2026-09-23T17:07:40.486001+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-GB",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
+      "score": 44,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "economic"
     },
     {
+      "id": "SIGNAL-GB-Фирма_по_п",
+      "type": "Signal",
+      "label": "Фирма по платежам индийского миллиардера",
+      "severity": 44,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GB-Фактчекинг",
       "type": "Signal",
       "label": "Фактчекинг: 45 ложных или вводящих в заб",
       "severity": 32,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GB-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Великобритания",
-      "severity": 50,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-GB",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-social",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -163,22 +163,64 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-climate",
+      "to": "DOMAIN-GB-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-GB-social",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-GB-Общественн",
       "to": "DOMAIN-GB-economic",
       "type": "AMPLIFIES",
       "weight": 0.47
     },
     {
+      "from": "SIGNAL-GB-Фирма_по_п",
+      "to": "DOMAIN-GB-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.44
+    },
+    {
       "from": "SIGNAL-GB-Фактчекинг",
       "to": "DOMAIN-GB-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-GB-Социальный",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
