@@ -170,6 +170,25 @@ jobs:
           python scripts/build_zone.py docs/country_zones.json docs/reports || true
           ls -la docs/reports/ || true
 
+      # Точечные экспертизы Tier 1. Отдельный шаг от зон, а не строка в том
+      # же: у зон ключ KV содержит код страны и список собирается перебором
+      # стран, у экспертизы ключ плоский и список приходит одним запросом.
+      # Свой шаг также означает, что падение одного генератора не уносит
+      # второй: у зон и у экспертиз разные клиенты и разные сроки.
+      #
+      # ФАЙЛ ДАННЫХ НЕ КОММИТИТСЯ. В экспертизе есть имя клиента, город и
+      # разбор его личной ситуации, а этот репозиторий публичный. И
+      # docs/tier1_reports.json, и docs/reports/tier1-*.pdf внесены в
+      # .gitignore; в списке _add шага публикации их тоже нет.
+      - name: Точечные экспертизы Tier 1 (PDF)
+        continue-on-error: true
+        env:
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+        run: |
+          mkdir -p docs/reports
+          python scripts/sync_tier1.py || true
+          python scripts/build_tier1.py docs/tier1_reports.json docs/reports || true
+
       # Документы уходят в приватный репозиторий: в публичном прямая ссылка
       # открыта любому, кто её узнает. Worker забирает файл оттуда и отдаёт
       # только администратору.
