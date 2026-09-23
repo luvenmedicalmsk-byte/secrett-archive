@@ -11854,6 +11854,122 @@ def _attach_decision_basis(events):
     return events
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SIGNAL STATE · status + confidence (ROADMAP STAGE 3, §9)
+# ─────────────────────────────────────────────────────────────────────────────
+# Замер 23.09.2026 на срезе из 378 событий: status, confidence, subcategory и
+# tags пусты у 100% записей. При этом lifecycle_stage, signal_type,
+# trend_direction, escalation_score, first_seen/last_update и слой basis
+# заполнены у 100%. То есть материал для двух из четырёх полей уже посчитан
+# конвейером и просто не сведён в unified signal structure.
+#
+# Слой АДДИТИВЕН ровно как basis: пишет два поля верхнего уровня (status,
+# confidence) плюс объяснение в basis['state']. Ничего не переопределяет,
+# severity не трогает. Потребителей у этих полей на 23.09.2026 нет ни в UI,
+# ни в Worker (проверено поиском), поэтому включение никого не ломает.
+# Откат: SIGNAL_STATE = False — одна строка.
+#
+# ВАЖНО, место вызова: слой читает basis, поэтому обязан идти ПОСЛЕ
+# _attach_decision_basis (тот же урок, что записан в IDR-006 выше).
+SIGNAL_STATE = True
+
+# confidence — это уверенность В ЗАПИСИ, а не в факте. Она отвечает на вопрос
+# «сколько полей этого события выведено правилами, а сколько проставлено по
+# умолчанию», и намеренно НЕ пытается оценивать правдивость новости.
+_STATE_W = {'geo': 0.25, 'domain': 0.25, 'severity': 0.25, 'intent': 0.15, 'signal': 0.10}
+
+
+def _state_status(e):
+    """Lifecycle по STAGE 3: new/active/escalating/stabilizing/resolved.
+
+    Порядок проверок — приоритет информативности: измеренная эскалация важнее
+    признака новизны, поэтому свежая эскалация это escalating, а не new.
+    Возвращает (status, обоснование).
+    """
+    _b = (e.get('basis') or {}).get('signal') or {}
+    _stage = e.get('lifecycle_stage')
+    _st = e.get('signal_type')
+    _tr = e.get('trend_direction')
+    _lvl = _b.get('escalation_level')
+
+    if _stage == 'archived':
+        return 'resolved', 'событие вышло из активного окна (lifecycle_stage=archived)'
+    if _st == 'de-escalation' or _tr == 'falling':
+        return 'stabilizing', 'зафиксировано снятие напряжения'
+    if _st == 'escalation' or _tr == 'rising' or _lvl in ('moderate', 'strong'):
+        return 'escalating', 'зафиксирован рост показателей'
+    if _tr == 'new' or (e.get('first_seen') and e.get('first_seen') == e.get('last_update')
+                        and _stage == 'active'):
+        return 'new', 'первое появление в срезе'
+    return 'active', 'наблюдается без изменения показателей'
+
+
+def _state_confidence(e):
+    """Доля выведенного правилами против проставленного по умолчанию, 0..1.
+
+    Каждая составляющая берётся из уже записанного basis, ничего не
+    пересчитывается заново. Возвращает (confidence, разложение по частям).
+    """
+    _b = e.get('basis') or {}
+    parts = {}
+
+    _g = _b.get('geo') or {}
+    try:
+        parts['geo'] = max(0.0, min(1.0, float(_g.get('confidence') or 0.0)))
+    except (TypeError, ValueError):
+        parts['geo'] = 0.0
+
+    _d = _b.get('domain') or {}
+    # Домен, унаследованный от источника, это не измерение, а предположение.
+    parts['domain'] = 1.0 if _d.get('how') == 'сработало правило реестра' else 0.3
+
+    _s = _b.get('severity') or {}
+    _nf = len(_s.get('factors') or [])
+    # Ноль факторов означает базовое значение маршрута: вес не выведен из текста.
+    parts['severity'] = 0.2 if _nf == 0 else (0.6 if _nf == 1 else 1.0)
+
+    _i = _b.get('intent') or {}
+    _cl = _i.get('class')
+    parts['intent'] = 1.0 if (_cl == 'EVENT' and _i.get('operational')) else (
+        0.8 if _cl in ('EVENT', 'PROCESS') else 0.4)
+
+    parts['signal'] = 1.0 if (_b.get('signal') or {}).get('is_signal') else 0.5
+
+    val = sum(_STATE_W[k] * v for k, v in parts.items())
+    return round(max(0.0, min(1.0, val)), 2), {k: round(v, 2) for k, v in parts.items()}
+
+
+def _attach_signal_state(events):
+    """Заполняет status и confidence из уже посчитанных полей. Аддитивно."""
+    if not SIGNAL_STATE:
+        return events
+    _n = 0
+    _st_hist, _cf = {}, []
+    for e in (events or []):
+        try:
+            status, why = _state_status(e)
+            conf, parts = _state_confidence(e)
+            e['status'] = status
+            e['confidence'] = conf
+            _b = e.get('basis')
+            if isinstance(_b, dict):
+                # Веса в запись не пишутся: это константа _STATE_W, одинаковая
+                # для всех событий. Числа воспроизводятся из parts и кода.
+                _b['state'] = {'status': status, 'how': why,
+                               'confidence': conf, 'parts': parts}
+            _st_hist[status] = _st_hist.get(status, 0) + 1
+            _cf.append(conf)
+            _n += 1
+        except Exception:
+            continue
+    _avg = round(sum(_cf) / len(_cf), 2) if _cf else 0.0
+    print('[STATE] status/confidence записаны: %d/%d | %s | средняя уверенность %.2f'
+          % (_n, len(events or []),
+             ' '.join('%s=%d' % kv for kv in sorted(_st_hist.items())), _avg),
+          file=sys.stderr)
+    return events
+
+
 def _apply_geo_contract(events):
     """GEO CONTRACT Phase 2 (docs/GEO_CONTRACT.md): авторитетная география платформы.
     resolve_geo() вычисляется ОДИН раз здесь; все гео-поля события — производные
@@ -20580,6 +20696,9 @@ def save_enriched(events, previous_snapshot=None):
             # ПОСЛЕ них — непосредственно перед записью файла.
             _sev_finalize(enriched["events"])          # IDR-013: разложение веса
             _attach_decision_basis(enriched["events"])
+            # STAGE 3 §9: status + confidence. Строго после basis — слой читает
+            # его разложение (см. урок IDR-006 выше о месте вызова).
+            _attach_signal_state(enriched["events"])
             # IDR-010 · F4: диагностика несовместимых пар тип↔домен. Ничего не
             # исправляет — делает видимым любое новое правило, создающее
             # невозможное сочетание.
