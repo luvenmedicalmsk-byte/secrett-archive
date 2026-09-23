@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T18:40:19.715637+00:00",
+  "generated_at": "2026-09-23T18:50:21.438717+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -26,7 +26,7 @@
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 33,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-CA-Imperial_O",
+      "type": "Signal",
+      "label": "Imperial Oil становится первой крупной э",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-CA-Канада_ище",
       "type": "Signal",
       "label": "Канада ищет защитные меры для работодате",
@@ -92,13 +99,6 @@
       "label": "Пожарная активность — Северная Америка",
       "severity": 80,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Северная Америка",
-      "severity": 67,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-CA",
@@ -161,6 +161,48 @@
       "to": "COUNTRY-CA",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-CA-climate",
@@ -236,12 +278,6 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.8
-    },
-    {
-      "from": "SIGNAL-CA-Санкционно",
-      "to": "DOMAIN-CA-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.67
     }
   ]
 }
