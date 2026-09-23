@@ -2,9 +2,9 @@
   "country": "DE",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T09:53:52.189421+00:00",
+  "generated_at": "2026-09-23T10:21:49.812623+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-DE",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 72,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 32,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-DE-Планы_по_с",
+      "id": "SIGNAL-DE-Пожарная_а",
       "type": "Signal",
-      "label": "Планы по строительству дата-центра мощно",
-      "severity": 32,
-      "domain": "technology"
+      "label": "Пожарная активность — Германия",
+      "severity": 72,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,13 +118,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-DE-geopolitical",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
@@ -196,10 +238,10 @@
       "weight": 0.52
     },
     {
-      "from": "SIGNAL-DE-Планы_по_с",
-      "to": "DOMAIN-DE-technology",
+      "from": "SIGNAL-DE-Пожарная_а",
+      "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.72
     }
   ]
 }
