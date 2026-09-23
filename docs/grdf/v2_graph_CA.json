@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T14:27:14.854166+00:00",
+  "generated_at": "2026-09-23T14:46:56.276982+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -40,14 +40,14 @@
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 68,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 34,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Канадская_",
-      "type": "Signal",
-      "label": "Канадская провинция подала в суд на Open",
-      "severity": 34,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-CA-Пожарная_а",
       "type": "Signal",
       "label": "Пожарная активность — Северная Америка",
@@ -99,6 +92,13 @@
       "label": "Санкционное давление — Северная Америка",
       "severity": 67,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-CA-Киберугроз",
+      "type": "Signal",
+      "label": "Киберугроза — Канада",
+      "severity": 68,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,13 +124,13 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.68
     },
     {
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-CA-geopolitical",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-CA-Канадская_",
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
       "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Пожарная_а",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-CA-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.67
+    },
+    {
+      "from": "SIGNAL-CA-Киберугроз",
+      "to": "DOMAIN-CA-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.68
     }
   ]
 }
