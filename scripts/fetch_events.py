@@ -18548,6 +18548,7 @@ def _signal_quality_pass(events):
 # ОТКАТ: вернуть 85 и 7.
 _RETAIN_MIN_SEV = 70      # прежнее значение: 85
 _RETAIN_MAX_DAYS = 2      # прежнее значение: 7
+RETAIN_RECOMPUTE = True   # удержанное событие пересчитывается по текущим правилам; откат: False
 
 
 def _retain_critical(evs, prev):
@@ -18560,7 +18561,7 @@ def _retain_critical(evs, prev):
         have={(e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]) for e in evs}
         have_t={(e.get('title') or '')[:60] for e in evs}
         from datetime import datetime as _dt, timezone as _tz
-        _now=_dt.now(_tz.utc); kept=[]
+        _now=_dt.now(_tz.utc); kept=[]; _dropped=0
         for e in pevs:
             if (e.get('severity') or 0) < _RETAIN_MIN_SEV: continue
             key=e.get('fingerprint') or e.get('id') or (e.get('title') or '')[:60]
@@ -18569,10 +18570,51 @@ def _retain_critical(evs, prev):
                 d=_dt.strptime((e.get('date') or '')[:10],'%Y-%m-%d').replace(tzinfo=_tz.utc)
                 if (_now-d).days>_RETAIN_MAX_DAYS: continue
             except Exception: continue
+            # ═══ RETAIN_RECOMPUTE 23.09.2026 ═══════════════════════════════
+            # Удержанное событие переносилось дословно, вместе с индексом,
+            # посчитанным при первом попадании. Правила с тех пор могли
+            # измениться, а событие оставалось окрещённым по старым.
+            #
+            # «Япония начинает уборку после тайфуна Дуджуан» держалась на 97
+            # и после того, как защита фазы восстановления была выкачена:
+            # на этом же событии движок считает 60, но пересчёт его не
+            # касался. Признак был в самом событии — в журнале стояло имя
+            # правила infra_boost, которого в задеплоенном коде уже нет.
+            #
+            # Плюс петля: событие, замороженное выше порога удержания, само
+            # себя держит в ленте. Ошибка индекса становилась самоподдержи-
+            # вающейся ровно на те двое суток, что живёт удержание.
+            #
+            # Поэтому пересчёт и повторная проверка порога: если после
+            # пересчёта событие больше не тяжёлое, удерживать его незачем —
+            # удержание существует для тяжёлых, которые пропал источник.
+            # Откат: RETAIN_RECOMPUTE = False.
+            if RETAIN_RECOMPUTE:
+                try:
+                    _old_sev = int(e.get('severity') or 0)
+                    _new_sev = _recompute_severity(dict(e))
+                    _new_sev = int(_new_sev) if _new_sev else _old_sev
+                    if _new_sev != _old_sev:
+                        e['severity'] = _new_sev
+                        _sd = dict(e.get('severity_decision') or {})
+                        _ap = list(_sd.get('applied') or [])
+                        _ap.append({'rule': 'retain_recompute', 'type':
+                                    'boost' if _new_sev > _old_sev else 'cut',
+                                    'from': _old_sev, 'to': _new_sev,
+                                    'delta': _new_sev - _old_sev,
+                                    'why': 'пересчёт удержанного события по текущим правилам'})
+                        _sd['applied'] = _ap
+                        e['severity_decision'] = _sd
+                except Exception:
+                    pass
+                if (e.get('severity') or 0) < _RETAIN_MIN_SEV:
+                    _dropped += 1
+                    continue
             m=dict(e.get('meta') or {}); m['retained']=True; e['meta']=m
             kept.append(e)
-        if kept:
-            print(f"  ✓ retention: удержано тяжёлых событий {len(kept)} "
+        if kept or _dropped:
+            print(f"  ✓ retention: удержано тяжёлых событий {len(kept)}, "
+                  f"снято после пересчёта {_dropped} "
                   f"(порог {_RETAIN_MIN_SEV}, до {_RETAIN_MAX_DAYS} сут)", file=sys.stderr)
         return evs+kept
     except Exception:

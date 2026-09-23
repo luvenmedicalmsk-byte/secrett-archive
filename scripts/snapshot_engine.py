@@ -9100,6 +9100,8 @@ _GRDF_WEIGHTS: dict[str, float] = {d: 1.0 for d in _GRDF_DOMAINS}
 # ОТКАТ: GRDF_V2_GATE = False возвращает прежнее поведение обеих функций.
 # ══════════════════════════════════════════════════════════════════════════════
 GRDF_V2_GATE = True      # откат: False
+GRDF_EVIDENCE = True        # домен оценивается по собственным событиям страны; откат: False
+GRDF_EXPL_EVIDENCE = True   # разложение вклада не создаёт риск в домене без событий; откат: False
 
 _GRDF_NODATA = 5         # пол для домена без измерений (прежний минимум функции)
 _GRDF_DOMINANCE = 0.6    # доля ведущего домена в оценке; остальное на среднее
@@ -9239,12 +9241,78 @@ def _domain_scores_from_grie(cc: str) -> dict[str, int | None]:
     return scores
 
 
+def _evidenced_domains(snap: dict) -> set:
+    """Домены, по которым у страны есть собственные события в этом прогоне."""
+    out = set()
+    for drv in (snap.get("drivers") or []):
+        raw = str(drv.get("domain") or "").lower()
+        dom = _ENGINE_TO_GRDF.get(raw, raw)
+        if dom in _GRDF_DOMAINS:
+            out.add(dom)
+    return out
+
+
+def _domain_scores_from_drivers(snap: dict,
+                                 base_scores: dict[str, int | None]) -> dict[str, int | None]:
+    """Оценка домена по собственным событиям страны: максимум серьёзности.
+
+    GRDF_EVIDENCE 23.09.2026. Раньше этого слоя не было, и домены заполнялись
+    разложением вклада (слой ниже), которое к стране отношения не имеет.
+    Драйверы снимка — это то, что по стране действительно произошло, и брать
+    оценку домена надо из них. Берётся максимум, а не среднее: один тайфун с
+    четырьмя погибшими и двумя миллионами эвакуированных не должен
+    разбавляться спокойными событиями того же домена.
+
+    Слой не понижает то, что дал GRIE, только поднимает: GRIE может знать о
+    фоновом риске, которого в ленте за эти сутки нет.
+    """
+    peak: dict[str, int] = {}
+    for drv in (snap.get("drivers") or []):
+        raw = str(drv.get("domain") or "").lower()
+        dom = _ENGINE_TO_GRDF.get(raw, raw)
+        if dom not in _GRDF_DOMAINS:
+            continue
+        try:
+            sev = int(drv.get("severity") or 0)
+        except (TypeError, ValueError):
+            continue
+        if sev > peak.get(dom, 0):
+            peak[dom] = sev
+    for dom, sev in peak.items():
+        cur = base_scores.get(dom)
+        if cur is None or sev > cur:
+            base_scores[dom] = max(0, min(100, sev))
+    return base_scores
+
+
 def _domain_scores_from_expl(cc: str, snap: dict,
                               base_scores: dict[str, int | None]) -> dict[str, int | None]:
     """
     Secondary source: explainability contributions.
     Fills domains still None after GRIE pass.
     domain_score = risk_score × (contribution / max_contribution)
+
+    GRDF_EXPL_EVIDENCE 23.09.2026. Этот слой приписывал стране риск в домене,
+    по которому у неё нет ни одного события.
+
+    Механизм. Деление на максимальный вклад означает, что ВЕРХНИЙ вклад
+    всегда получает полный страновой индекс: risk × 1.0. А верхний вклад во
+    всех 25 файлах разложения — geopolitics, с почти одинаковой лесенкой ниже
+    (economy ~13, finance ~10, energy ~7, governance ~6). Меняется только
+    величина самой геополитики. То есть это не разложение риска конкретной
+    страны, а фиксированная форма, и относительная доля используется как
+    абсолютный уровень.
+
+    Что это давало. У Японии risk_score 92 от тайфуна Дуджуан (четверо
+    погибших, два миллиона эвакуированных). Геополитических событий — ноль.
+    Слой выдал геополитике 92, климату досталось 50 из GRIE, и GRI страны
+    собрался вокруг домена, которого там нет. Владелец платформы заметил это
+    сам: «в ней нет войны».
+
+    Принцип G1 из слоя ниже — «отсутствие данных не производит риск» — этот
+    слой обходил. Теперь домен заполняется отсюда, только если у страны есть
+    по нему собственные события. Остальное уходит на пол.
+    Откат: GRDF_EXPL_EVIDENCE = False.
     """
     expl_path = EXPL_DIR / f"{cc}.json"
     if not expl_path.exists():
@@ -9254,15 +9322,19 @@ def _domain_scores_from_expl(cc: str, snap: dict,
         contrs = expl.get("contributions", []) or []
         if not contrs:
             return base_scores
+        seen      = _evidenced_domains(snap) if GRDF_EXPL_EVIDENCE else None
         risk      = snap.get("risk_score", 50) or 50
         max_contr = max((c.get("contribution", 0) or 0) for c in contrs) or 25
         for c in contrs:
             engine = c.get("engine", "")
             domain = _ENGINE_TO_GRDF.get(engine)
-            if domain and base_scores.get(domain) is None:
-                pct   = c.get("contribution", 0) or 0
-                score = min(100, round(risk * pct / max_contr))
-                base_scores[domain] = score
+            if not domain or base_scores.get(domain) is not None:
+                continue
+            if seen is not None and domain not in seen:
+                continue
+            pct   = c.get("contribution", 0) or 0
+            score = min(100, round(risk * pct / max_contr))
+            base_scores[domain] = score
     except Exception:
         pass
     return base_scores
@@ -9508,9 +9580,14 @@ def _get_domain_scores(cc: str, snap: dict) -> dict[str, dict]:
     """
     # Layer 1: GRIE
     raw = _domain_scores_from_grie(cc)
-    # Layer 2: explainability
+    # Layer 2: собственные события страны (GRDF_EVIDENCE 23.09.2026).
+    # Стоит ПЕРЕД разложением вклада: драйверы снимка — это то, что по
+    # стране действительно произошло, а разложение к стране не привязано.
+    if GRDF_EVIDENCE:
+        raw = _domain_scores_from_drivers(snap, raw)
+    # Layer 3: explainability
     raw = _domain_scores_from_expl(cc, snap, raw)
-    # Layer 3: fallback
+    # Layer 4: fallback
     raw = _domain_scores_fill_fallback(snap, raw)
 
     delta      = snap.get("delta", 0) or 0
