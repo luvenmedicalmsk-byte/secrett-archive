@@ -10888,6 +10888,8 @@ GEO_SINGLE_MENTION = True
 
 GEO_MENTIONED_XY = True
 ADM1_GATE = True            # регион первого уровня по координатам; откат: False
+ADM1_TEXT_FIRST = True      # регион из текста важнее координаты; откат: False
+METEO_CITY_GATE = True      # город в метеопредупреждении не теряется; откат: False
 
 _ACC_PAST = re.compile(r'(?<![а-яё])([а-яё]{3,})(л|ла|ло|ли|лся|лась|лось|лись)(?![а-яё])')
 # Страдательные причастия: окончание должно быть причастным, иначе шаблон
@@ -12034,16 +12036,37 @@ def _apply_geo_contract(events):
     # Ошибка справочника не может испортить существующее поле.
     # Откат: ADM1_GATE = False.
     if ADM1_GATE:
-        _n = 0
+        _txt = _cnf = _rej = 0
         try:
             import adm1 as _adm1
             for e in events:
-                _r = _adm1.adm1_ru(e.get('lat'), e.get('lng'), e.get('country_code'))
+                _cc = e.get('country_code')
+                # 1. Текст. Источник или ru_subject уже назвали субъект — это
+                #    единственное место, где регион известен, а не выведен.
+                _r = _adm1.region_from_text(e.get('region'))
                 if _r:
                     e['region_adm1'] = _r
-                    _n += 1
-            print('  [ADM1] регион по координатам: %d из %d событий' % (_n, len(events)),
-                  file=sys.stderr)
+                    _txt += 1
+                    continue
+                if not ADM1_TEXT_FIRST:
+                    _r = _adm1.adm1_ru(e.get('lat'), e.get('lng'), _cc)
+                    if _r:
+                        e['region_adm1'] = _r
+                        _cnf += 1
+                    continue
+                # 2. Координата — только с подтверждением из текста.
+                _r = _adm1.adm1_ru(e.get('lat'), e.get('lng'), _cc)
+                if not _r:
+                    continue
+                if _adm1.confirmed_by_text(
+                        _r, (e.get('title') or '') + ' ' + (e.get('summary') or '')):
+                    e['region_adm1'] = _r
+                    _cnf += 1
+                else:
+                    _rej += 1
+            print('  [ADM1] регион: из текста %d, координата подтверждена %d, '
+                  'координата отвергнута %d (всего %d)'
+                  % (_txt, _cnf, _rej, len(events)), file=sys.stderr)
         except Exception as _ex:
             print('  [WARN] ADM1: %s' % _ex, file=sys.stderr)
 
@@ -16508,16 +16531,27 @@ def fetch_russia_signals():
     items = []
 
     # 1. Росгидромет -- штормовые предупреждения
+    #
+    # METEO_CITY 23.09.2026. До этой правки все семь лент писали
+    # region='Россия' и координаты 55.75/37.62, то есть штормовое
+    # предупреждение по Сочи, Казани или Красноярску публиковалось как
+    # московская точка без названия города. Город известен из самой ленты
+    # (номер станции), и терять его незачем: из-за этого блок «Горячие
+    # регионы» не мог увидеть ни одного городского метеособытия, а карточка
+    # Москвы получала чужие предупреждения. Откат: METEO_CITY_GATE = False.
     meteo_feeds = [
-        'https://meteoinfo.ru/rss/forecasts/index.php?s=28440',  # Москва
-        'https://meteoinfo.ru/rss/forecasts/index.php?s=23330',  # Сочи
-        'https://meteoinfo.ru/rss/forecasts/index.php?s=24959',  # Новосибирск
-        'https://meteoinfo.ru/rss/forecasts/index.php?s=25954',  # Екатеринбург
-        'https://meteoinfo.ru/rss/forecasts/index.php?s=31960',  # Ростов-на-Дону
-        'https://meteoinfo.ru/rss/forecasts/index.php?s=24641',  # Красноярск
-        'https://meteoinfo.ru/rss/forecasts/index.php?s=29839',  # Казань
+        ('28440', 'Москва',          'Москва',               55.75, 37.62),
+        ('23330', 'Сочи',            'Краснодарский край',   43.60, 39.73),
+        ('24959', 'Новосибирск',     'Новосибирская область', 54.99, 82.90),
+        ('25954', 'Екатеринбург',    'Свердловская область', 56.83, 60.60),
+        ('31960', 'Ростов-на-Дону',  'Ростовская область',   47.23, 39.72),
+        ('24641', 'Красноярск',      'Красноярский край',    56.01, 92.79),
+        ('29839', 'Казань',          'Татарстан',            55.78, 49.12),
     ]
-    for url in meteo_feeds:
+    for _st, _city, _subj, _cla, _clo in meteo_feeds:
+        url = 'https://meteoinfo.ru/rss/forecasts/index.php?s=' + _st
+        if not METEO_CITY_GATE:
+            _city, _subj, _cla, _clo = '', 'Россия', 55.75, 37.62
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'ArchiveBot/2.0'})
             with urllib.request.urlopen(req, timeout=10) as r:
@@ -16531,33 +16565,40 @@ def fetch_russia_signals():
                 keywords = ['предупреждение', 'опасн', 'шторм', 'ураган', 'гроза', 'снег', 'мороз', 'жара', 'наводн', 'паводок']
                 if not any(k in (title+desc).lower() for k in keywords):
                     continue
+                # Заголовок ленты не называет город, а предупреждение без места
+                # нечитаемо: подставляем город из номера станции.
+                if _city and _city.lower() not in (title + ' ' + desc).lower():
+                    title = '%s: %s' % (_city, title)
                 items.append({
                     'title': title,
                     'desc': desc or title,
                     'date': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
                     'source': 'Росгидромет',
                     'domain': 'climate',
-                    'region': 'Россия',
-                    'lat': 55.75, 'lng': 37.62,
-                    '_lat': 55.75, '_lng': 37.62,
-                    '_region': 'Россия',
+                    'region': _subj,
+                    'lat': _cla, 'lng': _clo,
+                    '_lat': _cla, '_lng': _clo,
+                    '_region': _subj,
                     '_domain': 'climate',
                 })
         except Exception as e:
             print(f'  [WARN] Росгидромет {url[-20:]}: {e}', file=sys.stderr)
 
     # 2. Open-Meteo -- экстремальные погодные условия по городам России
+    # METEO_CITY 23.09.2026: рядом с городом хранится субъект. Поле region
+    # раньше было «Россия · Новосибирск», а это город, а не субъект: блок
+    # «Горячие регионы» такое значение не принимает и событие теряется.
     cities = [
-        ('Москва', 55.75, 37.62),
-        ('Санкт-Петербург', 59.93, 30.32),
-        ('Сочи', 43.60, 39.73),
-        ('Новосибирск', 54.99, 82.90),
-        ('Екатеринбург', 56.83, 60.60),
-        ('Красноярск', 56.01, 92.79),
-        ('Якутск', 62.03, 129.73),
-        ('Владивосток', 43.10, 131.87),
-        ('Казань', 55.78, 49.12),
-        ('Ростов-на-Дону', 47.23, 39.72),
+        ('Москва',          55.75,  37.62, 'Москва'),
+        ('Санкт-Петербург', 59.93,  30.32, 'Санкт-Петербург'),
+        ('Сочи',            43.60,  39.73, 'Краснодарский край'),
+        ('Новосибирск',     54.99,  82.90, 'Новосибирская область'),
+        ('Екатеринбург',    56.83,  60.60, 'Свердловская область'),
+        ('Красноярск',      56.01,  92.79, 'Красноярский край'),
+        ('Якутск',          62.03, 129.73, 'Якутия'),
+        ('Владивосток',     43.10, 131.87, 'Приморский край'),
+        ('Казань',          55.78,  49.12, 'Татарстан'),
+        ('Ростов-на-Дону',  47.23,  39.72, 'Ростовская область'),
     ]
     try:
         lats = ','.join(str(c[1]) for c in cities)
@@ -16577,7 +16618,9 @@ def fetch_russia_signals():
         for idx, city_data in enumerate(data):
             if idx >= len(cities):
                 break
-            city_name, lat, lng = cities[idx]
+            city_name, lat, lng, city_subj = cities[idx]
+            if not METEO_CITY_GATE:
+                city_subj = 'Россия · ' + city_name
             daily = city_data.get('daily', {})
             dates = daily.get('time', [])
             temps_max = daily.get('temperature_2m_max', [])
@@ -16623,9 +16666,9 @@ def fetch_russia_signals():
                     'date': date,
                     'source': 'Open-Meteo',
                     'domain': 'climate',
-                    'region': f'Россия · {city_name}',
+                    'region': city_subj,
                     '_lat': lat, '_lng': lng,
-                    '_region': f'Россия · {city_name}',
+                    '_region': city_subj,
                     '_domain': 'climate',
                     '_force_severity': normalize_severity('weather', {'severity_add': severity_add}),
                 })
