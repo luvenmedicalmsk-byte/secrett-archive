@@ -2,39 +2,39 @@
   "country": "IT",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T23:34:59.477270+00:00",
+  "generated_at": "2026-09-23T23:45:51.335719+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 62,
+      "score": 63,
       "props": {
-        "risk_score": 62
+        "risk_score": 63
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 76,
-      "trend": "down"
+      "score": 62,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
@@ -87,18 +87,18 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-IT-Amazon,_Na",
+      "id": "SIGNAL-IT-Пожарный_с",
       "type": "Signal",
-      "label": "Amazon, Nadara запускают агривольтаическ",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Пожарный сигнал — Европа · Рим",
+      "severity": 52,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-IT-Военные_уд",
+      "id": "SIGNAL-IT-Это_сицили",
       "type": "Signal",
-      "label": "Военные удары — Италия",
-      "severity": 76,
-      "domain": "geopolitical"
+      "label": "Это сицилийское сообщество существует уж",
+      "severity": 44,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.76
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-IT",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IT-social",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-IT-geopolitical",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -190,16 +232,16 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-IT-Amazon,_Na",
-      "to": "DOMAIN-IT-economic",
+      "from": "SIGNAL-IT-Пожарный_с",
+      "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.52
     },
     {
-      "from": "SIGNAL-IT-Военные_уд",
-      "to": "DOMAIN-IT-geopolitical",
+      "from": "SIGNAL-IT-Это_сицили",
+      "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.76
+      "weight": 0.44
     }
   ]
 }
