@@ -2,7 +2,7 @@
   "country": "SA",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T02:06:54.906614+00:00",
+  "generated_at": "2026-09-23T02:25:49.731995+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -10,24 +10,24 @@
       "id": "COUNTRY-SA",
       "type": "Country",
       "label": "SA",
-      "score": 58,
+      "score": 60,
       "props": {
-        "risk_score": 58
+        "risk_score": 60
       }
     },
     {
       "id": "DOMAIN-SA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 52,
-      "trend": "stable"
+      "score": 60,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 19,
-      "trend": "stable"
+      "score": 20,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-climate",
@@ -55,7 +55,7 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 11,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-SA-cyber",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-SA-Kpler:_сам",
+      "type": "Signal",
+      "label": "Kpler: самый загруженный день терминала ",
+      "severity": 60,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-SA-Военный_ко",
       "type": "Signal",
       "label": "Военный конфликт — Ближний Восток (систе",
@@ -92,13 +99,6 @@
       "label": "Отключение интернета — Ближний Восток (с",
       "severity": 72,
       "domain": "technology"
-    },
-    {
-      "id": "SIGNAL-SA-Авиационны",
-      "type": "Signal",
-      "label": "Авиационный инцидент — Ближний Восток (с",
-      "severity": 78,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.6
     },
     {
       "from": "COUNTRY-SA",
       "to": "DOMAIN-SA-economic",
       "type": "CORRELATES",
-      "weight": 0.19
+      "weight": 0.2
     },
     {
       "from": "COUNTRY-SA",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-SA-Kpler:_сам",
+      "to": "DOMAIN-SA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.6
+    },
+    {
       "from": "SIGNAL-SA-Военный_ко",
       "to": "DOMAIN-SA-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-SA-technology",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-SA-Авиационны",
-      "to": "DOMAIN-SA-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.78
     }
   ]
 }
