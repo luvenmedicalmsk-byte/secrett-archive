@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-09-23",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-23T15:46:52.163824+00:00",
+  "generated_at": "2026-09-23T16:20:43.462299+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,31 +10,31 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 52,
+      "score": 50,
       "props": {
-        "risk_score": 52
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 42,
-      "trend": "stable"
+      "score": 76,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 32,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 52,
-      "trend": "stable"
+      "score": 44,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-technology",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IT-Пожарный_с",
-      "type": "Signal",
-      "label": "Пожарный сигнал — Европа · Рим",
-      "severity": 52,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-IT-Это_сицили",
       "type": "Signal",
       "label": "Это сицилийское сообщество существует уж",
@@ -99,6 +92,13 @@
       "label": "Amazon, Nadara запускают агривольтаическ",
       "severity": 32,
       "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-IT-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Италия",
+      "severity": 76,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.42
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-IT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IT",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-IT-climate",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -226,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IT-Пожарный_с",
-      "to": "DOMAIN-IT-climate",
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-IT-Это_сицили",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-IT-Военные_уд",
+      "to": "DOMAIN-IT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.76
     }
   ]
 }
