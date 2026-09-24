@@ -21395,7 +21395,11 @@ def save_enriched(events, previous_snapshot=None):
                         json.dump({
                             "generated": datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                             "events": len(_pv),
-                            "critical": sum(1 for _e in _pv if (_e.get('severity') or 0) >= 80),
+                            # 24.09.2026. Порог был 80, интерфейс ставил 85, а
+                            # легенда шкалы говорила 90. Витрина показывала
+                            # «8 критических», карта подписывала критическими
+                            # две. Порог приведён к шкале Атласа: 90 и выше.
+                            "critical": sum(1 for _e in _pv if (_e.get('severity') or 0) >= 90),
                             "developing": sum(1 for _e in _pv if _e.get('signal_type') == 'escalation'),
                             "processes": int(_sig_n or 0),
                             "by_domain": {_d: sum(1 for _e in _pv if _e.get('domain') == _d)
