@@ -2,39 +2,39 @@
   "country": "DE",
   "date": "2026-09-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-24T22:06:41.705061+00:00",
+  "generated_at": "2026-09-24T22:26:02.862580+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 74,
+      "score": 73,
       "props": {
-        "risk_score": 74
+        "risk_score": 73
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-technology",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-DE-В_аэропорт",
+      "id": "SIGNAL-DE-Берлин_гот",
       "type": "Signal",
-      "label": "В аэропорту Берлина объявили тревогу из-",
-      "severity": 52,
-      "domain": "geopolitical"
+      "label": "Берлин готовится ограничить доступ власт",
+      "severity": 50,
+      "domain": "economic"
     },
     {
-      "id": "SIGNAL-DE-Беспилотна",
+      "id": "SIGNAL-DE-Климатичес",
       "type": "Signal",
-      "label": "Беспилотная опасность была объявлена в а",
-      "severity": 48,
-      "domain": "geopolitical"
+      "label": "Климатический сигнал — Германия",
+      "severity": 72,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-DE-social",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,25 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "DOMAIN-DE-geopolitical",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
+      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-DE-economic",
       "to": "DOMAIN-DE-social",
       "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-DE-Ветер:_Гер",
@@ -232,16 +211,16 @@
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-DE-В_аэропорт",
-      "to": "DOMAIN-DE-geopolitical",
+      "from": "SIGNAL-DE-Берлин_гот",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.52
+      "weight": 0.5
     },
     {
-      "from": "SIGNAL-DE-Беспилотна",
-      "to": "DOMAIN-DE-geopolitical",
+      "from": "SIGNAL-DE-Климатичес",
+      "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
-      "weight": 0.48
+      "weight": 0.72
     }
   ]
 }
