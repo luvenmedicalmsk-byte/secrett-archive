@@ -20206,6 +20206,134 @@ _SW_CAP = 25        # потолок прибавки: правило не до�
 _SW_MAX = 95        # верх шкалы остаётся за критическим уровнем
 
 
+# ── МАСШТАБ ЧЕЛОВЕЧЕСКИХ ПОТЕРЬ (HUMAN_SCALE) ───────────────────────────────
+# Повод, 24.09.2026. «Супер Эль-Ниньо вызовет 451 000 смертей от жары» стояло
+# с весом 46, то есть «Средний риск — ограниченное влияние». Разбор показал,
+# что вес пришёл маршрутом news без единого применённого правила: число в
+# тексте никто не читал. Рядом наводнение в Китае с 399 045 перемещёнными
+# стоит на 84, потому что там сработало правило источника. Одна и та же шкала
+# давала несопоставимые ответы в зависимости от того, кто прислал запись.
+#
+# Что именно считается. Число берётся ТОЛЬКО когда оно прямо связано со словом
+# вреда: погибшие, умершие, пострадавшие, перемещённые, заражённые. Грубая
+# выборка «большое число рядом» на замере поднимала статью о рождаемости
+# меннонитов и материал о демографии Британии — там миллионы, но это
+# статистика населения, а не пострадавшие. Смерть весит больше перемещения:
+# 400 тысяч оставшихся без крова и 400 тысяч погибших это разные события.
+#
+# Прогноз против факта. Оценка «вызовет», «по прогнозам» не равна
+# состоявшемуся: прибавка умножается на понижающий множитель. Совсем не
+# учитывать прогноз нельзя — предупреждение о массовой гибели это и есть
+# предмет платформы, — но и приравнивать к случившемуся неверно.
+#
+# СТАТУС. Только замер. Боевой вес не трогается. На срезе 24.09 правило
+# нашло 3 записи из 379 — этого мало, чтобы судить о таблице прибавок, и
+# промоушен возможен только после нескольких прогонов.
+# Откат замера: HUMAN_SCALE_SHADOW = False.
+HUMAN_SCALE_SHADOW = True       # считать и записывать теневое значение
+HUMAN_SCALE_APPLY = False       # промоушен: применять к боевому весу
+
+_HS_DEATH = r'погибш\w+|погибл\w+|умр\w+|умерл\w+|смерт\w+|жертв\w+|жизн\w+\s+унесл'
+_HS_HURT = (r'пострадав\w+|ранен\w+|перемещ\w+|эвакуирова\w+|беженц\w+|'
+            r'заражен\w+|заболевш\w+|госпитализирова\w+|остал\w+\s+без\s+кров')
+# Суффикс «к» и «k» в записи вида «140к случаев» на первом замере читался как
+# 140 человек вместо 140 тысяч: запись недооценивалась в тысячу раз.
+_HS_NUM = re.compile(
+    r'(\d[\d\s,\.]{2,})\s*(тысяч\w*|тыс\.?|миллион\w*|млн|к\b|k\b)?\s*(?:\w+\s+){0,3}?'
+    r'(?P<kind>' + _HS_DEATH + r'|' + _HS_HURT + r')', re.I)
+_HS_DEATH_RX = re.compile(_HS_DEATH, re.I)
+# Признак прогноза ищется в заголовке: главное утверждение записи там, а
+# оговорка в глубине текста не превращает случившееся в предсказание.
+_HS_FCAST = re.compile(r'по прогноз|прогнозир|вызовет|ожидаетс|по оценкам|рискует|может\s+привест', re.I)
+# Прибавка по порядку величины. Пороги круглые намеренно: точность здесь
+# ложная, важен порядок, а не разница между 9 и 11 тысячами.
+_HS_BANDS_DEATH = ((100000, 34), (10000, 24), (1000, 14), (100, 7))
+_HS_BANDS_HURT = ((100000, 20), (10000, 14), (1000, 8), (100, 4))
+_HS_FCAST_K = 0.7               # прогноз весит меньше состоявшегося
+_HS_MAX = 95
+
+
+def _hs_number(text):
+    """Наибольшее число людей, прямо связанное со словом вреда, и его характер."""
+    best, best_death = 0, False
+    for m in _HS_NUM.finditer(text or ''):
+        try:
+            n = float(m.group(1).replace(' ', '').replace(',', '').replace('.', ''))
+        except ValueError:
+            continue
+        u = (m.group(2) or '').lower()
+        if u.startswith(('миллион', 'млн')):
+            n *= 1e6
+        elif u.startswith(('тысяч', 'тыс', 'к', 'k')):
+            n *= 1e3
+        if n > best:
+            best, best_death = n, bool(_HS_DEATH_RX.match(m.group('kind')))
+    return best, best_death
+
+
+def _human_scale(events):
+    """Замер масштаба человеческих потерь. Боевой вес не трогает без промоушена."""
+    if not (HUMAN_SCALE_SHADOW or HUMAN_SCALE_APPLY):
+        return 0
+    n, moved = 0, []
+    for e in events:
+        # Записи, где вес уже поставил источник или сработавшее правило, не
+        # трогаем: там число пострадавших уже учтено. На первом замере без
+        # этой проверки наводнение в Китае уходило с 84 на 95 — те же 399 045
+        # человек считались дважды, один раз шкалой GDACS, второй здесь.
+        _sd = e.get('severity_decision') or {}
+        if _sd.get('applied') or _sd.get('route') == 'force' or e.get('_sev_route') == 'force':
+            continue
+        blob = (e.get('title') or '') + ' ' + (e.get('summary') or '')
+        num, is_death = _hs_number(blob)
+        if num < 100:
+            continue
+        add = 0
+        for edge, w in (_HS_BANDS_DEATH if is_death else _HS_BANDS_HURT):
+            if num >= edge:
+                add = w
+                break
+        if not add:
+            continue
+        fcast = bool(_HS_FCAST.search(e.get('title') or ''))
+        if fcast:
+            add = int(round(add * _HS_FCAST_K))
+        base = e.get('severity') or 0
+        new = min(_HS_MAX, base + add)
+        e['severity_hs_shadow'] = new
+        e['severity_hs_why'] = {'людей': int(num), 'характер': 'гибель' if is_death else 'пострадали',
+                                'прогноз': fcast, 'прибавка': add}
+        if new != base:
+            n += 1
+            moved.append((new - base, base, new, e.get('title') or ''))
+        if HUMAN_SCALE_APPLY and new != base:
+            e['severity'] = _sev_log(e, 'human_scale', base, new,
+                                     'масштаб человеческих потерь: %d %s%s'
+                                     % (int(num), 'погибших' if is_death else 'пострадавших',
+                                        ', прогноз' if fcast else ''),
+                                     'boost')
+    if n:
+        print('  [HUMAN-SCALE] %s: затронуто %d, средняя прибавка %.1f'
+              % ('ПРИМЕНЕНО' if HUMAN_SCALE_APPLY else 'тень', n,
+                 sum(x[0] for x in moved) / len(moved)), file=sys.stderr)
+    # Отчёт пишется при ЛЮБОМ исходе, включая нулевой: «правило никого не
+    # нашло» и «прогон не дошёл до правила» со стороны выглядят одинаково.
+    # Замер копится по прогонам, судить по одному срезу нельзя.
+    try:
+        (OUTPUT_PATH.parent / '_human_scale.json').write_text(json.dumps({
+            'дата': datetime.now(timezone.utc).isoformat(),
+            'режим': 'применено' if HUMAN_SCALE_APPLY else 'замер, боевой вес не тронут',
+            'записей в срезе': len(events),
+            'затронуто': n,
+            'средняя прибавка': (round(sum(x[0] for x in moved) / len(moved), 1) if moved else 0),
+            'сдвиги': [{'было': b, 'стало': nw, 'прибавка': d, 'заголовок': t[:110]}
+                       for d, b, nw, t in sorted(moved, reverse=True)],
+        }, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _he:
+        print('  [WARN] human scale report: %s' % _he, file=sys.stderr)
+    return n
+
+
 def _strike_weight(events):
     """Вес военного события по измеримым признакам масштаба. По умолчанию тень."""
     if not (STRIKE_WEIGHT_SHADOW or STRIKE_WEIGHT_APPLY):
@@ -21158,6 +21286,7 @@ def save_enriched(events, previous_snapshot=None):
                 # полным независимо от того, попала запись в ленту или нет.
                 _scale_revert(enriched["events"])
                 _strike_weight(enriched["events"])
+                _human_scale(enriched["events"])
                 _context_feed_gate(enriched["events"])
                 _cap_feed_gate(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
