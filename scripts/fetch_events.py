@@ -17527,28 +17527,31 @@ def fetch_mideast_asia():
 # Откат: METEOALARM = False.
 METEOALARM = True
 
-# Страны покрытия: имя ленты, код, название по-русски. Общая карта
-# COUNTRY_RU в файле ключуется иначе и этих кодов не содержит, проверено,
-# поэтому название несём рядом со страной.
+# Страны покрытия: имя ленты, код, название по-русски, координаты столицы.
+# Общая карта COUNTRY_RU ключуется иначе и этих кодов не содержит, проверено,
+# поэтому и название, и точку несём рядом со страной. Точка страновая: лента
+# даёт предупреждение по территории, а не по координате объекта.
 _MA_COUNTRIES = [
-   ('austria', 'AT', 'Австрия'), ('belgium', 'BE', 'Бельгия'),
-    ('bosnia-herzegovina', 'BA', 'Босния и Герцеговина'), ('bulgaria', 'BG', 'Болгария'),
-    ('croatia', 'HR', 'Хорватия'), ('cyprus', 'CY', 'Кипр'), ('czechia', 'CZ', 'Чехия'),
-    ('denmark', 'DK', 'Дания'), ('estonia', 'EE', 'Эстония'),
-    ('finland', 'FI', 'Финляндия'), ('france', 'FR', 'Франция'),
-    ('germany', 'DE', 'Германия'), ('greece', 'GR', 'Греция'),
-    ('hungary', 'HU', 'Венгрия'), ('iceland', 'IS', 'Исландия'),
-    ('ireland', 'IE', 'Ирландия'), ('israel', 'IL', 'Израиль'), ('italy', 'IT', 'Италия'),
-    ('latvia', 'LV', 'Латвия'), ('lithuania', 'LT', 'Литва'),
-    ('luxembourg', 'LU', 'Люксембург'), ('malta', 'MT', 'Мальта'),
-    ('moldova', 'MD', 'Молдова'), ('montenegro', 'ME', 'Черногория'),
-    ('netherlands', 'NL', 'Нидерланды'), ('norway', 'NO', 'Норвегия'),
-    ('poland', 'PL', 'Польша'), ('portugal', 'PT', 'Португалия'),
-    ('romania', 'RO', 'Румыния'), ('serbia', 'RS', 'Сербия'),
-    ('slovakia', 'SK', 'Словакия'), ('slovenia', 'SI', 'Словения'),
-    ('spain', 'ES', 'Испания'), ('sweden', 'SE', 'Швеция'),
-    ('switzerland', 'CH', 'Швейцария'), ('ukraine', 'UA', 'Украина'),
-    ('united-kingdom', 'GB', 'Великобритания')
+    ('austria', 'AT', 'Австрия', 48.2, 16.4), ('belgium', 'BE', 'Бельгия', 50.8, 4.4),
+    ('bosnia-herzegovina', 'BA', 'Босния и Герцеговина', 43.9, 17.7),
+    ('bulgaria', 'BG', 'Болгария', 42.7, 23.3), ('croatia', 'HR', 'Хорватия', 45.8, 16.0),
+    ('cyprus', 'CY', 'Кипр', 35.2, 33.4), ('czechia', 'CZ', 'Чехия', 50.1, 14.4),
+    ('denmark', 'DK', 'Дания', 55.7, 12.6), ('estonia', 'EE', 'Эстония', 59.4, 24.8),
+    ('finland', 'FI', 'Финляндия', 60.2, 24.9), ('france', 'FR', 'Франция', 48.9, 2.4),
+    ('germany', 'DE', 'Германия', 52.5, 13.4), ('greece', 'GR', 'Греция', 38.0, 23.7),
+    ('hungary', 'HU', 'Венгрия', 47.5, 19.0), ('iceland', 'IS', 'Исландия', 64.1, -21.9),
+    ('ireland', 'IE', 'Ирландия', 53.3, -6.3), ('israel', 'IL', 'Израиль', 31.8, 35.2),
+    ('italy', 'IT', 'Италия', 41.9, 12.5), ('latvia', 'LV', 'Латвия', 56.9, 24.1),
+    ('lithuania', 'LT', 'Литва', 54.7, 25.3), ('luxembourg', 'LU', 'Люксембург', 49.6, 6.1),
+    ('malta', 'MT', 'Мальта', 35.9, 14.5), ('moldova', 'MD', 'Молдова', 47.0, 28.9),
+    ('montenegro', 'ME', 'Черногория', 42.4, 19.3),
+    ('netherlands', 'NL', 'Нидерланды', 52.4, 4.9), ('norway', 'NO', 'Норвегия', 59.9, 10.7),
+    ('poland', 'PL', 'Польша', 52.2, 21.0), ('portugal', 'PT', 'Португалия', 38.7, -9.1),
+    ('romania', 'RO', 'Румыния', 44.4, 26.1), ('serbia', 'RS', 'Сербия', 44.8, 20.5),
+    ('slovakia', 'SK', 'Словакия', 48.1, 17.1), ('slovenia', 'SI', 'Словения', 46.1, 14.5),
+    ('spain', 'ES', 'Испания', 40.4, -3.7), ('sweden', 'SE', 'Швеция', 59.3, 18.1),
+    ('switzerland', 'CH', 'Швейцария', 46.9, 7.4), ('ukraine', 'UA', 'Украина', 50.4, 30.5),
+    ('united-kingdom', 'GB', 'Великобритания', 51.5, -0.1)
 ]
 # Уровень CAP -> вес Atlas. Жёлтый и зелёный не берутся вовсе.
 _MA_LEVEL = {'red': 88, 'orange': 72}
@@ -17561,7 +17564,7 @@ _MA_RU = {
 }
 
 
-def _ma_parse(xml_text, cc, country_name):
+def _ma_parse(xml_text, cc, country_name, lat, lng):
     """Разбор одной страновой Atom-ленты MeteoAlarm. Только красный и оранжевый."""
     out = []
     try:
@@ -17583,15 +17586,24 @@ def _ma_parse(xml_text, cc, country_name):
         title = (entry.findtext(ns + 'title') or '').strip()
         upd = (entry.findtext(ns + 'updated') or '')[:10]
         name = country_name
+        # Имена полей — те же, что у NOTAM и EONET: _lat/_lng/_region/_domain/
+        # _force_severity/_country_code. Первый прогон показал, чего стоит их
+        # выдумать: источник отдал 39 записей, до сборки дошло 2, в ленту ноль.
         out.append({
             'title': ('%s: %s%s' % (name, (kind + ', ') if kind else '',
                                     'красный уровень' if level == 'red' else 'оранжевый уровень')),
-            'desc': (title[:280] or 'Официальное предупреждение национальной метеослужбы.'),
+            'desc': ((title[:280] or 'Официальное предупреждение национальной метеослужбы.')
+                     + ' · MeteoAlarm, EUMETNET'),
             'date': upd or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
             'source': 'MeteoAlarm CAP',
             'source_bias': 9,
-            'country_hint': cc,
-            'severity_hint': _MA_LEVEL[level],
+            '_lat': lat, '_lng': lng,
+            '_region': name,
+            '_country_code': cc,
+            '_domain': 'climate',
+            '_force_severity': _MA_LEVEL[level],
+            '_meta': {'kind': 'cap', 'verified': True, 'provider': 'MeteoAlarm',
+                      'level': level, 'country': cc},
         })
     return out
 
@@ -17601,7 +17613,7 @@ def fetch_meteoalarm():
     if not METEOALARM:
         return []
     items, ok, fail = [], 0, 0
-    for slug, cc, name in _MA_COUNTRIES:
+    for slug, cc, name, la, lo in _MA_COUNTRIES:
         url = 'https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-' + slug
         try:
             data = fetch_url(url)
@@ -17611,7 +17623,7 @@ def fetch_meteoalarm():
             fail += 1
             continue
         got = _ma_parse(data if isinstance(data, str) else data.decode('utf-8', 'ignore'),
-                        cc, name)
+                        cc, name, la, lo)
         ok += 1
         items.extend(got)
     print('  MeteoAlarm: %d предупреждений, лент прочитано %d, недоступно %d'
