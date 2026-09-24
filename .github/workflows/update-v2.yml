@@ -72,6 +72,11 @@ jobs:
           TG_API_ID: ${{ secrets.TG_API_ID }}
           TG_API_HASH: ${{ secrets.TG_API_HASH }}
           TG_SESSION: ${{ secrets.TG_SESSION }}
+          # NOTAM через autorouter (EUROCONTROL EAD). Секретов в прогоне
+          # не было вовсе: даже заведённые в репозитории, до скрипта они
+          # не доходили. Без них источник молча пропускается.
+          AR_CLIENT_ID: ${{ secrets.AR_CLIENT_ID }}
+          AR_CLIENT_SECRET: ${{ secrets.AR_CLIENT_SECRET }}
         run: |
           python scripts/fetch_events.py
 

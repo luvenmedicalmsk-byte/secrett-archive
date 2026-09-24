@@ -14008,7 +14008,13 @@ def _mgm_repair(raw):
 # объёма после фильтра. Без ключа функция возвращает пустой список и пишет
 # [SKIP] — конвейер не страдает.
 # ══════════════════════════════════════════════════════════════════════════════
-NOTAM_GATE = False            # откат/включение: одно значение
+NOTAM_GATE = False            # ВЫПУСК в ленту. Включать только после замера.
+# Режим замера (24.09.2026). Записка по источнику требует shadow-прогона до
+# выпуска: объём после фильтра Q-кода не измерен, и он может оказаться как
+# пятнадцатью записями в сутки, так и полутора сотнями. При NOTAM_SHADOW
+# источник ходит в EAD, считает и пишет отчёт docs/_notam_shadow.json, но в
+# ленту НЕ отдаёт ничего. Без ключей оба режима молча пропускаются.
+NOTAM_SHADOW = True
 
 _AR_TOKEN_URL = "https://api.autorouter.aero/oauth2/token"
 _AR_NOTAM_URL = "https://api.autorouter.aero/v1.0/notam"
@@ -14093,7 +14099,7 @@ def fetch_notam():
     В ленту идут только изменения режима воздушного пространства и глушение
     навигации; аэродромная рутина отсекается по Q-коду."""
     items = []
-    if not NOTAM_GATE:
+    if not (NOTAM_GATE or NOTAM_SHADOW):
         return items
     tok = _notam_token()
     if not tok:
@@ -14148,6 +14154,33 @@ def fetch_notam():
             kept += 1
     print(f"  NOTAM: {kept} из {total} записей прошли фильтр Q-кода "
           f"({len(_NOTAM_FIR)} FIR)", file=sys.stderr)
+    if not NOTAM_GATE:
+        # Режим замера: отчёт на диск, в ленту ничего. Меряем то, чего не
+        # знаем: объём после фильтра, долю записей с координатами из Q-line,
+        # раскладку по FIR и по субъекту Q-кода, долю помех навигации.
+        try:
+            from collections import Counter as _NC
+            _rep = {
+                "режим": "замер, в ленту не выпущено",
+                "дата": now.isoformat(),
+                "FIR под наблюдением": len(_NOTAM_FIR),
+                "получено записей": total,
+                "прошло фильтр": kept,
+                "доля прошедших": (round(100.0 * kept / total, 1) if total else 0),
+                "с координатами из Q-line": sum(1 for x in items if x.get("_lat") is not None),
+                "без координат": sum(1 for x in items if x.get("_lat") is None),
+                "помехи навигации": sum(1 for x in items if (x.get("_meta") or {}).get("gnss")),
+                "по FIR": dict(_NC((x.get("_meta") or {}).get("fir") for x in items)),
+                "по субъекту Q-кода": dict(_NC((x.get("_meta") or {}).get("code23") for x in items)),
+                "примеры": [x["title"] for x in items[:10]],
+            }
+            _p = OUTPUT_PATH.parent / "_notam_shadow.json"
+            _p.write_text(json.dumps(_rep, ensure_ascii=False, indent=1), encoding="utf-8")
+            print("  [NOTAM-SHADOW] отчёт записан: %s, в ленту не выпущено" % _p.name,
+                  file=sys.stderr)
+        except Exception as _ne:
+            print("  [WARN] NOTAM shadow report: %s" % _ne, file=sys.stderr)
+        return []
     return items
 
 
