@@ -20448,6 +20448,8 @@ def _context_feed_gate(events):
     n = 0
     dom = {}
     for e in events:
+        if e.get('alerts_only'):
+            continue                      # предупреждение службы: своя вкладка
         if e.get('sic_class') == 'EVENT':
             continue
         if not e.get('sic_class'):
@@ -20497,17 +20499,26 @@ _CAP_SRC = re.compile(
 
 
 def _cap_feed_gate(events):
-    """Официальные предупреждения — на вкладке «Риски», не в ленте событий."""
+    """Официальные предупреждения — на вкладке «Риски», не в ленте событий.
+
+    Идёт ПЕРЕД гейтом контекста и метит запись независимо от того, скрыта ли
+    она уже. Пока порядок был обратным, предупреждение, которое интент отнёс к
+    комментарию, получало пометку контекста, а сюда приходило уже скрытым и
+    пометки предупреждения не получало вовсе. На срезе 24.09 таких было две —
+    «Ветер: Эстония» и «Ветер: Германия», обе показывались во вкладке
+    «Контекст» вторым экземпляром того, что уже стоит во вкладке «Риски».
+    """
     if not CAP_FEED_GATE:
         return 0
     n, dom = 0, {}
     for e in events:
         if not _CAP_SRC.search(str(e.get('source') or '')):
             continue
-        if e.get('feed_visible') is False:
+        if e.get('alerts_only'):
             continue
         e['feed_visible'] = False
         e['alerts_only'] = True
+        e.pop('context_only', None)   # место записи — вкладка предупреждений
         n += 1
         dom[e.get('domain')] = dom.get(e.get('domain'), 0) + 1
     if n:
@@ -21287,8 +21298,11 @@ def save_enriched(events, previous_snapshot=None):
                 _scale_revert(enriched["events"])
                 _strike_weight(enriched["events"])
                 _human_scale(enriched["events"])
-                _context_feed_gate(enriched["events"])
+                # Предупреждения метятся ПЕРВЫМИ: иначе запись, отнесённая
+                # интентом к комментарию, уходит в контекст и на вкладку
+                # предупреждений уже не попадает как предупреждение.
                 _cap_feed_gate(enriched["events"])
+                _context_feed_gate(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
                 _adr039a_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
