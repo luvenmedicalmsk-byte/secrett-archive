@@ -14094,12 +14094,24 @@ def _notam_qline_xy(qline):
     return round(la, 4), round(lo, 4)
 
 
+_NOTAM_LAST_ERR = ''
+
+
 def _notam_token():
-    """OAuth client_credentials. Без секретов возвращает пустую строку —
-    вызывающая сторона обязана это проверить и выйти без запроса."""
+    """OAuth client_credentials. Без секретов возвращает пустую строку.
+
+    Причина неудачи кладётся в _NOTAM_LAST_ERR. Раньше она уходила только в
+    stderr прогона, и со стороны это выглядело одинаково: отчёта замера нет,
+    источника в сводке нет, почему — неизвестно. Секреты при этом наружу не
+    попадают: пишется код ответа и текст сервера, но не отправленные значения.
+    """
+    global _NOTAM_LAST_ERR
+    _NOTAM_LAST_ERR = ''
     cid = os.environ.get('AR_CLIENT_ID', '')
     sec = os.environ.get('AR_CLIENT_SECRET', '')
     if not cid or not sec:
+        _NOTAM_LAST_ERR = 'секреты не заданы: AR_CLIENT_ID=%s, AR_CLIENT_SECRET=%s' % (
+            'есть' if cid else 'нет', 'есть' if sec else 'нет')
         return ''
     try:
         body = urllib.parse.urlencode({
@@ -14109,10 +14121,36 @@ def _notam_token():
         req = urllib.request.Request(_AR_TOKEN_URL, data=body,
               headers={'Content-Type': 'application/x-www-form-urlencoded'})
         with urllib.request.urlopen(req, timeout=20) as r:
-            return (json.loads(r.read().decode()) or {}).get('access_token', '')
+            _j = json.loads(r.read().decode()) or {}
+        _t = _j.get('access_token', '')
+        if not _t:
+            _NOTAM_LAST_ERR = 'ответ без access_token, поля: %s' % ', '.join(sorted(_j.keys()))
+        return _t
+    except urllib.error.HTTPError as e:
+        try:
+            _b = e.read().decode('utf-8', 'ignore')[:300]
+        except Exception:
+            _b = ''
+        _NOTAM_LAST_ERR = 'HTTP %s от сервера токена: %s' % (e.code, _b)
     except Exception as e:
-        print(f"  [WARN] NOTAM: токен не получен: {e}", file=sys.stderr)
-        return ''
+        _NOTAM_LAST_ERR = '%s: %s' % (type(e).__name__, e)
+    print('  [WARN] NOTAM: токен не получен: %s' % _NOTAM_LAST_ERR, file=sys.stderr)
+    return ''
+
+
+def _notam_shadow_write(rep):
+    """Отчёт замера пишется ВСЕГДА, в том числе при неудаче.
+
+    Прогон 24.09 08:21 прошёл с заведёнными секретами и не оставил ничего:
+    источник выходил до записи, и отличить «ключи не дошли» от «сервер отказал»
+    было нельзя. Теперь файл есть при любом исходе."""
+    try:
+        _p = OUTPUT_PATH.parent / "_notam_shadow.json"
+        rep.setdefault('дата', datetime.now(timezone.utc).isoformat())
+        _p.write_text(json.dumps(rep, ensure_ascii=False, indent=1), encoding="utf-8")
+        print('  [NOTAM-SHADOW] отчёт записан: %s' % _p.name, file=sys.stderr)
+    except Exception as _ne:
+        print('  [WARN] NOTAM shadow report: %s' % _ne, file=sys.stderr)
 
 
 def fetch_notam():
@@ -14124,7 +14162,10 @@ def fetch_notam():
         return items
     tok = _notam_token()
     if not tok:
-        print("  [SKIP] NOTAM: нет AR_CLIENT_ID / AR_CLIENT_SECRET", file=sys.stderr)
+        print("  [SKIP] NOTAM: токена нет", file=sys.stderr)
+        _notam_shadow_write({'режим': 'замер не состоялся',
+                             'причина': _NOTAM_LAST_ERR or 'токен пустой без объяснения',
+                             'FIR под наблюдением': len(_NOTAM_FIR)})
         return items
     now = datetime.now(timezone.utc)
     seen, total, kept = set(), 0, 0
@@ -14181,7 +14222,7 @@ def fetch_notam():
         # раскладку по FIR и по субъекту Q-кода, долю помех навигации.
         try:
             from collections import Counter as _NC
-            _rep = {
+            _notam_shadow_write({
                 "режим": "замер, в ленту не выпущено",
                 "дата": now.isoformat(),
                 "FIR под наблюдением": len(_NOTAM_FIR),
@@ -14194,11 +14235,7 @@ def fetch_notam():
                 "по FIR": dict(_NC((x.get("_meta") or {}).get("fir") for x in items)),
                 "по субъекту Q-кода": dict(_NC((x.get("_meta") or {}).get("code23") for x in items)),
                 "примеры": [x["title"] for x in items[:10]],
-            }
-            _p = OUTPUT_PATH.parent / "_notam_shadow.json"
-            _p.write_text(json.dumps(_rep, ensure_ascii=False, indent=1), encoding="utf-8")
-            print("  [NOTAM-SHADOW] отчёт записан: %s, в ленту не выпущено" % _p.name,
-                  file=sys.stderr)
+            })
         except Exception as _ne:
             print("  [WARN] NOTAM shadow report: %s" % _ne, file=sys.stderr)
         return []
