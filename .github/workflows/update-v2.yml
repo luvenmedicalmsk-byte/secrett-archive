@@ -121,6 +121,16 @@ jobs:
         run: |
           python scripts/snapshot_engine.py
 
+      # Замер Sendai. Отчётность рамки годовая, задержка от года до трёх,
+      # поэтому скрипт сам пропускает работу, если отчёт моложе двадцати
+      # часов: в источник он ходит примерно раз в сутки, а не каждые полчаса.
+      # Базовые уровни стран не трогает, только складывает сверку.
+      - name: Сверка базовых уровней стран с данными Sendai (замер)
+        continue-on-error: true
+        timeout-minutes: 6
+        run: |
+          python scripts/sendai_baseline.py
+
       - name: Coverage totals (накопительный счётчик сигналов)
         continue-on-error: true
         run: |
@@ -265,6 +275,7 @@ jobs:
           # хотя причина была в публикации, а не в источнике.
           _add docs/_notam_shadow.json   # замер NOTAM до выпуска в ленту
           _add docs/_human_scale.json    # замер масштаба человеческих потерь
+          _add docs/_sendai_baseline.json # сверка базовых уровней стран с Sendai
           # История снимков между прогонами. Без неё history_map пуст, trend_direction
           # у всех событий "new", и 55 из 100 очков escalation_score недостижимы.
           # Окно 7 дней задано HISTORY_RETENTION_DAYS в scripts/history_store.py (~6 МБ).
