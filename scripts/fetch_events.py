@@ -14208,6 +14208,10 @@ def fetch_notam():
         return items
     now = datetime.now(timezone.utc)
     seen, total, kept = set(), 0, 0
+    # Отказы по отдельным FIR раньше уходили только в stderr. В отчёте замера
+    # это выглядело как «получено 0» — тот же вид, что и «в небе спокойно».
+    # Различать обязательно: первое значит, что доступ не работает.
+    fir_err = {}
     for fir in _NOTAM_FIR:
         try:
             url = (_AR_NOTAM_URL + '?itemas=' + urllib.parse.quote('["%s"]' % fir)
@@ -14215,7 +14219,16 @@ def fetch_notam():
             req = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + tok})
             with urllib.request.urlopen(req, timeout=25) as r:
                 data = json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            try:
+                _eb = e.read().decode('utf-8', 'ignore')[:200]
+            except Exception:
+                _eb = ''
+            fir_err[fir] = 'HTTP %s: %s' % (e.code, _eb)
+            print(f"  [WARN] NOTAM {fir}: HTTP {e.code}", file=sys.stderr)
+            continue
         except Exception as e:
+            fir_err[fir] = '%s: %s' % (type(e).__name__, e)
             print(f"  [WARN] NOTAM {fir}: {e}", file=sys.stderr)
             continue
         rows = (data or {}).get('rows') or []
@@ -14265,6 +14278,8 @@ def fetch_notam():
                 "режим": "замер, в ленту не выпущено",
                 "дата": now.isoformat(),
                 "FIR под наблюдением": len(_NOTAM_FIR),
+                "FIR ответили": len(_NOTAM_FIR) - len(fir_err),
+                "FIR с отказом": fir_err,
                 "получено записей": total,
                 "прошло фильтр": kept,
                 "доля прошедших": (round(100.0 * kept / total, 1) if total else 0),
