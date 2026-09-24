@@ -17810,6 +17810,19 @@ _MA_RU = {
 }
 
 
+def _ma_areas_text(g):
+    """Текст предупреждения: перечень районов, а не повтор присказки.
+
+    Показывается до пяти районов. Остальные обозначаются числом, чтобы было
+    видно, что охват шире перечисленного, и при этом карточка не разрасталась.
+    """
+    areas = g.get('areas') or []
+    if not areas:
+        return 'Официальное предупреждение национальной метеослужбы.'
+    more = int(g.get('n') or 0) - len(areas)
+    return 'Районы: ' + ', '.join(areas) + (' и ещё %d' % more if more > 0 else '')
+
+
 def _ma_parse(xml_text, cc, country_name, lat, lng):
     """Разбор страновой Atom-ленты MeteoAlarm. Только красный и оранжевый.
 
@@ -17839,14 +17852,28 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
                 break
         title = (entry.findtext(ns + 'title') or '').strip()
         upd = (entry.findtext(ns + 'updated') or '')[:10]
-        g = groups.setdefault(kind, {'level': level, 'n': 0, 'date': '', 'samples': []})
+        g = groups.setdefault(kind, {'level': level, 'n': 0, 'date': '', 'areas': []})
         g['n'] += 1
         if level == 'red':
             g['level'] = 'red'            # красный перекрывает оранжевый
         if upd and (not g['date'] or upd > g['date']):
             g['date'] = upd
-        if title and len(g['samples']) < 3:
-            g['samples'].append(title[:70])
+        # 24.09.2026. Раньше в текст шли заголовки целиком, и присказка «Выдано
+        # оранжевое предупреждение о ветре для Германии» повторялась столько
+        # раз, сколько районов. Уровень и страна уже стоят в карточке, новое в
+        # заголовке только район — он и идёт после первого тире. Обрезка была
+        # ровно на семидесяти знаках и рубила слово посередине; теперь режем по
+        # границе слова и только если район действительно длинный.
+        if title and len(g['areas']) < 5:
+            _a = (title.split(' - ', 1)[1] if ' - ' in title else title).strip()
+            if len(_a) > 90:
+                _a = _a[:90].rsplit(' ', 1)[0] + '…'
+            # Слово «район» в начале каждого пункта перечня только мешает:
+            # «Районы: Гарц, Эрцгебирге» читается, «Районы: район Гарц,
+            # район Эрцгебирге» нет.
+            _a = re.sub(r'^(?:район|регион|область)\s+', '', _a.strip(' ,;-'), flags=re.I)
+            if _a and _a not in g['areas']:
+                g['areas'].append(_a)
 
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     for kind, g in groups.items():
@@ -17873,9 +17900,7 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
         _kind_ru = kind or 'Метеопредупреждение'
         out.append({
             'title': ('%s: %s (%s%s)' % (_kind_ru, country_name, lvl, cnt)),
-            'desc': (('; '.join(g['samples']) or
-                      'Официальное предупреждение национальной метеослужбы.')
-                     + ' · MeteoAlarm, EUMETNET'),
+            'desc': (_ma_areas_text(g) + ' · MeteoAlarm, EUMETNET'),
             'date': g['date'] or today,
             'source': 'MeteoAlarm CAP',
             'source_bias': 9,
