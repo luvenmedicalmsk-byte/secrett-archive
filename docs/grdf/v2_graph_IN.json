@@ -2,7 +2,7 @@
   "country": "IN",
   "date": "2026-09-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-24T13:20:18.733579+00:00",
+  "generated_at": "2026-09-24T13:28:01.632810+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,9 +10,9 @@
       "id": "COUNTRY-IN",
       "type": "Country",
       "label": "IN",
-      "score": 74,
+      "score": 73,
       "props": {
-        "risk_score": 74
+        "risk_score": 73
       }
     },
     {
@@ -34,20 +34,20 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
-      "trend": "stable"
+      "score": 56,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IN-social",
       "type": "Domain",
       "label": "social",
-      "score": 58,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IN-Полицейски",
-      "type": "Signal",
-      "label": "Полицейский из Дели нашел 76 пропавших д",
-      "severity": 58,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-IN-Наводнение",
       "type": "Signal",
       "label": "Наводнение: India",
       "severity": 57,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IN-Падение_ин",
+      "type": "Signal",
+      "label": "Падение интернет-связи: Индия",
+      "severity": 56,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,13 +124,13 @@
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-IN",
       "to": "DOMAIN-IN-social",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IN",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-IN-climate",
-      "to": "DOMAIN-IN-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IN-economic",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-IN-social",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-IN-climate",
       "to": "DOMAIN-IN-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-IN-climate",
+      "to": "DOMAIN-IN-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IN-economic",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-IN-social",
+      "to": "DOMAIN-IN-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-IN-Оранжевое_",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-IN-Полицейски",
-      "to": "DOMAIN-IN-social",
-      "type": "AMPLIFIES",
-      "weight": 0.58
-    },
-    {
       "from": "SIGNAL-IN-Наводнение",
       "to": "DOMAIN-IN-climate",
       "type": "AMPLIFIES",
       "weight": 0.57
+    },
+    {
+      "from": "SIGNAL-IN-Падение_ин",
+      "to": "DOMAIN-IN-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
