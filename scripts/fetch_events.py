@@ -6405,6 +6405,11 @@ _MIL_OVERRIDE_RE = re.compile(
     r'|бомбардир\w*|авиауд\w*|бпла|беспилотник\w*\s+атак|наступлен\w*\s+войск)', re.I)
 
 
+# Уровень, объявленный официальной службой, не пересчитывается по тексту.
+# Обоснование и замер — у места применения в process_events ниже.
+FORCE_KEEPS_SEVERITY = True
+
+
 def process_events(raw_items):
     events = []
     seen_ids = set()
@@ -7116,7 +7121,23 @@ def process_events(raw_items):
         events.append(_ev)
 
     # S45: пересчёт severity по масштабу риска (а не по громкости) -- до сортировки/квот/отбора
+    #
+    # 24.09.2026. Маршрут force выведен из-под пересчёта. Замер на боевом срезе:
+    # из 31 события с принудительным весом 9 получали его обратно от пересчёта, и
+    # все затронутые источники — официальные службы предупреждений: GDACS,
+    # Copernicus EMS, MGM Турции, MeteoAlarm. Оранжевое предупреждение немецкой
+    # метеослужбы приходило с весом 72 и уходило с 38: текстовая эвристика
+    # масштаба перебивала уровень, объявленный самой службой.
+    #
+    # Правило простое: если источник назвал свой уровень, он и остаётся. Вывести
+    # его из текста переведённого заголовка надёжнее нельзя. Это же защищает
+    # NOTAM: он тоже ставит вес через _force_severity и при включении попал бы
+    # под тот же пересчёт.
+    #
+    # Откат: FORCE_KEEPS_SEVERITY = False.
     for _ev in events:
+        if FORCE_KEEPS_SEVERITY and _ev.get('_sev_route') == 'force':
+            continue
         _ev['severity'] = _sev_log(_ev, 'scale_recompute', _ev.get('severity'), _recompute_severity(_ev), 'пересчёт по масштабу риска (S45)', 'recompute')
     # RSS-аналитика (climate/social) получает сорт-бонус, чтобы качественные источники не проигрывали
     # TG-потоку по severity и попадали в квоту (Мия 20.07). Не меняет реальную severity — только порядок отбора.
@@ -17565,8 +17586,16 @@ _MA_RU = {
 
 
 def _ma_parse(xml_text, cc, country_name, lat, lng):
-    """Разбор одной страновой Atom-ленты MeteoAlarm. Только красный и оранжевый."""
-    out = []
+    """Разбор страновой Atom-ленты MeteoAlarm. Только красный и оранжевый.
+
+    Записи сводятся по паре страна-явление. Причина замерена на боевом срезе:
+    источник отдал 39 предупреждений, до ленты дошло 6. Лента даёт по одному
+    сообщению на регион, а заголовок у нас страновой, поэтому семь ветровых
+    предупреждений по Германии превращались в семь одинаковых заголовков и
+    дедупликация схлопывала их в один. Теперь они складываются в одну запись с
+    числом предупреждений и максимальным уровнем: информация не теряется молча.
+    """
+    out, groups = [], {}
     try:
         root = ET.fromstring(xml_text)
     except Exception:
@@ -17585,25 +17614,46 @@ def _ma_parse(xml_text, cc, country_name, lat, lng):
                 break
         title = (entry.findtext(ns + 'title') or '').strip()
         upd = (entry.findtext(ns + 'updated') or '')[:10]
-        name = country_name
-        # Имена полей — те же, что у NOTAM и EONET: _lat/_lng/_region/_domain/
-        # _force_severity/_country_code. Первый прогон показал, чего стоит их
+        g = groups.setdefault(kind, {'level': level, 'n': 0, 'date': '', 'samples': []})
+        g['n'] += 1
+        if level == 'red':
+            g['level'] = 'red'            # красный перекрывает оранжевый
+        if upd and (not g['date'] or upd > g['date']):
+            g['date'] = upd
+        if title and len(g['samples']) < 3:
+            g['samples'].append(title[:70])
+
+    today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    for kind, g in groups.items():
+        lvl = 'красный уровень' if g['level'] == 'red' else 'оранжевый уровень'
+        n = g['n']
+        cnt = ''
+        if n > 1:
+            # Полное правило склонения: 21 это «предупреждение», а не
+            # «предупреждений». Упрощённая форма на двойке-четвёрке давала
+            # верный результат до двадцати и ломалась дальше.
+            _t, _h = n % 10, n % 100
+            _w = ('е' if _t == 1 and _h != 11 else
+                  'я' if 2 <= _t <= 4 and not 12 <= _h <= 14 else 'й')
+            cnt = ', %d предупреждени%s' % (n, _w)
+        # Имена полей те же, что у NOTAM и EONET: _lat, _lng, _region, _domain,
+        # _force_severity, _country_code. Первый прогон показал, чего стоит их
         # выдумать: источник отдал 39 записей, до сборки дошло 2, в ленту ноль.
         out.append({
-            'title': ('%s: %s%s' % (name, (kind + ', ') if kind else '',
-                                    'красный уровень' if level == 'red' else 'оранжевый уровень')),
-            'desc': ((title[:280] or 'Официальное предупреждение национальной метеослужбы.')
+            'title': ('%s: %s%s%s' % (country_name, (kind + ', ') if kind else '', lvl, cnt)),
+            'desc': (('; '.join(g['samples']) or
+                      'Официальное предупреждение национальной метеослужбы.')
                      + ' · MeteoAlarm, EUMETNET'),
-            'date': upd or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+            'date': g['date'] or today,
             'source': 'MeteoAlarm CAP',
             'source_bias': 9,
             '_lat': lat, '_lng': lng,
-            '_region': name,
+            '_region': country_name,
             '_country_code': cc,
             '_domain': 'climate',
-            '_force_severity': _MA_LEVEL[level],
+            '_force_severity': _MA_LEVEL[g['level']],
             '_meta': {'kind': 'cap', 'verified': True, 'provider': 'MeteoAlarm',
-                      'level': level, 'country': cc},
+                      'level': g['level'], 'country': cc, 'warnings': n},
         })
     return out
 
