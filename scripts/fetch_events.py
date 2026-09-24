@@ -17471,6 +17471,122 @@ def fetch_mideast_asia():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# MeteoAlarm — официальные метеопредупреждения Европы по стандарту CAP
+# ══════════════════════════════════════════════════════════════════════════════
+# Зачем. Atlas уже принимает CAP по России («Росгидромет CAP») и уже тянет
+# GDACS, который входит в список Alert Hub рамки WMO. MeteoAlarm закрывает
+# Европу теми же официальными предупреждениями национальных метеослужб.
+# Это не новостной поток: источник — сами службы, а не пересказ.
+#
+# Формат. Atom по стране: feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-{country}.
+# Ленты legacy RSS объявлены устаревшими и не обновляются, поэтому только Atom.
+# Лицензия CC BY 4.0, обязательна ссылка на источник: она уходит в поле
+# source и в подпись панели предупреждений.
+#
+# Отбор. Берутся только красный и оранжевый уровни. Жёлтых предупреждений
+# большинство, они рутинные и утопили бы панель: это решение владельца.
+#
+# Устойчивость. Сеть моего окружения к этим адресам доступа не имеет, поэтому
+# сетевая часть подтверждается только на боевом прогоне. Любая ошибка ловится
+# на уровне страны: недоступность одной ленты не роняет ни источник, ни
+# конвейер, в худшем случае источник вернёт пустой список.
+#
+# Откат: METEOALARM = False.
+METEOALARM = True
+
+# Страны покрытия: имя ленты, код, название по-русски. Общая карта
+# COUNTRY_RU в файле ключуется иначе и этих кодов не содержит, проверено,
+# поэтому название несём рядом со страной.
+_MA_COUNTRIES = [
+   ('austria', 'AT', 'Австрия'), ('belgium', 'BE', 'Бельгия'),
+    ('bosnia-herzegovina', 'BA', 'Босния и Герцеговина'), ('bulgaria', 'BG', 'Болгария'),
+    ('croatia', 'HR', 'Хорватия'), ('cyprus', 'CY', 'Кипр'), ('czechia', 'CZ', 'Чехия'),
+    ('denmark', 'DK', 'Дания'), ('estonia', 'EE', 'Эстония'),
+    ('finland', 'FI', 'Финляндия'), ('france', 'FR', 'Франция'),
+    ('germany', 'DE', 'Германия'), ('greece', 'GR', 'Греция'),
+    ('hungary', 'HU', 'Венгрия'), ('iceland', 'IS', 'Исландия'),
+    ('ireland', 'IE', 'Ирландия'), ('israel', 'IL', 'Израиль'), ('italy', 'IT', 'Италия'),
+    ('latvia', 'LV', 'Латвия'), ('lithuania', 'LT', 'Литва'),
+    ('luxembourg', 'LU', 'Люксембург'), ('malta', 'MT', 'Мальта'),
+    ('moldova', 'MD', 'Молдова'), ('montenegro', 'ME', 'Черногория'),
+    ('netherlands', 'NL', 'Нидерланды'), ('norway', 'NO', 'Норвегия'),
+    ('poland', 'PL', 'Польша'), ('portugal', 'PT', 'Португалия'),
+    ('romania', 'RO', 'Румыния'), ('serbia', 'RS', 'Сербия'),
+    ('slovakia', 'SK', 'Словакия'), ('slovenia', 'SI', 'Словения'),
+    ('spain', 'ES', 'Испания'), ('sweden', 'SE', 'Швеция'),
+    ('switzerland', 'CH', 'Швейцария'), ('ukraine', 'UA', 'Украина'),
+    ('united-kingdom', 'GB', 'Великобритания')
+]
+# Уровень CAP -> вес Atlas. Жёлтый и зелёный не берутся вовсе.
+_MA_LEVEL = {'red': 88, 'orange': 72}
+_MA_RU = {
+    'wind': 'Ветер', 'snow': 'Снег', 'snow-ice': 'Снег и гололёд',
+    'thunderstorm': 'Гроза', 'fog': 'Туман', 'high-temperature': 'Аномальная жара',
+    'low-temperature': 'Аномальный холод', 'coastalevent': 'Явления на побережье',
+    'forest-fire': 'Природный пожар', 'avalanches': 'Лавины', 'rain': 'Ливень',
+    'flooding': 'Наводнение', 'rain-flood': 'Ливневый паводок',
+}
+
+
+def _ma_parse(xml_text, cc, country_name):
+    """Разбор одной страновой Atom-ленты MeteoAlarm. Только красный и оранжевый."""
+    out = []
+    try:
+        root = ET.fromstring(xml_text)
+    except Exception:
+        return out
+    ns = '{http://www.w3.org/2005/Atom}'
+    for entry in root.iter(ns + 'entry'):
+        blob = ' '.join((t.text or '') for t in entry.iter() if t.text)
+        low = blob.lower()
+        level = 'red' if 'red' in low else ('orange' if 'orange' in low else None)
+        if not level:
+            continue
+        kind = ''
+        for k in _MA_RU:
+            if k in low:
+                kind = _MA_RU[k]
+                break
+        title = (entry.findtext(ns + 'title') or '').strip()
+        upd = (entry.findtext(ns + 'updated') or '')[:10]
+        name = country_name
+        out.append({
+            'title': ('%s: %s%s' % (name, (kind + ', ') if kind else '',
+                                    'красный уровень' if level == 'red' else 'оранжевый уровень')),
+            'desc': (title[:280] or 'Официальное предупреждение национальной метеослужбы.'),
+            'date': upd or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+            'source': 'MeteoAlarm CAP',
+            'source_bias': 9,
+            'country_hint': cc,
+            'severity_hint': _MA_LEVEL[level],
+        })
+    return out
+
+
+def fetch_meteoalarm():
+    """Официальные предупреждения европейских метеослужб. Красный и оранжевый."""
+    if not METEOALARM:
+        return []
+    items, ok, fail = [], 0, 0
+    for slug, cc, name in _MA_COUNTRIES:
+        url = 'https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-' + slug
+        try:
+            data = fetch_url(url)
+        except Exception:
+            data = None
+        if not data:
+            fail += 1
+            continue
+        got = _ma_parse(data if isinstance(data, str) else data.decode('utf-8', 'ignore'),
+                        cc, name)
+        ok += 1
+        items.extend(got)
+    print('  MeteoAlarm: %d предупреждений, лент прочитано %d, недоступно %d'
+          % (len(items), ok, fail), file=sys.stderr)
+    return items
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # ИСТОЧНИК 14: Великобритания, Канада, Скандинавия, Мексика
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_uk_canada_nordic():
@@ -21254,6 +21370,7 @@ if __name__ == '__main__':
             ('mideast_asia',       fetch_mideast_asia),
             ('uk_canada_nordic',   fetch_uk_canada_nordic),
             ('europe_latam',       fetch_europe_latam),
+            ('meteoalarm',         fetch_meteoalarm),
         ], max_workers=12)
 
 
