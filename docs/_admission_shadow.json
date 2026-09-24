@@ -1,72 +1,74 @@
 {
-  "generated": "2026-09-24T18:25:15Z",
+  "generated": "2026-09-24T18:44:16Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
-    "PASS_FACT": 835,
-    "DENY_COMMENTARY": 276,
+    "PASS_FACT": 836,
+    "DENY_COMMENTARY": 277,
     "DENY_BACKGROUND": 6,
     "DENY_STATE_ONLY": 4,
     "UNMATCHED": 3,
     "DENY_FEATURE": 4
   },
   "kpi": {
-    "processes_total": 1128,
-    "matched": 1125,
+    "processes_total": 1130,
+    "matched": 1127,
     "unmatched": 3,
     "coverage_pct": 99.7,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
     "admission_pass_rate": 74.2,
     "admission_deny_rate": 25.8,
-    "processes_without_fact": 290,
+    "processes_without_fact": 291,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 333,
-      "sample": 1171,
-      "agreement_pct": 86.9,
-      "decision_agreement_pct": 87.1,
-      "critical_errors": 151,
+      "processes": 335,
+      "sample": 1168,
+      "agreement_pct": 87.0,
+      "decision_agreement_pct": 87.2,
+      "critical_errors": 149,
       "truth_ratio_pct": 97.6,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 140,
+        "FACT_EVENT→COMMENTARY": 138,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "COMMENTARY→FACT_EVENT": 9,
         "STATE_CONFIRMATION→COMMENTARY": 1,
+        "BACKGROUND→COMMENTARY": 1,
         "FEATURE→COMMENTARY": 1,
         "FACT_EVENT→BACKGROUND": 1
       }
     },
     "historical": {
-      "processes": 1128,
-      "sample": 2472,
+      "processes": 1130,
+      "sample": 2469,
       "agreement_pct": 90.4,
-      "decision_agreement_pct": 90.5,
-      "critical_errors": 234,
+      "decision_agreement_pct": 90.6,
+      "critical_errors": 232,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 196,
+        "FACT_EVENT→COMMENTARY": 194,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "COMMENTARY→FACT_EVENT": 31,
         "STATE_CONFIRMATION→COMMENTARY": 1,
+        "BACKGROUND→COMMENTARY": 2,
         "FEATURE→COMMENTARY": 2,
         "FACT_EVENT→BACKGROUND": 2,
-        "BACKGROUND→COMMENTARY": 1,
         "FACT_EVENT→FEATURE": 1
       }
     },
     "events_stream": {
-      "sample": 369,
-      "agreement_pct": 86.4,
-      "decision_agreement_pct": 86.7,
-      "critical_errors": 49,
+      "sample": 374,
+      "agreement_pct": 85.8,
+      "decision_agreement_pct": 86.4,
+      "critical_errors": 51,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 46,
+        "FACT_EVENT→COMMENTARY": 47,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
-        "COMMENTARY→FACT_EVENT": 2
+        "COMMENTARY→FACT_EVENT": 3,
+        "BACKGROUND→COMMENTARY": 1
       }
     },
     "gate": {
@@ -78,12 +80,12 @@
   },
   "class_source": {
     "shadow_title_only": 184,
-    "evidence_sic": 2472
+    "evidence_sic": 2469
   },
   "truth_ratio_pct": 93.1,
   "domain_statistics": {
     "geopolitics": {
-      "pass": 242,
+      "pass": 243,
       "deny": 72
     },
     "climate": {
@@ -92,13 +94,13 @@
       "unmatched": 2
     },
     "economy": {
-      "pass": 138,
+      "pass": 139,
       "deny": 96,
       "unmatched": 1
     },
     "social": {
-      "pass": 65,
-      "deny": 46
+      "pass": 64,
+      "deny": 47
     },
     "technology": {
       "pass": 94,
@@ -404,7 +406,7 @@
         "COMMENTARY": 1
       },
       "status": "fading",
-      "causal_links": 1,
+      "causal_links": 2,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -449,7 +451,7 @@
         "COMMENTARY": 1
       },
       "status": "dormant",
-      "causal_links": 2,
+      "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -945,7 +947,7 @@
         "COMMENTARY": 1
       },
       "status": "archived",
-      "causal_links": 4,
+      "causal_links": 3,
       "reason": "no FACT_EVENT in evidence"
     },
     {
@@ -1110,6 +1112,13 @@
       "delta": null
     },
     {
+      "signal_id": "soci-социальный-сша-5278",
+      "domain": "social",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-стратегиче-китай-705c",
       "domain": "economy",
       "legacy": 32,
@@ -1236,16 +1245,16 @@
       "delta": null
     },
     {
-      "signal_id": "tech-технологич-индия-a870",
-      "domain": "technology",
-      "legacy": 44,
+      "signal_id": "geop-геополитич-москва-58ca",
+      "domain": "geopolitics",
+      "legacy": 48,
       "shadow": null,
       "delta": null
     },
     {
-      "signal_id": "geop-геополитич-москва-58ca",
-      "domain": "geopolitics",
-      "legacy": 48,
+      "signal_id": "tech-технологич-индия-a870",
+      "domain": "technology",
+      "legacy": 44,
       "shadow": null,
       "delta": null
     },
@@ -1295,6 +1304,13 @@
       "signal_id": "soci-социальный-пакистан-b6db",
       "domain": "social",
       "legacy": 54,
+      "shadow": null,
+      "delta": null
+    },
+    {
+      "signal_id": "econ-экономичес-глобальн-01da",
+      "domain": "economy",
+      "legacy": 47,
       "shadow": null,
       "delta": null
     },
@@ -1383,13 +1399,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-глобальн-01da",
-      "domain": "economy",
-      "legacy": 48,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "soci-социальный-испания-c67d",
       "domain": "social",
       "legacy": 45,
@@ -1423,18 +1432,11 @@
       "legacy": 46,
       "shadow": null,
       "delta": null
-    },
-    {
-      "signal_id": "clim-наводнение-африка-9901",
-      "domain": "climate",
-      "legacy": 32,
-      "shadow": null,
-      "delta": null
     }
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 198,
+    "31-50": 199,
     "51-70": 83,
     "71-90": 6,
     "91-100": 0
