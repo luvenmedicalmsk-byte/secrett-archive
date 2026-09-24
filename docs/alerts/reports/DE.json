@@ -2,43 +2,51 @@
   "country": "DE",
   "country_name": "DE",
   "date": "2026-09-24",
-  "alert_level": "NONE",
-  "alert_score": 20,
-  "risk_score": 52,
-  "confidence": 42,
-  "signals": 1,
+  "alert_level": "ALERT",
+  "alert_score": 61,
+  "risk_score": 68,
+  "confidence": 43,
+  "signals": 4,
   "trend": "rising",
   "top_drivers": [
     "geopolitics",
     "economy",
     "finance"
   ],
-  "created_at": "2026-09-24T03:09:36.117710+00:00",
-  "triggered_rules": [],
+  "created_at": "2026-09-24T03:26:41.437735+00:00",
+  "triggered_rules": [
+    "A",
+    "B",
+    "C"
+  ],
   "rules": {
     "A_velocity": {
       "rule": "A",
       "name": "velocity_spike",
-      "triggered": false,
-      "change_7d": 8.3,
-      "change_30d": -5.5,
-      "velocity_score": 28
+      "triggered": true,
+      "change_7d": 41.7,
+      "change_30d": 23.6,
+      "velocity_score": 100
     },
     "B_signal_expl": {
       "rule": "B",
       "name": "signal_explosion",
-      "triggered": false,
-      "current_signals": 1,
+      "triggered": true,
+      "current_signals": 4,
       "avg_90d": 2.0,
       "threshold": 3.0,
-      "explosion_ratio": 0.51
+      "explosion_ratio": 1.99
     },
     "C_multi_eng": {
       "rule": "C",
       "name": "multi_engine_confirmation",
-      "triggered": false,
-      "confirming_engines": [],
-      "engine_count": 0,
+      "triggered": true,
+      "confirming_engines": [
+        "geopolitics",
+        "economy",
+        "geopolitical"
+      ],
+      "engine_count": 3,
       "threshold": 3
     },
     "D_emerging": {
@@ -52,25 +60,31 @@
       "rule": "E",
       "name": "confidence_escalation",
       "triggered": false,
-      "current_confidence": 42,
+      "current_confidence": 43,
       "prev_confidence": 44,
-      "confidence_delta": -2,
-      "score_delta": -16
+      "confidence_delta": -1,
+      "score_delta": 0
     }
   },
   "sub_scores": {
-    "velocity_component": 28,
-    "severity_component": 22,
-    "confidence_component": 22,
-    "signal_density": 3
+    "velocity_component": 100,
+    "severity_component": 61,
+    "confidence_component": 29,
+    "signal_density": 33
   },
-  "escalation": null,
-  "is_escalation": false,
-  "dominant_domain": "economy",
-  "escalation_level": "elevated",
-  "delta": -16,
+  "escalation": {
+    "previous": "WATCH",
+    "current": "ALERT",
+    "delta_score": 3,
+    "timestamp": "2026-09-24T03:26:41.437724+00:00",
+    "escalated": true
+  },
+  "is_escalation": true,
+  "dominant_domain": "geopolitics",
+  "escalation_level": "pressured",
+  "delta": 16,
   "engine_version": "ALERT_V1",
   "model_version": "GRIE_V1",
-  "generated_at": "2026-09-24T03:09:36.117710+00:00",
-  "hash": "f880177e955688a1"
+  "generated_at": "2026-09-24T03:26:41.437735+00:00",
+  "hash": "c0c01e2099e178f6"
 }
