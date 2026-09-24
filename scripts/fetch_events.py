@@ -16830,6 +16830,18 @@ def fetch_flood_observatory():
                                 base['_lat'], base['_lng'] = _cc[0], _cc[1]
                                 base['_region'] = detect_region_by_coords(_cc[0], _cc[1])
                     if '_lat' not in base:
+                        # 24.09.2026. Заголовок бывает и одним лишь названием
+                        # страны: «China», без оборота «in». Правило выше его не
+                        # ловило, и запись выходила вовсе без координат и без
+                        # региона — на вкладке предупреждений она показывалась
+                        # как «Наводнение: China» и не сводилась с той же
+                        # записью из второй ленты GDACS.
+                        _bare = re.sub(r'^\s*Наводнение:\s*', '', ttl).strip()
+                        _cc = COUNTRY_COORDS.get(_bare.lower())
+                        if _cc:
+                            base['_lat'], base['_lng'] = _cc[0], _cc[1]
+                            base['_region'] = detect_region_by_coords(_cc[0], _cc[1])
+                    if '_lat' not in base:
                         geo = detect_coords(ttl, desc)
                         if geo:
                             base['_lat'], base['_lng'], base['_region'] = geo
@@ -20336,13 +20348,24 @@ def _context_feed_gate(events):
 # карту. Ни country_risk.py, ни signal_engine.py на feed_visible не смотрят,
 # поэтому аналитика ничего не теряет.
 #
-# Правило то же, что у панели предупреждений: источник со словом CAP. MGM
-# Турции под него не подпадает и остаётся в ленте — своей вкладки у него нет,
-# скрытие убрало бы его совсем.
+# Правило то же, что у панели предупреждений, и держать их надо вместе: если
+# список источников здесь и в панели разойдётся, запись пропадёт отовсюду.
+# 24.09.2026 добавлены GDACS, Copernicus и MGM Турции — это такие же машинные
+# детекторы официальных служб, что и CAP.
 #
 # Откат: CAP_FEED_GATE = False.
+# Список именно перечнем, а не по вхождению слова: под «Copernicus» иначе
+# попадают Copernicus/ESA и Copernicus C3S, а это новостные и аналитические
+# ленты, а не предупреждения. Ровно этот же перечень действует в панели
+# предупреждений на сайте, и разойтись они не должны: запись, скрытая здесь и
+# не принятая там, пропала бы отовсюду.
 CAP_FEED_GATE = True
-_CAP_SRC = re.compile(r'\bCAP\b')
+_CAP_SRC = re.compile(
+    r'\bCAP\b'                       # Росгидромет CAP, MeteoAlarm CAP
+    r'|^GDACS(?:/|\s|$)'             # GDACS Floods, GDACS/Copernicus, GDACS/UN, GDACS/Россия
+    r'|^Copernicus\s+EMS$'           # активации службы картирования
+    r'|^MGM\b',                      # MGM Турция
+    re.I)
 
 
 def _cap_feed_gate(events):
