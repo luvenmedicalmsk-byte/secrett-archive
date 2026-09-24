@@ -14076,7 +14076,10 @@ NOTAM_GATE = False            # ВЫПУСК в ленту. Включать т�
 # ленту НЕ отдаёт ничего. Без ключей оба режима молча пропускаются.
 NOTAM_SHADOW = True
 
-_AR_TOKEN_URL = "https://api.autorouter.aero/oauth2/token"
+# 24.09.2026. Адрес токена был без /v1.0/ и сервер отвечал 404. Со стороны это
+# выглядело как отказ в ключах, хотя ключи до проверки просто не доходили.
+# Документация autorouter: https://www.autorouter.aero/wiki/api/authentication/
+_AR_TOKEN_URL = "https://api.autorouter.aero/v1.0/oauth2/token"
 _AR_NOTAM_URL = "https://api.autorouter.aero/v1.0/notam"
 
 # FIR, за которыми следим. Восточный фланг НАТО, Балтика, Калининград, Чёрное
@@ -14130,6 +14133,42 @@ def _notam_qline_xy(qline):
     lo = int(m.group(4)) + int(m.group(5)) / 60.0
     if m.group(6).upper() == 'W':
         lo = -lo
+    return round(la, 4), round(lo, 4)
+
+
+def _notam_xy(row):
+    """Координаты из готовых полей ответа autorouter.
+
+    Формат полей lat/lon в документации не описан, поэтому принимаем оба
+    встречающихся в авиационных данных вида: десятичные градусы и запись
+    ICAO вида 4840N. Значение вне диапазона отбрасываем — лучше отдать
+    запись без точки, чем поставить её посреди океана.
+    """
+    def _one(v, lim):
+        if v is None or v == '':
+            return None
+        if isinstance(v, (int, float)):
+            f = float(v)
+            return f if -lim <= f <= lim else None
+        s = str(v).strip().upper()
+        m = re.fullmatch(r'(\d{2,3})(\d{2})(\d{2})?([NSEW])', s)
+        if m:
+            f = int(m.group(1)) + int(m.group(2)) / 60.0 + (int(m.group(3) or 0)) / 3600.0
+            if m.group(4) in ('S', 'W'):
+                f = -f
+            return f if -lim <= f <= lim else None
+        try:
+            f = float(s)
+        except ValueError:
+            return None
+        return f if -lim <= f <= lim else None
+
+    la = _one(row.get('lat'), 90)
+    lo = _one(row.get('lon'), 180)
+    if la is None or lo is None:
+        return None, None
+    if la == 0 and lo == 0:
+        return None, None
     return round(la, 4), round(lo, 4)
 
 
@@ -14212,6 +14251,7 @@ def fetch_notam():
     # это выглядело как «получено 0» — тот же вид, что и «в небе спокойно».
     # Различать обязательно: первое значит, что доступ не работает.
     fir_err = {}
+    first_keys = []
     for fir in _NOTAM_FIR:
         try:
             url = (_AR_NOTAM_URL + '?itemas=' + urllib.parse.quote('["%s"]' % fir)
@@ -14232,10 +14272,17 @@ def fetch_notam():
             print(f"  [WARN] NOTAM {fir}: {e}", file=sys.stderr)
             continue
         rows = (data or {}).get('rows') or []
+        if rows and not first_keys:
+            first_keys = sorted(str(k) for k in (rows[0] or {}).keys())
         total += len(rows)
         for n in rows:
             c23 = str(n.get('code23') or '').upper()
-            txt = str(n.get('all') or n.get('itemE') or '')
+            # Имена полей по документации autorouter: текст уведомления это
+            # iteme, а не all/itemE. Прежние имена не существуют в ответе, и
+            # текст всегда выходил пустым: проверка на глушение навигации
+            # никогда не могла сработать. Старые имена оставлены запасными на
+            # случай, если сервер отдаёт их в другом регистре.
+            txt = str(n.get('iteme') or n.get('itemE') or n.get('all') or '')
             gnss = bool(_NOTAM_GNSS.search(txt))
             if c23 not in _NOTAM_CODE23 and not gnss:
                 continue
@@ -14243,9 +14290,12 @@ def fetch_notam():
             if nid and nid in seen:
                 continue
             seen.add(nid)
-            lat, lng = _notam_qline_xy(n.get('Qline') or n.get('qline') or n.get('all'))
+            # Координаты приходят готовыми полями lat/lon. Поля Qline в ответе
+            # нет вовсе, поэтому разбор Q-строки остаётся только запасным путём
+            # по тексту уведомления.
+            lat, lng = _notam_xy(n)
             if lat is None:
-                lat, lng = n.get('latitude'), n.get('longitude')
+                lat, lng = _notam_qline_xy(txt)
             reg_ru, cc = _NOTAM_FIR_RU.get(fir, (fir, ''))
             score = _NOTAM_SEV_GNSS if gnss else _NOTAM_SEV.get(c23, 60)
             what = ('Помехи спутниковой навигации' if gnss else
@@ -14283,8 +14333,11 @@ def fetch_notam():
                 "получено записей": total,
                 "прошло фильтр": kept,
                 "доля прошедших": (round(100.0 * kept / total, 1) if total else 0),
-                "с координатами из Q-line": sum(1 for x in items if x.get("_lat") is not None),
+                "с координатами": sum(1 for x in items if x.get("_lat") is not None),
                 "без координат": sum(1 for x in items if x.get("_lat") is None),
+                # Имена полей проверяем по живому ответу, а не по документации:
+                # прежний разбор читал несуществующие поля и молча давал пустоту.
+                "поля первой записи": first_keys,
                 "помехи навигации": sum(1 for x in items if (x.get("_meta") or {}).get("gnss")),
                 "по FIR": dict(_NC((x.get("_meta") or {}).get("fir") for x in items)),
                 "по субъекту Q-кода": dict(_NC((x.get("_meta") or {}).get("code23") for x in items)),
