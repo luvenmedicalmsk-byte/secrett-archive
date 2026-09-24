@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-09-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-24T14:20:05.038958+00:00",
+  "generated_at": "2026-09-24T14:28:15.040221+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 78,
+      "score": 62,
       "props": {
-        "risk_score": 78
+        "risk_score": 62
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 76,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
-      "trend": "stable"
+      "score": 44,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IT-Италия:_Ве",
-      "type": "Signal",
-      "label": "Италия: Ветер, оранжевый уровень, 2 пред",
-      "severity": 72,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-IT-Италия_при",
       "type": "Signal",
       "label": "Италия приняла закон, который вновь разр",
@@ -99,6 +92,13 @@
       "label": "Это сицилийское сообщество существует уж",
       "severity": 44,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IT-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Италия",
+      "severity": 76,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-IT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-climate",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-IT-geopolitical",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -226,10 +205,25 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-IT-Италия:_Ве",
-      "to": "DOMAIN-IT-climate",
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.72
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-IT-Италия_при",
@@ -242,6 +236,12 @@
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.44
+    },
+    {
+      "from": "SIGNAL-IT-Военные_уд",
+      "to": "DOMAIN-IT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.76
     }
   ]
 }
