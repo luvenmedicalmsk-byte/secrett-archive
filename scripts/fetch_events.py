@@ -20326,6 +20326,46 @@ def _context_feed_gate(events):
     return n
 
 
+# ── ГЕЙТ ПРЕДУПРЕЖДЕНИЙ CAP (CAP_FEED_GATE) ─────────────────────────────────
+# Предупреждения официальных служб живут на своей вкладке «Риски», где у них
+# уровень, район и формулировка службы целиком. В ленте событий они шли вторым
+# экземпляром и занимали 13 из 44 мест климата, то есть почти треть.
+#
+# Скрытие касается ТОЛЬКО ленты. Записи остаются в потоке: у всех тринадцати
+# есть process_id и страна, они кормят процессы, страновые профили, радар и
+# карту. Ни country_risk.py, ни signal_engine.py на feed_visible не смотрят,
+# поэтому аналитика ничего не теряет.
+#
+# Правило то же, что у панели предупреждений: источник со словом CAP. MGM
+# Турции под него не подпадает и остаётся в ленте — своей вкладки у него нет,
+# скрытие убрало бы его совсем.
+#
+# Откат: CAP_FEED_GATE = False.
+CAP_FEED_GATE = True
+_CAP_SRC = re.compile(r'\bCAP\b')
+
+
+def _cap_feed_gate(events):
+    """Официальные предупреждения — на вкладке «Риски», не в ленте событий."""
+    if not CAP_FEED_GATE:
+        return 0
+    n, dom = 0, {}
+    for e in events:
+        if not _CAP_SRC.search(str(e.get('source') or '')):
+            continue
+        if e.get('feed_visible') is False:
+            continue
+        e['feed_visible'] = False
+        e['alerts_only'] = True
+        n += 1
+        dom[e.get('domain')] = dom.get(e.get('domain'), 0) + 1
+    if n:
+        print('  [CAP-GATE] предупреждения вне ленты событий: %d (%s)'
+              % (n, ', '.join('%s %d' % kv for kv in sorted(dom.items()))),
+              file=sys.stderr)
+    return n
+
+
 def _adr039a_shadow_report(events, outdir):
     """ADR-039A Phase 3 — метрики shadow-правила REPORT. Ничего не меняет."""
     from collections import Counter
@@ -21096,6 +21136,7 @@ def save_enriched(events, previous_snapshot=None):
                 _scale_revert(enriched["events"])
                 _strike_weight(enriched["events"])
                 _context_feed_gate(enriched["events"])
+                _cap_feed_gate(enriched["events"])
                 _sic_shadow_report(enriched["events"], OUTPUT_PATH.parent)
                 _adr039a_shadow_report(enriched["events"], OUTPUT_PATH.parent)
             except Exception as _se:
