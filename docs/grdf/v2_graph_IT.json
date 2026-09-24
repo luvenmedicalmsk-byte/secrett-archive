@@ -2,38 +2,38 @@
   "country": "IT",
   "date": "2026-09-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-24T22:26:02.874988+00:00",
+  "generated_at": "2026-09-24T22:45:38.160829+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 52,
+      "score": 50,
       "props": {
-        "risk_score": 52
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 20,
+      "score": 76,
       "trend": "down"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 52,
+      "score": 44,
       "trend": "down"
     },
     {
@@ -41,13 +41,13 @@
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 67,
       "trend": "down"
     },
     {
@@ -55,14 +55,14 @@
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "down"
+      "trend": "stable"
     },
     {
       "id": "DRIVER-IT-Geopolitical",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-IT-Пожарный_с",
-      "type": "Signal",
-      "label": "Пожарный сигнал — Европа · Палермо",
-      "severity": 52,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-IT-Италия_воз",
-      "type": "Signal",
-      "label": "Италия возвращается к ядерной энергетике",
-      "severity": 47,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-IT-Это_сицили",
       "type": "Signal",
       "label": "Это сицилийское сообщество существует уж",
       "severity": 44,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-IT-Военные_уд",
+      "type": "Signal",
+      "label": "Военные удары — Италия",
+      "severity": 76,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-IT-Миграционн",
+      "type": "Signal",
+      "label": "Миграционная политика — Италия",
+      "severity": 67,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,19 +106,19 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.2
+      "weight": 0.76
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.52
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-IT",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.67
     },
     {
       "from": "COUNTRY-IT",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-IT-climate",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,22 +184,64 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-IT-Пожарный_с",
-      "to": "DOMAIN-IT-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.52
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-IT-Италия_воз",
+      "from": "DOMAIN-IT-infrastructure",
       "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.47
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-IT-Это_сицили",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.44
+    },
+    {
+      "from": "SIGNAL-IT-Военные_уд",
+      "to": "DOMAIN-IT-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.76
+    },
+    {
+      "from": "SIGNAL-IT-Миграционн",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.67
     }
   ]
 }
