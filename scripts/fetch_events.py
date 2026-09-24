@@ -12245,6 +12245,46 @@ def _apply_geo_contract(events):
                 }
     except Exception:
         pass
+    # 24.09.2026. Тот же разворот у сухопутных предупреждений внутри страны.
+    # Предупреждение по Краснодарскому краю получало регион «Чёрное море»:
+    # центр области попадает в рамку морской зоны, и зонный слой подменял
+    # название, хотя страна при этом сохранялась. На карточке вместо края
+    # выходило море. Место у предупреждений CAP известно от самой службы и
+    # лежит в meta.area, поэтому восстанавливаем из источника, а не из текста.
+    # Замер 24.09: 1 запись из 18 Росгидромета. Координаты не трогаем — они
+    # верные, подменено было только название.
+    try:
+        _ZONE_WORD = re.compile(r'\b(?:мор[еяю]|залив|пролив|океан)\b', re.I)
+        _ZONE_NAME = {'Европа', 'Азия', 'Африка', 'Северная Америка', 'Южная Америка',
+                      'Латинская Америка', 'Центральная Америка', 'Балканы',
+                      'Скандинавия', 'Ближний Восток', 'Средиземноморье',
+                      'Центральная Азия', 'Юго-Восточная Азия', 'Закавказье',
+                      'Антарктика', 'Международные воды', 'Мировой океан'}
+        for e in events:
+            if 'CAP' not in str(e.get('source') or ''):
+                continue
+            _reg = str(e.get('region') or '').strip()
+            if not _reg:
+                continue
+            if not (_ZONE_WORD.search(_reg) or _reg in _ZONE_NAME):
+                continue
+            _meta = e.get('meta') if isinstance(e.get('meta'), dict) else {}
+            _area = str(_meta.get('area') or e.get('region_adm1') or '').strip()
+            if not _area or _area == _reg:
+                continue
+            e['region'] = _area
+            if str(e.get('event_country') or '') == _reg:
+                e['event_country'] = e.get('country_code') or e.get('primary_country') or _area
+            if isinstance(e.get('geo_decision'), dict):
+                e['geo_decision']['fallback'] = {
+                    'rule': 'cap_area_authority',
+                    'from': _reg,
+                    'to': _area,
+                    'why': 'место предупреждения известно от службы, зонный слой его подменил',
+                    'by': 'geo-fallback',
+                }
+    except Exception:
+        pass
     try:
         (OUTPUT_PATH.parent / '_geo_authority.json').write_text(json.dumps(
             {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -13941,6 +13981,46 @@ def _cap_centroid(poly_text):
         return None, None
     return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
 
+# «Прочие опасности» — собственная запасная рубрика Росгидромета: она стоит,
+# когда явление не попало в их именованный список. Для читателя это пустая
+# строка, при том что само явление описано в тексте предупреждения: «почвенная
+# засуха на пастбищах», «сильный дождь, ливень, в сочетании с грозой». Берём
+# явление из текста, и только для таких записей — там, где служба явление
+# назвала, её формулировка остаётся как есть. Замер 24.09.2026: 2 записи из 18.
+_RG_VAGUE = re.compile(r'^\s*(?:прочие\s+опасност|опасные\s+явлени|иные\s+опасност)', re.I)
+
+# Порядок в списке не важен: берётся то явление, которое в тексте названо
+# ПЕРВЫМ. Так карточка повторяет то, с чего начал синоптик, а не наш приоритет.
+_RG_PHENOM = [
+    (re.compile(r'почвенн\w*\s+засух|засух', re.I), 'Засуха'),
+    (re.compile(r'очень сильн\w*\s+дожд|сильн\w*\s+дожд|ливн|ливень', re.I), 'Сильный дождь'),
+    (re.compile(r'\bгроз', re.I), 'Гроза'),
+    (re.compile(r'\bград\b|градин', re.I), 'Град'),
+    (re.compile(r'шквал|сильн\w*\s+ветр|ураганн\w*\s+ветр', re.I), 'Сильный ветер'),
+    (re.compile(r'сильн\w*\s+снег|снегопад|метел|пург', re.I), 'Снегопад'),
+    (re.compile(r'гололёд|гололед|налипани', re.I), 'Гололёд'),
+    (re.compile(r'аномальн\w*\s+жар|сильн\w*\s+жар|жар[аы]\b', re.I), 'Аномальная жара'),
+    (re.compile(r'заморозк', re.I), 'Заморозки'),
+    (re.compile(r'сильн\w*\s+туман|туман', re.I), 'Туман'),
+    (re.compile(r'паводок|половодь|подтоплен|наводнен', re.I), 'Паводок'),
+    (re.compile(r'пожарн\w*\s+опасност|чрезвычайн\w*\s+пожарн', re.I), 'Пожарная опасность'),
+    (re.compile(r'лавин', re.I), 'Лавинная опасность'),
+    (re.compile(r'маловодь|низк\w*\s+уровн\w*\s+вод', re.I), 'Маловодье'),
+]
+
+
+def _rg_event_name(event, dtext):
+    """Явление предупреждения: формулировка службы, а если она общая — из текста."""
+    if not _RG_VAGUE.match(str(event or '')):
+        return event
+    best = None
+    for rx, name in _RG_PHENOM:
+        m = rx.search(str(dtext or ''))
+        if m and (best is None or m.start() < best[0]):
+            best = (m.start(), name)
+    return best[1] if best else event
+
+
 def fetch_rosgidromet_cap():
     """Официальные метеопредупреждения Гидрометцентра РФ (CAP) — климат России.
     Жара, осадки, грозы, шквалы, пожарная опасность, паводки, штормы и т.п."""
@@ -13996,6 +14076,7 @@ def fetch_rosgidromet_cap():
         lat, lng = _cap_centroid(poly.text if poly is not None else "")
         dsc = _cap_find(a, "description")
         dtext = (dsc.text or "").strip() if dsc is not None else event
+        event = _rg_event_name(event, dtext)
         title = (f"{event}: {areaDesc} (Россия)" if areaDesc else f"{event} (Россия)")
         items.append({
             "title": title[:130],
