@@ -12206,6 +12206,45 @@ def _apply_geo_contract(events):
                     }
     except Exception:
         pass
+    # 24.09.2026. Предупреждение службы погоды выпускается ДЛЯ СТРАНЫ: страна
+    # известна из самого канала, а не угадывается по тексту. Но в описании
+    # областей встречаются береговые названия ("Адриатическое побережье",
+    # "Восточная Пелопоннес"), и зонный слой уводил запись в море: у Греции и
+    # Черногории страна обнулялась, регион становился "Средиземное море".
+    # Замер на срезе 24.09: затронуто 2 записи из 358, обе MeteoAlarm, обе с
+    # ровно одной страной в упоминаниях. Правило узкое: только источники CAP,
+    # только когда страна пуста, только при единственном упоминании. Море как
+    # место события у таких записей не бывает по построению канала.
+    try:
+        _ma_cc = {t[1]: (t[2], t[3], t[4]) for t in _MA_COUNTRIES}
+        for e in events:
+            if 'CAP' not in str(e.get('source') or ''):
+                continue
+            if e.get('primary_country'):
+                continue
+            _ccs = [c for c in (e.get('country_codes') or []) if c in _ma_cc]
+            if len(_ccs) != 1:
+                continue
+            _cc = _ccs[0]
+            _nm, _la, _ln = _ma_cc[_cc]
+            _was = e.get('region')
+            e['primary_country'] = _cc
+            e['country_code'] = _cc
+            e['event_country'] = _cc
+            e['region'] = _nm
+            e['lat'], e['lng'] = _la, _ln
+            e['map_visible'] = True
+            if isinstance(e.get('geo_decision'), dict):
+                e['geo_decision']['primary'] = _cc
+                e['geo_decision']['fallback'] = {
+                    'rule': 'cap_country_authority',
+                    'from': _was,
+                    'to': _nm,
+                    'why': 'предупреждение службы погоды выпущено для страны, не для моря',
+                    'by': 'geo-fallback',
+                }
+    except Exception:
+        pass
     try:
         (OUTPUT_PATH.parent / '_geo_authority.json').write_text(json.dumps(
             {'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
