@@ -2,7 +2,7 @@
   "country": "SG",
   "date": "2026-09-24",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-24T08:06:34.728720+00:00",
+  "generated_at": "2026-09-24T08:26:44.243088+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-SG-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 39,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SG-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 56,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-SG-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-SG-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -80,10 +75,22 @@
       "label": "economic"
     },
     {
+      "id": "DRIVER-SG-climate",
+      "type": "Driver",
+      "label": "climate"
+    },
+    {
       "id": "SIGNAL-SG-Nexstrom_п",
       "type": "Signal",
       "label": "Nexstrom привлекает 12 миллионов долларо",
       "severity": 32,
+      "domain": "economic"
+    },
+    {
+      "id": "SIGNAL-SG-Транспортн",
+      "type": "Signal",
+      "label": "Транспортный коридор — Юго-Восточная Ази",
+      "severity": 53,
       "domain": "economic"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Санкционное давление — Юго-Восточная Ази",
       "severity": 62,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-SG-Технологич",
-      "type": "Signal",
-      "label": "Технологический сигнал — Сингапур",
-      "severity": 56,
-      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.39
     },
     {
       "from": "COUNTRY-SG",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SG",
       "to": "DOMAIN-SG-technology",
       "type": "CORRELATES",
-      "weight": 0.56
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SG",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-SG-technology",
-      "to": "COUNTRY-SG",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-SG-geopolitical",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
@@ -158,6 +152,12 @@
     },
     {
       "from": "DRIVER-SG-economic",
+      "to": "COUNTRY-SG",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DRIVER-SG-climate",
       "to": "COUNTRY-SG",
       "type": "CAUSES",
       "weight": 0.8
@@ -190,16 +190,16 @@
       "weight": 0.32
     },
     {
+      "from": "SIGNAL-SG-Транспортн",
+      "to": "DOMAIN-SG-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.53
+    },
+    {
       "from": "SIGNAL-SG-Санкционно",
       "to": "DOMAIN-SG-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-SG-Технологич",
-      "to": "DOMAIN-SG-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.56
     }
   ]
 }
