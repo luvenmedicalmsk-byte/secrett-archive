@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-09-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-25T17:06:46.008001+00:00",
+  "generated_at": "2026-09-25T17:25:54.142572+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 74,
+      "score": 72,
       "props": {
-        "risk_score": 74
+        "risk_score": 72
       }
     },
     {
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 60,
-      "trend": "stable"
+      "score": 56,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-economic",
@@ -34,7 +34,7 @@
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
-      "trend": "stable"
+      "score": 44,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-DE-infrastructure",
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-DE-В_аэропорт",
-      "type": "Signal",
-      "label": "В аэропорту Берлина объявили тревогу из-",
-      "severity": 52,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-DE-Беспилотна",
       "type": "Signal",
       "label": "Беспилотная опасность была объявлена в а",
       "severity": 48,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-DE-По_всей_Ге",
+      "type": "Signal",
+      "label": "По всей Германии школьники сегодня выйду",
+      "severity": 44,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.6
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-DE",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.44
     },
     {
       "from": "COUNTRY-DE",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-DE-geopolitical",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "SIGNAL-DE-Ветер:_Гер",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
-      "from": "SIGNAL-DE-В_аэропорт",
-      "to": "DOMAIN-DE-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.52
-    },
-    {
       "from": "SIGNAL-DE-Беспилотна",
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.48
+    },
+    {
+      "from": "SIGNAL-DE-По_всей_Ге",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.44
     }
   ]
 }
