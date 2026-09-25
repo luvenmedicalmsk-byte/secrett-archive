@@ -20305,6 +20305,103 @@ def _hs_number(text):
     return best, best_death
 
 
+# ── МЕСТО СОБЫТИЯ ПРОТИВ ЗОНЫ (ZONE_PLACE) ──────────────────────────────────
+# Повод, 25.09.2026. «Саудовская экономика может продержаться до конца года»
+# стояло в Ормузском проливе, «Ожидается, что инфляция ускорится, Португалия»
+# на Ближнем Востоке, «Минобороны РФ сообщило об уничтожении 17 БПЛА» в Чёрном
+# море. Один сюжет про саудовскую нефть разъехался на три места сразу: Красное
+# море, Ормузский пролив и Иран. Страна у таких записей пуста, потому что
+# зонный слой занял её место.
+#
+# Различитель тот же, что уже действует у интента и у метки подтверждённости:
+# место события названо в ЗАГОЛОВКЕ. «Всего один товарный корабль покинул
+# Ормузский пролив» это про пролив, и зона верна. «Саудовская экономика может
+# продержаться» это про страну, пролив там лишь обстоятельство из тела.
+#
+# Исключение для климата: шторм в океане действительно происходит в океане, и
+# «Ураган Поло вызывает огромные волны» правильно стоит в Тихом океане, хотя
+# заголовок океан не называет. Исключение только для морских зон: макрорегион
+# вроде Африки местом климатического события тоже не бывает.
+#
+# СТАТУС. Только замер. География не трогается. На семи срезах правило нашло
+# 35 записей класса: 12 оставляет, 23 считает подменёнными. Промоушен после
+# сверки отчёта человеком.
+# Откат замера: ZONE_PLACE_SHADOW = False.
+ZONE_PLACE_SHADOW = True
+ZONE_PLACE_APPLY = False
+
+_ZP_SEA = re.compile(r'\b(?:мор[еяю]|залив|пролив|океан)\b', re.I)
+_ZP_MACRO = {'Европа', 'Азия', 'Африка', 'Северная Америка', 'Южная Америка',
+             'Латинская Америка', 'Центральная Америка', 'Балканы', 'Скандинавия',
+             'Ближний Восток', 'Средиземноморье', 'Центральная Азия',
+             'Юго-Восточная Азия', 'Закавказье'}
+
+
+def _zp_named(region, title):
+    """Названо ли место в заголовке. Корень в пять букв, как в реестре стран."""
+    t = str(title or '').lower().replace('ё', 'е')
+    for w in re.findall(r'[А-Яа-яЁё]{4,}', str(region or '')):
+        if w.lower().replace('ё', 'е')[:5] in t:
+            return True
+    return False
+
+
+def _zone_place(events):
+    """Замер подмены места события зоной. Географию не трогает без промоушена."""
+    if not (ZONE_PLACE_SHADOW or ZONE_PLACE_APPLY):
+        return 0
+    moved, kept = [], []
+    for e in events:
+        reg = str(e.get('region') or '').strip()
+        if not reg or str(e.get('country_code') or '').strip():
+            continue
+        ment = [c for c in (e.get('mentioned_countries') or []) if c]
+        if not ment:
+            continue
+        is_sea = bool(_ZP_SEA.search(reg))
+        if not (is_sea or reg in _ZP_MACRO):
+            continue
+        title = e.get('title') or ''
+        if _zp_named(reg, title):
+            kept.append({'регион': reg, 'почему': 'место названо в заголовке',
+                         'заголовок': title[:100]})
+            continue
+        if is_sea and e.get('domain') == 'climate':
+            kept.append({'регион': reg, 'почему': 'климатическое событие в море',
+                         'заголовок': title[:100]})
+            continue
+        moved.append({'регион': reg, 'страны в упоминаниях': ment,
+                      'предлагается': ment[0], 'домен': e.get('domain'),
+                      'вес': e.get('severity'), 'заголовок': title[:100]})
+        e['zone_place_shadow'] = ment[0]
+        if ZONE_PLACE_APPLY:
+            e['country_code'] = ment[0]
+            e['primary_country'] = ment[0]
+            e['event_country'] = ment[0]
+    try:
+        (OUTPUT_PATH.parent / '_zone_place.json').write_text(json.dumps({
+            'дата': datetime.now(timezone.utc).isoformat(),
+            'режим': 'применено' if ZONE_PLACE_APPLY else 'замер, география не тронута',
+            'записей в срезе': len(events),
+            'записей класса': len(moved) + len(kept),
+            'зона оставлена': len(kept),
+            'зона признана подменой': len(moved),
+            'подменённые': moved,
+            'оставленные': kept,
+            'как читать': ('Место события названо в заголовке значит зона верна. '
+                           'Если в заголовке его нет, а страна в тексте есть, зона '
+                           'заняла место страны. Исключение: климатическое событие '
+                           'в море действительно происходит в море.'),
+        }, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _ze:
+        print('  [WARN] zone place report: %s' % _ze, file=sys.stderr)
+    if moved:
+        print('  [ZONE-PLACE] %s: подмен %d, зона верна %d'
+              % ('ПРИМЕНЕНО' if ZONE_PLACE_APPLY else 'тень', len(moved), len(kept)),
+              file=sys.stderr)
+    return len(moved)
+
+
 def _human_scale(events):
     """Замер масштаба человеческих потерь. Боевой вес не трогает без промоушена."""
     if not (HUMAN_SCALE_SHADOW or HUMAN_SCALE_APPLY):
@@ -21332,6 +21429,7 @@ def save_enriched(events, previous_snapshot=None):
                 _scale_revert(enriched["events"])
                 _strike_weight(enriched["events"])
                 _human_scale(enriched["events"])
+                _zone_place(enriched["events"])
                 # Предупреждения метятся ПЕРВЫМИ: иначе запись, отнесённая
                 # интентом к комментарию, уходит в контекст и на вкладку
                 # предупреждений уже не попадает как предупреждение.
