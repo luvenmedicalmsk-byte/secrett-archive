@@ -1,9 +1,9 @@
 {
   "grdf_version": "10.0",
   "date": "2026-09-25",
-  "generated_at": "2026-09-25T17:27:45.000504+00:00",
+  "generated_at": "2026-09-25T17:47:13.259844+00:00",
   "node_count": 585,
-  "edge_count": 606,
+  "edge_count": 608,
   "node_types": [
     "Country",
     "Risk",
@@ -111,13 +111,13 @@
       "id": "CC:US",
       "type": "Country",
       "label": "США",
-      "risk_score": 89
+      "risk_score": 92
     },
     {
       "id": "RISK:US:geopolitical",
       "type": "Risk",
       "label": "US geopolitical risk",
-      "score": 62,
+      "score": 66,
       "domain": "geopolitical"
     },
     {
@@ -131,7 +131,7 @@
       "id": "RISK:US:climate",
       "type": "Risk",
       "label": "US climate risk",
-      "score": 5,
+      "score": 79,
       "domain": "climate"
     },
     {
@@ -187,10 +187,10 @@
       "probability": "baseline"
     },
     {
-      "id": "POL:US:economic_intervention",
+      "id": "POL:US:climate_adaptation",
       "type": "Policy",
-      "label": "US economic_intervention",
-      "gri_lift": 6
+      "label": "US climate_adaptation",
+      "gri_lift": 7
     },
     {
       "id": "CC:CN",
@@ -209,7 +209,7 @@
       "id": "RISK:CN:economic",
       "type": "Risk",
       "label": "CN economic risk",
-      "score": 60,
+      "score": 5,
       "domain": "economic"
     },
     {
@@ -248,6 +248,12 @@
       "domain": "cyber"
     },
     {
+      "id": "DEC:CN:ACT-12",
+      "type": "Decision",
+      "label": "Diplomatic de-escalation",
+      "domain": "geopolitical"
+    },
+    {
       "id": "DEC:CN:ACT-07",
       "type": "Decision",
       "label": "Emergency response activation",
@@ -258,12 +264,6 @@
       "type": "Decision",
       "label": "Early warning system upgrade",
       "domain": "technology"
-    },
-    {
-      "id": "DEC:CN:ACT-01",
-      "type": "Decision",
-      "label": "Diversify import sources",
-      "domain": "economic"
     },
     {
       "id": "SCN:CN:baseline",
@@ -2157,14 +2157,14 @@
       "id": "RISK:IL:geopolitical",
       "type": "Risk",
       "label": "IL geopolitical risk",
-      "score": 63,
+      "score": 62,
       "domain": "geopolitical"
     },
     {
       "id": "RISK:IL:economic",
       "type": "Risk",
       "label": "IL economic risk",
-      "score": 5,
+      "score": 44,
       "domain": "economic"
     },
     {
@@ -3432,7 +3432,7 @@
       "id": "RISK:MY:geopolitical",
       "type": "Risk",
       "label": "MY geopolitical risk",
-      "score": 63,
+      "score": 42,
       "domain": "geopolitical"
     },
     {
@@ -3453,7 +3453,7 @@
       "id": "RISK:MY:technology",
       "type": "Risk",
       "label": "MY technology risk",
-      "score": 61,
+      "score": 56,
       "domain": "technology"
     },
     {
@@ -3484,16 +3484,16 @@
       "domain": "geopolitical"
     },
     {
-      "id": "DEC:MY:ACT-01",
-      "type": "Decision",
-      "label": "Diversify import sources",
-      "domain": "economic"
-    },
-    {
       "id": "DEC:MY:ACT-13",
       "type": "Decision",
       "label": "Early warning system upgrade",
       "domain": "technology"
+    },
+    {
+      "id": "DEC:MY:ACT-01",
+      "type": "Decision",
+      "label": "Diversify import sources",
+      "domain": "economic"
     },
     {
       "id": "SCN:MY:baseline",
@@ -3937,7 +3937,13 @@
       "from": "CC:US",
       "to": "RISK:US:geopolitical",
       "type": "LINKED_TO",
-      "weight": 0.62
+      "weight": 0.66
+    },
+    {
+      "from": "RISK:US:geopolitical",
+      "to": "CC:US",
+      "type": "AFFECTS",
+      "weight": 0.66
     },
     {
       "from": "CC:US",
@@ -3955,7 +3961,13 @@
       "from": "CC:US",
       "to": "RISK:US:climate",
       "type": "LINKED_TO",
-      "weight": 0.05
+      "weight": 0.79
+    },
+    {
+      "from": "RISK:US:climate",
+      "to": "CC:US",
+      "type": "AFFECTS",
+      "weight": 0.79
     },
     {
       "from": "CC:US",
@@ -3985,19 +3997,19 @@
       "from": "DEC:US:ACT-12",
       "to": "CC:US",
       "type": "MITIGATES",
-      "weight": 0.58
+      "weight": 0.59
     },
     {
       "from": "DEC:US:ACT-07",
       "to": "CC:US",
       "type": "MITIGATES",
-      "weight": 0.57
+      "weight": 0.58
     },
     {
       "from": "DEC:US:ACT-01",
       "to": "CC:US",
       "type": "MITIGATES",
-      "weight": 0.55
+      "weight": 0.56
     },
     {
       "from": "CC:US",
@@ -4006,7 +4018,7 @@
       "weight": 0.75
     },
     {
-      "from": "POL:US:economic_intervention",
+      "from": "POL:US:climate_adaptation",
       "to": "CC:US",
       "type": "ENABLES",
       "weight": 0.7
@@ -4021,7 +4033,7 @@
       "from": "CC:CN",
       "to": "RISK:CN:economic",
       "type": "LINKED_TO",
-      "weight": 0.6
+      "weight": 0.05
     },
     {
       "from": "CC:CN",
@@ -4060,22 +4072,22 @@
       "weight": 0.05
     },
     {
+      "from": "DEC:CN:ACT-12",
+      "to": "CC:CN",
+      "type": "MITIGATES",
+      "weight": 0.58
+    },
+    {
       "from": "DEC:CN:ACT-07",
       "to": "CC:CN",
       "type": "MITIGATES",
-      "weight": 0.57
+      "weight": 0.56
     },
     {
       "from": "DEC:CN:ACT-13",
       "to": "CC:CN",
       "type": "MITIGATES",
-      "weight": 0.57
-    },
-    {
-      "from": "DEC:CN:ACT-01",
-      "to": "CC:CN",
-      "type": "MITIGATES",
-      "weight": 0.55
+      "weight": 0.56
     },
     {
       "from": "CC:CN",
@@ -4231,7 +4243,7 @@
       "from": "DEC:DE:ACT-05",
       "to": "CC:DE",
       "type": "MITIGATES",
-      "weight": 0.5
+      "weight": 0.49
     },
     {
       "from": "CC:DE",
@@ -5713,13 +5725,13 @@
       "from": "CC:IL",
       "to": "RISK:IL:geopolitical",
       "type": "LINKED_TO",
-      "weight": 0.63
+      "weight": 0.62
     },
     {
       "from": "CC:IL",
       "to": "RISK:IL:economic",
       "type": "LINKED_TO",
-      "weight": 0.05
+      "weight": 0.44
     },
     {
       "from": "CC:IL",
@@ -6817,7 +6829,7 @@
       "from": "CC:MY",
       "to": "RISK:MY:geopolitical",
       "type": "LINKED_TO",
-      "weight": 0.63
+      "weight": 0.42
     },
     {
       "from": "CC:MY",
@@ -6835,7 +6847,7 @@
       "from": "CC:MY",
       "to": "RISK:MY:technology",
       "type": "LINKED_TO",
-      "weight": 0.61
+      "weight": 0.56
     },
     {
       "from": "CC:MY",
@@ -6859,19 +6871,19 @@
       "from": "DEC:MY:ACT-12",
       "to": "CC:MY",
       "type": "MITIGATES",
-      "weight": 0.61
-    },
-    {
-      "from": "DEC:MY:ACT-01",
-      "to": "CC:MY",
-      "type": "MITIGATES",
       "weight": 0.58
     },
     {
       "from": "DEC:MY:ACT-13",
       "to": "CC:MY",
       "type": "MITIGATES",
-      "weight": 0.58
+      "weight": 0.56
+    },
+    {
+      "from": "DEC:MY:ACT-01",
+      "to": "CC:MY",
+      "type": "MITIGATES",
+      "weight": 0.55
     },
     {
       "from": "CC:MY",
@@ -7231,7 +7243,7 @@
       "from": "CC:AE",
       "to": "CC:CN",
       "type": "LINKED_TO",
-      "weight": 0.462
+      "weight": 0.44
     },
     {
       "from": "CC:AE",
@@ -7249,7 +7261,7 @@
       "from": "CC:AE",
       "to": "CC:DE",
       "type": "LINKED_TO",
-      "weight": 0.432
+      "weight": 0.417
     },
     {
       "from": "CC:AE",
@@ -7309,7 +7321,7 @@
       "from": "CC:AE",
       "to": "CC:IL",
       "type": "LINKED_TO",
-      "weight": 0.514
+      "weight": 0.52
     },
     {
       "from": "CC:AE",
@@ -7357,7 +7369,7 @@
       "from": "CC:AE",
       "to": "CC:MY",
       "type": "LINKED_TO",
-      "weight": 0.535
+      "weight": 0.36
     },
     {
       "from": "CC:AE",
@@ -7435,7 +7447,7 @@
       "from": "CC:AE",
       "to": "CC:US",
       "type": "LINKED_TO",
-      "weight": 0.46
+      "weight": 0.495
     },
     {
       "from": "CC:AE",
