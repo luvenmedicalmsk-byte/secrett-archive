@@ -2,67 +2,67 @@
   "country": "TH",
   "date": "2026-09-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-25T15:20:19.735928+00:00",
+  "generated_at": "2026-09-25T15:28:45.339923+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-TH",
       "type": "Country",
       "label": "TH",
-      "score": 50,
+      "score": 56,
       "props": {
-        "risk_score": 50
+        "risk_score": 56
       }
     },
     {
       "id": "DOMAIN-TH-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 46,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-economic",
       "type": "Domain",
       "label": "economic",
       "score": 39,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
       "score": 56,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-TH-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-TH-technology",
@@ -70,28 +70,21 @@
       "label": "technology"
     },
     {
-      "id": "DRIVER-TH-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
-    },
-    {
       "id": "DRIVER-TH-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "SIGNAL-TH-Транспортн",
-      "type": "Signal",
-      "label": "Транспортный коридор — Юго-Восточная Ази",
-      "severity": 53,
-      "domain": "economic"
+      "id": "DRIVER-TH-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
     },
     {
-      "id": "SIGNAL-TH-Санкционно",
+      "id": "SIGNAL-TH-Падение_ин",
       "type": "Signal",
-      "label": "Санкционное давление — Юго-Восточная Ази",
-      "severity": 62,
-      "domain": "geopolitical"
+      "label": "Падение интернет-связи: Таиланд",
+      "severity": 56,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-TH-Отключение",
@@ -99,6 +92,13 @@
       "label": "Отключение интернета — Таиланд",
       "severity": 56,
       "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-TH-Транспортн",
+      "type": "Signal",
+      "label": "Транспортный коридор — Юго-Восточная Ази",
+      "severity": 53,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TH",
@@ -151,55 +151,34 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-TH-geopolitical",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-TH-economic",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-TH-geopolitical",
-      "to": "DOMAIN-TH-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
+      "from": "DRIVER-TH-geopolitical",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
-      "from": "DOMAIN-TH-infrastructure",
-      "to": "DOMAIN-TH-economic",
+      "from": "SIGNAL-TH-Падение_ин",
+      "to": "DOMAIN-TH-technology",
       "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TH-economic",
-      "to": "DOMAIN-TH-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
-      "from": "SIGNAL-TH-Транспортн",
-      "to": "DOMAIN-TH-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.53
-    },
-    {
-      "from": "SIGNAL-TH-Санкционно",
-      "to": "DOMAIN-TH-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.56
     },
     {
       "from": "SIGNAL-TH-Отключение",
       "to": "DOMAIN-TH-technology",
       "type": "AMPLIFIES",
       "weight": 0.56
+    },
+    {
+      "from": "SIGNAL-TH-Транспортн",
+      "to": "DOMAIN-TH-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     }
   ]
 }
