@@ -2,7 +2,7 @@
   "country": "TH",
   "date": "2026-09-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-25T14:46:35.968344+00:00",
+  "generated_at": "2026-09-25T15:20:19.735928+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -40,7 +40,7 @@
       "id": "DOMAIN-TH-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 36,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-TH-technology",
+      "type": "Driver",
+      "label": "technology"
+    },
+    {
       "id": "DRIVER-TH-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
@@ -73,18 +78,6 @@
       "id": "DRIVER-TH-economic",
       "type": "Driver",
       "label": "economic"
-    },
-    {
-      "id": "DRIVER-TH-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
-      "id": "SIGNAL-TH-Таиланд_го",
-      "type": "Signal",
-      "label": "Таиланд готов завершить новые правила дл",
-      "severity": 32,
-      "domain": "technology"
     },
     {
       "id": "SIGNAL-TH-Транспортн",
@@ -99,6 +92,13 @@
       "label": "Санкционное давление — Юго-Восточная Ази",
       "severity": 62,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TH-Отключение",
+      "type": "Signal",
+      "label": "Отключение интернета — Таиланд",
+      "severity": 56,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,7 +124,7 @@
       "from": "COUNTRY-TH",
       "to": "DOMAIN-TH-technology",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-TH",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-TH-technology",
+      "to": "COUNTRY-TH",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-TH-geopolitical",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
@@ -152,12 +158,6 @@
     },
     {
       "from": "DRIVER-TH-economic",
-      "to": "COUNTRY-TH",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DRIVER-TH-technology",
       "to": "COUNTRY-TH",
       "type": "CAUSES",
       "weight": 0.8
@@ -184,12 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TH-Таиланд_го",
-      "to": "DOMAIN-TH-technology",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
       "from": "SIGNAL-TH-Транспортн",
       "to": "DOMAIN-TH-economic",
       "type": "AMPLIFIES",
@@ -200,6 +194,12 @@
       "to": "DOMAIN-TH-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
+    },
+    {
+      "from": "SIGNAL-TH-Отключение",
+      "to": "DOMAIN-TH-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
     }
   ]
 }
