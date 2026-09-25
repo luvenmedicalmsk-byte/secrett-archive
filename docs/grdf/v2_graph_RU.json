@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-09-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-25T00:20:17.017732+00:00",
+  "generated_at": "2026-09-25T00:28:20.139385+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -10,16 +10,16 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 75,
+      "score": 81,
       "props": {
-        "risk_score": 75
+        "risk_score": 81
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 28,
+      "score": 88,
       "trend": "down"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-RU-Двадцать_ч",
+      "type": "Signal",
+      "label": "Маловодье: Новосибирская обл. (Россия)",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-RU-Наводнение",
       "type": "Signal",
       "label": "Наводнение: Хабаровский край, север (Рос",
@@ -92,13 +99,6 @@
       "label": "Маловодье: Новосибирская обл. (Россия)",
       "severity": 74,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-RU-Маловодье:",
-      "type": "Signal",
-      "label": "Маловодье: Томская обл. (Россия)",
-      "severity": 74,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.28
+      "weight": 0.88
     },
     {
       "from": "COUNTRY-RU",
@@ -205,13 +205,34 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-RU-Наводнение",
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-RU-Маловодье:",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
     },
     {
-      "from": "SIGNAL-RU-Маловодье:",
+      "from": "SIGNAL-RU-Наводнение",
       "to": "DOMAIN-RU-climate",
       "type": "AMPLIFIES",
       "weight": 0.74
