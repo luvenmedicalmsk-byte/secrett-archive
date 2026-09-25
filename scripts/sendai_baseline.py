@@ -100,8 +100,9 @@ def _fresh_enough():
         if not REPORT.exists():
             return False
         d = json.loads(REPORT.read_text(encoding="utf-8"))
-        if d.get("режим", "").startswith("замер не состоялся"):
-            return False          # неудачу повторяем на следующем прогоне
+        m = d.get("режим", "")
+        if m.startswith("замер не состоялся") or m.startswith("замер начат"):
+            return False          # неудачу и срыв повторяем на следующем прогоне
         t = datetime.fromisoformat(str(d.get("дата", "")).replace("Z", "+00:00"))
         return datetime.now(timezone.utc) - t < timedelta(hours=FRESH_HOURS)
     except Exception:
@@ -126,15 +127,37 @@ def _pick_indicators(items):
 
 
 def main():
+    """Обёртка: отчёт остаётся при любом исходе, включая срыв и снятие по таймауту."""
+    # Первый прогон 25.09 отработал и не оставил ничего: замеры NOTAM и
+    # масштаба потерь записались в 04:04, а этот файл не появился. Значит
+    # скрипт сорвался между началом и записью, и по отсутствию файла причину
+    # не восстановить. Метка ставится ДО работы: если процесс снимут, останется
+    # хотя бы она. Перехват по BaseException, а не Exception: снятие по
+    # таймауту и SystemExit обычным перехватом не ловятся.
+    #
+    # Свежесть проверяется ДО метки: иначе метка сама себя объявит свежим
+    # отчётом и следующий прогон пропустит работу, ничего не сделав.
+    if _fresh_enough():
+        _log("отчёт свежий, источник не опрашивается")
+        return 0
+    _write({"режим": "замер начат, ещё не завершён",
+            "примечание": "если эта запись осталась, скрипт сорвался до конца работы"})
+    try:
+        return _run()
+    except BaseException as e:
+        import traceback
+        _write({"режим": "замер не состоялся",
+                "причина": "%s: %s" % (type(e).__name__, e),
+                "след": traceback.format_exc()[-900:]})
+        return 0
+
+
+def _run():
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     try:
         from snapshot_engine import COUNTRIES
     except Exception as e:
         _write({"режим": "замер не состоялся", "причина": "реестр стран недоступен: %s" % e})
-        return 0
-
-    if _fresh_enough():
-        _log("отчёт свежий, источник не опрашивается")
         return 0
 
     manual = {cc: (m or {}).get("baseline") for cc, m in COUNTRIES.items()}
