@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-25T22:38:38Z",
+  "generated": "2026-09-25T22:45:58Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
@@ -16,53 +16,57 @@
     "unmatched": 3,
     "coverage_pct": 99.7,
     "coverage_note": "иерархия: 1) evidence.sic_class 2) event.sic_class — ИСТИНА; 3) sic(title+summary) 4) sic(title) — SHADOW-приближение",
-    "admission_pass_rate": 73.5,
-    "admission_deny_rate": 26.5,
-    "processes_without_fact": 303,
+    "admission_pass_rate": 73.8,
+    "admission_deny_rate": 26.2,
+    "processes_without_fact": 300,
     "report_evidence_count": 0,
     "reports_boosting": 0
   },
   "shadow_reliability": {
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
-      "processes": 341,
-      "sample": 1140,
-      "agreement_pct": 88.3,
-      "decision_agreement_pct": 88.4,
-      "critical_errors": 132,
+      "processes": 342,
+      "sample": 1161,
+      "agreement_pct": 88.4,
+      "decision_agreement_pct": 88.5,
+      "critical_errors": 133,
       "truth_ratio_pct": 97.3,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 119,
         "COMMENTARY→FACT_EVENT": 13,
-        "STATE_CONFIRMATION→COMMENTARY": 1
+        "STATE_CONFIRMATION→FACT_EVENT": 1,
+        "STATE_CONFIRMATION→COMMENTARY": 1,
+        "BACKGROUND→COMMENTARY": 1
       }
     },
     "historical": {
-      "processes": 1147,
-      "sample": 2502,
+      "processes": 1148,
+      "sample": 2523,
       "agreement_pct": 90.9,
       "decision_agreement_pct": 91.0,
-      "critical_errors": 225,
+      "critical_errors": 226,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 184,
         "COMMENTARY→FACT_EVENT": 36,
+        "STATE_CONFIRMATION→FACT_EVENT": 4,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
         "FACT_EVENT→BACKGROUND": 1,
         "FACT_EVENT→FEATURE": 1,
-        "FEATURE→COMMENTARY": 1,
-        "STATE_CONFIRMATION→FACT_EVENT": 3
+        "FEATURE→COMMENTARY": 1
       }
     },
     "events_stream": {
-      "sample": 337,
-      "agreement_pct": 88.4,
-      "decision_agreement_pct": 88.7,
-      "critical_errors": 38,
+      "sample": 370,
+      "agreement_pct": 86.8,
+      "decision_agreement_pct": 87.3,
+      "critical_errors": 47,
       "error_matrix": {
-        "FACT_EVENT→COMMENTARY": 37,
+        "FACT_EVENT→COMMENTARY": 44,
         "STATE_CONFIRMATION→COMMENTARY": 1,
-        "COMMENTARY→FACT_EVENT": 1
+        "STATE_CONFIRMATION→FACT_EVENT": 1,
+        "COMMENTARY→FACT_EVENT": 2,
+        "BACKGROUND→COMMENTARY": 1
       }
     },
     "gate": {
@@ -74,7 +78,7 @@
   },
   "class_source": {
     "shadow_title_only": 187,
-    "evidence_sic": 2502
+    "evidence_sic": 2523
   },
   "truth_ratio_pct": 93.0,
   "domain_statistics": {
@@ -83,8 +87,8 @@
       "deny": 75
     },
     "climate": {
-      "pass": 297,
-      "deny": 35,
+      "pass": 299,
+      "deny": 34,
       "unmatched": 2
     },
     "economy": {
@@ -93,8 +97,8 @@
       "unmatched": 1
     },
     "social": {
-      "pass": 64,
-      "deny": 48
+      "pass": 65,
+      "deny": 47
     },
     "technology": {
       "pass": 96,
@@ -438,7 +442,7 @@
       "title": "Экономический сигнал — США",
       "domain": "economy",
       "severity": 62,
-      "pressure": 38,
+      "pressure": 42,
       "first_seen": "2026-07-06",
       "evidence_count": 2,
       "evidence_classes": {
@@ -1004,6 +1008,21 @@
       "status": "active",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
+    },
+    {
+      "signal_id": "geop-покушение-европа-24fd",
+      "title": "Покушение — Европа",
+      "domain": "geopolitics",
+      "severity": 55,
+      "pressure": 32,
+      "first_seen": "2026-08-31",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "dormant",
+      "causal_links": 0,
+      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
@@ -1033,13 +1052,6 @@
       "signal_id": "soci-эпидемиоло-сша-ccda",
       "domain": "social",
       "legacy": 58,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-климатичес-сша-acd2",
-      "domain": "climate",
-      "legacy": 50,
       "shadow": null,
       "delta": null
     },
@@ -1093,13 +1105,6 @@
       "delta": null
     },
     {
-      "signal_id": "soci-социальный-россия-75a9",
-      "domain": "social",
-      "legacy": 48,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "geop-геополитич-франция-8954",
       "domain": "geopolitics",
       "legacy": 30,
@@ -1128,6 +1133,13 @@
       "delta": null
     },
     {
+      "signal_id": "clim-климатичес-сша-acd2",
+      "domain": "climate",
+      "legacy": 32,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-топливныйр-индия-1722",
       "domain": "economy",
       "legacy": 32,
@@ -1138,13 +1150,6 @@
       "signal_id": "clim-климатичес-таиланд-730b",
       "domain": "climate",
       "legacy": 32,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "econ-финансовый-россия-9284",
-      "domain": "economy",
-      "legacy": 34,
       "shadow": null,
       "delta": null
     },
@@ -1170,6 +1175,13 @@
       "delta": null
     },
     {
+      "signal_id": "econ-финансовый-россия-9284",
+      "domain": "economy",
+      "legacy": 34,
+      "shadow": null,
+      "delta": null
+    },
+    {
       "signal_id": "econ-государств-россия-6360",
       "domain": "economy",
       "legacy": 46,
@@ -1187,13 +1199,6 @@
       "signal_id": "geop-санкционно-израиль-5fdd",
       "domain": "geopolitics",
       "legacy": 62,
-      "shadow": null,
-      "delta": null
-    },
-    {
-      "signal_id": "clim-таяниекрио-глобальн-edd1",
-      "domain": "climate",
-      "legacy": 46,
       "shadow": null,
       "delta": null
     },
@@ -1431,8 +1436,8 @@
   ],
   "deny_by_severity": {
     "0-30": 3,
-    "31-50": 214,
-    "51-70": 79,
+    "31-50": 212,
+    "51-70": 78,
     "71-90": 7,
     "91-100": 0
   }
