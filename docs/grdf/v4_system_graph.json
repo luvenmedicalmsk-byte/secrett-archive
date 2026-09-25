@@ -1,9 +1,9 @@
 {
   "grdf_version": "4.0",
   "date": "2026-09-25",
-  "generated_at": "2026-09-25T15:45:54.090354+00:00",
+  "generated_at": "2026-09-25T16:06:19.888689+00:00",
   "node_count": 61,
-  "edge_count": 68,
+  "edge_count": 67,
   "node_types": [
     "Country",
     "Domain",
@@ -58,17 +58,17 @@
       "id": "CC:RU",
       "type": "Country",
       "label": "Россия",
-      "gri": 87,
-      "vulnerability": 16,
-      "resilience": 55
+      "gri": 90,
+      "vulnerability": 28,
+      "resilience": 46
     },
     {
       "id": "CC:US",
       "type": "Country",
       "label": "США",
       "gri": 78,
-      "vulnerability": 26,
-      "resilience": 57
+      "vulnerability": 29,
+      "resilience": 51
     },
     {
       "id": "CC:CN",
@@ -138,9 +138,9 @@
       "id": "CC:CA",
       "type": "Country",
       "label": "Канада",
-      "gri": 49,
-      "vulnerability": 9,
-      "resilience": 76
+      "gri": 59,
+      "vulnerability": 18,
+      "resilience": 70
     },
     {
       "id": "CC:AE",
@@ -162,8 +162,8 @@
       "id": "CC:IN",
       "type": "Country",
       "label": "Индия",
-      "gri": 70,
-      "vulnerability": 24,
+      "gri": 68,
+      "vulnerability": 23,
       "resilience": 62
     },
     {
@@ -266,7 +266,7 @@
       "id": "CC:IR",
       "type": "Country",
       "label": "Иран",
-      "gri": 59,
+      "gri": 60,
       "vulnerability": 17,
       "resilience": 69
     },
@@ -362,9 +362,9 @@
       "id": "CC:TH",
       "type": "Country",
       "label": "Таиланд",
-      "gri": 53,
-      "vulnerability": 9,
-      "resilience": 74
+      "gri": 56,
+      "vulnerability": 5,
+      "resilience": 72
     },
     {
       "id": "CC:VN",
@@ -415,18 +415,6 @@
       "resilience": 64
     },
     {
-      "id": "RISK:US:CHAIN-CL",
-      "type": "Risk",
-      "label": "US: Wildfire → Energy → Supply Cha",
-      "score": 28
-    },
-    {
-      "id": "RISK:US:CHAIN-DR",
-      "type": "Risk",
-      "label": "US: Drought → Agriculture → Food P",
-      "score": 20
-    },
-    {
       "id": "RISK:CN:CHAIN-CL",
       "type": "Risk",
       "label": "CN: Wildfire → Energy → Supply Cha",
@@ -437,6 +425,12 @@
       "type": "Risk",
       "label": "CN: Drought → Agriculture → Food P",
       "score": 11
+    },
+    {
+      "id": "RISK:US:CHAIN-GE",
+      "type": "Risk",
+      "label": "US: Geopolitical Conflict → Energy",
+      "score": 14
     },
     {
       "id": "RISK:VN:CHAIN-CL",
@@ -463,10 +457,16 @@
       "score": 7
     },
     {
-      "id": "RISK:BY:CHAIN-GE",
+      "id": "RISK:RU:CHAIN-DR",
       "type": "Risk",
-      "label": "BY: Geopolitical Conflict → Energy",
-      "score": 10
+      "label": "RU: Drought → Agriculture → Food P",
+      "score": 12
+    },
+    {
+      "id": "RISK:RU:CHAIN-CL",
+      "type": "Risk",
+      "label": "RU: Wildfire → Energy → Supply Cha",
+      "score": 3
     }
   ],
   "edges": [
@@ -593,8 +593,8 @@
     {
       "from": "CC:RU",
       "to": "DOM:climate",
-      "type": "CORRELATES",
-      "weight": 0.58
+      "type": "ESCALATES",
+      "weight": 0.74
     },
     {
       "from": "CC:US",
@@ -643,12 +643,6 @@
       "to": "DOM:economic",
       "type": "CORRELATES",
       "weight": 0.62
-    },
-    {
-      "from": "CC:CA",
-      "to": "DOM:climate",
-      "type": "CORRELATES",
-      "weight": 0.36
     },
     {
       "from": "CC:AE",
@@ -825,18 +819,6 @@
       "weight": 0.72
     },
     {
-      "from": "CC:US",
-      "to": "RISK:US:CHAIN-CL",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:US",
-      "to": "RISK:US:CHAIN-DR",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
       "from": "CC:CN",
       "to": "RISK:CN:CHAIN-CL",
       "type": "CAUSES",
@@ -845,6 +827,12 @@
     {
       "from": "CC:CN",
       "to": "RISK:CN:CHAIN-DR",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:US",
+      "to": "RISK:US:CHAIN-GE",
       "type": "CAUSES",
       "weight": 0.85
     },
@@ -873,8 +861,14 @@
       "weight": 0.85
     },
     {
-      "from": "CC:BY",
-      "to": "RISK:BY:CHAIN-GE",
+      "from": "CC:RU",
+      "to": "RISK:RU:CHAIN-DR",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:RU",
+      "to": "RISK:RU:CHAIN-CL",
       "type": "CAUSES",
       "weight": 0.85
     }
