@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-09-25",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-25T10:08:08.593342+00:00",
+  "generated_at": "2026-09-25T10:26:36.211961+00:00",
   "node_count": 14,
   "edge_count": 16,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 35,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-GR-Кредит_час",
+      "type": "Signal",
+      "label": "Кредит частного сектора Греции",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-GR-Санкционно",
       "type": "Signal",
       "label": "Санкционное давление — Греция",
@@ -92,13 +99,6 @@
       "label": "Шторм — Греция",
       "severity": 38,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GR-Экономичес",
-      "type": "Signal",
-      "label": "Экономический сигнал — Греция",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-GR",
@@ -184,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-GR-Кредит_час",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-GR-Санкционно",
       "to": "DOMAIN-GR-geopolitical",
       "type": "AMPLIFIES",
@@ -194,12 +200,6 @@
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.38
-    },
-    {
-      "from": "SIGNAL-GR-Экономичес",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.32
     }
   ]
 }
