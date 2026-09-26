@@ -2,67 +2,67 @@
   "country": "GB",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T12:25:56.978854+00:00",
+  "generated_at": "2026-09-26T12:45:48.411003+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-GB",
       "type": "Country",
       "label": "GB",
-      "score": 50,
+      "score": 64,
       "props": {
-        "risk_score": 50
+        "risk_score": 64
       }
     },
     {
       "id": "DOMAIN-GB-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 36,
-      "trend": "stable"
+      "score": 64,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 47,
-      "trend": "stable"
+      "score": 5,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-climate",
       "type": "Domain",
       "label": "climate",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-social",
       "type": "Domain",
       "label": "social",
       "score": 50,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GB-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GB-Geopolitical",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-GB-Британец_и",
+      "type": "Signal",
+      "label": "Британец и его греческая жена погибли пр",
+      "severity": 64,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-GB-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Великобритания",
+      "severity": 64,
+      "domain": "geopolitical"
+    },
+    {
       "id": "SIGNAL-GB-Социальный",
       "type": "Signal",
       "label": "Социальный процесс — Великобритания",
       "severity": 50,
-      "domain": "social"
-    },
-    {
-      "id": "SIGNAL-GB-Государств",
-      "type": "Signal",
-      "label": "Государственный долг — Великобритания",
-      "severity": 47,
-      "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-GB-Миграционн",
-      "type": "Signal",
-      "label": "Миграционная политика — Великобритания",
-      "severity": 46,
       "domain": "social"
     }
   ],
@@ -106,13 +106,13 @@
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.64
     },
     {
       "from": "COUNTRY-GB",
       "to": "DOMAIN-GB-economic",
       "type": "CORRELATES",
-      "weight": 0.47
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-GB",
@@ -163,22 +163,43 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-GB-geopolitical",
+      "to": "DOMAIN-GB-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-GB-infrastructure",
+      "to": "DOMAIN-GB-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GB-economic",
+      "to": "DOMAIN-GB-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-GB-Британец_и",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
+      "from": "SIGNAL-GB-Геополитич",
+      "to": "DOMAIN-GB-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.64
+    },
+    {
       "from": "SIGNAL-GB-Социальный",
       "to": "DOMAIN-GB-social",
       "type": "AMPLIFIES",
       "weight": 0.5
-    },
-    {
-      "from": "SIGNAL-GB-Государств",
-      "to": "DOMAIN-GB-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.47
-    },
-    {
-      "from": "SIGNAL-GB-Миграционн",
-      "to": "DOMAIN-GB-social",
-      "type": "AMPLIFIES",
-      "weight": 0.46
     }
   ]
 }
