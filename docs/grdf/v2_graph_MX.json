@@ -2,7 +2,7 @@
   "country": "MX",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T11:06:03.855979+00:00",
+  "generated_at": "2026-09-26T11:26:01.779607+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-MX-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-MX-Кровати_в_",
+      "type": "Signal",
+      "label": "Кровати в больницах Мексики",
+      "severity": 32,
+      "domain": "social"
+    },
+    {
       "id": "SIGNAL-MX-Отключение",
       "type": "Signal",
       "label": "Отключение интернета — Мексика",
@@ -92,13 +99,6 @@
       "label": "Шторм — Мексика",
       "severity": 56,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-MX-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Латинская Амер",
-      "severity": 64,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-MX",
       "to": "DOMAIN-MX-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-MX",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-MX-climate",
-      "to": "DOMAIN-MX-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-MX-infrastructure",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-MX-economic",
-      "to": "DOMAIN-MX-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-MX-geopolitical",
       "to": "DOMAIN-MX-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-MX-climate",
+      "to": "DOMAIN-MX-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-MX-infrastructure",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-MX-economic",
+      "to": "DOMAIN-MX-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-MX-Кровати_в_",
+      "to": "DOMAIN-MX-social",
+      "type": "AMPLIFIES",
+      "weight": 0.32
+    },
+    {
       "from": "SIGNAL-MX-Отключение",
       "to": "DOMAIN-MX-technology",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-MX-climate",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-MX-Геополитич",
-      "to": "DOMAIN-MX-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.64
     }
   ]
 }
