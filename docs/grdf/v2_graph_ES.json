@@ -2,7 +2,7 @@
   "country": "ES",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T20:43:30.394395+00:00",
+  "generated_at": "2026-09-26T21:04:04.807778+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 57,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-ES-social",
       "type": "Domain",
       "label": "social",
-      "score": 45,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "technology"
     },
     {
-      "id": "SIGNAL-ES-Социальный",
+      "id": "SIGNAL-ES-Валютный_р",
       "type": "Signal",
-      "label": "Социальный процесс — Испания",
-      "severity": 45,
-      "domain": "social"
+      "label": "Валютный рынок — Испания",
+      "severity": 57,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-ES",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-social",
       "type": "CORRELATES",
-      "weight": 0.45
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ES",
@@ -161,6 +161,27 @@
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "DOMAIN-ES-climate",
@@ -205,27 +226,6 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-ES-climate",
-      "to": "DOMAIN-ES-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-ES-infrastructure",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-ES-economic",
-      "to": "DOMAIN-ES-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-ES-Пожарная_а",
       "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
@@ -238,10 +238,10 @@
       "weight": 0.62
     },
     {
-      "from": "SIGNAL-ES-Социальный",
-      "to": "DOMAIN-ES-social",
+      "from": "SIGNAL-ES-Валютный_р",
+      "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.57
     }
   ]
 }

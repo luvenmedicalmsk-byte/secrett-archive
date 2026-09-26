@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T20:43:30.393766+00:00",
+  "generated_at": "2026-09-26T21:04:04.807169+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 13,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 61,
+      "score": 33,
       "trend": "stable"
     },
     {
@@ -65,6 +65,11 @@
       "trend": "stable"
     },
     {
+      "id": "DRIVER-CA-Economic",
+      "type": "Driver",
+      "label": "Economic"
+    },
+    {
       "id": "DRIVER-CA-Geopolitical",
       "type": "Driver",
       "label": "Geopolitical"
@@ -75,9 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CA-Economic",
-      "type": "Driver",
-      "label": "Economic"
+      "id": "SIGNAL-CA-Крупнейший",
+      "type": "Signal",
+      "label": "Крупнейший в Канаде детектор пожаров при",
+      "severity": 32,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-CA-Земля_разр",
@@ -91,13 +98,6 @@
       "type": "Signal",
       "label": "Канада ищет защитные меры для работодате",
       "severity": 32,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Пожарная_а",
-      "type": "Signal",
-      "label": "Пожарная активность — Северная Америка",
-      "severity": 82,
       "domain": "climate"
     }
   ],
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.61
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-CA",
@@ -145,6 +145,12 @@
       "weight": 0.05
     },
     {
+      "from": "DRIVER-CA-Economic",
+      "to": "COUNTRY-CA",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-CA-Geopolitical",
       "to": "COUNTRY-CA",
       "type": "CAUSES",
@@ -157,52 +163,10 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CA-Economic",
-      "to": "COUNTRY-CA",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
+      "from": "SIGNAL-CA-Крупнейший",
+      "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CA-social",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "weight": 0.32
     },
     {
       "from": "SIGNAL-CA-Земля_разр",
@@ -215,12 +179,6 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-CA-Пожарная_а",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.82
     }
   ]
 }
