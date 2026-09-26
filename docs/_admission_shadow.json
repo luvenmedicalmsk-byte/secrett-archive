@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-26T15:23:57Z",
+  "generated": "2026-09-26T15:43:54Z",
   "spec": "SPEC-013 Phase 1 Shadow — READ-ONLY, поведение не менялось",
   "invariant": "нет FACT_EVENT → процесса существовать не должно",
   "admission_audit": {
@@ -26,14 +26,14 @@
     "note": "Operational Agreement — gate для Production (только status=active: эти процессы влияют на Radar/Pressure/Weekly/страны). Historical — качество архива, НЕ блокер: dormant/fading по определению не обогащаются (lifecycle, не дефект).",
     "operational": {
       "processes": 328,
-      "sample": 1170,
+      "sample": 1173,
       "agreement_pct": 89.1,
       "decision_agreement_pct": 89.3,
-      "critical_errors": 125,
+      "critical_errors": 126,
       "truth_ratio_pct": 97.3,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 108,
-        "COMMENTARY→FACT_EVENT": 16,
+        "COMMENTARY→FACT_EVENT": 17,
         "STATE_CONFIRMATION→FACT_EVENT": 1,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1
@@ -41,13 +41,13 @@
     },
     "historical": {
       "processes": 1149,
-      "sample": 2590,
+      "sample": 2593,
       "agreement_pct": 90.9,
       "decision_agreement_pct": 91.0,
-      "critical_errors": 233,
+      "critical_errors": 234,
       "error_matrix": {
         "FACT_EVENT→COMMENTARY": 190,
-        "COMMENTARY→FACT_EVENT": 37,
+        "COMMENTARY→FACT_EVENT": 38,
         "STATE_CONFIRMATION→FACT_EVENT": 4,
         "STATE_CONFIRMATION→COMMENTARY": 1,
         "BACKGROUND→COMMENTARY": 1,
@@ -78,13 +78,18 @@
   },
   "class_source": {
     "shadow_title_only": 187,
-    "evidence_sic": 2590
+    "evidence_sic": 2593
   },
   "truth_ratio_pct": 93.3,
   "domain_statistics": {
     "geopolitics": {
       "pass": 249,
       "deny": 75
+    },
+    "economy": {
+      "pass": 135,
+      "deny": 105,
+      "unmatched": 1
     },
     "climate": {
       "pass": 299,
@@ -94,11 +99,6 @@
     "social": {
       "pass": 65,
       "deny": 49
-    },
-    "economy": {
-      "pass": 135,
-      "deny": 105,
-      "unmatched": 1
     },
     "technology": {
       "pass": 95,
@@ -620,6 +620,21 @@
       "reason": "no FACT_EVENT in evidence"
     },
     {
+      "signal_id": "econ-валютныйры-сша-a47b",
+      "title": "Валютный рынок — США",
+      "domain": "economy",
+      "severity": 60,
+      "pressure": 66,
+      "first_seen": "2026-06-30",
+      "evidence_count": 3,
+      "evidence_classes": {
+        "COMMENTARY": 3
+      },
+      "status": "active",
+      "causal_links": 10,
+      "reason": "no FACT_EVENT in evidence"
+    },
+    {
       "signal_id": "geop-геополитич-красноем-b5e2",
       "title": "Геополитический процесс — Красное море",
       "domain": "geopolitics",
@@ -993,25 +1008,17 @@
       "status": "dormant",
       "causal_links": 0,
       "reason": "no FACT_EVENT in evidence"
-    },
-    {
-      "signal_id": "geop-военныеуда-атлантич-37af",
-      "title": "Военные удары — Атлантический океан",
-      "domain": "geopolitics",
-      "severity": 55,
-      "pressure": 24,
-      "first_seen": "2026-09-02",
-      "evidence_count": 1,
-      "evidence_classes": {
-        "COMMENTARY": 1
-      },
-      "status": "dormant",
-      "causal_links": 0,
-      "reason": "no FACT_EVENT in evidence"
     }
   ],
   "report_log": [],
   "severity_delta": [
+    {
+      "signal_id": "econ-валютныйры-сша-a47b",
+      "domain": "economy",
+      "legacy": 60,
+      "shadow": null,
+      "delta": null
+    },
     {
       "signal_id": "clim-климатичес-германия-4516",
       "domain": "climate",
@@ -1104,13 +1111,6 @@
       "delta": null
     },
     {
-      "signal_id": "econ-экономичес-глобальн-01da",
-      "domain": "economy",
-      "legacy": 47,
-      "shadow": null,
-      "delta": null
-    },
-    {
       "signal_id": "econ-топливныйр-глобальн-27f0",
       "domain": "economy",
       "legacy": 32,
@@ -1118,9 +1118,9 @@
       "delta": null
     },
     {
-      "signal_id": "econ-валютныйры-сша-a47b",
+      "signal_id": "econ-экономичес-глобальн-01da",
       "domain": "economy",
-      "legacy": 32,
+      "legacy": 47,
       "shadow": null,
       "delta": null
     },
@@ -1435,8 +1435,8 @@
   ],
   "deny_by_severity": {
     "0-30": 4,
-    "31-50": 218,
-    "51-70": 75,
+    "31-50": 217,
+    "51-70": 76,
     "71-90": 6,
     "91-100": 0
   }
