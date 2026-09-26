@@ -2,9 +2,9 @@
   "country": "TR",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T03:45:43.934465+00:00",
+  "generated_at": "2026-09-26T04:07:06.151104+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-TR",
@@ -33,14 +33,14 @@
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 54,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Пожарный_с",
-      "type": "Signal",
-      "label": "Пожарный сигнал — Европа · Стамбул",
-      "severity": 34,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-TR-Геополитич",
       "type": "Signal",
       "label": "Геополитический процесс — Ближний Восток",
@@ -99,6 +92,13 @@
       "label": "Военный конфликт — Ближний Восток (систе",
       "severity": 84,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-TR-Отключение",
+      "type": "Signal",
+      "label": "Отключение интернета — Ближний Восток (с",
+      "severity": 72,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -118,13 +118,13 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-TR",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TR-social",
-      "to": "DOMAIN-TR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-TR-climate",
-      "to": "DOMAIN-TR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-TR-infrastructure",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-TR-economic",
-      "to": "DOMAIN-TR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -226,12 +184,6 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-Пожарный_с",
-      "to": "DOMAIN-TR-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.34
-    },
-    {
       "from": "SIGNAL-TR-Геополитич",
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
@@ -242,6 +194,12 @@
       "to": "DOMAIN-TR-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.84
+    },
+    {
+      "from": "SIGNAL-TR-Отключение",
+      "to": "DOMAIN-TR-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.72
     }
   ]
 }
