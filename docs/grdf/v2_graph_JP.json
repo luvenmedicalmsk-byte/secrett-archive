@@ -2,9 +2,9 @@
   "country": "JP",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T00:46:06.410450+00:00",
+  "generated_at": "2026-09-26T00:55:16.784744+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-JP",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-JP-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-JP-Шторм_—_Яп",
+      "id": "SIGNAL-JP-Геополитич",
       "type": "Signal",
-      "label": "Шторм — Япония",
-      "severity": 58,
-      "domain": "climate"
+      "label": "Геополитический процесс — Япония",
+      "severity": 46,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-JP",
       "to": "DOMAIN-JP-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-JP",
@@ -205,6 +205,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-JP-geopolitical",
+      "to": "DOMAIN-JP-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-JP-infrastructure",
+      "to": "DOMAIN-JP-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-JP-economic",
+      "to": "DOMAIN-JP-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-JP-Банк_япони",
       "to": "DOMAIN-JP-economic",
       "type": "AMPLIFIES",
@@ -217,10 +238,10 @@
       "weight": 0.9
     },
     {
-      "from": "SIGNAL-JP-Шторм_—_Яп",
-      "to": "DOMAIN-JP-climate",
+      "from": "SIGNAL-JP-Геополитич",
+      "to": "DOMAIN-JP-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.46
     }
   ]
 }
