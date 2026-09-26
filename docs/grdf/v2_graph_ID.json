@@ -2,9 +2,9 @@
   "country": "ID",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T17:44:12.935255+00:00",
+  "generated_at": "2026-09-26T18:04:18.507862+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-ID",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 39,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -94,11 +94,11 @@
       "domain": "social"
     },
     {
-      "id": "SIGNAL-ID-Транспортн",
+      "id": "SIGNAL-ID-Санкционно",
       "type": "Signal",
-      "label": "Транспортный коридор — Юго-Восточная Ази",
-      "severity": 53,
-      "domain": "economic"
+      "label": "Санкционное давление — Юго-Восточная Ази",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-ID",
@@ -163,6 +163,27 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "SIGNAL-ID-Пожары_в_И",
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
@@ -175,10 +196,10 @@
       "weight": 0.81
     },
     {
-      "from": "SIGNAL-ID-Транспортн",
-      "to": "DOMAIN-ID-economic",
+      "from": "SIGNAL-ID-Санкционно",
+      "to": "DOMAIN-ID-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.62
     }
   ]
 }
