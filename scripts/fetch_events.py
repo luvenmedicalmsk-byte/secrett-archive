@@ -14733,8 +14733,26 @@ def _tg_write_debug(transport, items, error, raw=None):
     try:
         from collections import Counter as _C
         import json as _j
+        # 26.09.2026. Отчёт считал только количество постов на канал, без дат.
+        # Когда Мия спросила, почему свежих записей мало, доказать было нечем:
+        # «bbbreaking отдал 166 постов» не отвечает на вопрос, сколько из них
+        # сегодняшние. Канал отдаёт последние N постов, то есть срез за двое
+        # суток, и без разбивки по датам молчание канала и обычный ход дел
+        # выглядят одинаково. Добавлены три числа: раскладка всех постов по
+        # датам, сколько постов за сегодня и сколько каналов сегодня не дали
+        # ни одного поста. Логика приёма не меняется, это только запись.
+        _today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        _by_day = _C(str(i.get('date') or '')[:10] for i in items)
+        _today_per_ch = _C(i['source'] for i in items
+                           if str(i.get('date') or '')[:10] == _today)
+        _silent = sorted(set(i['source'] for i in items) - set(_today_per_ch))
         dbg = {'transport': transport, 'error': error,
                'channels': dict(_C(i['source'] for i in items)), 'total': len(items),
+               'постов по датам': dict(sorted(_by_day.items(), reverse=True)[:10]),
+               'постов за сегодня': sum(_today_per_ch.values()),
+               'за сегодня по каналам': dict(_today_per_ch.most_common()),
+               'каналов без постов за сегодня': len(_silent),
+               'каналы без постов за сегодня': _silent[:40],
                'raw_per_channel': raw}
         _j.dump(dbg, open('docs/_tg_debug.json','w'), ensure_ascii=False, indent=2)
     except Exception:
