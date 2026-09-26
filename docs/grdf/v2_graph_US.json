@@ -2,17 +2,17 @@
   "country": "US",
   "date": "2026-09-26",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-26T01:44:38.368336+00:00",
+  "generated_at": "2026-09-26T02:07:23.380682+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-US",
       "type": "Country",
       "label": "US",
-      "score": 91,
+      "score": 92,
       "props": {
-        "risk_score": 91
+        "risk_score": 92
       }
     },
     {
@@ -20,21 +20,21 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 62,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-economic",
       "type": "Domain",
       "label": "economic",
       "score": 82,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 79,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-US-technology",
@@ -87,16 +87,16 @@
       "domain": "economic"
     },
     {
+      "id": "SIGNAL-US-Отслеживай",
+      "type": "Signal",
+      "label": "Отслеживайте новые законы о лесных пожар",
+      "severity": 79,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-US-38_глобаль",
       "type": "Signal",
       "label": "38 глобальных организаций гражданского о",
-      "severity": 62,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-US-Отчет:_зам",
-      "type": "Signal",
-      "label": "Отчет: заместитель прокурора МУС заявляе",
       "severity": 62,
       "domain": "geopolitical"
     }
@@ -118,7 +118,7 @@
       "from": "COUNTRY-US",
       "to": "DOMAIN-US-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.79
     },
     {
       "from": "COUNTRY-US",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-US-infrastructure",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-climate",
+      "to": "DOMAIN-US-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-US-economic",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-US-social",
+      "to": "DOMAIN-US-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "DOMAIN-US-geopolitical",
       "to": "DOMAIN-US-infrastructure",
       "type": "ESCALATES",
@@ -190,13 +232,13 @@
       "weight": 0.82
     },
     {
-      "from": "SIGNAL-US-38_глобаль",
-      "to": "DOMAIN-US-geopolitical",
+      "from": "SIGNAL-US-Отслеживай",
+      "to": "DOMAIN-US-climate",
       "type": "AMPLIFIES",
-      "weight": 0.62
+      "weight": 0.79
     },
     {
-      "from": "SIGNAL-US-Отчет:_зам",
+      "from": "SIGNAL-US-38_глобаль",
       "to": "DOMAIN-US-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.62
