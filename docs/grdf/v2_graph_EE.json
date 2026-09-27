@@ -2,9 +2,9 @@
   "country": "EE",
   "date": "2026-09-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-27T11:26:53.098836+00:00",
+  "generated_at": "2026-09-27T11:47:01.891486+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-EE",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-EE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 34,
+      "score": 53,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-EE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 38,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,14 +70,28 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-EE-geopolitical",
+      "type": "Driver",
+      "label": "geopolitical"
+    },
+    {
       "id": "DRIVER-EE-economic",
       "type": "Driver",
       "label": "economic"
     },
     {
-      "id": "DRIVER-EE-geopolitical",
-      "type": "Driver",
-      "label": "geopolitical"
+      "id": "SIGNAL-EE-DATACRUNCH",
+      "type": "Signal",
+      "label": "DATACRUNCH: Старые автомобили и китайски",
+      "severity": 53,
+      "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-EE-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Эстония",
+      "severity": 53,
+      "domain": "geopolitical"
     },
     {
       "id": "SIGNAL-EE-Климатичес",
@@ -85,20 +99,6 @@
       "label": "Климатический сигнал — Эстония",
       "severity": 57,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-EE-Геополитич",
-      "type": "Signal",
-      "label": "Геополитический процесс — Эстония",
-      "severity": 34,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-EE-Рынок_труд",
-      "type": "Signal",
-      "label": "Рынок труда — Эстония",
-      "severity": 32,
-      "domain": "economic"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.34
+      "weight": 0.53
     },
     {
       "from": "COUNTRY-EE",
       "to": "DOMAIN-EE-economic",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-EE",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-EE-economic",
-      "to": "COUNTRY-EE",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-EE-geopolitical",
       "to": "COUNTRY-EE",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-EE-climate",
-      "to": "DOMAIN-EE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-EE-infrastructure",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-EE-economic",
-      "to": "DOMAIN-EE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "from": "DRIVER-EE-economic",
+      "to": "COUNTRY-EE",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-EE-climate",
@@ -205,22 +184,64 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-EE-Климатичес",
-      "to": "DOMAIN-EE-climate",
+      "from": "DOMAIN-EE-climate",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.57
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-EE-geopolitical",
+      "to": "DOMAIN-EE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-EE-infrastructure",
+      "to": "DOMAIN-EE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-EE-economic",
+      "to": "DOMAIN-EE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-EE-DATACRUNCH",
+      "to": "DOMAIN-EE-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.53
     },
     {
       "from": "SIGNAL-EE-Геополитич",
       "to": "DOMAIN-EE-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.34
+      "weight": 0.53
     },
     {
-      "from": "SIGNAL-EE-Рынок_труд",
-      "to": "DOMAIN-EE-economic",
+      "from": "SIGNAL-EE-Климатичес",
+      "to": "DOMAIN-EE-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.57
     }
   ]
 }
