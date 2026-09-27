@@ -2,9 +2,9 @@
   "country": "CA",
   "date": "2026-09-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-27T12:24:54.122179+00:00",
+  "generated_at": "2026-09-27T12:59:56.881098+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-CA",
@@ -19,7 +19,7 @@
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Земля_разр",
-      "type": "Signal",
-      "label": "Земля разрывается под Тихоокеанским Севе",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CA-Канада_ище",
       "type": "Signal",
       "label": "Канада ищет защитные меры для работодате",
@@ -99,6 +92,13 @@
       "label": "Пожарная активность — Северная Америка",
       "severity": 79,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Геополитич",
+      "type": "Signal",
+      "label": "Геополитический процесс — Канада",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,46 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CA-Земля_разр",
-      "to": "DOMAIN-CA-climate",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
     },
     {
       "from": "SIGNAL-CA-Канада_ище",
@@ -221,6 +236,12 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.79
+    },
+    {
+      "from": "SIGNAL-CA-Геополитич",
+      "to": "DOMAIN-CA-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
