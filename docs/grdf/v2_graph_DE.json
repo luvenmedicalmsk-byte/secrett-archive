@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-09-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-27T22:44:51.118911+00:00",
+  "generated_at": "2026-09-27T23:20:02.130367+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -40,14 +40,14 @@
       "id": "DOMAIN-DE-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 58,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-DE-social",
       "type": "Domain",
       "label": "social",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "economic"
     },
     {
-      "id": "SIGNAL-DE-По_всей_Ге",
-      "type": "Signal",
-      "label": "По всей Германии прошла волна протестов ",
-      "severity": 46,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-DE-Климатичес",
       "type": "Signal",
       "label": "Климатический сигнал — Германия",
       "severity": 72,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-DE-Киберугроз",
+      "type": "Signal",
+      "label": "Киберугроза — Германия",
+      "severity": 58,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -124,13 +124,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-social",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-DE-social",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,14 +184,29 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-DE-[Интервью]",
+      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.46
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
     },
     {
-      "from": "SIGNAL-DE-По_всей_Ге",
+      "from": "DOMAIN-DE-economic",
       "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-DE-social",
+      "to": "DOMAIN-DE-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-DE-[Интервью]",
+      "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
       "weight": 0.46
     },
@@ -221,6 +215,12 @@
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-DE-Киберугроз",
+      "to": "DOMAIN-DE-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     }
   ]
 }
