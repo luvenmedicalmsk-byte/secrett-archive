@@ -13469,6 +13469,43 @@ def fetch_geopolitics_rss():
         # вслепую. Каждая лента отдаёт не более 12 записей за прогон.
         ('https://oc-media.org/feed', 'OC Media', 'geopolitics'),        # Грузия, Армения
         ('https://e.vnexpress.net/rss/world.rss', 'VnExpress', 'geopolitics'),  # Вьетнам
+        # ═══ ВОСТОЧНЫЙ ФЛАНГ (27.09.2026) ═══════════════════════════════════
+        # Повод: «Литва и Польша готовят план эвакуации жителей стран Балтии
+        # на случай войны» (26–27.09) в Атлас не попало. Проверено, что это не
+        # фильтр: следа нет ни в _pipeline_loss, ни в _filter_noise, ни в
+        # _no_domain, ни в _signal_gate, ни в _dedup_debug — запись не
+        # приходила.
+        #
+        # Причина в составе: из 21 источника геополитики ни одного из региона.
+        # Список это почти целиком американо-британские аналитические центры
+        # (Atlantic Council, CFR, CSIS, Carnegie, Chatham House, FPRI, ISW,
+        # War on the Rocks, Foreign Affairs) плюс OC Media (Кавказ),
+        # The Diplomat (Азия), VnExpress (Вьетнам), Semafor. Аналитический
+        # центр публикует РАЗБОР, а не событие: о таком плане он напишет через
+        # неделю, когда сигналом это уже не будет.
+        #
+        # Reuters World и LiveUAmap, названные в roadmap проекта, не подключены
+        # вовсе: из Reuters есть только Reuters Business. Отдельный вопрос.
+        #
+        # Взяты англоязычные службы национальных телерадиокомпаний: латиница
+        # проходит переводчик (is_english), как и в наборе 26.09. Балтийские и
+        # польские языки тоже латиница, поэтому регион совместим с конвейером
+        # без изменений — в отличие от грузинского и армянского.
+        #
+        # По два адреса на источник — та же схема, что уже применена к CSIS,
+        # Chatham House и ISW выше: точный адрес ленты не проверить из
+        # мастерской (сеть закрыта на реестры пакетов и GitHub), поэтому
+        # пробуются оба, мёртвый просто не отдаст данных. Какой сработал,
+        # скажет журнал _flank_probe.json после прогона.
+        #
+        # Три источника, а не десять: сохраняю порядок, принятый 26.09 —
+        # сначала проверить схему на одном прогоне.
+        ('https://eng.lsm.lv/rss/?lang=en&catid=315', 'LSM', 'geopolitics'),      # Латвия, политика
+        ('https://eng.lsm.lv/rss/?lang=en&catid=20472', 'LSM', 'geopolitics'),    # Латвия, оборона
+        ('https://news.err.ee/rss', 'ERR', 'geopolitics'),                        # Эстония
+        ('https://news.err.ee/feed', 'ERR', 'geopolitics'),                       # Эстония, запасной
+        ('https://www.lrt.lt/en/?rss', 'LRT', 'geopolitics'),                     # Литва
+        ('https://www.lrt.lt/?rss', 'LRT', 'geopolitics'),                        # Литва, запасной
     ]
 
     items = []
@@ -13479,14 +13516,26 @@ def fetch_geopolitics_rss():
         {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
     ]
 
+    # Журнал по каждой ленте. Прежде отказ был молчаливым («if not data:
+    # continue»), поэтому мёртвый адрес и живой, но пустой, выглядели
+    # одинаково — и накопились: blacklist держит 35 мёртвых URL. Здесь
+    # фиксируется исход каждого адреса, чтобы состав источников обсуждался
+    # по журналу, а не по памяти. Остальные четыре фетчера (климат,
+    # экономика, социум, технологии) отказ по-прежнему не журналируют.
+    probe = []
+
     for url, src_name, domain in sources:
         if url in seen_urls: continue
         data = None
         for hdrs in ua_list:
             data = fetch_url(url, headers=hdrs, timeout=8)
             if data: break
-        if not data: continue
+        if not data:
+            probe.append({'источник': src_name, 'адрес': url,
+                          'исход': 'не ответил', 'записей': 0, 'примеры': []})
+            continue
         seen_urls.add(url)
+        _before = len(items)
         try:
             import xml.etree.ElementTree as ET
             root = ET.fromstring(data)
@@ -13519,8 +13568,14 @@ def fetch_geopolitics_rss():
                     'domain': domain,
                     'source_bias': 1,
                 })
+            probe.append({'источник': src_name, 'адрес': url, 'исход': 'ок',
+                          'записей': len(items) - _before,
+                          'примеры': [i['title'][:90] for i in items[_before:_before + 2]]})
         except Exception as e:
             print(f'  [WARN] {src_name}: {e}', file=sys.stderr)
+            probe.append({'источник': src_name, 'адрес': url,
+                          'исход': 'ответил, но не разобрался: %s' % str(e)[:90],
+                          'записей': 0, 'примеры': []})
 
     seen = set()
     unique = []
@@ -13529,6 +13584,23 @@ def fetch_geopolitics_rss():
         if key not in seen:
             seen.add(key)
             unique.append(it)
+
+    try:
+        _alive = [p for p in probe if p['исход'] == 'ок' and p['записей']]
+        (OUTPUT_PATH.parent / '_flank_probe.json').write_text(json.dumps({
+            'дата': datetime.now(timezone.utc).isoformat(),
+            'о чём': ('Исход каждой ленты домена геополитика за прогон. Заведён '
+                      '27.09.2026 вместе с источниками восточного фланга (LSM, ERR, '
+                      'LRT): точный адрес ленты нельзя проверить из мастерской, '
+                      'поэтому у каждого источника по два адреса, и какой живой — '
+                      'показывает этот журнал, а не догадка.'),
+            'адресов всего': len(probe),
+            'живых с записями': len(_alive),
+            'молчат': len([p for p in probe if p['исход'] == 'не ответил']),
+            'ленты': probe,
+        }, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _pe:
+        print('  [WARN] flank probe: %s' % _pe, file=sys.stderr)
 
     print(f'  Геополитические RSS: {len(unique)} событий', file=sys.stderr)
     return unique
