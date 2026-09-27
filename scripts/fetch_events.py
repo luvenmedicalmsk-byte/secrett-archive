@@ -7086,9 +7086,13 @@ def process_events(raw_items):
             # должен работать, а не отключаться. Их случай — в словаре _SIG_RE,
             # где нет англоязычной лексики развёртывания сил: «German Eurofighter
             # jets arrive at Lielvārde air base» отбрасывается именно там.
+            # War on the Rocks и Geopolitical Futures здесь БЫЛИ и убраны
+            # 27.09.2026: оба состоят в _OPED_SOURCES и отбрасываются на стадии
+            # filter, то есть задолго до этого гейта. Доверие им было мёртвой
+            # настройкой и противоречило решению исключать колумнистику.
+            # Это моя недоработка: добавила их, не сверившись с _OPED_SOURCES.
             'CSIS','Chatham House','CFR','Atlantic Council','ISW',
-            'War on the Rocks','Carnegie Endowment','GLOBSEC','FPRI',
-            'Geopolitical Futures','Geopolitical Monitor'}
+            'Carnegie Endowment','GLOBSEC','FPRI','Geopolitical Monitor'}
         if (item.get('_force_severity') is None and not _sys
                 and domain in ('geopolitics','economy','social','technology')
                 and item.get('source') not in _TRUSTED_SOCIAL
@@ -7507,7 +7511,30 @@ def process_events(raw_items):
             for _s, _n in sorted(_src_raw.items(), key=lambda kv: -kv[1]):
                 _stages = {st: cnt.get(_s, 0) for st, cnt in _LOSS_SRC.items() if cnt.get(_s)}
                 _fin = _src_final.get(_s, 0)
-                if _n and not _fin:
+                # ЛЕНТА ОТВЕЧАЕТ, НО ОТДАЁТ ТОЛЬКО СТАРОЕ (27.09.2026).
+                # Blacklist ловит URL, которые не отвечают, — их 35. Ленту,
+                # которая отвечает исправно и отдаёт один и тот же архив,
+                # не ловит ничто: она скачивается каждые 30 минут и целиком
+                # уходит на стадии old. Замер прогона 19:27 UTC, потери
+                # только на old:
+                #     Dciber                    193 из 195
+                #     Downdetector              122 из 170
+                #     Cyber SN                  115 из 122
+                #     Cybersec                   63 из  63
+                #     Telegram/rakshademography  55 из  55
+                #     Engineering                39 из  41
+                #     AM Live                    40 из  81
+                #     ReliefWeb/UN               25 из  25
+                # Всего 573 записи за прогон, это 13% всего читаемого.
+                #
+                # Вердикт даётся отдельным именем, а источник НЕ отключается
+                # автоматически: один прогон не доказывает, что лента мертва,
+                # а не пережила тихий день. Имя делает состояние видимым, и
+                # решение по каждой ленте принимается по нескольким прогонам.
+                _old_lost = _stages.get('old', 0)
+                if _n and not _fin and _old_lost >= _n * 0.9:
+                    _verdict = 'отдаёт только устаревшее'
+                elif _n and not _fin:
                     _verdict = 'не доходит'
                 elif _fin < _n * 0.2:
                     _verdict = 'доходит мало'
@@ -13561,7 +13588,14 @@ def fetch_geopolitics_rss():
         ('https://www.cfr.org/rss/backgrounders', 'CFR', 'geopolitics'),
         ('https://www.atlanticcouncil.org/feed/', 'Atlantic Council', 'geopolitics'),
         # Военный анализ
-        ('https://warontherocks.com/feed/', 'War on the Rocks', 'geopolitics'),
+        # War on the Rocks отключён 27.09.2026. Источник состоит в
+        # _OPED_SOURCES: конвейер отбрасывает ВСЕ его записи на стадии filter
+        # как чистую колумнистику. Замер прогона 19:27 UTC: 12 сырых, из них
+        # 12 на filter, 0 в ленте. Чтение ленты каждые 30 минут было работой
+        # с заведомо нулевым результатом. Решение исключать колумнистику не
+        # меняется — меняется только то, что мы перестаём её скачивать.
+        # Вернуть: раскомментировать строку и убрать имя из _OPED_SOURCES.
+        # ('https://warontherocks.com/feed/', 'War on the Rocks', 'geopolitics'),
         ('https://www.understandingwar.org/rss.xml', 'ISW', 'geopolitics'),
         ('https://www.understandingwar.org/feed', 'ISW', 'geopolitics'),
         # Азия и Indo-Pacific
@@ -13571,7 +13605,10 @@ def fetch_geopolitics_rss():
         ('https://www.fpri.org/feed/', 'FPRI', 'geopolitics'),
         # Геополитические мониторы
         ('https://www.geopoliticalmonitor.com/feed/', 'Geopolitical Monitor', 'geopolitics'),
-        ('https://geopoliticalfutures.com/feed/', 'Geopolitical Futures', 'geopolitics'),
+        # Geopolitical Futures отключён 27.09.2026 по той же причине, что
+        # War on the Rocks выше: состоит в _OPED_SOURCES, замер 19:27 UTC дал
+        # 5 сырых, 5 на filter, 0 в ленте.
+        # ('https://geopoliticalfutures.com/feed/', 'Geopolitical Futures', 'geopolitics'),
         # Semafor
         ('https://www.semafor.com/feed', 'Semafor', 'geopolitics'),
         # ═══ РЕГИОНАЛЬНОЕ ПОКРЫТИЕ (COVERAGE_MIN, 26.09.2026) ═══════════════
