@@ -7059,7 +7059,36 @@ def process_events(raw_items):
         # S42: «сигнал или шум» -- не-системное событие 4 доменов без единого риск-маркера = новость.
         _TRUSTED_SOCIAL={'WFP','FAO News','FEWS NET','Pew Research','Brookings','Carnegie','Freedom House','CDC','ECDC','WHO Outbreaks','WHO','The Lancet','ProMED','Oxfam','UNHCR','IDMC','IOM','ReliefWeb','UN News','ILO','WEF',
             'IEEE Spectrum','Hugging Face','OpenAI News','Google DeepMind','KrebsOnSecurity','CISA','Cisco Talos','ENISA','Semiconductor Engineering','EE Times','Data Center Dynamics','The Register','SpaceNews','Space.com','Utility Dive','PV Magazine','The Robot Report','Cloudflare Blog','RIPE NCC','New Scientist','MIT Technology Review',
-            'IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business','Trading Economics','FAO Economy','IMF','World Bank','BIS','OECD'}
+            'IEA','EIA','OilPrice','Mining.com','FreightWaves','Journal of Commerce','WTO','UNCTAD','Reuters Business','Trading Economics','FAO Economy','IMF','World Bank','BIS','OECD',
+            # ═══ АНАЛИТИЧЕСКИЕ ЦЕНТРЫ ГЕОПОЛИТИКИ (27.09.2026) ═══════════════
+            # Список назван «social», но покрывает все домены: около 55 имён из
+            # экономики, технологий и социума. Геополитики в нём не было НИ ОДНОГО
+            # имени. То есть единственный домен, где институциональная аналитика
+            # обязана пройти ключевой гейт sev_nomarker, задуманный для новостной
+            # ленты. Прямое следствие, замер прогона 19:09 UTC:
+            #     CSIS                 10 сырых → 0 собранных
+            #     War on the Rocks     12 сырых → 0 собранных
+            #     Geopolitical Futures  5 сырых → 0 собранных
+            #     всего по центрам     51 сырых → 6 собранных → 2 в ленте
+            #
+            # НЕСОВПАДЕНИЕ СТРОКИ. «Carnegie» в списке уже был, но лента
+            # геополитики регистрирует источник как «Carnegie Endowment», и
+            # сравнение идёт по точному имени — значит покрыт он не был. Тот же
+            # класс дефекта, что дубли ключей в таблицах стран.
+            #
+            # Это правка симметрии, а не новая политика: Brookings, Carnegie,
+            # Pew Research, Freedom House, WEF в списке с самого начала. CSIS и
+            # Chatham House — ровно тот же класс источника.
+            #
+            # НАЦИОНАЛЬНЫЕ МЕДИА здесь НЕ добавлены намеренно: LSM, ERR, LRT,
+            # OC Media, VnExpress, Semafor, The Diplomat публикуют всё, включая
+            # спорт и культуру, и сплошное доверие залило бы домен. Для них гейт
+            # должен работать, а не отключаться. Их случай — в словаре _SIG_RE,
+            # где нет англоязычной лексики развёртывания сил: «German Eurofighter
+            # jets arrive at Lielvārde air base» отбрасывается именно там.
+            'CSIS','Chatham House','CFR','Atlantic Council','ISW',
+            'War on the Rocks','Carnegie Endowment','GLOBSEC','FPRI',
+            'Geopolitical Futures','Geopolitical Monitor'}
         if (item.get('_force_severity') is None and not _sys
                 and domain in ('geopolitics','economy','social','technology')
                 and item.get('source') not in _TRUSTED_SOCIAL
