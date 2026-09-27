@@ -7813,7 +7813,40 @@ def process_events(raw_items):
 
     try:
         import collections as _c2
+        # ДВА ПИСАТЕЛЯ В ОДИН ФАЙЛ (найдено 27.09.2026). Выше, около строки 7490,
+        # тот же _pipeline_loss.json уже записывается — и записывается с
+        # source_funnel: воронкой по каждому источнику со стадией, на которой он
+        # теряется, и вердиктом «не доходит / доходит мало / норма». Эта запись
+        # ПЕРЕЗАТИРАЛАСЬ здесь: ключей source_funnel и loss_by_stage_source в
+        # итоговом файле не было никогда.
+        #
+        # Обнаружено при разборе того, почему LSM даёт 24 сырых, 3 собранных и 0
+        # в ленте. Ответ считался на каждом прогоне и выбрасывался: приходилось
+        # гадать по общим счётчикам, хотя разбивка по источнику и стадии уже была
+        # посчитана. То же касается всей RSS-геополитики, включая CSIS (10 сырых,
+        # 0 собранных).
+        #
+        # Здесь файл теперь ДОПОЛНЯЕТСЯ, а не перезаписывается: ключи первого
+        # писателя переносятся, loss_by_stage_source пересчитывается заново,
+        # потому что _LOSS_SRC доступен и всегда актуален. Поле funnel_from
+        # держит метку первой записи — если воронка окажется от прошлого прогона
+        # (первый писатель не сработал), это будет видно по расхождению с ts.
+        _prev = {}
+        try:
+            _lp = OUTPUT_PATH.parent / '_pipeline_loss.json'
+            if _lp.exists():
+                _prev = json.loads(_lp.read_text(encoding='utf-8')) or {}
+        except Exception:
+            _prev = {}
+        _keep = {}
+        for _k in ('source_funnel', 'built', 'exported'):
+            if _k in _prev:
+                _keep[_k] = _prev[_k]
+        if 'generated' in _prev:
+            _keep['funnel_from'] = _prev['generated']
         (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(json.dumps({
+            **_keep,
+            'loss_by_stage_source': dict(_LOSS_SRC),
             'ts': datetime.now(timezone.utc).isoformat(),
             'loss': dict(_LOSS),
             'raw_by_source': dict(_c2.Counter(i.get('source','') for i in raw_items)),
