@@ -2,9 +2,9 @@
   "country": "ES",
   "date": "2026-09-27",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-27T15:30:34.371245+00:00",
+  "generated_at": "2026-09-27T15:47:58.047304+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ES",
@@ -26,21 +26,21 @@
       "id": "DOMAIN-ES-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 36,
+      "score": 57,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-ES-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 63,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-ES-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 62,
       "trend": "stable"
     },
     {
@@ -65,11 +65,6 @@
       "trend": "stable"
     },
     {
-      "id": "DRIVER-ES-Economic",
-      "type": "Driver",
-      "label": "Economic"
-    },
-    {
       "id": "DRIVER-ES-Geopolitical",
       "type": "Driver",
       "label": "Geopolitical"
@@ -80,24 +75,29 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-Потребител",
-      "type": "Signal",
-      "label": "Потребительский кредит в Испании",
-      "severity": 32,
-      "domain": "economic"
+      "id": "DRIVER-ES-Economic",
+      "type": "Driver",
+      "label": "Economic"
     },
     {
-      "id": "SIGNAL-ES-Цены_на_жи",
+      "id": "SIGNAL-ES-Пожарная_а",
       "type": "Signal",
-      "label": "Цены на жилье в Испании",
-      "severity": 32,
-      "domain": "economic"
+      "label": "Пожарная активность — Испания",
+      "severity": 63,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-ES-Уровень_бе",
+      "id": "SIGNAL-ES-Киберугроз",
       "type": "Signal",
-      "label": "Уровень безработицы среди молодежи в Исп",
-      "severity": 32,
+      "label": "Киберугроза — Испания",
+      "severity": 62,
+      "domain": "technology"
+    },
+    {
+      "id": "SIGNAL-ES-Валютный_р",
+      "type": "Signal",
+      "label": "Валютный рынок — Испания",
+      "severity": 57,
       "domain": "economic"
     }
   ],
@@ -112,19 +112,19 @@
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-economic",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.57
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-ES",
       "to": "DOMAIN-ES-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.62
     },
     {
       "from": "COUNTRY-ES",
@@ -145,12 +145,6 @@
       "weight": 0.05
     },
     {
-      "from": "DRIVER-ES-Economic",
-      "to": "COUNTRY-ES",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-ES-Geopolitical",
       "to": "COUNTRY-ES",
       "type": "CAUSES",
@@ -161,6 +155,54 @@
       "to": "COUNTRY-ES",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DRIVER-ES-Economic",
+      "to": "COUNTRY-ES",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-ES-infrastructure",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-climate",
+      "to": "DOMAIN-ES-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-ES-economic",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-ES-social",
+      "to": "DOMAIN-ES-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "DOMAIN-ES-geopolitical",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-ES-Потребител",
-      "to": "DOMAIN-ES-economic",
+      "from": "SIGNAL-ES-Пожарная_а",
+      "to": "DOMAIN-ES-climate",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.63
     },
     {
-      "from": "SIGNAL-ES-Цены_на_жи",
-      "to": "DOMAIN-ES-economic",
+      "from": "SIGNAL-ES-Киберугроз",
+      "to": "DOMAIN-ES-technology",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.62
     },
     {
-      "from": "SIGNAL-ES-Уровень_бе",
+      "from": "SIGNAL-ES-Валютный_р",
       "to": "DOMAIN-ES-economic",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.57
     }
   ]
 }
