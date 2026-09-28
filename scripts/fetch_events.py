@@ -7641,9 +7641,29 @@ def process_events(raw_items):
                     _verdict = 'доходит мало'
                 else:
                     _verdict = 'норма'
-                _by_source[_s] = {'raw': _n, 'final': _fin, 'verdict': _verdict, 'lost_at': _stages}
+                _by_source[_s] = {'raw': _n, 'до_лимитов': _fin, 'verdict': _verdict, 'lost_at': _stages}
+            # ЧЕСТНОЕ ИМЯ СТОЛБЦА (28.09.2026). Столбец назывался «final», и я
+            # два дня читала его как «в опубликованной ленте». Это неверно:
+            # воронка пишется ЗДЕСЬ, а после неё top_events проходит ещё пять
+            # усечений — S43/44 (сигнал против новости, битые фрагменты), S43b
+            # (локальный шум), _llm_dedup, _topic_cap(6) и кап на CISA KEV.
+            # Замер прогона 10:05 UTC: exported 943, а в docs/events.json 347.
+            # То есть 592 записи уходят ПОСЛЕ воронки, и «final» их не видит.
+            #
+            # Конкретный случай, на котором это вскрылось: воронка показала у
+            # LSM, OC Media и VnExpress по 2 записи (итого 6), а в
+            # опубликованной ленте от этих источников оказалась ОДНА.
+            #
+            # Столбец переименован в «до_лимитов», добавлено поле «этап».
+            # Перенос записи воронки за все усечения — отдельная задача:
+            # в файле на 22 тысячи строк это движение кода, а не правка поля,
+            # и делать его заодно опасно.
             _loss_report.update({'built': len(events), 'exported': len(top_events),
                 'generated': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'этап': ('«до_лимитов» считается против top_events на момент записи воронки. '
+                         'После неё идут S43/44, S43b, _llm_dedup, _topic_cap(6) и кап KEV, '
+                         'которые убирают ещё часть записей. Опубликованное число смотреть '
+                         'в docs/events.json, не здесь.'),
                 'loss_by_stage_source': _LOSS_SRC,
                 'source_funnel': _by_source})
             (OUTPUT_PATH.parent / '_pipeline_loss.json').write_text(
