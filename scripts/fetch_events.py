@@ -15043,6 +15043,22 @@ def fetch_notam():
 def fetch_mgm_turkey():
     """Активные метеопредупреждения Турции (MGM). Климат TR."""
     items = []
+
+    def _mgm_write_probe(payload):
+        """Разведка пишется ВСЕГДА, в том числе при отказе ленты.
+
+        Заведена 28.09.2026 вместе со сборкой предупреждений по цвету, и в
+        первой редакции я оставила два ранних выхода ВЫШЕ записи: при
+        недоступной ленте и при битом ответе журнал не писался вовсе, то есть
+        разведка молчала ровно в тех случаях, ради которых она и нужна.
+        Здесь запись вынесена в отдельную функцию и вызывается на всех путях.
+        """
+        try:
+            (OUTPUT_PATH.parent / '_mgm_probe.json').write_text(
+                json.dumps(payload, ensure_ascii=False, indent=1), encoding='utf-8')
+        except Exception as _me:
+            print('  [WARN] MGM probe: %s' % str(_me)[:90], file=sys.stderr)
+
     raw = fetch_url(_MGM_URL, timeout=25,
                     headers={"User-Agent": "Mozilla/5.0",
                              "Origin": "https://www.mgm.gov.tr",
@@ -15050,10 +15066,18 @@ def fetch_mgm_turkey():
                              "Accept": "application/json"})
     if not raw:
         print("  [SKIP] MGM Турция: фид недоступен", file=sys.stderr)
+        _mgm_write_probe({'дата': datetime.now(timezone.utc).isoformat(),
+                          'исход': 'лента не ответила',
+                          'адрес': _MGM_URL})
         return items
     data = _mgm_repair(raw)
     if not data:
         print("  [WARN] MGM Турция: пустой/битый ответ", file=sys.stderr)
+        _mgm_write_probe({'дата': datetime.now(timezone.utc).isoformat(),
+                          'исход': 'ответ получен, но не разобрался',
+                          'адрес': _MGM_URL,
+                          'длина ответа': len(raw),
+                          'начало ответа': raw[:300]})
         return items
     now = datetime.now(timezone.utc)
     # ═══ ПРЕДУПРЕЖДЕНИЯ СХЛОПЫВАЛИСЬ ДЕДУПЛИКАЦИЕЙ (28.09.2026) ═════════════
@@ -15149,9 +15173,9 @@ def fetch_mgm_turkey():
             "_meta": {"kind": "mgm", "verified": True, "color": col,
                       "types": g["types"], "count": g["n"], "alerts": g["alerts"][:20]},
         })
-    try:
-        (OUTPUT_PATH.parent / '_mgm_probe.json').write_text(json.dumps({
+    _mgm_write_probe({
             'дата': now.isoformat(),
+            'исход': 'ок',
             'о чём': ('Разведка ответа MGM. Нужна, чтобы добавить провинцию в '
                       'заголовок предупреждения по ПРОВЕРЕННОМУ имени поля, а не '
                       'по догадке: сейчас все предупреждения одного типа и цвета '
@@ -15163,9 +15187,7 @@ def fetch_mgm_turkey():
             'по цветам': {c: {'предупреждений': g['n'], 'типы': g['types']}
                           for c, g in _by_col.items()},
             'заголовки': [i['title'] for i in items],
-        }, ensure_ascii=False, indent=1), encoding='utf-8')
-    except Exception as _me:
-        print('  [WARN] MGM probe: %s' % str(_me)[:90], file=sys.stderr)
+    })
     print(f"  MGM Турция: {_active} активных предупреждений -> {len(items)} записей", file=sys.stderr)
     return items
 
