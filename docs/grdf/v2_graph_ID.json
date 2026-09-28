@@ -2,9 +2,9 @@
   "country": "ID",
   "date": "2026-09-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-28T07:50:36.204928+00:00",
+  "generated_at": "2026-09-28T08:08:07.375935+00:00",
   "node_count": 14,
-  "edge_count": 19,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-ID",
@@ -19,14 +19,14 @@
       "id": "DOMAIN-ID-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 46,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-ID-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-ID-Пожары_в_И",
-      "type": "Signal",
-      "label": "Пожары в Индонезии угрожают критически и",
-      "severity": 44,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-ID-Эпидемиоло",
       "type": "Signal",
       "label": "Эпидемиологический риск — Индонезия",
@@ -99,6 +92,13 @@
       "label": "Пожарная активность — Индонезия",
       "severity": 44,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-ID-Санкционно",
+      "type": "Signal",
+      "label": "Санкционное давление — Юго-Восточная Ази",
+      "severity": 62,
+      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.46
     },
     {
       "from": "COUNTRY-ID",
       "to": "DOMAIN-ID-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-ID",
@@ -184,6 +184,27 @@
       "lag_days": 90
     },
     {
+      "from": "DOMAIN-ID-geopolitical",
+      "to": "DOMAIN-ID-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-ID-infrastructure",
+      "to": "DOMAIN-ID-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-ID-economic",
+      "to": "DOMAIN-ID-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
       "from": "DOMAIN-ID-climate",
       "to": "DOMAIN-ID-infrastructure",
       "type": "ESCALATES",
@@ -205,12 +226,6 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-ID-Пожары_в_И",
-      "to": "DOMAIN-ID-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.44
-    },
-    {
       "from": "SIGNAL-ID-Эпидемиоло",
       "to": "DOMAIN-ID-social",
       "type": "AMPLIFIES",
@@ -221,6 +236,12 @@
       "to": "DOMAIN-ID-climate",
       "type": "AMPLIFIES",
       "weight": 0.44
+    },
+    {
+      "from": "SIGNAL-ID-Санкционно",
+      "to": "DOMAIN-ID-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.62
     }
   ]
 }
