@@ -1440,7 +1440,7 @@ DOMAIN_RULES = {
     "climate": {
         # Экстремальные погодные явления, биоразнообразие, экосистемы, природные ресурсы
         "keywords": [
-            "flood","wildfire","wildfire","hurricane","typhoon","cyclone","tornado",
+            "flood","wildfire","hurricane"   # 28.09.2026: снят повтор «wildfire»,"typhoon","cyclone","tornado",
             "heatwave","extreme weather","drought","earthquake","tsunami","avalanche",
             "landslide","eruption","volcano","blizzard","ice storm","heat dome",
             "biodiversity","ecosystem collapse","deforestation","species extinction",
@@ -1506,6 +1506,36 @@ DOMAIN_RULES = {
     "economy": {
         # Спад, инфляция, долги, финансовые пузыри, цепочки поставок, рынок труда
         "keywords": [
+            # ═══ АНГЛИЙСКИЕ РЫНКИ И ФИНАНСЫ (28.09.2026) ═══════════════════
+            # Мия спросила про турецкие ленты: 13 записей из 16 не получали
+            # домена. Замер показал, что дело не в Турции. У регионального
+            # фетчера, в отличие от геополитического, поле domain у записи НЕ
+            # проставляется вовсе, поэтому его записи целиком зависят от
+            # detect_domain. Собран список записей, отброшенных без домена, из
+            # истории docs/_no_domain.json за 60 прогонов: 610 записей, из них
+            # 495 английских. Крупнейшие потери оказались не турецкими:
+            #     Суспільне          115   (украинский язык, как и LRT)
+            #     Bloomberg Markets  103   (лента рынков, то есть чистая экономика)
+            #     France24            47
+            # У economy было 43 английских слова против 115 у technology —
+            # самый тонкий словарь из пяти доменов.
+            #
+            # ЛОВУШКИ ОТСЕЯНЫ ЗАРАНЕЕ, границы слов здесь не спасают:
+            #   yields  -> «crop yields» это климат, взято только 'bond yield'
+            #   gold    -> «gold medal», «gold rings for newborns», только 'gold price'
+            #   stocks  -> «fish stocks» это климат, только 'stock market', 'stocks fall/rise/drop'
+            #   shares  -> «shares his story», только 'share buyback'
+            #   fund    -> «fund research», только 'hedge/pension/mutual fund', 'fund crisis'
+            #   fed     -> «fed up», «fed the dog», не взято вовсе
+            "bond yield","treasuries","treasury yield","selloff","sell-off",
+            "stock market","stocks fall","stocks rise","stocks drop","equities",
+            "share buyback","bankruptcy","insolvency","lender","credit rating",
+            "downgrade","rate hike","rate cut","merger","acquisition",
+            "hedge fund","pension fund","mutual fund","fund crisis","asset freeze",
+            "capex","profit warning","bond market","gold price","copper",
+            "commodity","trade deficit","budget deficit","devaluation",
+            "exchange rate","reit","payroll","jobless","consumer spending",
+            "retail sales","investment probe","asset restriction",
             # --- Точечное покрытие (аудит 28.07.2026): энергорынок ---
             # «Совет PJM: аукцион резервной мощности» detect_domain относил
             # к technology по упоминанию ЦОД — тема экономическая.
@@ -1535,7 +1565,7 @@ DOMAIN_RULES = {
     "geopolitics": {
         # Вооружённые конфликты, внутригосударственное насилие, ядерное/биооружие, геоэкономика
         "keywords": [
-            "armed conflict","war","military operation","invasion","airstrike",
+            "armed conflict","war","military operation","invasion",   # 28.09.2026: снят повтор «airstrike», он стоит ниже
             "troops","military","ceasefire","casualties","killed in action",
             "coup","regime change","political violence","assassination",
             "nuclear weapon","biological weapon","chemical weapon","wmd",
@@ -1577,6 +1607,17 @@ DOMAIN_RULES = {
     "technology": {
         # Дезинформация, кибервойна, ИИ, онлайн-угрозы
         "keywords": [
+            # ═══ ПРОФЕССИОНАЛЬНАЯ ЛЕКСИКА КИБЕРБЕЗОПАСНОСТИ (28.09.2026) ════
+            # Из того же замера по 610 записям без домена: восемь записей
+            # Dark Reading и Hacker News Security не получали домена, потому
+            # что словарь описывал явления бытовым языком (cyberattack,
+            # ransomware), а профессиональные заголовки пишутся терминами.
+            # 'security patch' и 'unpatched', а не 'patch': «patch of land».
+            "ciso","csrf","xss","sql injection","zero trust","sandbox escape",
+            "service principal","credential theft","privilege escalation",
+            "supply chain attack","security patch","unpatched","botnet",
+            "rootkit","spyware","typosquat","shadow ai","ai agent",
+            "azure","kubernetes","remote access trojan",
             "disinformation","misinformation","fake news","information warfare",
             "propaganda","deepfake","bot network","influence operation",
             "cyberattack","cyber espionage","cyber warfare","ransomware",
@@ -1630,7 +1671,7 @@ DOMAIN_RULES = {
             "ддос","ddos-атак","утечка данных","взлом систем","атака на кии",
             "искусственн","deepseek","openai","chatgpt","ии-стартап",
             # --- EN target-stream expansion (Domain Coverage Audit, post-FREEZE) ---
-            "hackers","cybercrime","vulnerabilities","zero-day","kernel flaw","proxy network","malicious packages","encryption","quantum","data breach"
+            "hackers","cybercrime","vulnerabilities","zero-day","kernel flaw","proxy network","malicious packages","encryption","quantum"   # 28.09.2026: снят повтор «data breach», он уже стоит выше
         ],
         "weight": 1.3,
         "exclude": ["flood","wildfire","earthquake","military ground","armed conflict",
