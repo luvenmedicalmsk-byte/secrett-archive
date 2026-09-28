@@ -2993,6 +2993,26 @@ _SYN_GROUPS = {
     'g_offens':  {'наступлен', 'offensive', 'invasion'},
     'g_mobil':   {'мобилизац', 'mobiliz'},
     'g_blast':   {'взрыв', 'explosion'},
+    # СТОИМОСТЬ ЖИЗНИ ПО-АНГЛИЙСКИ (28.09.2026). Английская лексика
+    # стоимости жизни добавлена в med тем же днём, и без групп она сразу
+    # дала ту самую болезнь, от которой заведён SYN_DEDUP: на разборе
+    # Al Jazeera о британском кризисе совпало ВОСЕМЬ маркеров, и запись
+    # ушла с 57 на 84, то есть в «Высокий», хотя русский путь той же
+    # записи даёт 69. Двадцать семь баллов набраны на том, что одна мысль
+    # названа восемью словами.
+    #
+    # Три группы, а не одна: цена топлива, нагрузка на домохозяйство и
+    # общее движение цен это разные каналы давления, и текст, где названы
+    # все три, действительно тяжелее текста про одну цену.
+    'g_fuelprice': {'fuel price', 'fuel cost', 'petrol price', 'diesel price',
+                    'pump price', 'heating cost', 'energy bills',
+                    'fuel poverty', 'energy poverty'},
+    'g_costliving': {'cost of living', 'cost-of-living', 'household finance',
+                     'household cost', 'household budget', 'household bills',
+                     'utility bills', 'living standard', 'affordability',
+                     'purchasing power', 'real wage', 'real income'},
+    'g_pricerise': {'price rise', 'price increase', 'price hike',
+                    'food price', 'grocery price', 'cost pressure'},
 }
 _SYN_OWNER = set(_SYN_GROUPS.keys())
 
@@ -3036,6 +3056,41 @@ def estimate_severity(title, desc, bias=0, weight=1.0):
             'martial law','state of emergency','mass evacuation']
     med = ['crisis','conflict','protest','sanctions','strike','flood','drought',
            'recession','attack','missile','tension','displaced','emergency',
+           # СТОИМОСТЬ ЖИЗНИ ПО-АНГЛИЙСКИ (28.09.2026). Вес считается ДО
+           # перевода, на английском оригинале, а фильтр «сигнал против
+           # новости» — уже на русском. Из-за этого одна и та же запись
+           # весила по-разному. Замер на разборе Al Jazeera о британском
+           # кризисе стоимости жизни:
+           #     английский, заголовок + тело   57
+           #     английский, только заголовок   44
+           #     русский, заголовок + тело      69
+           #     русский, только заголовок      61
+           # Опубликовано было 46, то есть по английскому заголовку. Совпало
+           # маркеров: русских три (кризис, напряжен, рост цен на топливо),
+           # английских один (crisis). Фразы «рост цен на топливо» в
+           # английском словаре не было вовсе.
+           #
+           # Замер по английскому корпусу из 944 заголовков (собран из
+           # истории docs/_admission_sample.json, там лежат оригиналы до
+           # перевода): шесть записей ловятся этими маркерами, и все шесть
+           # стоят на 32-35, то есть НЕ доходят до порога ленты 45. Среди
+           # них тема, по которой в консоли собран разбор на 78/100:
+           #     Why a U.S. Diesel Export Ban Won't Lower Fuel Prices      32
+           #     Fuel surcharges in trucking spotlight as diesel prices... 32
+           #     US shippers boost private fleet use as trucking, fuel...   32
+           #
+           # Только множественное число у bills: «energy bill» в
+           # американских заголовках это законопроект, а не счёт за
+           # электричество, и singular поймал бы законодательство.
+           # Это тот же класс ловушки, что осадк/просадку и газа/Сектор Газа.
+           'cost of living','cost-of-living','fuel price','fuel cost',
+           'petrol price','diesel price','pump price','heating cost',
+           'energy bills','utility bills','household bills',
+           'household finance','household cost','household budget',
+           'food price','grocery price','price rise','price increase',
+           'price hike','affordability','purchasing power','real wage',
+           'real income','living standard','fuel poverty','energy poverty',
+           'cost pressure',
            # ЭКО-темы (Мия 20.07): загрязнение/деградация/вымирание = системный климат-риск
            'pollution','microplastic','contamination','deforestation','extinction','biodiversity loss',
            'ecosystem collapse','species decline','habitat loss','toxic','oil spill',
