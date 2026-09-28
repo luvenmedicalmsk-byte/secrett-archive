@@ -2,7 +2,7 @@
   "country": "RU",
   "date": "2026-09-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-28T05:53:50.375353+00:00",
+  "generated_at": "2026-09-28T06:06:27.638689+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 92,
+      "score": 91,
       "props": {
-        "risk_score": 92
+        "risk_score": 91
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 100,
-      "trend": "stable"
+      "score": 98,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 59,
-      "trend": "stable"
+      "score": 74,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-technology",
@@ -80,24 +80,24 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-RU-В_Краснода",
+      "id": "SIGNAL-RU-Три_челове",
       "type": "Signal",
-      "label": "В Краснодарском крае БПЛА атаковали Ильс",
-      "severity": 95,
+      "label": "Три человека погибли, двое пострадали пр",
+      "severity": 90,
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-RU-Пять_челов",
+      "id": "SIGNAL-RU-Наводнение",
       "type": "Signal",
-      "label": "Пять человек получили ранения в результа",
-      "severity": 95,
-      "domain": "geopolitical"
+      "label": "Наводнение: Хабаровский край, север (Рос",
+      "severity": 74,
+      "domain": "climate"
     },
     {
-      "id": "SIGNAL-RU-Северский_",
+      "id": "SIGNAL-RU-Силы_ПВО_с",
       "type": "Signal",
-      "label": "Северский район Краснодарского края подв",
-      "severity": 95,
+      "label": "Силы ПВО сбили 1222 БПЛА за сутки, — Мин",
+      "severity": 74,
       "domain": "geopolitical"
     }
   ],
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 1.0
+      "weight": 0.98
     },
     {
       "from": "COUNTRY-RU",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.59
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-RU",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-RU-geopolitical",
-      "to": "DOMAIN-RU-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-RU-infrastructure",
-      "to": "DOMAIN-RU-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-RU-economic",
-      "to": "DOMAIN-RU-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-RU-climate",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-RU-В_Краснода",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.95
+      "from": "DOMAIN-RU-geopolitical",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
     },
     {
-      "from": "SIGNAL-RU-Пять_челов",
-      "to": "DOMAIN-RU-geopolitical",
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
       "type": "AMPLIFIES",
-      "weight": 0.95
+      "weight": 0.72,
+      "lag_days": 14
     },
     {
-      "from": "SIGNAL-RU-Северский_",
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-RU-Три_челове",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
-      "weight": 0.95
+      "weight": 0.9
+    },
+    {
+      "from": "SIGNAL-RU-Наводнение",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-RU-Силы_ПВО_с",
+      "to": "DOMAIN-RU-geopolitical",
+      "type": "AMPLIFIES",
+      "weight": 0.74
     }
   ]
 }
