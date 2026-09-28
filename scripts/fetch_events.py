@@ -7641,7 +7641,14 @@ def process_events(raw_items):
                     _verdict = 'доходит мало'
                 else:
                     _verdict = 'норма'
-                _by_source[_s] = {'raw': _n, 'до_лимитов': _fin, 'verdict': _verdict, 'lost_at': _stages}
+                # ОБРАЗЦЫ ЗАГОЛОВКОВ (28.09.2026). Воронка считала, но не
+                # показывала, ЧТО прошло. Из-за этого нельзя было связать
+                # «LSM: 2 до лимитов» с конкретными записями и проверить их
+                # дальнейшую судьбу — приходилось угадывать, какие это были.
+                _ex = [(e.get('title') or '')[:110]
+                       for e in top_events if (e.get('source') or '?') == _s][:3]
+                _by_source[_s] = {'raw': _n, 'до_лимитов': _fin, 'verdict': _verdict,
+                                  'lost_at': _stages, 'примеры_прошедших': _ex}
             # ЧЕСТНОЕ ИМЯ СТОЛБЦА (28.09.2026). Столбец назывался «final», и я
             # два дня читала его как «в опубликованной ленте». Это неверно:
             # воронка пишется ЗДЕСЬ, а после неё top_events проходит ещё пять
@@ -7762,12 +7769,43 @@ def process_events(raw_items):
         if ev.get('summary'): ev['summary'] = _normalize_caps(ev['summary'])
 
     # S43: финальный гейт «сигнал/шум» + чистка TG-фрагментов на ПЕРЕВЕДЁННОМ тексте.
+    # ═══ УЧЁТ ЛИМИТОВ ОТОБРАЖЕНИЯ ПО ИСТОЧНИКУ (28.09.2026) ═════════════════
+    # Воронка по источникам пишется ВЫШЕ этой точки, поэтому пять стадий,
+    # идущих дальше, были для неё невидимы. Замер прогона 11:26 UTC:
+    #     до лимитов 940, опубликовано 341 — 599 записей уходят здесь.
+    # Конкретно это скрывало причину: LSM проходил порог тяжести (2 записи),
+    # OC Media проходил (3 записи), а в ленту не попадало НИ ОДНОЙ, и назвать
+    # стадию было нельзя — ни одна из пяти не считала по источнику.
+    #
+    # Ниже каждая стадия регистрирует, кого именно она убрала. Пишется в
+    # отдельный артефакт docs/_post_limits.json ПОСЛЕ всех усечений, а не в
+    # _pipeline_loss.json: переносить запись воронки за них — движение кода
+    # между стадиями, здесь же добавляется только новая точка записи.
+    _POST = {}
+    _POST_SAMPLE = {}
+
+    def _post_lost(stage, before_list, after_list):
+        """Кого убрала стадия: счёт по источнику плюс до трёх заголовков."""
+        _after_ids = {id(x) for x in after_list}
+        for _e in before_list:
+            if id(_e) in _after_ids:
+                continue
+            _s = _e.get('source') or '?'
+            _POST.setdefault(stage, {})
+            _POST[stage][_s] = _POST[stage].get(_s, 0) + 1
+            _key = (stage, _s)
+            _POST_SAMPLE.setdefault(_key, [])
+            if len(_POST_SAMPLE[_key]) < 3:
+                _POST_SAMPLE[_key].append((_e.get('title') or '')[:110])
+
     _before_s43 = len(top_events)
+    _s43_in = list(top_events)
     top_events = [e for e in top_events
                   if (e.get('meta') or {}).get('verified')
                   or (not _is_news_not_signal(e.get('title',''), e.get('summary',''), e.get('domain',''))
                   and not _is_broken_fragment(e.get('title',''), e.get('summary',''))
                   and len(re.findall(r'[іїєґІЇЄҐ]', (e.get('title') or '') + (e.get('summary') or ''))) < 3)]
+    _post_lost('S43_новость_не_сигнал', _s43_in, top_events)
     # S44: домен по содержанию -- переназначаем неверно-доменные сигналы (политика из экономики и т.п.)
     _moved = 0
     for e in top_events:
@@ -7831,6 +7869,7 @@ def process_events(raw_items):
         _ns_pre={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
         _ns_post={x.get('_obs_tid') for x in _keep_ns if x.get('_obs_tid')}
         for _nsx in (_ns_pre - _ns_post): _trace(_nsx,'TOPIC_CAP','removed',reason='noise_curio')
+    _post_lost('S43b_локальный_шум', top_events, _keep_ns)
     top_events = _keep_ns
     print(f"  [S43b] шум-курьёзы убраны: {_before_ns} -> {len(top_events)}", file=sys.stderr)
 
@@ -7899,12 +7938,16 @@ def process_events(raw_items):
         _cfm_n += 1
     print(f"  [S46/Этап8] подтверждённость скорректирована: {_cfm_n}", file=sys.stderr)
     if LINEAGE: _ld_pre={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
+    _ld_in = list(top_events)
     top_events = _llm_dedup(top_events, keep=3)
+    _post_lost('дедупликация', _ld_in, top_events)
     if LINEAGE:
         _ld_post={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
         for _ldx in (_ld_pre - _ld_post): _trace(_ldx,'TOPIC_CAP','removed',reason='llm_dedup')
     if LINEAGE: _tc_pre={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
+    _tc_in = list(top_events)
     top_events = _topic_cap(top_events, 6)
+    _post_lost('лимит_на_тему_6', _tc_in, top_events)
     if LINEAGE:
         _tc_post={x.get('_obs_tid') for x in top_events if x.get('_obs_tid')}
         for _tcx in (_tc_pre - _tc_post): _trace(_tcx,'TOPIC_CAP','removed',reason='topic_cap')
@@ -7916,8 +7959,51 @@ def process_events(raw_items):
     _KEV_CAP = 3
     if len(_kev) > _KEV_CAP:
         _keep = set(id(e) for e in sorted(_kev, key=lambda e: ((e.get('severity',0) or 0), e.get('date','')), reverse=True)[:_KEV_CAP])
+        _kev_in = list(top_events)
         top_events = [e for e in top_events if (not _is_kev(e)) or id(e) in _keep]
+        _post_lost('кап_CISA_KEV', _kev_in, top_events)
         print(f"  [Этап9b] CISA KEV: оставлено {_KEV_CAP} из {len(_kev)}", file=sys.stderr)
+
+    # ═══ ЗАПИСЬ УЧЁТА ЛИМИТОВ ОТОБРАЖЕНИЯ ═══════════════════════════════════
+    # Здесь top_events окончателен: все пять усечений позади. Именно этого
+    # места не хватало, чтобы назвать стадию, на которой источник теряется.
+    try:
+        import collections as _c3
+        _fin_by = _c3.Counter(e.get('source') or '?' for e in top_events)
+        _all_src = set(_fin_by) | {s for st in _POST.values() for s in st}
+        _per_source = {}
+        for _s in sorted(_all_src):
+            _lost = {st: cnt[_s] for st, cnt in _POST.items() if cnt.get(_s)}
+            if not _lost and not _fin_by.get(_s):
+                continue
+            _per_source[_s] = {
+                'дошло_до_публикации': _fin_by.get(_s, 0),
+                'убрано_лимитами': sum(_lost.values()),
+                'по_стадиям': _lost,
+                'примеры_убранного': {st: _POST_SAMPLE.get((st, _s), [])
+                                      for st in _lost},
+            }
+        (OUTPUT_PATH.parent / '_post_limits.json').write_text(json.dumps({
+            'дата': datetime.now(timezone.utc).isoformat(),
+            'о чём': ('Пять стадий, которые идут ПОСЛЕ воронки по источникам в '
+                      '_pipeline_loss.json и потому были для неё невидимы: отсев '
+                      '«новость, а не сигнал», локальный шум, дедупликация, лимит '
+                      'на тему (6) и кап на CISA KEV. Здесь видно, кого именно '
+                      'каждая убрала, с примерами заголовков.'),
+            'зачем': ('Замер 28.09: до лимитов 940 записей, опубликовано 341. LSM '
+                      'проходил порог тяжести, OC Media проходил, а в ленту не '
+                      'попадало ни одной записи — и назвать стадию было нельзя, '
+                      'потому что ни одна из пяти не считала по источнику.'),
+            'на_публикацию': len(top_events),
+            'убрано_лимитами_всего': sum(sum(c.values()) for c in _POST.values()),
+            'по_стадиям_всего': {st: sum(c.values()) for st, c in _POST.items()},
+            'по_источникам': _per_source,
+        }, ensure_ascii=False, indent=1), encoding='utf-8')
+        print('  [POST-LIMITS] убрано лимитами %d, на публикацию %d'
+              % (sum(sum(c.values()) for c in _POST.values()), len(top_events)),
+              file=sys.stderr)
+    except Exception as _ple:
+        print('  [WARN] post limits: %s' % str(_ple)[:90], file=sys.stderr)
 
     for _e in top_events:
         try:
