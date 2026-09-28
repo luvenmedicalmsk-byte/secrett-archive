@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-09-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-28T22:07:29.510084+00:00",
+  "generated_at": "2026-09-28T22:27:24.913140+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 50,
+      "score": 61,
       "props": {
-        "risk_score": 50
+        "risk_score": 61
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
-      "trend": "stable"
+      "score": 63,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 36,
-      "trend": "stable"
+      "score": 32,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 50,
-      "trend": "stable"
+      "score": 58,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -75,9 +75,16 @@
       "label": "Economic"
     },
     {
-      "id": "DRIVER-CA-Economic",
+      "id": "DRIVER-CA-Social",
       "type": "Driver",
-      "label": "Economic"
+      "label": "Social"
+    },
+    {
+      "id": "SIGNAL-CA-Канада_про",
+      "type": "Signal",
+      "label": "Канада продлевает ограничения на поездки",
+      "severity": 58,
+      "domain": "social"
     },
     {
       "id": "SIGNAL-CA-Послеобеде",
@@ -92,13 +99,6 @@
       "label": "Земля разрывается под Тихоокеанским Севе",
       "severity": 32,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Канада_ище",
-      "type": "Signal",
-      "label": "Канада ищет защитные меры для работодате",
-      "severity": 32,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.63
     },
     {
       "from": "COUNTRY-CA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.58
     },
     {
       "from": "COUNTRY-CA",
@@ -157,10 +157,37 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-CA-Economic",
+      "from": "DRIVER-CA-Social",
       "to": "COUNTRY-CA",
       "type": "CAUSES",
       "weight": 0.8
+    },
+    {
+      "from": "DOMAIN-CA-geopolitical",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-CA-Канада_про",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.58
     },
     {
       "from": "SIGNAL-CA-Послеобеде",
@@ -170,12 +197,6 @@
     },
     {
       "from": "SIGNAL-CA-Земля_разр",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
-    },
-    {
-      "from": "SIGNAL-CA-Канада_ище",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
