@@ -2,7 +2,7 @@
   "country": "DE",
   "date": "2026-09-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-28T14:48:51.864490+00:00",
+  "generated_at": "2026-09-28T15:08:53.556330+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-DE-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 5,
+      "score": 35,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-DE-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 46,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-DE-[Интервью]",
-      "type": "Signal",
-      "label": "[Интервью] ‘Бедный, но сексуальный’ Берл",
-      "severity": 46,
-      "domain": "economic"
-    },
-    {
       "id": "SIGNAL-DE-Киберугроз",
       "type": "Signal",
       "label": "Киберугроза — Германия",
@@ -99,6 +92,13 @@
       "label": "Климатический сигнал — Германия",
       "severity": 72,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-DE-Пожарная_а",
+      "type": "Signal",
+      "label": "Пожарная активность — Германия",
+      "severity": 72,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-economic",
       "type": "CORRELATES",
-      "weight": 0.46
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-climate",
       "to": "DOMAIN-DE-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,10 +184,25 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-DE-[Интервью]",
+      "from": "DOMAIN-DE-climate",
+      "to": "DOMAIN-DE-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-DE-infrastructure",
       "to": "DOMAIN-DE-economic",
       "type": "AMPLIFIES",
-      "weight": 0.46
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-DE-economic",
+      "to": "DOMAIN-DE-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-DE-Киберугроз",
@@ -218,6 +212,12 @@
     },
     {
       "from": "SIGNAL-DE-Климатичес",
+      "to": "DOMAIN-DE-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
+      "from": "SIGNAL-DE-Пожарная_а",
       "to": "DOMAIN-DE-climate",
       "type": "AMPLIFIES",
       "weight": 0.72

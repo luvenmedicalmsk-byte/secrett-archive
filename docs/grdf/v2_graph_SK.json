@@ -2,7 +2,7 @@
   "country": "SK",
   "date": "2026-09-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-28T14:48:51.874695+00:00",
+  "generated_at": "2026-09-28T15:08:53.566474+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-SK-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 32,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-SK-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 36,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -70,21 +70,14 @@
       "label": "climate"
     },
     {
-      "id": "DRIVER-SK-technology",
-      "type": "Driver",
-      "label": "technology"
-    },
-    {
       "id": "DRIVER-SK-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "SIGNAL-SK-Vertiv_рас",
-      "type": "Signal",
-      "label": "Vertiv расширяет производственные мощнос",
-      "severity": 32,
-      "domain": "technology"
+      "id": "DRIVER-SK-economic",
+      "type": "Driver",
+      "label": "economic"
     },
     {
       "id": "SIGNAL-SK-Тепловая_в",
@@ -99,6 +92,13 @@
       "label": "Геополитический процесс — Словакия",
       "severity": 34,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-SK-Экономичес",
+      "type": "Signal",
+      "label": "Экономический сигнал — Словакия",
+      "severity": 32,
+      "domain": "economic"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.32
     },
     {
       "from": "COUNTRY-SK",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-SK",
       "to": "DOMAIN-SK-technology",
       "type": "CORRELATES",
-      "weight": 0.36
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-SK",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
-      "from": "DRIVER-SK-technology",
-      "to": "COUNTRY-SK",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
       "from": "DRIVER-SK-geopolitical",
       "to": "COUNTRY-SK",
       "type": "CAUSES",
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-SK-climate",
-      "to": "DOMAIN-SK-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-SK-economic",
-      "to": "DOMAIN-SK-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-SK-social",
-      "to": "DOMAIN-SK-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
+      "from": "DRIVER-SK-economic",
+      "to": "COUNTRY-SK",
+      "type": "CAUSES",
+      "weight": 0.8
     },
     {
       "from": "DOMAIN-SK-climate",
@@ -205,10 +184,25 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-SK-Vertiv_рас",
-      "to": "DOMAIN-SK-technology",
+      "from": "DOMAIN-SK-climate",
+      "to": "DOMAIN-SK-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-SK-economic",
+      "to": "DOMAIN-SK-social",
       "type": "AMPLIFIES",
-      "weight": 0.32
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-SK-social",
+      "to": "DOMAIN-SK-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
     },
     {
       "from": "SIGNAL-SK-Тепловая_в",
@@ -221,6 +215,12 @@
       "to": "DOMAIN-SK-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.34
+    },
+    {
+      "from": "SIGNAL-SK-Экономичес",
+      "to": "DOMAIN-SK-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     }
   ]
 }
