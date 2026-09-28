@@ -2,7 +2,7 @@
   "country": "AT",
   "date": "2026-09-28",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-28T14:34:45.351566+00:00",
+  "generated_at": "2026-09-28T14:48:51.877953+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-AT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 33,
       "trend": "stable"
     },
     {
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-AT-Австрия_по",
+      "type": "Signal",
+      "label": "Австрия позволит обмен электроэнергией м",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-AT-Шторм_—_Ав",
       "type": "Signal",
       "label": "Шторм — Австрия",
@@ -105,7 +112,7 @@
       "from": "COUNTRY-AT",
       "to": "DOMAIN-AT-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.33
     },
     {
       "from": "COUNTRY-AT",
@@ -157,6 +164,27 @@
     },
     {
       "from": "DOMAIN-AT-climate",
+      "to": "DOMAIN-AT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-AT-infrastructure",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-AT-economic",
+      "to": "DOMAIN-AT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-AT-climate",
       "to": "DOMAIN-AT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -177,25 +205,10 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-AT-climate",
-      "to": "DOMAIN-AT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-AT-infrastructure",
+      "from": "SIGNAL-AT-Австрия_по",
       "to": "DOMAIN-AT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-AT-economic",
-      "to": "DOMAIN-AT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
+      "weight": 0.32
     },
     {
       "from": "SIGNAL-AT-Шторм_—_Ав",
