@@ -18290,9 +18290,28 @@ def fetch_regional():
     feeds = [
         # Украина
         {"url": "https://suspilne.media/rss/all.rss", "source": "Суспільне", "bias": 7},
-        # Турция
+        # ═══ ТУРЦИЯ ═══════════════════════════════════════════════════════
+        # По просьбе Мии, 28.09.2026. До правки турецкое покрытие состояло из
+        # двух лент, и работала одна: замер прогона 13:30 UTC дал Hurriyet
+        # 8 сырых и вердикт «норма», Daily Sabah НОЛЬ сырых. Отдельно есть
+        # метеослужба MGM: 8 сырых и ноль доходящих, вердикт «не доходит».
+        #
+        # Daily Sabah НЕ удалён и адрес не менялся: он подтверждается и
+        # каталогом лент, и самим сайтом. Причина нуля, скорее всего, в
+        # механике этого фетчера, а не в адресе — см. ротацию user-agent
+        # ниже по коду. Проверит журнал на первом же прогоне.
         {"url": "https://www.dailysabah.com/rss", "source": "Daily Sabah", "bias": 6},
         {"url": "https://www.hurriyetdailynews.com/rss.aspx", "source": "Hurriyet Daily", "bias": 6},
+        # Добавлено 28.09.2026. Англоязычные службы, по два адреса на
+        # источник — та же схема, что у LSM, ERR и LRT: точный адрес ленты из
+        # мастерской не проверить, её сеть закрыта на реестры пакетов и
+        # GitHub. Какой адрес живой, скажет журнал.
+        {"url": "https://www.duvarenglish.com/export/rss", "source": "Duvar English", "bias": 7},
+        {"url": "https://www.duvarenglish.com/rss", "source": "Duvar English", "bias": 7},
+        {"url": "https://www.turkishminute.com/feed/", "source": "Turkish Minute", "bias": 7},
+        {"url": "https://turkishminute.com/feed", "source": "Turkish Minute", "bias": 7},
+        {"url": "https://www.aa.com.tr/en/rss/default?cat=guncel", "source": "Anadolu Agency", "bias": 6},
+        {"url": "https://www.aa.com.tr/en/rss/default", "source": "Anadolu Agency", "bias": 6},
         # Казахстан
         {"url": "https://tengrinews.kz/rss/all.xml", "source": "Tengri News", "bias": 7},
         {"url": "https://kapital.kz/rss/all/", "source": "Kapital KZ", "bias": 6},
@@ -18306,9 +18325,37 @@ def fetch_regional():
         {"url": "https://eurasianet.org/feed", "source": "Eurasianet", "bias": 8},
         {"url": "https://www.rferl.org/api/zqpmoruj-q_", "source": "RFE/RL Central Asia", "bias": 7},
     ]
+    # РОТАЦИЯ USER-AGENT (28.09.2026). Этот фетчер делал ОДИН запрос с
+    # заголовком по умолчанию и при отказе молча сдавался, тогда как
+    # fetch_geopolitics_rss пробует три разных агента подряд. Замер прогона
+    # 13:30 UTC: в этом фетчере четыре источника из одиннадцати дали НОЛЬ
+    # сырых записей — Daily Sabah, Суспільне, Tengri News, Eurasianet, — при
+    # том что их адреса подтверждаются каталогами лент и самими сайтами.
+    # Множество сайтов отклоняет неизвестного агента, и именно это отличало
+    # два фетчера.
+    #
+    # Здесь тот же список агентов, что в геополитическом. Если причина была
+    # в агенте, часть источников оживёт без единой правки адреса; если нет,
+    # журнал ниже назовёт исход каждого адреса поимённо.
+    ua_list = [
+        {'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)'},
+        {'User-Agent': 'feedparser/6.0'},
+        {'User-Agent': 'ArchiveBot/2.0 (+https://secrett-archive.com)'},
+    ]
+    # Журнал по каждой ленте — как в fetch_geopolitics_rss. Прежде отказ был
+    # молчаливым, и мёртвый адрес не отличался от живого, но пустого.
+    probe = []
+
     for feed in feeds:
-        data = fetch_url(feed["url"])
-        if not data: continue
+        data = None
+        for hdrs in ua_list:
+            data = fetch_url(feed["url"], headers=hdrs, timeout=8)
+            if data: break
+        if not data:
+            probe.append({'источник': feed['source'], 'адрес': feed['url'],
+                          'исход': 'не ответил', 'записей': 0, 'примеры': []})
+            continue
+        _before = len(items)
         try:
             root = ET.fromstring(data)
             count = 0
@@ -18325,8 +18372,28 @@ def fetch_regional():
                     'source_bias': feed['bias']
                 })
                 count += 1
+            probe.append({'источник': feed['source'], 'адрес': feed['url'], 'исход': 'ок',
+                          'записей': len(items) - _before,
+                          'примеры': [i['title'][:90] for i in items[_before:_before + 2]]})
         except Exception as e:
             print(f"  [WARN] {feed['source']}: {e}", file=sys.stderr)
+            probe.append({'источник': feed['source'], 'адрес': feed['url'],
+                          'исход': 'ответил, но не разобрался: %s' % str(e)[:90],
+                          'записей': 0, 'примеры': []})
+    try:
+        _alive = [p for p in probe if p['исход'] == 'ок' and p['записей']]
+        (OUTPUT_PATH.parent / '_regional_probe.json').write_text(json.dumps({
+            'дата': datetime.now(timezone.utc).isoformat(),
+            'о чём': ('Исход каждой ленты регионального фетчера за прогон: Украина, '
+                      'Турция, Казахстан, Беларусь, Европа, Центральная Азия. Заведён '
+                      '28.09.2026 вместе с ротацией user-agent и турецкими источниками.'),
+            'адресов всего': len(probe),
+            'живых с записями': len(_alive),
+            'молчат': len([p for p in probe if p['исход'] == 'не ответил']),
+            'ленты': probe,
+        }, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _re:
+        print('  [WARN] regional probe: %s' % str(_re)[:90], file=sys.stderr)
     print(f"  Региональные: {len(items)} событий", file=sys.stderr)
     return items
 
