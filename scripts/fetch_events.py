@@ -15108,6 +15108,7 @@ def fetch_mgm_turkey():
     _MGM_COL_RU = {"yellow": "жёлтый", "orange": "оранжевый", "red": "красный"}
     _by_col = {}
     _first_keys = []
+    _towns_sample = []
     _active = 0
     for a in data:
         if not _first_keys and isinstance(a, dict):
@@ -15124,6 +15125,8 @@ def fetch_mgm_turkey():
         if not col:
             continue
         _active += 1
+        if len(_towns_sample) < 2:
+            _towns_sample.append({'alertNo': a.get('alertNo'), 'towns': a.get('towns')})
         g = _by_col.setdefault(col, {"types": [], "texts": [], "n": 0, "alerts": []})
         g["n"] += 1
         for t in (w.get(col) or []):
@@ -15184,6 +15187,16 @@ def fetch_mgm_turkey():
             'записей в ответе': len(data),
             'активных': _active,
             'поля первой записи': _first_keys,
+            # ПОЛЕ towns НАЙДЕНО (прогон 14:41 UTC 28.09.2026). Первая разведка
+            # дала только ИМЕНА полей: _id, alertNo, begin, end, insertDate,
+            # text, towns, weather. Имя нужного поля теперь известно, но не его
+            # СТРУКТУРА: список кодов, список имён или список объектов —
+            # неизвестно, а от этого зависит, можно ли поставить провинцию в
+            # заголовок, как у Росгидромета. Поэтому здесь дословно
+            # выкладывается значение towns первых двух активных записей.
+            # Гадать по имени поля нельзя ровно по той же причине, по которой
+            # нельзя было гадать само имя.
+            'towns первых активных': _towns_sample,
             'по цветам': {c: {'предупреждений': g['n'], 'типы': g['types']}
                           for c, g in _by_col.items()},
             'заголовки': [i['title'] for i in items],
@@ -18403,18 +18416,26 @@ def fetch_regional():
         # каталогом лент, и самим сайтом. Причина нуля, скорее всего, в
         # механике этого фетчера, а не в адресе — см. ротацию user-agent
         # ниже по коду. Проверит журнал на первом же прогоне.
+        # Daily Sabah, 28.09.2026. Ротация агента сработала: адрес перестал
+        # молчать и теперь ОТВЕЧАЕТ, но ответ не разбирается как XML
+        # («not well-formed»). Похоже, /rss отдаёт страницу со списком лент,
+        # а не саму ленту. Основной адрес оставлен, вторым добавлен
+        # вероятный адрес рубрики — какой из них лента, скажет журнал.
         {"url": "https://www.dailysabah.com/rss", "source": "Daily Sabah", "bias": 6},
+        {"url": "https://www.dailysabah.com/rss/homepage", "source": "Daily Sabah", "bias": 6},
         {"url": "https://www.hurriyetdailynews.com/rss.aspx", "source": "Hurriyet Daily", "bias": 6},
         # Добавлено 28.09.2026. Англоязычные службы, по два адреса на
         # источник — та же схема, что у LSM, ERR и LRT: точный адрес ленты из
         # мастерской не проверить, её сеть закрыта на реестры пакетов и
         # GitHub. Какой адрес живой, скажет журнал.
+        # Запасной адрес /rss проверен 28.09.2026 и не отвечает, основной живой.
         {"url": "https://www.duvarenglish.com/export/rss", "source": "Duvar English", "bias": 7},
-        {"url": "https://www.duvarenglish.com/rss", "source": "Duvar English", "bias": 7},
+        # Второй адрес убран 28.09.2026: журнал показал, что оба живые и отдают
+        # ОДНИ И ТЕ ЖЕ 8 записей — это одна лента с двух написаний домена,
+        # то есть удвоенный приём, который дальше вычищает дедупликация.
         {"url": "https://www.turkishminute.com/feed/", "source": "Turkish Minute", "bias": 7},
-        {"url": "https://turkishminute.com/feed", "source": "Turkish Minute", "bias": 7},
+        # Запасной адрес без cat проверен 28.09.2026 и не отвечает, основной живой.
         {"url": "https://www.aa.com.tr/en/rss/default?cat=guncel", "source": "Anadolu Agency", "bias": 6},
-        {"url": "https://www.aa.com.tr/en/rss/default", "source": "Anadolu Agency", "bias": 6},
         # Казахстан
         {"url": "https://tengrinews.kz/rss/all.xml", "source": "Tengri News", "bias": 7},
         {"url": "https://kapital.kz/rss/all/", "source": "Kapital KZ", "bias": 6},
