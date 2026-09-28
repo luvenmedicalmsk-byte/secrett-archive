@@ -15056,7 +15056,38 @@ def fetch_mgm_turkey():
         print("  [WARN] MGM Турция: пустой/битый ответ", file=sys.stderr)
         return items
     now = datetime.now(timezone.utc)
+    # ═══ ПРЕДУПРЕЖДЕНИЯ СХЛОПЫВАЛИСЬ ДЕДУПЛИКАЦИЕЙ (28.09.2026) ═════════════
+    # Замер прогона 13:30 UTC: MGM даёт 8 сырых записей за прогон и НОЛЬ
+    # доходящих, вердикт воронки «не доходит», потери {'dup': 5}.
+    #
+    # Причина в заголовке. Он строился как «{тип}: Турция (уровень {цвет})»,
+    # без провинции, поэтому все предупреждения одного типа и цвета получали
+    # ОДИН И ТОТ ЖЕ заголовок и схлопывались как дубли. Для сравнения,
+    # Росгидромет CAP проходит нормально (69 сырых, 25 доходящих) именно
+    # потому, что регион стоит в заголовке: «Пожарная опасность:
+    # Оренбургская обл. (Россия)».
+    #
+    # ЧТО СДЕЛАНО. Вместо восьми одинаковых записей собирается ОДНА на цвет,
+    # с перечнем типов и числом действующих предупреждений. Для платформы
+    # системных рисков это и честнее: «оранжевый уровень, 6 предупреждений,
+    # гроза и сильный дождь» описывает состояние страны, а восемь одинаковых
+    # строк не добавляли к нему ничего.
+    #
+    # ПОЧЕМУ НЕ ПРОВИНЦИЯ В ЗАГОЛОВКЕ, КАК У РОСГИДРОМЕТА. Имя поля с
+    # провинцией в ответе MGM не проверено: сеть мастерской закрыта, живой
+    # ответ отсюда не получить. Записка по NOTAM в этом же файле
+    # предупреждает ровно об этом: «имена полей проверяем по живому ответу, а
+    # не по документации, прежний разбор читал несуществующие поля и молча
+    # давал пустоту». Поэтому ниже пишется разведка: имена полей первой
+    # записи уходят в docs/_mgm_probe.json, и по ней провинция добавляется
+    # следующей правкой, уже проверенной.
+    _MGM_COL_RU = {"yellow": "жёлтый", "orange": "оранжевый", "red": "красный"}
+    _by_col = {}
+    _first_keys = []
+    _active = 0
     for a in data:
+        if not _first_keys and isinstance(a, dict):
+            _first_keys = sorted(a.keys())
         end = str(a.get("end", ""))
         try:
             if datetime.fromisoformat(end.replace("Z", "+00:00")) < now:
@@ -15068,14 +15099,47 @@ def fetch_mgm_turkey():
         col = "red" if w.get("red") else ("orange" if w.get("orange") else ("yellow" if w.get("yellow") else None))
         if not col:
             continue
-        types = w.get(col) or []
-        ru_types = ", ".join(_MGM_TYPE_RU.get(t, t) for t in types) or "Опасное явление"
+        _active += 1
+        g = _by_col.setdefault(col, {"types": [], "texts": [], "n": 0, "alerts": []})
+        g["n"] += 1
+        for t in (w.get(col) or []):
+            if t not in g["types"]:
+                g["types"].append(t)
         txt = (a.get("text", {}) or {}).get(col, "") or ""
+        if txt and txt not in g["texts"]:
+            g["texts"].append(txt)
+        if a.get("alertNo"):
+            g["alerts"].append(a.get("alertNo"))
+
+    def _ru_warn(n):
+        """Склонение слова «предупреждение» при числе. 1 предупреждение,
+        2-4 предупреждения, 5-20 предупреждений, далее по последней цифре."""
+        n = abs(int(n))
+        if 11 <= (n % 100) <= 14:
+            return "предупреждений"
+        d = n % 10
+        if d == 1:
+            return "предупреждение"
+        if d in (2, 3, 4):
+            return "предупреждения"
+        return "предупреждений"
+
+    for col in ("red", "orange", "yellow"):
+        g = _by_col.get(col)
+        if not g:
+            continue
+        # Первый тип с заглавной, остальные строчными: это перечисление внутри
+        # фразы, а не отдельные заголовки.
+        _tn = [_MGM_TYPE_RU.get(t, t) for t in g["types"]]
+        ru_types = (_tn[0] + ("".join(", " + x[0].lower() + x[1:] for x in _tn[1:]))) if _tn else "Опасное явление"
+        ru_col = _MGM_COL_RU.get(col, col)
         score = _MGM_SEV.get(col, 50)
-        title = f"{ru_types}: Турция (уровень {col})"
+        title = f"{ru_types}: Турция, {g['n']} {_ru_warn(g['n'])} ({ru_col} уровень)"
+        _txt = " · ".join(g["texts"][:3])
         items.append({
             "title": title[:130],
-            "desc": f"{txt} · MGM (Метеослужба Турции), уровень {col}. Турция".strip(" ·"),
+            "desc": (f"{_txt} · MGM (Метеослужба Турции), {ru_col} уровень, "
+                     f"действующих предупреждений: {g['n']}. Турция").strip(" ·"),  # здесь всегда род. мн., число стоит после двоеточия
             "date": now.strftime("%Y-%m-%d"),
             "source": "MGM Турция",
             "_lat": 39.0, "_lng": 35.0,  # центр Турции (детальной геопривязки по town-кодам нет)
@@ -15083,9 +15147,26 @@ def fetch_mgm_turkey():
             "_domain": "climate",
             "_force_severity": score,
             "_meta": {"kind": "mgm", "verified": True, "color": col,
-                      "types": types, "alertNo": a.get("alertNo")},
+                      "types": g["types"], "count": g["n"], "alerts": g["alerts"][:20]},
         })
-    print(f"  MGM Турция: {len(items)} активных предупреждений", file=sys.stderr)
+    try:
+        (OUTPUT_PATH.parent / '_mgm_probe.json').write_text(json.dumps({
+            'дата': now.isoformat(),
+            'о чём': ('Разведка ответа MGM. Нужна, чтобы добавить провинцию в '
+                      'заголовок предупреждения по ПРОВЕРЕННОМУ имени поля, а не '
+                      'по догадке: сейчас все предупреждения одного типа и цвета '
+                      'сводятся в одну запись на цвет, потому что поле провинции '
+                      'из мастерской не проверить.'),
+            'записей в ответе': len(data),
+            'активных': _active,
+            'поля первой записи': _first_keys,
+            'по цветам': {c: {'предупреждений': g['n'], 'типы': g['types']}
+                          for c, g in _by_col.items()},
+            'заголовки': [i['title'] for i in items],
+        }, ensure_ascii=False, indent=1), encoding='utf-8')
+    except Exception as _me:
+        print('  [WARN] MGM probe: %s' % str(_me)[:90], file=sys.stderr)
+    print(f"  MGM Турция: {_active} активных предупреждений -> {len(items)} записей", file=sys.stderr)
     return items
 
 
