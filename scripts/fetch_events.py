@@ -13867,6 +13867,49 @@ def fetch_acled_rss():
 
 
 
+def _xml_tolerant(data):
+    """Разбор ленты, которая почти валидна.
+
+    Заведено 28.09.2026 по журналу _flank_probe.json. Строгий
+    ET.fromstring роняет ВЕСЬ фид из-за одного плохого символа, и в журнале
+    это выглядит как мёртвый источник. Номер строки в ошибке показывает,
+    насколько лента цела:
+        LRT, https://www.lrt.lt/en/?rss   строка 37, столбец 46
+        ERR, https://news.err.ee/feed     строка 2,  столбец 116
+        Daily Sabah, /rss                 строка 2,  столбец 17
+    Ошибка на 37-й строке это нормальный фид с одним битым символом
+    посередине: он подлежит починке. Ошибка на 2-й строке это, скорее
+    всего, не фид вовсе, и починка её не спасёт — журнал следующего
+    прогона скажет, какой случай какой.
+
+    Чинятся три самые частые причины, все безопасные: мусор перед началом
+    документа, недопустимые управляющие символы и одиночный амперсанд, не
+    являющийся сущностью. Содержимое записей не переписывается.
+
+    Возвращает (root, как_разобрано) либо (None, причина).
+    """
+    import xml.etree.ElementTree as ET
+    if isinstance(data, bytes):
+        try:
+            data = data.decode('utf-8', 'replace')
+        except Exception:
+            data = str(data)
+    try:
+        return ET.fromstring(data), 'ок'
+    except Exception as _e1:
+        _first = str(_e1)[:80]
+    s = data
+    _starts = [p for p in (s.find('<?xml'), s.find('<rss'), s.find('<feed')) if p > 0]
+    if _starts:
+        s = s[min(_starts):]
+    s = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
+    s = re.sub(r'&(?!#\d+;|#x[0-9a-fA-F]+;|[a-zA-Z][a-zA-Z0-9]{0,31};)', '&amp;', s)
+    try:
+        return ET.fromstring(s), 'ок после починки'
+    except Exception as _e2:
+        return None, 'не разобрался: %s · после починки: %s' % (_first, str(_e2)[:60])
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # ГЕОПОЛИТИЧЕСКИЕ RSS -- think-tanks, military analysis, geostrategy
 # ══════════════════════════════════════════════════════════════════════════════
@@ -13961,7 +14004,15 @@ def fetch_geopolitics_rss():
         ('https://news.err.ee/rss', 'ERR', 'geopolitics'),                        # Эстония
         ('https://news.err.ee/feed', 'ERR', 'geopolitics'),                       # Эстония, запасной
         ('https://www.lrt.lt/en/?rss', 'LRT', 'geopolitics'),                     # Литва
-        ('https://www.lrt.lt/?rss', 'LRT', 'geopolitics'),                        # Литва, запасной
+        # ЗАПАСНОЙ АДРЕС LRT ОТКЛЮЧЁН 28.09.2026. Он отвечал исправно и давал
+        # 12 записей за прогон — но это ЛИТОВСКАЯ редакция, а не английская:
+        # адрес без /en/ отдаёт ленту на литовском. Словари географии и
+        # тяжести литовского не знают, и в прогоне 16:05 UTC все 12 записей
+        # ушли на стадию nogeo_noise, 12 из 12. То есть «живой запасной
+        # адрес» полностью состоял из шума, и в журнале выглядел как успех.
+        # Английский адрес выше отвечает и рушится об один символ на 37-й
+        # строке — это чинится, см. _xml_tolerant.
+        # ('https://www.lrt.lt/?rss', 'LRT', 'geopolitics'),                      # Литва, литовский язык
     ]
 
     items = []
@@ -13992,9 +14043,14 @@ def fetch_geopolitics_rss():
             continue
         seen_urls.add(url)
         _before = len(items)
+        root, _how = _xml_tolerant(data)
+        if root is None:
+            print(f'  [WARN] {src_name}: {_how}', file=sys.stderr)
+            probe.append({'источник': src_name, 'адрес': url,
+                          'исход': 'ответил, но %s' % _how,
+                          'записей': 0, 'примеры': []})
+            continue
         try:
-            import xml.etree.ElementTree as ET
-            root = ET.fromstring(data)
             ns = {'atom': 'http://www.w3.org/2005/Atom'}
             for item in root.findall('.//item')[:12]:
                 title = (item.findtext('title') or '').strip()
@@ -14024,7 +14080,7 @@ def fetch_geopolitics_rss():
                     'domain': domain,
                     'source_bias': 1,
                 })
-            probe.append({'источник': src_name, 'адрес': url, 'исход': 'ок',
+            probe.append({'источник': src_name, 'адрес': url, 'исход': _how,
                           'записей': len(items) - _before,
                           'примеры': [i['title'][:90] for i in items[_before:_before + 2]]})
         except Exception as e:
