@@ -7530,9 +7530,68 @@ def process_events(raw_items):
         domain_counts[ev['domain']] = domain_counts.get(ev['domain'], 0) + 1
         _flood_added += 1
 
+    # РЕЗЕРВ СЛОТОВ ПОД ОФИЦИАЛЬНЫЕ МЕТЕОПРЕДУПРЕЖДЕНИЯ (28.09.2026).
+    # Та же болезнь, от которой заведён FLOOD_RESERVE: климатическая квота
+    # раздаётся по убыванию тяжести, и предупреждение жёлтого уровня (вес 50
+    # по _MGM_SEV) проигрывает пожарам и красным GDACS, хотя порог ленты (45)
+    # проходит. Замер двух прогонов подряд, 15:45 и 16:05 UTC: запись MGM
+    # строится (raw=1, заголовок «Гроза, сильный дождь / ливень: Турция,
+    # 9 предупреждений (жёлтый уровень)»), проходит ВСЕ учитываемые гейты —
+    # поле lost_at в воронке пустое — и до ленты не доходит.
+    #
+    # Резерв стоит ЗДЕСЬ, до проверки свежести и до квоты, поэтому снимает
+    # обе возможные причины сразу. Это корректно: запись уже в events, то
+    # есть все содержательные гейты пройдены, и вопрос только в конкуренции
+    # за слот.
+    #
+    # Отбор ТОЛЬКО по проверенному полю meta.kind, а не по словам в
+    # заголовке: kind ставит сам фетчер (mgm, rosgidromet_cap, cap), и это
+    # официальные службы, а не пресса. Свежесть 3 дня жёстче общей нормы
+    # для климата (14): действующее предупреждение живёт часами, и старое
+    # в ленте вреднее отсутствующего.
+    #
+    # РЕЗЕРВ ПОСЧИТАН НА ИСТОЧНИК, А НЕ ОБЩИЙ. Первая редакция этого блока
+    # давала 12 слотов на всех, и это не работало бы: events отсортированы
+    # по убыванию тяжести, у Росгидромета 70 записей с весом 74 и 56, а у
+    # MGM жёлтый уровень это 50. Росгидромет забрал бы все 12 слотов раньше,
+    # чем цикл дошёл бы до MGM, и запись, ради которой резерв и заводится,
+    # снова не попала бы в ленту. Потолок на источник это исключает.
+    #
+    # Числа: MGM даёт не больше 3 записей за прогон (одна на цвет), поэтому
+    # 4 на источник с запасом хватает каждой службе. MeteoAlarm сейчас ничего
+    # не теряет (6 из 6 доходят) и включён как тот же класс: те же
+    # официальные службы, тот же вид записи, те же слоты.
+    WARN_RESERVE = 12          # общий потолок резерва
+    WARN_PER_SOURCE = 4        # потолок на одну службу
+    _WARN_KINDS = {'mgm', 'rosgidromet_cap', 'cap'}
+    _warn_reserved = set()
+    _warn_added = 0
+    _warn_by_src = {}
+    for ev in events:
+        if _warn_added >= WARN_RESERVE: break
+        if ev.get('id') in _flood_reserved: continue
+        if ((ev.get('meta') or {}).get('kind')) not in _WARN_KINDS: continue
+        _wsrc = str(ev.get('source') or '?')
+        if _warn_by_src.get(_wsrc, 0) >= WARN_PER_SOURCE: continue
+        try:
+            _ed = _date0.fromisoformat(ev.get('date','')[:10])
+            if (today - _ed).days > 3: continue
+        except Exception: continue
+        _trace(_obs_id(ev),'BUILT'); balanced.append(ev)
+        _warn_reserved.add(ev['id'])
+        _warn_by_src[_wsrc] = _warn_by_src.get(_wsrc, 0) + 1
+        domain_counts[ev['domain']] = domain_counts.get(ev['domain'], 0) + 1
+        _warn_added += 1
+    _LOSS['warn_reserve'] = _warn_added
+    _LOSS['warn_reserve_by_source'] = _warn_by_src
+
     for ev in events:
         ev_date_str = ev.get('date', '')[:10]
         if not ev_date_str:
+            # ТРЕТИЙ СЛЕПОЙ ПУТЬ (28.09.2026). Запись без даты выбрасывалась
+            # здесь молча: ни _lost, ни трассировки. Имя стадии заведено,
+            # поведение не меняется.
+            _lost('no_date', ev)
             continue
         try:
             from datetime import date as _date
@@ -7545,8 +7604,12 @@ def process_events(raw_items):
             if days_old > max_days:
                 _trace(_obs_id(ev),'FRESHNESS','removed',reason='fresh'); _lost('fresh', ev); continue
         except:
+            # Четвёртый слепой путь: дата есть, но не разбирается (не ISO).
+            # Тоже выбрасывалось молча.
+            _lost('bad_date', ev)
             continue
         if ev['id'] in _flood_reserved: continue  # уже зарезервировано как наводнение
+        if ev['id'] in _warn_reserved: continue   # уже зарезервировано как предупреждение
         d = ev['domain']
         # ANALYTIC LAYER: события ниже порога ленты (feed_visible=False) не квотируются —
         # они не отображаются в FREE, но кормят аналитический контур. Квота — только для ленты.
