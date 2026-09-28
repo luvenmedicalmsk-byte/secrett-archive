@@ -7577,14 +7577,31 @@ def process_events(raw_items):
                    domain=d, severity=ev.get('severity'),
                    canon_type=ev.get('canon_type'), source=ev.get('source'),
                    quota=quota, filled=domain_counts.get(d, 0))
+            # КВОТА ДОМЕНА НЕ ЗАПИСЫВАЛАСЬ В ПОТЕРИ (28.09.2026).
+            # Список overflow заполняется здесь и больше НИГДЕ не используется:
+            # записи выбрасываются. Вызова _lost на этом пути не было, поэтому
+            # воронка по источникам показывала их как исчезнувшие без стадии —
+            # у шести источников прогона 15:45 UTC поле lost_at было пустым:
+            #     EMSC 10, Open-Meteo 3, MGM Турция 1, K News 1,
+            #     МЧС/Росгидромет 1, Авиалесоохрана/Росгидромет 1
+            # Масштаб за тот же прогон: построено 1421, до воронки дошло 955,
+            # то есть 466 записей уходили в квоту молча. Feed-слой 588 при
+            # сумме квот 590, значит отсекает именно квота, а не кап ленты.
+            # Имя стадии делает это видимым; поведение не меняется.
+            _lost('quota', ev)
             overflow.append(ev)
 
     # MAX_EVENTS -- КАП для FEED-слоя (ленты). Analytic-события (feed_visible=False) идут
     # в поток сверх капа: их не видит FREE, но видят Process Engine / Radar / Pressure.
     _feed_all = [e for e in balanced if e.get('feed_visible') is not False]
     _feed = _feed_all[:MAX_EVENTS]
-    if LINEAGE:
-        for _fce in _feed_all[MAX_EVENTS:]: _trace(_fce.get('_obs_tid'),'TOPIC_CAP','removed',reason='feed_cap')
+    # КАП ЛЕНТЫ тоже не записывался в потери: трассировка шла только при
+    # LINEAGE=1, то есть в обычном прогоне его не видел никто. В прогоне
+    # 15:45 UTC он не срабатывал (588 из 600), но молчащая стадия рядом с
+    # молчащей квотой — это второй слепой участок на том же участке кода.
+    for _fce in _feed_all[MAX_EVENTS:]:
+        if LINEAGE: _trace(_fce.get('_obs_tid'),'TOPIC_CAP','removed',reason='feed_cap')
+        _lost('feed_cap', _fce)
     _analytic = [e for e in balanced if e.get('feed_visible') is False]
     top_events = _feed + _analytic
     _LOSS['feed_layer'] = len(_feed)
@@ -7633,7 +7650,16 @@ def process_events(raw_items):
                 # а не пережила тихий день. Имя делает состояние видимым, и
                 # решение по каждой ленте принимается по нескольким прогонам.
                 _old_lost = _stages.get('old', 0)
-                if _n and not _fin and _old_lost >= _n * 0.9:
+                # КВОТА ДОМЕНА отдельным вердиктом (28.09.2026): у источника,
+                # который доходит до конца и упирается в квоту, причина не в
+                # нём и не в словарях, а в конкуренции за слот домена по
+                # убыванию тяжести. Лечится резервом слотов, как у наводнений
+                # (FLOOD_RESERVE), а не правкой источника. Пока стадия не
+                # писалась, такие источники были неотличимы от мёртвых лент.
+                _quota_lost = _stages.get('quota', 0)
+                if _n and not _fin and _quota_lost >= _n * 0.9:
+                    _verdict = 'упирается в квоту домена'
+                elif _n and not _fin and _old_lost >= _n * 0.9:
                     _verdict = 'отдаёт только устаревшее'
                 elif _n and not _fin:
                     _verdict = 'не доходит'
