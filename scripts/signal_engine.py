@@ -1229,6 +1229,15 @@ def _evolve_one(cur, prev, now):
     if phase!=prev.get('phase'): log('смена стадии',_PHASE_SHORT.get(phase,phase),'phase_evolution',['phase'])
     # Phase 3: сначала сшиваем ФИНАЛЬНОЕ состояние процесса, потом считаем стадию.
     cur['phase']=phase; cur['status']='active' if changed else prev.get('status','active')
+    # TASK-243-A. merged_from — LINEAGE: пересобрать из текущего кластера нельзя,
+    # значит переносим объединением. Пока IDENTITY_V2_APPLY=False поле никем не
+    # ставится, и правка инертна; она нужна до включения, а не после.
+    _mf = list(prev.get('merged_from') or [])
+    for _x in (cur.get('merged_from') or []):
+        if _x not in _mf:
+            _mf.append(_x)
+    if _mf:
+        cur['merged_from'] = _mf
     tl=_cap(tl); audit=_cap(audit)
     health=_health(cur['severity'], phase, hours_idle, rising)
     cur.update({'phase':phase,'confidence':conf,'status':'active' if changed else 'active',
