@@ -2,7 +2,7 @@
   "country": "FR",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T09:45:04.211283+00:00",
+  "generated_at": "2026-09-29T09:53:40.295144+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -26,7 +26,7 @@
       "id": "DOMAIN-FR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 5,
+      "score": 35,
       "trend": "stable"
     },
     {
@@ -47,7 +47,7 @@
       "id": "DOMAIN-FR-social",
       "type": "Domain",
       "label": "social",
-      "score": 62,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-FR-Долг_Франц",
+      "type": "Signal",
+      "label": "Долг Франции достиг 119% от ВВП",
+      "severity": 35,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-FR-Шторм_—_Фр",
       "type": "Signal",
       "label": "Шторм — Франция",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-FR-Социальный",
-      "type": "Signal",
-      "label": "Социальный процесс — Франция",
-      "severity": 62,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -112,7 +112,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-economic",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.35
     },
     {
       "from": "COUNTRY-FR",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-FR",
       "to": "DOMAIN-FR-social",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-FR",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-FR-climate",
-      "to": "DOMAIN-FR-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-FR-economic",
-      "to": "DOMAIN-FR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-FR-social",
-      "to": "DOMAIN-FR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-FR-climate",
       "to": "DOMAIN-FR-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-FR-climate",
+      "to": "DOMAIN-FR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-FR-economic",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-FR-social",
+      "to": "DOMAIN-FR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
       "from": "SIGNAL-FR-Гроза:_Фра",
       "to": "DOMAIN-FR-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
     },
     {
+      "from": "SIGNAL-FR-Долг_Франц",
+      "to": "DOMAIN-FR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.35
+    },
+    {
       "from": "SIGNAL-FR-Шторм_—_Фр",
       "to": "DOMAIN-FR-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-FR-Социальный",
-      "to": "DOMAIN-FR-social",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }

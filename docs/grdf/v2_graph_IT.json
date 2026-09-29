@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T09:45:04.220723+00:00",
+  "generated_at": "2026-09-29T09:53:40.310895+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -19,14 +19,14 @@
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 76,
+      "score": 41,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 32,
+      "score": 36,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
+      "id": "SIGNAL-IT-Инфляция_ц",
+      "type": "Signal",
+      "label": "Инфляция цен производителей в Италии по ",
+      "severity": 32,
+      "domain": "economic"
+    },
+    {
       "id": "SIGNAL-IT-Италия_уст",
       "type": "Signal",
       "label": "Италия устанавливает правила выхода из с",
       "severity": 32,
       "domain": "economic"
-    },
-    {
-      "id": "SIGNAL-IT-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Италия",
-      "severity": 76,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,13 +106,13 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.76
+      "weight": 0.41
     },
     {
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-economic",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.36
     },
     {
       "from": "COUNTRY-IT",
@@ -164,6 +164,27 @@
     },
     {
       "from": "DOMAIN-IT-climate",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,43 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "DOMAIN-IT-climate",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "SIGNAL-IT-Это_сицили",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.48
     },
     {
-      "from": "SIGNAL-IT-Италия_уст",
+      "from": "SIGNAL-IT-Инфляция_ц",
       "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
       "weight": 0.32
     },
     {
-      "from": "SIGNAL-IT-Военные_уд",
-      "to": "DOMAIN-IT-geopolitical",
+      "from": "SIGNAL-IT-Италия_уст",
+      "to": "DOMAIN-IT-economic",
       "type": "AMPLIFIES",
-      "weight": 0.76
+      "weight": 0.32
     }
   ]
 }
