@@ -2,17 +2,17 @@
   "country": "DE",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T10:47:32.300785+00:00",
+  "generated_at": "2026-09-29T11:07:24.084432+00:00",
   "node_count": 14,
-  "edge_count": 22,
+  "edge_count": 16,
   "nodes": [
     {
       "id": "COUNTRY-DE",
       "type": "Country",
       "label": "DE",
-      "score": 48,
+      "score": 52,
       "props": {
-        "risk_score": 48
+        "risk_score": 52
       }
     },
     {
@@ -20,7 +20,7 @@
       "type": "Domain",
       "label": "geopolitical",
       "score": 56,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-economic",
@@ -33,7 +33,7 @@
       "id": "DOMAIN-DE-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 72,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -41,7 +41,7 @@
       "type": "Domain",
       "label": "technology",
       "score": 58,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-DE-social",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-DE-Вымогатели",
+      "type": "Signal",
+      "label": "Вымогатели взломали облачный файлообменн",
+      "severity": 52,
+      "domain": "technology"
+    },
+    {
       "id": "SIGNAL-DE-Киберугроз",
       "type": "Signal",
       "label": "Киберугроза — Германия",
@@ -92,13 +99,6 @@
       "label": "Геополитический процесс — Германия",
       "severity": 56,
       "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-DE-Климатичес",
-      "type": "Signal",
-      "label": "Климатический сигнал — Германия",
-      "severity": 72,
-      "domain": "climate"
     }
   ],
   "edges": [
@@ -118,7 +118,7 @@
       "from": "COUNTRY-DE",
       "to": "DOMAIN-DE-climate",
       "type": "CORRELATES",
-      "weight": 0.72
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-DE",
@@ -163,48 +163,6 @@
       "weight": 0.8
     },
     {
-      "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-DE-social",
-      "to": "DOMAIN-DE-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-DE-climate",
-      "to": "DOMAIN-DE-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-DE-infrastructure",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-DE-economic",
-      "to": "DOMAIN-DE-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-DE-geopolitical",
       "to": "DOMAIN-DE-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +184,12 @@
       "lag_days": 45
     },
     {
+      "from": "SIGNAL-DE-Вымогатели",
+      "to": "DOMAIN-DE-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
       "from": "SIGNAL-DE-Киберугроз",
       "to": "DOMAIN-DE-technology",
       "type": "AMPLIFIES",
@@ -236,12 +200,6 @@
       "to": "DOMAIN-DE-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.56
-    },
-    {
-      "from": "SIGNAL-DE-Климатичес",
-      "to": "DOMAIN-DE-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.72
     }
   ]
 }
