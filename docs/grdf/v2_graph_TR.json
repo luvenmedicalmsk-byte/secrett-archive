@@ -2,9 +2,9 @@
   "country": "TR",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T10:26:48.366682+00:00",
+  "generated_at": "2026-09-29T10:47:32.303099+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-TR",
@@ -26,21 +26,21 @@
       "id": "DOMAIN-TR-economic",
       "type": "Domain",
       "label": "economic",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
       "id": "DOMAIN-TR-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 54,
       "trend": "stable"
     },
     {
@@ -80,11 +80,11 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-TR-Кабинет_ми",
+      "id": "SIGNAL-TR-Гроза,_сил",
       "type": "Signal",
-      "label": "Кабинет министров Турции соберется сегод",
-      "severity": 45,
-      "domain": "economic"
+      "label": "Гроза, сильный ветер: Турция, 10 предупр",
+      "severity": 50,
+      "domain": "climate"
     },
     {
       "id": "SIGNAL-TR-Военный_ко",
@@ -94,11 +94,11 @@
       "domain": "geopolitical"
     },
     {
-      "id": "SIGNAL-TR-Геополитич",
+      "id": "SIGNAL-TR-Отключение",
       "type": "Signal",
-      "label": "Геополитический процесс — Ближний Восток",
-      "severity": 78,
-      "domain": "geopolitical"
+      "label": "Отключение интернета — Ближний Восток (с",
+      "severity": 72,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -112,19 +112,19 @@
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-economic",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-TR",
       "to": "DOMAIN-TR-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.54
     },
     {
       "from": "COUNTRY-TR",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TR-social",
+      "to": "DOMAIN-TR-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-TR-climate",
+      "to": "DOMAIN-TR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-TR-infrastructure",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-TR-economic",
+      "to": "DOMAIN-TR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-TR-geopolitical",
       "to": "DOMAIN-TR-infrastructure",
       "type": "ESCALATES",
@@ -184,10 +226,10 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-TR-Кабинет_ми",
-      "to": "DOMAIN-TR-economic",
+      "from": "SIGNAL-TR-Гроза,_сил",
+      "to": "DOMAIN-TR-climate",
       "type": "AMPLIFIES",
-      "weight": 0.45
+      "weight": 0.5
     },
     {
       "from": "SIGNAL-TR-Военный_ко",
@@ -196,10 +238,10 @@
       "weight": 0.84
     },
     {
-      "from": "SIGNAL-TR-Геополитич",
-      "to": "DOMAIN-TR-geopolitical",
+      "from": "SIGNAL-TR-Отключение",
+      "to": "DOMAIN-TR-technology",
       "type": "AMPLIFIES",
-      "weight": 0.78
+      "weight": 0.72
     }
   ]
 }
