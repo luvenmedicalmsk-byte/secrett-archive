@@ -1,26 +1,26 @@
 {
   "country": "RU",
-  "date": "2026-09-28",
+  "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-28T23:49:26.050074+00:00",
+  "generated_at": "2026-09-29T00:07:53.349955+00:00",
   "node_count": 14,
-  "edge_count": 16,
+  "edge_count": 22,
   "nodes": [
     {
       "id": "COUNTRY-RU",
       "type": "Country",
       "label": "RU",
-      "score": 92,
+      "score": 91,
       "props": {
-        "risk_score": 92
+        "risk_score": 91
       }
     },
     {
       "id": "DOMAIN-RU-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 100,
-      "trend": "stable"
+      "score": 98,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-RU-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 5,
-      "trend": "stable"
+      "score": 74,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-RU-technology",
@@ -80,25 +80,25 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-RU-В_Краснода",
-      "type": "Signal",
-      "label": "В Краснодарском крае БПЛА атаковали Ильс",
-      "severity": 95,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-RU-Пять_челов",
-      "type": "Signal",
-      "label": "Пять человек получили ранения в результа",
-      "severity": 95,
-      "domain": "geopolitical"
-    },
-    {
       "id": "SIGNAL-RU-Три_челове",
       "type": "Signal",
       "label": "Три человека погибли, двое пострадали пр",
       "severity": 90,
       "domain": "geopolitical"
+    },
+    {
+      "id": "SIGNAL-RU-Наводнение",
+      "type": "Signal",
+      "label": "Наводнение: Хабаровский край, север (Рос",
+      "severity": 74,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-RU-Пожарная_о",
+      "type": "Signal",
+      "label": "Пожарная опасность: Омская обл. (Россия)",
+      "severity": 74,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-geopolitical",
       "type": "CORRELATES",
-      "weight": 1.0
+      "weight": 0.98
     },
     {
       "from": "COUNTRY-RU",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-RU",
       "to": "DOMAIN-RU-climate",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.74
     },
     {
       "from": "COUNTRY-RU",
@@ -163,6 +163,48 @@
       "weight": 0.8
     },
     {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-RU-social",
+      "to": "DOMAIN-RU-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-RU-climate",
+      "to": "DOMAIN-RU-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-RU-infrastructure",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-RU-economic",
+      "to": "DOMAIN-RU-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
       "from": "DOMAIN-RU-geopolitical",
       "to": "DOMAIN-RU-infrastructure",
       "type": "ESCALATES",
@@ -184,22 +226,22 @@
       "lag_days": 45
     },
     {
-      "from": "SIGNAL-RU-В_Краснода",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.95
-    },
-    {
-      "from": "SIGNAL-RU-Пять_челов",
-      "to": "DOMAIN-RU-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.95
-    },
-    {
       "from": "SIGNAL-RU-Три_челове",
       "to": "DOMAIN-RU-geopolitical",
       "type": "AMPLIFIES",
       "weight": 0.9
+    },
+    {
+      "from": "SIGNAL-RU-Наводнение",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
+    },
+    {
+      "from": "SIGNAL-RU-Пожарная_о",
+      "to": "DOMAIN-RU-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.74
     }
   ]
 }
