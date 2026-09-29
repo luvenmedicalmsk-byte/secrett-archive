@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T14:48:13.288325+00:00",
+  "generated_at": "2026-09-29T15:12:10.274743+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 5,
+      "score": 50,
       "trend": "stable"
     },
     {
@@ -87,18 +87,18 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-CA-Канада_ище",
-      "type": "Signal",
-      "label": "Канада ищет защитные меры для работодате",
-      "severity": 32,
-      "domain": "climate"
-    },
-    {
       "id": "SIGNAL-CA-Шторм_—_Се",
       "type": "Signal",
       "label": "Шторм — Северная Америка",
       "severity": 100,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Эпидемиоло",
+      "type": "Signal",
+      "label": "Эпидемиологический риск — Канада",
+      "severity": 50,
+      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-CA-infrastructure",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-economic",
       "type": "ESCALATES",
       "weight": 0.75,
@@ -205,13 +184,28 @@
       "lag_days": 90
     },
     {
-      "from": "SIGNAL-CA-Земля_разр",
-      "to": "DOMAIN-CA-climate",
-      "type": "AMPLIFIES",
-      "weight": 0.32
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
     },
     {
-      "from": "SIGNAL-CA-Канада_ище",
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-CA-Земля_разр",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
@@ -221,6 +215,12 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 1.0
+    },
+    {
+      "from": "SIGNAL-CA-Эпидемиоло",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.5
     }
   ]
 }
