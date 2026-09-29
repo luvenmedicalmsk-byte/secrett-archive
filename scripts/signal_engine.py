@@ -216,7 +216,31 @@ _TYPE_DOMAIN={
  'Оборонное производство':'geopolitics','Геополитический процесс':'geopolitics',
  'Отключение интернета':'technology','Уязвимость ПО':'technology','Киберугроза':'technology','Фишинговая кампания':'technology',
  'Авиационный инцидент':'technology','Технологический сигнал':'technology',
- 'Эпидемиологический риск':'social','Миграционная политика':'social','Криминальный оборот':'social','Социальный процесс':'social'}
+ 'Эпидемиологический риск':'social','Миграционная политика':'social','Криминальный оборот':'social','Социальный процесс':'social',
+ # ТИПЫ КАНОНА, КОТОРЫХ В РЕЕСТРЕ НЕ БЫЛО (29.09.2026).
+ # _process_type берёт тип из canon_type, и словарь канона шире этого
+ # реестра. Тип вне реестра означает, что домен процесса решается
+ # голосованием доменов событий — а оно расходится само с собой:
+ # «Транспортный коридор» стоял в geopolitics трижды и в economy трижды,
+ # «Возобновляемая энергетика» в economy семь раз, в social и в
+ # geopolitics по одному, «Взрыв в общественном месте» в geopolitics
+ # трижды и в social один раз. Заявленный инвариант «домен процесса
+ # следует ТИПУ» для 110 процессов не работал.
+ #
+ # Добавлены только ОДНОЗНАЧНЫЕ типы: у которых наблюдаемый домен один
+ # и он же следует из таксономии. Замер: домен не меняется ни у одного
+ # процесса из 1167 — запись фиксирует то, что голосование и так давало,
+ # и не даст ему разойтись в следующий раз.
+ #
+ # НЕ добавлены пять спорных: «Транспортный коридор»,
+ # «Возобновляемая энергетика», «Взрыв в общественном месте»,
+ # «Криминальный инцидент», «Инфраструктурный инцидент». У них
+ # наблюдаемый домен расходится, и выбор домена — решение о таксономии.
+ 'Шторм':'climate','Климатическая аномалия':'climate','Экологический инцидент':'climate',
+ 'Оползень':'climate','Таяние криосферы':'climate','Морской лёд':'climate',
+ 'Вулканическая активность':'climate','Климатическая инженерия':'climate',
+ 'Энергоблэкаут':'technology','Промышленная авария':'technology',
+ 'Эпидемиологический надзор':'social','Взрыв':'geopolitics'}
 _DOM_DEFAULT={'climate':'Климатический сигнал','economy':'Экономический сигнал','geopolitics':'Геополитический процесс','technology':'Технологический сигнал','social':'Социальный процесс'}
 def _process_name_v2(evs, domain, place):
     blob=' '.join((x.get('title','')+' '+(x.get('summary','') or '')[:60]) for x in evs).lower()
@@ -949,11 +973,39 @@ def _lc_profile(sig):
     tempo=_TYPE_TEMPO.get(sig.get('process_type')) or _DOMAIN_TEMPO.get(sig.get('primary_domain'),'medium')
     return _LC_PROFILES[tempo], tempo
 
-def _gate_transition(prev, raw, rising, n, stale, peak_n=3):
+LC_DONE_NOT_ABSORBING = True   # «Завершён» не поглощающее состояние; откат: False
+
+
+def _gate_transition(prev, raw, rising, n, stale, peak_n=3, done=None):
     """Гейт переходов: запрещает нелогичные скачки между стадиями."""
     if not prev or prev==raw: return raw
-    if prev=='Завершён':                                   # возобновление только при реальном импульсе
-        return 'Развитие' if rising else 'Завершён'
+    if prev=='Завершён':
+        if rising: return 'Развитие'
+        # «ЗАВЕРШЁН» БЫЛ ПОГЛОЩАЮЩИМ СОСТОЯНИЕМ (29.09.2026).
+        #
+        # Выйти из него можно было только при РОСТЕ тяжести (_real_rising).
+        # Процесс, вернувшийся со свежим свидетельством на том же уровне,
+        # оставался «Завершён» навсегда — при том, что status у него active,
+        # а phase escalating. Замер по корпусу 1167 процессов: в «Завершён»
+        # без архива сидят 225, и у 57 из них свидетельство свежее их
+        # собственного порога done:
+        #     Отключение интернета — Нигерия  свидетельство сегодня, active
+        #     Пожарная активность — Якутия    свидетельство сегодня, active
+        #     Отключение интернета — Куба     active, phase=escalating
+        # Правило строкой выше объявляет «Завершён» ровно при stale >= done,
+        # поэтому гейт не должен держать там процесс, у которого stale < done.
+        # Из 57 освобождённых 40 уходят в «Ослабление» (мягкая посадка,
+        # а не скачок), 12 в «Развитие», 5 в «Стабилизацию». Остальные 168
+        # остаются «Завершён»: у них свидетельство действительно старое.
+        #
+        # Защита от дребезга сохранена: процесс без нового свидетельства
+        # из «Завершён» не выходит.
+        #
+        # ОТКАТ: LC_DONE_NOT_ABSORBING = False.
+        if (LC_DONE_NOT_ABSORBING and stale is not None and done is not None
+                and stale < done):
+            return raw
+        return 'Завершён'
     if prev=='Обнаружение' and raw=='Ослабление':          # нельзя миновать Развитие
         return raw if raw=='Завершён' else 'Обнаружение'
     if prev in ('Развитие','Пик','Стабилизация') and raw=='Завершён':
@@ -1001,7 +1053,8 @@ def _lifecycle_stage(sig, hours_idle, now=None, prev_stage=None):
         if age is not None and age<=prof['fresh'] and n<=2: return 'Обнаружение'    # свежий, только выявлен
         if age is not None and age>prof['fresh']: return 'Стабилизация'             # давно висит, данные свежие, без роста
         return 'Обнаружение'
-    return _gate_transition(prev_stage, _raw(), _real_rising, n, stale, peak_n=prof['peak_n'])
+    return _gate_transition(prev_stage, _raw(), _real_rising, n, stale,
+                            peak_n=prof['peak_n'], done=prof['done'])
 
 def _seed_history(sig, now):
     sig['first_seen']=sig.get('first_seen') or now
@@ -1682,6 +1735,7 @@ def _reconstruct_macro(signals, now):
             'evidence_count':_ev_total, 'first_seen':_first, 'last_seen':_last,
             'geo_spread':regions, 'geo_spread_count':len(regions),
             'included_processes':[m.get('signal_id') for m in members],
+            'included_labels':[m.get('title') or m.get('signal_id') for m in members],
             'included_regions':regions,
             'lifecycle_stage':'Развитие' if len(regions)>=3 else 'Обнаружение',
             'macro_reason':'%d процессов, распространение: %s' % (
@@ -2611,7 +2665,16 @@ def _build_one_signal(evs, meta=None):
             'origin_confidence':origin_conf,'origin_reasons':origin_reasons,'origin_chain':origin_chain,
             'access_tier':access_tier,'sensitivity':sensitivity,'free_title':free_title,
         'process_place':place,'process_place_iso':place_iso,'actor':actor,'target':target,
-        'affected_regions':affected,'included_places':included_places,'included_processes':(meta or {}).get('included_processes',[]),'merged_count':(meta or {}).get('merged_count',1),
+        'affected_regions':affected,'included_places':included_places,'included_processes':(meta or {}).get('included_processes',[]),
+        # ОДНО ПОЛЕ ДВУХ ТИПОВ (29.09.2026). included_processes у макропроцесса
+        # содержал ID участников, а у обычного процесса — человекочитаемые
+        # МЕТКИ, причём у 1075 процессов из 1167 это была единственная метка
+        # самого процесса, то есть ссылка на себя. Панель карты рендерит поле
+        # пилюлями «Развитие процесса», поэтому у всех 48 макропроцессов
+        # пользователю показывались сырые слаги вида geop-военныеуда-украина-87b6.
+        # Теперь included_processes — всегда ID, included_labels — всегда
+        # читаемые названия.
+        'included_labels':(meta or {}).get('included_labels',[]),'merged_count':(meta or {}).get('merged_count',1),
         'domains':domains,'primary_domain':primary_domain,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
         'trend':trend,'phase':sig_phase,
         'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
@@ -2667,10 +2730,10 @@ def _macro_merge_clusters(clusters):
             win=14 if key[0]=='M' else 30
             if _dates_close(combined, win):
                 labels=sorted(set(_cluster_label(sub) for sub in grp))
-                out.append((combined, {'merged_count':len(grp),'included_processes':labels}))
+                out.append((combined, {'merged_count':len(grp),'included_labels':labels}))
                 continue
         for sub in grp:
-            out.append((sub, {'merged_count':1,'included_processes':[_cluster_label(sub)]}))
+            out.append((sub, {'merged_count':1,'included_labels':[_cluster_label(sub)]}))
     return out
 
 # ── Фильтр шума: изолированные криминальные инциденты против частных лиц ────────
