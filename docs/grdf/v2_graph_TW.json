@@ -2,7 +2,7 @@
   "country": "TW",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T03:47:34.771151+00:00",
+  "generated_at": "2026-09-29T04:08:34.414418+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -19,7 +19,7 @@
       "id": "DOMAIN-TW-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 39,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -40,7 +40,7 @@
       "id": "DOMAIN-TW-technology",
       "type": "Domain",
       "label": "technology",
-      "score": 5,
+      "score": 56,
       "trend": "stable"
     },
     {
@@ -70,14 +70,21 @@
       "label": "climate"
     },
     {
+      "id": "DRIVER-TW-technology",
+      "type": "Driver",
+      "label": "technology"
+    },
+    {
       "id": "DRIVER-TW-geopolitical",
       "type": "Driver",
       "label": "geopolitical"
     },
     {
-      "id": "DRIVER-TW-economic",
-      "type": "Driver",
-      "label": "economic"
+      "id": "SIGNAL-TW-Падение_ин",
+      "type": "Signal",
+      "label": "Падение интернет-связи: Тайвань",
+      "severity": 56,
+      "domain": "technology"
     },
     {
       "id": "SIGNAL-TW-Наводнение",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-TW-Шторм_—_Во",
+      "id": "SIGNAL-TW-Отключение",
       "type": "Signal",
-      "label": "Шторм — Восточная Азия",
-      "severity": 62,
-      "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-TW-Военные_уд",
-      "type": "Signal",
-      "label": "Военные удары — Восточная Азия",
-      "severity": 53,
-      "domain": "geopolitical"
+      "label": "Отключение интернета — Тайвань",
+      "severity": 56,
+      "domain": "technology"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-TW",
@@ -124,7 +124,7 @@
       "from": "COUNTRY-TW",
       "to": "DOMAIN-TW-technology",
       "type": "CORRELATES",
-      "weight": 0.05
+      "weight": 0.56
     },
     {
       "from": "COUNTRY-TW",
@@ -151,37 +151,16 @@
       "weight": 0.8
     },
     {
+      "from": "DRIVER-TW-technology",
+      "to": "COUNTRY-TW",
+      "type": "CAUSES",
+      "weight": 0.8
+    },
+    {
       "from": "DRIVER-TW-geopolitical",
       "to": "COUNTRY-TW",
       "type": "CAUSES",
       "weight": 0.8
-    },
-    {
-      "from": "DRIVER-TW-economic",
-      "to": "COUNTRY-TW",
-      "type": "CAUSES",
-      "weight": 0.8
-    },
-    {
-      "from": "DOMAIN-TW-climate",
-      "to": "DOMAIN-TW-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-TW-economic",
-      "to": "DOMAIN-TW-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-TW-social",
-      "to": "DOMAIN-TW-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
     },
     {
       "from": "DOMAIN-TW-climate",
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-TW-climate",
+      "to": "DOMAIN-TW-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-TW-economic",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-TW-social",
+      "to": "DOMAIN-TW-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-TW-Падение_ин",
+      "to": "DOMAIN-TW-technology",
+      "type": "AMPLIFIES",
+      "weight": 0.56
+    },
+    {
       "from": "SIGNAL-TW-Наводнение",
       "to": "DOMAIN-TW-climate",
       "type": "AMPLIFIES",
       "weight": 0.9
     },
     {
-      "from": "SIGNAL-TW-Шторм_—_Во",
-      "to": "DOMAIN-TW-climate",
+      "from": "SIGNAL-TW-Отключение",
+      "to": "DOMAIN-TW-technology",
       "type": "AMPLIFIES",
-      "weight": 0.62
-    },
-    {
-      "from": "SIGNAL-TW-Военные_уд",
-      "to": "DOMAIN-TW-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.53
+      "weight": 0.56
     }
   ]
 }
