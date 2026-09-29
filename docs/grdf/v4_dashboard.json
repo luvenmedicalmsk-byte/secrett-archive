@@ -1,7 +1,7 @@
 {
   "grdf_version": "4.0",
   "date": "2026-09-29",
-  "generated_at": "2026-09-29T07:49:50.844107+00:00",
+  "generated_at": "2026-09-29T08:08:22.922349+00:00",
   "global_stress_map": [
     {
       "country": "AE",
@@ -54,10 +54,10 @@
     {
       "country": "CA",
       "country_name": "Канада",
-      "resilience": 76,
-      "vulnerability": 9,
-      "recovery_days": 201,
-      "stress_grade": "LOW"
+      "resilience": 65,
+      "vulnerability": 36,
+      "recovery_days": 348,
+      "stress_grade": "MODERATE"
     },
     {
       "country": "CH",
@@ -94,10 +94,10 @@
     {
       "country": "DE",
       "country_name": "Германия",
-      "resilience": 65,
-      "vulnerability": 20,
-      "recovery_days": 282,
-      "stress_grade": "LOW"
+      "resilience": 61,
+      "vulnerability": 55,
+      "recovery_days": 424,
+      "stress_grade": "HIGH"
     },
     {
       "country": "DK",
@@ -206,9 +206,9 @@
     {
       "country": "IT",
       "country_name": "Италия",
-      "resilience": 66,
-      "vulnerability": 22,
-      "recovery_days": 288,
+      "resilience": 76,
+      "vulnerability": 16,
+      "recovery_days": 231,
       "stress_grade": "LOW"
     },
     {
@@ -310,9 +310,9 @@
     {
       "country": "SG",
       "country_name": "Сингапур",
-      "resilience": 74,
+      "resilience": 75,
       "vulnerability": 13,
-      "recovery_days": 226,
+      "recovery_days": 224,
       "stress_grade": "LOW"
     },
     {
@@ -382,6 +382,18 @@
   ],
   "top_vulnerable": [
     {
+      "country": "DE",
+      "vulnerability": 55,
+      "recovery_days": 424,
+      "gri": 58
+    },
+    {
+      "country": "CA",
+      "vulnerability": 36,
+      "recovery_days": 348,
+      "gri": 64
+    },
+    {
       "country": "CN",
       "vulnerability": 30,
       "recovery_days": 342,
@@ -424,22 +436,10 @@
       "gri": 65
     },
     {
-      "country": "IT",
-      "vulnerability": 22,
-      "recovery_days": 288,
-      "gri": 66
-    },
-    {
       "country": "GR",
       "vulnerability": 22,
       "recovery_days": 286,
       "gri": 65
-    },
-    {
-      "country": "ES",
-      "vulnerability": 21,
-      "recovery_days": 298,
-      "gri": 76
     }
   ],
   "top_resilient": [
@@ -464,9 +464,9 @@
       "gri": 47
     },
     {
-      "country": "CA",
+      "country": "IT",
       "resilience": 76,
-      "gri": 47
+      "gri": 46
     },
     {
       "country": "SK",
@@ -475,8 +475,8 @@
     },
     {
       "country": "SG",
-      "resilience": 74,
-      "gri": 52
+      "resilience": 75,
+      "gri": 50
     },
     {
       "country": "KZ",
@@ -748,6 +748,90 @@
       ]
     },
     {
+      "country": "CA",
+      "country_name": "Канада",
+      "max_cascade_score": 17,
+      "active_cascades_n": 2,
+      "cascades": [
+        {
+          "chain_id": "CHAIN-DROUGHT-FOOD",
+          "chain_name": "Drought → Agriculture → Food Prices → Migration → Conflict",
+          "trigger_domain": "climate",
+          "trigger_score": 72,
+          "cascade_score": 17,
+          "cascade_grade": "LOW",
+          "steps": [
+            {
+              "domain": "economic",
+              "strength": 0.75,
+              "confidence": 0.88,
+              "lag_days": 30,
+              "label": "Agricultural loss",
+              "current_score": 5
+            },
+            {
+              "domain": "social",
+              "strength": 0.7,
+              "confidence": 0.85,
+              "lag_days": 60,
+              "label": "Food price inflation",
+              "current_score": 50
+            },
+            {
+              "domain": "social",
+              "strength": 0.65,
+              "confidence": 0.82,
+              "lag_days": 90,
+              "label": "Migration surge",
+              "current_score": 50
+            },
+            {
+              "domain": "geopolitical",
+              "strength": 0.58,
+              "confidence": 0.75,
+              "lag_days": 180,
+              "label": "Conflict escalation",
+              "current_score": 36
+            }
+          ]
+        },
+        {
+          "chain_id": "CHAIN-CLIMATE-ENERGY",
+          "chain_name": "Wildfire → Energy → Supply Chain → Economy",
+          "trigger_domain": "climate",
+          "trigger_score": 72,
+          "cascade_score": 2,
+          "cascade_grade": "LOW",
+          "steps": [
+            {
+              "domain": "infrastructure",
+              "strength": 0.82,
+              "confidence": 0.9,
+              "lag_days": 7,
+              "label": "Grid / Energy failure",
+              "current_score": 5
+            },
+            {
+              "domain": "economic",
+              "strength": 0.68,
+              "confidence": 0.85,
+              "lag_days": 14,
+              "label": "Supply disruption",
+              "current_score": 5
+            },
+            {
+              "domain": "economic",
+              "strength": 0.55,
+              "confidence": 0.78,
+              "lag_days": 30,
+              "label": "Economic loss",
+              "current_score": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
       "country": "FR",
       "country_name": "Франция",
       "max_cascade_score": 16,
@@ -830,48 +914,6 @@
           ]
         }
       ]
-    },
-    {
-      "country": "BY",
-      "country_name": "Беларусь",
-      "max_cascade_score": 15,
-      "active_cascades_n": 1,
-      "cascades": [
-        {
-          "chain_id": "CHAIN-GEO-ENERGY",
-          "chain_name": "Geopolitical Conflict → Energy → Economy → Social",
-          "trigger_domain": "geopolitical",
-          "trigger_score": 60,
-          "cascade_score": 15,
-          "cascade_grade": "LOW",
-          "steps": [
-            {
-              "domain": "infrastructure",
-              "strength": 0.8,
-              "confidence": 0.88,
-              "lag_days": 3,
-              "label": "Energy supply shock",
-              "current_score": 5
-            },
-            {
-              "domain": "economic",
-              "strength": 0.72,
-              "confidence": 0.85,
-              "lag_days": 14,
-              "label": "Economic stress",
-              "current_score": 62
-            },
-            {
-              "domain": "social",
-              "strength": 0.6,
-              "confidence": 0.78,
-              "lag_days": 45,
-              "label": "Social pressure",
-              "current_score": 46
-            }
-          ]
-        }
-      ]
     }
   ],
   "shock_types": [
@@ -924,11 +966,11 @@
     {
       "country": "DE",
       "country_name": "Германия",
-      "base_now": 48,
-      "base_3yr": 48,
-      "base_10yr": 48,
-      "trajectory": "stabilising",
-      "worst_10yr": 82
+      "base_now": 52,
+      "base_3yr": 97,
+      "base_10yr": 97,
+      "trajectory": "escalating",
+      "worst_10yr": 97
     },
     {
       "country": "GB",
@@ -976,8 +1018,8 @@
       "worst_10yr": 76
     }
   ],
-  "system_stability_index": 68,
+  "system_stability_index": 67,
   "ssi_grade": "stressed",
-  "avg_vulnerability": 15.3,
-  "avg_resilience": 67.6
+  "avg_vulnerability": 16.4,
+  "avg_resilience": 67.5
 }
