@@ -741,6 +741,22 @@ _TOMBSTONES = []       # надгробия, собранные за этот п
 _TOMBSTONES_IN = []    # надгробия прошлого снапшота: переносятся нетронутыми
 
 
+def _tomb_add(t):
+    """Кладёт надгробие в накопитель ОДИН раз на идентификатор.
+
+    Повторное снятие того же процесса — не новое событие истории, а та же
+    запись: дедуп пересобирает и снимает её каждый прогон. Без этой проверки
+    накопитель рос на единицу за цикл (замер: 2 -> 3 -> 4 при неизменном
+    active 1124), и merged_at у копий расходился.
+    """
+    _sid = t.get('signal_id')
+    for _x in _TOMBSTONES:
+        if _x.get('signal_id') == _sid:
+            return False
+    _TOMBSTONES.append(t)
+    return True
+
+
 def _make_tombstone(src, winner_id, reason, now):
     """Неизменяемый исторический снимок поглощённого процесса.
 
@@ -2630,7 +2646,8 @@ def _identity_v2_prepare(previous):
     # TASK-244: надгробия отдаются накопителем, а не четвёртым элементом
     # кортежа, — сигнатуру функции используют приёмка TASK-242 и сухой прогон.
     if TOMBSTONE_CONSERVATION:
-        _TOMBSTONES.extend(tombs)
+        for _t in tombs:
+            _tomb_add(_t)
     return merged, remap, lineage
 
 
@@ -2648,11 +2665,12 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     # _evolve_one, ни _decay_absent, ни rescue её больше не видят.
     del _TOMBSTONES[:]
     if TOMBSTONE_CONSERVATION:
-        _TOMBSTONES.extend(_TOMBSTONES_IN)
+        for _t in _TOMBSTONES_IN:
+            _tomb_add(_t)
         _stray=[s for s in previous if s.get('status')=='merged']
         if _stray:
-            _known={t.get('signal_id') for t in _TOMBSTONES}
-            _TOMBSTONES.extend([s for s in _stray if s.get('signal_id') not in _known])
+            for _t in _stray:
+                _tomb_add(_t)
             previous=[s for s in previous if s.get('status')!='merged']
     # TASK-242 · IDENTITY V2 В БОЕВОМ ПУТИ. Флаг по умолчанию выключен;
     # apply_identity_v2 позволяет прогнать путь в тени, не трогая production.
@@ -2896,8 +2914,8 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
             # Замер TASK-243-C: без надгробия её содержание исчезает совсем,
             # объединение свидетельств выше спасает только совпавшие заголовки.
             if TOMBSTONE_CONSERVATION:
-                _TOMBSTONES.append(_make_tombstone(s, _keep.get('signal_id'),
-                                                   'semantic_dedup', now))
+                _tomb_add(_make_tombstone(s, _keep.get('signal_id'),
+                                          'semantic_dedup', now))
             _merged_dups+=1
         else:
             _by_key[k]=s
