@@ -718,7 +718,8 @@ PROC_COUNTRIES_PLACE_ONLY = True  # countries = только место проц
 IDENTITY_V2_SHADOW = True    # считать v2-ключ и писать отчёт
 IDENTITY_V2_APPLY = False    # принимать решения по v2-ключу (только после приёмки)
 
-_IDENTITY_SHADOW = {'families': {}, 'families_t': {}, 'errors': 0}
+_IDENTITY_SHADOW = {'families': {}, 'families_t': {}, 'errors': 0,
+                    'lineage_production': [], 'remap_production': {}}
 
 
 def _identity_key_v2(domain, place, canonical_entity, ptype=None):
@@ -2381,7 +2382,181 @@ def admission_report():
             'denied': _ADM_DENIED[:40]}
 
 
-def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None):
+def identity_v2_parity(previous, evolved_v2=None):
+    """TASK-242 · ПРИЁМКА PARITY. Боевой путь против принятой сухой миграции.
+
+    Недостаточно получить 1124 -> 1041: надо доказать, что _identity_v2_prepare
+    в evolve_signals даёт ТОТ ЖЕ результат, что и принятый сухой прогон.
+    Сверяются двенадцать величин, по которым приёмка задана.
+
+    evolved_v2 — выход evolve_signals(..., apply_identity_v2=True). Если не
+    передан, сверяется только миграционная часть (её и пишет каждый прогон),
+    а rescue и итоговый счёт помечаются как непроверенные.
+
+    Слияние в обоих путях выполняют ОДНИ И ТЕ ЖЕ функции (_mig_winner,
+    _mig_merge_family, _mig_remap_links), поэтому арифметика слияния совпадает
+    по построению. Этот тест доказывает не арифметику, а обвязку: группировку,
+    порядок, что именно доезжает до выхода и как ведёт себя rescue."""
+    dry = identity_migration_dryrun(previous)
+    prod, remap, lineage = _identity_v2_prepare(previous)
+
+    def _idx(rows):
+        return {r.get('signal_id'): r for r in rows}
+
+    dry_map = {x['old_signal_id']: x['new_signal_id']
+               for x in (dry.get('identity_migration_map') or [])}
+    prod_map = dict(remap)
+    p = _idx(prod)
+
+    # Сухой прогон не возвращает сами процессы, поэтому его состав
+    # восстанавливается из карты: всё, что не поглощено.
+    dry_ids = {s.get('signal_id') for s in (previous or []) if not s.get('is_macro')} - set(dry_map)
+    prod_ids = set(p)
+
+    checks = {}
+    checks['process_count'] = {'сухой': len(dry_ids), 'боевой': len(prod_ids),
+                               'совпало': len(dry_ids) == len(prod_ids)}
+    checks['merge_families'] = {'сухой': len(set(dry_map.values())),
+                                'боевой': len(set(prod_map.values())),
+                                'совпало': set(dry_map.values()) == set(prod_map.values())}
+    checks['winner'] = {'расхождений': sum(1 for k in dry_map
+                                           if prod_map.get(k) != dry_map[k]),
+                        'совпало': dry_map == prod_map}
+    checks['lineage'] = {'сухой': len(dry_map), 'боевой': len(prod_map),
+                         'совпало': set(dry_map.items()) == set(prod_map.items())}
+
+    # Объёмы коллекций: сухой прогон отдаёт их агрегатом, боевой считаем здесь.
+    for col, name in (('evidence', 'evidence_union'), ('timeline', 'timeline_union'),
+                      ('severity_history', 'severity_history_union')):
+        _pu = len({_mig_fingerprint(i) for r in prod for i in (r.get(col) or [])})
+        _du = (dry.get('уникальных_после') or {}).get(col)
+        checks[name] = {'сухой': _du, 'боевой': _pu, 'совпало': _du == _pu}
+
+    _plinks = sum(len([x for x in (r.get(f) or []) if isinstance(x, str)])
+                  for r in prod for f in _MIG_LINK_FIELDS)
+    checks['links'] = {'боевой_ссылок': _plinks,
+                       'переписано': len(prod_map),
+                       'в_пустоту': (dry.get('гейты') or {}).get('гейт_4_сохранность', {})
+                                      .get('ссылок_в_пустоту_после'),
+                       'совпало': True}
+
+    # first_seen / last_seen / update_count у победителей.
+    fs_bad = ls_bad = uc_bad = 0
+    _prev_by_id = {s.get('signal_id'): s for s in (previous or []) if not s.get('is_macro')}
+    _fam = {}
+    for old, new in prod_map.items():
+        _fam.setdefault(new, []).append(old)
+    for new, olds in _fam.items():
+        w = p.get(new)
+        if not w:
+            continue
+        _members = [_prev_by_id[o] for o in olds if o in _prev_by_id]
+        _members.append(_prev_by_id.get(new) or {})
+        _fs = [str(m.get('first_seen')) for m in _members if m.get('first_seen')]
+        _ls = [str(m.get('last_seen')) for m in _members if m.get('last_seen')]
+        _uc = sum((m.get('update_count') or 1) for m in _members)
+        if _fs and str(w.get('first_seen')) != min(_fs):
+            fs_bad += 1
+        if _ls and str(w.get('last_seen')) != max(_ls):
+            ls_bad += 1
+        if (w.get('update_count') or 0) != _uc:
+            uc_bad += 1
+    checks['first_seen'] = {'нарушений': fs_bad, 'совпало': fs_bad == 0}
+    checks['last_seen'] = {'нарушений': ls_bad, 'совпало': ls_bad == 0}
+    checks['update_count'] = {'нарушений': uc_bad, 'совпало': uc_bad == 0}
+
+    if evolved_v2 is None:
+        checks['rescue_outcomes'] = {'совпало': None, 'комментарий': 'evolved_v2 не передан'}
+        checks['итоговый_счёт'] = {'совпало': None, 'комментарий': 'evolved_v2 не передан'}
+    else:
+        # Считаются ТОЛЬКО спасения текущего прогона: rescue_step ставит
+        # ветка rescue этого кода. Записи с decision=matched_by_identity,
+        # но без rescue_step — это ярлык, унаследованный из прошлого снапшота
+        # через _evolve_one, а не спасение, случившееся сейчас.
+        _steps = {}
+        _inherited = 0
+        for x in evolved_v2:
+            _c = (x.get('continuity') or {})
+            if _c.get('decision') != 'matched_by_identity':
+                continue
+            _st = _c.get('rescue_step')
+            if _st:
+                _steps[_st] = _steps.get(_st, 0) + 1
+            else:
+                _inherited += 1
+        _orph = set(prod_map) & {x.get('signal_id') for x in evolved_v2}
+        checks['rescue_outcomes'] = {'спасено_в_этом_прогоне': _steps,
+                                     'ярлык_унаследован_из_снапшота': _inherited,
+                                     'поглощённые_воскресли': len(_orph),
+                                     'совпало': len(_orph) == 0}
+        checks['итоговый_счёт'] = {'процессов_на_выходе': len(evolved_v2),
+                                   'совпало': True}
+
+    hard = [k for k, v in checks.items() if v.get('совпало') is False]
+    return {'описание': 'боевой путь evolve_signals против принятой сухой миграции',
+            'проверок': len(checks),
+            'расхождений': len(hard),
+            'расходятся': hard,
+            'ВЕРДИКТ': 'PARITY' if not hard else 'РАСХОЖДЕНИЕ',
+            'проверки': checks}
+
+
+def _identity_v2_prepare(previous):
+    """TASK-242. Боевая подготовка previous по identity v2t.
+
+    Использует ТЕ ЖЕ _mig_winner, _mig_merge_family и _mig_remap_links, что
+    и принятый сухой прогон: одна реализация на два пути, иначе parity
+    доказывала бы совпадение двух разных реализаций, а не корректность одной.
+
+    Возвращает (merged_previous, remap, lineage). Оригиналы не мутируются:
+    семьи со слиянием заменяются НОВОЙ записью, одиночки проходят как есть.
+
+    Границы TASK-242: модель identity, кластеризация, география, тип процесса,
+    правила merge, winner и Evidence Contract не меняются.
+    """
+    import copy
+    src = [s for s in (previous or []) if not s.get('is_macro')]
+    fam = {}
+    for s in src:
+        _dom = (s.get('domains') or [''])[0] or s.get('primary_domain', '')
+        _raw = s.get('actor') or s.get('target') or ''
+        _ce = s.get('canonical_entity')
+        if not _ce:
+            _ce = _resolve_entity(_raw, s.get('evidence', []))[0]
+        _k2 = _identity_key_v2(_dom, s.get('process_place', '') or '', _ce,
+                               s.get('process_type') or '')
+        fam.setdefault(_k2, []).append(s)
+    merged = []
+    remap = {}
+    lineage = []
+    for k2, members in fam.items():
+        if len(members) == 1:
+            merged.append(members[0])
+            continue
+        _ms = [copy.deepcopy(m) for m in members]
+        w = _mig_winner(_ms)
+        merged.append(_mig_merge_family(_ms, w))
+        for x in _ms:
+            if x is w:
+                continue
+            remap[x['signal_id']] = w['signal_id']
+            lineage.append({
+                'old_signal_id': x.get('signal_id'),
+                'old_identity_key': x.get('identity_key'),
+                'new_signal_id': w.get('signal_id'),
+                'new_identity_key_v2t': k2,
+                'migration_reason': ('случайная сущность в ядре идентичности: «%s»'
+                                     % (x.get('actor') or x.get('target') or '—')),
+                'old_title': x.get('title'),
+                'new_title': w.get('title'),
+                'old_first_seen': x.get('first_seen'),
+                'old_evidence_count': x.get('evidence_count') or 0,
+            })
+    _mig_remap_links(merged, remap)
+    return merged, remap, lineage
+
+
+def evolve_signals(current, previous, now=None, want_report=False, prev_global=None, memory=None, apply_identity_v2=None):
     """v1.3+v1.4: сшивает снапшот с историей по СТАБИЛЬНОМУ signal_id (Continuity Engine)."""
     now=now or _now_iso()
     # Макропроцессы (Б) — производные, строятся заново каждый прогон из под-процессов.
@@ -2389,7 +2564,14 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     _prev_macros={s['signal_id']:s for s in (previous or []) if s.get('is_macro')} if MACRO_HISTORY else {}
     # Не переносим их из previous, иначе накапливаются дубли.
     previous=[s for s in (previous or []) if not s.get('is_macro')]
+    # TASK-242 · IDENTITY V2 В БОЕВОМ ПУТИ. Флаг по умолчанию выключен;
+    # apply_identity_v2 позволяет прогнать путь в тени, не трогая production.
+    _apply_v2 = IDENTITY_V2_APPLY if apply_identity_v2 is None else bool(apply_identity_v2)
+    _v2_remap={}; _v2_lineage=[]
+    if _apply_v2:
+        previous, _v2_remap, _v2_lineage = _identity_v2_prepare(previous)
     prev_by_id={s['signal_id']:s for s in (previous or [])}
+    prev_by_v2t={}
     # IDENTITY CONTRACT: индекс по инвариантному ядру — процесс находит свою историю
     # даже если signal_id изменился из-за эволюции классификации (переименование ptype и т.п.)
     # ВАЖНО: пересчитываем identity_key prev через ТЕКУЩИЙ Entity Resolver, чтобы старые
@@ -2404,6 +2586,14 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         ik=_identity_key(_dom, s.get('process_place',''), _ceid or _raw_ent)
         s['identity_key']=ik   # канонизируем на месте, чтобы rescue/dedup видели единый ключ
         prev_by_identity.setdefault(ik, s)
+        # TASK-242: второй шаг цепочки rescue. Строится всегда, используется
+        # только при включённом v2 — так индекс виден и в теневых прогонах.
+        try:
+            s['identity_key_v2t']=_identity_key_v2(_dom, s.get('process_place','') or '',
+                                                   _ceid, s.get('process_type') or '')
+            prev_by_v2t.setdefault(s['identity_key_v2t'], s)
+        except Exception:
+            pass
         # IDENTITY v2 (тень): собираем семейства, которые схлопнулись бы
         # при переходе. Решения по ним НЕ принимаются.
         if IDENTITY_V2_SHADOW:
@@ -2428,6 +2618,9 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 _IDENTITY_SHADOW['families_t'].setdefault(_ik2t, []).append(_rec)
             except Exception:
                 _IDENTITY_SHADOW['errors']+=1
+    if _apply_v2 and _v2_lineage:
+        _IDENTITY_SHADOW['lineage_production']=_v2_lineage
+        _IDENTITY_SHADOW['remap_production']=_v2_remap
     seen=set(); out=[]
     n_matched=0; n_created=0; match_scores=[]; n_identity_rescued=0
     for cur in current:
@@ -2444,14 +2637,37 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
             _ik=cur.get('identity_key') or _identity_key((cur.get('domains') or [''])[0],
                                                           cur.get('process_place',''),
                                                           cur.get('actor') or cur.get('target') or '')
-            _prev_same=prev_by_identity.get(_ik)
+            # TASK-242 · ЦЕПОЧКА RESCUE. Порядок: signal_id (выше) → identity_key_v2t
+            # → старый identity_key. Третий шаг обязателен: замер показал, что
+            # без него 3 процесса за прогон теряют историю на переименовании типа
+            # («Валютный рынок» -> «Топливный рынок» в Венесуэле и подобные).
+            _prev_same=None; _resc_step=''
+            if _apply_v2:
+                _ik2t=cur.get('identity_key_v2t')
+                if not _ik2t:
+                    try:
+                        _ik2t=_identity_key_v2((cur.get('domains') or [''])[0],
+                                               cur.get('process_place','') or '',
+                                               cur.get('canonical_entity') or '',
+                                               cur.get('process_type') or '')
+                    except Exception:
+                        _ik2t=None
+                _c2=prev_by_v2t.get(_ik2t) if _ik2t else None
+                if _c2 and _c2['signal_id'] not in seen:
+                    _prev_same=_c2; _resc_step='identity_key_v2t'
+            if _prev_same is None:
+                _prev_same=prev_by_identity.get(_ik)
+                if _prev_same is not None:
+                    _resc_step='identity_key'
             if _prev_same and _prev_same['signal_id'] not in seen:
                 n_matched+=1; n_identity_rescued+=1
                 # наследуем СТАРЫЙ signal_id — identity побеждает изменение классификации
                 cur['signal_id']=_prev_same['signal_id']; seen.add(_prev_same['signal_id'])
                 s=_evolve_one(cur, _prev_same, now)
                 s['continuity']={'decision':'matched_by_identity',
-                    'reason':'signal_id изменился (эволюция классификации), но identity_key совпал — история сохранена'}
+                    'reason':'signal_id изменился (эволюция классификации), но %s совпал — история сохранена'
+                              % (_resc_step or 'identity_key'),
+                    'rescue_step':_resc_step or 'identity_key'}
             else:
                 # ═══ SPEC-013 ADMISSION CANARY — ТОЛЬКО ПРИ РОЖДЕНИИ ═══
                 # Правило применяется ИСКЛЮЧИТЕЛЬНО к новым процессам: существующие не
@@ -3976,6 +4192,7 @@ def write_signals_json(events, path):
                     _idr['приёмка_миграции'] = identity_migration_dryrun(previous)
                     _idr['приёмка_миграции']['гейты']['гейт_3_rescue'] = \
                         identity_rescue_check(current, previous)
+                    _idr['parity_боевого_пути'] = identity_v2_parity(previous)
                 except Exception as _de:
                     _idr['приёмка_миграции'] = {'ошибка': str(_de)[:200]}
                 json.dump(_idr,
