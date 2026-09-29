@@ -1,7 +1,7 @@
 {
   "grdf_version": "4.0",
   "date": "2026-09-29",
-  "generated_at": "2026-09-29T00:16:30.122201+00:00",
+  "generated_at": "2026-09-29T00:27:09.867273+00:00",
   "node_count": 63,
   "edge_count": 72,
   "node_types": [
@@ -59,16 +59,16 @@
       "type": "Country",
       "label": "Россия",
       "gri": 93,
-      "vulnerability": 22,
-      "resilience": 49
+      "vulnerability": 17,
+      "resilience": 52
     },
     {
       "id": "CC:US",
       "type": "Country",
       "label": "США",
-      "gri": 89,
-      "vulnerability": 15,
-      "resilience": 54
+      "gri": 87,
+      "vulnerability": 24,
+      "resilience": 53
     },
     {
       "id": "CC:CN",
@@ -163,8 +163,8 @@
       "type": "Country",
       "label": "Япония",
       "gri": 66,
-      "vulnerability": 46,
-      "resilience": 19
+      "vulnerability": 29,
+      "resilience": 64
     },
     {
       "id": "CC:SA",
@@ -266,8 +266,8 @@
       "id": "CC:IL",
       "type": "Country",
       "label": "Израиль",
-      "gri": 69,
-      "vulnerability": 23,
+      "gri": 67,
+      "vulnerability": 28,
       "resilience": 64
     },
     {
@@ -315,8 +315,8 @@
       "type": "Country",
       "label": "Индонезия",
       "gri": 74,
-      "vulnerability": 22,
-      "resilience": 61
+      "vulnerability": 28,
+      "resilience": 60
     },
     {
       "id": "CC:MX",
@@ -402,9 +402,9 @@
       "id": "CC:SG",
       "type": "Country",
       "label": "Сингапур",
-      "gri": 52,
-      "vulnerability": 45,
-      "resilience": 36
+      "gri": 59,
+      "vulnerability": 79,
+      "resilience": 32
     },
     {
       "id": "CC:PT",
@@ -431,6 +431,30 @@
       "resilience": 66
     },
     {
+      "id": "RISK:US:CHAIN-CL",
+      "type": "Risk",
+      "label": "US: Wildfire → Energy → Supply Cha",
+      "score": 23
+    },
+    {
+      "id": "RISK:US:CHAIN-DR",
+      "type": "Risk",
+      "label": "US: Drought → Agriculture → Food P",
+      "score": 20
+    },
+    {
+      "id": "RISK:ID:CHAIN-DR",
+      "type": "Risk",
+      "label": "ID: Drought → Agriculture → Food P",
+      "score": 19
+    },
+    {
+      "id": "RISK:ID:CHAIN-CL",
+      "type": "Risk",
+      "label": "ID: Wildfire → Energy → Supply Cha",
+      "score": 12
+    },
+    {
       "id": "RISK:JP:CHAIN-CL",
       "type": "Risk",
       "label": "JP: Wildfire → Energy → Supply Cha",
@@ -449,40 +473,16 @@
       "score": 15
     },
     {
-      "id": "RISK:ID:CHAIN-DR",
+      "id": "RISK:IL:CHAIN-CL",
       "type": "Risk",
-      "label": "ID: Drought → Agriculture → Food P",
+      "label": "IL: Wildfire → Energy → Supply Cha",
       "score": 14
     },
     {
-      "id": "RISK:ID:CHAIN-CL",
+      "id": "RISK:IL:CHAIN-DR",
       "type": "Risk",
-      "label": "ID: Wildfire → Energy → Supply Cha",
-      "score": 2
-    },
-    {
-      "id": "RISK:VN:CHAIN-CL",
-      "type": "Risk",
-      "label": "VN: Wildfire → Energy → Supply Cha",
+      "label": "IL: Drought → Agriculture → Food P",
       "score": 14
-    },
-    {
-      "id": "RISK:VN:CHAIN-DR",
-      "type": "Risk",
-      "label": "VN: Drought → Agriculture → Food P",
-      "score": 12
-    },
-    {
-      "id": "RISK:FR:CHAIN-DR",
-      "type": "Risk",
-      "label": "FR: Drought → Agriculture → Food P",
-      "score": 13
-    },
-    {
-      "id": "RISK:FR:CHAIN-CL",
-      "type": "Risk",
-      "label": "FR: Wildfire → Energy → Supply Cha",
-      "score": 8
     }
   ],
   "edges": [
@@ -614,9 +614,9 @@
     },
     {
       "from": "CC:US",
-      "to": "DOM:climate",
-      "type": "ESCALATES",
-      "weight": 0.97
+      "to": "DOM:economic",
+      "type": "CORRELATES",
+      "weight": 0.55
     },
     {
       "from": "CC:TW",
@@ -844,7 +844,7 @@
       "from": "CC:SG",
       "to": "DOM:climate",
       "type": "CORRELATES",
-      "weight": 0.39
+      "weight": 0.62
     },
     {
       "from": "CC:PT",
@@ -865,6 +865,30 @@
       "weight": 0.72
     },
     {
+      "from": "CC:US",
+      "to": "RISK:US:CHAIN-CL",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:US",
+      "to": "RISK:US:CHAIN-DR",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:ID",
+      "to": "RISK:ID:CHAIN-DR",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
+      "from": "CC:ID",
+      "to": "RISK:ID:CHAIN-CL",
+      "type": "CAUSES",
+      "weight": 0.85
+    },
+    {
       "from": "CC:JP",
       "to": "RISK:JP:CHAIN-CL",
       "type": "CAUSES",
@@ -883,38 +907,14 @@
       "weight": 0.85
     },
     {
-      "from": "CC:ID",
-      "to": "RISK:ID:CHAIN-DR",
+      "from": "CC:IL",
+      "to": "RISK:IL:CHAIN-CL",
       "type": "CAUSES",
       "weight": 0.85
     },
     {
-      "from": "CC:ID",
-      "to": "RISK:ID:CHAIN-CL",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:VN",
-      "to": "RISK:VN:CHAIN-CL",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:VN",
-      "to": "RISK:VN:CHAIN-DR",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:FR",
-      "to": "RISK:FR:CHAIN-DR",
-      "type": "CAUSES",
-      "weight": 0.85
-    },
-    {
-      "from": "CC:FR",
-      "to": "RISK:FR:CHAIN-CL",
+      "from": "CC:IL",
+      "to": "RISK:IL:CHAIN-DR",
       "type": "CAUSES",
       "weight": 0.85
     }
