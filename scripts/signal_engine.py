@@ -730,6 +730,22 @@ IDENTITY_V2_SHADOW = True         # считать v2-ключ и писать �
 # расширения приёмки на ПОЛНЫЙ путь previous -> выход evolve_signals.
 IDENTITY_V2_APPLY = False
 
+# ═══ Н2 · ТИП В ЯДРЕ ИДЕНТИЧНОСТИ (29.09.2026) ═══
+# Критерий continuity переходит со старого identity_key на identity_key_v2t,
+# то есть домен + место + сущность + ТИП процесса.
+#
+# Почему это нужно. Замер TASK-245: 1001 процесс из 1130 (88.6 %) не имеет
+# канонической сущности, и для них старый ключ вырождается в «домен + место».
+# Из-за этого 465 процессов попадали в 147 общих семей, где лежат совершенно
+# разные предметы, и «Возобновляемая энергетика — Китай» забирала историю
+# «Инфляции — Китай» вместе с её таймлайном и датой рождения.
+#
+# Это НЕ включение Identity V2: слияния семей не происходит,
+# IDENTITY_V2_APPLY остаётся False. Меняется только критерий сшивки.
+#
+# Откат: IDENTITY_CONTINUITY_V2T = False.
+IDENTITY_CONTINUITY_V2T = True
+
 # ═══ TASK-244 · TOMBSTONE CONSERVATION ═══
 # Процесс, поглощённый слиянием или снятый семантическим дедупом, не удаляется,
 # а превращается в надгробие: исходный объект целиком плюс четыре служебных
@@ -2707,7 +2723,11 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         _ceid=s.get('canonical_entity')
         if not _ceid:
             _ceid=_resolve_entity(_raw_ent, s.get('evidence',[]))[0]
-        ik=_identity_key(_dom, s.get('process_place',''), _ceid or _raw_ent)
+        if IDENTITY_CONTINUITY_V2T:
+            ik=_identity_key_v2(_dom, s.get('process_place','') or '', _ceid,
+                                s.get('process_type') or '')
+        else:
+            ik=_identity_key(_dom, s.get('process_place',''), _ceid or _raw_ent)
         s['identity_key']=ik   # канонизируем на месте, чтобы rescue/dedup видели единый ключ
         prev_by_identity.setdefault(ik, s)
         # TASK-242: второй шаг цепочки rescue. Строится всегда, используется
@@ -2758,9 +2778,17 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         else:
             # IDENTITY RESCUE: signal_id не совпал — ищем по инвариантному ядру.
             # Классификация (ptype/origin) могла измениться, но идентичность та же.
-            _ik=cur.get('identity_key') or _identity_key((cur.get('domains') or [''])[0],
-                                                          cur.get('process_place',''),
-                                                          cur.get('actor') or cur.get('target') or '')
+            # Ключ текущего процесса считается ТЕМ ЖЕ критерием, что и ключ
+            # previous, иначе сравнивались бы две разные модели идентичности.
+            if IDENTITY_CONTINUITY_V2T:
+                _ik=_identity_key_v2((cur.get('domains') or [''])[0],
+                                     cur.get('process_place','') or '',
+                                     cur.get('canonical_entity') or '',
+                                     cur.get('process_type') or '')
+            else:
+                _ik=cur.get('identity_key') or _identity_key((cur.get('domains') or [''])[0],
+                                                             cur.get('process_place',''),
+                                                             cur.get('actor') or cur.get('target') or '')
             # TASK-242 · ЦЕПОЧКА RESCUE. Порядок: signal_id (выше) → identity_key_v2t
             # → старый identity_key. Третий шаг обязателен: замер показал, что
             # без него 3 процесса за прогон теряют историю на переименовании типа
