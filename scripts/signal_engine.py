@@ -718,6 +718,13 @@ PROC_COUNTRIES_PLACE_ONLY = True  # countries = только место проц
 IDENTITY_V2_SHADOW = True    # считать v2-ключ и писать отчёт
 IDENTITY_V2_APPLY = False    # принимать решения по v2-ключу (только после приёмки)
 
+# TASK-242.1 · ЗНАМЕНАТЕЛИ ВОРОНКИ. Приёмка сорвалась на том, что три числа
+# (1041 / 1042 / 1086) назывались «результатом миграции», хотя считали разное
+# и вдобавок брались из трёх РАЗНЫХ версий docs/signals.json — production
+# переписывает его каждые двадцать минут. Счётчики ниже фиксируют каждый этап
+# по имени, чтобы «сколько процессов» больше не было вопросом с тремя ответами.
+# Поведение движка они не меняют.
+_FUNNEL = {}
 _IDENTITY_SHADOW = {'families': {}, 'families_t': {}, 'errors': 0,
                     'lineage_production': [], 'remap_production': {}}
 
@@ -2493,7 +2500,25 @@ def identity_v2_parity(previous, evolved_v2=None):
                                    'совпало': True}
 
     hard = [k for k, v in checks.items() if v.get('совпало') is False]
+    # ЗНАМЕНАТЕЛИ НАЗЫВАЮТСЯ ПОИМЁННО (TASK-242.1). Три числа в приёмке
+    # оказались тремя разными величинами из трёх разных версий входного файла.
+    _prev_non_macro = [x for x in (previous or []) if not x.get('is_macro')]
+    denom = {
+      'вход · signals.json всего': len(previous or []),
+      'вход · из них макропроцессов': len(previous or []) - len(_prev_non_macro),
+      'вход · previous без макро — база миграции': len(_prev_non_macro),
+      'миграция · поглощено': len(prod_map),
+      'миграция · previous после слияния': len(prod),
+      'воронка': dict(_FUNNEL),
+      'как_читать': ('«Результат миграции» — это previous после слияния. '
+                     'Выход evolve_signals — другая величина: к слитому previous '
+                     'добавляются процессы текущего прогона, затухшие и заново '
+                     'собранные макропроцессы, а семантический дедуп снимает '
+                     'совпавшие по _sem_key. Сравнивать миграцию можно только '
+                     'со строкой «previous после слияния».'),
+    }
     return {'описание': 'боевой путь evolve_signals против принятой сухой миграции',
+            'знаменатели': denom,
             'проверок': len(checks),
             'расхождений': len(hard),
             'расходятся': hard,
@@ -2716,12 +2741,16 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
                 except Exception:
                     pass
         out.append(s)
+    _FUNNEL['previous_на_входе']=len(previous)
+    _FUNNEL['current_из_событий']=len(current)
+    _FUNNEL['после_основного_цикла']=len(out)
     # Decay + Reactivation
     for sid,prev in prev_by_id.items():
         if sid in seen: continue
         d=_decay_absent(prev, now)
         if d.get('status')!='archived' or _hours(d.get('last_seen',now),now)<2160:
             out.append(d)
+    _FUNNEL['после_decay']=len(out)
     # ORIGIN BACKFILL: carried-forward процессы прошлых версий могли не иметь origin.
     # Единый Origin Engine (Task 10): восстанавливаем origin по EVIDENCE (реальным
     # событиям процесса), а не по обобщённому title, чтобы классификация была точной.
@@ -2801,7 +2830,14 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
             _merged_dups+=1
         else:
             _by_key[k]=s
+    # СЕМАНТИЧЕСКИЙ ДЕДУП — ОТДЕЛЬНЫЙ СЛОЙ, НЕ МИГРАЦИЯ. Снимает процессы
+    # с совпавшим _sem_key, сливая их свидетельства в оставшийся. На замере
+    # снимает ровно 2 записи и с миграцией, и без неё: к identity v2 отношения
+    # не имеет, но именно он объясняет разницу «merged previous 1043 против
+    # 1041 на выходе».
+    _FUNNEL['семантический_дедуп_снял']=_merged_dups
     out=list(_by_key.values())
+    _FUNNEL['после_семантического_дедупа']=len(out)
     # Task 7: Explainability
     for s in out:
         s['explain']=_explain(s, s.get('process_type', s.get('title','').split(' — ')[0]))
@@ -2813,7 +2849,9 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     # Один разворачивающийся кризис (топливо по регионам РФ) собирается в макропроцесс
     # с географической траекторией и кросс-доменным каскадом. Под-процессы сохраняются
     # (разрешающая способность из А не теряется). Intelligence-платформа: и лес, и деревья.
+    _FUNNEL['перед_реконструкцией_макро']=len(out)
     out = _reconstruct_macro(out, now)
+    _FUNNEL['после_реконструкции_макро']=len(out)
     if MACRO_HISTORY:
         _thread_macro_history(out, _prev_macros, now)
     if MACRO_VELOCITY:
