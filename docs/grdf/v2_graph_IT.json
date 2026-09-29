@@ -2,7 +2,7 @@
   "country": "IT",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T18:24:35.695813+00:00",
+  "generated_at": "2026-09-29T18:34:09.161243+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,17 +10,17 @@
       "id": "COUNTRY-IT",
       "type": "Country",
       "label": "IT",
-      "score": 50,
+      "score": 52,
       "props": {
-        "risk_score": 50
+        "risk_score": 52
       }
     },
     {
       "id": "DOMAIN-IT-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 76,
-      "trend": "down"
+      "score": 49,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-economic",
@@ -33,8 +33,8 @@
       "id": "DOMAIN-IT-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 48,
-      "trend": "down"
+      "score": 52,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-IT-technology",
@@ -47,8 +47,8 @@
       "id": "DOMAIN-IT-social",
       "type": "Domain",
       "label": "social",
-      "score": 67,
-      "trend": "down"
+      "score": 5,
+      "trend": "stable"
     },
     {
       "id": "DOMAIN-IT-infrastructure",
@@ -80,6 +80,13 @@
       "label": "Economic"
     },
     {
+      "id": "SIGNAL-IT-Пожарный_с",
+      "type": "Signal",
+      "label": "Пожарный сигнал — Европа · Катания",
+      "severity": 52,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-IT-Это_сицили",
       "type": "Signal",
       "label": "Это сицилийское сообщество существует уж",
@@ -87,18 +94,11 @@
       "domain": "climate"
     },
     {
-      "id": "SIGNAL-IT-Военные_уд",
+      "id": "SIGNAL-IT-Пожарная_а",
       "type": "Signal",
-      "label": "Военные удары — Италия",
-      "severity": 76,
-      "domain": "geopolitical"
-    },
-    {
-      "id": "SIGNAL-IT-Миграционн",
-      "type": "Signal",
-      "label": "Миграционная политика — Италия",
-      "severity": 67,
-      "domain": "social"
+      "label": "Пожарная активность — Италия",
+      "severity": 52,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.76
+      "weight": 0.49
     },
     {
       "from": "COUNTRY-IT",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-climate",
       "type": "CORRELATES",
-      "weight": 0.48
+      "weight": 0.52
     },
     {
       "from": "COUNTRY-IT",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-IT",
       "to": "DOMAIN-IT-social",
       "type": "CORRELATES",
-      "weight": 0.67
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-IT",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-IT-geopolitical",
-      "to": "DOMAIN-IT-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.8,
-      "lag_days": 3
-    },
-    {
-      "from": "DOMAIN-IT-infrastructure",
-      "to": "DOMAIN-IT-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.72,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-IT-economic",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.6,
-      "lag_days": 45
-    },
-    {
       "from": "DOMAIN-IT-climate",
       "to": "DOMAIN-IT-infrastructure",
       "type": "ESCALATES",
@@ -226,22 +205,43 @@
       "lag_days": 30
     },
     {
+      "from": "DOMAIN-IT-geopolitical",
+      "to": "DOMAIN-IT-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.8,
+      "lag_days": 3
+    },
+    {
+      "from": "DOMAIN-IT-infrastructure",
+      "to": "DOMAIN-IT-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.72,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-IT-economic",
+      "to": "DOMAIN-IT-social",
+      "type": "AMPLIFIES",
+      "weight": 0.6,
+      "lag_days": 45
+    },
+    {
+      "from": "SIGNAL-IT-Пожарный_с",
+      "to": "DOMAIN-IT-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.52
+    },
+    {
       "from": "SIGNAL-IT-Это_сицили",
       "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
       "weight": 0.48
     },
     {
-      "from": "SIGNAL-IT-Военные_уд",
-      "to": "DOMAIN-IT-geopolitical",
+      "from": "SIGNAL-IT-Пожарная_а",
+      "to": "DOMAIN-IT-climate",
       "type": "AMPLIFIES",
-      "weight": 0.76
-    },
-    {
-      "from": "SIGNAL-IT-Миграционн",
-      "to": "DOMAIN-IT-social",
-      "type": "AMPLIFIES",
-      "weight": 0.67
+      "weight": 0.52
     }
   ]
 }

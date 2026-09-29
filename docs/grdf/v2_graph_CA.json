@@ -2,7 +2,7 @@
   "country": "CA",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T18:24:35.697284+00:00",
+  "generated_at": "2026-09-29T18:34:09.162625+00:00",
   "node_count": 14,
   "edge_count": 19,
   "nodes": [
@@ -47,7 +47,7 @@
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 50,
+      "score": 5,
       "trend": "stable"
     },
     {
@@ -80,10 +80,17 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-'Теряем_на",
+      "id": "SIGNAL-CA-Крупнейший",
       "type": "Signal",
-      "label": "'Теряем нашу историю и идентичность' — т",
+      "label": "Крупнейший в Канаде детектор пожаров при",
       "severity": 44,
+      "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Земля_разр",
+      "type": "Signal",
+      "label": "Земля разрывается под Тихоокеанским Севе",
+      "severity": 32,
       "domain": "climate"
     },
     {
@@ -92,13 +99,6 @@
       "label": "Шторм — Северная Америка",
       "severity": 100,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-CA-Эпидемиоло",
-      "type": "Signal",
-      "label": "Эпидемиологический риск — Канада",
-      "severity": 50,
-      "domain": "social"
     }
   ],
   "edges": [
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.5
+      "weight": 0.05
     },
     {
       "from": "COUNTRY-CA",
@@ -164,27 +164,6 @@
     },
     {
       "from": "DOMAIN-CA-climate",
-      "to": "DOMAIN-CA-economic",
-      "type": "ESCALATES",
-      "weight": 0.75,
-      "lag_days": 30
-    },
-    {
-      "from": "DOMAIN-CA-economic",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.7,
-      "lag_days": 60
-    },
-    {
-      "from": "DOMAIN-CA-social",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.65,
-      "lag_days": 90
-    },
-    {
-      "from": "DOMAIN-CA-climate",
       "to": "DOMAIN-CA-infrastructure",
       "type": "ESCALATES",
       "weight": 0.82,
@@ -205,22 +184,43 @@
       "lag_days": 30
     },
     {
-      "from": "SIGNAL-CA-'Теряем_на",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "SIGNAL-CA-Крупнейший",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.44
+    },
+    {
+      "from": "SIGNAL-CA-Земля_разр",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.32
     },
     {
       "from": "SIGNAL-CA-Шторм_—_Се",
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 1.0
-    },
-    {
-      "from": "SIGNAL-CA-Эпидемиоло",
-      "to": "DOMAIN-CA-social",
-      "type": "AMPLIFIES",
-      "weight": 0.5
     }
   ]
 }
