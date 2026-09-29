@@ -2,7 +2,7 @@
   "country": "GR",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T12:27:21.322500+00:00",
+  "generated_at": "2026-09-29T12:56:25.960359+00:00",
   "node_count": 14,
   "edge_count": 22,
   "nodes": [
@@ -10,59 +10,59 @@
       "id": "COUNTRY-GR",
       "type": "Country",
       "label": "GR",
-      "score": 72,
+      "score": 84,
       "props": {
-        "risk_score": 72
+        "risk_score": 84
       }
     },
     {
       "id": "DOMAIN-GR-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 62,
-      "trend": "stable"
+      "score": 71,
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-climate",
       "type": "Domain",
       "label": "climate",
       "score": 72,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-social",
       "type": "Domain",
       "label": "social",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DOMAIN-GR-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "up"
     },
     {
       "id": "DRIVER-GR-climate",
@@ -80,6 +80,13 @@
       "label": "economic"
     },
     {
+      "id": "SIGNAL-GR-Гроза:_Гре",
+      "type": "Signal",
+      "label": "Гроза: Греция (оранжевый уровень)",
+      "severity": 72,
+      "domain": "climate"
+    },
+    {
       "id": "SIGNAL-GR-Ливень:_Гр",
       "type": "Signal",
       "label": "Ливень: Греция (оранжевый уровень, 2 пре",
@@ -92,13 +99,6 @@
       "label": "Шторм — Греция",
       "severity": 72,
       "domain": "climate"
-    },
-    {
-      "id": "SIGNAL-GR-Санкционно",
-      "type": "Signal",
-      "label": "Санкционное давление — Греция",
-      "severity": 62,
-      "domain": "geopolitical"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-GR",
       "to": "DOMAIN-GR-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.62
+      "weight": 0.71
     },
     {
       "from": "COUNTRY-GR",
@@ -184,27 +184,6 @@
       "lag_days": 90
     },
     {
-      "from": "DOMAIN-GR-climate",
-      "to": "DOMAIN-GR-infrastructure",
-      "type": "ESCALATES",
-      "weight": 0.82,
-      "lag_days": 7
-    },
-    {
-      "from": "DOMAIN-GR-infrastructure",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.68,
-      "lag_days": 14
-    },
-    {
-      "from": "DOMAIN-GR-economic",
-      "to": "DOMAIN-GR-economic",
-      "type": "AMPLIFIES",
-      "weight": 0.55,
-      "lag_days": 30
-    },
-    {
       "from": "DOMAIN-GR-geopolitical",
       "to": "DOMAIN-GR-infrastructure",
       "type": "ESCALATES",
@@ -226,6 +205,33 @@
       "lag_days": 45
     },
     {
+      "from": "DOMAIN-GR-climate",
+      "to": "DOMAIN-GR-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-GR-infrastructure",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-GR-economic",
+      "to": "DOMAIN-GR-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
+    },
+    {
+      "from": "SIGNAL-GR-Гроза:_Гре",
+      "to": "DOMAIN-GR-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.72
+    },
+    {
       "from": "SIGNAL-GR-Ливень:_Гр",
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
@@ -236,12 +242,6 @@
       "to": "DOMAIN-GR-climate",
       "type": "AMPLIFIES",
       "weight": 0.72
-    },
-    {
-      "from": "SIGNAL-GR-Санкционно",
-      "to": "DOMAIN-GR-geopolitical",
-      "type": "AMPLIFIES",
-      "weight": 0.62
     }
   ]
 }
