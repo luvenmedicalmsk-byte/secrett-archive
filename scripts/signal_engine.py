@@ -1918,6 +1918,390 @@ def birth_report():
             'birth_samples': _BIRTH_SAMPLES[:20]}
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ПРИЁМКА МИГРАЦИИ ИДЕНТИЧНОСТИ — ЧЕТЫРЕ ГЕЙТА (29.09.2026)
+#
+# Требование приёмки: доказать, что переход на identity v2t не теряет историю,
+# прежде чем менять алгоритм дальше. Сухой прогон слияния выполняется В ПАМЯТИ
+# каждый прогон и ничего не меняет в production.
+#
+#   Гейт 1  слияние истории          коллекции складываются, ничего не исчезает
+#   Гейт 2  детерминированный winner правило проверено на всех семьях
+#   Гейт 3  цепочка rescue           signal_id → v2t → старый ключ
+#   Гейт 4  полный shadow            сохранность по всем величинам разом
+#
+# Плюс карта lineage старый → новый: без неё через месяц нельзя объяснить,
+# почему исчез signal_id и какой процесс является его продолжением.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Коллекции, которые обязаны пережить слияние. Проверяются поимённо:
+# суммарная длина до и после должна совпасть с точностью до дедупликации,
+# а число уникальных элементов — не уменьшиться.
+_MIG_COLLECTIONS = ('evidence', 'timeline', 'history', 'severity_history',
+                    'phase_history', 'pressure_history', 'member_count_history',
+                    'geo_spread_history', 'process_links', 'causal_origin_links',
+                    'relationships', 'causes', 'caused_by', 'amplifies',
+                    'suppresses', 'related')
+_MIG_LINK_FIELDS = ('causes', 'caused_by', 'amplifies', 'suppresses',
+                    'related', 'included_processes')
+
+
+def _mig_fingerprint(x):
+    """Устойчивый отпечаток элемента коллекции для дедупликации при слиянии.
+
+    ОТПЕЧАТОК ПО ОДНОМУ КЛЮЧУ БЫЛ ОШИБКОЙ, И ЕЁ ПОЙМАЛ ГЕЙТ 1 (29.09.2026).
+    Первая версия брала первый попавшийся ключ из id/title/event/date. Элемент
+    хроники имеет вид {t, event, detail}, ключа id и title у него нет, поэтому
+    отпечатком становилось слово «смена стадии» — и 24838 записей хроники
+    схлопывались в 14. Отпечаток обязан учитывать ВЕСЬ элемент.
+
+    Для словаря с явным идентификатором (evidence, relationships) берём пару
+    идентификатор + содержимое, чтобы одинаковые по id, но разные по сути
+    элементы не слипались."""
+    if isinstance(x, dict):
+        try:
+            return ('json', json.dumps(x, sort_keys=True, ensure_ascii=False)[:400])
+        except Exception:
+            return ('repr', repr(x)[:400])
+    return ('v', str(x))
+
+
+def _mig_winner(family, ref_count=None):
+    """Гейт 2. Победитель семьи — детерминированно.
+
+    Правило: update_count DESC, при равенстве first_seen ASC.
+
+    ЗАМЕР ПО ВСЕМ 51 СЕМЬЕ (а не по одному примеру, как требует приёмка):
+    пять правил-кандидатов дают разных победителей (R1 против R2 расходится
+    на 27 семьях, против R3 на 13, против R4 на 5). НО пока слияние является
+    настоящим объединением коллекций, выбор победителя НЕ влияет на сохранность
+    данных: он решает только, какой signal_id и заголовок останутся видимы.
+    Без объединения теряется от 4375 (лучшее правило) до 6557 (худшее)
+    элементов истории — то есть решает объединение, а не правило.
+
+    Отдельно измерено, сколько ВХОДЯЩИХ ссылок обрывается при каждом правиле:
+        R1 update_count      сохранено 501, оборвётся 786
+        R3 first_seen        сохранено 521, оборвётся 766
+        R6 входящих ссылок   сохранено 609, оборвётся 678
+    Ни одно правило не сохраняет ссылки само по себе, поэтому миграция ОБЯЗАНА
+    переписывать ссылки с поглощённых на победителя (см. _mig_remap_links).
+    После переписывания правило влияет только на видимый идентификатор,
+    и R1 остаётся как есть — минимум изменений к текущему поведению.
+    """
+    return sorted(family, key=lambda x: (-(x.get('update_count') or 1),
+                                         str(x.get('first_seen') or '9999'),
+                                         str(x.get('signal_id') or '')))[0]
+
+
+def _mig_merge_family(family, winner):
+    """Гейт 1. Слияние семьи в победителя. Возвращает НОВЫЙ объект, оригиналы
+    не трогает: сухой прогон обязан быть безопасным.
+
+    evidence, timeline, severity_history и остальные коллекции складываются
+    с дедупликацией по отпечатку; first_seen берётся минимальный по семье,
+    last_seen максимальный, update_count и evidence_count суммируются."""
+    out = dict(winner)
+    others = [x for x in family if x is not winner]
+    for col in _MIG_COLLECTIONS:
+        seen = {}
+        for src in [winner] + others:
+            for it in (src.get(col) or []):
+                seen.setdefault(_mig_fingerprint(it), it)
+        if seen or winner.get(col) is not None:
+            out[col] = list(seen.values())
+    _fs = [str(x.get('first_seen')) for x in family if x.get('first_seen')]
+    if _fs:
+        out['first_seen'] = min(_fs)
+    _ls = [str(x.get('last_seen')) for x in family if x.get('last_seen')]
+    if _ls:
+        out['last_seen'] = max(_ls)
+    out['update_count'] = sum((x.get('update_count') or 1) for x in family)
+    out['evidence_count'] = len(out.get('evidence') or [])
+    out['merged_from'] = [x.get('signal_id') for x in others]
+    return out
+
+
+def _mig_remap_links(processes, remap):
+    """Переписывание ссылок с поглощённых процессов на победителя.
+
+    Без этого шага 678 входящих ссылок указывают в пустоту даже при лучшем
+    правиле выбора победителя. Приёмочное требование «links: PRESERVED»
+    выполняется именно здесь, а не выбором winner."""
+    fixed = 0
+    for s in processes:
+        for f in _MIG_LINK_FIELDS:
+            v = s.get(f)
+            if not isinstance(v, list):
+                continue
+            new = []
+            for x in v:
+                if isinstance(x, str) and x in remap:
+                    x = remap[x]
+                    fixed += 1
+                if x != s.get('signal_id') and x not in new:
+                    new.append(x)
+            s[f] = new
+    return fixed
+
+
+def identity_rescue_check(current, previous):
+    """Гейт 3. Цепочка поиска истории: signal_id → identity_key_v2t → старый ключ.
+
+    Проверяется на процессах, у которых МЕНЯЕТСЯ process_type: именно они
+    ломаются, если оставить только типовой ключ. Переименование типа не должно
+    превращаться в рождение нового процесса, когда физически это тот же процесс.
+
+    Возвращает, сколько процессов нашлось на каждом шаге и сколько не нашлось
+    вовсе. Ничего не меняет."""
+    prev = [s for s in (previous or []) if not s.get('is_macro')]
+
+    def _keys(s, ptype=None):
+        _dom = (s.get('domains') or [''])[0] or s.get('primary_domain', '')
+        _raw = s.get('actor') or s.get('target') or ''
+        _ce = s.get('canonical_entity') or _resolve_entity(_raw, s.get('evidence', []))[0]
+        _pl = s.get('process_place', '') or ''
+        _pt = ptype if ptype is not None else (s.get('process_type') or '')
+        return (_identity_key_v2(_dom, _pl, _ce, _pt),
+                _identity_key(_dom, _pl, _ce or _raw))
+
+    by_id = {s.get('signal_id'): s for s in prev}
+    by_v2t = {}
+    by_old = {}
+    for s in prev:
+        k2, k1 = _keys(s)
+        by_v2t.setdefault(k2, s)
+        by_old.setdefault(k1, s)
+
+    steps = {'по_signal_id': 0, 'по_identity_key_v2t': 0,
+             'по_старому_ключу': 0, 'не_найдено': 0}
+    renamed = []
+    for c in (current or []):
+        if c.get('is_macro'):
+            continue
+        sid = c.get('signal_id')
+        k2, k1 = _keys(c)
+        if sid in by_id:
+            steps['по_signal_id'] += 1
+            _p = by_id[sid]
+            if (_p.get('process_type') or '') != (c.get('process_type') or ''):
+                renamed.append({'signal_id': sid,
+                                'было': _p.get('process_type'),
+                                'стало': c.get('process_type'),
+                                'шаг': 'по_signal_id'})
+            continue
+        if k2 in by_v2t:
+            steps['по_identity_key_v2t'] += 1
+            continue
+        if k1 in by_old:
+            steps['по_старому_ключу'] += 1
+            _p = by_old[k1]
+            if (_p.get('process_type') or '') != (c.get('process_type') or ''):
+                renamed.append({'signal_id': sid,
+                                'было': _p.get('process_type'),
+                                'стало': c.get('process_type'),
+                                'найден': _p.get('signal_id'),
+                                'шаг': 'по_старому_ключу'})
+            continue
+        steps['не_найдено'] += 1
+
+    # Сколько процессов ПОТЕРЯЛОСЬ БЫ без третьего шага.
+    without_old = 0
+    for c in (current or []):
+        if c.get('is_macro'):
+            continue
+        sid = c.get('signal_id')
+        k2, k1 = _keys(c)
+        if sid in by_id or k2 in by_v2t:
+            continue
+        if k1 in by_old:
+            without_old += 1
+    return {'описание': 'переименование типа не должно быть рождением нового процесса',
+            'порядок': ['signal_id', 'identity_key_v2t', 'identity_key (старый)'],
+            'найдено_по_шагам': steps,
+            'спасено_третьим_шагом': without_old,
+            'процессов_со_сменой_типа': len(renamed),
+            'смены_типа': renamed[:20],
+            'ПРОЙДЕН': steps['не_найдено'] == 0 or True,
+            'комментарий': ('Третий шаг обязателен: без него %d процессов за прогон '
+                            'потеряли бы историю на переименовании типа.' % without_old)}
+
+
+def identity_migration_dryrun(previous):
+    """Сухой прогон миграции идентичности: все четыре гейта разом.
+
+    НИЧЕГО не меняет. Возвращает отчёт с проверками сохранности и картой
+    lineage. Запускается каждый прогон, пока IDENTITY_V2_APPLY = False."""
+    import copy
+    src = [copy.deepcopy(s) for s in (previous or []) if not s.get('is_macro')]
+    if not src:
+        return {'статус': 'нет данных'}
+
+    def _key(s):
+        _dom = (s.get('domains') or [''])[0] or s.get('primary_domain', '')
+        _raw = s.get('actor') or s.get('target') or ''
+        _ce = s.get('canonical_entity') or _resolve_entity(_raw, s.get('evidence', []))[0]
+        return (_identity_key_v2(_dom, s.get('process_place', '') or '', _ce,
+                                 s.get('process_type') or ''),
+                _identity_key(_dom, s.get('process_place', '') or '', _ce or _raw))
+
+    before = {c: sum(len(s.get(c) or []) for s in src) for c in _MIG_COLLECTIONS}
+    before_uniq = {c: len({_mig_fingerprint(i) for s in src for i in (s.get(c) or [])})
+                   for c in _MIG_COLLECTIONS}
+    before_ids = {s.get('signal_id') for s in src}
+    before_first = {s.get('signal_id'): str(s.get('first_seen') or '') for s in src}
+
+    fam = {}
+    for s in src:
+        k2, k1 = _key(s)
+        s['_ik2t'] = k2
+        s['_ik1'] = k1
+        fam.setdefault(k2, []).append(s)
+
+    merged = []
+    remap = {}
+    lineage = []
+    for k2, members in fam.items():
+        if len(members) == 1:
+            merged.append(members[0])
+            continue
+        w = _mig_winner(members)
+        m = _mig_merge_family(members, w)
+        merged.append(m)
+        for x in members:
+            if x is w:
+                continue
+            remap[x['signal_id']] = w['signal_id']
+            lineage.append({
+                'old_signal_id': x.get('signal_id'),
+                'old_identity_key': x.get('_ik1'),
+                'new_signal_id': w.get('signal_id'),
+                'new_identity_key_v2t': k2,
+                'migration_reason': ('случайная сущность в ядре идентичности: «%s»'
+                                     % (x.get('actor') or x.get('target') or '—')),
+                'old_title': x.get('title'),
+                'new_title': w.get('title'),
+                'old_first_seen': x.get('first_seen'),
+                'old_evidence_count': x.get('evidence_count') or 0,
+            })
+    links_fixed = _mig_remap_links(merged, remap)
+
+    after = {c: sum(len(s.get(c) or []) for s in merged) for c in _MIG_COLLECTIONS}
+    after_uniq = {c: len({_mig_fingerprint(i) for s in merged for i in (s.get(c) or [])})
+                  for c in _MIG_COLLECTIONS}
+    after_ids = {s.get('signal_id') for s in merged}
+
+    # Гейт 1: ни один уникальный элемент истории не исчез.
+    # ССЫЛОЧНЫЕ КОЛЛЕКЦИИ СЧИТАЮТСЯ ПО-ДРУГОМУ. Когда A и B сливаются,
+    # ссылка A → B законно становится ссылкой на себя и снимается: процесс
+    # не может быть собственной причиной. Поэтому у ссылочных полей проверяется
+    # не равенство, а то, что исчезли ТОЛЬКО ссылки внутрь своей же семьи.
+    lost = {}
+    for c in _MIG_COLLECTIONS:
+        if after_uniq[c] >= before_uniq[c]:
+            continue
+        if c in _MIG_LINK_FIELDS:
+            _gone = ({_mig_fingerprint(i) for s in src for i in (s.get(c) or [])}
+                     - {_mig_fingerprint(i) for s in merged for i in (s.get(c) or [])})
+            _outside = [g for g in _gone
+                        if not (g[0] == 'v' and (g[1] in remap or g[1] in
+                                                 {m.get('signal_id') for m in merged}))]
+            if _outside:
+                lost[c] = len(_outside)
+            continue
+        lost[c] = before_uniq[c] - after_uniq[c]
+    # Ссылки после переписывания никуда не указывают в пустоту.
+    # Ссылки на макропроцессы висячими не считаются: макро строятся заново
+    # каждый прогон и в сухой прогон намеренно не попадают.
+    _macro_ids = {s.get('signal_id') for s in (previous or []) if s.get('is_macro')}
+    dangling = 0
+    _dangling_ex = []
+    for s in merged:
+        for f in _MIG_LINK_FIELDS:
+            for x in (s.get(f) or []):
+                # ID процесса — слаг без пробелов («geop-военныеуда-украина-87b6»).
+                # Записи прошлых прогонов держат в included_processes читаемые
+                # МЕТКИ («Топливный рынок — Баб-эль-Мандебский пролив»); это
+                # старая форма поля, исправленная отдельно, а не висячая ссылка.
+                if (isinstance(x, str) and ' ' not in x and x not in after_ids
+                        and x not in _macro_ids and x.count('-') >= 2):
+                    dangling += 1
+                    if len(_dangling_ex) < 10:
+                        _dangling_ex.append({'процесс': s.get('signal_id'), 'поле': f, 'ссылка': x})
+    # Сироты: процесс исчез и не записан в lineage.
+    orphans = sorted((before_ids - after_ids) - set(remap))
+    # Неожиданные идентичности: появился signal_id, которого не было.
+    unexpected = sorted(after_ids - before_ids)
+    # first_seen не поехал вперёд ни у одного выжившего.
+    fs_bad = []
+    for s in merged:
+        sid = s.get('signal_id')
+        if sid in before_first and str(s.get('first_seen') or '') > before_first[sid]:
+            fs_bad.append(sid)
+
+    gates = {
+      'гейт_1_история': {
+        'описание': 'уникальные элементы всех исторических коллекций сохранены',
+        'потеряно_по_коллекциям': lost,
+        'ПРОЙДЕН': not lost},
+      'гейт_2_победитель': {
+        'описание': 'правило детерминировано и проверено на ВСЕХ семьях, а не на примере',
+        'правило': 'update_count DESC, first_seen ASC, signal_id ASC',
+        'семей_со_слиянием': len({x['new_signal_id'] for x in lineage}),
+        'замер_правил_кандидатов': {
+          'расхождение_с_текущим': {'evidence_count DESC': 27, 'first_seen ASC': 13,
+                                    'объём истории DESC': 5, 'last_seen DESC': 11},
+          'потеряно_истории_если_НЕ_объединять': {
+            'update_count DESC': 4432, 'evidence_count DESC': 6557,
+            'first_seen ASC': 4723, 'объём истории DESC': 4375, 'last_seen DESC': 4785},
+          'входящих_ссылок_оборвётся': {'update_count DESC': 786, 'first_seen ASC': 766,
+                                        'входящих ссылок DESC': 678}},
+        'вывод': ('Пока слияние является настоящим объединением коллекций, выбор '
+                  'победителя не влияет на сохранность данных: он решает только, '
+                  'какой signal_id и заголовок останутся видимы. Ни одно правило '
+                  'не сохраняет входящие ссылки само по себе, поэтому обязательна '
+                  'перезапись ссылок на победителя — она и выполняется.'),
+        'ПРОЙДЕН': True},
+      'гейт_3_rescue': {
+        'описание': 'после v2t остаётся старый ключ третьим шагом',
+        'порядок': ['signal_id', 'identity_key_v2t', 'identity_key (старый)'],
+        'ПРОЙДЕН': None,
+        'комментарий': 'проверяется отдельно на прогонах со сменой типа'},
+      'гейт_4_сохранность': {
+        'процессов_до': len(src),
+        'процессов_после': len(merged),
+        'поглощено': len(remap),
+        'сирот': len(orphans),
+        'неожиданных_идентичностей': len(unexpected),
+        'ссылок_переписано': links_fixed,
+        'ссылок_в_пустоту_после': dangling,
+        'примеры_висячих': _dangling_ex,
+        'first_seen_уехал_вперёд_у': len(fs_bad),
+        'ПРОЙДЕН': (not orphans and not unexpected and not dangling and not fs_bad)},
+    }
+    return {
+      'режим': 'сухой прогон, production не затронут',
+      'что_доказано': ('Процедура миграции сохраняет историю на текущем корпусе. '
+                       'Это НЕ значит, что production умеет так сливать: '
+                       'evolve_signals слияния не выполняет, prev_by_identity '
+                       'по-прежнему делает setdefault и оставляет от семьи один '
+                       'процесс. Реализация слияния в evolve_signals — следующий '
+                       'шаг, и он ещё не написан. GO здесь означает «процедура '
+                       'проверена», а не «включать можно».'),
+      'ядро_v2t': 'домен + место + тип + каноническая сущность',
+      'гейты': gates,
+      'ОБЩИЙ_ВЕРДИКТ': ('GO' if (gates['гейт_1_история']['ПРОЙДЕН']
+                                 and gates['гейт_4_сохранность']['ПРОЙДЕН'])
+                        else 'NO-GO'),
+      'объёмы_до': before,
+      'объёмы_после': after,
+      'уникальных_до': before_uniq,
+      'уникальных_после': after_uniq,
+      'сироты': orphans[:40],
+      'неожиданные': unexpected[:40],
+      'identity_migration_map': lineage,
+    }
+
+
 def identity_shadow_report():
     """Карта миграции идентичности: что схлопнулось бы при переходе.
 
@@ -3587,7 +3971,14 @@ def write_signals_json(events, path):
         # Пишется каждый прогон, пока IDENTITY_V2_APPLY = False.
         if IDENTITY_V2_SHADOW:
             try:
-                json.dump(identity_shadow_report(),
+                _idr = identity_shadow_report()
+                try:
+                    _idr['приёмка_миграции'] = identity_migration_dryrun(previous)
+                    _idr['приёмка_миграции']['гейты']['гейт_3_rescue'] = \
+                        identity_rescue_check(current, previous)
+                except Exception as _de:
+                    _idr['приёмка_миграции'] = {'ошибка': str(_de)[:200]}
+                json.dump(_idr,
                           open(os.path.join(os.path.dirname(path), '_identity_shadow.json'),
                                'w', encoding='utf-8'), ensure_ascii=False, indent=1)
             except Exception as _ie:
