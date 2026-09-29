@@ -730,6 +730,32 @@ IDENTITY_V2_SHADOW = True         # считать v2-ключ и писать �
 # расширения приёмки на ПОЛНЫЙ путь previous -> выход evolve_signals.
 IDENTITY_V2_APPLY = False
 
+# ═══ TASK-244 · TOMBSTONE CONSERVATION ═══
+# Процесс, поглощённый слиянием или снятый семантическим дедупом, не удаляется,
+# а превращается в надгробие: исходный объект целиком плюс четыре служебных
+# поля. Надгробия хранятся ОТДЕЛЬНЫМ ключом файла, не в списке signals, —
+# так ни лента, ни карта, ни risk index, ни матрица их не видят.
+# Откат: TOMBSTONE_CONSERVATION = False (файл пишется как раньше).
+TOMBSTONE_CONSERVATION = False
+_TOMBSTONES = []       # надгробия, собранные за этот прогон
+_TOMBSTONES_IN = []    # надгробия прошлого снапшота: переносятся нетронутыми
+
+
+def _make_tombstone(src, winner_id, reason, now):
+    """Неизменяемый исторический снимок поглощённого процесса.
+
+    Исходный объект копируется ЦЕЛИКОМ. Ничего не вычищается: смысл варианта
+    в том, что историческая материя физически остаётся.
+    """
+    import copy
+    t = copy.deepcopy(src)
+    t['status'] = 'merged'
+    t['merged_into'] = winner_id
+    t['merged_at'] = now
+    t['merge_reason'] = reason
+    return t
+
+
 # TASK-242.1 · ЗНАМЕНАТЕЛИ ВОРОНКИ. Приёмка сорвалась на том, что три числа
 # (1041 / 1042 / 1086) назывались «результатом миграции», хотя считали разное
 # и вдобавок брались из трёх РАЗНЫХ версий docs/signals.json — production
@@ -2575,6 +2601,7 @@ def _identity_v2_prepare(previous):
     merged = []
     remap = {}
     lineage = []
+    tombs = []          # TASK-244: поглощённые сохраняются, а не исчезают
     for k2, members in fam.items():
         if len(members) == 1:
             merged.append(members[0])
@@ -2586,6 +2613,7 @@ def _identity_v2_prepare(previous):
             if x is w:
                 continue
             remap[x['signal_id']] = w['signal_id']
+            tombs.append(_make_tombstone(x, w['signal_id'], 'identity_v2', _now_iso()))
             lineage.append({
                 'old_signal_id': x.get('signal_id'),
                 'old_identity_key': x.get('identity_key'),
@@ -2599,6 +2627,10 @@ def _identity_v2_prepare(previous):
                 'old_evidence_count': x.get('evidence_count') or 0,
             })
     _mig_remap_links(merged, remap)
+    # TASK-244: надгробия отдаются накопителем, а не четвёртым элементом
+    # кортежа, — сигнатуру функции используют приёмка TASK-242 и сухой прогон.
+    if TOMBSTONE_CONSERVATION:
+        _TOMBSTONES.extend(tombs)
     return merged, remap, lineage
 
 
@@ -2610,6 +2642,18 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     _prev_macros={s['signal_id']:s for s in (previous or []) if s.get('is_macro')} if MACRO_HISTORY else {}
     # Не переносим их из previous, иначе накапливаются дубли.
     previous=[s for s in (previous or []) if not s.get('is_macro')]
+    # TASK-244 · НАДГРОБИЯ НЕ ЭВОЛЮЦИОНИРУЮТ. Накопитель обнуляется на входе,
+    # в него кладутся надгробия прошлого снапшота — нетронутыми. Если запись
+    # со status='merged' всё же пришла в previous, она снимается здесь: ни
+    # _evolve_one, ни _decay_absent, ни rescue её больше не видят.
+    del _TOMBSTONES[:]
+    if TOMBSTONE_CONSERVATION:
+        _TOMBSTONES.extend(_TOMBSTONES_IN)
+        _stray=[s for s in previous if s.get('status')=='merged']
+        if _stray:
+            _known={t.get('signal_id') for t in _TOMBSTONES}
+            _TOMBSTONES.extend([s for s in _stray if s.get('signal_id') not in _known])
+            previous=[s for s in previous if s.get('status')!='merged']
     # TASK-242 · IDENTITY V2 В БОЕВОМ ПУТИ. Флаг по умолчанию выключен;
     # apply_identity_v2 позволяет прогнать путь в тени, не трогая production.
     _apply_v2 = IDENTITY_V2_APPLY if apply_identity_v2 is None else bool(apply_identity_v2)
@@ -2848,6 +2892,12 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
             if (s.get('origin_confidence',0) or 0) > (_keep.get('origin_confidence',0) or 0):
                 for _of in ('origin','origin_confidence','origin_reasons','origin_chain'):
                     if _of in s: _keep[_of]=s[_of]
+            # TASK-244. Снятая дедупом запись — тоже поглощённый процесс.
+            # Замер TASK-243-C: без надгробия её содержание исчезает совсем,
+            # объединение свидетельств выше спасает только совпавшие заголовки.
+            if TOMBSTONE_CONSERVATION:
+                _TOMBSTONES.append(_make_tombstone(s, _keep.get('signal_id'),
+                                                   'semantic_dedup', now))
             _merged_dups+=1
         else:
             _by_key[k]=s
@@ -2873,6 +2923,7 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
     _FUNNEL['перед_реконструкцией_макро']=len(out)
     out = _reconstruct_macro(out, now)
     _FUNNEL['после_реконструкции_макро']=len(out)
+    _FUNNEL['надгробий']=len(_TOMBSTONES)
     if MACRO_HISTORY:
         _thread_macro_history(out, _prev_macros, now)
     if MACRO_VELOCITY:
@@ -4003,6 +4054,14 @@ def write_signals_json(events, path):
             previous=json.load(open(path,encoding='utf-8')).get('signals',[])
     except Exception:
         previous=[]
+    # TASK-244: надгробия прошлого снапшота лежат отдельным ключом и в список
+    # signals не входят — поэтому ни один потребитель их не читает.
+    del _TOMBSTONES_IN[:]
+    try:
+        if os.path.exists(path):
+            _TOMBSTONES_IN.extend(json.load(open(path,encoding='utf-8')).get('tombstones',[]) or [])
+    except Exception:
+        pass
     prev_global=None
     try:
         if os.path.exists(path):
@@ -4216,6 +4275,11 @@ def write_signals_json(events, path):
 
     out={'updated':now,'count':len(evolved),'schema':'process-signal-v1.6',
          'global_health':global_health,'patterns_detected':patterns,'report':report,'signals':evolved}
+    if TOMBSTONE_CONSERVATION:
+        out['tombstones']=list(_TOMBSTONES)
+        out['count_total']=len(evolved)+len(_TOMBSTONES)
+        print('  [TOMBSTONE] active %d · надгробий %d · всего %d'
+              % (len(evolved), len(_TOMBSTONES), out['count_total']), file=sys.stderr)
     os.makedirs(os.path.dirname(path),exist_ok=True)
     # SIGNALS_COMPACT 23.09.2026. Файл отдаётся коду, а не человеку: отступы
     # занимали 31 МБ из 100 МБ и приближали его к лимиту GitHub. Читаемость
