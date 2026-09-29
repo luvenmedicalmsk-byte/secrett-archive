@@ -9847,25 +9847,42 @@ _CANON_TYPE = [
 # на литеральное «госдолг» и такую форму тоже не видел.
 # Только суверенный долг измеряют долей ВВП, поэтому признак точный. Запрещаем
 # между долгом и долей чужой фискальный предмет: «дефицит 6% ВВП» не долг.
-_DEBT_GDP_NB = r'(?:(?!дефицит|профицит|расход|доход|оборон)[^.])'
-_DEBT_GDP_UNIT = r'(?:ввп|валов\w*\s+внутренн\w*\s+продукт\w*)'
-_DEBT_GDP_SHARE = (r'(?:долг\w*|задолженност\w*)' + _DEBT_GDP_NB +
-                   r'{0,120}?\d{1,3}(?:[.,]\d+)?\s*%\s*(?:от\s+)?' + _DEBT_GDP_UNIT +
-                   r'|\d{1,3}(?:[.,]\d+)?\s*%\s*(?:от\s+)?' + _DEBT_GDP_UNIT +
-                   _DEBT_GDP_NB + r'{0,120}?(?:долг\w*|задолженност\w*)')
+# S46-c 29.09.2026. Английское плечо обязательно: _recompute_severity
+# вызывается на строке 7680, а пакетный перевод заголовков — на 8064. То есть
+# у иностранных лент правило видит ОРИГИНАЛ, а не русский текст, который потом
+# ляжет в ленту. «Долг Франции достиг 119% от ВВП» приходит из Politico EU как
+# «France's debt hits 119% of GDP», и русский паттерн по нему не срабатывал.
+# Третье плечо — форма «debt-to-GDP ratio of 119%», где доля стоит после ВВП.
+_DEBT_GDP_NB = (r'(?:(?!дефицит|профицит|расход|доход|оборон'
+                r'|deficit|surplus|spending|defence|defense)[^.])')
+_DEBT_GDP_UNIT = r'(?:ввп|валов\w*\s+внутренн\w*\s+продукт\w*|gdp)'
+_DEBT_GDP_WORD = r'(?:долг\w*|задолженност\w*|debts?\b|indebtedness)'
+_DEBT_GDP_PCT = r'(?:%|percent|per\s+cent|процент\w*)'
+_DEBT_GDP_SHARE = (_DEBT_GDP_WORD + _DEBT_GDP_NB +
+                   r'{0,120}?\d{1,3}(?:[.,]\d+)?\s*' + _DEBT_GDP_PCT +
+                   r'\s*(?:от\s+|of\s+)?' + _DEBT_GDP_UNIT +
+                   r'|\d{1,3}(?:[.,]\d+)?\s*' + _DEBT_GDP_PCT +
+                   r'\s*(?:от\s+|of\s+)?' + _DEBT_GDP_UNIT +
+                   _DEBT_GDP_NB + r'{0,120}?' + _DEBT_GDP_WORD +
+                   r'|' + _DEBT_GDP_WORD + r'[\s\-]*(?:to|к)[\s\-]*' + _DEBT_GDP_UNIT +
+                   _DEBT_GDP_NB + r'{0,60}?\d{1,3}(?:[.,]\d+)?\s*' + _DEBT_GDP_PCT)
 # Дальний член обоих плеч вынесен в lookahead: иначе первое совпадение съедает
 # слово «долг», и во фразе с двумя долями («дефицит 6 % ВВП, долг 100 % ВВП»)
 # находилась меньшая. Нужна максимальная.
 _DEBT_GDP_RX = re.compile(
-    r'(?:долг\w*|задолженност\w*)(?=' + _DEBT_GDP_NB +
-    r'{0,120}?(\d{1,3}(?:[.,]\d+)?)\s*%\s*(?:от\s+)?' + _DEBT_GDP_UNIT + r')'
-    r'|(\d{1,3}(?:[.,]\d+)?)\s*%\s*(?:от\s+)?' + _DEBT_GDP_UNIT + r'(?=' +
-    _DEBT_GDP_NB + r'{0,120}?(?:долг\w*|задолженност\w*))', re.I)
+    _DEBT_GDP_WORD + r'(?=' + _DEBT_GDP_NB +
+    r'{0,120}?(\d{1,3}(?:[.,]\d+)?)\s*' + _DEBT_GDP_PCT +
+    r'\s*(?:от\s+|of\s+)?' + _DEBT_GDP_UNIT + r')'
+    r'|(\d{1,3}(?:[.,]\d+)?)\s*' + _DEBT_GDP_PCT + r'\s*(?:от\s+|of\s+)?' +
+    _DEBT_GDP_UNIT + r'(?=' + _DEBT_GDP_NB + r'{0,120}?' + _DEBT_GDP_WORD + r')'
+    r'|' + _DEBT_GDP_WORD + r'[\s\-]*(?:to|к)[\s\-]*' + _DEBT_GDP_UNIT +
+    _DEBT_GDP_NB + r'{0,60}?(\d{1,3}(?:[.,]\d+)?)\s*' + _DEBT_GDP_PCT, re.I)
 # Порог 90 %. Ниже — обычная долговая нагрузка развитой экономики, не сигнал.
 DEBT_GDP_FLOOR_PCT = 90
 DEBT_GDP_FLOOR_SEV = 60
 _DEBT_GDP_SAFE = re.compile(r'на\s+безопасн\w*\s+уровн|в\s+пределах\s+норм|'
-                            r'не\s+превышает\s+допустим', re.I)
+                            r'не\s+превышает\s+допустим|at\s+a?\s*safe\s+level|'
+                            r'within\s+(?:the\s+)?norm', re.I)
 
 
 def _debt_gdp_share(text):
@@ -9873,7 +9890,7 @@ def _debt_gdp_share(text):
     _best = None
     for _m in _DEBT_GDP_RX.finditer(str(text or '')):
         try:
-            _v = float((_m.group(1) or _m.group(2)).replace(',', '.'))
+            _v = float((_m.group(1) or _m.group(2) or _m.group(3)).replace(',', '.'))
         except Exception:
             continue
         if _best is None or _v > _best:
