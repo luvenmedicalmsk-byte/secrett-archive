@@ -679,6 +679,81 @@ def _identity_key(domain, place, key_entity):
     base=f"{domain}|{place}|{key_entity or ''}"
     return hashlib.md5(base.encode()).hexdigest()[:8]
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# IDENTITY v2 — ТЕНЕВОЙ РЕЖИМ (29.09.2026, решение Мии, вариант А)
+#
+# ЧТО НЕ ТАК С ТЕКУЩЕЙ ИДЕНТИЧНОСТЬЮ. key_entity приходит из _actor_target:
+# страна или город из заголовка САМОГО ТЯЖЁЛОГО свидетельства кластера.
+# Entity Resolver на таких строках не срабатывает (в _ENTITY_CANON только
+# инфраструктура: НПЗ, трубопровод, порт), поэтому в identity падает сырое
+# название страны. Замер по корпусу 1167 процессов:
+#   · из 125 процессов с сущностью в ID все 125 сущностей — страна или город
+#     (иран 36, сша 27, украин 13, израил 11, киев 8, москва 4, испани 2);
+#   · 28% процессов с двумя и более свидетельствами меняют сущность
+#     в зависимости от того, какое свидетельство оказалось наверху;
+#   · 214 процессов в 81 семействе отличаются ТОЛЬКО этой сущностью, то есть
+#     133 дубликата: восемь процессов «Военные удары — Украина» с местом
+#     «Украина» и сущностями Испания, Иран, Израиль, США, Киев.
+# Топовое свидетельство меняется между прогонами вместе с тяжестью, значит
+# identity_key меняется, значит created_new, значит новый процесс, а старый
+# начинает затухать.
+#
+# ВАРИАНТ А. Если каноническая сущность доказана — она в идентичности.
+# Иначе идентичность = домен + место. Страна и город в идентичность
+# не попадают никогда: это семантически неверная категория, а не шум,
+# который можно усреднить.
+#
+# ПОЧЕМУ В ТЕНИ. Переход схлопывает семейства, а prev_by_identity оставляет
+# от семейства ОДИН процесс — остальные осиротеют и уйдут в затухание вместе
+# со своей историей. Это миграция, а не правка: сначала карта старый ключ →
+# новый, проверка слияния истории, отдельная приёмка. Пока движок считает
+# оба ключа и пишет отчёт docs/_identity_shadow.json, а решения принимает
+# по-прежнему старый ключ.
+#
+# ВКЛЮЧЕНИЕ ПОСЛЕ ПРИЁМКИ: IDENTITY_V2_APPLY = True.
+# ══════════════════════════════════════════════════════════════════════════════
+PROC_COUNTRIES_PLACE_ONLY = True  # countries = только место процесса; откат: False
+
+IDENTITY_V2_SHADOW = True    # считать v2-ключ и писать отчёт
+IDENTITY_V2_APPLY = False    # принимать решения по v2-ключу (только после приёмки)
+
+_IDENTITY_SHADOW = {'families': {}, 'families_t': {}, 'errors': 0}
+
+
+def _identity_key_v2(domain, place, canonical_entity, ptype=None):
+    """Идентичность варианта А: каноническая сущность либо ничего.
+
+    Отличие от _identity_key ровно одно: сюда НЕЛЬЗЯ передать сырой
+    actor/target. Если сущность не канонизирована, ядро идентичности —
+    домен и место (вариант А) либо домен, место и тип (вариант А-штрих).
+
+    ВАРИАНТ А В ЧИСТОМ ВИДЕ СЛИВАЕТ РАЗНЫЕ ПРОЦЕССЫ (замер 29.09.2026).
+    identity_key намеренно не содержит process_type: так процесс переживал
+    переименование типа. Пока в ядре стояла сущность, тип и не был нужен.
+    Убрав сущность, вариант А убирает и последнее, что различало процессы
+    одного домена в одном месте, и на корпусе 1120 процессов сливает
+    наводнение с пожаром:
+        climate · Глобально   15 процессов, 14 разных типов
+        economy · США         13 процессов, 12 разных типов
+        geopolitics · Украина 11 процессов, 5 разных типов
+    Поглощается 406 процессов и 1134 свидетельства — больше, чем сейчас
+    теряется на дубликатах.
+
+    ВАРИАНТ А-ШТРИХ добавляет в ядро тип. Поглощается 84 процесса и 647
+    свидетельств, и это ровно те дубликаты, ради которых затевался переход:
+        Военные удары — Украина            6 процессов (Испания, Киев, США, Израиль, Иран)
+        Военные удары — США                6 процессов
+        Санкционное давление — Сев. Америка 5 процессов
+    Цена: при переименовании типа история рвётся. Замер устойчивости типа
+    между прогонами — 109 из 111 процессов, то есть 2%. Защита: старый
+    ключ остаётся вторым шансом при rescue, если по типовому не нашлось.
+    """
+    if ptype is None:
+        return _identity_key(domain, place, canonical_entity or '')
+    base='%s|%s|%s|%s' % (domain, place, ptype or '', canonical_entity or '')
+    return hashlib.md5(base.encode()).hexdigest()[:8]
+
 # Task 5: Confidence Match — насколько свидетельство принадлежит процессу
 def _confidence_match(ev, ptype, place):
     et=_process_type([ev], ev.get('domain','')); ep=_process_place(ev)['place']
@@ -1730,6 +1805,10 @@ def _reconstruct_macro(signals, now):
             'process_type':ptype, 'primary_domain':_domains[0] if _domains else 'economy',
             'domains':_domains, 'process_place':_area_ru,
             'countries':sorted(set(c for m in members for c in (m.get('countries') or []))),
+            'impact_countries':sorted(set(c for m in members for c in (m.get('impact_countries') or []))
+                                      -set(c for m in members for c in (m.get('countries') or []))),
+            'mentioned_countries':sorted(set(c for m in members for c in (m.get('mentioned_countries') or []))
+                                         -set(c for m in members for c in (m.get('countries') or []))),
             'severity':_sev, 'priority':_maxpri, 'pressure':_pressure,
             'origin':members[0].get('origin','unknown'), 'origin_chain':_chain[:6],
             'evidence_count':_ev_total, 'first_seen':_first, 'last_seen':_last,
@@ -1839,6 +1918,76 @@ def birth_report():
             'birth_samples': _BIRTH_SAMPLES[:20]}
 
 
+def identity_shadow_report():
+    """Карта миграции идентичности: что схлопнулось бы при переходе.
+
+    Отчёт read-only, решения принимаются по старому ключу.
+    Приёмка смотрит на три величины в каждом варианте:
+      · семейств_со_слиянием — сколько семейств стало бы одним процессом;
+      · процессов_поглощается — сколько процессов потеряло бы собственную
+        запись (их история должна быть слита, а не потеряна);
+      · свидетельств_в_поглощаемых — сколько свидетельств при этом в риске.
+    Победителем берётся процесс с наибольшим update_count, при равенстве —
+    с самым ранним first_seen: это самая длинная непрерывная история.
+    """
+    def _fold(fams):
+        merging={k:v for k,v in fams.items() if len(v)>1}
+        absorbed=sum(len(v)-1 for v in merging.values())
+        ev_risk=0; mixed=0; rows=[]
+        for k,v in sorted(merging.items(), key=lambda kv:-len(kv[1])):
+            _order=sorted(v, key=lambda x:(-(x['update_count'] or 1), str(x['first_seen'] or '9999')))
+            _win=_order[0]; _lose=_order[1:]
+            ev_risk+=sum(x['evidence_count'] for x in _lose)
+            _types=sorted({x.get('process_type') or '' for x in v})
+            if len(_types)>1: mixed+=1
+            rows.append({'домен':_win['domain'],'место':_win['place'],
+                         'каноническая_сущность':_win['canonical_entity'] or '(нет)',
+                         'типов_в_семье':len(_types),'типы':_types[:10],
+                         'процессов_в_семье':len(v),
+                         'останется':{'signal_id':_win['signal_id'],'title':_win['title'],
+                                      'process_type':_win.get('process_type'),
+                                      'update_count':_win['update_count'],
+                                      'first_seen':_win['first_seen'],
+                                      'evidence_count':_win['evidence_count']},
+                         'поглощаются':[{'signal_id':x['signal_id'],'title':x['title'],
+                                         'process_type':x.get('process_type'),
+                                         'сущность_старая':x['raw_entity'],
+                                         'update_count':x['update_count'],
+                                         'first_seen':x['first_seen'],
+                                         'evidence_count':x['evidence_count'],
+                                         'status':x['status']} for x in _lose]})
+        return {'семейств':len(fams),'семейств_со_слиянием':len(merging),
+                'процессов_поглощается':absorbed,
+                'свидетельств_в_поглощаемых':ev_risk,
+                'семейств_со_смешанными_типами':mixed,
+                'семейства':rows[:80]}
+    A=_fold(_IDENTITY_SHADOW['families'])
+    AT=_fold(_IDENTITY_SHADOW['families_t'])
+    return {
+      'режим':('тень, решения принимаются по старому ключу' if not IDENTITY_V2_APPLY
+               else 'ПРИМЕНЁН'),
+      'процессов_всего':sum(len(v) for v in _IDENTITY_SHADOW['families'].values()),
+      'ошибок':_IDENTITY_SHADOW['errors'],
+      'вариант_A':{'ядро':'домен + место + каноническая сущность',
+                   'вердикт':('сливает процессы РАЗНЫХ типов в одном месте: '
+                              'наводнение с пожаром, валютный рынок с инфляцией. '
+                              'identity_key намеренно не содержит тип, и пока '
+                              'в ядре стояла сущность, тип не был нужен'),
+                   **A},
+      'вариант_A_штрих':{'ядро':'домен + место + ТИП + каноническая сущность',
+                         'вердикт':('сливает ровно дубликаты, ради которых затевался '
+                                    'переход. Цена — при переименовании типа история '
+                                    'рвётся; замер устойчивости типа между прогонами '
+                                    '109 из 111, то есть 2%. Защита: старый ключ '
+                                    'остаётся вторым шансом при rescue'),
+                         **AT},
+      'как_читать':('Переход схлопывает семейство в один процесс. Приёмка должна '
+                    'подтвердить, что история поглощаемых сливается в остающийся, '
+                    'а не теряется: evidence, severity_history, first_seen и '
+                    'process_links. До этого IDENTITY_V2_APPLY остаётся False.'),
+    }
+
+
 def admission_report():
     """Отчёт Canary: кого не пустили и почему."""
     from collections import Counter
@@ -1871,6 +2020,30 @@ def evolve_signals(current, previous, now=None, want_report=False, prev_global=N
         ik=_identity_key(_dom, s.get('process_place',''), _ceid or _raw_ent)
         s['identity_key']=ik   # канонизируем на месте, чтобы rescue/dedup видели единый ключ
         prev_by_identity.setdefault(ik, s)
+        # IDENTITY v2 (тень): собираем семейства, которые схлопнулись бы
+        # при переходе. Решения по ним НЕ принимаются.
+        if IDENTITY_V2_SHADOW:
+            try:
+                _ik2=_identity_key_v2(_dom, s.get('process_place',''), _ceid)
+                _ik2t=_identity_key_v2(_dom, s.get('process_place',''), _ceid,
+                                       s.get('process_type') or '')
+                _rec={'signal_id':s.get('signal_id'),'title':s.get('title'),
+                      'process_type':s.get('process_type'),
+                      'identity_key':ik,'domain':_dom,
+                      'place':s.get('process_place'),
+                      'canonical_entity':_ceid or '',
+                      'raw_entity':_raw_ent or '',
+                      'evidence_count':s.get('evidence_count') or 0,
+                      'first_seen':s.get('first_seen'),
+                      'last_seen':s.get('last_seen'),
+                      'status':s.get('status'),
+                      'lifecycle_stage':s.get('lifecycle_stage'),
+                      'update_count':s.get('update_count') or 1,
+                      'severity':s.get('severity') or 0}
+                _IDENTITY_SHADOW['families'].setdefault(_ik2, []).append(_rec)
+                _IDENTITY_SHADOW['families_t'].setdefault(_ik2t, []).append(_rec)
+            except Exception:
+                _IDENTITY_SHADOW['errors']+=1
     seen=set(); out=[]
     n_matched=0; n_created=0; match_scores=[]; n_identity_rescued=0
     for cur in current:
@@ -2586,6 +2759,9 @@ def _build_one_signal(evs, meta=None):
     # canonical_entity стабилен к переформулировкам (НПЗ=refinery=oil refinery).
     # Fallback на сырой key_entity только если сущность не канонизирована.
     identity_key=_identity_key(domains[0], place, canonical_entity or key_entity)
+    # IDENTITY v2 (тень): страна и город в ядро идентичности не входят.
+    identity_key_v2=_identity_key_v2(domains[0], place, canonical_entity)
+    identity_key_v2t=_identity_key_v2(domains[0], place, canonical_entity, ptype)
     # Task 5+6: качество и confidence-match каждого evidence
     evidence=[]
     for x in sorted(evs,key=lambda x:-x.get('severity',0)):
@@ -2636,7 +2812,42 @@ def _build_one_signal(evs, meta=None):
                   and 'de-escal' not in str(trend)
                   and 'спад' not in str(trend)) else 0
     priority=int(max(0,min(100,round(sev*(1+0.15*max(_rising(trend),_hold)+0.10*np_+0.12*nc_+qbonus)*conf_f))))
-    countries=sorted(set(sum((x.get('country_codes') or [] for x in evs),[])+sum((x.get('impact_countries') or [] for x in evs),[])))
+    # ═══ PLACE / IMPACT / MENTIONED — ТРИ РАЗНЫЕ ГЕОГРАФИИ (29.09.2026) ═══
+    # Было: countries = объединение country_codes и impact_countries. Замер по
+    # живому снапшоту: country_codes байт-в-байт равно mentioned_countries у всех
+    # 358 записей, то есть поле означало «страны, которые где-либо фигурировали
+    # в свидетельствах», а выглядело как география процесса. Отсюда 31 страна
+    # у «Военный конфликт — Россия — Украина» при geo_spread = [Россия, Украина],
+    # включая Шри-Ланку, Люксембург и Мали, и Индонезия с США у «Пожарная
+    # активность — Европа».
+    #
+    # Решение Мии: PLACE → countries, IMPACT → impact_countries,
+    # MENTIONED → никуда. Место берётся из гео-контракта (country_code), то есть
+    # из того же авторитетного поля, что и карта, а не из списка упоминаний.
+    # Упомянутые страны сохраняются в mentioned_countries отдельным полем:
+    # не выбрасываем данные, но и не выдаём их за географию процесса.
+    #
+    # ОТКАТ: PROC_COUNTRIES_PLACE_ONLY = False.
+    # Только ISO2: у части событий в поле места лежит название макрозоны
+    # («Европа»), а не код страны. Макрозона — это geo_spread и process_place,
+    # в списке стран ей не место.
+    _iso2=lambda c: bool(c) and len(str(c))==2 and str(c).isupper() and str(c).isalpha()
+    _place_cc=sorted({c for c in ((x.get('country_code') or x.get('primary_country')
+                                   or x.get('event_country') or '') for x in evs) if _iso2(c)})
+    # Место процесса известно, а ни у одного свидетельства кода страны нет:
+    # берём код самого процесса, иначе «Геополитический процесс — Канада»
+    # остался бы вообще без стран.
+    if not _place_cc and _iso2(place_iso):
+        _place_cc=[place_iso]
+    _impact_cc=sorted({c for c in sum((x.get('impact_countries') or [] for x in evs),[])
+                       if _iso2(c)}-set(_place_cc))
+    _ment_cc=sorted({c for c in sum((x.get('country_codes') or [] for x in evs),[])
+                     if _iso2(c)}-set(_place_cc)-set(_impact_cc))
+    if PROC_COUNTRIES_PLACE_ONLY:
+        countries=_place_cc
+    else:
+        countries=sorted(set(sum((x.get('country_codes') or [] for x in evs),[])
+                             +sum((x.get('impact_countries') or [] for x in evs),[])))
     regions=sorted(set(x.get('region','') for x in evs if x.get('region')))
     dates=sorted(x.get('date','') for x in evs if x.get('date'))
     _first=dates[0] if dates else ''; _last=dates[-1] if dates else ''
@@ -2676,6 +2887,9 @@ def _build_one_signal(evs, meta=None):
         # читаемые названия.
         'included_labels':(meta or {}).get('included_labels',[]),'merged_count':(meta or {}).get('merged_count',1),
         'domains':domains,'primary_domain':primary_domain,'countries':countries,'regions':regions,'severity':sev,'priority':priority,
+        'identity_key':identity_key,'identity_key_v2':identity_key_v2,'identity_key_v2t':identity_key_v2t,
+        'impact_countries':_impact_cc,'mentioned_countries':_ment_cc,
+        'canonical_entity':canonical_entity,'raw_entity':key_entity,
         'trend':trend,'phase':sig_phase,
         'escalation':{'score':top.get('escalation_score'),'level':top.get('escalation_level')},
         'persistence':persist,'confidence':conf,'connectivity':conn,'evidence_count':len(evs),
@@ -3369,6 +3583,15 @@ def write_signals_json(events, path):
     # записей (≈сутки при cron */30): birth · accept · deny · процессы по доменам.
     try:
         _br = birth_report(); _ar = admission_report()
+        # IDENTITY SHADOW: карта миграции идентичности, read-only.
+        # Пишется каждый прогон, пока IDENTITY_V2_APPLY = False.
+        if IDENTITY_V2_SHADOW:
+            try:
+                json.dump(identity_shadow_report(),
+                          open(os.path.join(os.path.dirname(path), '_identity_shadow.json'),
+                               'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+            except Exception as _ie:
+                print('  [WARN] identity shadow report: %s' % str(_ie)[:120], file=sys.stderr)
         _bs_path = os.path.join(os.path.dirname(path), '_birth_semantics.json')
         _hist = []
         try:
