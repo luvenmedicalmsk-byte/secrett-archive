@@ -2,67 +2,67 @@
   "country": "CA",
   "date": "2026-09-29",
   "grdf_version": "2.0",
-  "generated_at": "2026-09-29T00:46:08.611079+00:00",
+  "generated_at": "2026-09-29T01:07:42.192996+00:00",
   "node_count": 14,
-  "edge_count": 13,
+  "edge_count": 19,
   "nodes": [
     {
       "id": "COUNTRY-CA",
       "type": "Country",
       "label": "CA",
-      "score": 61,
+      "score": 50,
       "props": {
-        "risk_score": 61
+        "risk_score": 50
       }
     },
     {
       "id": "DOMAIN-CA-geopolitical",
       "type": "Domain",
       "label": "geopolitical",
-      "score": 38,
-      "trend": "stable"
+      "score": 14,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-economic",
       "type": "Domain",
       "label": "economic",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-climate",
       "type": "Domain",
       "label": "climate",
-      "score": 32,
-      "trend": "stable"
+      "score": 72,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-technology",
       "type": "Domain",
       "label": "technology",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-social",
       "type": "Domain",
       "label": "social",
-      "score": 58,
-      "trend": "stable"
+      "score": 50,
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-infrastructure",
       "type": "Domain",
       "label": "infrastructure",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DOMAIN-CA-cyber",
       "type": "Domain",
       "label": "cyber",
       "score": 5,
-      "trend": "stable"
+      "trend": "down"
     },
     {
       "id": "DRIVER-CA-Geopolitical",
@@ -80,13 +80,6 @@
       "label": "Economic"
     },
     {
-      "id": "SIGNAL-CA-Канада_про",
-      "type": "Signal",
-      "label": "Канада продлевает ограничения на поездки",
-      "severity": 58,
-      "domain": "social"
-    },
-    {
       "id": "SIGNAL-CA-Послеобеде",
       "type": "Signal",
       "label": "Послеобеденная первая страница: цена на ",
@@ -99,6 +92,13 @@
       "label": "Канада ищет защитные меры для работодате",
       "severity": 32,
       "domain": "climate"
+    },
+    {
+      "id": "SIGNAL-CA-Шторм_—_Се",
+      "type": "Signal",
+      "label": "Шторм — Северная Америка",
+      "severity": 97,
+      "domain": "climate"
     }
   ],
   "edges": [
@@ -106,7 +106,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-geopolitical",
       "type": "CORRELATES",
-      "weight": 0.38
+      "weight": 0.14
     },
     {
       "from": "COUNTRY-CA",
@@ -118,7 +118,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-climate",
       "type": "CORRELATES",
-      "weight": 0.32
+      "weight": 0.72
     },
     {
       "from": "COUNTRY-CA",
@@ -130,7 +130,7 @@
       "from": "COUNTRY-CA",
       "to": "DOMAIN-CA-social",
       "type": "CORRELATES",
-      "weight": 0.58
+      "weight": 0.5
     },
     {
       "from": "COUNTRY-CA",
@@ -163,10 +163,46 @@
       "weight": 0.8
     },
     {
-      "from": "SIGNAL-CA-Канада_про",
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-economic",
+      "type": "ESCALATES",
+      "weight": 0.75,
+      "lag_days": 30
+    },
+    {
+      "from": "DOMAIN-CA-economic",
       "to": "DOMAIN-CA-social",
       "type": "AMPLIFIES",
-      "weight": 0.58
+      "weight": 0.7,
+      "lag_days": 60
+    },
+    {
+      "from": "DOMAIN-CA-social",
+      "to": "DOMAIN-CA-social",
+      "type": "AMPLIFIES",
+      "weight": 0.65,
+      "lag_days": 90
+    },
+    {
+      "from": "DOMAIN-CA-climate",
+      "to": "DOMAIN-CA-infrastructure",
+      "type": "ESCALATES",
+      "weight": 0.82,
+      "lag_days": 7
+    },
+    {
+      "from": "DOMAIN-CA-infrastructure",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.68,
+      "lag_days": 14
+    },
+    {
+      "from": "DOMAIN-CA-economic",
+      "to": "DOMAIN-CA-economic",
+      "type": "AMPLIFIES",
+      "weight": 0.55,
+      "lag_days": 30
     },
     {
       "from": "SIGNAL-CA-Послеобеде",
@@ -179,6 +215,12 @@
       "to": "DOMAIN-CA-climate",
       "type": "AMPLIFIES",
       "weight": 0.32
+    },
+    {
+      "from": "SIGNAL-CA-Шторм_—_Се",
+      "to": "DOMAIN-CA-climate",
+      "type": "AMPLIFIES",
+      "weight": 0.97
     }
   ]
 }
