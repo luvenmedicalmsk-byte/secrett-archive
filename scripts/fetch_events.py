@@ -6780,10 +6780,16 @@ def _recompute_severity(ev):
         sev = max(sev, 60)
     # S46: долг, измеренный долей ВВП. Прежний пол держался на литеральном
     # «госдолг», и «Долг Франции достиг 119% от ВВП» под него не попадал.
-    if dom == 'economy':
-        _dgs = _debt_gdp_share(b)
-        if _dgs is not None and _dgs >= DEBT_GDP_FLOOR_PCT and not _DEBT_GDP_SAFE.search(b):
-            sev = max(sev, DEBT_GDP_FLOOR_SEV)
+    #
+    # S46-b 29.09.2026. Признак НАМЕРЕННО не привязан к домену. Пересчёт идёт
+    # ДО канонизации, поэтому здесь у события стоит домен ленты, а не домен,
+    # который присвоит канон: «Долг Франции» приходит из Politico EU как
+    # geopolitics и становится economy позже. Долей ВВП меряют только
+    # суверенный долг, признак однозначен в любом домене, поэтому правильный
+    # ответ — снять гейт, а не переносить пересчёт за канонизацию.
+    _dgs = _debt_gdp_share(b)
+    if _dgs is not None and _dgs >= DEBT_GDP_FLOOR_PCT and not _DEBT_GDP_SAFE.search(b):
+        sev = max(sev, DEBT_GDP_FLOOR_SEV)
     return max(12, min(100, int(round(sev))))
 
 def _is_broken_fragment(title, summary):
